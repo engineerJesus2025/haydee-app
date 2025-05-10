@@ -3,6 +3,7 @@
     require_once "modelo/usuario_modelo.php";
 
     $usuario = new Usuario();    
+    $roles = $usuario->consultar_roles();
 
     if (isset($_POST["operacion"])){
         $operacion = $_POST["operacion"];
@@ -16,7 +17,6 @@
 
         elseif ($operacion == "registrar") {
             //se guardan las variables a registrar
-            $cedula = $_POST["tipo_cedula"]. $_POST["cedula"];
             $apellido = $_POST["apellido"];
             $nombre = $_POST["nombre"];  
             $correo = $_POST["correo"];  
@@ -26,7 +26,6 @@
 
 
             //se usan los setters correspondientes
-            $usuario->set_cedula($cedula);
             $usuario->set_apellido($apellido);
             $usuario->set_nombre($nombre);
             $usuario->set_correo($correo);
@@ -53,7 +52,6 @@
         elseif ($operacion == "modificar") {
             //se guardan las variables a modificar
             $id_usuario = $_POST["id_usuario"];
-            $cedula = $_POST["tipo_cedula"]. $_POST["cedula"];
             $apellido = $_POST["apellido"];
             $nombre = $_POST["nombre"];  
             $correo = $_POST["correo"];  
@@ -63,7 +61,6 @@
 
             //se usan los setters correspondientes
             $usuario->set_id_usuario($id_usuario);
-            $usuario->set_cedula($cedula);
             $usuario->set_apellido($apellido);
             $usuario->set_nombre($nombre);
             $usuario->set_correo($correo);
@@ -86,31 +83,21 @@
             //se ejecuta la funcion:
             echo  json_encode($usuario->eliminar_usuario());
             //igual puse para que siempre retorne un arreglo que dara true o false de acuerdo al resultado
+        }elseif ($operacion == "ultimo_id"){
+            echo json_encode($usuario->lastId());
         }
 
         exit;//es salida en ingles... No puede faltar
     }
     if (isset($_POST["validar"])) {
-        $validar = $_POST["validar"];
-        if ($validar == "cedula") {
-            $usuario->set_cedula($_POST["tipo_cedula"] . $_POST["cedula"]);
-            echo  json_encode($usuario->verificar_cedula());
-        }
-        elseif ($validar == "correo"){
+        $validar = $_POST["validar"]; //Esto es igual pero para las validaciones
+        if ($validar == "correo"){
             $usuario->set_correo($_POST["correo"]);
             echo  json_encode($usuario->verificar_correo());
         }
         exit;
     }
     //FIN de AJAX
-
-    if($accion == "inicio"){
-        // unset($_SESSION["mensaje"]);
-        $roles = $usuario->consultar_roles();
-
-        require_once "vista/usuarios/usuario_inicio_vista.php";
-        unset($_SESSION["mensaje"]);
-        unset($_SESSION["estado_consulta"]);
-    }
+    require_once "vista/usuarios/usuario_vista.php";
 
 ?>
