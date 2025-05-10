@@ -1,24 +1,25 @@
-consultar(true); // para llenar la tabla al cargar
+consultar(); // para llenar la tabla al cargar
+let data_table, id_eliminado, id_registrado, correo_an;
+// VAriables que usaremos mas tarde
 
-//Este es el boton del formulario, lo usaremos para registrar o modificar
-let boton_formulario = document.querySelector("#boton_formulario");
-let modal = new bootstrap.Modal("#registrar_usuario");
-// EL fomulario principal de la pagia
-let formulario_usar = document.querySelector(`#form_usuario`);
-let correo_an, cedula_an;
+let tabla = document.querySelector("#tabla_usuario"); //La tabla
+let boton_formulario = document.querySelector("#boton_formulario"); // el boton
+let modal = new bootstrap.Modal("#registrar_usuario"); // el modal
+let formulario_usar = document.querySelector(`#form_usuario`); // el form
+
 //En caso de que se envie un formulario
-
 function envio(operacion) {	
 	if (operacion == "Editar") {
-		console.log(operacion)
-		id_modificar = boton_formulario.getAttribute("id_modificar")
+		id_modificar = boton_formulario.getAttribute("id_modificar");//obtenemos el id del registro
 		modificar(id_modificar);
-	}else if(operacion == "Registrar"){
+	}
+	else if(operacion == "Registrar"){
 		//sino a registrar
 		registrar()
 	}
 }
 
+// Esto es en caso de que uno quite el formulario, le devuelve los valores que tenia
 document.querySelector(`#registrar_usuario`).addEventListener("hide.bs.modal",()=>{
 	formulario_usar.reset();
 	boton_formulario.removeAttribute("modificar");
@@ -31,19 +32,18 @@ document.querySelector(`#registrar_usuario`).addEventListener("hide.bs.modal",()
 async function registrar() {
 	// el async vuelve la funcion asincrona	
 	//Creamos el formData
-	datos_consulta = new FormData()
+	datos_consulta = new FormData();
+	//Creamos las variables con los datos de los inputs
 	let nombre = formulario_usar.querySelector("#nombre").value,
-	apellido = formulario_usar.querySelector("#apellido").value,
-	tipo_cedula = formulario_usar.querySelector("#tipo_cedula").value, 
-	cedula = formulario_usar.querySelector("#cedula").value, 
+	apellido = formulario_usar.querySelector("#apellido").value,	
 	correo = formulario_usar.querySelector("#correo").value, 
 	contra = formulario_usar.querySelector("#contra").value, 
-	rol = formulario_usar.querySelector("#rol").value;
+	rol = formulario_usar.querySelector("#rol").value,
+	rol_nombre = formulario_usar.querySelector("#rol").selectedOptions[0].textContent;
 
+	// le pasamos los datos por el formData
 	datos_consulta.append("nombre",nombre);
-	datos_consulta.append("apellido",apellido);
-	datos_consulta.append("tipo_cedula",tipo_cedula);
-	datos_consulta.append("cedula",cedula);
+	datos_consulta.append("apellido",apellido);	
 	datos_consulta.append("correo",correo);
 	datos_consulta.append("contra",contra);
 	datos_consulta.append("rol",rol);
@@ -53,20 +53,26 @@ async function registrar() {
 	
 	//Llamamos a la funcion para hacer la consulta
 	let respuesta = await query(datos_consulta); // El await es para que espere el resultado, al ser asincrono, normalmente no lo esperaria
+	// wait = esperar (english)
+	modal.hide(); //Esconde el modal
+
+	formulario_usar.reset();//Limpia el formulario
+
+	id_registrado = await last_id(); //Guarda el nuevo id registrado, para darselo al evento de modificar
 	
-	modal.hide()
+	let acciones = crearBotones(id_registrado.mensaje); //Crea botones
+	
+	// esta variable no hace nada, pero me dio error cuando la quite XD
+	let res_data_table = await data_table.row.add([`${nombre}`,`${apellido}`,`${correo}`,`${rol_nombre}`,`${acciones.outerHTML}`]).draw();
+	// Tiene el await para que lo espere, sino no la pone en la tabla
 
-	formulario_usar.reset();
-
-	consultar(); // esto es para actualizar la tabla al registrar
-	consulta_completada();
+	consulta_completada();//Mensaje de que se completo la operacion
 }
 
 //Si queremos consultar
-async function consultar(inicial = false) {
-	
+async function consultar() {
 	//Creamos el formData
-	datos_consulta = new FormData()
+	datos_consulta = new FormData();
 
 	//Aqui decimos que vamos a hacer
 	datos_consulta.append('operacion','consulta');
@@ -74,11 +80,13 @@ async function consultar(inicial = false) {
 	//Llamamos a la funcion para hacer la consulta
 	data = await query(datos_consulta)
 	vaciar_tabla(); //Vaciamos la tabla de lo que tenia antes
+
 	//recorremos los datos y en cada vuelta llamamos una funcion para llenar la tabla
 	await data.map(fila=>{
-		llenarTabla(fila)
+		llenarTabla(fila);
 	})
-	if (inicial) {data_table()}
+	
+	data_table = init_data_table(); //iniciamos el dataTable de jquery
 }
 
 // Esta funcion hace lo que dice
@@ -88,58 +96,69 @@ function vaciar_tabla() {
 }
 
 // esta tambien, se ve larga, pero no es tan complicada  **********
+// esta funcion crea filas para la tabla al momento de consultar
 function llenarTabla(fila) {
 	// seleccionamos el cuerpo de la tabla que vamos a llenar
 	let cuerpo_tabla = document.querySelector(`#tabla_usuario tbody`);
 
 	// Creamos etiquetas
-	let fila_tabla = document.createElement("tr");	
-	id_informacion = document.createElement("td");
+	let fila_tabla = document.createElement("tr");//creamos la fila <tr></tr>
 
-	let id_campo = fila["id_usuario"];
+	let id_campo = fila["id_usuario"]; // guardamos el id que nos interese
 	
-	id_informacion.textContent = id_campo;
-	fila_tabla.appendChild(id_informacion);
-
+	// creamos un td por cada columna que vamos a llenar de la tabla <td></td>
 	let nombre_td = document.createElement("td"),
-	apellido_td = document.createElement("td"),
-	cedula_td = document.createElement("td"), 
+	apellido_td = document.createElement("td"),	
 	correo_td = document.createElement("td"), 
 	rol_td = document.createElement("td");
 
-	cedula_td.textContent = fila["cedula"];
+	// le damos el contenido de la consulta
 	nombre_td.textContent = fila["nombre_usuario"];
 	apellido_td.textContent = fila["apellido"];
 	correo_td.textContent = fila["correo"];
 	rol_td.textContent = fila["nombre_rol"];
 
-	// Llenamos la etiquetas
-	fila_tabla.appendChild(cedula_td);
+	let acciones = crearBotones(id_campo); 
+	// creamos los botones de eliminar y modificar
+
+	// le ponemos los td a la fila (tr)
 	fila_tabla.appendChild(nombre_td);
 	fila_tabla.appendChild(apellido_td);
 	fila_tabla.appendChild(correo_td);
 	fila_tabla.appendChild(rol_td);
+	fila_tabla.appendChild(acciones);
+
+	fila_tabla.setAttribute("id",`fila-${id_campo}`);
+	// le ponemos un id a las fila para cuando las eliminemos
 	
+	// y por ultimo, llenamos la tabla con la fila
+	cuerpo_tabla.appendChild(fila_tabla);	
+}
+
+function crearBotones(id) {
 	// Creamos los botones de las acciones
-	let acciones = document.createElement("td");
-	acciones.setAttribute("class","row justify-content-evenly")
+	let td = document.createElement("td");
+	let acciones = document.createElement("div");
+	acciones.setAttribute("class","row justify-content-evenly");
+	// le damos la clases de boostrap para que se vea tu sabe'
 
 	//creamos el boton de eliminar, le damos valor, y le asignamos la funcion para eliminar
 	let boton_eliminar = document.createElement("button");
 
-	let icono_eliminar = document.createElement("i");
-	icono_eliminar.setAttribute("class", "bi bi-trash");
+	let icono_eliminar = document.createElement("i");// le ponemos un icono
+	icono_eliminar.setAttribute("class", "bi bi-trash");// y estilos
 	boton_eliminar.appendChild(icono_eliminar);
 	
+	// le ponemos todos los atributos que lleva este boton
 	boton_eliminar.setAttribute("type", "button");
 	boton_eliminar.setAttribute("class", "btn btn-danger btn-sm eliminar col-3");
-	boton_eliminar.setAttribute("tabindex", "-1");
+	boton_eliminar.setAttribute("tabindex", "-1"); 
 	boton_eliminar.setAttribute("role", "button");
 	boton_eliminar.setAttribute("aria-disabled", "true");
+	// no se para que sirven la mayoria, pero bueno... boostrap
 
 	boton_eliminar.setAttribute("title","Eliminar");
-	boton_eliminar.setAttribute("value",id_campo);
-	// boton_eliminar.addEventListener("click",eliminar);//Esa funcion esta mas abajo
+	boton_eliminar.setAttribute("value",id);// el valor del id para eliminar	
 
 	// Lo mismo que arriba, pero con modificar
 	let boton_editar = document.createElement("button");
@@ -157,20 +176,16 @@ function llenarTabla(fila) {
 	boton_editar.setAttribute("data-bs-target", "#registrar_usuario");
 
 	boton_editar.setAttribute("title","Editar");
-	boton_editar.setAttribute("value",id_campo);
+	boton_editar.setAttribute("value",id);
 	boton_editar.addEventListener("click",modificar_formulario)//Esa funcion esta mas abajo
 
-	acciones.appendChild(boton_editar);//Le ponemos los botones al <td><td> de las acciones
+	//Le ponemos los botones al <td><td> de las acciones
+	acciones.appendChild(boton_editar);
 	acciones.appendChild(boton_eliminar);
-	fila_tabla.setAttribute("id",`fila-${id_campo}`);
-	// le ponemos un id a las fila para cuando las eliminemos
-	//Llenamos la fila con la info
-	
-	// ...
-	fila_tabla.appendChild(acciones);
 
-	// y por ultimo, llenamos la tabla con la fila
-	cuerpo_tabla.appendChild(fila_tabla);	
+	td.appendChild(acciones);
+
+	return td;
 }
 
 // si queremos eliminar
@@ -185,30 +200,29 @@ async function eliminar(id) {
 	datos_consulta.append('operacion','eliminar');
 
 	//Llamamos a la funcion para hacer la consulta
-	let result = await query(datos_consulta)
+	let result = await query(datos_consulta);
 	
-	eliminar_fila(id); // y por ultimo, eliminamos esa fila con esta funcion
-	consulta_completada();
-}
+	id_eliminado = id; 
+	// con esto indicamos que se elimino un registro
+	// en caso de que lo de abajo no lo elimine
 
-// elimina una fila de la tabla
-function eliminar_fila(id) {
-	let cuerpo_tabla = document.querySelector(`#tabla_usuario tbody`);
-	let fila_eliminar = cuerpo_tabla.querySelector(`#fila-${id}`);
-	cuerpo_tabla.removeChild(fila_eliminar);
+	data_table.row(`#fila-${id}`).remove().draw(); // esto es para eliminar la fila del data table
+
+	consulta_completada(); // mensaje de exito
 }
 
 // Esta funcion prepara el formulario para editar el registro
 async function modificar_formulario(e) {
 	// primero buscamos el registro a modificar
 	//Creamos el formData
-	datos_consulta = new FormData()
-	
-	// Le ponemos los datos del formulario
-	let id = e.target.value;
+	datos_consulta = new FormData();
+		
+	let id = e.target.value; // tomamos el id
 	if (id === undefined) {
-		id = e.target.parentElement.value;
+		id = e.target.parentElement.value; 
+		//esto es por si seleciona el icono en vez del boton al dar click
 	}
+	// le damos el id
 	datos_consulta.append("id_usuario",id);
 
 	//Aqui decimos que vamos a hacer
@@ -219,32 +233,27 @@ async function modificar_formulario(e) {
 	
 	// ahora seleccionamos los inputs
 	let nombre = formulario_usar.querySelector("#nombre"),
-	apellido = formulario_usar.querySelector("#apellido"),
-	tipo_cedula = formulario_usar.querySelector("#tipo_cedula"),
-	cedula = formulario_usar.querySelector("#cedula"),
+	apellido = formulario_usar.querySelector("#apellido"),	
 	correo = formulario_usar.querySelector("#correo"),
 	contra = formulario_usar.querySelector("#contra"),
 	rol = formulario_usar.querySelector("#rol");
+	console.log(contra,data)
 
+	// le damos valor
 	nombre.value = data.nombre_usuario;
-	apellido.value = data.apellido;
-	tipo_cedula.value = data.cedula.substring(0,1);
-	cedula.value = data.cedula.substring(1);
+	apellido.value = data.apellido;	
 	correo.value = data.correo;
-	contra.value = data.contra;
-	rol.value = data.rol_id;
-
-	let boton_formulario = document.querySelector("#boton_formulario");	
+	contra.value = data.contrasenia;
+	rol.value = data.rol_id;	
 
 	// aqui cambiamos los datos del boton para registrar, para saber que ahora se va es a modificar un registro
 	boton_formulario.setAttribute("modificar",true);
 	boton_formulario.setAttribute("id_modificar",data.id_usuario);
 	boton_formulario.textContent = "Modificar";
-
-	cedula_an = cedula.value;
-	correo_an = correo.value;
-
 	document.getElementById('titulo_modal').textContent = "Modificar Usuario";
+	
+	correo_an = correo.value; 
+	//guardamos el orginal del correo, para que no choquen con las validaciones
 }
 
 //si queremos modificar
@@ -255,19 +264,16 @@ async function modificar(id) {
 	//Guardamos los datos del formulario
 	let nombre = formulario_usar.querySelector("#nombre").value,
 	apellido = formulario_usar.querySelector("#apellido").value,
-	tipo_cedula = formulario_usar.querySelector("#tipo_cedula").value, 
-	cedula = formulario_usar.querySelector("#cedula").value, 
 	correo = formulario_usar.querySelector("#correo").value, 
 	contra = formulario_usar.querySelector("#contra").value, 
-	rol = formulario_usar.querySelector("#rol").value;
+	rol = formulario_usar.querySelector("#rol").value,
+	rol_nombre = formulario_usar.querySelector("#rol").selectedOptions[0].textContent;
 	
 	// Le ponemos los datos del formulario
 	datos_consulta.append("id_usuario",id);
 
 	datos_consulta.append("nombre",nombre);
-	datos_consulta.append("apellido",apellido);
-	datos_consulta.append("tipo_cedula",tipo_cedula);
-	datos_consulta.append("cedula",cedula);
+	datos_consulta.append("apellido",apellido);	
 	datos_consulta.append("correo",correo);
 	datos_consulta.append("contra",contra);
 	datos_consulta.append("rol",rol);
@@ -277,12 +283,11 @@ async function modificar(id) {
 	datos_consulta.append('operacion','modificar');
 
 	//Llamamos a la funcion para hacer la consulta
-	await query(datos_consulta)
+	await query(datos_consulta);
 
-	consultar(); // Volvemos a llenar la tabla
-	formulario_usar.reset();
+	formulario_usar.reset(); //Limpiamos el formulario
 
- 	modal.hide();
+ 	modal.hide(); // escondemos el modal
 
 	// al terminar le damos al boton su valores originales
 
@@ -292,7 +297,24 @@ async function modificar(id) {
 
 	document.getElementById('titulo_modal').textContent = "Registrar Usuario";
 
-	consulta_completada()
+	consulta_completada(); // mensaje de exito
+
+	// esto de abajo es para editar la fila que se modifico en el data table
+	let acciones = crearBotones(id); // creamos otro botones (no se que tan necesario sea esto)
+
+	data_table.row(`#fila-${id}`).data([`${nombre}`,`${apellido}`,`${correo}`,`${rol_nombre}`,`${acciones.outerHTML}`])
+	data_table.draw(); // esta funcion refresca la tabla, por si le da sed
+
+	// se le vuelve a poner el evento al boton
+	document.querySelector(`#fila-${id}`).querySelector(`[value='${id}']`).addEventListener("click",modificar_formulario);
+}
+
+// esta funcion obtiene el ultimo id registrado en la base de datos
+async function last_id() {
+	datos_consulta = new FormData()
+	datos_consulta.append('operacion','ultimo_id');
+	let res = await query(datos_consulta);
+	return res;
 }
 
 // Aqui se hace la peticion AJAX
@@ -300,13 +322,14 @@ async function query(datos){
 	// Solo es un fetching de datos, en body mandamos los datos
 	// Estos datos se mandan al controdalor
 	let data = await fetch("",{method:"POST", body:datos}).then(res=>{		
-		let result = res.json()
+		let result = res.json();		
 		return result;//Convertimos el resultado de json a js y lo mandamos
 	})
-	
+	// console.log(data);
 	return data;
 }
 
+// esto solo es para decir que se completo una operacion
 function consulta_completada(){
 	Swal.fire({
 	    title: "Atencion",
@@ -315,4 +338,99 @@ function consulta_completada(){
 	    confirmButtonColor: "#e01d22",
 	    icon: "success"
 	});
+}
+
+// esta funcion es para incializar el data table
+function init_data_table() {
+	return new DataTable("#tabla_usuario",{
+            destroy: true,
+            responsive: true,
+            "scrollX": true,
+            "pageLength": 10,
+            "aaSorting": [],
+            language: {
+                "processing": "Procesando...",
+                "lengthMenu": "Mostrar _MENU_ registros",
+                "zeroRecords": "No se encontraron resultados",
+                "emptyTable": "Ningún dato disponible en esta tabla",
+                "info": "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+                "infoEmpty": "Mostrando registros del 0 al 0 de un total de 0 registros",
+                "infoFiltered": "(filtrado de un total de _MAX_ registros)",
+                "infoPostFix": "",
+                "search": "Buscar:",
+                "url": "",
+                "infoThousands": ",",
+                "loadingRecords": "Cargando...",
+                "paginate": {
+                    "first": "Primero",
+                    "last": "Último",
+                    "next": "<i class='bi bi-caret-right'></i>",
+                    "previous": "<i class='bi bi-caret-left'></i>"
+                },
+                "aria": {
+                    "sortAscending": ": Activar para ordenar la columna de manera ascendente",
+                    "sortDescending": ": Activar para ordenar la columna de manera descendente"
+                },
+                "buttons": {
+                    "copy": "Copiar",
+                    "colvis": "Visibilidad"
+                }
+            }
+    })
+    // si lees esto tienes que saber que ahora odio estos data table, muerte a jquery...
+}
+
+// un observador que detecte cuando cambie la tabla, si detecta cambio ejecuta la esa funcion
+// yo la puse porque jquery cuando hace la paginacion en la tabla, borra los elementos, 
+// entonces se pierden los eventos asignados, y cuando vuelven a aparecer, no los tienen.
+// Esto es para reasinarle estos eventos (para eliminar, modificar, etc)
+const observer = new MutationObserver(() => {
+	reasignarEventos();
+});
+
+observer.observe(tabla, {childList:true});
+
+// esta funcion pone los eventos de eliminar y modificar
+function reasignarEventos() {
+	console.log("me ejecuto");
+	if (id_eliminado){ //Si hay un eliminado que no se ha quitado de la tabla
+		let existe_fila = document.querySelector(`#fila-${id_eliminado}`)
+		if (existe_fila) {
+			data_table.row(`#fila-${id_eliminado}`).remove().draw();
+			id_eliminado = null;	
+		}
+	//Esto es porque si la tabla esta paginada, como que no encuentra cual borrar hasta que esta en la pagina que la contiene
+	}
+
+	// Se asigna el evento eliminar para los botones, esta aqui porque pasa algo parecido a lo de arriba
+	$(".eliminar").on("click",function(e){
+		id = e.target.value;
+		if (id == undefined) {	
+			id = e.target.parentElement.value;
+		}
+		Swal.fire({
+			title: "¿Estás seguro?",
+			text: "¿Está seguro que desea eliminar este usuario?",
+			showCancelButton: true,
+			confirmButtonText: "Eliminar",
+			confirmButtonColor: "#e01d22",
+			cancelButtonText: "Cancelar",
+			icon: "warning"
+			}).then((resultado) => {
+				if (resultado.isConfirmed) {
+					eliminar(id);				
+				}
+			});
+	});
+
+	if (id_registrado) { // en caso de que se haya registrado y no se haya añadido a la tabla
+		let boton_modificar = document.querySelector(`[value='${id_registrado.mensaje}']`); 
+		// captura el boton de editar, sino lo encuentra es que no esta en su pagina, y no tiene caso ponerle evento
+		if (boton_modificar) {
+			// si lo encuentra le pone el evento de modificar
+			boton_modificar.addEventListener("click",modificar_formulario);
+			boton_modificar.parentElement.parentElement.parentElement.setAttribute("id",`fila-${id_registrado.mensaje}`);
+			id_registrado = null;
+		}
+	}
 }
