@@ -59,8 +59,6 @@
                                 <table id="tabla_usuario" class="table" style="width:97%">
                                     <thead>
                                         <tr>
-                                            <th>ID</th>
-                                            <th>CÉDULA</th>
                                             <th>NOMBRE</th>
                                             <th>APELLIDO</th>
                                             <th>CORREO</th>
@@ -75,7 +73,7 @@
                                     </tbody>
                                 </table>
                                 <div class="modal fade" id="registrar_usuario" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
-                                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                                    <div class="modal-dialog modal-lg">
                                         <div class="modal-content">
                                             <div class="modal-header">
                                                 <h1 class="modal-title fs-5" id="titulo_modal">Registrar usuario</h1>
@@ -104,49 +102,12 @@
         </div>
     </div>
 
-    <script type="text/javascript" src="recursos/js/validaciones/usuario_validar.js"></script>
-    <script type="text/javascript" src="recursos/js/consultas_ajax/usuario_ajax.js"></script>
+    
 </body>
-<script>
-    function data_table() {
-        $('#tabla_usuario').DataTable({
-        destroy: true,
-        responsive: true,
-        "scrollX": true,
-        "pageLength": 10,
-        "aaSorting": [],
-        language: {
-            "processing": "Procesando...",
-            "lengthMenu": "Mostrar _MENU_ registros",
-            "zeroRecords": "No se encontraron resultados",
-            "emptyTable": "Ningún dato disponible en esta tabla",
-            "info": "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
-            "infoEmpty": "Mostrando registros del 0 al 0 de un total de 0 registros",
-            "infoFiltered": "(filtrado de un total de _MAX_ registros)",
-            "infoPostFix": "",
-            "search": "Buscar:",
-            "url": "",
-            "infoThousands": ",",
-            "loadingRecords": "Cargando...",
-            "paginate": {
-                "first": "Primero",
-                "last": "Último",
-                "next": "<i class='bi bi-caret-right'></i>",
-                "previous": "<i class='bi bi-caret-left'></i>"
-            },
-            "aria": {
-                "sortAscending": ": Activar para ordenar la columna de manera ascendente",
-                "sortDescending": ": Activar para ordenar la columna de manera descendente"
-            },
-            "buttons": {
-                "copy": "Copiar",
-                "colvis": "Visibilidad"
-            }
-        }
-        });
-    }
 
-</script>
+<script type="text/javascript" src="recursos/js/validaciones/usuario_validar.js"></script>
+<script type="text/javascript" src="recursos/js/consultas_ajax/usuario_ajax.js"></script>
+
 </body>
 
 </html>

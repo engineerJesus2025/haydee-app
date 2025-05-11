@@ -1,5 +1,5 @@
 <form action="?pagina=usuario_controlador.php&accion=guardar" method="POST" id="form_usuario" name="form_usuario">
-    <div class="row">
+    <div class="row m-3">
         <div class="col-md-6">
             <label for="nombre">Nombre del usuario</label>
             <div class="input-group mb-3">
@@ -17,24 +17,7 @@
             </div>
         </div>
     </div>
-    <div class="row">
-        <div class="col-md-2">
-            <label for="tipo_cedula">Nacionalidad</label>
-            <div class="input-group mb-3">
-                <span class="input-group-text" id="basic-addon1"><i class="bi bi-person-vcard"></i></span>
-                <select class="form-select tipo_cedula" aria-label="Default select example" for="tipo_cedula" name="tipo_cedula" id="tipo_cedula">
-                    <option value="V">V</option>
-                    <option value="E">E</option>
-                </select>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <label for="cedula">Cédula de identidad</label>
-            <div class="input-group mb-3">
-                <input type="text" class="form-control cedula" name="cedula" id="cedula" placeholder="Cédula de identidad" aria-label="cedula" aria-describedby="basic-addon1" minlength="7" maxlength="9">
-                <span class="w-100"></span>
-            </div>
-        </div>
+    <div class="row m-3">
         <div class="col-md-6">
             <label for="correo">Correo electrónico</label>
             <div class="input-group mb-3">
@@ -43,11 +26,20 @@
                 <span class="w-100"></span>
             </div>
         </div>
+        <div class="col-md-6">
+            <label for="rol">Rol</label>
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="basic-addon1"><i class="bi bi-person-gear"></i></span>
+                <select class="form-select rol" aria-label="Default select example" name="rol" id="rol" form="form_usuario">
+                    <option selected hidden value="">Rol</option>
+                    <?php foreach ($roles as $rol) : ?>
+                        <option value="<?php echo $rol["id_rol"] ?>"><?php echo $rol["nombre"] ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+        </div>
     </div>
-    <div class="row">
-        
-    </div>
-    <div class="row">
+    <div class="row m-3">
         <div class="col-md-6">
             <label for="contra">Contraseña</label>
             <div class="input-group mb-3">
@@ -64,19 +56,7 @@
             </div>
         </div>
     </div>
-    <div class="row">
-        <div class="col-md-12">
-            <label for="rol">Rol</label>
-            <div class="input-group mb-3">
-                <span class="input-group-text" id="basic-addon1"><i class="bi bi-person-gear"></i></span>
-                <select class="form-select rol" aria-label="Default select example" name="rol" id="rol" form="form_usuario">
-                    <option selected hidden value="">Rol</option>
-                    <?php foreach ($roles as $rol) : ?>
-                        <option value="<?php echo $rol["id_rol"] ?>"><?php echo $rol["nombre"] ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-        </div>
+    <div class="row m-3">
         <div class="col-md-12 text-center">
             <button class="btn btn-primary" type="submit" id="boton_formulario">Registrar</button>
         </div>

@@ -18,27 +18,18 @@ $(document).ready(function(){
 		$(this),this.nextElementSibling,"Debe ingresar el apellido del usuario");
 	});
 
-	$("#cedula").on("keypress",function(e){
-		validarKeyPress(/^[0-9\b]*$/, e);
-	});
-
-	$("#cedula").on("keyup",function(e){
-		validarKeyUp(/^[0-9]{7,8}$/,$(this),
-		this.nextElementSibling,"Solo numeros, no menos de 7 y mas de 8");
-	});
-
 	$("#correo").on("keypress",function(e){	
 		validarKeyPress(/^[-A-Za-z0-9_.@\b]*$/, e);
 	});
 
 	$("#correo").on("keyup",function(e){
-		validarKeyUp(/^[-A-Za-z0-9_.]{3,20}[@][A-Za-z0-9]{3,10}[.][A-Za-z]{2,3}$/,$(this),
+		validarKeyUp(/^[-A-Za-z0-9_.]{3,35}[@][A-Za-z0-9]{3,10}[.][A-Za-z]{2,3}$/,$(this),
 		this.nextElementSibling,"El formato debe ser ejemplo@gmail.com");
 	});
 
 	$("#contra").on("keyup",function(e){
 		validarKeyUp(
-        /^[A-Za-z0-9_.+*$#%&@]{4,50}$/,
+        /^[A-Za-z0-9_.+*$#%&@]{5,50}$/,
         $(this),this.nextElementSibling,'La contraseña debe tener mínimo 5 caracteres'
         )
 	});
@@ -46,7 +37,7 @@ $(document).ready(function(){
 	$("#boton_formulario").on("click",async function(e){
 		let accion = (e.target.getAttribute("modificar"))?"Editar":"Registrar";		
 		e.preventDefault();
-		if(await validarenvio(accion)==true){
+		if(await validarEnvio(accion)==true){
 				Swal.fire({
 				title: "¿Estás seguro?",
 				text: `¿Está seguro que desea ${accion} este usuario?`,
@@ -57,66 +48,26 @@ $(document).ready(function(){
 				icon: "warning"
 			    }).then((result) => {
 					if (result.isConfirmed) {
-						envio(accion);
-						cedula_an = null;
-						correo_an = null;
+						envio(accion);						
+						correo_an = null;//resetea el valor del correo original (esto es de usuario_ajax.js)
 					}
 			    });
 		}	
 	});
 
-	// Para que verifique cada tanto si ya hay botones para eliminar, 
-	// Sin esto daria null
-	let intervalo = setInterval(function(){
-		if ($(".eliminar").length == 0) {return;}
-
-		$(".eliminar").on("click",function(e){
-			id = e.target.value;
-			if (id == undefined) {	
-				id = e.target.parentElement.value;
-			}
-			Swal.fire({
-				title: "¿Estás seguro?",
-				text: "¿Está seguro que desea eliminar este usuario?",
-				showCancelButton: true,
-				confirmButtonText: "Eliminar",
-				confirmButtonColor: "#e01d22",
-				cancelButtonText: "Cancelar",
-				icon: "warning"
-				}).then((resultado) => {
-					if (resultado.isConfirmed) {
-						eliminar(id)
-					}
-				});
-		});
-
-		clearInterval(intervalo);
-	},1000)
-
-	// AJAX
-
-	$("#cedula").on("keyup",function(){
-		if ($(this).val().length > 6 && $(this).val().length < 9) {
-			let datos = new FormData();
-			datos.append('validar','cedula');
-			datos.append('tipo_cedula',this.closest("form").querySelector("#tipo_cedula").value);
-			datos.append('cedula',$(this).val());			
-			verificar_duplicados(datos);
-		}
-	})
-	
 	$("#correo").on("keyup",function(e){
-		if ($(this).val().length > 6 || $(this).val().length < 9) {			
+		if (validarKeyUp(
+        /^[-A-Za-z0-9_.]{3,35}[@][A-Za-z0-9]{3,10}[.][A-Za-z]{2,3}$/,
+        $("#correo"),document.querySelector("#correo").nextElementSibling,''
+        )) {
 			let datos = new FormData();
 			datos.append('validar','correo');
 			datos.append('correo',$(this).val());
 			verificar_duplicados(datos);
-		}
+        }		
 	})
 
 });	//Fin de AJAX
-
-
 
 function mensajes(icono,tiempo,titulo,mensaje){
 	Swal.fire({
@@ -130,7 +81,7 @@ function mensajes(icono,tiempo,titulo,mensaje){
 	});
 }
 
-async function validarenvio(){	
+async function validarEnvio(){	
 	if(validarKeyUp(
         /^[A-Za-z ]{3,30}$/,
         $("#nombre"),document.querySelector("#nombre").nextElementSibling,'Debe ingresar el nombre del usuario'
@@ -151,19 +102,9 @@ async function validarenvio(){
 		
 		return false;
 	}
-	else if(validarKeyUp(
-        /^[0-9]{7,9}$/,
-        $("#cedula"),document.querySelector("#cedula").nextElementSibling,'Debe ingresar la cédula de identidad'
-        )==0)
-	{
-		mensajes('error',4000,'Debe ingresar la cédula de identidad',
-		'El formato debe ser 12345678');
-		
-		return false;
-	}
 	
 	else if(validarKeyUp(
-        /^[-A-Za-z0-9_.]{3,20}[@][A-Za-z0-9]{3,10}[.][A-Za-z]{2,3}$/,
+        /^[-A-Za-z0-9_.]{3,35}[@][A-Za-z0-9]{3,10}[.][A-Za-z]{2,3}$/,
         $("#correo"),document.querySelector("#correo").nextElementSibling,'Ejemplo: alguien@servidor.com'
         )==0)
 	{
@@ -196,30 +137,18 @@ async function validarenvio(){
 		
 		return false;
 	}	
-	
-		if(cedula_an != $("#cedula").val()){
-			let datos = new FormData();
-			datos.append('validar','cedula');
-			datos.append('tipo_cedula',document.querySelector("#tipo_cedula").value);
-			datos.append('cedula',$("#cedula").val());
-			let res = await verificar_duplicados(datos);
-
-			if(res){
-				mensajes('error',4000,'Cedula ya registrada','Esta cedula esta registrada, debe ingresar otra.');
-				return false;
-			}
+	// si el valor de correo no es el mismo de antes:
+	if(correo_an != $("#correo").val()){
+		datos = new FormData(); 
+		datos.append('validar','correo');
+		datos.append('correo',$("#correo").val());
+		res = await verificar_duplicados(datos);
+		// revisamos si esta duplicado con otro usuario
+		if(res){
+			mensajes('error',4000,'Correo ya registrado','Este correo esta registrado, debe ingresar otro.');
+			return false;
 		}
-		if(correo_an != $("#correo").val()){
-			datos = new FormData();
-			datos.append('validar','correo');
-			datos.append('correo',$("#correo").val());
-			res = await verificar_duplicados(datos);
-
-			if(res){
-				mensajes('error',4000,'Correo ya registrado','Este correo esta registrado, debe ingresar otro.');
-				return false;
-			}
-		}
+	}
 
 	return true;
 }
@@ -279,45 +208,3 @@ async function verificar_duplicados(datos,accion = "registrar"){
 	}
 	return false;
 }
-
-function enviaAjax(datos) {
-  $.ajax({
-    async: true,
-    url: "",
-    type: "POST",
-    contentType: false,
-    data: datos,
-    processData: false,
-    cache: false,
-    beforeSend: function () {},
-    timeout: 10000,
-    success: function (respuesta) {
-    // console.log(respuesta);
-      try {
-        let lee = JSON.parse(respuesta);        
-        if (lee.resultado == true) {
-        	if (lee.busqueda == "cedula") {
-        		//cosole.log(lee)
-        		document.querySelector("#contra").nextElementSibling.textContent = "Cédula de identidad ya registrada";
-        	}
-        	else if (lee.busqueda == "correo") {
-        		document.querySelector("#correo").nextElementSibling.textContent = "Correo electrónico ya registrado";        			
-        	}
-        }
-
-      } catch (e) {
-      	console.log(e)
-        alert("Error en JSON " + e.name);
-      }
-    },
-    error: function (request, status, err) {
-      if (status == "timeout") {
-        muestraMensaje("Servidor ocupado, intente de nuevo");
-      } else {
-        muestraMensaje("ERROR: <br/>" + request + status + err);
-      }
-    },
-    complete: function () {},
-  });
-}
-//Fin de AJAX

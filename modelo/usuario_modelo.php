@@ -5,7 +5,6 @@ require_once "modelo/conexion.php";
 class Usuario extends Conexion
 {
     private $id_usuario;
-    private $cedula;
     private $apellido;
     private $nombre;
     private $direccion;
@@ -26,16 +25,6 @@ class Usuario extends Conexion
     public function get_id_usuario()
     {
         return $this->id_usuario;
-    }
-
-    public function set_cedula($cedula)
-    {
-        $this->cedula = $cedula;
-    }
-
-    public function get_cedula()
-    {
-        return $this->cedula;
     }
 
     public function set_apellido($apellido)
@@ -98,28 +87,6 @@ class Usuario extends Conexion
         return $this->rol_id;
     }
 
-    public function verificar_cedula()
-    {
-        $this->cambiar_db_seguridad();
-        
-        $sql = "SELECT * FROM usuarios WHERE cedula = :cedula";
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":cedula", $this->cedula);
-        $result = $conexion->execute();
-        $datos = $conexion->fetch(PDO::FETCH_ASSOC);
-
-        $this->cambiar_db_negocio();
-        if (isset($datos["cedula"])) {
-            $r["estatus"] = true;
-            $r["busqueda"] = "cedula";
-            return $r;
-        } else {
-            $r["estatus"] = false;
-            $r["busqueda"] = "cedula";
-            return $r;
-        }
-    }
-
     public function verificar_correo()
     {
         $this->cambiar_db_seguridad();
@@ -143,17 +110,17 @@ class Usuario extends Conexion
         }
     }
 
-    public function consultar($prueba = false)
+    public function consultar()
     {
         $this->cambiar_db_seguridad();
 
-        $sql = "SELECT `id_usuario`, `cedula`, `apellido`, usuarios.nombre as nombre_usuario, `correo`, `contrasenia`, `rol_id`, roles.nombre as nombre_rol FROM usuarios INNER JOIN roles ON usuarios.rol_id=roles.id_rol ORDER BY id_usuario DESC";
+        $sql = "SELECT `id_usuario`, `apellido`, usuarios.nombre as nombre_usuario, `correo`, `contrasenia`, `rol_id`, roles.nombre as nombre_rol FROM usuarios INNER JOIN roles ON usuarios.rol_id=roles.id_rol ORDER BY id_usuario";
 
         $conexion = $this->get_conex()->prepare($sql);
         $result = $conexion->execute();
-        if ($prueba) {
-            $this->registrar_bitacora(CONSULTAR, GESTIONAR_USUARIOS);
-        }
+       
+        //$this->registrar_bitacora(CONSULTAR, GESTIONAR_USUARIOS);
+        
         $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
 
         $this->cambiar_db_negocio();
@@ -169,7 +136,7 @@ class Usuario extends Conexion
     {
         $this->cambiar_db_seguridad();
 
-        $sql = "SELECT `id_usuario`, `cedula`, `apellido`, usuarios.nombre as nombre_usuario, `correo`, `contrasenia`, `rol_id`, roles.nombre as nombre_rol FROM usuarios INNER JOIN roles ON usuarios.rol_id=roles.id_rol WHERE id_usuario = :usuario";
+        $sql = "SELECT `id_usuario`, `apellido`, usuarios.nombre as nombre_usuario, `correo`, `contrasenia`, `rol_id`, roles.nombre as nombre_rol FROM usuarios INNER JOIN roles ON usuarios.rol_id=roles.id_rol WHERE id_usuario = :usuario";
 
         $conexion = $this->get_conex()->prepare($sql);
 
@@ -216,12 +183,11 @@ class Usuario extends Conexion
         //$validaciones = $this->validarDatos();
         //if(!($validaciones["estatus"])){return $validaciones;}
 
-        $sql = "INSERT INTO usuarios(cedula,apellido,nombre,correo,contrasenia,rol_id) VALUES (:cedula,:apellido,:nombre,:correo,:contrasenia,:rol)";
+        $sql = "INSERT INTO usuarios(apellido,nombre,correo,contrasenia,rol_id) VALUES (:apellido,:nombre,:correo,:contrasenia,:rol)";
 
         //$contra_hash = password_hash($this->contra, PASSWORD_DEFAULT);
         $contra_hash = $this->contra;
         $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":cedula", $this->cedula);
         $conexion->bindParam(":apellido", $this->apellido);
         $conexion->bindParam(":nombre", $this->nombre);
         $conexion->bindParam(":correo", $this->correo);
@@ -245,14 +211,13 @@ class Usuario extends Conexion
         $validaciones = $this->validarDatos("editar");
         if(!($validaciones["estatus"])){return $validaciones;}
 
-        $sql = "UPDATE usuarios SET cedula=:cedula,apellido=:apellido,nombre=:nombre,correo=:correo,contrasenia=:contrasenia,rol_id=:rol WHERE id_usuario=:id_usuario";
+        $sql = "UPDATE usuarios SET apellido=:apellido,nombre=:nombre,correo=:correo,contrasenia=:contrasenia,rol_id=:rol WHERE id_usuario=:id_usuario";
 
         $contra_hash = password_hash($this->contra, PASSWORD_DEFAULT);
 
 
         $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":id_usuario", $this->id_usuario);
-        $conexion->bindParam(":cedula", $this->cedula);
+        $conexion->bindParam(":id_usuario", $this->id_usuario);    
         $conexion->bindParam(":apellido", $this->apellido);
         $conexion->bindParam(":nombre", $this->nombre);
         $conexion->bindParam(":correo", $this->correo);
@@ -343,6 +308,23 @@ class Usuario extends Conexion
         }
     }
 
+    public function lastId()
+    {
+        $this->cambiar_db_seguridad();
+        $sql = "SELECT MAX(id_usuario) as last_id FROM usuarios";
+        $conexion = $this->get_conex()->prepare($sql);
+        $result = $conexion->execute();
+        $datos = $conexion->fetch(PDO::FETCH_ASSOC);
+        $this->cambiar_db_negocio();
+
+        if ($result) {
+            return ["estatus"=>true,"mensaje"=>$datos["last_id"]];
+        } else {
+            return ["estatus"=>false,"mensaje"=>"Error en la consulta"];
+        }
+        
+    }
+
     private function validarDatos($consulta = "registrar")
     {   
         // Validamos el id usuario en caso de editar o eliminar porque en registrar no existe todavia
@@ -361,17 +343,14 @@ class Usuario extends Conexion
         }
         // Validamos que los campos enviados si existan
 
-        if (!(isset($this->cedula) && isset($this->apellido) && isset($this->nombre) && isset($this->correo) && isset($this->contra) && isset($this->rol_id))) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos no se recibieron correctamente"];}
+        if (!(isset($this->apellido) && isset($this->nombre) && isset($this->correo) && isset($this->contra) && isset($this->rol_id))) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos no se recibieron correctamente"];}
 
         // Validamos que los campos enviados no esten vacios
 
-        if (empty($this->cedula) || empty($this->apellido) || empty($this->nombre) ||empty($this->correo) || empty($this->contra) || empty($this->rol_id)) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos estan vacios"];}
+        if (empty($this->apellido) || empty($this->nombre) ||empty($this->correo) || empty($this->contra) || empty($this->rol_id)) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos estan vacios"];}
 
         // Verificamos si los valores tienen los datos que deberian
         
-        if(!(is_string($this->cedula)) || !(preg_match("/^[VE][0-9\b]*$/",$this->cedula))){
-            return ["estatus"=>false,"mensaje"=>"El campo 'cedula' no posee un valor valido"];
-        }
         if(!(is_string($this->apellido)) || !(preg_match("/^[A-Za-z \b]*$/",$this->apellido))){
             return ["estatus"=>false,"mensaje"=>"El campo 'apellido' no posee un valor valido"];
         }
