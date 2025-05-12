@@ -21,12 +21,12 @@
 
         $resultado = $usuario->validar_usuario();
         if ($resultado) {
-            //var_dump(password_verify($contrasenia, $resultado["contrasenia"]));
-            // if (!password_verify($contrasenia, $resultado["contrasenia"])) {
-            //     $_SESSION["mensaje"] = " Usuario o contraseña invalido";
-            //     header("Location:?pagina=login_controlador.php&accion=inicio");
-            //     exit();
-            // }
+            var_dump(password_verify($contrasenia, $resultado["contrasenia"]));
+            if (!password_verify($contrasenia, $resultado["contrasenia"])) {
+                $_SESSION["mensaje"] = " Usuario o contraseña invalido";
+                header("Location:?pagina=login_controlador.php&accion=inicio");
+                exit();
+            }
 
             session_start();
             $_SESSION["id_usuario"] = $resultado["id_usuario"];

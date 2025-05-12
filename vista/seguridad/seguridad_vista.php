@@ -37,6 +37,7 @@
                     <hr>
 
                     <div class="row">
+                    <?php if (Conexion::tiene_permiso(GESTIONAR_BITACORA, CONSULTAR)) : ?>
                         <div class="col-md-3 col-12">
                             <div class="card mb-3 shadow" title="Gestionar los movimientos de los Usuarios">
                                 <a href="?pagina=bitacora_controlador.php&accion=inicio" class="text-decoration-none text-black">
@@ -49,6 +50,8 @@
                                 </a>
                             </div>
                         </div>
+                    <?php endif; ?>
+                    <?php if (Conexion::tiene_permiso(GESTIONAR_ROLES, CONSULTAR)) : ?>
                         <div class="col-md-3 col-12">
                             <div class="card mb-3 shadow" title="Gestionar los roles y sus accesos en el sistema">
                                 <a href="?pagina=rol_controlador.php&accion=inicio" class="text-decoration-none text-black">
@@ -61,6 +64,7 @@
                                 </a>
                             </div>
                         </div>
+                    <?php endif; ?>
                     </div>
                 </main>
                 <?php
