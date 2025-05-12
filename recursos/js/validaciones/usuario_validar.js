@@ -153,7 +153,6 @@ async function validarEnvio(accion = "Registrar"){
 		datos.append("contra",$("#contra").val());
 		res = await verificar_contra(datos);
 		// revisamos si esta duplicado con otro usuario
-		console.log(res)
 		if(!res){
 			mensajes('error',4000,'Contraseña Icorrecta','La contraseña ingresada no es correcta, para poder realizar cambios debe ingresar la contraseña correcta');
 			return false;

@@ -20,7 +20,7 @@
             $apellido = $_POST["apellido"];
             $nombre = $_POST["nombre"];  
             $correo = $_POST["correo"];  
-            $contra = $_POST["contra"];  
+            $contra = $_POST["contra"]; 
             $rol = $_POST["rol"];              
             // ...
 
