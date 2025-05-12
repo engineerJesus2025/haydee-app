@@ -106,9 +106,7 @@ class Usuario extends Conexion
 
         if ($result == 1) {
             $_SESSION["id_usuario"] = $datos["id_usuario"];
-            
             // $this->registrar_bitacora(INICIAR_SESION, GESTIONAR_USUARIOS);
-            
             return $datos;
         } else {
             return false;

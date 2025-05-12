@@ -77,6 +77,7 @@ class Bitacora extends Conexion
 
     public function consultar()
     {
+        $this->cambiar_db_seguridad();
         $sql = "SELECT bitacora.id_bitacora, bitacora.fecha_hora, bitacora.accion, bitacora.ip,
             bitacora.usuario_id, bitacora.modulo_id, usuarios.id_usuario, usuarios.nombre AS 
             nombre_usuario, usuarios.apellido, modulos.id_modulo,
@@ -87,10 +88,11 @@ class Bitacora extends Conexion
         $result = $conexion->execute();
         $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
 
+        $this->cambiar_db_negocio();
         if ($result == true) {
             return $datos;
         } else {
-            return "";
+            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
         }
     }
 }
