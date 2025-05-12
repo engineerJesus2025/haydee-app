@@ -35,7 +35,7 @@
 		        		<i class="bi bi-person-vcard-fill nav_logo-icon"></i>
 		        		<span class="nav_name">Propietarios</span> 
 		        	</a> 
-		        	<a href="#" class="nav_link"> 
+		        	<a href="?pagina=configuracion_controlador.php&accion=inicio" class="nav_link"> 
 		        		<i class="bi bi-gear-wide-connected nav_logo-icon"></i>
 		        		<span class="nav_name">Configuración</span> 
 		        	</a> 

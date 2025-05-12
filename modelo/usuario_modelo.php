@@ -128,7 +128,7 @@ class Usuario extends Conexion
         if ($result == true) {
             return $datos;
         } else {
-            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un erro con la consulta"];
+            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
         }
     }
 
