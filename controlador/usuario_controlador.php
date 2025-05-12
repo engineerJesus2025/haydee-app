@@ -95,6 +95,16 @@
             $usuario->set_correo($_POST["correo"]);
             echo  json_encode($usuario->verificar_correo());
         }
+        if ($validar == "contra"){
+            $contra = $_POST["contra"];
+
+            $usuario->set_id_usuario($_POST["id_usuario"]);
+
+            $usuario_validar = $usuario->consultar_usuario();
+
+            echo json_encode(password_verify($contra, $usuario_validar["contrasenia"]));
+            // var_dump($usuario_validar);
+        }
         exit;
     }
     //FIN de AJAX

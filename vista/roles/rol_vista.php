@@ -9,14 +9,10 @@
     ?>
 </head>
 <body>
-    <?php if (isset($_SESSION["estado_consulta"])) { ?>
-        <!-- Verificando si se realizao una consulta exitosa -->
-        <p id="ok" hidden=""><?php echo $_SESSION["estado_consulta"]; ?></p>
-    <?php ;} ?>
-
+    <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Rol::tiene_permiso(GESTIONAR_ROLES, ELIMINAR) ?>">
+    <input type="text" hidden="" id="permiso_editar" value="<?php echo Rol::tiene_permiso(GESTIONAR_ROLES, MODIFICAR) ?>">
     <div class="container-fluid">
-        <div class="row flex-nowrap ">
-
+        <div class="row flex-nowrap ">            
             <?php
             require_once "vista/componentes/sesion.php";
             require_once "vista/componentes/header.php";
@@ -40,13 +36,14 @@
                     <p class="lead"></p>
                     <hr>
 
-                    <div class="row mb-3">
-                        <div class="col-12">
+                    <div class="row mb-3 justify-content-center">
+                        <div class="col-9">
                             <div class="card p-4">
+                                <?php if (Rol::tiene_permiso(GESTIONAR_ROLES, REGISTRAR)) : ?>
                                     <div class="button">
-                                        <button type="button" class="btn color-principal" data-bs-toggle="modal" data-bs-target="#registrar_rol">Registrar</a>
+                                        <button type="button" class="btn btn-primary mb-2" data-bs-toggle="modal" data-bs-target="#modal_roles">Registrar</a>
                                     </div><br>
-
+                                <?php endif; ?>
                                 <?php if (isset($_SESSION["mensaje"])) : ?>
                                     <div class="row">
                                         <div class="col-md-12">
@@ -60,10 +57,9 @@
                                     </div>
                                 <?php endif; ?>
 
-                                <table id="rol" class="table" style="width:100%">
+                                <table id="tabla_roles" class="table" style="width:97%">
                                     <thead>
-                                        <tr>
-                                            <th>ID</th>
+                                        <tr>        
                                             <th>ROL</th>
                                             <th>ACCIONES</th>
                                         </tr>
@@ -75,7 +71,7 @@
                                     </tbody>
                                 </table>
 
-                                <div class="modal fade modal-lg" id="modal_rol" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                <div class="modal fade modal-lg" id="modal_roles" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
                                     <div class="modal-dialog modal-dialog-centered">
                                         <div class="modal-content">
                                             <div class="modal-header">
@@ -85,7 +81,7 @@
                                             <div class="modal-body">
 
                                                 <?php
-                                                require_once "vista/roles/rol_registrar_vista.php";
+                                                require_once "vista/roles/rol_modal.php";
                                                 ?>
 
                                             </div>
@@ -105,46 +101,8 @@
         </div>
     </div>
 
-    <script type="text/javascript" src="recursos/js/validar_roles.js"></script>
-
-    <script>
-        $('#rol').DataTable({
-            responsive: true,
-            "scrollX": true,
-            "pageLength": 10,
-            "aaSorting": [],
-            language: {
-                "processing": "Procesando...",
-                "lengthMenu": "Mostrar _MENU_ registros",
-                "zeroRecords": "No se encontraron resultados",
-                "emptyTable": "Ningún dato disponible en esta tabla",
-                "info": "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
-                "infoEmpty": "Mostrando registros del 0 al 0 de un total de 0 registros",
-                "infoFiltered": "(filtrado de un total de _MAX_ registros)",
-                "infoPostFix": "",
-                "search": "Buscar:",
-                "url": "",
-                "infoThousands": ",",
-                "loadingRecords": "Cargando...",
-                "paginate": {
-                    "first": "Primero",
-                    "last": "Último",
-                    "next": "<i class='bi bi-caret-right'></i>",
-                    "previous": "<i class='bi bi-caret-left'></i>"
-                },
-                "aria": {
-                    "sortAscending": ": Activar para ordenar la columna de manera ascendente",
-                    "sortDescending": ": Activar para ordenar la columna de manera descendente"
-                },
-                "buttons": {
-                    "copy": "Copiar",
-                    "colvis": "Visibilidad"
-                }
-            }
-        });
-    </script>
-
-
+    <script type="text/javascript" src="recursos/js/validaciones/roles_validar.js"></script>
+    <script type="text/javascript" src="recursos/js/consultas_ajax/roles_ajax.js"></script>
 </body>
 
 </html>

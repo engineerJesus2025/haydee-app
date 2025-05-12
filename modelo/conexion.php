@@ -93,7 +93,7 @@ class Conexion extends PDO
         }
     }
 
-    public function cambiar_db_negocio()
+    protected function cambiar_db_negocio()
     {
         $conex_string = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8";
 
@@ -106,5 +106,20 @@ class Conexion extends PDO
         } catch (PDOException $e) {
             die("Conexión Fallida" . $e->getMessage());
         }
+    }
+
+    public static function tiene_permiso($modulo,$accion)
+    {
+        $permiso =false;
+
+        foreach($_SESSION["permisos"] AS $permisos){
+
+            if($permisos["id_modulo"] == $modulo && $permisos["nombre_permiso"] == $accion){
+                $permiso = true;
+                break;
+            }
+        }
+
+        return $permiso;
     }
 }

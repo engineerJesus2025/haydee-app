@@ -1,6 +1,6 @@
 <?php
 	require_once "vista/componentes/sesion.php";
-	//require_once "modelo/empleado_modelo.php";
+	require_once "modelo/conexion.php";
 
     if($accion == "inicio"){
   //   	$empleado = new Empleado();

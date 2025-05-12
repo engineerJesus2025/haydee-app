@@ -1,15 +1,15 @@
 consultar(); // para llenar la tabla al cargar
-let data_table, id_eliminado, id_registrado,id_modificar, correo_an;
-// VAriables que usaremos mas tarde
+let data_table, id_eliminado, id_registrado, nombre_an;
+// Variables que usaremos mas tarde
 
 let permiso_eliminar = document.querySelector("#permiso_eliminar").value;
 let permiso_editar = document.querySelector("#permiso_editar").value;
 
-let tabla = document.querySelector("#tabla_usuario"); //La tabla
+let tabla = document.querySelector("#tabla_roles"); //La tabla
 let boton_formulario = document.querySelector("#boton_formulario"); // el boton
-let modal = new bootstrap.Modal("#modal_usuario"); // el modal
-let formulario_usar = document.querySelector(`#form_usuario`); // el form
-
+let modal = new bootstrap.Modal("#modal_roles"); // el modal
+let formulario_usar = document.querySelector(`#form_rol`); // el form
+let input_permisos = document.querySelectorAll("[name='permisos[]']"); 
 //En caso de que se envie un formulario
 function envio(operacion) {	
 	if (operacion == "Editar") {
@@ -18,20 +18,23 @@ function envio(operacion) {
 	}
 	else if(operacion == "Registrar"){
 		//sino a registrar
-		registrar()
+		registrar();
 	}
 }
 
 // Esto es en caso de que uno quite el formulario, le devuelve los valores que tenia
-document.querySelector(`#modal_usuario`).addEventListener("hide.bs.modal",()=>{
+document.querySelector(`#modal_roles`).addEventListener("hide.bs.modal",()=>{
 	formulario_usar.reset();
 	boton_formulario.removeAttribute("modificar");
 	boton_formulario.removeAttribute("id_modificar");	
 	boton_formulario.textContent = "Registrar";
 	document.getElementById('titulo_modal').textContent = "Registrar Usuario";	
-	formulario_usar.querySelectorAll("[class='w-100']").forEach(el=>el.textContent="");	
-	formulario_usar.querySelector("#confir_contra").parentElement.previousElementSibling.textContent = "Confirmar Contraseña" 
-	formulario_usar.querySelector("#confir_contra").placeholder = "Confirmar Contraseña" 
+	formulario_usar.querySelectorAll("[class='w-100']").forEach(el=>el.textContent="");
+	input_permisos.forEach(input=>{
+		input.closest(".accordion-collapse").classList.remove("show");
+		input.closest(".accordion-collapse").previousElementSibling.children[0].classList.add("collapsed");
+		input.closest(".accordion-collapse").previousElementSibling.children[0].setAttribute("aria-expanded",false)		
+	})
 });
 
 //Si queremos registrar:
@@ -40,23 +43,23 @@ async function registrar() {
 	//Creamos el formData
 	datos_consulta = new FormData();
 	//Creamos las variables con los datos de los inputs
-	let nombre = formulario_usar.querySelector("#nombre").value,
-	apellido = formulario_usar.querySelector("#apellido").value,	
-	correo = formulario_usar.querySelector("#correo").value, 
-	contra = formulario_usar.querySelector("#contra").value, 
-	rol = formulario_usar.querySelector("#rol").value,
-	rol_nombre = formulario_usar.querySelector("#rol").selectedOptions[0].textContent;
+	let nombre = formulario_usar.querySelector("#nombre").value;
 
 	// le pasamos los datos por el formData
 	datos_consulta.append("nombre",nombre);
-	datos_consulta.append("apellido",apellido);	
-	datos_consulta.append("correo",correo);
-	datos_consulta.append("contra",contra);
-	datos_consulta.append("rol",rol);
+	
+	let permisos_selecionados = [];
+	input_permisos.forEach(permiso=>{
+		if (permiso.checked) {
+			permisos_selecionados.push(parseInt(permiso.value));
+		}
+	})
+
+	datos_consulta.append("permisos",permisos_selecionados);
 
 	//Aqui decimos que vamos a hacer
 	datos_consulta.append('operacion','registrar');
-	
+
 	//Llamamos a la funcion para hacer la consulta
 	let respuesta = await query(datos_consulta); // El await es para que espere el resultado, al ser asincrono, normalmente no lo esperaria
 	// wait = esperar (english)
@@ -69,7 +72,8 @@ async function registrar() {
 	let acciones = crearBotones(id_registrado.mensaje); //Crea botones
 	
 	// esta variable no hace nada, pero me dio error cuando la quite XD
-	let res_data_table = await data_table.row.add([`${nombre}`,`${apellido}`,`${correo}`,`${rol_nombre}`,`${acciones.outerHTML}`]).draw();
+	let res_data_table = await data_table.row.add([`${nombre}`,`${acciones.outerHTML}`])
+	data_table.draw();
 	// Tiene el await para que lo espere, sino no la pone en la tabla
 
 	consulta_completada();//Mensaje de que se completo la operacion
@@ -97,7 +101,7 @@ async function consultar() {
 
 // Esta funcion hace lo que dice
 function vaciar_tabla() {
-	let cuerpo_tabla = document.querySelector(`#tabla_usuario tbody`);
+	let cuerpo_tabla = document.querySelector(`#tabla_roles tbody`);
 	cuerpo_tabla.textContent = null;
 }
 
@@ -105,33 +109,24 @@ function vaciar_tabla() {
 // esta funcion crea filas para la tabla al momento de consultar
 function llenarTabla(fila) {
 	// seleccionamos el cuerpo de la tabla que vamos a llenar
-	let cuerpo_tabla = document.querySelector(`#tabla_usuario tbody`);
+	let cuerpo_tabla = document.querySelector(`#tabla_roles tbody`);
 
 	// Creamos etiquetas
 	let fila_tabla = document.createElement("tr");//creamos la fila <tr></tr>
 
-	let id_campo = fila["id_usuario"]; // guardamos el id que nos interese
+	let id_campo = fila["id_rol"]; // guardamos el id que nos interese
 	
 	// creamos un td por cada columna que vamos a llenar de la tabla <td></td>
-	let nombre_td = document.createElement("td"),
-	apellido_td = document.createElement("td"),	
-	correo_td = document.createElement("td"), 
-	rol_td = document.createElement("td");
+	let nombre_td = document.createElement("td");	
 
 	// le damos el contenido de la consulta
-	nombre_td.textContent = fila["nombre_usuario"];
-	apellido_td.textContent = fila["apellido"];
-	correo_td.textContent = fila["correo"];
-	rol_td.textContent = fila["nombre_rol"];
+	nombre_td.textContent = fila["nombre"];	
 
 	let acciones = crearBotones(id_campo); 
 	// creamos los botones de eliminar y modificar
 
 	// le ponemos los td a la fila (tr)
-	fila_tabla.appendChild(nombre_td);
-	fila_tabla.appendChild(apellido_td);
-	fila_tabla.appendChild(correo_td);
-	fila_tabla.appendChild(rol_td);
+	fila_tabla.appendChild(nombre_td);	
 	fila_tabla.appendChild(acciones);
 
 	fila_tabla.setAttribute("id",`fila-${id_campo}`);
@@ -145,7 +140,7 @@ function crearBotones(id) {
 	// Creamos los botones de las acciones
 	let td = document.createElement("td");
 	let acciones = document.createElement("div");
-	acciones.setAttribute("class","row justify-content-evenly");
+	acciones.setAttribute("class","row justify-content-start");
 	// le damos la clases de boostrap para que se vea tu sabe'
 
 	// Lo mismo que arriba, pero con modificar
@@ -156,18 +151,18 @@ function crearBotones(id) {
 	boton_editar.appendChild(icono_editar);
 
 	boton_editar.setAttribute("type", "button");
-	boton_editar.setAttribute("class", "btn btn-success btn-sm col-3");
+	boton_editar.setAttribute("class", "btn btn-success btn-sm col-2");
 	boton_editar.setAttribute("tabindex", "-1");
 	boton_editar.setAttribute("role", "button");
 	boton_editar.setAttribute("aria-disabled", "true");
 	boton_editar.setAttribute("data-bs-toggle", "modal");
-	boton_editar.setAttribute("data-bs-target", "#modal_usuario");
+	boton_editar.setAttribute("data-bs-target", "#modal_roles");// OJO (aqui va el id del modal)
 
-	boton_editar.setAttribute("title","Editar");
+	boton_editar.setAttribute("title","Ver mas");
 	boton_editar.setAttribute("value",id);
 	boton_editar.addEventListener("click",modificar_formulario)//Esa funcion esta mas abajo
 
-	//Le ponemos los botones al <td><td> de las acciones
+	//Le ponemos el boton al <td><td> de las acciones
 	acciones.appendChild(boton_editar);
 
 	if (permiso_eliminar) {
@@ -180,7 +175,7 @@ function crearBotones(id) {
 		
 		// le ponemos todos los atributos que lleva este boton
 		boton_eliminar.setAttribute("type", "button");
-		boton_eliminar.setAttribute("class", "btn btn-danger btn-sm eliminar col-3");
+		boton_eliminar.setAttribute("class", "btn btn-danger btn-sm eliminar col-2 mx-2");
 		boton_eliminar.setAttribute("tabindex", "-1"); 
 		boton_eliminar.setAttribute("role", "button");
 		boton_eliminar.setAttribute("aria-disabled", "true");
@@ -189,6 +184,7 @@ function crearBotones(id) {
 		boton_eliminar.setAttribute("title","Eliminar");
 		boton_eliminar.setAttribute("value",id);// el valor del id para eliminar	
 
+		//Le ponemos el boton al <td><td> de las acciones
 		acciones.appendChild(boton_eliminar);
 	}
 
@@ -200,10 +196,10 @@ function crearBotones(id) {
 // si queremos eliminar
 async function eliminar(id) {
 	//Creamos el formData
-	datos_consulta = new FormData()
+	datos_consulta = new FormData();
 
 	// Le ponemos el id al FormData
-	datos_consulta.append("id_usuario",id);
+	datos_consulta.append("id_rol",id);
 
 	//Aqui decimos que vamos a hacer
 	datos_consulta.append('operacion','eliminar');
@@ -224,50 +220,60 @@ async function eliminar(id) {
 async function modificar_formulario(e) {
 	// primero buscamos el registro a modificar
 	//Creamos el formData
-	datos_consulta = new FormData();
-		
+	let datos_consulta = new FormData();
+	
 	let id = e.target.value; // tomamos el id
 	if (id === undefined) {
 		id = e.target.parentElement.value; 
 		//esto es por si seleciona el icono en vez del boton al dar click
 	}
 	// le damos el id
-	datos_consulta.append("id_usuario",id);
+	datos_consulta.append("id_rol",id);
 
 	//Aqui decimos que vamos a hacer
 	datos_consulta.append('operacion','consulta_especifica');
 
 	//Llamamos a la funcion para hacer la consulta y guardamos los datos
-	data = await query(datos_consulta);	
-	
-	// ahora seleccionamos los inputs
-	let nombre = formulario_usar.querySelector("#nombre"),
-	apellido = formulario_usar.querySelector("#apellido"),	
-	correo = formulario_usar.querySelector("#correo"),	
-	rol = formulario_usar.querySelector("#rol");	
+	let data = await query(datos_consulta);
+
+	let nombre = formulario_usar.querySelector("#nombre");
 
 	// le damos valor
-	nombre.value = data.nombre_usuario;
-	apellido.value = data.apellido;	
-	correo.value = data.correo;
-	rol.value = data.rol_id;	
+	nombre.value = data.nombre;
 
+	//Permisos (toco hacer otra query)
+	datos_consulta = new FormData();
+
+	// le damos el id
+	datos_consulta.append("id_rol",id);
+
+	//Aqui decimos que vamos a hacer
+	datos_consulta.append('operacion','consulta_permisos');
+
+	let data_permisos = await query(datos_consulta);	
+	
+	data_permisos.map(permisos=>{
+		input_permisos.forEach(input=>{
+			if (permisos.permiso_usuario_id == input.value) {
+				input.checked = true;
+				input.closest(".accordion-collapse").classList.add("show");
+				input.closest(".accordion-collapse").previousElementSibling.children[0].classList.remove("collapsed");
+				input.closest(".accordion-collapse").previousElementSibling.children[0].setAttribute("aria-expanded",true)
+			}
+		})
+	})
 	// este if revisa si tiene permiso para editar, en caso de que no, quitamos el boton
 	if(!permiso_editar){
 		boton_formulario.setAttribute("hidden",true);
 		boton_formulario.setAttribute("disabled",true);
 	}
-
 	// aqui cambiamos los datos del boton para registrar, para saber que ahora se va es a modificar un registro
 	boton_formulario.setAttribute("modificar",true);
-	boton_formulario.setAttribute("id_modificar",data.id_usuario);
+	boton_formulario.setAttribute("id_modificar",data.id_rol);
 	boton_formulario.textContent = "Modificar";
-	document.getElementById('titulo_modal').textContent = "Modificar Usuario";
-	formulario_usar.querySelector("#confir_contra").parentElement.previousElementSibling.textContent = "Nueva Contraseña" 
-	formulario_usar.querySelector("#confir_contra").placeholder = "Nueva Contraseña" 
-
-	id_modificar = id;
-	correo_an = correo.value;
+	document.getElementById('titulo_modal').textContent = "Modificar Rol";
+	
+	nombre_an = nombre.value; 
 	//guardamos el orginal del correo, para que no choquen con las validaciones
 }
 
@@ -277,25 +283,24 @@ async function modificar(id) {
 	let datos_consulta = new FormData();
 
 	//Guardamos los datos del formulario
-	let nombre = formulario_usar.querySelector("#nombre").value,
-	apellido = formulario_usar.querySelector("#apellido").value,
-	correo = formulario_usar.querySelector("#correo").value, 	
-	nueva_contra = formulario_usar.querySelector("#confir_contra").value,
-	rol = formulario_usar.querySelector("#rol").value,
-	rol_nombre = formulario_usar.querySelector("#rol").selectedOptions[0].textContent;
-
+	let nombre = formulario_usar.querySelector("#nombre").value;	
+	
 	// Le ponemos los datos del formulario
-	datos_consulta.append("id_usuario",id);
-
+	datos_consulta.append("id_rol",id);
 	datos_consulta.append("nombre",nombre);
-	datos_consulta.append("apellido",apellido);	
-	datos_consulta.append("correo",correo);
-	datos_consulta.append("contra",nueva_contra);
-	datos_consulta.append("rol",rol);
-	// ...
+
+	let permisos_selecionados = [];
+	input_permisos.forEach(permiso=>{
+		if (permiso.checked) {
+			permisos_selecionados.push(parseInt(permiso.value));
+		}
+	})
+
+	datos_consulta.append("permisos",permisos_selecionados);
 
 	//Aqui decimos que vamos a hacer
 	datos_consulta.append('operacion','modificar');
+
 
 	//Llamamos a la funcion para hacer la consulta
 	await query(datos_consulta);
@@ -310,21 +315,23 @@ async function modificar(id) {
 	boton_formulario.removeAttribute("id_modificar");	
 	boton_formulario.textContent = "Registrar";
 
-	document.getElementById('titulo_modal').textContent = "Registrar Usuario";
+	document.getElementById('titulo_modal').textContent = "Registrar Rol";
 
 	consulta_completada(); // mensaje de exito
 
 	// esto de abajo es para editar la fila que se modifico en el data table
 	let acciones = crearBotones(id); // creamos otro botones (no se que tan necesario sea esto)
 
-	data_table.row(`#fila-${id}`).data([`${nombre}`,`${apellido}`,`${correo}`,`${rol_nombre}`,`${acciones.outerHTML}`])
+	data_table.row(`#fila-${id}`).data([`${nombre}`,`${acciones.outerHTML}`]);
 	data_table.draw(); // esta funcion refresca la tabla, por si le da sed
 
 	// se le vuelve a poner el evento al boton
 	let fila = document.querySelector(`#fila-${id}`);
 	if (fila) {
 		fila.querySelector(`[value='${id}']`).addEventListener("click",modificar_formulario);
-	}	
+	}else{
+		id_registrado = {estatus:true,mensaje:id}
+	}
 }
 
 // esta funcion obtiene el ultimo id registrado en la base de datos
@@ -360,7 +367,7 @@ function consulta_completada(){
 
 // esta funcion es para incializar el data table
 function init_data_table() {
-	return new DataTable("#tabla_usuario",{
+	return new DataTable("#tabla_roles",{
             destroy: true,
             responsive: true,
             "scrollX": true,
@@ -412,7 +419,7 @@ observer.observe(tabla, {childList:true});
 function reasignarEventos() {
 	console.log("me ejecuto");
 	if (id_eliminado){ //Si hay un eliminado que no se ha quitado de la tabla
-		let existe_fila = tabla.querySelector(`#fila-${id_eliminado}`)
+		let existe_fila = document.querySelector(`#fila-${id_eliminado}`)
 		if (existe_fila) {
 			data_table.row(`#fila-${id_eliminado}`).remove().draw();
 			id_eliminado = null;	
@@ -428,7 +435,7 @@ function reasignarEventos() {
 		}
 		Swal.fire({
 			title: "¿Estás seguro?",
-			text: "¿Está seguro que desea eliminar este usuario?",
+			text: "¿Está seguro que desea eliminar este Rol?",
 			showCancelButton: true,
 			confirmButtonText: "Eliminar",
 			confirmButtonColor: "#e01d22",
@@ -439,10 +446,10 @@ function reasignarEventos() {
 					eliminar(id);				
 				}
 			});
-	});
+	})
 
 	if (id_registrado) { // en caso de que se haya registrado y no se haya añadido a la tabla
-		let boton_modificar = tabla.querySelector(`[value='${id_registrado.mensaje}']`); 
+		let boton_modificar = tabla.querySelector(`[value='${id_registrado.mensaje}']`);
 		// captura el boton de editar, sino lo encuentra es que no esta en su pagina, y no tiene caso ponerle evento
 		if (boton_modificar) {
 			// si lo encuentra le pone el evento de modificar

@@ -38,11 +38,10 @@ class  Ayuda{
 
     public static function dateDiffInDays($date1, $date2) { 
     
-        // Calculating the difference in timestamps 
+        
         $diff = strtotime($date2) - strtotime($date1); 
       
-        // 1 day = 24 hours 
-        // 24 * 60 * 60 = 86400 seconds 
+        
         return abs(round($diff / 86400)); 
     }
 
@@ -77,29 +76,6 @@ class  Ayuda{
                 break;
             }
         }
-
-        
-
-
-        // if(isset($_SESSION['permisos'])){
-        //     for($i=0;$i<count($_SESSION['permisos']);$i++){
-        //            if($_SESSION['permisos'][$i]->id_modulo==$modulo){
-        //                $band=true;
-        //                break;
-        //            }
-
-        //            if($_SESSION['permisos'][$i]->id_modulo==$modulo&&$_SESSION['permisos'][$i]->id_permiso==$permission){
-        //                $band=true;
-        //                break;
-        //            }
-               
-
-        //     }
-
-            // if(!is_null($route)&& !$band){
-            //     header('Location:'.BASE_URL.$nameModule."/index");
-            // }
-        // }
 
         return $band;
     }
