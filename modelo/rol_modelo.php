@@ -40,13 +40,15 @@ class Rol extends Conexion
         $conexion = $this->get_conex()->prepare($sql);
         $result = $conexion->execute();
         
-        // $this->registrar_bitacora(CONSULTAR, GESTIONAR_ROLES);
+        
         
         $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
 
         $this->cambiar_db_negocio();
 
         if ($result == true) {
+            $this->registrar_bitacora(CONSULTAR, GESTIONAR_ROLES, "TODOS LOS ROLES");
+
             return $datos;
         } else {
             return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
@@ -130,11 +132,11 @@ class Rol extends Conexion
 
     public function registrar()
     {
-        $this->cambiar_db_seguridad();
-        
         //Validamos los datos obtenidos del controlador
         $validaciones = $this->validarDatos();
         if(!($validaciones["estatus"])){return $validaciones;}
+
+        $this->cambiar_db_seguridad();
 
         $sql = "INSERT INTO roles(nombre) VALUES (:nombre)";
         $conexion = $this->get_conex()->prepare($sql);
@@ -143,9 +145,8 @@ class Rol extends Conexion
 
         $this->cambiar_db_negocio();
         
-        // $this->registrar_bitacora(REGISTRAR, GESTIONAR_ROLES);
-        
-        if ($result) {
+        if ($result) {            
+            $this->registrar_bitacora(REGISTRAR, GESTIONAR_ROLES, "Rol " . $this->get_nombre());
             return ["estatus"=>true,"mensaje"=>"OK"];
         } else {
             return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar este Rol"];
@@ -154,11 +155,11 @@ class Rol extends Conexion
 
     public function registrar_permisos_roles($rol_id, $permiso_usuario_id)
     {
-        $this->cambiar_db_seguridad();
-        
         //Validamos los datos obtenidos del controlador
         $validaciones = $this->validarRolesPermisos(false,$rol_id, $permiso_usuario_id);
         if(!($validaciones["estatus"])){return $validaciones;}
+
+        $this->cambiar_db_seguridad();
 
         $sql = "INSERT INTO roles_permisos (rol_id, permiso_usuario_id) VALUES
         (:rol_id, :permiso_usuario_id)";
@@ -178,11 +179,11 @@ class Rol extends Conexion
 
     public function editar_rol()
     {
-        $this->cambiar_db_seguridad();
-        
         //Validamos los datos obtenidos del controlador
         $validaciones = $this->validarDatos("editar");
         if(!($validaciones["estatus"])){return $validaciones;}
+
+        $this->cambiar_db_seguridad();
 
         $sql = "UPDATE roles SET nombre = :nombre WHERE id_rol = :id_rol";
         $conexion = $this->get_conex()->prepare($sql);
@@ -190,12 +191,11 @@ class Rol extends Conexion
         $conexion->bindParam(":nombre", $this->nombre);
         $result = $conexion->execute();
 
-        $this->cambiar_db_negocio();
-
-        
-        // $this->registrar_bitacora(MODIFICAR, GESTIONAR_ROLES);
+        $this->cambiar_db_negocio();        
         
         if ($result) {
+            $this->registrar_bitacora(MODIFICAR, GESTIONAR_ROLES, "Rol " . $this->get_nombre());
+
             return ["estatus"=>true,"mensaje"=>"OK"];
         } else {
             return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar este Rol"];
@@ -203,11 +203,11 @@ class Rol extends Conexion
     }
     public function eliminar_rol()
     {
-        $this->cambiar_db_seguridad();
-        
         //Validamos los datos obtenidos del controlador
         $validaciones = $this->validarDatos("eliminar");
         if(!($validaciones["estatus"])){return $validaciones;}
+
+        $this->cambiar_db_seguridad();        
 
         $sql = "DELETE FROM roles WHERE id_rol = :id_rol";
         $conexion = $this->get_conex()->prepare($sql);
@@ -216,10 +216,9 @@ class Rol extends Conexion
 
         $this->cambiar_db_negocio();
 
-        
-        // $this->registrar_bitacora(ELIMINAR, GESTIONAR_ROLES);
-        
         if ($result) {
+            $this->registrar_bitacora(ELIMINAR, GESTIONAR_ROLES, "Rol " . $this->get_nombre());
+
             return ["estatus"=>true,"mensaje"=>"OK"];
         } else {
             return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar eliminar este Rol"];
@@ -249,14 +248,12 @@ class Rol extends Conexion
         }
     }
 
-    
-
     public function eliminar_roles_permisos(){
-        $this->cambiar_db_seguridad();
-        
         //Validamos los datos obtenidos del controlador
         $validaciones = $this->validarRolesPermisos(true,$this->id_rol);
         if(!($validaciones["estatus"])){return $validaciones;}
+
+        $this->cambiar_db_seguridad();
 
         $sql = "DELETE FROM roles_permisos WHERE rol_id = :rol_id";
         $conexion = $this->get_conex()->prepare($sql);
@@ -297,7 +294,7 @@ class Rol extends Conexion
             if (empty($this->id_rol)) {return ["estatus"=>false,"mensaje"=>"El ID del Rol se envio vacio"];}
 
             if(is_numeric($this->id_rol)){
-                if (!($this->validarClaveForanea("roles","id_rol",$this->id_rol))) {
+                if (!($this->validarClaveForanea("roles","id_rol",$this->id_rol,true))) {
                     return ["estatus"=>false,"mensaje"=>"El Rol seleccionado no existe"];
                 }
                 if ($consulta == "eliminar") {return ["estatus"=>true,"mensaje"=>"OK"];}
@@ -329,7 +326,7 @@ class Rol extends Conexion
             if (empty($rol_id)) {return ["estatus"=>false,"mensaje"=>"El ID del Rol para modificar los permisos se envio vacio"];}
 
             if(is_numeric($rol_id)){
-                if (!($this->validarClaveForanea("roles","id_rol",$rol_id))) {
+                if (!($this->validarClaveForanea("roles","id_rol",$rol_id,true))) {
                     return ["estatus"=>false,"mensaje"=>"El Rol seleccionado para modificar permisos no existe"];
                 }
                 if ($eliminar) {return ["estatus"=>true,"mensaje"=>"OK"];}
@@ -346,7 +343,7 @@ class Rol extends Conexion
         // Verificamos si los valores tienen los datos que deberian
         
         if(is_numeric($permiso_usuario_id)){
-            if (!($this->validarClaveForanea("permisos_usuarios","id_permiso_usuario",$permiso_usuario_id))) {
+            if (!($this->validarClaveForanea("permisos_usuarios","id_permiso_usuario",$permiso_usuario_id,true))) {
                 return ["estatus"=>false,"mensaje"=>"El ID de Usuario seleccionado para modificar permisos no existe"];
             }
         }
@@ -357,15 +354,20 @@ class Rol extends Conexion
         return ["estatus"=>true,"mensaje"=>"OK"];
     }
     //esta funcion es para revisar si una clave foranea existe, porque sino dara error la consulta
-    private function validarClaveForanea($tabla,$nombreClave,$valor)
+    private function validarClaveForanea($tabla,$nombreClave,$valor,$seguridad = false)
     {
+        if ($seguridad) {
+            $this->cambiar_db_seguridad();
+        }
         $sql="SELECT * FROM $tabla WHERE $nombreClave =:valor";
 
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":valor", $valor);
         $conexion->execute();
         $result = $conexion->fetch(PDO::FETCH_ASSOC);
-
+        if ($seguridad) {
+            $this->cambiar_db_negocio();
+        }
         return ($result)?true:false;        
     }
 }

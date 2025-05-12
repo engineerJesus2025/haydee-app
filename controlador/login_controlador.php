@@ -32,7 +32,7 @@
                 $_SESSION["permisos"] = $usuario->consultar_permisos_por_usuario($resultado["id_rol"]);
 
                 //$_SESSION["notificaciones"] = $notificaciones->consultar_notificaciones($resultado["id_usuario"]);
-                
+
                 echo json_encode(["estatus"=>true,"mensaje"=>"OK"]);
                 exit();
             }else{
@@ -48,9 +48,12 @@
         session_destroy();
     }
     if ($accion == "cerrar") {
-        session_start();
+        if (!(session_status() == PHP_SESSION_ACTIVE)) {
+              session_start();
+            }
+        
         $usuario = new Usuario();
-        $usuario->registrar_bitacora(CERRAR_SESION,GESTIONAR_USUARIOS);
+        $usuario->registrar_bitacora(CERRAR_SESION,GESTIONAR_USUARIOS,"NINGUNO");
         session_destroy();
         header("Location:?pagina=login_controlador.php&accion=inicio");
     }

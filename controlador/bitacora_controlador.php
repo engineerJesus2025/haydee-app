@@ -1,5 +1,4 @@
 <?php 
-
 require_once "modelo/bitacora_modelo.php";
 
 if($accion == "inicio"){
@@ -7,5 +6,4 @@ if($accion == "inicio"){
     $registros = $bitacora->consultar();
     require_once "vista/bitacora/bitacora_vista.php";
 }
-
 ?>

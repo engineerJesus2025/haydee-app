@@ -6,7 +6,7 @@ class Bitacora extends Conexion
     private $id_bitacora;
     private $fecha_hora;
     private $accion;
-    private $ip;
+    private $registro_alterado;
     private $usuario_id;
     private $modulo_id;
 
@@ -45,14 +45,14 @@ class Bitacora extends Conexion
         return $this->accion;
     }
 
-    public function set_ip($ip)
+    public function set_registro_alterado($registro_alterado)
     {
-        $this->ip = $ip;
+        $this->registro_alterado = $registro_alterado;
     }
 
-    public function get_ip()
+    public function get_registro_alterado()
     {
-        return $this->ip;
+        return $this->registro_alterado;
     }
 
     public function set_usuario_id($usuario_id)
@@ -78,12 +78,7 @@ class Bitacora extends Conexion
     public function consultar()
     {
         $this->cambiar_db_seguridad();
-        $sql = "SELECT bitacora.id_bitacora, bitacora.fecha_hora, bitacora.accion, bitacora.ip,
-            bitacora.usuario_id, bitacora.modulo_id, usuarios.id_usuario, usuarios.nombre AS 
-            nombre_usuario, usuarios.apellido, modulos.id_modulo,
-            modulos.nombre AS nombre_modulo FROM bitacora INNER JOIN usuarios ON 
-            usuarios.id_usuario = bitacora.usuario_id INNER JOIN
-            modulos ON modulos.id_modulo = bitacora.modulo_id ORDER BY id_bitacora DESC";
+        $sql = "SELECT bitacora.id_bitacora, bitacora.fecha_hora, bitacora.accion, bitacora.registro_alterado, bitacora.usuario_id, bitacora.modulo_id, usuarios.id_usuario, usuarios.nombre AS nombre_usuario, usuarios.apellido, modulos.id_modulo, modulos.nombre AS nombre_modulo, roles.nombre as nombre_rol FROM bitacora INNER JOIN usuarios ON usuarios.id_usuario = bitacora.usuario_id INNER JOIN modulos ON modulos.id_modulo = bitacora.modulo_id INNER JOIN roles ON roles.id_rol = usuarios.id_usuario ORDER BY id_bitacora DESC; ";
         $conexion = $this->get_conex()->prepare($sql);
         $result = $conexion->execute();
         $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);

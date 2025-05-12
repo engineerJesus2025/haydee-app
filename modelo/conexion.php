@@ -28,20 +28,20 @@ class Conexion extends PDO
         return $this->conex;
     }
 
-    public function registrar_bitacora($accion, $modulo_id){
+    public function registrar_bitacora($accion, $modulo_id, $registro_alt){
         $this->cambiar_db_seguridad();
 
-        $sql = "INSERT INTO bitacora(fecha_hora, accion, usuario_id, modulo_id)
-        VALUES (:fecha_hora, :accion, :usuario_id, :modulo_id)";
+        $sql = "INSERT INTO bitacora(fecha_hora, accion, registro_alterado, usuario_id, modulo_id)
+        VALUES (:fecha_hora, :accion, :registro_alterado, :usuario_id, :modulo_id)";
         $conexion = $this->get_conex()->prepare($sql);
         date_default_timezone_set('America/Caracas');
         $timestamp = time();
-        $fecha = date("Y-m-d H:i:s", $timestamp); 
-        $ip = $this->get_direccion_ip() || "N/A";
+        $fecha = date("Y-m-d H:i:s", $timestamp);         
         $usuario = $_SESSION["id_usuario"];
 
         $conexion->bindParam(":fecha_hora",$fecha);
-        $conexion->bindParam(":accion", $accion);        
+        $conexion->bindParam(":accion", $accion);
+        $conexion->bindParam(":registro_alterado", $registro_alt);
         $conexion->bindParam(":usuario_id", $usuario);
         $conexion->bindParam(":modulo_id", $modulo_id);
         $result = $conexion->execute();
@@ -49,33 +49,6 @@ class Conexion extends PDO
         $this->cambiar_db_negocio();
 
         return $result;
-    }
-
-    public function get_direccion_ip() {
-
-        if (isset($_SERVER["HTTP_CLIENT_IP"])){
-
-            return $_SERVER["HTTP_CLIENT_IP"];
-
-        }elseif (isset($_SERVER["HTTP_X_FORWARDED_FOR"])){
-
-            return $_SERVER["HTTP_X_FORWARDED_FOR"];
-
-        }elseif (isset($_SERVER["HTTP_X_FORWARDED"])){
-
-            return $_SERVER["HTTP_X_FORWARDED"];
-
-        }elseif (isset($_SERVER["HTTP_FORWARDED_FOR"])){
-
-            return $_SERVER["HTTP_FORWARDED_FOR"];
-
-        }elseif (isset($_SERVER["HTTP_FORWARDED"])){
-
-            return $_SERVER["HTTP_FORWARDED"];
-
-        }else{
-            return $_SERVER["REMOTE_ADDR"];
-        }
     }
 
     protected function cambiar_db_seguridad()
