@@ -33,6 +33,13 @@ $(document).ready(function(){
         $(this),this.nextElementSibling,'La contraseña debe tener mínimo 5 caracteres'
         )
 	});
+
+	$("#confir_contra").on("keyup",function(e){
+		validarKeyUp(
+        /^[A-Za-z0-9_.+*$#%&@]{5,50}$/,
+        $(this),this.nextElementSibling,'La contraseña debe tener mínimo 5 caracteres'
+        )
+	});
 	
 	$("#boton_formulario").on("click",async function(e){
 		let accion = (e.target.getAttribute("modificar"))?"Editar":"Registrar";		
@@ -58,8 +65,9 @@ $(document).ready(function(){
 	$("#correo").on("keyup",function(e){
 		if (validarKeyUp(
         /^[-A-Za-z0-9_.]{3,35}[@][A-Za-z0-9]{3,10}[.][A-Za-z]{2,3}$/,
-        $("#correo"),document.querySelector("#correo").nextElementSibling,''
+        $("#correo"),document.querySelector("#correo").nextElementSibling,'El formato debe ser ejemplo@gmail.com'
         )) {
+        	if (this.value == correo_an) {return;}
 			let datos = new FormData();
 			datos.append('validar','correo');
 			datos.append('correo',$(this).val());
@@ -81,7 +89,7 @@ function mensajes(icono,tiempo,titulo,mensaje){
 	});
 }
 
-async function validarEnvio(){	
+async function validarEnvio(accion = "Registrar"){	
 	if(validarKeyUp(
         /^[A-Za-z ]{3,30}$/,
         $("#nombre"),document.querySelector("#nombre").nextElementSibling,'Debe ingresar el nombre del usuario'
@@ -123,20 +131,34 @@ async function validarEnvio(){
 		
 		return false;
 	}
-	else if(validar_contra()==0)
-	{
-		mensajes('error',4000,'Verifique nuevamente la contraseña',
-		'El campo "contraseña" y el campo "confirmar contraseña" no coinciden');
-		
-		return false;
-	}
 	else if(validar_select("rol")==0)
 	{
 		mensajes('error',4000,'Debe ingresar el rol',
 		'Debe seleccionar una opción');
 		
 		return false;
-	}	
+	}
+	if (accion == "Registrar") {
+		if(validar_contra()==0)
+		{
+			mensajes('error',4000,'Verifique nuevamente la contraseña',
+			'El campo "contraseña" y el campo "confirmar contraseña" no coinciden');
+			
+			return false;
+		}
+	}else if (accion == "Editar"){
+		datos = new FormData();
+		datos.append("validar",'contra');
+		datos.append("id_usuario",id_modificar);
+		datos.append("contra",$("#contra").val());
+		res = await verificar_contra(datos);
+		// revisamos si esta duplicado con otro usuario
+		console.log(res)
+		if(!res){
+			mensajes('error',4000,'Contraseña Icorrecta','La contraseña ingresada no es correcta, para poder realizar cambios debe ingresar la contraseña correcta');
+			return false;
+		}
+	}
 	// si el valor de correo no es el mismo de antes:
 	if(correo_an != $("#correo").val()){
 		datos = new FormData(); 
@@ -149,7 +171,7 @@ async function validarEnvio(){
 			return false;
 		}
 	}
-
+	
 	return true;
 }
 
@@ -165,7 +187,9 @@ function validarKeyPress(er, e) {
 function validarKeyUp(er,etiqueta,etiquetamensaje,
 mensaje){
 	a = er.test(etiqueta.val());
+
 	if(a){
+
 		etiquetamensaje.textContent = "";
 		return 1;
 	}
@@ -193,18 +217,27 @@ function validar_contra() {
 		return 0;
 	}
 }
-// AJAX
-async function verificar_duplicados(datos,accion = "registrar"){
+
+async function verificar_duplicados(datos){
 	// Solo es un fetching de datos, en body mandamos los datos
 	// Estos datos se mandan al controdalor	
 	let data = await fetch("",{method:"POST", body:datos}).then(res=>{		
 		let result = res.json()
 		return result;//Convertimos el resultado de json a js y lo mandamos
 	})
-	// console.log(data)
+	// aqui revisamos el estatus, si es true es porque esta duplicado y mandamos un mensaje	
 	if(data.estatus){
-		document.querySelector(`#${data.busqueda}`).nextElementSibling.textContent = `${data.busqueda} ya registrada`
+		document.querySelector(`#${data.busqueda}`).nextElementSibling.textContent = `${data.busqueda} ya registrado/a`
 		return true;
 	}
 	return false;
+}
+
+async function verificar_contra(datos){
+	let data = await fetch("",{method:"POST", body:datos}).then(res=>{		
+		let result = res.json()
+		return result;//Convertimos el resultado de json a js y lo mandamos
+	})
+	// aqui revisamos el estatus, si es true es porque es correcta la contraseña		
+	return data;
 }

@@ -32,16 +32,16 @@ class Rol extends Conexion
         return $this->nombre;
     }
 
-    public function consultar($prueba = false)
+    public function consultar()
     {
         $this->cambiar_db_seguridad();
         
         $sql = "SELECT * FROM roles";
         $conexion = $this->get_conex()->prepare($sql);
         $result = $conexion->execute();
-        // if (!$prueba) {
-        //     $this->registrar_bitacora(CONSULTAR, GESTIONAR_ROLES);
-        // }
+        
+        // $this->registrar_bitacora(CONSULTAR, GESTIONAR_ROLES);
+        
         $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
 
         $this->cambiar_db_negocio();
@@ -49,90 +49,47 @@ class Rol extends Conexion
         if ($result == true) {
             return $datos;
         } else {
-            return "";
+            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
         }
     }
 
-    public function registrar($prueba = false)
+    public function consultar_rol()
     {
         $this->cambiar_db_seguridad();
-        
-        //Validamos los datos obtenidos del controlador
-        $validaciones = $this->validarDatos();
-        if(!($validaciones["estatus"])){return $validaciones;}
 
-        $sql = "INSERT INTO roles(nombre) VALUES (:nombre)";
+        $sql = "SELECT id_rol, nombre FROM roles WHERE id_rol = :rol";
+
         $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":nombre", $this->nombre);
-        $result = $conexion->execute();
 
-        $this->cambiar_db_negocio();
-        if (!$prueba) {
-            $this->registrar_bitacora(REGISTRAR, GESTIONAR_ROLES);
-        }
+        $conexion->bindParam(":rol", $this->id_rol);
 
-        return ["estatus"=>true,"mensaje"=>"OK"];
-    }
-
-    public function editar_rol($prueba = false)
-    {
-        $this->cambiar_db_seguridad();
+        $result = $conexion->execute();        
         
-        //Validamos los datos obtenidos del controlador
-        $validaciones = $this->validarDatos("editar");
-        if(!($validaciones["estatus"])){return $validaciones;}
-
-        $sql = "UPDATE roles SET nombre = :nombre WHERE id_rol = :id_rol";
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":id_rol", $this->id_rol);
-        $conexion->bindParam(":nombre", $this->nombre);
-        $result = $conexion->execute();
-
-        $this->cambiar_db_negocio();
-
-        if (!$prueba) {
-            $this->registrar_bitacora(MODIFICAR, GESTIONAR_ROLES);
-        }
-        return ["estatus"=>true,"mensaje"=>"OK"];
-    }
-    public function eliminar_rol($prueba = false)
-    {
-        $this->cambiar_db_seguridad();
-        
-        //Validamos los datos obtenidos del controlador
-        $validaciones = $this->validarDatos("eliminar");
-        if(!($validaciones["estatus"])){return $validaciones;}
-
-        $sql = "DELETE FROM roles WHERE id_rol = :id_rol";
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":id_rol", $this->id_rol);
-        $result = $conexion->execute();
-
-        $this->cambiar_db_negocio();
-
-        if (!$prueba) {
-            $this->registrar_bitacora(ELIMINAR, GESTIONAR_ROLES);
-        }
-        return ["estatus"=>true,"mensaje"=>"OK"];
-    }
-
-    public function verificar_nombre()
-    {
-        $this->cambiar_db_seguridad();
-        
-        $sql = "SELECT * FROM roles WHERE nombre = :nombre";
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":nombre", $this->nombre);
-        $result = $conexion->execute();
         $datos = $conexion->fetch(PDO::FETCH_ASSOC);
 
-
         $this->cambiar_db_negocio();
 
-        if (isset($datos["nombre"])) {
-            return true;
+        if ($result == true) {
+            return $datos;
         } else {
-            return false;
+            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+        }
+    }
+
+    public function consultar_permisos_usuarios()
+    {
+        $this->cambiar_db_seguridad();
+        
+        $sql = "SELECT * FROM permisos_usuarios";
+        $conexion = $this->get_conex()->prepare($sql);
+        $result = $conexion->execute();
+        $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
+
+        $this->cambiar_db_negocio();
+        if ($result) {
+            return $datos;
+        } else {
+            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
         }
     }
 
@@ -149,24 +106,49 @@ class Rol extends Conexion
         if ($result == true) {
             return $datos;
         } else {
-            return "";
+            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
         }
     }
 
-    public function consultar_permisos_usuarios()
-    {
+    public function consultar_roles_permisos(){
         $this->cambiar_db_seguridad();
         
-        $sql = "SELECT * FROM permisos_usuarios";
+        $sql = "SELECT * FROM roles_permisos WHERE rol_id = :rol";
         $conexion = $this->get_conex()->prepare($sql);
+        $conexion->bindParam(":rol", $this->id_rol);
         $result = $conexion->execute();
         $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
 
         $this->cambiar_db_negocio();
+
         if ($result == true) {
             return $datos;
         } else {
-            return "";
+            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+        }
+    }
+
+    public function registrar()
+    {
+        $this->cambiar_db_seguridad();
+        
+        //Validamos los datos obtenidos del controlador
+        $validaciones = $this->validarDatos();
+        if(!($validaciones["estatus"])){return $validaciones;}
+
+        $sql = "INSERT INTO roles(nombre) VALUES (:nombre)";
+        $conexion = $this->get_conex()->prepare($sql);
+        $conexion->bindParam(":nombre", $this->nombre);
+        $result = $conexion->execute();
+
+        $this->cambiar_db_negocio();
+        
+        // $this->registrar_bitacora(REGISTRAR, GESTIONAR_ROLES);
+        
+        if ($result) {
+            return ["estatus"=>true,"mensaje"=>"OK"];
+        } else {
+            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar este Rol"];
         }
     }
 
@@ -187,59 +169,123 @@ class Rol extends Conexion
 
         $this->cambiar_db_negocio();
 
-        return ["estatus"=>true,"mensaje"=>"OK"];
-    }
-
-    public function consultar_roles_permisos(){
-        $this->cambiar_db_seguridad();
-        
-        $sql = "SELECT * FROM roles_permisos";
-        $conexion = $this->get_conex()->prepare($sql);
-        $result = $conexion->execute();
-        $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
-
-        $this->cambiar_db_negocio();
-
-        if ($result == true) {
-            return $datos;
+        if ($result) {
+            return ["estatus"=>true,"mensaje"=>"OK"];
         } else {
-            return "";
+            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar este permiso de Rol"];
         }
     }
 
-    public function eliminar_roles_permisos($rol_id){
+    public function editar_rol()
+    {
         $this->cambiar_db_seguridad();
         
         //Validamos los datos obtenidos del controlador
-        $validaciones = $this->validarRolesPermisos(true,$rol_id);
+        $validaciones = $this->validarDatos("editar");
         if(!($validaciones["estatus"])){return $validaciones;}
 
-        $sql = "DELETE FROM roles_permisos WHERE rol_id = :rol_id";
+        $sql = "UPDATE roles SET nombre = :nombre WHERE id_rol = :id_rol";
         $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":rol_id", $rol_id);
+        $conexion->bindParam(":id_rol", $this->id_rol);
+        $conexion->bindParam(":nombre", $this->nombre);
         $result = $conexion->execute();
 
         $this->cambiar_db_negocio();
 
-        return ["estatus"=>true,"mensaje"=>"OK"];
+        
+        // $this->registrar_bitacora(MODIFICAR, GESTIONAR_ROLES);
+        
+        if ($result) {
+            return ["estatus"=>true,"mensaje"=>"OK"];
+        } else {
+            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar este Rol"];
+        }
     }
-
-    public function get_tabla_id()
+    public function eliminar_rol()
     {
         $this->cambiar_db_seguridad();
+        
+        //Validamos los datos obtenidos del controlador
+        $validaciones = $this->validarDatos("eliminar");
+        if(!($validaciones["estatus"])){return $validaciones;}
 
-        $sql = "SELECT MAX(id_rol) as last_id FROM roles";
+        $sql = "DELETE FROM roles WHERE id_rol = :id_rol";
         $conexion = $this->get_conex()->prepare($sql);
+        $conexion->bindParam(":id_rol", $this->id_rol);
+        $result = $conexion->execute();
+
+        $this->cambiar_db_negocio();
+
+        
+        // $this->registrar_bitacora(ELIMINAR, GESTIONAR_ROLES);
+        
+        if ($result) {
+            return ["estatus"=>true,"mensaje"=>"OK"];
+        } else {
+            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar eliminar este Rol"];
+        }
+    }
+
+    public function verificar_nombre()
+    {
+        $this->cambiar_db_seguridad();
+        
+        $sql = "SELECT * FROM roles WHERE nombre = :nombre";
+        $conexion = $this->get_conex()->prepare($sql);
+        $conexion->bindParam(":nombre", $this->nombre);
         $result = $conexion->execute();
         $datos = $conexion->fetch(PDO::FETCH_ASSOC);
 
         $this->cambiar_db_negocio();
 
-        if ($result == true) {
-            return $datos;
+        if (isset($datos["nombre"])) {
+            $r["estatus"] = true;
+            $r["busqueda"] = "nombre";
+            return $r;
         } else {
-            return "";
+            $r["estatus"] = false;
+            $r["busqueda"] = "nombre";
+            return $r;
         }
+    }
+
+    
+
+    public function eliminar_roles_permisos(){
+        $this->cambiar_db_seguridad();
+        
+        //Validamos los datos obtenidos del controlador
+        $validaciones = $this->validarRolesPermisos(true,$this->id_rol);
+        if(!($validaciones["estatus"])){return $validaciones;}
+
+        $sql = "DELETE FROM roles_permisos WHERE rol_id = :rol_id";
+        $conexion = $this->get_conex()->prepare($sql);
+        $conexion->bindParam(":rol_id", $this->id_rol);
+        $result = $conexion->execute();
+
+        $this->cambiar_db_negocio();
+
+        if ($result) {
+            return ["estatus"=>true,"mensaje"=>"OK"];
+        } else {
+            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar eliminar este permiso de Rol"];
+        }
+    }
+
+    public function lastId()
+    {
+        $this->cambiar_db_seguridad();
+        $sql = "SELECT MAX(id_rol) as last_id FROM roles";
+        $conexion = $this->get_conex()->prepare($sql);
+        $result = $conexion->execute();
+        $datos = $conexion->fetch(PDO::FETCH_ASSOC);
+        $this->cambiar_db_negocio();
+
+        if ($result) {
+            return ["estatus"=>true,"mensaje"=>$datos["last_id"]];
+        } else {
+            return ["estatus"=>false,"mensaje"=>"Error en la consulta"];
+        } 
     }
 
     private function validarDatos($consulta = "registrar")
@@ -300,7 +346,7 @@ class Rol extends Conexion
         // Verificamos si los valores tienen los datos que deberian
         
         if(is_numeric($permiso_usuario_id)){
-            if (!($this->validarClaveForanea("permisos_usuarios","id_permisos_usuarios",$permiso_usuario_id))) {
+            if (!($this->validarClaveForanea("permisos_usuarios","id_permiso_usuario",$permiso_usuario_id))) {
                 return ["estatus"=>false,"mensaje"=>"El ID de Usuario seleccionado para modificar permisos no existe"];
             }
         }

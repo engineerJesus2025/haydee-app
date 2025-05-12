@@ -87,6 +87,34 @@ class Usuario extends Conexion
         return $this->rol_id;
     }
 
+    public function validar_usuario()
+    {
+        $this->cambiar_db_seguridad();
+
+
+        $sql = "SELECT usuarios.id_usuario,usuarios.correo as correo, usuarios.nombre as nombre_usuario, roles.id_rol, roles.nombre as nombre_rol, usuarios.contrasenia FROM usuarios INNER JOIN roles ON usuarios.rol_id=roles.id_rol WHERE correo = :correo";
+        $conexion = $this->get_conex()->prepare($sql);
+
+        $conexion->bindParam(":correo", $this->correo);
+        // $conexion->bindParam(":contra", $this->contra);
+
+        $conexion->execute();
+        $datos = $conexion->fetch(PDO::FETCH_ASSOC);
+        $result = $conexion->rowCount();
+
+        $this->cambiar_db_negocio();
+
+        if ($result == 1) {
+            $_SESSION["id_usuario"] = $datos["id_usuario"];
+            
+            // $this->registrar_bitacora(INICIAR_SESION, GESTIONAR_USUARIOS);
+            
+            return $datos;
+        } else {
+            return false;
+        }
+    }
+
     public function verificar_correo()
     {
         $this->cambiar_db_seguridad();
@@ -110,6 +138,29 @@ class Usuario extends Conexion
         }
     }
 
+    public function verificar_contra()
+    {
+        $this->cambiar_db_seguridad();
+
+        $sql = "SELECT * FROM usuarios WHERE contrasenia = :contra";
+        $conexion = $this->get_conex()->prepare($sql);
+        $conexion->bindParam(":contra", $this->contra);
+        $result = $conexion->execute();
+        $datos = $conexion->fetch(PDO::FETCH_ASSOC);
+
+        $this->cambiar_db_negocio();
+
+        if (isset($datos["contra"])) {
+            $r["estatus"] = true;
+            $r["busqueda"] = "contra";
+            return $r;
+        } else {
+            $r["estatus"] = false;
+            $r["busqueda"] = "contra";
+            return $r;
+        }
+    }
+
     public function consultar()
     {
         $this->cambiar_db_seguridad();
@@ -125,14 +176,14 @@ class Usuario extends Conexion
 
         $this->cambiar_db_negocio();
 
-        if ($result == true) {
+        if ($result == true) {            
             return $datos;
         } else {
             return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
         }
     }
 
-    public function consultar_usuario($prueba = false)
+    public function consultar_usuario()
     {
         $this->cambiar_db_seguridad();
 
@@ -142,10 +193,8 @@ class Usuario extends Conexion
 
         $conexion->bindParam(":usuario", $this->id_usuario);
 
-        $result = $conexion->execute();
-        if ($prueba) {
-            $this->registrar_bitacora(CONSULTAR, GESTIONAR_USUARIOS);
-        }
+        $result = $conexion->execute();        
+        
         $datos = $conexion->fetch(PDO::FETCH_ASSOC);
 
         $this->cambiar_db_negocio();
@@ -175,7 +224,7 @@ class Usuario extends Conexion
             return ["resultado"=>false];
         }
     }
-    public function registrar($prueba = false)
+    public function registrar()
     {
         $this->cambiar_db_seguridad();
 
@@ -185,8 +234,7 @@ class Usuario extends Conexion
 
         $sql = "INSERT INTO usuarios(apellido,nombre,correo,contrasenia,rol_id) VALUES (:apellido,:nombre,:correo,:contrasenia,:rol)";
 
-        //$contra_hash = password_hash($this->contra, PASSWORD_DEFAULT);
-        $contra_hash = $this->contra;
+        $contra_hash = password_hash($this->contra, PASSWORD_DEFAULT);        
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":apellido", $this->apellido);
         $conexion->bindParam(":nombre", $this->nombre);
@@ -197,13 +245,16 @@ class Usuario extends Conexion
 
         $this->cambiar_db_negocio();
 
-        if (!$prueba) {
-        $this->registrar_bitacora(REGISTRAR, GESTIONAR_USUARIOS);
-        }
-        return ["estatus"=>true,"mensaje"=>"OK"];
+        // $this->registrar_bitacora(REGISTRAR, GESTIONAR_USUARIOS);
+
+        if ($result) {
+            return ["estatus"=>true,"mensaje"=>"OK"];
+        } else {
+            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar este usuario"];
+        }        
     }
 
-    public function editar_usuario($prueba = false)
+    public function editar_usuario()
     {
         $this->cambiar_db_seguridad();
 
@@ -228,13 +279,17 @@ class Usuario extends Conexion
 
         $this->cambiar_db_negocio();
 
-        if (!$prueba) {
-            $this->registrar_bitacora(MODIFICAR, GESTIONAR_USUARIOS);
+        
+        // $this->registrar_bitacora(MODIFICAR, GESTIONAR_USUARIOS);
+        
+        if ($result) {
+            return ["estatus"=>true,"mensaje"=>"OK"];
+        } else {
+            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar editar este usuario"];
         }
-        return ["estatus"=>true,"mensaje"=>"OK"];
     }
 
-    public function eliminar_usuario($prueba = false)
+    public function eliminar_usuario()
     {
         $this->cambiar_db_seguridad();
 
@@ -250,41 +305,16 @@ class Usuario extends Conexion
 
         $this->cambiar_db_negocio();
 
-        if (!$prueba) {
-            $this->registrar_bitacora(ELIMINAR, GESTIONAR_USUARIOS);
-        }
-        return ["estatus"=>true,"mensaje"=>"OK"];
-    }
-
-    public function validar_usuario($prueba = false)
-    {
-        $this->cambiar_db_seguridad();
-
-
-        $sql = "SELECT usuarios.id_usuario,usuarios.correo as correo, usuarios.nombre as nombre_usuario, roles.id_rol, roles.nombre as nombre_rol, usuarios.contrasenia FROM usuarios INNER JOIN roles ON usuarios.rol_id=roles.id_rol WHERE correo = :correo";
-        $conexion = $this->get_conex()->prepare($sql);
-
-
-
-        $conexion->bindParam(":correo", $this->correo);
-        // $conexion->bindParam(":contra", $this->contra);
-
-        $conexion->execute();
-        $datos = $conexion->fetch(PDO::FETCH_ASSOC);
-        $result = $conexion->rowCount();
-
-        $this->cambiar_db_negocio();
-
-        if ($result == 1) {
-            $_SESSION["id_usuario"] = $datos["id_usuario"];
-            if ($prueba) {
-                $this->registrar_bitacora(INICIAR_SESION, GESTIONAR_USUARIOS);
-            }
-            return $datos;
+        
+        // $this->registrar_bitacora(ELIMINAR, GESTIONAR_USUARIOS);
+        
+        if ($result) {
+            return ["estatus"=>true,"mensaje"=>"OK"];
         } else {
-            return false;
+            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar eliminar este usuario"];
         }
     }
+
 
     public function consultar_permisos_por_usuario($rol_permiso)
     {
@@ -321,8 +351,7 @@ class Usuario extends Conexion
             return ["estatus"=>true,"mensaje"=>$datos["last_id"]];
         } else {
             return ["estatus"=>false,"mensaje"=>"Error en la consulta"];
-        }
-        
+        } 
     }
 
     private function validarDatos($consulta = "registrar")
@@ -386,7 +415,7 @@ class Usuario extends Conexion
         $conexion->execute();
         $result = $conexion->fetch(PDO::FETCH_ASSOC);
 
-        return ($result)?true:false;        
+        return ($result)?true:false;
     }
-
 }
+?>
