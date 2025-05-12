@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 12-05-2025 a las 04:15:37
+-- Tiempo de generación: 12-05-2025 a las 22:03:05
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -107,7 +107,7 @@ CREATE TABLE `gastos` (
   `monto` float NOT NULL,
   `tipo_gasto` varchar(50) NOT NULL,
   `tasa_dolar` float NOT NULL,
-  `mensualidad_id` int(11) NOT NULL,
+  `gasto_mes_id` int(11) NOT NULL,
   `metodo_pago` varchar(20) NOT NULL,
   `banco_id` int(11) DEFAULT NULL,
   `referencia` varchar(50) DEFAULT NULL,
@@ -115,6 +115,18 @@ CREATE TABLE `gastos` (
   `caja_id` int(11) DEFAULT NULL,
   `proveedor_id` int(11) NOT NULL,
   `descripcion_gasto` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `gastos_mes`
+--
+
+CREATE TABLE `gastos_mes` (
+  `id_gasto_mes` int(11) NOT NULL,
+  `mes` varchar(2) NOT NULL,
+  `anio` varchar(4) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -146,7 +158,8 @@ CREATE TABLE `mensualidad` (
   `tasa_dolar` float NOT NULL,
   `mes` varchar(2) NOT NULL,
   `anio` varchar(4) NOT NULL,
-  `apartamento_id` int(11) NOT NULL
+  `apartamento_id` int(11) NOT NULL,
+  `gasto_mes_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -268,7 +281,13 @@ ALTER TABLE `gastos`
   ADD KEY `caja_id` (`caja_id`),
   ADD KEY `proveedor_id` (`proveedor_id`),
   ADD KEY `banco_id` (`banco_id`),
-  ADD KEY `gastos_ibfk_3` (`mensualidad_id`);
+  ADD KEY `gastos_ibfk_3` (`gasto_mes_id`);
+
+--
+-- Indices de la tabla `gastos_mes`
+--
+ALTER TABLE `gastos_mes`
+  ADD PRIMARY KEY (`id_gasto_mes`);
 
 --
 -- Indices de la tabla `habitantes`
@@ -283,7 +302,8 @@ ALTER TABLE `habitantes`
 --
 ALTER TABLE `mensualidad`
   ADD PRIMARY KEY (`id_mensualidad`),
-  ADD KEY `apartamento_id` (`apartamento_id`);
+  ADD KEY `apartamento_id` (`apartamento_id`),
+  ADD KEY `gasto_mes_id` (`gasto_mes_id`);
 
 --
 -- Indices de la tabla `movimientos_bancarios`
@@ -358,6 +378,12 @@ ALTER TABLE `gastos`
   MODIFY `id_gasto` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de la tabla `gastos_mes`
+--
+ALTER TABLE `gastos_mes`
+  MODIFY `id_gasto_mes` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de la tabla `habitantes`
 --
 ALTER TABLE `habitantes`
@@ -413,30 +439,31 @@ ALTER TABLE `apartamentos`
 -- Filtros para la tabla `gastos`
 --
 ALTER TABLE `gastos`
-  ADD CONSTRAINT `gastos_ibfk_1` FOREIGN KEY (`caja_id`) REFERENCES `caja_chica` (`id_caja`),
-  ADD CONSTRAINT `gastos_ibfk_2` FOREIGN KEY (`proveedor_id`) REFERENCES `proveedores` (`id_proveedor`),
-  ADD CONSTRAINT `gastos_ibfk_3` FOREIGN KEY (`mensualidad_id`) REFERENCES `mensualidad` (`id_mensualidad`),
-  ADD CONSTRAINT `gastos_ibfk_4` FOREIGN KEY (`banco_id`) REFERENCES `bancos` (`id_banco`);
+  ADD CONSTRAINT `gastos_ibfk_1` FOREIGN KEY (`caja_id`) REFERENCES `caja_chica` (`id_caja`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `gastos_ibfk_2` FOREIGN KEY (`proveedor_id`) REFERENCES `proveedores` (`id_proveedor`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `gastos_ibfk_3` FOREIGN KEY (`gasto_mes_id`) REFERENCES `gastos_mes` (`id_gasto_mes`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `gastos_ibfk_4` FOREIGN KEY (`banco_id`) REFERENCES `bancos` (`id_banco`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `habitantes`
 --
 ALTER TABLE `habitantes`
-  ADD CONSTRAINT `habitantes_ibfk_1` FOREIGN KEY (`apartamento_id`) REFERENCES `apartamentos` (`id_apartamento`);
+  ADD CONSTRAINT `habitantes_ibfk_1` FOREIGN KEY (`apartamento_id`) REFERENCES `apartamentos` (`id_apartamento`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `mensualidad`
 --
 ALTER TABLE `mensualidad`
-  ADD CONSTRAINT `mensualidad_ibfk_1` FOREIGN KEY (`apartamento_id`) REFERENCES `apartamentos` (`id_apartamento`);
+  ADD CONSTRAINT `mensualidad_ibfk_1` FOREIGN KEY (`apartamento_id`) REFERENCES `apartamentos` (`id_apartamento`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `mensualidad_ibfk_2` FOREIGN KEY (`gasto_mes_id`) REFERENCES `gastos_mes` (`id_gasto_mes`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `movimientos_bancarios`
 --
 ALTER TABLE `movimientos_bancarios`
-  ADD CONSTRAINT `movimientos_bancarios_ibfk_1` FOREIGN KEY (`conciliacion_id`) REFERENCES `conciliacion_bancaria` (`id_conciliacion`),
-  ADD CONSTRAINT `movimientos_bancarios_ibfk_2` FOREIGN KEY (`pago_id`) REFERENCES `pagos` (`id_pago`),
-  ADD CONSTRAINT `movimientos_bancarios_ibfk_3` FOREIGN KEY (`gasto_id`) REFERENCES `gastos` (`id_gasto`);
+  ADD CONSTRAINT `movimientos_bancarios_ibfk_1` FOREIGN KEY (`conciliacion_id`) REFERENCES `conciliacion_bancaria` (`id_conciliacion`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `movimientos_bancarios_ibfk_2` FOREIGN KEY (`pago_id`) REFERENCES `pagos` (`id_pago`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `movimientos_bancarios_ibfk_3` FOREIGN KEY (`gasto_id`) REFERENCES `gastos` (`id_gasto`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `pagos`
@@ -449,8 +476,8 @@ ALTER TABLE `pagos`
 -- Filtros para la tabla `pagos_mensualidad`
 --
 ALTER TABLE `pagos_mensualidad`
-  ADD CONSTRAINT `pagos_mensualidad_ibfk_1` FOREIGN KEY (`pago_id`) REFERENCES `pagos` (`id_pago`),
-  ADD CONSTRAINT `pagos_mensualidad_ibfk_2` FOREIGN KEY (`mensualidad_id`) REFERENCES `mensualidad` (`id_mensualidad`);
+  ADD CONSTRAINT `pagos_mensualidad_ibfk_1` FOREIGN KEY (`pago_id`) REFERENCES `pagos` (`id_pago`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `pagos_mensualidad_ibfk_2` FOREIGN KEY (`mensualidad_id`) REFERENCES `mensualidad` (`id_mensualidad`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
