@@ -2,6 +2,7 @@
     require_once "modelo/usuario_modelo.php";
     require_once "modelo/bitacora_modelo.php";
     require_once "modelo/notificaciones_modelo.php";
+    require_once "modelo/permisos_usuarios_modelo.php";
     require_once "ayuda/ayuda.php";
     
     if (isset($_POST["operacion"])) {
@@ -10,28 +11,31 @@
             if (session_status() == PHP_SESSION_ACTIVE) {
               session_destroy();
             }
-            $usuario = new Usuario();
-            $notificaciones = new Notificaciones();
+            $usuario_obj = new Usuario();
 
-            $usuario->set_correo($_POST["usuario"]);
+            $usuario_obj->set_correo($_POST["usuario"]);
             $contrasenia = $_POST["contra"];
 
-            $resultado = $usuario->validar_usuario();
+            $resultado = $usuario_obj->validar_usuario();
+
             if ($resultado) {
-                // var_dump(password_verify($contrasenia, $resultado["contrasenia"]));
+                
                 if (!password_verify($contrasenia, $resultado["contrasenia"])) {
                     echo json_encode(["estatus"=>false,"mensaje"=>"Contraseña incorrecta"]);
                     exit();
                 }
+
+                // $notificaciones_obj = new Notificaciones();
+                $permisos_usuarios_obj = new Permisos_usuarios();
 
                 session_start();
                 $_SESSION["id_usuario"] = $resultado["id_usuario"];
                 $_SESSION["usuario"] = $resultado["correo"];
                 $_SESSION["nombre_completo"] = $resultado["nombre_usuario"];
                 $_SESSION["rol"] = $resultado["nombre_rol"];
-                $_SESSION["permisos"] = $usuario->consultar_permisos_por_usuario($resultado["id_rol"]);
+                $_SESSION["permisos"] = $permisos_usuarios_obj->consultar_permisos_por_usuario($resultado["id_rol"]);
 
-                //$_SESSION["notificaciones"] = $notificaciones->consultar_notificaciones($resultado["id_usuario"]);
+                //$_SESSION["notificaciones"] = $notificaciones_obj->consultar_notificaciones($resultado["id_usuario"]);
 
                 echo json_encode(["estatus"=>true,"mensaje"=>"OK"]);
                 exit();

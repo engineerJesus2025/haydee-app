@@ -82,7 +82,7 @@ async function registrar() {
 	let res_data_table = await data_table.row.add([`${nombre}`,`${apellido}`,`${correo}`,`${rol_nombre}`,`${acciones.outerHTML}`]).draw();
 	// Tiene el await para que lo espere, sino no la pone en la tabla
 
-	consulta_completada();//Mensaje de que se completo la operacion
+	mensajes('success',4000,'Atencion','El registro se ha realizado exitosamente');//Mensaje de que se completo la operacion
 }
 
 //Si queremos consultar
@@ -239,7 +239,7 @@ async function eliminar(id) {
 
 	data_table.row(`#fila-${id}`).remove().draw(); // esto es para eliminar la fila del data table
 
-	consulta_completada(); // mensaje de exito
+	mensajes('success',4000,'Atencion','El registro ha sido eliminado correctamente');//Mensaje de que se completo la operacion
 }
 
 // Esta funcion prepara el formulario para editar el registro
@@ -340,7 +340,7 @@ async function modificar(id) {
 
 	document.getElementById('titulo_modal').textContent = "Registrar Usuario";
 
-	consulta_completada(); // mensaje de exito
+	mensajes('success',4000,'Atencion','El registro se ha modificado exitosamente');//Mensaje de que se completo la operacion
 
 	// esto de abajo es para editar la fila que se modifico en el data table
 	let acciones = crearBotones(id); // creamos otro botones (no se que tan necesario sea esto)
