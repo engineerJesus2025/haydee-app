@@ -31,7 +31,7 @@ $(document).ready(function(){
 	});
 	$("#nombre").on("keyup",function(e){
 		if (validarKeyUp(/^[A-Za-z \b]{3,30}$/,
-		$(this),this.nextElementSibling,"")) {
+		$(this),this.nextElementSibling,"Solo letras entre 3 y 30 caracteres")) {
 			if(this.value == nombre_an){return}
 			let datos = new FormData();
 			datos.append('validar','nombre');

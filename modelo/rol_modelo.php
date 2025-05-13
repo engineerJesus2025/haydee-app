@@ -145,7 +145,7 @@ class Rol extends Conexion
 
         $this->cambiar_db_negocio();
         
-        if ($result) {            
+        if ($result) {
             $this->registrar_bitacora(REGISTRAR, GESTIONAR_ROLES, "Rol " . $this->get_nombre());
             return ["estatus"=>true,"mensaje"=>"OK"];
         } else {

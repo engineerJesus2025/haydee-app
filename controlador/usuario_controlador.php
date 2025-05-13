@@ -103,7 +103,6 @@
             $usuario_validar = $usuario->consultar_usuario();
 
             echo json_encode(password_verify($contra, $usuario_validar["contrasenia"]));
-            // var_dump($usuario_validar);
         }
         exit;
     }

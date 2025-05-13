@@ -87,10 +87,11 @@ class Usuario extends Conexion
         return $this->rol_id;
     }
 
+    //HAsta aqui todo normal
+    //esta funcion se ejecuta en el login para autenticar
     public function validar_usuario()
     {
-        $this->cambiar_db_seguridad();
-
+        $this->cambiar_db_seguridad();//Este metodo cambia la base de datos seleccionada
 
         $sql = "SELECT usuarios.id_usuario,usuarios.correo as correo, usuarios.nombre as nombre_usuario, roles.id_rol, roles.nombre as nombre_rol, usuarios.contrasenia FROM usuarios INNER JOIN roles ON usuarios.rol_id=roles.id_rol WHERE correo = :correo";
         $conexion = $this->get_conex()->prepare($sql);
@@ -105,13 +106,13 @@ class Usuario extends Conexion
 
         if ($result == 1) {
             $_SESSION["id_usuario"] = $datos["id_usuario"];
-            $this->registrar_bitacora(INICIAR_SESION,GESTIONAR_USUARIOS,"NINGUNO");
+            $this->registrar_bitacora(INICIAR_SESION,GESTIONAR_USUARIOS,"NINGUNO");//Registramos en la bitacora que vamos a iniciar sesion
             return $datos;
         } else {
             return false;
         }
     }
-
+    //hace lo que dice
     public function verificar_correo()
     {
         $this->cambiar_db_seguridad();
@@ -134,7 +135,7 @@ class Usuario extends Conexion
             return $r;
         }
     }
-
+    // hace lo que dice
     public function verificar_contra()
     {
         $this->cambiar_db_seguridad();
@@ -157,7 +158,7 @@ class Usuario extends Conexion
             return $r;
         }
     }
-
+    //hace lo que dice
     public function consultar()
     {
         $this->cambiar_db_seguridad();
@@ -172,7 +173,7 @@ class Usuario extends Conexion
         $this->cambiar_db_negocio();
 
         if ($result == true) {
-            $this->registrar_bitacora(CONSULTAR, GESTIONAR_USUARIOS, "TODOS LOS USUARIOS");
+            $this->registrar_bitacora(CONSULTAR, GESTIONAR_USUARIOS, "TODOS LOS USUARIOS");//registra cuando se entra al modulo de ususario
 
             return $datos;
         } else {
@@ -223,7 +224,7 @@ class Usuario extends Conexion
     }
     public function registrar()
     {
-        //Validamos los datos obtenidos del controlador
+        //Validamos los datos obtenidos del controlador (validaciones back-end)
         $validaciones = $this->validarDatos();
         if(!($validaciones["estatus"])){return $validaciones;}
         
@@ -243,16 +244,16 @@ class Usuario extends Conexion
         $this->cambiar_db_negocio();
 
         if ($result) {
-            $id_ultimo = $this->lastId();
+            $id_ultimo = $this->lastId();//obtenemos el ultimo id
             $this->set_id_usuario($id_ultimo["mensaje"]);
-            $usuario_alterado = $this->consultar_usuario();
+            $usuario_alterado = $this->consultar_usuario();//lo consultamos
 
-            $this->registrar_bitacora(REGISTRAR, GESTIONAR_USUARIOS, $usuario_alterado["nombre_usuario"] . " (" . $usuario_alterado["nombre_rol"] . ")");
+            $this->registrar_bitacora(REGISTRAR, GESTIONAR_USUARIOS, $usuario_alterado["nombre_usuario"] . " (" . $usuario_alterado["nombre_rol"] . ")");//registramos en la bitacora
 
             return ["estatus"=>true,"mensaje"=>"OK"];
         } else {
             return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar este usuario"];
-        }        
+        }
     }
 
     public function editar_usuario()
@@ -355,7 +356,7 @@ class Usuario extends Conexion
             return ["estatus"=>false,"mensaje"=>"Error en la consulta"];
         } 
     }
-
+    // validaciones back end (se llaman al registrar o modificar)
     private function validarDatos($consulta = "registrar")
     {   
         // Validamos el id usuario en caso de editar o eliminar porque en registrar no existe todavia

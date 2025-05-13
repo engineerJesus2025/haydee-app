@@ -27,8 +27,6 @@
                 ?>
 
                 <main class="col ps-md-2 pt-2 mb-5">
-
-            
                     <div class="page-header pt-3">
                         <h2>USUARIOS</h2>
                     </div>

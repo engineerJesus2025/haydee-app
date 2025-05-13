@@ -1,7 +1,7 @@
 consultar(); // para llenar la tabla al cargar
 let data_table, id_eliminado, id_registrado,id_modificar, correo_an;
 // VAriables que usaremos mas tarde
-
+//guardamos los permisosdel usuario
 let permiso_eliminar = document.querySelector("#permiso_eliminar").value;
 let permiso_editar = document.querySelector("#permiso_editar").value;
 
@@ -18,7 +18,11 @@ function envio(operacion) {
 	}
 	else if(operacion == "Registrar"){
 		//sino a registrar
-		registrar()
+		registrar();
+	}else{
+		// esto es imposible que pase pero aja
+		mensajes('error',4000,'Atencion',
+		'Ha ocurrido un error durante la operacion, intentelo nuevamente')
 	}
 }
 
@@ -29,7 +33,8 @@ document.querySelector(`#modal_usuario`).addEventListener("hide.bs.modal",()=>{
 	boton_formulario.removeAttribute("id_modificar");	
 	boton_formulario.textContent = "Registrar";
 	document.getElementById('titulo_modal').textContent = "Registrar Usuario";	
-	formulario_usar.querySelectorAll("[class='w-100']").forEach(el=>el.textContent="");	
+	formulario_usar.querySelectorAll("[class='w-100']").forEach(el=>el.textContent="");
+	// CAmbiamos el input de nueva contra a confirmar contraseña
 	formulario_usar.querySelector("#confir_contra").parentElement.previousElementSibling.textContent = "Confirmar Contraseña" 
 	formulario_usar.querySelector("#confir_contra").placeholder = "Confirmar Contraseña" 
 });
@@ -61,8 +66,13 @@ async function registrar() {
 	let respuesta = await query(datos_consulta); // El await es para que espere el resultado, al ser asincrono, normalmente no lo esperaria
 	// wait = esperar (english)
 	modal.hide(); //Esconde el modal
-
 	formulario_usar.reset();//Limpia el formulario
+
+	// Resvisamos el resultado
+	if (!respuesta.estatus) {
+		mensajes('error',4000,'Atencion',respuesta.mensaje);
+		return;// en caso de error mandamos un mensaje con el error y nos vamos
+	}
 
 	id_registrado = await last_id(); //Guarda el nuevo id registrado, para darselo al evento de modificar
 	
@@ -87,6 +97,12 @@ async function consultar() {
 	data = await query(datos_consulta)
 	vaciar_tabla(); //Vaciamos la tabla de lo que tenia antes
 	
+	// Resvisamos el resultado
+	if(!(data.estatus == undefined)){
+		mensajes('error',4000,'Atencion', respuesta.mensaje);
+		return;// en caso de error mandamos un mensaje con el error y nos vamos
+	}
+
 	//recorremos los datos y en cada vuelta llamamos una funcion para llenar la tabla
 	await data.map(fila=>{
 		llenarTabla(fila);
@@ -209,8 +225,14 @@ async function eliminar(id) {
 	datos_consulta.append('operacion','eliminar');
 
 	//Llamamos a la funcion para hacer la consulta
-	let result = await query(datos_consulta);
+	let respuesta = await query(datos_consulta);
 	
+	// Resvisamos el resultado
+	if (!respuesta.estatus) {
+		mensajes('error',4000,'Atencion',respuesta.mensaje);
+		return;// en caso de error mandamos un mensaje con el error y nos vamos
+	}
+
 	id_eliminado = id; 
 	// con esto indicamos que se elimino un registro
 	// en caso de que lo de abajo no lo elimine
@@ -256,6 +278,7 @@ async function modificar_formulario(e) {
 	if(!permiso_editar){
 		boton_formulario.setAttribute("hidden",true);
 		boton_formulario.setAttribute("disabled",true);
+		//si no los tiene apaga el boton.
 	}
 
 	// aqui cambiamos los datos del boton para registrar, para saber que ahora se va es a modificar un registro
@@ -298,11 +321,16 @@ async function modificar(id) {
 	datos_consulta.append('operacion','modificar');
 
 	//Llamamos a la funcion para hacer la consulta
-	await query(datos_consulta);
+	let respuesta = await query(datos_consulta);
 
 	formulario_usar.reset(); //Limpiamos el formulario
-
  	modal.hide(); // escondemos el modal
+
+ 	// Resvisamos el resultado
+	if (!respuesta.estatus) {
+		mensajes('error',4000,'Atencion',respuesta.mensaje);
+		return;// en caso de error mandamos un mensaje con el error y nos vamos
+	}
 
 	// al terminar le damos al boton su valores originales
 
@@ -347,14 +375,15 @@ async function query(datos){
 	return data;
 }
 
-// esto solo es para decir que se completo una operacion
-function consulta_completada(){
+// esto solo es para decir que se completo o fallo una operacion
+function mensajes(icono,tiempo,titulo,mensaje){
 	Swal.fire({
-	    title: "Atencion",
-	    text: "La operacion se ha realizado correctamente",
-	    confirmButtonText: "Aceptar",
-	    confirmButtonColor: "#e01d22",
-	    icon: "success"
+	icon:icono,
+    timer:tiempo,	
+    title:titulo,
+	text:mensaje,
+	confirmButtonText:'Aceptar',
+	confirmButtonColor: "#e01d22",
 	});
 }
 
