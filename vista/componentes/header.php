@@ -44,7 +44,7 @@
 		        	</a>
 		        	<?php endif; ?>
 		        	<?php if (Conexion::tiene_permiso(GESTIONAR_PROPIETARIOS, CONSULTAR)) : ?>
-		        	<a href="#" class="nav_link" title="Propietarios"> 
+		        	<a href="?pagina=propietario_controlador.php&accion=inicio" class="nav_link" title="Propietarios"> 
 		        		<i class="bi bi-person-vcard-fill nav_logo-icon"></i>
 		        		<span class="nav_name">Propietarios</span> 
 		        	</a>
