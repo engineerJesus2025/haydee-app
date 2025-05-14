@@ -26,10 +26,6 @@
 
                 <main class="col ps-md-2 pt-2">
 
-                    <div class="container-fluid justify-content-end">
-                        <a href="#" data-bs-target="#sidebar" data-bs-toggle="collapse" class="border rounded-3 p-1 text-decoration-none"><i class="bi bi-list bi-lg py-2 p-1"></i></a>
-                    </div>
-
                     <div class="page-header pt-3">
                         <h2>ROLES</h2>
                     </div>
@@ -43,18 +39,6 @@
                                     <div class="button">
                                         <button type="button" class="btn btn-primary mb-2" data-bs-toggle="modal" data-bs-target="#modal_roles">Registrar</a>
                                     </div><br>
-                                <?php endif; ?>
-                                <?php if (isset($_SESSION["mensaje"])) : ?>
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="alert alert-danger d-flex align-items-center" role="alert">
-                                                <span class="bi bi-exclamation-triangle"></span>
-                                                <div class="mx-3">
-                                                    <?php echo $_SESSION["mensaje"]; ?>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
                                 <?php endif; ?>
 
                                 <table id="tabla_roles" class="table" style="width:97%">

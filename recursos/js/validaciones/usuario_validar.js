@@ -152,11 +152,20 @@ async function validarEnvio(accion = "Registrar"){
 		datos.append("id_usuario",id_modificar);
 		datos.append("contra",$("#contra").val());
 		res = await verificar_contra(datos);
-		// revisamos si esta duplicado con otro usuario
-		console.log(res)
+		// revisamos si la contraseña que puso es la correcta
 		if(!res){
 			mensajes('error',4000,'Contraseña Icorrecta','La contraseña ingresada no es correcta, para poder realizar cambios debe ingresar la contraseña correcta');
 			return false;
+		}
+
+		if ($("#confir_contra").val() != '') {
+			if(validarKeyUp(/^[A-Za-z0-9_.+*$#%&@]{5,50}$/,$("#confir_contra"),document.querySelector("#confir_contra").nextElementSibling,'Debe ingresar una contraseña')==0)
+			{
+				mensajes('error',4000,'Error en la nueva contraseña',
+				'El formato debe tener mínimo 5 caracteres, utilizar letras, numeros y caracteres especiales como: _.+*$#%&/ ');
+				
+				return false;
+			}
 		}
 	}
 	// si el valor de correo no es el mismo de antes:

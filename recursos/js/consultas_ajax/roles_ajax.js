@@ -19,6 +19,10 @@ function envio(operacion) {
 	else if(operacion == "Registrar"){
 		//sino a registrar
 		registrar();
+	}else{
+		// esto es imposible que pase pero aja
+		mensajes('error',4000,'Atencion',
+		'Ha ocurrido un error durante la operacion, intentelo nuevamente')
 	}
 }
 
@@ -34,7 +38,8 @@ document.querySelector(`#modal_roles`).addEventListener("hide.bs.modal",()=>{
 		input.closest(".accordion-collapse").classList.remove("show");
 		input.closest(".accordion-collapse").previousElementSibling.children[0].classList.add("collapsed");
 		input.closest(".accordion-collapse").previousElementSibling.children[0].setAttribute("aria-expanded",false)		
-	})
+	});
+	console.log("asd")
 });
 
 //Si queremos registrar:
@@ -64,8 +69,13 @@ async function registrar() {
 	let respuesta = await query(datos_consulta); // El await es para que espere el resultado, al ser asincrono, normalmente no lo esperaria
 	// wait = esperar (english)
 	modal.hide(); //Esconde el modal
-
 	formulario_usar.reset();//Limpia el formulario
+
+	// Resvisamos el resultado
+	if (!respuesta.estatus) {
+		mensajes('error',4000,'Atencion',respuesta.mensaje);
+		return;// en caso de error mandamos un mensaje con el error y nos vamos
+	}
 
 	id_registrado = await last_id(); //Guarda el nuevo id registrado, para darselo al evento de modificar
 	
@@ -76,7 +86,7 @@ async function registrar() {
 	data_table.draw();
 	// Tiene el await para que lo espere, sino no la pone en la tabla
 
-	consulta_completada();//Mensaje de que se completo la operacion
+	mensajes('success',4000,'Atencion','El registro se ha realizado exitosamente');//Mensaje de que se completo la operacion
 }
 
 //Si queremos consultar
@@ -88,8 +98,14 @@ async function consultar() {
 	datos_consulta.append('operacion','consulta');
 
 	//Llamamos a la funcion para hacer la consulta
-	data = await query(datos_consulta)
+	data = await query(datos_consulta);
 	vaciar_tabla(); //Vaciamos la tabla de lo que tenia antes
+
+	// Resvisamos el resultado
+	if(!(data.estatus == undefined)){
+		mensajes('error',4000,'Atencion', respuesta.mensaje);
+		return;// en caso de error mandamos un mensaje con el error y nos vamos
+	}
 	
 	//recorremos los datos y en cada vuelta llamamos una funcion para llenar la tabla
 	await data.map(fila=>{
@@ -205,15 +221,21 @@ async function eliminar(id) {
 	datos_consulta.append('operacion','eliminar');
 
 	//Llamamos a la funcion para hacer la consulta
-	let result = await query(datos_consulta);
-	
-	id_eliminado = id; 
+	let respuesta = await query(datos_consulta);
+
+	// Resvisamos el resultado
+	if (!respuesta.estatus) {
+		mensajes('error',4000,'Atencion',respuesta.mensaje);
+		return;// en caso de error mandamos un mensaje con el error y nos vamos
+	}
+
+	id_eliminado = id;
 	// con esto indicamos que se elimino un registro
 	// en caso de que lo de abajo no lo elimine
 
 	data_table.row(`#fila-${id}`).remove().draw(); // esto es para eliminar la fila del data table
 
-	consulta_completada(); // mensaje de exito
+	mensajes('success',4000,'Atencion','El registro ha sido eliminado correctamente');//Mensaje de que se completo la operacion
 }
 
 // Esta funcion prepara el formulario para editar el registro
@@ -303,11 +325,16 @@ async function modificar(id) {
 
 
 	//Llamamos a la funcion para hacer la consulta
-	await query(datos_consulta);
+	let respuesta = await query(datos_consulta);
 
 	formulario_usar.reset(); //Limpiamos el formulario
-
  	modal.hide(); // escondemos el modal
+
+	// Resvisamos el resultado
+	if (!respuesta.estatus) {
+		mensajes('error',4000,'Atencion',respuesta.mensaje);
+		return;// en caso de error mandamos un mensaje con el error y nos vamos
+	}
 
 	// al terminar le damos al boton su valores originales
 
@@ -317,7 +344,7 @@ async function modificar(id) {
 
 	document.getElementById('titulo_modal').textContent = "Registrar Rol";
 
-	consulta_completada(); // mensaje de exito
+	mensajes('success',4000,'Atencion','El registro se ha modificado exitosamente');//Mensaje de que se completo la operacion
 
 	// esto de abajo es para editar la fila que se modifico en el data table
 	let acciones = crearBotones(id); // creamos otro botones (no se que tan necesario sea esto)
@@ -354,17 +381,17 @@ async function query(datos){
 	return data;
 }
 
-// esto solo es para decir que se completo una operacion
-function consulta_completada(){
+// esto solo es para decir que se completo o fallo una operacion
+function mensajes(icono,tiempo,titulo,mensaje){
 	Swal.fire({
-	    title: "Atencion",
-	    text: "La operacion se ha realizado correctamente",
-	    confirmButtonText: "Aceptar",
-	    confirmButtonColor: "#e01d22",
-	    icon: "success"
+	icon:icono,
+    timer:tiempo,	
+    title:titulo,
+	text:mensaje,
+	confirmButtonText:'Aceptar',
+	confirmButtonColor: "#e01d22",
 	});
 }
-
 // esta funcion es para incializar el data table
 function init_data_table() {
 	return new DataTable("#tabla_roles",{
