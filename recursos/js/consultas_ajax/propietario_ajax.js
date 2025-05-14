@@ -76,7 +76,7 @@ async function registrar() {
     } else {
         Swal.fire({
             title: "Error",
-            text: "No se pudo registrar el propietario. Cedula y/o ya existen",
+            text: "No se pudo registrar el propietario. Cedula o correo ya existen",
             icon: "error",
             confirmButtonText: "Aceptar",
             confirmButtonColor: "#e01d22",
