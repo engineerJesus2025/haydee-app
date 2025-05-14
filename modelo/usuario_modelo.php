@@ -87,16 +87,16 @@ class Usuario extends Conexion
         return $this->rol_id;
     }
 
+    //HAsta aqui todo normal
+    //esta funcion se ejecuta en el login para autenticar
     public function validar_usuario()
     {
-        $this->cambiar_db_seguridad();
-
+        $this->cambiar_db_seguridad();//Este metodo cambia la base de datos seleccionada
 
         $sql = "SELECT usuarios.id_usuario,usuarios.correo as correo, usuarios.nombre as nombre_usuario, roles.id_rol, roles.nombre as nombre_rol, usuarios.contrasenia FROM usuarios INNER JOIN roles ON usuarios.rol_id=roles.id_rol WHERE correo = :correo";
         $conexion = $this->get_conex()->prepare($sql);
 
         $conexion->bindParam(":correo", $this->correo);
-        // $conexion->bindParam(":contra", $this->contra);
 
         $conexion->execute();
         $datos = $conexion->fetch(PDO::FETCH_ASSOC);
@@ -106,15 +106,13 @@ class Usuario extends Conexion
 
         if ($result == 1) {
             $_SESSION["id_usuario"] = $datos["id_usuario"];
-            
-            // $this->registrar_bitacora(INICIAR_SESION, GESTIONAR_USUARIOS);
-            
+            $this->registrar_bitacora(INICIAR_SESION,GESTIONAR_USUARIOS,"NINGUNO");//Registramos en la bitacora que vamos a iniciar sesion
             return $datos;
         } else {
             return false;
         }
     }
-
+    //hace lo que dice
     public function verificar_correo()
     {
         $this->cambiar_db_seguridad();
@@ -137,7 +135,7 @@ class Usuario extends Conexion
             return $r;
         }
     }
-
+    // hace lo que dice
     public function verificar_contra()
     {
         $this->cambiar_db_seguridad();
@@ -160,7 +158,7 @@ class Usuario extends Conexion
             return $r;
         }
     }
-
+    //hace lo que dice
     public function consultar()
     {
         $this->cambiar_db_seguridad();
@@ -169,14 +167,14 @@ class Usuario extends Conexion
 
         $conexion = $this->get_conex()->prepare($sql);
         $result = $conexion->execute();
-       
-        //$this->registrar_bitacora(CONSULTAR, GESTIONAR_USUARIOS);
         
         $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
 
         $this->cambiar_db_negocio();
 
-        if ($result == true) {            
+        if ($result == true) {
+            $this->registrar_bitacora(CONSULTAR, GESTIONAR_USUARIOS, "TODOS LOS USUARIOS");//registra cuando se entra al modulo de ususario
+
             return $datos;
         } else {
             return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
@@ -206,31 +204,13 @@ class Usuario extends Conexion
         }
     }
 
-    public function consultar_roles()
-    {
-        $this->cambiar_db_seguridad();
-
-        $sql = "SELECT * FROM roles";
-
-        $conexion = $this->get_conex()->prepare($sql);
-        $result = $conexion->execute();
-        $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
-
-        $this->cambiar_db_negocio();
-
-        if ($result == true) {
-            return $datos;
-        } else {
-            return ["resultado"=>false];
-        }
-    }
     public function registrar()
     {
+        //Validamos los datos obtenidos del controlador (validaciones back-end)
+        $validaciones = $this->validarDatos();
+        if(!($validaciones["estatus"])){return $validaciones;}
+        
         $this->cambiar_db_seguridad();
-
-        //Validamos los datos obtenidos del controlador
-        //$validaciones = $this->validarDatos();
-        //if(!($validaciones["estatus"])){return $validaciones;}
 
         $sql = "INSERT INTO usuarios(apellido,nombre,correo,contrasenia,rol_id) VALUES (:apellido,:nombre,:correo,:contrasenia,:rol)";
 
@@ -245,22 +225,26 @@ class Usuario extends Conexion
 
         $this->cambiar_db_negocio();
 
-        // $this->registrar_bitacora(REGISTRAR, GESTIONAR_USUARIOS);
-
         if ($result) {
+            $id_ultimo = $this->lastId();//obtenemos el ultimo id
+            $this->set_id_usuario($id_ultimo["mensaje"]);
+            $usuario_alterado = $this->consultar_usuario();//lo consultamos
+
+            $this->registrar_bitacora(REGISTRAR, GESTIONAR_USUARIOS, $usuario_alterado["nombre_usuario"] . " (" . $usuario_alterado["nombre_rol"] . ")");//registramos en la bitacora
+
             return ["estatus"=>true,"mensaje"=>"OK"];
         } else {
             return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar este usuario"];
-        }        
+        }
     }
 
     public function editar_usuario()
     {
-        $this->cambiar_db_seguridad();
-
         //Validamos los datos obtenidos del controlador
         $validaciones = $this->validarDatos("editar");
-        if(!($validaciones["estatus"])){return $validaciones;}
+        if(!($validaciones["estatus"])){return $validaciones;}        
+
+        $this->cambiar_db_seguridad();
 
         $sql = "UPDATE usuarios SET apellido=:apellido,nombre=:nombre,correo=:correo,contrasenia=:contrasenia,rol_id=:rol WHERE id_usuario=:id_usuario";
 
@@ -277,12 +261,12 @@ class Usuario extends Conexion
 
         $result = $conexion->execute();
 
-        $this->cambiar_db_negocio();
-
-        
-        // $this->registrar_bitacora(MODIFICAR, GESTIONAR_USUARIOS);
+        $this->cambiar_db_negocio();        
         
         if ($result) {
+            $usuario_alterado = $this->consultar_usuario();
+            $this->registrar_bitacora(MODIFICAR, GESTIONAR_USUARIOS, $usuario_alterado["nombre_usuario"] . " (" . $usuario_alterado["nombre_rol"] . ")");
+
             return ["estatus"=>true,"mensaje"=>"OK"];
         } else {
             return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar editar este usuario"];
@@ -291,11 +275,13 @@ class Usuario extends Conexion
 
     public function eliminar_usuario()
     {
-        $this->cambiar_db_seguridad();
-
         //Validamos los datos obtenidos del controlador
         $validaciones = $this->validarDatos("eliminar");
         if(!($validaciones["estatus"])){return $validaciones;}
+        
+        $usuario_alterado = $this->consultar_usuario();
+
+        $this->cambiar_db_seguridad();
 
         $sql = "DELETE FROM usuarios WHERE id_usuario = :id_usuario";
 
@@ -304,40 +290,16 @@ class Usuario extends Conexion
         $result = $conexion->execute();
 
         $this->cambiar_db_negocio();
-
-        
-        // $this->registrar_bitacora(ELIMINAR, GESTIONAR_USUARIOS);
         
         if ($result) {
+            $this->registrar_bitacora(ELIMINAR, GESTIONAR_USUARIOS, $usuario_alterado["nombre_usuario"] . " (" . $usuario_alterado["nombre_rol"] . ")");
+
             return ["estatus"=>true,"mensaje"=>"OK"];
         } else {
             return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar eliminar este usuario"];
         }
     }
-
-
-    public function consultar_permisos_por_usuario($rol_permiso)
-    {
-        $this->cambiar_db_seguridad();
-
-        $sql = "SELECT modulos.id_modulo, permisos_usuarios.nombre_accion AS nombre_permiso
-        FROM roles_permisos INNER JOIN permisos_usuarios ON permisos_usuarios.id_permiso_usuario = 
-        roles_permisos.permiso_usuario_id INNER JOIN  modulos ON modulos.id_modulo = permisos_usuarios.modulo_id
-        WHERE roles_permisos.rol_id = :rol_permiso";
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":rol_permiso", $rol_permiso);
-        $result = $conexion->execute();
-        $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
-
-        $this->cambiar_db_negocio();
-
-        if ($result == true) {
-            return $datos;
-        } else {
-            return "";
-        }
-    }
-
+    
     public function lastId()
     {
         $this->cambiar_db_seguridad();
@@ -353,7 +315,7 @@ class Usuario extends Conexion
             return ["estatus"=>false,"mensaje"=>"Error en la consulta"];
         } 
     }
-
+    // validaciones back end (se llaman al registrar o modificar)
     private function validarDatos($consulta = "registrar")
     {   
         // Validamos el id usuario en caso de editar o eliminar porque en registrar no existe todavia
@@ -363,7 +325,7 @@ class Usuario extends Conexion
             if (empty($this->id_usuario)) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos estan vacios"];}
 
             if(is_numeric($this->id_usuario)){
-                if (!($this->validarClaveForanea("usuarios","id_usuario",$this->id_usuario))) {
+                if (!($this->validarClaveForanea("usuarios","id_usuario",$this->id_usuario,true))) {
                     return ["estatus"=>false,"mensaje"=>"El usuario seleccionado no existe"];
                 }
                 if ($consulta == "eliminar") {return ["estatus"=>true,"mensaje"=>"OK"];}
@@ -394,7 +356,7 @@ class Usuario extends Conexion
         }
 
         if(is_numeric($this->rol_id)){
-            if (!($this->validarClaveForanea("roles","id_rol",$this->rol_id))) {
+            if (!($this->validarClaveForanea("roles","id_rol",$this->rol_id,true))) {
                 return ["estatus"=>false,"mensaje"=>"El campo 'Rol' no posee un valor valido"];
             }            
         }
@@ -406,8 +368,11 @@ class Usuario extends Conexion
     }
 
     //esta funcion es para revisar si una clave foranea existe, porque sino dara error la consulta
-    private function validarClaveForanea($tabla,$nombreClave,$valor)
+    private function validarClaveForanea($tabla,$nombreClave,$valor,$seguridad = false)
     {
+        if ($seguridad) {
+            $this->cambiar_db_seguridad();
+        }
         $sql="SELECT * FROM $tabla WHERE $nombreClave =:valor";
 
         $conexion = $this->get_conex()->prepare($sql);
@@ -415,6 +380,9 @@ class Usuario extends Conexion
         $conexion->execute();
         $result = $conexion->fetch(PDO::FETCH_ASSOC);
 
+        if ($seguridad) {
+            $this->cambiar_db_negocio();
+        }
         return ($result)?true:false;
     }
 }
