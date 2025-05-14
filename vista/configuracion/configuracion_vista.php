@@ -10,7 +10,6 @@
 </head>
 
 <body>
-
     <div class="container-fluid">
         <div class="row flex-nowrap ">
             <?php
@@ -38,8 +37,8 @@
 
                     <div class="row">
                         <div class="col-md-3 col-12">
-                            <div class="card mb-3 shadow" title="Gestionar los movimientos de los Usuarios">
-                                <a href="?pagina=bitacora_controlador.php&accion=inicio" class="text-decoration-none text-black">
+                            <div class="card mb-3 shadow" title="Gestionar la configuración">
+                                <a href="?pagina=bancos_controlador.php&accion=inicio" class="text-decoration-none text-black">
                                     <div class="card-header text-center bg-white border-bottom-0 p-0">
                                         <i class="bi bi-piggy-bank" style="font-size: 5rem !important;"></i>
                                     </div>
@@ -58,7 +57,6 @@
             </div>
         </div>
     </div>
-
 </body>
 
 </html>

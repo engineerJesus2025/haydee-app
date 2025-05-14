@@ -20,10 +20,10 @@
 
             if ($resultado) {
                 
-                if (!password_verify($contrasenia, $resultado["contrasenia"])) {
+                /*if (!password_verify($contrasenia, $resultado["contrasenia"])) {
                     echo json_encode(["estatus"=>false,"mensaje"=>"Contraseña incorrecta"]);
                     exit();
-                }
+                }*/
 
                 // $notificaciones_obj = new Notificaciones();
                 $permisos_usuarios_obj = new Permisos_usuarios();

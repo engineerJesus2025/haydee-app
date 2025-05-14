@@ -66,6 +66,8 @@
         // Metodos CRUD entre otros
         public function verificar_banco(){  // Verifica si existe el banco para así ver si se registra o no.
 
+            //$this->cambiar_db_seguridad();
+
             // 1) Se guarda una sentencia sql en una variable (la variable sql).
             $sql = "SELECT * FROM bancos WHERE numero_cuenta = :numero_cuenta"; 
 
@@ -117,6 +119,7 @@
             */
             $datos = $conexion->fetch(PDO::FETCH_ASSOC);
 
+            //$this->cambiar_db_negocio();
             /* 
                 La función "isset" verifica si una variable existe o no.
 
@@ -132,6 +135,166 @@
                 $r["busqueda"] = "numero_cuenta";
                 return $r;
             }
+        }
+
+        public function consultar(){
+
+            //$this->cambiar_db_seguridad();
+
+            // 1) Sentencia SQL de toda la vida.
+            $sql = "SELECT * FROM `bancos` ORDER BY id_banco";
+
+            // 2) Se prepara una consulta a la base de datos.
+            $conexion = $this->get_conex()->prepare($sql);
+
+            // 3) Se ejecuta la consulta SQL en la base de datos.
+            $result = $conexion->execute();
+            
+            // 4)Se obtiene la primera fila del resultado como un arreglo asociativo.
+            $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
+
+            //$this->cambiar_db_negocio();
+
+            if ($result == true) {
+                $this->registrar_bitacora(CONSULTAR, GESTIONAR_BANCOS, "TODOS LOS BANCOS");//registra cuando se entra al modulo de bancos
+
+                return $datos;
+            } else {
+                return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+            }
+        }
+
+        public function consultar_banco(){
+
+            //$this->cambiar_db_seguridad();
+
+            // 1) Sentencia SQL de toda la vida
+            $sql = "SELECT * FROM bancos WHERE id_banco = :id_banco";
+
+            // 2) Se prepara la conexion
+            $conexion = $this->get_conex()->prepare($sql);
+
+            // 3) Se manda el banco que queremos consultar
+            $conexion->bindParam(":id_banco", $this->id_banco);
+
+            // 4) Se ejecuta la sentencia
+            $result = $conexion->execute();        
+            
+            // 5) Se obtienen los datos
+            $datos = $conexion->fetch(PDO::FETCH_ASSOC);
+
+            //$this->cambiar_db_negocio();
+
+            if ($result == true) {
+                return $datos;
+            } else {
+                return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+            }
+        }
+
+        public function registrar_banco(){
+            //Validamos los datos obtenidos del controlador (validaciones back-end)
+            //$validaciones = $this->validarDatos();
+            //if(!($validaciones["estatus"])){return $validaciones;}
+            
+            //$this->cambiar_db_seguridad();
+
+            $sql = "INSERT INTO bancos(id_banco,nombre_banco,codigo,numero_cuenta,telefono_afiliado,cedula_afiliada) VALUES (:id_banco,:nombre_banco,:codigo,:numero_cuenta,:telefono_afiliado,:cedula_afiliada)";
+        
+            $conexion = $this->get_conex()->prepare($sql);
+            $conexion->bindParam(":id_banco", $this->id_banco);
+            $conexion->bindParam(":nombre_banco", $this->nombre_banco);
+            $conexion->bindParam(":codigo", $this->codigo);
+            $conexion->bindParam(":numero_cuenta", $this->numero_cuenta);
+            $conexion->bindParam(":telefono_afiliado", $this->telefono_afiliado);
+            $conexion->bindParam(":cedula_afiliado", $this->cedula_afiliada);
+            $result = $conexion->execute();
+
+            //$this->cambiar_db_negocio();
+
+            if ($result) {
+                $id_ultimo = $this->lastId();//obtenemos el ultimo id
+                $this->set_id_banco($id_ultimo["mensaje"]);
+                $banco_alterado = $this->consultar_banco();//lo consultamos
+
+                $this->registrar_bitacora(REGISTRAR, GESTIONAR_BANCOS, $banco_alterado["nombre_usuario"] . " (" . $banco_alterado["nombre_rol"] . ")");//registramos en la bitacora
+
+                return ["estatus"=>true,"mensaje"=>"OK"];
+            } else {
+                return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar este usuario"];
+            }
+        }
+
+        public function editar_banco(){
+            //Validamos los datos obtenidos del controlador
+            //$validaciones = $this->validarDatos("editar");
+            //if(!($validaciones["estatus"])){return $validaciones;}        
+
+            $this->cambiar_db_seguridad();
+
+            $sql = "UPDATE bancos SET id_banco=:id_banco,nombre_banco=:nombre_banco,codigo=:codigo,numero_cuenta=:numero_cuenta,telefono_afiliado=:telefono_afiliado,cedula_afiliada=:cedula_afiliada WHERE id_banco=:id_banco";
+
+            $conexion = $this->get_conex()->prepare($sql);
+            $conexion->bindParam(":id_banco", $this->id_banco);    
+            $conexion->bindParam(":nombre_banco", $this->nombre_banco);
+            $conexion->bindParam(":codigo", $this->codigo);
+            $conexion->bindParam(":numero_cuenta", $this->numero_cuenta);
+            $conexion->bindParam(":telefono_afiliado", $this->telefono_afiliado);
+            $conexion->bindParam(":cedula_afiliada", $this->cedula_afiliada);
+
+            $result = $conexion->execute();
+
+            //$this->cambiar_db_negocio();        
+            
+            if ($result) {
+                $banco_alterado = $this->consultar_banco();
+                $this->registrar_bitacora(MODIFICAR, GESTIONAR_BANCOS, $banco_alterado["nombre_usuario"] . " (" . $banco_alterado["nombre_rol"] . ")");
+
+                return ["estatus"=>true,"mensaje"=>"OK"];
+            } else {
+                return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar editar este banco"];
+            }
+        }
+
+        public function eliminar_banco(){
+            //Validamos los datos obtenidos del controlador
+            //$validaciones = $this->validarDatos("eliminar");
+            //if(!($validaciones["estatus"])){return $validaciones;}
+            
+            $banco_alterado = $this->consultar_banco();
+
+            //$this->cambiar_db_seguridad();
+
+            $sql = "DELETE FROM bancos WHERE id_banco = :id_banco";
+
+            $conexion = $this->get_conex()->prepare($sql);
+            $conexion->bindParam(":id_banco", $this->id_banco);
+            $result = $conexion->execute();
+
+            //$this->cambiar_db_negocio();
+            
+            if ($result) {
+                $this->registrar_bitacora(ELIMINAR, GESTIONAR_BANCOS, $banco_alterado["nombre_usuario"] . " (" . $banco_alterado["nombre_rol"] . ")");
+
+                return ["estatus"=>true,"mensaje"=>"OK"];
+            } else {
+                return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar eliminar este banco"];
+            }
+        }
+
+        public function lastId(){
+            $this->cambiar_db_seguridad();
+            $sql = "SELECT MAX(id_banco) as last_id FROM bancos";
+            $conexion = $this->get_conex()->prepare($sql);
+            $result = $conexion->execute();
+            $datos = $conexion->fetch(PDO::FETCH_ASSOC);
+            $this->cambiar_db_negocio();
+
+            if ($result) {
+                return ["estatus"=>true,"mensaje"=>$datos["last_id"]];
+            } else {
+                return ["estatus"=>false,"mensaje"=>"Error en la consulta"];
+            } 
         }
     }   
 ?>
