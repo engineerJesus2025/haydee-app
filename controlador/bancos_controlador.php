@@ -1,8 +1,6 @@
 <?php
     require_once("modelo/banco_modelo.php");
-    require_once("modelo/usuario_modelo.php");
 
-    $obj_banco = new Usuario();
     $obj_banco = new Banco(); // Objeto banco
  
     if(isset($_POST["operacion"])){
@@ -17,7 +15,6 @@
 
         elseif ($operacion == "registrar") {
             //se guardan las variables a registrar
-            $id_banco = $_POST["id_banco"];
             $nombre_banco = $_POST["nombre_banco"];  
             $codigo = $_POST["codigo"];  
             $numero_cuenta = $_POST["numero_cuenta"]; 
@@ -25,7 +22,6 @@
             $cedula_afiliada = $_POST["cedula_afiliada"];              
 
             //se usan los setters correspondientes
-            $obj_banco->set_id_banco($id_banco);
             $obj_banco->set_nombre_banco($nombre_banco);
             $obj_banco->set_codigo($codigo);
             $obj_banco->set_numero_cuenta($numero_cuenta);
@@ -91,19 +87,11 @@
 
     if (isset($_POST["validar"])) {
         $validar = $_POST["validar"]; //Esto es igual pero para las validaciones
-        if ($validar == "correo"){
-            $usuario_obj->set_correo($_POST["correo"]);
-            echo  json_encode($usuario_obj->verificar_correo());
+        if ($validar == "numero_cuenta"){
+            $obj_banco->set_numero_cuenta($_POST["numero_cuenta"]);
+            echo  json_encode($obj_banco->verificar_banco());
         }
-        if ($validar == "contra"){
-            $contra = $_POST["contra"];
-
-            $usuario_obj->set_id_usuario($_POST["id_usuario"]);
-
-            $usuario_validar = $usuario_obj->consultar_usuario();
-
-            echo json_encode(password_verify($contra, $usuario_validar["contrasenia"]));
-        }
+        
         exit;
     }
     //FIN de AJAX

@@ -1,5 +1,5 @@
 consultar(); // para llenar la tabla al cargar
-let data_table, id_eliminado, id_registrado,id_modificar, correo_an;
+let data_table, id_eliminado, id_registrado,id_modificar, numero_cuenta_an;
 // VAriables que usaremos mas tarde
 //guardamos los permisosdel usuario
 let permiso_eliminar = document.querySelector("#permiso_eliminar").value;
@@ -49,7 +49,7 @@ async function registrar() {
 	codigo = formulario_usar.querySelector("#codigo").value,	
 	numero_cuenta = formulario_usar.querySelector("#numero_cuenta").value, 
 	telefono_afiliado = formulario_usar.querySelector("#telefono_afiliado").value,
-    cedula_afiliada = formulario_usar.querySelector("#cedula_afiliado").value;
+    cedula_afiliada = formulario_usar.querySelector("#cedula_afiliada").value;
 
 	// le pasamos los datos por el formData
 	datos_consulta.append("nombre_banco",nombre_banco);
@@ -150,6 +150,7 @@ function llenarTabla(fila) {
 	fila_tabla.appendChild(numero_cuenta_td);
 	fila_tabla.appendChild(telefono_afiliado_td);
 	fila_tabla.appendChild(cedula_afiliada_td);
+    fila_tabla.appendChild(acciones);
 
 	fila_tabla.setAttribute("id",`fila-${id_campo}`);
 	// le ponemos un id a las fila para cuando las eliminemos
@@ -289,11 +290,11 @@ async function modificar_formulario(e) {
 	boton_formulario.setAttribute("id_modificar",data.id_banco);
 	boton_formulario.textContent = "Modificar";
 	document.getElementById('titulo_modal').textContent = "Modificar Banco";
-	formulario_usar.querySelector("#confir_contra").parentElement.previousElementSibling.textContent = "Nueva Contraseña" 
-	formulario_usar.querySelector("#confir_contra").placeholder = "Nueva Contraseña" 
+	//formulario_usar.querySelector("#confir_contra").parentElement.previousElementSibling.textContent = "Nueva Contraseña" 
+	//formulario_usar.querySelector("#confir_contra").placeholder = "Nueva Contraseña" 
 
 	id_modificar = id;
-	correo_an = correo.value;
+	numero_cuenta_an = numero_cuenta.value;
 	//guardamos el orginal del correo, para que no choquen con las validaciones
 }
 
@@ -428,7 +429,7 @@ function init_data_table() {
     })
     // si lees esto tienes que saber que ahora odio estos data table, muerte a jquery...
 }
-
+ 
 // un observador que detecte cuando cambie la tabla, si detecta cambio ejecuta la esa funcion
 // yo la puse porque jquery cuando hace la paginacion en la tabla, borra los elementos, 
 // entonces se pierden los eventos asignados, y cuando vuelven a aparecer, no los tienen.

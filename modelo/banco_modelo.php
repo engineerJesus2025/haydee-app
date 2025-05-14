@@ -153,7 +153,7 @@
             // 4)Se obtiene la primera fila del resultado como un arreglo asociativo.
             $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
 
-            //$this->cambiar_db_negocio();
+            $this->cambiar_db_negocio();
 
             if ($result == true) {
                 $this->registrar_bitacora(CONSULTAR, GESTIONAR_BANCOS, "TODOS LOS BANCOS");//registra cuando se entra al modulo de bancos
@@ -199,29 +199,28 @@
             
             //$this->cambiar_db_seguridad();
 
-            $sql = "INSERT INTO bancos(id_banco,nombre_banco,codigo,numero_cuenta,telefono_afiliado,cedula_afiliada) VALUES (:id_banco,:nombre_banco,:codigo,:numero_cuenta,:telefono_afiliado,:cedula_afiliada)";
+            $sql = "INSERT INTO bancos(nombre_banco,codigo,numero_cuenta,telefono_afiliado,cedula_afiliada) VALUES (:nombre_banco,:codigo,:numero_cuenta,:telefono_afiliado,:cedula_afiliada)";
         
             $conexion = $this->get_conex()->prepare($sql);
-            $conexion->bindParam(":id_banco", $this->id_banco);
             $conexion->bindParam(":nombre_banco", $this->nombre_banco);
             $conexion->bindParam(":codigo", $this->codigo);
             $conexion->bindParam(":numero_cuenta", $this->numero_cuenta);
             $conexion->bindParam(":telefono_afiliado", $this->telefono_afiliado);
-            $conexion->bindParam(":cedula_afiliado", $this->cedula_afiliada);
+            $conexion->bindParam(":cedula_afiliada", $this->cedula_afiliada);
             $result = $conexion->execute();
 
-            //$this->cambiar_db_negocio();
+            $this->cambiar_db_negocio();
 
             if ($result) {
                 $id_ultimo = $this->lastId();//obtenemos el ultimo id
                 $this->set_id_banco($id_ultimo["mensaje"]);
                 $banco_alterado = $this->consultar_banco();//lo consultamos
 
-                $this->registrar_bitacora(REGISTRAR, GESTIONAR_BANCOS, $banco_alterado["nombre_usuario"] . " (" . $banco_alterado["nombre_rol"] . ")");//registramos en la bitacora
+                $this->registrar_bitacora(REGISTRAR, GESTIONAR_BANCOS, $banco_alterado["nombre_banco"] . " (" . $banco_alterado["codigo"] . ")");//registramos en la bitacora
 
                 return ["estatus"=>true,"mensaje"=>"OK"];
             } else {
-                return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar este usuario"];
+                return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar este banco"];
             }
         }
 
@@ -230,12 +229,12 @@
             //$validaciones = $this->validarDatos("editar");
             //if(!($validaciones["estatus"])){return $validaciones;}        
 
-            $this->cambiar_db_seguridad();
+            //$this->cambiar_db_seguridad();
 
-            $sql = "UPDATE bancos SET id_banco=:id_banco,nombre_banco=:nombre_banco,codigo=:codigo,numero_cuenta=:numero_cuenta,telefono_afiliado=:telefono_afiliado,cedula_afiliada=:cedula_afiliada WHERE id_banco=:id_banco";
+            $sql = "UPDATE bancos SET nombre_banco=:nombre_banco,codigo=:codigo,numero_cuenta=:numero_cuenta,telefono_afiliado=:telefono_afiliado,cedula_afiliada=:cedula_afiliada WHERE id_banco=:id_banco";
 
-            $conexion = $this->get_conex()->prepare($sql);
-            $conexion->bindParam(":id_banco", $this->id_banco);    
+            $conexion = $this->get_conex()->prepare($sql);    
+            $conexion->bindParam(":id_banco", $this->id_banco);
             $conexion->bindParam(":nombre_banco", $this->nombre_banco);
             $conexion->bindParam(":codigo", $this->codigo);
             $conexion->bindParam(":numero_cuenta", $this->numero_cuenta);
@@ -244,11 +243,11 @@
 
             $result = $conexion->execute();
 
-            //$this->cambiar_db_negocio();        
+            $this->cambiar_db_negocio();        
             
             if ($result) {
                 $banco_alterado = $this->consultar_banco();
-                $this->registrar_bitacora(MODIFICAR, GESTIONAR_BANCOS, $banco_alterado["nombre_usuario"] . " (" . $banco_alterado["nombre_rol"] . ")");
+                $this->registrar_bitacora(MODIFICAR, GESTIONAR_BANCOS, $banco_alterado["nombre_banco"] . " (" . $banco_alterado["codigo"] . ")");
 
                 return ["estatus"=>true,"mensaje"=>"OK"];
             } else {
@@ -274,7 +273,7 @@
             //$this->cambiar_db_negocio();
             
             if ($result) {
-                $this->registrar_bitacora(ELIMINAR, GESTIONAR_BANCOS, $banco_alterado["nombre_usuario"] . " (" . $banco_alterado["nombre_rol"] . ")");
+                $this->registrar_bitacora(ELIMINAR, GESTIONAR_BANCOS, $banco_alterado["nombre_banco"] . " (" . $banco_alterado["codigo"] . ")");
 
                 return ["estatus"=>true,"mensaje"=>"OK"];
             } else {
@@ -283,7 +282,7 @@
         }
 
         public function lastId(){
-            $this->cambiar_db_seguridad();
+            //$this->cambiar_db_seguridad();
             $sql = "SELECT MAX(id_banco) as last_id FROM bancos";
             $conexion = $this->get_conex()->prepare($sql);
             $result = $conexion->execute();
