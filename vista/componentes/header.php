@@ -50,7 +50,7 @@
 		        	</a>
 		        	<?php endif; ?>
 		        	<?php if (Conexion::tiene_permiso(GESTIONAR_CONFIGURACION, CONSULTAR)) : ?>
-		        	<a href="#" class="nav_link" title="Configuración"> 
+		        	<a href="?pagina=configuracion_controlador.php&accion=inicio" class="nav_link" title="Configuración"> 
 		        		<i class="bi bi-gear-wide-connected nav_logo-icon"></i>
 		        		<span class="nav_name">Configuración</span> 
 		        	</a>

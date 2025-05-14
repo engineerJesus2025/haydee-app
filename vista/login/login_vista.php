@@ -33,18 +33,7 @@
                         <div class="card-body">
                             <form action="?pagina=login_controlador.php&accion=entrar" method="POST" id="form-login">
                                 <h5 class="card-title text-center p-3">Iniciar sesión</h5>
-                                <?php if(isset($_SESSION["mensaje"])): ?>
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="alert alert-danger d-flex align-items-center" role="alert">
-                                                <span class="bi bi-exclamation-triangle"></span>
-                                                <div>
-                                                    <?php echo $_SESSION["mensaje"]; ?>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                <?php endif; ?>
+                            
                                 <div class="row">
                                     <div class="col-md-12">
                                         <div class="input-group mb-3">

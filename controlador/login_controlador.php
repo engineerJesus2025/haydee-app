@@ -19,7 +19,7 @@
             $resultado = $usuario_obj->validar_usuario();
 
             if ($resultado) {
-                
+
                 if (!password_verify($contrasenia, $resultado["contrasenia"])) {
                     echo json_encode(["estatus"=>false,"mensaje"=>"Contraseña incorrecta"]);
                     exit();

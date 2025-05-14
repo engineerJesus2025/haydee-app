@@ -40,18 +40,6 @@
                                         <button type="button" class="btn btn-primary mb-2" data-bs-toggle="modal" data-bs-target="#modal_roles">Registrar</a>
                                     </div><br>
                                 <?php endif; ?>
-                                <?php if (isset($_SESSION["mensaje"])) : ?>
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="alert alert-danger d-flex align-items-center" role="alert">
-                                                <span class="bi bi-exclamation-triangle"></span>
-                                                <div class="mx-3">
-                                                    <?php echo $_SESSION["mensaje"]; ?>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                <?php endif; ?>
 
                                 <table id="tabla_roles" class="table" style="width:97%">
                                     <thead>
