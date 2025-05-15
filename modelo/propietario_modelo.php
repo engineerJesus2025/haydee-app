@@ -60,7 +60,7 @@ class Propietario extends Conexion{
 
         $conexion = $this->get_conex()->prepare($sql);
         $result = $conexion->execute();
-        //$this->registrar_bitacora(CONSULTAR, GESTIONAR_PROPIETARIOS);
+        $this->registrar_bitacora(CONSULTAR, GESTIONAR_PROPIETARIOS, "TODOS LOS USUARIOS");//registra cuando se entra al modulo de propietarios
 
         $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
 
@@ -102,7 +102,7 @@ class Propietario extends Conexion{
         $conexion->bindParam(":correo", $this->correo);
         $result = $conexion->execute();
 
-        //$this->registrar_bitacora(REGISTRAR, GESTIONAR_PROPIETARIOS); 
+        $this->registrar_bitacora(REGISTRAR, GESTIONAR_PROPIETARIOS, "Propietario: ".$this->nombre." ".$this->apellido); 
 
         if($result == true){
             return ["estatus"=>true, "mensaje"=>"Propietario registrado correctamente"];
@@ -129,7 +129,7 @@ class Propietario extends Conexion{
         $conexion->bindParam(":correo", $this->correo);
         $result = $conexion->execute();
 
-        //$this->registrar_bitacora(MODIFICAR, GESTIONAR_PROPIETARIOS); 
+        $this->registrar_bitacora(MODIFICAR, GESTIONAR_PROPIETARIOS, "Propietario: ".$this->nombre." ".$this->apellido); 
 
         if($result == true){
             return ["estatus"=>true, "mensaje"=>"Propietario editado correctamente"];
@@ -139,12 +139,12 @@ class Propietario extends Conexion{
     }
 
     public function eliminar_propietario(){
+        $propietario_alterado = $this->consultar_propietario();
         $sql = "DELETE FROM propietarios WHERE id_propietario = :id_propietario";
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":id_propietario", $this->id_propietario);
         $result = $conexion->execute();
-
-        //$this->registrar_bitacora(ELIMINAR, GESTIONAR_PROPIETARIOS); 
+        $this->registrar_bitacora(ELIMINAR, GESTIONAR_PROPIETARIOS, "Propietario: ".$propietario_alterado[0]["nombre"]." ".$propietario_alterado[0]["apellido"]); 
 
         if($result == true){
             return ["estatus"=>true, "mensaje"=>"Propietario eliminado correctamente"];

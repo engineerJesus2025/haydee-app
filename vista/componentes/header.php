@@ -32,7 +32,7 @@
 		        	</a>
 		        	<?php endif; ?>
 		        	<?php if (Conexion::tiene_permiso(GESTIONAR_CARTELERA_VIRTUAL, CONSULTAR)) : ?>
-		        	<a href="#" class="nav_link" title="Cartelera Virtual"> 
+		        	<a href="?pagina=cartelera_virtual_controlador.php&accion=inicio" class="nav_link" title="Cartelera Virtual"> 
 		        		<i class="bi bi-tv nav_logo-icon"></i>
 		        		<span class="nav_name">Cartelera Virtual</span> 
 		        	</a>
