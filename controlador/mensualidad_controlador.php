@@ -18,8 +18,7 @@ if (isset($_POST["operacion"])){
         echo json_encode($mensualidad_obj->consultar());
 
         // la hice para que retorne un arreglo, si sale vacio solo mandara un array con false
-    }
-    // SELECT * FROM gastos WHERE YEAR(gastos.fecha) = 2025 && MONTH(gastos.fecha) = 3 && gastos.tipo_gasto = "fijo"
+    }    
     else if($operacion == "gastos_fijos"){
         $mes = date("m");
         $anio = date("Y");

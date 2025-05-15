@@ -20,7 +20,7 @@
 		        	</a>
 		        	<?php endif; ?>
 		        	<?php if (Conexion::tiene_permiso(GESTIONAR_CONCILIACION_BANCARIA, CONSULTAR)) : ?>
-		        	<a href="#" class="nav_link" title="Conciliacion Bancaria"> 
+		        	<a href="?pagina=conciliacion_bancaria_controlador.php&accion=inicio" class="nav_link" title="Conciliacion Bancaria"> 
 		        		<i class="bi bi-bank2 nav_logo-icon"></i>
 		        		<span class="nav_name">Conciliacion Bancaria</span> 
 		        	</a>
