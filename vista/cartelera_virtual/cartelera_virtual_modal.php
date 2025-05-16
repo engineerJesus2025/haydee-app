@@ -55,6 +55,7 @@
                 </div>
             </div>
         </div>
+        <input type="hidden" id="nombre_usuario" value="<?php echo $_SESSION['nombre_completo']; ?>">
 
         <div class="row mb-3">
             <div class="col-md-12 text-center">

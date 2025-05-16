@@ -86,7 +86,7 @@ class Cartelera_virtual extends Conexion
     $sql = "SELECT id_cartelera, titulo, prioridad, fecha, usuarios.nombre as nombre_usuario 
             FROM cartelera_virtual
             INNER JOIN usuarios ON usuarios.id_usuario = cartelera_virtual.usuario_id
-            ORDER BY fecha";
+            ORDER BY fecha ASC";
     $conexion = $this->get_conex()->prepare($sql);
     $result = $conexion->execute();
 
@@ -132,7 +132,11 @@ class Cartelera_virtual extends Conexion
         // $this->registrar_bitacora(REGISTRAR, GESTIONAR_CARTELERA_VIRTUAL, $this->titulo);//registra cuando se registra un nuevo cartelera
 
         if ($result) {
-            return ["estatus" => true, "mensaje" => "Registro exitoso", "imagen_url" => "recursos/img/" . $this->imagen];
+            $id_ultimo = $this->lastId();
+            $this->set_id_cartelera($id_ultimo['mensaje']);
+            $cartelera_alterada = $this->consultar_cartelera_id();
+
+            return ["estatus" => true, "mensaje" => "OK"];
         } else {
             return ["estatus" => false, "mensaje" => "Error al registrar los datos"];
         }
@@ -140,15 +144,15 @@ class Cartelera_virtual extends Conexion
 
     public function editar_publicacion(){
         $this->cambiar_db_seguridad();
-        $sql = "UPDATE cartelera_virtual SET titulo = :titulo, descripcion = :descripcion, fecha = :fecha, tipo = :tipo, imagen = :imagen, prioridad = :prioridad WHERE id_cartelera = :id_cartelera";
+        $sql = "UPDATE cartelera_virtual SET titulo = :titulo, descripcion = :descripcion, fecha = :fecha, imagen = :imagen, prioridad = :prioridad, usuario_id = :usuario_id WHERE id_cartelera = :id_cartelera";
         $conexion = $this->get_conex()->prepare($sql);
+        $conexion->bindParam(":id_cartelera", $this->id_cartelera);
         $conexion->bindParam(":titulo", $this->titulo);
         $conexion->bindParam(":descripcion", $this->descripcion);
         $conexion->bindParam(":fecha", $this->fecha);
-        $conexion->bindParam(":tipo", $this->tipo);
         $conexion->bindParam(":imagen", $this->imagen);
         $conexion->bindParam(":prioridad", $this->prioridad);
-        $conexion->bindParam(":id_cartelera", $this->id_cartelera);
+        $conexion->bindParam(":usuario_id", $this->usuario_id);
         $result = $conexion->execute();
         $this->cambiar_db_negocio();
         // $this->registrar_bitacora(MODIFICAR, GESTIONAR_CARTELERA_VIRTUAL, "ID: ".$this->id_cartelera);//registra cuando se edita un cartelera
@@ -179,13 +183,13 @@ class Cartelera_virtual extends Conexion
     public function lastId()
     {
         $this->cambiar_db_seguridad();
-        $sql = "SELECT MAX(id_cartelera) as id_cartelera FROM cartelera_virtual";
+        $sql = "SELECT MAX(id_cartelera) as last_id FROM cartelera_virtual";
         $conexion = $this->get_conex()->prepare($sql);
         $result = $conexion->execute();
         $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
         $this->cambiar_db_negocio();
         if ($result) {
-            return ["estatus" =>true, $datos[0]['id_cartelera']];
+            return ["estatus" =>true, "mensaje"=>$datos[0]['last_id']];
         } else {
             return ["estatus" => false, "mensaje" => "Error al consultar los datos"];
         }
@@ -208,6 +212,18 @@ class Cartelera_virtual extends Conexion
         }
         return ($result)?true:false;
     }
+
+    public function obtener_imagen_actual() {
+    $this->cambiar_db_seguridad(); // Si usas múltiples bases
+    $sql = "SELECT imagen FROM cartelera_virtual WHERE id_cartelera = :id_cartelera";
+    $conexion = $this->get_conex()->prepare($sql);
+    $conexion->bindParam(":id_cartelera", $this->id_cartelera);
+    $conexion->execute();
+    $this->cambiar_db_negocio();
+
+    $resultado = $conexion->fetch(PDO::FETCH_ASSOC);
+    return $resultado ? $resultado["imagen"] : null;
+}
 
 }
 ?>

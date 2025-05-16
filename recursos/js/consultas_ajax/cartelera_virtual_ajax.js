@@ -5,6 +5,7 @@ let permiso_eliminar = document.querySelector("#permiso_eliminar").value;
 let permiso_editar = document.querySelector("#permiso_editar").value;
 
 let tabla = document.querySelector("#tabla_cartelera_virtual");
+let nombre_usuario = document.querySelector("#nombre_usuario")?.value || "Desconocido";
 let boton_formulario = document.querySelector("#boton_formulario");
 let modal = new bootstrap.Modal(document.querySelector("#modal_cartelera"));
 let formulario_usar = document.querySelector("#form_cartelera");
@@ -37,7 +38,7 @@ document.querySelector('#modal_cartelera').addEventListener('hidden.bs.modal', (
 // Si queremos registrar:
 
 async function registrar() {
-    datos_consulta = new FormData();
+    let datos_consulta = new FormData();
 
     let titulo = document.querySelector("#titulo").value,
         descripcion = document.querySelector("#descripcion").value,
@@ -52,56 +53,40 @@ async function registrar() {
     datos_consulta.append("prioridad", prioridad);
     datos_consulta.append("operacion", "registrar");
 
-   let respuesta = await query(datos_consulta);
+    let respuesta = await query(datos_consulta);
 
-if (respuesta && respuesta.estatus){
-    modal.hide();
-    formulario_usar.reset();
+    if (respuesta && respuesta.estatus) {
+        modal.hide();
+        formulario_usar.reset();
 
-    id_registrado = await last_id();
+        id_registrado = await last_id();
 
-    let imagen_url = respuesta.imagen_url ? respuesta.imagen_url : 'ruta/default.jpg';
+        // Obtener el nombre del autor desde el input del modal
+        nombre_usuario = document.querySelector("#nombre_usuario")?.value || "Desconocido";
 
-    let prioridadTexto, prioridadColor;
+        // Crear fila nueva con los datos
+        let fila_nueva = {
+            id_cartelera: id_registrado.mensaje,
+            fecha: fecha,
+            titulo: titulo,
+            prioridad: prioridad,
+            nombre_usuario: nombre_usuario
+        };
 
-    switch(prioridad){
-        case "1":
-            prioridadTexto = "Alta";
-            prioridadColor = "success";
-            break;
-        case "2":
-            prioridadTexto = "Media";
-            prioridadColor = "warning";
-            break;
-        case "3":
-            prioridadTexto = "Baja";
-            prioridadColor = "danger";
-            break;
-        default:
-            prioridadTexto = "Desconocida";
-            prioridadColor = "secondary";
+        // Insertar la nueva fila visualmente
+        llenarTabla(fila_nueva);
+        data_table.row.add(document.querySelector(`#fila-${id_registrado.mensaje}`)).draw(false);
+        reasignarEventos();
+        consulta_completada();
+    } else {
+        Swal.fire({
+            title: "Error",
+            text: "No se ha podido registrar la publicación",
+            icon: "error",
+            confirmButtonText: "Aceptar",
+            confirmButtonColor: "#e01d22",
+        });
     }
-
-    let acciones = crearBotones(id_registrado.mensaje);
-    let res_data_table = await data_table.row.add([
-    fecha, 
-    titulo, 
-    `<span class="badge bg-${prioridadColor}">${prioridadTexto}</span>`,
-    nombre_usuario, // Columna 3: Prioridad
-    acciones.outerHTML // Columna 4: Acciones
-]).draw(false);
-    reasignarEventos();
-
-    consulta_completada();
-} else {
-    swal.fire({
-        title: "Error",
-        text: "No se ha podido registrar la publicación",
-        icon: "error",
-        confirmButtonText: "Aceptar",
-        confirmButtonColor: "#e01d22",
-    });
-}
 }
 
 // Si queremos consultar:
@@ -131,6 +116,42 @@ function vaciar_tabla() {
     cuerpo_tabla.textContent = null;
 }
 
+function obtenerPrioridadTexto(prioridad) {
+    let texto = "";
+    let color = "";
+
+    switch(prioridad) {
+        case "1":
+        case 1:
+            texto = "Alta";
+            color = "success";
+            break;
+        case "2":
+        case 2:
+            texto = "Media";
+            color = "warning";
+            break;
+        case "3":
+        case 3:
+            texto = "Baja";
+            color = "danger";
+            break;
+        default:
+            texto = "Desconocida";
+            color = "secondary";
+    }
+
+    return `<span class="badge bg-${color}">${texto}</span>`;
+}
+
+function formatearFecha(fechaStr) {
+    const partes = fechaStr.split("-");
+    if (partes.length === 3) {
+        return `${partes[2]}-${partes[1]}-${partes[0]}`; // DD-MM-AAAA
+    }
+    return fechaStr; // En caso de error, retorna original
+}
+
 function llenarTabla(fila) {
     let cuerpo_tabla = document.querySelector('#tabla_cartelera_virtual tbody');
     let fila_tabla = document.createElement("tr");
@@ -138,16 +159,21 @@ function llenarTabla(fila) {
 
     let fecha = document.createElement("td"),
     titulo = document.createElement("td"),
+    autor = document.createElement("td");
+
     prioridad = document.createElement("td");
 
-    fecha.textContent = fila["fecha"];
+    fecha.textContent = formatearFecha(fila["fecha"]);
     titulo.textContent = fila["titulo"];
-    prioridad.textContent = fila["prioridad"];
+    autor.textContent = fila["nombre_usuario"];
+
+    prioridad.innerHTML = obtenerPrioridadTexto(fila["prioridad"]);
 
     let acciones = crearBotones(id_campo);
 
     fila_tabla.appendChild(fecha);
     fila_tabla.appendChild(titulo);
+    fila_tabla.appendChild(autor);
     fila_tabla.appendChild(prioridad);
     fila_tabla.appendChild(acciones);
 
@@ -221,7 +247,7 @@ async function modificar_formulario(e){
 
     const datos_consulta = new FormData();
     datos_consulta.append("id_cartelera", id);
-    datos_consulta.append("operacion", "consultar_especifica");
+    datos_consulta.append("operacion", "consulta_especifica");
 
     const respuesta = await query(datos_consulta);
     const data = respuesta[0];
@@ -231,7 +257,6 @@ async function modificar_formulario(e){
     let fecha = formulario_usar.querySelector("#fecha");
     let imagen = formulario_usar.querySelector("#imagen");
     let prioridad = formulario_usar.querySelector("#prioridad");
-    let usuario = formulario_usar.querySelector("#usuario");
 
     titulo.value = data.titulo;
     descripcion.value = data.descripcion;
@@ -258,19 +283,21 @@ async function modificar(id) {
         descripcion = document.querySelector("#descripcion").value,
         fecha = document.querySelector("#fecha").value,
         imagen = document.querySelector("#imagen").files[0],
-        prioridad = document.querySelector("#prioridad").value,
-        usuario = document.querySelector("#usuario").value;
+        prioridad = document.querySelector("#prioridad").value;
 
     datos_consulta.append("id_cartelera", id);
     datos_consulta.append("titulo", titulo);
     datos_consulta.append("descripcion", descripcion);
     datos_consulta.append("fecha", fecha);
-    datos_consulta.append("imagen", imagen);
     datos_consulta.append("prioridad", prioridad);
-    datos_consulta.append("usuario", usuario);
     datos_consulta.append("operacion", "modificar");
 
-    await query(datos_consulta);
+    // Solo si hay una nueva imagen seleccionada
+    if (imagen !== undefined) {
+        datos_consulta.append("imagen", imagen);
+    }
+
+    let respuesta = await query(datos_consulta);
     formulario_usar.reset();
     modal.hide();
 
@@ -280,22 +307,24 @@ async function modificar(id) {
     document.getElementById("titulo_modal").textContent = "Registrar Publicación";
     consulta_completada();
 
-    let acciones = crearBotones(id);
-    data_table.row(`#fila-${id}`).data([
-        `${titulo}`,
-        `${descripcion}`,
-        `${fecha}`,
-        `<img src="${URL.createObjectURL(imagen)}" class="img-fluid" width="100px" height="100px">`,
-        `${prioridad}`,
-        `<span class="badge bg-${prioridad == "1" ? "success" : "danger"}">${prioridad == "1" ? "Alta" : "Baja"}</span>`,
-        `${usuario}`,
-        `${acciones.outerHTML}`])
-        data_table.draw();
+    // Obtener ruta de imagen actualizada o previa
+    const rutaImagen = respuesta.imagen_url || "recursos/img/default.jpg";
+    const prioridadHTML = obtenerPrioridadTexto(prioridad);
 
-        let fila = document.querySelector(`#fila-${id}`);
-        if (fila) {
+    const acciones = crearBotones(id);
+
+    data_table.row(`#fila-${id}`).data([
+    formatearFecha(fecha),
+    titulo,
+    nombre_usuario,
+    prioridadHTML,
+    acciones.outerHTML
+]).draw();
+
+    const fila = document.querySelector(`#fila-${id}`);
+    if (fila) {
         fila.querySelector(`[value="${id}"]`).addEventListener("click", modificar_formulario);
-        }
+    }
 }
 
 async function last_id() {

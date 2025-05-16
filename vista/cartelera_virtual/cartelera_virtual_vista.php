@@ -65,8 +65,8 @@
                                         <tr>
                                             <th>FECHA</th>
                                             <th>TITULO</th>
-                                            <th>PRIORIDAD</th>
                                             <th>AUTOR</th>
+                                            <th>PRIORIDAD</th>
                                             <th class="text-center">ACCIONES</th>
                                     </thead>
                                     <tbody>
@@ -82,7 +82,7 @@
                                     <div class="modal-dialog modal-lg">
                                         <div class="modal-content">
                                             <div class="modal-header">
-                                                <h5 class="modal-title" id="titulo-modal">Registrar Publicación</h5>
+                                                <h5 class="modal-title" id="titulo_modal">Registrar Publicación</h5>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal"
                                                     aria-label="Close"></button>
                                             </div>
