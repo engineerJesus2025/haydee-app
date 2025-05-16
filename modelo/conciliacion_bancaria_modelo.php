@@ -167,6 +167,29 @@ class Conciliacion_bancaria extends Conexion
         }
     }
 
+    public function buscar_movimientos()
+    {
+        $mes_buscar = date("m",$this->fecha_inicio);
+        $anio_buscar = date("Y",$this->fecha_inicio);
+    
+        $sql = "SELECT * FROM movimientos_bancarios WHERE MONTH(movimientos_bancarios.fecha) = :mes && YEAR(movimientos_bancarios.fecha) = :anio;";
+
+        $conexion = $this->get_conex()->prepare($sql);
+
+        $conexion->bindParam(":anio", $anio_buscar);
+        $conexion->bindParam(":mes", $mes_buscar);
+
+        $result = $conexion->execute();
+        
+        $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
+
+        if ($result == true) {
+            return $datos;
+        } else {
+            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+        }
+    }
+
 
 
 

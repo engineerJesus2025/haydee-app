@@ -48,6 +48,14 @@ if (isset($_POST["operacion"])){
         echo  json_encode($conciliacion_obj->buscar_mes());
         
     }
+    else if ($operacion == "consultar_movimientos"){
+        $fecha = strtotime($_POST["fecha"]);
+        
+        $conciliacion_obj->set_fecha_inicio($fecha);
+
+        echo  json_encode($conciliacion_obj->buscar_movimientos());
+        
+    }
 
     exit;//es salida en ingles... No puede faltar
     }

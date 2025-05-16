@@ -488,7 +488,7 @@ conciliacion:
 * al inicio del mes crear una conciliacion del mes que paso sin procesar :D
 * cuando entre buscar los mes no conciliados :D
 * dar la opcion de cambiar de meses no conciliados :D
-* mostrar pagos y gastos del mes
+* mostrar pagos y gastos del mes seleccionado :D
 * ver conciliaciones (no se si cambiar la tabla o mostrarlo en un modal)
 * en la tabla  dar la opcion para registrar movimiento bancario (form)
 * posteriormente opciones para editar y eliminar
@@ -500,9 +500,12 @@ conciliacion:
 
 buscarMesesNoConciliados();
 
+let fecha_seleccionada = null;
+
 //Asignamos el evento select para que cada que cambie llene la tabla de registros del sistema
 document.getElementById("mes_select").addEventListener("change",e=>{
-	llenarTablaRegistrosSistema(e.target.value);
+	fecha_seleccionada = e.target.value;
+	llenarTablaRegistrosSistema();
 });
 
 async function crearConciliacionBancaria() {
@@ -547,31 +550,32 @@ async function buscarMesesNoConciliados() {
 	});
 }
 
-async function llenarTablaRegistrosSistema(fecha){
+async function llenarTablaRegistrosSistema(){
 	let datos_consulta = new FormData();
 
 	datos_consulta.append("operacion","buscar_mes");
-	datos_consulta.append("fecha",fecha);
+	datos_consulta.append("fecha",fecha_seleccionada);
 
 	let resultados = await query(datos_consulta);
 
 	let tabla = document.querySelector("#tabla_registros_sistema tbody");
 
-	console.log(tabla, resultados);
+	// console.log(tabla, resultados);
 
-	tabla.textContent = null;
 	let fragment = document.createDocumentFragment();
 
 	resultados.map(resultado=>{
 		
 		let fila = document.createElement("tr");
 
+		let acciones_td = document.createElement("td");
 		let ingre_egre_td = document.createElement("td");
 		let fecha_td = document.createElement("td");
 		let monto_td = document.createElement("td");
 		let referencia_td = document.createElement("td");
 		let apar_prove_td = document.createElement("td");
 
+		acciones_td.setAttribute("class","text-center");
 		ingre_egre_td.setAttribute("class","text-center");
 		fecha_td.setAttribute("class","text-center");
 		monto_td.setAttribute("class","text-center");
@@ -582,12 +586,15 @@ async function llenarTablaRegistrosSistema(fecha){
 
 		fila.setAttribute("id",`${accion}-${resultado.id}`);
 
+		let boton_conciliado = crearBoton("Conciliado");
+		acciones_td.appendChild(boton_conciliado);
 		ingre_egre_td.textContent = accion;
 		fecha_td.textContent = resultado.fecha;
-		monto_td.textContent = resultado.monto;
+		monto_td.textContent = resultado.monto + "Bs.";
 		referencia_td.textContent = resultado.referencia;
-		apar_prove_td.textContent = resultado.remitente;
+		apar_prove_td.textContent = `${(accion == "Ingreso")?"Ap. Nº ":''}${resultado.remitente}`;
 
+		fila.appendChild(acciones_td);
 		fila.appendChild(ingre_egre_td);
 		fila.appendChild(fecha_td);
 		fila.appendChild(monto_td);
@@ -597,7 +604,166 @@ async function llenarTablaRegistrosSistema(fecha){
 		fragment.appendChild(fila);
 	})
 
+	tabla.textContent = null;
 	tabla.appendChild(fragment);
 
-	init_data_table()
+	init_data_table();
+	llenarTablaMovimientos();
+}
+
+async function llenarTablaMovimientos() {
+	let tabla_registros = document.querySelectorAll("#tabla_registros_sistema tbody tr");
+	let tabla_movimientos = document.querySelector("#tabla_movimientos_sistema tbody");
+
+	let datos_consulta = new FormData();
+
+	datos_consulta.append("operacion","consultar_movimientos");
+	datos_consulta.append("fecha",fecha_seleccionada);
+
+	let movimientos_bancarios = await query(datos_consulta);
+
+	let fragment = document.createDocumentFragment();
+
+	tabla_registros.forEach(fila=>{		
+		let accion = (fila.id.includes("Ingreso"))?"Ingreso":"Egreso";
+		let id_accion = fila.id.split("-")[1];
+
+		let fila_tr = document.createElement("tr");
+		let td_monto = document.createElement("td");
+		let td_accion = document.createElement("td");;
+
+		let relacion = false;
+
+		movimientos_bancarios.map(movimiento=>{
+			let boton_editar;
+			let boton_eliminar;
+			if (accion == "Ingreso") {				
+				if (movimiento.pago_id == id_accion) {
+					// Poner en la tabla movimientos el valor
+					fila_tr.setAttribute("id",fila.id);
+
+					td_monto.textContent = `${movimiento.monto}bs`;
+
+					boton_editar = crearBoton("Editar",fila.id);
+					boton_eliminar = crearBoton("Eliminar",fila.id);
+					td_accion.appendChild(boton_editar);
+					td_accion.appendChild(boton_eliminar);
+
+					fila_tr.appendChild(td_monto);
+					fila_tr.appendChild(td_accion);
+
+					relacion = true;
+				}
+			}else{
+				if (movimiento.gasto_id == id_accion) {
+					// Poner en la tabla movimientos el valor
+					fila_tr.setAttribute("id",fila.id);
+
+					td_monto.textContent = `${movimiento.monto}bs`;
+					
+					boton_editar = crearBoton("Editar",fila.id);
+					boton_eliminar = crearBoton("Eliminar",fila.id);
+					td_accion.appendChild(boton_editar);
+					td_accion.appendChild(boton_eliminar);
+
+					fila_tr.appendChild(td_monto);
+					fila_tr.appendChild(td_accion);
+
+					relacion = true;
+				}
+			}
+		});
+
+		if (!relacion) {
+			// Poner en la tabla que esta vacio
+			let boton_agregar;
+
+			td_monto.textContent = `No registrado`;
+
+			boton_agregar = crearBoton("Agregar");
+			td_accion.appendChild(boton_agregar);
+
+			fila_tr.appendChild(td_monto);
+			fila_tr.appendChild(td_accion);
+		}
+
+		fragment.appendChild(fila_tr);		
+	});
+
+	tabla_movimientos.textContent = null;
+	tabla_movimientos.appendChild(fragment);	
+}
+
+function crearBoton(boton_nombre,id_fila = null) {
+	// Creamos los botones de las acciones
+
+	let boton = document.createElement("button");
+
+	if (boton_nombre == "Agregar") {
+		let icono_agregar = document.createElement("i");
+		icono_agregar.setAttribute("class", "bi bi-plus-lg");
+		boton.appendChild(icono_agregar);
+
+		boton.setAttribute("type", "button");
+		boton.setAttribute("class", "btn btn-primary btn-sm col-3");
+		boton.setAttribute("tabindex", "-1");
+		boton.setAttribute("role", "button");
+		boton.setAttribute("aria-disabled", "true");
+		boton.setAttribute("data-bs-toggle", "modal");
+		boton.setAttribute("data-bs-target", "#modal_usuario"); // ojo
+
+		boton.setAttribute("title","Agregar Movimiento");		
+	}
+
+	if (boton_nombre == "Editar") {
+		console.log(id_fila)
+		let icono_editar = document.createElement("i");
+		icono_editar.setAttribute("class", "bi bi-pencil-square");
+		boton.appendChild(icono_editar);
+
+		boton.setAttribute("type", "button");
+		boton.setAttribute("class", "btn btn-success btn-sm col-3 me-1");
+		boton.setAttribute("tabindex", "-1");
+		boton.setAttribute("role", "button");
+		boton.setAttribute("aria-disabled", "true");
+		boton.setAttribute("data-bs-toggle", "modal");
+		boton.setAttribute("data-bs-target", "#modal_usuario"); // ojo
+
+		boton.setAttribute("title","Ver mas/Editar");
+		boton.setAttribute("value",id_fila);
+
+	}
+
+	if (boton_nombre == "Eliminar") {
+		let icono_eliminar = document.createElement("i");// le ponemos un icono
+		icono_eliminar.setAttribute("class", "bi bi-trash");// y estilos
+		boton.appendChild(icono_eliminar);
+
+		boton.setAttribute("type", "button");
+		boton.setAttribute("class", "btn btn-danger btn-sm eliminar col-3");
+		boton.setAttribute("tabindex", "-1");
+		boton.setAttribute("role", "button");
+		boton.setAttribute("aria-disabled", "true");		
+
+		boton.setAttribute("title","Eliminar Movimiento");
+		boton.setAttribute("value",id_fila);
+	}
+
+	if (boton_nombre == "Conciliado") {
+		let icono_check = document.createElement("i");
+		icono_check.setAttribute("class", "bi bi-check2");
+		boton.appendChild(icono_check);
+
+		boton.setAttribute("type", "button");
+		boton.setAttribute("class", "btn btn-success btn-sm");
+		boton.setAttribute("tabindex", "-1");
+		boton.setAttribute("role", "button");
+		boton.setAttribute("aria-disabled", "true");
+
+		boton.setAttribute("title","Conciliado");		
+	}
+
+	//boton_editar.addEventListener("click",modificar_formulario)//Esa funcion esta mas abajo
+
+	return boton;
 }

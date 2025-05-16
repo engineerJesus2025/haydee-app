@@ -9,10 +9,10 @@
 	?>
 </head>
 
-<body id="body-pd" style="">
+<body id="body-pd mb-2">
 
 	<div class="container-fluid">
-		<div class="row flex-nowrap ">
+		<div class="row flex-nowrap mb-2">
 			<?php
 				require_once "vista/componentes/sesion.php";
 				require_once "vista/componentes/header.php";
@@ -21,9 +21,9 @@
 			<?php
 				require_once "vista/componentes/navbar.php";
 			?>
-				<main class="col ps-md-2 pt-2">
+				<main class="col ps-md-2 pt-2 mb-5">
 					<div class="page-header pt-3">
-						<h2>CONCILIACION BANCARIA (no terminado)</h2>						
+						<h2>CONCILIACION BANCARIA</h2>						
 					</div>
 					<p class="lead"></p>
 					<hr>
@@ -45,11 +45,12 @@
 					</div>
 					<div class="row mb-3">
                         <div class="col-8">
-                            <div class="card p-2">
-                                <table id="tabla_registros_sistema" class="table caption-top">
+                            <div class="card p-2 pt-3">
+                                <table id="tabla_registros_sistema" class="table caption-top" style="">
                                 	<caption>Registros del Sistema</caption>
                                     <thead>
                                         <tr>
+                                            <th class="text-center">Estado</th>
                                             <th class="text-center">Ingreso/Egreso</th>
                                             <th class="text-center">Fecha</th>
                                             <th class="text-center">Monto</th>
@@ -63,29 +64,12 @@
                                         </tr>
                                     </tbody>
                                 </table>
-                                <!-- <div class="modal fade" id="modal_usuario" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
-                                    <div class="modal-dialog modal-lg">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h1 class="modal-title fs-5" id="titulo_modal">Registrar usuario</h1>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-
-                                                <?php
-                                                require_once "vista/usuarios/usuario_modal.php";
-                                                ?>
-
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div> -->
 
                             </div>
                         </div>
                         <div class="col-4">
-                            <div class="card p-2">
-                                <table id="tabla_registros_sistema" class="table caption-top">
+                            <div class="card p-2 pt-5">
+                                <table id="tabla_movimientos_sistema" class="table caption-top">
                                 	<caption>Movimientos Bancarios</caption>
                                     <thead>
                                         <tr>
@@ -95,32 +79,16 @@
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td colspan="7"><h5>Ningún mes seleccionado</h5></td>
+                                            <td colspan="2"><h6>Ningún mes seleccionado</h6></td>
                                         </tr>
                                     </tbody>
                                 </table>
-                                <!-- <div class="modal fade" id="modal_usuario" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
-                                    <div class="modal-dialog modal-lg">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h1 class="modal-title fs-5" id="titulo_modal">Registrar usuario</h1>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-
-                                                <?php
-                                                require_once "vista/usuarios/usuario_modal.php";
-                                                ?>
-
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div> -->
 
                             </div>
                         </div>
-                        <div class="col-12">
-                        	<button>Guardar</button>
+                        <div class="col-12 text-center mt-3">
+                        	<button class="btn btn-primary">Registrar Conciliación Bancaria</button>
+
                         </div>
                     </div>
 
