@@ -44,13 +44,12 @@ CREATE TABLE `bitacora` (
 
 CREATE TABLE `cartelera_virtual` (
   `id_cartelera` int(11) NOT NULL,
-  `titulo` varchar(100) NOT NULL,
-  `descripcion` varchar(100) NOT NULL,
-  `fecha` date NOT NULL,
-  `tipo` varchar(20) NOT NULL,
-  `imagen` varchar(100) DEFAULT NULL,
-  `prioridad` varchar(10) NOT NULL,
-  `usuario_id` int(11) NOT NULL
+  `titulo` varchar(255) DEFAULT NULL,
+  `descripcion` text DEFAULT NULL,
+  `fecha` date DEFAULT NULL,
+  `imagen` varchar(255) DEFAULT NULL,
+  `prioridad` varchar(11) DEFAULT NULL,
+  `usuario_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -349,7 +348,7 @@ ALTER TABLE `bitacora`
 --
 ALTER TABLE `cartelera_virtual`
   ADD PRIMARY KEY (`id_cartelera`),
-  ADD UNIQUE KEY `usuario_id` (`usuario_id`);
+  ADD KEY `usuario_id` (`usuario_id`);
 
 --
 -- Indices de la tabla `modulos`
@@ -461,6 +460,7 @@ ALTER TABLE `bitacora`
 --
 ALTER TABLE `cartelera_virtual`
   ADD CONSTRAINT `cartelera_virtual_ibfk_1` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id_usuario`) ON DELETE CASCADE ON UPDATE CASCADE;
+COMMIT;
 
 --
 -- Filtros para la tabla `notificaciones`
