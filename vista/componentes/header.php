@@ -38,7 +38,7 @@
 		        	</a>
 		        	<?php endif; ?>
 		        	<?php if (Conexion::tiene_permiso(GESTIONAR_HABITANTES, CONSULTAR)) : ?>
-		        	<a href="#" class="nav_link" title="Habitantes"> 
+		        	<a href="?pagina=habitantes_controlador.php&accion=inicio" class="nav_link" title="Habitantes"> 
 		        		<i class="bi bi-people-fill nav_logo-icon"></i>
 		        		<span class="nav_name">Habitantes</span> 
 		        	</a>
