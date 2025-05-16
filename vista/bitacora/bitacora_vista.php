@@ -36,7 +36,7 @@
                                     <thead>
                                         <tr>
                                             <th>USUARIO</th>
-                                            <th>CARGO</th>
+                                            <th>ROL</th>
                                             <th>FECHA/HORA</th>
                                             <th>MODULO</th>
                                             <th>ACCIÓN</th>
