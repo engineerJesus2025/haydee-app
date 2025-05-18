@@ -33,6 +33,12 @@ document.querySelector('#modal_cartelera').addEventListener('hidden.bs.modal', (
     boton_formulario.textContent = "Registrar";
     document.getElementById("titulo_modal").textContent = "Registrar Publicación";
     formulario_usar.querySelectorAll("[class='w-100").forEach(el => el.textContent = "");
+    document.querySelector("#nombre_imagen_cargada").textContent = "";
+document.querySelector("#boton_eliminar_imagen").classList.add("d-none");
+document.querySelector("#boton_eliminar_imagen").removeAttribute("data-nombre");
+
+const inputOculto = formulario_usar.querySelector("input[name='eliminar_imagen']");
+if (inputOculto) inputOculto.remove();
 });
 
 // Si queremos registrar:
@@ -255,16 +261,28 @@ async function modificar_formulario(e){
     let titulo = formulario_usar.querySelector("#titulo");
     let descripcion = formulario_usar.querySelector("#descripcion");
     let fecha = formulario_usar.querySelector("#fecha");
-    let imagen = formulario_usar.querySelector("#imagen");
     let prioridad = formulario_usar.querySelector("#prioridad");
 
     titulo.value = data.titulo;
     descripcion.value = data.descripcion;
     fecha.value = data.fecha;
-    imagen.value = data.imagen;
     prioridad.value = data.prioridad;
 
-    
+    // Mostrar nombre de imagen
+    const nombreImagen = document.querySelector("#nombre_imagen_cargada");
+    const botonEliminarImagen = document.querySelector("#boton_eliminar_imagen");
+
+    if (data.imagen && data.imagen !== "") {
+        let nombre_archivo = data.imagen.split("/").pop();
+        nombreImagen.textContent = `Imagen cargada: ${nombre_archivo}`;
+        botonEliminarImagen.classList.remove("d-none");
+        botonEliminarImagen.setAttribute("data-nombre", nombre_archivo);
+    } else {
+        nombreImagen.textContent = "No hay imagen cargada.";
+        botonEliminarImagen.classList.add("d-none");
+        botonEliminarImagen.removeAttribute("data-nombre");
+    }
+
     if (!permiso_editar) {
         boton_formulario.setAttribute("hidden", true);
         boton_formulario.setAttribute("disabled", true);
@@ -276,6 +294,7 @@ async function modificar_formulario(e){
     document.getElementById("titulo_modal").textContent = "Modificar Publicación";
     id_modificar = id;
 }
+
 
 async function modificar(id) {
     let datos_consulta = new FormData();
@@ -326,6 +345,29 @@ async function modificar(id) {
         fila.querySelector(`[value="${id}"]`).addEventListener("click", modificar_formulario);
     }
 }
+
+document.querySelector("#boton_eliminar_imagen").addEventListener("click", function() {
+    Swal.fire({
+        title: "¿Eliminar imagen?",
+        text: "La imagen cargada será eliminada de esta publicación.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#e01d22",
+        cancelButtonText: "Cancelar",
+        confirmButtonText: "Sí, eliminar"
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const hiddenEliminar = document.createElement("input");
+            hiddenEliminar.type = "hidden";
+            hiddenEliminar.name = "eliminar_imagen";
+            hiddenEliminar.value = "1";
+            formulario_usar.appendChild(hiddenEliminar);
+
+            document.querySelector("#nombre_imagen_cargada").textContent = "Imagen eliminada.";
+            document.querySelector("#boton_eliminar_imagen").classList.add("d-none");
+        }
+    });
+});
 
 async function last_id() {
     datos_consulta = new FormData();
