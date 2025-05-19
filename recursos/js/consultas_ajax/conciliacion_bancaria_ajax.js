@@ -1,3 +1,8 @@
+/*
+PELIGRO: no terminado
+
+Ni se molesten en leerlo, yo apenas lo entiendo
+*/
 //consultar(); // para llenar la tabla al cargar
 let data_table, id_eliminado, id_registrado,id_modificar, correo_an;
 // VAriables que usaremos mas tarde
@@ -490,7 +495,7 @@ conciliacion:
 * dar la opcion de cambiar de meses no conciliados :D
 * mostrar pagos y gastos del mes seleccionado :D
 * ver conciliaciones (no se si cambiar la tabla o mostrarlo en un modal)
-* en la tabla  dar la opcion para registrar movimiento bancario (form)
+* en la tabla dar la opcion para registrar movimiento bancario (form)
 * posteriormente opciones para editar y eliminar
 * dar la opcion para registrar un pago no correspondido por le sistema
 * dar la opcion para marcar un registro no correspondido por el banco
@@ -506,6 +511,8 @@ document.getElementById("mes_select").addEventListener("change",e=>{
 	fecha_seleccionada = e.target.value;
 	llenarTablaRegistrosSistema();
 });
+
+
 
 async function crearConciliacionBancaria() {
 	//Revisar si no hay del mes pasado
@@ -679,7 +686,7 @@ async function llenarTablaMovimientos() {
 
 			td_monto.textContent = `No registrado`;
 
-			boton_agregar = crearBoton("Agregar");
+			boton_agregar = crearBoton("Agregar",fila.id);
 			td_accion.appendChild(boton_agregar);
 
 			fila_tr.appendChild(td_monto);
@@ -711,7 +718,19 @@ function crearBoton(boton_nombre,id_fila = null) {
 		boton.setAttribute("data-bs-toggle", "modal");
 		boton.setAttribute("data-bs-target", "#modal_movimientos"); // ojo
 
-		boton.setAttribute("title","Agregar Movimiento");		
+		boton.setAttribute("title","Agregar Movimiento");
+		boton.setAttribute("value",id_fila);
+
+		boton.addEventListener("click",e=>{
+			let id_fila;
+			if (e.target.value == undefined) {
+				id_fila = e.target.parentElement.value;
+			}else{
+				id_fila = e.target.value;
+			}
+			
+			mostrarFormulario("",id_fila);
+		})
 	}
 
 	if (boton_nombre == "Editar") {
@@ -731,6 +750,16 @@ function crearBoton(boton_nombre,id_fila = null) {
 		boton.setAttribute("title","Ver mas/Editar");
 		boton.setAttribute("value",id_fila);
 
+		boton.addEventListener("click",e=>{
+			let id_fila;
+			if (e.target.value == undefined) {
+				id_fila = e.target.parentElement.value;
+			}else{
+				id_fila = e.target.value;
+			}
+			
+			mostrarFormulario("",id_fila);
+		})
 	}
 
 	if (boton_nombre == "Eliminar") {
@@ -765,4 +794,22 @@ function crearBoton(boton_nombre,id_fila = null) {
 	//boton_editar.addEventListener("click",modificar_formulario)//Esa funcion esta mas abajo
 
 	return boton;
+}
+
+function mostrarFormulario(accion,id_fila) {
+	// Llenar los datos de sistema
+	// seleccionar fila de registros de sistema
+	let fila_selec = document.getElementById(id_fila);
+	// seleccionar inputs de formulario
+	let monto_s  = document.getElementById("monto_sistema"),
+	pago_gasto_s  = document.getElementById("pago_gasto_sistema"),
+	fecha_s  = document.getElementById("fecha_sistema"),
+	referencia_s  = document.getElementById("referencia_sistema");
+
+	// Le damos valor a esos inputs
+	monto_s.value = fila_selec.childNodes[3].textContent;
+	pago_gasto_s.value = fila_selec.childNodes[5].textContent;
+	fecha_s.value = fila_selec.childNodes[2].textContent;
+	referencia_s.value = fila_selec.childNodes[4].textContent;
+	// console.log(fila_selec, monto_s);
 }

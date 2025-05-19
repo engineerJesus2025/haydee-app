@@ -1,8 +1,9 @@
 <?php 
 require_once "modelo/conciliacion_bancaria_modelo.php";
+require_once "modelo/banco_modelo.php";
 
 $conciliacion_obj = new Conciliacion_bancaria();
-$banco_obj = ;
+$banco_obj = new Banco();
 
 if (isset($_POST["operacion"])){
     $operacion = $_POST["operacion"];
@@ -61,6 +62,7 @@ if (isset($_POST["operacion"])){
     exit;//es salida en ingles... No puede faltar
     }
 
+$registros_bancos = $banco_obj->consultar();
 
 if($accion == "inicio"){    
     require_once "vista/conciliacion_bancaria/conciliacion_bancaria_vista.php";

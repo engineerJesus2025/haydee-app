@@ -12,7 +12,7 @@
             <label for="fecha_movimiento">Fecha del movimiento</label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-calendar2-check"></i></span>
-                <input type="text" class="form-control" name="fecha_movimiento" id="fecha_movimiento" placeholder="Ingrese la Fecha" aria-label="fecha_movimiento" aria-describedby="basic-addon1" minlength="3" maxlength="30">
+                <input type="date" class="form-control" name="fecha_movimiento" id="fecha_movimiento" aria-label="fecha_movimiento" aria-describedby="basic-addon1" minlength="3" maxlength="30">
                 <span class="w-100"></span>
             </div>
         </div>
@@ -43,10 +43,8 @@
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-bank"></i></span>
                 <select class="form-select" aria-label="Default select example" name="banco_movimiento" id="banco_movimiento" form="form_movimientos">
                     <option selected hidden value="">Seleccione el Banco</option>
-                    <option value="Ingreso">Ingreso</option>
-                    <option value="Egreso">Egreso</option>
-                    <?php foreach ($roles as $rol) : ?>
-                        <option value="<?php echo $rol["id_rol"] ?>"><?php echo $rol["nombre"] ?></option>
+                    <?php foreach ($registros_bancos as $registro) : ?>
+                        <option value="<?php echo $registro["id_banco"] ?>"><?php echo $registro["nombre_banco"] ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
@@ -55,36 +53,36 @@
     <h5 class="text-center">Registro del sistema:</h5>
     <div class="row m-3">
         <div class="col-md-6">
-            <label for="contra">Monto según el sistema</label>
+            <label for="monto_sistema">Monto según el sistema</label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-cash-coin"></i></span>
-                <input type="password" class="form-control contra" name="contra" id="contra" placeholder="Monto según el sistema" aria-label="contra" aria-describedby="basic-addon1" minlength="5" maxlength="50">
+                <input type="text" class="form-control" name="monto_sistema" id="monto_sistema" placeholder="Monto según el sistema" aria-label="monto_sistema" aria-describedby="basic-addon1" minlength="5" maxlength="50">
                 <span class="w-100"></span>
             </div>
         </div>
         <div class="col-md-6">
-            <label for="confir_contra">Pago realizado por:</label>
+            <label for="pago_gasto_sistema">Pago realizado por:</label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-person-circle"></i></span>
-                <input type="password" class="form-control confir_contra" name="confir_contra" id="confir_contra" placeholder="Pago realizado por" aria-label="confir_contra" aria-describedby="basic-addon1" minlength="5" maxlength="50">
+                <input type="text" class="form-control" name="pago_gasto_sistema" id="pago_gasto_sistema" placeholder="Pago realizado por" aria-label="pago_gasto_sistema" aria-describedby="basic-addon1" minlength="5" maxlength="50">
                 <span class="w-100"></span>
             </div>
         </div>
     </div>
     <div class="row m-3">
         <div class="col-md-6">
-            <label for="contra">Fecha de registro de Pago</label>
+            <label for="fecha_sistema">Fecha de registro de Pago</label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-calendar-event"></i></span>
-                <input type="password" class="form-control contra" name="contra" id="contra" placeholder="Fecha de registro de Pago" aria-label="contra" aria-describedby="basic-addon1" minlength="5" maxlength="50">
+                <input type="text" class="form-control" name="fecha_sistema" id="fecha_sistema" placeholder="Fecha de registro de Pago" aria-label="fecha_sistema" aria-describedby="basic-addon1" minlength="5" maxlength="50">
                 <span class="w-100"></span>
             </div>
         </div>
         <div class="col-md-6">
-            <label for="confir_contra">Referencia Según el Sistema</label>
+            <label for="referencia_sistema">Referencia Según el Sistema</label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-journal-bookmark-fill"></i></span>
-                <input type="password" class="form-control confir_contra" name="confir_contra" id="confir_contra" placeholder="Referencia Según el Sistema" aria-label="confir_contra" aria-describedby="basic-addon1" minlength="5" maxlength="50">
+                <input type="text" class="form-control" name="referencia_sistema" id="referencia_sistema" placeholder="Referencia Según el Sistema" aria-label="referencia_sistema" aria-describedby="basic-addon1" minlength="5" maxlength="50">
                 <span class="w-100"></span>
             </div>
         </div>
@@ -92,19 +90,19 @@
     <h5 class="text-center">Resumen:</h5>
     <div class="row m-3">
         <div class="col-md-6">
-            <label for="confir_contra">Diferencia</label>
+            <label for="diferencia_tipo">Diferencia</label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-plus-slash-minus"></i></span>
-                <input type="password" class="form-control me-1 confir_contra" name="confir_contra" id="confir_contra" placeholder="Nombre diferencia" aria-label="confir_contra" aria-describedby="basic-addon1" minlength="5" maxlength="50">
-                 <input type="password" class="form-control confir_contra" name="confir_contra" id="confir_contra" placeholder="diferencia" aria-label="confir_contra" aria-describedby="basic-addon1" minlength="5" maxlength="50">
+                <input type="text" class="form-control me-1" name="diferencia_tipo" id="diferencia_tipo" placeholder="Nombre diferencia_tipo" aria-label="diferencia_tipo" aria-describedby="basic-addon1" minlength="5" maxlength="50">
+                 <input type="text" class="form-control" name="diferencia_monto" id="diferencia_monto" placeholder="diferencia_monto" aria-label="diferencia_monto" aria-describedby="basic-addon1" minlength="5" maxlength="50">
                 <span class="w-100"></span>
             </div>
         </div>        
         <div class="col-md-6">
-            <label for="confir_contra">Estado</label>
+            <label for="estado">Estado</label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-brilliance"></i></span>
-                <input type="password" class="form-control confir_contra" name="confir_contra" id="confir_contra" placeholder="Estado" aria-label="confir_contra" aria-describedby="basic-addon1" minlength="5" maxlength="50">
+                <input type="text" class="form-control" name="estado" id="estado" placeholder="Estado" aria-label="estado" aria-describedby="basic-addon1" minlength="5" maxlength="50">
                 <span class="w-100"></span>
             </div>
         </div>
