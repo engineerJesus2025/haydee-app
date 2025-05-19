@@ -9,21 +9,21 @@
 	?>
 </head>
 
-<body id="body-pd mb-2">
+<body id="body-pd mb-2" class="body-pd">
 
 	<div class="container-fluid">
 		<div class="row flex-nowrap mb-2">
 			<?php
 				require_once "vista/componentes/sesion.php";
-				require_once "vista/componentes/header.php";
+				require_once "vista/componentes/navbar.php";
 			?>
 			<div class="col d-flex flex-column  min-vh-100 gris">
 			<?php
-				require_once "vista/componentes/navbar.php";
+				require_once "vista/componentes/header.php";
 			?>
 				<main class="col ps-md-2 pt-2 mb-5">
 					<div class="page-header pt-3">
-						<h2>CONCILIACION BANCARIA</h2>						
+						<h2>CONCILIACION BANCARIA</h2>
 					</div>
 					<p class="lead"></p>
 					<hr>
@@ -31,7 +31,7 @@
 					    <div class="col-4">
 					        <div class="card p-4">
 
-					        	<div class="col-md-8">
+					        	<div class="col-md-12">
 						            <label for="mes_seleccionado">Seleccione el mes para Evaluar</label>
 						            <div class="input-group mb-3">
 						                <span class="input-group-text" id="basic-addon1"><i class="bi bi-calendar2-date"></i></span>
@@ -46,7 +46,7 @@
 					<div class="row mb-3">
                         <div class="col-8">
                             <div class="card p-2 pt-3">
-                                <table id="tabla_registros_sistema" class="table caption-top" style="">
+                                <table id="tabla_registros_sistema" class="table caption-top" style="width: 98%">
                                 	<caption>Registros del Sistema</caption>
                                     <thead>
                                         <tr>
@@ -83,15 +83,27 @@
                                         </tr>
                                     </tbody>
                                 </table>
-
                             </div>
                         </div>
                         <div class="col-12 text-center mt-3">
                         	<button class="btn btn-primary">Registrar Conciliación Bancaria</button>
-
                         </div>
                     </div>
-
+                	<div class="modal fade" id="modal_movimientos" tabindex="-1" aria-labelledby="titulo_modal_movimientos" aria-hidden="true">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h1 class="modal-title fs-5" id="titulo_modal_movimientos">Registrar Movimiento</h1>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <?php
+                                    require_once "vista/conciliacion_bancaria/movimientos_modal.php";
+                                    ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
 				</main>
 				<?php

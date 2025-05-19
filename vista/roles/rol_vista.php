@@ -8,20 +8,19 @@
     require_once "vista/componentes/estilos.php";
     ?>
 </head>
-<body>
+<body class="body-pd">
     <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Rol::tiene_permiso(GESTIONAR_ROLES, ELIMINAR) ?>">
     <input type="text" hidden="" id="permiso_editar" value="<?php echo Rol::tiene_permiso(GESTIONAR_ROLES, MODIFICAR) ?>">
     <div class="container-fluid">
-        <div class="row flex-nowrap ">            
+        <div class="row flex-nowrap ">
             <?php
             require_once "vista/componentes/sesion.php";
-            require_once "vista/componentes/header.php";
+            require_once "vista/componentes/navbar.php";
             ?>
 
             <div class="col d-flex flex-column  min-vh-100 gris">
-
                 <?php
-                require_once "vista/componentes/navbar.php";
+                require_once "vista/componentes/header.php";
                 ?>
 
                 <main class="col ps-md-2 pt-2">

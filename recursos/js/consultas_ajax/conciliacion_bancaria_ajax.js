@@ -5,7 +5,7 @@ let data_table, id_eliminado, id_registrado,id_modificar, correo_an;
 // let permiso_eliminar = document.querySelector("#permiso_eliminar").value;
 // let permiso_editar = document.querySelector("#permiso_editar").value;
 
-// let tabla = document.querySelector("#tabla_usuario"); //La tabla
+let tabla = document.querySelector("#tabla_usuario"); //La tabla
 // let boton_formulario = document.querySelector("#boton_formulario"); // el boton
 // let modal = new bootstrap.Modal("#modal_usuario"); // el modal
 // let formulario_usar = document.querySelector(`#form_usuario`); // el form
@@ -501,7 +501,6 @@ conciliacion:
 buscarMesesNoConciliados();
 
 let fecha_seleccionada = null;
-
 //Asignamos el evento select para que cada que cambie llene la tabla de registros del sistema
 document.getElementById("mes_select").addEventListener("change",e=>{
 	fecha_seleccionada = e.target.value;
@@ -533,7 +532,7 @@ async function buscarMesesNoConciliados() {
 		return;
 	}
 	
-	span_select.textContent = `Hay ${meses_no_conciliados.length} mes${(meses_no_conciliados.length > 1)?'es':''} que falta${(meses_no_conciliados.length > 1)?'n':''} por conciliacion bancaria`
+	span_select.textContent = `Hay ${meses_no_conciliados.length} mes${(meses_no_conciliados.length > 1)?'es':''} que falta${(meses_no_conciliados.length > 1)?'n':''} por conciliación bancaria`
 
 	let select = document.querySelector("#mes_select");
 
@@ -607,7 +606,7 @@ async function llenarTablaRegistrosSistema(){
 	tabla.textContent = null;
 	tabla.appendChild(fragment);
 
-	init_data_table();
+	data_table = await init_data_table();
 	llenarTablaMovimientos();
 }
 
@@ -705,12 +704,12 @@ function crearBoton(boton_nombre,id_fila = null) {
 		boton.appendChild(icono_agregar);
 
 		boton.setAttribute("type", "button");
-		boton.setAttribute("class", "btn btn-primary btn-sm col-3");
+		boton.setAttribute("class", "btn btn-primary btn-sm");
 		boton.setAttribute("tabindex", "-1");
 		boton.setAttribute("role", "button");
 		boton.setAttribute("aria-disabled", "true");
 		boton.setAttribute("data-bs-toggle", "modal");
-		boton.setAttribute("data-bs-target", "#modal_usuario"); // ojo
+		boton.setAttribute("data-bs-target", "#modal_movimientos"); // ojo
 
 		boton.setAttribute("title","Agregar Movimiento");		
 	}
@@ -722,12 +721,12 @@ function crearBoton(boton_nombre,id_fila = null) {
 		boton.appendChild(icono_editar);
 
 		boton.setAttribute("type", "button");
-		boton.setAttribute("class", "btn btn-success btn-sm col-3 me-1");
+		boton.setAttribute("class", "btn btn-success btn-sm me-1");
 		boton.setAttribute("tabindex", "-1");
 		boton.setAttribute("role", "button");
 		boton.setAttribute("aria-disabled", "true");
 		boton.setAttribute("data-bs-toggle", "modal");
-		boton.setAttribute("data-bs-target", "#modal_usuario"); // ojo
+		boton.setAttribute("data-bs-target", "#modal_movimientos"); // ojo
 
 		boton.setAttribute("title","Ver mas/Editar");
 		boton.setAttribute("value",id_fila);
@@ -740,7 +739,7 @@ function crearBoton(boton_nombre,id_fila = null) {
 		boton.appendChild(icono_eliminar);
 
 		boton.setAttribute("type", "button");
-		boton.setAttribute("class", "btn btn-danger btn-sm eliminar col-3");
+		boton.setAttribute("class", "btn btn-danger btn-sm eliminar");
 		boton.setAttribute("tabindex", "-1");
 		boton.setAttribute("role", "button");
 		boton.setAttribute("aria-disabled", "true");		

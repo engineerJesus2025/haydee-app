@@ -2,6 +2,7 @@
 require_once "modelo/conciliacion_bancaria_modelo.php";
 
 $conciliacion_obj = new Conciliacion_bancaria();
+$banco_obj = ;
 
 if (isset($_POST["operacion"])){
     $operacion = $_POST["operacion"];
