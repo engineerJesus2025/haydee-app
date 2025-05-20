@@ -10,7 +10,8 @@
 </head>
 
 <body id="body-pd mb-2" class="body-pd">
-
+    <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Conciliacion_bancaria::tiene_permiso(GESTIONAR_CONCILIACION_BANCARIA, ELIMINAR) ?>">
+    <input type="text" hidden="" id="permiso_editar" value="<?php echo Conciliacion_bancaria::tiene_permiso(GESTIONAR_CONCILIACION_BANCARIA, MODIFICAR) ?>">
 	<div class="container-fluid">
 		<div class="row flex-nowrap mb-2">
 			<?php
@@ -93,7 +94,7 @@
                         <div class="modal-dialog modal-lg">
                             <div class="modal-content">
                                 <div class="modal-header">
-                                    <h1 class="modal-title fs-5" id="titulo_modal_movimientos">Registrar Movimiento</h1>
+                                    <h1 class="modal-title fs-5" id="titulo_modal_movimientos">Registrar Movimiento Bancario</h1>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
                                 <div class="modal-body">
