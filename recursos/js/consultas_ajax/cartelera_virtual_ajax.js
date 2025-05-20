@@ -8,22 +8,23 @@ let tabla = document.querySelector("#tabla_cartelera_virtual");
 let nombre_usuario = document.querySelector("#nombre_usuario")?.value || "Desconocido";
 let boton_formulario = document.querySelector("#boton_formulario");
 let modal = new bootstrap.Modal(document.querySelector("#modal_cartelera"));
+let modalVistaPrevia = new bootstrap.Modal(document.querySelector("#modal_vista_previa"));
 let formulario_usar = document.querySelector("#form_cartelera");
 
 // En caso de que se envie un formulario
 function envio(operacion) {
-        if (operacion == "Editar") {
+    if (operacion == "Editar") {
         id_modificar = boton_formulario.getAttribute("id_modificar");
         modificar(id_modificar);
 
     }
     else if (operacion == "Registrar") {
         registrar();
-    }else{
-		// esto es imposible que pase pero aja
-		mensajes('error',4000,'Atencion',
-		'Ha ocurrido un error durante la operacion, intentelo nuevamente')
-	}
+    } else {
+        // esto es imposible que pase pero aja
+        mensajes('error', 4000, 'Atencion',
+            'Ha ocurrido un error durante la operacion, intentelo nuevamente')
+    }
 }
 
 document.querySelector('#modal_cartelera').addEventListener('hidden.bs.modal', () => {
@@ -34,11 +35,11 @@ document.querySelector('#modal_cartelera').addEventListener('hidden.bs.modal', (
     document.getElementById("titulo_modal").textContent = "Registrar Publicación";
     formulario_usar.querySelectorAll("[class='w-100").forEach(el => el.textContent = "");
     document.querySelector("#nombre_imagen_cargada").textContent = "";
-document.querySelector("#boton_eliminar_imagen").classList.add("d-none");
-document.querySelector("#boton_eliminar_imagen").removeAttribute("data-nombre");
+    document.querySelector("#boton_eliminar_imagen").classList.add("d-none");
+    document.querySelector("#boton_eliminar_imagen").removeAttribute("data-nombre");
 
-const inputOculto = formulario_usar.querySelector("input[name='eliminar_imagen']");
-if (inputOculto) inputOculto.remove();
+    const inputOculto = formulario_usar.querySelector("input[name='eliminar_imagen']");
+    if (inputOculto) inputOculto.remove();
 });
 
 // Si queremos registrar:
@@ -96,7 +97,7 @@ async function registrar() {
 }
 
 // Si queremos consultar:
-async function consultar(){
+async function consultar() {
 
     datos_consulta = new FormData();
     datos_consulta.append("operacion", "consulta");
@@ -104,10 +105,10 @@ async function consultar(){
     vaciar_tabla();
 
 
-    if(!(data.estatus == undefined)){
-		mensajes('error',4000,'Atencion', respuesta.mensaje);
-		return;// en caso de error mandamos un mensaje con el error y nos vamos
-	}
+    if (!(data.estatus == undefined)) {
+        mensajes('error', 4000, 'Atencion', respuesta.mensaje);
+        return;// en caso de error mandamos un mensaje con el error y nos vamos
+    }
 
 
     await data.map(fila => {
@@ -122,11 +123,12 @@ function vaciar_tabla() {
     cuerpo_tabla.textContent = null;
 }
 
+// PARA EL COLOR DE LA PRIORIDAD, COMO SOLO SON 3 OPCIONES HICE MEJOR UN SWITCH CASE
 function obtenerPrioridadTexto(prioridad) {
     let texto = "";
     let color = "";
 
-    switch(prioridad) {
+    switch (prioridad) {
         case "1":
         case 1:
             texto = "Alta";
@@ -150,6 +152,7 @@ function obtenerPrioridadTexto(prioridad) {
     return `<span class="badge bg-${color}">${texto}</span>`;
 }
 
+
 function formatearFecha(fechaStr) {
     const partes = fechaStr.split("-");
     if (partes.length === 3) {
@@ -164,8 +167,8 @@ function llenarTabla(fila) {
     let id_campo = fila["id_cartelera"];
 
     let fecha = document.createElement("td"),
-    titulo = document.createElement("td"),
-    autor = document.createElement("td");
+        titulo = document.createElement("td"),
+        autor = document.createElement("td");
 
     prioridad = document.createElement("td");
 
@@ -183,7 +186,7 @@ function llenarTabla(fila) {
     fila_tabla.appendChild(prioridad);
     fila_tabla.appendChild(acciones);
 
-	fila_tabla.setAttribute("id",`fila-${id_campo}`);
+    fila_tabla.setAttribute("id", `fila-${id_campo}`);
     fila_tabla.setAttribute("id_cartelera", id_campo);
     cuerpo_tabla.appendChild(fila_tabla);
 }
@@ -193,12 +196,22 @@ function crearBotones(id) {
     let acciones = document.createElement("div");
     acciones.setAttribute("class", "row justify-content-evenly");
 
-    let boton_editar = document.createElement("button");
+    // BOTON DE VISTA PREVIA CON EL OJITO
+    let boton_vista_previa = document.createElement("button");
+    let icono_ver = document.createElement("i");
+    icono_ver.setAttribute("class", "bi bi-eye-fill");
+    boton_vista_previa.appendChild(icono_ver);
+    boton_vista_previa.setAttribute("type", "button");
+    boton_vista_previa.setAttribute("class", "btn btn-primary btn-sm col-3");
+    boton_vista_previa.setAttribute("title", "Vista previa");
+    boton_vista_previa.setAttribute("value", id);
+    boton_vista_previa.addEventListener("click", mostrarVistaPrevia);
+    acciones.appendChild(boton_vista_previa);
 
+    let boton_editar = document.createElement("button");
     let icono_editar = document.createElement("i");
     icono_editar.setAttribute("class", "bi bi-pencil-square");
     boton_editar.appendChild(icono_editar);
-
     boton_editar.setAttribute("type", "button");
     boton_editar.setAttribute("class", "btn btn-success btn-sm col-3");
     boton_editar.setAttribute("tabindex", "-1");
@@ -206,11 +219,9 @@ function crearBotones(id) {
     boton_editar.setAttribute("aria-disabled", "true");
     boton_editar.setAttribute("data-bs-toggle", "modal");
     boton_editar.setAttribute("data-bs-target", "#modal_cartelera");
-
     boton_editar.setAttribute("title", "Editar");
     boton_editar.setAttribute("value", id);
     boton_editar.addEventListener("click", modificar_formulario)
-
     acciones.appendChild(boton_editar);
 
     if (permiso_eliminar) {
@@ -247,7 +258,7 @@ async function eliminar(id) {
 }
 
 // Esta funcion prepara el formulario para editar el registro
-async function modificar_formulario(e){
+async function modificar_formulario(e) {
     const boton = e.target.closest("button");
     const id = boton.getAttribute("value");
 
@@ -268,7 +279,7 @@ async function modificar_formulario(e){
     fecha.value = data.fecha;
     prioridad.value = data.prioridad;
 
-    // Mostrar nombre de imagen
+    // Mostrar nombre de imagen, esos id estan en el formulario
     const nombreImagen = document.querySelector("#nombre_imagen_cargada");
     const botonEliminarImagen = document.querySelector("#boton_eliminar_imagen");
 
@@ -293,6 +304,38 @@ async function modificar_formulario(e){
     boton_formulario.textContent = "Modificar";
     document.getElementById("titulo_modal").textContent = "Modificar Publicación";
     id_modificar = id;
+}
+
+//FUNCIONALIDAD DE LA VISTA PREVIA
+async function mostrarVistaPrevia(e) {
+    const boton = e.target.closest("button");
+    const id = boton.getAttribute("value");
+
+    const datos_consulta = new FormData();
+    datos_consulta.append("id_cartelera", id);
+    datos_consulta.append("operacion", "consulta_especifica");
+
+    const respuesta = await query(datos_consulta);
+    const data = respuesta[0];
+
+    document.getElementById("vista_titulo").textContent = data.titulo;
+    document.getElementById("vista_descripcion").textContent = data.descripcion;
+    document.getElementById("vista_fecha").textContent = formatearFecha(data.fecha);
+    document.getElementById("vista_prioridad").innerHTML = obtenerPrioridadTexto(data.prioridad);
+    document.getElementById("vista_autor").textContent = data.nombre_usuario;
+
+    // Resetear mensaje de error por si estaba visible
+    document.getElementById("vista_imagen").style.display = "block";
+    document.getElementById("mensaje_error_imagen").classList.add("d-none");
+
+    const imagen = (data.imagen && data.imagen !== "")
+        ? `recursos/img/${data.imagen}`
+        : "";
+
+    document.getElementById("vista_imagen").setAttribute("src", imagen);
+
+    // Mostrar el modal como los otros
+    modalVistaPrevia.show();
 }
 
 
@@ -333,20 +376,23 @@ async function modificar(id) {
     const acciones = crearBotones(id);
 
     data_table.row(`#fila-${id}`).data([
-    formatearFecha(fecha),
-    titulo,
-    nombre_usuario,
-    prioridadHTML,
-    acciones.outerHTML
-]).draw();
+        formatearFecha(fecha),
+        titulo,
+        nombre_usuario,
+        prioridadHTML,
+        acciones.outerHTML
+    ]).draw();
 
     const fila = document.querySelector(`#fila-${id}`);
     if (fila) {
         fila.querySelector(`[value="${id}"]`).addEventListener("click", modificar_formulario);
     }
+    reasignarEventos();
 }
 
-document.querySelector("#boton_eliminar_imagen").addEventListener("click", function() {
+
+// BOTON PARA ELIMINAR LA IMAGEN EN EL FORMULARIO DE EDITAR
+document.querySelector("#boton_eliminar_imagen").addEventListener("click", function () {
     Swal.fire({
         title: "¿Eliminar imagen?",
         text: "La imagen cargada será eliminada de esta publicación.",
@@ -363,6 +409,7 @@ document.querySelector("#boton_eliminar_imagen").addEventListener("click", funct
             hiddenEliminar.value = "1";
             formulario_usar.appendChild(hiddenEliminar);
 
+            // llAMA A LOS INPUTS QUE ESTAN EN EL MODAL
             document.querySelector("#nombre_imagen_cargada").textContent = "Imagen eliminada.";
             document.querySelector("#boton_eliminar_imagen").classList.add("d-none");
         }
@@ -377,12 +424,12 @@ async function last_id() {
 }
 
 async function query(datos) {
-	let data = await fetch("",{method:"POST", body:datos}).then(res=>{		
-		let result = res.json();		
-		return result;//Convertimos el resultado de json a js y lo mandamos
-	})
-	// console.log(data);
-	return data;
+    let data = await fetch("", { method: "POST", body: datos }).then(res => {
+        let result = res.json();
+        return result;//Convertimos el resultado de json a js y lo mandamos
+    })
+    // console.log(data);
+    return data;
 }
 
 function consulta_completada() {
@@ -445,43 +492,47 @@ observer.observe(document.querySelector("#tabla_cartelera_virtual tbody"), {
 });
 
 function reasignarEventos() {
-	if (id_eliminado){ //Si hay un eliminado que no se ha quitado de la tabla
-		let existe_fila = tabla.querySelector(`#fila-${id_eliminado}`)
-		if (existe_fila) {
-			data_table.row(`#fila-${id_eliminado}`).remove().draw();
-			id_eliminado = null;	
-		}
-	//Esto es porque si la tabla esta paginada, como que no encuentra cual borrar hasta que esta en la pagina que la contiene
-	}
+    if (id_eliminado) { //Si hay un eliminado que no se ha quitado de la tabla
+        let existe_fila = tabla.querySelector(`#fila-${id_eliminado}`)
+        if (existe_fila) {
+            data_table.row(`#fila-${id_eliminado}`).remove().draw();
+            id_eliminado = null;
+        }
+        //Esto es porque si la tabla esta paginada, como que no encuentra cual borrar hasta que esta en la pagina que la contiene
+    }
 
-	// Se asigna el evento eliminar para los botones, esta aqui porque pasa algo parecido a lo de arriba
-	$(".eliminar").on("click",function(e){
-		id = e.target.value;
-		if (id == undefined) {	
-			id = e.target.parentElement.value;
-		}
-		Swal.fire({
-			title: "¿Estás seguro?",
-			text: "¿Está seguro que desea eliminar esta publicación?",
-			showCancelButton: true,
-			confirmButtonText: "Eliminar",
-			confirmButtonColor: "#e01d22",
-			cancelButtonText: "Cancelar",
-			icon: "warning"
-			}).then((resultado) => {
-				if (resultado.isConfirmed) {
-					eliminar(id);				
-				}
-			});
-	});
+    // Se asigna el evento eliminar para los botones, esta aqui porque pasa algo parecido a lo de arriba
+    $(".eliminar").on("click", function (e) {
+        id = e.target.value;
+        if (id == undefined) {
+            id = e.target.parentElement.value;
+        }
+        Swal.fire({
+            title: "¿Estás seguro?",
+            text: "¿Está seguro que desea eliminar esta publicación?",
+            showCancelButton: true,
+            confirmButtonText: "Eliminar",
+            confirmButtonColor: "#e01d22",
+            cancelButtonText: "Cancelar",
+            icon: "warning"
+        }).then((resultado) => {
+            if (resultado.isConfirmed) {
+                eliminar(id);
+            }
+        });
+    });
+     document.querySelectorAll("button[title='Vista previa']").forEach(btn => {
+        btn.removeEventListener("click", mostrarVistaPrevia);
+        btn.addEventListener("click", mostrarVistaPrevia);
+    });
     if (id_registrado) { // en caso de que se haya registrado y no se haya añadido a la tabla
-		let boton_modificar = tabla.querySelector(`[value='${id_registrado.mensaje}']`); 
-		// captura el boton de editar, sino lo encuentra es que no esta en su pagina, y no tiene caso ponerle evento
-		if (boton_modificar) {
-			// si lo encuentra le pone el evento de modificar
-			boton_modificar.addEventListener("click",modificar_formulario);
-			boton_modificar.parentElement.parentElement.parentElement.setAttribute("id",`fila-${id_registrado.mensaje}`);
-			id_registrado = null;
-		}
-	}
+        let boton_modificar = tabla.querySelector(`[value='${id_registrado.mensaje}']`);
+        // captura el boton de editar, sino lo encuentra es que no esta en su pagina, y no tiene caso ponerle evento
+        if (boton_modificar) {
+            // si lo encuentra le pone el evento de modificar
+            boton_modificar.addEventListener("click", modificar_formulario);
+            boton_modificar.parentElement.parentElement.parentElement.setAttribute("id", `fila-${id_registrado.mensaje}`);
+            id_registrado = null;
+        }
+    }
 }

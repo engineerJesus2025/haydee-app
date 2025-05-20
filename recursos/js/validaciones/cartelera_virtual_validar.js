@@ -1,43 +1,46 @@
 $(document).ready(function () {
-   $("#titulo").on("keypress", function (e) {
-      validarKeyPress(/^[A-Za-z \b]*$/, e);
-   });
-    $("#titulo").on("keyup", function () {
-        validarKeyUp(/^[A-Za-z \b]{3,30}$/, $(this), this.nextElementSibling, "Debe ingresar el titulo de la publicación");
-    });
-    $("#descripcion").on("keypress", function (e) {
-        validarKeyPress(/^[A-Za-z \b]*$/, e);
-    });
-    $("#descripcion").on("keyup", function () {
-        validarKeyUp(/^[A-Za-z \b]{3,30}$/, $(this), this.nextElementSibling, "Debe ingresar la descripción de la publicación");
-    });
-    $("#fecha").on("keypress", function (e) {
-        validarKeyPress(/^[0-9\b]*$/, e);
-    });
-    $("#fecha").on("keyup", function () {
-        validarKeyUp(/^[0-9]{7,10}$/, $(this), this.nextElementSibling, "Debe ingresar la fecha de la publicación");
+
+    /* UN solo carácter permitido (letra, número, símbolos básicos) */
+    const regexChar  = /[A-Za-zÁÉÍÓÚáéíóú0-9.,;()'"!?¡¿%°\- ]/;
+
+    /* Texto completo: 3-200 caracteres con los mismos símbolos */
+    const regexTexto = /^[A-Za-zÁÉÍÓÚáéíóú0-9.,;()'"!?¡¿%°\- ]{3,200}$/;
+
+    /* ----------  TÍTULO  ---------- */
+    $("#titulo").on("keypress", e => validarKeyPress(regexChar, e));
+    $("#titulo").on("keyup",   function () {
+        validarKeyUp(regexTexto, $(this), this.nextElementSibling,
+                      "Debe ingresar un título válido (mín. 3 caracteres)");
     });
 
-$("#boton_formulario").on("click", async function (e) {
-    let accion = (e.target.hasAttribute("modificar")) ? "Editar" : "Registrar";
-    e.preventDefault();
-    if (await validarEnvio(accion) == true) {
-        Swal.fire({
-            title: "¿Estás seguro?",
-            text: `¿Está seguro que desea ${accion} esta publicación?`,
-            showCancelButton: true,
-            confirmButtonText: accion,
-            confirmButtonColor: "#1b8a40",
-            cancelButtonText: "Cancelar",
-            icon: "warning"
-        }).then((result) => {
-            if (result.isConfirmed) {
-                envio(accion);
-            }
-        });
-    }
-})
-}); // Fin de AJAX
+    /* ----------  DESCRIPCIÓN  ---------- */
+    $("#descripcion").on("keypress", e => validarKeyPress(regexChar, e));
+    $("#descripcion").on("keyup",   function () {
+        validarKeyUp(regexTexto, $(this), this.nextElementSibling,
+                      "Debe ingresar una descripción válida (mín. 3 caracteres)");
+    });
+
+    /* ----------  FECHA  ---------- */
+    $("#fecha").on("keyup change", () => validarFecha($("#fecha")));
+
+    /* ----------  BOTÓN  ---------- */
+    $("#boton_formulario").on("click", async function (e) {
+        const accion = e.target.hasAttribute("modificar") ? "Editar" : "Registrar";
+        e.preventDefault();
+        if (await validarEnvio(accion, regexTexto)) {
+            Swal.fire({
+                title: "¿Estás seguro?",
+                text: `¿Está seguro que desea ${accion} esta publicación?`,
+                showCancelButton: true,
+                confirmButtonText: accion,
+                confirmButtonColor: "#1b8a40",
+                cancelButtonText: "Cancelar",
+                icon: "warning"
+            }).then(res => { if (res.isConfirmed) envio(accion); });
+        }
+    });
+});
+// Fin de AJAX
 
 function mensajes(icono, tiempo, titulo, mensaje) {
     Swal.fire({
@@ -51,59 +54,39 @@ function mensajes(icono, tiempo, titulo, mensaje) {
     });
 } // Fin de mensajes
 
-async function validarEnvio(accion = "Registrar") {
-    if (validarKeyUp(
-        /^[A-Za-z ]{3,30}$/,
-        $("#titulo"), document.querySelector("#titulo").nextElementSibling, 
-    )== 0){
-        mensajes("error", 2000, "Error", "Debe ingresar el título de la publicación");
-        return false;
-    }
-    if (validarKeyUp(
-        /^[A-Za-z ]{3,30}$/,
-        $("#descripcion"), document.querySelector("#descripcion").nextElementSibling, 
-    )== 0){
-        mensajes("error", 2000, "Error", "Debe ingresar la descripción de la publicación");
-        return false;
-    }
+async function validarEnvio(accion, regexTexto) {
+    if (!validarKeyUp(regexTexto, $("#titulo"), $("#titulo")[0].nextElementSibling))
+        { mensajes("error", 2000, "Error", "Debe ingresar un título válido"); return false; }
+
+    if (!validarKeyUp(regexTexto, $("#descripcion"), $("#descripcion")[0].nextElementSibling))
+        { mensajes("error", 2000, "Error", "Debe ingresar una descripción válida"); return false; }
+
     if (!validarFecha($("#fecha"))) {
-    mensajes("error", 2000, "Error", "Debe ingresar la fecha de la publicación");
-    return false;
-}
-    if (validar_select("prioridad") == false) {
-        mensajes("error", 2000, "Error", "Debe seleccionar la prioridad de la publicación");
-        return false;
+        mensajes("error", 2000, "Error", "Debe ingresar una fecha válida"); return false;
+    }
+    if (!validar_select("prioridad")) {
+        mensajes("error", 2000, "Error", "Debe seleccionar la prioridad"); return false;
     }
     return true;
 }
 
-function validarKeyPress(er, e){
-    key = e.keyCode;
-    tecla = String.fromCharCode(key);
-    a = er.test(tecla);
-    if (!a) {
-        e.preventDefault();
-    }
+
+function validarKeyPress(er, e) {
+    const key = e.keyCode || e.which;
+    if (!er.test(String.fromCharCode(key))) e.preventDefault();
 }
 
-function validarKeyUp(er, etiqueta, etiquetamensaje, mensaje){
-    let valido = er.test(etiqueta.val());
-
-    if (etiquetamensaje) {
-        etiquetamensaje.textContent = valido ? "" : mensaje;
-    }
-
-    return valido ? 1 : 0;
+function validarKeyUp(er, $input, msgElem, msg = "") {
+    const ok = er.test($input.val().trim());
+    if (msgElem) msgElem.textContent = ok ? "" : msg;
+    return ok;
 }
 
 function validar_select(id) {
-	let selec = document.querySelector("#"+id);
-	if (selec.value == '') {
-		return false;
-	}else{
-		return true;
-	}
+    return document.getElementById(id).value.trim() !== "";
 }
-function validarFecha(fechaInput) {
-    return fechaInput.val() !== "";
+
+function validarFecha($input) {
+    const v = $input.val();
+    return /^\d{4}-\d{2}-\d{2}$/.test(v);  // yyyy-mm-dd
 }

@@ -47,6 +47,7 @@
                                     </div><br>
                                 <?php endif; ?>
 
+
                                 <?php if (isset($_SESSION["mensaje"])): ?>
                                     <div class="row ">
                                         <div class="col-md-12">
@@ -102,6 +103,37 @@
                 require_once "vista/componentes/footer.php";
                 require_once "vista/componentes/script.php";
                 ?>
+                <!-- Modal Vista Previa (fuera de todo el layout visual) -->
+                <div class="modal fade" id="modal_vista_previa" tabindex="-1" aria-labelledby="modal_vista_previa_label"
+                    aria-hidden="true">
+                    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Vista Previa de la Publicación</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Cerrar"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p><strong>Título:</strong> <span id="vista_titulo"></span></p>
+                                <p><strong>Descripción:</strong></p>
+                                <p id="vista_descripcion"></p>
+                                <p><strong>Fecha:</strong> <span id="vista_fecha"></span></p>
+                                <p><strong>Prioridad:</strong> <span id="vista_prioridad"></span></p>
+                                <p><strong>Autor:</strong> <span id="vista_autor"></span></p>
+                                <div class="text-center mt-3">
+                                    <img id="vista_imagen" src="" class="img-fluid border rounded"
+                                        style="max-height: 300px;" alt="Vista previa de la imagen"
+                                        onerror="this.style.display='none'; document.getElementById('mensaje_error_imagen').classList.remove('d-none');">
+                                    <p id="mensaje_error_imagen" class="text-danger d-none mt-2">⚠ No se pudo cargar la
+                                        imagen.</p>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
             </div>
         </div>
