@@ -107,6 +107,7 @@ if (isset($_POST["operacion"])){
         $banco_id = $_POST["banco_id"];
         $monto_diferencia = $_POST["monto_diferencia"];
         $tipo_diferencia = $_POST["tipo_diferencia"];
+        $conciliacion_id = $_POST["conciliacion_id"];
 
         $movimientos_obj->set_id_movimiento($id_movimiento);
         $movimientos_obj->set_fecha($fecha);
@@ -116,6 +117,7 @@ if (isset($_POST["operacion"])){
         $movimientos_obj->set_banco_id($banco_id);
         $movimientos_obj->set_monto_diferencia($monto_diferencia);
         $movimientos_obj->set_tipo_diferencia($tipo_diferencia);
+        $movimientos_obj->set_conciliacion_id($conciliacion_id);
 
         echo  json_encode($movimientos_obj->editar());
     }
@@ -127,6 +129,15 @@ if (isset($_POST["operacion"])){
         echo  json_encode($movimientos_obj->eliminar());
     }
     exit;//es salida en ingles... No puede faltar
+}
+
+if (isset($_POST["validar"])) {
+        $validar = $_POST["validar"]; //Esto es igual pero para las validaciones
+        if ($validar == "referencia"){
+            $movimientos_obj->set_referencia($_POST["referencia"]);
+            echo  json_encode($movimientos_obj->verificar_referencia());
+        }
+        exit;
     }
 
 $registros_bancos = $banco_obj->consultar();

@@ -67,6 +67,25 @@ class Movimientos_bancarios extends Conexion
 
     //HAsta aqui todo normal
 
+    public function verificar_referencia()
+    {
+        $sql = "SELECT * FROM movimientos_bancarios WHERE referencia = :referencia";
+        $conexion = $this->get_conex()->prepare($sql);
+        $conexion->bindParam(":referencia", $this->referencia);
+        $result = $conexion->execute();
+        $datos = $conexion->fetch(PDO::FETCH_ASSOC);
+
+        if (isset($datos["referencia"])) {
+            $r["estatus"] = true;
+            $r["busqueda"] = "referencia_movimiento";
+            return $r;
+        } else {
+            $r["estatus"] = false;
+            $r["busqueda"] = "referencia_movimiento";
+            return $r;
+        }
+    }
+
     public function consultar_movimientos()
     {
         $mes_buscar = date("m",$this->fecha);
@@ -121,7 +140,7 @@ class Movimientos_bancarios extends Conexion
         $conexion->bindParam(":fecha", $this->fecha);
         $conexion->bindParam(":monto", $this->monto);
         $conexion->bindParam(":referencia", $this->referencia);
-        $conexion->bindParam(":tipo_movimiento", $tipo_movimiento);
+        $conexion->bindParam(":tipo_movimiento", $this->tipo_movimiento);
         $conexion->bindParam(":banco_id", $this->banco_id);
         $conexion->bindParam(":monto_diferencia", $this->monto_diferencia);
         $conexion->bindParam(":tipo_diferencia", $this->tipo_diferencia);
@@ -193,7 +212,7 @@ class Movimientos_bancarios extends Conexion
             if (empty($this->id_movimiento)) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos estan vacios"];}
 
             if(is_numeric($this->id_movimiento)){
-                if (!($this->validarClaveForanea("usuarios","id_movimiento",$this->id_movimiento))) {
+                if (!($this->validarClaveForanea("movimientos_bancarios","id_movimiento",$this->id_movimiento))) {
                     return ["estatus"=>false,"mensaje"=>"El Movimento seleccionado no existe"];
                 }
                 if ($consulta == "eliminar") {return ["estatus"=>true,"mensaje"=>"OK"];}
@@ -202,11 +221,11 @@ class Movimientos_bancarios extends Conexion
         }
         // Validamos que los campos enviados si existan
 
-        if (!(isset($this->fecha) && isset($this->monto) && isset($this->referencia) && isset($this->tipo_movimiento) && isset($this->banco_id) && isset($this->monto_diferencia) && isset($this->tipo_diferencia) && isset($this->conciliacion_id) && isset($this->pago_id) && isset($this->gasto_id))) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos no se recibieron correctamente"];}
+        if (!(isset($this->fecha) && isset($this->monto) && isset($this->referencia) && isset($this->tipo_movimiento) && isset($this->banco_id) && isset($this->monto_diferencia) && isset($this->tipo_diferencia) && isset($this->conciliacion_id))) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos no se recibieron correctamente"];}
 
         // Validamos que los campos enviados no esten vacios
 
-        if (empty($this->fecha) || empty($this->monto) ||empty($this->referencia) || empty($this->tipo_movimiento) || empty($this->banco_id) || empty($this->monto_diferencia) || empty($this->tipo_diferencia) ||empty($this->conciliacion_id) || empty($this->pago_id) || empty($this->gasto_id)) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos estan vacios"];}
+        if (empty($this->fecha) || empty($this->monto) ||empty($this->referencia) || empty($this->tipo_movimiento) || empty($this->banco_id) || empty($this->tipo_diferencia) ||empty($this->conciliacion_id)) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos estan vacios"];}
 
         // Verificamos si los valores tienen los datos que deberian
         
@@ -225,7 +244,7 @@ class Movimientos_bancarios extends Conexion
         }   
 
         if(is_numeric($this->banco_id)){
-            if (!($this->validarClaveForanea("bancos","banco_id",$this->banco_id))) {
+            if (!($this->validarClaveForanea("bancos","id_banco",$this->banco_id))) {
                 return ["estatus"=>false,"mensaje"=>"El campo 'Banco' seleccionado no existe"];
             }
         }
@@ -250,24 +269,26 @@ class Movimientos_bancarios extends Conexion
             return ["estatus"=>false,"mensaje"=>"La 'Conciliacion' seleccionada no posee un valor valido"];
         }
 
-        if(is_numeric($this->pago_id)){
-            if (!($this->validarClaveForanea("pagos","id_pago",$this->pago_id))) {
-                return ["estatus"=>false,"mensaje"=>"El 'Pago de Mensualidad' seleccionado no existe"];
+        if (isset($this->pago_id)) {
+            if(is_numeric($this->pago_id)){
+                if (!($this->validarClaveForanea("pagos","id_pago",$this->pago_id))) {
+                    return ["estatus"=>false,"mensaje"=>"El 'Pago de Mensualidad' seleccionado no existe"];
+                }
+            }
+            else{
+                return ["estatus"=>false,"mensaje"=>"El 'Pago de Mensualidad' seleccionado no posee un valor valido"];
             }
         }
-        else{
-            return ["estatus"=>false,"mensaje"=>"El 'Pago de Mensualidad' seleccionado no posee un valor valido"];
-        }
-
-        if(is_numeric($this->gasto_id)){
-            if (!($this->validarClaveForanea("gastos","id_gasto",$this->gasto_id))) {
-                return ["estatus"=>false,"mensaje"=>"El 'Pago de Servicio' seleccionado no existe"];
+        if (isset($this->gasto_id)) {
+            if(is_numeric($this->gasto_id)){
+                if (!($this->validarClaveForanea("gastos","id_gasto",$this->gasto_id))) {
+                    return ["estatus"=>false,"mensaje"=>"El 'Pago de Servicio' seleccionado no existe"];
+                }
+            }
+            else{
+                return ["estatus"=>false,"mensaje"=>"El 'Pago de Servicio' seleccionado no posee un valor valido"];
             }
         }
-        else{
-            return ["estatus"=>false,"mensaje"=>"El 'Pago de Servicio' seleccionado no posee un valor valido"];
-        }
-
 
         return ["estatus"=>true,"mensaje"=>"OK"];
     }

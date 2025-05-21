@@ -4,7 +4,8 @@ PELIGRO: no terminado
 Ni se molesten en leerlo, yo apenas lo entiendo
 */
 /*Validaciones Faltan*/
-let data_table, id_eliminado, id_registrado, id_modificar;
+let data_table, referencia_an
+// id_eliminado, id_registrado, id_modificar;
 // VAriables que usaremos mas tarde
 //guardamos los permisosdel usuario
 let permiso_eliminar = document.querySelector("#permiso_eliminar").value;
@@ -19,17 +20,19 @@ conciliacion:
 * cuando entre buscar los mes no conciliados :D
 * dar la opcion de cambiar de meses no conciliados :D
 * mostrar pagos y gastos del mes seleccionado :D
-* Agregar Validaciones
-* en la tabla dar la opcion para registrar movimiento bancario (form)
-* funcionalidad para registrar
-* posteriormente opciones para editar y eliminar
-* consultar y llenar formulario al editar
-* funcionalidad a eliminar
+* Agregar Validaciones :D
+* en la tabla dar la opcion para registrar movimiento bancario (form) :D
+* funcionalidad para registrar :d
+* posteriormente opciones para editar y eliminar:D
+* consultar y llenar formulario al editar :D
+* funcionalidad a eliminar :D
 * dar la opcion para registrar un pago no correspondido por le sistema
 * dar la opcion para marcar un registro no correspondido por el banco
 * al final un boton para guardar conciliacion bancaria
 * ver conciliaciones (no se si cambiar la tabla o mostrarlo en un modal)
 * Agregar bitacora
+* confirmaciones con boostap
+* Actualizar data_table
 * debatir si usar data table :/
 */
 
@@ -340,13 +343,17 @@ function crearBoton(boton_nombre,id = '', accion = '',id_movimiento = '') {
 		boton.setAttribute("aria-disabled", "true");
 		boton.setAttribute("data-bs-toggle", "modal");
 		boton.setAttribute("data-bs-target", "#modal_movimientos"); // ojo
-
+		boton.setAttribute("value",id);
 		boton.setAttribute("title","Agregar Movimiento");
 
 		boton.addEventListener("click",e=>{
+			// Le damos al boton la info que necesita
+			boton_formulario.setAttribute("id",id);
+			boton_formulario.setAttribute("op","Registrar");
+
 			// preparamos el formulario
 			prepararFormulario(accion,id);
-		})
+		});
 	}
 
 	if (boton_nombre == "Editar") {
@@ -362,6 +369,7 @@ function crearBoton(boton_nombre,id = '', accion = '',id_movimiento = '') {
 		boton.setAttribute("data-bs-toggle", "modal");
 		boton.setAttribute("data-bs-target", "#modal_movimientos"); // ojo
 		boton.setAttribute("title","Ver mas/Editar");
+		boton.setAttribute("value",id_movimiento);
 
 		boton.addEventListener("click",e=>{
 			// Le damos al boton la info que necesita
@@ -374,7 +382,7 @@ function crearBoton(boton_nombre,id = '', accion = '',id_movimiento = '') {
 			// preparamos el formulario
 			prepararFormulario(accion,id,id_movimiento);
 			llenarFormulario(id_movimiento);
-		})
+		});
 	}
 
 	if (boton_nombre == "Eliminar") {
@@ -390,6 +398,22 @@ function crearBoton(boton_nombre,id = '', accion = '',id_movimiento = '') {
 
 		boton.setAttribute("title","Eliminar Movimiento");
 		boton.setAttribute("value",id);
+
+		boton.addEventListener("click",e=>{
+			Swal.fire({
+			title: "¿Estás seguro?",
+			text: "¿Está seguro que desea eliminar este Movimiento?",
+			showCancelButton: true,
+			confirmButtonText: "Eliminar",
+			confirmButtonColor: "#e01d22",
+			cancelButtonText: "Cancelar",
+			icon: "warning"
+			}).then((resultado) => {
+				if (resultado.isConfirmed) {
+					eliminarMovimiento(id);
+				}
+			});
+		});
 	}
 
 	if (boton_nombre == "Conciliado") {
@@ -470,11 +494,7 @@ function prepararFormulario(accion,id_fila,id_movimiento = '') {
 		diferencia_t.parentElement.parentElement.setAttribute("hidden","");
 		estado.parentElement.parentElement.setAttribute("hidden","");
 		titulo2.setAttribute("hidden","");
-		titulo3.setAttribute("hidden","");
-
-		// Le damos al boton la info que necesita
-		boton_formulario.setAttribute("id",id_fila);
-		boton_formulario.setAttribute("op","Registrar");
+		titulo3.setAttribute("hidden","");		
 
 		return;
 	}
@@ -541,7 +561,7 @@ async function registrar(id_fila) {
 	
 	//Llamamos a la funcion para hacer la consulta
 	let respuesta = await query(datos_consulta); 
-	
+	console.log(datos_consulta);
 	modal_movimientos.hide(); //Esconde el modal
 	formulario_usar.reset();//Limpia el formulario
 
@@ -594,6 +614,8 @@ async function llenarFormulario(id){
 	diferencia_tipo.value = respuesta.tipo_diferencia;
 	diferencia_monto.value = respuesta.monto_diferencia;
 
+	referencia_an = referencia.value;// Guardamos la ref para futuras validaciones
+
 	// este if revisa si tiene permiso para editar, en caso de que no, quitamos el boton
 	if(!permiso_editar){
 		boton_formulario.setAttribute("hidden",true);
@@ -607,6 +629,8 @@ async function llenarFormulario(id){
 }
 
 async function editarMovimiento(id){
+	let select = document.querySelector("#mes_select");
+
 	//Creamos el formData
 	let datos_consulta = new FormData();
 
@@ -618,7 +642,8 @@ async function editarMovimiento(id){
 	tipo_movimiento = formulario_usar.querySelector("#tipo_movimiento").value,
 	banco_id = formulario_usar.querySelector("#banco_movimiento").value,
 	monto_diferencia = formulario_usar.querySelector("#diferencia_monto").value,
-	tipo_diferencia = formulario_usar.querySelector("#diferencia_tipo").value;
+	tipo_diferencia = formulario_usar.querySelector("#diferencia_tipo").value,
+	conciliacion_id = select[select.options.selectedIndex].id;
 
 	// Le ponemos los datos del formulario
 	datos_consulta.append("id_movimiento",id_movimiento);
@@ -629,6 +654,7 @@ async function editarMovimiento(id){
 	datos_consulta.append("banco_id",banco_id);
 	datos_consulta.append("monto_diferencia",monto_diferencia);
 	datos_consulta.append("tipo_diferencia",tipo_diferencia);
+	datos_consulta.append("conciliacion_id",conciliacion_id);
 
 	//Aqui decimos que vamos a hacer
 	datos_consulta.append('operacion','modificar_movimiento');
@@ -637,7 +663,7 @@ async function editarMovimiento(id){
 	let respuesta = await query(datos_consulta);
 
 	formulario_usar.reset(); //Limpiamos el formulario
- 	modal.hide(); // escondemos el modal
+ 	modal_movimientos.hide(); // escondemos el modal
 
  	// Resvisamos el resultado
 	if (!respuesta.estatus) {
@@ -650,7 +676,12 @@ async function editarMovimiento(id){
 	boton_formulario.removeAttribute("id_modificar");	
 	boton_formulario.textContent = "Registrar";
 
-	document.getElementById('titulo_modal').textContent = "Registrar Movimiento Bancario";
+	document.getElementById('titulo_modal_movimientos').textContent = "Registrar Movimiento Bancario";
+
+	//Actualizar las tablas
+	llenarTablaRegistrosSistema();
+
+	data_table.draw(); // glu glu *Se refresca*
 
 	mensajes('success',4000,'Atencion','El registro se ha modificado exitosamente');//Mensaje de que se completo la operacion	
 }
@@ -675,24 +706,30 @@ async function eliminarMovimiento(id) {
 		return;// en caso de error mandamos un mensaje con el error y nos vamos
 	}
 
+	//Actualizar las tablas
+	llenarTablaRegistrosSistema();
+
+	data_table.draw(); // glu glu *Se refresca*
+
 	mensajes('success',4000,'Atencion','El registro ha sido eliminado correctamente');//Mensaje de que se completo la operacion
 }
 
-//En caso de que se envie un formulario
+//En caso de que se envie un formulario, punto de entrada del validar.js
 function envio(operacion) {	
-	if (operacion == "Editar") {
-		id_modificar = boton_formulario.getAttribute("id_modificar");//obtenemos el id del registro
-		modificar(id_modificar);
+	id_utilizar = boton_formulario.getAttribute("id");//obtenemos el id del registro
+	if (operacion == "Editar") {		
+		editarMovimiento(id_utilizar);
 	}
 	else if(operacion == "Registrar"){
 		//sino a registrar
-		registrar();
+		registrar(id_utilizar);
 	}else{
 		// esto es imposible que pase pero aja
 		mensajes('error',4000,'Atencion',
 		'Ha ocurrido un error durante la operacion, intentelo nuevamente')
 	}
 }
+
 
 // esta funcion obtiene el ultimo id registrado en la base de datos
 async function last_id() {
@@ -803,9 +840,9 @@ function reasignarEventos() {
 			icon: "warning"
 			}).then((resultado) => {
 				if (resultado.isConfirmed) {
-					eliminar(id);				
+					eliminar(id);
 				}
-			});
+		});
 	});
 
 	if (id_registrado) { // en caso de que se haya registrado y no se haya añadido a la tabla

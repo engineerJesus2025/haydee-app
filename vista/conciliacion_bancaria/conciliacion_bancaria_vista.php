@@ -115,6 +115,7 @@
 		</div>
 	</div>
 	<script type="text/javascript" src="recursos/js/consultas_ajax/conciliacion_bancaria_ajax.js"></script>
+    <script type="text/javascript" src="recursos/js/validaciones/conciliacion_bancaria_validar.js"></script>
 </body>
 
 </html>

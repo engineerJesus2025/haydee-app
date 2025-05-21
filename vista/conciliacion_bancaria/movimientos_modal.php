@@ -4,7 +4,7 @@
             <label for="monto_movimiento">Monto del movimiento</label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-coin"></i></span>
-                <input type="text" class="form-control" name="monto_movimiento" id="monto_movimiento" placeholder="Ingrese el Monto" aria-label="monto_movimiento" aria-describedby="basic-addon1" minlength="3" maxlength="30">
+                <input type="number" class="form-control" name="monto_movimiento" id="monto_movimiento" placeholder="Ingrese el Monto" aria-label="monto_movimiento" aria-describedby="basic-addon1" min="1" step="any">
                 <span class="w-100"></span>
             </div>
         </div>
@@ -31,7 +31,7 @@
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-bank"></i></span>
                 <select class="form-select" aria-label="Default select example" name="banco_movimiento" id="banco_movimiento" form="form_movimientos">
-                    <option selected hidden value="seleccionar">Seleccione el Banco</option>
+                    <option selected hidden value="">Seleccione el Banco</option>
                     <?php foreach ($registros_bancos as $registro) : ?>
                         <option value="<?php echo $registro["id_banco"] ?>"><?php echo $registro["nombre_banco"] ?></option>
                     <?php endforeach; ?>
