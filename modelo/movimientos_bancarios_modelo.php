@@ -91,7 +91,7 @@ class Movimientos_bancarios extends Conexion
         $mes_buscar = date("m",$this->fecha);
         $anio_buscar = date("Y",$this->fecha);
     
-        $sql = "SELECT * FROM movimientos_bancarios WHERE MONTH(movimientos_bancarios.fecha) = :mes && YEAR(movimientos_bancarios.fecha) = :anio;";
+        $sql = "SELECT * FROM movimientos_bancarios WHERE MONTH(movimientos_bancarios.fecha) = :mes && YEAR(movimientos_bancarios.fecha) = :anio ORDER BY fecha";
 
         $conexion = $this->get_conex()->prepare($sql);
 
@@ -256,8 +256,8 @@ class Movimientos_bancarios extends Conexion
             return ["estatus"=>false,"mensaje"=>"El Monto en 'Resumen' no posee un valor valido"];
         }
 
-        if(!(is_string($this->tipo_diferencia)) || !(preg_match("/^[A-Za-z\b]*$/",$this->tipo_diferencia))){
-            return ["estatus"=>false,"mensaje"=>"El Nombre de la difrenecia en 'Resumen' no posee un valor valido"];
+        if(!(is_string($this->tipo_diferencia)) || !(preg_match("/^[A-Za-z \b]*$/",$this->tipo_diferencia))){
+            return ["estatus"=>false,"mensaje"=>"El Nombre del Tipo de Diferencia en 'Resumen' no posee un valor valido"];
         }
 
         if(is_numeric($this->conciliacion_id)){

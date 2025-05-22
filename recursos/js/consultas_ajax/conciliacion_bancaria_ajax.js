@@ -3,16 +3,12 @@ PELIGRO: no terminado
 
 Ni se molesten en leerlo, yo apenas lo entiendo
 */
-/*Validaciones Faltan*/
 let data_table, referencia_an
 // id_eliminado, id_registrado, id_modificar;
 // VAriables que usaremos mas tarde
 //guardamos los permisosdel usuario
 let permiso_eliminar = document.querySelector("#permiso_eliminar").value;
 let permiso_editar = document.querySelector("#permiso_editar").value;
-
-
-// let boton_formulario = document.querySelector("#boton_formulario"); // el boton
 /*
 TO DO
 conciliacion:
@@ -26,8 +22,9 @@ conciliacion:
 * posteriormente opciones para editar y eliminar:D
 * consultar y llenar formulario al editar :D
 * funcionalidad a eliminar :D
-* dar la opcion para registrar un pago no correspondido por le sistema
-* dar la opcion para marcar un registro no correspondido por el banco
+* dar la opcion para registrar un pago no correspondido por le sistema :D
+* dar la opcion para marcar un registro no correspondido por el banco :D
+* Calcular conciliacion y mostrarla
 * al final un boton para guardar conciliacion bancaria
 * ver conciliaciones (no se si cambiar la tabla o mostrarlo en un modal)
 * Agregar bitacora
@@ -45,6 +42,7 @@ let tabla_movimientos = document.querySelector("#tabla_movimientos_sistema");
 let modal_movimientos = new bootstrap.Modal("#modal_movimientos"); // el modal
 let formulario_usar = document.querySelector(`#form_movimientos`); // el form
 let boton_formulario = document.getElementById("boton_formulario");
+
 //Eventos:
 //Asignamos el evento select para que cada que cambie llene la tabla de registros del sistema
 document.getElementById("mes_select").addEventListener("change",e=>{
@@ -69,13 +67,13 @@ document.getElementById('modal_movimientos').addEventListener("hide.bs.modal",e=
 	let titulo2 = document.getElementById("registro_sistema"),
 	titulo3 = document.getElementById("resumen");
 
-	monto_s.removeAttribute("hidden");
-	pago_gasto_s.removeAttribute("hidden");
-	fecha_s.removeAttribute("hidden");
-	referencia_s.removeAttribute("hidden");
-	diferencia_m.removeAttribute("hidden");
-	diferencia_t.removeAttribute("hidden");
-	estado.removeAttribute("hidden");
+	monto_s.parentElement.parentElement.removeAttribute("hidden");
+	pago_gasto_s.parentElement.parentElement.removeAttribute("hidden");
+	fecha_s.parentElement.parentElement.removeAttribute("hidden");
+	referencia_s.parentElement.parentElement.removeAttribute("hidden");
+	diferencia_m.parentElement.parentElement.removeAttribute("hidden");
+	diferencia_t.parentElement.parentElement.removeAttribute("hidden");
+	estado.parentElement.parentElement.removeAttribute("hidden");
 	titulo2.removeAttribute("hidden");
 	titulo3.removeAttribute("hidden");
 
@@ -236,20 +234,79 @@ async function llenarTablaMovimientos() {
 	let movimientos_bancarios = await query(datos_consulta);
 
 	let fragment = document.createDocumentFragment();
+	tabla_registros_filas.forEach((fila,index)=>{
 
-	tabla_registros_filas.forEach(fila=>{		
 		let accion = (fila.id.includes("Ingreso"))?"Ingreso":"Egreso";
 		let id_accion = fila.id.split("-")[1];
-
+		
 		let fila_tr = document.createElement("tr");
 		let td_monto = document.createElement("td");
-		let td_accion = document.createElement("td");;
+		let td_accion = document.createElement("td");
+
+		let ultima = false;
+		let tr_ultima;
 
 		let relacion = false;
 
-		movimientos_bancarios.map(movimiento=>{
+		movimientos_bancarios.map((movimiento,index_m)=>{
 			let boton_editar;
 			let boton_eliminar;
+			// console.log(tabla_registros_filas.length == index + 1 && movimientos_bancarios.length == index_m + 1, index_m+1, index+1);
+			if (movimiento.pago_id == null && movimiento.gasto_id == null) {
+				// Revisamos si ya la pusimos 0.0
+				let existe = fila.parentElement.querySelector(`#Movimiento-${movimiento.id_movimiento}`);
+				if (existe) {return;}
+				if (!(fila.children[2].textContent > movimiento.fecha && 
+					movimiento.fecha.split("-")[2] < new Date(movimiento.fecha.split("-")[0],movimiento.fecha.split("-")[1] + 1,0).getDate()
+					) && !(tabla_registros_filas.length == index + 1 && movimientos_bancarios.length == index_m + 1)) {return;}
+				//Insertando en registro-sistema
+				let fila_sistema = document.createElement("tr");
+				fila_sistema.setAttribute("id",`Movimiento-${movimiento.id_movimiento}`);
+
+				let td_estatus = document.createElement("td");
+				let td_sistema = document.createElement("td");
+				td_sistema.setAttribute("colspan",5);
+				td_sistema.setAttribute("class","text-center");
+				td_sistema.textContent = `No hay Registro en el sistema para este Movimiento`;
+
+				let boton_estatus = crearBoton("Sin Correspondencia",true);
+				td_estatus.appendChild(boton_estatus);
+				td_estatus.setAttribute("class","text-center");
+				// Recursividad Papa
+
+				fila_sistema.appendChild(td_estatus);
+				fila_sistema.appendChild(td_sistema);
+				// El padre le dice al hijo que se lo meta despues <..>
+
+				let fila_tr_otro = document.createElement("tr");
+				let td_monto_otro = document.createElement("td");
+				let td_accion_otro = document.createElement("td");
+
+				// Poner en la tabla movimientos el valor
+				fila_tr_otro.setAttribute("id",`Movimiento-${movimiento.id_movimiento}`);
+
+				td_monto_otro.textContent = `${movimiento.monto}bs`;
+				
+				boton_editar = crearBoton("Editar",fila.id,`Ninguna-${movimiento.tipo_movimiento}`,movimiento.id_movimiento);
+				boton_eliminar = crearBoton("Eliminar",movimiento.id_movimiento);
+				// boton_agregar_no_correspondido = crearBoton("No Correspondido",fila.id,'',movimiento.id_movimiento);
+
+				td_accion_otro.appendChild(boton_editar);
+				td_accion_otro.appendChild(boton_eliminar);
+				// td_accion_otro.appendChild(boton_agregar_no_correspondido);
+
+				fila_tr_otro.appendChild(td_monto_otro);
+				fila_tr_otro.appendChild(td_accion_otro);
+				fragment.appendChild(fila_tr_otro);
+
+				ultima = tabla_registros_filas.length == index + 1 && movimientos_bancarios.length == index_m + 1;
+				if (ultima) {
+					tr_ultima = fila_tr_otro;
+					fila.parentElement.insertBefore(fila_sistema,fila.nextSibling);
+				}else{
+					fila.parentElement.insertBefore(fila_sistema,fila);
+				}		
+			}
 			if (accion == "Ingreso") {
 				if (movimiento.pago_id == id_accion) {
 					// Poner en la tabla movimientos el valor
@@ -259,8 +316,11 @@ async function llenarTablaMovimientos() {
 
 					boton_editar = crearBoton("Editar",fila.id,accion,movimiento.id_movimiento);
 					boton_eliminar = crearBoton("Eliminar",movimiento.id_movimiento);
+					boton_agregar_no_correspondido = crearBoton("No Correspondido",fila.id,'',movimiento.id_movimiento);
+
 					td_accion.appendChild(boton_editar);
 					td_accion.appendChild(boton_eliminar);
+					td_accion.appendChild(boton_agregar_no_correspondido);
 
 					fila_tr.appendChild(td_monto);
 					fila_tr.appendChild(td_accion);
@@ -274,7 +334,8 @@ async function llenarTablaMovimientos() {
 						estado_registro.appendChild(boton_diferencia);
 					}
 				}
-			}else{
+			}
+			else if (accion == "Egreso") {
 				if (movimiento.gasto_id == id_accion) {
 					// Poner en la tabla movimientos el valor
 					fila_tr.setAttribute("id",fila.id);
@@ -283,8 +344,11 @@ async function llenarTablaMovimientos() {
 					
 					boton_editar = crearBoton("Editar",fila.id,accion,movimiento.id_movimiento);
 					boton_eliminar = crearBoton("Eliminar",movimiento.id_movimiento);
+					boton_agregar_no_correspondido = crearBoton("No Correspondido",fila.id,'',movimiento.id_movimiento);
+
 					td_accion.appendChild(boton_editar);
 					td_accion.appendChild(boton_eliminar);
+					td_accion.appendChild(boton_agregar_no_correspondido);
 
 					fila_tr.appendChild(td_monto);
 					fila_tr.appendChild(td_accion);
@@ -308,7 +372,10 @@ async function llenarTablaMovimientos() {
 			td_monto.textContent = `No registrado`;
 
 			boton_agregar = crearBoton("Agregar",fila.id,accion);
+			boton_agregar_no_correspondido = crearBoton("No Correspondido",fila.id);
+
 			td_accion.appendChild(boton_agregar);
+			td_accion.appendChild(boton_agregar_no_correspondido);
 
 			fila_tr.appendChild(td_monto);
 			fila_tr.appendChild(td_accion);
@@ -317,18 +384,23 @@ async function llenarTablaMovimientos() {
 			let boton_diferencia = crearBoton("Sin Movimiento");
 			estado_registro.textContent = null;
 			estado_registro.appendChild(boton_diferencia);
+
+			if (ultima) {
+				fragment.insertBefore(fila_tr,tr_ultima);
+				return;
+			}
 		}
 
-		fragment.appendChild(fila_tr);		
+		fragment.appendChild(fila_tr);
 	});
 
 	tabla_movimientos_tbody.textContent = null;
-	tabla_movimientos_tbody.appendChild(fragment);	
+	tabla_movimientos_tbody.appendChild(fragment);
 }
 
 function crearBoton(boton_nombre,id = '', accion = '',id_movimiento = '') {
 	// Creamos los botones de las acciones
-
+	// es como el crear botones 2.0
 	let boton = document.createElement("button");
 
 	if (boton_nombre == "Agregar") {
@@ -337,7 +409,7 @@ function crearBoton(boton_nombre,id = '', accion = '',id_movimiento = '') {
 		boton.appendChild(icono_agregar);
 
 		boton.setAttribute("type", "button");
-		boton.setAttribute("class", "btn btn-primary btn-sm");
+		boton.setAttribute("class", "btn btn-primary btn-sm me-1");
 		boton.setAttribute("tabindex", "-1");
 		boton.setAttribute("role", "button");
 		boton.setAttribute("aria-disabled", "true");
@@ -355,14 +427,13 @@ function crearBoton(boton_nombre,id = '', accion = '',id_movimiento = '') {
 			prepararFormulario(accion,id);
 		});
 	}
-
 	if (boton_nombre == "Editar") {
 		let icono_editar = document.createElement("i");
 		icono_editar.setAttribute("class", "bi bi-pencil-square");
 		boton.appendChild(icono_editar);
 
 		boton.setAttribute("type", "button");
-		boton.setAttribute("class", "btn btn-success btn-sm me-1");
+		boton.setAttribute("class", "btn btn-success btn-sm");
 		boton.setAttribute("tabindex", "-1");
 		boton.setAttribute("role", "button");
 		boton.setAttribute("aria-disabled", "true");
@@ -384,14 +455,13 @@ function crearBoton(boton_nombre,id = '', accion = '',id_movimiento = '') {
 			llenarFormulario(id_movimiento);
 		});
 	}
-
 	if (boton_nombre == "Eliminar") {
 		let icono_eliminar = document.createElement("i");// le ponemos un icono
 		icono_eliminar.setAttribute("class", "bi bi-trash");// y estilos
 		boton.appendChild(icono_eliminar);
 
 		boton.setAttribute("type", "button");
-		boton.setAttribute("class", "btn btn-danger btn-sm eliminar");
+		boton.setAttribute("class", "btn btn-danger btn-sm mx-1");
 		boton.setAttribute("tabindex", "-1");
 		boton.setAttribute("role", "button");
 		boton.setAttribute("aria-disabled", "true");		
@@ -415,7 +485,6 @@ function crearBoton(boton_nombre,id = '', accion = '',id_movimiento = '') {
 			});
 		});
 	}
-
 	if (boton_nombre == "Conciliado") {
 		let icono_check = document.createElement("i");
 		icono_check.setAttribute("class", "bi bi-check2");
@@ -427,13 +496,12 @@ function crearBoton(boton_nombre,id = '', accion = '',id_movimiento = '') {
 		boton.setAttribute("role", "button");
 		boton.setAttribute("aria-disabled", "true");
 
-		boton.setAttribute("title","Conciliado");		
+		boton.setAttribute("title","Conciliado");
 	}
-
 	if (boton_nombre == "No Conciliado") {
-		let icono_check = document.createElement("i");
-		icono_check.setAttribute("class", "bi bi-x-lg");
-		boton.appendChild(icono_check);
+		let icono_x = document.createElement("i");
+		icono_x.setAttribute("class", "bi bi-x-lg");
+		boton.appendChild(icono_x);
 		boton.setAttribute("type", "button");
 		boton.setAttribute("class", "btn btn-danger btn-sm");
 		boton.setAttribute("tabindex", "-1");
@@ -442,18 +510,119 @@ function crearBoton(boton_nombre,id = '', accion = '',id_movimiento = '') {
 
 		boton.setAttribute("title","No Conciliado");		
 	}
-
 	if (boton_nombre == "Sin Movimiento") {
-		let icono_check = document.createElement("i");
-		icono_check.setAttribute("class", "bi bi-question-lg");
-		boton.appendChild(icono_check);
+		let icono_question = document.createElement("i");
+		icono_question.setAttribute("class", "bi bi-question-lg");
+		boton.appendChild(icono_question);
 		boton.setAttribute("type", "button");
 		boton.setAttribute("class", "btn btn-secondary btn-sm");
 		boton.setAttribute("tabindex", "-1");
 		boton.setAttribute("role", "button");
 		boton.setAttribute("aria-disabled", "true");
 
-		boton.setAttribute("title","Sin movimiento Asociado");		
+		boton.setAttribute("title","Marcar como sin Movimiento Bancario Asociado");
+		// Evento para marcar como "Sin movimiento asociado"
+		boton.addEventListener("click",e=>{
+
+			let id_tabla_sistema = boton.closest("tr").id;
+
+			let fila_movimientos = tabla_movimientos.querySelector(`[value='${id_tabla_sistema}']`).closest("tr");
+			fila_movimientos.textContent = null;
+
+			let td = document.createElement("td");
+			td.textContent = "Sin movimiento Asociado";
+			td.setAttribute("colspan",2);
+
+			fila_movimientos.appendChild(td);		
+			boton.outerHTML = crearBoton("No Correspondido por Banco").outerHTML;			
+			// Recursividad No joda
+		});
+	}
+	if (boton_nombre == "Sin Correspondencia") {
+		let icono_question = document.createElement("i");
+		icono_question.setAttribute("class", "bi bi-journal-x");
+		boton.appendChild(icono_question);
+		boton.setAttribute("type", "button");
+		boton.setAttribute("class", "btn btn-info btn-sm");
+		boton.setAttribute("tabindex", "-1");
+		boton.setAttribute("role", "button");
+		boton.setAttribute("aria-disabled", "true");
+
+		boton.setAttribute("title",`Movimiento no Correspondido Por El ${(id)?"Banco":"Sistema"}`);
+	}
+	if (boton_nombre == "No Correspondido") {
+		let icono_inferior = document.createElement("i");
+		icono_inferior.setAttribute("class", "bi bi-chevron-bar-down");
+		boton.appendChild(icono_inferior);
+		boton.setAttribute("type", "button");
+		boton.setAttribute("class", "btn btn-warning btn-sm");
+		boton.setAttribute("tabindex", "-1");
+		boton.setAttribute("role", "button");
+		boton.setAttribute("aria-disabled", "true");
+
+		boton.setAttribute("title","Agregar Movimiento Bancario no Correspondido");
+
+		boton.addEventListener("click",e=>{
+			//Crear fila e insertarla debajo
+			let fila = tabla_registros_sistema.querySelector("#"+id);
+			//Insertando en registro-sistema
+			let fila_sistema = document.createElement("tr");
+			fila_sistema.setAttribute("id",`Movimiento-${id_movimiento}`);
+
+			let td_estatus = document.createElement("td");
+			let td_sistema = document.createElement("td");
+			td_sistema.setAttribute("colspan",5);
+			td_sistema.setAttribute("class","text-center");
+			td_sistema.textContent = `No hay Registro en el sistema para este Movimiento`;
+
+			let boton_estatus = crearBoton("Sin Correspondencia",true);
+			td_estatus.appendChild(boton_estatus);
+			td_estatus.setAttribute("class","text-center");
+			// Recursividad Papa
+
+			fila_sistema.appendChild(td_estatus);
+			fila_sistema.appendChild(td_sistema);
+			// El padre le dice al hijo que se lo meta despues <..>
+			fila.parentElement.insertBefore(fila_sistema,fila.nextSibling);
+
+			// Insertando en movimientos
+			let fila_movimientos = document.createElement("tr");
+
+			let td_movimiento_monto = document.createElement("td");
+			td_movimiento_monto.textContent = 'No registrado';
+
+			let td_movimiento_accion = document.createElement("td");
+			let boton_agregar = crearBoton("Agregar",null,"Ninguna");
+			// let boton_eliminar = crearBoton("Eliminar",movimiento.id_movimiento);
+
+			td_movimiento_accion.appendChild(boton_agregar);
+			// Mas Recursividad Papa
+
+			fila_movimientos.appendChild(td_movimiento_monto);
+			fila_movimientos.appendChild(td_movimiento_accion);
+
+			// Debieron ver la fumada que habia escrito aqui AJAJASJ:
+			// console.log();
+			e.target.closest("tbody").insertBefore(fila_movimientos,e.target.closest("tr").nextSibling);
+			// Basicamente es el papa del papa del papa...*Inserte reggaeton*
+			// Despues descrubi como hacerlo mas corto pero ahhhhhhh
+
+			// Llamar al form
+		})
+	}
+	if (boton_nombre == "No Correspondido por Banco") {
+		let icono_check = document.createElement("i");
+		icono_check.setAttribute("class", "bi bi-check2");
+		boton.appendChild(icono_check);
+
+		boton.setAttribute("type", "button");
+		boton.setAttribute("class", "btn btn-primary btn-sm");
+		boton.setAttribute("tabindex", "-1");
+		boton.setAttribute("role", "button");
+		boton.setAttribute("aria-disabled", "true");
+
+		boton.setAttribute("title","Movimiento No correspondido por el banco");
+
 	}
 
 	return boton;
@@ -472,7 +641,7 @@ function prepararFormulario(accion,id_fila,id_movimiento = '') {
 	tipo_m = document.getElementById("tipo_movimiento");
 
 	// si es un pago no coorespondido por el sistema
-	if (accion == "Ninguna") {
+	if (accion.includes("Ninguna")) {
 		tipo_m.removeAttribute("disabled");
 		tipo_m.removeAttribute("readonly");
 
@@ -494,8 +663,14 @@ function prepararFormulario(accion,id_fila,id_movimiento = '') {
 		diferencia_t.parentElement.parentElement.setAttribute("hidden","");
 		estado.parentElement.parentElement.setAttribute("hidden","");
 		titulo2.setAttribute("hidden","");
-		titulo3.setAttribute("hidden","");		
+		titulo3.setAttribute("hidden","");
 
+		for (opcion of tipo_m){
+			if (opcion.value == accion.split("-")[1]) {
+				opcion.selected = true;
+			}
+		}
+		estado.value = "Ninguna";
 		return;
 	}
 
@@ -523,9 +698,12 @@ function prepararFormulario(accion,id_fila,id_movimiento = '') {
 async function registrar(id_fila) {
 	// Realmente no es registrar, porque se crea una conciliacion a inicio
 	// de mes, se edita el registro que ya esta
-		
-	let accion = id_fila.split("-")[0];
-	let id_accion = id_fila.split("-")[1];
+
+	if (id_fila != "null") {
+		let accion = id_fila.split("-")[0];
+		let id_accion = id_fila.split("-")[1];
+	}
+	
 	let select = document.querySelector("#mes_select");
 	// para tomar el id de conciliacion a la que le vamos a meter esto
 
@@ -536,32 +714,42 @@ async function registrar(id_fila) {
 	let fecha = formulario_usar.querySelector("#fecha_movimiento").value,
 	monto = formulario_usar.querySelector("#monto_movimiento").value,	
 	referencia = formulario_usar.querySelector("#referencia_movimiento").value, 
-	tipo_movimiento = formulario_usar.querySelector("#tipo_movimiento").value, 
-	banco_id = formulario_usar.querySelector("#banco_movimiento").value,
-	monto_diferencia = formulario_usar.querySelector("#diferencia_monto").value,
-	tipo_diferencia = formulario_usar.querySelector("#diferencia_tipo").value,
+	tipo_movimiento = formulario_usar.querySelector("#tipo_movimiento").value,
 	conciliacion_id = select[select.options.selectedIndex].id,
-	gasto_pago = accion,
-	gasto_pago_id = id_accion;
+	banco_id = formulario_usar.querySelector("#banco_movimiento").value;
+
+	if (id_fila != "null") {		
+		let monto_diferencia = formulario_usar.querySelector("#diferencia_monto").value,
+		tipo_diferencia = formulario_usar.querySelector("#diferencia_tipo").value,
+		gasto_pago = accion,
+		gasto_pago_id = id_accion;
+	}
 
 	// le pasamos los datos por el formData
 	datos_consulta.append("fecha",fecha);
 	datos_consulta.append("monto",monto);
 	datos_consulta.append("referencia",referencia);	
 	datos_consulta.append("tipo_movimiento",tipo_movimiento);	
-	datos_consulta.append("banco_id",banco_id);
-	datos_consulta.append("monto_diferencia",monto_diferencia);
-	datos_consulta.append("tipo_diferencia",tipo_diferencia);
 	datos_consulta.append("conciliacion_id",conciliacion_id);
-	datos_consulta.append("gasto_pago",gasto_pago);
-	datos_consulta.append("gasto_pago_id",gasto_pago_id);
+	datos_consulta.append("banco_id",banco_id);
+	if (id_fila != "null") {
+		datos_consulta.append("monto_diferencia",monto_diferencia);
+		datos_consulta.append("tipo_diferencia",tipo_diferencia);
+		datos_consulta.append("gasto_pago",gasto_pago);
+		datos_consulta.append("gasto_pago_id",gasto_pago_id);
+	}else{
+		datos_consulta.append("monto_diferencia",0);
+		datos_consulta.append("tipo_diferencia","No hay");
+		datos_consulta.append("gasto_pago","Ninguna");
+		datos_consulta.append("gasto_pago_id","Ninguna");
+	}
 
 	//Aqui decimos que vamos a hacer
 	datos_consulta.append('operacion','registrar_movimiento');
 	
 	//Llamamos a la funcion para hacer la consulta
 	let respuesta = await query(datos_consulta); 
-	console.log(datos_consulta);
+	console.log(respuesta);
 	modal_movimientos.hide(); //Esconde el modal
 	formulario_usar.reset();//Limpia el formulario
 
@@ -634,6 +822,8 @@ async function editarMovimiento(id){
 	//Creamos el formData
 	let datos_consulta = new FormData();
 
+	let estado = document.getElementById("estado");
+
 	//Guardamos los datos del formulario
 	let id_movimiento = id,
 	fecha = formulario_usar.querySelector("#fecha_movimiento").value,
@@ -652,9 +842,11 @@ async function editarMovimiento(id){
 	datos_consulta.append("referencia",referencia);	
 	datos_consulta.append("tipo_movimiento",tipo_movimiento);
 	datos_consulta.append("banco_id",banco_id);
-	datos_consulta.append("monto_diferencia",monto_diferencia);
-	datos_consulta.append("tipo_diferencia",tipo_diferencia);
 	datos_consulta.append("conciliacion_id",conciliacion_id);
+	if (estado != "Ninguna") {
+		datos_consulta.append("monto_diferencia",0);
+		datos_consulta.append("tipo_diferencia","No hay");
+	}
 
 	//Aqui decimos que vamos a hacer
 	datos_consulta.append('operacion','modificar_movimiento');
@@ -730,7 +922,6 @@ function envio(operacion) {
 	}
 }
 
-
 // esta funcion obtiene el ultimo id registrado en la base de datos
 async function last_id() {
 	datos_consulta = new FormData()
@@ -801,6 +992,13 @@ function init_data_table() {
     })
     // si lees esto tienes que saber que ahora odio estos data table, muerte a jquery...
 }
+
+
+
+
+
+
+// Esta en veremos lo de abajo
 
 // un observador que detecte cuando cambie la tabla, si detecta cambio ejecuta la esa funcion
 // yo la puse porque jquery cuando hace la paginacion en la tabla, borra los elementos, 
