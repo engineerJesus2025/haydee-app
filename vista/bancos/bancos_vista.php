@@ -68,7 +68,7 @@
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td colspan="7"><h4>Cargando...</h4></td>
+                                            <td colspan="7"><h4>No hay bancos registrados</h4></td>
                                         </tr>
                                     </tbody>
                                 </table>
