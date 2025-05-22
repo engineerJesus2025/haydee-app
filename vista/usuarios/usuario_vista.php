@@ -9,7 +9,11 @@
     ?>
 </head>
 
+<<<<<<< HEAD
 <body>
+=======
+<body class="body-pd">
+>>>>>>> francisco
     <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Usuario::tiene_permiso(GESTIONAR_USUARIOS, ELIMINAR) ?>">
     <input type="text" hidden="" id="permiso_editar" value="<?php echo Usuario::tiene_permiso(GESTIONAR_USUARIOS, MODIFICAR) ?>">
     <div class="container-fluid">
@@ -17,13 +21,13 @@
 
             <?php
             require_once "vista/componentes/sesion.php";
-            require_once "vista/componentes/header.php";
+            require_once "vista/componentes/navbar.php";
             ?>
 
             <div class="col d-flex flex-column  min-vh-100 gris">
 
                 <?php
-                require_once "vista/componentes/navbar.php";
+                require_once "vista/componentes/header.php";
                 ?>
 
                 <main class="col ps-md-2 pt-2 mb-5">
@@ -40,19 +44,6 @@
                                     <div class="button mb-4">
                                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_usuario">Registrar</a>
                                     </div><br>
-                                <?php endif; ?>
-
-                                <?php if (isset($_SESSION["mensaje"])) : ?>
-                                    <div class="row ">
-                                        <div class="col-md-12">
-                                            <div class="alert alert-danger d-flex align-items-center" role="alert">
-                                                <span class="bi bi-exclamation-triangle"></span>
-                                                <div class="mx-3">
-                                                    <?php echo $_SESSION["mensaje"]; ?>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
                                 <?php endif; ?>
 
                                 <table id="tabla_usuario" class="table" style="width:97%">

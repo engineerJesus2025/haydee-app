@@ -8,20 +8,19 @@
     require_once "vista/componentes/estilos.php";
     ?>
 </head>
-<body>
+<body class="body-pd">
     <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Rol::tiene_permiso(GESTIONAR_ROLES, ELIMINAR) ?>">
     <input type="text" hidden="" id="permiso_editar" value="<?php echo Rol::tiene_permiso(GESTIONAR_ROLES, MODIFICAR) ?>">
     <div class="container-fluid">
-        <div class="row flex-nowrap ">            
+        <div class="row flex-nowrap ">
             <?php
             require_once "vista/componentes/sesion.php";
-            require_once "vista/componentes/header.php";
+            require_once "vista/componentes/navbar.php";
             ?>
 
             <div class="col d-flex flex-column  min-vh-100 gris">
-
                 <?php
-                require_once "vista/componentes/navbar.php";
+                require_once "vista/componentes/header.php";
                 ?>
 
                 <main class="col ps-md-2 pt-2">
@@ -40,6 +39,7 @@
                                         <button type="button" class="btn btn-primary mb-2" data-bs-toggle="modal" data-bs-target="#modal_roles">Registrar</a>
                                     </div><br>
                                 <?php endif; ?>
+<<<<<<< HEAD
                                 <?php if (isset($_SESSION["mensaje"])) : ?>
                                     <div class="row">
                                         <div class="col-md-12">
@@ -52,6 +52,8 @@
                                         </div>
                                     </div>
                                 <?php endif; ?>
+=======
+>>>>>>> francisco
 
                                 <table id="tabla_roles" class="table" style="width:97%">
                                     <thead>

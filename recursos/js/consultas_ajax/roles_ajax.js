@@ -155,17 +155,35 @@ function llenarTabla(fila) {
 function crearBotones(id) {
 	// Creamos los botones de las acciones
 	let td = document.createElement("td");
+<<<<<<< HEAD
+=======
+
+	if (id == 1) {
+		td.textContent = 'No Modificable';
+		return td;
+	}
+
+>>>>>>> francisco
 	let acciones = document.createElement("div");
 	acciones.setAttribute("class","row justify-content-start");
 	// le damos la clases de boostrap para que se vea tu sabe'
 
 	// Lo mismo que arriba, pero con modificar
 	let boton_editar = document.createElement("button");
+<<<<<<< HEAD
 
+=======
+	
+>>>>>>> francisco
 	let icono_editar = document.createElement("i");
 	icono_editar.setAttribute("class", "bi bi-pencil-square")
 	boton_editar.appendChild(icono_editar);
 
+<<<<<<< HEAD
+=======
+	boton_editar.appendChild(icono_editar);
+
+>>>>>>> francisco
 	boton_editar.setAttribute("type", "button");
 	boton_editar.setAttribute("class", "btn btn-success btn-sm col-2");
 	boton_editar.setAttribute("tabindex", "-1");
@@ -189,6 +207,11 @@ function crearBotones(id) {
 		icono_eliminar.setAttribute("class", "bi bi-trash");// y estilos
 		boton_eliminar.appendChild(icono_eliminar);
 		
+<<<<<<< HEAD
+=======
+		boton_eliminar.appendChild(icono_eliminar);
+		
+>>>>>>> francisco
 		// le ponemos todos los atributos que lleva este boton
 		boton_eliminar.setAttribute("type", "button");
 		boton_eliminar.setAttribute("class", "btn btn-danger btn-sm eliminar col-2 mx-2");
@@ -323,13 +346,20 @@ async function modificar(id) {
 	//Aqui decimos que vamos a hacer
 	datos_consulta.append('operacion','modificar');
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> francisco
 	//Llamamos a la funcion para hacer la consulta
 	let respuesta = await query(datos_consulta);
 
 	formulario_usar.reset(); //Limpiamos el formulario
  	modal.hide(); // escondemos el modal
+<<<<<<< HEAD
 
+=======
+ 	
+>>>>>>> francisco
 	// Resvisamos el resultado
 	if (!respuesta.estatus) {
 		mensajes('error',4000,'Atencion',respuesta.mensaje);

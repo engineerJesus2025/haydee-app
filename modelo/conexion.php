@@ -18,9 +18,15 @@ class Conexion extends PDO
                 PDO::ATTR_ERRMODE,
                 PDO::ERRMODE_EXCEPTION
             );
+            
         } catch (PDOException $e) {
             die("Conexión Fallida" . $e->getMessage());
         }
+    }
+
+    public function destruir()
+    {
+        $this->conex = null;
     }
 
     public function get_conex()

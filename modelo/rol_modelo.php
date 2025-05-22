@@ -9,7 +9,7 @@ class Rol extends Conexion
 
     public function __construct()
     {
-        parent::__construct();
+        parent::__construct();        
     }
 
     public function set_id_rol($id_rol)
@@ -56,13 +56,13 @@ class Rol extends Conexion
     }
 
     public function consultar($consulta_externa = false)
-    {
+    {        
         $this->cambiar_db_seguridad();
         
         $sql = "SELECT * FROM roles";
         $conexion = $this->get_conex()->prepare($sql);
         $result = $conexion->execute();
-            
+        
         $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
 
         $this->cambiar_db_negocio();
@@ -71,7 +71,6 @@ class Rol extends Conexion
             if (!$consulta_externa) {
                 $this->registrar_bitacora(CONSULTAR, GESTIONAR_ROLES, "TODOS LOS ROLES");
             }
-            
             return $datos;
         } else {
             return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
@@ -189,8 +188,8 @@ class Rol extends Conexion
     }
 
     private function validarDatos($consulta = "registrar")
-    {   
-        // Validamos el id rol en caso de editar o eliminar porque en registrar no existe todavia
+    {
+        // Validamos el id rol en caso de editar o eliminar porque en registrar no existe todavia        
         if ($consulta == "editar" || $consulta == "eliminar") {
             if (!(isset($this->id_rol))) {return ["estatus"=>false,"mensaje"=>"El ID del rol no se recibio correctamente"];}
 
@@ -200,9 +199,14 @@ class Rol extends Conexion
                 if (!($this->validarClaveForanea("roles","id_rol",$this->id_rol,true))) {
                     return ["estatus"=>false,"mensaje"=>"El Rol seleccionado no existe"];
                 }
+                
+                if($this->id_rol == 1){return ["estatus"=>false,"mensaje"=>"No se puede Alterar el Rol del Administrador Global"];}
+                
                 if ($consulta == "eliminar") {return ["estatus"=>true,"mensaje"=>"OK"];}
             }
             else{return ["estatus"=>false,"mensaje"=>"El id del Rol tiene debe ser un valor numerico entero"];}
+
+            if($this->id_rol == 1){return ["estatus"=>false,"mensaje"=>"No se puede Alterar el Rol del Administrador Global"];}
         }
         // Validamos que los campos enviados si existan
 
@@ -215,7 +219,7 @@ class Rol extends Conexion
         
         if(!(is_string($this->nombre)) || !(preg_match("/^[A-Za-z \b]*$/",$this->nombre))){
             return ["estatus"=>false,"mensaje"=>"El campo 'nombre' no posee un valor valido"];
-        }
+        }        
         
         return ["estatus"=>true,"mensaje"=>"OK"];
     }

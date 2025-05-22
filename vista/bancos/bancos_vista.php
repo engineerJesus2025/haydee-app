@@ -9,7 +9,11 @@
     ?>
 </head>
 
+<<<<<<< HEAD
 <body>
+=======
+<body class="body-pd">
+>>>>>>> francisco
     <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Banco::tiene_permiso(GESTIONAR_BANCOS, ELIMINAR) ?>">
     <input type="text" hidden="" id="permiso_editar" value="<?php echo Banco::tiene_permiso(GESTIONAR_BANCOS, MODIFICAR) ?>">
     <div class="container-fluid">
@@ -17,13 +21,21 @@
 
             <?php
             require_once "vista/componentes/sesion.php";
+<<<<<<< HEAD
             require_once "vista/componentes/header.php";
+=======
+            require_once "vista/componentes/navbar.php";        
+>>>>>>> francisco
             ?>
 
             <div class="col d-flex flex-column  min-vh-100 gris">
 
                 <?php
+<<<<<<< HEAD
                 require_once "vista/componentes/navbar.php";
+=======
+                require_once "vista/componentes/header.php";
+>>>>>>> francisco
                 ?>
 
                 <main class="col ps-md-2 pt-2 mb-5">
@@ -68,7 +80,11 @@
                                     </thead>
                                     <tbody>
                                         <tr>
+<<<<<<< HEAD
                                             <td colspan="7"><h4>No hay bancos registrados</h4></td>
+=======
+                                            <td colspan="7"><h4>Cargando...</h4></td>
+>>>>>>> francisco
                                         </tr>
                                     </tbody>
                                 </table>
