@@ -45,7 +45,7 @@
                     </a>
                     <?php endif; ?>
                     <?php if (Conexion::tiene_permiso(GESTIONAR_PROPIETARIOS, CONSULTAR)) : ?>
-                    <a href="?pagina=propietarios_controlador.php&accion=inicio" class="nav_link <?php echo ($_GET["pagina"] == "propietarios_controlador.php")?"active":''; ?>" title="Propietarios"> 
+                    <a href="?pagina=propietario_controlador.php&accion=inicio" class="nav_link <?php echo ($_GET["pagina"] == "propietario_controlador.php")?"active":''; ?>" title="Propietarios"> 
                         <i class="bi bi-person-vcard-fill nav_logo-icon"></i>
                         <span class="nav_name">Propietarios</span> 
                     </a>

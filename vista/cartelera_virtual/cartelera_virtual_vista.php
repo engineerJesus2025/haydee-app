@@ -10,23 +10,23 @@
     ?>
 </head>
 
-<body>
+<body class="body-pd">
     <input type="text" hidden="" id="permiso_eliminar"
         value="<?php echo Cartelera_virtual::tiene_permiso(GESTIONAR_CARTELERA_VIRTUAL, ELIMINAR) ?>">
     <input type="text" hidden="" id="permiso_editar"
         value="<?php echo Cartelera_virtual::tiene_permiso(GESTIONAR_CARTELERA_VIRTUAL, MODIFICAR) ?>">
     <div class="container-fluid">
-        <div class="row flex-nowrap ">
+        <div class="row flex-nowrap">
 
             <?php
             require_once "vista/componentes/sesion.php";
-            require_once "vista/componentes/header.php";
+            require_once "vista/componentes/navbar.php";
             ?>
 
             <div class="col d-flex flex-column  min-vh-100 gris">
 
                 <?php
-                require_once "vista/componentes/navbar.php";
+                require_once "vista/componentes/header.php";
                 ?>
 
                 <main class="col ps-md-2 pt-2 mb-5">
@@ -103,7 +103,6 @@
                 require_once "vista/componentes/footer.php";
                 require_once "vista/componentes/script.php";
                 ?>
-                <!-- Modal Vista Previa (fuera de todo el layout visual) -->
                 <div class="modal fade" id="modal_vista_previa" tabindex="-1" aria-labelledby="modal_vista_previa_label"
                     aria-hidden="true">
                     <div class="modal-dialog modal-lg modal-dialog-scrollable">
