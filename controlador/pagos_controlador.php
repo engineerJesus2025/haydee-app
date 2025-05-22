@@ -5,7 +5,7 @@
     $obj_pago = new Pagos(); // Objeto banco
     $obj_banco = new Banco();
  
-    $banco_id = $obj_banco->consultar();
+    $registro_banco = $obj_banco->consultar();
 
     if(isset($_POST["operacion"])){
         $operacion = $_POST["operacion"];
@@ -24,6 +24,7 @@
             $tasa_dolar = $_POST["tasa_dolar"]; 
             $estado = $_POST["estado"];
             $metodo_pago = $_POST["metodo_pago"];
+            $banco_id = $_POST["banco_id"];
             $referencia = $_POST["referencia"];
             $imagen = $_POST["imagen"];
             $observacion = $_POST["observacion"];
@@ -54,7 +55,7 @@
             echo  json_encode($obj_pago->consultar_pago());
             // igual hice para que retorne un arreglo, si sale vacio solo mandara un array con false
         }
-
+ 
         elseif ($operacion == "modificar") {
             //se guardan las variables a modificar
             $fecha = $_POST["fecha"];  

@@ -1,50 +1,33 @@
 $(document).ready(function(){
-
-	$("#nombre_banco").on("keypress",function(e){
-		validarKeyPress(/^[A-Za-z \b]*$/, e);
+	// Validaciones
+	$("#monto").on("keypress",function(e){
+		validarKeyPress(/^[0-9,\b]*$/, e);
 	});
 
-	$("#nombre_banco").on("keyup",function(){
-		validarKeyUp(/^[A-Za-z \b]{3,30}$/,
-		$(this),this.nextElementSibling,"Debe ingresar el nombre del banco");
+	$("#monto").on("keyup",function(){
+		validarKeyUp(/^[0-9,\b]{1,5}$/,
+		$(this),this.nextElementSibling,"Debe ingresar el monto del pago");
 	});
 
-	$("#codigo").on("keypress",function(e){
+	$("#tasa_dolar").on("keypress",function(e){
+		validarKeyPress(/^[0-9,\b]*$/, e);
+	});
+
+	$("#tasa_dolar").on("keyup",function(){
+		validarKeyUp(/^[0-9,\b]{1,5}$/,
+		$(this),this.nextElementSibling,"Debe ingresar la tasa del día de hoy");
+	});
+
+	$("#referencia").on("keypress",function(e){
 		validarKeyPress(/^[0-9\b]*$/, e);
 	});
 
-	$("#codigo").on("keyup",function(){
-		validarKeyUp(/^[0-9\b]{4}$/,
-		$(this),this.nextElementSibling,"Debe ingresar el codigo del banco");
-	});
-
-	$("#numero_cuenta").on("keypress",function(e){
-		validarKeyPress(/^[0-9\b]*$/, e);
-	});
-
-	$("#numero_cuenta").on("keyup",function(){
-		validarKeyUp(/^[0-9\b]{18,30}$/,
-		$(this),this.nextElementSibling,"Debe ingresar el número de cuenta");
-	});
-
-    $("#telefono_afiliado").on("keypress",function(e){
-		validarKeyPress(/^[0-9\b]*$/, e);
-	});
-
-	$("#telefono_afiliado").on("keyup",function(){
-		validarKeyUp(/^[0-9\b]{11}$/,
-		$(this),this.nextElementSibling,"Debe ingresar un telefono afiliado");
-	});
-
-    $("#cedula_afiliada").on("keypress",function(e){
-		validarKeyPress(/^[0-9\b]*$/, e);
-	});
-
-	$("#cedula_afiliada").on("keyup",function(){
-		validarKeyUp(/^[0-9\b]{7,8}$/,
-		$(this),this.nextElementSibling,"Debe ingresar una cedula afiliada");
+	$("#referencia").on("keyup",function(){
+		validarKeyUp(/^[0-9\b]{3,10}$/,
+		$(this),this.nextElementSibling,"Debe ingresar la referencia del pago");
 	});
 	
+	// Boton del formulario
 	$("#boton_formulario").on("click",async function(e){
 		let accion = (e.target.getAttribute("modificar"))?"Editar":"Registrar";		
 		e.preventDefault();
@@ -60,7 +43,7 @@ $(document).ready(function(){
 			    }).then((result) => {
 					if (result.isConfirmed) {
 						envio(accion);						
-						numero_cuenta_an = null;//resetea el valor del correo original (esto es de usuario_ajax.js)
+						referencia_an = null;//resetea el valor del correo original (esto es de usuario_ajax.js)
 					}
 			    });
 		}	
@@ -68,10 +51,10 @@ $(document).ready(function(){
 
 	$("#referencia").on("keyup",function(e){
 		if (validarKeyUp(
-        /^[0-9]{18,30}$/,
+        /^[0-9]{3,10}$/,
         $("#referencia"),document.querySelector("#referencia").nextElementSibling,'El formato debe ser en números'
         )) {
-        	if (this.value == numero_cuenta_an) {return;}
+        	if (this.value == referencia_an) {return;}
 			let datos = new FormData();
 			datos.append('validar','referencia');
 			datos.append('referencia',$(this).val());
@@ -95,52 +78,32 @@ function mensajes(icono,tiempo,titulo,mensaje){
 
 async function validarEnvio(accion = "Registrar"){	
 	if(validarKeyUp(
-        /^[A-Za-z ]{3,30}$/,
-        $("#nombre_banco"),document.querySelector("#nombre_banco").nextElementSibling,'Debe ingresar el nombre del banco'
+        /^[0-9,]{1,5}$/,
+        $("#monto"),document.querySelector("#monto").nextElementSibling,'Debe ingresar el monto del pago'
         )==0)
 	{
-		mensajes('error',4000,'Debe ingresar el nombre del banco',
-		'El formato debe ser sólo en letras');
+		mensajes('error',4000,'Debe ingresar el monto del pago',
+		'El formato debe ser sólo en numeros');
 		
 		return false;
 	}
 	else if(validarKeyUp(
-        /^[0-9]{4}$/,
-        $("#codigo"),document.querySelector("#codigo").nextElementSibling,'Debe ingresar el codigo del banco'
+        /^[0-9,]{1,5}$/,
+        $("#tasa_dolar"),document.querySelector("#tasa_dolar").nextElementSibling,'Debe ingresar la tasa del dolar de hoy'
         )==0)
 	{
-		mensajes('error',4000,'Debe ingresar el codigo del banco',
+		mensajes('error',4000,'Debe ingresar la tasa del dolar de hoy',
 		'El formato debe ser sólo en números');
 		
 		return false;
 	}
 	
 	else if(validarKeyUp(
-        /^[0-9]{18,30}$/,
-        $("#numero_cuenta"),document.querySelector("#numero_cuenta").nextElementSibling,'Ejemplo: XXXX-XXXXX-XXX...'
+        /^[0-9]{3,10}$/,
+        $("#referencia"),document.querySelector("#referencia").nextElementSibling,'Debe ingresar la referencia del pago'
         )==0)
 	{
-		mensajes('error',4000,'Debe ingresar un número de cuenta',
-		'Ejemplo: XXXX-XXXXX-XXX...');
-		
-		return false;
-	}
-	else if(validarKeyUp(
-        /^[0-9]{11}$/,
-        $("#telefono_afiliado"),document.querySelector("#telefono_afiliado").nextElementSibling,'Debe ingresar un telefono afiliado'
-        )==0)
-	{
-		mensajes('error',4000,'Debe ingresar un telefono afiliado',
-		'El formato debe ser XXXX-XXXXXXX');
-		
-		return false;
-	}
-	else if(validarKeyUp(
-        /^[0-9]{7,8}$/,
-        $("#cedula_afiliada"),document.querySelector("#cedula_afiliada").nextElementSibling,'Debe ingresar una cedula afiliada'
-        )==0)
-	{
-		mensajes('error',4000,'Debe ingresar una cedula afiliada',
+		mensajes('error',4000,'Debe ingresar la referencia del pago',
 		'El formato debe ser sólo en números');
 		
 		return false;
@@ -156,7 +119,7 @@ async function validarEnvio(accion = "Registrar"){
 	}else if (accion == "Editar"){
 		datos = new FormData();
 		//datos.append("validar",'contra');
-		datos.append("id_banco",id_modificar);
+		datos.append("id_pago",id_modificar);
 		/*datos.append("contra",$("#contra").val());
 		res = await verificar_contra(datos);
 		// revisamos si la contraseña que puso es la correcta
@@ -176,14 +139,14 @@ async function validarEnvio(accion = "Registrar"){
 		}*/
 	}
 	// si el valor de correo no es el mismo de antes:
-	if(numero_cuenta_an != $("#referencia").val()){
+	if(referencia_an != $("#referencia").val()){
 		datos = new FormData(); 
 		datos.append('validar','referencia');
 		datos.append('referencia',$("#referencia").val());
 		res = await verificar_duplicados(datos);
 		// revisamos si esta duplicado con otro usuario
 		if(res){
-			mensajes('error',4000,'Número de cuenta ya registrado','Este número de cuenta esta registrado, debe ingresar otro.');
+			mensajes('error',4000,'Referencia ya registrada','Esta referencia esta registrada, debe ingresar otra.');
 			return false;
 		}
 	}

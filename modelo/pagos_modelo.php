@@ -124,7 +124,7 @@
             //$this->cambiar_db_seguridad();
 
             // 1) Sentencia SQL de toda la vida.
-            $sql = "SELECT * FROM `pagos` ORDER BY id_pago";
+            $sql = "SELECT pagos.id_pago,pagos.fecha,pagos.monto,pagos.tasa_dolar,pagos.estado,pagos.metodo_pago,bancos.nombre_banco,pagos.referencia,pagos.imagen,pagos.observacion FROM pagos JOIN bancos ON pagos.banco_id = bancos.id_banco ORDER BY (pagos.fecha) DESC, pagos.estado = 'PENDIENTE' DESC;";
 
             // 2) Se prepara una consulta a la base de datos.
             $conexion = $this->get_conex()->prepare($sql);
@@ -185,7 +185,8 @@
         
             $conexion = $this->get_conex()->prepare($sql);
             $conexion->bindParam(":fecha", $this->fecha);
-            $conexion->bindParam(":monto", $this->tasa_dolar);
+            $conexion->bindParam(":monto", $this->monto);
+            $conexion->bindParam(":tasa_dolar", $this->tasa_dolar);
             $conexion->bindParam(":estado", $this->estado);
             $conexion->bindParam(":metodo_pago", $this->metodo_pago);
             $conexion->bindParam(":banco_id", $this->banco_id);
@@ -216,12 +217,13 @@
 
             //$this->cambiar_db_seguridad();
 
-            $sql = "UPDATE pagos SET fecha=:fecha,monto=:monto,estado=:estado,metodo_pago=:metodo_pago,banco_id=:banco_id,referencia=:referencia,imagen=:imagen,observacion=:observacion WHERE id_pago=:id_pago";
+            $sql = "UPDATE pagos SET fecha=:fecha,monto=:monto,tasa_dolar=:tasa_dolar,estado=:estado,metodo_pago=:metodo_pago,banco_id=:banco_id,referencia=:referencia,imagen=:imagen,observacion=:observacion WHERE id_pago=:id_pago";
 
             $conexion = $this->get_conex()->prepare($sql);    
             $conexion->bindParam(":id_pago", $this->id_pago);
             $conexion->bindParam(":fecha", $this->fecha);
             $conexion->bindParam(":monto", $this->monto);
+            $conexion->bindParam(":tasa_dolar", $this->tasa_dolar);
             $conexion->bindParam(":estado", $this->estado);
             $conexion->bindParam(":metodo_pago", $this->metodo_pago);
             $conexion->bindParam(":banco_id", $this->banco_id);

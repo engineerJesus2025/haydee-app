@@ -47,7 +47,7 @@
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-bank2"></i></span>
                     <select class="form-select banco" aria-label="Default select example" id="banco_id" name="banco_id">
                         <option selected hidden value="">Banco</option>
-                        <?php foreach($banco_id as $banco): ?>
+                        <?php foreach($registro_banco as $banco): ?>
                             <option value="<?php echo $banco["id_banco"]?>"><?php echo $banco["nombre_banco"] ?></option>
                         <?php endforeach; ?>
                     </select>

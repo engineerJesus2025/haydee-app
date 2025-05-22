@@ -9,11 +9,7 @@
     ?>
 </head>
 
-<<<<<<< HEAD
-<body>
-=======
 <body class="body-pd">
->>>>>>> francisco
     <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Usuario::tiene_permiso(GESTIONAR_USUARIOS, ELIMINAR) ?>">
     <input type="text" hidden="" id="permiso_editar" value="<?php echo Usuario::tiene_permiso(GESTIONAR_USUARIOS, MODIFICAR) ?>">
     <div class="container-fluid">

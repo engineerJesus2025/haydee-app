@@ -32,7 +32,7 @@ document.querySelector(`#modal_pagos`).addEventListener("hide.bs.modal",()=>{
 	boton_formulario.removeAttribute("modificar");
 	boton_formulario.removeAttribute("id_modificar");	
 	boton_formulario.textContent = "Registrar";
-	document.getElementById('titulo_modal').textContent = "Registrar Pagos";	
+	document.getElementById('titulo_modal').textContent = "Registrar Pago";	
 	formulario_usar.querySelectorAll("[class='w-100']").forEach(el=>el.textContent="");
 	// CAmbiamos el input de nueva contra a confirmar contraseña
 	//formulario_usar.querySelector("#confir_contra").parentElement.previousElementSibling.textContent = "Confirmar Contraseña" 
@@ -86,7 +86,7 @@ async function registrar() {
 	let acciones = crearBotones(id_registrado.mensaje); //Crea botones
 	
 	// esta variable no hace nada, pero me dio error cuando la quite XD
-	let res_data_table = await data_table.row.add([`${nombre_banco}`,`${codigo}`,`${numero_cuenta}`,`${telefono_afiliado}`,`${cedula_afiliada}`,`${acciones.outerHTML}`]).draw();
+	let res_data_table = await data_table.row.add([`${fecha}`,`${monto}`,`${tasa_dolar}`,`${estado}`,`${metodo_pago}`,`${banco_id}`,`${referencia}`,`${imagen}`,`${observacion}`,`${acciones.outerHTML}`]).draw();
 	// Tiene el await para que lo espere, sino no la pone en la tabla
 
 	mensajes('success',4000,'Atencion','El registro se ha realizado exitosamente');//Mensaje de que se completo la operacion
@@ -152,7 +152,7 @@ function llenarTabla(fila) {
 	tasa_dolar_td.textContent = fila["tasa_dolar"];
 	estado_td.textContent = fila["estado"];
     metodo_pago_td.textContent = fila["metodo_pago"];
-	banco_id_td.textContent = fila["banco_id"];
+	banco_id_td.textContent = fila["nombre_banco"];
 	referencia_td.textContent = fila["referencia"];
 	imagen_td.textContent = fila["imagen"];
 	observacion_td.textContent = fila["observacion"];
@@ -336,7 +336,7 @@ async function modificar(id) {
 	monto = formulario_usar.querySelector("#monto").value,
 	tasa_dolar = formulario_usar.querySelector("#tasa_dolar").value, 	
 	estado = formulario_usar.querySelector("#estado").value,
-	metodo_pago = formulario_usar.querySelector("metodo_pago").value;
+	metodo_pago = formulario_usar.querySelector("#metodo_pago").value;
 	banco_id = formulario_usar.querySelector("#banco_id").value;
 	referencia = formulario_usar.querySelector("#referencia").value;
 	imagen = formulario_usar.querySelector("#imagen").value;
@@ -376,7 +376,7 @@ async function modificar(id) {
 	boton_formulario.removeAttribute("modificar");
 	boton_formulario.removeAttribute("id_modificar");	
 	boton_formulario.textContent = "Registrar";
-
+ 
 	document.getElementById('titulo_modal').textContent = "Registrar Pago";
 
 	mensajes('success',4000,'Atencion','El registro se ha modificado exitosamente');//Mensaje de que se completo la operacion
@@ -465,7 +465,7 @@ function init_data_table() {
     })
     // si lees esto tienes que saber que ahora odio estos data table, muerte a jquery...
 }
- 
+  
 // un observador que detecte cuando cambie la tabla, si detecta cambio ejecuta la esa funcion
 // yo la puse porque jquery cuando hace la paginacion en la tabla, borra los elementos, 
 // entonces se pierden los eventos asignados, y cuando vuelven a aparecer, no los tienen.
