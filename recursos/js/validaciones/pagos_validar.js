@@ -1,37 +1,37 @@
 $(document).ready(function(){
 
-	$("#cedula").on("keypress",function(e){
+	$("#nombre_banco").on("keypress",function(e){
 		validarKeyPress(/^[A-Za-z \b]*$/, e);
 	});
 
-	$("#cedula").on("keyup",function(){
+	$("#nombre_banco").on("keyup",function(){
 		validarKeyUp(/^[A-Za-z \b]{3,30}$/,
 		$(this),this.nextElementSibling,"Debe ingresar el nombre del banco");
 	});
 
-	$("#nombre_habitante").on("keypress",function(e){
+	$("#codigo").on("keypress",function(e){
 		validarKeyPress(/^[0-9\b]*$/, e);
 	});
 
-	$("#nombre_habitante").on("keyup",function(){
+	$("#codigo").on("keyup",function(){
 		validarKeyUp(/^[0-9\b]{4}$/,
 		$(this),this.nextElementSibling,"Debe ingresar el codigo del banco");
 	});
 
-	$("#apellido").on("keypress",function(e){
+	$("#numero_cuenta").on("keypress",function(e){
 		validarKeyPress(/^[0-9\b]*$/, e);
 	});
 
-	$("#apellido").on("keyup",function(){
+	$("#numero_cuenta").on("keyup",function(){
 		validarKeyUp(/^[0-9\b]{18,30}$/,
 		$(this),this.nextElementSibling,"Debe ingresar el número de cuenta");
 	});
 
-    $("#sexo").on("keypress",function(e){
+    $("#telefono_afiliado").on("keypress",function(e){
 		validarKeyPress(/^[0-9\b]*$/, e);
 	});
 
-	$("#sexo").on("keyup",function(){
+	$("#telefono_afiliado").on("keyup",function(){
 		validarKeyUp(/^[0-9\b]{11}$/,
 		$(this),this.nextElementSibling,"Debe ingresar un telefono afiliado");
 	});
@@ -44,11 +44,6 @@ $(document).ready(function(){
 		validarKeyUp(/^[0-9\b]{7,8}$/,
 		$(this),this.nextElementSibling,"Debe ingresar una cedula afiliada");
 	});
-
-	$(".fecha_nacimiento").on("keyup",function(){
-		validarKeyUp(/^(?:(?:1[6-9]|[2-9]\d)?\d{2})(?:(?:(\/|-|\.)(?:0?[13578]|1[02])\1(?:31))|(?:(\/|-|\.)(?:0?[13-9]|1[0-2])\2(?:29|30)))$|^(?:(?:(?:1[6-9]|[2-9]\d)?(?:0[48]|[2468][048]|[13579][26])|(?:(?:16|[2468][048]|[3579][26])00)))(\/|-|\.)0?2\3(?:29)$|^(?:(?:1[6-9]|[2-9]\d)?\d{2})(\/|-|\.)(?:(?:0?[1-9])|(?:1[0-2]))\4(?:0?[1-9]|1\d|2[0-8])$/,
-		$(this),this.nextElementSibling,"Debe ingresar la fecha de nacimiento");
-	});
 	
 	$("#boton_formulario").on("click",async function(e){
 		let accion = (e.target.getAttribute("modificar"))?"Editar":"Registrar";		
@@ -56,7 +51,7 @@ $(document).ready(function(){
 		if(await validarEnvio(accion)==true){
 				Swal.fire({
 				title: "¿Estás seguro?",
-				text: `¿Está seguro que desea ${accion} este Habitante?`,
+				text: `¿Está seguro que desea ${accion} este Pago?`,
 				showCancelButton: true,
 				confirmButtonText: accion,
 				confirmButtonColor: "#1b8a40",
@@ -71,15 +66,15 @@ $(document).ready(function(){
 		}	
 	});
 
-	$("#numero_cuenta").on("keyup",function(e){
+	$("#referencia").on("keyup",function(e){
 		if (validarKeyUp(
         /^[0-9]{18,30}$/,
-        $("#numero_cuenta"),document.querySelector("#numero_cuenta").nextElementSibling,'El formato debe ser en números'
+        $("#referencia"),document.querySelector("#referencia").nextElementSibling,'El formato debe ser en números'
         )) {
         	if (this.value == numero_cuenta_an) {return;}
 			let datos = new FormData();
-			datos.append('validar','numero_cuenta');
-			datos.append('numero_cuenta',$(this).val());
+			datos.append('validar','referencia');
+			datos.append('referencia',$(this).val());
 			verificar_duplicados(datos);
         }		
 	})
@@ -181,14 +176,14 @@ async function validarEnvio(accion = "Registrar"){
 		}*/
 	}
 	// si el valor de correo no es el mismo de antes:
-	if(cedula_an != $("#cedula").val()){
+	if(numero_cuenta_an != $("#referencia").val()){
 		datos = new FormData(); 
-		datos.append('validar','cedula');
-		datos.append('cedula',$("#cedula").val());
+		datos.append('validar','referencia');
+		datos.append('referencia',$("#referencia").val());
 		res = await verificar_duplicados(datos);
 		// revisamos si esta duplicado con otro usuario
 		if(res){
-			mensajes('error',4000,'Esta cedula ya esta registrada','Esta cedula esta registrada, debe ingresar otra.');
+			mensajes('error',4000,'Número de cuenta ya registrado','Este número de cuenta esta registrado, debe ingresar otro.');
 			return false;
 		}
 	}

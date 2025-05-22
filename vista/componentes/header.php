@@ -8,7 +8,7 @@
 	        	</a>
 		        <div class="nav_list">
 		        	<?php if (Conexion::tiene_permiso(GESTIONAR_PAGOS, CONSULTAR)) : ?>
-		        	<a href="#" class="nav_link active" title="Pagos"> 
+		        	<a href="?pagina=pagos_controlador.php&accion=inicio" class="nav_link active" title="Pagos"> 
 		        		<i class="bi bi-cash-coin nav_logo-icon"></i>
 		        		<span class="nav_name">Pagos</span> 
 		        	</a>
@@ -27,8 +27,8 @@
 		        	<?php endif; ?>
 		        	<?php if (Conexion::tiene_permiso(GESTIONAR_EFECTIVO, CONSULTAR)) : ?> 
 		        	<a href="#" class="nav_link" title="Control de Caja"> 
-		        		<i class="bi bi-piggy-bank-fill nav_logo-icon"></i>
-		        		<span class="nav_name">Control de Caja</span> 
+						<i class="Bi bi-calendar3 nav_logo-icon"></i>
+		        		<span class="nav_name">Mensualidad</span> 
 		        	</a>
 		        	<?php endif; ?>
 		        	<?php if (Conexion::tiene_permiso(GESTIONAR_CARTELERA_VIRTUAL, CONSULTAR)) : ?>

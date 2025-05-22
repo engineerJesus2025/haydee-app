@@ -1,14 +1,14 @@
 consultar(); // para llenar la tabla al cargar
-let data_table, id_eliminado, id_registrado,id_modificar, cedula_an;
+let data_table, id_eliminado, id_registrado,id_modificar, referencia_an;
 // VAriables que usaremos mas tarde
 //guardamos los permisosdel usuario
 let permiso_eliminar = document.querySelector("#permiso_eliminar").value;
 let permiso_editar = document.querySelector("#permiso_editar").value;
 
-let tabla = document.querySelector("#tabla_habitantes"); //La tabla
+let tabla = document.querySelector("#tabla_pagos"); //La tabla
 let boton_formulario = document.querySelector("#boton_formulario"); // el boton
-let modal = new bootstrap.Modal("#modal_habitantes"); // el modal
-let formulario_usar = document.querySelector(`#form_habitantes`); // el form
+let modal = new bootstrap.Modal("#modal_pagos"); // el modal
+let formulario_usar = document.querySelector(`#form_pagos`); // el form
 
 //En caso de que se envie un formulario
 function envio(operacion) {	
@@ -27,12 +27,12 @@ function envio(operacion) {
 }
 
 // Esto es en caso de que uno quite el formulario, le devuelve los valores que tenia
-document.querySelector(`#modal_habitantes`).addEventListener("hide.bs.modal",()=>{
+document.querySelector(`#modal_pagos`).addEventListener("hide.bs.modal",()=>{
 	formulario_usar.reset();
 	boton_formulario.removeAttribute("modificar");
 	boton_formulario.removeAttribute("id_modificar");	
 	boton_formulario.textContent = "Registrar";
-	document.getElementById('titulo_modal').textContent = "Registrar Habitante";	
+	document.getElementById('titulo_modal').textContent = "Registrar Pagos";	
 	formulario_usar.querySelectorAll("[class='w-100']").forEach(el=>el.textContent="");
 	// CAmbiamos el input de nueva contra a confirmar contraseña
 	//formulario_usar.querySelector("#confir_contra").parentElement.previousElementSibling.textContent = "Confirmar Contraseña" 
@@ -45,22 +45,26 @@ async function registrar() {
 	//Creamos el formData
 	datos_consulta = new FormData();
 	//Creamos las variables con los datos de los inputs
-	let cedula = formulario_usar.querySelector("#cedula").value,
-	nombre_habitante = formulario_usar.querySelector("#nombre_habitante").value,	
-	apellido = formulario_usar.querySelector("#apellido").value, 
-	fecha_nacimiento = formulario_usar.querySelector("#fecha_nacimiento").value,
-    sexo = formulario_usar.querySelector("#sexo").value,
-    telefono = formulario_usar.querySelector("#telefono").value,
-    apartamento_id = formulario_usar.querySelector("#apartamento_id").value;
+	let fecha = formulario_usar.querySelector("#fecha").value,
+	monto = formulario_usar.querySelector("#monto").value,	
+	tasa_dolar = formulario_usar.querySelector("#tasa_dolar").value, 
+	estado = formulario_usar.querySelector("#estado").value,
+    metodo_pago = formulario_usar.querySelector("#metodo_pago").value;
+	banco_id = formulario_usar.querySelector("#banco_id").value;
+	referencia = formulario_usar.querySelector("#referencia").value;
+	imagen = formulario_usar.querySelector("#imagen").value;
+	observacion = formulario_usar.querySelector("#observacion").value;
 
 	// le pasamos los datos por el formData
-	datos_consulta.append("cedula",cedula);
-	datos_consulta.append("nombre_habitante",nombre_habitante);	
-	datos_consulta.append("apellido",apellido);
-	datos_consulta.append("fecha_nacimiento",fecha_nacimiento);
-	datos_consulta.append("sexo",sexo);
-    datos_consulta.append("telefono",telefono);
-    datos_consulta.append("apartamento_id",apartamento_id);
+	datos_consulta.append("fecha",fecha);
+	datos_consulta.append("monto",monto);	
+	datos_consulta.append("tasa_dolar",tasa_dolar);
+	datos_consulta.append("estado",estado);
+	datos_consulta.append("metodo_pago",metodo_pago);
+	datos_consulta.append("banco_id",banco_id);
+	datos_consulta.append("referencia",referencia);
+	datos_consulta.append("imagen",imagen);
+	datos_consulta.append("observacion",observacion);
 
 	//Aqui decimos que vamos a hacer
 	datos_consulta.append('operacion','registrar');
@@ -82,7 +86,7 @@ async function registrar() {
 	let acciones = crearBotones(id_registrado.mensaje); //Crea botones
 	
 	// esta variable no hace nada, pero me dio error cuando la quite XD
-	let res_data_table = await data_table.row.add([`${cedula}`,`${nombre_habitante}`,`${apellido}`,`${fecha_nacimiento}`,`${sexo}`,`${telefono}`,`${apartamento_id}`,`${acciones.outerHTML}`]).draw();
+	let res_data_table = await data_table.row.add([`${nombre_banco}`,`${codigo}`,`${numero_cuenta}`,`${telefono_afiliado}`,`${cedula_afiliada}`,`${acciones.outerHTML}`]).draw();
 	// Tiene el await para que lo espere, sino no la pone en la tabla
 
 	mensajes('success',4000,'Atencion','El registro se ha realizado exitosamente');//Mensaje de que se completo la operacion
@@ -116,7 +120,7 @@ async function consultar() {
 
 // Esta funcion hace lo que dice
 function vaciar_tabla() {
-	let cuerpo_tabla = document.querySelector(`#tabla_habitantes tbody`);
+	let cuerpo_tabla = document.querySelector(`#tabla_pagos tbody`);
 	cuerpo_tabla.textContent = null;
 }
 
@@ -124,42 +128,48 @@ function vaciar_tabla() {
 // esta funcion crea filas para la tabla al momento de consultar
 function llenarTabla(fila) {
 	// seleccionamos el cuerpo de la tabla que vamos a llenar
-	let cuerpo_tabla = document.querySelector(`#tabla_habitantes tbody`);
+	let cuerpo_tabla = document.querySelector(`#tabla_pagos tbody`);
 
 	// Creamos etiquetas
 	let fila_tabla = document.createElement("tr");//creamos la fila <tr></tr>
 
-	let id_campo = fila["id_habitante"]; // guardamos el id que nos interese
+	let id_campo = fila["id_pago"]; // guardamos el id que nos interese
 	
 	// creamos un td por cada columna que vamos a llenar de la tabla <td></td>
-	let cedula_td = document.createElement("td"),
-	nombre_habitante_td = document.createElement("td"),	
-	apellido_td = document.createElement("td"), 
-	fecha_nacimiento_td = document.createElement("td");
-    sexo_td = document.createElement("td");
-    telefono_td = document.createElement("td");
-    apartamento_id_td = document.createElement("td");
+	let fecha_td = document.createElement("td"),	
+	monto_td = document.createElement("td"), 
+	tasa_dolar_td = document.createElement("td");
+    estado_td = document.createElement("td");
+	metodo_pago_td = document.createElement("td");
+	banco_id_td = document.createElement("td");
+	referencia_td = document.createElement("td");
+	imagen_td = document.createElement("td");
+	observacion_td = document.createElement("td");
 
 	// le damos el contenido de la consulta
-	cedula_td.textContent = fila["cedula"];
-	nombre_habitante_td.textContent = fila["nombre_habitante"];
-	apellido_td.textContent = fila["apellido"];
-	fecha_nacimiento_td.textContent = fila["fecha_nacimiento"];
-    sexo_td.textContent = fila["sexo"];
-    telefono_td.textContent = fila["telefono"];
-    apartamento_id_td.textContent = fila["apartamento_id"];
+	fecha_td.textContent = fila["fecha"];
+	monto_td.textContent = fila["monto"];
+	tasa_dolar_td.textContent = fila["tasa_dolar"];
+	estado_td.textContent = fila["estado"];
+    metodo_pago_td.textContent = fila["metodo_pago"];
+	banco_id_td.textContent = fila["banco_id"];
+	referencia_td.textContent = fila["referencia"];
+	imagen_td.textContent = fila["imagen"];
+	observacion_td.textContent = fila["observacion"];
 
 	let acciones = crearBotones(id_campo); 
 	// creamos los botones de eliminar y modificar
 
 	// le ponemos los td a la fila (tr)
-	fila_tabla.appendChild(cedula_td);
-	fila_tabla.appendChild(nombre_habitante_td);
-	fila_tabla.appendChild(apellido_td);
-	fila_tabla.appendChild(fecha_nacimiento_td);
-	fila_tabla.appendChild(sexo_td);
-    fila_tabla.appendChild(telefono_td);
-    fila_tabla.appendChild(apartamento_id_td);
+	fila_tabla.appendChild(fecha_td);
+	fila_tabla.appendChild(monto_td);
+	fila_tabla.appendChild(tasa_dolar_td);
+	fila_tabla.appendChild(estado_td);
+	fila_tabla.appendChild(metodo_pago_td);
+	fila_tabla.appendChild(banco_id_td);
+	fila_tabla.appendChild(referencia_td);
+	fila_tabla.appendChild(imagen_td);
+	fila_tabla.appendChild(observacion_td);
     fila_tabla.appendChild(acciones);
 
 	fila_tabla.setAttribute("id",`fila-${id_campo}`);
@@ -189,7 +199,7 @@ function crearBotones(id) {
 	boton_editar.setAttribute("role", "button");
 	boton_editar.setAttribute("aria-disabled", "true");
 	boton_editar.setAttribute("data-bs-toggle", "modal");
-	boton_editar.setAttribute("data-bs-target", "#modal_banco");
+	boton_editar.setAttribute("data-bs-target", "#modal_pagos");
 
 	boton_editar.setAttribute("title","Editar");
 	boton_editar.setAttribute("value",id);
@@ -231,7 +241,7 @@ async function eliminar(id) {
 	datos_consulta = new FormData()
 
 	// Le ponemos el id al FormData
-	datos_consulta.append("id_habitante",id);
+	datos_consulta.append("id_pago",id);
 
 	//Aqui decimos que vamos a hacer
 	datos_consulta.append('operacion','eliminar');
@@ -266,7 +276,7 @@ async function modificar_formulario(e) {
 		//esto es por si seleciona el icono en vez del boton al dar click
 	}
 	// le damos el id
-	datos_consulta.append("id_habitante",id);
+	datos_consulta.append("id_pago",id);
 
 	//Aqui decimos que vamos a hacer
 	datos_consulta.append('operacion','consulta_especifica');
@@ -275,22 +285,26 @@ async function modificar_formulario(e) {
 	data = await query(datos_consulta);	
 	
 	// ahora seleccionamos los inputs
-	let cedula = formulario_usar.querySelector("#cedula"),
-	nombre_habitante = formulario_usar.querySelector("#nombre_habitante"),	
-	apellido = formulario_usar.querySelector("#apellido"),	
-	fecha_nacimiento = formulario_usar.querySelector("#fecha_nacimiento");
-    sexo = formulario_usar.querySelector("#sexo");
-    telefono = formulario_usar.querySelector("#telefono");
-    apartamento_id = formulario_usar.querySelector("#apartamento_id");
+	let fecha = formulario_usar.querySelector("#fecha"),
+	monto = formulario_usar.querySelector("#monto"),	
+	tasa_dolar = formulario_usar.querySelector("#tasa_dolar"),	
+	estado = formulario_usar.querySelector("#estado");
+    metodo_pago = formulario_usar.querySelector("#metodo_pago");
+	banco_id = formulario_usar.querySelector("#banco_id");
+	referencia = formulario_usar.querySelector("#referencia");	
+	imagen = formulario_usar.querySelector("#imagen");
+	observacion = formulario_usar.querySelector("#observacion");
 
 	// le damos valor
-	cedula.value = data.cedula;
-	nombre_habitante.value = data.nombre_habitante;	
-	apellido.value = data.apellido;
-	fecha_nacimiento.value = data.fecha_nacimiento;
-    sexo.value = data.sexo;
-    telefono.value = data.telefono;
-    apartamento_id.value = data.apartamento_id;
+	fecha.value = data.fecha;
+	monto.value = data.monto;	
+	tasa_dolar.value = data.tasa_dolar;
+	estado.value = data.estado;
+    metodo_pago.value = data.metodo_pago;
+	banco_id.value = data.banco_id;
+	referencia.value = data.referencia;
+	imagen.value = data.imagen;
+	observacion.value = data.observacion;
 
 	// este if revisa si tiene permiso para editar, en caso de que no, quitamos el boton
 	if(!permiso_editar){
@@ -301,14 +315,14 @@ async function modificar_formulario(e) {
 
 	// aqui cambiamos los datos del boton para registrar, para saber que ahora se va es a modificar un registro
 	boton_formulario.setAttribute("modificar",true);
-	boton_formulario.setAttribute("id_modificar",data.id_banco);
+	boton_formulario.setAttribute("id_modificar",data.id_pago);
 	boton_formulario.textContent = "Modificar";
-	document.getElementById('titulo_modal').textContent = "Modificar Habitante";
+	document.getElementById('titulo_modal').textContent = "Modificar Pago";
 	//formulario_usar.querySelector("#confir_contra").parentElement.previousElementSibling.textContent = "Nueva Contraseña" 
 	//formulario_usar.querySelector("#confir_contra").placeholder = "Nueva Contraseña" 
 
 	id_modificar = id;
-	cedula_an = cedula.value;
+	referencia_an = referencia.value;
 	//guardamos el orginal del correo, para que no choquen con las validaciones
 }
 
@@ -318,24 +332,28 @@ async function modificar(id) {
 	let datos_consulta = new FormData();
 
 	//Guardamos los datos del formulario
-	let cedula = formulario_usar.querySelector("#cedula"),
-	nombre_habitante = formulario_usar.querySelector("#nombre_habitante"),	
-	apellido = formulario_usar.querySelector("#apellido"),	
-	fecha_nacimiento = formulario_usar.querySelector("#fecha_nacimiento");
-    sexo = formulario_usar.querySelector("#sexo");
-    telefono = formulario_usar.querySelector("#telefono");
-    apartamento_id = formulario_usar.querySelector("#apartamento_id");
+	let fecha = formulario_usar.querySelector("#fecha").value,
+	monto = formulario_usar.querySelector("#monto").value,
+	tasa_dolar = formulario_usar.querySelector("#tasa_dolar").value, 	
+	estado = formulario_usar.querySelector("#estado").value,
+	metodo_pago = formulario_usar.querySelector("metodo_pago").value;
+	banco_id = formulario_usar.querySelector("#banco_id").value;
+	referencia = formulario_usar.querySelector("#referencia").value;
+	imagen = formulario_usar.querySelector("#imagen").value;
+	observacion	= formulario_usar.querySelector("#observacion").value;
 
 	// Le ponemos los datos del formulario
-	datos_consulta.append("id_habitante",id);
+	datos_consulta.append("id_pago",id);
 
-	datos_consulta.append("cedula",cedula);
-	datos_consulta.append("nombre_habitante",nombre_habitante);	
-	datos_consulta.append("apellido",apellido);
-	datos_consulta.append("fecha_nacimiento",fecha_nacimiento);
-	datos_consulta.append("sexo",sexo);
-    datos_consulta.append("telefono",telefono);
-    datos_consulta.append("apartamento_id",apartamento_id);
+	datos_consulta.append("fecha",fecha);
+	datos_consulta.append("monto",monto);	
+	datos_consulta.append("tasa_dolar",tasa_dolar);
+	datos_consulta.append("estado",estado);
+	datos_consulta.append("metodo_pago",metodo_pago);
+	datos_consulta.append("banco_id",banco_id);
+	datos_consulta.append("referencia",referencia);
+	datos_consulta.append("imagen",imagen);
+	datos_consulta.append("observacion",observacion);
 	// ...
 
 	//Aqui decimos que vamos a hacer
@@ -359,14 +377,14 @@ async function modificar(id) {
 	boton_formulario.removeAttribute("id_modificar");	
 	boton_formulario.textContent = "Registrar";
 
-	document.getElementById('titulo_modal').textContent = "Registrar Habitante";
+	document.getElementById('titulo_modal').textContent = "Registrar Pago";
 
 	mensajes('success',4000,'Atencion','El registro se ha modificado exitosamente');//Mensaje de que se completo la operacion
 
 	// esto de abajo es para editar la fila que se modifico en el data table
 	let acciones = crearBotones(id); // creamos otro botones (no se que tan necesario sea esto)
 
-	data_table.row(`#fila-${id}`).data([`${cedula}`,`${nombre_habitante}`,`${apellido}`,`${fecha_nacimiento}`,`${sexo}`,`${telefono}`,`${apartamentos_id}`,`${acciones.outerHTML}`])
+	data_table.row(`#fila-${id}`).data([`${fecha}`,`${monto}`,`${tasa_dolar}`,`${estado}`,`${metodo_pago}`,`${banco_id}`,`${referencia}`,`${imagen}`,`${observacion}`,`${acciones.outerHTML}`])
 	data_table.draw(); // esta funcion refresca la tabla, por si le da sed
 
 	// se le vuelve a poner el evento al boton
@@ -410,7 +428,7 @@ function mensajes(icono,tiempo,titulo,mensaje){
 
 // esta funcion es para incializar el data table
 function init_data_table() {
-	return new DataTable("#tabla_habitantes",{
+	return new DataTable("#tabla_pagos",{
             destroy: true,
             responsive: true,
             "scrollX": true,
@@ -478,7 +496,7 @@ function reasignarEventos() {
 		}
 		Swal.fire({
 			title: "¿Estás seguro?",
-			text: "¿Está seguro que desea eliminar este habitante?",
+			text: "¿Está seguro que desea eliminar este pago?",
 			showCancelButton: true,
 			confirmButtonText: "Eliminar",
 			confirmButtonColor: "#e01d22",
