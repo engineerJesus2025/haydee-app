@@ -1,20 +1,20 @@
 $(document).ready(function(){
 	// Validaciones
 	$("#monto").on("keypress",function(e){
-		validarKeyPress(/^[0-9,\b]*$/, e);
+		validarKeyPress(/^\d*\.?\d*$/, e);
 	});
 
 	$("#monto").on("keyup",function(){
-		validarKeyUp(/^[0-9,\b]{1,5}$/,
+		validarKeyUp(/^\d{1,6}(\.\d{1,2})?$/,
 		$(this),this.nextElementSibling,"Debe ingresar el monto del pago");
 	});
 
 	$("#tasa_dolar").on("keypress",function(e){
-		validarKeyPress(/^[0-9,\b]*$/, e);
+		validarKeyPress(/^\d*\.?\d*$/, e);
 	});
 
 	$("#tasa_dolar").on("keyup",function(){
-		validarKeyUp(/^[0-9,\b]{1,5}$/,
+		validarKeyUp(/^\d{1,6}(\.\d{1,2})?$/,
 		$(this),this.nextElementSibling,"Debe ingresar la tasa del día de hoy");
 	});
 
@@ -78,7 +78,7 @@ function mensajes(icono,tiempo,titulo,mensaje){
 
 async function validarEnvio(accion = "Registrar"){	
 	if(validarKeyUp(
-        /^[0-9,]{1,5}$/,
+        /^[0-9,]{1,8}$/,
         $("#monto"),document.querySelector("#monto").nextElementSibling,'Debe ingresar el monto del pago'
         )==0)
 	{
@@ -88,7 +88,7 @@ async function validarEnvio(accion = "Registrar"){
 		return false;
 	}
 	else if(validarKeyUp(
-        /^[0-9,]{1,5}$/,
+        /^\d{1,6}(\.\d{1,2})?$/,
         $("#tasa_dolar"),document.querySelector("#tasa_dolar").nextElementSibling,'Debe ingresar la tasa del dolar de hoy'
         )==0)
 	{
@@ -99,7 +99,7 @@ async function validarEnvio(accion = "Registrar"){
 	}
 	
 	else if(validarKeyUp(
-        /^[0-9]{3,10}$/,
+        /^\d{1,6}(\.\d{1,2})?$/,
         $("#referencia"),document.querySelector("#referencia").nextElementSibling,'Debe ingresar la referencia del pago'
         )==0)
 	{

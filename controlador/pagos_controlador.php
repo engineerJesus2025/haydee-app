@@ -26,8 +26,27 @@
             $metodo_pago = $_POST["metodo_pago"];
             $banco_id = $_POST["banco_id"];
             $referencia = $_POST["referencia"];
-            $imagen = $_POST["imagen"];
+            $imagen = '';
             $observacion = $_POST["observacion"];
+
+            if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === 0) {
+                $nombre_original = $_FILES['imagen']['name'];
+                $temporal = $_FILES['imagen']['tmp_name'];
+                $extension = pathinfo($nombre_original, PATHINFO_EXTENSION);
+
+                // ESTO ES PARA QUE SE GUARDE LA IMAGEN CON EL NOMBRE ORIGINAL + UNOS NUMEROS RANDOM PARA EVITAR DUPLICACION
+                $nombre_sanitizado = preg_replace("/[^a-zA-Z0-9-_\.]/", "_", pathinfo($nombre_original, PATHINFO_FILENAME));
+                $imagen = $nombre_sanitizado . '_' . time() . '.' . $extension;
+
+                // AQUI ES DONDE SE VA A GUARDAR LA IMAGEN FISICAMENTE
+                $ruta_destino = "recursos/img/";
+                // ESTO NUNCA VA A PASAR!! PERO POR SI ACASO (BASICAMENTE SI NO EXISTE LA RUTA, SE CREA)
+                if (!is_dir($ruta_destino)) {
+                    mkdir($ruta_destino, 0777, true);
+                }
+                // AQUI SE CAMBIA LA RUTA DE LA IMAGEN, DE UNA IMAGEN TEMPORAL A LA RUTA DE DESTINO FISICA
+                move_uploaded_file($temporal, $ruta_destino . $imagen);
+            }
  
             //se usan los setters correspondientes
             $obj_pago->set_fecha($fecha);
@@ -66,9 +85,38 @@
             $metodo_pago = $_POST["metodo_pago"];
             $banco_id = $_POST["banco_id"];  
             $referencia = $_POST["referencia"];
-            $imagen = $_POST["imagen"];
             $observacion = $_POST["observacion"];
             // ...
+
+            $imagen = $cartelera_virtual_obj->obtener_imagen_actual();
+            if (!empty($imagen)) {
+                $ruta_imagen = "recursos/img/" . $imagen;
+
+                // Eliminar imagen si el usuario lo pidió y el archivo existe
+                if ($eliminar_imagen && file_exists($ruta_imagen) && is_file($ruta_imagen)) {
+                    unlink($ruta_imagen);
+                    $imagen = '';
+                }
+            } else {
+                $ruta_imagen = ''; // No hay imagen previa
+            }
+
+            //  Reemplazo de imagen
+            if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === 0) {
+                // Si hay imagen previa, se elimina
+                if (!empty($imagen) && file_exists("recursos/img/" . $imagen) && is_file("recursos/img/" . $imagen)) {
+                    unlink("recursos/img/" . $imagen);
+                }
+                
+                // LO MISMO QUE EN REGISTRAR
+                $nombre_original = $_FILES['imagen']['name'];
+                $temporal = $_FILES['imagen']['tmp_name'];
+                $extension = pathinfo($nombre_original, PATHINFO_EXTENSION);
+                $nombre_sanitizado = preg_replace("/[^a-zA-Z0-9-_\.]/", "_", pathinfo($nombre_original, PATHINFO_FILENAME));
+                $imagen = $nombre_sanitizado . '_' . time() . '.' . $extension;
+
+                move_uploaded_file($temporal, "recursos/img/" . $imagen);
+            }
 
             //se usan los setters correspondientes
             $obj_pago->set_id_pago($id_pago);

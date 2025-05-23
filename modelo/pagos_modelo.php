@@ -271,6 +271,19 @@
             }
         }
 
+        public function obtener_imagen_actual(){
+
+            $this->cambiar_db_seguridad(); 
+            $sql = "SELECT imagen FROM pagos WHERE id_pago = :id_pago";
+            $conexion = $this->get_conex()->prepare($sql);
+            $conexion->bindParam(":id_pago", $this->id_pago);
+            $conexion->execute();
+            $this->cambiar_db_negocio();
+
+            $resultado = $conexion->fetch(PDO::FETCH_ASSOC);
+            return $resultado ? $resultado["imagen"] : null;
+        }
+
         public function lastId(){
             //$this->cambiar_db_seguridad();
             $sql = "SELECT MAX(id_pago) as last_id FROM pagos";

@@ -34,9 +34,13 @@ document.querySelector(`#modal_pagos`).addEventListener("hide.bs.modal",()=>{
 	boton_formulario.textContent = "Registrar";
 	document.getElementById('titulo_modal').textContent = "Registrar Pago";	
 	formulario_usar.querySelectorAll("[class='w-100']").forEach(el=>el.textContent="");
-	// CAmbiamos el input de nueva contra a confirmar contraseña
-	//formulario_usar.querySelector("#confir_contra").parentElement.previousElementSibling.textContent = "Confirmar Contraseña" 
-	//formulario_usar.querySelector("#confir_contra").placeholder = "Confirmar Contraseña" 
+
+	document.querySelector("#nombre_imagen_cargada").textContent = "";
+    document.querySelector("#boton_eliminar_imagen").classList.add("d-none");
+    document.querySelector("#boton_eliminar_imagen").removeAttribute("data-nombre");
+
+    const inputOculto = formulario_usar.querySelector("input[name='eliminar_imagen']");
+    if (inputOculto) inputOculto.remove();
 });
 
 //Si queremos registrar:
@@ -53,7 +57,7 @@ async function registrar() {
 	banco_id = formulario_usar.querySelector("#banco_id").value;
 	nombre_banco = formulario_usar.querySelector("#banco_id").selectedOptions[0].textContent;
 	referencia = formulario_usar.querySelector("#referencia").value;
-	imagen = formulario_usar.querySelector("#imagen").value;
+	imagen = formulario_usar.querySelector("#imagen").files[0];
 	observacion = formulario_usar.querySelector("#observacion").value;
 
 	// le pasamos los datos por el formData
@@ -118,7 +122,7 @@ async function consultar() {
 	
 	data_table = init_data_table(); //iniciamos el dataTable de jquery
 }
-
+ 
 // Esta funcion hace lo que dice
 function vaciar_tabla() {
 	let cuerpo_tabla = document.querySelector(`#tabla_pagos tbody`);
@@ -148,10 +152,28 @@ function llenarTabla(fila) {
 	observacion_td = document.createElement("td");
 
 	// le damos el contenido de la consulta
-	fecha_td.textContent = fila["fecha"];
-	monto_td.textContent = fila["monto"] + " $";
+	// Para arreglar la fecha
+	let fecha = new Date(fila["fecha"]);
+	let dia = String(fecha.getDate()).padStart(2, '0');
+	let mes = String(fecha.getMonth() + 1).padStart(2, '0');
+	let anio = String(fecha.getFullYear()); // Para solo 2 dígitos = String(fecha.getFullYear()).slice(-2);
+	fecha_td.textContent = `${dia}/${mes}/${anio}`;
+	// ...
+	// Para mostrar el calculo entre el monto y la tasa
+	monto_td.textContent = fila["monto"] + " $ " + "(" + (parseFloat(fila["monto"]) * parseFloat(fila["tasa_dolar"])).toFixed(2) + " Bs)";
+	// ...
 	tasa_dolar_td.textContent = fila["tasa_dolar"] + " Bs";
+	// Para que los estados tengan colores
 	estado_td.textContent = fila["estado"];
+
+	if (fila["estado"] === "COMPROBADO") {
+		estado_td.style.color = "green";
+		estado_td.style.fontWeight = "bold";
+	} else if (fila["estado"] === "PENDIENTE") {
+		estado_td.style.color = "orange";
+		estado_td.style.fontWeight = "bold";
+	}
+	// ...
     metodo_pago_td.textContent = fila["metodo_pago"];
 	banco_id_td.textContent = fila["nombre_banco"];
 	referencia_td.textContent = fila["referencia"];
@@ -179,16 +201,6 @@ function llenarTabla(fila) {
 	// y por ultimo, llenamos la tabla con la fila
 	cuerpo_tabla.appendChild(fila_tabla);	
 
-	// Para que los estados tengan colores
-	if (fila["estado"] === "COMPROBADO") {
-		estado_td.style.color = "green";
-		estado_td.style.fontWeight = "bold";
-	} else if (fila["estado"] === "PENDIENTE") {
-		estado_td.style.color = "orange";
-		estado_td.style.fontWeight = "bold";
-	}
-	// ...
-
 	// Ajusta mas o menos los contenidos
 	fecha_td.style.whiteSpace = "nowrap";
 	fecha_td.style.overflow = "hidden";
@@ -202,6 +214,18 @@ function crearBotones(id) {
 	let acciones = document.createElement("div");
 	acciones.setAttribute("class","row justify-content-evenly");
 	// le damos la clases de boostrap para que se vea tu sabe'
+
+	// BOTON DE VISTA PREVIA CON EL OJITO
+    let boton_vista_previa = document.createElement("button");
+    let icono_ver = document.createElement("i");
+    icono_ver.setAttribute("class", "bi bi-eye-fill");
+    boton_vista_previa.appendChild(icono_ver);
+    boton_vista_previa.setAttribute("type", "button");
+    boton_vista_previa.setAttribute("class", "btn btn-primary btn-sm col-3");
+    boton_vista_previa.setAttribute("title", "Vista previa");
+    boton_vista_previa.setAttribute("value", id);
+    boton_vista_previa.addEventListener("click", mostrarVistaPrevia);
+    acciones.appendChild(boton_vista_previa);
 
 	// Lo mismo que arriba, pero con modificar
 	let boton_editar = document.createElement("button");
@@ -322,6 +346,9 @@ async function modificar_formulario(e) {
 	referencia.value = data.referencia;
 	imagen.value = data.imagen;
 	observacion.value = data.observacion;
+	// ...
+
+	
 
 	// este if revisa si tiene permiso para editar, en caso de que no, quitamos el boton
 	if(!permiso_editar){
