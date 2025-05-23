@@ -28,7 +28,7 @@
             $referencia = $_POST["referencia"];
             $imagen = $_POST["imagen"];
             $observacion = $_POST["observacion"];
-
+ 
             //se usan los setters correspondientes
             $obj_pago->set_fecha($fecha);
             $obj_pago->set_monto($monto);
@@ -58,6 +58,7 @@
  
         elseif ($operacion == "modificar") {
             //se guardan las variables a modificar
+            $id_pago = $_POST["id_pago"];
             $fecha = $_POST["fecha"];  
             $monto = $_POST["monto"];  
             $tasa_dolar = $_POST["tasa_dolar"]; 
@@ -70,6 +71,7 @@
             // ...
 
             //se usan los setters correspondientes
+            $obj_pago->set_id_pago($id_pago);
             $obj_pago->set_fecha($fecha);
             $obj_pago->set_monto($monto);
             $obj_pago->set_tasa_dolar($tasa_dolar);

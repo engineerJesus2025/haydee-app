@@ -51,6 +51,7 @@ async function registrar() {
 	estado = formulario_usar.querySelector("#estado").value,
     metodo_pago = formulario_usar.querySelector("#metodo_pago").value;
 	banco_id = formulario_usar.querySelector("#banco_id").value;
+	nombre_banco = formulario_usar.querySelector("#banco_id").selectedOptions[0].textContent;
 	referencia = formulario_usar.querySelector("#referencia").value;
 	imagen = formulario_usar.querySelector("#imagen").value;
 	observacion = formulario_usar.querySelector("#observacion").value;
@@ -86,7 +87,7 @@ async function registrar() {
 	let acciones = crearBotones(id_registrado.mensaje); //Crea botones
 	
 	// esta variable no hace nada, pero me dio error cuando la quite XD
-	let res_data_table = await data_table.row.add([`${fecha}`,`${monto}`,`${tasa_dolar}`,`${estado}`,`${metodo_pago}`,`${banco_id}`,`${referencia}`,`${imagen}`,`${observacion}`,`${acciones.outerHTML}`]).draw();
+	let res_data_table = await data_table.row.add([`${fecha}`,`${monto}`,`${tasa_dolar}`,`${estado}`,`${metodo_pago}`,`${nombre_banco}`,`${referencia}`,`${imagen}`,`${observacion}`,`${acciones.outerHTML}`]).draw();
 	// Tiene el await para que lo espere, sino no la pone en la tabla
 
 	mensajes('success',4000,'Atencion','El registro se ha realizado exitosamente');//Mensaje de que se completo la operacion
@@ -148,8 +149,8 @@ function llenarTabla(fila) {
 
 	// le damos el contenido de la consulta
 	fecha_td.textContent = fila["fecha"];
-	monto_td.textContent = fila["monto"];
-	tasa_dolar_td.textContent = fila["tasa_dolar"];
+	monto_td.textContent = fila["monto"] + " $";
+	tasa_dolar_td.textContent = fila["tasa_dolar"] + " Bs";
 	estado_td.textContent = fila["estado"];
     metodo_pago_td.textContent = fila["metodo_pago"];
 	banco_id_td.textContent = fila["nombre_banco"];
@@ -177,6 +178,22 @@ function llenarTabla(fila) {
 	
 	// y por ultimo, llenamos la tabla con la fila
 	cuerpo_tabla.appendChild(fila_tabla);	
+
+	// Para que los estados tengan colores
+	if (fila["estado"] === "COMPROBADO") {
+		estado_td.style.color = "green";
+		estado_td.style.fontWeight = "bold";
+	} else if (fila["estado"] === "PENDIENTE") {
+		estado_td.style.color = "orange";
+		estado_td.style.fontWeight = "bold";
+	}
+	// ...
+
+	// Ajusta mas o menos los contenidos
+	fecha_td.style.whiteSpace = "nowrap";
+	fecha_td.style.overflow = "hidden";
+	fecha_td.style.textOverflow = "ellipsis";
+	// ...
 }
 
 function crearBotones(id) {
@@ -338,6 +355,7 @@ async function modificar(id) {
 	estado = formulario_usar.querySelector("#estado").value,
 	metodo_pago = formulario_usar.querySelector("#metodo_pago").value;
 	banco_id = formulario_usar.querySelector("#banco_id").value;
+	nombre_banco = formulario_usar.querySelector("#banco_id").selectedOptions[0].textContent;
 	referencia = formulario_usar.querySelector("#referencia").value;
 	imagen = formulario_usar.querySelector("#imagen").value;
 	observacion	= formulario_usar.querySelector("#observacion").value;
@@ -384,7 +402,7 @@ async function modificar(id) {
 	// esto de abajo es para editar la fila que se modifico en el data table
 	let acciones = crearBotones(id); // creamos otro botones (no se que tan necesario sea esto)
 
-	data_table.row(`#fila-${id}`).data([`${fecha}`,`${monto}`,`${tasa_dolar}`,`${estado}`,`${metodo_pago}`,`${banco_id}`,`${referencia}`,`${imagen}`,`${observacion}`,`${acciones.outerHTML}`])
+	data_table.row(`#fila-${id}`).data([`${fecha}`,`${monto}`,`${tasa_dolar}`,`${estado}`,`${metodo_pago}`,`${nombre_banco}`,`${referencia}`,`${imagen}`,`${observacion}`,`${acciones.outerHTML}`])
 	data_table.draw(); // esta funcion refresca la tabla, por si le da sed
 
 	// se le vuelve a poner el evento al boton
