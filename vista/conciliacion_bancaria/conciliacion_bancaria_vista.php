@@ -7,6 +7,17 @@
 	<?php
 		require_once "vista/componentes/estilos.php";
 	?>
+    <style type="text/css">
+        .table>tbody>tr>td, .table>tbody>tr>th, .table>tfoot>tr>td, .table>tfoot>tr>th, .table>thead>tr>td, .table>thead>tr>th {
+          padding-top: 15px;
+          padding-bottom: 15px;
+        }
+        /*#tabla_resumen td, #tabla_resumen tr, #tabla_resumen th{
+            padding-top: 10px;
+            padding-bottom: 5px;
+        }*/
+
+    </style>
 </head>
 
 <body id="body-pd mb-2" class="body-pd">
@@ -28,26 +39,68 @@
 					</div>
 					<p class="lead"></p>
 					<hr>
-					<div class="row mb-3">
+					<div class="row mb-3 align-items-center">
 					    <div class="col-4">
 					        <div class="card p-4">
-
+                                <h5 class="mb-4">Seleccione el mes para Evaluar</h5>
 					        	<div class="col-md-12">
-						            <label for="mes_seleccionado">Seleccione el mes para Evaluar</label>
 						            <div class="input-group mb-3">
 						                <span class="input-group-text" id="basic-addon1"><i class="bi bi-calendar2-date"></i></span>
 						                <select class="form-select " aria-label="Default select example" name="mes_seleccionado" id="mes_select"><option selected hidden value="">Seleccionar Mes</option>
 						                </select>
 						            </div>
 						        </div>
-						        <span id="span_select"></span>
+						        <span id="span_select" class="my-3"></span>
+                                <button>Mostrar conciliaciones</button>
 					        </div>
 					    </div>
+                        <div class="col-8">
+                            <div class="card px-4   ">
+                                <div class="col-md-12">
+                                    <table class="table table-hover caption-top" id="tabla_resumen">
+                                        <caption>Resumen de Conciliación</caption>
+                                      <thead>
+                                        <tr>
+                                          <th scope="col">#</th>
+                                          <th scope="col">Sistema</th>
+                                          <th scope="col">Banco</th>
+                                          <th scope="col">Conciliado</th>
+                                          <th scope="col">Diferencia</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody class="table-group-divider">
+                                        <tr>
+                                          <th scope="row">Ingreso</th>
+                                          <td class="text-success">20Bs.</td>
+                                          <td class="text-success">20Bs.</td>
+                                          <td class="text-success">@20Bs.</td>
+                                          <td>20bs</td>
+                                        </tr>
+                                        <tr>
+                                          <th scope="row">Egreso</th>
+                                          <td class="text-danger">20Bs.</td>
+                                          <td class="text-danger">20Bs.</td>
+                                          <td class="text-danger">@20Bs.</td>
+                                          <td>20bs</td>
+                                        </tr>
+                                      </tbody>
+                                      <tfoot class="table-group-divider">
+                                          <td colspan="2">Saldo Registrado: 20Bs.</td>
+                                          <td colspan="2">Saldo del Banco: 20Bs.</td>
+                                          <td>200bs</td>
+                                      </tfoot>
+                                    </table>
+
+
+                                </div>
+                                <span id="span_select"></span>
+                            </div>
+                        </div>
 					</div>
 					<div class="row mb-3">
                         <div class="col-8">
-                            <div class="card p-2 pt-3">
-                                <table id="tabla_registros_sistema" class="table caption-top" style="width: 98%">
+                            <div class="card p-3 pt-3">
+                                <table id="tabla_registros_sistema" class="table caption-top table-hover" style="width: 98%">
                                 	<caption>Registros del Sistema</caption>
                                     <thead>
                                         <tr>
@@ -68,9 +121,9 @@
 
                             </div>
                         </div>
-                        <div class="col-4">
-                            <div class="card p-2 pt-5">
-                                <table id="tabla_movimientos_sistema" class="table caption-top">
+                        <div class="col-4 p-2 pt-5">
+                            <div class="card p-2 pt-4 mt-1" hidden>
+                                <table id="tabla_movimientos_sistema" class="table caption-top table-hover">
                                 	<caption>Movimientos Bancarios</caption>
                                     <thead>
                                         <tr>

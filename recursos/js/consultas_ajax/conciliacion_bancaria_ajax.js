@@ -3,7 +3,7 @@ PELIGRO: no terminado
 
 Ni se molesten en leerlo, yo apenas lo entiendo
 */
-let data_table, referencia_an
+let data_table = null, referencia_an;
 // id_eliminado, id_registrado, id_modificar;
 // VAriables que usaremos mas tarde
 //guardamos los permisosdel usuario
@@ -25,12 +25,11 @@ conciliacion:
 * dar la opcion para registrar un pago no correspondido por le sistema :D
 * dar la opcion para marcar un registro no correspondido por el banco :D
 * Calcular conciliacion y mostrarla
-* al final un boton para guardar conciliacion bancaria
+* al final un boton para guardar conciliacion bancaria (funcional)
 * ver conciliaciones (no se si cambiar la tabla o mostrarlo en un modal)
 * Agregar bitacora
-* confirmaciones con boostap
 * Actualizar data_table
-* debatir si usar data table :/
+* confirmaciones con boostap
 */
 
 buscarMesesNoConciliados();
@@ -98,7 +97,10 @@ document.getElementById("monto_movimiento").addEventListener("keyup",e=>{
 	let monto_sistema = parseInt(document.getElementById("monto_sistema").value.split("B")[0]);
 	let diferencia;
 	let monto_diferencia = monto_escrito - monto_sistema;
+	let estado_input = document.getElementById("estado");
 	let estado;
+
+	if(estado_input.value == "Ninguna"){return;}
 
 	if (monto_escrito > monto_sistema) {
 		diferencia = "Adicional";
@@ -114,7 +116,7 @@ document.getElementById("monto_movimiento").addEventListener("keyup",e=>{
 	// Ponemos los valores en los inputs:
 	document.getElementById("diferencia_tipo").value = diferencia;
 	document.getElementById("diferencia_monto").value = Math.abs(monto_diferencia);
-	document.getElementById("estado").value = estado;	
+	estado_input.value = estado;	
 });
 
 //Funciones:
@@ -176,8 +178,7 @@ async function llenarTablaRegistrosSistema(){
 	let fragment = document.createDocumentFragment();
 
 	resultados.map(resultado=>{
-		
-		let fila = document.createElement("tr");
+		let fila = document.createElement("tr");		
 
 		let acciones_td = document.createElement("td");
 		let ingre_egre_td = document.createElement("td");
@@ -205,6 +206,13 @@ async function llenarTablaRegistrosSistema(){
 		referencia_td.textContent = resultado.referencia;
 		apar_prove_td.textContent = `${(accion == "Ingreso")?"Ap. Nº ":''}${resultado.remitente}`;
 
+		if (accion == "Ingreso") {
+			monto_td.setAttribute("class","text-success text-bold");
+		}
+		else{
+			monto_td.setAttribute("class","text-danger text-bold");
+		}
+
 		fila.appendChild(acciones_td);
 		fila.appendChild(ingre_egre_td);
 		fila.appendChild(fecha_td);
@@ -213,13 +221,12 @@ async function llenarTablaRegistrosSistema(){
 		fila.appendChild(apar_prove_td);
 
 		fragment.appendChild(fila);
-	})
+	});
 
 	tabla.textContent = null;
 	tabla.appendChild(fragment);
-
-	data_table = await init_data_table();
-	llenarTablaMovimientos();
+	
+	llenarTablaMovimientos();	
 }
 
 async function llenarTablaMovimientos() {
@@ -242,29 +249,31 @@ async function llenarTablaMovimientos() {
 		let fila_tr = document.createElement("tr");
 		let td_monto = document.createElement("td");
 		let td_accion = document.createElement("td");
+		let td_fecha = document.createElement("td");
 
 		let ultima = false;
 		let tr_ultima;
 
 		let relacion = false;
-
+		let fecha_alta;
 		movimientos_bancarios.map((movimiento,index_m)=>{
 			let boton_editar;
 			let boton_eliminar;
-			// console.log(tabla_registros_filas.length == index + 1 && movimientos_bancarios.length == index_m + 1, index_m+1, index+1);
 			if (movimiento.pago_id == null && movimiento.gasto_id == null) {
 				// Revisamos si ya la pusimos 0.0
 				let existe = fila.parentElement.querySelector(`#Movimiento-${movimiento.id_movimiento}`);
+				
 				if (existe) {return;}
-				if (!(fila.children[2].textContent > movimiento.fecha && 
-					movimiento.fecha.split("-")[2] < new Date(movimiento.fecha.split("-")[0],movimiento.fecha.split("-")[1] + 1,0).getDate()
-					) && !(tabla_registros_filas.length == index + 1 && movimientos_bancarios.length == index_m + 1)) {return;}
+				
+				// console.log(fecha_alta);
+
 				//Insertando en registro-sistema
 				let fila_sistema = document.createElement("tr");
 				fila_sistema.setAttribute("id",`Movimiento-${movimiento.id_movimiento}`);
 
 				let td_estatus = document.createElement("td");
 				let td_sistema = document.createElement("td");
+				
 				td_sistema.setAttribute("colspan",5);
 				td_sistema.setAttribute("class","text-center");
 				td_sistema.textContent = `No hay Registro en el sistema para este Movimiento`;
@@ -272,20 +281,43 @@ async function llenarTablaMovimientos() {
 				let boton_estatus = crearBoton("Sin Correspondencia",true);
 				td_estatus.appendChild(boton_estatus);
 				td_estatus.setAttribute("class","text-center");
-				// Recursividad Papa
+
+				// relleno porque el data table jode y no acepta colspan
+				let td_1 = document.createElement("td");
+				td_1.textContent = movimiento.fecha;
+				td_1.style = `display:none`;
+				let td_2 = document.createElement("td");
+				td_2.style = `display:none`;
+				let td_3 = document.createElement("td");
+				td_3.style = `display:none`;
+				let td_4 = document.createElement("td");
+				td_4.style = `display:none`;
+				// Jquery <----- Asco
 
 				fila_sistema.appendChild(td_estatus);
 				fila_sistema.appendChild(td_sistema);
+				fila_sistema.appendChild(td_1);
+				fila_sistema.appendChild(td_2);
+				fila_sistema.appendChild(td_3);
+				fila_sistema.appendChild(td_4);
 				// El padre le dice al hijo que se lo meta despues <..>
 
 				let fila_tr_otro = document.createElement("tr");
 				let td_monto_otro = document.createElement("td");
 				let td_accion_otro = document.createElement("td");
+				let td_fecha_otro = document.createElement("td");
 
 				// Poner en la tabla movimientos el valor
 				fila_tr_otro.setAttribute("id",`Movimiento-${movimiento.id_movimiento}`);
 
-				td_monto_otro.textContent = `${movimiento.monto}bs`;
+				td_monto_otro.textContent = `${movimiento.monto}Bs.`;
+
+				if (movimiento.tipo_movimiento == "Ingreso") {
+					td_monto_otro.setAttribute("class","text-success");
+				}
+				else{
+					td_monto_otro.setAttribute("class","text-danger");
+				}
 				
 				boton_editar = crearBoton("Editar",fila.id,`Ninguna-${movimiento.tipo_movimiento}`,movimiento.id_movimiento);
 				boton_eliminar = crearBoton("Eliminar",movimiento.id_movimiento);
@@ -295,8 +327,12 @@ async function llenarTablaMovimientos() {
 				td_accion_otro.appendChild(boton_eliminar);
 				// td_accion_otro.appendChild(boton_agregar_no_correspondido);
 
+				td_fecha_otro.textContent = movimiento.fecha;
+				td_fecha_otro.style = `display:none`;				
+
 				fila_tr_otro.appendChild(td_monto_otro);
 				fila_tr_otro.appendChild(td_accion_otro);
+				fila_tr_otro.appendChild(td_fecha_otro);
 				fragment.appendChild(fila_tr_otro);
 
 				ultima = tabla_registros_filas.length == index + 1 && movimientos_bancarios.length == index_m + 1;
@@ -312,7 +348,8 @@ async function llenarTablaMovimientos() {
 					// Poner en la tabla movimientos el valor
 					fila_tr.setAttribute("id",fila.id);
 
-					td_monto.textContent = `${movimiento.monto}bs`;
+					td_monto.textContent = `${movimiento.monto}Bs.`;
+					td_monto.setAttribute("class","text-success");
 
 					boton_editar = crearBoton("Editar",fila.id,accion,movimiento.id_movimiento);
 					boton_eliminar = crearBoton("Eliminar",movimiento.id_movimiento);
@@ -322,16 +359,37 @@ async function llenarTablaMovimientos() {
 					td_accion.appendChild(boton_eliminar);
 					td_accion.appendChild(boton_agregar_no_correspondido);
 
+					td_fecha.textContent = fila.children[2].textContent;
+					td_fecha.style = `display:none`;
+
 					fila_tr.appendChild(td_monto);
 					fila_tr.appendChild(td_accion);
+					fila_tr.appendChild(td_fecha);
 
 					relacion = true;
+					// console.log(movimiento);
 					// si la diferencia no es 0 modificar el bton de estado
-					if (parseInt(movimiento.monto_diferencia) != 0) {
+					if (parseInt(movimiento.monto_diferencia) != 0) {						
 						let estado_registro = document.getElementById(fila.id).children[0];
 						let boton_diferencia = crearBoton("No Conciliado");
-						estado_registro.textContent = null;
+						estado_registro.textContent = null;				
 						estado_registro.appendChild(boton_diferencia);
+						// Si ya se definio el data table toca actualizar la tabla manualmente
+						if (data_table) {
+							data_table.row(`#${fila.id}`).data([boton_diferencia.outerHTML,fila.children[1].textContent,fila.children[2].textContent,fila.children[3].textContent,fila.children[4].textContent,fila.children[5].textContent]);
+						}
+					}
+					else{
+						let estado_registro = document.getElementById(fila.id).children[0];
+						let boton_conciliado = crearBoton("Conciliado");
+						estado_registro.textContent = null;
+						estado_registro.appendChild(boton_conciliado);
+						// Si ya se definio el data table toca actualizar la tabla manualmente
+						if (data_table) {
+							data_table.row(`#${fila.id}`).data([boton_conciliado.outerHTML,fila.children[1].textContent,fila.children[2].textContent,fila.children[3].textContent,fila.children[4].textContent,fila.children[5].textContent]);
+							// Dejo este comentario para recordarme que soy la mera verga
+						}
+						
 					}
 				}
 			}
@@ -340,7 +398,8 @@ async function llenarTablaMovimientos() {
 					// Poner en la tabla movimientos el valor
 					fila_tr.setAttribute("id",fila.id);
 
-					td_monto.textContent = `${movimiento.monto}bs`;
+					td_monto.textContent = `${movimiento.monto}Bs.`;
+					td_monto.setAttribute("class","text-danger");
 					
 					boton_editar = crearBoton("Editar",fila.id,accion,movimiento.id_movimiento);
 					boton_eliminar = crearBoton("Eliminar",movimiento.id_movimiento);
@@ -350,8 +409,12 @@ async function llenarTablaMovimientos() {
 					td_accion.appendChild(boton_eliminar);
 					td_accion.appendChild(boton_agregar_no_correspondido);
 
+					td_fecha.textContent = fila.children[2].textContent;
+					td_fecha.style = `display:none`;
+
 					fila_tr.appendChild(td_monto);
 					fila_tr.appendChild(td_accion);
+					fila_tr.appendChild(td_fecha);
 
 					relacion = true;
 					// si la diferencia no es 0 modificar el bton de estado
@@ -360,6 +423,20 @@ async function llenarTablaMovimientos() {
 						let boton_diferencia = crearBoton("No Conciliado");
 						estado_registro.textContent = null;
 						estado_registro.appendChild(boton_diferencia);
+						if (data_table) {
+							data_table.row(`#${fila.id}`).data([boton_diferencia.outerHTML,fila.children[1].textContent,fila.children[2].textContent,fila.children[3].textContent,fila.children[4].textContent,fila.children[5].textContent]);							
+						}
+					}
+					else{
+						let estado_registro = document.getElementById(fila.id).children[0];
+						let boton_conciliado = crearBoton("Conciliado");
+						estado_registro.textContent = null;
+						estado_registro.appendChild(boton_conciliado);
+						// Si ya se definio el data table toca actualizar la tabla manualmente
+						if (data_table) {
+							data_table.row(`#${fila.id}`).data([boton_conciliado.outerHTML,fila.children[1].textContent,fila.children[2].textContent,fila.children[3].textContent,fila.children[4].textContent,fila.children[5].textContent]);
+							// Dejo este comentario para recordarme que soy la mera verga
+						}
 					}
 				}
 			}
@@ -377,13 +454,21 @@ async function llenarTablaMovimientos() {
 			td_accion.appendChild(boton_agregar);
 			td_accion.appendChild(boton_agregar_no_correspondido);
 
+			td_fecha.textContent = fila.children[2].textContent;
+			td_fecha.style = `display:none`;
 			fila_tr.appendChild(td_monto);
 			fila_tr.appendChild(td_accion);
+			fila_tr.appendChild(td_fecha);
 
 			let estado_registro = document.getElementById(fila.id).children[0];
 			let boton_diferencia = crearBoton("Sin Movimiento");
 			estado_registro.textContent = null;
 			estado_registro.appendChild(boton_diferencia);
+
+			if (data_table) {
+				data_table.row(`#${fila.id}`).data([boton_diferencia.outerHTML,fila.children[1].textContent,fila.children[2].textContent,fila.children[3].textContent,fila.children[4].textContent,fila.children[5].textContent]);
+				// Dejo este comentario para recordarme que soy la mera verga
+			}
 
 			if (ultima) {
 				fragment.insertBefore(fila_tr,tr_ultima);
@@ -396,6 +481,18 @@ async function llenarTablaMovimientos() {
 
 	tabla_movimientos_tbody.textContent = null;
 	tabla_movimientos_tbody.appendChild(fragment);
+
+	tabla_movimientos.parentElement.removeAttribute("hidden");
+
+	//Ordenamos las tablas por fecha
+	ordenarTablaPorFecha(tabla_registros_sistema,2);
+	ordenarTablaPorFecha(tabla_movimientos,2);
+
+	if (!data_table) {
+		data_table = await init_data_table();
+	}else{
+		data_table.draw(); // glu glu *Se refresca*
+	}
 }
 
 function crearBoton(boton_nombre,id = '', accion = '',id_movimiento = '') {
@@ -532,6 +629,7 @@ function crearBoton(boton_nombre,id = '', accion = '',id_movimiento = '') {
 			let td = document.createElement("td");
 			td.textContent = "Sin movimiento Asociado";
 			td.setAttribute("colspan",2);
+			td.setAttribute("class","pt-3");
 
 			fila_movimientos.appendChild(td);		
 			boton.outerHTML = crearBoton("No Correspondido por Banco").outerHTML;			
@@ -572,6 +670,17 @@ function crearBoton(boton_nombre,id = '', accion = '',id_movimiento = '') {
 			let td_estatus = document.createElement("td");
 			let td_sistema = document.createElement("td");
 			td_sistema.setAttribute("colspan",5);
+
+			// relleno porque el data table jode y no acepta colspan
+			let td_1 = document.createElement("td");
+			td_1.style = `display:none`;
+			let td_2 = document.createElement("td");
+			td_2.style = `display:none`;
+			let td_3 = document.createElement("td");
+			td_3.style = `display:none`;
+			let td_4 = document.createElement("td");
+			td_4.style = `display:none`;
+
 			td_sistema.setAttribute("class","text-center");
 			td_sistema.textContent = `No hay Registro en el sistema para este Movimiento`;
 
@@ -582,6 +691,10 @@ function crearBoton(boton_nombre,id = '', accion = '',id_movimiento = '') {
 
 			fila_sistema.appendChild(td_estatus);
 			fila_sistema.appendChild(td_sistema);
+			fila_sistema.appendChild(td_1);
+			fila_sistema.appendChild(td_2);
+			fila_sistema.appendChild(td_3);
+			fila_sistema.appendChild(td_4);
 			// El padre le dice al hijo que se lo meta despues <..>
 			fila.parentElement.insertBefore(fila_sistema,fila.nextSibling);
 
@@ -626,6 +739,31 @@ function crearBoton(boton_nombre,id = '', accion = '',id_movimiento = '') {
 	}
 
 	return boton;
+}
+
+//Lo reconozco, esta funcion se la pedi a una ia (no conocia el metodo sort)
+function ordenarTablaPorFecha(tabla,columna) {
+  
+  const filas = Array.from(tabla.querySelectorAll('tr')).slice(1); // Excluye el encabezado
+  const ordenadas = filas.sort((filaA, filaB) => {
+    const fechaA = new Date(filaA.cells[columna].textContent);
+    const fechaB = new Date(filaB.cells[columna].textContent);
+
+    if (fechaA < fechaB) {
+      return -1;
+    }
+    if (fechaA > fechaB) {
+      return 1;
+    }
+    return 0;
+  });
+
+  const tbody = tabla.querySelector('tbody');
+  tbody.innerHTML = '';
+
+  ordenadas.forEach(fila => {
+    tbody.appendChild(fila);
+  });
 }
 
 function prepararFormulario(accion,id_fila,id_movimiento = '') {
@@ -698,10 +836,11 @@ function prepararFormulario(accion,id_fila,id_movimiento = '') {
 async function registrar(id_fila) {
 	// Realmente no es registrar, porque se crea una conciliacion a inicio
 	// de mes, se edita el registro que ya esta
-
+	let accion;
+	let id_accion;
 	if (id_fila != "null") {
-		let accion = id_fila.split("-")[0];
-		let id_accion = id_fila.split("-")[1];
+		accion = id_fila.split("-")[0];
+		id_accion = id_fila.split("-")[1];
 	}
 	
 	let select = document.querySelector("#mes_select");
@@ -718,10 +857,12 @@ async function registrar(id_fila) {
 	conciliacion_id = select[select.options.selectedIndex].id,
 	banco_id = formulario_usar.querySelector("#banco_movimiento").value;
 
+	let monto_diferencia, tipo_diferencia, gasto_pago, gasto_pago_id;
+
 	if (id_fila != "null") {		
-		let monto_diferencia = formulario_usar.querySelector("#diferencia_monto").value,
-		tipo_diferencia = formulario_usar.querySelector("#diferencia_tipo").value,
-		gasto_pago = accion,
+		monto_diferencia = formulario_usar.querySelector("#diferencia_monto").value;
+		tipo_diferencia = formulario_usar.querySelector("#diferencia_tipo").value;
+		gasto_pago = accion;
 		gasto_pago_id = id_accion;
 	}
 
@@ -761,8 +902,6 @@ async function registrar(id_fila) {
 
 	//Actualizar las tablas
 	llenarTablaRegistrosSistema();
-
-	data_table.draw(); // glu glu *Se refresca*
 
 	// Dar mensaje de exito
 	mensajes('success',4000,'Atencion','El registro se ha realizado exitosamente');//Mensaje de que se completo la operacion
@@ -843,11 +982,14 @@ async function editarMovimiento(id){
 	datos_consulta.append("tipo_movimiento",tipo_movimiento);
 	datos_consulta.append("banco_id",banco_id);
 	datos_consulta.append("conciliacion_id",conciliacion_id);
-	if (estado != "Ninguna") {
+	if (estado.value == "Ninguna") {
 		datos_consulta.append("monto_diferencia",0);
 		datos_consulta.append("tipo_diferencia","No hay");
+	}else{
+		datos_consulta.append("monto_diferencia",monto_diferencia);
+		datos_consulta.append("tipo_diferencia",tipo_diferencia);
 	}
-
+	console.log(estado,monto_diferencia,tipo_diferencia)
 	//Aqui decimos que vamos a hacer
 	datos_consulta.append('operacion','modificar_movimiento');
 
@@ -871,9 +1013,7 @@ async function editarMovimiento(id){
 	document.getElementById('titulo_modal_movimientos').textContent = "Registrar Movimiento Bancario";
 
 	//Actualizar las tablas
-	llenarTablaRegistrosSistema();
-
-	data_table.draw(); // glu glu *Se refresca*
+	llenarTablaRegistrosSistema();	
 
 	mensajes('success',4000,'Atencion','El registro se ha modificado exitosamente');//Mensaje de que se completo la operacion	
 }
@@ -900,8 +1040,6 @@ async function eliminarMovimiento(id) {
 
 	//Actualizar las tablas
 	llenarTablaRegistrosSistema();
-
-	data_table.draw(); // glu glu *Se refresca*
 
 	mensajes('success',4000,'Atencion','El registro ha sido eliminado correctamente');//Mensaje de que se completo la operacion
 }
