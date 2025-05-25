@@ -149,7 +149,8 @@ class Movimientos_bancarios extends Conexion
         $conexion->bindParam(":gasto_id", $this->gasto_id);
         $result = $conexion->execute();
 
-        if ($result) {            
+        if ($result) {
+            $this->registrar_bitacora(REGISTRAR, GESTIONAR_CONCILIACION_BANCARIA, "Movimiento Registrado de: " . $this->monto . "Bs.");
             return ["estatus"=>true,"mensaje"=>"OK"];
         } else {
             return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar este Movimiento Bancario"];
@@ -177,6 +178,7 @@ class Movimientos_bancarios extends Conexion
         $result = $conexion->execute();
         
         if ($result) {
+            $this->registrar_bitacora(MODIFICAR, GESTIONAR_CONCILIACION_BANCARIA, "Movimiento Editado de: " . $this->monto . "Bs.");
             return ["estatus"=>true,"mensaje"=>"OK"];
         } else {
             return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar editar este Movimiento Bancario"];
@@ -195,7 +197,10 @@ class Movimientos_bancarios extends Conexion
         $conexion->bindParam(":id_movimiento", $this->id_movimiento);
         $result = $conexion->execute();
 
-        if ($result) {        
+        if ($result) {
+            $movimiento_alterado = $this->buscar_movimiento();
+            $this->registrar_bitacora(ELIMINAR, GESTIONAR_CONCILIACION_BANCARIA, "Movimiento Eliminado de: " . $movimiento_alterado["monto"] . "Bs.");
+
             return ["estatus"=>true,"mensaje"=>"OK"];
         } else {
             return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar eliminar este Movimiento Bancario"];

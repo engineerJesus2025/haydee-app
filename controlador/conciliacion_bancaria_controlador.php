@@ -128,6 +128,39 @@ if (isset($_POST["operacion"])){
 
         echo  json_encode($movimientos_obj->eliminar());
     }
+    else if ($operacion == "registrar_conciliacion"){
+        
+        $saldo_fin = $_POST["saldo_fin"];
+        $saldo_sistema = $_POST["saldo_sistema"];
+        $diferencia = $_POST["diferencia"];
+        $tasa_dolar = $_POST["tasa_dolar"];
+        $ingreso_banco_no_correspondido = $_POST["ingreso_banco_no_correspondido"];
+        $ingreso_sistema_no_correspondido = $_POST["ingreso_sistema_no_correspondido"];
+        $egreso_banco_no_correspondido = $_POST["egreso_banco_no_correspondido"];
+        $egreso_sistema_no_correspondido = $_POST["egreso_sistema_no_correspondido"];
+        $observaciones = $_POST["observaciones"];
+        $estado = "Conciliado";
+
+        $fecha = $_POST["fecha"];;
+
+        $id_conciliacion = $_POST["id_conciliacion"];
+
+        $conciliacion_obj->set_saldo_fin($saldo_fin);
+        $conciliacion_obj->set_saldo_sistema($saldo_sistema);
+        $conciliacion_obj->set_diferencia($diferencia);
+        $conciliacion_obj->set_tasa_dolar($tasa_dolar);
+        $conciliacion_obj->set_ingreso_banco_no_correspondido($ingreso_banco_no_correspondido);
+        $conciliacion_obj->set_ingreso_sistema_no_correspondido($ingreso_sistema_no_correspondido);
+        $conciliacion_obj->set_egreso_banco_no_correspondido($egreso_banco_no_correspondido);
+        $conciliacion_obj->set_egreso_sistema_no_correspondido($egreso_sistema_no_correspondido);
+        $conciliacion_obj->set_observaciones($observaciones);
+        $conciliacion_obj->set_estado($estado);
+        $conciliacion_obj->set_id_conciliacion($id_conciliacion);
+
+        $conciliacion_obj->set_fecha_inicio($fecha); // Para la bitacora
+
+        echo  json_encode($conciliacion_obj->guardar_conciliacion());
+    }
     exit;//es salida en ingles... No puede faltar
 }
 
@@ -138,8 +171,9 @@ if (isset($_POST["validar"])) {
             echo  json_encode($movimientos_obj->verificar_referencia());
         }
         exit;
-    }
+}
 
+$registros_conciliaciones = $conciliacion_obj->consultar();
 $registros_bancos = $banco_obj->consultar();
 
 if($accion == "inicio"){    

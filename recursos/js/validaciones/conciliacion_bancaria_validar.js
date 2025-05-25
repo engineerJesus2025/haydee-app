@@ -22,6 +22,15 @@ $(document).ready(function(){
 		validarKeyUp(/^[A-Za-z0-9\b]{1,20}$/,$(this),
 		this.nextElementSibling,"El formato de la referencia es incorrecto");
 	});
+
+	$("#observaciones").on("keypress",function(e){	
+		validarKeyPress(/^[a-zA-z \b]*$/, e);		
+	});
+
+	$("#observaciones").on("keyup",function(e){
+		validarKeyUp(/^[a-zA-z \b]{0,100}$/,$(this),
+		this.nextElementSibling,"Numeros y letras, Maximo 100 caracteres");
+	});
 	
 	$("#boton_formulario").on("click",async function(e){
 		let accion = e.target.getAttribute("op");		
@@ -43,10 +52,30 @@ $(document).ready(function(){
 			    });
 		}	
 	});
+	
+	$("#boton_registrar_conciliacion").on("click",async function(e){		
+		e.preventDefault();
+		if(await validarConciliacion()==true){
+			Swal.fire({
+			title: "¿Estás seguro?",
+			text: `¿Está seguro que desea Guardar Conciliacion Bancaria?`,
+			showCancelButton: true,
+			confirmButtonText: "Guardar",
+			confirmButtonColor: "#1b8a40",
+			cancelButtonText: "Cancelar",
+			icon: "warning"
+			}).then((result) => {
+				if (result.isConfirmed) {
+					guardarConciliacionBancaria()
+				}
+			});
+		}	
+	});
+
 	// Referencia
 	$("#referencia_movimiento").on("keyup",function(e){
 		if (validarKeyUp(
-        /^[A-Za-z0-9\b]{3,20}$/,
+        /^[A-Za-z\b]{3,20}$/,
         $("#referencia_movimiento"),document.querySelector("#referencia_movimiento").nextElementSibling,'El formato de la referencia es incorrecto'
         )) {
         	if (this.value == referencia_an) {return;}
@@ -54,7 +83,6 @@ $(document).ready(function(){
 			datos.append('validar','referencia');
 			datos.append('referencia',$(this).val());
 			verificar_duplicados(datos);
-			console.log(datos)
         }		
 	})
 });	//Fin de AJAX
@@ -127,6 +155,30 @@ async function validarEnvio(accion = "Registrar"){
 	return true;
 }
 
+function validarConciliacion(){	
+	if(validarKeyUp(
+       /^[0-9a-zA-z /b]{0,100}$/,
+        $("#observaciones"),document.querySelector("#observaciones").nextElementSibling,'Numeros y letras, Maximo 100 caracteres'
+        )==0)
+	{
+		mensajes('error',4000,'Error en las Observaciones',
+		'El formato debe ser sólo letras o números, Máximo 100 caracteres');
+		
+		return false;
+	}
+	// Que todos los campos estan revisados
+	let marca = document.querySelector("[title='Marcar como sin Movimiento Bancario Asociado']");
+	if (marca) {
+		mensajes('error',8000,'Error en la Tabla de Registros',
+		'Debe Revisar todos los registros del sistema y asignarle movimientos. En caso de no tener marcar como "No Correspondido"');
+		
+		return false;
+	}
+	
+	
+	return true;
+}
+
 function validarKeyPress(er, e) {
     key = e.keyCode;
     tecla = String.fromCharCode(key);
@@ -139,7 +191,6 @@ function validarKeyPress(er, e) {
 function validarKeyUp(er,etiqueta,etiquetamensaje,
 mensaje){
 	a = er.test(etiqueta.val());
-
 	if(a){
 
 		etiquetamensaje.textContent = "";

@@ -303,7 +303,7 @@ async function modificar(id) {
 	let nombre = formulario_usar.querySelector("#nombre").value,
 	apellido = formulario_usar.querySelector("#apellido").value,
 	correo = formulario_usar.querySelector("#correo").value, 	
-	nueva_contra = formulario_usar.querySelector("#confir_contra").value,
+	nueva_contra = formulario_usar.querySelector("#confir_contra").value || formulario_usar.querySelector("#contra").value,
 	rol = formulario_usar.querySelector("#rol").value,
 	rol_nombre = formulario_usar.querySelector("#rol").selectedOptions[0].textContent;
 
