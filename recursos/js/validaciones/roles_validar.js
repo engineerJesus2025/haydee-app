@@ -115,3 +115,13 @@ async function verificar_duplicados(datos){
 	}
 	return false;
 }
+
+async function api() {
+	let obj_dolar = await fetch('https://pydolarve.org/api/v2/tipo-cambio?currency=usd')
+	.then(response => {
+	let result = response.json();		
+	return result;//Convertimos el resultado de json a js y lo mandamos})
+	});
+	console.log(obj_dolar);
+	return obj_dolar;
+}
