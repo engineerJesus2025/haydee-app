@@ -34,7 +34,7 @@
                     <div class="row">
                         <div class="col-md-3 col-12">
                             <div class="card mb-3 shadow" title="Gestionar los Proveedores">
-                                <a href="#" class="text-decoration-none text-black">
+                                <a href="?pagina=proveedores_controlador.php&accion=inicio" class="text-decoration-none text-black">
                                     <div class="card-header text-center bg-white border-bottom-0 p-0">
                                         <i class="bi bi-truck" style="font-size: 5rem !important;"></i>
                                     </div>
