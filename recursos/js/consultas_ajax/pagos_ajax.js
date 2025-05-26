@@ -125,7 +125,6 @@ async function registrar() {
 	//Creamos las variables con los datos de los inputs
 	let fecha = formulario_usar.querySelector("#fecha").value,
 	monto = formulario_usar.querySelector("#monto").value,
-	nro_apartamento = formulario_usar.querySelector("#nro_apartamento").value,
 	tasa_dolar = formulario_usar.querySelector("#tasa_dolar").value; 
 	estado = formulario_usar.querySelector("#estado").value,
     metodo_pago = formulario_usar.querySelector("#metodo_pago").value;
@@ -168,7 +167,7 @@ async function registrar() {
 	let acciones = crearBotones(id_registrado.mensaje); //Crea botones
 	
 	// esta variable no hace nada, pero me dio error cuando la quite XD
-	let res_data_table = await data_table.row.add([`${fecha}`,`${monto}`,`${nro_apartamento}`,`${tasa_dolar}`,`${estado}`,`${metodo_pago}`,`${nombre_banco}`,`${referencia}`,`${imagen}`,`${observacion}`,`${mensualidad_id}`,`${acciones.outerHTML}`]).draw();
+	let res_data_table = await data_table.row.add([`${fecha}`,`${monto}`,`${tasa_dolar}`,`${estado}`,`${metodo_pago}`,`${nombre_banco}`,`${referencia}`,`${imagen}`,`${observacion}`,`${mensualidad_id}`,`${acciones.outerHTML}`]).draw();
 	// Tiene el await para que lo espere, sino no la pone en la tabla
 
 	mensajes('success',4000,'Atencion','El registro se ha realizado exitosamente');//Mensaje de que se completo la operacion
