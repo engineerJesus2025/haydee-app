@@ -13,6 +13,11 @@
         private $imagen;
         private $observacion;
 
+        // Campos de la tabla puente
+        private $id_pago_mensualidad;
+        private $pago_id;
+        private $mensualidad_id;
+
         public function __construct(){
             parent::__construct();
         }
@@ -98,6 +103,32 @@
             return $this->observacion;
         }
 
+        // Metodos Get y Set de la tabla puente
+
+        public function set_id_pago_mensualidad($id_pago_mensualidad){
+            $this->id_pago_mensualidad = $id_pago_mensualidad;
+        }
+
+        public function get_id_pago_mensualidad(){
+            return $this->id_pago_mensualidad;
+        }
+
+        public function set_pago_id($pago_id){
+            $this->pago_id = $pago_id;
+        }
+
+        public function get_pago_id(){
+            return $this->pago_id;
+        }
+
+        public function set_mensualidad_id($mensualidad_id){
+            $this->mensualidad_id = $mensualidad_id;
+        }
+
+        public function get_mensualidad_id(){
+            return $this->mensualidad_id;
+        }
+
         // Metodos CRUD
         public function verificar_pago(){ 
 
@@ -123,8 +154,10 @@
 
             //$this->cambiar_db_seguridad();
 
+            // Mouseque Herramienta misteriosa que nos ayudara mas tarde
+            // SELECT pagos.id_pago, pagos.fecha, apartamentos.nro_apartamento, pagos.monto, pagos.tasa_dolar, pagos.estado, pagos.metodo_pago, bancos.nombre_banco, pagos.referencia, pagos.imagen, pagos.observacion FROM pagos JOIN bancos ON pagos.banco_id = bancos.id_banco JOIN pagos_mensualidad ON pagos.id_pago = pagos_mensualidad.pago_id JOIN mensualidad ON pagos_mensualidad.mensualidad_id = mensualidad.id_mensualidad JOIN apartamentos ON mensualidad.apartamento_id = apartamentos.id_apartamento ORDER BY pagos.fecha DESC, pagos.estado = 'PENDIENTE' DESC;
             // 1) Sentencia SQL de toda la vida.
-            $sql = "SELECT pagos.id_pago,pagos.fecha,pagos.monto,pagos.tasa_dolar,pagos.estado,pagos.metodo_pago,bancos.nombre_banco,pagos.referencia,pagos.imagen,pagos.observacion FROM pagos JOIN bancos ON pagos.banco_id = bancos.id_banco ORDER BY (pagos.fecha) DESC, pagos.estado = 'PENDIENTE' DESC;";
+            $sql = "SELECT pagos.id_pago, pagos.fecha, pagos.monto, apartamentos.nro_apartamento, pagos.tasa_dolar, pagos.estado, pagos.metodo_pago, bancos.nombre_banco, pagos.referencia, pagos.imagen, pagos.observacion, CONCAT(CASE mensualidad.mes WHEN 1 THEN 'Enero' WHEN 2 THEN 'Febrero' WHEN 3 THEN 'Marzo' WHEN 4 THEN 'Abril' WHEN 5 THEN 'Mayo' WHEN 6 THEN 'Junio' WHEN 7 THEN 'Julio' WHEN 8 THEN 'Agosto' WHEN 9 THEN 'Septiembre' WHEN 10 THEN 'Octubre' WHEN 11 THEN 'Noviembre' WHEN 12 THEN 'Diciembre' END, ' ', mensualidad.anio) AS mes_anio FROM pagos JOIN bancos ON pagos.banco_id = bancos.id_banco JOIN pagos_mensualidad ON pagos.id_pago = pagos_mensualidad.pago_id JOIN mensualidad ON pagos_mensualidad.mensualidad_id = mensualidad.id_mensualidad JOIN apartamentos ON mensualidad.apartamento_id = apartamentos.id_apartamento ORDER BY pagos.fecha DESC, pagos.estado = 'PENDIENTE' DESC";
 
             // 2) Se prepara una consulta a la base de datos.
             $conexion = $this->get_conex()->prepare($sql);
@@ -203,6 +236,35 @@
                 $pago_alterado = $this->consultar_pago();//lo consultamos
 
                 $this->registrar_bitacora(REGISTRAR, GESTIONAR_PAGOS, $pago_alterado["monto"] . " (" . $pago_alterado["fecha"] . ")");//registramos en la bitacora
+
+                return ["estatus"=>true,"mensaje"=>"OK"];
+            } else {
+                return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar este pago"];
+            }
+        }
+
+        public function registrar_pago_mensualidad(){
+            //Validamos los datos obtenidos del controlador (validaciones back-end)
+            //$validaciones = $this->validarDatos();
+            //if(!($validaciones["estatus"])){return $validaciones;}
+            
+            //$this->cambiar_db_seguridad();
+
+            $sql = "INSERT INTO pagos_mensualidad(pago_id,mensualidad_id) VALUES (pago_id,mensualidad_id)";
+        
+            $conexion = $this->get_conex()->prepare($sql);
+            $conexion->bindParam(":pago_id", $this->pago_id);
+            $conexion->bindParam(":mensualidad_id", $this->mensualidad_id);
+            $result = $conexion->execute();
+
+            $this->cambiar_db_negocio();
+
+            if ($result) {
+                $id_ultimo = $this->lastId();//obtenemos el ultimo id
+                $this->set_id_pago($id_ultimo["mensaje"]);
+                $pago_alterado = $this->consultar_pago();//lo consultamos
+
+                //$this->registrar_bitacora(REGISTRAR, GESTIONAR_PAGOS, $pago_alterado["monto"] . " (" . $pago_alterado["fecha"] . ")");//registramos en la bitacora
 
                 return ["estatus"=>true,"mensaje"=>"OK"];
             } else {
@@ -297,6 +359,60 @@
             } else {
                 return ["estatus"=>false,"mensaje"=>"Error en la consulta"];
             } 
+        }
+
+        public function registrar_pagos_mensualidad(){
+            //Validamos los datos obtenidos del controlador (validaciones back-end)
+            //$validaciones = $this->validarDatos();
+            //if(!($validaciones["estatus"])){return $validaciones;}
+            
+            //$this->cambiar_db_seguridad();
+
+            $sql = "INSERT INTO pagos_mensualidad(pago_id,mensualidad_id) VALUES (:pago_id,:mensualidad_id)";
+        
+            $conexion = $this->get_conex()->prepare($sql);
+            $conexion->bindParam(":pago_id", $this->pago_id);
+            $conexion->bindParam(":mensualidad_id", $this->mensualidad_id);
+            $result = $conexion->execute();
+
+            $this->cambiar_db_negocio();
+
+            if ($result) {
+                $id_ultimo = $this->lastIdPagoMensualidad();//obtenemos el ultimo id
+                $this->set_id_pago_mensualidad($id_ultimo["mensaje"]);
+
+                return ["estatus"=>true,"mensaje"=>"OK"];
+            } else {
+                return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar este pago"];
+            }
+        }
+
+        public function lastIdPagoMensualidad(){
+            //$this->cambiar_db_seguridad();
+            $sql = "SELECT MAX(id_pago_mensualidad) as last_id FROM pagos_mensualidad";
+            $conexion = $this->get_conex()->prepare($sql);
+            $result = $conexion->execute();
+            $datos = $conexion->fetch(PDO::FETCH_ASSOC);
+            $this->cambiar_db_negocio();
+
+            if ($result) {
+                return ["estatus"=>true,"mensaje"=>$datos["last_id"]];
+            } else {
+                return ["estatus"=>false,"mensaje"=>"Error en la consulta"];
+            } 
+        }
+
+        public function consultarMensualidad(){
+            $sql = "SELECT m.id_mensualidad,m.monto,m.tasa_dolar,m.mes,m.anio,a.nro_apartamento,m.gasto_mes_id FROM mensualidad m JOIN apartamentos a ON m.apartamento_id = a.id_apartamento ORDER BY a.nro_apartamento, m.anio, m.mes";
+            $conexion = $this->get_conex()->prepare($sql);
+            $result = $conexion->execute();
+            $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
+            $this->cambiar_db_negocio();
+            if ($result == true) {
+                return $datos;
+            } else {
+                return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+            }
         }
     }
 ?>

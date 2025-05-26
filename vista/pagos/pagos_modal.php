@@ -9,6 +9,26 @@
             </div>
         </div>
         <div class="col-md-6">
+            <label for="mensualidad">Mensualidad</label>
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="basic-addon1"><i class="bi bi-bank2"></i></span>
+                    <select class="form-select mensualidad_id" aria-label="Default select example" id="mensualidad_id" name="mensualidad_id">
+                        <option selected hidden value="">Escoga la Mensualidad</option>
+                        <?php foreach($registro_mensualidad as $mensualidad): ?>
+                            <option value="<?php echo $mensualidad["id_mensualidad"]?>">
+                                <?php 
+                                    $mes_num = str_pad($mensualidad["mes"], 2, "0", STR_PAD_LEFT);
+                                    echo "Apartamento ".$mensualidad["nro_apartamento"].": ".$meses[$mes_num]." ".$mensualidad["anio"]." (Monto: ".$mensualidad["monto"].")";
+                                ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                <span class="w-100"></span>
+            </div>
+        </div>
+    </div>
+    <div class="row m-3">
+        <div class="col-md-6">
             <label for="monto">Monto</label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-cash-coin"></i></span>
@@ -16,8 +36,6 @@
                 <span class="w-100"></span>
             </div>
         </div>
-    </div>
-    <div class="row m-3">
         <div class="col-md-6">
             <label for="tasa_dolar">Tasa del Dolar</label>
             <div class="input-group mb-3">
@@ -26,6 +44,8 @@
                 <span class="w-100"></span>
             </div>
         </div>
+    </div> 
+    <div class="row m-3">
         <div class="col-md-6">
             <label for="metodo_pago">Metodo de Pago</label>
             <div class="input-group mb-3">
@@ -39,14 +59,12 @@
                 <span class="w-100"></span>
             </div>
         </div>
-    </div> 
-    <div class="row m-3">
         <div class="col-md-6">
             <label for="banco_id">Banco</label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-bank2"></i></span>
                     <select class="form-select banco" aria-label="Default select example" id="banco_id" name="banco_id">
-                        <option selected hidden value="">Banco</option>
+                        <option selected hidden value="">Escoga el Banco</option>
                         <?php foreach($registro_banco as $banco): ?>
                             <option value="<?php echo $banco["id_banco"]?>"><?php echo $banco["nombre_banco"] ?></option>
                         <?php endforeach; ?>
@@ -54,6 +72,8 @@
                 <span class="w-100"></span>
             </div>
         </div>
+    </div>
+    <div class="row m-3">
         <div class="col-md-6">
             <label for="referencia">Referencia</label>
             <div class="input-group mb-3">
@@ -62,16 +82,20 @@
                 <span class="w-100"></span>
             </div>
         </div>
-    </div>
-    <div class="row m-3">
         <div class="col-md-6">
             <label for="imagen">Imagen</label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-image-fill"></i></span>
                     <input type="file" class="form-control imagen" name="imagen" id="imagen" placeholder="Imagen" aria-label="imagen" aria-describedby="basic-addon1" minlength="3" maxlength="60">
+                    <small id="nombre_imagen_cargada" class="text-muted fst-italic d-block mt-1"></small>
+                    <button type="button" id="boton_eliminar_imagen" class="btn btn-sm btn-outline-danger mt-2 d-none">
+                        <i class="bi bi-trash3"></i> Eliminar imagen cargada
+                    </button>
                 <span class="w-100"></span>
             </div>
         </div> 
+    </div>
+    <div class="row m-3">
         <div class="col-md-6">
             <label for="estado">Estado del Pago</label>
             <div class="input-group mb-3">
@@ -84,9 +108,7 @@
                 <span class="w-100"></span>
             </div>
         </div>
-    </div>
-    <div class="row m-3">
-        <div class="col-md-12">
+        <div class="col-md-6">
             <label for="observacion">Observacion</label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-info-circle-fill"></i></span>

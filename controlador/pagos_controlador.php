@@ -2,9 +2,25 @@
     require_once("modelo/pagos_modelo.php");
     require_once("modelo/banco_modelo.php");
 
-    $obj_pago = new Pagos(); // Objeto banco
-    $obj_banco = new Banco();
- 
+    $obj_pago = new Pagos(); // Objeto pago
+    $obj_banco = new Banco(); // Objeto banco
+    
+    $meses = [
+        "01" => "Enero",
+        "02" => "Febrero",
+        "03" => "Marzo",
+        "04" => "Abril",
+        "05" => "Mayo",
+        "06" => "Junio",
+        "07" => "Julio",
+        "08" => "Agosto",
+        "09" => "Septiembre",
+        "10" => "Octubre",
+        "11" => "Noviembre",
+        "12" => "Diciembre",
+    ];
+
+    $registro_mensualidad = $obj_pago->consultarMensualidad();
     $registro_banco = $obj_banco->consultar();
 
     if(isset($_POST["operacion"])){
@@ -47,7 +63,11 @@
                 // AQUI SE CAMBIA LA RUTA DE LA IMAGEN, DE UNA IMAGEN TEMPORAL A LA RUTA DE DESTINO FISICA
                 move_uploaded_file($temporal, $ruta_destino . $imagen);
             }
- 
+
+            $mensualidad_id = $_POST["mensualidad_id"];
+            $resultado = $obj_pago->lastIdPagoMensualidad();
+            $pago_id = $resultado["mensaje"];
+
             //se usan los setters correspondientes
             $obj_pago->set_fecha($fecha);
             $obj_pago->set_monto($monto);
@@ -58,6 +78,10 @@
             $obj_pago->set_referencia($referencia);
             $obj_pago->set_imagen($imagen);
             $obj_pago->set_observacion($observacion);
+            $obj_pago->set_mensualidad_id($mensualidad_id);
+            $obj_pago->set_pago_id($pago_id);
+
+            $obj_pago->registrar_pagos_mensualidad();
 
             //se ejecuta la funcion:
             echo  json_encode($obj_pago->registrar_pago());
@@ -66,7 +90,7 @@
         elseif ($operacion == "consulta_especifica"){
             //se guardan el id para buscar
             $id_pago = $_POST["id_pago"];
-
+ 
             //se usan el setter correspondientes
             $obj_pago->set_id_pago($id_pago);
 
@@ -88,7 +112,9 @@
             $observacion = $_POST["observacion"];
             // ...
 
-            $imagen = $cartelera_virtual_obj->obtener_imagen_actual();
+            $eliminar_imagen = isset($_POST["eliminar_imagen"]);
+
+            $imagen = $obj_pago->obtener_imagen_actual();
             if (!empty($imagen)) {
                 $ruta_imagen = "recursos/img/" . $imagen;
 
@@ -139,11 +165,21 @@
         elseif ($operacion == "eliminar") {
             //se guardan el id de la variable a eliminar
             $id_pago = $_POST["id_pago"];
-
-            //se usan el setter correspondientes
             $obj_pago->set_id_pago($id_pago);
 
-            //se ejecuta la funcion:
+            //  Consultar la imagen antes de eliminar
+            $datos = $obj_pago->consultar_pago(); // debe retornar imagen
+
+            if ($datos && isset($datos[0]["imagen"]) && $datos[0]["imagen"] !== "") {
+                $nombre_imagen = $datos[0]["imagen"];
+                $ruta = "recursos/img/" . $nombre_imagen;
+
+                // Eliminar imagen físicamente 
+                if (file_exists($ruta) && is_file($ruta)) {
+                    unlink($ruta);
+                }
+            }
+
             echo  json_encode($obj_pago->eliminar_pago());
             //igual puse para que siempre retorne un arreglo que dara true o false de acuerdo al resultado
         }elseif ($operacion == "ultimo_id"){
@@ -152,7 +188,7 @@
 
         exit;//es salida en ingles... No puede faltar
     }
-
+ 
     if (isset($_POST["validar"])) {
         $validar = $_POST["validar"]; //Esto es igual pero para las validaciones
         if ($validar == "referencia"){

@@ -1,18 +1,54 @@
-consultar(); // para llenar la tabla al cargar
+consultar(); // Para llenar la tabla al cargar o entrar a la pagina
+api();
+// Todo lo que esta aqui son variables que se pueden emplear a lo largo del codigo
 let data_table, id_eliminado, id_registrado,id_modificar, referencia_an;
-// VAriables que usaremos mas tarde
-//guardamos los permisosdel usuario
+// Para guardar los permisos del usuario
+/*
+	- document: es un objeto que representa la página web cargada en el navegador 
+	y sirve como punto de entrada para interactuar con el contenido de la página.
+
+	- querySelector(): método que te permite seleccionar elementos del DOM 
+	(Document Object Model) utilizando selectores CSS, ejemplos: .clase-especifica, 
+	#id-especifico, p.
+
+	- value: es el dato que una variable contiene o el valor que se asigna a una 
+	propiedad o atributo.
+
+	- punto (.): sirve para acceder a las propiedades y métodos de un objeto.
+*/
 let permiso_eliminar = document.querySelector("#permiso_eliminar").value;
 let permiso_editar = document.querySelector("#permiso_editar").value;
+// ...
 
 let tabla = document.querySelector("#tabla_pagos"); //La tabla
 let boton_formulario = document.querySelector("#boton_formulario"); // el boton
-let modal = new bootstrap.Modal("#modal_pagos"); // el modal
+
+/* 
+	El modal se define aqui
+
+	- bootstrap.Modal(): es basicamente una clase de Bootstrap 5 para controlar
+	modales.
+	
+	- new: al usar new estamos creando un objeto modal.
+
+	NOTA: esta forma de definir es incorrecta.
+*/ 
+let modal = new bootstrap.Modal("#modal_pagos");
 let formulario_usar = document.querySelector(`#form_pagos`); // el form
+
+// Forma correcta de definir el modal
+let modalVistaPrevia = new bootstrap.Modal(document.querySelector("#modal_vista_previa"));
 
 //En caso de que se envie un formulario
 function envio(operacion) {	
 	if (operacion == "Editar") {
+		/*
+			- getAttribute: es un método que permite obtener el valor de un atributo 
+			específico de un elemento HTML.
+
+			y "envio", "modificar", "registrar", "mensajes" son funciones definidas 
+			por nosotroso mismos para que no te confundas.
+		*/
 		id_modificar = boton_formulario.getAttribute("id_modificar");//obtenemos el id del registro
 		modificar(id_modificar);
 	}
@@ -35,6 +71,8 @@ document.querySelector(`#modal_pagos`).addEventListener("hide.bs.modal",()=>{
 	document.getElementById('titulo_modal').textContent = "Registrar Pago";	
 	formulario_usar.querySelectorAll("[class='w-100']").forEach(el=>el.textContent="");
 
+	api();
+
 	document.querySelector("#nombre_imagen_cargada").textContent = "";
     document.querySelector("#boton_eliminar_imagen").classList.add("d-none");
     document.querySelector("#boton_eliminar_imagen").removeAttribute("data-nombre");
@@ -43,6 +81,42 @@ document.querySelector(`#modal_pagos`).addEventListener("hide.bs.modal",()=>{
     if (inputOculto) inputOculto.remove();
 });
 
+async function api() {
+    try {
+        let response = await fetch('https://pydolarve.org/api/v2/dollar?page=alcambio');
+        let obj_dolar = await response.json();
+        console.log(obj_dolar);
+
+        let tasaParalelo = obj_dolar?.monitors?.enparalelovzla?.price;
+        if (tasaParalelo) {
+            document.getElementById('tasa_dolar').value = tasaParalelo;
+        } else {
+            document.getElementById('tasa_dolar').value = "No disponible";
+        }
+    } catch (error) {
+        console.error('Error al obtener la tasa del dólar paralelo:', error);
+        document.getElementById('tasa_dolar').value = "Error";
+    }
+}
+
+async function bcv() {
+    try {
+        let response = await fetch('https://pydolarve.org/api/v2/dollar?page=alcambio');
+        let obj_dolar = await response.json();
+        console.log(obj_dolar);
+
+        let tasaBCV = obj_dolar?.monitors?.bcv?.price;
+        if (tasaBCV) {
+            return tasaBCV;
+        } else {
+            return "No disponible";
+        }
+    } catch (error) {
+        console.error('Error al obtener la tasa del dólar paralelo:', error);
+        return "Error";
+    }
+}
+
 //Si queremos registrar:
 async function registrar() {
 	// el async vuelve la funcion asincrona	
@@ -50,8 +124,9 @@ async function registrar() {
 	datos_consulta = new FormData();
 	//Creamos las variables con los datos de los inputs
 	let fecha = formulario_usar.querySelector("#fecha").value,
-	monto = formulario_usar.querySelector("#monto").value,	
-	tasa_dolar = formulario_usar.querySelector("#tasa_dolar").value, 
+	monto = formulario_usar.querySelector("#monto").value,
+	nro_apartamento = formulario_usar.querySelector("#nro_apartamento").value,
+	tasa_dolar = formulario_usar.querySelector("#tasa_dolar").value; 
 	estado = formulario_usar.querySelector("#estado").value,
     metodo_pago = formulario_usar.querySelector("#metodo_pago").value;
 	banco_id = formulario_usar.querySelector("#banco_id").value;
@@ -59,10 +134,11 @@ async function registrar() {
 	referencia = formulario_usar.querySelector("#referencia").value;
 	imagen = formulario_usar.querySelector("#imagen").files[0];
 	observacion = formulario_usar.querySelector("#observacion").value;
+	mensualidad_id = formulario_usar.querySelector("#mensualidad_id").value;
 
 	// le pasamos los datos por el formData
 	datos_consulta.append("fecha",fecha);
-	datos_consulta.append("monto",monto);	
+	datos_consulta.append("monto",monto);
 	datos_consulta.append("tasa_dolar",tasa_dolar);
 	datos_consulta.append("estado",estado);
 	datos_consulta.append("metodo_pago",metodo_pago);
@@ -70,6 +146,7 @@ async function registrar() {
 	datos_consulta.append("referencia",referencia);
 	datos_consulta.append("imagen",imagen);
 	datos_consulta.append("observacion",observacion);
+	datos_consulta.append("mensualidad_id",mensualidad_id);
 
 	//Aqui decimos que vamos a hacer
 	datos_consulta.append('operacion','registrar');
@@ -91,7 +168,7 @@ async function registrar() {
 	let acciones = crearBotones(id_registrado.mensaje); //Crea botones
 	
 	// esta variable no hace nada, pero me dio error cuando la quite XD
-	let res_data_table = await data_table.row.add([`${fecha}`,`${monto}`,`${tasa_dolar}`,`${estado}`,`${metodo_pago}`,`${nombre_banco}`,`${referencia}`,`${imagen}`,`${observacion}`,`${acciones.outerHTML}`]).draw();
+	let res_data_table = await data_table.row.add([`${fecha}`,`${monto}`,`${nro_apartamento}`,`${tasa_dolar}`,`${estado}`,`${metodo_pago}`,`${nombre_banco}`,`${referencia}`,`${imagen}`,`${observacion}`,`${mensualidad_id}`,`${acciones.outerHTML}`]).draw();
 	// Tiene el await para que lo espere, sino no la pone en la tabla
 
 	mensajes('success',4000,'Atencion','El registro se ha realizado exitosamente');//Mensaje de que se completo la operacion
@@ -132,6 +209,7 @@ function vaciar_tabla() {
 // esta tambien, se ve larga, pero no es tan complicada  **********
 // esta funcion crea filas para la tabla al momento de consultar
 function llenarTabla(fila) {
+	console.log(fila);
 	// seleccionamos el cuerpo de la tabla que vamos a llenar
 	let cuerpo_tabla = document.querySelector(`#tabla_pagos tbody`);
 
@@ -142,7 +220,8 @@ function llenarTabla(fila) {
 	
 	// creamos un td por cada columna que vamos a llenar de la tabla <td></td>
 	let fecha_td = document.createElement("td"),	
-	monto_td = document.createElement("td"), 
+	monto_td = document.createElement("td"),
+	nro_apartamento_td = document.createElement("td"),
 	tasa_dolar_td = document.createElement("td");
     estado_td = document.createElement("td");
 	metodo_pago_td = document.createElement("td");
@@ -150,6 +229,7 @@ function llenarTabla(fila) {
 	referencia_td = document.createElement("td");
 	imagen_td = document.createElement("td");
 	observacion_td = document.createElement("td");
+	mes_anio_td = document.createElement("td");
 
 	// le damos el contenido de la consulta
 	// Para arreglar la fecha
@@ -162,6 +242,7 @@ function llenarTabla(fila) {
 	// Para mostrar el calculo entre el monto y la tasa
 	monto_td.textContent = fila["monto"] + " $ " + "(" + (parseFloat(fila["monto"]) * parseFloat(fila["tasa_dolar"])).toFixed(2) + " Bs)";
 	// ...
+	nro_apartamento_td.textContent = fila["nro_apartamento"];
 	tasa_dolar_td.textContent = fila["tasa_dolar"] + " Bs";
 	// Para que los estados tengan colores
 	estado_td.textContent = fila["estado"];
@@ -179,6 +260,7 @@ function llenarTabla(fila) {
 	referencia_td.textContent = fila["referencia"];
 	imagen_td.textContent = fila["imagen"];
 	observacion_td.textContent = fila["observacion"];
+	mes_anio_td.textContent = fila["mes_anio"];
 
 	let acciones = crearBotones(id_campo); 
 	// creamos los botones de eliminar y modificar
@@ -186,6 +268,7 @@ function llenarTabla(fila) {
 	// le ponemos los td a la fila (tr)
 	fila_tabla.appendChild(fecha_td);
 	fila_tabla.appendChild(monto_td);
+	fila_tabla.appendChild(nro_apartamento_td);
 	fila_tabla.appendChild(tasa_dolar_td);
 	fila_tabla.appendChild(estado_td);
 	fila_tabla.appendChild(metodo_pago_td);
@@ -193,6 +276,7 @@ function llenarTabla(fila) {
 	fila_tabla.appendChild(referencia_td);
 	fila_tabla.appendChild(imagen_td);
 	fila_tabla.appendChild(observacion_td);
+	fila_tabla.appendChild(mes_anio_td);
     fila_tabla.appendChild(acciones);
 
 	fila_tabla.setAttribute("id",`fila-${id_campo}`);
@@ -207,7 +291,7 @@ function llenarTabla(fila) {
 	fecha_td.style.textOverflow = "ellipsis";
 	// ...
 }
-
+ 
 function crearBotones(id) {
 	// Creamos los botones de las acciones
 	let td = document.createElement("td");
@@ -229,11 +313,9 @@ function crearBotones(id) {
 
 	// Lo mismo que arriba, pero con modificar
 	let boton_editar = document.createElement("button");
-
 	let icono_editar = document.createElement("i");
 	icono_editar.setAttribute("class", "bi bi-pencil-square")
 	boton_editar.appendChild(icono_editar);
-
 	boton_editar.setAttribute("type", "button");
 	boton_editar.setAttribute("class", "btn btn-success btn-sm col-3");
 	boton_editar.setAttribute("tabindex", "-1");
@@ -241,7 +323,6 @@ function crearBotones(id) {
 	boton_editar.setAttribute("aria-disabled", "true");
 	boton_editar.setAttribute("data-bs-toggle", "modal");
 	boton_editar.setAttribute("data-bs-target", "#modal_pagos");
-
 	boton_editar.setAttribute("title","Editar");
 	boton_editar.setAttribute("value",id);
 	boton_editar.addEventListener("click",modificar_formulario)//Esa funcion esta mas abajo
@@ -327,28 +408,41 @@ async function modificar_formulario(e) {
 	
 	// ahora seleccionamos los inputs
 	let fecha = formulario_usar.querySelector("#fecha"),
-	monto = formulario_usar.querySelector("#monto"),	
+	monto = formulario_usar.querySelector("#monto"),
+	nro_apartamento = formulario_usar.querySelector("#nro_apartamento");
 	tasa_dolar = formulario_usar.querySelector("#tasa_dolar"),	
 	estado = formulario_usar.querySelector("#estado");
     metodo_pago = formulario_usar.querySelector("#metodo_pago");
 	banco_id = formulario_usar.querySelector("#banco_id");
 	referencia = formulario_usar.querySelector("#referencia");	
-	imagen = formulario_usar.querySelector("#imagen");
 	observacion = formulario_usar.querySelector("#observacion");
-
+ 
 	// le damos valor
 	fecha.value = data.fecha;
-	monto.value = data.monto;	
+	monto.value = data.monto;
+	nro_apartamento.value = data.nro_apartamento;
 	tasa_dolar.value = data.tasa_dolar;
 	estado.value = data.estado;
     metodo_pago.value = data.metodo_pago;
 	banco_id.value = data.banco_id;
 	referencia.value = data.referencia;
-	imagen.value = data.imagen;
 	observacion.value = data.observacion;
 	// ...
+ 
+	// Mostrar nombre de imagen, esos id estan en el formulario
+    const nombreImagen = document.querySelector("#nombre_imagen_cargada");
+    const botonEliminarImagen = document.querySelector("#boton_eliminar_imagen");
 
-	
+    if (data.imagen && data.imagen !== "") {
+        let nombre_archivo = data.imagen.split("/").pop();
+        nombreImagen.textContent = `Imagen cargada: ${nombre_archivo}`;
+        botonEliminarImagen.classList.remove("d-none");
+        botonEliminarImagen.setAttribute("data-nombre", nombre_archivo);
+    } else {
+        nombreImagen.textContent = "No hay imagen cargada.";
+        botonEliminarImagen.classList.add("d-none");
+        botonEliminarImagen.removeAttribute("data-nombre");
+    }
 
 	// este if revisa si tiene permiso para editar, en caso de que no, quitamos el boton
 	if(!permiso_editar){
@@ -362,12 +456,47 @@ async function modificar_formulario(e) {
 	boton_formulario.setAttribute("id_modificar",data.id_pago);
 	boton_formulario.textContent = "Modificar";
 	document.getElementById('titulo_modal').textContent = "Modificar Pago";
-	//formulario_usar.querySelector("#confir_contra").parentElement.previousElementSibling.textContent = "Nueva Contraseña" 
-	//formulario_usar.querySelector("#confir_contra").placeholder = "Nueva Contraseña" 
 
 	id_modificar = id;
 	referencia_an = referencia.value;
 	//guardamos el orginal del correo, para que no choquen con las validaciones
+}
+
+//FUNCIONALIDAD DE LA VISTA PREVIA
+async function mostrarVistaPrevia(e) {
+    const boton = e.target.closest("button");
+    const id = boton.getAttribute("value");
+
+    const datos_consulta = new FormData();
+    datos_consulta.append("id_pago", id);
+    datos_consulta.append("operacion", "consulta_especifica");
+
+    const respuesta = await query(datos_consulta);
+    const data = respuesta;
+
+	/*
+    document.getElementById("vista_titulo").textContent = data.titulo;
+    document.getElementById("vista_descripcion").textContent = data.descripcion;
+    document.getElementById("vista_fecha").textContent = formatearFecha(data.fecha);
+    document.getElementById("vista_prioridad").innerHTML = obtenerPrioridadTexto(data.prioridad);
+    document.getElementById("vista_autor").textContent = data.nombre_usuario;
+	*/
+
+    // Resetear mensaje de error por si estaba visible
+    document.getElementById("vista_imagen").style.display = "block";
+    document.getElementById("mensaje_error_imagen").classList.add("d-none");
+
+	console.log("soy marico y no agarro uwu");
+	console.log("Respuesta obtenida:", respuesta);
+
+    const imagen = (data.imagen && data.imagen !== "")
+        ? `recursos/img/${data.imagen}`
+        : "";
+
+    document.getElementById("vista_imagen").setAttribute("src", imagen);
+
+    // Mostrar el modal como los otros
+    modalVistaPrevia.show();
 }
 
 //si queremos modificar
@@ -378,20 +507,23 @@ async function modificar(id) {
 	//Guardamos los datos del formulario
 	let fecha = formulario_usar.querySelector("#fecha").value,
 	monto = formulario_usar.querySelector("#monto").value,
+	nro_apartamento = formulario_usar.querySelector("#nro_apartamento").value,
 	tasa_dolar = formulario_usar.querySelector("#tasa_dolar").value, 	
 	estado = formulario_usar.querySelector("#estado").value,
 	metodo_pago = formulario_usar.querySelector("#metodo_pago").value;
 	banco_id = formulario_usar.querySelector("#banco_id").value;
 	nombre_banco = formulario_usar.querySelector("#banco_id").selectedOptions[0].textContent;
 	referencia = formulario_usar.querySelector("#referencia").value;
-	imagen = formulario_usar.querySelector("#imagen").value;
+	imagen = formulario_usar.querySelector("#imagen").files[0];
 	observacion	= formulario_usar.querySelector("#observacion").value;
+	mensualidad_id = formulario_usar.querySelector("#mensualidad_id").value;
 
 	// Le ponemos los datos del formulario
 	datos_consulta.append("id_pago",id);
 
 	datos_consulta.append("fecha",fecha);
-	datos_consulta.append("monto",monto);	
+	datos_consulta.append("monto",monto);
+	datos_consulta.append("nro_apartamento",nro_apartamento);	
 	datos_consulta.append("tasa_dolar",tasa_dolar);
 	datos_consulta.append("estado",estado);
 	datos_consulta.append("metodo_pago",metodo_pago);
@@ -399,10 +531,16 @@ async function modificar(id) {
 	datos_consulta.append("referencia",referencia);
 	datos_consulta.append("imagen",imagen);
 	datos_consulta.append("observacion",observacion);
+	datos_consulta.append("mensualidad_id",mensualidad_id);
 	// ...
 
 	//Aqui decimos que vamos a hacer
 	datos_consulta.append('operacion','modificar');
+
+	// Solo si hay una nueva imagen seleccionada
+    if (imagen !== undefined) {
+        datos_consulta.append("imagen", imagen);
+    }
 
 	//Llamamos a la funcion para hacer la consulta
 	let respuesta = await query(datos_consulta);
@@ -426,10 +564,13 @@ async function modificar(id) {
 
 	mensajes('success',4000,'Atencion','El registro se ha modificado exitosamente');//Mensaje de que se completo la operacion
 
+	// Obtener ruta de imagen actualizada o previa
+    const rutaImagen = respuesta.imagen_url || "recursos/img/default.jpg";
+
 	// esto de abajo es para editar la fila que se modifico en el data table
 	let acciones = crearBotones(id); // creamos otro botones (no se que tan necesario sea esto)
 
-	data_table.row(`#fila-${id}`).data([`${fecha}`,`${monto}`,`${tasa_dolar}`,`${estado}`,`${metodo_pago}`,`${nombre_banco}`,`${referencia}`,`${imagen}`,`${observacion}`,`${acciones.outerHTML}`])
+	data_table.row(`#fila-${id}`).data([`${fecha}`,`${monto}`,`${tasa_dolar}`,`${estado}`,`${metodo_pago}`,`${nombre_banco}`,`${referencia}`,`${imagen}`,`${observacion}`,`${mensualidad_id}``${acciones.outerHTML}`])
 	data_table.draw(); // esta funcion refresca la tabla, por si le da sed
 
 	// se le vuelve a poner el evento al boton
@@ -438,6 +579,31 @@ async function modificar(id) {
 		fila.querySelector(`[value='${id}']`).addEventListener("click",modificar_formulario);
 	}	
 }
+
+// BOTON PARA ELIMINAR LA IMAGEN EN EL FORMULARIO DE EDITAR
+document.querySelector("#boton_eliminar_imagen").addEventListener("click", function () {
+    Swal.fire({
+        title: "¿Eliminar imagen?",
+        text: "La imagen cargada será eliminada de esta publicación.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#e01d22",
+        cancelButtonText: "Cancelar",
+        confirmButtonText: "Sí, eliminar"
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const hiddenEliminar = document.createElement("input");
+            hiddenEliminar.type = "hidden";
+            hiddenEliminar.name = "eliminar_imagen";
+            hiddenEliminar.value = "1";
+            formulario_usar.appendChild(hiddenEliminar);
+
+            // llAMA A LOS INPUTS QUE ESTAN EN EL MODAL
+            document.querySelector("#nombre_imagen_cargada").textContent = "Imagen eliminada.";
+            document.querySelector("#boton_eliminar_imagen").classList.add("d-none");
+        }
+    });
+});
 
 // esta funcion obtiene el ultimo id registrado en la base de datos
 async function last_id() {
@@ -553,7 +719,10 @@ function reasignarEventos() {
 				}
 			});
 	});
-
+	document.querySelectorAll("button[title='Vista previa']").forEach(btn => {
+        btn.removeEventListener("click", mostrarVistaPrevia);
+        btn.addEventListener("click", mostrarVistaPrevia);
+    });
 	if (id_registrado) { // en caso de que se haya registrado y no se haya añadido a la tabla
 		let boton_modificar = tabla.querySelector(`[value='${id_registrado.mensaje}']`); 
 		// captura el boton de editar, sino lo encuentra es que no esta en su pagina, y no tiene caso ponerle evento
