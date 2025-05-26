@@ -1,4 +1,4 @@
-consultar();
+//consultar();
 let data_table, id_eliminado, id_registrado, id_modificar;
 
 let permiso_eliminar = document.querySelector("#permiso_eliminar").value;
@@ -49,7 +49,6 @@ async function registrar() {
     let fecha = document.querySelector("#fecha").value,
         monto = document.querySelector("#monto").value,
         tipo_gasto = document.querySelector("#tipo_gasto").value,
-        tasa_dolar = document.querySelector("#tasa_dolar").value,
         metodo_pago = document.querySelector("#metodo_pago").value,
         referencia = document.querySelector("#referencia").value,
         descripcion_gasto = document.querySelector("#descripcion").value,
@@ -60,7 +59,6 @@ async function registrar() {
     datos_consulta.append("fecha", fecha);
     datos_consulta.append("monto", monto);
     datos_consulta.append("tipo_gasto", tipo_gasto);
-    datos_consulta.append("tasa_dolar", tasa_dolar);
     datos_consulta.append("metodo_pago", metodo_pago);
     datos_consulta.append("referencia", referencia);
     datos_consulta.append("descripcion_gasto", descripcion_gasto);
@@ -82,9 +80,7 @@ async function registrar() {
             id_gasto: id_registrado.mensaje,
             fecha: fecha,
             monto: monto,
-            monto: monto,
             tipo_gasto: tipo_gasto,
-            tasa_dolar: tasa_dolar,
             metodo_pago: metodo_pago,
             referencia: referencia,
             descripcion_gasto: descripcion_gasto,
@@ -94,14 +90,14 @@ async function registrar() {
         };
 
         // Insertar la nueva fila visualmente
-        llenarTabla(fila_nueva);
-        data_table.row.add(document.querySelector(`#fila-${id_registrado.mensaje}`)).draw(false);
-        reasignarEventos();
+await cargarGastosPorMes(document.querySelector("#selector_mes_anio").value);
+await cargarTotalesMetodoPago(document.querySelector("#selector_mes_anio").value);
+consulta_completada();
         consulta_completada();
     } else {
         Swal.fire({
             title: "Error",
-            text: "No se ha podido registrar la publicación",
+            text: "No se ha podido registrar el gasto",
             icon: "error",
             confirmButtonText: "Aceptar",
             confirmButtonColor: "#e01d22",
@@ -136,6 +132,16 @@ function vaciar_tabla() {
     cuerpo_tabla.textContent = null;
 }
 
+function formatearMonto(monto) {
+    const numero = parseFloat(monto);
+    if (isNaN(numero)) return "0,00";
+    
+    return numero.toLocaleString('es-VE', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
 function formatearFecha(fechaStr) {
     const partes = fechaStr.split("-");
     if (partes.length === 3) {
@@ -144,48 +150,53 @@ function formatearFecha(fechaStr) {
     return fechaStr; // En caso de error, retorna original
 }
 
+
 function llenarTabla(fila) {
     let cuerpo_tabla = document.querySelector('#tabla_gastos tbody');
     let fila_tabla = document.createElement("tr");
-    let id_campo = fila["id_gasto"];
 
-    let fecha = document.createElement("td"),
-        monto = document.createElement("td"),
-        tipo_gasto = document.createElement("td"),
-        tasa_dolar = document.createElement("td"),
-        metodo_pago = document.createElement("td"),
-        referencia = document.createElement("td"),
-        descripcion_gasto = document.createElement("td"),
-        banco = document.createElement("td"),
-        proveedor = document.createElement("td"),
-        imagen = document.createElement("td");
+    const id_campo = fila["id_gasto"];
+
+    const fecha = document.createElement("td");
+    const monto = document.createElement("td");
+    const tipo_gasto = document.createElement("td");
+    const metodo_pago = document.createElement("td");
+    const banco = document.createElement("td");
+    const referencia = document.createElement("td");
+    const imagen = document.createElement("td");
+    const descripcion_gasto = document.createElement("td");
 
     fecha.textContent = formatearFecha(fila["fecha"]);
-    monto.textContent = fila["monto"];
-    tipo_gasto.textContent = fila["tipo_gasto"];
-    tasa_dolar.textContent = fila["tasa_dolar"];
-    metodo_pago.textContent = fila["metodo_pago"];
-    referencia.textContent = fila["referencia"];
+
+    const metodo = fila["metodo_pago"];
+    const esBs = ["pago_movil", "transferencia"].includes(metodo);
+    monto.textContent = `${formatearMonto(fila["monto"])} ${esBs ? "Bs" : "$"}`;
+
+    tipo_gasto.textContent = mayuscula(fila["tipo_gasto"]);
+    metodo_pago.textContent = formatearMetodo(metodo);
+    banco.textContent = fila["banco"] || "—";
+    referencia.textContent = fila["referencia"] || "—";
+    imagen.textContent = fila["imagen"] ? "🖼️" : "—";
     descripcion_gasto.textContent = fila["descripcion_gasto"];
-    banco.textContent = fila["banco"];
-    proveedor.textContent = fila["proveedor"];
-    let acciones = crearBotones(id_campo);
+
+    const acciones = crearBotones(id_campo);
 
     fila_tabla.appendChild(fecha);
     fila_tabla.appendChild(monto);
     fila_tabla.appendChild(tipo_gasto);
-    fila_tabla.appendChild(tasa_dolar);
     fila_tabla.appendChild(metodo_pago);
-    fila_tabla.appendChild(referencia);
-    fila_tabla.appendChild(descripcion_gasto);
     fila_tabla.appendChild(banco);
-    fila_tabla.appendChild(proveedor);
+    fila_tabla.appendChild(referencia);
+    fila_tabla.appendChild(imagen);
+    fila_tabla.appendChild(descripcion_gasto);
     fila_tabla.appendChild(acciones);
 
     fila_tabla.setAttribute("id", `fila-${id_campo}`);
     fila_tabla.setAttribute("id_gasto", id_campo);
+
     cuerpo_tabla.appendChild(fila_tabla);
 }
+
 
 function crearBotones(id) {
     let td = document.createElement("td");
@@ -263,12 +274,11 @@ async function modificar_formulario(e) {
     datos_consulta.append("operacion", "consulta_especifica");
 
     const respuesta = await query(datos_consulta);
-    const data = respuesta[0];
+    const data = respuesta;
 
     let fecha = formulario_usar.querySelector("#fecha");
     let monto = formulario_usar.querySelector("#monto");
     let tipo_gasto = formulario_usar.querySelector("#tipo_gasto");
-    let tasa_dolar = formulario_usar.querySelector("#tasa_dolar");
     let metodo_pago = formulario_usar.querySelector("#metodo_pago");
     let referencia = formulario_usar.querySelector("#referencia");
     let descripcion = formulario_usar.querySelector("#descripcion");
@@ -279,12 +289,12 @@ async function modificar_formulario(e) {
     fecha.value = data.fecha;
     monto.value = data.monto;
     tipo_gasto.value = data.tipo_gasto;
-    tasa_dolar.value = data.tasa_dolar;
     metodo_pago.value = data.metodo_pago;
+    actualizarVisibilidadCampos();
     referencia.value = data.referencia;
     descripcion.value = data.descripcion_gasto;
-    banco.value = data.banco;
-    proveedor.value = data.proveedor;
+    banco.value = data.id_banco;
+    proveedor.value = data.id_proveedor;
 
     // Mostrar nombre de imagen, esos id estan en el formulario
     const nombreImagen = document.querySelector("#nombre_imagen_cargada");
@@ -345,7 +355,6 @@ async function modificar(id) {
     let fecha = document.querySelector("#fecha").value,
         monto = document.querySelector("#monto").value,
         tipo_gasto = document.querySelector("#tipo_gasto").value,
-        tasa_dolar = document.querySelector("#tasa_dolar").value,
         metodo_pago = document.querySelector("#metodo_pago").value,
         referencia = document.querySelector("#referencia").value,
         descripcion = document.querySelector("#descripcion").value,
@@ -353,21 +362,17 @@ async function modificar(id) {
         proveedor = document.querySelector("#proveedor").value,
         imagen = document.querySelector("#imagen").files[0];
 
-
     datos_consulta.append("id_gasto", id);
     datos_consulta.append("fecha", fecha);
     datos_consulta.append("monto", monto);
     datos_consulta.append("tipo_gasto", tipo_gasto);
-    datos_consulta.append("tasa_dolar", tasa_dolar);
     datos_consulta.append("metodo_pago", metodo_pago);
     datos_consulta.append("referencia", referencia);
     datos_consulta.append("descripcion_gasto", descripcion);
     datos_consulta.append("banco", banco);
     datos_consulta.append("proveedor", proveedor);
-
     datos_consulta.append("operacion", "modificar");
 
-    // Solo si hay una nueva imagen seleccionada
     if (imagen !== undefined) {
         datos_consulta.append("imagen", imagen);
     }
@@ -380,32 +385,33 @@ async function modificar(id) {
     boton_formulario.removeAttribute("id_modificar");
     boton_formulario.textContent = "Registrar";
     document.getElementById("titulo_modal").textContent = "Registrar Gasto";
-    consulta_completada();
 
-    // Obtener ruta de imagen actualizada o previa
-    const rutaImagen = respuesta.imagen_url || "recursos/img/default.jpg";
-    const prioridadHTML = obtenerPrioridadTexto(prioridad);
-
-    const acciones = crearBotones(id);
-
-    data_table.row(`#fila-${id}`).data([
-        formatearFecha(fecha),
-        monto,
-        tipo_gasto,
-        tasa_dolar,
-        metodo_pago,
-        referencia,
-        descripcion,
-        banco,
-        proveedor,
-        acciones.outerHTML
-    ]).draw();
-
-    const fila = document.querySelector(`#fila-${id}`);
-    if (fila) {
-        fila.querySelector(`[value="${id}"]`).addEventListener("click", modificar_formulario);
+    // Actualizar la tabla
+    const filaExistente = document.querySelector(`#fila-${id}`);
+    if (filaExistente) {
+        filaExistente.remove(); // Elimina la fila vieja
     }
+
+    const filaModificada = {
+        id_gasto: id,
+        fecha: fecha,
+        monto: monto,
+        tipo_gasto: tipo_gasto,
+        metodo_pago: metodo_pago,
+        referencia: referencia,
+        descripcion_gasto: descripcion,
+        banco: banco,
+        proveedor: proveedor,
+        imagen: respuesta.imagen || ""
+    };
+
+    llenarTabla(filaModificada);
+    consulta_completada();
     reasignarEventos();
+
+    // 🔄 Recargar totales
+    const idMesActual = document.querySelector("#selector_mes_anio").value;
+    await cargarTotalesMetodoPago(idMesActual);
 }
 
 
@@ -413,7 +419,7 @@ async function modificar(id) {
 document.querySelector("#boton_eliminar_imagen").addEventListener("click", function () {
     Swal.fire({
         title: "¿Eliminar imagen?",
-        text: "La imagen cargada será eliminada de esta publicación.",
+        text: "La imagen cargada será eliminada de este gasto.",
         icon: "warning",
         showCancelButton: true,
         confirmButtonColor: "#e01d22",
@@ -435,82 +441,7 @@ document.querySelector("#boton_eliminar_imagen").addEventListener("click", funct
 });
 
 // Cargar los meses y años al cargar la página
-document.addEventListener("DOMContentLoaded", async () => {
-  await cargarSelectorMesAnio();
-  document.querySelector("#selector_mes_anio").addEventListener("change", cargarDatosPorMes);
-});
 
-// Llenar el select de meses y años
-async function cargarSelectorMesAnio() {
-  const datos = new FormData();
-  datos.append("operacion", "listar_gastos_mes");
-
-  const respuesta = await query(datos);
-
-  if (respuesta && Array.isArray(respuesta)) {
-    const selector = document.querySelector("#selector_mes_anio");
-    selector.innerHTML = '<option value="">Seleccione un mes/año</option>';
-
-    respuesta.forEach(item => {
-      const option = document.createElement("option");
-      option.value = item.id_gasto_mes;
-      option.text = `${item.mes}-${item.anio}`;
-      selector.appendChild(option);
-    });
-  }
-}
-
-// Al cambiar el select
-async function cargarDatosPorMes(e) {
-  const id_mes = e.target.value;
-  if (!id_mes) return;
-
-  await cargarGastosPorMes(id_mes);
-  await cargarTotalesMetodoPago(id_mes);
-}
-
-// Mostrar gastos del mes seleccionado
-async function cargarGastosPorMes(id_mes) {
-  const datos = new FormData();
-  datos.append("operacion", "filtrar_gastos_mes");
-  datos.append("gasto_mes_id", id_mes);
-
-  const respuesta = await query(datos);
-
-  vaciar_tabla(); // función existente
-  if (respuesta && Array.isArray(respuesta)) {
-    respuesta.forEach(gasto => llenarTabla(gasto));
-    if (data_table) data_table.destroy();
-    data_table = init_data_table();
-  }
-}
-
-// Mostrar los totales por método de pago
-async function cargarTotalesMetodoPago(id_mes) {
-  const datos = new FormData();
-  datos.append("operacion", "totales_metodo_pago");
-  datos.append("gasto_mes_id", id_mes);
-
-  const respuesta = await query(datos);
-
-  const cuerpoTabla = document.querySelector("#tabla_totales tbody");
-  cuerpoTabla.innerHTML = "";
-
-  if (respuesta && Array.isArray(respuesta)) {
-    respuesta.forEach(item => {
-      const fila = document.createElement("tr");
-      const metodo = document.createElement("td");
-      const total = document.createElement("td");
-
-      metodo.textContent = item.metodo_pago;
-      total.textContent = parseFloat(item.total).toFixed(2);
-
-      fila.appendChild(metodo);
-      fila.appendChild(total);
-      cuerpoTabla.appendChild(fila);
-    });
-  }
-}
 
 async function last_id() {
     datos_consulta = new FormData();
@@ -605,7 +536,7 @@ function reasignarEventos() {
         }
         Swal.fire({
             title: "¿Estás seguro?",
-            text: "¿Está seguro que desea eliminar esta publicación?",
+            text: "¿Está seguro que desea eliminar este gasto?",
             showCancelButton: true,
             confirmButtonText: "Eliminar",
             confirmButtonColor: "#e01d22",
@@ -631,4 +562,244 @@ function reasignarEventos() {
             id_registrado = null;
         }
     }
+}
+
+
+// ----------- FUNCIONES Y COSAS NUEVAS PARA EL MODULO DE GASTOS-------------------
+document.addEventListener("DOMContentLoaded", async () => {
+  await cargarSelectorMesAnio();
+
+  const selector = document.querySelector("#selector_mes_anio");
+
+  // Obtener mes y año actuales
+  const fecha = new Date();
+  const mes = String(fecha.getMonth() + 1).padStart(2, "0"); // meses de 0-11
+  const anio = fecha.getFullYear();
+  const valorActual = `${mes}-${anio}`;
+
+  // Buscar si ese valor existe en las opciones
+  const opcionActual = Array.from(selector.options).find(opt => opt.text === valorActual);
+  if (opcionActual) {
+    selector.value = opcionActual.value;
+
+    // Cargar datos del mes actual automáticamente
+    await cargarGastosPorMes(opcionActual.value);
+    await cargarTotalesMetodoPago(opcionActual.value);
+  }
+
+  // Evento cuando cambia el select
+  selector.addEventListener("change", cargarDatosPorMes);
+});
+
+// Llenar el select de meses y años
+async function cargarSelectorMesAnio() {
+  const datos = new FormData();
+  datos.append("operacion", "listar_gastos_mes");
+
+  const respuesta = await query(datos);
+
+  if (respuesta && Array.isArray(respuesta)) {
+    const selector = document.querySelector("#selector_mes_anio");
+    selector.innerHTML = '<option value="">Seleccione un mes/año</option>';
+
+    // Calcular mes y año actual
+    const fechaActual = new Date();
+    const mesActual = String(fechaActual.getMonth() + 1).padStart(2, "0");
+    const anioActual = fechaActual.getFullYear();
+
+    let idSeleccionado = null;
+
+    respuesta.forEach(item => {
+      if (item.mes && item.anio) {
+        const option = document.createElement("option");
+        const nombreMes = obtenerNombreMes(item.mes);
+        option.value = item.id_gasto_mes;
+        option.text = `${nombreMes}-${item.anio}`;
+        selector.appendChild(option);
+
+        // Comparar con el mes/año actual
+        if (parseInt(item.mes) == parseInt(mesActual) && parseInt(item.anio) == anioActual) {
+          idSeleccionado = item.id_gasto_mes;
+        }
+      }
+    });
+
+    // Si se encontró el mes actual en la lista, seleccionarlo y cargar sus datos
+    if (idSeleccionado) {
+      selector.value = idSeleccionado;
+      await cargarGastosPorMes(idSeleccionado);
+      await cargarTotalesMetodoPago(idSeleccionado);
+    }
+  }
+}
+
+
+// Al cambiar el select
+async function cargarDatosPorMes(e) {
+  const id_mes = e.target.value;
+  if (!id_mes) return;
+
+  await cargarGastosPorMes(id_mes);
+  await cargarTotalesMetodoPago(id_mes);
+}
+
+// Mostrar gastos del mes seleccionado
+async function cargarGastosPorMes(id_mes) {
+  const datos = new FormData();
+  datos.append("operacion", "filtrar_gastos_mes");
+  datos.append("gasto_mes_id", id_mes);
+
+  const respuesta = await query(datos);
+
+  vaciar_tabla(); // función existente
+  if (respuesta && Array.isArray(respuesta)) {
+    if (data_table) data_table.destroy(); 
+
+vaciar_tabla(); 
+
+respuesta.forEach(gasto => llenarTabla(gasto));
+
+data_table = init_data_table();
+  }
+}
+
+function actualizarVisibilidadCampos() {
+    const metodoPago = document.querySelector("#metodo_pago");
+    const grupoReferencia = document.querySelector("#grupo_referencia");
+    const grupoBanco = document.querySelector("#grupo_banco");
+    const grupoImagen = document.querySelector("#grupo_imagen");
+
+    const valor = metodoPago.value;
+
+    if (valor === "efectivo" || valor === "Efectivo ($)") {
+        grupoReferencia.style.display = "none";
+        grupoBanco.style.display = "none";
+        grupoImagen.style.display = "none";
+    } else if (valor === "pago_movil" || valor === "transferencia" || valor === "Pago Móvil" || valor === "Transferencia") {
+        grupoReferencia.style.display = "";
+        grupoBanco.style.display = "";
+        grupoImagen.style.display = "";
+    } else {
+        grupoReferencia.style.display = "none";
+        grupoBanco.style.display = "none";
+        grupoImagen.style.display = "none";
+    }
+}
+
+// Ejecutar en eventos globales
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelector("#metodo_pago").addEventListener("change", actualizarVisibilidadCampos);
+    actualizarVisibilidadCampos();
+});
+
+// Mostrar los totales por método de pago
+async function cargarTotalesMetodoPago(id_mes) {
+    const datos = new FormData();
+    datos.append("operacion", "totales_metodo_pago");
+    datos.append("gasto_mes_id", id_mes);
+
+    const respuesta = await query(datos);
+    const cuerpo_tabla = document.querySelector("#tabla_totales tbody");
+    cuerpo_tabla.textContent = "";
+
+    let totalBs = 0;
+    let totalDolares = 0;
+
+    if (respuesta && Array.isArray(respuesta) && respuesta.length > 0) {
+        respuesta.forEach(item => {
+            const fila = document.createElement("tr");
+
+            const metodo = document.createElement("td");
+            metodo.textContent = formatearMetodo(item.metodo_pago);
+
+            const total = document.createElement("td");
+            const monto = parseFloat(item.total);
+
+            if (item.metodo_pago === "efectivo") {
+                total.textContent = `${formatearMonto(monto)} $`;
+                totalDolares += monto;
+            } else {
+                total.textContent = `${formatearMonto(monto)} Bs`;
+                totalBs += monto;
+            }
+
+            fila.appendChild(metodo);
+            fila.appendChild(total);
+            cuerpo_tabla.appendChild(fila);
+        });
+
+        // Fila de total Bs
+        const filaTotalBs = document.createElement("tr");
+        const celdaLabelBs = document.createElement("td");
+        celdaLabelBs.innerHTML = "<strong>Total Bs</strong>";
+        const celdaTotalBs = document.createElement("td");
+        celdaTotalBs.innerHTML = `<strong>${formatearMonto(totalBs)} Bs</strong>`;
+        filaTotalBs.appendChild(celdaLabelBs);
+        filaTotalBs.appendChild(celdaTotalBs);
+        cuerpo_tabla.appendChild(filaTotalBs);
+
+        // Fila de total $
+        const filaTotalUsd = document.createElement("tr");
+        const celdaLabelUsd = document.createElement("td");
+        celdaLabelUsd.innerHTML = "<strong>Total $</strong>";
+        const celdaTotalUsd = document.createElement("td");
+        celdaTotalUsd.innerHTML = `<strong>${formatearMonto(totalDolares)} $</strong>`;
+        filaTotalUsd.appendChild(celdaLabelUsd);
+        filaTotalUsd.appendChild(celdaTotalUsd);
+        cuerpo_tabla.appendChild(filaTotalUsd);
+    } else {
+        const fila = document.createElement("tr");
+        const celda = document.createElement("td");
+        celda.colSpan = 2;
+        celda.textContent = "No hay datos disponibles.";
+        fila.appendChild(celda);
+        cuerpo_tabla.appendChild(fila);
+    }
+}
+function formatearMetodo(metodo) {
+    switch (metodo) {
+        case "pago_movil": return "Pago Móvil";
+        case "transferencia": return "Transferencia";
+        case "efectivo": return "Efectivo";
+        case "variable": return "Variable";
+        case "fijo": return "Fijo";
+        default: return metodo;
+    }
+}
+
+function obtenerNombreMes(numeroMes) {
+  const meses = [
+    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+  ];
+
+  const indice = parseInt(numeroMes, 10) - 1;
+  return meses[indice] || "Mes inválido";
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    const metodoPago = document.querySelector("#metodo_pago");
+    const unidadMonto = document.querySelector("#unidad_monto");
+
+    function actualizarUnidadMoneda() {
+        const valor = metodoPago.value;
+
+        if (valor === "pago_movil" || valor === "transferencia") {
+            unidadMonto.textContent = "Bs";
+            unidadMonto.style.display = "";
+        } else if (valor === "efectivo") {
+            unidadMonto.textContent = "$";
+            unidadMonto.style.display = "";
+        } else {
+            unidadMonto.style.display = "none";
+        }
+    }
+
+    metodoPago.addEventListener("change", actualizarUnidadMoneda);
+    actualizarUnidadMoneda(); // Ejecutar por si hay valor cargado
+});
+
+function mayuscula(texto) {
+    if (!texto) return "";
+    return texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase();
 }

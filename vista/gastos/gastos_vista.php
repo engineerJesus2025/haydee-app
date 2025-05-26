@@ -40,6 +40,14 @@
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="card p-4">
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <label for="selector_mes_anio" class="form-label">Seleccionar Mes/Año:</label>
+                                        <select id="selector_mes_anio" class="form-select">
+                                            <option value="" disabled selected>Cargando...</option>
+                                        </select>
+                                    </div>
+                                </div>
                                 <?php if (Gastos::tiene_permiso(GESTIONAR_GASTOS, REGISTRAR)): ?>
                                     <div class="button mb-4">
                                         <button type="button" class="btn btn-primary" data-bs-toggle="modal"
@@ -61,22 +69,13 @@
                                     </div>
                                 <?php endif; ?>
 
-                                <div class="mb-3">
-                                    <label for="selector_mes_anio" class="form-label">Filtrar por mes y año</label>
-                                    <select id="selector_mes_anio" class="form-select"></select>
-                                </div>
-
                                 <table id="tabla_gastos" class="table" style="width:97%;">
                                     <thead>
                                         <tr>
                                             <th>FECHA</th>
                                             <th>MONTO</th>
                                             <th>TIPO GASTO</th>
-                                            <th>TASA DOLAR</th>
                                             <th>METODO PAGO</th>
-                                            <th>BANCO</th>
-                                            <th>REFERENCIA</th>
-                                            <th>IMAGEN</th>
                                             <th>DESCRIPCION</th>
                                             <th class="text-center">ACCIONES</th>
                                     </thead>
@@ -88,67 +87,80 @@
                                         </tr>
                                     </tbody>
                                 </table>
-                                <table id="tabla_totales" class="table table-bordered mt-4">
-                                    <thead>
-                                        <tr>
-                                            <th>Método de Pago</th>
-                                            <th>Total</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody></tbody>
-                                </table>
-                                <div class="modal fade" id="modal_gastos" tabindex="-1" aria-labelledby="titulo-modal"
-                                    aria-hidden="true">
-                                    <div class="modal-dialog modal-lg">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title" id="titulo_modal">Registrar Gasto</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                    aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <?php
-                                                require_once "vista/gastos/gastos_modal.php";
-                                                ?>
-                                            </div>
+
+
+                                <div class="col-md-4">
+                                    <div class="card p-4">
+                                        <h5 class="card-title">Resumen de Gastos</h5>
+                                        <table id="tabla_totales" class="table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Método de Pago</th>
+                                                    <th>Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td colspan="2">Seleccione un mes</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="modal fade" id="modal_gastos" tabindex="-1" aria-labelledby="titulo-modal"
+                                aria-hidden="true">
+                                <div class="modal-dialog modal-lg">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="titulo_modal">Registrar Gasto</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <?php
+                                            require_once "vista/gastos/gastos_modal.php";
+                                            ?>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </main>
-                <?php
-                require_once "vista/componentes/footer.php";
-                require_once "vista/componentes/script.php";
-                ?>
-                <div class="modal fade" id="modal_vista_previa" tabindex="-1" aria-labelledby="modal_vista_previa_label"
-                    aria-hidden="true">
-                    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Imagen</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                    aria-label="Cerrar"></button>
+            </div>
+            </main>
+            <?php
+            require_once "vista/componentes/footer.php";
+            require_once "vista/componentes/script.php";
+            ?>
+            <div class="modal fade" id="modal_vista_previa" tabindex="-1" aria-labelledby="modal_vista_previa_label"
+                aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Imagen</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                aria-label="Cerrar"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="text-center mt-3">
+                                <img id="vista_imagen" src="" class="img-fluid border rounded"
+                                    style="max-height: 300px;" alt="Vista previa de la imagen"
+                                    onerror="this.style.display='none'; document.getElementById('mensaje_error_imagen').classList.remove('d-none');">
+                                <p id="mensaje_error_imagen" class="text-danger d-none mt-2">⚠ No se pudo cargar la
+                                    imagen.</p>
                             </div>
-                            <div class="modal-body">
-                                <div class="text-center mt-3">
-                                    <img id="vista_imagen" src="" class="img-fluid border rounded"
-                                        style="max-height: 300px;" alt="Vista previa de la imagen"
-                                        onerror="this.style.display='none'; document.getElementById('mensaje_error_imagen').classList.remove('d-none');">
-                                    <p id="mensaje_error_imagen" class="text-danger d-none mt-2">⚠ No se pudo cargar la
-                                        imagen.</p>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                         </div>
                     </div>
                 </div>
-
             </div>
+
         </div>
+    </div>
     </div>
 </body>
 <script type="text/javascript" src="recursos/js/validaciones/gastos_validar.js"></script>
