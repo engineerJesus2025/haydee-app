@@ -65,9 +65,7 @@
             }
 
             $mensualidad_id = $_POST["mensualidad_id"];
-            $resultado = $obj_pago->lastIdPagoMensualidad();
-            $pago_id = $resultado["mensaje"];
-
+            
             //se usan los setters correspondientes
             $obj_pago->set_fecha($fecha);
             $obj_pago->set_monto($monto);
@@ -78,14 +76,42 @@
             $obj_pago->set_referencia($referencia);
             $obj_pago->set_imagen($imagen);
             $obj_pago->set_observacion($observacion);
-            $obj_pago->set_mensualidad_id($mensualidad_id);
-            $obj_pago->set_pago_id($pago_id);
 
-            $obj_pago->registrar_pagos_mensualidad();
+           
+            $resultado_registro_pago = $obj_pago->registrar_pago();  // Registrar el pago
 
-            //se ejecuta la funcion:
-            echo  json_encode($obj_pago->registrar_pago());
-            //igual puse para que siempre retorne un arreglo que dara true o false de acuerdo al resultado
+            if ($resultado_registro_pago["estatus"]) {
+                // Obtener último ID insertado
+                $ultimo_pago = $obj_pago->lastId();
+                $pago_id = $ultimo_pago["mensaje"];
+
+                // Setear IDs para tabla puente
+                $obj_pago->set_pago_id($pago_id);
+                $obj_pago->set_mensualidad_id($mensualidad_id);
+
+                // Registrar relación en tabla puente
+                $resultado_puente = $obj_pago->registrar_pagos_mensualidad();
+
+                if ($resultado_puente["estatus"]) {
+                    echo json_encode([
+                        "estatus" => true,
+                        "mensaje" => "Pago y relación registrados correctamente"
+                    ]);
+                } else {
+                    echo json_encode([
+                        "estatus" => false,
+                        "mensaje" => "Error al registrar relación en tabla puente"
+                    ]);
+                }
+            } else {
+                // Error al registrar pago
+                echo json_encode([
+                    "estatus" => false,
+                    "mensaje" => "Error al registrar pago"
+                ]);
+            }
+
+            exit;
         }
         elseif ($operacion == "consulta_especifica"){
             //se guardan el id para buscar

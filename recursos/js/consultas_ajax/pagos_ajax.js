@@ -221,7 +221,6 @@ function llenarTabla(fila) {
 	// creamos un td por cada columna que vamos a llenar de la tabla <td></td>
 	let fecha_td = document.createElement("td"),	
 	monto_td = document.createElement("td"),
-	nro_apartamento_td = document.createElement("td"),
 	tasa_dolar_td = document.createElement("td");
     estado_td = document.createElement("td");
 	metodo_pago_td = document.createElement("td");
@@ -242,7 +241,6 @@ function llenarTabla(fila) {
 	// Para mostrar el calculo entre el monto y la tasa
 	monto_td.textContent = fila["monto"] + " $ " + "(" + (parseFloat(fila["monto"]) * parseFloat(fila["tasa_dolar"])).toFixed(2) + " Bs)";
 	// ...
-	nro_apartamento_td.textContent = fila["nro_apartamento"];
 	tasa_dolar_td.textContent = fila["tasa_dolar"] + " Bs";
 	// Para que los estados tengan colores
 	estado_td.textContent = fila["estado"];
@@ -268,7 +266,6 @@ function llenarTabla(fila) {
 	// le ponemos los td a la fila (tr)
 	fila_tabla.appendChild(fecha_td);
 	fila_tabla.appendChild(monto_td);
-	fila_tabla.appendChild(nro_apartamento_td);
 	fila_tabla.appendChild(tasa_dolar_td);
 	fila_tabla.appendChild(estado_td);
 	fila_tabla.appendChild(metodo_pago_td);
