@@ -55,7 +55,7 @@
                                     </div>
                                 <?php endif; ?>
 
-                                <table id="tabla_pagos" class="table table-dark" style="width:97%">
+                                <table id="tabla_pagos"  style="width:97%">
                                     <thead>
                                         <tr>
                                             <th>FECHA</th>
