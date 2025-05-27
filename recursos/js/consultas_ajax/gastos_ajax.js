@@ -161,9 +161,7 @@ function llenarTabla(fila) {
     const monto = document.createElement("td");
     const tipo_gasto = document.createElement("td");
     const metodo_pago = document.createElement("td");
-    const banco = document.createElement("td");
-    const referencia = document.createElement("td");
-    const imagen = document.createElement("td");
+    const proveedor = document.createElement("td");
     const descripcion_gasto = document.createElement("td");
 
     fecha.textContent = formatearFecha(fila["fecha"]);
@@ -171,12 +169,9 @@ function llenarTabla(fila) {
     const metodo = fila["metodo_pago"];
     const esBs = ["pago_movil", "transferencia"].includes(metodo);
     monto.textContent = `${formatearMonto(fila["monto"])} ${esBs ? "Bs" : "$"}`;
-
     tipo_gasto.textContent = mayuscula(fila["tipo_gasto"]);
     metodo_pago.textContent = formatearMetodo(metodo);
-    banco.textContent = fila["banco"] || "—";
-    referencia.textContent = fila["referencia"] || "—";
-    imagen.textContent = fila["imagen"] ? "🖼️" : "—";
+    proveedor.textContent = fila["proveedor"] || "N/A";
     descripcion_gasto.textContent = fila["descripcion_gasto"];
 
     const acciones = crearBotones(id_campo);
@@ -185,9 +180,7 @@ function llenarTabla(fila) {
     fila_tabla.appendChild(monto);
     fila_tabla.appendChild(tipo_gasto);
     fila_tabla.appendChild(metodo_pago);
-    fila_tabla.appendChild(banco);
-    fila_tabla.appendChild(referencia);
-    fila_tabla.appendChild(imagen);
+    fila_tabla.appendChild(proveedor);
     fila_tabla.appendChild(descripcion_gasto);
     fila_tabla.appendChild(acciones);
 

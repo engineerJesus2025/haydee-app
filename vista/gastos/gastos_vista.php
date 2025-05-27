@@ -69,13 +69,14 @@
                                     </div>
                                 <?php endif; ?>
 
-                                <table id="tabla_gastos" class="table" style="width:97%;">
+                                <table id="tabla_gastos" class="table table-striped table-hover" style="width:97%;">
                                     <thead>
                                         <tr>
                                             <th>FECHA</th>
                                             <th>MONTO</th>
                                             <th>TIPO GASTO</th>
                                             <th>METODO PAGO</th>
+                                            <th>PROVEEDOR</th>
                                             <th>DESCRIPCION</th>
                                             <th class="text-center">ACCIONES</th>
                                     </thead>
