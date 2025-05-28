@@ -1,48 +1,21 @@
 $(document).ready(function(){
 
-	$("#nombre_banco").on("keypress",function(e){
-		validarKeyPress(/^[A-Za-z \b]*$/, e);
-	});
-
-	$("#nombre_banco").on("keyup",function(){
-		validarKeyUp(/^[A-Za-z \b]{3,30}$/,
-		$(this),this.nextElementSibling,"Debe ingresar el nombre del banco");
-	});
-
-	$("#codigo").on("keypress",function(e){
+	$("#nro_apartamento").on("keypress",function(e){
 		validarKeyPress(/^[0-9\b]*$/, e);
 	});
 
-	$("#codigo").on("keyup",function(){
-		validarKeyUp(/^[0-9\b]{4}$/,
+	$("#nro_apartamento").on("keyup",function(){
+		validarKeyUp(/^[0-9\b]{1,2}$/,
+		$(this),this.nextElementSibling,"Debe ingresar el número del apartamento");
+	});
+
+	$("#porcentaje_participacion").on("keypress",function(e){
+		validarKeyPress(/[0-9.]$/, e);
+	});
+
+	$("#porcentaje_participacion").on("keyup",function(){
+		validarKeyUp(/^\d{1,2}(\.\d{1,2})?$/,
 		$(this),this.nextElementSibling,"Debe ingresar el codigo del banco");
-	});
-
-	$("#numero_cuenta").on("keypress",function(e){
-		validarKeyPress(/^[0-9\b]*$/, e);
-	});
-
-	$("#numero_cuenta").on("keyup",function(){
-		validarKeyUp(/^[0-9\b]{18,30}$/,
-		$(this),this.nextElementSibling,"Debe ingresar el número de cuenta");
-	});
-
-    $("#telefono_afiliado").on("keypress",function(e){
-		validarKeyPress(/^[0-9\b]*$/, e);
-	});
-
-	$("#telefono_afiliado").on("keyup",function(){
-		validarKeyUp(/^[0-9\b]{11}$/,
-		$(this),this.nextElementSibling,"Debe ingresar un telefono afiliado");
-	});
-
-    $("#cedula_afiliada").on("keypress",function(e){
-		validarKeyPress(/^[0-9\b]*$/, e);
-	});
-
-	$("#cedula_afiliada").on("keyup",function(){
-		validarKeyUp(/^[0-9\b]{7,8}$/,
-		$(this),this.nextElementSibling,"Debe ingresar una cedula afiliada");
 	});
 	
 	$("#boton_formulario").on("click",async function(e){
@@ -68,7 +41,7 @@ $(document).ready(function(){
 
 	$("#nro_apartamento").on("keyup",function(e){
 		if (validarKeyUp(
-        /^[0-9]{18,30}$/,
+        /^[0-9]{1,2}$/,
         $("#nro_apartamento"),document.querySelector("#nro_apartamento").nextElementSibling,'El formato debe ser en números'
         )) {
         	if (this.value == nro_apartamento_an) {return;}
@@ -95,53 +68,50 @@ function mensajes(icono,tiempo,titulo,mensaje){
 
 async function validarEnvio(accion = "Registrar"){	
 	if(validarKeyUp(
-        /^[A-Za-z ]{3,30}$/,
-        $("#nombre_banco"),document.querySelector("#nombre_banco").nextElementSibling,'Debe ingresar el nombre del banco'
+        /^[0-9]{1,2}$/,
+        $("#nro_apartamento"),document.querySelector("#nro_apartamento").nextElementSibling,'Debe ingresar el número del apartamento'
         )==0)
 	{
-		mensajes('error',4000,'Debe ingresar el nombre del banco',
-		'El formato debe ser sólo en letras');
-		
-		return false;
-	}
-	else if(validarKeyUp(
-        /^[0-9]{4}$/,
-        $("#codigo"),document.querySelector("#codigo").nextElementSibling,'Debe ingresar el codigo del banco'
-        )==0)
-	{
-		mensajes('error',4000,'Debe ingresar el codigo del banco',
+		mensajes('error',4000,'Debe ingresar el número del apartamento',
 		'El formato debe ser sólo en números');
 		
 		return false;
 	}
-	
 	else if(validarKeyUp(
-        /^[0-9]{18,30}$/,
-        $("#numero_cuenta"),document.querySelector("#numero_cuenta").nextElementSibling,'Ejemplo: XXXX-XXXXX-XXX...'
+        /^\d{1,2}(\.\d{1,2})?$/,
+        $("#porcentaje_participacion"),document.querySelector("#porcentaje_participacion").nextElementSibling,'Debe ingresar el porcentaje de participación'
         )==0)
 	{
-		mensajes('error',4000,'Debe ingresar un número de cuenta',
-		'Ejemplo: XXXX-XXXXX-XXX...');
-		
-		return false;
-	}
-	else if(validarKeyUp(
-        /^[0-9]{11}$/,
-        $("#telefono_afiliado"),document.querySelector("#telefono_afiliado").nextElementSibling,'Debe ingresar un telefono afiliado'
-        )==0)
-	{
-		mensajes('error',4000,'Debe ingresar un telefono afiliado',
-		'El formato debe ser XXXX-XXXXXXX');
-		
-		return false;
-	}
-	else if(validarKeyUp(
-        /^[0-9]{7,8}$/,
-        $("#cedula_afiliada"),document.querySelector("#cedula_afiliada").nextElementSibling,'Debe ingresar una cedula afiliada'
-        )==0)
-	{
-		mensajes('error',4000,'Debe ingresar una cedula afiliada',
+		mensajes('error',4000,'Debe ingresar el porcentaje de participación',
 		'El formato debe ser sólo en números');
+		
+		return false;
+	}
+	else if(validar_select("gas")==0)
+	{
+		mensajes('error',4000,'Debe indicar si tiene o no gas',
+		'Debe seleccionar una opción');
+		
+		return false;
+	}
+	else if(validar_select("agua")==0)
+	{
+		mensajes('error',4000,'Debe indicar si tiene o no agua',
+		'Debe seleccionar una opción');
+		
+		return false;
+	}
+	else if(validar_select("alquilado")==0)
+	{
+		mensajes('error',4000,'Debe indicar si es alquilado o no',
+		'Debe seleccionar una opción');
+		
+		return false;
+	}
+	else if(validar_select("propietario_id")==0)
+	{
+		mensajes('error',4000,'Debe seleccionar un propietario',
+		'Debe seleccionar una opción');
 		
 		return false;
 	}
@@ -156,7 +126,7 @@ async function validarEnvio(accion = "Registrar"){
 	}else if (accion == "Editar"){
 		datos = new FormData();
 		//datos.append("validar",'contra');
-		datos.append("id_banco",id_modificar);
+		datos.append("id_apartamento",id_modificar);
 		/*datos.append("contra",$("#contra").val());
 		res = await verificar_contra(datos);
 		// revisamos si la contraseña que puso es la correcta
@@ -176,14 +146,14 @@ async function validarEnvio(accion = "Registrar"){
 		}*/
 	}
 	// si el valor de correo no es el mismo de antes:
-	if(numero_cuenta_an != $("#numero_cuenta").val()){
+	if(nro_apartamento_an != $("#nro_apartamento").val()){
 		datos = new FormData(); 
-		datos.append('validar','numero_cuenta');
-		datos.append('numero_cuenta',$("#numero_cuenta").val());
+		datos.append('validar','nro_apartamento');
+		datos.append('nro_apartamento',$("#nro_apartamento").val());
 		res = await verificar_duplicados(datos);
 		// revisamos si esta duplicado con otro usuario
 		if(res){
-			mensajes('error',4000,'Número de cuenta ya registrado','Este número de cuenta esta registrado, debe ingresar otro.');
+			mensajes('error',4000,'Número de apartamento ya esta registrado','Este número de apartamento esta registrado, debe ingresar otro.');
 			return false;
 		}
 	}

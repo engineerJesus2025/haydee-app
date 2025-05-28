@@ -36,10 +36,17 @@ async function registrar() {
 	
 	let nro_apartamento = formulario_usar.querySelector("#nro_apartamento").value,
 	porcentaje_participacion = formulario_usar.querySelector("#porcentaje_participacion").value,	
-	gas = formulario_usar.querySelector("#gas").value, 
-	agua = formulario_usar.querySelector("#agua").value,
-    alquilado = formulario_usar.querySelector("#alquilado").value,
+	gas = Number(formulario_usar.querySelector("#gas").value), 
+	agua = Number(formulario_usar.querySelector("#agua").value),
+    alquilado = Number(formulario_usar.querySelector("#alquilado").value),
     propietario_id = formulario_usar.querySelector("#propietario_id").value;
+	propietario_texto = formulario_usar.querySelector("#propietario_id").selectedOptions[0].text;
+
+	// Formatear los valores como en la consulta SQL
+	let gas_texto = (gas == 1) ? 'TIENE' : 'NO TIENE';
+	let agua_texto = (agua == 1) ? 'TIENE' : 'NO TIENE';
+	let alquilado_texto = (alquilado == 1) ? 'SI' : 'NO';
+	let porcentaje_formateado = porcentaje_participacion + '%';
 
 	datos_consulta.append("nro_apartamento",nro_apartamento);
 	datos_consulta.append("porcentaje_participacion",porcentaje_participacion);	
@@ -64,8 +71,8 @@ async function registrar() {
 	
 	let acciones = crearBotones(id_registrado.mensaje);
 	
-	let res_data_table = await data_table.row.add([`${nro_apartamento}`,`${porcentaje_participacion}`,`${gas}`,`${agua}`,`${alquilado}`,`${propietario_id}`,`${acciones.outerHTML}`]).draw();
-	
+	let res_data_table = await data_table.row.add([`${nro_apartamento}`,`${porcentaje_formateado}`,`${gas_texto}`,`${agua_texto}`,`${alquilado_texto}`,`${propietario_texto}`,`${acciones.outerHTML}`]).draw();
+
 	mensajes('success',4000,'Atencion','El registro se ha realizado exitosamente');
 }
 
@@ -96,6 +103,8 @@ function vaciar_tabla() {
 
 function llenarTabla(fila) {
 	let cuerpo_tabla = document.querySelector(`#tabla_apartamentos tbody`);
+
+	console.log(fila);
 
 	// Creamos etiquetas
 	let fila_tabla = document.createElement("tr");
@@ -252,10 +261,17 @@ async function modificar(id) {
 
 	let nro_apartamento = formulario_usar.querySelector("#nro_apartamento").value,
 	porcentaje_participacion = formulario_usar.querySelector("#porcentaje_participacion").value,
-	gas = formulario_usar.querySelector("#gas").value, 	
-	agua = formulario_usar.querySelector("#agua").value,
-	alquilado = formulario_usar.querySelector("#alquilado").value,
+	gas = Number(formulario_usar.querySelector("#gas").value), 
+	agua = Number(formulario_usar.querySelector("#agua").value),
+    alquilado = Number(formulario_usar.querySelector("#alquilado").value),
     propietario_id = formulario_usar.querySelector("#propietario_id").value;
+	propietario_texto = formulario_usar.querySelector("#propietario_id").selectedOptions[0].text;
+
+	// Formatear los valores como en la consulta SQL
+	let gas_texto = (gas == 1) ? 'TIENE' : 'NO TIENE';
+	let agua_texto = (agua == 1) ? 'TIENE' : 'NO TIENE';
+	let alquilado_texto = (alquilado == 1) ? 'SI' : 'NO';
+	let porcentaje_formateado = porcentaje_participacion + '%';
 
 	datos_consulta.append("id_apartamento",id);
 
@@ -288,7 +304,7 @@ async function modificar(id) {
 
 	let acciones = crearBotones(id);
 
-	data_table.row(`#fila-${id}`).data([`${nro_apartamento}`,`${porcentaje_participacion}`,`${gas}`,`${agua}`,`${alquilado}`,`${propietario_id}`,`${acciones.outerHTML}`])
+	data_table.row(`#fila-${id}`).data([`${nro_apartamento}`,`${porcentaje_formateado}`,`${gas_texto}`,`${agua_texto}`,`${alquilado_texto}`,`${propietario_texto}`,`${acciones.outerHTML}`])
 	data_table.draw();
 
 	let fila = document.querySelector(`#fila-${id}`);
