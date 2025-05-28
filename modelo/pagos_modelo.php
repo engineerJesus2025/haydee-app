@@ -403,7 +403,7 @@
         }
 
         public function consultarMensualidad(){
-            $sql = "SELECT m.id_mensualidad,m.monto,m.tasa_dolar,m.mes,m.anio,a.nro_apartamento,m.gasto_mes_id FROM mensualidad m JOIN apartamentos a ON m.apartamento_id = a.id_apartamento ORDER BY a.nro_apartamento, m.anio, m.mes";
+            $sql = "SELECT m.id_mensualidad,m.monto,m.tasa_dolar,m.mes,m.anio,a.nro_apartamento FROM mensualidad m JOIN apartamentos a ON m.apartamento_id = a.id_apartamento ORDER BY a.nro_apartamento, m.anio, m.mes";
             $conexion = $this->get_conex()->prepare($sql);
             $result = $conexion->execute();
             $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
