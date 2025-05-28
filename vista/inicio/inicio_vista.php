@@ -40,6 +40,7 @@
 			</div>
 		</div>
 	</div>
+	<script src="recursos/js/consultas_ajax/notificaciones_ajax.js"></script>
 
 </body>
 
