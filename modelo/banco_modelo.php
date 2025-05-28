@@ -194,8 +194,8 @@
 
         public function registrar_banco(){
             //Validamos los datos obtenidos del controlador (validaciones back-end)
-            //$validaciones = $this->validarDatos();
-            //if(!($validaciones["estatus"])){return $validaciones;}
+            $validaciones = $this->validarDatos();
+            if(!($validaciones["estatus"])){return $validaciones;}
             
             //$this->cambiar_db_seguridad();
 
@@ -209,7 +209,7 @@
             $conexion->bindParam(":cedula_afiliada", $this->cedula_afiliada);
             $result = $conexion->execute();
 
-            $this->cambiar_db_negocio();
+            //$this->cambiar_db_negocio();
 
             if ($result) {
                 $id_ultimo = $this->lastId();//obtenemos el ultimo id
@@ -226,8 +226,8 @@
 
         public function editar_banco(){
             //Validamos los datos obtenidos del controlador
-            //$validaciones = $this->validarDatos("editar");
-            //if(!($validaciones["estatus"])){return $validaciones;}        
+            $validaciones = $this->validarDatos("editar");
+            if(!($validaciones["estatus"])){return $validaciones;}        
 
             //$this->cambiar_db_seguridad();
 
@@ -243,7 +243,7 @@
 
             $result = $conexion->execute();
 
-            $this->cambiar_db_negocio();        
+            //$this->cambiar_db_negocio();        
             
             if ($result) {
                 $banco_alterado = $this->consultar_banco();
@@ -257,8 +257,8 @@
 
         public function eliminar_banco(){
             //Validamos los datos obtenidos del controlador
-            //$validaciones = $this->validarDatos("eliminar");
-            //if(!($validaciones["estatus"])){return $validaciones;}
+            $validaciones = $this->validarDatos("eliminar");
+            if(!($validaciones["estatus"])){return $validaciones;}
             
             $banco_alterado = $this->consultar_banco();
 
@@ -303,13 +303,6 @@
 
                 if (empty($this->id_banco)) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos estan vacios"];}
 
-                if(is_numeric($this->id_banco)){
-                    if (!($this->validarClaveForanea("bancos","id_banco",$this->id_banco,true))) {
-                        return ["estatus"=>false,"mensaje"=>"El banco seleccionado no existe"];
-                    }
-                    if ($consulta == "eliminar") {return ["estatus"=>true,"mensaje"=>"OK"];}
-                }
-                else{return ["estatus"=>false,"mensaje"=>"El id del Banco debe ser un valor numerico entero"];}
             } 
             // Validamos que los campos enviados si existan
 
@@ -335,15 +328,6 @@
             }
             if(!(is_numeric($this->cedula_afiliada)) || !(preg_match("/^[0-9\b]{7,8}$/",$this->cedula_afiliada))){
                 return ["estatus"=>false,"mensaje"=>"El campo 'Cedula Afiliada' no posee un valor valido"];
-            }
-
-            if(is_numeric($this->id_banco)){
-                if (!($this->validarClaveForanea("bancos","id_banco",$this->id_banco,true))) {
-                    return ["estatus"=>false,"mensaje"=>"El banco no posee un valor valido"];
-                }            
-            }
-            else{
-                return ["estatus"=>false,"mensaje"=>"El banco no posee un valor valido"];
             }
             
             return ["estatus"=>true,"mensaje"=>"OK"];

@@ -232,14 +232,7 @@
 
                 if (empty($this->id_apartamento)) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos estan vacios"];}
 
-                if(is_numeric($this->id_apartamento)){
-                    if (!($this->validarClaveForanea("apartamentos","id_apartamento",$this->id_apartamento,true))) {
-                        return ["estatus"=>false,"mensaje"=>"El apartamento seleccionado no existe"];
-                    }
-                    if ($consulta == "eliminar") {return ["estatus"=>true,"mensaje"=>"OK"];}
-                }
-                else{return ["estatus"=>false,"mensaje"=>"El id del Apartamento tiene debe ser un valor numerico entero"];}
-            }
+            } 
             // Validamos que los campos enviados si existan
 
             if (!(isset($this->nro_apartamento) && isset($this->porcentaje_participacion) && isset($this->gas) && isset($this->agua) && isset($this->alquilado) && isset($this->propietario_id))) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos no se recibieron correctamente"];}
@@ -251,29 +244,29 @@
             // Verificamos si los valores tienen los datos que deberian
             
             if(!(is_string($this->nro_apartamento)) || !(preg_match("/^[0-9\b]{1,2}$/",$this->nro_apartamento))){
-                return ["estatus"=>false,"mensaje"=>"El campo 'número de apartamento' no posee un valor valido"];
+                return ["estatus"=>false,"mensaje"=>"El campo 'Nro de Apartamento' no posee un valor valido"];
             }
             if(!(is_string($this->porcentaje_participacion)) || !(preg_match("/^\d{1,2}(\.\d{1,2})?$/",$this->porcentaje_participacion))){
-                return ["estatus"=>false,"mensaje"=>"El campo 'porcentaje de participación' no posee un valor valido"];
+                return ["estatus"=>false,"mensaje"=>"El campo 'Codigo' no posee un valor valido"];
             }
-            if (!is_numeric($this->gas)) {
-                return ["estatus" => false, "mensaje" => "El campo 'gas' no posee un valor valido"];
+            if(!(is_numeric($this->gas))){
+                return ["estatus"=>false,"mensaje"=>"El campo 'Gas' no posee un valor valido"];
             }
-            if (!is_numeric($this->agua)) {
-                return ["estatus" => false, "mensaje" => "El campo 'agua' no posee un valor valido"];
+            if(!(is_numeric($this->agua))){
+                return ["estatus"=>false,"mensaje"=>"El campo 'Agua' no posee un valor valido"];
             }
-            if (!is_numeric($this->alquilado)) {
-                return ["estatus" => false, "mensaje" => "El campo 'alquilado' no posee un valor valido"];
+            if(!(is_numeric($this->alquilado))){
+                return ["estatus"=>false,"mensaje"=>"El campo 'Alquilado' no posee un valor valido"];
             }
             if(is_numeric($this->propietario_id)){
                 if (!($this->validarClaveForanea("propietarios","id_propietario",$this->propietario_id,true))) {
-                    return ["estatus"=>false,"mensaje"=>"El campo 'propietario' no posee un valor valido"];
+                    return ["estatus"=>false,"mensaje"=>"El campo 'Propietario' no posee un valor valido"];
                 }            
             }
             else{
-                return ["estatus"=>false,"mensaje"=>"El campo 'propietario' no posee un valor valido"];
+                return ["estatus"=>false,"mensaje"=>"El campo 'Propietario' no posee un valor valido"];
             }
-            
+
             return ["estatus"=>true,"mensaje"=>"OK"];
         }
 

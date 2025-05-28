@@ -251,5 +251,67 @@
                 return ["estatus"=>false,"mensaje"=>"Error en la consulta"];
             } 
         }
+
+        private function validarDatos($consulta = "registrar"){   
+            // Validamos el id usuario en caso de editar o eliminar porque en registrar no existe todavia
+            if ($consulta == "editar" || $consulta == "eliminar") {
+                if (!(isset($this->id_habitante))) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos no se recibieron correctamente"];}
+
+                if (empty($this->id_habitante)) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos estan vacios"];}
+
+            } 
+            // Validamos que los campos enviados si existan
+
+            if (!(isset($this->cedula) && isset($this->nombre_habitante) && isset($this->apellido) && isset($this->fecha_nacimiento) && isset($this->sexo) && isset($this->telefono) && isset($this->apartamento_id))) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos no se recibieron correctamente"];}
+
+            // Validamos que los campos enviados no esten vacios
+
+            if (empty($this->cedula) || empty($this->nombre_habitante) ||empty($this->apellido) || empty($this->fecha_nacimiento) || empty($this->sexo) || empty($this->telefono) || empty($this->apartamento_id)) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos estan vacios"];}
+
+            // Verificamos si los valores tienen los datos que deberian
+            
+            if(!(is_string($this->cedula)) || !(preg_match("/^[0-9\b]{7,8}$/",$this->cedula))){
+                return ["estatus"=>false,"mensaje"=>"El campo 'Cedula' no posee un valor valido"];
+            }
+            if(!(is_string($this->nombre_habitante)) || !(preg_match("/^[A-Za-z \b]{3,30}$/",$this->nombre_habitante))){
+                return ["estatus"=>false,"mensaje"=>"El campo 'Nombre' no posee un valor valido"];
+            }
+            if(!(is_string($this->apellido)) || !(preg_match("/^[A-Za-z \b]{3,30}$/",$this->apellido))){
+                return ["estatus"=>false,"mensaje"=>"El campo 'Apellido' no posee un valor valido"];
+            }
+            if(!(is_string($this->sexo))){
+                return ["estatus"=>false,"mensaje"=>"El campo 'Sexo' no posee un valor valido"];
+            }
+            if(!(is_numeric($this->telefono)) || !(preg_match("/^[0-9\b]{11}$/",$this->telefono))){
+                return ["estatus"=>false,"mensaje"=>"El campo 'Telefono' no posee un valor valido"];
+            }
+            if(is_numeric($this->apartamento_id)){
+                if (!($this->validarClaveForanea("apartamentos","id_apartamento",$this->apartamento_id,true))) {
+                    return ["estatus"=>false,"mensaje"=>"El campo 'Apartamento' no posee un valor valido"];
+                }            
+            }
+            else{
+                return ["estatus"=>false,"mensaje"=>"El campo 'Apartamento' no posee un valor valido"];
+            }
+
+            return ["estatus"=>true,"mensaje"=>"OK"];
+        }
+
+        private function validarClaveForanea($tabla,$nombreClave,$valor,$seguridad = false){
+            if ($seguridad) {
+                $this->cambiar_db_seguridad();
+            }
+            $sql="SELECT * FROM $tabla WHERE $nombreClave =:valor";
+
+            $conexion = $this->get_conex()->prepare($sql);
+            $conexion->bindParam(":valor", $valor);
+            $conexion->execute();
+            $result = $conexion->fetch(PDO::FETCH_ASSOC);
+
+            if ($seguridad) {
+                $this->cambiar_db_negocio();
+            }
+            return ($result)?true:false;
+        }
     }
 ?>
