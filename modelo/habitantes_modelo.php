@@ -109,7 +109,7 @@
 
             //$this->cambiar_db_seguridad();
 
-            $sql = "SELECT * FROM `habitantes` ORDER BY id_habitante";
+            $sql = "SELECT h.id_habitante, h.cedula, h.nombre_habitante, h.apellido, h.fecha_nacimiento, h.sexo, h.telefono, CONCAT('Nro: ', a.nro_apartamento) AS apartamento FROM habitantes h INNER JOIN apartamentos a ON h.apartamento_id = a.id_apartamento";
             $conexion = $this->get_conex()->prepare($sql);
             $result = $conexion->execute();
             $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
@@ -128,10 +128,10 @@
         public function consultar_habitante(){
 
             //$this->cambiar_db_seguridad();
-
+ 
             $sql = "SELECT * FROM habitantes WHERE id_habitante = :id_habitante";
             $conexion = $this->get_conex()->prepare($sql);
-                $conexion->bindParam(":id_habitante", $this->id_banco);
+            $conexion->bindParam(":id_habitante", $this->id_habitante);
             $result = $conexion->execute();        
             $datos = $conexion->fetch(PDO::FETCH_ASSOC);
 
@@ -189,6 +189,7 @@
 
             $conexion = $this->get_conex()->prepare($sql);    
             $conexion->bindParam(":id_habitante", $this->id_habitante);
+            $conexion->bindParam(":cedula", $this->cedula);
             $conexion->bindParam(":nombre_habitante", $this->nombre_habitante);
             $conexion->bindParam(":apellido", $this->apellido);
             $conexion->bindParam(":fecha_nacimiento", $this->fecha_nacimiento);

@@ -1,54 +1,45 @@
 $(document).ready(function(){
 
 	$("#cedula").on("keypress",function(e){
-		validarKeyPress(/^[A-Za-z \b]*$/, e);
+		validarKeyPress(/^[0-9\b]*$/, e);
 	});
 
 	$("#cedula").on("keyup",function(){
-		validarKeyUp(/^[A-Za-z \b]{3,30}$/,
-		$(this),this.nextElementSibling,"Debe ingresar el nombre del banco");
+		validarKeyUp(/^[0-9\b]{7,8}$/,
+		$(this),this.nextElementSibling,"Debe ingresar la cedula del habitante");
 	});
 
 	$("#nombre_habitante").on("keypress",function(e){
-		validarKeyPress(/^[0-9\b]*$/, e);
+		validarKeyPress(/^[A-Za-z \b]*$/, e);
 	});
 
 	$("#nombre_habitante").on("keyup",function(){
-		validarKeyUp(/^[0-9\b]{4}$/,
-		$(this),this.nextElementSibling,"Debe ingresar el codigo del banco");
+		validarKeyUp(/^[A-Za-z \b]{3,30}$/,
+		$(this),this.nextElementSibling,"Debe ingresar el nombre del habitante");
 	});
 
 	$("#apellido").on("keypress",function(e){
-		validarKeyPress(/^[0-9\b]*$/, e);
+		validarKeyPress(/^[A-Za-z \b]*$/, e);
 	});
 
 	$("#apellido").on("keyup",function(){
-		validarKeyUp(/^[0-9\b]{18,30}$/,
-		$(this),this.nextElementSibling,"Debe ingresar el número de cuenta");
+		validarKeyUp(/^[A-Za-z \b]{3,30}$/,
+		$(this),this.nextElementSibling,"Debe ingresar el apellido del habitante");
 	});
 
-    $("#sexo").on("keypress",function(e){
+	$("#telefono").on("keypress",function(e){
 		validarKeyPress(/^[0-9\b]*$/, e);
 	});
 
-	$("#sexo").on("keyup",function(){
+	$("#telefono").on("keyup",function(){
 		validarKeyUp(/^[0-9\b]{11}$/,
-		$(this),this.nextElementSibling,"Debe ingresar un telefono afiliado");
+		$(this),this.nextElementSibling,"Debe ingresar un telefono del habitante");
 	});
 
-    $("#cedula_afiliada").on("keypress",function(e){
-		validarKeyPress(/^[0-9\b]*$/, e);
-	});
-
-	$("#cedula_afiliada").on("keyup",function(){
-		validarKeyUp(/^[0-9\b]{7,8}$/,
-		$(this),this.nextElementSibling,"Debe ingresar una cedula afiliada");
-	});
-
-	$(".fecha_nacimiento").on("keyup",function(){
+	/*$(".fecha_nacimiento").on("keyup",function(){
 		validarKeyUp(/^(?:(?:1[6-9]|[2-9]\d)?\d{2})(?:(?:(\/|-|\.)(?:0?[13578]|1[02])\1(?:31))|(?:(\/|-|\.)(?:0?[13-9]|1[0-2])\2(?:29|30)))$|^(?:(?:(?:1[6-9]|[2-9]\d)?(?:0[48]|[2468][048]|[13579][26])|(?:(?:16|[2468][048]|[3579][26])00)))(\/|-|\.)0?2\3(?:29)$|^(?:(?:1[6-9]|[2-9]\d)?\d{2})(\/|-|\.)(?:(?:0?[1-9])|(?:1[0-2]))\4(?:0?[1-9]|1\d|2[0-8])$/,
 		$(this),this.nextElementSibling,"Debe ingresar la fecha de nacimiento");
-	});
+	});*/
 	
 	$("#boton_formulario").on("click",async function(e){
 		let accion = (e.target.getAttribute("modificar"))?"Editar":"Registrar";		
@@ -65,21 +56,21 @@ $(document).ready(function(){
 			    }).then((result) => {
 					if (result.isConfirmed) {
 						envio(accion);						
-						numero_cuenta_an = null;//resetea el valor del correo original (esto es de usuario_ajax.js)
+						cedula_an = null;//resetea el valor del correo original (esto es de usuario_ajax.js)
 					}
 			    });
 		}	
 	});
 
-	$("#numero_cuenta").on("keyup",function(e){
+	$("#cedula").on("keyup",function(e){
 		if (validarKeyUp(
-        /^[0-9]{18,30}$/,
-        $("#numero_cuenta"),document.querySelector("#numero_cuenta").nextElementSibling,'El formato debe ser en números'
+        /^[0-9\b]{7,8}$/,
+        $("#cedula"),document.querySelector("#cedula").nextElementSibling,'El formato debe ser en números'
         )) {
-        	if (this.value == numero_cuenta_an) {return;}
+        	if (this.value == cedula_an) {return;}
 			let datos = new FormData();
-			datos.append('validar','numero_cuenta');
-			datos.append('numero_cuenta',$(this).val());
+			datos.append('validar','cedula');
+			datos.append('cedula',$(this).val());
 			verificar_duplicados(datos);
         }		
 	})
@@ -100,53 +91,57 @@ function mensajes(icono,tiempo,titulo,mensaje){
 
 async function validarEnvio(accion = "Registrar"){	
 	if(validarKeyUp(
-        /^[A-Za-z ]{3,30}$/,
-        $("#nombre_banco"),document.querySelector("#nombre_banco").nextElementSibling,'Debe ingresar el nombre del banco'
+        /^[0-9\b]{7,8}$/,
+        $("#cedula"),document.querySelector("#cedula").nextElementSibling,'Debe ingresar la cedula'
         )==0)
 	{
-		mensajes('error',4000,'Debe ingresar el nombre del banco',
-		'El formato debe ser sólo en letras');
+		mensajes('error',4000,'Debe ingresar la cedula',
+		'El formato debe ser sólo en números');
 		
 		return false;
 	}
 	else if(validarKeyUp(
-        /^[0-9]{4}$/,
-        $("#codigo"),document.querySelector("#codigo").nextElementSibling,'Debe ingresar el codigo del banco'
+        /^[A-Za-z \b]{3,30}$/,
+        $("#nombre_habitante"),document.querySelector("#nombre_habitante").nextElementSibling,'Debe ingresar el nombre'
         )==0)
 	{
-		mensajes('error',4000,'Debe ingresar el codigo del banco',
-		'El formato debe ser sólo en números');
+		mensajes('error',4000,'Debe ingresar el nombre',
+		'El formato debe ser sólo en letras');
 		
 		return false;
 	}
 	
 	else if(validarKeyUp(
-        /^[0-9]{18,30}$/,
-        $("#numero_cuenta"),document.querySelector("#numero_cuenta").nextElementSibling,'Ejemplo: XXXX-XXXXX-XXX...'
+        /^[A-Za-z \b]{3,30}$/,
+        $("#apellido"),document.querySelector("#apellido").nextElementSibling,'Debe ingresar el apellido'
         )==0)
 	{
-		mensajes('error',4000,'Debe ingresar un número de cuenta',
-		'Ejemplo: XXXX-XXXXX-XXX...');
+		mensajes('error',4000,'Debe ingresar el apellido',
+		'El formato debe ser sólo en letras');
 		
 		return false;
 	}
 	else if(validarKeyUp(
-        /^[0-9]{11}$/,
-        $("#telefono_afiliado"),document.querySelector("#telefono_afiliado").nextElementSibling,'Debe ingresar un telefono afiliado'
+        /^[0-9\b]{11}$/,
+        $("#telefono"),document.querySelector("#telefono").nextElementSibling,'Debe ingresar un telefono'
         )==0)
 	{
-		mensajes('error',4000,'Debe ingresar un telefono afiliado',
+		mensajes('error',4000,'Debe ingresar un telefono',
 		'El formato debe ser XXXX-XXXXXXX');
 		
 		return false;
 	}
-	else if(validarKeyUp(
-        /^[0-9]{7,8}$/,
-        $("#cedula_afiliada"),document.querySelector("#cedula_afiliada").nextElementSibling,'Debe ingresar una cedula afiliada'
-        )==0)
+	else if(validar_select("apartamento_id")==0)
 	{
-		mensajes('error',4000,'Debe ingresar una cedula afiliada',
-		'El formato debe ser sólo en números');
+		mensajes('error',4000,'Debe seleccionar un apartamento',
+		'Debe seleccionar una opción');
+		
+		return false;
+	}
+	else if(validar_select("sexo")==0)
+	{
+		mensajes('error',4000,'Debe seleccionar un sexo',
+		'Debe seleccionar una opción');
 		
 		return false;
 	}
@@ -161,7 +156,7 @@ async function validarEnvio(accion = "Registrar"){
 	}else if (accion == "Editar"){
 		datos = new FormData();
 		//datos.append("validar",'contra');
-		datos.append("id_banco",id_modificar);
+		datos.append("id_habitante",id_modificar);
 		/*datos.append("contra",$("#contra").val());
 		res = await verificar_contra(datos);
 		// revisamos si la contraseña que puso es la correcta

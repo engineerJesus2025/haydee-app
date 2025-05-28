@@ -1,8 +1,12 @@
 <?php
     require_once("modelo/habitantes_modelo.php");
+    require_once("modelo/apartamentos_modelo.php");
 
+    $obj_apartamento = new Apartamento(); // Objeto apartamento
     $obj_habitante = new Habitantes(); // Objeto habitante
  
+    $registro_apartamento = $obj_apartamento->consultar();
+
     if(isset($_POST["operacion"])){
         $operacion = $_POST["operacion"];
 
@@ -50,6 +54,7 @@
 
         elseif ($operacion == "modificar") {
             //se guardan las variables a modificar
+            $id_habitante = $_POST["id_habitante"];
             $cedula = $_POST["cedula"];  
             $nombre_habitante = $_POST["nombre_habitante"];  
             $apellido = $_POST["apellido"]; 
@@ -60,6 +65,7 @@
             // ...
 
             //se usan los setters correspondientes
+            $obj_habitante->set_id_habitante($id_habitante);
             $obj_habitante->set_cedula($cedula);
             $obj_habitante->set_nombre_habitante($nombre_habitante);
             $obj_habitante->set_apellido($apellido);

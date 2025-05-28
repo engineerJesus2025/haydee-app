@@ -110,7 +110,7 @@
             $result = $conexion->execute();        
             $datos = $conexion->fetch(PDO::FETCH_ASSOC);
 
-            //$this->cambiar_db_negocio();
+            $this->cambiar_db_negocio();
 
             if ($result == true) {
                 return $datos;
@@ -199,7 +199,7 @@
             $conexion->bindParam(":id_apartamento", $this->id_apartamento);
             $result = $conexion->execute();
 
-            //$this->cambiar_db_negocio();
+            $this->cambiar_db_negocio();
             
             if ($result) {
                 $this->registrar_bitacora(ELIMINAR, GESTIONAR_APARTAMENTOS, $apartamento_alterado["nro_apartamento"] . " (" . $apartamento_alterado["propietario_id"] . ")");
