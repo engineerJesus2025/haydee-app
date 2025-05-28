@@ -66,7 +66,7 @@
         // Metodos CRUD entre otros
         public function verificar_banco(){  // Verifica si existe el banco para así ver si se registra o no.
 
-            //$this->cambiar_db_seguridad();
+            //$this->cambiar_db_seguridad(); // va documentada
 
             // 1) Se guarda una sentencia sql en una variable (la variable sql).
             $sql = "SELECT * FROM bancos WHERE numero_cuenta = :numero_cuenta"; 
@@ -119,7 +119,7 @@
             */
             $datos = $conexion->fetch(PDO::FETCH_ASSOC);
 
-            //$this->cambiar_db_negocio();
+            //$this->cambiar_db_negocio(); // va documentada
             /* 
                 La función "isset" verifica si una variable existe o no.
 
@@ -139,7 +139,7 @@
 
         public function consultar(){
 
-            //$this->cambiar_db_seguridad();
+            //$this->cambiar_db_seguridad(); // Esta va documentada
 
             // 1) Sentencia SQL de toda la vida.
             $sql = "SELECT * FROM `bancos` ORDER BY id_banco";
@@ -324,16 +324,16 @@
             if(!(is_string($this->nombre_banco)) || !(preg_match("/^[A-Za-z \b]{3,30}$/",$this->nombre_banco))){
                 return ["estatus"=>false,"mensaje"=>"El campo 'Nombre del Banco' no posee un valor valido"];
             }
-            if(!(is_string($this->codigo)) || !(preg_match("/^[0-9\b]{4}$/",$this->codigo))){
+            if(!(is_numeric($this->codigo)) || !(preg_match("/^[0-9\b]{4}$/",$this->codigo))){
                 return ["estatus"=>false,"mensaje"=>"El campo 'Codigo' no posee un valor valido"];
             }
-            if(!(is_string($this->numero_cuenta)) || !(preg_match("/^[0-9\b]{18,30}$/",$this->numero_cuenta))){
+            if(!(is_numeric($this->numero_cuenta)) || !(preg_match("/^[0-9\b]{18,30}$/",$this->numero_cuenta))){
                 return ["estatus"=>false,"mensaje"=>"El campo 'Numero de Cuenta' no posee un valor valido"];
             }
-            if(!(is_string($this->telefono_afiliado)) || !(preg_match("/^[0-9\b]{11}$/",$this->telefono_afiliado))){
+            if(!(is_numeric($this->telefono_afiliado)) || !(preg_match("/^[0-9\b]{11}$/",$this->telefono_afiliado))){
                 return ["estatus"=>false,"mensaje"=>"El campo 'Telefono Afiliado' no posee un valor valido"];
             }
-            if(!(is_string($this->cedula_afiliada)) || !(preg_match("/^[0-9\b]{7,8}$/",$this->cedula_afiliada))){
+            if(!(is_numeric($this->cedula_afiliada)) || !(preg_match("/^[0-9\b]{7,8}$/",$this->cedula_afiliada))){
                 return ["estatus"=>false,"mensaje"=>"El campo 'Cedula Afiliada' no posee un valor valido"];
             }
 
