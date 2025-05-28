@@ -1,6 +1,7 @@
 consultar(); // para llenar la tabla al cargar
-// consultarUltimaMensualidad();
-
+//Para tomar el precio del dolar
+let dolar = {};
+api();
 //Tablas
 let tabla_mensualidad = document.querySelector(`#tabla_mensualidad`);
 let tabla_mensualidad_asignar = document.querySelector(`#tabla_mensualidad_asignar`);
@@ -9,6 +10,7 @@ let tabla_mensualidad_asignar = document.querySelector(`#tabla_mensualidad_asign
 let boton_registrar = document.getElementById("boton_registrar");
 let boton_editar = document.getElementById("boton_editar");
 let boton_formulario = document.getElementById("boton_formulario");
+let boton_eliminar = document.getElementById("boton_eliminar");
 // Modal
 let modal = new bootstrap.Modal("#modal_mensualidad"); // el modal
 //Select
@@ -16,15 +18,21 @@ let select_mes = document.getElementById('mes_select');
 
 //Eventos
 select_mes.addEventListener("change",e=>{
-	let id_mes = e.target.selectedOptions[0].id
-	consultarMensualidad(id_mes);
+	let fecha = e.target.selectedOptions[0].id
+	consultarMensualidad(fecha);
 	// console.log(e)
 });
 boton_registrar.addEventListener("click",e=>{
-	let id_mes = select_mes.selectedOptions[0].id
-	llenarTablaNueva(id_mes);
+	let fecha = select_mes.selectedOptions[0].id
+	llenarTablaNueva(fecha);
 	// console.log()
 });
+boton_editar.addEventListener("click",e=>{
+	let fecha = select_mes.selectedOptions[0].id
+	llenarTablaNueva(fecha);
+	llenarTablaEditar(fecha);
+});
+
 document.querySelector(`#modal_mensualidad`).addEventListener("hide.bs.modal",()=>{	
 	// No me di mala vida
 	tabla_mensualidad_asignar.innerHTML= `<caption>Tabla de Mensualidades</caption><thead><tr><th>Apartamentos</th></tr></thead><tbody></tbody><tfoot><tr><td>Total:</td></tr></tfoot></table>`;
@@ -32,6 +40,7 @@ document.querySelector(`#modal_mensualidad`).addEventListener("hide.bs.modal",()
 	boton_formulario.textContent = "Guardar Mensualidad";
 	document.getElementById('titulo_modal').textContent = "Registrar Mensualidad";
 });
+
 
 //Funciones
 async function consultar() {
@@ -42,7 +51,7 @@ async function consultar() {
 	datos_consulta.append('operacion','consultar');
 
 	//Llamamos a la funcion para hacer la consulta
-	data = await query(datos_consulta)
+	let data = await query(datos_consulta);
 	
 	// Resvisamos el resultado
 	if(!(data.estatus == undefined)){
@@ -51,38 +60,42 @@ async function consultar() {
 	}
 
 	let fragment = document.createDocumentFragment();
+	let fechas_mensualidades = [];
 
 	data.map(registro=>{
 		let option = document.createElement("option");
 
-		fecha = new Date(`${registro.mes}-01-${registro.anio}`);
+		let fecha = new Date(`${registro.mes}-01-${registro.anio}`);
 		mes_buscar = fecha.toLocaleString("es-ES",{month: 'long'});
 		anio_buscar = fecha.getFullYear();
 		
-		option.setAttribute("id",registro.id_gasto_mes);
+		option.setAttribute("id",fecha.toLocaleDateString());
 		option.textContent = `${mes_buscar} del ${anio_buscar}`;
 
 		fragment.appendChild(option);
+		fechas_mensualidades.push(new Date(registro.anio,parseInt(registro.mes - 1),1))
 	});
+
+	// console.log(fechas_mensualidades);
+	verificarMeses(fechas_mensualidades);
 
 	select_mes.appendChild(fragment);
 
-	let id_mes = select_mes.selectedOptions[0].id
+	let fecha_buscar = select_mes.selectedOptions[0].id
 
-	consultarMensualidad(id_mes);
+	consultarMensualidad(fecha_buscar);
 }
 
-async function consultarMensualidad(gasto_mes_id) {
+async function consultarMensualidad(fecha_buscar) {
 	//Creamos el formData
 	datos_consulta = new FormData();
 
-	datos_consulta.append('gasto_mes_id',gasto_mes_id);
+	datos_consulta.append('fecha',fecha_buscar);
 	//Aqui decimos que vamos a hacer
 	datos_consulta.append('operacion','consultar_mensualidad');
 
 	//Llamamos a la funcion para hacer la consulta
-	data = await query(datos_consulta)
-	
+	data = await query(datos_consulta);
 	// Resvisamos el resultado
 	if(!(data.estatus == undefined)){
 		mensajes('error',4000,'Atencion', respuesta.mensaje);
@@ -106,7 +119,7 @@ function llenarTabla(fila) {
 	// Creamos etiquetas
 	let fila_tabla = document.createElement("tr");//creamos la fila <tr></tr>
 
-	let id_campo = fila["id_usuario"]; // guardamos el id que nos interese
+	// let id_campo = fila["id_mensualidad"]; // guardamos el id que nos interese
 	
 	// creamos un td por cada columna que vamos a llenar de la tabla <td></td>
 	let mes_anio_td = document.createElement("td"),
@@ -132,10 +145,10 @@ function llenarTabla(fila) {
 	fila_tabla.appendChild(monto_td);
 
 	// y por ultimo, llenamos la tabla con la fila
-	cuerpo_tabla.appendChild(fila_tabla);	
+	cuerpo_tabla.appendChild(fila_tabla);
 }
 
-async function llenarTablaNueva(gasto_mes_id) {
+async function llenarTablaNueva(fecha) {
 	//Llenamos el tbody
 	let datos_consulta = new FormData();
 
@@ -168,7 +181,7 @@ async function llenarTablaNueva(gasto_mes_id) {
 	//Llenamos el thead
 	datos_consulta = new FormData();
 
-	datos_consulta.append("gasto_mes_id",gasto_mes_id);
+	datos_consulta.append("fecha",fecha);
 	datos_consulta.append("operacion","consultar_gastos");
 
 	respuesta = await query(datos_consulta);
@@ -184,12 +197,11 @@ async function llenarTablaNueva(gasto_mes_id) {
 
 	let fragment = document.createDocumentFragment();
 	let fragment_footer = document.createDocumentFragment();
-
+	
 	respuesta.map(gasto=>{
 		let th = document.createElement("th");
-
-		th.textContent = gasto.tipo_gasto;
-		th.setAttribute("id",gasto.id_gasto);
+		
+		th.textContent = gasto.tipo_gasto;		
 		th.setAttribute("class","text-center");
 		
 		filas_cuerpo.forEach(fila=>{
@@ -200,12 +212,11 @@ async function llenarTablaNueva(gasto_mes_id) {
 			checkbox.setAttribute("type","checkbox");
 			checkbox.setAttribute("class","form-check-input");
 			checkbox.setAttribute("gasto",gasto.monto);
-
+			checkbox.setAttribute("id_gasto",gasto.id_gasto);
 			//Asignar el evento a los checkbox
 			checkbox.addEventListener("change",e=>{
 				let participacion = fila.getAttribute("participacion");
 				let monto_apartamento = (participacion * checkbox.getAttribute("gasto")) / 100;
-				let monto_total = filas_footer;
 
 				if (checkbox.checked) {
 					fila.lastElementChild.textContent = parseFloat(fila.lastElementChild.textContent) + monto_apartamento;
@@ -251,22 +262,261 @@ async function llenarTablaNueva(gasto_mes_id) {
 	filas_footer.appendChild(fragment_footer);
 }
 
+function verificarMeses(fechas) {
+  // Ordena las fechas por mes y año
+  const fechasOrdenadas = fechas.sort((a, b) => a.getFullYear() - b.getFullYear() || a.getMonth() - b.getMonth());
+
+  // Verifica si hay algún mes faltante entre las fechas consecutivas
+  for (let i = 0; i < fechasOrdenadas.length - 1; i++) {
+    const fechaActual = fechasOrdenadas[i];
+    const fechaSiguiente = fechasOrdenadas[i + 1];
+
+    // Si el mes siguiente no es consecutivo al actual, retorna true
+    if (fechaSiguiente.getFullYear() > fechaActual.getFullYear() || fechaSiguiente.getMonth() > fechaActual.getMonth() + 1) {
+      console.log(fechaActual);
+    }
+  }
+}
+
 function envio(operacion) {	
 	if (operacion == "Editar") {
-		id_modificar = boton_formulario.getAttribute("id_modificar");//obtenemos el id del registro
-		modificar(id_modificar);
+		// id_modificar = boton_formulario.getAttribute("id_modificar");//obtenemos el id del registro
+		modificar();
 	}
 	else if(operacion == "Registrar"){
 		//sino a registrar
 		registrar();
-	}else{
+	}else if(operacion == "Eliminar"){
+		let fecha = select_mes.selectedOptions[0].id
+		eliminar(fecha);
+	}
+	else{
 		// esto es imposible que pase pero aja
 		mensajes('error',4000,'Atencion',
-		'Ha ocurrido un error durante la operacion, intentelo nuevamente')
+		'Ha ocurrido un error durante la operacion, intentelo nuevamente');
 	}
 }
 
-// esto solo es para decir que se completo o fallo una operacion
+async function registrar() {
+	let filas_cuerpo = tabla_mensualidad_asignar.querySelectorAll("tbody tr");
+
+	//Recorrer por apartamentos
+	filas_cuerpo.forEach(async (tr)=>{
+	//Por cada apartamento se registra una mensualidad con el total del monto
+		let monto, tasa_dolar, mes, anio, apartamento_id;
+
+		let fecha_actual = new Date();
+		// mes = parseInt(select_mes.selectedOptions[0].id.split("/")[1]);
+		// anio = parseInt(select_mes.selectedOptions[0].id.split("/")[2]);
+		mes = fecha_actual.getMonth();
+		anio = fecha_actual.getFullYear();
+
+		monto = parseFloat(tr.lastElementChild.textContent);
+		tasa_dolar = dolar.bcv;
+		
+		apartamento_id = tr.id;
+
+		let datos_consulta = new FormData();
+
+		datos_consulta.append("operacion","registrar_mensualidad");
+
+		datos_consulta.append("monto",monto);
+		datos_consulta.append("tasa_dolar",tasa_dolar);
+		datos_consulta.append("mes",mes);
+		datos_consulta.append("anio",anio);
+		datos_consulta.append("apartamento_id",apartamento_id);
+
+		let respuesta = await query(datos_consulta);
+
+		if (!respuesta.estatus) {
+			mensajes('error',4000,'Atencion',respuesta.mensaje);
+			return;// en caso de error mandamos un mensaje con el error y nos vamos
+		}
+
+		//Por cada mensualidad registrada se registra en la puente los gastos asignados
+		let id_mensualidad = respuesta.lastId;
+		let id_gastos = [];
+		tr.querySelectorAll("td").forEach(td=>{			
+			if(td.firstElementChild != null){
+				if(td.firstElementChild.checked){
+					id_gastos.push(parseInt(td.firstElementChild.getAttribute("id_gasto")));					
+				}
+			}
+		});
+
+		datos_consulta = new FormData();
+
+		datos_consulta.append("operacion","registrar_gastos_mensualidades");
+		datos_consulta.append("id_mensualidad",id_mensualidad);
+		datos_consulta.append("id_gastos",id_gastos);
+		console.log(datos_consulta);
+		respuesta = await query(datos_consulta);
+
+		if (!respuesta.estatus) {
+			mensajes('error',4000,'Atencion',respuesta.mensaje);
+			return;// en caso de error mandamos un mensaje con el error y nos vamos
+		}
+	});
+	modal.hide();
+	mensajes('success',4000,'Atencion','El registro se ha realizado exitosamente');
+	consultar();
+}
+
+async function llenarTablaEditar(fecha) {
+	//Creamos el formData
+	let datos_consulta = new FormData();
+
+	datos_consulta.append('fecha',fecha);
+	//Aqui decimos que vamos a hacer
+	datos_consulta.append('operacion','consultar_mensualidad');
+
+	//Llamamos a la funcion para hacer la consulta
+	let mensualidades = await query(datos_consulta);
+	// Resvisamos el resultado
+	if(!(mensualidades.estatus == undefined)){
+		mensajes('error',4000,'Atencion', mensualidades.mensaje);
+		return;// en caso de error mandamos un mensaje con el error y nos vamos
+	}
+
+	let ids = [];
+	mensualidades.map(mensualidad_apartamento=>{ids.push(mensualidad_apartamento.id_mensualidad)});
+
+	console.log(mensualidades);
+	datos_consulta = new FormData();
+
+	datos_consulta.append('ids_mensualidades',ids);
+	//Aqui decimos que vamos a hacer
+	datos_consulta.append('operacion','consultar_gastos_mes');
+
+	let gastos_mes = await query(datos_consulta);
+	// Resvisamos el resultado
+	if(!(gastos_mes.estatus == undefined)){
+		mensajes('error',4000,'Atencion', gastos_mes.mensaje);
+		return;// en caso de error mandamos un mensaje con el error y nos vamos
+	}
+	console.log(gastos_mes);
+	// Todo esto para llenar los chebox
+	let filas_footer = tabla_mensualidad_asignar.querySelector("tfoot tr");
+	mensualidades.map(mensualidad_apartamento=>{
+		let fila_tabla = tabla_mensualidad_asignar.querySelector(`[id='${mensualidad_apartamento.apartamento_id}']`);
+		gastos_mes.map(mensualidades=>{
+			if (mensualidades[0].mensualidad_id == mensualidad_apartamento.id_mensualidad){
+				mensualidades.map(mensualidad=>{
+					fila_tabla.querySelectorAll("[id_gasto]").forEach(checkbox=>{
+						if (checkbox.getAttribute("id_gasto") == mensualidad.gasto_id) {
+							checkbox.checked = true;
+							let participacion = fila_tabla.getAttribute("participacion");
+							let monto_apartamento = (participacion * checkbox.getAttribute("gasto")) / 100;
+
+							fila_tabla.lastElementChild.setAttribute("id",mensualidad.mensualidad_id);
+							fila_tabla.lastElementChild.textContent = parseFloat(fila_tabla.lastElementChild.textContent) + monto_apartamento;
+							filas_footer.lastElementChild.textContent = parseFloat(filas_footer.lastElementChild.textContent) + monto_apartamento;
+						}
+					});
+				});
+			}
+		});
+	});
+	boton_formulario.textContent = "Editar Mensualidad";
+	boton_formulario.setAttribute("op","Editar");
+}
+
+async function modificar() {
+	let filas_cuerpo = tabla_mensualidad_asignar.querySelectorAll("tbody tr");
+
+	//Recorrer por apartamentos
+	filas_cuerpo.forEach(async (tr)=>{
+	//Por cada apartamento se registra una mensualidad con el total del monto
+		let monto, tasa_dolar, mes, anio, apartamento_id, id_mensualidad;
+
+		let fecha_actual = new Date();
+		mes = parseInt(select_mes.selectedOptions[0].id.split("/")[1]);
+		anio = parseInt(select_mes.selectedOptions[0].id.split("/")[2]);
+		// mes = fecha_actual.getMonth();
+		// anio = fecha_actual.getFullYear();
+
+		monto = parseFloat(tr.lastElementChild.textContent);
+		tasa_dolar = dolar.bcv;
+		
+		apartamento_id = tr.id;
+		id_mensualidad = tr.lastElementChild.id;
+
+		let datos_consulta = new FormData();
+
+		datos_consulta.append("operacion","editar_mensualidad");
+
+		datos_consulta.append("monto",monto);
+		datos_consulta.append("tasa_dolar",tasa_dolar);
+		datos_consulta.append("mes",mes);
+		datos_consulta.append("anio",anio);
+		datos_consulta.append("apartamento_id",apartamento_id);
+		datos_consulta.append("id_mensualidad",id_mensualidad);
+
+		let respuesta = await query(datos_consulta);
+
+		if (!respuesta.estatus) {
+			mensajes('error',4000,'Atencion',respuesta.mensaje);
+			return;// en caso de error mandamos un mensaje con el error y nos vamos
+		}
+
+		//Por cada mensualidad registrada se registra en la puente los gastos asignados		
+		let id_gastos = [];
+		tr.querySelectorAll("td").forEach(td=>{			
+			if(td.firstElementChild != null){
+				if(td.firstElementChild.checked){
+					id_gastos.push(parseInt(td.firstElementChild.getAttribute("id_gasto")));					
+				}
+			}
+		});
+
+		datos_consulta = new FormData();
+
+		datos_consulta.append("operacion","editar_gastos_mensualidades");
+		datos_consulta.append("id_mensualidad",id_mensualidad);
+		datos_consulta.append("id_gastos",id_gastos);
+
+		respuesta = await query(datos_consulta);
+
+		if (!respuesta.estatus) {
+			mensajes('error',4000,'Atencion',respuesta.mensaje);
+			return;// en caso de error mandamos un mensaje con el error y nos vamos
+		}
+	});
+	mensajes('success',4000,'Atencion','Se han editado las mensualidaddes exitosamente');
+	consultar();
+
+	modal.hide();
+}
+
+async function eliminar(fecha) {
+	let datos_consulta = new FormData();
+
+	datos_consulta.append("operacion","eliminar_mensualidad");
+	datos_consulta.append("fecha",fecha);
+	
+	let respuesta = await query(datos_consulta);
+
+	if (!respuesta.estatus) {
+		mensajes('error',4000,'Atencion',respuesta.mensaje);
+		return;// en caso de error mandamos un mensaje con el error y nos vamos
+	}
+
+	mensajes('success',4000,'Atencion','Se ha eliminado la mensualidad exitosamente');
+	consultar();
+}
+
+async function api() {
+    try {
+        let response = await fetch('https://pydolarve.org/api/v2/dollar?page=alcambio');
+        let obj_dolar = await response.json();
+        // console.log(obj_dolar);
+
+		dolar.bcv = obj_dolar.monitors.bcv.price;
+		dolar.paralelo = obj_dolar.monitors.enparalelovzla.price;      
+    } 
+    catch (error) {document.getElementById('tasa_dolar').value = "Error";}
+}
+
 function mensajes(icono,tiempo,titulo,mensaje){
 	Swal.fire({
 	icon:icono,
@@ -328,3 +578,4 @@ function init_data_table() {
             }
     })    
 }
+

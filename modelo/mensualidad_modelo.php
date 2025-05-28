@@ -10,7 +10,6 @@ class Mensualidad extends Conexion
     private $mes;
     private $anio;
     private $apartamento_id;
-    private $gasto_mes_id;
 
     public function __construct()
     {
@@ -82,18 +81,13 @@ class Mensualidad extends Conexion
         $this->gasto_mes_id = $gasto_mes_id;
     }
 
-    public function get_gasto_mes_id()
-    {
-        return $this->gasto_mes_id;
-    }
-
     //HAsta aqui todo normal
     //esta funcion se ejecuta en el login para autenticar
    
     //hace lo que dice
     public function consultar()
     {
-        $sql = "SELECT * FROM mensualidad INNER JOIN gastos_mes ON mensualidad.gasto_mes_id = gastos_mes.id_gasto_mes GROUP BY gastos_mes.mes ORDER BY gastos_mes.mes DESC";
+        $sql = "SELECT mes, anio FROM mensualidad GROUP BY mes, anio ORDER BY mes DESC";
 
         $conexion = $this->get_conex()->prepare($sql);
 
@@ -109,19 +103,20 @@ class Mensualidad extends Conexion
             return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
         }
     }
-
     public function consultar_mensualidad()
     {
-        // $this->gasto_mes_id = 1;
-        $sql = "SELECT * FROM `mensualidad` INNER JOIN apartamentos ON mensualidad.apartamento_id = apartamentos.id_apartamento INNER JOIN propietarios ON apartamentos.propietario_id = propietarios.id_propietario INNER JOIN gastos_mes ON mensualidad.gasto_mes_id = gastos_mes.id_gasto_mes WHERE gastos_mes.id_gasto_mes = :gasto_mes_id";
+        $mes_entero = intval($this->mes);
+        $anio_entero = intval($this->anio);
+        $sql = "SELECT * FROM mensualidad INNER JOIN apartamentos ON mensualidad.apartamento_id = apartamentos.id_apartamento INNER JOIN propietarios ON apartamentos.propietario_id = propietarios.id_propietario WHERE mensualidad.mes = :mes && mensualidad.anio = :anio";
 
         $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":gasto_mes_id", $this->gasto_mes_id);        
+        $conexion->bindParam(":mes", $mes_entero,PDO::PARAM_INT);
+        $conexion->bindParam(":anio", $anio_entero,PDO::PARAM_INT);
 
         $result = $conexion->execute();
         
         $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);        
-
+        // var_dump($this->mes,$this->anio,$datos);
         if ($result == true) {
             return $datos;
         } else {
@@ -148,67 +143,6 @@ class Mensualidad extends Conexion
         }
     }
 
-    // ojo: mover eventualente
-    // public function consultar_gastos_fijos(){
-
-    //     $sql = "SELECT * FROM gastos INNER JOIN proveedores ON gastos.proveedor_id = proveedores.id_proveedor WHERE YEAR(gastos.fecha) = :anio && MONTH(gastos.fecha) = :mes && gastos.tipo_gasto = 'fijo' && proveedores.servicio != 'gas'";
-
-    //     $conexion = $this->get_conex()->prepare($sql);
-    //     $conexion->bindParam(":anio", $this->anio);
-    //     $conexion->bindParam(":mes", $this->mes);
-        
-
-    //     $result = $conexion->execute();
-        
-    //     $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);        
-
-    //     if ($result == true) {
-    //         return $datos;
-    //     } else {
-    //         return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
-    //     }
-    // }
-
-    // public function consultar_gastos_variables(){
-
-    //     $sql = "SELECT * FROM gastos INNER JOIN proveedores ON gastos.proveedor_id = proveedores.id_proveedor WHERE YEAR(gastos.fecha) = :anio && MONTH(gastos.fecha) = :mes && gastos.tipo_gasto = 'variable' && proveedores.servicio != 'gas'";
-
-    //     $conexion = $this->get_conex()->prepare($sql);
-    //     $conexion->bindParam(":anio", $this->anio);
-    //     $conexion->bindParam(":mes", $this->mes);
-        
-
-    //     $result = $conexion->execute();
-        
-    //     $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);        
-
-    //     if ($result == true) {
-    //         return $datos;
-    //     } else {
-    //         return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
-    //     }
-    // }
-
-    // public function consultar_gasto_gas(){
-
-    //     $sql = "SELECT * FROM gastos INNER JOIN proveedores ON gastos.proveedor_id = proveedores.id_proveedor WHERE YEAR(gastos.fecha) = :anio && MONTH(gastos.fecha) = :mes && proveedores.servicio = 'gas'";
-
-    //     $conexion = $this->get_conex()->prepare($sql);
-    //     $conexion->bindParam(":anio", $this->anio);
-    //     $conexion->bindParam(":mes", $this->mes);
-        
-
-    //     $result = $conexion->execute();
-        
-    //     $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);        
-
-    //     if ($result == true) {
-    //         return $datos;
-    //     } else {
-    //         return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
-    //     }
-    // }
-
     public function consultar_apartamentos()
     {
         $sql = "SELECT * FROM apartamentos";
@@ -228,15 +162,19 @@ class Mensualidad extends Conexion
 
     public function consultar_gastos()
     {
-        $sql = 'SELECT gastos.id_gasto, gastos.tipo_gasto as tipo_gasto, SUM(gastos.monto) as monto FROM gastos INNER JOIN proveedores ON gastos.proveedor_id = proveedores.id_proveedor INNER JOIN gastos_mes ON gastos.gasto_mes_id = gastos_mes.id_gasto_mes WHERE gastos_mes.id_gasto_mes = :gasto_mes_id && proveedores.servicio != "gas" && gastos.tipo_gasto = "fijo"
+        $mes_entero = intval($this->mes);
+        $anio_entero = intval($this->anio);
+
+        $sql = 'SELECT gastos.id_gasto, gastos.tipo_gasto as tipo_gasto, SUM(gastos.monto) as monto FROM gastos INNER JOIN proveedores ON gastos.proveedor_id = proveedores.id_proveedor WHERE MONTH(gastos.fecha) = :mes && YEAR(gastos.fecha) = :anio && proveedores.servicio != "gas" && gastos.tipo_gasto = "fijo"
             UNION
-            SELECT gastos.id_gasto, proveedores.servicio as tipo_gasto, SUM(gastos.monto) as monto FROM gastos INNER JOIN proveedores ON gastos.proveedor_id = proveedores.id_proveedor INNER JOIN gastos_mes ON gastos.gasto_mes_id = gastos_mes.id_gasto_mes WHERE gastos_mes.id_gasto_mes = :gasto_mes_id && proveedores.servicio = "gas"            
+            SELECT gastos.id_gasto, proveedores.servicio as tipo_gasto, SUM(gastos.monto) as monto FROM gastos INNER JOIN proveedores ON gastos.proveedor_id = proveedores.id_proveedor WHERE MONTH(gastos.fecha) = :mes && YEAR(gastos.fecha) = :anio && proveedores.servicio = "gas"           
             UNION
-            SELECT gastos.id_gasto, gastos.descripcion_gasto as tipo_gasto, gastos.monto as monto FROM gastos INNER JOIN proveedores ON gastos.proveedor_id = proveedores.id_proveedor INNER JOIN gastos_mes ON gastos.gasto_mes_id = gastos_mes.id_gasto_mes WHERE gastos_mes.id_gasto_mes = :gasto_mes_id && proveedores.servicio != "gas" && gastos.tipo_gasto = "variable"';
+            SELECT gastos.id_gasto, gastos.descripcion_gasto as tipo_gasto, gastos.monto as monto FROM gastos INNER JOIN proveedores ON gastos.proveedor_id = proveedores.id_proveedor WHERE MONTH(gastos.fecha) = :mes && YEAR(gastos.fecha) = :anio && proveedores.servicio != "gas" && gastos.tipo_gasto = "variable";';
             // Nada de humildad: Me saque la pinga con este sql
 
         $conexion = $this->get_conex()->prepare($sql); 
-        $conexion->bindParam(":gasto_mes_id", $this->gasto_mes_id);
+        $conexion->bindParam(":mes", $mes_entero,PDO::PARAM_INT);
+        $conexion->bindParam(":anio", $anio_entero,PDO::PARAM_INT);
         $result = $conexion->execute();
         
         $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);        
@@ -268,7 +206,7 @@ class Mensualidad extends Conexion
 
     public function registrar()
     {           
-        $sql = "INSERT INTO mensualidad(monto,tasa_dolar,mes,anio,apartamento_id,gasto_mes_id) VALUES (:monto,:tasa_dolar,:mes,:anio,:apartamento_id,:gasto_mes_id)";
+        $sql = "INSERT INTO mensualidad(monto,tasa_dolar,mes,anio,apartamento_id) VALUES (:monto,:tasa_dolar,:mes,:anio,:apartamento_id)";
         
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":monto", $this->monto);
@@ -276,13 +214,53 @@ class Mensualidad extends Conexion
         $conexion->bindParam(":mes", $this->mes);
         $conexion->bindParam(":anio", $this->anio);
         $conexion->bindParam(":apartamento_id", $this->apartamento_id);
-        $conexion->bindParam(":gasto_mes_id", $this->gasto_mes_id);
+        $result = $conexion->execute();
+
+        $conexion = $this->get_conex();//otra conexion para buscar el ultimo id
+        $res = $conexion->lastInsertId();
+
+        if ($result) {            
+            return ["estatus"=>true,"mensaje"=>"OK","lastId"=>$res];
+        } else {
+            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar esta Mensualidad"];
+        }
+    }
+
+    public function editar()
+    {           
+        $sql = "UPDATE mensualidad SET monto = :monto, tasa_dolar = :tasa_dolar, mes = :mes, anio = :anio, apartamento_id = :apartamento_id WHERE id_mensualidad = :id_mensualidad";
+        
+        $conexion = $this->get_conex()->prepare($sql);
+        $conexion->bindParam(":monto", $this->monto);
+        $conexion->bindParam(":tasa_dolar", $this->tasa_dolar);
+        $conexion->bindParam(":mes", $this->mes);
+        $conexion->bindParam(":anio", $this->anio);
+        $conexion->bindParam(":apartamento_id", $this->apartamento_id);
+        $conexion->bindParam(":id_mensualidad", $this->id_mensualidad);
         $result = $conexion->execute();
 
         if ($result) {            
             return ["estatus"=>true,"mensaje"=>"OK"];
         } else {
-            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar este usuario"];
+            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar esta Mensualidad"];
+        }
+    }
+    public function eliminar()
+    {
+        $mes_entero = intval($this->mes);
+        $anio_entero = intval($this->anio);
+
+        $sql = "DELETE FROM mensualidad WHERE mes = :mes && anio = :anio";
+        $conexion = $this->get_conex()->prepare($sql);
+        $conexion->bindParam(":mes", $mes_entero);
+        $conexion->bindParam(":anio", $anio_entero);
+        $result = $conexion->execute();
+        
+        if (true) {
+
+            return ["estatus"=>true,"mensaje"=>"OK"];
+        } else {
+            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar eliminar esta Mensualidad"];
         }
     }
 

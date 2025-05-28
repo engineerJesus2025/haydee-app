@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 12-05-2025 a las 03:53:40
+-- Tiempo de generación: 28-05-2025 a las 05:48:03
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -37,17 +37,14 @@ CREATE TABLE `apartamentos` (
   `propietario_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
-
 --
--- Estructura de tabla para la tabla `apartamento_cartelera`
+-- Volcado de datos para la tabla `apartamentos`
 --
 
-CREATE TABLE `apartamento_cartelera` (
-  `id_apartamento_cartelera` int(11) NOT NULL,
-  `apartamento_id` int(11) NOT NULL,
-  `cartelera_id` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+INSERT INTO `apartamentos` (`id_apartamento`, `nro_apartamento`, `porcentaje_participacion`, `gas`, `agua`, `alquilado`, `propietario_id`) VALUES
+(1, '10', 5.25, 1, 1, 1, 1),
+(2, '11', 5.25, 1, 1, 1, 1),
+(3, '13', 5.25, 1, 0, 1, 2);
 
 -- --------------------------------------------------------
 
@@ -64,39 +61,12 @@ CREATE TABLE `bancos` (
   `cedula_afiliada` varchar(20) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
-
 --
--- Estructura de tabla para la tabla `caja_chica`
+-- Volcado de datos para la tabla `bancos`
 --
 
-CREATE TABLE `caja_chica` (
-  `id_caja` int(11) NOT NULL,
-  `fecha_inicio` date NOT NULL,
-  `fecha_fin` date NOT NULL,
-  `saldo_inicial` float NOT NULL,
-  `saldo_final` float NOT NULL,
-  `saldo_sistema` float NOT NULL,
-  `diferencia` float NOT NULL,
-  `tasa_dolar` float NOT NULL,
-  `estado` varchar(20) NOT NULL,
-  `observaciones` varchar(255) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `cartelera_virtual`
---
-
-CREATE TABLE `cartelera_virtual` (
-  `id_cartelera` int(11) NOT NULL,
-  `titulo` varchar(100) NOT NULL,
-  `descripcion` text NOT NULL,
-  `fecha` date NOT NULL,
-  `tipo` varchar(50) NOT NULL,
-  `imagen` varchar(255) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+INSERT INTO `bancos` (`id_banco`, `nombre_banco`, `codigo`, `numero_cuenta`, `telefono_afiliado`, `cedula_afiliada`) VALUES
+(1, 'venezuela', 102, '0102-123412124', '041524568', '152456542');
 
 -- --------------------------------------------------------
 
@@ -109,7 +79,6 @@ CREATE TABLE `conciliacion_bancaria` (
   `fecha_inicio` date NOT NULL,
   `fecha_fin` date NOT NULL,
   `estado` varchar(20) NOT NULL,
-  `banco` varchar(50) NOT NULL,
   `saldo_inicio` float NOT NULL,
   `saldo_fin` float NOT NULL,
   `saldo_sistema` float NOT NULL,
@@ -122,17 +91,13 @@ CREATE TABLE `conciliacion_bancaria` (
   `observaciones` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
-
 --
--- Estructura de tabla para la tabla `cuentas_cobrar`
+-- Volcado de datos para la tabla `conciliacion_bancaria`
 --
 
-CREATE TABLE `cuentas_cobrar` (
-  `id_cuenta_cobrar` int(11) NOT NULL,
-  `fecha` date NOT NULL,
-  `monto` float NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+INSERT INTO `conciliacion_bancaria` (`id_conciliacion`, `fecha_inicio`, `fecha_fin`, `estado`, `saldo_inicio`, `saldo_fin`, `saldo_sistema`, `diferencia`, `tasa_dolar`, `ingreso_banco_no_correspondido`, `ingreso_sistema_no_correspondido`, `egreso_banco_no_correspondido`, `egreso_sistema_no_correspondido`, `observaciones`) VALUES
+(1, '2025-02-01', '2025-02-01', 'Conciliado', 1000, 2000, 1995, 5, 100, 5, 0, 0, 0, 'mes febreo'),
+(2, '2025-04-01', '2025-04-30', 'Sin Conciliar', 0, 822, 975, 153, 100, 33, 1000, 111, 925, 'Yes');
 
 -- --------------------------------------------------------
 
@@ -146,27 +111,42 @@ CREATE TABLE `gastos` (
   `monto` float NOT NULL,
   `tipo_gasto` varchar(50) NOT NULL,
   `tasa_dolar` float NOT NULL,
-  `gastos_mes_id` int(11) NOT NULL,
   `metodo_pago` varchar(20) NOT NULL,
   `banco_id` int(11) DEFAULT NULL,
   `referencia` varchar(50) DEFAULT NULL,
   `imagen` varchar(255) DEFAULT NULL,
-  `caja_id` int(11) DEFAULT NULL,
   `proveedor_id` int(11) NOT NULL,
   `descripcion_gasto` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `gastos`
+--
+
+INSERT INTO `gastos` (`id_gasto`, `fecha`, `monto`, `tipo_gasto`, `tasa_dolar`, `metodo_pago`, `banco_id`, `referencia`, `imagen`, `proveedor_id`, `descripcion_gasto`) VALUES
+(1, '2025-03-01', 200, 'fijo', 100, 'transferencia', 1, '12654231', 'image', 1, 'se gasto'),
+(2, '2025-03-02', 300, 'variable', 100, 'transferencia', 1, '1345312345', 'image', 2, 'gasttta'),
+(3, '2025-03-01', 450, 'fijo', 100, 'transferencia', 1, '4245231', 'image', 2, 'proimca otra vez'),
+(4, '2025-03-04', 250, 'variable', 100, 'tranferencia', 1, '3215648', 'img', 1, 'gas de emergencia'),
+(5, '2025-04-14', 275, 'fijo', 100, 'transferencia', 1, '12412', 'img', 1, 'pago de gas'),
+(6, '2025-04-02', 650, 'variable', 100, 'transferencia', 1, '12521', 'img', 2, 'pago de proimca'),
+(7, '2025-03-12', 175, 'fijo', 100, 'transferencia', 1, '4156123', 'img', 2, 'pago de luz proimca'),
+(8, '2025-03-10', 650, 'variable', 100, 'transferencia', 1, '164531', 'img', 2, 'pago de proimca'),
+(9, '2025-03-02', 100, 'variable', 100, 'transferencia', 1, '4561234', 'img', 1, 'pago gas'),
+(10, '2025-04-10', 400, 'fijo', 0, 'transferencia', 1, '124125', NULL, 2, 'gasto luz proimca'),
+(11, '2025-04-10', 100, 'fijo', 0, 'efectivo', NULL, '', '', 1, 'pago gas'),
+(12, '2025-04-18', 200, 'variable', 0, 'transferencia', 1, '456123', '', 2, 'pago de luz de emergencia');
+
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `gastos_mes`
+-- Estructura de tabla para la tabla `gastos_mensualidades`
 --
 
-CREATE TABLE `gastos_mes` (
-  `id_gasto_mes` int(11) NOT NULL,
-  `fecha` date NOT NULL,
-  `monto` float NOT NULL,
-  `mensualidad_id` int(11) NOT NULL
+CREATE TABLE `gastos_mensualidades` (
+  `id_gasto_mensualidad` int(11) NOT NULL,
+  `gasto_id` int(11) NOT NULL,
+  `mesualidad_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -201,6 +181,17 @@ CREATE TABLE `mensualidad` (
   `apartamento_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `mensualidad`
+--
+
+INSERT INTO `mensualidad` (`id_mensualidad`, `monto`, `tasa_dolar`, `mes`, `anio`, `apartamento_id`) VALUES
+(1, 25, 100, '03', '2025', 1),
+(2, 14435.7, 100, '03', '2025', 1),
+(3, 14435.7, 100, '03', '2025', 2),
+(4, 14435.7, 100, '03', '2025', 3),
+(5, 1234, 100, '04', '2025', 1);
+
 -- --------------------------------------------------------
 
 --
@@ -213,13 +204,24 @@ CREATE TABLE `movimientos_bancarios` (
   `monto` float NOT NULL,
   `referencia` varchar(50) NOT NULL,
   `tipo_movimiento` varchar(20) NOT NULL,
-  `estado` varchar(20) NOT NULL,
+  `banco_id` int(11) NOT NULL,
   `monto_diferencia` float NOT NULL,
   `tipo_diferencia` varchar(50) NOT NULL,
   `conciliacion_id` int(11) NOT NULL,
   `pago_id` int(11) DEFAULT NULL,
   `gasto_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `movimientos_bancarios`
+--
+
+INSERT INTO `movimientos_bancarios` (`id_movimiento`, `fecha`, `monto`, `referencia`, `tipo_movimiento`, `banco_id`, `monto_diferencia`, `tipo_diferencia`, `conciliacion_id`, `pago_id`, `gasto_id`) VALUES
+(2, '2025-04-12', 500, '45612', 'Ingreso', 1, 0, 'Neutro', 2, 2, NULL),
+(4, '2025-04-09', 400, '45378', 'Ingreso', 1, 0, 'Neutro', 2, 1, NULL),
+(6, '2025-04-10', 15, '54312', 'Ingreso', 1, 0, 'No hay', 2, NULL, NULL),
+(7, '2025-04-03', 18, 'asd123', 'Ingreso', 1, 0, 'No hay', 2, NULL, NULL),
+(9, '2025-04-17', 111, '456423', 'Egreso', 1, 0, 'No hay', 2, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -237,10 +239,18 @@ CREATE TABLE `pagos` (
   `banco_id` int(11) DEFAULT NULL,
   `referencia` varchar(50) DEFAULT NULL,
   `imagen` varchar(255) DEFAULT NULL,
-  `caja_id` int(11) DEFAULT NULL,
-  `cuenta_cobrar_id` int(11) NOT NULL,
   `observacion` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `pagos`
+--
+
+INSERT INTO `pagos` (`id_pago`, `fecha`, `monto`, `tasa_dolar`, `estado`, `metodo_pago`, `banco_id`, `referencia`, `imagen`, `observacion`) VALUES
+(1, '2025-04-02', 400, 100, 'procesado', 'transferencia', 1, '134512', 'img', 'pago de jose'),
+(2, '2025-04-12', 500, 100, 'procesado', 'transferencia', 1, '1231', 'img', 'pago de pepe'),
+(3, '2025-04-06', 550, 100, 'procesado', 'transferencia', 1, '15123', 'uhj', 'pago tralaleo tralala'),
+(4, '2025-04-15', 450, 100, 'procesado', 'transferencia', 1, '4124', 'ign', 'pago de miguel');
 
 -- --------------------------------------------------------
 
@@ -250,9 +260,19 @@ CREATE TABLE `pagos` (
 
 CREATE TABLE `pagos_mensualidad` (
   `id_pago_mensualidad` int(11) NOT NULL,
-  `cuenta_cobrar_id` int(11) DEFAULT NULL,
+  `pago_id` int(11) DEFAULT NULL,
   `mensualidad_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `pagos_mensualidad`
+--
+
+INSERT INTO `pagos_mensualidad` (`id_pago_mensualidad`, `pago_id`, `mensualidad_id`) VALUES
+(1, 1, 1),
+(2, 2, 2),
+(3, 3, 3),
+(4, 4, 4);
 
 -- --------------------------------------------------------
 
@@ -269,6 +289,14 @@ CREATE TABLE `propietarios` (
   `correo` varchar(50) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `propietarios`
+--
+
+INSERT INTO `propietarios` (`id_propietario`, `nombre`, `apellido`, `cedula`, `telefono`, `correo`) VALUES
+(1, 'manda', 'mas', '15816366', '04245528892', 'mandamas@gamil.com'),
+(2, 'pablo', 'escobar', '11111111', '0800matalo', 'merca@gmail.com');
+
 -- --------------------------------------------------------
 
 --
@@ -284,6 +312,14 @@ CREATE TABLE `proveedores` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
+-- Volcado de datos para la tabla `proveedores`
+--
+
+INSERT INTO `proveedores` (`id_proveedor`, `nombre_proveedor`, `servicio`, `rif`, `direccion`) VALUES
+(1, 'Gas Lara', 'gas', '24425152', 'lara'),
+(2, 'Proimca', 'luz', '1251312', 'quibor');
+
+--
 -- Índices para tablas volcadas
 --
 
@@ -295,31 +331,11 @@ ALTER TABLE `apartamentos`
   ADD KEY `apartamentos_ibfk_1` (`propietario_id`);
 
 --
--- Indices de la tabla `apartamento_cartelera`
---
-ALTER TABLE `apartamento_cartelera`
-  ADD PRIMARY KEY (`id_apartamento_cartelera`),
-  ADD KEY `apartamento_cartelera_ibfk_1` (`apartamento_id`),
-  ADD KEY `apartamento_cartelera_ibfk_2` (`cartelera_id`);
-
---
 -- Indices de la tabla `bancos`
 --
 ALTER TABLE `bancos`
   ADD PRIMARY KEY (`id_banco`),
   ADD UNIQUE KEY `codigo` (`codigo`);
-
---
--- Indices de la tabla `caja_chica`
---
-ALTER TABLE `caja_chica`
-  ADD PRIMARY KEY (`id_caja`);
-
---
--- Indices de la tabla `cartelera_virtual`
---
-ALTER TABLE `cartelera_virtual`
-  ADD PRIMARY KEY (`id_cartelera`);
 
 --
 -- Indices de la tabla `conciliacion_bancaria`
@@ -328,27 +344,20 @@ ALTER TABLE `conciliacion_bancaria`
   ADD PRIMARY KEY (`id_conciliacion`);
 
 --
--- Indices de la tabla `cuentas_cobrar`
---
-ALTER TABLE `cuentas_cobrar`
-  ADD PRIMARY KEY (`id_cuenta_cobrar`);
-
---
 -- Indices de la tabla `gastos`
 --
 ALTER TABLE `gastos`
   ADD PRIMARY KEY (`id_gasto`),
-  ADD KEY `caja_id` (`caja_id`),
   ADD KEY `proveedor_id` (`proveedor_id`),
-  ADD KEY `gastos_mes_id` (`gastos_mes_id`),
   ADD KEY `banco_id` (`banco_id`);
 
 --
--- Indices de la tabla `gastos_mes`
+-- Indices de la tabla `gastos_mensualidades`
 --
-ALTER TABLE `gastos_mes`
-  ADD PRIMARY KEY (`id_gasto_mes`),
-  ADD KEY `mensualidad_id` (`mensualidad_id`);
+ALTER TABLE `gastos_mensualidades`
+  ADD PRIMARY KEY (`id_gasto_mensualidad`),
+  ADD KEY `gasto_id` (`gasto_id`),
+  ADD KEY `mesualidad_id` (`mesualidad_id`);
 
 --
 -- Indices de la tabla `habitantes`
@@ -372,15 +381,14 @@ ALTER TABLE `movimientos_bancarios`
   ADD PRIMARY KEY (`id_movimiento`),
   ADD KEY `conciliacion_id` (`conciliacion_id`),
   ADD KEY `pago_id` (`pago_id`),
-  ADD KEY `gasto_id` (`gasto_id`);
+  ADD KEY `gasto_id` (`gasto_id`),
+  ADD KEY `banco_id` (`banco_id`);
 
 --
 -- Indices de la tabla `pagos`
 --
 ALTER TABLE `pagos`
   ADD PRIMARY KEY (`id_pago`),
-  ADD KEY `caja_id` (`caja_id`),
-  ADD KEY `cuenta_cobrar_id` (`cuenta_cobrar_id`),
   ADD KEY `banco_id` (`banco_id`);
 
 --
@@ -389,7 +397,7 @@ ALTER TABLE `pagos`
 ALTER TABLE `pagos_mensualidad`
   ADD PRIMARY KEY (`id_pago_mensualidad`),
   ADD KEY `mensualidad_id` (`mensualidad_id`),
-  ADD KEY `pagos_mensualidad_ibfk_1` (`cuenta_cobrar_id`);
+  ADD KEY `pagos_mensualidad_ibfk_1` (`pago_id`);
 
 --
 -- Indices de la tabla `propietarios`
@@ -412,55 +420,31 @@ ALTER TABLE `proveedores`
 -- AUTO_INCREMENT de la tabla `apartamentos`
 --
 ALTER TABLE `apartamentos`
-  MODIFY `id_apartamento` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT de la tabla `apartamento_cartelera`
---
-ALTER TABLE `apartamento_cartelera`
-  MODIFY `id_apartamento_cartelera` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_apartamento` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `bancos`
 --
 ALTER TABLE `bancos`
-  MODIFY `id_banco` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT de la tabla `caja_chica`
---
-ALTER TABLE `caja_chica`
-  MODIFY `id_caja` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT de la tabla `cartelera_virtual`
---
-ALTER TABLE `cartelera_virtual`
-  MODIFY `id_cartelera` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_banco` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `conciliacion_bancaria`
 --
 ALTER TABLE `conciliacion_bancaria`
-  MODIFY `id_conciliacion` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT de la tabla `cuentas_cobrar`
---
-ALTER TABLE `cuentas_cobrar`
-  MODIFY `id_cuenta_cobrar` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_conciliacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de la tabla `gastos`
 --
 ALTER TABLE `gastos`
-  MODIFY `id_gasto` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_gasto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
--- AUTO_INCREMENT de la tabla `gastos_mes`
+-- AUTO_INCREMENT de la tabla `gastos_mensualidades`
 --
-ALTER TABLE `gastos_mes`
-  MODIFY `id_gasto_mes` int(11) NOT NULL AUTO_INCREMENT;
+ALTER TABLE `gastos_mensualidades`
+  MODIFY `id_gasto_mensualidad` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `habitantes`
@@ -472,37 +456,37 @@ ALTER TABLE `habitantes`
 -- AUTO_INCREMENT de la tabla `mensualidad`
 --
 ALTER TABLE `mensualidad`
-  MODIFY `id_mensualidad` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_mensualidad` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT de la tabla `movimientos_bancarios`
 --
 ALTER TABLE `movimientos_bancarios`
-  MODIFY `id_movimiento` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_movimiento` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT de la tabla `pagos`
 --
 ALTER TABLE `pagos`
-  MODIFY `id_pago` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de la tabla `pagos_mensualidad`
 --
 ALTER TABLE `pagos_mensualidad`
-  MODIFY `id_pago_mensualidad` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_pago_mensualidad` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de la tabla `propietarios`
 --
 ALTER TABLE `propietarios`
-  MODIFY `id_propietario` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_propietario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de la tabla `proveedores`
 --
 ALTER TABLE `proveedores`
-  MODIFY `id_proveedor` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_proveedor` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- Restricciones para tablas volcadas
@@ -515,61 +499,52 @@ ALTER TABLE `apartamentos`
   ADD CONSTRAINT `apartamentos_ibfk_1` FOREIGN KEY (`propietario_id`) REFERENCES `propietarios` (`id_propietario`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
--- Filtros para la tabla `apartamento_cartelera`
---
-ALTER TABLE `apartamento_cartelera`
-  ADD CONSTRAINT `apartamento_cartelera_ibfk_1` FOREIGN KEY (`apartamento_id`) REFERENCES `apartamentos` (`id_apartamento`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `apartamento_cartelera_ibfk_2` FOREIGN KEY (`cartelera_id`) REFERENCES `cartelera_virtual` (`id_cartelera`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
 -- Filtros para la tabla `gastos`
 --
 ALTER TABLE `gastos`
-  ADD CONSTRAINT `gastos_ibfk_1` FOREIGN KEY (`caja_id`) REFERENCES `caja_chica` (`id_caja`),
-  ADD CONSTRAINT `gastos_ibfk_2` FOREIGN KEY (`proveedor_id`) REFERENCES `proveedores` (`id_proveedor`),
-  ADD CONSTRAINT `gastos_ibfk_3` FOREIGN KEY (`gastos_mes_id`) REFERENCES `gastos_mes` (`id_gasto_mes`),
-  ADD CONSTRAINT `gastos_ibfk_4` FOREIGN KEY (`banco_id`) REFERENCES `bancos` (`id_banco`);
+  ADD CONSTRAINT `gastos_ibfk_2` FOREIGN KEY (`proveedor_id`) REFERENCES `proveedores` (`id_proveedor`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `gastos_ibfk_4` FOREIGN KEY (`banco_id`) REFERENCES `bancos` (`id_banco`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
--- Filtros para la tabla `gastos_mes`
+-- Filtros para la tabla `gastos_mensualidades`
 --
-ALTER TABLE `gastos_mes`
-  ADD CONSTRAINT `gastos_mes_ibfk_1` FOREIGN KEY (`mensualidad_id`) REFERENCES `mensualidad` (`id_mensualidad`);
+ALTER TABLE `gastos_mensualidades`
+  ADD CONSTRAINT `gastos_mensualidades_ibfk_1` FOREIGN KEY (`gasto_id`) REFERENCES `gastos` (`id_gasto`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `gastos_mensualidades_ibfk_2` FOREIGN KEY (`mesualidad_id`) REFERENCES `mensualidad` (`id_mensualidad`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `habitantes`
 --
 ALTER TABLE `habitantes`
-  ADD CONSTRAINT `habitantes_ibfk_1` FOREIGN KEY (`apartamento_id`) REFERENCES `apartamentos` (`id_apartamento`);
+  ADD CONSTRAINT `habitantes_ibfk_1` FOREIGN KEY (`apartamento_id`) REFERENCES `apartamentos` (`id_apartamento`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `mensualidad`
 --
 ALTER TABLE `mensualidad`
-  ADD CONSTRAINT `mensualidad_ibfk_1` FOREIGN KEY (`apartamento_id`) REFERENCES `apartamentos` (`id_apartamento`);
+  ADD CONSTRAINT `mensualidad_ibfk_1` FOREIGN KEY (`apartamento_id`) REFERENCES `apartamentos` (`id_apartamento`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `movimientos_bancarios`
 --
 ALTER TABLE `movimientos_bancarios`
-  ADD CONSTRAINT `movimientos_bancarios_ibfk_1` FOREIGN KEY (`conciliacion_id`) REFERENCES `conciliacion_bancaria` (`id_conciliacion`),
-  ADD CONSTRAINT `movimientos_bancarios_ibfk_2` FOREIGN KEY (`pago_id`) REFERENCES `pagos` (`id_pago`),
-  ADD CONSTRAINT `movimientos_bancarios_ibfk_3` FOREIGN KEY (`gasto_id`) REFERENCES `gastos` (`id_gasto`);
+  ADD CONSTRAINT `movimientos_bancarios_ibfk_1` FOREIGN KEY (`conciliacion_id`) REFERENCES `conciliacion_bancaria` (`id_conciliacion`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `movimientos_bancarios_ibfk_2` FOREIGN KEY (`pago_id`) REFERENCES `pagos` (`id_pago`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `movimientos_bancarios_ibfk_3` FOREIGN KEY (`gasto_id`) REFERENCES `gastos` (`id_gasto`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `movimientos_bancarios_ibfk_4` FOREIGN KEY (`banco_id`) REFERENCES `bancos` (`id_banco`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `pagos`
 --
 ALTER TABLE `pagos`
-  ADD CONSTRAINT `pagos_ibfk_1` FOREIGN KEY (`caja_id`) REFERENCES `caja_chica` (`id_caja`),
-  ADD CONSTRAINT `pagos_ibfk_2` FOREIGN KEY (`cuenta_cobrar_id`) REFERENCES `cuentas_cobrar` (`id_cuenta_cobrar`),
-  ADD CONSTRAINT `pagos_ibfk_3` FOREIGN KEY (`banco_id`) REFERENCES `bancos` (`id_banco`);
+  ADD CONSTRAINT `pagos_ibfk_3` FOREIGN KEY (`banco_id`) REFERENCES `bancos` (`id_banco`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `pagos_mensualidad`
 --
 ALTER TABLE `pagos_mensualidad`
-  ADD CONSTRAINT `pagos_mensualidad_ibfk_1` FOREIGN KEY (`cuenta_cobrar_id`) REFERENCES `cuentas_cobrar` (`id_cuenta_cobrar`),
-  ADD CONSTRAINT `pagos_mensualidad_ibfk_2` FOREIGN KEY (`mensualidad_id`) REFERENCES `mensualidad` (`id_mensualidad`);
+  ADD CONSTRAINT `pagos_mensualidad_ibfk_1` FOREIGN KEY (`pago_id`) REFERENCES `pagos` (`id_pago`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `pagos_mensualidad_ibfk_2` FOREIGN KEY (`mensualidad_id`) REFERENCES `mensualidad` (`id_mensualidad`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

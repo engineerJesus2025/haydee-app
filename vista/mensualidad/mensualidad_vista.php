@@ -41,9 +41,10 @@
                                         <label for="mes_select">Mostrando Mensualidad del mes:</label>
                                         <div class="input-group my-1 mb-3">
                                             <span class="input-group-text" id="basic-addon1"><i class="bi bi-calendar2-date"></i></span>
-                                            <select class="form-select " aria-label="Default select example" name="mes_seleccionado" id="mes_select">                          
+                                            <select class="form-select " aria-label="Default select example" name="mes_seleccionado" id="mes_select">            
                                             </select>
                                         </div>
+                                        <button id="boton_eliminar" class="btn btn-outline-danger my-2">Eliminar Mensualidad</button>
                                     </div>
                                     <div class="col-3">
                                         <button class="btn btn-primary" id="boton_registrar" title="Presione para Registrar Nueva Mensualidad" type="button" data-bs-toggle="modal" data-bs-target="#modal_mensualidad">Registrar Mensualidad</button>
@@ -66,7 +67,7 @@
                                         </tr>
                                     </tbody>
                                 </table>
-                                <button class="btn btn-outline-primary col-4 mx-auto" id="boton_editar" title="Presione para Editar Mensualidad Actual">Editar Mensualidad Seleccionada</button>
+                                <button class="btn btn-outline-primary col-4 mx-auto" id="boton_editar" title="Presione para Editar Mensualidad Actual" type="button" data-bs-toggle="modal" data-bs-target="#modal_mensualidad">Editar Mensualidad Seleccionada</button>
                                 <div class="modal fade" id="modal_mensualidad" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
                                     <div class="modal-dialog modal-lg">
                                         <div class="modal-content">

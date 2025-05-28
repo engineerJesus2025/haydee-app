@@ -14,5 +14,5 @@
 	</tfoot>
 </table>
 <div class="row justify-content-center">
-	<button id="boton_formulario" class="btn btn-primary col-3" op="registrar">Guardar Mensualidad</button>
+	<button id="boton_formulario" class="btn btn-primary col-3" op="Registrar">Guardar Mensualidad</button>
 </div>

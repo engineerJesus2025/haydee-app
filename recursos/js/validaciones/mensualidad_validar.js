@@ -1,7 +1,3 @@
-// document.querySelector(`#modal_mensualidad`).addEventListener("show.bs.modal",()=>{	
-	
-// });
-
 boton_formulario.addEventListener("click",e=>{
 	let filas_cuerpo = tabla_mensualidad_asignar.querySelectorAll("tbody tr");
 	let asignado = false;
@@ -39,6 +35,23 @@ boton_formulario.addEventListener("click",e=>{
 			}
 		});
 	}
+});
+
+boton_eliminar.addEventListener("click",e=>{
+	Swal.fire({
+		title: "¿Estás seguro?",
+		text: `¿Está seguro que desea Eliminar esta Mensualidad?`,
+		showCancelButton: true,
+		confirmButtonText: "Eliminar",
+		confirmButtonColor: "#e01d22",
+		cancelButtonText: "Cancelar",
+		icon: "warning"
+	})
+	.then((result) => {
+		if (result.isConfirmed) {
+			envio("Eliminar");					
+		}
+	});
 });
 
 function mensajes(icono,tiempo,titulo,mensaje){
