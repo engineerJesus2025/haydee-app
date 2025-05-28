@@ -6,53 +6,25 @@ $mensualidad_obj = new Mensualidad();
 if (isset($_POST["operacion"])){
     $operacion = $_POST["operacion"];
 
-    if ($operacion == "consulta"){
-    	$mes = date("m");
-    	$anio = date("Y");
-    	
-        $mes = "03";
-
-    	$mensualidad_obj->set_mes($mes);
-    	$mensualidad_obj->set_anio($anio);
-
+    if ($operacion == "consultar"){       
         echo json_encode($mensualidad_obj->consultar());
-
-        // la hice para que retorne un arreglo, si sale vacio solo mandara un array con false
-    }    
-    else if($operacion == "gastos_fijos"){
-        $mes = date("m");
-        $anio = date("Y");
-        
-        $mes = "03";
-
-        $mensualidad_obj->set_mes($mes);
-        $mensualidad_obj->set_anio($anio);
-
-        echo json_encode($mensualidad_obj->consultar_gastos_fijos());
     }
-    else if($operacion == "gastos_variables"){
-        $mes = date("m");
-        $anio = date("Y");
-        
-        $mes = "03";
 
-        $mensualidad_obj->set_mes($mes);
-        $mensualidad_obj->set_anio($anio);
+    else if ($operacion == "consultar_mensualidad"){        
+        $set_gasto_mes_id = $_POST["gasto_mes_id"];
 
-        echo json_encode($mensualidad_obj->consultar_gastos_variables());
+        $mensualidad_obj->set_gasto_mes_id($set_gasto_mes_id);
+
+        echo json_encode($mensualidad_obj->consultar_mensualidad());
     }
-    else if($operacion == "gasto_gas"){
-        $mes = date("m");
-        $anio = date("Y");
-        
-        $mes = "03";
+    else if ($operacion == "consultar_gastos"){
+        $gasto_mes_id = $_POST["gasto_mes_id"];        
 
-        $mensualidad_obj->set_mes($mes);
-        $mensualidad_obj->set_anio($anio);
+        $mensualidad_obj->set_gasto_mes_id($gasto_mes_id);
 
-        echo json_encode($mensualidad_obj->consultar_gasto_gas());
+        echo json_encode($mensualidad_obj->consultar_gastos());
     }
-    else if($operacion == "apartamentos"){
+    else if ($operacion == "consultar_apartamentos"){
         echo json_encode($mensualidad_obj->consultar_apartamentos());
     }
     else if($operacion == "registrar"){

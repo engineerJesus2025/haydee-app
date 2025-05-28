@@ -32,7 +32,7 @@ document.querySelector(`#modal_roles`).addEventListener("hide.bs.modal",()=>{
 	boton_formulario.removeAttribute("modificar");
 	boton_formulario.removeAttribute("id_modificar");	
 	boton_formulario.textContent = "Registrar";
-	document.getElementById('titulo_modal').textContent = "Registrar Usuario";	
+	document.getElementById('titulo_modal').textContent = "Registrar Rol";	
 	formulario_usar.querySelectorAll("[class='w-100']").forEach(el=>el.textContent="");
 	input_permisos.forEach(input=>{
 		input.closest(".accordion-collapse").classList.remove("show");

@@ -26,7 +26,7 @@
                         <span class="nav_name">Conciliación<br>Bancaria</span> 
                     </a>
                     <?php endif; ?>
-                    <?php if (Conexion::tiene_permiso(GESTIONAR_EFECTIVO, CONSULTAR)) : ?> 
+                    <?php if (Conexion::tiene_permiso(GESTIONAR_MENSUALIDAD, CONSULTAR)) : ?> 
                     <a href="?pagina=mensualidad_controlador.php&accion=inicio" class="nav_link <?php echo ($_GET["pagina"] == "mensualidad_controlador.php")?"active":''; ?>" title="Control de Caja"> 
                         <i class="bi bi-piggy-bank-fill nav_logo-icon"></i>
                         <span class="nav_name">Mensualidad</span> 

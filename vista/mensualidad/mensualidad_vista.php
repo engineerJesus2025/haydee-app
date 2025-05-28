@@ -8,10 +8,11 @@
     require_once "vista/componentes/estilos.php";
     ?>
 </head>
-
-<body class="body-pd">    
+<body class="body-pd">
+    <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Mensualidad::tiene_permiso(GESTIONAR_MENSUALIDAD, ELIMINAR) ?>">
+    <input type="text" hidden="" id="permiso_editar" value="<?php echo Mensualidad::tiene_permiso(GESTIONAR_MENSUALIDAD, MODIFICAR) ?>">
     <div class="container-fluid">
-        <div class="row flex-nowrap ">
+        <div class="row flex-nowrap">
 
             <?php
             require_once "vista/componentes/sesion.php";
@@ -32,44 +33,57 @@
                     <p class="lead"></p>
                     <hr>
 
-                    <div class="row mb-3">
-                        <div class="col-12">
-                            <div class="card p-4">
+                    <div class="row my-4 justify-content-center">
+                        <div class="col-11">
+                            <div class="card p-4 row">
+                                <div class="col-12 row justify-content-between">
+                                    <div class="col-4">
+                                        <label for="mes_select">Mostrando Mensualidad del mes:</label>
+                                        <div class="input-group my-1 mb-3">
+                                            <span class="input-group-text" id="basic-addon1"><i class="bi bi-calendar2-date"></i></span>
+                                            <select class="form-select " aria-label="Default select example" name="mes_seleccionado" id="mes_select">                          
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-3">
+                                        <button class="btn btn-primary" id="boton_registrar" title="Presione para Registrar Nueva Mensualidad" type="button" data-bs-toggle="modal" data-bs-target="#modal_mensualidad">Registrar Mensualidad</button>
+                                    </div>
+                                </div>                                
 
-                                <table id="tabla_mensualidad" class="table" style="width:97%">
+                                <table id="tabla_mensualidad" class="table  caption-top mx-auto" style="width:97%">
+                                    <caption>Listado de Mensualidades</caption>
                                     <thead>
                                         <tr>
-                                            <th>MES/AÑO</th>
-                                            <th>APARTAMENTO</th>
-                                            <th>PROPIETARIO</th>
-                                            <th>MONTO</th>
-                                            <th>TASA DOLAR</th>
+                                            <th class="">MES/AÑO</th>
+                                            <th class="">APARTAMENTO</th>
+                                            <th class="">PROPIETARIO</th>
+                                            <th class="">MONTO MENSUALIDAD</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td colspan="7"><h4>Cargando...</h4></td>
+                                            <td colspan="4"><h4>Cargando...</h4></td>
                                         </tr>
                                     </tbody>
                                 </table>
-                                <!-- <div class="modal fade" id="modal_usuario" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
+                                <button class="btn btn-outline-primary col-4 mx-auto" id="boton_editar" title="Presione para Editar Mensualidad Actual">Editar Mensualidad Seleccionada</button>
+                                <div class="modal fade" id="modal_mensualidad" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
                                     <div class="modal-dialog modal-lg">
                                         <div class="modal-content">
                                             <div class="modal-header">
-                                                <h1 class="modal-title fs-5" id="titulo_modal">Registrar usuario</h1>
+                                                <h1 class="modal-title fs-5" id="titulo_modal">Registrar Mensualidad</h1>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                             </div>
                                             <div class="modal-body">
 
                                                 <?php
-                                                require_once "vista/usuarios/usuario_modal.php";
+                                                require_once "vista/mensualidad/mensualidad_modal.php";
                                                 ?>
 
                                             </div>
                                         </div>
                                     </div>
-                                </div> -->
-
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -86,6 +100,7 @@
 </body>
 
 <script type="text/javascript" src="recursos/js/consultas_ajax/mensualidades_ajax.js"></script>
+<script type="text/javascript" src="recursos/js/validaciones/mensualidad_validar.js"></script>
 
 </body>
 

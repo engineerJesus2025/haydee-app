@@ -49,7 +49,7 @@
 						      </div>
 						    </div>
 						    <span id="span_select" class="my-3"></span>
-                <button id="boton_conciliaciones" class="btn btn-primary" tabindex="-1" role="button" aria-disabled="true" data-bs-toggle="modal" data-bs-target="#modal_conciliaciones" title="Mostrar Conciliaciones">Mostrar Todas las Conciliaciones</button>
+                <button id="boton_conciliaciones" class="btn btn-outline-primary" tabindex="-1" role="button" aria-disabled="true" data-bs-toggle="modal" data-bs-target="#modal_conciliaciones" title="Mostrar Conciliaciones">Mostrar Todas las Conciliaciones</button>
 					    </div>
 					  </div>
             <div class="col-8" hidden="">

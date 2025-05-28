@@ -93,8 +93,46 @@ class Mensualidad extends Conexion
     //hace lo que dice
     public function consultar()
     {
-        $sql = "SELECT * FROM `mensualidad` INNER JOIN apartamentos ON mensualidad.apartamento_id = apartamentos.id_apartamento INNER JOIN propietarios ON apartamentos.propietario_id = propietarios.id_propietario WHERE mensualidad.mes = :mes && mensualidad.anio = :anio";
+        $sql = "SELECT * FROM mensualidad INNER JOIN gastos_mes ON mensualidad.gasto_mes_id = gastos_mes.id_gasto_mes GROUP BY gastos_mes.mes ORDER BY gastos_mes.mes DESC";
 
+        $conexion = $this->get_conex()->prepare($sql);
+
+        $result = $conexion->execute();
+        
+        $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);        
+
+        if ($result == true) {
+            $this->registrar_bitacora(CONSULTAR, GESTIONAR_MENSUALIDAD, "TODOS LAS MENSUALIDADES");//registra cuando se entra al modulo de mensualidad
+
+            return $datos;
+        } else {
+            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+        }
+    }
+
+    public function consultar_mensualidad()
+    {
+        // $this->gasto_mes_id = 1;
+        $sql = "SELECT * FROM `mensualidad` INNER JOIN apartamentos ON mensualidad.apartamento_id = apartamentos.id_apartamento INNER JOIN propietarios ON apartamentos.propietario_id = propietarios.id_propietario INNER JOIN gastos_mes ON mensualidad.gasto_mes_id = gastos_mes.id_gasto_mes WHERE gastos_mes.id_gasto_mes = :gasto_mes_id";
+
+        $conexion = $this->get_conex()->prepare($sql);
+        $conexion->bindParam(":gasto_mes_id", $this->gasto_mes_id);        
+
+        $result = $conexion->execute();
+        
+        $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);        
+
+        if ($result == true) {
+            return $datos;
+        } else {
+            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+        }
+    }
+
+    public function consultar_ultima_mensualidad()
+    {
+        $sql = "SELECT * FROM `mensualidad` INNER JOIN apartamentos ON mensualidad.apartamento_id = apartamentos.id_apartamento INNER JOIN propietarios ON apartamentos.propietario_id = propietarios.id_propietario WHERE mensualidad.mes = :mes && mensualidad.anio = :anio";
+        // ORDER BY id_mensualidad
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":mes", $this->mes);
         $conexion->bindParam(":anio", $this->anio);
@@ -104,8 +142,6 @@ class Mensualidad extends Conexion
         $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);        
 
         if ($result == true) {
-            $this->registrar_bitacora(CONSULTAR, GESTIONAR_MENSUALIDAD, "TODOS LOS USUARIOS");//registra cuando se entra al modulo de mensualidad
-
             return $datos;
         } else {
             return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
@@ -113,65 +149,65 @@ class Mensualidad extends Conexion
     }
 
     // ojo: mover eventualente
-    public function consultar_gastos_fijos(){
+    // public function consultar_gastos_fijos(){
 
-        $sql = "SELECT * FROM gastos INNER JOIN proveedores ON gastos.proveedor_id = proveedores.id_proveedor WHERE YEAR(gastos.fecha) = :anio && MONTH(gastos.fecha) = :mes && gastos.tipo_gasto = 'fijo' && proveedores.servicio != 'gas'";
+    //     $sql = "SELECT * FROM gastos INNER JOIN proveedores ON gastos.proveedor_id = proveedores.id_proveedor WHERE YEAR(gastos.fecha) = :anio && MONTH(gastos.fecha) = :mes && gastos.tipo_gasto = 'fijo' && proveedores.servicio != 'gas'";
 
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":anio", $this->anio);
-        $conexion->bindParam(":mes", $this->mes);
+    //     $conexion = $this->get_conex()->prepare($sql);
+    //     $conexion->bindParam(":anio", $this->anio);
+    //     $conexion->bindParam(":mes", $this->mes);
         
 
-        $result = $conexion->execute();
+    //     $result = $conexion->execute();
         
-        $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);        
+    //     $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);        
 
-        if ($result == true) {
-            return $datos;
-        } else {
-            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
-        }
-    }
+    //     if ($result == true) {
+    //         return $datos;
+    //     } else {
+    //         return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+    //     }
+    // }
 
-    public function consultar_gastos_variables(){
+    // public function consultar_gastos_variables(){
 
-        $sql = "SELECT * FROM gastos INNER JOIN proveedores ON gastos.proveedor_id = proveedores.id_proveedor WHERE YEAR(gastos.fecha) = :anio && MONTH(gastos.fecha) = :mes && gastos.tipo_gasto = 'variable' && proveedores.servicio != 'gas'";
+    //     $sql = "SELECT * FROM gastos INNER JOIN proveedores ON gastos.proveedor_id = proveedores.id_proveedor WHERE YEAR(gastos.fecha) = :anio && MONTH(gastos.fecha) = :mes && gastos.tipo_gasto = 'variable' && proveedores.servicio != 'gas'";
 
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":anio", $this->anio);
-        $conexion->bindParam(":mes", $this->mes);
-        
-
-        $result = $conexion->execute();
-        
-        $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);        
-
-        if ($result == true) {
-            return $datos;
-        } else {
-            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
-        }
-    }
-
-    public function consultar_gasto_gas(){
-
-        $sql = "SELECT * FROM gastos INNER JOIN proveedores ON gastos.proveedor_id = proveedores.id_proveedor WHERE YEAR(gastos.fecha) = :anio && MONTH(gastos.fecha) = :mes && proveedores.servicio = 'gas'";
-
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":anio", $this->anio);
-        $conexion->bindParam(":mes", $this->mes);
+    //     $conexion = $this->get_conex()->prepare($sql);
+    //     $conexion->bindParam(":anio", $this->anio);
+    //     $conexion->bindParam(":mes", $this->mes);
         
 
-        $result = $conexion->execute();
+    //     $result = $conexion->execute();
         
-        $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);        
+    //     $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);        
 
-        if ($result == true) {
-            return $datos;
-        } else {
-            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
-        }
-    }
+    //     if ($result == true) {
+    //         return $datos;
+    //     } else {
+    //         return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+    //     }
+    // }
+
+    // public function consultar_gasto_gas(){
+
+    //     $sql = "SELECT * FROM gastos INNER JOIN proveedores ON gastos.proveedor_id = proveedores.id_proveedor WHERE YEAR(gastos.fecha) = :anio && MONTH(gastos.fecha) = :mes && proveedores.servicio = 'gas'";
+
+    //     $conexion = $this->get_conex()->prepare($sql);
+    //     $conexion->bindParam(":anio", $this->anio);
+    //     $conexion->bindParam(":mes", $this->mes);
+        
+
+    //     $result = $conexion->execute();
+        
+    //     $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);        
+
+    //     if ($result == true) {
+    //         return $datos;
+    //     } else {
+    //         return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+    //     }
+    // }
 
     public function consultar_apartamentos()
     {
@@ -179,6 +215,28 @@ class Mensualidad extends Conexion
 
         $conexion = $this->get_conex()->prepare($sql);        
 
+        $result = $conexion->execute();
+        
+        $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);        
+
+        if ($result == true) {
+            return $datos;
+        } else {
+            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+        }
+    }
+
+    public function consultar_gastos()
+    {
+        $sql = 'SELECT gastos.id_gasto, gastos.tipo_gasto as tipo_gasto, SUM(gastos.monto) as monto FROM gastos INNER JOIN proveedores ON gastos.proveedor_id = proveedores.id_proveedor INNER JOIN gastos_mes ON gastos.gasto_mes_id = gastos_mes.id_gasto_mes WHERE gastos_mes.id_gasto_mes = :gasto_mes_id && proveedores.servicio != "gas" && gastos.tipo_gasto = "fijo"
+            UNION
+            SELECT gastos.id_gasto, proveedores.servicio as tipo_gasto, SUM(gastos.monto) as monto FROM gastos INNER JOIN proveedores ON gastos.proveedor_id = proveedores.id_proveedor INNER JOIN gastos_mes ON gastos.gasto_mes_id = gastos_mes.id_gasto_mes WHERE gastos_mes.id_gasto_mes = :gasto_mes_id && proveedores.servicio = "gas"            
+            UNION
+            SELECT gastos.id_gasto, gastos.descripcion_gasto as tipo_gasto, gastos.monto as monto FROM gastos INNER JOIN proveedores ON gastos.proveedor_id = proveedores.id_proveedor INNER JOIN gastos_mes ON gastos.gasto_mes_id = gastos_mes.id_gasto_mes WHERE gastos_mes.id_gasto_mes = :gasto_mes_id && proveedores.servicio != "gas" && gastos.tipo_gasto = "variable"';
+            // Nada de humildad: Me saque la pinga con este sql
+
+        $conexion = $this->get_conex()->prepare($sql); 
+        $conexion->bindParam(":gasto_mes_id", $this->gasto_mes_id);
         $result = $conexion->execute();
         
         $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);        
