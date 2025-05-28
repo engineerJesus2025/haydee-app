@@ -79,7 +79,7 @@
                                 </table>
                                 <div class="modal fade" id="modal_pagos" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
                                     <div class="modal-dialog modal-xl">
-                                        <div class="modal-content bg-dark text-white">
+                                        <div class="modal-content">
                                             <div class="modal-header">
                                                 <h1 class="modal-title fs-5" id="titulo_modal">Registrar Pago</h1>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>

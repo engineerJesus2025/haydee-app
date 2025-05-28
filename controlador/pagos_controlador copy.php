@@ -138,6 +138,8 @@
             $observacion = $_POST["observacion"];
             // ...
 
+            $id_pago_mensualidad = $_POST["id_pago_mensualidad"];
+
             $eliminar_imagen = isset($_POST["eliminar_imagen"]);
 
             $imagen = $obj_pago->obtener_imagen_actual();
@@ -185,32 +187,22 @@
             $obj_pago ->set_observacion($observacion);
             // ....
             
+            $obj_pago->set_id_pago_mensualidad($id_pago_mensualidad);
             $obj_pago->set_pago_id($id_pago);
             $obj_pago->set_mensualidad_id($mensualidad_id);
 
-            $resultado_modificacion = $obj_pago->editar_pago();
+            $resultado_puente = $obj_pago->editar_pagos_mensualidad(); 
 
-            if ($resultado_modificacion["estatus"]) {
-                // Actualizar relación en tabla puente
-                $resultado_puente = $obj_pago->editar_pagos_mensualidad(); // <-- debes crear esta función si no existe
-
-                if ($resultado_puente["estatus"]) {
-                    echo json_encode([
-                        "estatus" => true,
-                        "mensaje" => "Pago y relación actualizados correctamente"
-                    ]);
-                } else {
-                    echo json_encode([
-                        "estatus" => false,
-                        "mensaje" => "Pago actualizado, pero error al actualizar relación en tabla puente"
-                    ]);
-                }
-            } else {
+            if (!$resultado_puente["estatus"]) {
                 echo json_encode([
                     "estatus" => false,
-                    "mensaje" => "Error al actualizar el pago"
+                    "mensaje" => "Error al modificar relación en la tabla puente"
                 ]);
+                exit;
             }
+            //se ejecuta la funcion:
+            echo  json_encode($obj_pago->editar_pago());
+            //igual puse para que siempre retorne un arreglo que dara true o false de acuerdo al resultado
         }
 
         elseif ($operacion == "eliminar") {

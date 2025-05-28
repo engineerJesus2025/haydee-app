@@ -168,7 +168,7 @@
             // 4)Se obtiene la primera fila del resultado como un arreglo asociativo.
             $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
 
-            $this->cambiar_db_negocio();
+            //$this->cambiar_db_negocio();
 
             if ($result == true) {
                 $this->registrar_bitacora(CONSULTAR, GESTIONAR_PAGOS, "TODOS LOS PAGOS");//registra cuando se entra al modulo de pagos
@@ -182,28 +182,32 @@
         public function consultar_pago(){
 
             //$this->cambiar_db_seguridad();
+            //$this->cambiar_db_negocio();
 
             // 1) Sentencia SQL de toda la vida
-            $sql = "SELECT * FROM pagos WHERE id_pago = :id_pago";
+            $sql = "SELECT pagos.*, pagos_mensualidad.mensualidad_id 
+            FROM pagos 
+            LEFT JOIN pagos_mensualidad ON pagos.id_pago = pagos_mensualidad.pago_id 
+            WHERE pagos.id_pago = :id_pago 
+            LIMIT 1";
 
-            // 2) Se prepara la conexion
+            // 2) Se prepara la conexión
             $conexion = $this->get_conex()->prepare($sql);
 
-            // 3) Se manda el banco que queremos consultar
+            // 3) Se manda el id_pago que queremos consultar
             $conexion->bindParam(":id_pago", $this->id_pago);
 
             // 4) Se ejecuta la sentencia
             $result = $conexion->execute();        
-            
+
             // 5) Se obtienen los datos
             $datos = $conexion->fetch(PDO::FETCH_ASSOC);
 
-            //$this->cambiar_db_negocio();
-
-            if ($result == true) {
+            // 6) Retornamos resultados
+            if ($result == true && $datos) {
                 return $datos;
             } else {
-                return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+                return ["estatus" => false, "mensaje" => "Ha ocurrido un error con la consulta"];
             }
         }
 
@@ -228,7 +232,7 @@
             $conexion->bindParam(":observacion", $this->observacion);
             $result = $conexion->execute();
 
-            $this->cambiar_db_negocio();
+            //$this->cambiar_db_negocio();
 
             if ($result) {
                 $id_ultimo = $this->lastId();//obtenemos el ultimo id
@@ -257,7 +261,7 @@
             $conexion->bindParam(":mensualidad_id", $this->mensualidad_id);
             $result = $conexion->execute();
 
-            $this->cambiar_db_negocio();
+            //$this->cambiar_db_negocio();
 
             if ($result) {
                 $id_ultimo = $this->lastId();//obtenemos el ultimo id
@@ -295,7 +299,7 @@
 
             $result = $conexion->execute();
 
-            $this->cambiar_db_negocio();        
+            //$this->cambiar_db_negocio();        
             
             if ($result) {
                 $pago_alterado = $this->consultar_pago();
@@ -335,12 +339,12 @@
 
         public function obtener_imagen_actual(){
 
-            $this->cambiar_db_seguridad(); 
+            //$this->cambiar_db_seguridad(); 
             $sql = "SELECT imagen FROM pagos WHERE id_pago = :id_pago";
             $conexion = $this->get_conex()->prepare($sql);
             $conexion->bindParam(":id_pago", $this->id_pago);
             $conexion->execute();
-            $this->cambiar_db_negocio();
+            //$this->cambiar_db_negocio();
 
             $resultado = $conexion->fetch(PDO::FETCH_ASSOC);
             return $resultado ? $resultado["imagen"] : null;
@@ -352,7 +356,7 @@
             $conexion = $this->get_conex()->prepare($sql);
             $result = $conexion->execute();
             $datos = $conexion->fetch(PDO::FETCH_ASSOC);
-            $this->cambiar_db_negocio();
+            //$this->cambiar_db_negocio();
 
             if ($result) {
                 return ["estatus"=>true,"mensaje"=>$datos["last_id"]];
@@ -375,12 +379,35 @@
             $conexion->bindParam(":mensualidad_id", $this->mensualidad_id);
             $result = $conexion->execute();
 
-            $this->cambiar_db_negocio();
+            //$this->cambiar_db_negocio();
 
             if ($result) {
                 $id_ultimo = $this->lastIdPagoMensualidad();//obtenemos el ultimo id
                 $this->set_id_pago_mensualidad($id_ultimo["mensaje"]);
 
+                return ["estatus"=>true,"mensaje"=>"OK"];
+            } else {
+                return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar este pago"];
+            }
+        }
+
+        public function editar_pagos_mensualidad(){
+            //Validamos los datos obtenidos del controlador (validaciones back-end)
+            //$validaciones = $this->validarDatos();
+            //if(!($validaciones["estatus"])){return $validaciones;}
+            
+            //$this->cambiar_db_seguridad();
+
+            $sql = "UPDATE pagos_mensualidad SET mensualidad_id = :mensualidad_id WHERE pago_id = :pago_id";
+        
+            $conexion = $this->get_conex()->prepare($sql);
+            $conexion->bindParam(":pago_id", $this->pago_id);
+            $conexion->bindParam(":mensualidad_id", $this->mensualidad_id);
+            $result = $conexion->execute();
+
+            //$this->cambiar_db_negocio();
+
+            if ($result) {
                 return ["estatus"=>true,"mensaje"=>"OK"];
             } else {
                 return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar este pago"];
@@ -393,7 +420,7 @@
             $conexion = $this->get_conex()->prepare($sql);
             $result = $conexion->execute();
             $datos = $conexion->fetch(PDO::FETCH_ASSOC);
-            $this->cambiar_db_negocio();
+            //$this->cambiar_db_negocio();
 
             if ($result) {
                 return ["estatus"=>true,"mensaje"=>$datos["last_id"]];
@@ -407,7 +434,7 @@
             $conexion = $this->get_conex()->prepare($sql);
             $result = $conexion->execute();
             $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
-            $this->cambiar_db_negocio();
+            //$this->cambiar_db_negocio();
             if ($result == true) {
                 return $datos;
             } else {

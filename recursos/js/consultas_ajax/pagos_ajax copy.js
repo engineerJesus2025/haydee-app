@@ -117,81 +117,6 @@ async function bcv() {
     }
 }
 
-function formatearFilaPago(fila) {
-	let fecha = new Date(fila["fecha"]);
-	let dia = String(fecha.getDate()).padStart(2, '0');
-	let mes = String(fecha.getMonth() + 1).padStart(2, '0');
-	let anio = String(fecha.getFullYear());
-	let fecha_formateada = `${dia}/${mes}/${anio}`;
-
-	let monto_bolivares = (parseFloat(fila["monto"]) * parseFloat(fila["tasa_dolar"])).toFixed(2);
-	let monto_formateado = `${fila["monto"]} $ (${monto_bolivares} Bs)`;
-	let tasa_formateada = `${fila["tasa_dolar"]} Bs`;
-
-	let estado = fila["estado"];
-
-	let imagen = !fila["imagen"]?.trim() ? "(Sin imagen)" : "";
-
-	return {
-		fecha: fecha_formateada,
-		monto: monto_formateado,
-		tasa_dolar: tasa_formateada,
-		estado: estado,
-		metodo_pago: fila["metodo_pago"],
-		nombre_banco: fila["nombre_banco"],
-		referencia: fila["referencia"],
-		imagen: imagen,
-		observacion: fila["observacion"],
-		mes_anio: fila["mes_anio"]
-	};
-}
-
-function obtenerImagen(imagen) {
-    let texto = "";
-    let color = "";
-
-    switch (imagen) {
-        case "(Sin imagen)":
-        case 1:
-            texto = "Sin Imagen";
-            color = "warning";
-            break;
-		case "(Imagen)":
-        case 2:
-            texto = "Imagen";
-            color = "success";
-            break;
-        default:
-            texto = "Sin Imagen";
-            color = "warning";
-    }
-
-    return `<span class="badge bg-${color}">${texto}</span>`;
-}
-
-function obtenerEstado(estado) {
-    let texto = "";
-    let color = "";
-
-    switch (estado) {
-        case "COMPROBADO":
-        case 1:
-            texto = "Comprobado";
-            color = "success";
-            break;
-        case "PENDIENTE":
-        case 2:
-            texto = "Pendiente";
-            color = "warning";
-            break;
-        default:
-            texto = "Desconocida";
-            color = "secondary";
-    }
-
-    return `<span class="badge bg-${color}">${texto}</span>`;
-}
-
 //Si queremos registrar:
 async function registrar() {
 	// el async vuelve la funcion asincrona	
@@ -209,7 +134,6 @@ async function registrar() {
 	imagen = formulario_usar.querySelector("#imagen").files[0];
 	observacion = formulario_usar.querySelector("#observacion").value;
 	mensualidad_id = formulario_usar.querySelector("#mensualidad_id").value;
-	mensualidad = formulario_usar.querySelector("#mensualidad_id").selectedOptions[0].textContent;
 
 	// le pasamos los datos por el formData
 	datos_consulta.append("fecha",fecha);
@@ -243,37 +167,7 @@ async function registrar() {
 	let acciones = crearBotones(id_registrado.mensaje); //Crea botones
 	
 	// esta variable no hace nada, pero me dio error cuando la quite XD
-	let fila = {
-		id_pago: id_registrado.mensaje, // importante para los botones
-		fecha,
-		monto,
-		tasa_dolar,
-		estado,
-		metodo_pago,
-		nombre_banco,
-		referencia,
-		imagen: !imagen?.name ? "(Sin imagen)" : "(Imagen)", // solo el nombre si existe
-		observacion,
-		mes_anio: mensualidad // puedes cambiar esto si usas otro campo formateado
-	};
-
-	let datos = formatearFilaPago(fila);
-
-	console.log(datos);
-
-	await data_table.row.add([
-		datos.fecha,
-		datos.monto,
-		datos.tasa_dolar,
-		obtenerEstado(datos.estado),
-		datos.metodo_pago,
-		datos.nombre_banco,
-		datos.referencia,
-		obtenerImagen(datos.imagen),
-		datos.observacion,
-		datos.mes_anio,
-		acciones.outerHTML
-	]).draw();
+	let res_data_table = await data_table.row.add([`${fecha}`,`${monto}`,`${tasa_dolar}`,`${estado}`,`${metodo_pago}`,`${nombre_banco}`,`${referencia}`,`${imagen}`,`${observacion}`,`${mensualidad_id}`,`${acciones.outerHTML}`]).draw();
 	// Tiene el await para que lo espere, sino no la pone en la tabla
 
 	mensajes('success',4000,'Atencion','El registro se ha realizado exitosamente');//Mensaje de que se completo la operacion
@@ -336,18 +230,34 @@ function llenarTabla(fila) {
 	mes_anio_td = document.createElement("td");
 
 	// le damos el contenido de la consulta
-	let datos = formatearFilaPago(fila);
+	// Para arreglar la fecha
+	let fecha = new Date(fila["fecha"]);
+	let dia = String(fecha.getDate()).padStart(2, '0');
+	let mes = String(fecha.getMonth() + 1).padStart(2, '0');
+	let anio = String(fecha.getFullYear()); // Para solo 2 dígitos = String(fecha.getFullYear()).slice(-2);
+	fecha_td.textContent = `${dia}/${mes}/${anio}`;
+	// ...
+	// Para mostrar el calculo entre el monto y la tasa
+	monto_td.textContent = fila["monto"] + " $ " + "(" + (parseFloat(fila["monto"]) * parseFloat(fila["tasa_dolar"])).toFixed(2) + " Bs)";
+	// ...
+	tasa_dolar_td.textContent = fila["tasa_dolar"] + " Bs";
+	// Para que los estados tengan colores
+	estado_td.textContent = fila["estado"];
 
-	fecha_td.textContent = datos.fecha;
-	monto_td.textContent = datos.monto;
-	tasa_dolar_td.textContent = datos.tasa_dolar;
-	estado_td.innerHTML = obtenerEstado(datos.estado);
-	metodo_pago_td.textContent = datos.metodo_pago;
-	banco_id_td.textContent = datos.nombre_banco;
-	referencia_td.textContent = datos.referencia;
-	imagen_td.innerHTML = obtenerImagen(datos.imagen);
-	observacion_td.textContent = datos.observacion;
-	mes_anio_td.textContent = datos.mes_anio;
+	if (fila["estado"] === "COMPROBADO") {
+		estado_td.style.color = "green";
+		estado_td.style.fontWeight = "bold";
+	} else if (fila["estado"] === "PENDIENTE") {
+		estado_td.style.color = "orange";
+		estado_td.style.fontWeight = "bold";
+	}
+	// ...
+    metodo_pago_td.textContent = fila["metodo_pago"];
+	banco_id_td.textContent = fila["nombre_banco"];
+	referencia_td.textContent = fila["referencia"];
+	imagen_td.textContent = fila["imagen"];
+	observacion_td.textContent = fila["observacion"];
+	mes_anio_td.textContent = fila["mes_anio"];
 
 	let acciones = crearBotones(id_campo); 
 	// creamos los botones de eliminar y modificar
@@ -501,7 +411,6 @@ async function modificar_formulario(e) {
 	banco_id = formulario_usar.querySelector("#banco_id");
 	referencia = formulario_usar.querySelector("#referencia");	
 	observacion = formulario_usar.querySelector("#observacion");
-	mensualidad_id = formulario_usar.querySelector("#mensualidad_id");
  
 	// le damos valor
 	fecha.value = data.fecha;
@@ -512,7 +421,6 @@ async function modificar_formulario(e) {
 	banco_id.value = data.banco_id;
 	referencia.value = data.referencia;
 	observacion.value = data.observacion;
-	mensualidad_id.value = data.mensualidad_id;
 	// ...
  
 	// Mostrar nombre de imagen, esos id estan en el formulario
@@ -593,6 +501,7 @@ async function modificar(id) {
 	//Guardamos los datos del formulario
 	let fecha = formulario_usar.querySelector("#fecha").value,
 	monto = formulario_usar.querySelector("#monto").value,
+	nro_apartamento = formulario_usar.querySelector("#nro_apartamento").value,
 	tasa_dolar = formulario_usar.querySelector("#tasa_dolar").value, 	
 	estado = formulario_usar.querySelector("#estado").value,
 	metodo_pago = formulario_usar.querySelector("#metodo_pago").value;
@@ -602,13 +511,13 @@ async function modificar(id) {
 	imagen = formulario_usar.querySelector("#imagen").files[0];
 	observacion	= formulario_usar.querySelector("#observacion").value;
 	mensualidad_id = formulario_usar.querySelector("#mensualidad_id").value;
-	mensualidad = formulario_usar.querySelector("#mensualidad_id").selectedOptions[0].textContent;
 
 	// Le ponemos los datos del formulario
 	datos_consulta.append("id_pago",id);
 
 	datos_consulta.append("fecha",fecha);
 	datos_consulta.append("monto",monto);
+	datos_consulta.append("nro_apartamento",nro_apartamento);	
 	datos_consulta.append("tasa_dolar",tasa_dolar);
 	datos_consulta.append("estado",estado);
 	datos_consulta.append("metodo_pago",metodo_pago);
@@ -655,35 +564,8 @@ async function modificar(id) {
 	// esto de abajo es para editar la fila que se modifico en el data table
 	let acciones = crearBotones(id); // creamos otro botones (no se que tan necesario sea esto)
 
-	let fila_datos = {
-		id_pago: id,
-		fecha,
-		monto,
-		tasa_dolar,
-		estado,
-		metodo_pago,
-		nombre_banco,
-		referencia,
-		imagen: imagen?.name ? "" : "(Sin imagen)",
-		observacion,
-		mes_anio: mensualidad_id
-	};
-
-	let datos = formatearFilaPago(fila_datos);
-
-	data_table.row(`#fila-${id}`).data([
-		datos.fecha,
-		datos.monto,
-		datos.tasa_dolar,
-		obtenerEstado(datos.estado),
-		datos.metodo_pago,
-		datos.nombre_banco,
-		datos.referencia,
-		obtenerImagen(datos.imagen),
-		datos.observacion,
-		datos.mes_anio,
-		acciones.outerHTML
-	]).draw();
+	data_table.row(`#fila-${id}`).data([`${fecha}`,`${monto}`,`${tasa_dolar}`,`${estado}`,`${metodo_pago}`,`${nombre_banco}`,`${referencia}`,`${imagen}`,`${observacion}`,`${mensualidad_id}``${acciones.outerHTML}`])
+	data_table.draw(); // esta funcion refresca la tabla, por si le da sed
 
 	// se le vuelve a poner el evento al boton
 	let fila = document.querySelector(`#fila-${id}`);

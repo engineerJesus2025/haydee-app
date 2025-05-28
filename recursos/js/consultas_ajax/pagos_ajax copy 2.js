@@ -130,7 +130,7 @@ function formatearFilaPago(fila) {
 
 	let estado = fila["estado"];
 
-	let imagen = !fila["imagen"]?.trim() ? "(Sin imagen)" : "";
+	let imagen = fila["imagen"]?.trim() ? "(Imagen)" : "(Sin imagen)";
 
 	return {
 		fecha: fecha_formateada,
@@ -151,19 +151,19 @@ function obtenerImagen(imagen) {
     let color = "";
 
     switch (imagen) {
-        case "(Sin imagen)":
+        case "(Imagen)":
         case 1:
-            texto = "Sin Imagen";
-            color = "warning";
-            break;
-		case "(Imagen)":
-        case 2:
             texto = "Imagen";
             color = "success";
             break;
-        default:
+        case "(Sin imagen)":
+        case 2:
             texto = "Sin Imagen";
             color = "warning";
+            break;
+        default:
+            texto = "Desconocida";
+            color = "secondary";
     }
 
     return `<span class="badge bg-${color}">${texto}</span>`;
@@ -209,7 +209,7 @@ async function registrar() {
 	imagen = formulario_usar.querySelector("#imagen").files[0];
 	observacion = formulario_usar.querySelector("#observacion").value;
 	mensualidad_id = formulario_usar.querySelector("#mensualidad_id").value;
-	mensualidad = formulario_usar.querySelector("#mensualidad_id").selectedOptions[0].textContent;
+	mensualidad = formulario_usar.querySelector("#mensualidad_id").selectedOptions[0].textContent
 
 	// le pasamos los datos por el formData
 	datos_consulta.append("fecha",fecha);
@@ -252,14 +252,12 @@ async function registrar() {
 		metodo_pago,
 		nombre_banco,
 		referencia,
-		imagen: !imagen?.name ? "(Sin imagen)" : "(Imagen)", // solo el nombre si existe
+		imagen: imagen?.name ? "(Hay imagen)" : "(Sin imagen)", // solo el nombre si existe
 		observacion,
 		mes_anio: mensualidad // puedes cambiar esto si usas otro campo formateado
 	};
 
 	let datos = formatearFilaPago(fila);
-
-	console.log(datos);
 
 	await data_table.row.add([
 		datos.fecha,
@@ -501,7 +499,6 @@ async function modificar_formulario(e) {
 	banco_id = formulario_usar.querySelector("#banco_id");
 	referencia = formulario_usar.querySelector("#referencia");	
 	observacion = formulario_usar.querySelector("#observacion");
-	mensualidad_id = formulario_usar.querySelector("#mensualidad_id");
  
 	// le damos valor
 	fecha.value = data.fecha;
@@ -512,7 +509,6 @@ async function modificar_formulario(e) {
 	banco_id.value = data.banco_id;
 	referencia.value = data.referencia;
 	observacion.value = data.observacion;
-	mensualidad_id.value = data.mensualidad_id;
 	// ...
  
 	// Mostrar nombre de imagen, esos id estan en el formulario
@@ -602,7 +598,6 @@ async function modificar(id) {
 	imagen = formulario_usar.querySelector("#imagen").files[0];
 	observacion	= formulario_usar.querySelector("#observacion").value;
 	mensualidad_id = formulario_usar.querySelector("#mensualidad_id").value;
-	mensualidad = formulario_usar.querySelector("#mensualidad_id").selectedOptions[0].textContent;
 
 	// Le ponemos los datos del formulario
 	datos_consulta.append("id_pago",id);
@@ -655,35 +650,8 @@ async function modificar(id) {
 	// esto de abajo es para editar la fila que se modifico en el data table
 	let acciones = crearBotones(id); // creamos otro botones (no se que tan necesario sea esto)
 
-	let fila_datos = {
-		id_pago: id,
-		fecha,
-		monto,
-		tasa_dolar,
-		estado,
-		metodo_pago,
-		nombre_banco,
-		referencia,
-		imagen: imagen?.name ? "" : "(Sin imagen)",
-		observacion,
-		mes_anio: mensualidad_id
-	};
-
-	let datos = formatearFilaPago(fila_datos);
-
-	data_table.row(`#fila-${id}`).data([
-		datos.fecha,
-		datos.monto,
-		datos.tasa_dolar,
-		obtenerEstado(datos.estado),
-		datos.metodo_pago,
-		datos.nombre_banco,
-		datos.referencia,
-		obtenerImagen(datos.imagen),
-		datos.observacion,
-		datos.mes_anio,
-		acciones.outerHTML
-	]).draw();
+	data_table.row(`#fila-${id}`).data([`${fecha}`,`${monto}`,`${tasa_dolar}`,`${estado}`,`${metodo_pago}`,`${nombre_banco}`,`${referencia}`,`${imagen}`,`${observacion}`,`${mensualidad_id}``${acciones.outerHTML}`])
+	data_table.draw(); // esta funcion refresca la tabla, por si le da sed
 
 	// se le vuelve a poner el evento al boton
 	let fila = document.querySelector(`#fila-${id}`);
