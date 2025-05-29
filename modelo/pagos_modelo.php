@@ -150,6 +150,83 @@
             }
         }
 
+        public function consultarPropietarios($correo) {
+
+            $sql = "SELECT 
+                        a.id_apartamento, 
+                        a.nro_apartamento, 
+                        m.id_mensualidad, 
+                        m.mes, 
+                        m.anio, 
+                        m.monto
+                    FROM propietarios p
+                    JOIN apartamentos a ON p.id_propietario = a.propietario_id
+                    LEFT JOIN mensualidad m ON a.id_apartamento = m.apartamento_id
+                    WHERE p.correo = :correo";
+
+            // Prepara conexión
+            $conexion = $this->get_conex()->prepare($sql);
+
+            // Ejecuta consulta con parámetro seguro
+            $result = $conexion->execute(['correo' => $correo]);
+
+            // Obtiene resultados
+            $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
+
+            if ($result == true) {
+                return $datos;
+            } else {
+                return ["estatus" => false, "mensaje" => "Ha ocurrido un error con la consulta"];
+            }
+        }
+
+        public function consultarPropietariosPagos($correo){
+
+            $sql = "SELECT 
+                pagos.id_pago, 
+                pagos.fecha, 
+                pagos.monto, 
+                pagos.tasa_dolar, 
+                pagos.estado, 
+                pagos.metodo_pago, 
+                bancos.nombre_banco, 
+                pagos.referencia, 
+                pagos.imagen, 
+                pagos.observacion, 
+                CONCAT('AP ', apartamentos.nro_apartamento, ': ', 
+                    CASE mensualidad.mes
+                        WHEN 1 THEN 'Enero' WHEN 2 THEN 'Febrero' WHEN 3 THEN 'Marzo'
+                        WHEN 4 THEN 'Abril' WHEN 5 THEN 'Mayo' WHEN 6 THEN 'Junio'
+                        WHEN 7 THEN 'Julio' WHEN 8 THEN 'Agosto' WHEN 9 THEN 'Septiembre'
+                        WHEN 10 THEN 'Octubre' WHEN 11 THEN 'Noviembre' WHEN 12 THEN 'Diciembre'
+                    END, ' ', mensualidad.anio
+                ) AS mes_anio
+            FROM pagos
+            JOIN bancos ON pagos.banco_id = bancos.id_banco
+            JOIN pagos_mensualidad ON pagos.id_pago = pagos_mensualidad.pago_id
+            JOIN mensualidad ON pagos_mensualidad.mensualidad_id = mensualidad.id_mensualidad
+            JOIN apartamentos ON mensualidad.apartamento_id = apartamentos.id_apartamento
+            JOIN propietarios ON apartamentos.propietario_id = propietarios.id_propietario
+            WHERE propietarios.correo = :correo
+            AND pagos.estado = 'PENDIENTE'
+            ORDER BY pagos.fecha DESC";
+
+            // Prepara conexión
+            $conexion = $this->get_conex()->prepare($sql);
+
+            // Ejecuta consulta con parámetro seguro
+            $result = $conexion->execute(['correo' => $correo]);
+
+            // Obtiene resultados
+            $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
+
+            if ($result == true) {
+                return $datos;
+            } else {
+                return ["estatus" => false, "mensaje" => "Ha ocurrido un error con la consulta"];
+            }
+        }
+
         public function consultar(){
 
             //$this->cambiar_db_seguridad();
