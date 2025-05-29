@@ -320,9 +320,9 @@ class Usuario extends Conexion
     {   
         // Validamos el id usuario en caso de editar o eliminar porque en registrar no existe todavia
         if ($consulta == "editar" || $consulta == "eliminar") {
-            if (!(isset($this->id_usuario))) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos no se recibieron correctamente"];}
+            if (!(isset($this->id_usuario))) {return ["estatus"=>false,"mensaje"=>"El id del Usuario requerido no se recibio correctamente"];}
 
-            if (empty($this->id_usuario)) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos estan vacios"];}
+            if (empty($this->id_usuario)) {return ["estatus"=>false,"mensaje"=>"El id del Usuario requerido esta vacio"];}
 
             if(is_numeric($this->id_usuario)){
                 if (!($this->validarClaveForanea("usuarios","id_usuario",$this->id_usuario,true))) {

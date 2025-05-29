@@ -32,7 +32,7 @@ document.querySelector(`#modal_roles`).addEventListener("hide.bs.modal",()=>{
 	boton_formulario.removeAttribute("modificar");
 	boton_formulario.removeAttribute("id_modificar");	
 	boton_formulario.textContent = "Registrar";
-	document.getElementById('titulo_modal').textContent = "Registrar Usuario";	
+	document.getElementById('titulo_modal').textContent = "Registrar Rol";	
 	formulario_usar.querySelectorAll("[class='w-100']").forEach(el=>el.textContent="");
 	input_permisos.forEach(input=>{
 		input.closest(".accordion-collapse").classList.remove("show");
@@ -155,15 +155,23 @@ function llenarTabla(fila) {
 function crearBotones(id) {
 	// Creamos los botones de las acciones
 	let td = document.createElement("td");
+
+	if (id == 1) {
+		td.textContent = 'No Modificable';
+		return td;
+	}
+
 	let acciones = document.createElement("div");
 	acciones.setAttribute("class","row justify-content-start");
 	// le damos la clases de boostrap para que se vea tu sabe'
 
 	// Lo mismo que arriba, pero con modificar
 	let boton_editar = document.createElement("button");
-
+	
 	let icono_editar = document.createElement("i");
 	icono_editar.setAttribute("class", "bi bi-pencil-square")
+	boton_editar.appendChild(icono_editar);
+
 	boton_editar.appendChild(icono_editar);
 
 	boton_editar.setAttribute("type", "button");
@@ -187,6 +195,8 @@ function crearBotones(id) {
 
 		let icono_eliminar = document.createElement("i");// le ponemos un icono
 		icono_eliminar.setAttribute("class", "bi bi-trash");// y estilos
+		boton_eliminar.appendChild(icono_eliminar);
+		
 		boton_eliminar.appendChild(icono_eliminar);
 		
 		// le ponemos todos los atributos que lleva este boton
@@ -323,13 +333,12 @@ async function modificar(id) {
 	//Aqui decimos que vamos a hacer
 	datos_consulta.append('operacion','modificar');
 
-
 	//Llamamos a la funcion para hacer la consulta
 	let respuesta = await query(datos_consulta);
 
 	formulario_usar.reset(); //Limpiamos el formulario
  	modal.hide(); // escondemos el modal
-
+ 	
 	// Resvisamos el resultado
 	if (!respuesta.estatus) {
 		mensajes('error',4000,'Atencion',respuesta.mensaje);

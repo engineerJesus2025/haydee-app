@@ -132,7 +132,8 @@
             //se ejecuta la funcion:
             echo  json_encode($rol_obj->eliminar_rol());
             //igual puse para que siempre retorne un arreglo que dara true o false de acuerdo al resultado
-        }elseif ($operacion == "ultimo_id"){
+        }
+        elseif ($operacion == "ultimo_id"){
             echo json_encode($rol_obj->lastId());
         }
 
