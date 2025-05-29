@@ -21,12 +21,8 @@ if (isset($_POST["operacion"])) {
         $monto = $_POST["monto"];
 
         // Verificamos si ya existe el mes y el año de gasto_mes y sino, se crea
-        $gasto_mes = $gastos_obj->consultar_gasto_mes($mes, $anio);
-        if (!$gasto_mes) {
-            $gastos_obj->registrar_gasto_mes($mes, $anio);
-            $gasto_mes = $gastos_obj->consultar_gasto_mes($mes, $anio);
-        }
-        $gastos_obj->set_gasto_mes_id($gasto_mes["id_gasto_mes"]);
+        //La quite
+        
 
         $tipo_gasto = $_POST["tipo_gasto"];
         $metodo_pago = $_POST["metodo_pago"];
@@ -71,11 +67,15 @@ if (isset($_POST["operacion"])) {
     } elseif ($operacion == "listar_gastos_mes") {
         echo json_encode($gastos_obj->listar_gastos_mes());
     } elseif ($operacion == "filtrar_gastos_mes") {
-        $id_mes = $_POST["gasto_mes_id"];
-        echo json_encode($gastos_obj->filtrar_por_mes($id_mes));
+        // $id_mes = $_POST["gasto_mes_id"]; -> quite esto tambien y lo cambie por fecha
+        $fecha = $_POST["fecha"];
+        $gastos_obj->set_fecha($fecha);
+        echo json_encode($gastos_obj->filtrar_por_mes());
     } elseif ($operacion == "totales_metodo_pago") {
-        $id_mes = $_POST["gasto_mes_id"];
-        echo json_encode($gastos_obj->total_por_metodo_pago($id_mes));
+        $fecha = $_POST["fecha"];
+        $gastos_obj->set_fecha($fecha);
+
+        echo json_encode($gastos_obj->total_por_metodo_pago());
     } elseif ($operacion == "consulta_especifica") {
         $id_gasto = $_POST["id_gasto"];
         $gastos_obj->set_id_gasto($id_gasto);
@@ -88,12 +88,7 @@ if (isset($_POST["operacion"])) {
         $monto = $_POST["monto"];
 
         // Verificamos si ya existe el mes y el año de gasto_mes y sino, se crea
-        $gasto_mes = $gastos_obj->consultar_gasto_mes($mes, $anio);
-        if (!$gasto_mes) {
-            $gastos_obj->registrar_gasto_mes($mes, $anio);
-            $gasto_mes = $gastos_obj->consultar_gasto_mes($mes, $anio);
-        }
-        $gastos_obj->set_gasto_mes_id($gasto_mes["id_gasto_mes"]);
+        //Lo quite
         $id_gasto = $_POST["id_gasto"];
         $fecha = $_POST["fecha"];
         $monto = $_POST["monto"];

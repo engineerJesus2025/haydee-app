@@ -8,7 +8,7 @@ class Notificaciones extends Conexion
     private $descripcion;
     private $fecha;
     private $usuario_id;
-    private $leida;
+    private $activo;
 
     public function __construct()
     {
@@ -65,21 +65,21 @@ class Notificaciones extends Conexion
         return $this->usuario_id;
     }
 
-    public function set_leida($leida)
+    public function set_activo($activo)
     {
-        $this->leida = $leida;
+        $this->activo = $activo;
     }
 
-    public function get_leida()
+    public function get_activo()
     {
-        return $this->leida;
+        return $this->activo;
     }
 
     public function consultar()
     {
         $this->cambiar_db_seguridad();
         $sql = "SELECT id_notificacion, titulo, descripcion, fecha, usuario_id,
-            leida, id_usuario, nombre, usuarios.apellido FROM notificaciones INNER JOIN usuarios ON 
+            activo, id_usuario, nombre, usuarios.apellido FROM notificaciones INNER JOIN usuarios ON 
             usuarios.id_usuario = notificaciones.usuario_id";
         $conexion = $this->get_conex()->prepare($sql);
         $result = $conexion->execute();
@@ -97,8 +97,8 @@ class Notificaciones extends Conexion
     {
         $this->cambiar_db_seguridad();
         $sql = "SELECT id_notificacion, titulo, descripcion, fecha, usuario_id,
-            leida, id_usuario, nombre , usuarios.apellido FROM notificaciones INNER JOIN usuarios ON 
-            usuarios.id_usuario = notificaciones.usuario_id WHERE leida = 0 AND usuarios.id_usuario = :usuario";
+            activo, id_usuario, nombre , usuarios.apellido FROM notificaciones INNER JOIN usuarios ON 
+            usuarios.id_usuario = notificaciones.usuario_id WHERE activo = 0 AND usuarios.id_usuario = :usuario";
 
         $conexion = $this->get_conex()->prepare($sql);
 
@@ -118,7 +118,7 @@ class Notificaciones extends Conexion
     public function agregar_notificacion($titulo,$mensaje,$fecha,$usuario)
     {
         $this->cambiar_db_seguridad();
-        $sql ="INSERT INTO notificaciones(titulo, descripcion, fecha, usuario_id, leida) VALUES (:titulo,:descripcion, :fecha, :usuario_id,0)";
+        $sql ="INSERT INTO notificaciones(titulo, descripcion, fecha, usuario_id, activo) VALUES (:titulo,:descripcion, :fecha, :usuario_id,0)";
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":titulo", $titulo);
         $conexion->bindParam(":descripcion", $mensaje);
@@ -136,10 +136,10 @@ class Notificaciones extends Conexion
         }
     }
 
-    public function marcar_como_leida($id_notificacion)
+    public function marcar_como_activo($id_notificacion)
     {
         $this->cambiar_db_seguridad();
-        $sql = "UPDATE notificaciones SET leida = 1 WHERE id_notificacion = :id_notificacion";
+        $sql = "UPDATE notificaciones SET activo = 1 WHERE id_notificacion = :id_notificacion";
 
         $conexion = $this->get_conex()->prepare($sql);
 

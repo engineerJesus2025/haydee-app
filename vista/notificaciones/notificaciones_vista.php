@@ -47,7 +47,7 @@
                                                 <td><?php echo $registro["titulo"] ?></td>
                                                 <td><?php echo $registro["descripcion"] ?></td>
                                                 <td><?php echo $registro["fecha"] ?></td>
-                                                <td><?php echo ($registro["leida"] == 1) ? "SI" : "NO"; ?></td>
+                                                <td><?php echo ($registro["activo"] == 1) ? "SI" : "NO"; ?></td>
                                             </tr>
                                         <?php endforeach; ?>
                                     </tbody>

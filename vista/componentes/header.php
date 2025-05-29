@@ -56,6 +56,7 @@
                 Hola, <?php echo $_SESSION["nombre_completo"] . " (" . $_SESSION["rol"] . ")"; ?>
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="?pagina=ayuda_controlador.php&accion=inicio">Ayuda</a></li>
                 <li><a class="dropdown-item" href="?pagina=login_controlador.php&accion=cerrar">Salir</a></li>
             </ul>
         </div>

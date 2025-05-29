@@ -1,3 +1,5 @@
+// Francis: Cambie mas que nada nombres en las funciones de abajo
+// Ta` chulo el modulo
 //consultar();
 let data_table, id_eliminado, id_registrado, id_modificar;
 
@@ -600,47 +602,46 @@ async function cargarSelectorMesAnio() {
     const mesActual = String(fechaActual.getMonth() + 1).padStart(2, "0");
     const anioActual = fechaActual.getFullYear();
 
-    let idSeleccionado = null;
+    let fechaSeleccionada = null;
 
     respuesta.forEach(item => {
       if (item.mes && item.anio) {
         const option = document.createElement("option");
         const nombreMes = obtenerNombreMes(item.mes);
-        option.value = item.id_gasto_mes;
+        option.value = item.fecha;
         option.text = `${nombreMes}-${item.anio}`;
         selector.appendChild(option);
 
         // Comparar con el mes/año actual
         if (parseInt(item.mes) == parseInt(mesActual) && parseInt(item.anio) == anioActual) {
-          idSeleccionado = item.id_gasto_mes;
+          fechaSeleccionada = item.fecha;
         }
       }
     });
 
     // Si se encontró el mes actual en la lista, seleccionarlo y cargar sus datos
-    if (idSeleccionado) {
-      selector.value = idSeleccionado;
-      await cargarGastosPorMes(idSeleccionado);
-      await cargarTotalesMetodoPago(idSeleccionado);
+    if (fechaSeleccionada) {
+      selector.value = fechaSeleccionada;
+      await cargarGastosPorMes(fechaSeleccionada);
+      await cargarTotalesMetodoPago(fechaSeleccionada);
     }
   }
 }
 
-
 // Al cambiar el select
 async function cargarDatosPorMes(e) {
-  const id_mes = e.target.value;
-  if (!id_mes) return;
+  const fecha = e.target.value;
+  if (!fecha) return;
 
-  await cargarGastosPorMes(id_mes);
-  await cargarTotalesMetodoPago(id_mes);
+  await cargarGastosPorMes(fecha);
+  await cargarTotalesMetodoPago(fecha);
 }
 
 // Mostrar gastos del mes seleccionado
-async function cargarGastosPorMes(id_mes) {
+async function cargarGastosPorMes(fecha) {
   const datos = new FormData();
   datos.append("operacion", "filtrar_gastos_mes");
-  datos.append("gasto_mes_id", id_mes);
+  datos.append("fecha", fecha);
 
   const respuesta = await query(datos);
 
@@ -686,10 +687,10 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // Mostrar los totales por método de pago
-async function cargarTotalesMetodoPago(id_mes) {
+async function cargarTotalesMetodoPago(fecha) {
     const datos = new FormData();
     datos.append("operacion", "totales_metodo_pago");
-    datos.append("gasto_mes_id", id_mes);
+    datos.append("fecha", fecha);
 
     const respuesta = await query(datos);
     const cuerpo_tabla = document.querySelector("#tabla_totales tbody");

@@ -157,16 +157,16 @@ class Cartelera_virtual extends Conexion
     $titulo = "Cartelera Virtual";
     $descripcion = "Se ha registrado una nueva publicación en la cartelera virtual.";
     $fecha = date('Y-m-d'); 
-    $leida = "0";
+    $activo = "0";
 
     // Obtener todos los usuarios con rol de propietario (rol_id = 2)
-    $sql_usuarios = "SELECT id_usuario FROM usuarios WHERE rol_id = 2";
+    $sql_usuarios = "SELECT id_usuario FROM usuarios WHERE rol_id = 3";
     $conexion_usuarios = $this->get_conex()->prepare($sql_usuarios);
     $conexion_usuarios->execute();
     $usuarios = $conexion_usuarios->fetchAll(PDO::FETCH_ASSOC);
 
-    $sql = "INSERT INTO notificaciones (titulo, descripcion, fecha, usuario_id, leida) 
-            VALUES (:titulo, :descripcion, :fecha, :usuario_id, :leida)";
+    $sql = "INSERT INTO notificaciones (titulo, descripcion, fecha, usuario_id, activo) 
+            VALUES (:titulo, :descripcion, :fecha, :usuario_id, :activo)";
     $conexion = $this->get_conex()->prepare($sql);
 
     $result = true;
@@ -178,7 +178,7 @@ class Cartelera_virtual extends Conexion
         $conexion->bindParam(":descripcion", $descripcion);
         $conexion->bindParam(":fecha", $fecha);
         $conexion->bindParam(":usuario_id", $usuario_id);
-        $conexion->bindParam(":leida", $leida);
+        $conexion->bindParam(":activo", $activo);
         $this->cambiar_db_negocio();
 
 

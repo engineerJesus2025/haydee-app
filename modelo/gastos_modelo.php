@@ -159,7 +159,7 @@ public function consultar_gasto_id() {
 }
 
     public function registrar(){
-        $sql = "INSERT INTO gastos (fecha, monto, tipo_gasto, metodo_pago, referencia, imagen, descripcion_gasto, gasto_mes_id, banco_id, proveedor_id) VALUES (:fecha, :monto, :tipo_gasto, :metodo_pago, :referencia, :imagen, :descripcion_gasto, :gasto_mes_id, :banco_id, :proveedor_id)";
+        $sql = "INSERT INTO gastos (fecha, monto, tipo_gasto, metodo_pago, referencia, imagen, descripcion_gasto, banco_id, proveedor_id) VALUES (:fecha, :monto, :tipo_gasto, :metodo_pago, :referencia, :imagen, :descripcion_gasto, :banco_id, :proveedor_id)";
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":fecha", $this->fecha);
         $conexion->bindParam(":monto", $this->monto);
@@ -168,7 +168,6 @@ public function consultar_gasto_id() {
         $conexion->bindParam(":referencia", $this->referencia);
         $conexion->bindParam(":imagen", $this->imagen);
         $conexion->bindParam(":descripcion_gasto", $this->descripcion_gasto);
-        $conexion->bindParam(":gasto_mes_id", $this->gasto_mes_id);
         $conexion->bindParam(":banco_id", $this->banco_id);
         $conexion->bindParam(":proveedor_id", $this->proveedor_id);
         $result = $conexion->execute();
@@ -180,7 +179,7 @@ public function consultar_gasto_id() {
     }
 
     public function editar_gasto(){
-        $sql = "UPDATE gastos SET fecha = :fecha, monto = :monto, tipo_gasto = :tipo_gasto, tasa_dolar = :tasa_dolar, metodo_pago = :metodo_pago, referencia = :referencia, imagen = :imagen, descripcion_gasto = :descripcion_gasto, gasto_mes_id = :gasto_mes_id, banco_id = :banco_id, proveedor_id = :proveedor_id WHERE id_gasto = :id_gasto";
+        $sql = "UPDATE gastos SET fecha = :fecha, monto = :monto, tipo_gasto = :tipo_gasto, tasa_dolar = :tasa_dolar, metodo_pago = :metodo_pago, referencia = :referencia, imagen = :imagen, descripcion_gasto = :descripcion_gasto, banco_id = :banco_id, proveedor_id = :proveedor_id WHERE id_gasto = :id_gasto";
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":id_gasto", $this->id_gasto);
         $conexion->bindParam(":fecha", $this->fecha);
@@ -191,7 +190,6 @@ public function consultar_gasto_id() {
         $conexion->bindParam(":referencia", $this->referencia);
         $conexion->bindParam(":imagen", $this->imagen);
         $conexion->bindParam(":descripcion_gasto", $this->descripcion_gasto);
-        $conexion->bindParam(":gasto_mes_id", $this->gasto_mes_id);
         $conexion->bindParam(":banco_id", $this->banco_id);
         $conexion->bindParam(":proveedor_id", $this->proveedor_id);
         $result = $conexion->execute();
@@ -260,18 +258,20 @@ public function consultar_gasto_mes($mes, $anio) {
 }
 
 public function listar_gastos_mes() {
-    $sql = "SELECT gm.id_gasto_mes, gm.mes, gm.anio
-            FROM gastos_mes gm
-            INNER JOIN gastos g ON g.gasto_mes_id = gm.id_gasto_mes
-            GROUP BY gm.id_gasto_mes, gm.mes, gm.anio
-            ORDER BY gm.anio DESC, gm.mes DESC";
+    //Cambie la consulta y ahora solo usa el propio gasto
+    $sql = "SELECT g.fecha , MONTH(g.fecha) as mes, YEAR(g.fecha) as anio
+            FROM gastos g     
+            GROUP BY MONTH(g.fecha), YEAR(g.fecha)
+            ORDER BY YEAR(g.fecha) DESC,  MONTH(g.fecha) DESC";
 
     $conexion = $this->get_conex()->prepare($sql);
     $conexion->execute();
     return $conexion->fetchAll(PDO::FETCH_ASSOC);
 }
 
-public function filtrar_por_mes($gasto_mes_id) {
+public function filtrar_por_mes() {
+    list($anio_buscar,$mes_buscar) = explode('-', $this->fecha);
+    // esto de arriba saca el mes y año de la fecha y con eso buscamos
     $sql = "SELECT 
                 g.id_gasto,
                 g.fecha,
@@ -286,17 +286,22 @@ public function filtrar_por_mes($gasto_mes_id) {
             FROM gastos g
             LEFT JOIN bancos b ON g.banco_id = b.id_banco
             LEFT JOIN proveedores p ON g.proveedor_id = p.id_proveedor
-            WHERE g.gasto_mes_id = :id";
+            WHERE MONTH(g.fecha) = :mes && YEAR(g.fecha) = :anio";
 
     $conexion = $this->get_conex()->prepare($sql);
-    $conexion->bindParam(":id", $gasto_mes_id);
+    $conexion->bindParam(":mes", $mes_buscar);
+    $conexion->bindParam(":anio", $anio_buscar);
     $conexion->execute();
     return $conexion->fetchAll(PDO::FETCH_ASSOC);
 }
-public function total_por_metodo_pago($gasto_mes_id) {
-    $sql = "SELECT metodo_pago, SUM(monto) as total FROM gastos WHERE gasto_mes_id = :id GROUP BY metodo_pago";
+
+public function total_por_metodo_pago() {
+    list($anio_buscar,$mes_buscar) = explode('-', $this->fecha);
+    $sql = "SELECT metodo_pago, SUM(monto) as total FROM gastos WHERE MONTH(gastos.fecha) = :mes && YEAR(gastos.fecha) = :anio GROUP BY metodo_pago";
+
     $conexion = $this->get_conex()->prepare($sql);
-    $conexion->bindParam(":id", $gasto_mes_id);
+    $conexion->bindParam(":mes", $mes_buscar);
+    $conexion->bindParam(":anio", $anio_buscar);
     $conexion->execute();
     return $conexion->fetchAll(PDO::FETCH_ASSOC);
 }

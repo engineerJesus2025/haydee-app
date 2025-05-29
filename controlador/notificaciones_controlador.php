@@ -13,7 +13,7 @@ if($accion == "quitar"){
 
     $id_notificacion = $_POST["id"];	
 
-    $resultado = $notificaciones->marcar_como_leida($id_notificacion);
+    $resultado = $notificaciones->marcar_como_activo($id_notificacion);
     $indices_notificaciones = array_keys($_SESSION["notificaciones"]);
             
     foreach ($indices_notificaciones as $indice) {        
