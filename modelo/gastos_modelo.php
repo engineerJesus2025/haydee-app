@@ -159,7 +159,7 @@ public function consultar_gasto_id() {
 }
 
     public function registrar(){
-        $sql = "INSERT INTO gastos (fecha, monto, tipo_gasto, metodo_pago, referencia, imagen, descripcion_gasto, gasto_mes_id, banco_id, proveedor_id) VALUES (:fecha, :monto, :tipo_gasto, :metodo_pago, :referencia, :imagen, :descripcion_gasto, :gasto_mes_id, :banco_id, :proveedor_id)";
+        $sql = "INSERT INTO gastos (fecha, monto, tipo_gasto, metodo_pago, referencia, imagen, descripcion_gasto, banco_id, proveedor_id) VALUES (:fecha, :monto, :tipo_gasto, :metodo_pago, :referencia, :imagen, :descripcion_gasto, :banco_id, :proveedor_id)";
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":fecha", $this->fecha);
         $conexion->bindParam(":monto", $this->monto);
@@ -168,7 +168,6 @@ public function consultar_gasto_id() {
         $conexion->bindParam(":referencia", $this->referencia);
         $conexion->bindParam(":imagen", $this->imagen);
         $conexion->bindParam(":descripcion_gasto", $this->descripcion_gasto);
-        $conexion->bindParam(":gasto_mes_id", $this->gasto_mes_id);
         $conexion->bindParam(":banco_id", $this->banco_id);
         $conexion->bindParam(":proveedor_id", $this->proveedor_id);
         $result = $conexion->execute();
@@ -180,7 +179,7 @@ public function consultar_gasto_id() {
     }
 
     public function editar_gasto(){
-        $sql = "UPDATE gastos SET fecha = :fecha, monto = :monto, tipo_gasto = :tipo_gasto, tasa_dolar = :tasa_dolar, metodo_pago = :metodo_pago, referencia = :referencia, imagen = :imagen, descripcion_gasto = :descripcion_gasto, gasto_mes_id = :gasto_mes_id, banco_id = :banco_id, proveedor_id = :proveedor_id WHERE id_gasto = :id_gasto";
+        $sql = "UPDATE gastos SET fecha = :fecha, monto = :monto, tipo_gasto = :tipo_gasto, tasa_dolar = :tasa_dolar, metodo_pago = :metodo_pago, referencia = :referencia, imagen = :imagen, descripcion_gasto = :descripcion_gasto, banco_id = :banco_id, proveedor_id = :proveedor_id WHERE id_gasto = :id_gasto";
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":id_gasto", $this->id_gasto);
         $conexion->bindParam(":fecha", $this->fecha);
@@ -191,7 +190,6 @@ public function consultar_gasto_id() {
         $conexion->bindParam(":referencia", $this->referencia);
         $conexion->bindParam(":imagen", $this->imagen);
         $conexion->bindParam(":descripcion_gasto", $this->descripcion_gasto);
-        $conexion->bindParam(":gasto_mes_id", $this->gasto_mes_id);
         $conexion->bindParam(":banco_id", $this->banco_id);
         $conexion->bindParam(":proveedor_id", $this->proveedor_id);
         $result = $conexion->execute();
@@ -308,16 +306,110 @@ public function total_por_metodo_pago() {
     return $conexion->fetchAll(PDO::FETCH_ASSOC);
 }
 
-    public function obtener_imagen_actual()
-    {
-        $sql = "SELECT imagen FROM gastos WHERE id_gasto = :id_gasto";
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":id_gasto", $this->id_gasto);
-        $conexion->execute();
+public function obtener_imagen_actual()
+{
+    $sql = "SELECT imagen FROM gastos WHERE id_gasto = :id_gasto";
+    $conexion = $this->get_conex()->prepare($sql);
+    $conexion->bindParam(":id_gasto", $this->id_gasto);
+    $conexion->execute();
 
-        $resultado = $conexion->fetch(PDO::FETCH_ASSOC);
-        return $resultado ? $resultado["imagen"] : null;
+    $resultado = $conexion->fetch(PDO::FETCH_ASSOC);
+    return $resultado ? $resultado["imagen"] : null;
+}
+//Metodo para el reporte estadistico
+
+public function obtenerIngresosYEgresos($fecha_inicio,$fecha_fin,$balance,$metodo_pago,$tipo_gasto)
+{
+    $sql = '';
+    if ($balance != "Todos") {
+        if ($balance == "Egresos") {
+        $sql .= "SELECT SUM(gastos.monto) as monto, gastos.fecha, 'Egreso' as balance, gastos.metodo_pago, gastos.tipo_gasto FROM gastos WHERE gastos.fecha BETWEEN :fecha_inicio AND :fecha_fin";
+        }
+        else if ($balance == "Ingresos") {
+            $sql .= "SELECT SUM(pagos.monto) as monto, pagos.fecha, 'Ingreso' as balance, pagos.metodo_pago, 'No tiene' as tipo_gasto FROM pagos WHERE pagos.fecha BETWEEN :fecha_inicio AND :fecha_fin";
+            if ($tipo_gasto != "Todos") {
+                if ($tipo_gasto == "Fijo") {
+                    $sql .= " && gastos.tipo_gasto = 'fijo'";
+                }
+                else if($tipo_gasto == "Variable"){
+                    $sql .= " && gastos.tipo_gasto = 'variable'";
+                }
+            }
+        }
+        if ($metodo_pago != "Todos") {
+            if ($metodo_pago == "Pago Movil") {
+                $sql .= " && metodo_pago = 'pago_movil'";
+            }
+            else if($metodo_pago == "Transferencia"){
+                $sql .= " && metodo_pago = 'transferencia'";
+            }
+            else if ($metodo_pago == "Efectivo"){
+                $sql .= " && metodo_pago = 'efectivo'";
+            }
+        }
+
+        if ($balance == "Egresos") {
+            $sql .= " GROUP BY MONTH(gastos.fecha)";
+        }
+        else if ($balance == "Ingresos") {
+            $sql .= " GROUP BY MONTH(pagos.fecha)";
+        }
     }
+    else{
+        if ($metodo_pago != "Todos") {
+            if ($metodo_pago == "Pago Movil") {
+                $sql .= "SELECT SUM(pagos.monto) as monto, pagos.fecha, 'Ingreso' as balance, pagos.metodo_pago, 'No tiene' as tipo_gasto FROM pagos WHERE pagos.fecha BETWEEN :fecha_inicio AND :fecha_fin && metodo_pago = 'pago_movil' GROUP BY MONTH(pagos.fecha)
+                UNION
+                SELECT SUM(gastos.monto) as monto, gastos.fecha, 'Egreso' as balance, gastos.metodo_pago, gastos.tipo_gasto FROM gastos WHERE gastos.fecha BETWEEN :fecha_inicio AND :fecha_fin && metodo_pago = 'pago_movil'";
+            }
+            else if($metodo_pago == "Transferencia"){
+                $sql .= "SELECT SUM(pagos.monto) as monto, pagos.fecha, 'Ingreso' as balance, pagos.metodo_pago, 'No tiene' as tipo_gasto FROM pagos WHERE pagos.fecha BETWEEN :fecha_inicio AND :fecha_fin && metodo_pago = 'transferencia' GROUP BY MONTH(pagos.fecha)
+                UNION
+                SELECT SUM(gastos.monto) as monto, gastos.fecha, 'Egreso' as balance, gastos.metodo_pago, gastos.tipo_gasto FROM gastos WHERE gastos.fecha BETWEEN :fecha_inicio AND :fecha_fin && metodo_pago = 'transferencia'";
+            }
+            else if ($metodo_pago == "Efectivo"){
+                $sql .= "SELECT SUM(pagos.monto) as monto, pagos.fecha, 'Ingreso' as balance, pagos.metodo_pago, 'No tiene' as tipo_gasto FROM pagos WHERE pagos.fecha BETWEEN :fecha_inicio AND :fecha_fin && metodo_pago = 'efectivo' GROUP BY MONTH(pagos.fecha)
+                UNION
+                SELECT SUM(gastos.monto) as monto, gastos.fecha, 'Egreso' as balance, gastos.metodo_pago, gastos.tipo_gasto FROM gastos WHERE gastos.fecha BETWEEN :fecha_inicio AND :fecha_fin && metodo_pago = 'efectivo'";
+            }
+            if ($tipo_gasto != "Todos") {
+                if ($tipo_gasto == "Fijo") {
+                    $sql .= " && gastos.tipo_gasto = 'fijo'";
+                }
+                else if($tipo_gasto == "Variable"){
+                    $sql .= " && gastos.tipo_gasto = 'variable'";
+                }
+            }
+            $sql .= " GROUP BY MONTH(gastos.fecha)";
+        }
+        else{
+            $sql .= "SELECT SUM(pagos.monto) as monto, pagos.fecha, 'Ingreso' as balance, pagos.metodo_pago, 'No tiene' as tipo_gasto FROM pagos WHERE pagos.fecha BETWEEN :fecha_inicio AND :fecha_fin GROUP BY MONTH(pagos.fecha)
+                UNION
+                SELECT SUM(gastos.monto) as monto, gastos.fecha, 'Egreso' as balance, gastos.metodo_pago, gastos.tipo_gasto FROM gastos WHERE gastos.fecha BETWEEN :fecha_inicio AND :fecha_fin";
 
+            if ($tipo_gasto != "Todos") {
+                if ($tipo_gasto == "Fijo") {
+                    $sql .= " && gastos.tipo_gasto = 'fijo'";
+                }
+                else if($tipo_gasto == "Variable"){
+                    $sql .= " && gastos.tipo_gasto = 'variable'";
+                }
+            }
+            $sql .= " GROUP BY MONTH(gastos.fecha)";
+        }
+    }
+    
+    $conexion = $this->get_conex()->prepare($sql);
+    $conexion->bindParam(":fecha_inicio", $fecha_inicio);
+    $conexion->bindParam(":fecha_fin", $fecha_fin);
+    $result = $conexion->execute();
+    $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
+
+    if ($result) {
+        return ["estatus" => true, "mensaje" => $datos];
+    } else {
+        return ["estatus" => false, "mensaje" => "Ha ocurrido un error con la consulta"];
+    }
+}
 
 }
