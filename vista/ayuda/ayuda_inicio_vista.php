@@ -64,7 +64,7 @@
     const modulos = [
         {
             nombre: "PAGOS",
-            descripcion: "Este módulo permite gestionar funcionalidades relacionadas con pagos. Aquí aprenderás lo básico para comenzar.",
+            descripcion: "Este módulo permite gestionar funcionalidades relacionadas con pagos.",
             imagenes: [
                 { src: "recursos/img/ayuda/pagos/1.webp", texto: "Vista principal del módulo de pagos. También puedes ver los botones para editar y eliminar algún pago." },
                 { src: "recursos/img/ayuda/pagos/2.webp", texto: "Formulario para registrar un nuevo pago." }
@@ -82,8 +82,69 @@
             nombre: "CONCILIACIÓN BANCARIA",
             descripcion: "Este módulo permite gestionar las funcionalidades relacionadas con conciliación bancaria.",
             imagenes: [
-                { src: "recursos/img/ayuda/conciliacion/1.webp", texto: "Vista principal del módulo de conciliación bancaria." },
+                { src: "recursos/img/ayuda/conciliacion/1.webp", texto: "Vista principal del módulo de conciliación bancaria. Tambien puedes ver el resumen de conciliación bancaria." },
                 { src: "recursos/img/ayuda/conciliacion/2.webp", texto: "Formulario para registrar una nueva conciliación bancaria." }
+            ]
+        },
+        {
+            nombre: "MENSUALIDAD",
+            descripcion: "Este módulo permite gestionar las funcionalidades relacionadas con mensualidad.",
+            imagenes: [
+                { src: "recursos/img/ayuda/mensualidad/1.webp", texto: "Vista principal del módulo de mensualidad. Tambien puedes ver los botones para editar y eliminar alguna mensualidad." },
+                { src: "recursos/img/ayuda/mensualidad/2.webp", texto: "Formulario para registrar una nueva mensualidad." }
+            ]
+        },
+        {
+            nombre: "CARTELERA VIRTUAL",
+            descripcion: "Este módulo permite gestionar las funcionalidades relacionadas con la cartelera virtual.",
+            imagenes: [
+                { src: "recursos/img/ayuda/cartelera/1.webp", texto: "Vista principal del módulo de cartelera virtual. Tambien puedes ver ." },
+                { src: "recursos/img/ayuda/cartelera/2.webp", texto: "Formulario para registrar un nuevo usuario." }
+            ]
+        },
+        {
+            nombre: "HABITANTES",
+            descripcion: "Este módulo permite gestionar las funcionalidades relacionadas con habitantes.",
+            imagenes: [
+                { src: "recursos/img/ayuda/habitantes/1.webp", texto: "Vista principal del módulo de habitantes." },
+                { src: "recursos/img/ayuda/habitantes/2.webp", texto: "Formulario para registrar un nuevo habitante." }
+            ]
+        },
+        {
+            nombre: "PROPIETARIOS",
+            descripcion: "Este módulo permite gestionar las funcionalidades relacionadas con propietarios.",
+            imagenes: [
+                { src: "recursos/img/ayuda/propietarios/1.webp", texto: "Vista principal del módulo de propietarios." },
+                { src: "recursos/img/ayuda/propietarios/2.webp", texto: "Formulario para registrar un nuevo propietario." }
+            ]
+        },
+        {
+            nombre: "CONFIGURACIÓN",
+            descripcion: "Este módulo permite gestionar las funcionalidades relacionadas con configuración.",
+            imagenes: [
+                { src: "recursos/img/ayuda/configuracion/1.webp", texto: "Vista principal del módulo de configuración." }
+            ]
+        },
+        {
+            nombre: "USUARIOS",
+            descripcion: "Este módulo permite gestionar las funcionalidades relacionadas con usuarios.",
+            imagenes: [
+                { src: "recursos/img/ayuda/usuarios/1.webp", texto: "Vista principal del módulo de usuarios." },
+                { src: "recursos/img/ayuda/usuarios/2.webp", texto: "Formulario para registrar un nuevo usuario." }
+            ]
+        },
+        {
+            nombre: "SEGURIDAD",
+            descripcion: "Este módulo permite gestionar las funcionalidades relacionadas con seguridad.",
+            imagenes: [
+                { src: "recursos/img/ayuda/seguridad/1.webp", texto: "Vista principal del módulo de seguridad." },
+            ]
+        },
+        {
+            nombre: "NOTIFICACIONES",
+            descripcion: "Este módulo permite gestionar las funcionalidades relacionadas con notificaciones.",
+            imagenes: [
+                { src: "recursos/img/ayuda/notificaciones/1.webp", texto: "Vista principal del módulo de notificaciones." }
             ]
         }
 
