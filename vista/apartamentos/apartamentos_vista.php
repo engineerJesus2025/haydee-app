@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
- 
+
 <head>
-    <title>Habitantes | Inicio</title>
+    <title>Apartamentos | Inicio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php
     require_once "vista/componentes/estilos.php";
@@ -10,14 +10,14 @@
 </head>
 
 <body class="body-pd">
-    <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Habitantes::tiene_permiso(GESTIONAR_HABITANTES, ELIMINAR) ?>">
-    <input type="text" hidden="" id="permiso_editar" value="<?php echo Habitantes::tiene_permiso(GESTIONAR_HABITANTES, MODIFICAR) ?>">
+    <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Apartamento::tiene_permiso(GESTIONAR_APARTAMENTOS, ELIMINAR) ?>">
+    <input type="text" hidden="" id="permiso_editar" value="<?php echo Apartamento::tiene_permiso(GESTIONAR_APARTAMENTOS, MODIFICAR) ?>">
     <div class="container-fluid">
         <div class="row flex-nowrap ">
 
             <?php
             require_once "vista/componentes/sesion.php";
-            require_once "vista/componentes/navbar.php";
+            require_once "vista/componentes/navbar.php";        
             ?>
 
             <div class="col d-flex flex-column  min-vh-100 gris">
@@ -28,7 +28,7 @@
 
                 <main class="col ps-md-2 pt-2 mb-5">
                     <div class="page-header pt-3">
-                        <h2>HABITANTES</h2>
+                        <h2>APARTAMENTOS</h2>
                     </div>
                     <p class="lead"></p>
                     <hr>
@@ -36,9 +36,9 @@
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="card p-4">
-                                <?php if (Habitantes::tiene_permiso(GESTIONAR_HABITANTES, REGISTRAR)) : ?>
+                                <?php if (Apartamento::tiene_permiso(GESTIONAR_APARTAMENTOS, REGISTRAR)) : ?>
                                     <div class="button mb-4">
-                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_habitantes">Registrar</a>
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_apartamentos">Registrar</a>
                                     </div><br>
                                 <?php endif; ?>
 
@@ -55,36 +55,35 @@
                                     </div>
                                 <?php endif; ?>
 
-                                <table id="tabla_habitantes" class="table" style="width:97%">
+                                <table id="tabla_apartamentos" class="table" style="width:97%">
                                     <thead>
                                         <tr>
-                                            <th>CEDULA</th>
-                                            <th>NOMBRE</th>
-                                            <th>APELLIDO</th>
-                                            <th>FECHA DE NACIMIENTO</th>
-                                            <th>SEXO</th>
-                                            <th>TELEFONO</th>
-                                            <th>APARTAMENTO</th>
+                                            <th>NRO APARTAMENTO</th>
+                                            <th>PARTICIPACION</th>
+                                            <th>GAS</th>
+                                            <th>AGUA</th>
+                                            <th>ALQUILADO</th>
+                                            <th>PROPIETARIO</th>
                                             <th class="text-center">ACCIONES</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td colspan="7"><h4>Cargando...</h4></td>
+                                            <td colspan="7"><h4>No hay apartamentos registrados</h4></td>
                                         </tr>
                                     </tbody>
                                 </table>
-                                <div class="modal fade" id="modal_habitantes" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
+                                <div class="modal fade" id="modal_apartamentos" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
                                     <div class="modal-dialog modal-lg">
                                         <div class="modal-content">
                                             <div class="modal-header">
-                                                <h1 class="modal-title fs-5" id="titulo_modal">Registrar Habitante</h1>
+                                                <h1 class="modal-title fs-5" id="titulo_modal">Registrar Apartamento</h1>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                             </div>
                                             <div class="modal-body">
 
                                                 <?php
-                                                require_once "vista/habitantes/habitantes_modal.php";
+                                                require_once "vista/apartamentos/apartamentos_modal.php";
                                                 ?>
 
                                             </div>
@@ -104,8 +103,8 @@
         </div>
     </div>
 
-<script type="text/javascript" src="recursos/js/validaciones/habitantes_validar.js"></script>
-<script type="text/javascript" src="recursos/js/consultas_ajax/habitantes_ajax.js"></script>
+<script type="text/javascript" src="recursos/js/validaciones/apartamentos_validar.js"></script>
+<script type="text/javascript" src="recursos/js/consultas_ajax/apartamentos_ajax.js"></script>
 
 </body>
 

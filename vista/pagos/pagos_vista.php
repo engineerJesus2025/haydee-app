@@ -2,21 +2,18 @@
 <html>
 
 <head>
-    <meta charset="UTF-8">
+    <title>Pagos | Inicio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cartelera Virtual | Inicio</title>
     <?php
     require_once "vista/componentes/estilos.php";
     ?>
 </head>
 
 <body class="body-pd">
-    <input type="text" hidden="" id="permiso_eliminar"
-        value="<?php echo Cartelera_virtual::tiene_permiso(GESTIONAR_CARTELERA_VIRTUAL, ELIMINAR) ?>">
-    <input type="text" hidden="" id="permiso_editar"
-        value="<?php echo Cartelera_virtual::tiene_permiso(GESTIONAR_CARTELERA_VIRTUAL, MODIFICAR) ?>">
+    <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Pagos::tiene_permiso(GESTIONAR_PAGOS, ELIMINAR) ?>">
+    <input type="text" hidden="" id="permiso_editar" value="<?php echo Pagos::tiene_permiso(GESTIONAR_PAGOS, MODIFICAR) ?>">
     <div class="container-fluid">
-        <div class="row flex-nowrap">
+        <div class="row flex-nowrap ">
 
             <?php
             require_once "vista/componentes/sesion.php";
@@ -30,9 +27,8 @@
                 ?>
 
                 <main class="col ps-md-2 pt-2 mb-5">
-
                     <div class="page-header pt-3">
-                        <h2>CARTELERA VIRTUAL</h2>
+                        <h2>PAGOS</h2>
                     </div>
                     <p class="lead"></p>
                     <hr>
@@ -40,15 +36,13 @@
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="card p-4">
-                                <?php if (Cartelera_virtual::tiene_permiso(GESTIONAR_CARTELERA_VIRTUAL, REGISTRAR)): ?>
+                                <?php if (Pagos::tiene_permiso(GESTIONAR_PAGOS, REGISTRAR)) : ?>
                                     <div class="button mb-4">
-                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                                            data-bs-target="#modal_cartelera">Registrar Publicación</a>
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_pagos">Registrar</a>
                                     </div><br>
                                 <?php endif; ?>
 
-
-                                <?php if (isset($_SESSION["mensaje"])): ?>
+                                <?php if (isset($_SESSION["mensaje"])) : ?>
                                     <div class="row ">
                                         <div class="col-md-12">
                                             <div class="alert alert-danger d-flex align-items-center" role="alert">
@@ -61,40 +55,46 @@
                                     </div>
                                 <?php endif; ?>
 
-                                <table id="tabla_cartelera_virtual" class="table" style="width:97%;">
+                                <table id="tabla_pagos"  style="width:97%">
                                     <thead>
                                         <tr>
                                             <th>FECHA</th>
-                                            <th>TITULO</th>
-                                            <th>AUTOR</th>
-                                            <th>PRIORIDAD</th>
+                                            <th>MONTO</th>
+                                            <th>TASA DEL DOLAR</th>
+                                            <th>ESTADO</th>
+                                            <th>METODO DE PAGO</th>
+                                            <th>BANCO</th>
+                                            <th>REFERENCIA</th>
+                                            <th>IMAGEN</th>
+                                            <th>OBSERVACION</th>
+                                            <th>MENSUALIDAD</th>
                                             <th class="text-center">ACCIONES</th>
+                                        </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td colspan="5">
-                                                <h4>Cargando...</h4>
-                                            </td>
+                                            <td colspan="7"><h4>No hay pagos registrados</h4></td>
                                         </tr>
                                     </tbody>
                                 </table>
-                                <div class="modal fade" id="modal_cartelera" tabindex="-1"
-                                    aria-labelledby="titulo-modal" aria-hidden="true">
-                                    <div class="modal-dialog modal-lg">
+                                <div class="modal fade" id="modal_pagos" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
+                                    <div class="modal-dialog modal-xl">
                                         <div class="modal-content">
                                             <div class="modal-header">
-                                                <h5 class="modal-title" id="titulo_modal">Registrar Publicación</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                    aria-label="Close"></button>
+                                                <h1 class="modal-title fs-5" id="titulo_modal">Registrar Pago</h1>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                             </div>
                                             <div class="modal-body">
+
                                                 <?php
-                                                require_once "vista/cartelera_virtual/cartelera_virtual_modal.php";
+                                                require_once "vista/pagos/pagos_modal.php";
                                                 ?>
+
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+
                             </div>
                         </div>
                     </div>
@@ -113,12 +113,6 @@
                                     aria-label="Cerrar"></button>
                             </div>
                             <div class="modal-body">
-                                <p><strong>Título:</strong> <span id="vista_titulo"></span></p>
-                                <p><strong>Descripción:</strong></p>
-                                <p id="vista_descripcion"></p>
-                                <p><strong>Fecha:</strong> <span id="vista_fecha"></span></p>
-                                <p><strong>Prioridad:</strong> <span id="vista_prioridad"></span></p>
-                                <p><strong>Autor:</strong> <span id="vista_autor"></span></p>
                                 <div class="text-center mt-3">
                                     <img id="vista_imagen" src="" class="img-fluid border rounded"
                                         style="max-height: 300px;" alt="Vista previa de la imagen"
@@ -133,12 +127,13 @@
                         </div>
                     </div>
                 </div>
-
-            </div>
+            </div> 
         </div>
     </div>
+
+<script type="text/javascript" src="recursos/js/validaciones/pagos_validar.js"></script>
+<script type="text/javascript" src="recursos/js/consultas_ajax/pagos_ajax.js"></script>
+
 </body>
-<script type="text/javascript" src="recursos/js/validaciones/cartelera_virtual_validar.js"></script>
-<script type="text/javascript" src="recursos/js/consultas_ajax/cartelera_virtual_ajax.js"></script>
 
 </html>

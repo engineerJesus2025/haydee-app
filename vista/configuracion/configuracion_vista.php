@@ -46,7 +46,7 @@
                         </div>
                         <div class="col-md-3 col-12">
                             <div class="card mb-3 shadow" title="Gestionar los Apartamentos">
-                                <a href="#" class="text-decoration-none text-black">
+                                <a href="?pagina=apartamentos_controlador.php&accion=inicio" class="text-decoration-none text-black">
                                     <div class="card-header text-center bg-white border-bottom-0 p-0">
                                         <i class="bi bi-building" style="font-size: 5rem !important;"></i>
                                     </div>

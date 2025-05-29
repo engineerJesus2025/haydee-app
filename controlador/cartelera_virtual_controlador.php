@@ -19,40 +19,45 @@ if (isset($_POST["operacion"])) {
     $cartelera_virtual_obj->set_usuario_id($usuario_id);
 
     //Despues de cada echo se regresa al javascript como respuesta en json
+
+    // ----------- REGISTRAR ---------------
     if ($operacion == "registrar") {
-        //se guardan las variables a registrar
         $titulo = $_POST["titulo"];
         $descripcion = $_POST["descripcion"];
         $fecha = $_POST["fecha"];
         $prioridad = $_POST["prioridad"];
-        // PROCESAR IMAGEN
+
+
+        // PARA INSERTAR UNA IMAGEN (ESTO FUE UN PEO)
         $nombre_archivo = '';
         if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === 0) {
             $nombre_original = $_FILES['imagen']['name'];
             $temporal = $_FILES['imagen']['tmp_name'];
             $extension = pathinfo($nombre_original, PATHINFO_EXTENSION);
 
+            // ESTO ES PARA QUE SE GUARDE LA IMAGEN CON EL NOMBRE ORIGINAL + UNOS NUMEROS RANDOM PARA EVITAR DUPLICACION
+            $nombre_sanitizado = preg_replace("/[^a-zA-Z0-9-_\.]/", "_", pathinfo($nombre_original, PATHINFO_FILENAME));
+            $nombre_archivo = $nombre_sanitizado . '_' . time() . '.' . $extension;
+
+            // AQUI ES DONDE SE VA A GUARDAR LA IMAGEN FISICAMENTE
             $ruta_destino = "recursos/img/";
+            // ESTO NUNCA VA A PASAR!! PERO POR SI ACASO (BASICAMENTE SI NO EXISTE LA RUTA, SE CREA)
             if (!is_dir($ruta_destino)) {
-                mkdir($ruta_destino, 0777, true); // Crea la carpeta si no existe
+                mkdir($ruta_destino, 0777, true);
             }
-
-            // Crear nombre único
-            $nombre_archivo = uniqid('img_') . '.' . $extension;
-
-            // Mover archivo
+            // AQUI SE CAMBIA LA RUTA DE LA IMAGEN, DE UNA IMAGEN TEMPORAL A LA RUTA DE DESTINO FISICA
             move_uploaded_file($temporal, $ruta_destino . $nombre_archivo);
         }
 
-        //se usan los setters correspondientes
         $cartelera_virtual_obj->set_titulo($titulo);
         $cartelera_virtual_obj->set_descripcion($descripcion);
         $cartelera_virtual_obj->set_fecha($fecha);
         $cartelera_virtual_obj->set_imagen($nombre_archivo);
         $cartelera_virtual_obj->set_prioridad($prioridad);
 
-        //se ejecuta la funcion:    
         echo json_encode($cartelera_virtual_obj->registrar());
+
+
     } elseif ($operacion == "consulta_especifica") {
         //se guardan el id para buscar
         $id_cartelera = $_POST["id_cartelera"];
@@ -63,47 +68,80 @@ if (isset($_POST["operacion"])) {
         // llamamos a la funcion, lo convertimos a json y la mandamos al js con echo
         echo json_encode($cartelera_virtual_obj->consultar_cartelera_id());
         // igual hice para que retorne un arreglo, si sale vacio solo mandara un array con false
+
+        // ----------- MODIFICAR ---------------
     } elseif ($operacion == "modificar") {
-        //se guardan las variables a modificar
         $id_cartelera = $_POST["id_cartelera"];
         $titulo = $_POST["titulo"];
         $descripcion = $_POST["descripcion"];
         $fecha = $_POST["fecha"];
         $prioridad = $_POST["prioridad"];
+        $eliminar_imagen = isset($_POST["eliminar_imagen"]);
 
-        //IMAGEN
-        $nombre_archivo = $cartelera_virtual_obj->obtener_imagen_actual(); // necesitas implementar esto
+        $nombre_archivo = $cartelera_virtual_obj->obtener_imagen_actual();
+        if (!empty($nombre_archivo)) {
+            $ruta_imagen = "recursos/img/" . $nombre_archivo;
 
+            // Eliminar imagen si el usuario lo pidió y el archivo existe
+            if ($eliminar_imagen && file_exists($ruta_imagen) && is_file($ruta_imagen)) {
+                unlink($ruta_imagen);
+                $nombre_archivo = '';
+            }
+        } else {
+            $ruta_imagen = ''; // No hay imagen previa
+        }
+
+        //  Reemplazo de imagen
         if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === 0) {
+            // Si hay imagen previa, se elimina
+            if (!empty($nombre_archivo) && file_exists("recursos/img/" . $nombre_archivo) && is_file("recursos/img/" . $nombre_archivo)) {
+                unlink("recursos/img/" . $nombre_archivo);
+            }
+            
+            // LO MISMO QUE EN REGISTRAR
             $nombre_original = $_FILES['imagen']['name'];
             $temporal = $_FILES['imagen']['tmp_name'];
             $extension = pathinfo($nombre_original, PATHINFO_EXTENSION);
-            $nombre_archivo = uniqid('img_') . '.' . $extension;
+            $nombre_sanitizado = preg_replace("/[^a-zA-Z0-9-_\.]/", "_", pathinfo($nombre_original, PATHINFO_FILENAME));
+            $nombre_archivo = $nombre_sanitizado . '_' . time() . '.' . $extension;
+
             move_uploaded_file($temporal, "recursos/img/" . $nombre_archivo);
         }
 
-        // Luego
-        $cartelera_virtual_obj->set_imagen($nombre_archivo);
-
-        //se usan los setters correspondientes
         $cartelera_virtual_obj->set_id_cartelera($id_cartelera);
         $cartelera_virtual_obj->set_titulo($titulo);
         $cartelera_virtual_obj->set_descripcion($descripcion);
         $cartelera_virtual_obj->set_fecha($fecha);
         $cartelera_virtual_obj->set_imagen($nombre_archivo);
         $cartelera_virtual_obj->set_prioridad($prioridad);
-        //se ejecuta la funcion:    
+
         echo json_encode($cartelera_virtual_obj->editar_publicacion());
+        
     } elseif ($operacion == "eliminar") {
-        //se guardan el id para eliminar
-        $id_cartelera = $_POST["id_cartelera"];
+    // Se guarda el id de la publicación a eliminar
+    $id_cartelera = $_POST["id_cartelera"];
+    $cartelera_virtual_obj->set_id_cartelera($id_cartelera);
 
-        //se usan el setter correspondientes
-        $cartelera_virtual_obj->set_id_cartelera($id_cartelera);
+    //  Consultar la imagen antes de eliminar
+    $datos = $cartelera_virtual_obj->consultar_cartelera_id(); // debe retornar imagen
 
-        // llamamos a la funcion, lo convertimos a json y la mandamos al js con echo
-        echo json_encode($cartelera_virtual_obj->eliminar_publicacion());
-    } elseif ($operacion == "ultimo_id") {
+    if ($datos && isset($datos[0]["imagen"]) && $datos[0]["imagen"] !== "") {
+        $nombre_imagen = $datos[0]["imagen"];
+        $ruta = "recursos/img/" . $nombre_imagen;
+
+        // Eliminar imagen físicamente 
+        if (file_exists($ruta) && is_file($ruta)) {
+            unlink($ruta);
+        }
+    }
+
+    // 🗑 Eliminar la publicación de la base de datos
+    echo json_encode($cartelera_virtual_obj->eliminar_publicacion());
+} 
+    
+    
+    
+    elseif ($operacion == "ultimo_id") {
         echo json_encode($cartelera_virtual_obj->lastId());
     }
 

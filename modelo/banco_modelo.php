@@ -66,7 +66,7 @@
         // Metodos CRUD entre otros
         public function verificar_banco(){  // Verifica si existe el banco para así ver si se registra o no.
 
-            //$this->cambiar_db_seguridad();
+            //$this->cambiar_db_seguridad(); // va documentada
 
             // 1) Se guarda una sentencia sql en una variable (la variable sql).
             $sql = "SELECT * FROM bancos WHERE numero_cuenta = :numero_cuenta"; 
@@ -119,7 +119,7 @@
             */
             $datos = $conexion->fetch(PDO::FETCH_ASSOC);
 
-            //$this->cambiar_db_negocio();
+            //$this->cambiar_db_negocio(); // va documentada
             /* 
                 La función "isset" verifica si una variable existe o no.
 
@@ -139,7 +139,7 @@
 
         public function consultar(){
 
-            //$this->cambiar_db_seguridad();
+            //$this->cambiar_db_seguridad(); // Esta va documentada
 
             // 1) Sentencia SQL de toda la vida.
             $sql = "SELECT * FROM `bancos` ORDER BY id_banco";
@@ -194,8 +194,8 @@
 
         public function registrar_banco(){
             //Validamos los datos obtenidos del controlador (validaciones back-end)
-            //$validaciones = $this->validarDatos();
-            //if(!($validaciones["estatus"])){return $validaciones;}
+            $validaciones = $this->validarDatos();
+            if(!($validaciones["estatus"])){return $validaciones;}
             
             //$this->cambiar_db_seguridad();
 
@@ -209,7 +209,7 @@
             $conexion->bindParam(":cedula_afiliada", $this->cedula_afiliada);
             $result = $conexion->execute();
 
-            $this->cambiar_db_negocio();
+            //$this->cambiar_db_negocio();
 
             if ($result) {
                 $id_ultimo = $this->lastId();//obtenemos el ultimo id
@@ -226,8 +226,8 @@
 
         public function editar_banco(){
             //Validamos los datos obtenidos del controlador
-            //$validaciones = $this->validarDatos("editar");
-            //if(!($validaciones["estatus"])){return $validaciones;}        
+            $validaciones = $this->validarDatos("editar");
+            if(!($validaciones["estatus"])){return $validaciones;}        
 
             //$this->cambiar_db_seguridad();
 
@@ -243,7 +243,7 @@
 
             $result = $conexion->execute();
 
-            $this->cambiar_db_negocio();        
+            //$this->cambiar_db_negocio();        
             
             if ($result) {
                 $banco_alterado = $this->consultar_banco();
@@ -257,8 +257,8 @@
 
         public function eliminar_banco(){
             //Validamos los datos obtenidos del controlador
-            //$validaciones = $this->validarDatos("eliminar");
-            //if(!($validaciones["estatus"])){return $validaciones;}
+            $validaciones = $this->validarDatos("eliminar");
+            if(!($validaciones["estatus"])){return $validaciones;}
             
             $banco_alterado = $this->consultar_banco();
 
@@ -294,6 +294,60 @@
             } else {
                 return ["estatus"=>false,"mensaje"=>"Error en la consulta"];
             } 
+        }
+
+        private function validarDatos($consulta = "registrar"){   
+            // Validamos el id usuario en caso de editar o eliminar porque en registrar no existe todavia
+            if ($consulta == "editar" || $consulta == "eliminar") {
+                if (!(isset($this->id_banco))) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos no se recibieron correctamente"];}
+
+                if (empty($this->id_banco)) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos estan vacios"];}
+
+            } 
+            // Validamos que los campos enviados si existan
+
+            if (!(isset($this->nombre_banco) && isset($this->codigo) && isset($this->numero_cuenta) && isset($this->telefono_afiliado) && isset($this->cedula_afiliada))) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos no se recibieron correctamente"];}
+
+            // Validamos que los campos enviados no esten vacios
+
+            if (empty($this->nombre_banco) || empty($this->codigo) ||empty($this->numero_cuenta) || empty($this->telefono_afiliado) || empty($this->cedula_afiliada)) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos estan vacios"];}
+
+            // Verificamos si los valores tienen los datos que deberian
+            
+            if(!(is_string($this->nombre_banco)) || !(preg_match("/^[A-Za-z \b]{3,30}$/",$this->nombre_banco))){
+                return ["estatus"=>false,"mensaje"=>"El campo 'Nombre del Banco' no posee un valor valido"];
+            }
+            if(!(is_numeric($this->codigo)) || !(preg_match("/^[0-9\b]{4}$/",$this->codigo))){
+                return ["estatus"=>false,"mensaje"=>"El campo 'Codigo' no posee un valor valido"];
+            }
+            if(!(is_numeric($this->numero_cuenta)) || !(preg_match("/^[0-9\b]{18,30}$/",$this->numero_cuenta))){
+                return ["estatus"=>false,"mensaje"=>"El campo 'Numero de Cuenta' no posee un valor valido"];
+            }
+            if(!(is_numeric($this->telefono_afiliado)) || !(preg_match("/^[0-9\b]{11}$/",$this->telefono_afiliado))){
+                return ["estatus"=>false,"mensaje"=>"El campo 'Telefono Afiliado' no posee un valor valido"];
+            }
+            if(!(is_numeric($this->cedula_afiliada)) || !(preg_match("/^[0-9\b]{7,8}$/",$this->cedula_afiliada))){
+                return ["estatus"=>false,"mensaje"=>"El campo 'Cedula Afiliada' no posee un valor valido"];
+            }
+            
+            return ["estatus"=>true,"mensaje"=>"OK"];
+        }
+
+        private function validarClaveForanea($tabla,$nombreClave,$valor,$seguridad = false){
+            if ($seguridad) {
+                $this->cambiar_db_seguridad();
+            }
+            $sql="SELECT * FROM $tabla WHERE $nombreClave =:valor";
+
+            $conexion = $this->get_conex()->prepare($sql);
+            $conexion->bindParam(":valor", $valor);
+            $conexion->execute();
+            $result = $conexion->fetch(PDO::FETCH_ASSOC);
+
+            if ($seguridad) {
+                $this->cambiar_db_negocio();
+            }
+            return ($result)?true:false;
         }
     }   
 ?>

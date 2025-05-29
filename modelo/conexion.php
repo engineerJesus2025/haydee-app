@@ -34,7 +34,6 @@ class Conexion extends PDO
         return $this->conex;
     }
 
-
     public function registrar_bitacora($accion, $modulo_id, $registro_alt){
         $this->cambiar_db_seguridad();
 

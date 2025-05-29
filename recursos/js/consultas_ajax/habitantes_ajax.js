@@ -52,6 +52,7 @@ async function registrar() {
     sexo = formulario_usar.querySelector("#sexo").value,
     telefono = formulario_usar.querySelector("#telefono").value,
     apartamento_id = formulario_usar.querySelector("#apartamento_id").value;
+	apartamento = formulario_usar.querySelector("#apartamento_id").selectedOptions[0].text;
 
 	// le pasamos los datos por el formData
 	datos_consulta.append("cedula",cedula);
@@ -60,7 +61,7 @@ async function registrar() {
 	datos_consulta.append("fecha_nacimiento",fecha_nacimiento);
 	datos_consulta.append("sexo",sexo);
     datos_consulta.append("telefono",telefono);
-    datos_consulta.append("apartamento",apartamento_id);
+    datos_consulta.append("apartamento_id",apartamento_id);
 
 	//Aqui decimos que vamos a hacer
 	datos_consulta.append('operacion','registrar');
@@ -82,7 +83,7 @@ async function registrar() {
 	let acciones = crearBotones(id_registrado.mensaje); //Crea botones
 	
 	// esta variable no hace nada, pero me dio error cuando la quite XD
-	let res_data_table = await data_table.row.add([`${cedula}`,`${nombre_habitante}`,`${apellido}`,`${fecha_nacimiento}`,`${sexo}`,`${telefono}`,`${apartamento_id}`,`${acciones.outerHTML}`]).draw();
+	let res_data_table = await data_table.row.add([`${cedula}`,`${nombre_habitante}`,`${apellido}`,`${fecha_nacimiento}`,`${sexo}`,`${telefono}`,`${apartamento}`,`${acciones.outerHTML}`]).draw();
 	// Tiene el await para que lo espere, sino no la pone en la tabla
 
 	mensajes('success',4000,'Atencion','El registro se ha realizado exitosamente');//Mensaje de que se completo la operacion
@@ -147,8 +148,8 @@ function llenarTabla(fila) {
 	fecha_nacimiento_td.textContent = fila["fecha_nacimiento"];
     sexo_td.textContent = fila["sexo"];
     telefono_td.textContent = fila["telefono"];
-    apartamento_id_td.textContent = fila["apartamento_id"];
-
+    apartamento_id_td.textContent = fila["apartamento"];
+ 
 	let acciones = crearBotones(id_campo); 
 	// creamos los botones de eliminar y modificar
 
@@ -189,7 +190,7 @@ function crearBotones(id) {
 	boton_editar.setAttribute("role", "button");
 	boton_editar.setAttribute("aria-disabled", "true");
 	boton_editar.setAttribute("data-bs-toggle", "modal");
-	boton_editar.setAttribute("data-bs-target", "#modal_banco");
+	boton_editar.setAttribute("data-bs-target", "#modal_habitantes");
 
 	boton_editar.setAttribute("title","Editar");
 	boton_editar.setAttribute("value",id);
@@ -301,7 +302,7 @@ async function modificar_formulario(e) {
 
 	// aqui cambiamos los datos del boton para registrar, para saber que ahora se va es a modificar un registro
 	boton_formulario.setAttribute("modificar",true);
-	boton_formulario.setAttribute("id_modificar",data.id_banco);
+	boton_formulario.setAttribute("id_modificar",data.id_habitante);
 	boton_formulario.textContent = "Modificar";
 	document.getElementById('titulo_modal').textContent = "Modificar Habitante";
 	//formulario_usar.querySelector("#confir_contra").parentElement.previousElementSibling.textContent = "Nueva Contraseña" 
@@ -318,13 +319,14 @@ async function modificar(id) {
 	let datos_consulta = new FormData();
 
 	//Guardamos los datos del formulario
-	let cedula = formulario_usar.querySelector("#cedula"),
-	nombre_habitante = formulario_usar.querySelector("#nombre_habitante"),	
-	apellido = formulario_usar.querySelector("#apellido"),	
-	fecha_nacimiento = formulario_usar.querySelector("#fecha_nacimiento");
-    sexo = formulario_usar.querySelector("#sexo");
-    telefono = formulario_usar.querySelector("#telefono");
-    apartamento_id = formulario_usar.querySelector("#apartamento_id");
+	let cedula = formulario_usar.querySelector("#cedula").value,
+	nombre_habitante = formulario_usar.querySelector("#nombre_habitante").value,	
+	apellido = formulario_usar.querySelector("#apellido").value,	
+	fecha_nacimiento = formulario_usar.querySelector("#fecha_nacimiento").value;
+    sexo = formulario_usar.querySelector("#sexo").value;
+    telefono = formulario_usar.querySelector("#telefono").value;
+    apartamento_id = formulario_usar.querySelector("#apartamento_id").value;
+	apartamento = formulario_usar.querySelector("#apartamento_id").selectedOptions[0].text;
 
 	// Le ponemos los datos del formulario
 	datos_consulta.append("id_habitante",id);
@@ -366,7 +368,7 @@ async function modificar(id) {
 	// esto de abajo es para editar la fila que se modifico en el data table
 	let acciones = crearBotones(id); // creamos otro botones (no se que tan necesario sea esto)
 
-	data_table.row(`#fila-${id}`).data([`${cedula}`,`${nombre_habitante}`,`${apellido}`,`${fecha_nacimiento}`,`${sexo}`,`${telefono}`,`${apartamentos_id}`,`${acciones.outerHTML}`])
+	data_table.row(`#fila-${id}`).data([`${cedula}`,`${nombre_habitante}`,`${apellido}`,`${fecha_nacimiento}`,`${sexo}`,`${telefono}`,`${apartamento}`,`${acciones.outerHTML}`])
 	data_table.draw(); // esta funcion refresca la tabla, por si le da sed
 
 	// se le vuelve a poner el evento al boton
@@ -410,7 +412,7 @@ function mensajes(icono,tiempo,titulo,mensaje){
 
 // esta funcion es para incializar el data table
 function init_data_table() {
-	return new DataTable("#tabla_banco",{
+	return new DataTable("#tabla_habitantes",{
             destroy: true,
             responsive: true,
             "scrollX": true,

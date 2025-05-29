@@ -1,46 +1,73 @@
 <form action="?pagina=habitantes_controlador.php&accion=guardar" method="POST" id="form_habitantes" name="form_habitantes">
     <div class="row m-3">
         <div class="col-md-6">
-            <label for="nombre_banco">Nombre del Banco</label>
+            <label for="cedula">Cedula</label>
             <div class="input-group mb-3">
-                <span class="input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
-                <input type="text" class="form-control nombre_banco" name="nombre_banco" id="nombre_banco" placeholder="Nombre del Banco" aria-label="nombre_banco" aria-describedby="basic-addon1" minlength="3" maxlength="30">
+                <span class="input-group-text" id="basic-addon1"><i class="bi bi-person-vcard-fill"></i></span>
+                <input type="text" class="form-control cedula" name="cedula" id="cedula" placeholder="Cedula" aria-label="cedula" aria-describedby="basic-addon1" minlength="3" maxlength="30">
                 <span class="w-100"></span>
             </div>
         </div>
         <div class="col-md-6">
-            <label for="codigo">Codigo del Banco</label>
+            <label for="nombre_habitante">Nombre</label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
-                <input type="text" class="form-control codigo" name="codigo" id="codigo" placeholder="Codigo" aria-label="codigo" aria-describedby="basic-addon1" minlength="3" maxlength="30">
+                <input type="text" class="form-control nombre_habitante" name="nombre_habitante" id="nombre_habitante" placeholder="Nombre" aria-label="nombre_habitante" aria-describedby="basic-addon1" minlength="3" maxlength="30">
                 <span class="w-100"></span>
             </div>
         </div>
     </div>
     <div class="row m-3">
         <div class="col-md-6">
-            <label for="numero_cuenta">Numero de Cuenta</label>
+            <label for="apellido">Apellido</label>
             <div class="input-group mb-3">
-                <span class="input-group-text" id="basic-addon1"><i class="bi bi-envelope-at"></i></span>
-                <input type="text" class="form-control numero_cuenta" name="numero_cuenta" id="numero_cuenta" placeholder="Número de Cuenta" aria-label="numero_cuenta" aria-describedby="basic-addon1" minlength="3" maxlength="60">
+                <span class="input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
+                <input type="text" class="form-control apellido" name="apellido" id="apellido" placeholder="Apellido" aria-label="apellido" aria-describedby="basic-addon1" minlength="3" maxlength="60">
                 <span class="w-100"></span>
             </div>
         </div>
         <div class="col-md-6">
-            <label for="telefono_afiliado">Telefono Afiliado</label>
+            <label for="fecha_nacimiento">Fecha de Nacimiento</label>
             <div class="input-group mb-3">
-                <span class="input-group-text" id="basic-addon1"><i class="bi bi-envelope-at"></i></span>
-                <input type="text" class="form-control telefono_afiliado" name="telefono_afiliado" id="telefono_afiliado" placeholder="Telefono Afiliado" aria-label="telefono_afiliado" aria-describedby="basic-addon1" minlength="3" maxlength="60">
+                <span class="input-group-text" id="basic-addon1"><i class="bi bi-cake2"></i></span>
+                <input type="date" class="form-control fecha_nacimiento" name="fecha_nacimiento" id="fecha_nacimiento" placeholder="Fecha de nacimiento" aria-label="fecha_nacimiento" aria-describedby="basic-addon1">
                 <span class="w-100"></span>
             </div>
         </div>
     </div>
     <div class="row m-3">
         <div class="col-md-6">
-            <label for="cedula_afiliada">Cedula Afiliada</label>
+            <label for="telefono">Telefono</label>
             <div class="input-group mb-3">
-                <span class="input-group-text" id="basic-addon1"><i class="bi bi-envelope-at"></i></span>
-                <input type="text" class="form-control cedula_afiliada" name="cedula_afiliada" id="cedula_afiliada" placeholder="Cedula Afiliada" aria-label="cedula_afiliada" aria-describedby="basic-addon1" minlength="3" maxlength="60">
+                <span class="input-group-text" id="basic-addon1"><i class="bi bi-telephone-fill"></i></span>
+                <input type="text" class="form-control telefono" name="telefono" id="telefono" placeholder="Telefono" aria-label="telefono" aria-describedby="basic-addon1" minlength="3" maxlength="60">
+                <span class="w-100"></span>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <label for="apartamento_id">Apartamento</label>
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="basic-addon1"><i class="bi bi-building"></i></span>
+                <select class="form-select apartamento_id" aria-label="Default select example" id="apartamento_id" name="apartamento_id">
+                    <option selected hidden value="">Seleccione un Apartamento</option>
+                    <?php foreach($registro_apartamento as $apartamento): ?>
+                        <option value="<?php echo $apartamento["id_apartamento"]?>"><?php echo "Nro: ".$apartamento["nro_apartamento"] ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <span class="w-100"></span>
+            </div>
+        </div>
+    </div>
+    <div class="row m-3">
+        <div class="col-md-6">
+            <label for="sexo">Sexo</label>
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="basic-addon1"><i class="bi bi-gender-male"></i></span>
+                <select class="form-select sexo" aria-label="Default select example" for="sexo" name="sexo" id="sexo">
+                    <option selected hidden value="">Seleccione un Sexo</option>
+                    <option value="Masculino">Masculino</option>
+                    <option value="Femenino">Femenino</option>
+                </select>
                 <span class="w-100"></span>
             </div>
         </div>
