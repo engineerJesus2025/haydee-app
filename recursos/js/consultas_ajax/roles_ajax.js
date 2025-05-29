@@ -103,7 +103,7 @@ async function consultar() {
 
 	// Resvisamos el resultado
 	if(!(data.estatus == undefined)){
-		mensajes('error',4000,'Atencion', respuesta.mensaje);
+		mensajes('error',4000,'Atencion', data.mensaje);
 		return;// en caso de error mandamos un mensaje con el error y nos vamos
 	}
 	

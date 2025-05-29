@@ -56,13 +56,17 @@
                             <span class="nav_name">Habitantes</span>
                         </a>
                     <?php endif; ?>
-                    <?php if (Conexion::tiene_permiso(GESTIONAR_PROPIETARIOS, CONSULTAR)): ?>
-                        <a href="?pagina=propietario_controlador.php&accion=inicio"
-                            class="nav_link <?php echo ($_GET["pagina"] == "propietario_controlador.php") ? "active" : ''; ?>"
-                            title="Propietarios">
-                            <i class="bi bi-person-vcard-fill nav_logo-icon"></i>
-                            <span class="nav_name">Propietarios</span>
-                        </a>
+                    <?php if (Conexion::tiene_permiso(GESTIONAR_PROPIETARIOS, CONSULTAR)) : ?>
+                    <a href="?pagina=propietarios_controlador.php&accion=inicio" class="nav_link <?php echo ($_GET["pagina"] == "propietarios_controlador.php")?"active":''; ?>" title="Propietarios"> 
+                        <i class="bi bi-person-vcard-fill nav_logo-icon"></i>
+                        <span class="nav_name">Propietarios</span> 
+                    </a>
+                    <?php endif; ?>
+                    <?php if (Conexion::tiene_permiso(GESTIONAR_REPORTES, CONSULTAR)) : ?>
+                    <a href="?pagina=reportes_controlador.php&accion=inicio" class="nav_link <?php echo ($_GET["pagina"] == "propietarios_controlador.php")?"active":''; ?>" title="Propietarios"> 
+                        <i class="bi bi-card-checklist nav_logo-icon"></i>
+                        <span class="nav_name">Reportes</span> 
+                    </a>
                     <?php endif; ?>
                     <?php if (Conexion::tiene_permiso(GESTIONAR_CONFIGURACION, CONSULTAR)): ?>
                         <a href="?pagina=configuracion_controlador.php&accion=inicio"
