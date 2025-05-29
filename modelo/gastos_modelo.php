@@ -159,7 +159,7 @@ public function consultar_gasto_id() {
 }
 
     public function registrar(){
-        $sql = "INSERT INTO gastos (fecha, monto, tipo_gasto, metodo_pago, referencia, imagen, descripcion_gasto, gasto_mes_id, banco_id, proveedor_id) VALUES (:fecha, :monto, :tipo_gasto, :metodo_pago, :referencia, :imagen, :descripcion_gasto, :gasto_mes_id, :banco_id, :proveedor_id)";
+        $sql = "INSERT INTO gastos (fecha, monto, tipo_gasto, metodo_pago, referencia, imagen, descripcion_gasto, banco_id, proveedor_id) VALUES (:fecha, :monto, :tipo_gasto, :metodo_pago, :referencia, :imagen, :descripcion_gasto, :banco_id, :proveedor_id)";
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":fecha", $this->fecha);
         $conexion->bindParam(":monto", $this->monto);
@@ -168,7 +168,6 @@ public function consultar_gasto_id() {
         $conexion->bindParam(":referencia", $this->referencia);
         $conexion->bindParam(":imagen", $this->imagen);
         $conexion->bindParam(":descripcion_gasto", $this->descripcion_gasto);
-        $conexion->bindParam(":gasto_mes_id", $this->gasto_mes_id);
         $conexion->bindParam(":banco_id", $this->banco_id);
         $conexion->bindParam(":proveedor_id", $this->proveedor_id);
         $result = $conexion->execute();
@@ -180,7 +179,7 @@ public function consultar_gasto_id() {
     }
 
     public function editar_gasto(){
-        $sql = "UPDATE gastos SET fecha = :fecha, monto = :monto, tipo_gasto = :tipo_gasto, tasa_dolar = :tasa_dolar, metodo_pago = :metodo_pago, referencia = :referencia, imagen = :imagen, descripcion_gasto = :descripcion_gasto, gasto_mes_id = :gasto_mes_id, banco_id = :banco_id, proveedor_id = :proveedor_id WHERE id_gasto = :id_gasto";
+        $sql = "UPDATE gastos SET fecha = :fecha, monto = :monto, tipo_gasto = :tipo_gasto, tasa_dolar = :tasa_dolar, metodo_pago = :metodo_pago, referencia = :referencia, imagen = :imagen, descripcion_gasto = :descripcion_gasto, banco_id = :banco_id, proveedor_id = :proveedor_id WHERE id_gasto = :id_gasto";
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":id_gasto", $this->id_gasto);
         $conexion->bindParam(":fecha", $this->fecha);
@@ -191,7 +190,6 @@ public function consultar_gasto_id() {
         $conexion->bindParam(":referencia", $this->referencia);
         $conexion->bindParam(":imagen", $this->imagen);
         $conexion->bindParam(":descripcion_gasto", $this->descripcion_gasto);
-        $conexion->bindParam(":gasto_mes_id", $this->gasto_mes_id);
         $conexion->bindParam(":banco_id", $this->banco_id);
         $conexion->bindParam(":proveedor_id", $this->proveedor_id);
         $result = $conexion->execute();

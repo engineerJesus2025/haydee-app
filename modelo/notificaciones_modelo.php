@@ -5,9 +5,10 @@ class Notificaciones extends Conexion
 {
     private $id_notificacion;
     private $titulo;
-    private $contenido;
+    private $descripcion;
+    private $fecha;
     private $usuario_id;
-    private $visto;
+    private $activo;
 
     public function __construct()
     {
@@ -35,14 +36,23 @@ class Notificaciones extends Conexion
         return $this->titulo;
     }
 
-    public function set_contenido($contenido)
+    public function set_descripcion($descripcion)
     {
-        $this->contenido = $contenido;
+        $this->descripcion = $descripcion;
     }
 
-    public function get_contenido()
+    public function get_descripcion()
     {
-        return $this->contenido;
+        return $this->descripcion;
+    }
+        public function set_fecha($fecha)
+    {
+        $this->fecha = $fecha;
+    }
+
+    public function get_fecha()
+    {
+        return $this->fecha;
     }
 
     public function set_usuario_id($usuario_id)
@@ -55,37 +65,40 @@ class Notificaciones extends Conexion
         return $this->usuario_id;
     }
 
-    public function set_visto($visto)
+    public function set_activo($activo)
     {
-        $this->visto = $visto;
+        $this->activo = $activo;
     }
 
-    public function get_visto()
+    public function get_activo()
     {
-        return $this->visto;
+        return $this->activo;
     }
 
     public function consultar()
     {
-        $sql = "SELECT id_notificacion, titulo, contenido, usuario_id,
-            visto, id_usuario, nombre , usuarios.apellido FROM notificaciones INNER JOIN usuarios ON 
+        $this->cambiar_db_seguridad();
+        $sql = "SELECT id_notificacion, titulo, descripcion, fecha, usuario_id,
+            activo, id_usuario, nombre, usuarios.apellido FROM notificaciones INNER JOIN usuarios ON 
             usuarios.id_usuario = notificaciones.usuario_id";
         $conexion = $this->get_conex()->prepare($sql);
         $result = $conexion->execute();
         $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
 
+        $this->cambiar_db_negocio();
         if ($result == true) {
             return $datos;
         } else {
-            return [];
+            return ["estatus" => false, "mensaje" => "Ha ocurrido un error con la consulta"];
         }
     }
 
     public function consultar_notificaciones($usuario)
     {
-        $sql = "SELECT id_notificacion, titulo, contenido, usuario_id,
-            visto, id_usuario, nombre , usuarios.apellido FROM notificaciones INNER JOIN usuarios ON 
-            usuarios.id_usuario = notificaciones.usuario_id WHERE visto = 0 AND usuarios.id_usuario = :usuario";
+        $this->cambiar_db_seguridad();
+        $sql = "SELECT id_notificacion, titulo, descripcion, fecha, usuario_id,
+            activo, id_usuario, nombre , usuarios.apellido FROM notificaciones INNER JOIN usuarios ON 
+            usuarios.id_usuario = notificaciones.usuario_id WHERE activo = 0 AND usuarios.id_usuario = :usuario";
 
         $conexion = $this->get_conex()->prepare($sql);
 
@@ -93,51 +106,40 @@ class Notificaciones extends Conexion
         $result = $conexion->execute();
         $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
 
+        $this->cambiar_db_negocio();
+
         if ($result == true) {
             return $datos;
         } else {
-            return [];
+            return ["estatus" => false, "mensaje" => "Ha ocurrido un error con la consulta"];
         }
     }
 
-    public function verificar_vacaciones($fecha)
+    public function agregar_notificacion($titulo,$mensaje,$fecha,$usuario)
     {
-        $sql = "SELECT * FROM vacaciones WHERE estatus = 'En proceso' AND fecha_culminacion < :fecha";
-
-        $conexion = $this->get_conex()->prepare($sql);
-
-        $conexion->bindParam(":fecha", $fecha);
-        $result = $conexion->execute();
-        //$datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
-        $result = $conexion->rowCount();
-
-        if ($result > 0) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    public function agregar_notificacion($titulo,$mensaje,$usuario)
-    {
-        $sql ="INSERT INTO notificaciones(titulo, contenido, usuario_id, visto) VALUES (:titulo,:contenido,:usuario_id,0)";
+        $this->cambiar_db_seguridad();
+        $sql ="INSERT INTO notificaciones(titulo, descripcion, fecha, usuario_id, activo) VALUES (:titulo,:descripcion, :fecha, :usuario_id,0)";
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":titulo", $titulo);
-        $conexion->bindParam(":contenido", $mensaje);
+        $conexion->bindParam(":descripcion", $mensaje);
+        $conexion->bindParam(":fecha", $fecha);
         $conexion->bindParam(":usuario_id", $usuario);
         $result = $conexion->execute();
 
+        $this->cambiar_db_negocio();
+
         return $result;
         if ($result) {
-            return true;
+            return ["estatus" => true, "mensaje" => "OK"];
         } else {
-            return false;
+            return ["estatus" => false, "mensaje" => "Ha ocurrido un error al intentar registrar esta notificacion"];
         }
     }
 
-    public function quitar_notificacion($id_notificacion)
+    public function marcar_como_activo($id_notificacion)
     {
-        $sql = "UPDATE notificaciones SET visto = 1 WHERE id_notificacion = :id_notificacion";
+        $this->cambiar_db_seguridad();
+        $sql = "UPDATE notificaciones SET activo = 1 WHERE id_notificacion = :id_notificacion";
 
         $conexion = $this->get_conex()->prepare($sql);
 
@@ -145,10 +147,11 @@ class Notificaciones extends Conexion
         $result = $conexion->execute();
         $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
 
+        $this->cambiar_db_negocio();
         if ($result == true) {
-            return true;
+            return ["estatus" => true, "mensaje" => "OK"];
         } else {
-            return false;
+            return ["estatus" => false, "mensaje" => "Ha ocurrido un error al intentar editar esta notificacion"];
         }
     }
 

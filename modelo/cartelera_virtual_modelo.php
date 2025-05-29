@@ -135,7 +135,6 @@ class Cartelera_virtual extends Conexion
         $conexion->bindParam(":usuario_id", $this->usuario_id);
         $result = $conexion->execute();
         $this->cambiar_db_negocio();
-        // $this->registrar_bitacora(REGISTRAR, GESTIONAR_CARTELERA_VIRTUAL, $this->titulo);//registra cuando se registra un nuevo cartelera
 
         if ($result) {
             $id_ultimo = $this->lastId();
@@ -143,12 +142,53 @@ class Cartelera_virtual extends Conexion
             $cartelera_alterada = $this->consultar_cartelera_id();
             $this->registrar_bitacora(REGISTRAR, GESTIONAR_CARTELERA_VIRTUAL, "Titulo: ".$this->titulo); 
 
+            // Notificación
+            $this->registrar_notificacion();
+
 
             return ["estatus" => true, "mensaje" => "OK"];
         } else {
             return ["estatus" => false, "mensaje" => "Error al registrar los datos"];
         }
     }
+
+  public function registrar_notificacion() {
+    $this->cambiar_db_seguridad();
+    $titulo = "Cartelera Virtual";
+    $descripcion = "Se ha registrado una nueva publicación en la cartelera virtual.";
+    $fecha = date('Y-m-d'); 
+    $activo = "0";
+
+    // Obtener todos los usuarios con rol de propietario (rol_id = 2)
+    $sql_usuarios = "SELECT id_usuario FROM usuarios WHERE rol_id = 3";
+    $conexion_usuarios = $this->get_conex()->prepare($sql_usuarios);
+    $conexion_usuarios->execute();
+    $usuarios = $conexion_usuarios->fetchAll(PDO::FETCH_ASSOC);
+
+    $sql = "INSERT INTO notificaciones (titulo, descripcion, fecha, usuario_id, activo) 
+            VALUES (:titulo, :descripcion, :fecha, :usuario_id, :activo)";
+    $conexion = $this->get_conex()->prepare($sql);
+
+    $result = true;
+
+    foreach ($usuarios as $usuario) {
+        $usuario_id = $usuario['id_usuario'];
+        
+        $conexion->bindParam(":titulo", $titulo);
+        $conexion->bindParam(":descripcion", $descripcion);
+        $conexion->bindParam(":fecha", $fecha);
+        $conexion->bindParam(":usuario_id", $usuario_id);
+        $conexion->bindParam(":activo", $activo);
+        $this->cambiar_db_negocio();
+
+
+        if (!$conexion->execute()) {
+            $result = false;
+        }
+    }
+
+    return $result;
+}
 
     public function editar_publicacion()
     {

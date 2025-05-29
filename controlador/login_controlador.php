@@ -25,7 +25,7 @@
                     exit();
                 }
 
-                // $notificaciones_obj = new Notificaciones();
+                $notificaciones_obj = new Notificaciones();
                 $permisos_usuarios_obj = new Permisos_usuarios();
 
                 session_start();
@@ -35,7 +35,7 @@
                 $_SESSION["rol"] = $resultado["nombre_rol"];
                 $_SESSION["permisos"] = $permisos_usuarios_obj->consultar_permisos_por_usuario($resultado["id_rol"]);
 
-                //$_SESSION["notificaciones"] = $notificaciones_obj->consultar_notificaciones($resultado["id_usuario"]);
+                $_SESSION["notificaciones"] = $notificaciones_obj->consultar_notificaciones($resultado["id_usuario"]);
 
                 echo json_encode(["estatus"=>true,"mensaje"=>"OK"]);
                 exit();
