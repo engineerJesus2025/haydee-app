@@ -188,7 +188,7 @@ class Cartelera_virtual extends Conexion
     }
 
     return $result;
-}
+    }
 
     public function editar_publicacion()
     {
@@ -282,7 +282,7 @@ class Cartelera_virtual extends Conexion
     }
 
     private function validarDatos($operacion = "registrar")
-{
+    {
     // Validar ID de usuario en todos los casos
     if (!isset($this->usuario_id) || empty($this->usuario_id)) {
         return ["estatus" => false, "mensaje" => "El usuario no fue especificado correctamente"];
@@ -330,7 +330,30 @@ class Cartelera_virtual extends Conexion
     }
 
     return ["estatus" => true, "mensaje" => "OK"];
-}
+    }
 
+    // Esta te la metio jesus, francisco
+    public function consultar_inicio($limite)
+    {
+        $limite_int = intval($limite);
+        $this->cambiar_db_seguridad();
+        $sql = "SELECT id_cartelera, titulo, prioridad, fecha, imagen, descripcion, usuarios.nombre as nombre_usuario 
+            FROM cartelera_virtual
+            INNER JOIN usuarios ON usuarios.id_usuario = cartelera_virtual.usuario_id
+            ORDER BY fecha LIMIT 2 OFFSET $limite_int";
+
+        $conexion = $this->get_conex()->prepare($sql);
+        // $conexion->bindParam(":limite", $limite_int);
+        $result = $conexion->execute();
+
+        $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
+
+        $this->cambiar_db_negocio();
+        if ($result) {
+            return $datos;
+        } else {
+            return ["estatus" => false, "mensaje" => "Error al consultar los datos"];
+        }
+    }
 }
 ?>

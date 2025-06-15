@@ -1,16 +1,19 @@
 <?php
-	require_once "vista/componentes/sesion.php";
-	require_once "modelo/conexion.php";
+require_once "vista/componentes/sesion.php";
+require_once "modelo/cartelera_virtual_modelo.php";
 
-    if($accion == "inicio"){
-  //   	$empleado = new Empleado();
-  //   	$total_empleados = $empleado->total_empleados();
-  //   	$total_empleados_activos = $empleado->total_empleados_activos();
-  //   	$total_empleados_jubilados = $empleado->total_empleados_jubilados();
-		// $total_empleados_reposo = $empleado->total_empleados_reposo();
+$cartelera_virtual_obj = new Cartelera_virtual();
 
+if (isset($_POST["operacion"])) {
+  $operacion = $_POST["operacion"];
 
-        require_once "vista/inicio/inicio_vista.php";
-    }
+  if ($operacion == "consulta_inicio") {
+  	$limite = $_POST["limite"];
+
+    echo json_encode($cartelera_virtual_obj->consultar_inicio($limite));
+  }
+  exit();
+}
+require_once "vista/inicio/inicio_vista.php";
 
 ?>
