@@ -39,14 +39,13 @@ document.querySelector(`#modal_roles`).addEventListener("hide.bs.modal",()=>{
 		input.closest(".accordion-collapse").previousElementSibling.children[0].classList.add("collapsed");
 		input.closest(".accordion-collapse").previousElementSibling.children[0].setAttribute("aria-expanded",false)		
 	});
-	console.log("asd")
 });
 
 //Si queremos registrar:
 async function registrar() {
 	// el async vuelve la funcion asincrona	
 	//Creamos el formData
-	datos_consulta = new FormData();
+	let datos_consulta = new FormData();
 	//Creamos las variables con los datos de los inputs
 	let nombre = formulario_usar.querySelector("#nombre").value;
 

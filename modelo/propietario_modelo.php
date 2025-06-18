@@ -56,11 +56,11 @@ class Propietario extends Conexion{
     }
 
     public function consultar(){
-        $sql = "SELECT * FROM propietarios";
+        $sql = "SELECT * FROM personas INNER JOIN personas_apartamentos ON personas.id_persona = personas_apartamentos.persona_id WHERE personas_apartamentos.tipo_vinculo = 'Propietario'";
 
         $conexion = $this->get_conex()->prepare($sql);
         $result = $conexion->execute();
-        $this->registrar_bitacora(CONSULTAR, GESTIONAR_PROPIETARIOS, "TODOS LOS USUARIOS");//registra cuando se entra al modulo de propietarios
+        //$this->registrar_bitacora(CONSULTAR, GESTIONAR_PROPIETARIOS, "TODOS LOS USUARIOS");//registra cuando se entra al modulo de propietarios
 
         $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
 

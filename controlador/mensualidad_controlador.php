@@ -2,10 +2,14 @@
 require_once "modelo/mensualidad_modelo.php";
 require_once "modelo/gastos_mensualidades_modelo.php";
 require_once "modelo/apartamentos_modelo.php";
+require_once "modelo/notificaciones_modelo.php";
+require_once "modelo/usuario_modelo.php";
 
 $mensualidad_obj = new Mensualidad();
 $gastos_mensualidades_obj = new Gastos_mensualidades();
 $apartamento_obj = new Apartamento();
+$notificacion_obj = new Notificaciones();
+$usuario_obj = new Usuario();
 
 if (isset($_POST["operacion"])){
     $operacion = $_POST["operacion"];
@@ -49,7 +53,25 @@ if (isset($_POST["operacion"])){
         $mensualidad_obj->set_anio($anio);
         $mensualidad_obj->set_apartamento_id($apartamento_id);
 
-        echo json_encode($mensualidad_obj->registrar());
+        $resultado = $mensualidad_obj->registrar();
+
+        if ($resultado["estatus"]) {
+            $registro_usuarios = $usuario_obj->consultar();
+
+            foreach ($registro_usuarios as $usuarios) {
+                $notificacion_obj->set_titulo("Mensualidad de Apartamentos");
+                $notificacion_obj->set_descripcion("Ya se asginaron las mensualidades de este mes");
+                $notificacion_obj->set_fecha(date("Y-m-d"));
+                $notificacion_obj->set_usuario_id($usuarios["id_usuario"]);
+                $resultado_notificacion = $notificacion_obj->agregar_notificacion();
+
+                if (!$resultado_notificacion["estatus"]) {
+                    echo json_encode($resultado_notificacion);
+                    exit();
+                }
+            }
+        }
+        echo json_encode($resultado);
     }
     else if($operacion == "registrar_gastos_mensualidades"){
         $id_mensualidad = $_POST["id_mensualidad"];

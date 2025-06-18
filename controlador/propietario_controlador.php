@@ -77,8 +77,13 @@ if (isset($_POST["operacion"])){
             echo  json_encode($propietario->lastId());
         }
 
-        exit;
+    if ($operacion == "consultar_propietarios_reporte"){
+        echo  json_encode($propietario->consultar());
+    }
+    exit;
+
 
 }
+echo "string";
         require_once "vista/propietarios/propietario_vista.php";
 ?>

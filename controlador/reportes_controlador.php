@@ -1,6 +1,6 @@
 <?php
-require_once "modelo/conexion.php";
 require_once "modelo/gastos_modelo.php";
+require_once "modelo/propietario_modelo.php";
 
 require_once 'vendor/autoload.php';
 
@@ -10,6 +10,7 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 $gastos_obj = new Gastos();
+$propietarios_obj = new Propietario();
 
     if (isset($_POST["operacion"])){
         $operacion = $_POST["operacion"];
@@ -33,6 +34,36 @@ $gastos_obj = new Gastos();
 	if($accion == "reportes_pdf"){
         require_once "vista/reportes/reportes_pdf/reportes_pdf_vista.php";
     }
+    if ($accion == "solvencia"){
+        $propietario = $_POST["select_reporte"];
+
+        ob_start();
+        require_once "vista/reportes/reportes_pdf/pdf/reporte_solvencia_pdf.php";
+
+        $html = ob_get_clean();
+
+        $dompdf = new Dompdf(array('enable_remote' => true));
+        
+        $dompdf->loadHtml($html);
+        $dompdf->render();
+        $dompdf->stream("solvencia_");
+    }
+    if ($accion == "residencia"){
+        $propietario = $_POST["select_reporte"];
+
+        ob_start();
+        require_once "vista/reportes/reportes_pdf/pdf/reporte_residencia_pdf.php";
+
+        $html = ob_get_clean();
+
+        $dompdf = new Dompdf(array('enable_remote' => true));
+        
+        $dompdf->loadHtml($html);
+        $dompdf->render();
+        $dompdf->stream("solvencia_");
+    }
+
+    // Estadisticos
     if($accion == "reportes_estadisticos"){
         require_once "vista/reportes/reportes_estadisticos/reportes_estadisticos_vista.php";
     }
@@ -54,7 +85,6 @@ $gastos_obj = new Gastos();
         $dompdf->loadHtml($html);
         $dompdf->render();
         $dompdf->stream("reporte_estadistico_sede");
-
     }
 
 
