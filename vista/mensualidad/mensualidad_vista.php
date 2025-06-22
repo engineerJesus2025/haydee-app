@@ -46,8 +46,11 @@
                                         </div>
                                         <button id="boton_eliminar" class="btn btn-outline-danger my-2">Eliminar Mensualidad</button>
                                     </div>
-                                    <div class="col-3">
-                                        <button class="btn btn-primary" id="boton_registrar" title="Presione para Registrar Nueva Mensualidad" type="button" data-bs-toggle="modal" data-bs-target="#modal_mensualidad">Registrar Mensualidad</button>
+                                    <div class="col-4">
+                                        <div class="d-flex flex-column align-items-end">
+                                            <button class="btn btn-primary my-2" id="boton_registrar" title="Presione para Registrar Nueva Mensualidad" type="button" data-bs-toggle="modal" data-bs-target="#modal_mensualidad">Registrar Mensualidad</button>
+                                            <p class="text-danger"></p>
+                                        </div>
                                     </div>
                                 </div>                                
 

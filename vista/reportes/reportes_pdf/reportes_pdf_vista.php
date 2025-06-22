@@ -33,19 +33,46 @@
                     <div class="row">
                         <div class="col-md-3 col-12">
                             <div class="card mb-3 shadow" title="Reportes PDF">
-                                <a href="?pagina=reportes_controlador.php&accion=reportes_pdf" class="text-decoration-none text-black">
+                                <button data-bs-toggle="modal" data-bs-target="#modal_reporte_persona" type="button" class="btn text-decoration-none text-black" id="boton_residencia">
                                     <div class="card-header text-center bg-white border-bottom-0 p-0">
-                                        <i class="bi bi-filetype-pdf" style="font-size: 5rem !important;"></i>
+                                        <i class="bi bi-house-fill" style="font-size: 5rem !important;"></i>
                                     </div>
                                     <div class="card-body text-center p-0 mb-3">
-                                        <p class="card-title fw-bold">Reportes PDF</p>
+                                        <p class="card-title fw-bold">Constancias de Residencia</p>
                                     </div>
-                                </a>
+                                </button>
                             </div>
                         </div>
-                        
+                        <div class="col-md-3 col-12">
+                            <div class="card mb-3 shadow" title="Reportes PDF">
+                                <button data-bs-toggle="modal" data-bs-target="#modal_reporte_persona" type="button" class="btn text-decoration-none text-black" id="boton_solvencia">
+                                    <div class="card-header text-center bg-white border-bottom-0 p-0">
+                                        <i class="bi bi-house-check-fill" style="font-size: 5rem !important;"></i>
+                                    </div>
+                                    <div class="card-body text-center p-0 mb-3">
+                                        <p class="card-title fw-bold">Solvencia</p>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                    
+                    <div class="modal fade" id="modal_reporte_persona" tabindex="-1" aria-labelledby="titulo_modal_persona" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h1 class="modal-title fs-5" id="titulo_modal_persona">Reporte</h1>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+
+                                    <?php
+                                    require_once "vista/reportes/reportes_pdf/reporte_persona_modal.php";
+                                    ?>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </main>
                 <?php
                 require_once "vista/componentes/footer.php";
@@ -54,6 +81,43 @@
             </div>
         </div>
     </div>
+    <script type="text/javascript">
+        //Puse esta parte del scrip aqui porque se repite la logica y como es en la misma pagina puess...
+        //Ustedes tambien pueden aprovecharla
+        let boton_generar = document.getElementById('boton_generar');
+        let form = document.getElementById('form_reporte');
+
+        boton_generar.addEventListener("click",async e=>{
+            let select_reporte = document.getElementById('select_reporte');
+
+            if (select_reporte.value == "") {
+                mensajes('error',4000,'Atencion','Debe seleccionar una opción');
+                return;
+            }
+            let reporte = boton_generar.getAttribute("reporte");
+            form.setAttribute("action",`?pagina=reportes_controlador.php&accion=${reporte}`);
+            form.submit();
+        });
+
+        document.getElementById("modal_reporte_persona").addEventListener("hidden.bs.modal",e=>{
+            let select_reporte = document.getElementById('select_reporte');
+            select_reporte.innerHTML = `<option selected hidden value="">Propietario</option>`;
+        });
+
+        function mensajes(icono,tiempo,titulo,mensaje){
+            Swal.fire({
+            icon:icono,
+            timer:tiempo,   
+            title:titulo,
+            text:mensaje,
+            confirmButtonText:'Aceptar',
+            confirmButtonColor: "#e01d22",
+            });
+        }
+    </script>
+
+    <script type="text/javascript" src="recursos/js/reportes/solvencia.js"></script>
+    <script type="text/javascript" src="recursos/js/reportes/residencia.js"></script>
 </body>
 
 </html>

@@ -43,7 +43,7 @@ document.querySelector(`#modal_usuario`).addEventListener("hide.bs.modal",()=>{
 async function registrar() {
 	// el async vuelve la funcion asincrona	
 	//Creamos el formData
-	datos_consulta = new FormData();
+	let datos_consulta = new FormData();
 	//Creamos las variables con los datos de los inputs
 	let nombre = formulario_usar.querySelector("#nombre").value,
 	apellido = formulario_usar.querySelector("#apellido").value,	
@@ -88,7 +88,7 @@ async function registrar() {
 //Si queremos consultar
 async function consultar() {
 	//Creamos el formData
-	datos_consulta = new FormData();
+	let datos_consulta = new FormData();
 
 	//Aqui decimos que vamos a hacer
 	datos_consulta.append('operacion','consulta');

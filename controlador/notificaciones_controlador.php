@@ -19,7 +19,7 @@ if($accion == "quitar"){
     foreach ($indices_notificaciones as $indice) {        
         if ($_SESSION["notificaciones"][$indice]["id_notificacion"] == $id_notificacion) {
             unset($_SESSION["notificaciones"][$indice]);
-        }        
+        }
     }    
 
     echo json_encode(['ok' => $resultado]);

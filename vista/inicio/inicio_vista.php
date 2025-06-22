@@ -9,7 +9,7 @@
 	?>
 </head>
 
-<body id="body-pd" class="body-pd">
+<body id="body-pd" class="body-pd mb-5">
 
 	<div class="container-fluid">
 		<div class="row flex-nowrap ">
@@ -28,10 +28,11 @@
 				<main class="col ps-md-2 pt-2">
 					<div class="page-header pt-3">
 						<h2>INICIO</h2>
-						<p>proximamente</p>
+						<p>Bueno seria mostrar un grafico o algo</p>
 					</div>
 					<p class="lead"></p>
 					<hr>
+					<div class="row justify-content-center" id="contenido"></div>
 				</main>
 				<?php
 				require_once "vista/componentes/footer.php";
@@ -41,6 +42,7 @@
 		</div>
 	</div>
 	<script src="recursos/js/consultas_ajax/notificaciones_ajax.js"></script>
+	<script src="recursos/js/consultas_ajax/inicio_ajax.js"></script>
 
 </body>
 

@@ -115,20 +115,19 @@ class Notificaciones extends Conexion
         }
     }
 
-    public function agregar_notificacion($titulo,$mensaje,$fecha,$usuario)
+    public function agregar_notificacion()
     {
         $this->cambiar_db_seguridad();
         $sql ="INSERT INTO notificaciones(titulo, descripcion, fecha, usuario_id, activo) VALUES (:titulo,:descripcion, :fecha, :usuario_id,0)";
         $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":titulo", $titulo);
-        $conexion->bindParam(":descripcion", $mensaje);
-        $conexion->bindParam(":fecha", $fecha);
-        $conexion->bindParam(":usuario_id", $usuario);
+        $conexion->bindParam(":titulo", $this->titulo);
+        $conexion->bindParam(":descripcion", $this->descripcion);
+        $conexion->bindParam(":fecha", $this->fecha);
+        $conexion->bindParam(":usuario_id", $this->usuario_id);
         $result = $conexion->execute();
 
         $this->cambiar_db_negocio();
 
-        return $result;
         if ($result) {
             return ["estatus" => true, "mensaje" => "OK"];
         } else {

@@ -412,4 +412,26 @@ public function obtenerIngresosYEgresos($fecha_inicio,$fecha_fin,$balance,$metod
     }
 }
 
+public function consultar_gastos()
+    {
+        list($dia,$mes,$anio) = explode('/', $this->fecha);
+        $mes_entero = intval($mes);
+        $anio_entero = intval($anio);
+
+        $sql = 'SELECT tipo_gasto.nombre_tipo_gasto as nombre, SUM(gastos.monto) as monto, tipo_gasto.id_tipo_gasto as id_tipo_gasto, GROUP_CONCAT(gastos.id_gasto) as id_gastos_asociados FROM gastos INNER JOIN tipo_gasto ON gastos.tipo_gasto_id = tipo_gasto.id_tipo_gasto WHERE MONTH(gastos.fecha) = :mes && YEAR(gastos.fecha) = :anio GROUP BY tipo_gasto.nombre_tipo_gasto';            
+        // Que precioso es sql
+        $conexion = $this->get_conex()->prepare($sql); 
+        $conexion->bindParam(":mes", $mes_entero,PDO::PARAM_INT);
+        $conexion->bindParam(":anio", $anio_entero,PDO::PARAM_INT);
+        $result = $conexion->execute();
+        
+        $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);        
+
+        if ($result == true) {
+            return $datos;
+        } else {
+            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+        }
+    }
+
 }

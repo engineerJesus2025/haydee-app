@@ -143,7 +143,7 @@ if (isset($_POST["operacion"])) {
     
     elseif ($operacion == "ultimo_id") {
         echo json_encode($cartelera_virtual_obj->lastId());
-    }
+    }    
 
     exit;
 

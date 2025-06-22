@@ -56,7 +56,7 @@
                                     <input type="checkbox" class="form-check-input" id="balance">
                                 </div>
                                 <div class="col-5">
-                                    <select class="form-select" id="select_balance">
+                                    <select class="form-select" id="select_balance" disabled>
                                         <option value="Todos">Todos</option>
                                         <option value="Ingresos">Ingresos</option>
                                         <option value="Egresos">Egresos</option>                                    
@@ -67,7 +67,7 @@
                                     <input type="checkbox" class="form-check-input" id="metodo_pago">
                                 </div>
                                 <div class="col-5">
-                                    <select class="form-select" id="select_metodo_pago">
+                                    <select class="form-select" id="select_metodo_pago" disabled>
                                         <option value="Todos">Todos</option>
                                         <option value="Transferencia">Transferencia</option>
                                         <option value="Efectivo">Efectivo</option>
@@ -79,14 +79,14 @@
                                     <input type="checkbox" class="form-check-input" id="tipo_gasto">
                                 </div>
                                 <div class="col-5">
-                                    <select class="form-select" id="select_tipo_gasto">
+                                    <select class="form-select" id="select_tipo_gasto" disabled>
                                         <option value="Todos">Todos</option>
                                         <option value="Variable">Variable</option>
                                         <option value="Fijo">Fijo</option>
                                     </select>
                                 </div>
                                 <div class="col-3 mx-auto">
-                                    <button id="boton_vista_previa" class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#modal_reporte">Vista Previa</button>
+                                    <button id="boton_vista_previa" class="btn btn-primary" type="button">Vista Previa</button>
                                 </div>
                             </form>
                             

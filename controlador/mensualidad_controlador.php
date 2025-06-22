@@ -1,17 +1,27 @@
 <?php 
 require_once "modelo/mensualidad_modelo.php";
+require_once "modelo/gastos_modelo.php";
 require_once "modelo/gastos_mensualidades_modelo.php";
+require_once "modelo/apartamentos_modelo.php";
+require_once "modelo/notificaciones_modelo.php";
+require_once "modelo/usuario_modelo.php";
 
 $mensualidad_obj = new Mensualidad();
 $gastos_mensualidades_obj = new Gastos_mensualidades();
+$gastos_obj = new Gastos();
+$apartamento_obj = new Apartamento();
+$notificacion_obj = new Notificaciones();
+$usuario_obj = new Usuario();
 
 if (isset($_POST["operacion"])){
     $operacion = $_POST["operacion"];
 
-    if ($operacion == "consultar"){       
+    if ($operacion == "verificar_meses"){
+        echo json_encode($mensualidad_obj->verificarMeses());
+    }
+    if ($operacion == "consultar_mensualidades"){
         echo json_encode($mensualidad_obj->consultar());
     }
-
     else if ($operacion == "consultar_mensualidad"){        
         $fecha = $_POST["fecha"];
 
@@ -24,16 +34,10 @@ if (isset($_POST["operacion"])){
     }
     else if ($operacion == "consultar_gastos"){
         $fecha = $_POST["fecha"];
+        //AJA
+        $gastos_obj->set_fecha($fecha);        
 
-        list($dia,$mes_buscar,$anio_buscar) = explode('/', $fecha);
-
-        $mensualidad_obj->set_mes($mes_buscar);
-        $mensualidad_obj->set_anio($anio_buscar);
-
-        echo json_encode($mensualidad_obj->consultar_gastos());
-    }
-    else if ($operacion == "consultar_apartamentos"){
-        echo json_encode($mensualidad_obj->consultar_apartamentos());
+        echo json_encode($gastos_obj->consultar_gastos());
     }
     else if($operacion == "registrar_mensualidad"){
         $monto = $_POST["monto"];
@@ -48,7 +52,25 @@ if (isset($_POST["operacion"])){
         $mensualidad_obj->set_anio($anio);
         $mensualidad_obj->set_apartamento_id($apartamento_id);
 
-        echo json_encode($mensualidad_obj->registrar());
+        $resultado = $mensualidad_obj->registrar();
+
+        if ($resultado["estatus"]) {
+            $registro_usuarios = $usuario_obj->consultar();
+
+            foreach ($registro_usuarios as $usuarios) {
+                $notificacion_obj->set_titulo("Mensualidad de Apartamentos");
+                $notificacion_obj->set_descripcion("Ya se asginaron las mensualidades de este mes");
+                $notificacion_obj->set_fecha(date("Y-m-d"));
+                $notificacion_obj->set_usuario_id($usuarios["id_usuario"]);
+                $resultado_notificacion = $notificacion_obj->agregar_notificacion();
+
+                if (!$resultado_notificacion["estatus"]) {
+                    echo json_encode($resultado_notificacion);
+                    exit();
+                }
+            }
+        }
+        echo json_encode($resultado);
     }
     else if($operacion == "registrar_gastos_mensualidades"){
         $id_mensualidad = $_POST["id_mensualidad"];
@@ -68,14 +90,14 @@ if (isset($_POST["operacion"])){
         }
         echo json_encode($resultado);
     }
-    else if ($operacion == "consultar_gastos_mes"){
+    else if ($operacion == "consultar_gastos_asociados"){
         $ids_mensualidades = explode(",", $_POST["ids_mensualidades"]);        
 
         $resultado = [];
         foreach ($ids_mensualidades as $id_mensualidad) {
             $gastos_mensualidades_obj->set_mensualidad_id($id_mensualidad);
 
-            $resultado_consulta = $gastos_mensualidades_obj->consultar();
+            $resultado_consulta = $gastos_mensualidades_obj->consultar_gastos_asociados();
             
             if (!$resultado_consulta["estatus"]) {
                 echo json_encode($resultado_consulta);
@@ -106,22 +128,13 @@ if (isset($_POST["operacion"])){
     }
     else if($operacion == "editar_gastos_mensualidades"){
         $id_mensualidad = $_POST["id_mensualidad"];
-        $id_gastos = explode(",", $_POST["id_gastos"]);
+        $id_gastos = $_POST["id_gastos"];
 
         $gastos_mensualidades_obj->set_mensualidad_id($id_mensualidad);
+        $gastos_mensualidades_obj->set_gasto_id($id_gastos);
 
-        $gastos_mensualidades_obj->eliminar();
+        $resultado = $gastos_mensualidades_obj->editar();
 
-        $resultado = null;
-        foreach ($id_gastos as $gasto) {
-            $gastos_mensualidades_obj->set_gasto_id($gasto);            
-            $resultado = $gastos_mensualidades_obj->registrar();
-            
-            if (!$resultado["estatus"]) {
-                echo json_encode($resultado);
-                exit;
-            }
-        }
         echo json_encode($resultado);
     }
     else if($operacion == "eliminar_mensualidad"){
@@ -136,6 +149,7 @@ if (isset($_POST["operacion"])){
     exit;
 }
 
+$registos_apartamentos = $mensualidad_obj->consultar_apartamentos();
 
 require_once 'vista/mensualidad/mensualidad_vista.php';
 ?>

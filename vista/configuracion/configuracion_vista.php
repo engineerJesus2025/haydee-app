@@ -39,19 +39,7 @@
                                         <i class="bi bi-truck" style="font-size: 5rem !important;"></i>
                                     </div>
                                     <div class="card-body text-center p-0 mb-3">
-                                        <p class="card-title fw-bold">Gestionar Proveedores</p>
-                                    </div>
-                                </a>
-                            </div>
-                        </div>
-                        <div class="col-md-3 col-12">
-                            <div class="card mb-3 shadow" title="Gestionar los Apartamentos">
-                                <a href="?pagina=apartamentos_controlador.php&accion=inicio" class="text-decoration-none text-black">
-                                    <div class="card-header text-center bg-white border-bottom-0 p-0">
-                                        <i class="bi bi-building" style="font-size: 5rem !important;"></i>
-                                    </div>
-                                    <div class="card-body text-center p-0 mb-3">
-                                        <p class="card-title fw-bold">Gestionar Apartamentos</p>
+                                        <p class="card-title fw-bold">Gestionar <br>Proveedores</p>
                                     </div>
                                 </a>
                             </div>
@@ -68,6 +56,18 @@
                                 </a>
                             </div>
                         </div>
+                        <div class="col-md-3 col-12">
+                            <div class="card mb-3 shadow" title="Gestionar los Apartamentos">
+                                <a href="?pagina=tipo_gasto_controlador.php&accion=inicio" class="text-decoration-none text-black">
+                                    <div class="card-header text-center bg-white border-bottom-0 p-0">
+                                        <i class="bi bi-building" style="font-size: 5rem !important;"></i>
+                                    </div>
+                                    <div class="card-body text-center p-0 mb-3">
+                                        <p class="card-title fw-bold">Gestionar Tipo de Gastos</p>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>   
                     </div>
                 </main>
                 <?php
