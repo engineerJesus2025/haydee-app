@@ -8,7 +8,6 @@
         private $gas;
         private $agua;
         private $alquilado;
-        private $propietario_id;
 
         // Metodos Setter y Getter
         public function set_id_apartamento($id_apartamento){
@@ -59,14 +58,6 @@
             return $this->alquilado;
         }
 
-        public function set_propietario_id($propietario_id){
-            $this->propietario_id = $propietario_id;
-        }
-
-        public function get_propietario_id(){
-            return $this->propietario_id;
-        }
-
         // Metodos CRUD
         public function verificar_apartamento(){
             $sql = "SELECT * FROM apartamentos WHERE nro_apartamento = :nro_apartamento";
@@ -74,24 +65,24 @@
             $conexion->bindParam(":nro_apartamento", $this->nro_apartamento);
             $conexion->execute();
             $datos = $conexion->fetch(PDO::FETCH_ASSOC);
-            if (isset($datos["numero_cuenta"])) { 
+            if (isset($datos["nro_apartamento"])) { 
                 $r["estatus"] = true;
-                $r["busqueda"] = "numero_cuenta";
+                $r["busqueda"] = "nro_apartamento";
                 return $r;
             } else {
                 $r["estatus"] = false;
-                $r["busqueda"] = "numero_cuenta";
+                $r["busqueda"] = "nro_apartamento";
                 return $r;
             }
         }
 
         public function consultar(){
             //$this->cambiar_db_seguridad();
-            $sql = "SELECT a.id_apartamento, a.nro_apartamento, CONCAT(a.porcentaje_participacion, '%') AS porcentaje_participacion, CASE a.gas WHEN 1 THEN 'TIENE' WHEN 0 THEN 'NO TIENE' END AS gas, CASE a.agua WHEN 1 THEN 'TIENE' WHEN 0 THEN 'NO TIENE' END AS agua, CASE a.alquilado WHEN 1 THEN 'SI' WHEN 0 THEN 'NO' END AS alquilado, CONCAT(p.nombre, ' ', p.apellido) AS propietario_id FROM apartamentos a JOIN propietarios p ON a.propietario_id = p.id_propietario ORDER BY a.id_apartamento";
+            $sql = "SELECT * FROM apartamentos ORDER BY id_apartamento";
             $conexion = $this->get_conex()->prepare($sql);
             $result = $conexion->execute();
             $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
-
+ 
             $this->cambiar_db_negocio();
 
             if ($result == true) {
@@ -119,6 +110,30 @@
             }
         }
 
+        public function consultar_detalles(){
+            //$this->cambiar_db_seguridad();
+            $sql = "SELECT 
+                a.id_apartamento,
+                p.*,
+                pa.tipo_vinculo
+            FROM apartamentos a
+            LEFT JOIN personas_apartamentos pa ON pa.apartamento_id = a.id_apartamento
+            LEFT JOIN personas p ON pa.persona_id = p.id_persona
+            WHERE a.id_apartamento = :id_apartamento";
+            $conexion = $this->get_conex()->prepare($sql);
+            $conexion->bindParam(":id_apartamento", $this->id_apartamento);
+            $result = $conexion->execute();        
+            $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
+
+            $this->cambiar_db_negocio();
+
+            if ($result == true) {
+                return $datos;
+            } else {
+                return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+            }
+        }
+
         public function registrar_apartamento(){
             //Validamos los datos obtenidos del controlador (validaciones back-end)
             //$validaciones = $this->validarDatos();
@@ -126,7 +141,7 @@
             
             //$this->cambiar_db_seguridad();
 
-            $sql = "INSERT INTO apartamentos(nro_apartamento,porcentaje_participacion,gas,agua,alquilado,propietario_id) VALUES (:nro_apartamento,:porcentaje_participacion,:gas,:agua,:alquilado,:propietario_id)";
+            $sql = "INSERT INTO apartamentos(nro_apartamento,porcentaje_participacion,gas,agua,alquilado) VALUES (:nro_apartamento,:porcentaje_participacion,:gas,:agua,:alquilado)";
         
             $conexion = $this->get_conex()->prepare($sql);
             $conexion->bindParam(":nro_apartamento", $this->nro_apartamento);
@@ -134,7 +149,6 @@
             $conexion->bindParam(":gas", $this->gas);
             $conexion->bindParam(":agua", $this->agua);
             $conexion->bindParam(":alquilado", $this->alquilado);
-            $conexion->bindParam(":propietario_id", $this->propietario_id);
             $result = $conexion->execute();
 
             $this->cambiar_db_negocio();
@@ -144,7 +158,7 @@
                 $this->set_id_apartamento($id_ultimo["mensaje"]);
                 $apartamento_alterado = $this->consultar_apartamento();
 
-                $this->registrar_bitacora(REGISTRAR, GESTIONAR_APARTAMENTOS, $apartamento_alterado["nro_apartamento"] . " (" . $apartamento_alterado["propietario_id"] . ")");
+                $this->registrar_bitacora(REGISTRAR, GESTIONAR_APARTAMENTOS, $apartamento_alterado["nro_apartamento"]);
 
                 return ["estatus"=>true,"mensaje"=>"OK"];
             } else {
@@ -159,7 +173,7 @@
 
             //$this->cambiar_db_seguridad();
 
-            $sql = "UPDATE apartamentos SET nro_apartamento=:nro_apartamento,porcentaje_participacion=:porcentaje_participacion,gas=:gas,agua=:agua,alquilado=:alquilado,propietario_id=:propietario_id WHERE id_apartamento=:id_apartamento";
+            $sql = "UPDATE apartamentos SET nro_apartamento=:nro_apartamento,porcentaje_participacion=:porcentaje_participacion,gas=:gas,agua=:agua,alquilado=:alquilado WHERE id_apartamento=:id_apartamento";
 
             $conexion = $this->get_conex()->prepare($sql);    
             $conexion->bindParam(":id_apartamento", $this->id_apartamento);
@@ -168,7 +182,6 @@
             $conexion->bindParam(":gas", $this->gas);
             $conexion->bindParam(":agua", $this->agua);
             $conexion->bindParam(":alquilado", $this->alquilado);
-            $conexion->bindParam(":propietario_id", $this->propietario_id);
 
             $result = $conexion->execute();
 
@@ -176,7 +189,7 @@
             
             if ($result) {
                 $apartamento_alterado = $this->consultar_apartamento();
-                $this->registrar_bitacora(MODIFICAR, GESTIONAR_APARTAMENTOS, $apartamento_alterado["nro_apartamento"] . " (" . $apartamento_alterado["propietario_id"] . ")");
+                $this->registrar_bitacora(MODIFICAR, GESTIONAR_APARTAMENTOS, $apartamento_alterado["nro_apartamento"]. " (".$apartamento_alterado["nro_apartamento"].")");
 
                 return ["estatus"=>true,"mensaje"=>"OK"];
             } else {
@@ -202,7 +215,7 @@
             $this->cambiar_db_negocio();
             
             if ($result) {
-                $this->registrar_bitacora(ELIMINAR, GESTIONAR_APARTAMENTOS, $apartamento_alterado["nro_apartamento"] . " (" . $apartamento_alterado["propietario_id"] . ")");
+                $this->registrar_bitacora(ELIMINAR, GESTIONAR_APARTAMENTOS, $apartamento_alterado["nro_apartamento"]);
 
                 return ["estatus"=>true,"mensaje"=>"OK"];
             } else {
@@ -235,11 +248,11 @@
             } 
             // Validamos que los campos enviados si existan
 
-            if (!(isset($this->nro_apartamento) && isset($this->porcentaje_participacion) && isset($this->gas) && isset($this->agua) && isset($this->alquilado) && isset($this->propietario_id))) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos no se recibieron correctamente"];}
+            if (!(isset($this->nro_apartamento) && isset($this->porcentaje_participacion) && isset($this->gas) && isset($this->agua) && isset($this->alquilado))) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos no se recibieron correctamente"];}
 
             // Validamos que los campos enviados no esten vacios
 
-            if (empty($this->nro_apartamento) || empty($this->porcentaje_participacion) ||empty($this->gas) || empty($this->agua) || empty($this->alquilado) || empty($this->propietario_id)) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos estan vacios"];}
+            if (empty($this->nro_apartamento) || empty($this->porcentaje_participacion) ||empty($this->gas) || empty($this->agua) || empty($this->alquilado)) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos estan vacios"];}
 
             // Verificamos si los valores tienen los datos que deberian
             
@@ -257,14 +270,6 @@
             }
             if(!(is_numeric($this->alquilado))){
                 return ["estatus"=>false,"mensaje"=>"El campo 'Alquilado' no posee un valor valido"];
-            }
-            if(is_numeric($this->propietario_id)){
-                if (!($this->validarClaveForanea("propietarios","id_propietario",$this->propietario_id,true))) {
-                    return ["estatus"=>false,"mensaje"=>"El campo 'Propietario' no posee un valor valido"];
-                }            
-            }
-            else{
-                return ["estatus"=>false,"mensaje"=>"El campo 'Propietario' no posee un valor valido"];
             }
 
             return ["estatus"=>true,"mensaje"=>"OK"];

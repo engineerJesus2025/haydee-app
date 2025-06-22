@@ -56,6 +56,12 @@
                             <span class="nav_name">Apartamentos</span>
                         </a>
                     <?php endif; ?>
+                    <?php if (Conexion::tiene_permiso(GESTIONAR_PERSONAS, CONSULTAR)) : ?>
+                    <a href="?pagina=personas_controlador.php&accion=inicio" class="nav_link <?php echo ($_GET["pagina"] == "personas_controlador.php")?"active":''; ?>" title="Personas"> 
+                        <i class="bi bi-people-fill nav_logo-icon"></i>
+                        <span class="nav_name">Personas</span> 
+                    </a>
+                    <?php endif; ?>
                     <?php if (Conexion::tiene_permiso(GESTIONAR_SOLICITUD_GASTO, CONSULTAR)) : ?>
                     <a href="?pagina=solicitud_gasto_controlador.php&accion=inicio" class="nav_link <?php echo ($_GET["pagina"] == "solicitud_gasto_controlador.php")?"active":''; ?>" title="Solicitud Gasto"> 
                         <i class="bi-clipboard-check nav_logo-icon"></i>
