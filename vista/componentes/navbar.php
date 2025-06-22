@@ -130,7 +130,7 @@
                             <?php if (Conexion::tiene_permiso(GESTIONAR_ROLES, CONSULTAR)): ?>
                             <a href="?pagina=rol_controlador.php&accion=inicio" class="nav_link <?php echo ($_GET["pagina"] == "rol_controlador.php")?"active":''; ?>" title="Gestionar Roles"> 
                                 <i class="bi bi-person-gear nav_logo-icon"></i>
-                                <span class="nav_name">Gestionar Roles</span> 
+                                <span class="nav_name">Roles</span> 
                             </a>
                             <?php endif; ?>
                             <?php if (Conexion::tiene_permiso(GESTIONAR_BITACORA, CONSULTAR)): ?>

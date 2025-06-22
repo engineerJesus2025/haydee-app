@@ -35,7 +35,16 @@ $propietarios_obj = new Propietario();
         require_once "vista/reportes/reportes_pdf/reportes_pdf_vista.php";
     }
     if ($accion == "solvencia"){
-        $propietario = $_POST["select_reporte"];
+        $meses = array("Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre");
+        $id_propietario = $_POST["select_reporte"];
+        
+        $propietarios_obj->set_id_propietario($id_propietario);
+
+        $registro_porpietario = $propietarios_obj->consultar_propietario();
+        $fecha = new DateTime();
+        $fecha->modify("+1 month");
+        $mes_fin = $fecha->format("n");
+        $anio_fin = $fecha->format("Y");
 
         ob_start();
         require_once "vista/reportes/reportes_pdf/pdf/reporte_solvencia_pdf.php";
@@ -46,10 +55,15 @@ $propietarios_obj = new Propietario();
         
         $dompdf->loadHtml($html);
         $dompdf->render();
-        $dompdf->stream("solvencia_");
+        $dompdf->stream("solvencia_" . $registro_porpietario["nombre"] . "_" . $registro_porpietario["apellido"]);
     }
     if ($accion == "residencia"){
-        $propietario = $_POST["select_reporte"];
+        $meses = array("Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre");
+        $id_propietario = $_POST["select_reporte"];
+        
+        $propietarios_obj->set_id_propietario($id_propietario);
+
+        $registro_porpietario = $propietarios_obj->consultar_propietario();
 
         ob_start();
         require_once "vista/reportes/reportes_pdf/pdf/reporte_residencia_pdf.php";
@@ -60,7 +74,7 @@ $propietarios_obj = new Propietario();
         
         $dompdf->loadHtml($html);
         $dompdf->render();
-        $dompdf->stream("solvencia_");
+        $dompdf->stream("constancia_residencia_" . $registro_porpietario["nombre"] . "_" . $registro_porpietario["apellido"]);
     }
 
     // Estadisticos

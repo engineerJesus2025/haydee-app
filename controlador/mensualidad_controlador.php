@@ -1,5 +1,6 @@
 <?php 
 require_once "modelo/mensualidad_modelo.php";
+require_once "modelo/gastos_modelo.php";
 require_once "modelo/gastos_mensualidades_modelo.php";
 require_once "modelo/apartamentos_modelo.php";
 require_once "modelo/notificaciones_modelo.php";
@@ -7,6 +8,7 @@ require_once "modelo/usuario_modelo.php";
 
 $mensualidad_obj = new Mensualidad();
 $gastos_mensualidades_obj = new Gastos_mensualidades();
+$gastos_obj = new Gastos();
 $apartamento_obj = new Apartamento();
 $notificacion_obj = new Notificaciones();
 $usuario_obj = new Usuario();
@@ -14,10 +16,10 @@ $usuario_obj = new Usuario();
 if (isset($_POST["operacion"])){
     $operacion = $_POST["operacion"];
 
-    if ($operacion == "verificar_meses"){       
+    if ($operacion == "verificar_meses"){
         echo json_encode($mensualidad_obj->verificarMeses());
     }
-    if ($operacion == "consultar"){       
+    if ($operacion == "consultar_mensualidades"){
         echo json_encode($mensualidad_obj->consultar());
     }
     else if ($operacion == "consultar_mensualidad"){        
@@ -32,13 +34,10 @@ if (isset($_POST["operacion"])){
     }
     else if ($operacion == "consultar_gastos"){
         $fecha = $_POST["fecha"];
+        //AJA
+        $gastos_obj->set_fecha($fecha);        
 
-        list($dia,$mes_buscar,$anio_buscar) = explode('/', $fecha);
-
-        $mensualidad_obj->set_mes($mes_buscar);
-        $mensualidad_obj->set_anio($anio_buscar);
-
-        echo json_encode($mensualidad_obj->consultar_gastos());
+        echo json_encode($gastos_obj->consultar_gastos());
     }
     else if($operacion == "registrar_mensualidad"){
         $monto = $_POST["monto"];
@@ -149,7 +148,7 @@ if (isset($_POST["operacion"])){
     }
     exit;
 }
-//Ojo cambiar por apartamentos
+
 $registos_apartamentos = $mensualidad_obj->consultar_apartamentos();
 
 require_once 'vista/mensualidad/mensualidad_vista.php';

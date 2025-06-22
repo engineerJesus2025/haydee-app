@@ -27,9 +27,6 @@ let boton_generar = document.getElementById("boton_generar");
 
 let modal = new bootstrap.Modal(document.getElementById("modal_reporte"));
 
-document.addEventListener("DOMContentLoaded",()=>{
-	console.log("cargado");
-});
 let resultado;
 boton_vista_previa.addEventListener("click",async e=>{
 	let fecha_inicio = document.getElementById('fecha_inicio');
@@ -37,7 +34,10 @@ boton_vista_previa.addEventListener("click",async e=>{
 	if (fecha_inicio.value == "" && fecha_fin.value == "") {
 		mensajes('error',4000,'Atencion', "Debe colocar una fecha para la consulta");
 		return;// en caso de error mandamos un mensaje con el error y nos vamos
+
 	}
+
+	modal.show();
 
 	datos_reporte.fecha_inicio = document.getElementById('fecha_inicio').value;
 	datos_reporte.fecha_fin = document.getElementById('fecha_fin').value;

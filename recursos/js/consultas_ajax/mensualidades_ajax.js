@@ -1,21 +1,7 @@
-/*
-Verificar Meses por generar mensualidad :D
-Traer apartamentos :D
-Traer gastos :D
-LLenar tabla exitosamente :D
-Distribuir precios exitosamente :D
-Registrar Mensualidad :D
-Alternar MEnsualidades registradas
-Editar Mensualidad
-Eliminar Mensualidad
-
-editar un registro si existe sino registrar sql
-*/
-consultar(); // para llenar la tabla al cargar
+consultar_mensualidades(); 
 verificarMes();
-//Para tomar el precio del dolar
-let dolar = {};
 api();
+let dolar = {};
 
 //Variables
 let mensualidad_seleccionada = [];//Para guardar la mensualidad si se va a editar(nos ahoramos una consulta)
@@ -110,25 +96,25 @@ async function verificarMes(){
 	select_mes_asignar.appendChild(fragment);
 }
 
-async function consultar() {
+async function consultar_mensualidades() {
 	//Creamos el formData
 	datos_consulta = new FormData();
 
 	//Aqui decimos que vamos a hacer
-	datos_consulta.append('operacion','consultar');
+	datos_consulta.append('operacion','consultar_mensualidades');
 
 	//Llamamos a la funcion para hacer la consulta
-	let data = await query(datos_consulta);
+	let mensualidades = await query(datos_consulta);
 	
 	// Resvisamos el resultado
-	if(!(data.estatus == undefined)){
-		mensajes('error',4000,'Atencion', data.mensaje);
+	if(!(mensualidades.estatus == undefined)){
+		mensajes('error',4000,'Atencion', mensualidades.mensaje);
 		return;// en caso de error mandamos un mensaje con el error y nos vamos
 	}
 
 	let fragment = document.createDocumentFragment();	
 	
-	if (data.length === 0) {
+	if (mensualidades.length === 0) {
 		let div_padre = select_mes.closest(".col-4");
 
 		div_padre.textContent = null;
@@ -138,7 +124,8 @@ async function consultar() {
 		return;
 	}
 	select_mes.innerHTML = null;
-	data.map(registro=>{
+	console.log(mensualidades)
+	mensualidades.map(registro=>{
 		let option = document.createElement("option");
 
 		let fecha = new Date(`${registro.mes}-01-${registro.anio}`);
@@ -227,10 +214,10 @@ async function llenarTablaNueva(fecha) {
 	datos_consulta.append("fecha",fecha);
 	datos_consulta.append("operacion","consultar_gastos");
 
-	let respuesta = await query(datos_consulta);
+	let gastos = await query(datos_consulta);
 
-	if(!(respuesta.estatus == undefined)){
-		mensajes('error',4000,'Atencion', respuesta.mensaje);
+	if(!(gastos.estatus == undefined)){
+		mensajes('error',4000,'Atencion', gastos.mensaje);
 		return;// en caso de error mandamos un mensaje con el error y nos vamos
 	}
 
@@ -241,7 +228,7 @@ async function llenarTablaNueva(fecha) {
 	let fragment = document.createDocumentFragment();
 	let fragment_footer = document.createDocumentFragment();
 	
-	respuesta.map(gasto=>{
+	gastos.map(gasto=>{
 		let th = document.createElement("th");
 		
 		th.textContent = gasto.nombre;		
@@ -324,7 +311,7 @@ function envio(operacion) {
 	}
 }
 
-async function registrar() {
+async function registrar_mensualidad() {
 	let filas_cuerpo = tabla_mensualidad_asignar.querySelectorAll("tbody tr");
 
 	//Recorrer por apartamentos

@@ -14,8 +14,8 @@ boton_solvencia.addEventListener("click",e=>{
 	let fragment = document.createDocumentFragment();
 	array_propietarios_solventes.map(propietario=>{
 		let option = document.createElement("option");
-		option.textContent = `${propietario.nombre} ${propietario.apellido}`;
-		option.id = propietario.id_persona;
+		option.textContent = `Aptartamento Nº ${propietario.nro_apartamento}, ${propietario.nombre} ${propietario.apellido}`;
+		option.value = propietario.id_persona;
 
 		fragment.appendChild(option);
 	});
@@ -33,3 +33,35 @@ function consultar_propietarios() {
 }
 
 consultar_propietarios();
+
+/*
+Por si las borran
+public function consultar(){
+    $sql = "SELECT * FROM personas INNER JOIN personas_apartamentos ON personas.id_persona = personas_apartamentos.persona_id INNER JOIN apartamentos ON apartamentos.id_apartamento = personas_apartamentos.apartamento_id WHERE personas_apartamentos.tipo_vinculo = 'Propietario'";
+
+    $conexion = $this->get_conex()->prepare($sql);
+    $result = $conexion->execute();
+    //$this->registrar_bitacora(CONSULTAR, GESTIONAR_PROPIETARIOS, "TODOS LOS USUARIOS");//registra cuando se entra al modulo de propietarios
+
+    $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
+
+    if($result == true){
+        return $datos;
+    }else{
+        return ["estatus"=>false, "mensaje"=>"Error al consultar los propietarios"];
+    }
+}
+public function consultar_propietario(){
+    $sql = "SELECT * FROM personas INNER JOIN personas_apartamentos ON personas.id_persona = personas_apartamentos.persona_id INNER JOIN apartamentos ON apartamentos.id_apartamento = personas_apartamentos.apartamento_id WHERE id_persona = :id_propietario";
+    $conexion = $this->get_conex()->prepare($sql);
+    $conexion->bindParam(":id_propietario", $this->id_propietario);
+    $result = $conexion->execute();
+    $datos = $conexion->fetch(PDO::FETCH_ASSOC);
+
+    if($result == true){
+        return $datos;
+    }else{
+        return ["estatus"=>false, "mensaje"=>"Error al consultar el propietario"];
+    }
+}
+*/

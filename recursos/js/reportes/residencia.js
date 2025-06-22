@@ -14,8 +14,8 @@ boton_residencia.addEventListener("click",e=>{
 	let fragment = document.createDocumentFragment();
 	array_propietarios_residentes.map(propietario=>{
 		let option = document.createElement("option");
-		option.textContent = `${propietario.nombre} ${propietario.apellido}`;
-		option.id = propietario.id_persona;
+option.textContent = `Aptartamento Nº ${propietario.nro_apartamento}, ${propietario.nombre} ${propietario.apellido}`;
+		option.value = propietario.id_persona;
 
 		fragment.appendChild(option);
 	});
