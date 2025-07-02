@@ -2,7 +2,7 @@
     enctype="multipart/form-data">
     <div class="container mt-4">
 
-        <!-- Fila 1: Fecha + Monto -->
+        <!-- Fila 1: Fecha + Metodo -->
         <div class="row mb-3">
             <div class="col-md-6">
                 <label for="fecha">Fecha del Gasto</label>
@@ -30,10 +30,10 @@
         <!-- Fila 2: Tipo de Gasto + Método de Pago -->
         <div class="row mb-3">
             <div class="col-md-6">
-                <label for="tipo_gasto">Tipo de Gasto</label>
+                <label for="tipo">Tipo</label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-tags"></i></span>
-                    <select class="form-select" name="tipo_gasto" id="tipo_gasto" required>
+                    <select class="form-select" name="tipo" id="tipo" required>
                         <option value="" disabled selected>Seleccione un tipo</option>
                         <option value="fijo">Fijo</option>
                         <option value="variable">Variable</option>
@@ -41,6 +41,22 @@
                 </div>
             </div>
             <div class="col-md-6">
+                <label for="tipo_gasto">Tipo de Gasto</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-building"></i></span>
+                    <select class="form-select" name="tipo_gasto" id="tipo_gasto" required>
+                        <option value="" disabled selected>Seleccione un tipo</option>
+                        <?php foreach ($tipos_gasto as $tipo): ?>
+                            <option value="<?php echo $tipo["id_tipo_gasto"] ?>">
+                                <?php echo $tipo["nombre_tipo_gasto"] ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+
+        </div>
+                    <div class="col-md-6">
                 <label for="monto">Monto</label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-currency-dollar"></i></span>
@@ -49,7 +65,6 @@
                 </div>
                 <div class="invalid-feedback" id="mensaje_monto"></div>
             </div>
-        </div>
 
         <!-- Fila 3: Referencia + Banco (solo si NO es efectivo) -->
         <div class="row mb-3">
@@ -74,7 +89,7 @@
             </div>
         </div>
 
-        <!-- Fila 4: Proveedor -->
+        <!-- Fila 4: Proveedor + Solicitud -->
         <div class="row mb-3">
             <div class="col-md-6">
                 <label for="proveedor">Proveedor</label>
@@ -85,6 +100,20 @@
                         <?php foreach ($proveedores as $proveedor): ?>
                             <option value="<?php echo $proveedor["id_proveedor"] ?>">
                                 <?php echo $proveedor["nombre_proveedor"] ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <label for="solicitud">Solicitud</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-building"></i></span>
+                    <select class="form-select" name="solicitud" id="solicitud" required>
+                        <option value="" disabled selected>Seleccione una solicitud</option>
+                        <?php foreach ($solicitudes_gasto as $solicitud): ?>
+                            <option value="<?php echo $solicitud["id_solicitud"] ?>">
+                                <?php echo $solicitud["descripcion_necesidad"] ?>
                             </option>
                         <?php endforeach; ?>
                     </select>

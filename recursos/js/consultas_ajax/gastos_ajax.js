@@ -50,7 +50,9 @@ async function registrar() {
 
     let fecha = document.querySelector("#fecha").value,
         monto = document.querySelector("#monto").value,
+        tipo = document.querySelector("#tipo").value,
         tipo_gasto = document.querySelector("#tipo_gasto").value,
+        solicitud = document.querySelector("#solicitud").value,
         metodo_pago = document.querySelector("#metodo_pago").value,
         referencia = document.querySelector("#referencia").value,
         descripcion_gasto = document.querySelector("#descripcion").value,
@@ -60,7 +62,9 @@ async function registrar() {
 
     datos_consulta.append("fecha", fecha);
     datos_consulta.append("monto", monto);
+    datos_consulta.append("tipo", tipo);
     datos_consulta.append("tipo_gasto", tipo_gasto);
+    datos_consulta.append("solicitud", solicitud);
     datos_consulta.append("metodo_pago", metodo_pago);
     datos_consulta.append("referencia", referencia);
     datos_consulta.append("descripcion_gasto", descripcion_gasto);
@@ -82,7 +86,9 @@ async function registrar() {
             id_gasto: id_registrado.mensaje,
             fecha: fecha,
             monto: monto,
+            tipo: tipo,
             tipo_gasto: tipo_gasto,
+            solicitud: solicitud,
             metodo_pago: metodo_pago,
             referencia: referencia,
             descripcion_gasto: descripcion_gasto,
@@ -92,9 +98,9 @@ async function registrar() {
         };
 
         // Insertar la nueva fila visualmente
-await cargarGastosPorMes(document.querySelector("#selector_mes_anio").value);
-await cargarTotalesMetodoPago(document.querySelector("#selector_mes_anio").value);
-consulta_completada();
+        await cargarGastosPorMes(document.querySelector("#selector_mes_anio").value);
+        await cargarTotalesMetodoPago(document.querySelector("#selector_mes_anio").value);
+        consulta_completada();
         consulta_completada();
     } else {
         Swal.fire({
@@ -137,7 +143,7 @@ function vaciar_tabla() {
 function formatearMonto(monto) {
     const numero = parseFloat(monto);
     if (isNaN(numero)) return "0,00";
-    
+
     return numero.toLocaleString('es-VE', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
@@ -161,6 +167,7 @@ function llenarTabla(fila) {
 
     const fecha = document.createElement("td");
     const monto = document.createElement("td");
+    const tipo = document.createElement("td");
     const tipo_gasto = document.createElement("td");
     const metodo_pago = document.createElement("td");
     const proveedor = document.createElement("td");
@@ -171,15 +178,17 @@ function llenarTabla(fila) {
     const metodo = fila["metodo_pago"];
     const esBs = ["pago_movil", "transferencia"].includes(metodo);
     monto.textContent = `${formatearMonto(fila["monto"])} ${esBs ? "Bs" : "$"}`;
-    tipo_gasto.textContent = mayuscula(fila["tipo_gasto"]);
+    tipo.textContent = mayuscula(fila["tipo"]);
+    tipo_gasto.textContent = mayuscula(fila["nombre_tipo_gasto"]);
     metodo_pago.textContent = formatearMetodo(metodo);
-    proveedor.textContent = fila["proveedor"] || "N/A";
+    proveedor.textContent = fila["nombre_proveedor"] || "N/A";
     descripcion_gasto.textContent = fila["descripcion_gasto"];
 
     const acciones = crearBotones(id_campo);
 
     fila_tabla.appendChild(fecha);
     fila_tabla.appendChild(monto);
+    fila_tabla.appendChild(tipo);
     fila_tabla.appendChild(tipo_gasto);
     fila_tabla.appendChild(metodo_pago);
     fila_tabla.appendChild(proveedor);
@@ -273,7 +282,9 @@ async function modificar_formulario(e) {
 
     let fecha = formulario_usar.querySelector("#fecha");
     let monto = formulario_usar.querySelector("#monto");
+    let tipo = formulario_usar.querySelector("#tipo");
     let tipo_gasto = formulario_usar.querySelector("#tipo_gasto");
+    let solicitud = formulario_usar.querySelector("#solicitud");
     let metodo_pago = formulario_usar.querySelector("#metodo_pago");
     let referencia = formulario_usar.querySelector("#referencia");
     let descripcion = formulario_usar.querySelector("#descripcion");
@@ -283,7 +294,9 @@ async function modificar_formulario(e) {
 
     fecha.value = data.fecha;
     monto.value = data.monto;
-    tipo_gasto.value = data.tipo_gasto;
+    tipo.value = data.tipo;
+    tipo_gasto.value = data.id_tipo_gasto;
+    solicitud.value = data.id_solicitud;
     metodo_pago.value = data.metodo_pago;
     actualizarVisibilidadCampos();
     referencia.value = data.referencia;
@@ -328,14 +341,26 @@ async function mostrarVistaPrevia(e) {
     datos_consulta.append("operacion", "consulta_especifica");
 
     const respuesta = await query(datos_consulta);
-    const data = respuesta[0];
+    const data = respuesta;
+
+    document.getElementById("vista_fecha").textContent = formatearFecha(data.fecha);
+    document.getElementById("vista_monto").textContent = data.monto;
+    document.getElementById("vista_tipo").textContent = mayuscula(data.tipo);
+    document.getElementById("vista_tipo_gasto").textContent = data.nombre_tipo_gasto;
+    document.getElementById("vista_metodo_pago").textContent = formatearMetodo(data.metodo_pago);
+    console.log("Método de pago recibido:", data.metodo_pago);
+    actualizarVisibilidadCamposVistaPrevia(data.metodo_pago);
+    document.getElementById("vista_proveedor").textContent = data.nombre_proveedor;
+    document.getElementById("vista_referencia").textContent = data.referencia;
+    document.getElementById("vista_descripcion").textContent = data.descripcion_gasto;
+    document.getElementById("vista_banco").textContent = data.nombre_banco;
 
     // Resetear mensaje de error por si estaba visible
     document.getElementById("vista_imagen").style.display = "block";
     document.getElementById("mensaje_error_imagen").classList.add("d-none");
 
     const imagen = (data.imagen && data.imagen !== "")
-        ? `recursos/img/${data.imagen}`
+        ? `recursos/img/gastos/${data.imagen}`
         : "";
 
     document.getElementById("vista_imagen").setAttribute("src", imagen);
@@ -344,12 +369,28 @@ async function mostrarVistaPrevia(e) {
     modalVistaPrevia.show();
 }
 
+function actualizarVisibilidadCamposVistaPrevia(metodo_pago) {
+    const grupoReferencia = document.getElementById("grupo_referencia");
+    const grupoBanco = document.getElementById("grupo_banco");
+    const grupoImagen = document.getElementById("grupo_imagen");
+
+    const valor = metodo_pago.toLowerCase().trim(); // ← IMPORTANTE
+
+    const mostrar = (valor === "transferencia" || valor === "pago movil" || valor === "pago_movil");
+
+    grupoReferencia.style.display = mostrar ? "block" : "none";
+    grupoBanco.style.display = mostrar ? "block" : "none";
+    grupoImagen.style.display = mostrar ? "block" : "none";
+}
+
 
 async function modificar(id) {
     let datos_consulta = new FormData();
     let fecha = document.querySelector("#fecha").value,
         monto = document.querySelector("#monto").value,
+        tipo = document.querySelector("#tipo").value,
         tipo_gasto = document.querySelector("#tipo_gasto").value,
+        solicitud = document.querySelector("#solicitud").value,
         metodo_pago = document.querySelector("#metodo_pago").value,
         referencia = document.querySelector("#referencia").value,
         descripcion = document.querySelector("#descripcion").value,
@@ -360,7 +401,9 @@ async function modificar(id) {
     datos_consulta.append("id_gasto", id);
     datos_consulta.append("fecha", fecha);
     datos_consulta.append("monto", monto);
+    datos_consulta.append("tipo", tipo);
     datos_consulta.append("tipo_gasto", tipo_gasto);
+    datos_consulta.append("solicitud", solicitud);
     datos_consulta.append("metodo_pago", metodo_pago);
     datos_consulta.append("referencia", referencia);
     datos_consulta.append("descripcion_gasto", descripcion);
@@ -391,7 +434,9 @@ async function modificar(id) {
         id_gasto: id,
         fecha: fecha,
         monto: monto,
+        tipo: tipo,
         tipo_gasto: tipo_gasto,
+        solicitud: solicitud,
         metodo_pago: metodo_pago,
         referencia: referencia,
         descripcion_gasto: descripcion,
@@ -543,7 +588,7 @@ function reasignarEventos() {
             }
         });
     });
-     document.querySelectorAll("button[title='Vista previa']").forEach(btn => {
+    document.querySelectorAll("button[title='Vista previa']").forEach(btn => {
         btn.removeEventListener("click", mostrarVistaPrevia);
         btn.addEventListener("click", mostrarVistaPrevia);
     });
@@ -562,99 +607,99 @@ function reasignarEventos() {
 
 // ----------- FUNCIONES Y COSAS NUEVAS PARA EL MODULO DE GASTOS-------------------
 document.addEventListener("DOMContentLoaded", async () => {
-  await cargarSelectorMesAnio();
+    await cargarSelectorMesAnio();
 
-  const selector = document.querySelector("#selector_mes_anio");
+    const selector = document.querySelector("#selector_mes_anio");
 
-  // Obtener mes y año actuales
-  const fecha = new Date();
-  const mes = String(fecha.getMonth() + 1).padStart(2, "0"); // meses de 0-11
-  const anio = fecha.getFullYear();
-  const valorActual = `${mes}-${anio}`;
+    // Obtener mes y año actuales
+    const fecha = new Date();
+    const mes = String(fecha.getMonth() + 1).padStart(2, "0"); // meses de 0-11
+    const anio = fecha.getFullYear();
+    const valorActual = `${mes}-${anio}`;
 
-  // Buscar si ese valor existe en las opciones
-  const opcionActual = Array.from(selector.options).find(opt => opt.text === valorActual);
-  if (opcionActual) {
-    selector.value = opcionActual.value;
+    // Buscar si ese valor existe en las opciones
+    const opcionActual = Array.from(selector.options).find(opt => opt.text === valorActual);
+    if (opcionActual) {
+        selector.value = opcionActual.value;
 
-    // Cargar datos del mes actual automáticamente
-    await cargarGastosPorMes(opcionActual.value);
-    await cargarTotalesMetodoPago(opcionActual.value);
-  }
+        // Cargar datos del mes actual automáticamente
+        await cargarGastosPorMes(opcionActual.value);
+        await cargarTotalesMetodoPago(opcionActual.value);
+    }
 
-  // Evento cuando cambia el select
-  selector.addEventListener("change", cargarDatosPorMes);
+    // Evento cuando cambia el select
+    selector.addEventListener("change", cargarDatosPorMes);
 });
 
 // Llenar el select de meses y años
 async function cargarSelectorMesAnio() {
-  const datos = new FormData();
-  datos.append("operacion", "listar_gastos_mes");
+    const datos = new FormData();
+    datos.append("operacion", "listar_gastos_mes");
 
-  const respuesta = await query(datos);
+    const respuesta = await query(datos);
 
-  if (respuesta && Array.isArray(respuesta)) {
-    const selector = document.querySelector("#selector_mes_anio");
-    selector.innerHTML = '<option value="">Seleccione un mes/año</option>';
+    if (respuesta && Array.isArray(respuesta)) {
+        const selector = document.querySelector("#selector_mes_anio");
+        selector.innerHTML = '<option value="">Seleccione un mes/año</option>';
 
-    // Calcular mes y año actual
-    const fechaActual = new Date();
-    const mesActual = String(fechaActual.getMonth() + 1).padStart(2, "0");
-    const anioActual = fechaActual.getFullYear();
+        // Calcular mes y año actual
+        const fechaActual = new Date();
+        const mesActual = String(fechaActual.getMonth() + 1).padStart(2, "0");
+        const anioActual = fechaActual.getFullYear();
 
-    let fechaSeleccionada = null;
+        let fechaSeleccionada = null;
 
-    respuesta.forEach(item => {
-      if (item.mes && item.anio) {
-        const option = document.createElement("option");
-        const nombreMes = obtenerNombreMes(item.mes);
-        option.value = item.fecha;
-        option.text = `${nombreMes}-${item.anio}`;
-        selector.appendChild(option);
+        respuesta.forEach(item => {
+            if (item.mes && item.anio) {
+                const option = document.createElement("option");
+                const nombreMes = obtenerNombreMes(item.mes);
+                option.value = item.fecha;
+                option.text = `${nombreMes}-${item.anio}`;
+                selector.appendChild(option);
 
-        // Comparar con el mes/año actual
-        if (parseInt(item.mes) == parseInt(mesActual) && parseInt(item.anio) == anioActual) {
-          fechaSeleccionada = item.fecha;
+                // Comparar con el mes/año actual
+                if (parseInt(item.mes) == parseInt(mesActual) && parseInt(item.anio) == anioActual) {
+                    fechaSeleccionada = item.fecha;
+                }
+            }
+        });
+
+        // Si se encontró el mes actual en la lista, seleccionarlo y cargar sus datos
+        if (fechaSeleccionada) {
+            selector.value = fechaSeleccionada;
+            await cargarGastosPorMes(fechaSeleccionada);
+            await cargarTotalesMetodoPago(fechaSeleccionada);
         }
-      }
-    });
-
-    // Si se encontró el mes actual en la lista, seleccionarlo y cargar sus datos
-    if (fechaSeleccionada) {
-      selector.value = fechaSeleccionada;
-      await cargarGastosPorMes(fechaSeleccionada);
-      await cargarTotalesMetodoPago(fechaSeleccionada);
     }
-  }
 }
 
 // Al cambiar el select
 async function cargarDatosPorMes(e) {
-  const fecha = e.target.value;
-  if (!fecha) return;
+    const fecha = e.target.value;
+    if (!fecha) return;
 
-  await cargarGastosPorMes(fecha);
-  await cargarTotalesMetodoPago(fecha);
+    await cargarGastosPorMes(fecha);
+    await cargarTotalesMetodoPago(fecha);
 }
 
 // Mostrar gastos del mes seleccionado
 async function cargarGastosPorMes(fecha) {
-  const datos = new FormData();
-  datos.append("operacion", "filtrar_gastos_mes");
-  datos.append("fecha", fecha);
+    const datos = new FormData();
+    datos.append("operacion", "filtrar_gastos_mes");
+    datos.append("fecha", fecha);
 
-  const respuesta = await query(datos);
+    const respuesta = await query(datos);
 
-  vaciar_tabla(); // función existente
-  if (respuesta && Array.isArray(respuesta)) {
-    if (data_table) data_table.destroy(); 
+    vaciar_tabla(); // función existente
+    if (respuesta && Array.isArray(respuesta)) {
+        if (data_table) data_table.destroy();
 
-vaciar_tabla(); 
+        vaciar_tabla();
 
-respuesta.forEach(gasto => llenarTabla(gasto));
+        respuesta.forEach(gasto => llenarTabla(gasto));
 
-data_table = init_data_table();
-  }
+        data_table = init_data_table();
+    }
 }
 
 function actualizarVisibilidadCampos() {
@@ -762,13 +807,13 @@ function formatearMetodo(metodo) {
 }
 
 function obtenerNombreMes(numeroMes) {
-  const meses = [
-    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-  ];
+    const meses = [
+        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    ];
 
-  const indice = parseInt(numeroMes, 10) - 1;
-  return meses[indice] || "Mes inválido";
+    const indice = parseInt(numeroMes, 10) - 1;
+    return meses[indice] || "Mes inválido";
 }
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -797,3 +842,27 @@ function mayuscula(texto) {
     if (!texto) return "";
     return texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase();
 }
+
+//CAMBIAR SOLICITUD DE GASTO A ASIGNADO:
+document.getElementById("solicitud").addEventListener("change", async function () {
+    const id_solicitud = this.value;
+    if (!id_solicitud) return;
+
+    const formData = new FormData();
+    formData.append("operacion", "asignar_solicitud");
+    formData.append("id_solicitud", id_solicitud);
+
+    // 🔥 Aquí importante: el endpoint es el de SOLICITUDES
+    const respuesta = await fetch("solicitud_gasto_controlador.php", {
+        method: "POST",
+        body: formData
+    });
+
+    const data = await respuesta.json();
+
+    if (data.estatus) {
+        console.log("Solicitud marcada como 'asignada'");
+    } else {
+        mensajes("error", 4000, "Error", data.mensaje || "No se pudo actualizar el estado de la solicitud.");
+    }
+});

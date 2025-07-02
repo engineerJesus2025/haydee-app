@@ -74,6 +74,7 @@
                                         <tr>
                                             <th>FECHA</th>
                                             <th>MONTO</th>
+                                            <th>TIPO</th>
                                             <th>TIPO GASTO</th>
                                             <th>METODO PAGO</th>
                                             <th>PROVEEDOR</th>
@@ -140,12 +141,21 @@
                 <div class="modal-dialog modal-lg modal-dialog-scrollable">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title">Imagen</h5>
+                            <h5 class="modal-title">Vista previa del Gasto</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"
                                 aria-label="Cerrar"></button>
                         </div>
                         <div class="modal-body">
-                            <div class="text-center mt-3">
+                            <p><strong>Fecha Gasto:</strong> <span id="vista_fecha"></span></p>
+                            <p><strong>Monto:</strong> <span id="vista_monto"></span></p>
+                            <p><strong>Tipo:</strong> <span id="vista_tipo"></span></p>
+                            <p><strong>Tipo Gasto:</strong> <span id="vista_tipo_gasto"></span></p>
+                            <p><strong>Metodo Pago:</strong> <span id="vista_metodo_pago"></span></p>
+                            <p><strong>Proveedor:</strong> <span id="vista_proveedor"></span></p>
+                            <p><strong>Descripcion:</strong> <span id="vista_descripcion"></span></p>
+                            <p id="grupo_referencia"><strong>Referencia:</strong> <span id="vista_referencia"></span></p>
+                            <p id="grupo_banco"><strong>Banco:</strong> <span id="vista_banco"></span></p>
+                            <div id="grupo_imagen" class="text-center mt-3">
                                 <img id="vista_imagen" src="" class="img-fluid border rounded"
                                     style="max-height: 300px;" alt="Vista previa de la imagen"
                                     onerror="this.style.display='none'; document.getElementById('mensaje_error_imagen').classList.remove('d-none');">

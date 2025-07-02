@@ -330,6 +330,23 @@ public function listar_meses_anios_con_presupuesto() {
 
     return $conexion->fetchAll(PDO::FETCH_ASSOC);
 }
+
+public function cambiar_estado_asignado() {
+    try {
+        $sql = "UPDATE solicitudes_gasto SET estado = 'Asignado' WHERE id_solicitud = :id";
+        $conexion = $this->get_conex()->prepare($sql);
+        $conexion->bindParam(":id", $this->id_solicitud);
+        $conexion->execute();
+
+        if ($conexion->rowCount() > 0) {
+            return ["estatus" => true, "mensaje" => "Estado actualizado a 'asignado'"];
+        } else {
+            return ["estatus" => false, "mensaje" => "No se encontró la solicitud o ya estaba asignada"];
+        }
+    } catch (PDOException $e) {
+        return ["estatus" => false, "mensaje" => "Error al actualizar estado: " . $e->getMessage()];
+    }
+}
     
 
 
