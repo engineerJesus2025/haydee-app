@@ -4,8 +4,8 @@
             <label for="nombre">Nombre del usuario</label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
-                <input type="text" class="form-control nombre" name="nombre" id="nombre" placeholder="Nombre" aria-label="nombre" aria-describedby="basic-addon1" minlength="3" maxlength="30">
-                <span class="w-100"></span>
+                <input type="text" class="form-control" name="nombre" id="nombre" placeholder="Nombre" aria-label="nombre" aria-describedby="basic-addon1" minlength="3" maxlength="30">
+                <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
         <div class="col-md-6">
@@ -13,7 +13,7 @@
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
                 <input type="text" class="form-control apellido" name="apellido" id="apellido" placeholder="Apellido" aria-label="apellido" aria-describedby="basic-addon1" minlength="3" maxlength="30">
-                <span class="w-100"></span>
+                <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
     </div>
@@ -22,8 +22,8 @@
             <label for="correo">Correo electrónico</label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-envelope-at"></i></span>
-                <input type="text" class="form-control correo" name="correo" id="correo" placeholder="Correo electrónico" aria-label="correo" aria-describedby="basic-addon1" minlength="3" maxlength="60">
-                <span class="w-100"></span>
+                <input type="text" class="form-control" name="correo" id="correo" placeholder="Correo electrónico" aria-label="correo" aria-describedby="basic-addon1" minlength="3" maxlength="60">
+                <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
         <div class="col-md-6">
@@ -36,6 +36,7 @@
                         <option value="<?php echo $rol["id_rol"] ?>"><?php echo $rol["nombre"] ?></option>
                     <?php endforeach; ?>
                 </select>
+                <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
     </div>
@@ -44,8 +45,11 @@
             <label for="contra">Contraseña</label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-key"></i></span>
-                <input type="password" class="form-control contra" name="contra" id="contra" placeholder="Contraseña" aria-label="contra" aria-describedby="basic-addon1" minlength="5" maxlength="50">
-                <span class="w-100"></span>
+                <input type="password" class="form-control" name="contra" id="contra" placeholder="Contraseña" aria-label="contra" aria-describedby="basic-addon1" minlength="5" maxlength="50">
+                <button class="btn contra" type="button" title="Mostrar Contraseña">
+                    <i class="bi bi-eye"></i>
+                </button>
+                <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
         <div class="col-md-6">
@@ -53,7 +57,10 @@
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-key"></i></span>
                 <input type="password" class="form-control confir_contra" name="confir_contra" id="confir_contra" placeholder="Confirmar contraseña" aria-label="confir_contra" aria-describedby="basic-addon1" minlength="5" maxlength="50">
-                <span class="w-100"></span>
+                <button class="btn contra" type="button" title="Mostrar Contraseña">
+                    <i class="bi bi-eye"></i>
+                </button>
+                <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
     </div>

@@ -6,7 +6,7 @@ $(document).ready(function(){
 
 	$("#nombre").on("keyup",function(){
 		validarKeyUp(/^[A-Za-z \b]{3,30}$/,
-		$(this),this.nextElementSibling,"Solo letras entre 3 y 30 caracteres");
+		this,this.nextElementSibling,"Solo letras entre 3 y 30 caracteres");
 	});
 	
 	$("#boton_formulario").on("click",async function(e){
@@ -24,19 +24,19 @@ $(document).ready(function(){
 			    }).then((result) => {
 					if (result.isConfirmed) {
 						envio(accion);						
-						nombre_an = null;//resetea el valor del correo original (esto es de usuario_ajax.js)
+						nombre_anterior = null;//resetea el valor del correo original (esto es de usuario_ajax.js)
 					}
 			    });
 		}	
 	});
 	$("#nombre").on("keyup",function(e){
 		if (validarKeyUp(/^[A-Za-z \b]{3,30}$/,
-		$(this),this.nextElementSibling,"Solo letras entre 3 y 30 caracteres")) {
-			if(this.value == nombre_an){return}
+		this,this.nextElementSibling,"Solo letras entre 3 y 30 caracteres")) {
+			if(this.value == nombre_anterior){return}
 			let datos = new FormData();
 			datos.append('validar','nombre');
 			datos.append('nombre',$(this).val());
-			verificar_duplicados(datos);
+			verificar_duplicados(datos);			
         }
 	})
 });
@@ -56,7 +56,7 @@ function mensajes(icono,tiempo,titulo,mensaje){
 async function validarEnvio(){
 	if(validarKeyUp(
         /^[A-Za-z ]{3,30}$/,
-        $("#nombre"),$("#span_nombre"),'El formato debe ser en letras'
+        document.getElementById('nombre'),document.getElementById('nombre').nextElementSibling,'El formato debe ser en letras'
         )==0)
 	{
 		mensajes('error',4000,'Verifique el nombre del rol',
@@ -65,7 +65,7 @@ async function validarEnvio(){
 		return false;
 	}
 
-	if(nombre_an != $("#nombre").val()){
+	if(nombre_anterior != $("#nombre").val()){
 		datos = new FormData(); 
 		datos.append('validar','nombre');
 		datos.append('nombre',$("#nombre").val());
@@ -90,12 +90,17 @@ function validarKeyPress(er, e) {
 
 function validarKeyUp(er,etiqueta,etiquetamensaje,
 mensaje){
-	a = er.test(etiqueta.val());
+	a = er.test(etiqueta.value);
+	
 	if(a){
+		etiqueta.classList.add('is-valid');
+		etiqueta.classList.remove('is-invalid');
 		etiquetamensaje.textContent = "";
 		return 1;
 	}
 	else{
+		etiqueta.classList.add('is-invalid')
+		etiqueta.classList.remove('is-valid');
 		etiquetamensaje.textContent = mensaje;
 		return 0;
 	}
@@ -109,19 +114,11 @@ async function verificar_duplicados(datos){
 		return result;//Convertimos el resultado de json a js y lo mandamos
 	})
 	
-	if(data.estatus){		
-		document.querySelector(`#${data.busqueda}`).nextElementSibling.textContent = `${data.busqueda} ya registrado`
+	if(data.estatus){	
+		document.querySelector(`#${data.busqueda}`).nextElementSibling.textContent = `${data.busqueda} ya registrado`;
+		document.querySelector(`#${data.busqueda}`).classList.add('is-invalid');
+		document.querySelector(`#${data.busqueda}`).classList.remove('is-valid');
 		return true;
 	}
 	return false;
-}
-
-async function api() {
-	let obj_dolar = await fetch('https://pydolarve.org/api/v2/tipo-cambio?currency=usd')
-	.then(response => {
-	let result = response.json();		
-	return result;//Convertimos el resultado de json a js y lo mandamos})
-	});
-	console.log(obj_dolar);
-	return obj_dolar;
 }

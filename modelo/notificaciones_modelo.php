@@ -75,9 +75,77 @@ class Notificaciones extends Conexion
         return $this->activo;
     }
 
-    public function consultar()
-    {
+    public function realizar_consulta($accion){
         $this->cambiar_db_seguridad();
+        switch ($accion) {
+            case 'consultar':
+                $respuesta = $this->consultar();
+
+                $this->cambiar_db_negocio();
+
+                if ($respuesta["resultado"] == true) {
+                    return $respuesta["datos"];
+                } 
+                else {
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+                }
+                
+            case 'consultar_notificaciones_usuario':
+                $respuesta = $this->consultar_notificaciones_usuario();
+
+                $this->cambiar_db_negocio();
+
+                if ($respuesta["resultado"] == true) {
+                    return $respuesta["datos"];
+                } 
+                else {
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+                }
+
+            case 'agregar_notificacion':
+                $respuesta = $this->agregar_notificacion();
+
+                $this->cambiar_db_negocio();
+
+                if ($respuesta) {
+                    return ["estatus"=>true,"mensaje"=>"OK"];
+                } else {
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar esta notificacion"];
+                }
+
+            case 'notificar_pago':
+                $respuesta = $this->notificar_pago();
+
+                $this->cambiar_db_negocio();
+
+                if ($respuesta) {
+                    return ["estatus"=>true,"mensaje"=>"OK"];
+                } else {
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar esta notificacion"];
+                }
+
+            case 'marcar_como_activo':
+                $respuesta = $this->marcar_como_activo();
+
+                $this->cambiar_db_negocio();
+
+                if ($respuesta["resultado"]) {
+                    if ($respuesta["fila_afectada"] < 1) {
+                        return ["estatus"=>false,"mensaje"=>"No se modificó ningún registro","h"=>$respuesta];
+                    }
+                    return ["estatus"=>true,"mensaje"=>"OK"];
+                } else {
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar marcar esta notificacion"];
+                }
+
+            default:
+                return ["estatus"=>false,"mensaje"=>"A ocurrido un error en la consulta"];
+                break;
+        }
+    }
+
+    private function consultar()
+    {        
         $sql = "SELECT id_notificacion, titulo, descripcion, fecha, usuario_id,
             activo, id_usuario, nombre, usuarios.apellido FROM notificaciones INNER JOIN usuarios ON 
             usuarios.id_usuario = notificaciones.usuario_id";
@@ -85,77 +153,64 @@ class Notificaciones extends Conexion
         $result = $conexion->execute();
         $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
 
-        $this->cambiar_db_negocio();
-        if ($result == true) {
-            return $datos;
-        } else {
-            return ["estatus" => false, "mensaje" => "Ha ocurrido un error con la consulta"];
-        }
+        return ["resultado"=>$result,"datos"=>$datos];
     }
 
-    public function consultar_notificaciones($usuario)
-    {
-        $this->cambiar_db_seguridad();
-        $sql = "SELECT id_notificacion, titulo, descripcion, fecha, usuario_id,
-            activo, id_usuario, nombre , usuarios.apellido FROM notificaciones INNER JOIN usuarios ON 
-            usuarios.id_usuario = notificaciones.usuario_id WHERE activo = 0 AND usuarios.id_usuario = :usuario";
+    private function consultar_notificaciones_usuario()
+    {        
+        $sql = "SELECT id_notificacion, titulo, descripcion FROM notificaciones WHERE notificaciones.usuario_id = :usuario_id";
 
         $conexion = $this->get_conex()->prepare($sql);
+        $conexion->bindParam(":usuario_id", $this->usuario_id);
 
-        $conexion->bindParam(":usuario", $usuario);
         $result = $conexion->execute();
         $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
 
-        $this->cambiar_db_negocio();
-
-        if ($result == true) {
-            return $datos;
-        } else {
-            return ["estatus" => false, "mensaje" => "Ha ocurrido un error con la consulta"];
-        }
+        return ["resultado"=>$result,"datos"=>$datos];        
     }
 
-    public function agregar_notificacion($titulo,$mensaje,$fecha,$usuario)
-    {
-        $this->cambiar_db_seguridad();
+    private function agregar_notificacion()
+    {        
         $sql ="INSERT INTO notificaciones(titulo, descripcion, fecha, usuario_id, activo) VALUES (:titulo,:descripcion, :fecha, :usuario_id,0)";
         $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":titulo", $titulo);
-        $conexion->bindParam(":descripcion", $mensaje);
-        $conexion->bindParam(":fecha", $fecha);
-        $conexion->bindParam(":usuario_id", $usuario);
+        $conexion->bindParam(":titulo", $this->titulo);
+        $conexion->bindParam(":descripcion", $this->descripcion);
+        $conexion->bindParam(":fecha", $this->fecha);
+        $conexion->bindParam(":usuario_id", $this->usuario_id);
         $result = $conexion->execute();
 
-        $this->cambiar_db_negocio();
-
         return $result;
-        if ($result) {
-            return ["estatus" => true, "mensaje" => "OK"];
-        } else {
-            return ["estatus" => false, "mensaje" => "Ha ocurrido un error al intentar registrar esta notificacion"];
-        }
     }
 
-    public function marcar_como_activo($id_notificacion)
-    {
-        $this->cambiar_db_seguridad();
+    private function notificar_pago()
+    {        
+        $sql = "INSERT INTO notificaciones (titulo, descripcion, fecha, usuario_id, activo)
+        SELECT :titulo, :descripcion, :fecha, u.id_usuario, 0
+        FROM usuarios u
+        WHERE u.rol_id IN (1, 2)";
+
+        $conexion = $this->get_conex()->prepare($sql);
+        $conexion->bindParam(":titulo", $this->titulo);
+        $conexion->bindParam(":descripcion", $this->descripcion);
+        $conexion->bindParam(":fecha", $this->fecha);
+
+        $result = $conexion->execute();
+
+        return $result;
+    }
+
+    private function marcar_como_activo()
+    {        
         $sql = "UPDATE notificaciones SET activo = 1 WHERE id_notificacion = :id_notificacion";
 
         $conexion = $this->get_conex()->prepare($sql);
 
-        $conexion->bindParam(":id_notificacion", $id_notificacion);
+        $conexion->bindParam(":id_notificacion", $this->id_notificacion);
+
         $result = $conexion->execute();
-        $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
-
-        $this->cambiar_db_negocio();
-        if ($result == true) {
-            return ["estatus" => true, "mensaje" => "OK"];
-        } else {
-            return ["estatus" => false, "mensaje" => "Ha ocurrido un error al intentar editar esta notificacion"];
-        }
+        
+        $filas_afectadas = $conexion->rowCount();
+        
+        return ["resultado"=>$result,"fila_afectada"=>$filas_afectadas];
     }
-
-
-
-
 }

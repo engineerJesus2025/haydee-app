@@ -1,106 +1,146 @@
 <form action="?pagina=pagos_controlador.php&accion=guardar" method="POST" id="form_pagos" name="form_pagos">
     <div class="row m-3">
-        <div class="col-md-6">
+        <div class="col-lg-4">
+            <label for="apartamento">Apartamento</label>
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="basic-addon1"><i class="bi bi-building"></i></span>
+                <select class="form-select apartamento_id" aria-label="Default select example" id="apartamento_id" name="apartamento_id">
+                    <option selected hidden value="">Seleccione un Apartamento</option>
+                    <?php foreach($registro_apartamento as $apartamento): ?>
+                        <option value="<?php echo $apartamento["id_apartamento"]?>"><?php echo "Nro: ".$apartamento["nro_apartamento"] ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <span class="w-100"></span>
+            </div>
+        </div>
+        <div class="col-lg-4">
             <label for="mensualidad">Mensualidad</label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-bank2"></i></span>
                     <select class="form-select mensualidad_id" aria-label="Default select example" id="mensualidad_id" name="mensualidad_id">
-                        <option selected hidden value="">Escoga la Mensualidad</option>
-                        <?php foreach($registro_mensualidad as $mensualidad): ?>
-                            <option value="<?php echo $mensualidad["id_mensualidad"]?>">
-                                <?php 
-                                    $mes_num = str_pad($mensualidad["mes"], 2, "0", STR_PAD_LEFT);
-                                    echo "Apartamento ".$mensualidad["nro_apartamento"].": ".$meses[$mes_num]." ".$mensualidad["anio"]." (Monto: ".$mensualidad["monto"].")";
-                                ?>
-                            </option>
-                        <?php endforeach; ?>
+                        <option selected hidden value="">Escoja primero un Apartamento</option> 
                     </select>
                 <span class="w-100"></span>
             </div>
         </div>
-        <div class="col-md-3">
-            <label for="telefono">Telefono</label>
+        <div class="col-lg-3">
+            <label for="monto_mensualidad">Monto Mensualidad</label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-cash-coin"></i></span>
-                <input type="text" class="form-control telefono" name="telefono" id="telefono" placeholder="telefono" aria-label="telefono" aria-describedby="basic-addon1" minlength="3" maxlength="30">
-                <span class="w-100"></span>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <label for="cedula">Cedula</label>
-            <div class="input-group mb-3">
-                <span class="input-group-text" id="basic-addon1"><i class="bi bi-cash-coin"></i></span>
-                <input type="text" class="form-control cedula" name="cedula" id="cedula" placeholder="cedula" aria-label="cedula" aria-describedby="basic-addon1" minlength="3" maxlength="30">
+                <input type="text" class="form-control monto_mensualidad" name="monto_mensualidad" id="monto_mensualidad" placeholder="Monto Mensualidad" aria-label="monto_mensualidad" aria-describedby="basic-addon1" minlength="3" maxlength="30" readonly>
                 <span class="w-100"></span>
             </div>
         </div>
     </div>
-    <div class="row m-3">
-        <div class="col-md-6">
-            <label for="monto">Monto</label>
-            <div class="input-group mb-3">
-                <span class="input-group-text" id="basic-addon1"><i class="bi bi-cash-coin"></i></span>
-                <input type="text" class="form-control monto" name="monto" id="monto" placeholder="Monto" aria-label="monto" aria-describedby="basic-addon1" minlength="3" maxlength="30">
-                <span class="w-100"></span>
+    <!-- Detalles del Pago -->
+     <div id="detalles_container">
+    <div class="detalle-pago card shadow-sm border-primary mt-4 mb-4">
+        <div class="card-header bg-primary text-white fw-bold">
+            <i class="bi bi-receipt-cutoff me-2"></i> Detalles del Pago
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-lg-3 col-sm-6">
+                    <label for="fecha">Fecha</label>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="bi bi-calendar-date"></i></span>
+                        <input type="date" class="form-control fecha_propietario" name="fecha[]">
+                        <span class="mensaje-error text-danger small"></span>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-sm-6">
+                    <label for="tipo_pago">Método de Pago</label>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="bi bi-credit-card-fill"></i></span>
+                        <select class="form-select tipo_pago_propietario" name="tipo_pago[]">
+                            <option selected hidden value="">Método de Pago</option>
+                            <option value="Transferencia">Transferencia</option>
+                            <option value="Efectivo">Efectivo</option>
+                            <option value="Pago Movil">Pago Movil</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-sm-6 campo-monto d-none">
+                    <label for="monto">Monto</label>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="bi bi-cash-coin"></i></span>
+                        <input type="text" class="form-control monto" name="monto[]" placeholder="Monto">
+                        <span class="mensaje-error text-danger small"></span>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-sm-6">
+                    <label for="tasa_dolar">Tasa del Dólar</label>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="bi bi-coin"></i></span>
+                        <input type="text" class="form-control tasa_dolar" name="tasa_dolar[]" placeholder="Tasa">
+                        <span class="mensaje-error text-danger small"></span>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-sm-6 campo-monto d-none">
+                    <label for="monto_dolar">Monto Dólar</label>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="bi bi-cash-coin"></i></span>
+                        <input type="text" class="form-control monto_dolar" name="monto_dolar[]" placeholder="Dólar">
+                        <span class="mensaje-error text-danger small"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3 campos-bancarios d-none">
+                    <label for="referencia">Referencia</label>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="bi bi-receipt"></i></span>
+                        <input type="text" class="form-control referencia" name="referencia[]" placeholder="Referencia">
+                        <span class="mensaje-error text-danger small"></span>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-sm-6 campos-bancarios d-none">
+                    <label for="banco_id">Banco</label>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="bi bi-bank2"></i></span>
+                        <select class="form-select banco_propietario" name="banco_id[]">
+                            <option selected hidden value="">Escoga el Banco</option>
+                            <?php foreach($registro_banco as $banco): ?>
+                                <option value="<?php echo $banco["id_banco"] ?>"><?php echo $banco["nombre_banco"] ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-lg-6 campos-bancarios d-none">
+                    <label for="imagen">Imagen</label>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="bi bi-image-fill"></i></span>
+                        <input type="file" class="form-control imagen" name="imagen[]">
+                    </div>
+                    <small class="nombre-imagen-cargada text-muted fst-italic d-block mt-1"></small>
+                    <button type="button" class="btn btn-sm btn-outline-danger mt-2 d-none boton_eliminar_imagen">
+                        <i class="bi bi-trash3"></i> Eliminar imagen cargada
+                    </button>
+                </div>
             </div>
         </div>
-        <div class="col-md-6">
-            <label for="nro_cuenta">Numero de Cuenta</label>
-            <div class="input-group mb-3">
-                <span class="input-group-text" id="basic-addon1"><i class="bi bi-cash-coin"></i></span>
-                <input type="text" class="form-control nro_cuenta" name="nro_cuenta" id="nro_cuenta" placeholder="Numero de cuenta" aria-label="nro_cuenta" aria-describedby="basic-addon1" minlength="3" maxlength="30">
-                <span class="w-100"></span>
-            </div>
-        </div>
-    </div> 
+    </div>
+</div>
     <div class="row m-3">
-        <div class="col-md-6">
-            <label for="metodo_pago">Metodo de Pago</label>
+        <div class="col-lg-6 mb-3 d-flex align-items-end mx-auto">
+            <button type="button" class="btn btn-outline-success w-100" id="agregar_detalle">
+                <i class="bi bi-plus-circle"></i> Agregar Detalle de Pago
+            </button>
+        </div>
+    </div>
+    <div class="row m-3"> 
+        <div class="col-lg-4">
+            <label for="estado">Estado del Pago</label>
             <div class="input-group mb-3">
-                <span class="input-group-text" id="basic-addon1"><i class="bi bi-credit-card-fill"></i></span>
-                    <select class="form-select metodo_pago" aria-label="Default select example" id="metodo_pago" for="metodo_pago" name="metodo_pago">
-                        <option selected hidden value="">Metodo de Pago</option>
-                        <option value="Transferencia">Transferencia</option>
-                        <option value="Efectivo">Efectivo</option>
-                        <option value="Pago Movil">Pago Movil</option>
+                <span class="input-group-text" id="basic-addon1"><i class="bi bi-check-circle-fill"></i></span>
+                    <select class="form-select estado" aria-label="Default select example" id="estado" for="estado" name="estado">
+                        <option selected hidden value="">Estado del Pago</option>
+                        <option value="No procesado">NO PROCESADO</option>
                     </select>
                 <span class="w-100"></span>
             </div>
         </div>
-        <div class="col-md-6">
-            <label for="tasa_dolar">Tasa del Dolar</label>
-            <div class="input-group mb-3">
-                <span class="input-group-text" id="basic-addon1"><i class="bi bi-coin"></i></span>
-                <input type="text" class="form-control tasa_dolar" name="tasa_dolar" id="tasa_dolar" placeholder="Tasa del Dolar" aria-label="tasa_dolar" aria-describedby="basic-addon1" minlength="3" maxlength="60">
-                <span class="w-100"></span>
-            </div>
-        </div>
-    </div>
-    <div class="row m-3">
-        <div class="col-md-6">
-            <label for="referencia">Referencia</label>
-            <div class="input-group mb-3">
-                <span class="input-group-text" id="basic-addon1"><i class="bi bi-receipt"></i></span>
-                    <input type="text" class="form-control referencia" name="referencia" id="referencia" placeholder="Referencia" aria-label="referencia" aria-describedby="basic-addon1" minlength="3" maxlength="60">
-                <span class="w-100"></span>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <label for="banco_id">Banco</label>
-            <div class="input-group mb-3">
-                <span class="input-group-text" id="basic-addon1"><i class="bi bi-bank2"></i></span>
-                    <select class="form-select banco" aria-label="Default select example" id="banco_id" name="banco_id">
-                        <option selected hidden value="">Escoga el Banco</option>
-                        <?php foreach($registro_banco as $banco): ?>
-                            <option value="<?php echo $banco["id_banco"]?>" data-numero_cuenta="<?= $banco['numero_cuenta'] ?>" data-telefono="<?= $banco['telefono_afiliado'] ?>" data-cedula="<?= $banco['cedula_afiliada'] ?>" ><?php echo $banco["nombre_banco"] ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                <span class="w-100"></span>
-            </div>
-        </div>
-    </div>
-    <div class="row m-3">
-        <div class="col-md-6">
+        <div class="col-lg-8 mb-3">
             <label for="observacion">Observacion</label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-info-circle-fill"></i></span>
@@ -108,18 +148,6 @@
                 <span class="w-100"></span>
             </div>
         </div>
-        <div class="col-md-6">
-            <label for="imagen">Imagen</label>
-            <div class="input-group mb-3">
-                <span class="input-group-text" id="basic-addon1"><i class="bi bi-image-fill"></i></span>
-                    <input type="file" class="form-control imagen" name="imagen" id="imagen" placeholder="Imagen" aria-label="imagen" aria-describedby="basic-addon1" minlength="3" maxlength="60">
-                    <small id="nombre_imagen_cargada" class="text-muted fst-italic d-block mt-1"></small>
-                    <button type="button" id="boton_eliminar_imagen" class="btn btn-sm btn-outline-danger mt-2 d-none">
-                        <i class="bi bi-trash3"></i> Eliminar imagen cargada
-                    </button>
-                <span class="w-100"></span>
-            </div>
-        </div> 
     </div>
     <div class="row m-3">
         <div class="col-md-12 text-center">

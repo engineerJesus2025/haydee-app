@@ -9,19 +9,26 @@ $(document).ready(function () {
     /* ----------  TÍTULO  ---------- */
     $("#titulo").on("keypress", e => validarKeyPress(regexChar, e));
     $("#titulo").on("keyup",   function () {
-        validarKeyUp(regexTexto, $(this), this.nextElementSibling,
-                      "Debe ingresar un título válido (mín. 3 caracteres)");
+        validarKeyUp(/^[A-Za-zÁÉÍÓÚáéíóú0-9.,;()'"!?¡¿%°\- ]{3,100}$/, this, this.nextElementSibling,
+                      "Debe ingresar un título válido (mín. 3 caracteres y max. 100)");
     });
 
     /* ----------  DESCRIPCIÓN  ---------- */
     $("#descripcion").on("keypress", e => validarKeyPress(regexChar, e));
     $("#descripcion").on("keyup",   function () {
-        validarKeyUp(regexTexto, $(this), this.nextElementSibling,
-                      "Debe ingresar una descripción válida (mín. 3 caracteres)");
+        validarKeyUp(regexTexto, this, this.nextElementSibling,
+                      "Debe ingresar una descripción válida (mín. 3 caracteres y max. 200)");
     });
 
     /* ----------  FECHA  ---------- */
-    $("#fecha").on("keyup change", () => validarFecha($("#fecha")));
+    $("#fecha").on("keyup change", () => validarFecha(document.getElementById("fecha")));
+
+
+    document.getElementById('prioridad').addEventListener("change",e=>{
+        e.target.classList.add('is-valid');
+        e.target.classList.remove('is-invalid');
+        e.target.nextElementSibling.textContent = "";
+    });
 
     /* ----------  BOTÓN  ---------- */
     $("#boton_formulario").on("click", async function (e) {
@@ -53,15 +60,15 @@ function mensajes(icono, tiempo, titulo, mensaje) {
         confirmButtonColor: "#e01d22",
     });
 } // Fin de mensajes
-
+document.getElementById('')
 async function validarEnvio(accion, regexTexto) {
-    if (!validarKeyUp(regexTexto, $("#titulo"), $("#titulo")[0].nextElementSibling))
+    if (!validarKeyUp(/^[A-Za-zÁÉÍÓÚáéíóú0-9.,;()'"!?¡¿%°\- ]{3,100}$/, document.getElementById("titulo"), document.getElementById("titulo").nextElementSibling, 'ingresar un título válido (mín. 3 caracteres y max. 100)'))
         { mensajes("error", 2000, "Error", "Debe ingresar un título válido"); return false; }
 
-    if (!validarKeyUp(regexTexto, $("#descripcion"), $("#descripcion")[0].nextElementSibling))
+    if (!validarKeyUp(regexTexto, document.getElementById("descripcion"), document.getElementById("descripcion").nextElementSibling, 'ingresar una descripción válida (mín. 3 caracteres y max. 200)'))
         { mensajes("error", 2000, "Error", "Debe ingresar una descripción válida"); return false; }
 
-    if (!validarFecha($("#fecha"))) {
+    if (!validarFecha(document.getElementById("fecha"))) {
         mensajes("error", 2000, "Error", "Debe ingresar una fecha válida"); return false;
     }
     if (!validar_select("prioridad")) {
@@ -76,17 +83,53 @@ function validarKeyPress(er, e) {
     if (!er.test(String.fromCharCode(key))) e.preventDefault();
 }
 
-function validarKeyUp(er, $input, msgElem, msg = "") {
-    const ok = er.test($input.val().trim());
-    if (msgElem) msgElem.textContent = ok ? "" : msg;
-    return ok;
+function validarKeyUp(er,etiqueta,etiquetamensaje,
+mensaje){
+    a = er.test(etiqueta.value);
+    
+    if(a){
+        etiqueta.classList.add('is-valid');
+        etiqueta.classList.remove('is-invalid');
+        etiquetamensaje.textContent = "";
+        return 1;
+    }
+    else{
+        etiqueta.classList.add('is-invalid')
+        etiqueta.classList.remove('is-valid');
+        etiquetamensaje.textContent = mensaje;
+        return 0;
+    }
 }
 
 function validar_select(id) {
-    return document.getElementById(id).value.trim() !== "";
+    let selec = document.querySelector("#"+id);
+    if (selec.value == '') {
+        selec.classList.add('is-invalid')
+        selec.classList.remove('is-valid');
+        selec.nextElementSibling.textContent = "Debe seleccionar una opcion";
+        return false;
+    }
+    else{
+        selec.classList.add('is-valid');
+        selec.classList.remove('is-invalid');
+        selec.nextElementSibling.textContent = "";
+        return true;
+    }
 }
 
 function validarFecha($input) {
-    const v = $input.val();
-    return /^\d{4}-\d{2}-\d{2}$/.test(v);  // yyyy-mm-dd
+    const v = $input.value;
+    let res = /^\d{4}-\d{2}-\d{2}$/.test(v);// yyyy-mm-dd
+    if (res) {
+        $input.classList.add('is-valid');
+        $input.classList.remove('is-invalid');
+        $input.nextElementSibling.textContent = "";
+        return true;
+    }
+    else{
+        $input.classList.add('is-invalid')
+        $input.classList.remove('is-valid');
+        $input.nextElementSibling.textContent = "El formato de la fecha es incorrecta";
+        return false;
+    }
 }

@@ -1,21 +1,20 @@
 $(document).ready(function(){
-
 	$("#cedula").on("keypress",function(e){
 		validarKeyPress(/^[0-9\b]*$/, e);
 	});
 
 	$("#cedula").on("keyup",function(){
 		validarKeyUp(/^[0-9\b]{7,8}$/,
-		$(this),this.nextElementSibling,"Debe ingresar la cedula del habitante");
+		this,this.nextElementSibling,"Debe ingresar la cedula del Habitante");
 	});
 
-	$("#nombre_habitante").on("keypress",function(e){
+	$("#nombre").on("keypress",function(e){
 		validarKeyPress(/^[A-Za-z \b]*$/, e);
 	});
 
-	$("#nombre_habitante").on("keyup",function(){
+	$("#nombre").on("keyup",function(){
 		validarKeyUp(/^[A-Za-z \b]{3,30}$/,
-		$(this),this.nextElementSibling,"Debe ingresar el nombre del habitante");
+		this,this.nextElementSibling,"Debe ingresar el nombre del Habitante");
 	});
 
 	$("#apellido").on("keypress",function(e){
@@ -24,8 +23,13 @@ $(document).ready(function(){
 
 	$("#apellido").on("keyup",function(){
 		validarKeyUp(/^[A-Za-z \b]{3,30}$/,
-		$(this),this.nextElementSibling,"Debe ingresar el apellido del habitante");
+		this,this.nextElementSibling,"Debe ingresar el apellido del Habitante");
 	});
+
+	$("#fecha_nacimiento").on("keyup",function(){
+        validarKeyUp(/^(?:(?:1[6-9]|[2-9]\d)?\d{2})(?:(?:(\/|-|\.)(?:0?[13578]|1[02])\1(?:31))|(?:(\/|-|\.)(?:0?[13-9]|1[0-2])\2(?:29|30)))$|^(?:(?:(?:1[6-9]|[2-9]\d)?(?:0[48]|[2468][048]|[13579][26])|(?:(?:16|[2468][048]|[3579][26])00)))(\/|-|\.)0?2\3(?:29)$|^(?:(?:1[6-9]|[2-9]\d)?\d{2})(\/|-|\.)(?:(?:0?[1-9])|(?:1[0-2]))\4(?:0?[1-9]|1\d|2[0-8])$/,
+        this,this.nextElementSibling,"Ingrese una fecha valida");
+    });
 
 	$("#telefono").on("keypress",function(e){
 		validarKeyPress(/^[0-9\b]*$/, e);
@@ -33,21 +37,25 @@ $(document).ready(function(){
 
 	$("#telefono").on("keyup",function(){
 		validarKeyUp(/^[0-9\b]{11}$/,
-		$(this),this.nextElementSibling,"Debe ingresar un telefono del habitante");
+		this,this.nextElementSibling,"Debe ingresar un telefono del Habitante");
 	});
 
-	/*$(".fecha_nacimiento").on("keyup",function(){
-		validarKeyUp(/^(?:(?:1[6-9]|[2-9]\d)?\d{2})(?:(?:(\/|-|\.)(?:0?[13578]|1[02])\1(?:31))|(?:(\/|-|\.)(?:0?[13-9]|1[0-2])\2(?:29|30)))$|^(?:(?:(?:1[6-9]|[2-9]\d)?(?:0[48]|[2468][048]|[13579][26])|(?:(?:16|[2468][048]|[3579][26])00)))(\/|-|\.)0?2\3(?:29)$|^(?:(?:1[6-9]|[2-9]\d)?\d{2})(\/|-|\.)(?:(?:0?[1-9])|(?:1[0-2]))\4(?:0?[1-9]|1\d|2[0-8])$/,
-		$(this),this.nextElementSibling,"Debe ingresar la fecha de nacimiento");
-	});*/
+	$("#correo").on("keypress",function(e){	
+		validarKeyPress(/^[-A-Za-z0-9_.@\b]*$/, e);
+	});
+
+	$("#correo").on("keyup",function(e){
+		validarKeyUp(/^[-A-Za-z0-9_.]{3,35}[@][A-Za-z0-9]{3,10}[.][A-Za-z]{2,3}$/,this,
+		this.nextElementSibling,"El formato debe ser asi: ejemplo@gmail.com");
+	});
 	
-	$("#boton_formulario").on("click",async function(e){
+	$("#boton_formulario_habitantes").on("click",async function(e){
 		let accion = (e.target.getAttribute("modificar"))?"Editar":"Registrar";		
 		e.preventDefault();
-		if(await validarEnvio(accion)==true){
+		if(await validarEnvio_habitantes(accion)==true){
 				Swal.fire({
 				title: "¿Estás seguro?",
-				text: `¿Está seguro que desea ${accion} este Habitante?`,
+				text: `¿Está seguro que desea ${accion} a este Habitante?`,
 				showCancelButton: true,
 				confirmButtonText: accion,
 				confirmButtonColor: "#1b8a40",
@@ -55,28 +63,46 @@ $(document).ready(function(){
 				icon: "warning"
 			    }).then((result) => {
 					if (result.isConfirmed) {
-						envio(accion);						
+						envio_habitantes(accion);						
 						cedula_an = null;//resetea el valor del correo original (esto es de usuario_ajax.js)
 					}
 			    });
 		}	
 	});
 
+	document.getElementById('sexo').addEventListener("change",e=>{
+		e.target.classList.add('is-valid');
+		e.target.classList.remove('is-invalid');
+		e.target.nextElementSibling.textContent = "";
+	});
+
+	document.getElementById('apartamento_id').addEventListener("change",e=>{
+		e.target.classList.add('is-valid');
+		e.target.classList.remove('is-invalid');
+		e.target.nextElementSibling.textContent = "";
+	});
+
+	document.getElementById('tipo_vinculo').addEventListener("change",e=>{
+		e.target.classList.add('is-valid');
+		e.target.classList.remove('is-invalid');
+		e.target.nextElementSibling.textContent = "";
+	});
+
 	$("#cedula").on("keyup",function(e){
 		if (validarKeyUp(
         /^[0-9\b]{7,8}$/,
-        $("#cedula"),document.querySelector("#cedula").nextElementSibling,'El formato debe ser en números'
+        document.querySelector("#cedula"),document.querySelector("#cedula").nextElementSibling,'El formato debe ser en números'
         )) {
         	if (this.value == cedula_an) {return;}
 			let datos = new FormData();
 			datos.append('validar','cedula');
 			datos.append('cedula',$(this).val());
-			verificar_duplicados(datos);
+			verificar_duplicados_habitantes(datos);
         }		
 	})
 
 });	//Fin de AJAX
-
+ 
 function mensajes(icono,tiempo,titulo,mensaje){
 	Swal.fire({
 	icon:icono,
@@ -89,10 +115,10 @@ function mensajes(icono,tiempo,titulo,mensaje){
 	});
 }
 
-async function validarEnvio(accion = "Registrar"){	
+async function validarEnvio_habitantes(accion = "Registrar"){	
 	if(validarKeyUp(
         /^[0-9\b]{7,8}$/,
-        $("#cedula"),document.querySelector("#cedula").nextElementSibling,'Debe ingresar la cedula'
+        document.querySelector("#cedula"),document.querySelector("#cedula").nextElementSibling,'Debe ingresar la cedula'
         )==0)
 	{
 		mensajes('error',4000,'Debe ingresar la cedula',
@@ -102,18 +128,18 @@ async function validarEnvio(accion = "Registrar"){
 	}
 	else if(validarKeyUp(
         /^[A-Za-z \b]{3,30}$/,
-        $("#nombre_habitante"),document.querySelector("#nombre_habitante").nextElementSibling,'Debe ingresar el nombre'
+        document.querySelector("#nombre"),document.querySelector("#nombre").nextElementSibling,'Solo letras, no mas de 30 caracteres'
         )==0)
 	{
 		mensajes('error',4000,'Debe ingresar el nombre',
-		'El formato debe ser sólo en letras');
+		'Solo letras, no mas de 30 caracteres');
 		
 		return false;
 	}
 	
 	else if(validarKeyUp(
         /^[A-Za-z \b]{3,30}$/,
-        $("#apellido"),document.querySelector("#apellido").nextElementSibling,'Debe ingresar el apellido'
+        document.querySelector("#apellido"),document.querySelector("#apellido").nextElementSibling,'Solo letras, no mas de 30 caracteres'
         )==0)
 	{
 		mensajes('error',4000,'Debe ingresar el apellido',
@@ -121,20 +147,28 @@ async function validarEnvio(accion = "Registrar"){
 		
 		return false;
 	}
+	else if(validarFechaNacimiento(document.querySelector("#fecha_nacimiento")) == false)
+	{
+
+		return false;
+	}
 	else if(validarKeyUp(
         /^[0-9\b]{11}$/,
-        $("#telefono"),document.querySelector("#telefono").nextElementSibling,'Debe ingresar un telefono'
+        document.querySelector("#telefono"),document.querySelector("#telefono").nextElementSibling,'Solo numeros'
         )==0)
 	{
 		mensajes('error',4000,'Debe ingresar un telefono',
-		'El formato debe ser XXXX-XXXXXXX');
+		'El formato debe ser XXXX-XXXXXXX. Solo numeros');
 		
 		return false;
 	}
-	else if(validar_select("apartamento_id")==0)
+	else if(validarKeyUp(
+        /^[-A-Za-z0-9_.]{3,35}[@][A-Za-z0-9]{3,10}[.][A-Za-z]{2,3}$/,
+        document.querySelector("#correo"),document.querySelector("#correo").nextElementSibling,'Ejemplo: alguien@servidor.com'
+        )==0)
 	{
-		mensajes('error',4000,'Debe seleccionar un apartamento',
-		'Debe seleccionar una opción');
+		mensajes('error',4000,'Debe ingresar un correo electrónico',
+		'Ejemplo: alguien@servidor.com');
 		
 		return false;
 	}
@@ -145,36 +179,30 @@ async function validarEnvio(accion = "Registrar"){
 		
 		return false;
 	}
+	else if(validar_select("apartamento_id")==0)
+	{
+		mensajes('error',4000,'Debe seleccionar un apartamento',
+		'Debe seleccionar una opción');
+		
+		return false;
+	}
+	
+	else if(validar_select("tipo_vinculo")==0)
+	{
+		mensajes('error',4000,'Debe seleccionar un vinculo',
+		'Debe seleccionar una opción');
+		
+		return false;
+	}
+	
 	if (accion == "Registrar") {
-		/*if(validar_contra()==0)
-		{
-			mensajes('error',4000,'Verifique nuevamente la contraseña',
-			'El campo "contraseña" y el campo "confirmar contraseña" no coinciden');
-			
-			return false;
-		}*/
+		
 	}else if (accion == "Editar"){
 		datos = new FormData();
-		//datos.append("validar",'contra');
-		datos.append("id_habitante",id_modificar);
-		/*datos.append("contra",$("#contra").val());
-		res = await verificar_contra(datos);
-		// revisamos si la contraseña que puso es la correcta
-		if(!res){
-			mensajes('error',4000,'Contraseña Icorrecta','La contraseña ingresada no es correcta, para poder realizar cambios debe ingresar la contraseña correcta');
-			return false;
-		}
-
-		if ($("#confir_contra").val() != '') {
-			if(validarKeyUp(/^[A-Za-z0-9_.+*$#%&@]{5,50}$/,$("#confir_contra"),document.querySelector("#confir_contra").nextElementSibling,'Debe ingresar una contraseña')==0)
-			{
-				mensajes('error',4000,'Error en la nueva contraseña',
-				'El formato debe tener mínimo 5 caracteres, utilizar letras, numeros y caracteres especiales como: _.+*$#%&/ ');
-				
-				return false;
-			}
-		}*/
+		
+		datos.append("id_habitane",id_modificar_habitantes);
 	}
+	
 	// si el valor de correo no es el mismo de antes:
 	if(cedula_an != $("#cedula").val()){
 		datos = new FormData(); 
@@ -202,14 +230,17 @@ function validarKeyPress(er, e) {
 
 function validarKeyUp(er,etiqueta,etiquetamensaje,
 mensaje){
-	a = er.test(etiqueta.val());
-
+	a = er.test(etiqueta.value);
+	
 	if(a){
-
+		etiqueta.classList.add('is-valid');
+		etiqueta.classList.remove('is-invalid');
 		etiquetamensaje.textContent = "";
 		return 1;
 	}
 	else{
+		etiqueta.classList.add('is-invalid')
+		etiqueta.classList.remove('is-valid');
 		etiquetamensaje.textContent = mensaje;
 		return 0;
 	}
@@ -218,42 +249,63 @@ mensaje){
 function validar_select(id) {
 	let selec = document.querySelector("#"+id);
 	if (selec.value == '') {
+		selec.classList.add('is-invalid')
+		selec.classList.remove('is-valid');
+		selec.nextElementSibling.textContent = "Debe seleccionar una opcion";
 		return false;
-	}else{
+	}
+	else{
+		selec.classList.add('is-valid');
+		selec.classList.remove('is-invalid');
+		selec.nextElementSibling.textContent = "";
 		return true;
 	}
 }
 
-function validar_contra() {
-	let contra = document.querySelector("#contra");
-	let confir_contra = document.querySelector("#confir_contra");
-	if (contra.value == confir_contra.value) {
-		return 1;
-	}else{
-		return 0;
+function validarFechaNacimiento(fecha_input) {
+	let resultado = true;
+
+	if (!fecha_input.value) {
+		mensajes('error', 4000, 'Fecha obligatoria', 'Debes ingresar la fecha de nacimiento');
+		return false;
 	}
+
+	const fechaNacimiento = new Date(fecha_input.value);
+	const hoy = new Date();
+
+	// Validación básica de rango aceptable
+	if (fechaNacimiento.getFullYear() < 1900 || fechaNacimiento > hoy) {
+		mensajes('error', 4000, 'Fecha no válida', 'La fecha debe ser posterior a 1900 y no puede ser futura');
+		return false;
+	}
+
+	// Calcular la edad
+	let edad = hoy.getFullYear() - fechaNacimiento.getFullYear();
+	const mes = hoy.getMonth() - fechaNacimiento.getMonth();
+
+	if (mes < 0 || (mes === 0 && hoy.getDate() < fechaNacimiento.getDate())) {
+		edad--;
+	}
+
+	if (edad < 18) {
+		mensajes('error', 4000, 'Edad insuficiente', 'Debes ser mayor de 18 años');
+		resultado = false;
+	}
+
+	return resultado;
 }
 
-async function verificar_duplicados(datos){
+async function verificar_duplicados_habitantes(datos){
 	// Solo es un fetching de datos, en body mandamos los datos
 	// Estos datos se mandan al controdalor	
 	let data = await fetch("",{method:"POST", body:datos}).then(res=>{		
 		let result = res.json()
 		return result;//Convertimos el resultado de json a js y lo mandamos
-	})
+	});
 	// aqui revisamos el estatus, si es true es porque esta duplicado y mandamos un mensaje	
 	if(data.estatus){
 		document.querySelector(`#${data.busqueda}`).nextElementSibling.textContent = `${data.busqueda} ya registrado/a`
 		return true;
 	}
 	return false;
-}
-
-async function verificar_contra(datos){
-	let data = await fetch("",{method:"POST", body:datos}).then(res=>{		
-		let result = res.json()
-		return result;//Convertimos el resultado de json a js y lo mandamos
-	})
-	// aqui revisamos el estatus, si es true es porque es correcta la contraseña		
-	return data;
 }

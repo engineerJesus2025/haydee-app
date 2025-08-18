@@ -55,44 +55,32 @@ class Propietario extends Conexion{
         return $this->correo;
     }
 
-    public function consultar(){
-        $sql = "SELECT * FROM propietarios";
+    // public function consultar(){
+    //     $sql = "SELECT * FROM personas INNER JOIN personas_apartamentos ON personas.id_persona = personas_apartamentos.persona_id INNER JOIN apartamentos ON apartamentos.id_apartamento = personas_apartamentos.apartamento_id WHERE personas_apartamentos.tipo_vinculo = 'Propietario'";
 
-        $conexion = $this->get_conex()->prepare($sql);
-        $result = $conexion->execute();
-        $this->registrar_bitacora(CONSULTAR, GESTIONAR_PROPIETARIOS, "TODOS LOS USUARIOS");//registra cuando se entra al modulo de propietarios
+    //     $conexion = $this->get_conex()->prepare($sql);
+    //     $result = $conexion->execute();
+    //     //$this->registrar_bitacora(CONSULTAR, GESTIONAR_PROPIETARIOS, "TODOS LOS USUARIOS");//registra cuando se entra al modulo de propietarios
 
-        $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
+    //     $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
 
-        if($result == true){
-            return $datos;
-        }else{
-            return ["estatus"=>false, "mensaje"=>"Error al consultar los propietarios"];
-        }
-    }
+    //     if($result == true){
+    //         return $datos;
+    //     }else{
+    //         return ["estatus"=>false, "mensaje"=>"Error al consultar los propietarios"];
+    //     }
+    // }
 
-    public function consultar_propietario(){
-        $sql = "SELECT * FROM propietarios WHERE id_propietario = :id_propietario";
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":id_propietario", $this->id_propietario);
-        $result = $conexion->execute();
-        $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
-
-        if($result == true){
-            return $datos;
-        }else{
-            return ["estatus"=>false, "mensaje"=>"Error al consultar el propietario"];
-        }
-    }
+    
 
     public function registrar(){
         // Validar duplicados
-    if ($this->existe_cedula($this->cedula)) {
-        return ["estatus"=>false, "mensaje"=>"La cédula ya está registrada"];
-    }
-    if ($this->existe_correo($this->correo)) {
-        return ["estatus"=>false, "mensaje"=>"El correo ya está registrado"];
-    }
+        if ($this->existe_cedula($this->cedula)) {
+            return ["estatus"=>false, "mensaje"=>"La cédula ya está registrada"];
+        }
+        if ($this->existe_correo($this->correo)) {
+            return ["estatus"=>false, "mensaje"=>"El correo ya está registrado"];
+        }
         $sql = "INSERT INTO propietarios (nombre, apellido, cedula, telefono, correo) VALUES (:nombre, :apellido, :cedula, :telefono, :correo)";
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":nombre", $this->nombre);
@@ -112,13 +100,13 @@ class Propietario extends Conexion{
     }
 
     public function editar_propietario(){
-         // Validar duplicados excluyendo el actual
-    if ($this->existe_cedula($this->cedula, $this->id_propietario)) {
-        return ["estatus"=>false, "mensaje"=>"La cédula ya está registrada"];
-    }
-    if ($this->existe_correo($this->correo, $this->id_propietario)) {
-        return ["estatus"=>false, "mensaje"=>"El correo ya está registrado"];
-    }
+        // Validar duplicados excluyendo el actual
+        if ($this->existe_cedula($this->cedula, $this->id_propietario)) {
+            return ["estatus"=>false, "mensaje"=>"La cédula ya está registrada"];
+        }
+        if ($this->existe_correo($this->correo, $this->id_propietario)) {
+            return ["estatus"=>false, "mensaje"=>"El correo ya está registrado"];
+        }
         $sql = "UPDATE propietarios SET nombre = :nombre, apellido = :apellido, cedula = :cedula, telefono = :telefono, correo = :correo WHERE id_propietario = :id_propietario";
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":id_propietario", $this->id_propietario);
@@ -133,9 +121,9 @@ class Propietario extends Conexion{
 
         if($result == true){
             return ["estatus"=>true, "mensaje"=>"Propietario editado correctamente"];
-    } else{
-            return ["estatus"=>false, "mensaje"=>"Error al editar el propietario"];
-        }
+        } else{
+                return ["estatus"=>false, "mensaje"=>"Error al editar el propietario"];
+            }
     }
 
     public function eliminar_propietario(){
@@ -265,6 +253,53 @@ public function existe_correo($correo, $excluir_id = null) {
     $result = $conexion->fetch(PDO::FETCH_ASSOC);
     return $result['total'] > 0;
 }
+
+//Usadas
+    public function consultar(){
+        $sql = "SELECT * FROM habitantes INNER JOIN habitantes_apartamentos ON habitantes.id_habitante = habitantes_apartamentos.habitante_id INNER JOIN apartamentos ON apartamentos.id_apartamento = habitantes_apartamentos.apartamento_id";
+
+        $conexion = $this->get_conex()->prepare($sql);
+        $result = $conexion->execute();
+
+        $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
+
+        if($result == true){
+            return $datos;
+        }else{
+            return ["estatus"=>false, "mensaje"=>"Error al consultar los propietarios"];
+        }
+    }
+    public function consultar_propietario(){
+        $sql = "SELECT * FROM personas INNER JOIN personas_apartamentos ON personas.id_persona = personas_apartamentos.persona_id INNER JOIN apartamentos ON apartamentos.id_apartamento = personas_apartamentos.apartamento_id WHERE id_persona = :id_propietario";
+        $conexion = $this->get_conex()->prepare($sql);    
+        $conexion->bindParam(":id_propietario", $this->id_propietario);
+        $result = $conexion->execute();
+        $datos = $conexion->fetch(PDO::FETCH_ASSOC);
+
+        if($result == true){
+            return $datos;
+        }else{
+            return ["estatus"=>false, "mensaje"=>"Error al consultar el propietario"];
+        }
+    }
+    /*
+
+    */
+
+    public function consultar_personas_solvencia(){
+        $sql = "SELECT * FROM habitantes INNER JOIN habitantes_apartamentos ON habitantes.id_habitante = habitantes_apartamentos.habitante_id INNER JOIN apartamentos ON apartamentos.id_apartamento = habitantes_apartamentos.apartamento_id WHERE apartamentos.id_apartamento IN 
+            (SELECT apartamentos.id_apartamento FROM mensualidad INNER JOIN apartamentos ON mensualidad.apartamento_id = apartamentos.id_apartamento
+            WHERE (SELECT SUM(mensualidad.monto) FROM mensualidad WHERE mensualidad.apartamento_id = apartamentos.id_apartamento) <= (SELECT SUM(detalles_pagos.monto) FROM detalles_pagos INNER JOIN pagos_mensualidad ON pagos_mensualidad.detalle_pago_id = detalles_pagos.id_detalle_pago INNER JOIN mensualidad ON mensualidad.apartamento_id = apartamentos.id_apartamento INNER JOIN mensualidad mensualidad_aisgnada ON mensualidad.id_mensualidad = pagos_mensualidad.mensualidad_id WHERE mensualidad_aisgnada.apartamento_id = apartamentos.id_apartamento))";
+        $conexion = $this->get_conex()->prepare($sql);        
+        $result = $conexion->execute();
+        $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
+
+        if($result == true){
+            return $datos;
+        }else{
+            return ["estatus"=>false, "mensaje"=>"Error al consultar los propietarios"];
+        }
+    }
 }
 
 

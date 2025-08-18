@@ -32,171 +32,235 @@ class Rol extends Conexion
         return $this->nombre;
     }
 
-    public function verificar_nombre()
-    {
+    public function realizar_consulta($accion){
         $this->cambiar_db_seguridad();
-        
+        switch ($accion) {
+            case 'verificar_nombre':
+                $respuesta = $this->verificar_nombre();
+
+                $this->cambiar_db_negocio();
+
+                if ($respuesta["resultado"]) {                    
+                    if (isset($respuesta["datos"]["nombre"])) {                        
+                        return ["estatus"=>true,"busqueda"=>"nombre"];
+                    } else {                        
+                        return ["estatus"=>false,"busqueda"=>"nombre"];
+                    }
+                } 
+                else {
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+                }
+
+            case 'consultar':
+                $respuesta = $this->consultar();
+
+                $this->cambiar_db_negocio();
+
+                if ($respuesta["resultado"]) {
+                    return $respuesta["datos"];
+                } 
+                else {
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+                }
+
+            case 'consultar_roles':
+                $respuesta = $this->consultar_roles();
+
+                $this->cambiar_db_negocio();
+
+                if ($respuesta["resultado"]) {
+                    return $respuesta["datos"];
+                } 
+                else {
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+                }
+
+            case 'consultar_rol':
+                $respuesta = $this->consultar_rol();
+
+                $this->cambiar_db_negocio();
+
+                if ($respuesta["resultado"]) {
+                    return $respuesta["datos"];
+                } 
+                else {
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+                }
+
+            case 'registrar':
+                $validaciones = $this->validarDatos();
+                if(!($validaciones["estatus"])){return $validaciones;}
+
+                $respuesta = $this->registrar();
+
+                $this->cambiar_db_negocio();
+
+                if ($respuesta) {
+                    $this->registrar_bitacora(REGISTRAR, GESTIONAR_ROLES, "Rol " . $this->nombre);
+
+                    return ["estatus"=>true,"mensaje"=>"OK"];
+                } 
+                else {
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar este Rol"];
+                }
+
+            case 'editar_rol':
+                $validaciones = $this->validarDatos("editar");
+                if(!($validaciones["estatus"])){return $validaciones;}
+
+                $respuesta = $this->editar_rol();
+
+                $this->cambiar_db_negocio();
+
+                if ($respuesta["resultado"]) {
+                    if ($respuesta["fila_afectada"] < 1) {
+                        return ["estatus"=>false,"mensaje"=>"No se modificó ningún registro"];
+                    }
+                    $this->registrar_bitacora(MODIFICAR, GESTIONAR_ROLES, "Rol " . $this->nombre);
+
+                    return ["estatus"=>true,"mensaje"=>"OK"];
+                } 
+                else {
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar editar este Rol"];
+                }
+
+            case 'eliminar_rol':
+                $validaciones = $this->validarDatos("eliminar");
+                if(!($validaciones["estatus"])){return $validaciones;}
+
+                $respuesta = $this->eliminar_rol();
+
+                $this->cambiar_db_negocio();
+
+                if ($respuesta["resultado"]) {
+                    if ($respuesta["fila_afectada"] < 1) {
+                        return ["estatus"=>false,"mensaje"=>"No se eliminó ningún registro"];
+                    }
+                    $this->registrar_bitacora(ELIMINAR, GESTIONAR_ROLES, "Rol " . $this->nombre);
+
+                    return ["estatus"=>true,"mensaje"=>"OK"];
+                } else {
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar eliminar este Rol"];
+                }
+
+            case 'lastId':
+                $respuesta = $this->lastId();
+
+                $this->cambiar_db_negocio();
+
+                if ($respuesta["resultado"] == true) {
+                    return $respuesta["datos"];
+                } 
+                else {
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+                }
+
+            default:
+                return ["estatus"=>false,"mensaje"=>"A ocurrido un error en la consulta"];
+                break;
+        }
+    }
+
+    private function verificar_nombre()
+    {
         $sql = "SELECT * FROM roles WHERE nombre = :nombre";
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":nombre", $this->nombre);
         $result = $conexion->execute();
         $datos = $conexion->fetch(PDO::FETCH_ASSOC);
 
-        $this->cambiar_db_negocio();
-
-        if (isset($datos["nombre"])) {
-            $r["estatus"] = true;
-            $r["busqueda"] = "nombre";
-            return $r;
-        } else {
-            $r["estatus"] = false;
-            $r["busqueda"] = "nombre";
-            return $r;
-        }
+        return ["resultado"=>$result,"datos"=>$datos];   
     }
 
-    public function consultar($consulta_externa = false)
+    private function consultar()
     {        
-        $this->cambiar_db_seguridad();
-        
         $sql = "SELECT * FROM roles";
         $conexion = $this->get_conex()->prepare($sql);
+
         $result = $conexion->execute();
-        
         $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
 
-        $this->cambiar_db_negocio();
-
-        if ($result == true) {
-            if (!$consulta_externa) {
-                $this->registrar_bitacora(CONSULTAR, GESTIONAR_ROLES, "TODOS LOS ROLES");
-            }
-            return $datos;
-        } else {
-            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
-        }
+        return ["resultado"=>$result,"datos"=>$datos];
     }
 
-    public function consultar_rol()
+    private function consultar_roles()
     {
-        $this->cambiar_db_seguridad();
+        $sql = "SELECT * FROM roles";
+        $conexion = $this->get_conex()->prepare($sql);
 
+        $result = $conexion->execute();
+        $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
+
+        return ["resultado"=>$result,"datos"=>$datos];
+    }
+
+    private function consultar_rol()
+    {
         $sql = "SELECT id_rol, nombre FROM roles WHERE id_rol = :rol";
 
         $conexion = $this->get_conex()->prepare($sql);
-
         $conexion->bindParam(":rol", $this->id_rol);
 
         $result = $conexion->execute();        
-        
         $datos = $conexion->fetch(PDO::FETCH_ASSOC);
 
-        $this->cambiar_db_negocio();
-
-        if ($result == true) {
-            return $datos;
-        } else {
-            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
-        }
+        return ["resultado"=>$result,"datos"=>$datos];
     }
 
-    public function registrar()
+    private function registrar()
     {
-        //Validamos los datos obtenidos del controlador
-        $validaciones = $this->validarDatos();
-        if(!($validaciones["estatus"])){return $validaciones;}
-
-        $this->cambiar_db_seguridad();
-
         $sql = "INSERT INTO roles(nombre) VALUES (:nombre)";
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":nombre", $this->nombre);
         $result = $conexion->execute();
 
-        $this->cambiar_db_negocio();
-        
-        if ($result) {
-            $this->registrar_bitacora(REGISTRAR, GESTIONAR_ROLES, "Rol " . $this->get_nombre());
-            return ["estatus"=>true,"mensaje"=>"OK"];
-        } else {
-            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar este Rol"];
-        }
+        return $result;
     }
 
-    public function editar_rol()
+    private function editar_rol()
     {
-        //Validamos los datos obtenidos del controlador
-        $validaciones = $this->validarDatos("editar");
-        if(!($validaciones["estatus"])){return $validaciones;}
-
-        $this->cambiar_db_seguridad();
-
         $sql = "UPDATE roles SET nombre = :nombre WHERE id_rol = :id_rol";
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":id_rol", $this->id_rol);
         $conexion->bindParam(":nombre", $this->nombre);
+
         $result = $conexion->execute();
-
-        $this->cambiar_db_negocio();        
+        $filas_afectadas = $conexion->rowCount();
         
-        if ($result) {
-            $this->registrar_bitacora(MODIFICAR, GESTIONAR_ROLES, "Rol " . $this->get_nombre());
-
-            return ["estatus"=>true,"mensaje"=>"OK"];
-        } else {
-            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar este Rol"];
-        }
+        return ["resultado"=>$result,"fila_afectada"=>$filas_afectadas];
     }
-    public function eliminar_rol()
-    {
-        //Validamos los datos obtenidos del controlador
-        $validaciones = $this->validarDatos("eliminar");
-        if(!($validaciones["estatus"])){return $validaciones;}
-
-        $this->cambiar_db_seguridad();        
-
+    private function eliminar_rol()
+    {        
         $sql = "DELETE FROM roles WHERE id_rol = :id_rol";
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":id_rol", $this->id_rol);
+
         $result = $conexion->execute();
-
-        $this->cambiar_db_negocio();
-
-        if ($result) {
-            $this->registrar_bitacora(ELIMINAR, GESTIONAR_ROLES, "Rol " . $this->get_nombre());
-
-            return ["estatus"=>true,"mensaje"=>"OK"];
-        } else {
-            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar eliminar este Rol"];
-        }
+        $filas_afectadas = $conexion->rowCount();
+        
+        return ["resultado"=>$result,"fila_afectada"=>$filas_afectadas];
     }
 
-    public function lastId()
+    private function lastId()
     {
         $this->cambiar_db_seguridad();
         $sql = "SELECT MAX(id_rol) as last_id FROM roles";
         $conexion = $this->get_conex()->prepare($sql);
         $result = $conexion->execute();
         $datos = $conexion->fetch(PDO::FETCH_ASSOC);
-        $this->cambiar_db_negocio();
 
-        if ($result) {
-            return ["estatus"=>true,"mensaje"=>$datos["last_id"]];
-        } else {
-            return ["estatus"=>false,"mensaje"=>"Error en la consulta"];
-        } 
+        return ["resultado"=>$result,"datos"=>$datos];
     }
 
     private function validarDatos($consulta = "registrar")
     {
-        // Validamos el id rol en caso de editar o eliminar porque en registrar no existe todavia        
         if ($consulta == "editar" || $consulta == "eliminar") {
             if (!(isset($this->id_rol))) {return ["estatus"=>false,"mensaje"=>"El ID del rol no se recibio correctamente"];}
 
             if (empty($this->id_rol)) {return ["estatus"=>false,"mensaje"=>"El ID del Rol se envio vacio"];}
 
             if(is_numeric($this->id_rol)){
-                if (!($this->validarClaveForanea("roles","id_rol",$this->id_rol,true))) {
+                if (!($this->validarClaveForanea("roles","id_rol",$this->id_rol))) {
                     return ["estatus"=>false,"mensaje"=>"El Rol seleccionado no existe"];
                 }
                 
@@ -208,14 +272,10 @@ class Rol extends Conexion
 
             if($this->id_rol == 1){return ["estatus"=>false,"mensaje"=>"No se puede Alterar el Rol del Administrador Global"];}
         }
-        // Validamos que los campos enviados si existan
 
         if (!(isset($this->nombre))) {return ["estatus"=>false,"mensaje"=>"El campos 'nombre' no se recibio correctamente"];}
 
-        // Validamos que los campos enviados no esten vacios        
         if (empty($this->nombre)) {return ["estatus"=>false,"mensaje"=>"El campos 'nombre' esta vacio"];}
-
-        // Verificamos si los valores tienen los datos que deberian
         
         if(!(is_string($this->nombre)) || !(preg_match("/^[A-Za-z \b]*$/",$this->nombre))){
             return ["estatus"=>false,"mensaje"=>"El campo 'nombre' no posee un valor valido"];
@@ -224,21 +284,15 @@ class Rol extends Conexion
         return ["estatus"=>true,"mensaje"=>"OK"];
     }
 
-    //esta funcion es para revisar si una clave foranea existe, porque sino dara error la consulta
     private function validarClaveForanea($tabla,$nombreClave,$valor,$seguridad = false)
     {
-        if ($seguridad) {
-            $this->cambiar_db_seguridad();
-        }
         $sql="SELECT * FROM $tabla WHERE $nombreClave =:valor";
 
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":valor", $valor);
         $conexion->execute();
         $result = $conexion->fetch(PDO::FETCH_ASSOC);
-        if ($seguridad) {
-            $this->cambiar_db_negocio();
-        }
+
         return ($result)?true:false;        
     }
 }

@@ -1,13 +1,16 @@
-consultar(); 
 let data_table, id_eliminado, id_registrado,id_modificar, nro_apartamento_an;
-
+let datos_apartamento;
 let permiso_eliminar = document.querySelector("#permiso_eliminar").value;
 let permiso_editar = document.querySelector("#permiso_editar").value;
 
 let tabla = document.querySelector("#tabla_apartamentos"); //La tabla
 let boton_formulario = document.querySelector("#boton_formulario"); // el boton
 let modal = new bootstrap.Modal("#modal_apartamentos"); // el modal
+let modal_carga = new bootstrap.Modal("#modal_carga");
 let formulario_usar = document.querySelector(`#form_apartamentos`); // el form
+let modalVistaPrevia = new bootstrap.Modal(document.querySelector("#modal_vista_previa")); // Boton vista previa
+
+consultar();
 
 function envio(operacion) {	
 	if (operacion == "Editar") {
@@ -29,18 +32,50 @@ document.querySelector(`#modal_apartamentos`).addEventListener("hide.bs.modal",(
 	boton_formulario.textContent = "Registrar";
 	document.getElementById('titulo_modal').textContent = "Registrar Apartamento";	
 	formulario_usar.querySelectorAll("[class='w-100']").forEach(el=>el.textContent="");
+	document.querySelectorAll('.is-valid').forEach(input=>input.classList.remove('is-valid'));
+	document.querySelectorAll('.is-invalid').forEach(input=>input.classList.remove('is-invalid'));
 });
+
+// Para que se vuelva abrir el modal de vista previa y esas cosas
+function asignarEventoRegistrar() {
+    const btnRegistrar = document.querySelector('#modal_vista_previa .btn-primary'); // ajusta selector si tu botón tiene otra clase o id
+
+    if (btnRegistrar) {
+        btnRegistrar.removeEventListener('click', abrirModalRegistrar);
+        btnRegistrar.addEventListener('click', abrirModalRegistrar);
+    }
+}
+
+function abrirModalRegistrar() {
+    const modalVistaPreviaEl = document.getElementById('modal_vista_previa');
+
+    function abrirHabitantes() {
+        modal_habitantes.show();
+        modalVistaPreviaEl.removeEventListener('hidden.bs.modal', abrirHabitantes);
+    }
+
+    // Primero elimina para evitar duplicados
+    modalVistaPreviaEl.removeEventListener('hidden.bs.modal', abrirHabitantes);
+    // Luego añade el listener
+    modalVistaPreviaEl.addEventListener('hidden.bs.modal', abrirHabitantes);
+
+    // Finalmente cierra la vista previa
+    modalVistaPrevia.hide();
+}
+
+document.getElementById('modal_habitantes').addEventListener('hidden.bs.modal', () => {
+    modalVistaPrevia.show();
+});
+// ...
 
 async function registrar() {
 	datos_consulta = new FormData();
 	
 	let nro_apartamento = formulario_usar.querySelector("#nro_apartamento").value,
 	porcentaje_participacion = formulario_usar.querySelector("#porcentaje_participacion").value,	
-	gas = Number(formulario_usar.querySelector("#gas").value), 
-	agua = Number(formulario_usar.querySelector("#agua").value),
-    alquilado = Number(formulario_usar.querySelector("#alquilado").value),
-    propietario_id = formulario_usar.querySelector("#propietario_id").value;
-	propietario_texto = formulario_usar.querySelector("#propietario_id").selectedOptions[0].text;
+	gas = formulario_usar.querySelector("#gas").value, 
+	agua = formulario_usar.querySelector("#agua").value,
+    alquilado = formulario_usar.querySelector("#alquilado").value;
 
 	// Formatear los valores como en la consulta SQL
 	let gas_texto = (gas == 1) ? 'TIENE' : 'NO TIENE';
@@ -53,7 +88,6 @@ async function registrar() {
 	datos_consulta.append("gas",gas);
 	datos_consulta.append("agua",agua);
 	datos_consulta.append("alquilado",alquilado);
-    datos_consulta.append("propietario_id",propietario_id);
 
 	datos_consulta.append('operacion','registrar');
 	
@@ -71,7 +105,7 @@ async function registrar() {
 	
 	let acciones = crearBotones(id_registrado.mensaje);
 	
-	let res_data_table = await data_table.row.add([`${nro_apartamento}`,`${porcentaje_formateado}`,`${gas_texto}`,`${agua_texto}`,`${alquilado_texto}`,`${propietario_texto}`,`${acciones.outerHTML}`]).draw();
+	let res_data_table = await data_table.row.add([`${"Nro: " + nro_apartamento}`,`${porcentaje_formateado}`,`${gas_texto}`,`${agua_texto}`,`${alquilado_texto}`,`${acciones.outerHTML}`]).draw();
 
 	mensajes('success',4000,'Atencion','El registro se ha realizado exitosamente');
 }
@@ -106,6 +140,17 @@ function llenarTabla(fila) {
 
 	console.log(fila);
 
+	let gas = fila["gas"];
+	let agua = fila["agua"];
+	let alquilado = fila["alquilado"];
+	let porcentaje_participacion = fila["porcentaje_participacion"];
+
+	// Formatear los valores como en la consulta SQL
+	let gas_texto = (gas == 1) ? 'TIENE' : 'NO TIENE';
+	let agua_texto = (agua == 1) ? 'TIENE' : 'NO TIENE';
+	let alquilado_texto = (alquilado == 1) ? 'SI' : 'NO';
+	let porcentaje_formateado = porcentaje_participacion + '%';
+
 	// Creamos etiquetas
 	let fila_tabla = document.createElement("tr");
 
@@ -116,14 +161,12 @@ function llenarTabla(fila) {
 	gas_td = document.createElement("td"), 
 	agua_td = document.createElement("td");
     alquilado_td = document.createElement("td");
-    propietario_id_td = document.createElement("td");
 
-	nro_apartamento_td.textContent = fila["nro_apartamento"];
-	porcentaje_participacion_td.textContent = fila["porcentaje_participacion"];
-	gas_td.textContent = fila["gas"];
-	agua_td.textContent = fila["agua"];
-    alquilado_td.textContent = fila["alquilado"];
-    propietario_id_td.textContent = fila["propietario_id"];
+	nro_apartamento_td.textContent = "Nro: " + fila["nro_apartamento"];
+	porcentaje_participacion_td.textContent = porcentaje_formateado;
+	gas_td.textContent = gas_texto;
+	agua_td.textContent = agua_texto;
+    alquilado_td.textContent = alquilado_texto;
 
 	let acciones = crearBotones(id_campo); 
 
@@ -133,7 +176,6 @@ function llenarTabla(fila) {
 	fila_tabla.appendChild(gas_td);
 	fila_tabla.appendChild(agua_td);
 	fila_tabla.appendChild(alquilado_td);
-    fila_tabla.appendChild(propietario_id_td);
     fila_tabla.appendChild(acciones);
 
 	fila_tabla.setAttribute("id",`fila-${id_campo}`);
@@ -148,12 +190,24 @@ function crearBotones(id) {
 	let acciones = document.createElement("div");
 	acciones.setAttribute("class","row justify-content-evenly");
 
-	let boton_editar = document.createElement("button");
+	// BOTON DE VISTA PREVIA CON EL OJITO
+    let boton_vista_previa = document.createElement("button");
+    let icono_ver = document.createElement("i");
+    icono_ver.setAttribute("class", "bi bi-eye-fill");
+    boton_vista_previa.appendChild(icono_ver);
+    boton_vista_previa.setAttribute("type", "button");
+    boton_vista_previa.setAttribute("class", "btn btn-primary btn-sm col-3");
+    boton_vista_previa.setAttribute("title", "Detalles Apartamento");
+    boton_vista_previa.setAttribute("value", id);
+    boton_vista_previa.addEventListener("click", mostrarVistaPrevia);
+    acciones.appendChild(boton_vista_previa);
+	// ...
 
+	// Boton de Editar
+	let boton_editar = document.createElement("button");
 	let icono_editar = document.createElement("i");
 	icono_editar.setAttribute("class", "bi bi-pencil-square")
 	boton_editar.appendChild(icono_editar);
-
 	boton_editar.setAttribute("type", "button");
 	boton_editar.setAttribute("class", "btn btn-success btn-sm col-3");
 	boton_editar.setAttribute("tabindex", "-1");
@@ -161,10 +215,10 @@ function crearBotones(id) {
 	boton_editar.setAttribute("aria-disabled", "true");
 	boton_editar.setAttribute("data-bs-toggle", "modal");
 	boton_editar.setAttribute("data-bs-target", "#modal_apartamentos");
-
 	boton_editar.setAttribute("title","Editar");
 	boton_editar.setAttribute("value",id);
 	boton_editar.addEventListener("click",modificar_formulario)
+	//...
 
 	//Le ponemos los botones al <td><td> de las acciones
 	acciones.appendChild(boton_editar);
@@ -191,6 +245,66 @@ function crearBotones(id) {
 	td.appendChild(acciones);
 
 	return td;
+}
+
+//FUNCIONALIDAD DE LA VISTA PREVIA
+async function mostrarVistaPrevia(e) {
+    let boton = e.target.closest("button");
+    let id = boton.getAttribute("value");
+
+    let datos_consulta = new FormData();
+    datos_consulta.append("id_apartamento", id);
+    datos_consulta.append("operacion", "consulta_especifica");
+
+    let respuesta = await query(datos_consulta);
+
+    let data = respuesta;
+
+	console.log("Mostrar vista previa del apartamento");
+	console.log(data);
+
+	datos_apartamento = data.apartamento;
+
+	console.log("Datos del Apartamento: ",datos_apartamento);
+	
+	await consultar_habitantes(data.apartamento.id_apartamento);
+
+    // Mostrar el modal como los otros
+    modalVistaPrevia.show();
+
+	asignarEventoRegistrar()
+}
+
+function mostrarHabitantes(detalles) {
+    let cuerpoTabla = document.querySelector("#tabla_apartamentos tbody");
+    cuerpoTabla.innerHTML = ""; // Limpia cualquier contenido anterior
+
+    // Filtramos solo los habitantes
+    let habitantes = detalles.filter(habitante => habitante.tipo_vinculo === "Habitante");
+
+    if (habitantes.length === 0) {
+        cuerpoTabla.innerHTML = `
+            <tr>
+                <td colspan="3" class="text-center text-muted">
+                    <em>No hay habitantes registrados</em>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    // Creamos una fila por cada habitante
+    habitantes.forEach(habitante => {
+        let fila = document.createElement("tr");
+
+        fila.innerHTML = `
+            <td>${habitante.cedula}</td>
+            <td>${habitante.nombre}</td>
+            <td>${habitante.apellido}</td>
+        `;
+
+        cuerpoTabla.appendChild(fila);
+    });
 }
 
 async function eliminar(id) {
@@ -233,14 +347,12 @@ async function modificar_formulario(e) {
 	gas = formulario_usar.querySelector("#gas"),	
 	agua = formulario_usar.querySelector("#agua");
     alquilado = formulario_usar.querySelector("#alquilado");
-    propietario_id = formulario_usar.querySelector("#propietario_id");
 
-	nro_apartamento.value = data.nro_apartamento;
-	porcentaje_participacion.value = data.porcentaje_participacion;	
-	gas.value = data.gas;
-	agua.value = data.agua;
-    alquilado.value = data.alquilado;
-    propietario_id.value = data.propietario_id;
+	nro_apartamento.value = data.apartamento.nro_apartamento;
+	porcentaje_participacion.value = data.apartamento.porcentaje_participacion;	
+	gas.value = data.apartamento.gas;
+	agua.value = data.apartamento.agua;
+    alquilado.value = data.apartamento.alquilado;
 
 	if(!permiso_editar){
 		boton_formulario.setAttribute("hidden",true);
@@ -248,7 +360,7 @@ async function modificar_formulario(e) {
 	}
 
 	boton_formulario.setAttribute("modificar",true);
-	boton_formulario.setAttribute("id_modificar",data.id_apartamento);
+	boton_formulario.setAttribute("id_modificar",data.apartamento.id_apartamento);
 	boton_formulario.textContent = "Modificar";
 	document.getElementById('titulo_modal').textContent = "Modificar Apartamento";
 
@@ -263,9 +375,7 @@ async function modificar(id) {
 	porcentaje_participacion = formulario_usar.querySelector("#porcentaje_participacion").value,
 	gas = Number(formulario_usar.querySelector("#gas").value), 
 	agua = Number(formulario_usar.querySelector("#agua").value),
-    alquilado = Number(formulario_usar.querySelector("#alquilado").value),
-    propietario_id = formulario_usar.querySelector("#propietario_id").value;
-	propietario_texto = formulario_usar.querySelector("#propietario_id").selectedOptions[0].text;
+    alquilado = Number(formulario_usar.querySelector("#alquilado").value);
 
 	// Formatear los valores como en la consulta SQL
 	let gas_texto = (gas == 1) ? 'TIENE' : 'NO TIENE';
@@ -280,7 +390,6 @@ async function modificar(id) {
 	datos_consulta.append("gas",gas);
 	datos_consulta.append("agua",agua);
 	datos_consulta.append("alquilado",alquilado);
-    datos_consulta.append("propietario_id",propietario_id);
 	
 	datos_consulta.append('operacion','modificar');
 
@@ -304,7 +413,7 @@ async function modificar(id) {
 
 	let acciones = crearBotones(id);
 
-	data_table.row(`#fila-${id}`).data([`${nro_apartamento}`,`${porcentaje_formateado}`,`${gas_texto}`,`${agua_texto}`,`${alquilado_texto}`,`${propietario_texto}`,`${acciones.outerHTML}`])
+	data_table.row(`#fila-${id}`).data([`${"Nro: " + nro_apartamento}`,`${porcentaje_formateado}`,`${gas_texto}`,`${agua_texto}`,`${alquilado_texto}`,`${acciones.outerHTML}`])
 	data_table.draw();
 
 	let fila = document.querySelector(`#fila-${id}`);
@@ -320,13 +429,41 @@ async function last_id() {
 	return res;
 }
 
-async function query(datos){
-	let data = await fetch("",{method:"POST", body:datos}).then(res=>{		
-		let result = res.json();		
-		return result;
-	})
+async function query(datos) {
+	let mostrarModal = false;
+    let tiempoCarga;
+
+	tiempoCarga = setTimeout(()=>{
+		mostrarModal = true;
+		modal_carga.show();
+	}, 300);
 	
-	return data;
+	try{
+		const tiempoInicio = performance.now();
+
+		const res = await fetch("", { method: "POST", body: datos });
+    	const data = await res.json();
+
+		const tiempoTranscurido = performance.now() - tiempoInicio;
+		const tiempoEsperaMin = 700;
+		
+		if (mostrarModal && tiempoTranscurido < tiempoEsperaMin) {
+			
+			const restante = tiempoEsperaMin - tiempoTranscurido;
+			await new Promise(resolve => setTimeout(resolve,restante));
+		}
+
+		return data;
+	}
+	catch(error){
+		return {estatus:false,mensaje:"A ocurrido un error durante la consulta",error}
+	}
+	finally{
+		clearTimeout(tiempoCarga);
+		if (mostrarModal) {
+			modal_carga.hide();
+		}
+	}
 }
 
 function mensajes(icono,tiempo,titulo,mensaje){
@@ -416,6 +553,16 @@ function reasignarEventos() {
 			});
 	});
 
+	document.querySelectorAll("button[title='Detalles Apartamento']").forEach(btn => {
+        btn.removeEventListener("click", mostrarVistaPrevia);
+        btn.addEventListener("click", mostrarVistaPrevia);
+    });
+
+	document.querySelectorAll("button[title='Editar']").forEach(btn => {
+        btn.removeEventListener("click", modificar_formulario);
+        btn.addEventListener("click", modificar_formulario);
+    });
+
 	if (id_registrado) {
 		let boton_modificar = tabla.querySelector(`[value='${id_registrado.mensaje}']`); 
 		
@@ -427,3 +574,10 @@ function reasignarEventos() {
 		}
 	}
 }
+
+const resizeObserver = new ResizeObserver(entries => {
+	if (data_table) {
+		data_table.draw();
+	}
+});
+resizeObserver.observe(tabla);

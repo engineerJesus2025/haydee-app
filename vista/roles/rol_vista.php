@@ -39,25 +39,25 @@
                                         <button type="button" class="btn btn-primary mb-2" data-bs-toggle="modal" data-bs-target="#modal_roles">Registrar</a>
                                     </div><br>
                                 <?php endif; ?>
-
-                                <table id="tabla_roles" class="table" style="width:97%">
-                                    <thead>
-                                        <tr>        
-                                            <th>ROL</th>
-                                            <th>ACCIONES</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td colspan="7"><h4>Cargando...</h4></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-
+                                <div class="table-responsive">
+                                    <table id="tabla_roles" class="table table-striped table-hover" style="width:97%">
+                                        <thead>
+                                            <tr>        
+                                                <th>ROL</th>
+                                                <th class="text-center">ACCIONES</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td colspan="7"><h4>Cargando...</h4></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                                 <div class="modal fade modal-lg" id="modal_roles" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
                                     <div class="modal-dialog modal-dialog-centered">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
+                                        <div class="modal-content"> 
+                                            <div class="modal-header bg-primary text-white">
                                                 <h1 class="modal-title fs-5" id="titulo_modal">Registrar rol</h1>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                             </div>
@@ -74,9 +74,10 @@
 
                             </div>
                         </div>
-                    </div>
+                    </div>                    
                 </main>
                 <?php
+                require_once 'vista/componentes/modal_carga.php';
                 require_once "vista/componentes/footer.php";
                 require_once "vista/componentes/script.php";
                 ?>

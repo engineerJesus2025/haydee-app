@@ -3,7 +3,6 @@ require_once "modelo/conexion.php";
 
 class Modulos extends Conexion
 {
-
     private $id_modulo;
     private $nombre;
 
@@ -32,10 +31,19 @@ class Modulos extends Conexion
         return $this->nombre;
     }
 
-    public function consultar()
-    {
+    public function realizar_consulta($accion){
         $this->cambiar_db_seguridad();
-        
+        switch ($accion) {
+            case 'consultar':
+                return $this->consultar();
+            default:
+                return ["estatus"=>false,"mensaje"=>"A ocurrido un error en la consulta"];
+                break;
+        }
+    }
+
+    public function consultar()
+    {        
         $sql = "SELECT * FROM modulos";
         $conexion = $this->get_conex()->prepare($sql);
         $result = $conexion->execute();

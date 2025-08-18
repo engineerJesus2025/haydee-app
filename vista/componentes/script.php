@@ -6,3 +6,4 @@
 <script src="recursos/bootstrap/js/dataTables.bootstrap5.min.js"></script>
 <script src="recursos/bootstrap/js/sweetalert2.js"></script>
 <script src="recursos/js/header.js"></script>
+<script src="recursos/js/notificaciones.js"></script>

@@ -302,7 +302,10 @@
                 if (!(isset($this->id_banco))) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos no se recibieron correctamente"];}
 
                 if (empty($this->id_banco)) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos estan vacios"];}
-
+                
+                if ($consulta == "eliminar") {
+                    return ["estatus"=>true,"mensaje"=>"OK"];
+                }
             } 
             // Validamos que los campos enviados si existan
 

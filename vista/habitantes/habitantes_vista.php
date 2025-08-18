@@ -54,30 +54,28 @@
                                         </div>
                                     </div>
                                 <?php endif; ?>
-
-                                <table id="tabla_habitantes" class="table" style="width:97%">
-                                    <thead>
-                                        <tr>
-                                            <th>CEDULA</th>
-                                            <th>NOMBRE</th>
-                                            <th>APELLIDO</th>
-                                            <th>FECHA DE NACIMIENTO</th>
-                                            <th>SEXO</th>
-                                            <th>TELEFONO</th>
-                                            <th>APARTAMENTO</th>
-                                            <th class="text-center">ACCIONES</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td colspan="7"><h4>Cargando...</h4></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                <div class="table-responsive">
+                                    <table id="tabla_habitantes" class="table table-striped table-hover" style="width:97%">
+                                        <thead>
+                                            <tr>
+                                                <th>NOMBRE</th>
+                                                <th>APELLIDO</th>
+                                                <th>CEDULA</th>
+                                                <th>APARTAMENTO</th>
+                                                <th class="text-center">ACCIONES</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td colspan="7"><h4>Cargando...</h4></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                                 <div class="modal fade" id="modal_habitantes" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
                                     <div class="modal-dialog modal-lg">
                                         <div class="modal-content">
-                                            <div class="modal-header">
+                                            <div class="modal-header bg-primary text-white">
                                                 <h1 class="modal-title fs-5" id="titulo_modal">Registrar Habitante</h1>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                             </div>
@@ -100,6 +98,32 @@
                 require_once "vista/componentes/footer.php";
                 require_once "vista/componentes/script.php";
                 ?>
+                <div class="modal fade" id="modal_vista_previa" tabindex="-1" aria-labelledby="modal_vista_previa_label"
+                    aria-hidden="true">
+                    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                        <div class="modal-content">
+                            <div class="modal-header bg-primary text-white">
+                                <h5 class="modal-title">Mas detalles del Habitante</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Cerrar"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p><strong>Nombre:</strong> <span id="vista_nombre"></span></p>
+                                <p><strong>Apellido:</strong> <span id="vista_apellido"></span></p>
+                                <p><strong>Cedula:</strong> <span id="vista_cedula"></span></p>
+                                <p><strong>Telefono:</strong> <span id="vista_telefono"></span></p>
+                                <p><strong>Correo:</strong> <span id="vista_correo"></span></p>
+                                <p><strong>Fecha de Nacimiento:</strong> <span id="vista_fecha_nacimiento"></span></p>
+                                <p><strong>Sexo:</strong> <span id="vista_sexo"></span></p>
+                                <p><strong>Apartamento:</strong> <span id="vista_apartamento"></span></p>
+                                <p><strong>Tipo Vinculo:</strong> <span id="vista_vinculo"></span></p>
+                            </div>
+                            <div class="modal-footer">
+                                <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

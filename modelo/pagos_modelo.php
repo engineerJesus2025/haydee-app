@@ -3,14 +3,8 @@
 
     class Pagos extends Conexion{
         private $id_pago;
-        private $fecha;
         private $monto;
-        private $tasa_dolar;
         private $estado;
-        private $metodo_pago;
-        private $banco_id;
-        private $referencia;
-        private $imagen;
         private $observacion;
 
         // Campos de la tabla puente
@@ -31,14 +25,6 @@
             return $this->id_pago;
         }
 
-        public function set_fecha($fecha){
-            $this->fecha = $fecha;
-        }
-
-        public function get_fecha(){
-            return $this->fecha;
-        }
-
         public function set_monto($monto){
             $this->monto = $monto;
         }
@@ -47,52 +33,12 @@
             return $this->monto;
         }
 
-        public function set_tasa_dolar($tasa_dolar){
-            $this->tasa_dolar = $tasa_dolar;
-        }
-
-        public function get_tasa_dolar(){
-            return $this->tasa_dolar;
-        }
-
         public function set_estado($estado){
             $this->estado = $estado;
         }
 
         public function get_estado(){
             return $this->estado;
-        }
-
-        public function set_metodo_pago($metodo_pago){
-            $this->metodo_pago = $metodo_pago;
-        }
-
-        public function get_metodo_pago(){
-            return $this->metodo_pago;
-        }
-
-        public function set_banco_id($banco_id){
-            $this->banco_id = $banco_id;
-        }
-
-        public function get_banco_id(){
-            return $this->banco_id;
-        }
-
-        public function set_referencia($referencia){
-            $this->referencia = $referencia;
-        }
-
-        public function get_referencia(){
-            return $this->referencia;
-        }
-
-        public function set_imagen($imagen){
-            $this->imagen = $imagen;
-        }
-
-        public function get_imagen(){
-            return $this->imagen;
         }
 
         public function set_observacion($observacion){
@@ -130,8 +76,7 @@
         }
 
         // Metodos CRUD
-        public function verificar_pago(){ 
-
+        public function verificar_pago(){ // Verificar después XD
             
             $sql = "SELECT * FROM pagos WHERE referencia = :referencia"; 
             $conexion = $this->get_conex()->prepare($sql);
@@ -150,7 +95,45 @@
             }
         }
 
-        public function consultarPropietarios($correo) {
+        public function registrar_notificacion() {
+            $this->cambiar_db_seguridad();
+            $titulo = "Pagos";
+            $descripcion = "Se ha registrado un nuevo pago en el modulo, por favor verifique el registro.";
+            $fecha = date('Y-m-d'); 
+            $activo = "0";
+
+            // Obtener todos los usuarios con rol de propietario (rol_id = 2)
+            $sql_usuarios = "SELECT id_usuario FROM usuarios WHERE rol_id = 3";
+            $conexion_usuarios = $this->get_conex()->prepare($sql_usuarios);
+            $conexion_usuarios->execute();
+            $usuarios = $conexion_usuarios->fetchAll(PDO::FETCH_ASSOC);
+
+            $sql = "INSERT INTO notificaciones (titulo, descripcion, fecha, usuario_id, activo) 
+                    VALUES (:titulo, :descripcion, :fecha, :usuario_id, :activo)";
+            $conexion = $this->get_conex()->prepare($sql);
+
+            $result = true;
+
+            foreach ($usuarios as $usuario) {
+                $usuario_id = $usuario['id_usuario'];
+                
+                $conexion->bindParam(":titulo", $titulo);
+                $conexion->bindParam(":descripcion", $descripcion);
+                $conexion->bindParam(":fecha", $fecha);
+                $conexion->bindParam(":usuario_id", $usuario_id);
+                $conexion->bindParam(":activo", $activo);
+                $this->cambiar_db_negocio();
+
+
+                if (!$conexion->execute()) {
+                    $result = false;
+                }
+            }
+
+            return $result;
+        }
+
+        public function consultarPropietarios($correo) { // para que el propietario vea el pago
 
             $sql = "SELECT 
                         a.id_apartamento, 
@@ -180,13 +163,13 @@
             }
         }
 
-        public function consultarPropietariosPagos($correo){
+        public function consultarPropietariosPagos($correo){ // Para el propietario
 
             $sql = "SELECT 
                 pagos.id_pago, 
                 pagos.fecha, 
                 pagos.monto, 
-                pagos.tasa_dolar, 
+                pagos.monto_dolar, 
                 pagos.estado, 
                 pagos.metodo_pago, 
                 bancos.nombre_banco, 
@@ -232,9 +215,23 @@
             //$this->cambiar_db_seguridad();
 
             // Mouseque Herramienta misteriosa que nos ayudara mas tarde
-            // SELECT pagos.id_pago, pagos.fecha, apartamentos.nro_apartamento, pagos.monto, pagos.tasa_dolar, pagos.estado, pagos.metodo_pago, bancos.nombre_banco, pagos.referencia, pagos.imagen, pagos.observacion FROM pagos JOIN bancos ON pagos.banco_id = bancos.id_banco JOIN pagos_mensualidad ON pagos.id_pago = pagos_mensualidad.pago_id JOIN mensualidad ON pagos_mensualidad.mensualidad_id = mensualidad.id_mensualidad JOIN apartamentos ON mensualidad.apartamento_id = apartamentos.id_apartamento ORDER BY pagos.fecha DESC, pagos.estado = 'PENDIENTE' DESC;
             // 1) Sentencia SQL de toda la vida.
-            $sql = "SELECT pagos.id_pago, pagos.fecha, pagos.monto, pagos.tasa_dolar, pagos.estado, pagos.metodo_pago, bancos.nombre_banco, pagos.referencia, pagos.imagen, pagos.observacion, CONCAT('AP ', apartamentos.nro_apartamento, ': ', CASE mensualidad.mes WHEN 1 THEN 'Enero' WHEN 2 THEN 'Febrero' WHEN 3 THEN 'Marzo' WHEN 4 THEN 'Abril' WHEN 5 THEN 'Mayo' WHEN 6 THEN 'Junio' WHEN 7 THEN 'Julio' WHEN 8 THEN 'Agosto' WHEN 9 THEN 'Septiembre' WHEN 10 THEN 'Octubre' WHEN 11 THEN 'Noviembre' WHEN 12 THEN 'Diciembre' END, ' ', mensualidad.anio) AS mes_anio FROM pagos JOIN bancos ON pagos.banco_id = bancos.id_banco JOIN pagos_mensualidad ON pagos.id_pago = pagos_mensualidad.pago_id JOIN mensualidad ON pagos_mensualidad.mensualidad_id = mensualidad.id_mensualidad JOIN apartamentos ON mensualidad.apartamento_id = apartamentos.id_apartamento ORDER BY pagos.fecha DESC, pagos.estado = 'PENDIENTE' DESC";
+            $sql = "SELECT 
+                p.*, 
+                (SELECT SUM(detalles_pagos.monto) FROM detalles_pagos WHERE detalles_pagos.pago_id = p.id_pago) AS monto,
+                (
+                    SELECT dp.fecha
+                    FROM detalles_pagos dp
+                    WHERE dp.pago_id = p.id_pago
+                    ORDER BY dp.fecha ASC
+                    LIMIT 1
+                ) AS primera_fecha_detalle
+            FROM pagos p
+            LEFT JOIN detalles_pagos dp ON dp.pago_id = p.id_pago
+            GROUP BY p.id_pago
+            ORDER BY 
+                MAX(CASE WHEN p.estado = 'No procesado' THEN 1 ELSE 0 END) DESC,
+                MAX(dp.fecha) DESC";
 
             // 2) Se prepara una consulta a la base de datos.
             $conexion = $this->get_conex()->prepare($sql);
@@ -256,36 +253,124 @@
             }
         }
 
-        public function consultar_pago(){
+        public function consultarPorCorreo($correo) {
+            $sql = "SELECT 
+                        p.*, 
+                        (
+                            SELECT dp.fecha
+                            FROM detalles_pagos dp
+                            WHERE dp.pago_id = p.id_pago
+                            ORDER BY dp.fecha ASC
+                            LIMIT 1
+                        ) AS primera_fecha_detalle
+                    FROM pagos p
+                    JOIN detalles_pagos dp ON dp.pago_id = p.id_pago
+                    JOIN pagos_mensualidad pm ON pm.detalle_pago_id = dp.id_detalle_pago
+                    JOIN mensualidad m ON m.id_mensualidad = pm.mensualidad_id
+                    JOIN apartamentos a ON a.id_apartamento = m.apartamento_id
+                    JOIN habitantes_apartamentos pa ON pa.apartamento_id = a.id_apartamento
+                    JOIN habitantes per ON per.id_habitante = pa.habitante_id
+                    WHERE per.correo = :correo
+                    GROUP BY p.id_pago
+                    ORDER BY 
+                        MAX(CASE WHEN p.estado = 'No procesado' THEN 1 ELSE 0 END) DESC,
+                        MAX(dp.fecha) DESC";
 
-            //$this->cambiar_db_seguridad();
-            //$this->cambiar_db_negocio();
-
-            // 1) Sentencia SQL de toda la vida
-            $sql = "SELECT pagos.*, pagos_mensualidad.mensualidad_id 
-            FROM pagos 
-            LEFT JOIN pagos_mensualidad ON pagos.id_pago = pagos_mensualidad.pago_id 
-            WHERE pagos.id_pago = :id_pago 
-            LIMIT 1";
-
-            // 2) Se prepara la conexión
             $conexion = $this->get_conex()->prepare($sql);
+            $conexion->bindParam(':correo', $correo);
+            $resultado = $conexion->execute();
 
-            // 3) Se manda el id_pago que queremos consultar
-            $conexion->bindParam(":id_pago", $this->id_pago);
+            $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
 
-            // 4) Se ejecuta la sentencia
-            $result = $conexion->execute();        
-
-            // 5) Se obtienen los datos
-            $datos = $conexion->fetch(PDO::FETCH_ASSOC);
-
-            // 6) Retornamos resultados
-            if ($result == true && $datos) {
+            if ($resultado) {
+                $this->registrar_bitacora(CONSULTAR, GESTIONAR_PAGOS, "PAGOS DE HABITANTE CON CORREO: $correo");
                 return $datos;
             } else {
-                return ["estatus" => false, "mensaje" => "Ha ocurrido un error con la consulta"];
+                return ["estatus" => false, "mensaje" => "Error al consultar pagos por correo"];
             }
+        }
+
+        public function consultar_pago() {
+            $sql = "SELECT 
+                        p.id_pago,
+                        (SELECT SUM(detalles_pagos.monto) FROM detalles_pagos WHERE detalles_pagos.pago_id = p.id_pago) AS monto_pago,
+                        p.estado,
+                        p.observacion,
+
+                        dp.id_detalle_pago,
+                        dp.fecha,
+                        dp.monto AS monto,
+                        dp.monto_dolar,
+                        dp.tipo_pago,
+                        dp.caja_id,
+
+                        pm.mensualidad_id as mensualidad_id,
+                        m.apartamento_id,
+                        m.mes,
+                        m.anio,
+                        m.monto as monto_mensualidad,
+                        a.nro_apartamento,
+
+                        bt.id_banco_transaccion,
+                        bt.referencia,
+                        bt.imagen,
+                        b.id_banco as banco_id,
+                        b.nombre_banco
+
+                    FROM pagos p
+                    LEFT JOIN detalles_pagos dp ON p.id_pago = dp.pago_id
+                    LEFT JOIN pagos_mensualidad pm ON dp.id_detalle_pago = pm.detalle_pago_id
+                    LEFT JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
+                    LEFT JOIN apartamentos a ON m.apartamento_id = a.id_apartamento
+                    LEFT JOIN banco_transacciones bt ON dp.id_detalle_pago = bt.detalle_pago_id
+                    LEFT JOIN bancos b ON bt.banco_id = b.id_banco
+                    WHERE p.id_pago = :id_pago";
+
+            $conexion = $this->get_conex()->prepare($sql);
+            $conexion->bindParam(":id_pago", $this->id_pago);
+            $conexion->execute();        
+            $filas = $conexion->fetchAll(PDO::FETCH_ASSOC);
+
+            if (!$filas || count($filas) === 0) {
+                return ["estatus" => false, "mensaje" => "No se encontró el pago"];
+            }
+
+            // Extraer la primera fila
+            $primera = $filas[0];
+
+            // Armar los datos finales
+            $datos_pago = [
+                "estatus" => true,
+                "id_pago" => $primera["id_pago"],
+                "estado" => $primera["estado"],
+                "observacion" => $primera["observacion"],
+                "monto_pago" => $primera["monto_pago"],
+                "apartamento_id" => $primera["apartamento_id"],
+                "mensualidad_id" => $primera["mensualidad_id"],
+                "monto_mensualidad" => $primera["monto_mensualidad"],
+                "nro_apartamento" => $primera["nro_apartamento"],
+                "detalles" => []
+            ];
+
+            // Agregar los detalles
+            foreach ($filas as $f) {
+                // Puedes verificar si existe un detalle válido
+                if ($f["id_detalle_pago"] !== null) {
+                    $datos_pago["detalles"][] = [
+                        "id_detalle_pago" => $f["id_detalle_pago"],
+                        "fecha" => $f["fecha"],
+                        "monto" => $f["monto"],
+                        "monto_dolar" => $f["monto_dolar"],
+                        "tipo_pago" => $f["tipo_pago"],
+                        "referencia" => $f["referencia"],
+                        "banco_id" => $f["banco_id"],
+                        "nombre_banco" => $f["nombre_banco"],
+                        "imagen" => $f["imagen"]
+                    ];
+                }
+            }
+
+            return $datos_pago;
         }
 
         public function registrar_pago(){
@@ -295,17 +380,10 @@
             
             //$this->cambiar_db_seguridad();
 
-            $sql = "INSERT INTO pagos(fecha,monto,tasa_dolar,estado,metodo_pago,banco_id,referencia,imagen,observacion) VALUES (:fecha,:monto,:tasa_dolar,:estado,:metodo_pago,:banco_id,:referencia,:imagen,:observacion)";
+            $sql = "INSERT INTO pagos(estado,observacion) VALUES (:estado,:observacion)";
         
-            $conexion = $this->get_conex()->prepare($sql);
-            $conexion->bindParam(":fecha", $this->fecha);
-            $conexion->bindParam(":monto", $this->monto);
-            $conexion->bindParam(":tasa_dolar", $this->tasa_dolar);
+            $conexion = $this->get_conex()->prepare($sql);            
             $conexion->bindParam(":estado", $this->estado);
-            $conexion->bindParam(":metodo_pago", $this->metodo_pago);
-            $conexion->bindParam(":banco_id", $this->banco_id);
-            $conexion->bindParam(":referencia", $this->referencia);
-            $conexion->bindParam(":imagen", $this->imagen);
             $conexion->bindParam(":observacion", $this->observacion);
             $result = $conexion->execute();
 
@@ -316,8 +394,8 @@
                 $this->set_id_pago($id_ultimo["mensaje"]);
                 $pago_alterado = $this->consultar_pago();//lo consultamos
 
-                $this->registrar_bitacora(REGISTRAR, GESTIONAR_PAGOS, $pago_alterado["monto"] . " (" . $pago_alterado["fecha"] . ")");//registramos en la bitacora
-
+                $this->registrar_bitacora(REGISTRAR, GESTIONAR_PAGOS, $pago_alterado["monto_pago"] . " (" . $pago_alterado["observacion"] . ")");//registramos en la bitacora
+                //$this->registrar_notificacion();
                 return ["estatus"=>true,"mensaje"=>"OK"];
             } else {
                 return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar este pago"];
@@ -360,18 +438,11 @@
 
             //$this->cambiar_db_seguridad();
 
-            $sql = "UPDATE pagos SET fecha=:fecha,monto=:monto,tasa_dolar=:tasa_dolar,estado=:estado,metodo_pago=:metodo_pago,banco_id=:banco_id,referencia=:referencia,imagen=:imagen,observacion=:observacion WHERE id_pago=:id_pago";
+            $sql = "UPDATE pagos SET estado=:estado,observacion=:observacion WHERE id_pago=:id_pago";
 
             $conexion = $this->get_conex()->prepare($sql);    
             $conexion->bindParam(":id_pago", $this->id_pago);
-            $conexion->bindParam(":fecha", $this->fecha);
-            $conexion->bindParam(":monto", $this->monto);
-            $conexion->bindParam(":tasa_dolar", $this->tasa_dolar);
             $conexion->bindParam(":estado", $this->estado);
-            $conexion->bindParam(":metodo_pago", $this->metodo_pago);
-            $conexion->bindParam(":banco_id", $this->banco_id);
-            $conexion->bindParam(":referencia", $this->referencia);
-            $conexion->bindParam(":imagen", $this->imagen);
             $conexion->bindParam(":observacion", $this->observacion);
 
             $result = $conexion->execute();
@@ -380,7 +451,7 @@
             
             if ($result) {
                 $pago_alterado = $this->consultar_pago();
-                $this->registrar_bitacora(MODIFICAR, GESTIONAR_PAGOS, $pago_alterado["monto"] . " (" . $pago_alterado["fecha"] . ")");
+                $this->registrar_bitacora(MODIFICAR, GESTIONAR_PAGOS, $pago_alterado["monto_pago"] . " (" . $pago_alterado["observacion"] . ")");
 
                 return ["estatus"=>true,"mensaje"=>"OK"];
             } else {
@@ -406,7 +477,7 @@
             //$this->cambiar_db_negocio();
             
             if ($result) {
-                $this->registrar_bitacora(ELIMINAR, GESTIONAR_PAGOS, $pago_alterado["monto"] . " (" . $pago_alterado["fecha"] . ")");
+                $this->registrar_bitacora(ELIMINAR, GESTIONAR_PAGOS, $pago_alterado["monto_pago"] . " (" . $pago_alterado["observacion"] . ")");
 
                 return ["estatus"=>true,"mensaje"=>"OK"];
             } else {
@@ -506,7 +577,7 @@
             } 
         }
 
-        public function consultarMensualidad(){
+        /*public function consultarMensualidad(){
             $sql = "SELECT m.id_mensualidad,m.monto,m.tasa_dolar,m.mes,m.anio,a.nro_apartamento FROM mensualidad m JOIN apartamentos a ON m.apartamento_id = a.id_apartamento ORDER BY a.nro_apartamento, m.anio, m.mes";
             $conexion = $this->get_conex()->prepare($sql);
             $result = $conexion->execute();
@@ -517,6 +588,57 @@
             } else {
                 return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
             }
+        }*/
+
+        public function consultarMensualidad($id_apartamento) {
+            $sql = "SELECT 
+                    id_mensualidad,
+                    monto,
+                    monto_dolar,
+                    mes,
+                    anio
+                FROM mensualidad
+                WHERE apartamento_id = :id_apartamento
+                ORDER BY anio, mes";
+
+            $conexion = $this->get_conex()->prepare($sql);
+            $conexion->bindParam(":id_apartamento", $id_apartamento);
+            $result = $conexion->execute();
+            $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
+
+            if ($result == true) {
+                return $datos;
+            } else {
+                return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+            }
         }
+
+        public function consultarCajaActual() {
+            $sql = "SELECT 
+                    id_caja_chica 
+                FROM caja_chica 
+                WHERE MONTH(fecha_apertura) = :mes 
+                AND YEAR(fecha_apertura) = :anio 
+                AND estado = 'Abierta'
+                LIMIT 1";
+
+            $mes = date('m'); // mes actual del sistema
+            $anio = date('Y'); // año actual del sistema
+
+            $conexion = $this->get_conex()->prepare($sql);
+            $conexion->bindParam(":mes", $mes);
+            $conexion->bindParam(":anio", $anio);
+
+            $resultado = $conexion->execute();
+            $datos = $conexion->fetch(PDO::FETCH_ASSOC); // fetch en singular porque es un solo registro
+
+            if ($resultado && $datos) {
+                return $datos; // Devuelve ['id_caja' => ...]
+            } else {
+                return ["estatus" => false, "mensaje" => "No hay caja abierta en el mes actual"];
+            }
+        }
+
+
     }
 ?>

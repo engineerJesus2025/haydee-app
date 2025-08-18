@@ -3,109 +3,158 @@
     require_once "modelo/usuario_modelo.php";
     require_once 'modelo/rol_modelo.php';
 
-    $usuario_obj = new Usuario(); //objeto usuario  
-    $rol_obj = new Rol(); // objeto roles
-    $roles = $rol_obj->consultar(); 
+    
+
+    $rol_obj = new Rol(); 
+    $roles = $rol_obj->realizar_consulta('consultar_roles'); 
 
     if (isset($_POST["operacion"])){
         $operacion = $_POST["operacion"];
 
         if ($operacion == "consulta"){
-            // llamamos a la funcion, lo convertimos a json y la mandamos al js con echo
-            echo  json_encode($usuario_obj->consultar());
-            // la hice para que retorne un arreglo, si sale vacio solo mandara un array con false
-        }
-        //Despues de cada echo se regresa al javascript como respuesta en json
-
+            $usuario_obj = new Usuario(); 
+            echo  json_encode($usuario_obj->realizar_consulta('consultar'));            
+        }        
         elseif ($operacion == "registrar") {
-            //se guardan las variables a registrar
+            $usuario_obj = new Usuario();
+
             $apellido = $_POST["apellido"];
             $nombre = $_POST["nombre"];  
             $correo = $_POST["correo"];  
             $contra = $_POST["contra"]; 
             $rol = $_POST["rol"];              
 
-            //se usan los setters correspondientes
             $usuario_obj->set_apellido($apellido);
             $usuario_obj->set_nombre($nombre);
             $usuario_obj->set_correo($correo);
             $usuario_obj->set_contra($contra);
             $usuario_obj->set_rol_id($rol);
 
-            //se ejecuta la funcion:
-            echo  json_encode($usuario_obj->registrar());
-            //igual puse para que siempre retorne un arreglo que dara true o false de acuerdo al resultado
+            echo  json_encode($usuario_obj->realizar_consulta('registrar'));
         }
         elseif ($operacion == "consulta_especifica"){
-            //se guardan el id para buscar
+            $usuario_obj = new Usuario();
+
             $id_usuario = $_POST["id_usuario"];
 
-            //se usan el setter correspondientes
             $usuario_obj->set_id_usuario($id_usuario);
 
-            // llamamos a la funcion, lo convertimos a json y la mandamos al js con echo
-            echo  json_encode($usuario_obj->consultar_usuario());
-            // igual hice para que retorne un arreglo, si sale vacio solo mandara un array con false
+            echo  json_encode($usuario_obj->realizar_consulta('consultar_usuario'));
         }
+        elseif ($operacion == "editar_usuario") {
+            $usuario_obj = new Usuario();
 
-        elseif ($operacion == "modificar") {
-            //se guardan las variables a modificar
             $id_usuario = $_POST["id_usuario"];
             $apellido = $_POST["apellido"];
             $nombre = $_POST["nombre"];  
             $correo = $_POST["correo"];  
-            $contra = $_POST["contra"];  
+            $contra = $_POST["contra"];
             $rol = $_POST["rol"];
-            // ...
 
-            //se usan los setters correspondientes
             $usuario_obj->set_id_usuario($id_usuario);
             $usuario_obj->set_apellido($apellido);
             $usuario_obj->set_nombre($nombre);
             $usuario_obj->set_correo($correo);
             $usuario_obj->set_contra($contra);
             $usuario_obj->set_rol_id($rol);
-            // ....
             
-            //se ejecuta la funcion:
-            echo  json_encode($usuario_obj->editar_usuario());
-            //igual puse para que siempre retorne un arreglo que dara true o false de acuerdo al resultado
+            echo  json_encode($usuario_obj->realizar_consulta('editar_usuario'));
         }
 
         elseif ($operacion == "eliminar") {
-            //se guardan el id de la variable a eliminar
+            $usuario_obj = new Usuario();
+
             $id_usuario = $_POST["id_usuario"];
 
-            //se usan el setter correspondientes
             $usuario_obj->set_id_usuario($id_usuario);
 
-            //se ejecuta la funcion:
-            echo  json_encode($usuario_obj->eliminar_usuario());
-            //igual puse para que siempre retorne un arreglo que dara true o false de acuerdo al resultado
-        }elseif ($operacion == "ultimo_id"){
-            echo json_encode($usuario_obj->lastId());
+            echo  json_encode($usuario_obj->realizar_consulta('eliminar_usuario'));
         }
+        elseif ($operacion == "ultimo_id"){
+            $usuario_obj = new Usuario();
+            echo json_encode($usuario_obj->realizar_consulta('lastId'));
+        }
+        elseif ($operacion == "consultar_perfil_usuario") {
+            $usuario_obj = new Usuario();
 
-        exit;//es salida en ingles... No puede faltar
+            $id_usuario = $_SESSION["id_usuario"];
+            
+            $usuario_obj->set_id_usuario($id_usuario);            
+            echo  json_encode($usuario_obj->realizar_consulta('consultar_perfil_usuario'));
+        }
+        elseif ($operacion == "editar_perfil") {
+            $usuario_obj = new Usuario();
+
+            $id_usuario = $_SESSION["id_usuario"];
+            $apellido = $_POST["apellido"];
+            $nombre = $_POST["nombre"];  
+            $correo = $_POST["correo"];  
+
+            $usuario_obj->set_id_usuario($id_usuario);
+            $usuario_obj->set_apellido($apellido);
+            $usuario_obj->set_nombre($nombre);
+            $usuario_obj->set_correo($correo);
+
+            echo  json_encode($usuario_obj->realizar_consulta('editar_perfil'));
+        }
+        elseif ($operacion == "cambiar_contrasenia") {
+            $usuario_obj = new Usuario();
+
+            $contrasenia = $_POST["contra"];
+            $correo = $_POST["correo"];
+
+            $usuario_obj->set_correo($correo);
+            $usuario_obj->set_contra($contrasenia);
+
+            echo  json_encode($usuario_obj->realizar_consulta('cambiar_contrasenia'));        
+        }
+        exit;
     }
     if (isset($_POST["validar"])) {
-        $validar = $_POST["validar"]; //Esto es igual pero para las validaciones
+        $validar = $_POST["validar"];
+
         if ($validar == "correo"){
+            $usuario_obj = new Usuario();
+
             $usuario_obj->set_correo($_POST["correo"]);
-            echo  json_encode($usuario_obj->verificar_correo());
+            echo  json_encode($usuario_obj->realizar_consulta('verificar_correo'));
         }
-        if ($validar == "contra"){
+        elseif ($validar == "contra"){
+            $usuario_obj = new Usuario();
+
             $contra = $_POST["contra"];
 
             $usuario_obj->set_id_usuario($_POST["id_usuario"]);
 
-            $usuario_validar = $usuario_obj->consultar_usuario();
+            $usuario_validar = $usuario_obj->realizar_consulta('consultar_usuario');
+
+            echo json_encode(password_verify($contra, $usuario_validar["contrasenia"]));
+        }
+        elseif ($validar == "contra_perfil"){
+            $usuario_obj = new Usuario();
+
+            $contra = $_POST["contra"];
+
+            $usuario_obj->set_id_usuario($_SESSION["id_usuario"]);
+
+            $usuario_validar = $usuario_obj->realizar_consulta('consultar_usuario');
 
             echo json_encode(password_verify($contra, $usuario_validar["contrasenia"]));
         }
         exit;
     }
-    //FIN de AJAX
-    require_once "vista/usuarios/usuario_vista.php";
+    if ($accion == "perfil") {
+        $usuario_obj = new Usuario();
 
+        $id_usuario = $_SESSION["id_usuario"];
+
+        $usuario_obj->set_id_usuario($id_usuario);
+
+        $usuario = $usuario_obj->realizar_consulta('consultar_usuario');
+
+        require_once "vista/usuarios/usuario_perfil.php";
+    }
+    if ($accion == "inicio") {
+        require_once "vista/usuarios/usuario_vista.php";
+    }
 ?>

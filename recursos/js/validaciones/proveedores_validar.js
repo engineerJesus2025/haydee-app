@@ -1,20 +1,31 @@
 $(document).ready(function() {
-    $("#nombre_proveedor").on("keypress", function(e) {
-        validarKeyPress(/^[A-Za-z \b]*$/, e);
+
+
+    $("#fecha").on("keyup",function(){
+        validarKeyUp(/^(?:(?:1[6-9]|[2-9]\d)?\d{2})(?:(?:(\/|-|\.)(?:0?[13578]|1[02])\1(?:31))|(?:(\/|-|\.)(?:0?[13-9]|1[0-2])\2(?:29|30)))$|^(?:(?:(?:1[6-9]|[2-9]\d)?(?:0[48]|[2468][048]|[13579][26])|(?:(?:16|[2468][048]|[3579][26])00)))(\/|-|\.)0?2\3(?:29)$|^(?:(?:1[6-9]|[2-9]\d)?\d{2})(\/|-|\.)(?:(?:0?[1-9])|(?:1[0-2]))\4(?:0?[1-9]|1\d|2[0-8])$/,
+        this,this.nextElementSibling,"Ingrese una fecha valida");
     });
 
-    $("#nombre").on("keyup", function() {
-        validarKeyUp(/^[A-Za-z \b]{3,30}$/,
-            $(this), this.nextElementSibling, "Debe ingresar el nombre del proveedor");
+    $("#nombre_proveedor").on("keypress", function(e) {
+        validarKeyPress(/^[A-Za-z ]$/, e);
+    });
+
+    $("#nombre_proveedor").on("keyup", function() {
+        validarKeyUp(/^[A-Za-z ]{3,20}$/,
+            this, this.nextElementSibling, "Solo texto, no mas de 20 caracteres");
     });
 
     $("#servicio").on("keypress", function(e) {
-        validarKeyPress(/^[A-Za-z \b]*$/, e);
+        validarKeyPress(/^[A-Za-z ]$/, e);
     });
 
     $("#servicio").on("keyup", function() {
-        validarKeyUp(/^[A-Za-z \b]{3,30}$/,
-            $(this), this.nextElementSibling, "Debe ingresar el tipo de servicio");
+        validarKeyUp(/^[A-Za-z ]{3,20}$/,
+            this, this.nextElementSibling, "Solo texto, no mas de 20 caracteres");
+    });
+
+    $("#observaciones").on("keypress", function (e) {
+        validarKeyPress(/^[A-Za-z0-9ñ., \b]*$/, e);
     });
 
     $("#rif").on("keypress", function(e) {
@@ -33,9 +44,10 @@ $(document).ready(function() {
             }
         }
     });
+
     $("#rif").on("keyup", function() {
         validarKeyUp(/^[VEJPvejp][0-9]{5,9}$/,
-            $(this), this.nextElementSibling, "Debe ingresar el RIF del proveedor. Ejemplo: V-E-J-P12345678");
+            this, this.nextElementSibling, "Debe ingresar el RIF del proveedor. Ejemplo: V-E-J-P12345678");
     });
     $("#direccion").on("keypress", function(e) {
         validarKeyPress(/^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9,.\-#° ]$/, e);
@@ -43,7 +55,7 @@ $(document).ready(function() {
 
     $("#direccion").on("keyup", function() {
         validarKeyUp(/^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9,.\-#° ]{3,100}$/,
-            $(this), this.nextElementSibling, "Debe ingresar la dirección del proveedor");
+            this, this.nextElementSibling, "Debe ingresar la dirección del proveedor");
     });
 
     $("#boton_formulario").on("click", async function(e) {
@@ -82,7 +94,7 @@ function mensajes(icono, tiempo, titulo, mensaje){
 async function validarEnvio(accion = "Registrar"){
     if(validarKeyUp(
         /^[A-Za-z ]{3,30}$/,
-        $("#nombre_proveedor"), document.querySelector("#nombre_proveedor").nextElementSibling, 'Debe ingresar el nombre del proveedor'
+        document.querySelector("#nombre_proveedor"), document.querySelector("#nombre_proveedor").nextElementSibling, 'Debe ingresar el nombre del proveedor'
     ) === 0) {
         mensajes('error', 4000, 'Debe ingresar el nombre del proveedor',
             'El formato debe ser sólo en letras');
@@ -90,7 +102,7 @@ async function validarEnvio(accion = "Registrar"){
     }
     if(validarKeyUp(
         /^[A-Za-z ]{3,30}$/,
-        $("#servicio"), document.querySelector("#servicio").nextElementSibling, 'Debe ingresar el tipo de servicio del proovedor'
+        document.querySelector("#servicio"), document.querySelector("#servicio").nextElementSibling, 'Debe ingresar el tipo de servicio del proovedor'
     ) === 0) {
         mensajes('error', 4000, 'Debe ingresar el tipo de servicio del proveedor',
             'El formato debe ser sólo en letras');
@@ -98,7 +110,7 @@ async function validarEnvio(accion = "Registrar"){
     }
     if(validarKeyUp(
         /^[VEJPvejp][0-9]{5,9}$/,
-        $("#rif"), document.querySelector("#rif").nextElementSibling, 'Debe ingresar el RIF del proveedor'
+        document.querySelector("#rif"), document.querySelector("#rif").nextElementSibling, 'Debe ingresar el RIF del proveedor'
     ) === 0) {
         mensajes('error', 4000, 'Debe ingresar el RIF del proveedor',
             'El formato debe ser la letra inicial y números. Ejemplo: VEJP123456789');
@@ -106,7 +118,7 @@ async function validarEnvio(accion = "Registrar"){
     }
     if(validarKeyUp(
         /^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9,.\-#° ]{3,100}$/,
-        $("#direccion"), document.querySelector("#direccion").nextElementSibling, 'Debe ingresar la dirección del proveedor'
+        document.querySelector("#direccion"), document.querySelector("#direccion").nextElementSibling, 'Debe ingresar la dirección del proveedor'
     ) === 0) {
         mensajes('error', 4000, 'Debe ingresar la dirección del proveedor',
             'El formato debe ser en letras');
@@ -127,15 +139,18 @@ function validarKeyPress(er, e){
 }
 
 function validarKeyUp(er,etiqueta,etiquetamensaje,
-                      mensaje){
-    a = er.test(etiqueta.val());
-
+mensaje){
+    a = er.test(etiqueta.value);
+    
     if(a){
-
+        etiqueta.classList.add('is-valid');
+        etiqueta.classList.remove('is-invalid');
         etiquetamensaje.textContent = "";
         return 1;
     }
     else{
+        etiqueta.classList.add('is-invalid')
+        etiqueta.classList.remove('is-valid');
         etiquetamensaje.textContent = mensaje;
         return 0;
     }

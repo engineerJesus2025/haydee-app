@@ -37,23 +37,6 @@ boton_formulario.addEventListener("click",e=>{
 	}
 });
 
-boton_eliminar.addEventListener("click",e=>{
-	Swal.fire({
-		title: "¿Estás seguro?",
-		text: `¿Está seguro que desea Eliminar esta Mensualidad?`,
-		showCancelButton: true,
-		confirmButtonText: "Eliminar",
-		confirmButtonColor: "#e01d22",
-		cancelButtonText: "Cancelar",
-		icon: "warning"
-	})
-	.then((result) => {
-		if (result.isConfirmed) {
-			envio("Eliminar");					
-		}
-	});
-});
-
 function mensajes(icono,tiempo,titulo,mensaje){
 	Swal.fire({
 	icon:icono,

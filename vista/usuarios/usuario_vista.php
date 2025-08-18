@@ -7,6 +7,64 @@
     <?php
     require_once "vista/componentes/estilos.php";
     ?>
+    <!-- Una personalizacion que me invente para las contraseñas -->
+    <style type="text/css">
+
+        .contra{
+            border: var(--bs-border-width) solid var(--bs-border-color);
+            border-left: none;
+        }
+        .contra:hover{
+            cursor: pointer;
+            border: var(--bs-border-width) solid var(--bs-border-color);
+            border-left: none;
+        }
+
+        .contra:active{
+            border-color: var(--bs-border-color) !important;
+        }
+
+        #contra , #confir_contra{
+            border-right: none;
+        }
+
+        #contra:focus , #confir_contra:focus{
+            box-shadow: -.2rem 0 0 .18rem rgba(13,110,253,.25);
+        }
+
+        #contra:focus + .contra, #confir_contra:focus + .contra{
+            box-shadow: .22rem 0 0 .18rem rgba(13,110,253,.25);
+            border-color: #86b7fe;
+        }
+
+        #contra.is-invalid:focus , #confir_contra.is-invalid:focus, .was-validated .form-control:invalid:focus {
+          border-color: var(--bs-form-invalid-border-color);
+          box-shadow: -.2rem 0 0 .18rem rgba(var(--bs-danger-rgb),.25);
+        }
+
+        #confir_contra.is-invalid + .contra{
+            border-color: var(--bs-form-invalid-border-color);
+        }
+
+        #contra.is-invalid:focus + .contra , #confir_contra.is-invalid:focus + .contra, .was-validated .form-control:invalid:focus {
+          border-color: var(--bs-form-invalid-border-color);
+          box-shadow: .22rem 0 0 .18rem rgba(var(--bs-danger-rgb),.25);
+        }
+
+        #contra.is-valid:focus , #confir_contra.is-valid:focus, .was-validated .form-control:valid:focus {
+          border-color: var(--bs-form-valid-border-color);
+          box-shadow: -.2rem 0 0 .18rem rgba(var(--bs-success-rgb),.25);
+        }
+
+        #confir_contra.is-valid + .contra{
+            border-color: var(--bs-form-valid-border-color);
+        }
+
+        #contra.is-valid:focus + .contra, #confir_contra.is-valid:focus + .contra, .was-validated .form-control:valid:focus {
+          border-color: var(--bs-form-valid-border-color);
+          box-shadow: .22rem 0 0 .18rem rgba(var(--bs-success-rgb),.25);
+        }
+    </style>
 </head>
 
 <body class="body-pd">
@@ -41,27 +99,28 @@
                                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_usuario">Registrar</a>
                                     </div><br>
                                 <?php endif; ?>
-
-                                <table id="tabla_usuario" class="table" style="width:97%">
-                                    <thead>
-                                        <tr>
-                                            <th>NOMBRE</th>
-                                            <th>APELLIDO</th>
-                                            <th>CORREO</th>
-                                            <th>ROL</th>
-                                            <th class="text-center">ACCIONES</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td colspan="7"><h4>Cargando...</h4></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                <div class="table-responsive">
+                                    <table id="tabla_usuario" class="table table-striped table-hover" style="width:97%">
+                                        <thead>
+                                            <tr>
+                                                <th>NOMBRE</th>
+                                                <th>APELLIDO</th>
+                                                <th>CORREO</th>
+                                                <th>ROL</th>
+                                                <th class="text-center">ACCIONES</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td colspan="7"><h4>Cargando...</h4></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                                 <div class="modal fade" id="modal_usuario" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
                                     <div class="modal-dialog modal-lg">
                                         <div class="modal-content">
-                                            <div class="modal-header">
+                                            <div class="modal-header bg-primary text-white">
                                                 <h1 class="modal-title fs-5" id="titulo_modal">Registrar usuario</h1>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                             </div>
@@ -78,9 +137,10 @@
 
                             </div>
                         </div>
-                    </div>
+                    </div>                    
                 </main>
                 <?php
+                require_once 'vista/componentes/modal_carga.php';
                 require_once "vista/componentes/footer.php";
                 require_once "vista/componentes/script.php";
                 ?>

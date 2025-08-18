@@ -54,28 +54,29 @@
                                         </div>
                                     </div>
                                 <?php endif; ?>
-
-                                <table id="tabla_banco" class="table" style="width:97%">
-                                    <thead>
-                                        <tr>
-                                            <th>NOMBRE</th>
-                                            <th>CODIGO</th>
-                                            <th>NUMERO DE CUENTA</th>
-                                            <th>TELEFONO AFILIADO</th>
-                                            <th>CEDULA AFILIADA</th>
-                                            <th class="text-center">ACCIONES</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td colspan="7"><h4>Cargando...</h4></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                <div class="table-responsive">
+                                    <table id="tabla_banco" class="table table-striped table-hover" style="width:97%">
+                                        <thead>
+                                            <tr>
+                                                <th>NOMBRE</th>
+                                                <th>CODIGO</th>
+                                                <th>NUMERO DE CUENTA</th>
+                                                <th>TELEFONO AFILIADO</th>
+                                                <th>CEDULA AFILIADA</th>
+                                                <th class="text-center">ACCIONES</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td colspan="7"><h4>Cargando...</h4></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                                 <div class="modal fade" id="modal_banco" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
                                     <div class="modal-dialog modal-lg">
                                         <div class="modal-content">
-                                            <div class="modal-header">
+                                            <div class="modal-header bg-primary text-white">
                                                 <h1 class="modal-title fs-5" id="titulo_modal">Registrar banco</h1>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                             </div>
@@ -95,6 +96,7 @@
                     </div>
                 </main>
                 <?php
+                require_once 'vista/componentes/modal_carga.php';
                 require_once "vista/componentes/footer.php";
                 require_once "vista/componentes/script.php";
                 ?>

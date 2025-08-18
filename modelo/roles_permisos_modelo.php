@@ -42,32 +42,102 @@ class Roles_permisos extends Conexion
         return $this->permiso_usuario_id;
     }
 
-    public function consultar_roles_permisos(){
+    public function realizar_consulta($accion){
         $this->cambiar_db_seguridad();
-        
-        $sql = "SELECT * FROM roles_permisos WHERE rol_id = :rol";
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":rol", $this->rol_id);
-        $result = $conexion->execute();
-        $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
 
-        $this->cambiar_db_negocio();
+        switch ($accion) {
+            case 'consultar_roles_permisos':
+                $respuesta = $this->consultar_roles_permisos();
 
-        if ($result == true) {
-            return $datos;
-        } else {
-            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+                $this->cambiar_db_negocio();
+
+                if ($respuesta["resultado"]) {
+                    return $respuesta["datos"];
+                } 
+                else {
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+                }
+
+            case 'consultar_permisos_por_usuario':
+                $respuesta = $this->consultar_permisos_por_usuario();
+
+                $this->cambiar_db_negocio();
+
+                if ($respuesta["resultado"]) {
+                    return $respuesta["datos"];
+                } 
+                else {
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+                }
+
+            case 'registrar_permisos_roles':
+                $validaciones = $this->validarRolesPermisos(false);
+                if(!($validaciones["estatus"])){return $validaciones;}
+
+                $respuesta = $this->registrar_permisos_roles();
+
+                $this->cambiar_db_negocio();
+
+                if ($respuesta) {
+                    return ["estatus"=>true,"mensaje"=>"OK"];
+                } 
+                else {
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar asignar los permisos a los roles"];
+                }
+
+            case 'eliminar_roles_permisos':
+                $validaciones = $this->validarRolesPermisos(true);
+                if(!($validaciones["estatus"])){return $validaciones;}
+
+                $respuesta = $this->eliminar_roles_permisos();
+
+                $this->cambiar_db_negocio();
+
+                if ($respuesta["resultado"]) {
+                    if ($respuesta["fila_afectada"] < 1) {
+                        return ["estatus"=>false,"mensaje"=>"No se modificó ningún registro"];
+                    }
+
+                    return ["estatus"=>true,"mensaje"=>"OK"];
+                } 
+                else {
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar eliminar los permisos de este rol"];
+                }
+
+            default:
+                return ["estatus"=>false,"mensaje"=>"A ocurrido un error en la consulta"];
+                break;
         }
     }
 
-    public function registrar_permisos_roles()
+    private function consultar_roles_permisos(){
+        $sql = "SELECT * FROM roles_permisos WHERE rol_id = :rol";
+        $conexion = $this->get_conex()->prepare($sql);
+        $conexion->bindParam(":rol", $this->rol_id);
+
+        $result = $conexion->execute();
+        $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
+
+        return ["resultado"=>$result,"datos"=>$datos];
+    }
+
+    private function consultar_permisos_por_usuario()
     {
-        //Validamos los datos obtenidos del controlador
-        $validaciones = $this->validarRolesPermisos(false);
-        if(!($validaciones["estatus"])){return $validaciones;}
+        $sql = "SELECT modulos.id_modulo, permisos_usuarios.nombre_accion AS nombre_permiso
+        FROM roles_permisos INNER JOIN permisos_usuarios ON permisos_usuarios.id_permiso_usuario = 
+        roles_permisos.permiso_usuario_id INNER JOIN  modulos ON modulos.id_modulo = permisos_usuarios.modulo_id
+        WHERE roles_permisos.rol_id = :rol_permiso";
+        $conexion = $this->get_conex()->prepare($sql);
+        $conexion->bindParam(":rol_permiso", $this->rol_id);
 
-        $this->cambiar_db_seguridad();
+        $result = $conexion->execute();
+        $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
 
+        return ["resultado"=>$result,"datos"=>$datos];
+    }
+
+    private function registrar_permisos_roles()
+    {
         $sql = "INSERT INTO roles_permisos (rol_id, permiso_usuario_id) VALUES
         (:rol_id, :permiso_usuario_id)";
         $conexion = $this->get_conex()->prepare($sql);
@@ -75,63 +145,40 @@ class Roles_permisos extends Conexion
         $conexion->bindParam(":permiso_usuario_id", $this->permiso_usuario_id);
         $result = $conexion->execute();
 
-        $this->cambiar_db_negocio();
-
-        if ($result) {
-            return ["estatus"=>true,"mensaje"=>"OK"];
-        } else {
-            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar este permiso de Rol"];
-        }
+        return $result;
     }
 
-    public function eliminar_roles_permisos(){
-        //Validamos los datos obtenidos del controlador
-        $validaciones = $this->validarRolesPermisos(true);
-        if(!($validaciones["estatus"])){return $validaciones;}
-
-        $this->cambiar_db_seguridad();
-
+    private function eliminar_roles_permisos(){
         $sql = "DELETE FROM roles_permisos WHERE rol_id = :rol_id";
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":rol_id", $this->rol_id);
+
         $result = $conexion->execute();
-
-        $this->cambiar_db_negocio();
-
-        if ($result) {
-            return ["estatus"=>true,"mensaje"=>"OK"];
-        } else {
-            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar eliminar este permiso de Rol"];
-        }
+        $filas_afectadas = $conexion->rowCount();
+        
+        return ["resultado"=>$result,"fila_afectada"=>$filas_afectadas];
     }
 
     private function validarRolesPermisos($eliminar = false)
     {   
-        // Validamos el id rol/permiso en caso de eliminar porque en registrar no existe todavia
+        if (!(isset($this->rol_id))) {return ["estatus"=>false,"mensaje"=>"El ID del rol no se recibio correctamente para modificar los permisos"];}
 
-            if (!(isset($this->rol_id))) {return ["estatus"=>false,"mensaje"=>"El ID del rol no se recibio correctamente para modificar los permisos"];}
+        if (empty($this->rol_id)) {return ["estatus"=>false,"mensaje"=>"El ID del Rol para modificar los permisos se envio vacio"];}
 
-            if (empty($this->rol_id)) {return ["estatus"=>false,"mensaje"=>"El ID del Rol para modificar los permisos se envio vacio"];}
-
-            if(is_numeric($this->rol_id)){
-                if (!($this->validarClaveForanea("roles","id_rol",$this->rol_id,true))) {
-                    return ["estatus"=>false,"mensaje"=>"El Rol seleccionado para modificar permisos no existe"];
-                }
-                if ($eliminar) {return ["estatus"=>true,"mensaje"=>"OK"];}
-            }
-            else{return ["estatus"=>false,"mensaje"=>"El id del Rol para modificar permisos tiene debe ser un valor numerico entero"];}
-
-            if ($eliminar) {return ["estatus"=>true,"mensaje"=>"OK"];}
-        // Validamos que los campos enviados si existan
+        if(is_numeric($this->rol_id)){
+           if (!($this->validarClaveForanea("roles","id_rol",$this->rol_id))) {
+               return ["estatus"=>false,"mensaje"=>"El Rol seleccionado para modificar permisos no existe"];
+           }
+           if ($eliminar) {return ["estatus"=>true,"mensaje"=>"OK"];}
+        }
+        else{return ["estatus"=>false,"mensaje"=>"El id del Rol para modificar permisos tiene debe ser un valor numerico entero"];}
+        
         if (!(isset($this->permiso_usuario_id))) {return ["estatus"=>false,"mensaje"=>"El ID del usuario no se recibio correctamente"];}
 
-        // Validamos que los campos enviados no esten vacios        
         if (empty($this->permiso_usuario_id)) {return ["estatus"=>false,"mensaje"=>"El ID del usuario esta vacio"];}
-
-        // Verificamos si los valores tienen los datos que deberian
         
         if(is_numeric($this->permiso_usuario_id)){
-            if (!($this->validarClaveForanea("permisos_usuarios","id_permiso_usuario",$this->permiso_usuario_id,true))) {
+            if (!($this->validarClaveForanea("permisos_usuarios","id_permiso_usuario",$this->permiso_usuario_id))) {
                 return ["estatus"=>false,"mensaje"=>"El ID de Usuario seleccionado para modificar permisos no existe"];
             }
         }
@@ -141,21 +188,16 @@ class Roles_permisos extends Conexion
         
         return ["estatus"=>true,"mensaje"=>"OK"];
     }
-    //esta funcion es para revisar si una clave foranea existe, porque sino dara error la consulta
-    private function validarClaveForanea($tabla,$nombreClave,$valor,$seguridad = false)
+    
+    private function validarClaveForanea($tabla,$nombreClave,$valor)
     {
-        if ($seguridad) {
-            $this->cambiar_db_seguridad();
-        }
         $sql="SELECT * FROM $tabla WHERE $nombreClave =:valor";
 
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":valor", $valor);
         $conexion->execute();
         $result = $conexion->fetch(PDO::FETCH_ASSOC);
-        if ($seguridad) {
-            $this->cambiar_db_negocio();
-        }
+
         return ($result)?true:false;        
     }
 }

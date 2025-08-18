@@ -36,46 +36,36 @@
                     <div class="row my-4 justify-content-center">
                         <div class="col-11">
                             <div class="card p-4 row">
-                                <div class="col-12 row justify-content-between">
-                                    <div class="col-4">
-                                        <label for="mes_select">Mostrando Mensualidad del mes:</label>
-                                        <div class="input-group my-1 mb-3">
-                                            <span class="input-group-text" id="basic-addon1"><i class="bi bi-calendar2-date"></i></span>
-                                            <select class="form-select " aria-label="Default select example" name="mes_seleccionado" id="mes_select">            
-                                            </select>
-                                        </div>
-                                        <button id="boton_eliminar" class="btn btn-outline-danger my-2">Eliminar Mensualidad</button>
+                                <div class="col-12 row">
+                                    <div class="col" hidden="">                       
+                                        <button class="btn btn-primary my-2" id="boton_registrar" title="Presione para Registrar Nueva Mensualidad" type="button" data-bs-toggle="modal" data-bs-target="#modal_mensualidad">Registrar Mensualidad</button>
+                                        <p class="text-danger"></p>
                                     </div>
-                                    <div class="col-3">
-                                        <button class="btn btn-primary" id="boton_registrar" title="Presione para Registrar Nueva Mensualidad" type="button" data-bs-toggle="modal" data-bs-target="#modal_mensualidad">Registrar Mensualidad</button>
-                                    </div>
-                                </div>                                
-
-                                <table id="tabla_mensualidad" class="table  caption-top mx-auto" style="width:97%">
-                                    <caption>Listado de Mensualidades</caption>
-                                    <thead>
-                                        <tr>
-                                            <th class="">MES/AÑO</th>
-                                            <th class="">APARTAMENTO</th>
-                                            <th class="">PROPIETARIO</th>
-                                            <th class="">MONTO MENSUALIDAD</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td colspan="4"><h4>Cargando...</h4></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                                <button class="btn btn-outline-primary col-4 mx-auto" id="boton_editar" title="Presione para Editar Mensualidad Actual" type="button" data-bs-toggle="modal" data-bs-target="#modal_mensualidad">Editar Mensualidad Seleccionada</button>
+                                </div>
+                                <div class="table-responsive">
+                                    <table id="tabla_mensualidad" class="table caption-top table-striped table-hover" style="width: 99%">
+                                        <caption>Listado de Mensualidades</caption>
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">MES/AÑO</th>
+                                                <th scope="col">MONTO TOTAL</th>
+                                                <th scope="col">MONTO RESTANTE</th>
+                                                <th scope="col">ACCIONES</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
                                 <div class="modal fade" id="modal_mensualidad" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
-                                    <div class="modal-dialog modal-lg">
+                                    <div class="modal-dialog modal-xl">
                                         <div class="modal-content">
-                                            <div class="modal-header">
+                                            <div class="modal-header bg-primary text-white">
                                                 <h1 class="modal-title fs-5" id="titulo_modal">Registrar Mensualidad</h1>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                             </div>
-                                            <div class="modal-body">
+                                            <div class="modal-body p-4">
 
                                                 <?php
                                                 require_once "vista/mensualidad/mensualidad_modal.php";
@@ -85,13 +75,31 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div class="modal fade" id="modal_mensualidades_apartamentos" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                            <div class="modal-header bg-primary text-white">
+                                                <h1 class="modal-title fs-5" id="titulo_modal">Mensualidades de los Apartamentos</h1>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+
+                                                <?php
+                                                require_once "vista/mensualidad/mensualidad_apartamentos_modal.php";
+                                                ?>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    </div>                        
                 </main>
                 <?php
-                require_once "vista/componentes/footer.php";
-                require_once "vista/componentes/script.php";
+                    require_once 'vista/componentes/modal_carga.php';
+                    require_once "vista/componentes/footer.php";
+                    require_once "vista/componentes/script.php";
                 ?>
             </div>
         </div>

@@ -1,29 +1,35 @@
 <?php 
-
 require_once "modelo/notificaciones_modelo.php";
 
-$notificaciones = new Notificaciones();
+if (isset($_POST["operacion"])){
+    $operacion = $_POST["operacion"];
 
-if($accion == "inicio"){
-    $registros = $notificaciones->consultar();
-    require_once "vista/notificaciones/notificaciones_vista.php";
-}
-if($accion == "quitar"){
-    header('Content-Type: application/json'); // <-- Muy importante
+    if ($operacion == "consultar"){
+        $notificaciones_obj = new Notificaciones();
+        echo  json_encode($notificaciones_obj->realizar_consulta('consultar'));
+    }
+    else if ($operacion == "quitar_notificacion"){
+        $notificaciones_obj = new Notificaciones();
 
-    $id_notificacion = $_POST["id"];	
+        $id_notificacion = $_POST["id"];
 
-    $resultado = $notificaciones->marcar_como_activo($id_notificacion);
-    $indices_notificaciones = array_keys($_SESSION["notificaciones"]);
-            
-    foreach ($indices_notificaciones as $indice) {        
-        if ($_SESSION["notificaciones"][$indice]["id_notificacion"] == $id_notificacion) {
-            unset($_SESSION["notificaciones"][$indice]);
-        }        
-    }    
+        $notificaciones_obj->set_id_notificacion($id_notificacion);
 
-    echo json_encode(['ok' => $resultado]);
+        $resultado = $notificaciones_obj->realizar_consulta('marcar_como_activo');
+        $indices_notificaciones = array_keys($_SESSION["notificaciones"]);
+                
+        foreach ($indices_notificaciones as $indice) {        
+            if ($_SESSION["notificaciones"][$indice]["id_notificacion"] == $id_notificacion) {
+                unset($_SESSION["notificaciones"][$indice]);
+            }
+        }
+        echo json_encode($resultado);
+    }
     exit;
+}
+
+if($accion == "inicio"){    
+    require_once "vista/notificaciones/notificaciones_vista.php";
 }
 
 ?>

@@ -1,12 +1,11 @@
 $(document).ready(function(){
-
 	$("#nro_apartamento").on("keypress",function(e){
-		validarKeyPress(/^[0-9\b]*$/, e);
+		validarKeyPress(/^[0-9\-\b]*$/, e);
 	});
 
 	$("#nro_apartamento").on("keyup",function(){
-		validarKeyUp(/^[0-9\b]{1,2}$/,
-		$(this),this.nextElementSibling,"Debe ingresar el número del apartamento");
+		validarKeyUp(/^[0-9\-\b]{1,3}$/,
+		this,this.nextElementSibling,"Debe ingresar el número del apartamento");
 	});
 
 	$("#porcentaje_participacion").on("keypress",function(e){
@@ -15,7 +14,25 @@ $(document).ready(function(){
 
 	$("#porcentaje_participacion").on("keyup",function(){
 		validarKeyUp(/^\d{1,2}(\.\d{1,2})?$/,
-		$(this),this.nextElementSibling,"Debe ingresar el codigo del banco");
+		this,this.nextElementSibling,"Debe ingresar porcentaje de participación de este apartamento");
+	});
+
+	document.getElementById('gas').addEventListener("change",e=>{
+		e.target.classList.add('is-valid');
+		e.target.classList.remove('is-invalid');
+		e.target.nextElementSibling.textContent = "";
+	});
+
+	document.getElementById('agua').addEventListener("change",e=>{
+		e.target.classList.add('is-valid');
+		e.target.classList.remove('is-invalid');
+		e.target.nextElementSibling.textContent = "";
+	});
+
+	document.getElementById('alquilado').addEventListener("change",e=>{
+		e.target.classList.add('is-valid');
+		e.target.classList.remove('is-invalid');
+		e.target.nextElementSibling.textContent = "";
 	});
 	
 	$("#boton_formulario").on("click",async function(e){
@@ -41,8 +58,8 @@ $(document).ready(function(){
 
 	$("#nro_apartamento").on("keyup",function(e){
 		if (validarKeyUp(
-        /^[0-9]{1,2}$/,
-        $("#nro_apartamento"),document.querySelector("#nro_apartamento").nextElementSibling,'El formato debe ser en números'
+        /^[0-9\-]{1,3}$/,
+        document.querySelector("#nro_apartamento"),document.querySelector("#nro_apartamento").nextElementSibling,'Debe ingresar el número del apartamento'
         )) {
         	if (this.value == nro_apartamento_an) {return;}
 			let datos = new FormData();
@@ -68,8 +85,8 @@ function mensajes(icono,tiempo,titulo,mensaje){
 
 async function validarEnvio(accion = "Registrar"){	
 	if(validarKeyUp(
-        /^[0-9]{1,2}$/,
-        $("#nro_apartamento"),document.querySelector("#nro_apartamento").nextElementSibling,'Debe ingresar el número del apartamento'
+        /^[0-9\-\b]{1,3}$/,
+        document.querySelector("#nro_apartamento"),document.querySelector("#nro_apartamento").nextElementSibling,'Debe ingresar el número del apartamento'
         )==0)
 	{
 		mensajes('error',4000,'Debe ingresar el número del apartamento',
@@ -79,7 +96,7 @@ async function validarEnvio(accion = "Registrar"){
 	}
 	else if(validarKeyUp(
         /^\d{1,2}(\.\d{1,2})?$/,
-        $("#porcentaje_participacion"),document.querySelector("#porcentaje_participacion").nextElementSibling,'Debe ingresar el porcentaje de participación'
+        document.querySelector("#porcentaje_participacion"),document.querySelector("#porcentaje_participacion").nextElementSibling,'Debe ingresar porcentaje de participación de este apartamento'
         )==0)
 	{
 		mensajes('error',4000,'Debe ingresar el porcentaje de participación',
@@ -108,43 +125,15 @@ async function validarEnvio(accion = "Registrar"){
 		
 		return false;
 	}
-	else if(validar_select("propietario_id")==0)
-	{
-		mensajes('error',4000,'Debe seleccionar un propietario',
-		'Debe seleccionar una opción');
-		
-		return false;
-	}
+
 	if (accion == "Registrar") {
-		/*if(validar_contra()==0)
-		{
-			mensajes('error',4000,'Verifique nuevamente la contraseña',
-			'El campo "contraseña" y el campo "confirmar contraseña" no coinciden');
-			
-			return false;
-		}*/
+		
 	}else if (accion == "Editar"){
 		datos = new FormData();
-		//datos.append("validar",'contra');
+		
 		datos.append("id_apartamento",id_modificar);
-		/*datos.append("contra",$("#contra").val());
-		res = await verificar_contra(datos);
-		// revisamos si la contraseña que puso es la correcta
-		if(!res){
-			mensajes('error',4000,'Contraseña Icorrecta','La contraseña ingresada no es correcta, para poder realizar cambios debe ingresar la contraseña correcta');
-			return false;
-		}
-
-		if ($("#confir_contra").val() != '') {
-			if(validarKeyUp(/^[A-Za-z0-9_.+*$#%&@]{5,50}$/,$("#confir_contra"),document.querySelector("#confir_contra").nextElementSibling,'Debe ingresar una contraseña')==0)
-			{
-				mensajes('error',4000,'Error en la nueva contraseña',
-				'El formato debe tener mínimo 5 caracteres, utilizar letras, numeros y caracteres especiales como: _.+*$#%&/ ');
-				
-				return false;
-			}
-		}*/
 	}
+
 	// si el valor de correo no es el mismo de antes:
 	if(nro_apartamento_an != $("#nro_apartamento").val()){
 		datos = new FormData(); 
@@ -172,14 +161,17 @@ function validarKeyPress(er, e) {
 
 function validarKeyUp(er,etiqueta,etiquetamensaje,
 mensaje){
-	a = er.test(etiqueta.val());
-
+	a = er.test(etiqueta.value);
+	
 	if(a){
-
+		etiqueta.classList.add('is-valid');
+		etiqueta.classList.remove('is-invalid');
 		etiquetamensaje.textContent = "";
 		return 1;
 	}
 	else{
+		etiqueta.classList.add('is-invalid')
+		etiqueta.classList.remove('is-valid');
 		etiquetamensaje.textContent = mensaje;
 		return 0;
 	}
@@ -188,19 +180,16 @@ mensaje){
 function validar_select(id) {
 	let selec = document.querySelector("#"+id);
 	if (selec.value == '') {
+		selec.classList.add('is-invalid')
+		selec.classList.remove('is-valid');
+		selec.nextElementSibling.textContent = "Debe seleccionar una opcion";
 		return false;
-	}else{
-		return true;
 	}
-}
-
-function validar_contra() {
-	let contra = document.querySelector("#contra");
-	let confir_contra = document.querySelector("#confir_contra");
-	if (contra.value == confir_contra.value) {
-		return 1;
-	}else{
-		return 0;
+	else{
+		selec.classList.add('is-valid');
+		selec.classList.remove('is-invalid');
+		selec.nextElementSibling.textContent = "";
+		return true;
 	}
 }
 
@@ -213,17 +202,10 @@ async function verificar_duplicados(datos){
 	})
 	// aqui revisamos el estatus, si es true es porque esta duplicado y mandamos un mensaje	
 	if(data.estatus){
-		document.querySelector(`#${data.busqueda}`).nextElementSibling.textContent = `${data.busqueda} ya registrado/a`
+		document.querySelector(`#${data.busqueda}`).classList.add('is-invalid');
+		document.querySelector(`#${data.busqueda}`).classList.remove('is-valid');
+		document.querySelector(`#${data.busqueda}`).nextElementSibling.textContent = `${data.busqueda} ya registrado/a`;
 		return true;
 	}
 	return false;
-}
-
-async function verificar_contra(datos){
-	let data = await fetch("",{method:"POST", body:datos}).then(res=>{		
-		let result = res.json()
-		return result;//Convertimos el resultado de json a js y lo mandamos
-	})
-	// aqui revisamos el estatus, si es true es porque es correcta la contraseña		
-	return data;
 }

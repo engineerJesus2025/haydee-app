@@ -30,7 +30,7 @@
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="card p-4">
-                                <table id="notificaciones" class="table" style="width:100%">
+                                <table id="tabla_notificaciones" class="table table-striped table-hover" style="width:100%">
                                     <thead>
                                         <tr>
                                             <th>USUARIO</th>
@@ -41,7 +41,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php foreach ($registros as $registro): ?>
+                                        <!-- <?php foreach ($registros as $registro): ?>
                                             <tr>
                                                 <td><?php echo $registro["nombre"] ?></td>
                                                 <td><?php echo $registro["titulo"] ?></td>
@@ -49,7 +49,7 @@
                                                 <td><?php echo $registro["fecha"] ?></td>
                                                 <td><?php echo ($registro["activo"] == 1) ? "SI" : "NO"; ?></td>
                                             </tr>
-                                        <?php endforeach; ?>
+                                        <?php endforeach; ?> -->
                                     </tbody>
                                 </table>
                             </div>
@@ -57,50 +57,14 @@
                     </div>
                 </main>
                 <?php
+                require_once 'vista/componentes/modal_carga.php';
                 require_once "vista/componentes/footer.php";
                 require_once "vista/componentes/script.php";
                 ?>
             </div>
         </div>
     </div>
-
-    <script>
-        $('#notificaciones').DataTable({
-            responsive: true,
-            "scrollX": true,
-            "pageLength": 10,
-            "aaSorting": [],
-            language: {
-                "processing": "Procesando...",
-                "lengthMenu": "Mostrar _MENU_ registros",
-                "zeroRecords": "No se encontraron resultados",
-                "emptyTable": "Ningún dato disponible en esta tabla",
-                "info": "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
-                "infoEmpty": "Mostrando registros del 0 al 0 de un total de 0 registros",
-                "infoFiltered": "(filtrado de un total de _MAX_ registros)",
-                "infoPostFix": "",
-                "search": "Buscar:",
-                "url": "",
-                "infoThousands": ",",
-                "loadingRecords": "Cargando...",
-                "paginate": {
-                    "first": "Primero",
-                    "last": "Último",
-                    "next": "<i class='bi bi-caret-right'></i>",
-                    "previous": "<i class='bi bi-caret-left'></i>"
-                },
-                "aria": {
-                    "sortAscending": ": Activar para ordenar la columna de manera ascendente",
-                    "sortDescending": ": Activar para ordenar la columna de manera descendente"
-                },
-                "buttons": {
-                    "copy": "Copiar",
-                    "colvis": "Visibilidad"
-                }
-            }
-        });
-    </script>
-
+    <script type="text/javascript" src="recursos/js/consultas_ajax/notificaciones_ajax.js"></script>
 </body>
 
 </html>

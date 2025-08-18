@@ -9,7 +9,6 @@ let boton_formulario = document.querySelector("#boton_formulario");
 let modal = new bootstrap.Modal(document.querySelector("#modal_proveedores"));
 let formulario_usar = document.querySelector("#form_proveedores");
 
-
 // En caso de que se envie un formulario
 function envio(operacion) {
     if (operacion == "Editar") {
@@ -29,6 +28,9 @@ document.querySelector('#modal_proveedores').addEventListener('hidden.bs.modal',
     boton_formulario.textContent = "Registrar";
     document.getElementById("titulo_modal").textContent = "Registrar Proveedor";
     formulario_usar.querySelectorAll("[class='w-100").forEach(el => el.textContent = "");
+
+    document.querySelectorAll('.is-valid').forEach(input=>input.classList.remove('is-valid'));
+    document.querySelectorAll('.is-invalid').forEach(input=>input.classList.remove('is-invalid'));
 });
 
 // Si queremos registrar:
@@ -87,17 +89,14 @@ async function consultar() {
     datos_consulta.append("operacion", "consulta");
 
     data = await query(datos_consulta);
-    vaciar_tabla();
+
+    let cuerpo_tabla = document.querySelector('#tabla_proveedores tbody');
+    cuerpo_tabla.textContent = null;
 
     await data.map(fila => {
         llenarTabla(fila);
     })
     data_table = init_data_table();
-}
-
-function vaciar_tabla() {
-    let cuerpo_tabla = document.querySelector('#tabla_proveedores tbody');
-    cuerpo_tabla.textContent = null;
 }
 
 function llenarTabla(fila) {
@@ -142,7 +141,7 @@ function crearBotones(id) {
     boton_editar.appendChild(icono_editar);
 
     boton_editar.setAttribute("type", "button");
-    boton_editar.setAttribute("class", "btn btn-success btn-sm col-3");
+    boton_editar.setAttribute("class", "btn btn-success col-lg-3 col-4");
     boton_editar.setAttribute("tabindex", "-1");
     boton_editar.setAttribute("role", "button");
     boton_editar.setAttribute("aria-disabled", "true");
@@ -162,7 +161,7 @@ function crearBotones(id) {
         boton_eliminar.appendChild(icono_eliminar);
 
         boton_eliminar.setAttribute("type", "button");
-        boton_eliminar.setAttribute("class", "btn btn-danger btn-sm eliminar col-3");
+        boton_eliminar.setAttribute("class", "btn btn-danger eliminar col-lg-3 col-4");
         boton_eliminar.setAttribute("tabindex", "-1");
         boton_eliminar.setAttribute("role", "button");
         boton_eliminar.setAttribute("aria-disabled", "true");
@@ -269,14 +268,43 @@ async function last_id() {
 }
 
 async function query(datos) {
-    let res = await fetch("", {
-        method: "POST",
-        body: datos
-    });
+    let modal_carga = new bootstrap.Modal("#modal_carga");
+    let mostrarModal = false;
+    let tiempoCarga;
 
-    let result = await res.json();
-    return result;
+    tiempoCarga = setTimeout(()=>{
+        mostrarModal = true;
+        modal_carga.show();
+    }, 300);
+    
+    try{
+        const tiempoInicio = performance.now();
+
+        const res = await fetch("", { method: "POST", body: datos });
+        const data = await res.json();
+
+        const tiempoTranscurido = performance.now() - tiempoInicio;
+        const tiempoEsperaMin = 700;
+        
+        if (mostrarModal && tiempoTranscurido < tiempoEsperaMin) {
+            
+            const restante = tiempoEsperaMin - tiempoTranscurido;
+            await new Promise(resolve => setTimeout(resolve,restante));
+        }
+
+        return data;
+    }
+    catch(error){
+        return {estatus:false,mensaje:"A ocurrido un error durante la consulta",error}
+    }
+    finally{
+        clearTimeout(tiempoCarga);
+        if (mostrarModal) {
+            modal_carga.hide();
+        }
+    }
 }
+
 function consulta_completada() {
     Swal.fire({
         title: "Atencion",
@@ -379,3 +407,10 @@ function reasignarEventos() {
     }
 
 }
+
+const resizeObserver = new ResizeObserver(entries => {
+    if (data_table) {
+        data_table.draw();
+    }
+});
+resizeObserver.observe(tabla);

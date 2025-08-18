@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <title>Bitacora | Inicio</title>
+    <title>Bitácora | Inicio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php
     require_once "vista/componentes/estilos.php";
@@ -25,85 +25,42 @@
                         <a href="#" data-bs-target="#sidebar" data-bs-toggle="collapse" class="border rounded-3 p-1 text-decoration-none"><i class="bi bi-list bi-lg py-2 p-1"></i></a>
                     </div>
                     <div class="page-header pt-3">
-                        <h2>BITACORA</h2>
+                        <h2>BITÁCORA</h2>
                     </div>
                     <p class="lead"></p>
                     <hr>
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="card p-4">
-                                <table id="bitacora" class="table" style="width:100%">
-                                    <thead>
-                                        <tr>
-                                            <th>USUARIO</th>
-                                            <th>ROL</th>
-                                            <th>FECHA/HORA</th>
-                                            <th>MODULO</th>
-                                            <th>ACCIÓN</th>
-                                            <th>REGISTRO ALTERADO/CREADO</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($registros as $registro) : ?>
+                                <div class="table-responsive">
+                                    <table id="tabla_bitacora" class="table table-striped table-hover" style="width:100%">
+                                        <thead>
                                             <tr>
-                                                <td><?php echo $registro["nombre_usuario"] ?></td>
-                                                <td><?php echo $registro["nombre_rol"] ?></td>
-                                                <td><?php echo $registro["fecha_hora"] ?></td>
-                                                <td><?php echo $registro["nombre_modulo"] ?></td>
-                                                <td><?php echo $registro["accion"] ?></td>
-                                                <td><?php echo $registro["registro_alterado"] ?></td>
+                                                <th>USUARIO</th>
+                                                <th>ROL</th>
+                                                <th>FECHA/HORA</th>
+                                                <th>MODULO</th>
+                                                <th>ACCIÓN</th>
+                                                <th>REGISTRO ALTERADO/CREADO</th>
                                             </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </main>
                 <?php
+                require_once 'vista/componentes/modal_carga.php';
                 require_once "vista/componentes/footer.php";
                 require_once "vista/componentes/script.php";
                 ?>
             </div>
         </div>
     </div>
-    
-    <script>
-        $('#bitacora').DataTable({
-            responsive: true,
-            "scrollX": true,
-            "pageLength": 10,
-            "aaSorting": [],
-            language: {
-                "processing": "Procesando...",
-                "lengthMenu": "Mostrar _MENU_ registros",
-                "zeroRecords": "No se encontraron resultados",
-                "emptyTable": "Ningún dato disponible en esta tabla",
-                "info": "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
-                "infoEmpty": "Mostrando registros del 0 al 0 de un total de 0 registros",
-                "infoFiltered": "(filtrado de un total de _MAX_ registros)",
-                "infoPostFix": "",
-                "search": "Buscar:",
-                "url": "",
-                "infoThousands": ",",
-                "loadingRecords": "Cargando...",
-                "paginate": {
-                    "first": "Primero",
-                    "last": "Último",
-                    "next": "<i class='bi bi-caret-right'></i>",
-                    "previous": "<i class='bi bi-caret-left'></i>"
-                },
-                "aria": {
-                    "sortAscending": ": Activar para ordenar la columna de manera ascendente",
-                    "sortDescending": ": Activar para ordenar la columna de manera descendente"
-                },
-                "buttons": {
-                    "copy": "Copiar",
-                    "colvis": "Visibilidad"
-                }
-            }
-        });
-    </script>
+    <script type="text/javascript" src="recursos/js/consultas_ajax/bitacora_ajax.js"></script>
 
 </body>
 

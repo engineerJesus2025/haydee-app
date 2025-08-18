@@ -7,7 +7,7 @@
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
                 <input type="text" class="form-control nombre_proveedor" name="nombre_proveedor" id="nombre_proveedor" placeholder="Nombre"
                        aria-label="nombre_proveedor" aria-describedby="basic-addon1" minlength="3" maxlength="30">
-                <span class="w-100"></span>
+                <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
         <div class="col-md-6">
@@ -16,7 +16,7 @@
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
                 <input type="text" class="form-control servicio" name="servicio" id="servicio" placeholder="Servicio"
                        aria-label="servicio" aria-describedby="basic-addon1" minlength="3" maxlength="30">
-                <span class="w-100"></span>
+                <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
     </div>
@@ -28,7 +28,7 @@
                 <input type="text" class="form-control rif" name="rif" id="rif"
                        placeholder="RIF" aria-label="rif" aria-describedby="basic-addon1"
                        minlength="3" maxlength="30">
-                <span class="w-100"></span>
+                <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
         <div class="col-md-6">
@@ -37,7 +37,7 @@
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-map"></i></span>
                 <input type="text" class="form-control direccion" name="direccion" id="direccion" placeholder="Dirección"
                        aria-label="direccion" aria-describedby="basic-addon1" minlength="3" maxlength="30">
-                <span class="w-100"></span>
+                <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
     </div>

@@ -5,45 +5,42 @@
     require_once "modelo/modulos_modelo.php";
     require_once "modelo/roles_permisos_modelo.php";
     require_once "vista/componentes/sesion.php";
-    
-    $rol_obj = new Rol();
-    $modulo_obj = new Modulos();
-    $permisos_usuarios_obj = new Permisos_usuarios();
-    $roles_permisos_obj = new Roles_permisos();
 
-    $registros_modulos = $modulo_obj->consultar();
-    $registros_permisos_usuarios = $permisos_usuarios_obj->consultar();
+    $modulo_obj = new Modulos();
+    $registros_modulos = $modulo_obj->realizar_consulta('consultar');
+
+    $permisos_usuarios_obj = new Permisos_usuarios();
+    $registros_permisos_usuarios = $permisos_usuarios_obj->realizar_consulta('consultar');
 
     if (isset($_POST["operacion"])){
         $operacion = $_POST["operacion"];
 
-        if ($operacion == "consulta"){
-            // llamamos a la funcion, lo convertimos a json y la mandamos al js con echo
-            echo  json_encode($rol_obj->consultar());
-            // la hice para que retorne un arreglo, si sale vacio solo mandara un array con false
-        }
-        //Despues de cada echo se regresa al javascript como respuesta en json
+        if ($operacion == "consulta"){            
+            $rol_obj = new Rol();
 
-        elseif ($operacion == "registrar") {
-            //se guardan las variables a registrar
+            echo  json_encode($rol_obj->realizar_consulta('consultar'));            
+        }
+
+        elseif ($operacion == "registrar_rol") {
+            $rol_obj = new Rol();
+
             $nombre = $_POST["nombre"];  
             $permisos = explode(",",$_POST["permisos"]);
 
-            //se usan los setters correspondientes            
             $rol_obj->set_nombre($nombre);
-
-            //se ejecuta la funcion:
-            $resultado_registro = $rol_obj->registrar();
-            //igual puse para que siempre retorne un arreglo que dara true o false de acuerdo al resultado
+ 
+            $resultado_registro = $rol_obj->realizar_consulta('registrar');
             if ($resultado_registro["estatus"]) {
-                $rol_id = $rol_obj->lastId();
+                $roles_permisos_obj = new Roles_permisos();
+
+                $rol_id = $rol_obj->realizar_consulta('lastId');
 
                 $roles_permisos_obj->set_rol_id($rol_id["mensaje"]);
 
                 foreach($permisos as $permiso){
                     $roles_permisos_obj->set_permiso_usuario_id($permiso);
 
-                    $resultado_permisos = $roles_permisos_obj->registrar_permisos_roles();
+                    $resultado_permisos = $roles_permisos_obj->realizar_consulta('registrar_permisos_roles');
 
                     if($resultado_permisos["estatus"] == false){
                         echo json_encode($resultado_permisos);
@@ -59,59 +56,53 @@
         }
 
         elseif ($operacion == "consulta_especifica"){
-            //se guardan el id para buscar
+            $rol_obj = new Rol();
+
             $id_rol = $_POST["id_rol"];
 
-            //se usan el setter correspondientes
             $rol_obj->set_id_rol($id_rol);
 
-            // llamamos a la funcion, lo convertimos a json y la mandamos al js con echo
-            echo  json_encode($rol_obj->consultar_rol());
-            // igual hice para que retorne un arreglo, si sale vacio solo mandara un array con false
+            echo  json_encode($rol_obj->realizar_consulta('consultar_rol'));
         }
 
         elseif ($operacion == "consulta_permisos"){
-            //se guardan el id para buscar
+            $roles_permisos_obj = new Roles_permisos();
+
             $id_rol = $_POST["id_rol"];
 
-            //se usan el setter correspondientes
             $roles_permisos_obj->set_rol_id($id_rol);
 
-            // llamamos a la funcion, lo convertimos a json y la mandamos al js con echo
-            echo  json_encode($roles_permisos_obj->consultar_roles_permisos());
-            // igual hice para que retorne un arreglo, si sale vacio solo mandara un array con false
+            echo  json_encode($roles_permisos_obj->realizar_consulta('consultar_roles_permisos'));
         }
         elseif ($operacion == "modificar") {
-            //se guardan las variables a modificar
+            $rol_obj = new Rol();
+
             $id_rol = $_POST["id_rol"];
             $nombre = $_POST["nombre"];  
             $permisos = explode(",",$_POST["permisos"]);
-            //se usan los setters correspondientes
+            
             $rol_obj->set_id_rol($id_rol);
             $rol_obj->set_nombre($nombre);
             
-            //se ejecuta la funcion:
-            $result = $rol_obj->editar_rol();
+            $result = $rol_obj->realizar_consulta('editar_rol');
             if (!$result["estatus"]) {
                 echo json_encode($result);
                 exit();
             }
 
+            $roles_permisos_obj = new Roles_permisos();
+
             $roles_permisos_obj->set_rol_id($id_rol);
 
-            //eliminamos los permisos
-            $resultado_permisos = $roles_permisos_obj->eliminar_roles_permisos();
+            $resultado_permisos = $roles_permisos_obj->realizar_consulta('eliminar_roles_permisos');
             if (!$resultado_permisos["estatus"]) {
                 echo json_encode($result);
                 exit();
             }
 
-
-
-            // se loss volvemos a poner
             foreach($permisos as $permiso){
                 $roles_permisos_obj->set_permiso_usuario_id($permiso);
-                $resultado_permisos = $roles_permisos_obj->registrar_permisos_roles($permiso);
+                $resultado_permisos = $roles_permisos_obj->realizar_consulta('registrar_permisos_roles');
                 if(!$resultado_permisos["estatus"]){
                     echo json_encode($resultado_permisos);
                     exit();
@@ -123,27 +114,29 @@
         }
 
         elseif ($operacion == "eliminar") {
-            //se guardan el id de la variable a eliminar
+            $rol_obj = new Rol();
+
             $id_rol = $_POST["id_rol"];
 
-            //se usan el setter correspondientes
             $rol_obj->set_id_rol($id_rol);
 
-            //se ejecuta la funcion:
-            echo  json_encode($rol_obj->eliminar_rol());
-            //igual puse para que siempre retorne un arreglo que dara true o false de acuerdo al resultado
+            echo  json_encode($rol_obj->realizar_consulta('eliminar_rol'));
         }
         elseif ($operacion == "ultimo_id"){
-            echo json_encode($rol_obj->lastId());
+            $rol_obj = new Rol();
+            echo json_encode($rol_obj->realizar_consulta('lastId'));
         }
 
-        exit;//es salida en ingles... No puede faltar
+        exit;
     }
     if (isset($_POST["validar"])) {
-        $validar = $_POST["validar"]; //Esto es igual pero para las validaciones
+        $validar = $_POST["validar"];
+
         if ($validar == "nombre"){
+            $rol_obj = new Rol();
+
             $rol_obj->set_nombre($_POST["nombre"]);
-            echo  json_encode($rol_obj->verificar_nombre());
+            echo  json_encode($rol_obj->realizar_consulta('verificar_nombre'));
         }
         exit;
     }

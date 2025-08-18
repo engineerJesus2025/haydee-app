@@ -6,4 +6,5 @@
 
 <!-- <link href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap" rel="stylesheet"> -->
 <link rel="stylesheet" type="text/css" href="recursos/css/header.css">
+<link rel="stylesheet" type="text/css" href="recursos/css/nav.css">
 <link rel="stylesheet" type="text/css" href="recursos/css/estilos_generales.css">

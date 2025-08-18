@@ -1,7 +1,5 @@
-// Francis: Cambie mas que nada nombres en las funciones de abajo
-// Ta` chulo el modulo
-//consultar();
 let data_table, id_eliminado, id_registrado, id_modificar;
+let id_detalle_gasto = null, id_banco_transaccion; // Variable para almacenar el ID del detalle de gasto
 
 let permiso_eliminar = document.querySelector("#permiso_eliminar").value;
 let permiso_editar = document.querySelector("#permiso_editar").value;
@@ -12,12 +10,19 @@ let modal = new bootstrap.Modal(document.querySelector("#modal_gastos"));
 let modalVistaPrevia = new bootstrap.Modal(document.querySelector("#modal_vista_previa"));
 let formulario_usar = document.querySelector("#form_gastos");
 
+let modal_carga = new bootstrap.Modal("#modal_carga");
+let peticionesActivas = 0;
+let ultimaPeticion = 0;
+let tiempoCarga;
+let tiempoInicio;
+
+consultar();
+
 // En caso de que se envie un formulario
 function envio(operacion) {
     if (operacion == "Editar") {
         id_modificar = boton_formulario.getAttribute("id_modificar");
         modificar(id_modificar);
-
     }
     else if (operacion == "Registrar") {
         registrar();
@@ -29,16 +34,50 @@ function envio(operacion) {
 }
 
 document.querySelector('#modal_gastos').addEventListener('hidden.bs.modal', () => {
-    formulario_usar.reset();
+    // 1. Restaura el botón y el título del modal a su estado de "Registrar"
     boton_formulario.removeAttribute("modificar");
     boton_formulario.removeAttribute("id_modificar");
     boton_formulario.textContent = "Registrar";
     document.getElementById("titulo_modal").textContent = "Registrar Gasto";
-    formulario_usar.querySelectorAll("[class='w-100").forEach(el => el.textContent = "");
-    document.querySelector("#nombre_imagen_cargada").textContent = "";
-    document.querySelector("#boton_eliminar_imagen").classList.add("d-none");
-    document.querySelector("#boton_eliminar_imagen").removeAttribute("data-nombre");
 
+    // 2. Elimina los bloques de detalle adicionales, dejando solo el primero.
+    const container = formulario_usar.querySelector("#detalles-container");
+    const bloques = container.querySelectorAll(".detalle-gasto");
+    bloques.forEach((bloque, index) => {
+        if (index > 0) { // Si es un bloque adicional (no el primero)
+            bloque.remove();
+        }
+    });
+
+    // 3. Resetea los valores de todos los inputs del formulario a su valor por defecto
+    formulario_usar.reset();
+
+    // 4. Limpia y reconfigura el primer (y ahora único) bloque de detalle.
+    const primerBloque = container.querySelector(".detalle-gasto");
+    if (primerBloque) {
+        // Limpia el texto del comprobante cargado
+        const nombreImagen = primerBloque.querySelector(".nombre_imagen_cargada");
+        if (nombreImagen) nombreImagen.textContent = '';
+
+        // Oculta el botón de eliminar imagen (si existe)
+        const btnEliminarImagen = primerBloque.querySelector(".boton_eliminar_imagen");
+        if (btnEliminarImagen) {
+            btnEliminarImagen.classList.add('d-none');
+            btnEliminarImagen.removeAttribute("data-nombre");
+        }
+
+        // Elimina el botón "Eliminar este Detalle" que pudo ser añadido en modo edición
+        const btnEliminarDetalle = primerBloque.querySelector('.btn-outline-danger');
+        if (btnEliminarDetalle) btnEliminarDetalle.remove();
+
+        // Restaura la visibilidad de los campos según el método de pago por defecto
+        const metodoPagoSelect = primerBloque.querySelector('.metodo_pago');
+        if (metodoPagoSelect) {
+            actualizarVisibilidadCampos(metodoPagoSelect);
+        }
+    }
+
+    // 5. Elimina cualquier input oculto que se haya añadido (como 'eliminar_imagen')
     const inputOculto = formulario_usar.querySelector("input[name='eliminar_imagen']");
     if (inputOculto) inputOculto.remove();
 });
@@ -48,64 +87,123 @@ document.querySelector('#modal_gastos').addEventListener('hidden.bs.modal', () =
 async function registrar() {
     let datos_consulta = new FormData();
 
-    let fecha = document.querySelector("#fecha").value,
-        monto = document.querySelector("#monto").value,
+    // Campos simples
+    let tipo = document.querySelector("#tipo").value,
         tipo_gasto = document.querySelector("#tipo_gasto").value,
-        metodo_pago = document.querySelector("#metodo_pago").value,
-        referencia = document.querySelector("#referencia").value,
-        descripcion_gasto = document.querySelector("#descripcion").value,
-        banco = document.querySelector("#banco").value,
-        proveedor = document.querySelector("#proveedor").value,
-        imagen = document.querySelector("#imagen").files[0];
+        solicitud = document.querySelector("#solicitud").value,
+        proveedor = formulario_usar.querySelector("#proveedor").value,
+        descripcion_gasto = formulario_usar.querySelector("#descripcion_gasto").value;
 
-    datos_consulta.append("fecha", fecha);
-    datos_consulta.append("monto", monto);
+    datos_consulta.append("tipo", tipo);
     datos_consulta.append("tipo_gasto", tipo_gasto);
-    datos_consulta.append("metodo_pago", metodo_pago);
-    datos_consulta.append("referencia", referencia);
-    datos_consulta.append("descripcion_gasto", descripcion_gasto);
-    datos_consulta.append("banco", banco);
+    datos_consulta.append("solicitud", solicitud);
     datos_consulta.append("proveedor", proveedor);
-    datos_consulta.append("imagen", imagen);
+    datos_consulta.append("descripcion_gasto", descripcion_gasto);
+
+    // Bloques de detalle
+    let bloques_detalle = formulario_usar.querySelectorAll(".detalle-gasto");
+    let total = bloques_detalle.length;
+
+    if (total === 0) {
+        mensajes("error", 4000, "Error", "Debes agregar al menos un detalle de gasto.");
+        return;
+    }
+
+    let monto_total = 0;
+    let ultima_fecha = "";
+
+    for (let i = 0; i < total; i++) {
+        const bloque = bloques_detalle[i];
+
+        let metodo_pago = bloque.querySelector(".metodo_pago"),
+            fecha = bloque.querySelector(".fecha_detalle"),
+            referencia = bloque.querySelector(".referencia"),
+            descripcion = bloque.querySelector(".descripcion_detalle"),
+            banco = bloque.querySelector(".banco"),
+            imagen = bloque.querySelector(".imagen"),
+            monto = bloque.querySelector(".monto");
+
+        if (
+            !metodo_pago || !fecha || !referencia || !descripcion ||
+            !banco || !monto
+        ) {
+            mensajes("error", 4000, "Error", "Faltan campos en uno de los detalles.");
+            return;
+        }
+
+        datos_consulta.append("metodo_pago[]", metodo_pago.value);
+        datos_consulta.append("fecha_detalle[]", fecha.value);
+        datos_consulta.append("referencia[]", referencia.value);
+        datos_consulta.append("descripcion_detalle[]", descripcion.value);
+        datos_consulta.append("banco[]", banco.value);
+        datos_consulta.append("monto[]", monto.value);
+
+        monto_total += parseFloat(monto.value) || 0;
+        if (fecha.value) {
+            ultima_fecha = fecha.value;
+        }
+
+        if (imagen && imagen.files[0]) {
+            datos_consulta.append("imagen[]", imagen.files[0]);
+        } else {
+            datos_consulta.append("imagen[]", ""); // Para mantener alineados los índices
+        }
+    }
+
     datos_consulta.append("operacion", "registrar");
 
     let respuesta = await query(datos_consulta);
-
-    if (respuesta && respuesta.estatus) {
-        modal.hide();
-        formulario_usar.reset();
-
-        id_registrado = await last_id();
-
-        // Crear fila nueva con los datos
-        let fila_nueva = {
-            id_gasto: id_registrado.mensaje,
-            fecha: fecha,
-            monto: monto,
-            tipo_gasto: tipo_gasto,
-            metodo_pago: metodo_pago,
-            referencia: referencia,
-            descripcion_gasto: descripcion_gasto,
-            banco: banco,
-            proveedor: proveedor,
-            imagen: imagen
-        };
-
-        // Insertar la nueva fila visualmente
-await cargarGastosPorMes(document.querySelector("#selector_mes_anio").value);
-await cargarTotalesMetodoPago(document.querySelector("#selector_mes_anio").value);
-consulta_completada();
-        consulta_completada();
-    } else {
-        Swal.fire({
-            title: "Error",
-            text: "No se ha podido registrar el gasto",
-            icon: "error",
-            confirmButtonText: "Aceptar",
-            confirmButtonColor: "#e01d22",
-        });
+    if (respuesta && !respuesta.estatus) {
+        mensajes("error", 4000, "Atención", respuesta.mensaje);
+        return;
     }
+
+    let fila = {
+        id_gasto: respuesta.gasto.id_gasto,
+        tipo: respuesta.gasto.tipo,
+        tipo_gasto: respuesta.gasto.tipo_gasto,
+        proveedor: respuesta.gasto.proveedor,
+        descripcion_gasto: respuesta.gasto.descripcion_gasto,
+        monto_total: respuesta.gasto.monto_total,
+        ultima_fecha: respuesta.gasto.ultima_fecha
+    };
+
+    modal.hide();
+
+
+    formulario_usar.reset();
+    mensajes("success", 4000, "Éxito", "El registro se ha realizado exitosamenteeeeeeeee");
+
+    // Elimina todos los bloques excepto el primero
+    const bloques = formulario_usar.querySelectorAll(".detalle-gasto");
+    bloques.forEach((bloque, i) => i > 0 && bloque.remove());
+
+    // Crear acciones y añadir fila a la tabla
+    let acciones = crearBotones(fila.id_gasto);
+
+    const filaDatos = [
+        formatearFecha(respuesta.gasto.ultima_fecha) || "N/A",
+        formatearMontoConMoneda(respuesta.gasto.monto_total, respuesta.gasto.metodo_pago_predominante),
+        mayuscula(respuesta.gasto.tipo) || "N/A",
+        mayuscula(respuesta.gasto.nombre_tipo_gasto) || "N/A", // Corregido
+        respuesta.gasto.nombre_proveedor || "N/A",            // Corregido
+        respuesta.gasto.descripcion_gasto || "N/A",
+        acciones.outerHTML || ""
+    ];
+
+    let nuevaFila = data_table.row.add(filaDatos).draw(false).node();
+    data_table.row(nuevaFila).data(filaDatos).draw(false);
+    data_table.columns.adjust().draw(false);
+
+    id_registrado = { mensaje: fila.id_gasto };
+
+    setTimeout(() => {
+        reasignarEventos();
+    }, 100); // Esperamos 100 milisegundos antes de reasignar los eventos
+
+    mensajes("success", 4000, "Éxito", "El registro se ha realizado exitosamente");
 }
+
 
 // Si queremos consultar:
 async function consultar() {
@@ -137,7 +235,7 @@ function vaciar_tabla() {
 function formatearMonto(monto) {
     const numero = parseFloat(monto);
     if (isNaN(numero)) return "0,00";
-    
+
     return numero.toLocaleString('es-VE', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
@@ -161,27 +259,26 @@ function llenarTabla(fila) {
 
     const fecha = document.createElement("td");
     const monto = document.createElement("td");
+    const tipo = document.createElement("td");
     const tipo_gasto = document.createElement("td");
-    const metodo_pago = document.createElement("td");
     const proveedor = document.createElement("td");
     const descripcion_gasto = document.createElement("td");
 
-    fecha.textContent = formatearFecha(fila["fecha"]);
+    fecha.textContent = formatearFecha(fila["ultima_fecha"]);
+    monto.textContent = formatearMontoConMoneda(fila["monto_total"], fila["metodo_pago_predominante"]);
 
-    const metodo = fila["metodo_pago"];
-    const esBs = ["pago_movil", "transferencia"].includes(metodo);
-    monto.textContent = `${formatearMonto(fila["monto"])} ${esBs ? "Bs" : "$"}`;
-    tipo_gasto.textContent = mayuscula(fila["tipo_gasto"]);
-    metodo_pago.textContent = formatearMetodo(metodo);
-    proveedor.textContent = fila["proveedor"] || "N/A";
+
+    tipo.textContent = mayuscula(fila["tipo"]);
+    tipo_gasto.textContent = mayuscula(fila["nombre_tipo_gasto"]);
+    proveedor.textContent = fila["nombre_proveedor"] || "N/A";
     descripcion_gasto.textContent = fila["descripcion_gasto"];
 
     const acciones = crearBotones(id_campo);
 
     fila_tabla.appendChild(fecha);
     fila_tabla.appendChild(monto);
+    fila_tabla.appendChild(tipo);
     fila_tabla.appendChild(tipo_gasto);
-    fila_tabla.appendChild(metodo_pago);
     fila_tabla.appendChild(proveedor);
     fila_tabla.appendChild(descripcion_gasto);
     fila_tabla.appendChild(acciones);
@@ -269,54 +366,82 @@ async function modificar_formulario(e) {
     datos_consulta.append("operacion", "consulta_especifica");
 
     const respuesta = await query(datos_consulta);
-    const data = respuesta;
 
-    let fecha = formulario_usar.querySelector("#fecha");
-    let monto = formulario_usar.querySelector("#monto");
-    let tipo_gasto = formulario_usar.querySelector("#tipo_gasto");
-    let metodo_pago = formulario_usar.querySelector("#metodo_pago");
-    let referencia = formulario_usar.querySelector("#referencia");
-    let descripcion = formulario_usar.querySelector("#descripcion");
-    let banco = formulario_usar.querySelector("#banco");
-    let proveedor = formulario_usar.querySelector("#proveedor");
-
-
-    fecha.value = data.fecha;
-    monto.value = data.monto;
-    tipo_gasto.value = data.tipo_gasto;
-    metodo_pago.value = data.metodo_pago;
-    actualizarVisibilidadCampos();
-    referencia.value = data.referencia;
-    descripcion.value = data.descripcion_gasto;
-    banco.value = data.id_banco;
-    proveedor.value = data.id_proveedor;
-
-    // Mostrar nombre de imagen, esos id estan en el formulario
-    const nombreImagen = document.querySelector("#nombre_imagen_cargada");
-    const botonEliminarImagen = document.querySelector("#boton_eliminar_imagen");
-
-    if (data.imagen && data.imagen !== "") {
-        let nombre_archivo = data.imagen.split("/").pop();
-        nombreImagen.textContent = `Imagen cargada: ${nombre_archivo}`;
-        botonEliminarImagen.classList.remove("d-none");
-        botonEliminarImagen.setAttribute("data-nombre", nombre_archivo);
-    } else {
-        nombreImagen.textContent = "No hay imagen cargada.";
-        botonEliminarImagen.classList.add("d-none");
-        botonEliminarImagen.removeAttribute("data-nombre");
+    if (!respuesta || !respuesta.gasto) {
+        mensajes("error", 4000, "Error", "No se pudieron cargar los datos para modificar.");
+        return;
     }
 
-    if (!permiso_editar) {
-        boton_formulario.setAttribute("hidden", true);
-        boton_formulario.setAttribute("disabled", true);
+    const dataGasto = respuesta.gasto;
+    const detalles = respuesta.detalles;
+
+    // Llenar campos principales
+    formulario_usar.querySelector("#tipo").value = dataGasto.tipo;
+    formulario_usar.querySelector("#tipo_gasto").value = dataGasto.tipo_gasto_id;
+    formulario_usar.querySelector("#solicitud").value = dataGasto.solicitud_id;
+    formulario_usar.querySelector("#descripcion_gasto").value = dataGasto.descripcion_gasto;
+    formulario_usar.querySelector("#proveedor").value = dataGasto.proveedor_id;
+
+    // Reconstruir bloques de detalles
+    const detallesContainer = formulario_usar.querySelector("#detalles-container");
+    detallesContainer.innerHTML = ''; 
+    const plantilla = document.getElementById('plantilla-detalle-gasto');
+
+    if (detalles && detalles.length > 0) {
+        detalles.forEach((detalle, index) => {
+            const nuevoBloque = plantilla.content.firstElementChild.cloneNode(true);
+
+            // Añadir botón de eliminar si no es el primer detalle
+            if (index > 0) {
+                const eliminarBtn = document.createElement('button');
+                eliminarBtn.className = 'btn btn-sm btn-outline-danger mb-3';
+                eliminarBtn.type = 'button';
+                eliminarBtn.innerHTML = '<i class="bi bi-x-circle"></i> Eliminar este Detalle';
+                eliminarBtn.onclick = () => nuevoBloque.remove();
+                nuevoBloque.querySelector('.card-body').prepend(eliminarBtn);
+            }
+
+            // Llenar campos del detalle
+            nuevoBloque.querySelector(".fecha_detalle").value = detalle.fecha;
+            nuevoBloque.querySelector(".metodo_pago").value = detalle.metodo_pago;
+            nuevoBloque.querySelector(".monto").value = detalle.monto;
+            nuevoBloque.querySelector(".descripcion_detalle").value = detalle.descripcion_detalle_gasto;
+
+            // Mostrar campos condicionales
+            const metodo = detalle.metodo_pago.toLowerCase();
+            if (metodo === 'transferencia' || metodo === 'pago movil') {
+                nuevoBloque.querySelector(".grupo_referencia").classList.remove('d-none');
+                nuevoBloque.querySelector(".grupo_banco").classList.remove('d-none');
+                nuevoBloque.querySelector(".grupo_imagen").classList.remove('d-none');
+                nuevoBloque.querySelector(".referencia").value = detalle.referencia || '';
+                nuevoBloque.querySelector(".banco").value = detalle.id_banco || '';
+                if (detalle.imagen) {
+                    nuevoBloque.querySelector(".nombre_imagen_cargada").textContent = `Comprobante cargado: ${detalle.imagen}`;
+                }
+            }
+
+            // Si el detalle tiene imagen, crea un input oculto para conservar el nombre
+            if (detalle.imagen && detalle.imagen.trim() !== "") {
+                const inputImagenExistente = document.createElement('input');
+                inputImagenExistente.type = 'hidden';
+                inputImagenExistente.name = 'imagen_existente[]';
+                inputImagenExistente.value = detalle.imagen;
+                nuevoBloque.appendChild(inputImagenExistente);
+            }
+
+            agregarEventosMetodoPago(nuevoBloque);
+            detallesContainer.appendChild(nuevoBloque);
+        });
     }
 
+    // Configurar botón del modal
     boton_formulario.setAttribute("modificar", true);
-    boton_formulario.setAttribute("id_modificar", data.id_gasto);
+    boton_formulario.setAttribute("id_modificar", dataGasto.id_gasto);
     boton_formulario.textContent = "Modificar";
     document.getElementById("titulo_modal").textContent = "Modificar Gasto";
     id_modificar = id;
 }
+
 
 //FUNCIONALIDAD DE LA VISTA PREVIA
 async function mostrarVistaPrevia(e) {
@@ -328,112 +453,97 @@ async function mostrarVistaPrevia(e) {
     datos_consulta.append("operacion", "consulta_especifica");
 
     const respuesta = await query(datos_consulta);
-    const data = respuesta[0];
+    const data = respuesta;
 
-    // Resetear mensaje de error por si estaba visible
-    document.getElementById("vista_imagen").style.display = "block";
-    document.getElementById("mensaje_error_imagen").classList.add("d-none");
+    document.getElementById("vista_fecha").textContent = formatearFecha(data.gasto.ultima_fecha);
 
-    const imagen = (data.imagen && data.imagen !== "")
-        ? `recursos/img/${data.imagen}`
-        : "";
-
-    document.getElementById("vista_imagen").setAttribute("src", imagen);
-
+    await consultar_detalles(data.gasto.id_gasto);
     // Mostrar el modal como los otros
     modalVistaPrevia.show();
+
+}
+
+
+function abrirModalRegistrar() {
+    const modalVistaPreviaEl = document.getElementById('modal_vista_previa');
+
+    function abrirDetalles() {
+        modal_detalles.show();
+        modalVistaPreviaEl.removeEventListener('hidden.bs.modal', abrirDetalles);
+    }
+
+    // Primero elimina para evitar duplicados
+    modalVistaPreviaEl.removeEventListener('hidden.bs.modal', abrirDetalles);
+    // Luego añade el listener
+    modalVistaPreviaEl.addEventListener('hidden.bs.modal', abrirDetalles);
+
+    // Finalmente cierra la vista previa
+    modalVistaPrevia.hide();
+}
+document.getElementById('modal_detalles_gastos').addEventListener('hidden.bs.modal', () => {
+    modalVistaPrevia.show();
+});
+
+
+
+
+function actualizarVisibilidadCamposVistaPrevia(metodo_pago) {
+    const grupoReferencia = document.getElementById("grupo_referencia");
+    const grupoBanco = document.getElementById("grupo_banco");
+    const grupoImagen = document.getElementById("grupo_imagen");
+
+    const valor = metodo_pago.toLowerCase().trim(); // ← IMPORTANTE
+
+    const mostrar = (valor === "transferencia" || valor === "pago movil" || valor === "pago_movil");
+
+    grupoReferencia.style.display = mostrar ? "block" : "none";
+    grupoBanco.style.display = mostrar ? "block" : "none";
+    grupoImagen.style.display = mostrar ? "block" : "none";
 }
 
 
 async function modificar(id) {
-    let datos_consulta = new FormData();
-    let fecha = document.querySelector("#fecha").value,
-        monto = document.querySelector("#monto").value,
-        tipo_gasto = document.querySelector("#tipo_gasto").value,
-        metodo_pago = document.querySelector("#metodo_pago").value,
-        referencia = document.querySelector("#referencia").value,
-        descripcion = document.querySelector("#descripcion").value,
-        banco = document.querySelector("#banco").value,
-        proveedor = document.querySelector("#proveedor").value,
-        imagen = document.querySelector("#imagen").files[0];
+    // ✅ CAMBIO CLAVE: Se crea el FormData a partir del formulario HTML.
+    // Esto captura AUTOMÁTICAMENTE todos los campos: textos, selects, archivos 
+    // y, lo más importante, el input oculto 'imagen_existente[]'.
+    let datos_consulta = new FormData(formulario_usar);
 
+    // Ahora, solo añadimos los datos que NO están en el formulario.
     datos_consulta.append("id_gasto", id);
-    datos_consulta.append("fecha", fecha);
-    datos_consulta.append("monto", monto);
-    datos_consulta.append("tipo_gasto", tipo_gasto);
-    datos_consulta.append("metodo_pago", metodo_pago);
-    datos_consulta.append("referencia", referencia);
-    datos_consulta.append("descripcion_gasto", descripcion);
-    datos_consulta.append("banco", banco);
-    datos_consulta.append("proveedor", proveedor);
     datos_consulta.append("operacion", "modificar");
 
-    if (imagen !== undefined) {
-        datos_consulta.append("imagen", imagen);
+    // El resto de la función para enviar y procesar la respuesta es igual.
+    let respuesta = await query(datos_consulta);
+
+    if (respuesta && !respuesta.estatus) {
+        mensajes("error", 4000, "Atención", respuesta.mensaje);
+        return;
     }
 
-    let respuesta = await query(datos_consulta);
-    formulario_usar.reset();
     modal.hide();
 
-    boton_formulario.removeAttribute("modificar");
-    boton_formulario.removeAttribute("id_modificar");
-    boton_formulario.textContent = "Registrar";
-    document.getElementById("titulo_modal").textContent = "Registrar Gasto";
+    // Actualizamos la tabla de DataTables: eliminamos la fila vieja y añadimos la nueva.
+    data_table.row(`#fila-${id}`).remove().draw(false);
 
-    // Actualizar la tabla
-    const filaExistente = document.querySelector(`#fila-${id}`);
-    if (filaExistente) {
-        filaExistente.remove(); // Elimina la fila vieja
-    }
+    let fila = respuesta.gasto;
+    let acciones = crearBotones(fila.id_gasto);
 
-    const filaModificada = {
-        id_gasto: id,
-        fecha: fecha,
-        monto: monto,
-        tipo_gasto: tipo_gasto,
-        metodo_pago: metodo_pago,
-        referencia: referencia,
-        descripcion_gasto: descripcion,
-        banco: banco,
-        proveedor: proveedor,
-        imagen: respuesta.imagen || ""
-    };
+    const filaDatos = [
+        formatearFecha(fila.ultima_fecha) || "N/A",
+        formatearMontoConMoneda(fila.monto_total, fila.metodo_pago_predominante),
+        mayuscula(fila.tipo) || "N/A",
+        mayuscula(fila.nombre_tipo_gasto) || "N/A",
+        fila.nombre_proveedor || "N/A",
+        fila.descripcion_gasto || "N/A",
+        acciones.outerHTML || ""
+    ];
 
-    llenarTabla(filaModificada);
-    consulta_completada();
-    reasignarEventos();
+    let nuevaFila = data_table.row.add(filaDatos).draw(false).node();
+    nuevaFila.id = `fila-${fila.id_gasto}`; 
 
-    // 🔄 Recargar totales
-    const idMesActual = document.querySelector("#selector_mes_anio").value;
-    await cargarTotalesMetodoPago(idMesActual);
+    mensajes("success", 4000, "Éxito", "El gasto se ha modificado exitosamente");
 }
 
-
-// BOTON PARA ELIMINAR LA IMAGEN EN EL FORMULARIO DE EDITAR
-document.querySelector("#boton_eliminar_imagen").addEventListener("click", function () {
-    Swal.fire({
-        title: "¿Eliminar imagen?",
-        text: "La imagen cargada será eliminada de este gasto.",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#e01d22",
-        cancelButtonText: "Cancelar",
-        confirmButtonText: "Sí, eliminar"
-    }).then((result) => {
-        if (result.isConfirmed) {
-            const hiddenEliminar = document.createElement("input");
-            hiddenEliminar.type = "hidden";
-            hiddenEliminar.name = "eliminar_imagen";
-            hiddenEliminar.value = "1";
-            formulario_usar.appendChild(hiddenEliminar);
-
-            // llAMA A LOS INPUTS QUE ESTAN EN EL MODAL
-            document.querySelector("#nombre_imagen_cargada").textContent = "Imagen eliminada.";
-            document.querySelector("#boton_eliminar_imagen").classList.add("d-none");
-        }
-    });
-});
 
 // Cargar los meses y años al cargar la página
 
@@ -446,12 +556,56 @@ async function last_id() {
 }
 
 async function query(datos) {
-    let data = await fetch("", { method: "POST", body: datos }).then(res => {
-        let result = res.json();
-        return result;//Convertimos el resultado de json a js y lo mandamos
-    })
-    // console.log(data);
-    return data;
+    peticionesActivas++;
+
+    const tiempoInicio = performance.now();
+
+    ultimaPeticion = tiempoInicio;
+
+    if (peticionesActivas === 1) {
+        tiempoCarga = setTimeout(()=>{
+            modal_carga.show();
+        }, 200);
+    }
+
+    try{
+        let data = await fetch("",{method:"POST", body:datos}).then(res=>{      
+        let result = res.json()
+            return result;
+        });
+        return data;
+    }
+    catch(error){
+        console.log(error);
+        return {estatus:false,mensaje:"A ocurrido un error durante la consulta",error}
+    }
+    finally{
+        peticionesActivas--;
+
+        if (peticionesActivas === 0) {
+            const espera = 50;
+            setTimeout(()=>{
+                if (peticionesActivas === 0) {
+                    clearTimeout(tiempoCarga);
+
+                    const tiempoTranscurido = performance.now() - tiempoInicio;
+                    const tiempoEsperaMin = 300;
+
+                    if (tiempoTranscurido < tiempoEsperaMin) {
+                        const restante = tiempoEsperaMin - tiempoTranscurido;
+                        setTimeout(()=>{
+                            if (performance.now() - ultimaPeticion >= restante) {
+                                modal_carga.hide();
+                            }
+                        },restante);
+                    }
+                    else{
+                        modal_carga.hide();
+                    }
+                }
+            }, espera);
+        }
+    }
 }
 
 function consulta_completada() {
@@ -520,12 +674,11 @@ function reasignarEventos() {
             data_table.row(`#fila-${id_eliminado}`).remove().draw();
             id_eliminado = null;
         }
-        //Esto es porque si la tabla esta paginada, como que no encuentra cual borrar hasta que esta en la pagina que la contiene
     }
 
-    // Se asigna el evento eliminar para los botones, esta aqui porque pasa algo parecido a lo de arriba
+    // Se asigna el evento eliminar para los botones
     $(".eliminar").on("click", function (e) {
-        id = e.target.value;
+        let id = e.target.value;
         if (id == undefined) {
             id = e.target.parentElement.value;
         }
@@ -543,148 +696,94 @@ function reasignarEventos() {
             }
         });
     });
-     document.querySelectorAll("button[title='Vista previa']").forEach(btn => {
+
+    // Bucle para VISTA PREVIA
+    document.querySelectorAll("button[title='Vista previa']").forEach(btn => {
         btn.removeEventListener("click", mostrarVistaPrevia);
         btn.addEventListener("click", mostrarVistaPrevia);
     });
-    if (id_registrado) { // en caso de que se haya registrado y no se haya añadido a la tabla
-        let boton_modificar = tabla.querySelector(`[value='${id_registrado.mensaje}']`);
-        // captura el boton de editar, sino lo encuentra es que no esta en su pagina, y no tiene caso ponerle evento
-        if (boton_modificar) {
-            // si lo encuentra le pone el evento de modificar
-            boton_modificar.addEventListener("click", modificar_formulario);
-            boton_modificar.parentElement.parentElement.parentElement.setAttribute("id", `fila-${id_registrado.mensaje}`);
-            id_registrado = null;
+
+    document.querySelectorAll("button[title='Editar']").forEach(btn => {
+        btn.removeEventListener("click", modificar_formulario); // Evita duplicados
+        btn.addEventListener("click", modificar_formulario); // Asigna el evento
+    });
+
+    if (id_registrado) {
+        let fila_nueva = tabla.querySelector(`button[value='${id_registrado.mensaje}']`).closest("tr");
+        if (fila_nueva && !fila_nueva.id) {
+            fila_nueva.setAttribute("id", `fila-${id_registrado.mensaje}`);
         }
+        id_registrado = null;
     }
 }
 
 
 // ----------- FUNCIONES Y COSAS NUEVAS PARA EL MODULO DE GASTOS-------------------
-document.addEventListener("DOMContentLoaded", async () => {
-  await cargarSelectorMesAnio();
 
-  const selector = document.querySelector("#selector_mes_anio");
+function actualizarVisibilidadCampos(select) {
+    const bloque = select.closest('.detalle-gasto');
+    const grupoReferencia = bloque.querySelector(".grupo_referencia");
+    const grupoBanco = bloque.querySelector(".grupo_banco");
+    const grupoImagen = bloque.querySelector(".grupo_imagen");
 
-  // Obtener mes y año actuales
-  const fecha = new Date();
-  const mes = String(fecha.getMonth() + 1).padStart(2, "0"); // meses de 0-11
-  const anio = fecha.getFullYear();
-  const valorActual = `${mes}-${anio}`;
+    const valor = select.value.toLowerCase();
 
-  // Buscar si ese valor existe en las opciones
-  const opcionActual = Array.from(selector.options).find(opt => opt.text === valorActual);
-  if (opcionActual) {
-    selector.value = opcionActual.value;
+    // Determina si los campos deben mostrarse
+    const mostrarCampos = (valor === "pago movil" || valor === "transferencia");
 
-    // Cargar datos del mes actual automáticamente
-    await cargarGastosPorMes(opcionActual.value);
-    await cargarTotalesMetodoPago(opcionActual.value);
-  }
+    // Usa classList para añadir o quitar la clase d-none
+    grupoReferencia.classList.toggle('d-none', !mostrarCampos);
+    grupoBanco.classList.toggle('d-none', !mostrarCampos);
+    grupoImagen.classList.toggle('d-none', !mostrarCampos);
+}
 
-  // Evento cuando cambia el select
-  selector.addEventListener("change", cargarDatosPorMes);
-});
-
-// Llenar el select de meses y años
-async function cargarSelectorMesAnio() {
-  const datos = new FormData();
-  datos.append("operacion", "listar_gastos_mes");
-
-  const respuesta = await query(datos);
-
-  if (respuesta && Array.isArray(respuesta)) {
-    const selector = document.querySelector("#selector_mes_anio");
-    selector.innerHTML = '<option value="">Seleccione un mes/año</option>';
-
-    // Calcular mes y año actual
-    const fechaActual = new Date();
-    const mesActual = String(fechaActual.getMonth() + 1).padStart(2, "0");
-    const anioActual = fechaActual.getFullYear();
-
-    let fechaSeleccionada = null;
-
-    respuesta.forEach(item => {
-      if (item.mes && item.anio) {
-        const option = document.createElement("option");
-        const nombreMes = obtenerNombreMes(item.mes);
-        option.value = item.fecha;
-        option.text = `${nombreMes}-${item.anio}`;
-        selector.appendChild(option);
-
-        // Comparar con el mes/año actual
-        if (parseInt(item.mes) == parseInt(mesActual) && parseInt(item.anio) == anioActual) {
-          fechaSeleccionada = item.fecha;
-        }
-      }
+function agregarEventosMetodoPago(bloque) {
+    const metodoPagoSelect = bloque.querySelector('.metodo_pago');
+    metodoPagoSelect.addEventListener('change', function () {
+        actualizarVisibilidadCampos(this);
     });
 
-    // Si se encontró el mes actual en la lista, seleccionarlo y cargar sus datos
-    if (fechaSeleccionada) {
-      selector.value = fechaSeleccionada;
-      await cargarGastosPorMes(fechaSeleccionada);
-      await cargarTotalesMetodoPago(fechaSeleccionada);
-    }
-  }
+    // Aplicar visibilidad inicial
+    actualizarVisibilidadCampos(metodoPagoSelect);
 }
 
-// Al cambiar el select
-async function cargarDatosPorMes(e) {
-  const fecha = e.target.value;
-  if (!fecha) return;
+document.addEventListener('DOMContentLoaded', () => {
+    // Inicializa visibilidad en el bloque original
+    document.querySelectorAll('.detalle-gasto').forEach(b => agregarEventosMetodoPago(b));
 
-  await cargarGastosPorMes(fecha);
-  await cargarTotalesMetodoPago(fecha);
-}
+    // Botón de agregar nuevo detalle
+   document.getElementById('agregar_detalle').addEventListener('click', () => {
+    const container = document.getElementById('detalles-container');
+    
+    // Clonar siempre desde la plantilla limpia para evitar heredar estados
+    const plantilla = document.getElementById('plantilla-detalle-gasto');
+    const nuevoDetalle = plantilla.content.firstElementChild.cloneNode(true);
 
-// Mostrar gastos del mes seleccionado
-async function cargarGastosPorMes(fecha) {
-  const datos = new FormData();
-  datos.append("operacion", "filtrar_gastos_mes");
-  datos.append("fecha", fecha);
+    // Limpia los valores de los inputs
+    nuevoDetalle.querySelectorAll('input, select, textarea').forEach(el => {
+        if (el.type !== 'hidden') el.value = '';
+    });
+    const nombreImagen = nuevoDetalle.querySelector('.nombre_imagen_cargada');
+    if (nombreImagen) nombreImagen.textContent = '';
+    
+    // Añade el botón para eliminar este nuevo bloque
+    const eliminarBtn = document.createElement('button');
+    eliminarBtn.className = 'btn btn-sm btn-outline-danger mb-3';
+    eliminarBtn.type = 'button';
+    eliminarBtn.innerHTML = '<i class="bi bi-x-circle"></i> Eliminar este Detalle';
+    eliminarBtn.onclick = () => nuevoDetalle.remove();
+    
+    const cardBody = nuevoDetalle.querySelector('.card-body');
+    cardBody.prepend(eliminarBtn);
 
-  const respuesta = await query(datos);
+    // Aplica la lógica de visibilidad al nuevo bloque
+    agregarEventosMetodoPago(nuevoDetalle);
 
-  vaciar_tabla(); // función existente
-  if (respuesta && Array.isArray(respuesta)) {
-    if (data_table) data_table.destroy(); 
-
-vaciar_tabla(); 
-
-respuesta.forEach(gasto => llenarTabla(gasto));
-
-data_table = init_data_table();
-  }
-}
-
-function actualizarVisibilidadCampos() {
-    const metodoPago = document.querySelector("#metodo_pago");
-    const grupoReferencia = document.querySelector("#grupo_referencia");
-    const grupoBanco = document.querySelector("#grupo_banco");
-    const grupoImagen = document.querySelector("#grupo_imagen");
-
-    const valor = metodoPago.value;
-
-    if (valor === "efectivo" || valor === "Efectivo ($)") {
-        grupoReferencia.style.display = "none";
-        grupoBanco.style.display = "none";
-        grupoImagen.style.display = "none";
-    } else if (valor === "pago_movil" || valor === "transferencia" || valor === "Pago Móvil" || valor === "Transferencia") {
-        grupoReferencia.style.display = "";
-        grupoBanco.style.display = "";
-        grupoImagen.style.display = "";
-    } else {
-        grupoReferencia.style.display = "none";
-        grupoBanco.style.display = "none";
-        grupoImagen.style.display = "none";
-    }
-}
-
-// Ejecutar en eventos globales
-document.addEventListener("DOMContentLoaded", function () {
-    document.querySelector("#metodo_pago").addEventListener("change", actualizarVisibilidadCampos);
-    actualizarVisibilidadCampos();
+    // Añade el nuevo bloque al formulario
+    container.appendChild(nuevoDetalle);
 });
+});
+
 
 // Mostrar los totales por método de pago
 async function cargarTotalesMetodoPago(fecha) {
@@ -762,38 +861,284 @@ function formatearMetodo(metodo) {
 }
 
 function obtenerNombreMes(numeroMes) {
-  const meses = [
-    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-  ];
+    const meses = [
+        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    ];
 
-  const indice = parseInt(numeroMes, 10) - 1;
-  return meses[indice] || "Mes inválido";
+    const indice = parseInt(numeroMes, 10) - 1;
+    return meses[indice] || "Mes inválido";
 }
-
-document.addEventListener("DOMContentLoaded", function () {
-    const metodoPago = document.querySelector("#metodo_pago");
-    const unidadMonto = document.querySelector("#unidad_monto");
-
-    function actualizarUnidadMoneda() {
-        const valor = metodoPago.value;
-
-        if (valor === "pago_movil" || valor === "transferencia") {
-            unidadMonto.textContent = "Bs";
-            unidadMonto.style.display = "";
-        } else if (valor === "efectivo") {
-            unidadMonto.textContent = "$";
-            unidadMonto.style.display = "";
-        } else {
-            unidadMonto.style.display = "none";
-        }
-    }
-
-    metodoPago.addEventListener("change", actualizarUnidadMoneda);
-    actualizarUnidadMoneda(); // Ejecutar por si hay valor cargado
-});
 
 function mayuscula(texto) {
     if (!texto) return "";
     return texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase();
 }
+
+function formatearMontoConMoneda(monto, metodo_pago) {
+    const numero = parseFloat(monto);
+    if (isNaN(numero)) return "0,00 Bs"; // Valor por defecto
+
+    const montoFormateado = numero.toLocaleString('es-VE', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+
+    if (metodo_pago && metodo_pago.toLowerCase().includes('efectivo')) {
+        return `$ ${montoFormateado}`;
+    } else {
+        return `${montoFormateado} Bs`;
+    }
+}
+
+
+
+
+// -------DETALLES GASTOS-------------------
+let data_table_detalles, id_eliminado_detalles, id_registrado_detalles, id_modificar_detalles, referencia_an_detalles;
+let tabla_detalles = document.querySelector("#tabla_detalles_gastos");
+let boton_formulario_detalles = document.querySelector("#boton_formulario_detalles");
+let modal_detalles = new bootstrap.Modal("#modal_detalles_gastos");
+let formulario_usar_detalles = document.querySelector(`#form_detalles_gastos`);
+let modalVistaPrevia_detalles = new bootstrap.Modal(document.querySelector("#modal_vista_previa_detalles"));
+
+function envio_detalles(operacion) {
+    if (operacion == "Editar") {
+        /*
+            - getAttribute: es un método que permite obtener el valor de un atributo 
+            específico de un elemento HTML.
+
+            y "envio", "modificar", "registrar", "mensajes" son funciones definidas 
+            por nosotroso mismos para que no te confundas.
+        */
+        id_modificar_detalles = boton_formulario_detalles.getAttribute("id_modificar");//obtenemos el id del registro
+        modificar_detalles(id_modificar_detalles);
+    }
+    else if (operacion == "Registrar") {
+        //sino a registrar
+        registrar_detalles();
+    } else {
+        // esto es imposible que pase pero aja
+        mensajes('error', 4000, 'Atencion',
+            'Ha ocurrido un error durante la operacion, intentelo nuevamente')
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const modal_detalles_element = document.querySelector(`#modal_detalles_gastos`);
+    if (!modal_detalles_element) return console.error("❌ No se encontró el modal de detalles en el DOM.");
+
+    modal_detalles_element.addEventListener("hide.bs.modal", () => {
+        formulario_usar_detalles.reset();
+        boton_formulario_detalles.removeAttribute("modificar");
+        boton_formulario_detalles.removeAttribute("id_modificar");
+        boton_formulario_detalles.textContent = "Registrar";
+
+        const tituloModal = document.getElementById('titulo_modal_detalles');
+        if (tituloModal) {
+            tituloModal.textContent = "Registrar Detalle Gasto";
+        }
+
+        formulario_usar_detalles.querySelectorAll("[class='w-100']").forEach(el => el.textContent = "");
+
+        const nombreImagen = document.querySelector("#nombre_imagen_cargada_detalles");
+        if (nombreImagen) nombreImagen.textContent = "";
+
+        const btnEliminarImg = document.querySelector("#boton_eliminar_imagen_detalles");
+        if (btnEliminarImg) {
+            btnEliminarImg.classList.add("d-none");
+            btnEliminarImg.removeAttribute("data-nombre");
+        }
+
+        const inputOculto = formulario_usar_detalles.querySelector("input[name='eliminar_imagen']");
+        if (inputOculto) inputOculto.remove();
+    });
+});
+
+
+async function consultar_detalles(id_gasto) {
+    if ($.fn.DataTable.isDataTable("#tabla_detalles_gastos")) {
+        $('#tabla_detalles_gastos').DataTable().clear().destroy();
+    }
+
+    //Creamos el formData
+    datos_consulta = new FormData();
+
+    //Aqui decimos que vamos a hacer
+    datos_consulta.append('operacion', 'consultar_detalles');
+    datos_consulta.append('id_gasto', id_gasto);
+
+    //Llamamos a la funcion para hacer la consulta
+    data = await query(datos_consulta)
+    vaciar_tabla_detalles(); //Vaciamos la tabla de lo que tenia antes
+
+    // Resvisamos el resultado
+    if (!(data.estatus == undefined)) {
+        mensajes('error', 4000, 'Atencion', data.mensaje);
+        return;// en caso de error mandamos un mensaje con el error y nos vamos
+    }
+
+    //recorremos los datos y en cada vuelta llamamos una funcion para llenar la tabla
+    await data.map(fila => {
+        llenarTabla_detalles(fila);
+    })
+
+    data_table_detalles = init_data_table_detalles(); //iniciamos el dataTable de jquery
+}
+function vaciar_tabla_detalles() {
+    let cuerpo_tabla = document.querySelector(`#tabla_detalles_gastos tbody`);
+    cuerpo_tabla.textContent = null;
+}
+
+function llenarTabla_detalles(fila) {
+    console.log("Se llena tabla secundaria:", fila);
+    // seleccionamos el cuerpo de la tabla que vamos a llenar
+    let cuerpo_tabla = document.querySelector(`#tabla_detalles_gastos tbody`);
+
+    // Creamos etiquetas
+    let fila_tabla = document.createElement("tr");//creamos la fila <tr></tr>
+
+    let id_campo = fila["id_detalle_gasto"]; // guardamos el id que nos interese
+
+    // creamos un td por cada columna que vamos a llenar de la tabla <td></td>
+    let fecha_td = document.createElement("td"),
+        monto_td = document.createElement("td"),
+        metodo_pago_td = document.createElement("td"),
+        descripcion_detalle_td = document.createElement("td");
+
+    // le damos el contenido de la consulta
+    let datos = fila;
+
+    fecha_td.textContent = formatearFecha(datos.fecha);
+    monto_td.textContent = formatearMontoConMoneda(datos.monto, datos.metodo_pago);
+    metodo_pago_td.textContent = datos.metodo_pago;
+    descripcion_detalle_td.textContent = datos.descripcion_detalle_gasto;
+
+    let acciones = crearBotones_detalles(id_campo);
+    // creamos los botones de eliminar y modificar
+
+    // le ponemos los td a la fila (tr)
+    fila_tabla.appendChild(fecha_td);
+    fila_tabla.appendChild(monto_td);
+    fila_tabla.appendChild(metodo_pago_td);
+    fila_tabla.appendChild(descripcion_detalle_td);
+    fila_tabla.appendChild(acciones);
+
+    fila_tabla.setAttribute("id", `fila-${id_campo}`);
+    // le ponemos un id a las fila para cuando las eliminemos
+
+    // y por ultimo, llenamos la tabla con la fila
+    cuerpo_tabla.appendChild(fila_tabla);
+}
+function crearBotones_detalles(id) {
+    // Creamos los botones de las acciones
+    let td = document.createElement("td");
+    let acciones = document.createElement("div");
+    acciones.setAttribute("class", "row justify-content-evenly");
+    // le damos la clases de boostrap para que se vea tu sabe'
+
+    // BOTON DE VISTA PREVIA CON EL OJITO
+    let boton_vista_previa = document.createElement("button");
+    let icono_ver = document.createElement("i");
+    icono_ver.setAttribute("class", "bi bi-eye-fill");
+    boton_vista_previa.appendChild(icono_ver);
+    boton_vista_previa.setAttribute("type", "button");
+    boton_vista_previa.setAttribute("class", "btn btn-primary btn-sm col-3");
+    boton_vista_previa.setAttribute("title", "Informacion");
+    boton_vista_previa.setAttribute("value", id);
+    boton_vista_previa.addEventListener("click", mostrarVistaPrevia_detalles);
+    acciones.appendChild(boton_vista_previa);
+
+    td.appendChild(acciones);
+
+    return td;
+}
+
+async function mostrarVistaPrevia_detalles(e) {
+    const boton = e.target.closest("button");
+    const id = boton.getAttribute("value");
+
+    const datos_consulta = new FormData();
+    datos_consulta.append("id_detalle_gasto", id);
+    datos_consulta.append("operacion", "consulta_especifica_detalles");
+
+    const respuesta = await query(datos_consulta);
+    const data = respuesta;
+
+    document.getElementById("vista_fecha_detalles").textContent = formatearFecha(data.fecha);
+    document.getElementById("vista_monto_detalles").textContent = formatearMontoConMoneda(data.monto, data.metodo_pago);
+
+    //document.getElementById("vista_prioridad").innerHTML = obtenerPrioridadTexto(data.prioridad);
+    document.getElementById("vista_metodo_pago_detalles").textContent = data.metodo_pago;
+
+    document.getElementById("vista_nombre_banco_detalles").innerHTML = data.nombre_banco && data.nombre_banco.trim() !== ""
+        ? data.nombre_banco
+        : "No hay banco registrado";
+
+    document.getElementById("vista_referencia_detalles").innerHTML = data.referencia && data.referencia.trim() !== ""
+        ? data.referencia
+        : "No hay referencia registrada";
+
+    document.getElementById("vista_descripcion_detalles").textContent = data.descripcion_detalle_gasto;
+
+    // Resetear mensaje de error por si estaba visible
+    document.getElementById("vista_imagen_detalles").style.display = "block";
+    document.getElementById("mensaje_error_imagen_detalles").classList.add("d-none");
+
+    const imagen = (data.imagen && data.imagen !== "")
+        ? `recursos/img/gastos/${data.imagen}`
+        : "";
+
+    document.getElementById("vista_imagen_detalles").setAttribute("src", imagen);
+
+    // Mostrar el modal como los otros
+    modalVistaPrevia_detalles.show();
+}
+
+
+function init_data_table_detalles() {
+    return new DataTable("#tabla_detalles_gastos", {
+        destroy: true,
+        responsive: true,
+        "scrollX": true,
+        "pageLength": 10,
+        "aaSorting": [],
+        language: {
+            "processing": "Procesando...",
+            "lengthMenu": "Mostrar _MENU_ registros",
+            "zeroRecords": "No se encontraron resultados",
+            "emptyTable": "Ningún dato disponible en esta tabla",
+            "info": "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+            "infoEmpty": "Mostrando registros del 0 al 0 de un total de 0 registros",
+            "infoFiltered": "(filtrado de un total de _MAX_ registros)",
+            "infoPostFix": "",
+            "search": "Buscar:",
+            "url": "",
+            "infoThousands": ",",
+            "loadingRecords": "Cargando...",
+            "paginate": {
+                "first": "Primero",
+                "last": "Último",
+                "next": "<i class='bi bi-caret-right'></i>",
+                "previous": "<i class='bi bi-caret-left'></i>"
+            },
+            "aria": {
+                "sortAscending": ": Activar para ordenar la columna de manera ascendente",
+                "sortDescending": ": Activar para ordenar la columna de manera descendente"
+            },
+            "buttons": {
+                "copy": "Copiar",
+                "colvis": "Visibilidad"
+            }
+        }
+    })
+    // si lees esto tienes que saber que ahora odio estos data table, muerte a jquery...
+}
+
+const resizeObserver = new ResizeObserver(entries => {
+    if (data_table_detalles) {
+        data_table_detalles.draw();
+    }
+});
+
+resizeObserver.observe(tabla_detalles);

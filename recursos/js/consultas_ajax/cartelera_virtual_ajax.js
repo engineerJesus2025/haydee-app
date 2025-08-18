@@ -1,4 +1,3 @@
-consultar();
 let data_table, id_eliminado, id_registrado, id_modificar;
 
 let permiso_eliminar = document.querySelector("#permiso_eliminar").value;
@@ -8,8 +7,11 @@ let tabla = document.querySelector("#tabla_cartelera_virtual");
 let nombre_usuario = document.querySelector("#nombre_usuario")?.value || "Desconocido";
 let boton_formulario = document.querySelector("#boton_formulario");
 let modal = new bootstrap.Modal(document.querySelector("#modal_cartelera"));
+let modal_carga = new bootstrap.Modal("#modal_carga");
 let modalVistaPrevia = new bootstrap.Modal(document.querySelector("#modal_vista_previa"));
 let formulario_usar = document.querySelector("#form_cartelera");
+
+consultar();
 
 // En caso de que se envie un formulario
 function envio(operacion) {
@@ -40,6 +42,9 @@ document.querySelector('#modal_cartelera').addEventListener('hidden.bs.modal', (
 
     const inputOculto = formulario_usar.querySelector("input[name='eliminar_imagen']");
     if (inputOculto) inputOculto.remove();
+
+    document.querySelectorAll('.is-valid').forEach(input=>input.classList.remove('is-valid'));
+    document.querySelectorAll('.is-invalid').forEach(input=>input.classList.remove('is-invalid'));
 });
 
 // Si queremos registrar:
@@ -202,7 +207,7 @@ function crearBotones(id) {
     icono_ver.setAttribute("class", "bi bi-eye-fill");
     boton_vista_previa.appendChild(icono_ver);
     boton_vista_previa.setAttribute("type", "button");
-    boton_vista_previa.setAttribute("class", "btn btn-primary btn-sm col-3");
+    boton_vista_previa.setAttribute("class", "btn btn-primary col-3 btn-sm");
     boton_vista_previa.setAttribute("title", "Vista previa");
     boton_vista_previa.setAttribute("value", id);
     boton_vista_previa.addEventListener("click", mostrarVistaPrevia);
@@ -213,7 +218,7 @@ function crearBotones(id) {
     icono_editar.setAttribute("class", "bi bi-pencil-square");
     boton_editar.appendChild(icono_editar);
     boton_editar.setAttribute("type", "button");
-    boton_editar.setAttribute("class", "btn btn-success btn-sm col-3");
+    boton_editar.setAttribute("class", "btn btn-success col-3 btn-sm");
     boton_editar.setAttribute("tabindex", "-1");
     boton_editar.setAttribute("role", "button");
     boton_editar.setAttribute("aria-disabled", "true");
@@ -231,7 +236,7 @@ function crearBotones(id) {
         boton_eliminar.appendChild(icono_eliminar);
 
         boton_eliminar.setAttribute("type", "button");
-        boton_eliminar.setAttribute("class", "btn btn-danger btn-sm eliminar col-3");
+        boton_eliminar.setAttribute("class", "btn btn-danger eliminar col-3 btn-sm");
         boton_eliminar.setAttribute("tabindex", "-1");
         boton_eliminar.setAttribute("role", "button");
         boton_eliminar.setAttribute("aria-disabled", "true");
@@ -424,12 +429,40 @@ async function last_id() {
 }
 
 async function query(datos) {
-    let data = await fetch("", { method: "POST", body: datos }).then(res => {
-        let result = res.json();
-        return result;//Convertimos el resultado de json a js y lo mandamos
-    })
-    // console.log(data);
-    return data;
+    let mostrarModal = false;
+    let tiempoCarga;
+
+    tiempoCarga = setTimeout(()=>{
+        mostrarModal = true;
+        modal_carga.show();
+    }, 300);
+    
+    try{
+        const tiempoInicio = performance.now();
+
+        const res = await fetch("", { method: "POST", body: datos });
+        const data = await res.json();
+
+        const tiempoTranscurido = performance.now() - tiempoInicio;
+        const tiempoEsperaMin = 700;
+        
+        if (mostrarModal && tiempoTranscurido < tiempoEsperaMin) {
+            
+            const restante = tiempoEsperaMin - tiempoTranscurido;
+            await new Promise(resolve => setTimeout(resolve,restante));
+        }
+
+        return data;
+    }
+    catch(error){
+        return {estatus:false,mensaje:"A ocurrido un error durante la consulta",error}
+    }
+    finally{
+        clearTimeout(tiempoCarga);
+        if (mostrarModal) {
+            modal_carga.hide();
+        }
+    }
 }
 
 function consulta_completada() {
@@ -536,3 +569,10 @@ function reasignarEventos() {
         }
     }
 }
+
+const resizeObserver = new ResizeObserver(entries => {
+    if (data_table) {
+        data_table.draw();
+    }
+});
+resizeObserver.observe(tabla);

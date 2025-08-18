@@ -4,7 +4,7 @@ let data_table, id_eliminado, id_registrado,id_modificar, numero_cuenta_an;
 //guardamos los permisosdel usuario
 let permiso_eliminar = document.querySelector("#permiso_eliminar").value;
 let permiso_editar = document.querySelector("#permiso_editar").value;
-
+const idioma = "recursos/bootstrap/js/datatable-plugin-es.js";
 let tabla = document.querySelector("#tabla_banco"); //La tabla
 let boton_formulario = document.querySelector("#boton_formulario"); // el boton
 let modal = new bootstrap.Modal("#modal_banco"); // el modal
@@ -34,9 +34,9 @@ document.querySelector(`#modal_banco`).addEventListener("hide.bs.modal",()=>{
 	boton_formulario.textContent = "Registrar";
 	document.getElementById('titulo_modal').textContent = "Registrar Banco";	
 	formulario_usar.querySelectorAll("[class='w-100']").forEach(el=>el.textContent="");
-	// CAmbiamos el input de nueva contra a confirmar contraseña
-	//formulario_usar.querySelector("#confir_contra").parentElement.previousElementSibling.textContent = "Confirmar Contraseña" 
-	//formulario_usar.querySelector("#confir_contra").placeholder = "Confirmar Contraseña" 
+	
+	document.querySelectorAll('.is-valid').forEach(input=>input.classList.remove('is-valid'));
+	document.querySelectorAll('.is-invalid').forEach(input=>input.classList.remove('is-invalid'));
 });
 
 //Si queremos registrar:
@@ -174,7 +174,7 @@ function crearBotones(id) {
 	boton_editar.appendChild(icono_editar);
 
 	boton_editar.setAttribute("type", "button");
-	boton_editar.setAttribute("class", "btn btn-success btn-sm col-3");
+	boton_editar.setAttribute("class", "btn btn-success col-4");
 	boton_editar.setAttribute("tabindex", "-1");
 	boton_editar.setAttribute("role", "button");
 	boton_editar.setAttribute("aria-disabled", "true");
@@ -198,7 +198,7 @@ function crearBotones(id) {
 		
 		// le ponemos todos los atributos que lleva este boton
 		boton_eliminar.setAttribute("type", "button");
-		boton_eliminar.setAttribute("class", "btn btn-danger btn-sm eliminar col-3");
+		boton_eliminar.setAttribute("class", "btn btn-danger col-4 eliminar");
 		boton_eliminar.setAttribute("tabindex", "-1"); 
 		boton_eliminar.setAttribute("role", "button");
 		boton_eliminar.setAttribute("aria-disabled", "true");
@@ -367,15 +367,42 @@ async function last_id() {
 }
 
 // Aqui se hace la peticion AJAX
-async function query(datos){
-	// Solo es un fetching de datos, en body mandamos los datos
-	// Estos datos se mandan al controdalor
-	let data = await fetch("",{method:"POST", body:datos}).then(res=>{		
-		let result = res.json();		
-		return result;//Convertimos el resultado de json a js y lo mandamos
-	})
-	// console.log(data);
-	return data;
+async function query(datos) {
+    let modal_carga = new bootstrap.Modal("#modal_carga");
+    let mostrarModal = false;
+    let tiempoCarga;
+
+    tiempoCarga = setTimeout(()=>{
+        mostrarModal = true;
+        modal_carga.show();
+    }, 300);
+    
+    try{
+        const tiempoInicio = performance.now();
+
+        const res = await fetch("", { method: "POST", body: datos });
+        const data = await res.json();
+
+        const tiempoTranscurido = performance.now() - tiempoInicio;
+        const tiempoEsperaMin = 700;
+        
+        if (mostrarModal && tiempoTranscurido < tiempoEsperaMin) {
+            
+            const restante = tiempoEsperaMin - tiempoTranscurido;
+            await new Promise(resolve => setTimeout(resolve,restante));
+        }
+
+        return data;
+    }
+    catch(error){
+        return {estatus:false,mensaje:"A ocurrido un error durante la consulta",error}
+    }
+    finally{
+        clearTimeout(tiempoCarga);
+        if (mostrarModal) {
+            modal_carga.hide();
+        }
+    }
 }
 
 // esto solo es para decir que se completo o fallo una operacion
@@ -399,32 +426,7 @@ function init_data_table() {
             "pageLength": 10,
             "aaSorting": [],
             language: {
-                "processing": "Procesando...",
-                "lengthMenu": "Mostrar _MENU_ registros",
-                "zeroRecords": "No se encontraron resultados",
-                "emptyTable": "Ningún dato disponible en esta tabla",
-                "info": "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
-                "infoEmpty": "Mostrando registros del 0 al 0 de un total de 0 registros",
-                "infoFiltered": "(filtrado de un total de _MAX_ registros)",
-                "infoPostFix": "",
-                "search": "Buscar:",
-                "url": "",
-                "infoThousands": ",",
-                "loadingRecords": "Cargando...",
-                "paginate": {
-                    "first": "Primero",
-                    "last": "Último",
-                    "next": "<i class='bi bi-caret-right'></i>",
-                    "previous": "<i class='bi bi-caret-left'></i>"
-                },
-                "aria": {
-                    "sortAscending": ": Activar para ordenar la columna de manera ascendente",
-                    "sortDescending": ": Activar para ordenar la columna de manera descendente"
-                },
-                "buttons": {
-                    "copy": "Copiar",
-                    "colvis": "Visibilidad"
-                }
+                url: idioma
             }
     })
     // si lees esto tienes que saber que ahora odio estos data table, muerte a jquery...
@@ -484,3 +486,10 @@ function reasignarEventos() {
 		}
 	}
 }
+
+const resizeObserver = new ResizeObserver(entries => {
+	if (data_table) {
+		data_table.draw();
+	}
+});
+resizeObserver.observe(tabla);

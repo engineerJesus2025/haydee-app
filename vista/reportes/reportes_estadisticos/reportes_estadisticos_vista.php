@@ -31,7 +31,7 @@
                     <p class="lead"></p>
                     <hr>
                     <div class="row">
-                        <div class="col-md-3 col-12">
+                        <div class="col-lg-3 col-md-6">
                             <div class="card mb-3 shadow" title="Reportes Estadisticos">
                                 <a href="?pagina=reportes_controlador.php&accion=ingreso_egreso" class="text-decoration-none text-black">
                                     <div class="card-header text-center bg-white border-bottom-0 p-0">
@@ -39,6 +39,18 @@
                                     </div>
                                     <div class="card-body text-center p-0 mb-3">
                                         <p class="card-title fw-bold">Reportes De Ingresos y Egresos</p>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="card mb-3 shadow" title="Reportes Estadisticos">
+                                <a href="?pagina=reportes_controlador.php&accion=habitantes" class="text-decoration-none text-black">
+                                    <div class="card-header text-center bg-white border-bottom-0 p-0">
+                                        <i class="bi-people-fill" style="font-size: 5rem !important;"></i>
+                                    </div>
+                                    <div class="card-body text-center p-0 mb-3">
+                                        <p class="card-title fw-bold">Reportes De Habitantes</p>
                                     </div>
                                 </a>
                             </div>

@@ -1,0 +1,17 @@
+{
+    "require": {
+        "dompdf/dompdf": "^2.0",
+        "phpoffice/phpspreadsheet": "^1.29",
+        "sendgrid/sendgrid": "^8.1",
+        "php-http/guzzle7-adapter": "^1.1",
+        "nyholm/psr7": "^1.8",
+        "mailersend/mailersend": "^0.34.0",
+        "resend/resend-php": "^0.18.0",
+        "phpmailer/phpmailer": "^6.10"
+    },
+    "config": {
+        "allow-plugins": {
+            "php-http/discovery": true
+        }
+    }
+}

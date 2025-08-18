@@ -5,8 +5,8 @@ $(document).ready(function(){
 	});
 
 	$("#nombre_banco").on("keyup",function(){
-		validarKeyUp(/^[A-Za-z \b]{3,30}$/,
-		$(this),this.nextElementSibling,"Debe ingresar el nombre del banco");
+		validarKeyUp(/^[A-Za-z \b]{3,20}$/,
+		this,this.nextElementSibling,"Solo letras, no mas de 20 caracteres");
 	});
 
 	$("#codigo").on("keypress",function(e){
@@ -15,7 +15,7 @@ $(document).ready(function(){
 
 	$("#codigo").on("keyup",function(){
 		validarKeyUp(/^[0-9\b]{4}$/,
-		$(this),this.nextElementSibling,"Debe ingresar el codigo del banco");
+		this,this.nextElementSibling,"Debe ingresar el codigo del banco, cuatro digitos");
 	});
 
 	$("#numero_cuenta").on("keypress",function(e){
@@ -24,7 +24,7 @@ $(document).ready(function(){
 
 	$("#numero_cuenta").on("keyup",function(){
 		validarKeyUp(/^[0-9\b]{18,30}$/,
-		$(this),this.nextElementSibling,"Debe ingresar el número de cuenta");
+		this,this.nextElementSibling,"Debe ingresar el número de cuenta, no mas de 30 caracteres");
 	});
 
     $("#telefono_afiliado").on("keypress",function(e){
@@ -33,7 +33,7 @@ $(document).ready(function(){
 
 	$("#telefono_afiliado").on("keyup",function(){
 		validarKeyUp(/^[0-9\b]{11}$/,
-		$(this),this.nextElementSibling,"Debe ingresar un telefono afiliado");
+		this,this.nextElementSibling,"Solo numeros, ejemplo xxxx-xxxxxxx");
 	});
 
     $("#cedula_afiliada").on("keypress",function(e){
@@ -42,7 +42,7 @@ $(document).ready(function(){
 
 	$("#cedula_afiliada").on("keyup",function(){
 		validarKeyUp(/^[0-9\b]{7,8}$/,
-		$(this),this.nextElementSibling,"Debe ingresar una cedula afiliada");
+		this,this.nextElementSibling,"Solo numeros, no mas de 8 caracteres");
 	});
 	
 	$("#boton_formulario").on("click",async function(e){
@@ -69,7 +69,7 @@ $(document).ready(function(){
 	$("#numero_cuenta").on("keyup",function(e){
 		if (validarKeyUp(
         /^[0-9]{18,30}$/,
-        $("#numero_cuenta"),document.querySelector("#numero_cuenta").nextElementSibling,'El formato debe ser en números'
+        document.querySelector("#numero_cuenta"),document.querySelector("#numero_cuenta").nextElementSibling,'Debe ingresar el número de cuenta, no mas de 30 caracteres'
         )) {
         	if (this.value == numero_cuenta_an) {return;}
 			let datos = new FormData();
@@ -96,7 +96,7 @@ function mensajes(icono,tiempo,titulo,mensaje){
 async function validarEnvio(accion = "Registrar"){	
 	if(validarKeyUp(
         /^[A-Za-z ]{3,30}$/,
-        $("#nombre_banco"),document.querySelector("#nombre_banco").nextElementSibling,'Debe ingresar el nombre del banco'
+        document.querySelector("#nombre_banco"),document.querySelector("#nombre_banco").nextElementSibling,'Solo letras, no mas de 20 caracteres'
         )==0)
 	{
 		mensajes('error',4000,'Debe ingresar el nombre del banco',
@@ -106,7 +106,7 @@ async function validarEnvio(accion = "Registrar"){
 	}
 	else if(validarKeyUp(
         /^[0-9]{4}$/,
-        $("#codigo"),document.querySelector("#codigo").nextElementSibling,'Debe ingresar el codigo del banco'
+        document.querySelector("#codigo"),document.querySelector("#codigo").nextElementSibling,'Debe ingresar el codigo del banco, cuatro digitos'
         )==0)
 	{
 		mensajes('error',4000,'Debe ingresar el codigo del banco',
@@ -117,7 +117,7 @@ async function validarEnvio(accion = "Registrar"){
 	
 	else if(validarKeyUp(
         /^[0-9]{18,30}$/,
-        $("#numero_cuenta"),document.querySelector("#numero_cuenta").nextElementSibling,'Ejemplo: XXXX-XXXXX-XXX...'
+        document.querySelector("#numero_cuenta"),document.querySelector("#numero_cuenta").nextElementSibling,'Debe ingresar el número de cuenta, no mas de 30 caracteres'
         )==0)
 	{
 		mensajes('error',4000,'Debe ingresar un número de cuenta',
@@ -127,7 +127,7 @@ async function validarEnvio(accion = "Registrar"){
 	}
 	else if(validarKeyUp(
         /^[0-9]{11}$/,
-        $("#telefono_afiliado"),document.querySelector("#telefono_afiliado").nextElementSibling,'Debe ingresar un telefono afiliado'
+        document.querySelector("#telefono_afiliado"),document.querySelector("#telefono_afiliado").nextElementSibling,'Solo numeros, ejemplo xxxx-xxxxxxx'
         )==0)
 	{
 		mensajes('error',4000,'Debe ingresar un telefono afiliado',
@@ -137,7 +137,7 @@ async function validarEnvio(accion = "Registrar"){
 	}
 	else if(validarKeyUp(
         /^[0-9]{7,8}$/,
-        $("#cedula_afiliada"),document.querySelector("#cedula_afiliada").nextElementSibling,'Debe ingresar una cedula afiliada'
+        document.querySelector("#cedula_afiliada"),document.querySelector("#cedula_afiliada").nextElementSibling,'Solo numeros, no mas de 8 caracteres'
         )==0)
 	{
 		mensajes('error',4000,'Debe ingresar una cedula afiliada',
@@ -145,43 +145,13 @@ async function validarEnvio(accion = "Registrar"){
 		
 		return false;
 	}
-	if (accion == "Registrar") {
-		/*if(validar_contra()==0)
-		{
-			mensajes('error',4000,'Verifique nuevamente la contraseña',
-			'El campo "contraseña" y el campo "confirmar contraseña" no coinciden');
-			
-			return false;
-		}*/
-	}else if (accion == "Editar"){
-		datos = new FormData();
-		//datos.append("validar",'contra');
-		datos.append("id_banco",id_modificar);
-		/*datos.append("contra",$("#contra").val());
-		res = await verificar_contra(datos);
-		// revisamos si la contraseña que puso es la correcta
-		if(!res){
-			mensajes('error',4000,'Contraseña Icorrecta','La contraseña ingresada no es correcta, para poder realizar cambios debe ingresar la contraseña correcta');
-			return false;
-		}
 
-		if ($("#confir_contra").val() != '') {
-			if(validarKeyUp(/^[A-Za-z0-9_.+*$#%&@]{5,50}$/,$("#confir_contra"),document.querySelector("#confir_contra").nextElementSibling,'Debe ingresar una contraseña')==0)
-			{
-				mensajes('error',4000,'Error en la nueva contraseña',
-				'El formato debe tener mínimo 5 caracteres, utilizar letras, numeros y caracteres especiales como: _.+*$#%&/ ');
-				
-				return false;
-			}
-		}*/
-	}
-	// si el valor de correo no es el mismo de antes:
 	if(numero_cuenta_an != $("#numero_cuenta").val()){
 		datos = new FormData(); 
 		datos.append('validar','numero_cuenta');
 		datos.append('numero_cuenta',$("#numero_cuenta").val());
 		res = await verificar_duplicados(datos);
-		// revisamos si esta duplicado con otro usuario
+
 		if(res){
 			mensajes('error',4000,'Número de cuenta ya registrado','Este número de cuenta esta registrado, debe ingresar otro.');
 			return false;
@@ -202,58 +172,34 @@ function validarKeyPress(er, e) {
 
 function validarKeyUp(er,etiqueta,etiquetamensaje,
 mensaje){
-	a = er.test(etiqueta.val());
-
+	a = er.test(etiqueta.value);
+	
 	if(a){
-
+		etiqueta.classList.add('is-valid');
+		etiqueta.classList.remove('is-invalid');
 		etiquetamensaje.textContent = "";
 		return 1;
 	}
 	else{
+		etiqueta.classList.add('is-invalid')
+		etiqueta.classList.remove('is-valid');
 		etiquetamensaje.textContent = mensaje;
 		return 0;
 	}
 }
 
-function validar_select(id) {
-	let selec = document.querySelector("#"+id);
-	if (selec.value == '') {
-		return false;
-	}else{
-		return true;
-	}
-}
-
-function validar_contra() {
-	let contra = document.querySelector("#contra");
-	let confir_contra = document.querySelector("#confir_contra");
-	if (contra.value == confir_contra.value) {
-		return 1;
-	}else{
-		return 0;
-	}
-}
-
 async function verificar_duplicados(datos){
-	// Solo es un fetching de datos, en body mandamos los datos
-	// Estos datos se mandan al controdalor	
+
 	let data = await fetch("",{method:"POST", body:datos}).then(res=>{		
 		let result = res.json()
 		return result;//Convertimos el resultado de json a js y lo mandamos
 	})
-	// aqui revisamos el estatus, si es true es porque esta duplicado y mandamos un mensaje	
+	
 	if(data.estatus){
-		document.querySelector(`#${data.busqueda}`).nextElementSibling.textContent = `${data.busqueda} ya registrado/a`
+		document.querySelector(`#${data.busqueda}`).classList.add('is-invalid');
+		document.querySelector(`#${data.busqueda}`).classList.remove('is-valid');
+		document.querySelector(`#${data.busqueda}`).nextElementSibling.textContent = `${data.busqueda} ya registrado/a`;
 		return true;
 	}
 	return false;
-}
-
-async function verificar_contra(datos){
-	let data = await fetch("",{method:"POST", body:datos}).then(res=>{		
-		let result = res.json()
-		return result;//Convertimos el resultado de json a js y lo mandamos
-	})
-	// aqui revisamos el estatus, si es true es porque es correcta la contraseña		
-	return data;
 }

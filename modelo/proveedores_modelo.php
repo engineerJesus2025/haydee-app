@@ -52,6 +52,7 @@ class Proveedores extends Conexion{
         $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
 
         if ($result) {
+            $this->registrar_bitacora(CONSULTAR, GESTIONAR_PROVEEDORES, "TODOS LOS PROVEEDORES");
             return $datos;
         } else {
             return ["estatus"=>false, "mensaje"=>"Error al consultar los proveedores"];
@@ -83,6 +84,7 @@ class Proveedores extends Conexion{
         //$this->registrar_bitacora(REGISTRAR, GESTIONAR_PROPIETARIOS, "Propietario: ".$this->nombre." ".$this->apellido);
 
         if($result == true){
+            $this->registrar_bitacora(REGISTRAR, GESTIONAR_PROVEEDORES, "Proveedor " . $this->nombre_proveedor . " de " . $this->servicio);
             return ["estatus"=>true, "mensaje"=>"Proveedor registrado correctamente"];
         } else{
             return ["estatus"=>false, "mensaje"=>"Error al registrar el proveedor"];
@@ -101,6 +103,7 @@ class Proveedores extends Conexion{
         $result = $conexion->execute();
 
         if($result == true){
+            $this->registrar_bitacora(MODIFICAR, GESTIONAR_PROVEEDORES, "Proveedor " . $this->nombre_proveedor . " de " . $this->servicio);
             return ["estatus"=>true, "mensaje"=>"Proveedor actualizado correctamente"];
         } else{
             return ["estatus"=>false, "mensaje"=>"Error al actualizar el proveedor"];
@@ -112,6 +115,7 @@ class Proveedores extends Conexion{
         $conexion->bindParam(":id_proveedor", $this->id_proveedor);
         $result = $conexion->execute();
         if($result == true){
+            $this->registrar_bitacora(ELIMINAR, GESTIONAR_PROVEEDORES, "Proveedor " . $this->nombre_proveedor . " de " . $this->servicio);
             return ["estatus"=>true, "mensaje"=>"Proveedor eliminado correctamente"];
         } else{
             return ["estatus"=>false, "mensaje"=>"Error al eliminar el proveedor"];

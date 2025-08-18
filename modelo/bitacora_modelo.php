@@ -75,19 +75,33 @@ class Bitacora extends Conexion
         return $this->modulo_id;
     }
 
-    public function consultar()
-    {
+    public function realizar_consulta($accion){
         $this->cambiar_db_seguridad();
+        switch ($accion) {
+            case 'consultar':
+                $respuesta = $this->consultar();
+
+                $this->cambiar_db_negocio();
+
+                if ($respuesta["resultado"] == true) {
+                    return $respuesta["datos"];
+                } 
+                else {
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+                }
+            default:
+                return ["estatus"=>false,"mensaje"=>"A ocurrido un error en la consulta"];
+                break;
+        }
+    }
+
+    private function consultar()
+    {
         $sql = "SELECT bitacora.id_bitacora, bitacora.fecha_hora, bitacora.accion, bitacora.registro_alterado, bitacora.usuario_id, bitacora.modulo_id, usuarios.id_usuario, usuarios.nombre AS nombre_usuario, usuarios.apellido, modulos.id_modulo, modulos.nombre AS nombre_modulo, roles.nombre as nombre_rol FROM bitacora INNER JOIN usuarios ON usuarios.id_usuario = bitacora.usuario_id INNER JOIN modulos ON modulos.id_modulo = bitacora.modulo_id INNER JOIN roles ON roles.id_rol = usuarios.id_usuario ORDER BY id_bitacora DESC; ";
         $conexion = $this->get_conex()->prepare($sql);
         $result = $conexion->execute();
         $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
 
-        $this->cambiar_db_negocio();
-        if ($result == true) {
-            return $datos;
-        } else {
-            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
-        }
+        return ["resultado"=>$result,"datos"=>$datos];
     }
 }
