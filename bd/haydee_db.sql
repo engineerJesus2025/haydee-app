@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 09-08-2025 a las 05:58:46
+-- Tiempo de generación: 19-08-2025 a las 20:15:50
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -25,6 +25,23 @@ DELIMITER $$
 --
 -- Procedimientos
 --
+CREATE DEFINER=`root`@`localhost` PROCEDURE `gestionar_anio_fiscal` ()   BEGIN
+    DECLARE existe_anio_actual BOOLEAN;
+    DECLARE anio_actual_abierto BOOLEAN;
+    
+    SELECT COUNT(*) > 0 INTO existe_anio_actual 
+    FROM anio_fiscal 
+    WHERE YEAR(fecha_inicio) = YEAR(NOW()) AND estado = 'Abierto';
+    
+    IF NOT existe_anio_actual THEN
+        UPDATE anio_fiscal SET estado = 'Cerrada', fecha_cierre = NOW() 
+        WHERE estado = 'Abierto';
+        
+        INSERT INTO anio_fiscal(fecha_inicio, fecha_cierre, estado, descripcion)
+        VALUES (NOW(), NULL, 'Abierto', CONCAT('Año fiscal ', YEAR(NOW())));
+    END IF;
+END$$
+
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_gestion_caja_chica_mensual` ()   sp_block: BEGIN 
     DECLARE v_mes_actual VARCHAR(7);
     DECLARE v_existe_caja_abierta INT;
@@ -157,7 +174,7 @@ CREATE TABLE `anio_fiscal` (
 --
 
 INSERT INTO `anio_fiscal` (`id_anio_fiscal`, `fecha_inicio`, `fecha_cierre`, `estado`, `descripcion`) VALUES
-(24, '2025-01-01', '2026-01-01', 'Abierto', 'añi fiscal 2025');
+(24, '2025-01-01', '2026-01-01', 'Abierto', 'año fiscal 2025');
 
 -- --------------------------------------------------------
 
@@ -252,8 +269,8 @@ CREATE TABLE `caja_chica` (
 --
 
 INSERT INTO `caja_chica` (`id_caja_chica`, `fecha_apertura`, `monto_inicial`, `saldo_actual`, `estado`, `observaciones`, `anio_fiscal_id`) VALUES
-(15, '2025-07-01', 1500, 2000, 'Cerrada', 'Caja chica mes J_ulio', 24),
-(18, '2025-08-05', 2000, -396019, 'Abierta', 'Caja chica del mes Agosto del 2025s', 24);
+(15, '2025-07-01', 1500, 2000, 'Cerrada', 'Caja chica mes Julio', 24),
+(18, '2025-08-05', 2000, -396019, 'Abierta', 'Caja chica del mes Agosto del 2025', 24);
 
 -- --------------------------------------------------------
 
@@ -517,8 +534,8 @@ CREATE TABLE `mensualidad` (
 --
 
 INSERT INTO `mensualidad` (`id_mensualidad`, `monto`, `monto_dolar`, `mes`, `anio`, `apartamento_id`) VALUES
-(231, 19.95, 0.155568, '2', '2025', 11),
-(232, 4.73, 0.036884, '2', '2025', 12),
+(231, 19.95, 0.147081, '2', '2025', 11),
+(232, 4.73, 0.0348717, '2', '2025', 12),
 (237, 3.05, 0.0237835, '3', '2025', 11),
 (238, 15.28, 0.119152, '3', '2025', 12);
 
@@ -851,7 +868,7 @@ ALTER TABLE `tipo_gasto`
 -- AUTO_INCREMENT de la tabla `anio_fiscal`
 --
 ALTER TABLE `anio_fiscal`
-  MODIFY `id_anio_fiscal` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `id_anio_fiscal` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
 -- AUTO_INCREMENT de la tabla `apartamentos`
