@@ -107,7 +107,7 @@ class Usuario extends Conexion
                 $this->cambiar_db_negocio();
 
                 if ($respuesta["resultado"]) {
-                    $_SESSION["id_usuario"] = $datos["id_usuario"];
+                    $_SESSION["id_usuario"] = $respuesta["datos"]["id_usuario"];
                     $this->registrar_bitacora(INICIAR_SESION,GESTIONAR_USUARIOS,"NINGUNO");
                     return $respuesta["datos"];
                 } 
