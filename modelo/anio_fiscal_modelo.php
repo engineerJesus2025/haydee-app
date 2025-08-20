@@ -65,13 +65,15 @@ class Anio_fiscal extends Conexion
         return $this->descripcion;
     }
 
-    public function realizar_consulta($accion){
+    public function realizar_consulta($accion,$prueba = false){
         switch ($accion) {
             case 'consultar':
                 $respuesta = $this->consultar();
 
                 if ($respuesta["resultado"] == true) {
-                    $this->registrar_bitacora(CONSULTAR, GESTIONAR_ANIO_FISCAL, "TODOS LOS AÑOS FISCALES");
+                    if (!$prueba) {
+                        $this->registrar_bitacora(CONSULTAR, GESTIONAR_ANIO_FISCAL, "TODOS LOS AÑOS FISCALES");
+                    }                
                     return $respuesta["datos"];
                 } 
                 else {
@@ -95,8 +97,9 @@ class Anio_fiscal extends Conexion
                 $respuesta = $this->registrar();
 
                 if ($respuesta) {
-                    $this->registrar_bitacora(REGISTRAR, GESTIONAR_ANIO_FISCAL, $this->fecha_inicio . " - " . $this->estado);
-
+                    if (!$prueba) {
+                        $this->registrar_bitacora(REGISTRAR, GESTIONAR_ANIO_FISCAL, $this->fecha_inicio . " - " . $this->estado);
+                    }
                     return ["estatus"=>true,"mensaje"=>"OK"];
                 } 
                 else {
@@ -113,7 +116,9 @@ class Anio_fiscal extends Conexion
                     if ($respuesta["fila_afectada"] < 1) {
                         return ["estatus"=>false,"mensaje"=>"No se modificó ningún registro"];
                     }
-                    $this->registrar_bitacora(MODIFICAR, GESTIONAR_ANIO_FISCAL, $this->fecha_inicio . " - " . $this->estado);//registramos en la bitacora
+                    if (!$prueba) {
+                        $this->registrar_bitacora(MODIFICAR, GESTIONAR_ANIO_FISCAL, $this->fecha_inicio . " - " . $this->estado);//registramos en la bitacora
+                    }                    
 
                     return ["estatus"=>true,"mensaje"=>"OK"];
                 } 
@@ -133,9 +138,13 @@ class Anio_fiscal extends Conexion
                     if ($respuesta["fila_afectada"] < 1) {
                         return ["estatus"=>false,"mensaje"=>"No se eliminó ningún registro"];
                     }
-                    $this->registrar_bitacora(ELIMINAR, GESTIONAR_ANIO_FISCAL, $anio_alterado["fecha_inicio"] . " - " . $anio_alterado["estado"]);//registramos en la bitacora            
+                    if (!$prueba) {
+                        $this->registrar_bitacora(ELIMINAR, GESTIONAR_ANIO_FISCAL, $anio_alterado["fecha_inicio"] . " - " . $anio_alterado["estado"]);
+                    }
+                    
                     return ["estatus"=>true,"mensaje"=>"OK"];
-                } else {
+                } 
+                else {
                     return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar eliminar este Año Fiscal"];
                 }
 
@@ -145,7 +154,7 @@ class Anio_fiscal extends Conexion
                 if ($respuesta) {
                     return ["estatus"=>true,"mensaje"=>"OK"];
                 } else {
-                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta",$result];
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
                 }
 
             default:
@@ -154,7 +163,7 @@ class Anio_fiscal extends Conexion
         }
     }
 
-    public function consultar()
+    private function consultar()
     {
         $sql = "SELECT * FROM anio_fiscal";
 

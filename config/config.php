@@ -1,6 +1,6 @@
 <?php
 
-    define("DB_NAME", "haydee_db");
+    define("DB_NAME", "haydee_pruebas");
     define("DB_HOST", "localhost");
     define("DB_USER", "root");
     define("DB_PASS", "");
