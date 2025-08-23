@@ -113,15 +113,6 @@ class Detalles_presupuesto extends Conexion
                 else {
                     return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar eliminar este presepuesto"];
                 }
-            case 'lastId':
-                $respuesta = $this->lastId();
-                if ($respuesta["resultado"] == true) {
-                    return $respuesta["datos"];
-                } 
-                else {
-                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
-                }
-
             default:
                 return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error en la consulta"];
                 break;
@@ -178,19 +169,13 @@ class Detalles_presupuesto extends Conexion
         
         return ["resultado"=>$result,"fila_afectada"=>$filas_afectadas];
     }
-
-    public function lastId()
-    {
-        $sql = "SELECT MAX(id_detalle_presupuesto) as last_id FROM detalles_presupuesto";
-        $conexion = $this->get_conex()->prepare($sql);
-        $result = $conexion->execute();
-        $datos = $conexion->fetch(PDO::FETCH_ASSOC);
-        return ["resultado"=>$result,"datos"=>$datos["last_id"]];        
-    }
     
     private function validarDatos($consulta = "registrar")
     {   
         if ($consulta == "eliminar") {
+            if (empty($this->presupuesto_id)){
+                return ["estatus"=>false,"mensaje"=>"El id del presupuesto se envio vacío"];
+            }
             if (!($this->validarClaveForanea("presupuesto","id_presupuesto",$this->presupuesto_id))) {
                 return ["estatus"=>false,"mensaje"=>"El id del presupuesto seleccionado no existe"];
             }

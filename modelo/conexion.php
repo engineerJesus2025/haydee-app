@@ -13,7 +13,7 @@ class Conexion extends PDO
         $conex_string = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8";
 
         try {
-            $this->conex = new PDO($conex_string, DB_USER, DB_PASS, [PDO::MYSQL_ATTR_FOUND_ROWS => true]);
+            $this->conex = new PDO($conex_string, DB_USER, DB_PASS);
             $this->conex->setAttribute(
                 PDO::ATTR_ERRMODE,
                 PDO::ERRMODE_EXCEPTION

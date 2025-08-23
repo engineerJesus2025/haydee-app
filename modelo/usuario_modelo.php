@@ -565,7 +565,7 @@ class Usuario extends Conexion
                 }
                 if ($consulta == "eliminar") {return ["estatus"=>true,"mensaje"=>"OK"];}
             }
-            else{return ["estatus"=>false,"mensaje"=>"El id del Usuario tiene debe ser un valor numerico entero"];}
+            else{return ["estatus"=>false,"mensaje"=>"El id del Usuario debe ser un valor numerico entero"];}
         }
 
         if (!(isset($this->apellido) && isset($this->nombre) && isset($this->correo))) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos no se recibieron correctamente"];}

@@ -103,6 +103,9 @@ class Notificaciones extends Conexion
                 }
 
             case 'agregar_notificacion':
+                $validaciones = $this->validarDatos('agregar_notificacion');
+                if(!($validaciones["estatus"])){return $validaciones;}
+
                 $respuesta = $this->agregar_notificacion();
 
                 $this->cambiar_db_negocio();
@@ -114,6 +117,9 @@ class Notificaciones extends Conexion
                 }
 
             case 'notificar_pago':
+                $validaciones = $this->validarDatos();
+                if(!($validaciones["estatus"])){return $validaciones;}
+
                 $respuesta = $this->notificar_pago();
 
                 $this->cambiar_db_negocio();
@@ -125,14 +131,14 @@ class Notificaciones extends Conexion
                 }
 
             case 'marcar_como_activo':
+                $validaciones = $this->validarDatos('editar');
+                if(!($validaciones["estatus"])){return $validaciones;}
+
                 $respuesta = $this->marcar_como_activo();
 
                 $this->cambiar_db_negocio();
 
-                if ($respuesta["resultado"]) {
-                    if ($respuesta["fila_afectada"] < 1) {
-                        return ["estatus"=>false,"mensaje"=>"No se modificó ningún registro","h"=>$respuesta];
-                    }
+                if ($respuesta) {
                     return ["estatus"=>true,"mensaje"=>"OK"];
                 } else {
                     return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar marcar esta notificacion"];
@@ -146,8 +152,8 @@ class Notificaciones extends Conexion
 
     private function consultar()
     {        
-        $sql = "SELECT id_notificacion, titulo, descripcion, fecha, usuario_id,
-            activo, id_usuario, nombre, usuarios.apellido FROM notificaciones INNER JOIN usuarios ON 
+        $sql = "SELECT nombre, titulo, descripcion, fecha,
+            activo FROM notificaciones INNER JOIN usuarios ON 
             usuarios.id_usuario = notificaciones.usuario_id";
         $conexion = $this->get_conex()->prepare($sql);
         $result = $conexion->execute();
@@ -208,9 +214,65 @@ class Notificaciones extends Conexion
         $conexion->bindParam(":id_notificacion", $this->id_notificacion);
 
         $result = $conexion->execute();
+
+        return $result;
+    }
+
+    private function validarDatos($consulta = "registrar")
+    {   
+        if ($consulta == "editar") {
+            if (empty($this->id_notificacion)){
+                return ["estatus"=>false,"mensaje"=>"El id de la notificacion se envio vacío"];
+            }
+            if (!($this->validarClaveForanea("notificaciones","id_notificacion",$this->id_notificacion))) {
+                return ["estatus"=>false,"mensaje"=>"El id de la notificacion seleccionada no existe"];
+            }
+            return ["estatus"=>true,"mensaje"=>"OK"];
+        }
+
+        if (!(isset($this->titulo) && isset($this->descripcion) && isset($this->fecha))) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos no se recibieron correctamente"];}
+
+        if (empty($this->titulo) || empty($this->descripcion) || empty($this->fecha)) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos estan vacios"];}
         
-        $filas_afectadas = $conexion->rowCount();
+        if(!(is_string($this->titulo)) || !(preg_match("/^[A-Za-z áéíóúÑñ \b]*$/",$this->titulo))){
+            return ["estatus"=>false,"mensaje"=>"El campo 'titulo' no posee un valor valido"];
+        }
+
+        if(!(is_string($this->descripcion)) || !(preg_match("/^[A-Za-z áéíóúÑñ \b]*$/",$this->descripcion))){
+            return ["estatus"=>false,"mensaje"=>"El campo 'descripcion' no posee un valor valido"];
+        }
+
+        if(!(is_string($this->fecha)) || !($this->validarFecha($this->fecha))){
+            return ["estatus"=>false,"mensaje"=>"El campo 'fecha' no posee un valor valido"];
+        }
+
+        if($consulta == 'agregar_notificacion'){
+            if (!($this->validarClaveForanea("usuarios","id_usuario",$this->usuario_id))) {
+                return ["estatus"=>false,"mensaje"=>"El id del usuario seleccionado no existe"];
+            }
+        }
         
-        return ["resultado"=>$result,"fila_afectada"=>$filas_afectadas];
+        return ["estatus"=>true,"mensaje"=>"OK"];
+    }
+
+    private function validarClaveForanea($tabla,$nombreClave,$valor)
+    {
+
+        $sql="SELECT * FROM $tabla WHERE $nombreClave =:valor";
+
+        $conexion = $this->get_conex()->prepare($sql);
+        $conexion->bindParam(":valor", $valor);
+        $conexion->execute();
+        $result = $conexion->fetch(PDO::FETCH_ASSOC);
+
+        return ($result)?true:false;
+    }
+
+    private function validarFecha($fecha){
+        $valores = explode('-', $fecha);
+        if(count($valores) == 3 && checkdate($valores[1], $valores[2], $valores[0])){
+            return true;
+        }
+        return false;
     }
 }

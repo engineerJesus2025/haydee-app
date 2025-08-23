@@ -185,7 +185,7 @@ class AnioFiscalTest extends TestCase
 
     //Metodo eliminar
     public function testEliminarAnioFiscalDatosCorrectos(){
-        $this->anio_fiscal->set_id_anio_fiscal(31); // Id existente
+        $this->anio_fiscal->set_id_anio_fiscal(32); // Id existente
 
         $resultado = $this->anio_fiscal->realizar_consulta('eliminar',true);
         
@@ -225,7 +225,7 @@ class AnioFiscalTest extends TestCase
 
     //Metodo verificar_anio_fiscal
     public function testAniosFiscales(){
-        $resultado = $this->anio_fiscal->realizar_consulta('verificar_anio_fiscal',true);
+        $resultado = $this->anio_fiscal->realizar_consulta('verificar_anio_fiscal');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);        

@@ -45,13 +45,15 @@ class Caja_chica extends Conexion
 
     public function get_anio_fiscal_id(){return $this->anio_fiscal_id;}
 
-    public function realizar_consulta($accion){
+    public function realizar_consulta($accion,$prueba = false){
         switch ($accion) {
             case 'consultar':
                 $respuesta = $this->consultar();
 
                 if ($respuesta["resultado"] == true) {
-                    $this->registrar_bitacora(CONSULTAR, GESTIONAR_CAJA_CHICA, "TODOS LAS CAJAS");
+                    if (!$prueba) {
+                        $this->registrar_bitacora(CONSULTAR, GESTIONAR_CAJA_CHICA, "TODOS LAS CAJAS");
+                    }                    
                     return $respuesta["datos"];
                 } 
                 else {
@@ -59,7 +61,7 @@ class Caja_chica extends Conexion
                 }
             case 'buscar_mes':
                 $respuesta = $this->buscar_mes();
-                if ($respuesta["resultado"] == true) {
+                if ($respuesta["resultado"]) {
                     return $respuesta["datos"];
                 } 
                 else {
@@ -72,10 +74,7 @@ class Caja_chica extends Conexion
 
                 $respuesta = $this->editar_observacion();
 
-                if ($respuesta["resultado"]) {
-                    if ($respuesta["fila_afectada"] < 1) {
-                        return ["estatus"=>false,"mensaje"=>"No se modificó ningún registro"];
-                    }
+                if ($respuesta) {
                     return ["estatus"=>true,"mensaje"=>"OK"];
                 } else {
                     return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar editar esta observación"];
@@ -135,9 +134,8 @@ class Caja_chica extends Conexion
         $conexion->bindParam(":id_caja_chica", $this->id_caja_chica);
 
         $result = $conexion->execute();
-        $filas_afectadas = $conexion->rowCount();
-        
-        return ["resultado"=>$result,"fila_afectada"=>$filas_afectadas];
+
+        return $result;
     }
 
     private function verificar_caja_mes()

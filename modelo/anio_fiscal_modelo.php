@@ -85,7 +85,7 @@ class Anio_fiscal extends Conexion
 
                 if ($respuesta["resultado"]) {
                     return $respuesta["datos"];
-                } 
+                }
                 else {
                     return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
                 }
@@ -112,10 +112,7 @@ class Anio_fiscal extends Conexion
 
                 $respuesta = $this->editar();
 
-                if ($respuesta["resultado"]) {
-                    if ($respuesta["fila_afectada"] < 1) {
-                        return ["estatus"=>false,"mensaje"=>"No se modificó ningún registro"];
-                    }
+                if ($respuesta) {
                     if (!$prueba) {
                         $this->registrar_bitacora(MODIFICAR, GESTIONAR_ANIO_FISCAL, $this->fecha_inicio . " - " . $this->estado);//registramos en la bitacora
                     }                    
@@ -134,10 +131,7 @@ class Anio_fiscal extends Conexion
 
                 $respuesta = $this->eliminar();
 
-                if ($respuesta["resultado"]) {
-                    if ($respuesta["fila_afectada"] < 1) {
-                        return ["estatus"=>false,"mensaje"=>"No se eliminó ningún registro"];
-                    }
+                if ($respuesta) {
                     if (!$prueba) {
                         $this->registrar_bitacora(ELIMINAR, GESTIONAR_ANIO_FISCAL, $anio_alterado["fecha_inicio"] . " - " . $anio_alterado["estado"]);
                     }
@@ -216,9 +210,8 @@ class Anio_fiscal extends Conexion
         $conexion->bindParam(":descripcion", $this->descripcion);
 
         $result = $conexion->execute();
-        $filas_afectadas = $conexion->rowCount();
         
-        return ["resultado"=>$result,"fila_afectada"=>$filas_afectadas];
+        return $result;
     }
 
     private function eliminar()
@@ -229,9 +222,8 @@ class Anio_fiscal extends Conexion
         $conexion->bindParam(":id_anio_fiscal", $this->id_anio_fiscal);
 
         $result = $conexion->execute();
-        $filas_afectadas = $conexion->rowCount();
-        
-        return ["resultado"=>$result,"fila_afectada"=>$filas_afectadas];
+ 
+        return $result;
     }
 
     private function verificar_anio_fiscal()
