@@ -54,40 +54,107 @@ class Presupuesto extends Conexion
         return $this->observacion;
     }
 
-    public function realizar_consulta($accion){
+    public function realizar_consulta($accion,$prueba = false){
         switch ($accion) {
-            case 'consultar':
-                return $this->consultar();
+            case 'consultar':                
+                $respuesta = $this->consultar();
+
+                if ($respuesta["resultado"]) {
+                    if (!$prueba) {
+                        $this->registrar_bitacora(CONSULTAR, GESTIONAR_PRESUPUESTO, "TODOS LOS PRESUPUESTOS");
+                    }                
+                    return $respuesta["datos"];
+                } 
+                else {
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+                }
 
             case 'consultar_meses_faltantes':
-                return $this->consultar_meses_faltantes();
-
+                $respuesta = $this->consultar_meses_faltantes();
+                if ($respuesta["resultado"]) {
+                    return $respuesta["datos"];
+                }
+                else {
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+                }
             case 'consultar_presupuesto':
-                return $this->consultar_presupuesto();
+                $respuesta = $this->consultar_presupuesto();
+                if ($respuesta["resultado"]) {
+                    return $respuesta["datos"];
+                }
+                else {
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+                }
 
             case 'consultar_presupuestos_mensualidades':
-                return $this->consultar_presupuestos_mensualidades();
+                $respuesta = $this->consultar_presupuestos_mensualidades();
+                if ($respuesta["resultado"]) {
+                    return $respuesta["datos"];
+                }
+                else {
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+                }
 
             case 'registrar':
                 $validaciones = $this->validarDatos();
                 if(!($validaciones["estatus"])){return $validaciones;} 
 
-                return $this->registrar();
+                $respuesta = $this->registrar();
+
+                if ($respuesta) {
+                    if (!$prueba) {
+                        $this->registrar_bitacora(REGISTRAR, GESTIONAR_PRESUPUESTO, "Presupuesto del " . $this->fecha);
+                    }
+                    return ["estatus"=>true,"mensaje"=>"OK"];
+                } 
+                else {
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar este Presupuesto"];
+                }
 
             case 'editar':
                 $validaciones = $this->validarDatos("editar");
                 if(!($validaciones["estatus"])){return $validaciones;}
 
-                return $this->editar();
+                $respuesta = $this->editar();
 
-            case 'eliminar':                    
+                if ($respuesta) {
+                    if (!$prueba) {
+                        $this->registrar_bitacora(MODIFICAR, GESTIONAR_PRESUPUESTO, "Presupuesto del " . $this->fecha);
+                    }                    
+
+                    return ["estatus"=>true,"mensaje"=>"OK"];
+                } 
+                else {
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar editar este Presupuesto"];
+                }
+
+            case 'eliminar':
                 $validaciones = $this->validarDatos("eliminar");
                 if(!($validaciones["estatus"])){return $validaciones;}
 
-                return $this->eliminar();
+                $presupuesto_eliminado = $this->consultar_presupuesto();
+
+                $respuesta = $this->eliminar();
+                if ($respuesta) {
+                    if (!$prueba) {
+                        $this->registrar_bitacora(ELIMINAR, GESTIONAR_PRESUPUESTO, "Presupuesto del " . $presupuesto_eliminado["fecha"]);
+                    }
+                    
+                    return ["estatus"=>true,"mensaje"=>"OK"];
+                } 
+                else {
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar eliminar este Presupuesto"];
+                }
 
             case 'lastId':
-                return $this->lastId();
+                $respuesta = $this->lastId();
+
+                if ($respuesta["resultado"]) {
+                    return $respuesta["datos"];
+                }
+                else {
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+                }
 
             default:
                 return ["estatus"=>false,"mensaje"=>"A ocurrido un error en la consulta"];
@@ -104,13 +171,7 @@ class Presupuesto extends Conexion
         
         $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
 
-        if ($result == true) {
-            $this->registrar_bitacora(CONSULTAR, GESTIONAR_PRESUPUESTO, "TODOS LOS PRESUPUESTOS");
-
-            return $datos;
-        } else {
-            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
-        }
+        return ["resultado"=>$result,"datos"=>$datos];
     }
 
     private function consultar_meses_faltantes()
@@ -155,11 +216,7 @@ class Presupuesto extends Conexion
         
         $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
 
-        if ($result == true) {
-            return $datos;
-        } else {
-            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
-        }
+        return ["resultado"=>$result,"datos"=>$datos];
     }
 
     private function consultar_presupuesto()
@@ -174,13 +231,9 @@ class Presupuesto extends Conexion
         
         $datos = $conexion->fetch(PDO::FETCH_ASSOC);
 
-        if ($result == true) {
-            return $datos;
-        } else {
-            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
-        }
+        return ["resultado"=>$result,"datos"=>$datos];
     }
-
+    
     private function consultar_presupuestos_mensualidades()
     {
         $sql = "SELECT tipo_gasto.nombre_tipo_gasto as nombre, SUM(detalles_presupuesto.monto_detalle) as monto, GROUP_CONCAT(detalles_presupuesto.id_detalle_presupuesto) as id_presupuestos_asociados, id_presupuesto FROM tipo_gasto INNER JOIN detalles_presupuesto ON detalles_presupuesto.tipo_gasto_id = tipo_gasto.id_tipo_gasto INNER JOIN presupuesto ON detalles_presupuesto.presupuesto_id = presupuesto.id_presupuesto
@@ -195,11 +248,7 @@ class Presupuesto extends Conexion
         
         $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
 
-        if ($result == true) {
-            return $datos;
-        } else {
-            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
-        }
+        return ["resultado"=>$result,"datos"=>$datos];
     }
 
     private function registrar()
@@ -212,13 +261,7 @@ class Presupuesto extends Conexion
         $conexion->bindParam(":observacion", $this->observacion);
         $result = $conexion->execute();
 
-        if ($result) {
-            $this->registrar_bitacora(REGISTRAR, GESTIONAR_PRESUPUESTO, "Presupuesto del " . $this->fecha);
-
-            return ["estatus"=>true,"mensaje"=>"OK"];
-        } else {
-            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar este presupuesto"];
-        }
+        return $result;
     }
 
     private function editar()
@@ -233,31 +276,18 @@ class Presupuesto extends Conexion
 
         $result = $conexion->execute();
         
-        if ($result) {
-            $this->registrar_bitacora(MODIFICAR, GESTIONAR_PRESUPUESTO, "Presupuesto del " . $this->fecha);
-
-            return ["estatus"=>true,"mensaje"=>"OK"];
-        } else {
-            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar editar este presupuesto"];
-        }
+        return $result;
     }
 
     private function eliminar()
     {
-        $presupuesto_eliminado = $this->consultar_presupuesto();
-
         $sql = "DELETE FROM presupuesto WHERE id_presupuesto = :id_presupuesto";
 
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":id_presupuesto", $this->id_presupuesto);
         $result = $conexion->execute();
  
-        if ($result) {
-            $this->registrar_bitacora(ELIMINAR, GESTIONAR_PRESUPUESTO, "Presupuesto del " . $presupuesto_eliminado["fecha"]);
-            return ["estatus"=>true,"mensaje"=>"OK"];
-        } else {
-            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar eliminar este presepuesto"];
-        }
+        return $result;
     }
 
     private function lastId()
@@ -267,11 +297,7 @@ class Presupuesto extends Conexion
         $result = $conexion->execute();
         $datos = $conexion->fetch(PDO::FETCH_ASSOC);
 
-        if ($result) {
-            return ["estatus"=>true,"mensaje"=>$datos["last_id"]];
-        } else {
-            return ["estatus"=>false,"mensaje"=>"Error en la consulta"];
-        } 
+        return ["resultado"=>$result,"datos"=>$datos["last_id"]];        
     }
     
     private function validarDatos($consulta = "registrar")

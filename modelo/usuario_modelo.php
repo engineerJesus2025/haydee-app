@@ -98,7 +98,7 @@ class Usuario extends Conexion
         return $this->duracion_token;
     }
     
-    public function realizar_consulta($accion){
+    public function realizar_consulta($accion,$prueba = false){
         $this->cambiar_db_seguridad();
         switch ($accion) {
             case 'validar_usuario':
@@ -107,8 +107,14 @@ class Usuario extends Conexion
                 $this->cambiar_db_negocio();
 
                 if ($respuesta["resultado"]) {
-                    $_SESSION["id_usuario"] = $respuesta["datos"]["id_usuario"];
-                    $this->registrar_bitacora(INICIAR_SESION,GESTIONAR_USUARIOS,"NINGUNO");
+                    if($respuesta["total_resultados"] != 1){
+                        return ["estatus"=>false,"mensaje"=>"Usuario no encontrado"];
+                    }
+                    if (!$prueba) {
+                        $_SESSION["id_usuario"] = $respuesta["datos"]["id_usuario"];
+                        $this->registrar_bitacora(INICIAR_SESION,GESTIONAR_USUARIOS,"NINGUNO");
+                    }
+                    
                     return $respuesta["datos"];
                 } 
                 else {
@@ -129,34 +135,22 @@ class Usuario extends Conexion
                 } 
                 else {
                     return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
-                }
-
-            case 'verificar_contra':
-                $respuesta = $this->verificar_contra();
-
-                $this->cambiar_db_negocio();
-
-                if ($respuesta["resultado"]) {
-                    if (isset($respuesta["datos"]["contra"])) {                        
-                        return ["estatus"=>true,"busqueda"=>"contra"];
-                    } else {                        
-                        return ["estatus"=>false,"busqueda"=>"contra"];
-                    }
-                } 
-                else {
-                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
-                }
+                }            
 
             case 'validar_token':
                 $respuesta = $this->validar_token();
 
                 $this->cambiar_db_negocio();
 
-                if ($respuesta["resultado"] == 1) {
+                if ($respuesta["resultado"]) {
+                    if($respuesta["total_resultados"] != 1){
+                        return ["estatus"=>false,"mensaje"=>"Token no encontrado"];
+                    }
+                    
                     return $respuesta["datos"];
                 } 
                 else {
-                    return false;
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
                 }
 
             case 'consultar':
@@ -165,7 +159,10 @@ class Usuario extends Conexion
                 $this->cambiar_db_negocio();
 
                 if ($respuesta["resultado"]) {
-                    $this->registrar_bitacora(CONSULTAR, GESTIONAR_USUARIOS, "TODOS LOS USUARIOS");
+                    if (!$prueba) {
+                        $this->registrar_bitacora(CONSULTAR, GESTIONAR_USUARIOS, "TODOS LOS USUARIOS");
+                    }
+                    
                     return $respuesta["datos"];
                 } 
                 else {
@@ -205,11 +202,13 @@ class Usuario extends Conexion
                 $this->cambiar_db_negocio();
 
                 if ($respuesta) {
-                    $id_ultimo = $this->lastId();//obtenemos el ultimo id
-                    $this->set_id_usuario($id_ultimo["mensaje"]);
-                    $usuario_alterado = $this->consultar_usuario();//lo consultamos
+                    if (!$prueba) {
+                        $id_ultimo = $this->lastId();//obtenemos el ultimo id
+                        $this->set_id_usuario($id_ultimo["mensaje"]);
+                        $usuario_alterado = $this->consultar_usuario();//lo consultamos
 
-                    $this->registrar_bitacora(REGISTRAR, GESTIONAR_USUARIOS, $usuario_alterado["nombre_usuario"] . " (" . $usuario_alterado["nombre_rol"] . ")");
+                        $this->registrar_bitacora(REGISTRAR, GESTIONAR_USUARIOS, $usuario_alterado["nombre_usuario"] . " (" . $usuario_alterado["nombre_rol"] . ")");
+                    }                    
 
                     return ["estatus"=>true,"mensaje"=>"OK"];
                 } 
@@ -218,6 +217,9 @@ class Usuario extends Conexion
                 }
 
             case 'registrar_token':
+                $validaciones = $this->validarTokens();
+                if(!($validaciones["estatus"])){return $validaciones;}
+
                 $respuesta = $this->registrar_token();
 
                 $this->cambiar_db_negocio();
@@ -237,13 +239,11 @@ class Usuario extends Conexion
 
                 $this->cambiar_db_negocio();
 
-                if ($respuesta["resultado"]) {
-                    if ($respuesta["fila_afectada"] < 1) {
-                        return ["estatus"=>false,"mensaje"=>"No se modificó ningún registro"];
-                    }
-
-                    $usuario_alterado = $this->consultar_usuario();
-                    $this->registrar_bitacora(MODIFICAR, GESTIONAR_USUARIOS, $usuario_alterado["nombre_usuario"] . " (" . $usuario_alterado["nombre_rol"] . ")");
+                if ($respuesta) {
+                    if (!$prueba) {
+                        $usuario_alterado = $this->consultar_usuario();
+                        $this->registrar_bitacora(MODIFICAR, GESTIONAR_USUARIOS, $usuario_alterado["nombre_usuario"] . " (" . $usuario_alterado["nombre_rol"] . ")");
+                    }                    
 
                     return ["estatus"=>true,"mensaje"=>"OK"];
                 } 
@@ -259,10 +259,7 @@ class Usuario extends Conexion
 
                 $this->cambiar_db_negocio();
 
-                if ($respuesta["resultado"]) {
-                    if ($respuesta["fila_afectada"] < 1) {
-                        return ["estatus"=>false,"mensaje"=>"No se modificó ningún registro"];
-                    }
+                if ($respuesta) {
 
                     return ["estatus"=>true,"mensaje"=>"OK"];
                 } 
@@ -271,14 +268,14 @@ class Usuario extends Conexion
                 }
 
             case 'cambiar_contrasenia':
+                $validaciones = $this->validarNuevaContrasenia();
+                if(!($validaciones["estatus"])){return $validaciones;}
+
                 $respuesta = $this->cambiar_contrasenia();
 
                 $this->cambiar_db_negocio();
 
-                if ($respuesta["resultado"]) {
-                    if ($respuesta["fila_afectada"] < 1) {
-                        return ["estatus"=>false,"mensaje"=>"No se modificó ningún registro"];
-                    }
+                if ($respuesta) {
 
                     return ["estatus"=>true,"mensaje"=>"OK"];
                 } 
@@ -296,11 +293,10 @@ class Usuario extends Conexion
 
                 $this->cambiar_db_negocio();
 
-                if ($respuesta["resultado"]) {
-                    if ($respuesta["fila_afectada"] < 1) {
-                        return ["estatus"=>false,"mensaje"=>"No se eliminó ningún registro"];
-                    }
-                    $this->registrar_bitacora(ELIMINAR, GESTIONAR_USUARIOS, $usuario_alterado["nombre_usuario"] . " (" . $usuario_alterado["nombre_rol"] . ")");
+                if ($respuesta) {
+                    if (!$prueba) {
+                        $this->registrar_bitacora(ELIMINAR, GESTIONAR_USUARIOS, $usuario_alterado["nombre_usuario"] . " (" . $usuario_alterado["nombre_rol"] . ")");
+                    }                
 
                     return ["estatus"=>true,"mensaje"=>"OK"];
                 } else {
@@ -308,15 +304,14 @@ class Usuario extends Conexion
                 }
 
             case 'eliminar_token':
-                $respuesta = $this->eliminar_token();
+                $validaciones = $this->validarTokens('Eliminar');
+                if(!($validaciones["estatus"])){return $validaciones;}
 
+                $respuesta = $this->eliminar_token();
+                
                 $this->cambiar_db_negocio();
 
-                if ($respuesta["resultado"]) {
-                    if ($respuesta["fila_afectada"] < 1) {
-                        return ["estatus"=>false,"mensaje"=>"No se eliminó ningún registro"];
-                    }
-
+                if ($respuesta) {
                     return ["estatus"=>true,"mensaje"=>"OK"];
                 } else {
                     return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar eliminar este Usuario"];
@@ -342,16 +337,16 @@ class Usuario extends Conexion
 
     private function validar_usuario()
     {
-        $sql = "SELECT usuarios.id_usuario,usuarios.correo as correo, usuarios.nombre as nombre_usuario, roles.id_rol, roles.nombre as nombre_rol, usuarios.contrasenia FROM usuarios INNER JOIN roles ON usuarios.rol_id=roles.id_rol WHERE correo = :correo";
+        $sql = "SELECT usuarios.id_usuario, usuarios.correo as correo, usuarios.nombre as nombre_usuario, roles.id_rol, roles.nombre as nombre_rol, usuarios.contrasenia FROM usuarios INNER JOIN roles ON usuarios.rol_id=roles.id_rol WHERE correo = :correo";
         $conexion = $this->get_conex()->prepare($sql);
 
         $conexion->bindParam(":correo", $this->correo);
 
-        $conexion->execute();
+        $result = $conexion->execute();
         $datos = $conexion->fetch(PDO::FETCH_ASSOC);
-        $result = $conexion->rowCount();
+        $total_resultados = $conexion->rowCount();
 
-        return ["resultado"=>$result,"datos"=>$datos];
+        return ["resultado"=>$result,"datos"=>$datos,"total_resultados"=>$total_resultados];
     }
     
     private function verificar_correo()
@@ -364,36 +359,25 @@ class Usuario extends Conexion
 
         return ["resultado"=>$result,"datos"=>$datos];
     }
-    
-    private function verificar_contra()
-    {
-        $sql = "SELECT * FROM usuarios WHERE contrasenia = :contra";
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":contra", $this->contra);
-        $result = $conexion->execute();
-        $datos = $conexion->fetch(PDO::FETCH_ASSOC);
-
-        return ["resultado"=>$result,"datos"=>$datos];
-    }
 
     private function validar_token()
     {
-        $sql = "SELECT * FROM usuarios WHERE DATE_ADD(usuarios.duracion_token, INTERVAL 10 MINUTE) < :duracion_token && usuarios.token = :token";
+        $sql = "SELECT * FROM usuarios WHERE DATE_ADD(usuarios.duracion_token, INTERVAL 10 MINUTE) > :duracion_token && usuarios.token = :token";
         $conexion = $this->get_conex()->prepare($sql);
 
         $conexion->bindParam(":duracion_token", $this->duracion_token);
         $conexion->bindParam(":token", $this->token);
 
-        $conexion->execute();
+        $result = $conexion->execute();
         $datos = $conexion->fetch(PDO::FETCH_ASSOC);
-        $result = $conexion->rowCount();
+        $total_resultados = $conexion->rowCount();
 
-        return ["resultado"=>$result,"datos"=>$datos];
+        return ["resultado"=>$result,"datos"=>$datos,"total_resultados"=>$total_resultados];
     }
 
     private function consultar()
     {
-        $sql = "SELECT `id_usuario`, `apellido`, usuarios.nombre as nombre_usuario, `correo`, `contrasenia`, `rol_id`, roles.nombre as nombre_rol FROM usuarios INNER JOIN roles ON usuarios.rol_id=roles.id_rol ORDER BY id_usuario";
+        $sql = "SELECT id_usuario, apellido, usuarios.nombre as nombre_usuario, correo, rol_id, roles.nombre as nombre_rol FROM usuarios INNER JOIN roles ON usuarios.rol_id=roles.id_rol ORDER BY id_usuario";
 
         $conexion = $this->get_conex()->prepare($sql);
         $result = $conexion->execute();
@@ -466,7 +450,6 @@ class Usuario extends Conexion
 
         $contra_hash = password_hash($this->contra, PASSWORD_DEFAULT);
 
-
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":id_usuario", $this->id_usuario);    
         $conexion->bindParam(":apellido", $this->apellido);
@@ -492,9 +475,8 @@ class Usuario extends Conexion
         $conexion->bindParam(":correo", $this->correo);
 
         $result = $conexion->execute();
-        $filas_afectadas = $conexion->rowCount();
-        
-        return ["resultado"=>$result,"fila_afectada"=>$filas_afectadas];
+ 
+        return $result;
     }
 
     private function cambiar_contrasenia()
@@ -508,24 +490,19 @@ class Usuario extends Conexion
         $conexion->bindParam(":contrasenia", $contra_hash);
 
         $result = $conexion->execute();
-        $filas_afectadas = $conexion->rowCount();
-        
-        return ["resultado"=>$result,"fila_afectada"=>$filas_afectadas];
+
+        return $result;
     }
 
     private function eliminar_usuario()
     {
-        $usuario_alterado = $this->consultar_usuario();
-
         $sql = "DELETE FROM usuarios WHERE id_usuario = :id_usuario";
 
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":id_usuario", $this->id_usuario);
 
         $result = $conexion->execute();
-        $filas_afectadas = $conexion->rowCount();
-        
-        return ["resultado"=>$result,"fila_afectada"=>$filas_afectadas];
+        return $result;
     }
 
     private function eliminar_token()
@@ -536,9 +513,7 @@ class Usuario extends Conexion
         $conexion->bindParam(":token", $this->token);
 
         $result = $conexion->execute();
-        $filas_afectadas = $conexion->rowCount();
-        
-        return ["resultado"=>$result,"fila_afectada"=>$filas_afectadas];
+        return $result;
     }
     
     private function lastId()
@@ -560,7 +535,7 @@ class Usuario extends Conexion
             if (empty($this->id_usuario)) {return ["estatus"=>false,"mensaje"=>"El id del Usuario requerido esta vacio"];}
 
             if(is_numeric($this->id_usuario)){
-                if (!($this->validarClaveForanea("usuarios","id_usuario",$this->id_usuario,true))) {
+                if (!($this->validarClaveForanea("usuarios","id_usuario",$this->id_usuario))) {
                     return ["estatus"=>false,"mensaje"=>"El usuario seleccionado no existe"];
                 }
                 if ($consulta == "eliminar") {return ["estatus"=>true,"mensaje"=>"OK"];}
@@ -600,15 +575,15 @@ class Usuario extends Conexion
             return ["estatus"=>false,"mensaje"=>"El campo 'correo' no posee un valor valido"];
         }
         if (!$perfil) {
-            if(!(is_string($this->contra)) || !(preg_match("/^[A-Za-z0-9_.+*$#%&@]{5,50}$/",$this->contra))){
+            if(!(is_string($this->contra)) || !(preg_match("/^[A-Za-z0-9_.+*$#%&@ñÑ]{5,50}$/",$this->contra))){
                 return ["estatus"=>false,"mensaje"=>"El campo 'contraseña' no posee un valor valido"];
             }
         }
         
         if (!$perfil) {
             if(is_numeric($this->rol_id)){
-                if (!($this->validarClaveForanea("roles","id_rol",$this->rol_id,true))) {
-                    return ["estatus"=>false,"mensaje"=>"El campo 'Rol' no posee un valor valido"];
+                if (!($this->validarClaveForanea("roles","id_rol",$this->rol_id))) {
+                    return ["estatus"=>false,"mensaje"=>"El Rol seleccionado no existe"];
                 }            
             }
             else{
@@ -619,11 +594,45 @@ class Usuario extends Conexion
         return ["estatus"=>true,"mensaje"=>"OK"];
     }
 
-    private function validarClaveForanea($tabla,$nombreClave,$valor,$seguridad = false)
-    {
-        if ($seguridad) {
-            $this->cambiar_db_seguridad();
+    private function validarTokens($consulta = "Registrar")
+    {   
+        if ($consulta == "Eliminar") {
+            if (!(isset($this->token))){return ["estatus"=>false,"mensaje"=>"El token requerido no se recibio correctamente"];}
+
+            if (empty($this->token)) {return ["estatus"=>false,"mensaje"=>"El token requerido esta vacio"];}
+
+            return ["estatus"=>true,"mensaje"=>"OK"];
         }
+        if (!(isset($this->token) && isset($this->duracion_token) && isset($this->correo))) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos no se recibieron correctamente"];}
+
+        if (empty($this->token) || empty($this->duracion_token) ||empty($this->correo)) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos estan vacios"];}
+
+        if(!(is_string($this->correo)) || !(preg_match("/^[a-zA-Z0-9._+-]{3,35}@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/",$this->correo))){
+            return ["estatus"=>false,"mensaje"=>"El campo 'correo' no posee un valor valido"];
+        }      
+        
+        return ["estatus"=>true,"mensaje"=>"OK"];
+    }
+
+    private function validarNuevaContrasenia()
+    {   
+        if (!(isset($this->correo) && isset($this->contra))) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos no se recibieron correctamente"];}
+
+        if (empty($this->correo) || empty($this->contra)) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos estan vacios"];}
+
+        if(!(is_string($this->contra)) || !(preg_match("/^[A-Za-z0-9_.+*$#%&@]{5,50}$/",$this->contra))){
+            return ["estatus"=>false,"mensaje"=>"El campo 'contraseña' no posee un valor valido"];
+        }
+
+        if(!(is_string($this->correo)) || !(preg_match("/^[a-zA-Z0-9._+-]{3,35}@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/",$this->correo))){
+            return ["estatus"=>false,"mensaje"=>"El campo 'correo' no posee un valor valido"];
+        }
+        
+        return ["estatus"=>true,"mensaje"=>"OK"];
+    }
+
+    private function validarClaveForanea($tabla,$nombreClave,$valor)
+    {
         $sql="SELECT * FROM $tabla WHERE $nombreClave =:valor";
 
         $conexion = $this->get_conex()->prepare($sql);
@@ -631,9 +640,6 @@ class Usuario extends Conexion
         $conexion->execute();
         $result = $conexion->fetch(PDO::FETCH_ASSOC);
 
-        if ($seguridad) {
-            $this->cambiar_db_negocio();
-        }
         return ($result)?true:false;
     }
 }

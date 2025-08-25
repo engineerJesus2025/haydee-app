@@ -70,7 +70,7 @@ class Anio_fiscal extends Conexion
             case 'consultar':
                 $respuesta = $this->consultar();
 
-                if ($respuesta["resultado"] == true) {
+                if ($respuesta["resultado"]) {
                     if (!$prueba) {
                         $this->registrar_bitacora(CONSULTAR, GESTIONAR_ANIO_FISCAL, "TODOS LOS AÑOS FISCALES");
                     }                

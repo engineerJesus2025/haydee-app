@@ -32,7 +32,7 @@ class Rol extends Conexion
         return $this->nombre;
     }
 
-    public function realizar_consulta($accion){
+    public function realizar_consulta($accion,$prueba = false){
         $this->cambiar_db_seguridad();
         switch ($accion) {
             case 'verificar_nombre':
@@ -56,7 +56,10 @@ class Rol extends Conexion
 
                 $this->cambiar_db_negocio();
 
-                if ($respuesta["resultado"]) {
+                if ($respuesta["resultado"]) {                    
+                    if (!$prueba) {
+                        $this->registrar_bitacora(CONSULTAR, GESTIONAR_ROLES, "Todos los roles de usuario");
+                    }
                     return $respuesta["datos"];
                 } 
                 else {
@@ -64,7 +67,7 @@ class Rol extends Conexion
                 }
 
             case 'consultar_roles':
-                $respuesta = $this->consultar_roles();
+                $respuesta = $this->consultar();
 
                 $this->cambiar_db_negocio();
 
@@ -96,8 +99,10 @@ class Rol extends Conexion
                 $this->cambiar_db_negocio();
 
                 if ($respuesta) {
-                    $this->registrar_bitacora(REGISTRAR, GESTIONAR_ROLES, "Rol " . $this->nombre);
-
+                    if (!$prueba) {
+                        $this->registrar_bitacora(REGISTRAR, GESTIONAR_ROLES, "Rol " . $this->nombre);
+                    }
+                    
                     return ["estatus"=>true,"mensaje"=>"OK"];
                 } 
                 else {
@@ -112,11 +117,10 @@ class Rol extends Conexion
 
                 $this->cambiar_db_negocio();
 
-                if ($respuesta["resultado"]) {
-                    if ($respuesta["fila_afectada"] < 1) {
-                        return ["estatus"=>false,"mensaje"=>"No se modificó ningún registro"];
+                if ($respuesta) {
+                    if (!$prueba) {
+                        $this->registrar_bitacora(MODIFICAR, GESTIONAR_ROLES, "Rol " . $this->nombre);
                     }
-                    $this->registrar_bitacora(MODIFICAR, GESTIONAR_ROLES, "Rol " . $this->nombre);
 
                     return ["estatus"=>true,"mensaje"=>"OK"];
                 } 
@@ -132,11 +136,10 @@ class Rol extends Conexion
 
                 $this->cambiar_db_negocio();
 
-                if ($respuesta["resultado"]) {
-                    if ($respuesta["fila_afectada"] < 1) {
-                        return ["estatus"=>false,"mensaje"=>"No se eliminó ningún registro"];
-                    }
-                    $this->registrar_bitacora(ELIMINAR, GESTIONAR_ROLES, "Rol " . $this->nombre);
+                if ($respuesta) {
+                    if (!$prueba) {
+                        $this->registrar_bitacora(ELIMINAR, GESTIONAR_ROLES, "Rol " . $this->nombre);
+                    }                    
 
                     return ["estatus"=>true,"mensaje"=>"OK"];
                 } else {
@@ -148,7 +151,7 @@ class Rol extends Conexion
 
                 $this->cambiar_db_negocio();
 
-                if ($respuesta["resultado"] == true) {
+                if ($respuesta["resultado"]) {
                     return $respuesta["datos"];
                 } 
                 else {
@@ -174,17 +177,6 @@ class Rol extends Conexion
 
     private function consultar()
     {        
-        $sql = "SELECT * FROM roles";
-        $conexion = $this->get_conex()->prepare($sql);
-
-        $result = $conexion->execute();
-        $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
-
-        return ["resultado"=>$result,"datos"=>$datos];
-    }
-
-    private function consultar_roles()
-    {
         $sql = "SELECT * FROM roles";
         $conexion = $this->get_conex()->prepare($sql);
 
@@ -225,9 +217,7 @@ class Rol extends Conexion
         $conexion->bindParam(":nombre", $this->nombre);
 
         $result = $conexion->execute();
-        $filas_afectadas = $conexion->rowCount();
-        
-        return ["resultado"=>$result,"fila_afectada"=>$filas_afectadas];
+        return $result;
     }
     private function eliminar_rol()
     {        
@@ -235,10 +225,9 @@ class Rol extends Conexion
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":id_rol", $this->id_rol);
 
-        $result = $conexion->execute();
-        $filas_afectadas = $conexion->rowCount();
+        $result = $conexion->execute();        
         
-        return ["resultado"=>$result,"fila_afectada"=>$filas_afectadas];
+        return $result;
     }
 
     private function lastId()
@@ -277,7 +266,7 @@ class Rol extends Conexion
 
         if (empty($this->nombre)) {return ["estatus"=>false,"mensaje"=>"El campos 'nombre' esta vacio"];}
         
-        if(!(is_string($this->nombre)) || !(preg_match("/^[A-Za-z \b]*$/",$this->nombre))){
+        if(!(is_string($this->nombre)) || !(preg_match("/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/",$this->nombre))){
             return ["estatus"=>false,"mensaje"=>"El campo 'nombre' no posee un valor valido"];
         }        
         

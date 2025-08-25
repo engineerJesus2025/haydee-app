@@ -562,7 +562,7 @@ async function registrar_mensualidad() {
 		let apartamento_id;
 
 		let monto = parseFloat(tr.lastElementChild.previousElementSibling.textContent);
-		let monto_dolar = (monto / (dolar.bcv));
+		let monto_dolar = (monto / (dolar.bcv)).toFixed(2);
 		
 		apartamento_id = tr.id;
 

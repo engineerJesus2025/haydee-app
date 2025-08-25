@@ -76,16 +76,12 @@ class Mensualidad extends Conexion
         return $this->apartamento_id;
     }
 
-    public function set_gasto_mes_id($gasto_mes_id)
-    {
-        $this->gasto_mes_id = $gasto_mes_id;
-    }
-
-    public function realizar_consulta($accion){
+    public function realizar_consulta($accion, $prueba = false){
         switch ($accion) {
             case 'verificarMeses':
                 $respuesta = $this->verificarMeses();
-                if ($respuesta["resultado"] == true) {
+
+                if ($respuesta["resultado"]) {
                     return $respuesta["datos"];
                 } 
                 else {
@@ -94,8 +90,12 @@ class Mensualidad extends Conexion
 
             case 'consultarPorMeses':
                 $respuesta = $this->consultarPorMeses();
-                if ($respuesta["resultado"] == true) {
-                    $this->registrar_bitacora(CONSULTAR, GESTIONAR_MENSUALIDAD, "TODOS LAS MENSUALIDADES");
+
+                if ($respuesta["resultado"]) {
+                    if (!$prueba) {
+                        $this->registrar_bitacora(CONSULTAR, GESTIONAR_MENSUALIDAD, "TODOS LAS MENSUALIDADES");
+                    }
+                    
                     return $respuesta["datos"];
                 } 
                 else {
@@ -103,18 +103,28 @@ class Mensualidad extends Conexion
                 }
 
             case 'consultar_mensualidad_apartamentos':
+                $validaciones = $this->validarMesAnio();
+                if(!($validaciones["estatus"])){return $validaciones;}
+
                 $respuesta = $this->consultar_mensualidad_apartamentos();
-                if ($respuesta["resultado"] == true) {
+                
+                if ($respuesta["resultado"]) {
                     return $respuesta["datos"];
                 } 
                 else {
                     return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
                 }
 
-            case 'registrar':                
+            case 'registrar':
+                $validaciones = $this->validarDatos();
+                if(!($validaciones["estatus"])){return $validaciones;}
+
                 $respuesta = $this->registrar();
+
                 if ($respuesta["resultado"]) {
-                    $this->registrar_bitacora(REGISTRAR, GESTIONAR_MENSUALIDAD, "Mensualidad del mes " . $this->mes . " del ". $this->anio);
+                    if (!$prueba) {
+                        $this->registrar_bitacora(REGISTRAR, GESTIONAR_MENSUALIDAD, "Mensualidad del mes " . $this->mes . " del ". $this->anio);
+                    }
 
                     return ["estatus"=>true,"mensaje"=>"OK","lastId"=>$respuesta["lastId"]];
                 } else {
@@ -122,14 +132,16 @@ class Mensualidad extends Conexion
                 }
 
             case 'editar':
+                $validaciones = $this->validarDatos('editar');
+                if(!($validaciones["estatus"])){return $validaciones;}
+
                 $respuesta = $this->editar();
 
-                if ($respuesta["resultado"]) {
-                    if ($respuesta["fila_afectada"] < 1) {
-                        return ["estatus"=>false,"mensaje"=>"No se modificó ningún registro"];
+                if ($respuesta) {
+                    if (!$prueba) {
+                        $this->registrar_bitacora(MODIFICAR, GESTIONAR_MENSUALIDAD, "Mensualidad del mes " . $this->mes . " del ". $this->anio);
                     }
-                    $this->registrar_bitacora(MODIFICAR, GESTIONAR_MENSUALIDAD, "Mensualidad del mes " . $this->mes . " del ". $this->anio);
-
+                    
                     return ["estatus"=>true,"mensaje"=>"OK"];
                 }
                 else {
@@ -137,13 +149,15 @@ class Mensualidad extends Conexion
                 }
 
             case 'eliminar':
+                $validaciones = $this->validarMesAnio();
+                if(!($validaciones["estatus"])){return $validaciones;}
+
                 $respuesta = $this->eliminar();
 
-                if ($respuesta["resultado"]) {
-                    if ($respuesta["fila_afectada"] < 1) {
-                        return ["estatus"=>false,"mensaje"=>"No se eliminó ningún registro"];
+                if ($respuesta) {
+                    if (!$prueba) {
+                        $this->registrar_bitacora(ELIMINAR, GESTIONAR_MENSUALIDAD, "Mensualidad del mes " . $this->mes . " del ". $this->anio);
                     }
-                    $this->registrar_bitacora(ELIMINAR, GESTIONAR_MENSUALIDAD, "Mensualidad del mes " . $this->mes . " del ". $this->anio);
 
                     return ["estatus"=>true,"mensaje"=>"OK"];
                 }
@@ -202,6 +216,7 @@ class Mensualidad extends Conexion
         $result = $conexion->execute();
         
         $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
+
         return ["resultado"=>$result,"datos"=>$datos];
     }
 
@@ -269,9 +284,8 @@ class Mensualidad extends Conexion
         $conexion->bindParam(":apartamento_id", $this->apartamento_id);
         $conexion->bindParam(":id_mensualidad", $this->id_mensualidad);
         $result = $conexion->execute();
-        $filas_afectadas = $conexion->rowCount();
-        
-        return ["resultado"=>$result,"fila_afectada"=>$filas_afectadas];
+  
+        return $result;
     }
     private function eliminar()
     {
@@ -283,9 +297,8 @@ class Mensualidad extends Conexion
         $conexion->bindParam(":mes", $mes_entero);
         $conexion->bindParam(":anio", $anio_entero);
         $result = $conexion->execute();
-        $filas_afectadas = $conexion->rowCount();
-        
-        return ["resultado"=>$result,"fila_afectada"=>$filas_afectadas];
+
+        return $result;
     }
     
     private function consultar_estadisticas_inicio()
@@ -299,56 +312,56 @@ class Mensualidad extends Conexion
                 mensualidad
             GROUP BY
                 apartamento_id
-        ),
-        TotalPagado AS (
+            ),
+            TotalPagado AS (
+                SELECT
+                    m.apartamento_id,
+                    SUM(dp.monto) AS monto_total_pagado
+                FROM
+                    detalles_pagos dp
+                JOIN
+                    pagos_mensualidad pm ON dp.id_detalle_pago = pm.detalle_pago_id
+                JOIN
+                    mensualidad m ON pm.mensualidad_id = m.id_mensualidad
+                GROUP BY
+                    m.apartamento_id
+            ),
+            SaldosFinales AS (
+                SELECT
+                    f.apartamento_id,
+                    (COALESCE(f.monto_total_facturado, 0) - COALESCE(p.monto_total_pagado, 0)) AS saldo,
+                    COALESCE(p.monto_total_pagado, 0) AS pagado_individual
+                FROM
+                    TotalFacturado f
+                LEFT JOIN
+                    TotalPagado p ON f.apartamento_id = p.apartamento_id
+                UNION
+                SELECT
+                    p.apartamento_id,
+                    (COALESCE(f.monto_total_facturado, 0) - COALESCE(p.monto_total_pagado, 0)) AS saldo,
+                    COALESCE(p.monto_total_pagado, 0) AS pagado_individual
+                FROM
+                    TotalFacturado f
+                RIGHT JOIN
+                    TotalPagado p ON f.apartamento_id = p.apartamento_id
+                WHERE
+                    f.apartamento_id IS NULL
+            )
             SELECT
-                m.apartamento_id,
-                SUM(dp.monto) AS monto_total_pagado
+                COUNT(CASE WHEN saldo > 0.01 THEN 1 END) AS accion,
+                SUM(CASE WHEN saldo > 0.01 THEN saldo ELSE 0 END) AS valor
             FROM
-                detalles_pagos dp
-            JOIN
-                pagos_mensualidad pm ON dp.id_detalle_pago = pm.detalle_pago_id
-            JOIN
-                mensualidad m ON pm.mensualidad_id = m.id_mensualidad
-            GROUP BY
-                m.apartamento_id
-        ),
-        SaldosFinales AS (
-            SELECT
-                f.apartamento_id,
-                (COALESCE(f.monto_total_facturado, 0) - COALESCE(p.monto_total_pagado, 0)) AS saldo,
-                COALESCE(p.monto_total_pagado, 0) AS pagado_individual
-            FROM
-                TotalFacturado f
-            LEFT JOIN
-                TotalPagado p ON f.apartamento_id = p.apartamento_id
+                SaldosFinales
             UNION
             SELECT
-                p.apartamento_id,
-                (COALESCE(f.monto_total_facturado, 0) - COALESCE(p.monto_total_pagado, 0)) AS saldo,
-                COALESCE(p.monto_total_pagado, 0) AS pagado_individual
+                COUNT(CASE WHEN saldo <= 0.01 THEN 1 END) AS accion,
+                SUM(CASE WHEN saldo <= 0.01 THEN pagado_individual ELSE 0 END) AS valor
             FROM
-                TotalFacturado f
-            RIGHT JOIN
-                TotalPagado p ON f.apartamento_id = p.apartamento_id
-            WHERE
-                f.apartamento_id IS NULL
-        )
-        SELECT
-            COUNT(CASE WHEN saldo > 0.01 THEN 1 END) AS accion,
-            SUM(CASE WHEN saldo > 0.01 THEN saldo ELSE 0 END) AS valor
-        FROM
-            SaldosFinales
-        UNION
-        SELECT
-            COUNT(CASE WHEN saldo <= 0.01 THEN 1 END) AS accion,
-            SUM(CASE WHEN saldo <= 0.01 THEN pagado_individual ELSE 0 END) AS valor
-        FROM
-            SaldosFinales
-            UNION
-        SELECT 'total_egresos' as accion, SUM(detalles_gastos.monto) as valor FROM detalles_gastos WHERE detalles_gastos.fecha BETWEEN DATE_FORMAT(CURDATE(), '%Y-%m-01') AND CURDATE() 
-        UNION 
-        SELECT 'total_ingresos' as accion, SUM(detalles_pagos.monto) as valor FROM detalles_pagos WHERE detalles_pagos.fecha BETWEEN DATE_FORMAT(CURDATE(), '%Y-%m-01') AND CURDATE()";            
+                SaldosFinales
+                UNION
+            SELECT 'total_egresos' as accion, SUM(detalles_gastos.monto) as valor FROM detalles_gastos WHERE detalles_gastos.fecha BETWEEN DATE_FORMAT(CURDATE(), '%Y-%m-01') AND CURDATE() 
+            UNION 
+            SELECT 'total_ingresos' as accion, SUM(detalles_pagos.monto) as valor FROM detalles_pagos WHERE detalles_pagos.fecha BETWEEN DATE_FORMAT(CURDATE(), '%Y-%m-01') AND CURDATE()";            
         // Que precioso es sql
         $conexion = $this->get_conex()->prepare($sql);         
         $result = $conexion->execute();
@@ -360,7 +373,7 @@ class Mensualidad extends Conexion
     private function consultar_meses_mensualidad()
     {
         $sql = "SELECT mes, anio FROM mensualidad GROUP BY anio, mes ORDER BY anio, mes DESC";            
-        // Que precioso es sql
+
         $conexion = $this->get_conex()->prepare($sql);         
         $result = $conexion->execute();
         
@@ -481,6 +494,82 @@ class Mensualidad extends Conexion
         return 0;
     }
 
-    //Back
+    private function validarDatos($consulta = "registrar")
+    {           
+        if ($consulta == "editar" || $consulta == "eliminar") {
+            if (!(isset($this->id_mensualidad))) {return ["estatus"=>false,"mensaje"=>"El id de la Mensualidad requerida no se recibio correctamente"];}
+
+            if (empty($this->id_mensualidad)) {return ["estatus"=>false,"mensaje"=>"El id de la Mensualidad requerida esta vacio"];}
+
+            if(is_numeric($this->id_mensualidad)){
+                if (!($this->validarClaveForanea("mensualidad","id_mensualidad",$this->id_mensualidad))) {
+                    return ["estatus"=>false,"mensaje"=>"La mensualidad seleccionada no existe"];
+                }
+                if ($consulta == "eliminar") {return ["estatus"=>true,"mensaje"=>"OK"];}
+            }
+            else{return ["estatus"=>false,"mensaje"=>"El id de la mensualidad tiene debe ser un valor numerico entero"];}
+        }
+
+        if (!(isset($this->monto) && isset($this->monto_dolar) && isset($this->mes) && isset($this->anio) && isset($this->apartamento_id))) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos no se recibieron correctamente"];}
+
+        if (empty($this->monto) || empty($this->monto_dolar) || empty($this->mes) || empty($this->anio) || empty($this->apartamento_id)) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos estan vacios"];}        
+
+        if(!(is_string($this->monto)) || !(preg_match("/^[0-9]{0,12}[,.]{0,1}[0-9]{0,2}$/",$this->monto))){
+            return ["estatus"=>false,"mensaje"=>"Uno de los 'montos' no posee un valor valido"];
+        }
+
+        if(!(is_string($this->monto_dolar)) || !(preg_match("/^[0-9]{0,12}[,.]{0,1}[0-9]{0,2}$/",$this->monto_dolar))){
+            return ["estatus"=>false,"mensaje"=>"Uno de los 'montos en dolar' no posee un valor valido"];
+        }
+
+        if(!(is_string($this->mes)) || !(preg_match("/^[0-9]{1,2}$/",$this->mes))){
+            return ["estatus"=>false,"mensaje"=>"Uno de los 'meses' no posee un valor valido"];
+        }
+
+        if(!(is_string($this->anio)) || !(preg_match("/^[0-9]{4}$/",$this->anio))){
+            return ["estatus"=>false,"mensaje"=>"Uno de los 'años' no posee un valor valido"];
+        }
+
+        if(is_numeric($this->apartamento_id)){
+            if (!($this->validarClaveForanea("apartamentos","id_apartamento",$this->apartamento_id))) {
+                return ["estatus"=>false,"mensaje"=>"Uno de los Apartamentos seleccionados no existe"];
+            }            
+        }
+        else{
+            return ["estatus"=>false,"mensaje"=>"El campo 'Apartamento' no posee un valor valido"];
+        }
+        
+        return ["estatus"=>true,"mensaje"=>"OK"];
+    }
+
+    private function validarMesAnio()
+    {           
+        if (!(isset($this->mes) && isset($this->anio))) {return ["estatus"=>false,"mensaje"=>"El mes o año no se recibio correctamente"];}
+
+        if (empty($this->mes) || empty($this->anio)) {return ["estatus"=>false,"mensaje"=>"El mes o año se envio vacios"];}        
+
+        if(!(is_string($this->mes)) || !(preg_match("/^[0-9]{1,2}$/",$this->mes))){
+            return ["estatus"=>false,"mensaje"=>"El mes para la consulta no posee un valor valido"];
+        }
+
+        if(!(is_string($this->anio)) || !(preg_match("/^[0-9]{4}$/",$this->anio))){
+            return ["estatus"=>false,"mensaje"=>"El año para la consulta no posee un valor valido"];
+        }
+        
+        return ["estatus"=>true,"mensaje"=>"OK"];
+    }
+
+    private function validarClaveForanea($tabla,$nombreClave,$valor)
+    {
+        $sql="SELECT * FROM $tabla WHERE $nombreClave =:valor";
+
+        $conexion = $this->get_conex()->prepare($sql);
+        $conexion->bindParam(":valor", $valor);
+        $conexion->execute();
+        $result = $conexion->fetch(PDO::FETCH_ASSOC);
+
+        return ($result)?true:false;
+    }
+
 }
 ?>

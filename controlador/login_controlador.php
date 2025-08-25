@@ -8,9 +8,8 @@
     require_once "ayuda/ayuda.php";
 
     require 'vendor/autoload.php';
-
-    use PHPMailer\PHPMailer\src\PHPMailer;
-    use PHPMailer\PHPMailer\src\Exception;
+    use PHPMailer\PHPMailer\PHPMailer;
+    use PHPMailer\PHPMailer\Exception;
     
     if (isset($_POST["operacion"])) {
         $operacion = $_POST["operacion"];
@@ -26,7 +25,6 @@
             $resultado = $usuario_obj->realizar_consulta('validar_usuario');
 
             if ($resultado) {
-
                 if (!password_verify($contrasenia, $resultado["contrasenia"])) {
                     echo json_encode(["estatus"=>false,"mensaje"=>"Contraseña incorrecta"]);
                     exit();
