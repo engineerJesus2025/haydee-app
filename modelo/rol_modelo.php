@@ -32,7 +32,7 @@ class Rol extends Conexion
         return $this->nombre;
     }
 
-    public function realizar_consulta($accion,$prueba = false){
+    public function realizar_consulta($accion){
         $this->cambiar_db_seguridad();
         switch ($accion) {
             case 'verificar_nombre':
@@ -56,10 +56,7 @@ class Rol extends Conexion
 
                 $this->cambiar_db_negocio();
 
-                if ($respuesta["resultado"]) {                    
-                    if (!$prueba) {
-                        $this->registrar_bitacora(CONSULTAR, GESTIONAR_ROLES, "Todos los roles de usuario");
-                    }
+                if ($respuesta["resultado"]) {                        
                     return $respuesta["datos"];
                 } 
                 else {
@@ -99,10 +96,6 @@ class Rol extends Conexion
                 $this->cambiar_db_negocio();
 
                 if ($respuesta) {
-                    if (!$prueba) {
-                        $this->registrar_bitacora(REGISTRAR, GESTIONAR_ROLES, "Rol " . $this->nombre);
-                    }
-                    
                     return ["estatus"=>true,"mensaje"=>"OK"];
                 } 
                 else {
@@ -118,10 +111,6 @@ class Rol extends Conexion
                 $this->cambiar_db_negocio();
 
                 if ($respuesta) {
-                    if (!$prueba) {
-                        $this->registrar_bitacora(MODIFICAR, GESTIONAR_ROLES, "Rol " . $this->nombre);
-                    }
-
                     return ["estatus"=>true,"mensaje"=>"OK"];
                 } 
                 else {
@@ -136,11 +125,7 @@ class Rol extends Conexion
 
                 $this->cambiar_db_negocio();
 
-                if ($respuesta) {
-                    if (!$prueba) {
-                        $this->registrar_bitacora(ELIMINAR, GESTIONAR_ROLES, "Rol " . $this->nombre);
-                    }                    
-
+                if ($respuesta) {                        
                     return ["estatus"=>true,"mensaje"=>"OK"];
                 } else {
                     return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar eliminar este Rol"];

@@ -5,7 +5,7 @@ $proveedor = new Proveedores();
 if(isset($_POST["operacion"])){
     $operacion = $_POST["operacion"];
     if($operacion == "consulta"){
-        echo json_encode($proveedor->consultar());
+        echo json_encode($proveedor->realizar_consulta("consultar"));
     }
 
     elseif($operacion == "registrar"){
@@ -18,13 +18,13 @@ if(isset($_POST["operacion"])){
         $proveedor->set_servicio($servicio);
         $proveedor->set_rif($rif);
         $proveedor->set_direccion($direccion);
-        echo json_encode($proveedor->registrar());
+        echo json_encode($proveedor->realizar_consulta("registrar"));
     }
 
-    elseif($operacion == "consulta_especifica"){
+    elseif($operacion == "consultar_proveedor"){
         $id_proveedor = $_POST["id_proveedor"];
         $proveedor->set_id_proveedor($id_proveedor);
-        echo json_encode($proveedor->consultar_proveedor());
+        echo json_encode($proveedor->realizar_consulta("consultar_proveedor"));
     }
 
     elseif ($operacion == "modificar"){
@@ -40,17 +40,17 @@ if(isset($_POST["operacion"])){
         $proveedor->set_rif($rif);
         $proveedor->set_direccion($direccion);
 
-        echo json_encode($proveedor->editar_proveedor());
+        echo json_encode($proveedor->realizar_consulta("modificar"));
     }
 
     elseif ($operacion == "eliminar"){
         $id_proveedor = $_POST["id_proveedor"];
         $proveedor->set_id_proveedor($id_proveedor);
-        echo json_encode($proveedor->eliminar_proveedor());
+        echo json_encode($proveedor->realizar_consulta("eliminar"));
     }
 
-    elseif ($operacion == "ultimo_id"){
-        echo json_encode($proveedor->lastId());
+    elseif ($operacion == "lastId"){
+        echo json_encode($proveedor->realizar_consulta("lastId"));
     }
     exit;
 }

@@ -59,21 +59,119 @@
         }
 
         // Metodos CRUD
-        public function verificar_apartamento(){
+        public function realizar_consulta($accion){
+            switch ($accion) {
+                case 'validar':
+                    $respuesta = $this->verificar_apartamento();
+
+                    if ($respuesta["resultado"]) {
+                        if (isset($respuesta["datos"]["nro_apartamento"])){
+                            return ["estatus"=>true,"busqueda"=>"nro_apartamento"];
+                        } else {
+                            return ["estatus"=>false,"busqueda"=>"nro_apartamento"];
+                        }
+                    } else {
+                        return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la validación del apartamento"];
+                    }
+                
+                case 'consultar':
+                    $respuesta = $this->consultar();
+
+                    if ($respuesta["resultado"]) {
+                        $this->registrar_bitacora(CONSULTAR, GESTIONAR_APARTAMENTOS, "TODOS LOS APARTAMENTOS");
+                        return $respuesta["datos"];
+                    } else {
+                        return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+                    }
+
+                case 'registrar':
+                    $validaciones = $this->validarDatos();
+                    if(!($validaciones["estatus"])){return $validaciones;}
+
+                    $respuesta = $this->registrar_apartamento();
+
+                    if ($respuesta) {
+                        $id_ultimo = $this->lastId();
+                        $this->set_id_apartamento($id_ultimo["datos"]["last_id"]);
+                        $apartamento_alterado = $this->consultar_apartamento();
+                        $this->registrar_bitacora(REGISTRAR, GESTIONAR_APARTAMENTOS, $apartamento_alterado["datos"]["nro_apartamento"]);
+                        return ["estatus"=>true,"mensaje"=>"OK"];
+                    } else {
+                        return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar este apartamento"];
+                    }
+
+                case 'consulta_especifica':
+                    $respuesta = $this->consultar_apartamento();
+
+                    if ($respuesta["resultado"]) {
+                        return $respuesta["datos"];
+                    } else {
+                        return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta de este apartamento"];
+                    }
+
+                case 'modificar':
+                    $validaciones = $this->validarDatos("editar");
+                    if(!($validaciones["estatus"])){return $validaciones;}
+
+                    $respuesta = $this->editar_apartamento();
+
+                    if ($respuesta["resultado"]) {
+                        if ($respuesta["fila_afectada"] < 1) {
+                            return ["estatus"=>false,"mensaje"=>"No se realizaron cambios en la información del apartamento"];
+                        }
+
+                        $apartamento_alterado = $this->consultar_apartamento();
+                        $this->registrar_bitacora(MODIFICAR, GESTIONAR_APARTAMENTOS, $apartamento_alterado["datos"]["nro_apartamento"]. " (".$apartamento_alterado["datos"]["nro_apartamento"].")");
+
+                        return ["estatus"=>true,"mensaje"=>"OK"];
+                    } else {
+                        return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar editar este apartamento"];
+                    }
+
+
+                case 'eliminar':
+                    $validaciones = $this->validarDatos("eliminar");
+                    if(!($validaciones["estatus"])){return $validaciones;}
+
+                    $apartamento_alterado = $this->consultar_apartamento();
+
+                    $respuesta = $this->eliminar_apartamento();
+
+                    if ($respuesta["resultado"]) {
+                        if ($respuesta["fila_afectada"] < 1) {
+                            return ["estatus"=>false,"mensaje"=>"No se eliminó ningún apartamento"];
+                        }
+
+                        $this->registrar_bitacora(ELIMINAR, GESTIONAR_APARTAMENTOS, $apartamento_alterado["datos"]["nro_apartamento"]);
+                        return ["estatus"=>true,"mensaje"=>"OK"];
+                    } else {
+                        return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar eliminar este apartamento"];
+                    }
+
+                case 'lastId':
+                    $respuesta = $this->lastId();
+                    
+                    if ($respuesta["resultado"]) {
+                        return $respuesta["datos"];
+                    } 
+                    else {
+                        return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+                    }
+
+                default:
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error en el proceso"];
+                    break;
+            }
+        }
+
+        private function verificar_apartamento(){ // SI SE USA
             $sql = "SELECT * FROM apartamentos WHERE nro_apartamento = :nro_apartamento";
             $conexion = $this->get_conex()->prepare($sql);
             $conexion->bindParam(":nro_apartamento", $this->nro_apartamento);
-            $conexion->execute();
+            $result = $conexion->execute();
             $datos = $conexion->fetch(PDO::FETCH_ASSOC);
-            if (isset($datos["nro_apartamento"])) { 
-                $r["estatus"] = true;
-                $r["busqueda"] = "nro_apartamento";
-                return $r;
-            } else {
-                $r["estatus"] = false;
-                $r["busqueda"] = "nro_apartamento";
-                return $r;
-            }
+            
+            return ["resultado"=>$result,"datos"=>$datos];
         }
 
         public function consultar_propietario($correo) {
@@ -99,7 +197,7 @@
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
 
-        public function consultar(){
+        private function consultar(){ // SI SE USA
             //$this->cambiar_db_seguridad();
             $sql = "SELECT * FROM apartamentos ORDER BY id_apartamento";
             $conexion = $this->get_conex()->prepare($sql);
@@ -108,12 +206,7 @@
  
             $this->cambiar_db_negocio();
 
-            if ($result == true) {
-                $this->registrar_bitacora(CONSULTAR, GESTIONAR_APARTAMENTOS, "TODOS LOS APARTAMENTOS");
-                return $datos;
-            } else {
-                return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
-            }
+            return ["resultado"=>$result,"datos"=>$datos];
         }
 
         public function consultar_apartamentos_mensualidad(){
@@ -130,21 +223,21 @@
             }
         }
 
-        public function consultar_apartamento(){
+        private function consultar_apartamento(){ // SI SE USA
             //$this->cambiar_db_seguridad();
             $sql = "SELECT * FROM apartamentos WHERE id_apartamento = :id_apartamento";
             $conexion = $this->get_conex()->prepare($sql);
             $conexion->bindParam(":id_apartamento", $this->id_apartamento);
             $result = $conexion->execute();        
-            $datos = $conexion->fetch(PDO::FETCH_ASSOC);
+            $filas = $conexion->fetch(PDO::FETCH_ASSOC);
 
             $this->cambiar_db_negocio();
 
-            if ($result == true) {
-                return $datos;
-            } else {
-                return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+            if (!$filas || count($filas) === 0) {
+                return ["resultado"=>false,"datos"=>null];
             }
+
+            return ["resultado"=>$result,"datos"=>$filas];
         }
 
         public function consultar_detalles(){
@@ -171,10 +264,7 @@
             }
         }
 
-        public function registrar_apartamento(){
-            //Validamos los datos obtenidos del controlador (validaciones back-end)
-            $validaciones = $this->validarDatos();
-            if(!($validaciones["estatus"])){return $validaciones;}
+        private function registrar_apartamento(){ // SI SE USA
             
             //$this->cambiar_db_seguridad();
 
@@ -188,27 +278,12 @@
             $conexion->bindParam(":alquilado", $this->alquilado);
             $result = $conexion->execute();
 
-            //$this->cambiar_db_negocio();
-
-            if ($result) {
-                $id_ultimo = $this->lastId();
-                $this->set_id_apartamento($id_ultimo["mensaje"]);
-                $apartamento_alterado = $this->consultar_apartamento();
-
-                $this->registrar_bitacora(REGISTRAR, GESTIONAR_APARTAMENTOS, $apartamento_alterado["nro_apartamento"]);
-
-                return ["estatus"=>true,"mensaje"=>"OK"];
-            } else {
-                return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar este apartamento"];
-            }
+            return $result;
         }
 
-        public function editar_apartamento(){
-            //Validamos los datos obtenidos del controlador
-            $validaciones = $this->validarDatos("editar");
-            if(!($validaciones["estatus"])){return $validaciones;}        
-
+        private function editar_apartamento(){ // SI SE USA
             //$this->cambiar_db_seguridad();
+            //$this->cambiar_db_negocio(); 
 
             $sql = "UPDATE apartamentos SET nro_apartamento=:nro_apartamento,porcentaje_participacion=:porcentaje_participacion,gas=:gas,agua=:agua,alquilado=:alquilado WHERE id_apartamento=:id_apartamento";
 
@@ -221,26 +296,13 @@
             $conexion->bindParam(":alquilado", $this->alquilado);
 
             $result = $conexion->execute();
+            $fila_afectadas = $conexion->rowCount();
 
-            $this->cambiar_db_negocio();        
-            
-            if ($result) {
-                $apartamento_alterado = $this->consultar_apartamento();
-                $this->registrar_bitacora(MODIFICAR, GESTIONAR_APARTAMENTOS, $apartamento_alterado["nro_apartamento"]. " (".$apartamento_alterado["nro_apartamento"].")");
-
-                return ["estatus"=>true,"mensaje"=>"OK"];
-            } else {
-                return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar editar este apartamento"];
-            }
+            return ["resultado"=>$result,"fila_afectada"=>$fila_afectadas];
         }
 
-        public function eliminar_apartamento(){
+        private function eliminar_apartamento(){ // SI SE USA
             //Validamos los datos obtenidos del controlador
-            $validaciones = $this->validarDatos("eliminar");
-            if(!($validaciones["estatus"])){return $validaciones;}
-            
-            $apartamento_alterado = $this->consultar_apartamento();
-
             //$this->cambiar_db_seguridad();
 
             $sql = "DELETE FROM apartamentos WHERE id_apartamento = :id_apartamento";
@@ -248,31 +310,22 @@
             $conexion = $this->get_conex()->prepare($sql);
             $conexion->bindParam(":id_apartamento", $this->id_apartamento);
             $result = $conexion->execute();
+            $fila_afectadas = $conexion->rowCount();
 
-            $this->cambiar_db_negocio();
+            //$this->cambiar_db_negocio();
             
-            if ($result) {
-                $this->registrar_bitacora(ELIMINAR, GESTIONAR_APARTAMENTOS, $apartamento_alterado["nro_apartamento"]);
-
-                return ["estatus"=>true,"mensaje"=>"OK"];
-            } else {
-                return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar eliminar este apartamento"];
-            }
+            return ["resultado"=>$result,"fila_afectada"=>$fila_afectadas];
         }
 
-        public function lastId(){
+        private function lastId(){ // SI SE USA
             //$this->cambiar_db_seguridad();
             $sql = "SELECT MAX(id_apartamento) as last_id FROM apartamentos";
             $conexion = $this->get_conex()->prepare($sql);
             $result = $conexion->execute();
             $datos = $conexion->fetch(PDO::FETCH_ASSOC);
-            $this->cambiar_db_negocio();
+            //$this->cambiar_db_negocio();
 
-            if ($result) {
-                return ["estatus"=>true,"mensaje"=>$datos["last_id"]];
-            } else {
-                return ["estatus"=>false,"mensaje"=>"Error en la consulta"];
-            } 
+            return ["resultado"=>$result,"datos"=>$datos];
         }
 
         private function validarDatos($consulta = "registrar"){   
@@ -288,7 +341,7 @@
                     }
                     if ($consulta == "eliminar") {return ["estatus"=>true,"mensaje"=>"OK"];}
                 }
-                else{return ["estatus"=>false,"mensaje"=>"El id del Apartamento tiene debe ser un valor numerico entero"];}
+                else{return ["estatus"=>false,"mensaje"=>"El id del Apartamento debe ser un valor numerico entero"];}
             } 
             // Validamos que los campos enviados si existan
 
@@ -302,7 +355,7 @@
             
             if(!(is_string($this->nro_apartamento)) || !(preg_match("/^[0-9\-\b]{1,3}$/",$this->nro_apartamento))){
                 return ["estatus"=>false,"mensaje"=>"El campo 'Nro de Apartamento' no posee un valor valido"];
-            }
+            } 
             if(!(is_numeric($this->porcentaje_participacion)) || !(preg_match("/^\d{1,2}(\.\d{1,2})?$/",$this->porcentaje_participacion))){
                 return ["estatus"=>false,"mensaje"=>"El campo 'Codigo' no posee un valor valido"];
             }

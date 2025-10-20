@@ -1,14 +1,14 @@
 <?php
     require_once("modelo/banco_modelo.php");
 
-    $obj_banco = new Banco(); // Objeto banco
+    $obj_banco = new Banco(); // Objeto banco 
  
     if(isset($_POST["operacion"])){
         $operacion = $_POST["operacion"];
 
         if ($operacion == "consulta"){
             // llamamos a la funcion, lo convertimos a json y la mandamos al js con echo
-            echo  json_encode($obj_banco->consultar());
+            echo  json_encode($obj_banco->realizar_consulta('consultar'));
             // la hice para que retorne un arreglo, si sale vacio solo mandara un array con false
         }
         //Despues de cada echo se regresa al javascript como respuesta en json
@@ -29,7 +29,7 @@
             $obj_banco->set_cedula_afiliada($cedula_afiliada);
 
             //se ejecuta la funcion:
-            echo  json_encode($obj_banco->registrar_banco());
+            echo  json_encode($obj_banco->realizar_consulta('registrar'));
             //igual puse para que siempre retorne un arreglo que dara true o false de acuerdo al resultado
         }
         elseif ($operacion == "consulta_especifica"){
@@ -40,7 +40,7 @@
             $obj_banco->set_id_banco($id_banco);
 
             // llamamos a la funcion, lo convertimos a json y la mandamos al js con echo
-            echo  json_encode($obj_banco->consultar_banco());
+            echo  json_encode($obj_banco->realizar_consulta('consulta_especifica'));
             // igual hice para que retorne un arreglo, si sale vacio solo mandara un array con false
         }
 
@@ -64,7 +64,7 @@
             // ....
             
             //se ejecuta la funcion:
-            echo  json_encode($obj_banco->editar_banco());
+            echo  json_encode($obj_banco->realizar_consulta('modificar'));
             //igual puse para que siempre retorne un arreglo que dara true o false de acuerdo al resultado
         }
 
@@ -76,10 +76,10 @@
             $obj_banco->set_id_banco($id_banco);
 
             //se ejecuta la funcion:
-            echo  json_encode($obj_banco->eliminar_banco());
+            echo  json_encode($obj_banco->realizar_consulta('eliminar'));
             //igual puse para que siempre retorne un arreglo que dara true o false de acuerdo al resultado
         }elseif ($operacion == "ultimo_id"){
-            echo json_encode($obj_banco->lastId());
+            echo json_encode($obj_banco->realizar_consulta('lastId'));
         }
 
         exit;//es salida en ingles... No puede faltar
@@ -89,7 +89,7 @@
         $validar = $_POST["validar"]; //Esto es igual pero para las validaciones
         if ($validar == "numero_cuenta"){
             $obj_banco->set_numero_cuenta($_POST["numero_cuenta"]);
-            echo  json_encode($obj_banco->verificar_banco());
+            echo  json_encode($obj_banco->realizar_consulta('validar'));
         }
         
         exit;

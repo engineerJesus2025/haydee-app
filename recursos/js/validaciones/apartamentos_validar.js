@@ -8,6 +8,36 @@ $(document).ready(function(){
 		this,this.nextElementSibling,"Debe ingresar el número del apartamento");
 	});
 
+	/* 
+	Por si tocar cambiarlo
+
+	$("#nro_apartamento").on("keypress", function(e){
+		let tecla = String.fromCharCode(e.which || e.keyCode);
+		let valor = $(this).val();
+
+		// Permitir números siempre
+		if(/[0-9]/.test(tecla)){
+			return;
+		}
+
+		// Permitir guion solo si hay **exactamente 2 números antes** y aún no hay guion
+		if(tecla === '-' && /^[0-9]{2}$/.test(valor)){
+			return;
+		}
+
+		// Bloquear cualquier otra tecla
+		e.preventDefault();
+	});
+
+	$("#nro_apartamento").on("keyup", function(){
+		validarKeyUp(/^[0-9]{2}-[0-9]$/, 
+			this,
+			this.nextElementSibling,
+			"Formato válido: 10-1"
+		);
+	});
+	*/
+
 	$("#porcentaje_participacion").on("keypress",function(e){
 		validarKeyPress(/[0-9.]$/, e);
 	});
@@ -43,7 +73,7 @@ $(document).ready(function(){
 				title: "¿Estás seguro?",
 				text: `¿Está seguro que desea ${accion} este Apartamento?`,
 				showCancelButton: true,
-				confirmButtonText: accion,
+				confirmButtonText: "Sí, " + accion,
 				confirmButtonColor: "#1b8a40",
 				cancelButtonText: "Cancelar",
 				icon: "warning"

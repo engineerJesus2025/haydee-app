@@ -105,7 +105,7 @@ async function registrar() {
         await consultar();         
 
     } else {
-        mensajes("error", 4000, "Error", respuesta.mensaje || "No se pudo registrar la solicitud.");
+        mensajes("error", 4000, "Error", data.mensaje || "No se pudo registrar la solicitud.");
     }
 }
 
@@ -597,7 +597,7 @@ async function buscarPresupuesto() {
         infoPresupuesto.style.display = "flex";
         camposFormulario.style.display = "block";
     } else {
-        mensajes("error", 4000, "Presupuesto no encontrado", respuesta.mensaje || "No hay presupuesto para esa fecha.");
+        mensajes("error", 4000, "Presupuesto no encontrado", data.mensaje || "No hay presupuesto para esa fecha.");
         infoPresupuesto.style.display = "none";
         camposFormulario.style.display = "none";
         inputPresupuestoId.value = "";
@@ -655,7 +655,7 @@ async function consultarPresupuestoDisponible(presupuesto_id) {
     if (respuesta && respuesta.estatus) {
         return parseFloat(respuesta.disponible);
     } else {
-        mensajes("error", 4000, "Error", respuesta.mensaje || "No se pudo consultar el presupuesto.");
+        mensajes("error", 4000, "Error", data.mensaje || "No se pudo consultar el presupuesto.");
         return null; // Importante para saber si falló
     }
 }

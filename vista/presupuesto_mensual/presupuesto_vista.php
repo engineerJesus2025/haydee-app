@@ -9,7 +9,7 @@
     ?>
 </head>
 
-<body class="body-pd">
+<body id="body-pd" class="body-pd">
     <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Presupuesto::tiene_permiso(GESTIONAR_PRESUPUESTO, ELIMINAR) ?>">
     <input type="text" hidden="" id="permiso_editar" value="<?php echo Presupuesto::tiene_permiso(GESTIONAR_PRESUPUESTO, MODIFICAR) ?>">
     <div class="container-fluid">
@@ -28,7 +28,7 @@
 
                 <main class="col ps-md-2 pt-2 mb-5">
                     <div class="page-header pt-3">
-                        <h2>PRESUPUESTOS MENSUALES</h2>
+                        <h2>GESTIONAR PRESUPUESTOS MENSUALES</h2>
                     </div>
                     <p class="lead"></p>
                     <hr>
@@ -38,7 +38,7 @@
                             <div class="card p-4">
                                 <?php if (Presupuesto::tiene_permiso(GESTIONAR_PRESUPUESTO, REGISTRAR)) : ?>
                                     <div class="button mb-4">
-                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_presupuesto" id="boton_registrar">Registrar</button>
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_presupuesto" id="boton_registrar">Nuevo Presupuesto</button>
                                         <span class="text-success"></span>
                                     </div>
                                 <?php endif; ?>
@@ -57,7 +57,7 @@
                                     </tbody>
                                 </table>
                                 <div class="modal fade" id="modal_presupuesto" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
-                                    <div class="modal-dialog modal-lg">
+                                    <div class="modal-dialog modal-xl">
                                         <div class="modal-content">
                                             <div class="modal-header bg-primary text-white">
                                                 <h1 class="modal-title fs-5" id="titulo_modal">Registrar presupuesto mensual</h1>

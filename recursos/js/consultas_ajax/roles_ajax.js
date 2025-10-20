@@ -15,7 +15,7 @@ document.querySelector(`#modal_roles`).addEventListener("hide.bs.modal",()=>{
 	formulario_usar.reset();
 	boton_formulario.removeAttribute("modificar");
 	boton_formulario.removeAttribute("id_modificar");	
-	boton_formulario.textContent = "Registrar";
+	boton_formulario.textContent = "Guardar";
 	document.getElementById('titulo_modal').textContent = "Registrar Rol";	
 	formulario_usar.querySelectorAll("[class='w-100']").forEach(el=>el.textContent="");
 	input_permisos.forEach(input=>{
@@ -28,12 +28,33 @@ document.querySelector(`#modal_roles`).addEventListener("hide.bs.modal",()=>{
 	document.querySelectorAll('.is-invalid').forEach(input=>input.classList.remove('is-invalid'));
 });
 
-const resizeObserver = new ResizeObserver(entries => {
-	if (tabla_roles) {
-		tabla_roles.draw();
-	}
+document.getElementById('header-toggle').addEventListener("click",e=>{
+	setTimeout(function(){
+		tabla_roles.columns.adjust().draw();
+	},450);
 });
-resizeObserver.observe(document.querySelector("#tabla_roles"));
+
+document.querySelectorAll(".seleccionar_todo").forEach(checkbox=>{
+	checkbox.addEventListener("click",()=>{		
+		checkbox.closest("tr").querySelectorAll(".form-check-input").forEach(checkbox_permisos=>{
+			checkbox_permisos.checked = checkbox.checked;			
+		});
+	});
+});
+
+document.querySelectorAll("[name='permisos[]']").forEach(checkbox=>{
+	checkbox.addEventListener("click",e=>{
+		let alguno_inactivo = false;
+		checkbox.closest(".row").querySelectorAll("input").forEach(checkbox_permisos=>{			
+			if (!checkbox_permisos.checked) alguno_inactivo = true;
+		});
+		if (!alguno_inactivo) {
+			checkbox.closest("tr").querySelector(".seleccionar_todo").checked = true;
+		}else{
+			checkbox.closest("tr").querySelector(".seleccionar_todo").checked = false;
+		}
+	});
+});
 
 function envio(operacion) {	
 	if (operacion == "Editar") {
@@ -75,7 +96,7 @@ function crearBotones(id) {
 	boton_editar.setAttribute("data-bs-toggle", "modal");
 	boton_editar.setAttribute("data-bs-target", "#modal_roles");
 
-	boton_editar.setAttribute("title","Ver mas");
+	boton_editar.setAttribute("title","Editar");
 	boton_editar.setAttribute("value",id);
 
 	acciones.appendChild(boton_editar);
@@ -288,7 +309,7 @@ function eventoEliminar(e){
 		title: "¿Estás seguro?",
 		text: "¿Está seguro que desea eliminar este rol?",
 		showCancelButton: true,
-		confirmButtonText: "Eliminar",
+		confirmButtonText: "Si, Eliminar",
 		confirmButtonColor: "#e01d22",
 		cancelButtonText: "Cancelar",
 		icon: "warning"
@@ -362,7 +383,7 @@ async function modificar_formulario(e) {
 
 	boton_formulario.setAttribute("modificar",true);
 	boton_formulario.setAttribute("id_modificar",data.id_rol);
-	boton_formulario.textContent = "Modificar";
+	boton_formulario.textContent = "Guardar Cambios";
 	document.getElementById('titulo_modal').textContent = "Modificar Rol";
 	
 	nombre_anterior = nombre.value; 
@@ -397,7 +418,7 @@ async function modificar(id) {
 
 	boton_formulario.removeAttribute("modificar");
 	boton_formulario.removeAttribute("id_modificar");	
-	boton_formulario.textContent = "Registrar";
+	boton_formulario.textContent = "Guardar";
 
 	document.getElementById('titulo_modal').textContent = "Registrar Rol";
 

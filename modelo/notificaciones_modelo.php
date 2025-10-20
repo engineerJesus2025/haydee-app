@@ -143,6 +143,20 @@ class Notificaciones extends Conexion
                 } else {
                     return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar marcar esta notificacion"];
                 }
+            case 'marcar_todas_leidas':
+                $validaciones = $this->validarDatos('marcar_todas');
+                if(!($validaciones["estatus"])){return $validaciones;}
+
+                $respuesta = $this->marcar_todas_como_leidas();
+
+                $this->cambiar_db_negocio();
+
+                if ($respuesta) {
+                    return ["estatus" => true, "mensaje" => "OK"];
+                } 
+                else {
+                    return ["estatus" => false, "mensaje" => "Error al marcar las notificaciones"];
+                }
 
             default:
                 return ["estatus"=>false,"mensaje"=>"A ocurrido un error en la consulta"];
@@ -164,7 +178,7 @@ class Notificaciones extends Conexion
 
     private function consultar_notificaciones_usuario()
     {        
-        $sql = "SELECT id_notificacion, titulo, descripcion FROM notificaciones WHERE notificaciones.usuario_id = :usuario_id";
+        $sql = "SELECT id_notificacion, titulo, descripcion FROM notificaciones WHERE notificaciones.usuario_id = :usuario_id and notificaciones.activo = 0";
 
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":usuario_id", $this->usuario_id);
@@ -218,6 +232,18 @@ class Notificaciones extends Conexion
         return $result;
     }
 
+    private function marcar_todas_como_leidas()
+    {
+        // Actualiza todas las notificaciones pendientes (activo=0) del usuario a leídas (activo=1).
+        $sql = "UPDATE notificaciones SET activo = 1 WHERE usuario_id = :usuario_id AND activo = 0";
+
+        $conexion = $this->get_conex();
+        $stmt = $conexion->prepare($sql);
+        $stmt->bindParam(':usuario_id', $this->usuario_id);
+
+        return $stmt->execute();
+    }
+
     private function validarDatos($consulta = "registrar")
     {   
         if ($consulta == "editar") {
@@ -226,6 +252,16 @@ class Notificaciones extends Conexion
             }
             if (!($this->validarClaveForanea("notificaciones","id_notificacion",$this->id_notificacion))) {
                 return ["estatus"=>false,"mensaje"=>"El id de la notificacion seleccionada no existe"];
+            }
+            return ["estatus"=>true,"mensaje"=>"OK"];
+        }
+
+        if ($consulta == "marcar_todas") {
+            if (empty($this->usuario_id)){
+                return ["estatus"=>false,"mensaje"=>"El id del usuario se envio vacío"];
+            }
+            if (!($this->validarClaveForanea("usuarios","id_usuario",$this->usuario_id))) {
+                return ["estatus"=>false,"mensaje"=>"El id del usuario seleccionado no existe"];
             }
             return ["estatus"=>true,"mensaje"=>"OK"];
         }

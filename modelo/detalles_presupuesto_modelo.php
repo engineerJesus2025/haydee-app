@@ -92,7 +92,7 @@ class Detalles_presupuesto extends Conexion
                 if(!($validaciones["estatus"])){return $validaciones;}
 
                 $respuesta = $this->registrar();
-                if ($respuesta) {
+                if ($respuesta) {                    
                     return ["estatus"=>true,"mensaje"=>"OK"];
                 } else {
                     return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar este presupuesto"];
@@ -111,7 +111,7 @@ class Detalles_presupuesto extends Conexion
                     return ["estatus"=>true,"mensaje"=>"OK"];
                 } 
                 else {
-                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar eliminar este presepuesto"];
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar eliminar este presupuesto"];
                 }
             default:
                 return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error en la consulta"];
@@ -155,6 +155,9 @@ class Detalles_presupuesto extends Conexion
         $conexion->bindParam(":tipo_gasto_id", $this->tipo_gasto_id);
         $result = $conexion->execute();
 
+        $conexion = $this->get_conex();//otra conexion para buscar el ultimo id
+        $res = $conexion->lastInsertId();
+
         return $result;
     }
 
@@ -183,8 +186,7 @@ class Detalles_presupuesto extends Conexion
         }
         if (!(isset($this->monto_detalle) && isset($this->nombre_detalle) && isset($this->presupuesto_id) && isset($this->tipo_gasto_id))) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos no se recibieron correctamente","var"=>[$this->monto_detalle,$this->nombre_detalle,$this->presupuesto_id]];}
 
-
-        if (empty($this->monto_detalle) || empty($this->nombre_detalle) || empty($this->presupuesto_id) || empty($this->tipo_gasto_id)) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos estan vacios"];}
+        if (empty($this->nombre_detalle) || empty($this->presupuesto_id) || empty($this->tipo_gasto_id)) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos estan vacios"];}
 
         if(!(is_string($this->monto_detalle)) || !(preg_match("/^[0-9]{0,12}[,.]{0,1}[0-9]{0,2}$/",$this->monto_detalle))){
             return ["estatus"=>false,"mensaje"=>"El campo 'monto' de uno de los presupuestos no posee un valor valido"];

@@ -14,6 +14,8 @@ let ultimaPeticion = 0;
 let tiempoCarga;
 let modal_carga = new bootstrap.Modal("#modal_carga");
 
+let tasa_dolar = parseFloat(localStorage.getItem("tasa_dolar")).toFixed(2) || 1;
+
 //Eventos
 select_mes_asignar.addEventListener("change",e=>{
 	tabla_mensualidad_asignar.innerHTML = tabla_asignar_inicial;
@@ -29,6 +31,12 @@ boton_registrar.addEventListener('click',e=>{
 	}
 });
 
+document.getElementById('header-toggle').addEventListener("click",e=>{
+    setTimeout(function(){
+        tabla_mensualidades.columns.adjust().draw();
+    },450);
+});
+
 document.querySelector(`#modal_mensualidad`).addEventListener("hidden.bs.modal",()=>{	
 	tabla_mensualidad_asignar.innerHTML = tabla_asignar_inicial;
 
@@ -36,7 +44,7 @@ document.querySelector(`#modal_mensualidad`).addEventListener("hidden.bs.modal",
 	select_mes_asignar.parentElement.removeAttribute("hidden","");
 	select_mes_asignar.removeAttribute('disabled');
 
-	boton_formulario.textContent = "Guardar Mensualidad";
+	boton_formulario.textContent = "Guardar";
 	boton_formulario.setAttribute("op","Registrar");
 
 	document.getElementById('titulo_modal').textContent = "Registrar Mensualidad";
@@ -131,15 +139,16 @@ async function consultar_mensualidades() {
         },
 		{ 
 			"data": null, // No asignamos una clave específica aquí
-			"render": function (data, type, row) {
-                return `${row["monto"].toFixed(2)}Bs. / ${row["monto_dolar"].toFixed(2)}$`;
+			"render": function (data, type, row) {				
+                return `${row["monto"].toFixed(2)} Bs. / ${(row["monto"] / row["tasa_dolar"]).toFixed(2)} $`;
             }
         },
         { 
             "data": null, // No asignamos una clave específica aquí
             "render": function (data, type, row) {
-            	let pagado = (row["monto"] - row["pagado"] < 0)?'Deuda Cancelada':(row["monto"] - row["pagado"]).toFixed(2) + " Bs.";
-				let pagado_dolar = (row["monto_dolar"] - row["pagado_dolar"] < 0)?'':' / ' + (row["monto_dolar"] - row["pagado_dolar"]).toFixed(2) + '$';
+            	let deuda_cancelada = ((row.monto - row.pagado) < 0)?true:false;
+            	let pagado = (deuda_cancelada)?'Deuda Cancelada':(row.monto - row["pagado"]).toFixed(2) + " Bs.";
+				let pagado_dolar = (deuda_cancelada)?'':' / ' + ((row.monto - row["pagado"]) / row["tasa_dolar"]).toFixed(2) + ' $';
 
                 return `${pagado}${pagado_dolar}`;
             }
@@ -163,6 +172,8 @@ async function consultar_mensualidades() {
 
  		row.firstElementChild.id = `${data["mes"]}/${data["anio"]}`;
  		row.setAttribute("id",`fila-01/${data["mes"]}/${data["anio"]}`);
+ 		row.setAttribute("intereses",data["porcentaje_interes"]);
+ 		row.setAttribute("limite",data["limite_mensualidad"]);
 
  		row.querySelector(".vista_previa").addEventListener('click',llenarTablaMensualidadesApartamentos);
  		row.querySelector(".editar").addEventListener('click',prepararFormulario);
@@ -180,7 +191,19 @@ async function consultar_mensualidades() {
 
 			boton_cuadro_pagos.previousElementSibling.value = fecha_buscar;
 
-			boton_cuadro_pagos.closest('form').submit();			
+			Swal.fire({
+				title: "¿Estás seguro?",
+				text: "¿Está seguro que desea generar el cuadro de pagos de esta mensualidad?",
+				showCancelButton: true,
+				confirmButtonText: "Si, Generar",
+				confirmButtonColor: "#1b8a40",
+				cancelButtonText: "Cancelar",
+				icon: "warning"
+			}).then((resultado) => {
+				if (resultado.isConfirmed) {
+					boton_cuadro_pagos.closest('form').submit();
+				}
+			});			
 		});
  	}
 
@@ -406,6 +429,7 @@ async function llenarTablaNueva(fecha) {
 	fila_cabecera.appendChild(fragment);
 
 	let td_footer = document.createElement("td");
+	td_footer.setAttribute("class","text-end pe-0");
 	td_footer.textContent = 0;
 	let td_footer_2 = document.createElement("td");
 	td_footer_2.textContent = "Bs.";
@@ -470,8 +494,10 @@ async function llenarTablaEditar(boton_editar) {
 		});
 	});
 
+	document.getElementById("porcentaje_demora").value = boton_editar.closest("tr").getAttribute("intereses");
+	document.getElementById("dia_limite").value = boton_editar.closest("tr").getAttribute("limite");
 
-	boton_formulario.textContent = "Editar Mensualidad";
+	boton_formulario.textContent = "Guardar Cambios";
 	boton_formulario.setAttribute("op","Editar");
 	document.getElementById('titulo_modal').textContent = "Modificar Mensualidad";
 }
@@ -489,26 +515,27 @@ async function llenarTablaMensualidadesApartamentos(e){
  			"data": null, // No asignamos una clave específica aquí
             "render": function (data, type, row) {
                 return `Apartamento Nº ${row.nro_apartamento}`;
-            }  
+            }
         },
-		{ 
+		{
 			"data": null, // No asignamos una clave específica aquí
 			"render": function (data, type, row) {
                 return row.nombre + ' ' + row.apellido;
             }
         },
-        { 
+        {
             "data": null, // No asignamos una clave específica aquí
             "render": function (data, type, row) {
-                return `${row.monto.toFixed(2)} Bs. / ${row.monto_dolar.toFixed(2)}$`;
+                return `${row.monto.toFixed(2)} Bs. / ${(row.monto / row.tasa_dolar).toFixed(2)}$`;
             }
         },
-        { 
+        {
             "data": null, // No asignamos una clave específica aquí
-            "render": function (data, type, row) {            	
-               	let pagado = ((row.monto - row.pagado) < 0)?'Deuda Cancelada':(row.monto - row.pagado).toFixed(2) + " Bs.";
-				let pagado_dolar = ((row.monto_dolar - row.pagado_dolar) < 0)?'':' / ' + (row.monto_dolar - row.pagado_dolar).toFixed(2) + '$';
-                return `${pagado}${pagado_dolar}`;
+            "render": function (data, type, row) {
+            	let deuda_cancelada = ((row.monto - row.pagado) < 0)?true:false;
+               	let pagado = (deuda_cancelada)?'Deuda Cancelada':(row.monto - row.pagado).toFixed(2) + " Bs.";
+				let pagado_dolar = (deuda_cancelada)?'':' / ' + (row.monto / row.tasa_dolar).toFixed(2) + '$';
+                return `${pagado}${pagado_dolar}`;	
         	}
         } 		
  	]
@@ -538,7 +565,7 @@ function eventoEliminar(e){
 		title: "¿Estás seguro?",
 		text: "¿Está seguro que desea eliminar esta mensualidad?",
 		showCancelButton: true,
-		confirmButtonText: "Eliminar",
+		confirmButtonText: "Si, Eliminar",
 		confirmButtonColor: "#e01d22",
 		cancelButtonText: "Cancelar",
 		icon: "warning"
@@ -550,9 +577,10 @@ function eventoEliminar(e){
 }
 
 async function registrar_mensualidad() {
-	let filas_cuerpo = tabla_mensualidad_asignar.querySelectorAll("tbody tr");
+	let filas_cuerpo = tabla_mensualidad_asignar.querySelectorAll("tbody tr");	
 
-	let total_monto = 0, total_monto_dolar = 0;
+	let porcentaje_interes = document.getElementById("porcentaje_demora").value,
+	limite_mensualidad = document.getElementById("dia_limite").value;
 
 	let mes = parseInt(select_mes_asignar.selectedOptions[0].id.split("/")[1]);
 	let anio = parseInt(select_mes_asignar.selectedOptions[0].id.split("/")[2]);
@@ -561,8 +589,7 @@ async function registrar_mensualidad() {
 	for (const tr of filas_cuerpo){
 		let apartamento_id;
 
-		let monto = parseFloat(tr.lastElementChild.previousElementSibling.textContent);
-		let monto_dolar = (monto / (dolar.bcv)).toFixed(2);
+		let monto = parseFloat(tr.lastElementChild.previousElementSibling.textContent);		
 		
 		apartamento_id = tr.id;
 
@@ -571,10 +598,12 @@ async function registrar_mensualidad() {
 		datos_consulta.append("operacion","registrar_mensualidad");
 
 		datos_consulta.append("monto",monto);
-		datos_consulta.append("monto_dolar",monto_dolar);
+		datos_consulta.append("tasa_dolar",tasa_dolar);
 		datos_consulta.append("mes",mes);
 		datos_consulta.append("anio",anio);
 		datos_consulta.append("apartamento_id",apartamento_id);
+		datos_consulta.append("limite_mensualidad",limite_mensualidad);
+		datos_consulta.append("porcentaje_interes",porcentaje_interes);
 		
 		let respuesta = await query(datos_consulta);
 		
@@ -611,9 +640,6 @@ async function registrar_mensualidad() {
 
 		ids_mensualidades.push(id_mensualidad);
 		ids_apartamentos.push(apartamento_id);
-
-		total_monto += monto;
-		total_monto_dolar += monto_dolar;
 	}
 
 	modal.hide();
@@ -629,15 +655,17 @@ async function modificar() {
 	let filas_cuerpo = tabla_mensualidad_asignar.querySelectorAll("tbody tr");
 	
 	for (const tr of filas_cuerpo){		
-		let monto, monto_dolar, mes, anio, apartamento_id, id_mensualidad;
+		let monto, mes, anio, apartamento_id, id_mensualidad;
+
+		let porcentaje_interes = document.getElementById("porcentaje_demora").value,
+		limite_mensualidad = document.getElementById("dia_limite").value;
 
 		let fecha_buscar = tr.firstElementChild.id;
 
 		mes = parseInt(select_mes_asignar.selectedOptions[0].id.split("/")[1]);
 		anio = parseInt(select_mes_asignar.selectedOptions[0].id.split("/")[2]);
 
-		monto = parseFloat(tr.lastElementChild.previousElementSibling.textContent);
-		monto_dolar = monto / dolar.bcv;
+		monto = parseFloat(tr.lastElementChild.previousElementSibling.textContent);		
 		
 		apartamento_id = tr.id;
 		id_mensualidad = tr.lastElementChild.previousElementSibling.id;
@@ -647,11 +675,13 @@ async function modificar() {
 		datos_consulta.append("operacion","editar_mensualidad");
 
 		datos_consulta.append("monto",monto);
-		datos_consulta.append("monto_dolar",monto_dolar);
+		datos_consulta.append("tasa_dolar",tasa_dolar);
 		datos_consulta.append("mes",mes);
 		datos_consulta.append("anio",anio);
 		datos_consulta.append("apartamento_id",apartamento_id);
 		datos_consulta.append("id_mensualidad",id_mensualidad);
+		datos_consulta.append("limite_mensualidad",limite_mensualidad);
+		datos_consulta.append("porcentaje_interes",porcentaje_interes);
 
 		let respuesta = await query(datos_consulta);
 
@@ -842,13 +872,5 @@ function crearDataTable(id_tabla,estructura_filas,datos_paramentros, configuraci
 	});
 }
 
-const resizeObserver = new ResizeObserver(entries => {
-	if (tabla_mensualidades) {
-		tabla_mensualidades.draw();
-	}
-});
-resizeObserver.observe(document.querySelector(`#tabla_mensualidad`));
-
 consultar_mensualidades(); 
 verificarMes();
-api();

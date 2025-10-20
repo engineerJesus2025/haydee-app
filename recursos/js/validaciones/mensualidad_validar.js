@@ -24,7 +24,7 @@ boton_formulario.addEventListener("click",e=>{
 			title: "¿Estás seguro?",
 			text: `¿Está seguro que desea ${accion} esta Mensualidad?`,
 			showCancelButton: true,
-			confirmButtonText: accion,
+			confirmButtonText: "Si, " + accion,
 			confirmButtonColor: "#1b8a40",
 			cancelButtonText: "Cancelar",
 			icon: "warning"

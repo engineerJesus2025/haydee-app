@@ -9,7 +9,7 @@
     ?>
 </head>
 
-<body class="body-pd">
+<body id="body-pd" class="body-pd">
     <div class="container-fluid">
         <div class="row flex-nowrap ">
             <?php
@@ -20,10 +20,7 @@
                 <?php
                 require_once "vista/componentes/header.php";
                 ?>
-                <main class="col ps-md-2 pt-2">
-                    <div class="container-fluid justify-content-end">
-                        <a href="#" data-bs-target="#sidebar" data-bs-toggle="collapse" class="border rounded-3 p-1 text-decoration-none"><i class="bi bi-list bi-lg py-2 p-1"></i></a>
-                    </div>
+                <main class="col ps-md-2 pt-2">                    
                     <div class="page-header pt-3">
                         <h2>BITÁCORA</h2>
                     </div>

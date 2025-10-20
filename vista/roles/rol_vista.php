@@ -8,7 +8,7 @@
     require_once "vista/componentes/estilos.php";
     ?>
 </head>
-<body class="body-pd">
+<body id="body-pd" class="body-pd">
     <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Rol::tiene_permiso(GESTIONAR_ROLES, ELIMINAR) ?>">
     <input type="text" hidden="" id="permiso_editar" value="<?php echo Rol::tiene_permiso(GESTIONAR_ROLES, MODIFICAR) ?>">
     <div class="container-fluid">
@@ -26,7 +26,7 @@
                 <main class="col ps-md-2 pt-2">
 
                     <div class="page-header pt-3">
-                        <h2>ROLES</h2>
+                        <h2>GESTIONAR ROLES</h2>
                     </div>
                     <p class="lead"></p>
                     <hr>
@@ -36,7 +36,7 @@
                             <div class="card p-4">
                                 <?php if (Rol::tiene_permiso(GESTIONAR_ROLES, REGISTRAR)) : ?>
                                     <div class="button">
-                                        <button type="button" class="btn btn-primary mb-2" data-bs-toggle="modal" data-bs-target="#modal_roles">Registrar</a>
+                                        <button type="button" class="btn btn-primary mb-2" data-bs-toggle="modal" data-bs-target="#modal_roles">Nuevo Rol</a>
                                     </div><br>
                                 <?php endif; ?>
                                 <div class="table-responsive">

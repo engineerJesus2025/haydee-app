@@ -9,7 +9,7 @@
     ?>
 </head> 
 
-<body class="body-pd mb-5">
+<body id="body-pd" class="body-pd mb-5">
     <div class="container-fluid">
         <div class="row flex-nowrap ">
             <?php

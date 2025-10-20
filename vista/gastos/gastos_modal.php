@@ -149,9 +149,9 @@
                                 <span class="input-group-text"><i class="bi bi-card-text"></i></span>
                                 <textarea name="descripcion_detalle[]" class="form-control descripcion_detalle" rows="3"
                                     placeholder="Describa el detalle específico del pago..." required></textarea>
-                                <small class="form-text text-danger mensaje-validacion"
-                                    data-for="descripcion_detalle"></small>
                                 <span class="w-100"></span>
+                                <small class="form-text text-danger mensaje-validacion" data-for="descripcion_detalle"></small>
+
                             </div>
                         </div>
                         <div class="col-12 grupo_imagen">

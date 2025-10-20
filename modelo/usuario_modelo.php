@@ -12,6 +12,8 @@ class Usuario extends Conexion
     private $rol_id;
     private $token;
     private $duracion_token;
+    private $token_recuerdame;
+    private $duracion_token_recuerdame;
 
     public function __construct()
     {
@@ -97,8 +99,28 @@ class Usuario extends Conexion
     {
         return $this->duracion_token;
     }
+
+    public function set_token_recuerdame($token_recuerdame)
+    {
+        $this->token_recuerdame = $token_recuerdame;
+    }
+
+    public function get_token_recuerdame()
+    {
+        return $this->token_recuerdame;
+    }
+
+    public function set_duracion_token_recuerdame($duracion_token_recuerdame)
+    {
+        $this->duracion_token_recuerdame = $duracion_token_recuerdame;
+    }
+
+    public function get_duracion_token_recuerdame()
+    {
+        return $this->duracion_token_recuerdame;
+    }
     
-    public function realizar_consulta($accion,$prueba = false){
+    public function realizar_consulta($accion){
         $this->cambiar_db_seguridad();
         switch ($accion) {
             case 'validar_usuario':
@@ -109,11 +131,7 @@ class Usuario extends Conexion
                 if ($respuesta["resultado"]) {
                     if($respuesta["total_resultados"] != 1){
                         return ["estatus"=>false,"mensaje"=>"Usuario no encontrado"];
-                    }
-                    if (!$prueba) {
-                        $_SESSION["id_usuario"] = $respuesta["datos"]["id_usuario"];
-                        $this->registrar_bitacora(INICIAR_SESION,GESTIONAR_USUARIOS,"NINGUNO");
-                    }
+                    }                        
                     
                     return $respuesta["datos"];
                 } 
@@ -142,15 +160,23 @@ class Usuario extends Conexion
 
                 $this->cambiar_db_negocio();
 
-                if ($respuesta["resultado"]) {
-                    if($respuesta["total_resultados"] != 1){
-                        return ["estatus"=>false,"mensaje"=>"Token no encontrado"];
-                    }
-                    
+                if ($respuesta["resultado"]) {                    
                     return $respuesta["datos"];
                 } 
                 else {
                     return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+                }
+
+            case 'validar_token_recuerdame':
+                $respuesta = $this->validar_token_recuerdame();
+
+                $this->cambiar_db_negocio();
+
+                if ($respuesta["resultado"]) {                    
+                    return $respuesta["datos"];
+                } 
+                else {
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al tratar de validar el codigo para mantener sesion"];
                 }
 
             case 'consultar':
@@ -158,11 +184,7 @@ class Usuario extends Conexion
 
                 $this->cambiar_db_negocio();
 
-                if ($respuesta["resultado"]) {
-                    if (!$prueba) {
-                        $this->registrar_bitacora(CONSULTAR, GESTIONAR_USUARIOS, "TODOS LOS USUARIOS");
-                    }
-                    
+                if ($respuesta["resultado"]) {                        
                     return $respuesta["datos"];
                 } 
                 else {
@@ -197,19 +219,11 @@ class Usuario extends Conexion
                 $validaciones = $this->validarDatos();
                 if(!($validaciones["estatus"])){return $validaciones;}
         
-                $respuesta = $this->registrar();
+                $respuesta = $this->registrar();                
 
                 $this->cambiar_db_negocio();
 
-                if ($respuesta) {
-                    if (!$prueba) {
-                        $id_ultimo = $this->lastId();//obtenemos el ultimo id
-                        $this->set_id_usuario($id_ultimo["mensaje"]);
-                        $usuario_alterado = $this->consultar_usuario();//lo consultamos
-
-                        $this->registrar_bitacora(REGISTRAR, GESTIONAR_USUARIOS, $usuario_alterado["nombre_usuario"] . " (" . $usuario_alterado["nombre_rol"] . ")");
-                    }                    
-
+                if ($respuesta) {                        
                     return ["estatus"=>true,"mensaje"=>"OK"];
                 } 
                 else {
@@ -228,7 +242,22 @@ class Usuario extends Conexion
                     return ["estatus"=>true,"mensaje"=>"OK"];
                 } 
                 else {
-                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar el codigo de recuperación"];
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar el codigo de recuperación de contraseña"];
+                } 
+
+            case 'registrar_token_recuerdame':
+                $validaciones = $this->validarTokensRecuerdame();
+                if(!($validaciones["estatus"])){return $validaciones;}
+
+                $respuesta = $this->registrar_token_recuerdame();
+
+                $this->cambiar_db_negocio();
+
+                if ($respuesta) {
+                    return ["estatus"=>true,"mensaje"=>"OK"];
+                } 
+                else {
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar el codigo para mantener sesion"];
                 } 
 
             case 'editar_usuario':
@@ -240,11 +269,6 @@ class Usuario extends Conexion
                 $this->cambiar_db_negocio();
 
                 if ($respuesta) {
-                    if (!$prueba) {
-                        $usuario_alterado = $this->consultar_usuario();
-                        $this->registrar_bitacora(MODIFICAR, GESTIONAR_USUARIOS, $usuario_alterado["nombre_usuario"] . " (" . $usuario_alterado["nombre_rol"] . ")");
-                    }                    
-
                     return ["estatus"=>true,"mensaje"=>"OK"];
                 } 
                 else {
@@ -287,17 +311,11 @@ class Usuario extends Conexion
                 $validaciones = $this->validarDatos("eliminar");
                 if(!($validaciones["estatus"])){return $validaciones;}
 
-                $usuario_alterado = $this->consultar_usuario();
-
                 $respuesta = $this->eliminar_usuario();
 
                 $this->cambiar_db_negocio();
 
                 if ($respuesta) {
-                    if (!$prueba) {
-                        $this->registrar_bitacora(ELIMINAR, GESTIONAR_USUARIOS, $usuario_alterado["nombre_usuario"] . " (" . $usuario_alterado["nombre_rol"] . ")");
-                    }                
-
                     return ["estatus"=>true,"mensaje"=>"OK"];
                 } else {
                     return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar eliminar este Usuario"];
@@ -314,7 +332,21 @@ class Usuario extends Conexion
                 if ($respuesta) {
                     return ["estatus"=>true,"mensaje"=>"OK"];
                 } else {
-                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar eliminar este Usuario"];
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar eliminar este Token de autenticacion de contraseña"];
+                }
+
+            case 'eliminar_token_recuerdame':
+                $validaciones = $this->validarTokensRecuerdame('Eliminar');
+                if(!($validaciones["estatus"])){return $validaciones;}
+
+                $respuesta = $this->eliminar_token_recuerdame();
+                
+                $this->cambiar_db_negocio();
+
+                if ($respuesta) {
+                    return ["estatus"=>true,"mensaje"=>"OK"];
+                } else {
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar eliminar este codigo para mantener sesion"];
                 }
 
             case 'lastId':
@@ -369,10 +401,22 @@ class Usuario extends Conexion
         $conexion->bindParam(":token", $this->token);
 
         $result = $conexion->execute();
-        $datos = $conexion->fetch(PDO::FETCH_ASSOC);
-        $total_resultados = $conexion->rowCount();
+        $datos = $conexion->fetch(PDO::FETCH_ASSOC);        
 
-        return ["resultado"=>$result,"datos"=>$datos,"total_resultados"=>$total_resultados];
+        return ["resultado"=>$result,"datos"=>$datos];
+    }
+
+    private function validar_token_recuerdame()
+    {
+        $sql = "SELECT usuarios.id_usuario, usuarios.correo as correo, usuarios.nombre as nombre_usuario, roles.id_rol, roles.nombre as nombre_rol, usuarios.contrasenia, token_recuerdame, duracion_token_recuerdame FROM usuarios INNER JOIN roles ON usuarios.rol_id=roles.id_rol WHERE usuarios.correo = :correo";
+        $conexion = $this->get_conex()->prepare($sql);
+        
+        $conexion->bindParam(":correo", $this->correo);
+
+        $result = $conexion->execute();
+        $datos = $conexion->fetch(PDO::FETCH_ASSOC);        
+
+        return ["resultado"=>$result,"datos"=>$datos];
     }
 
     private function consultar()
@@ -389,7 +433,7 @@ class Usuario extends Conexion
 
     private function consultar_usuario()
     {
-        $sql = "SELECT id_usuario, apellido, usuarios.nombre as nombre_usuario, correo, roles.nombre as nombre_rol, contrasenia FROM usuarios INNER JOIN roles ON usuarios.rol_id=roles.id_rol WHERE id_usuario = :usuario";
+        $sql = "SELECT id_usuario, apellido, usuarios.nombre as nombre_usuario, correo, roles.nombre as nombre_rol, contrasenia, rol_id FROM usuarios INNER JOIN roles ON usuarios.rol_id=roles.id_rol WHERE id_usuario = :usuario";
 
         $conexion = $this->get_conex()->prepare($sql);
 
@@ -403,7 +447,28 @@ class Usuario extends Conexion
 
     private function consultar_perfil_usuario()
     {
-        $sql = "SELECT usuarios.nombre as nombre_usuario, apellido, correo, roles.nombre as nombre_rol, bitacora.fecha_hora as ultima_vez FROM usuarios INNER JOIN roles ON usuarios.rol_id=roles.id_rol INNER JOIN bitacora ON usuarios.id_usuario = bitacora.usuario_id WHERE id_usuario = :usuario && bitacora.accion = 'iniciar sesion' ORDER BY bitacora.fecha_hora DESC LIMIT 1 OFFSET 1";
+        $sql = "SELECT 
+                    usuarios.nombre as nombre_usuario, 
+                    apellido, 
+                    correo, 
+                    roles.nombre as nombre_rol,
+                    COALESCE(
+                        (SELECT bitacora.fecha_hora 
+                         FROM bitacora 
+                         WHERE bitacora.usuario_id = usuarios.id_usuario 
+                         AND bitacora.accion = 'iniciar sesion' 
+                         ORDER BY bitacora.fecha_hora DESC 
+                         LIMIT 1 OFFSET 1),
+                        (SELECT bitacora.fecha_hora 
+                         FROM bitacora 
+                         WHERE bitacora.usuario_id = usuarios.id_usuario 
+                         AND bitacora.accion = 'iniciar sesion' 
+                         ORDER BY bitacora.fecha_hora DESC 
+                         LIMIT 1)
+                    ) as ultima_vez
+                FROM usuarios 
+                INNER JOIN roles ON usuarios.rol_id = roles.id_rol 
+                WHERE usuarios.id_usuario = :usuario";
 
         $conexion = $this->get_conex()->prepare($sql);
 
@@ -438,6 +503,22 @@ class Usuario extends Conexion
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":token", $this->token);
         $conexion->bindParam(":duracion_token", $this->duracion_token);
+        $conexion->bindParam(":correo", $this->correo);        
+        $result = $conexion->execute();
+
+        return $result;
+    }
+
+    private function registrar_token_recuerdame()
+    {
+        $hashToken = password_hash($this->token_recuerdame, PASSWORD_DEFAULT);
+        $fechaExpiracion = date('Y-m-d H:i:s', $this->duracion_token_recuerdame);
+
+        $sql = "UPDATE usuarios SET token_recuerdame=:token, duracion_token_recuerdame=:duracion_token WHERE correo = :correo";
+
+        $conexion = $this->get_conex()->prepare($sql);
+        $conexion->bindParam(":token", $hashToken);
+        $conexion->bindParam(":duracion_token", $fechaExpiracion);
         $conexion->bindParam(":correo", $this->correo);        
         $result = $conexion->execute();
 
@@ -515,6 +596,17 @@ class Usuario extends Conexion
         $result = $conexion->execute();
         return $result;
     }
+
+    private function eliminar_token_recuerdame()
+    {
+        $sql = "UPDATE usuarios SET token_recuerdame=null, duracion_token_recuerdame=null WHERE correo=:correo";
+        
+        $conexion = $this->get_conex()->prepare($sql);
+        $conexion->bindParam(":correo", $this->correo);
+
+        $result = $conexion->execute();
+        return $result;
+    }
     
     private function lastId()
     {
@@ -524,6 +616,28 @@ class Usuario extends Conexion
         $datos = $conexion->fetch(PDO::FETCH_ASSOC);
 
         return ["resultado"=>$result,"datos"=>$datos];
+    }
+
+    public function verificarRecaptcha($respuestaRecaptcha) {
+        $url = 'https://www.google.com/recaptcha/api/siteverify';
+        
+        $datos = [
+            'secret' => CLAVE_SECRETA_RECAPTCHA,
+            'response' => $respuestaRecaptcha,
+            'remoteip' => $_SERVER['REMOTE_ADDR']
+        ];
+
+        $opciones = [
+            'http' => [
+                'header' => "Content-type: application/x-www-form-urlencoded\r\n",
+                'method' => 'POST',
+                'content' => http_build_query($datos)
+            ]
+        ];
+
+        $contexto = stream_context_create($opciones);
+        $resultado = file_get_contents($url, false, $contexto);
+        return json_decode($resultado, true);
     }
 
     private function validarDatos($consulta = "registrar",$perfil = false)
@@ -599,7 +713,7 @@ class Usuario extends Conexion
         if ($consulta == "Eliminar") {
             if (!(isset($this->token))){return ["estatus"=>false,"mensaje"=>"El token requerido no se recibio correctamente"];}
 
-            if (empty($this->token)) {return ["estatus"=>false,"mensaje"=>"El token requerido esta vacio"];}
+            if (empty($this->token)) {return ["estatus"=>false,"mensaje"=>"El tiempo del token requerido esta vacio"];}
 
             return ["estatus"=>true,"mensaje"=>"OK"];
         }
@@ -609,7 +723,39 @@ class Usuario extends Conexion
 
         if(!(is_string($this->correo)) || !(preg_match("/^[a-zA-Z0-9._+-]{3,35}@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/",$this->correo))){
             return ["estatus"=>false,"mensaje"=>"El campo 'correo' no posee un valor valido"];
-        }      
+        }
+
+        if (!($this->validarClaveForanea("usuarios","correo",$this->correo))) {
+            return ["estatus"=>false,"mensaje"=>"El correo seleccionado no existe"];
+        }
+        
+        return ["estatus"=>true,"mensaje"=>"OK"];
+    }
+
+    private function validarTokensRecuerdame($consulta = "Registrar")
+    {   
+        if ($consulta == "Eliminar") {
+            if (!(isset($this->correo))){return ["estatus"=>false,"mensaje"=>"El correo para eliminar el token no se recibio correctamente"];}
+
+            if (empty($this->correo)) {return ["estatus"=>false,"mensaje"=>"El correo para eliminar el token requerido esta vacío"];}
+
+            if(!(is_string($this->correo)) || !(preg_match("/^[a-zA-Z0-9._+-]{3,35}@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/",$this->correo))){
+                return ["estatus"=>false,"mensaje"=>"El campo 'correo' no posee un valor valido"];
+            }
+
+            return ["estatus"=>true,"mensaje"=>"OK"];
+        }
+        if (!(isset($this->token_recuerdame) && isset($this->duracion_token_recuerdame) && isset($this->correo))) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos no se recibieron correctamente"];}
+
+        if (empty($this->token_recuerdame) || empty($this->duracion_token_recuerdame) ||empty($this->correo)) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos estan vacios"];}
+
+        if(!(is_string($this->correo)) || !(preg_match("/^[a-zA-Z0-9._+-]{3,35}@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/",$this->correo))){
+            return ["estatus"=>false,"mensaje"=>"El campo 'correo' no posee un valor valido"];
+        }
+        
+        if (!($this->validarClaveForanea("usuarios","correo",$this->correo))) {
+            return ["estatus"=>false,"mensaje"=>"El correo seleccionado no existe"];
+        }  
         
         return ["estatus"=>true,"mensaje"=>"OK"];
     }

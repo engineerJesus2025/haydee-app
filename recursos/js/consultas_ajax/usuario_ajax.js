@@ -4,7 +4,13 @@ let permiso_eliminar = document.querySelector("#permiso_eliminar").value;
 let permiso_editar = document.querySelector("#permiso_editar").value;
 
 let boton_formulario = document.querySelector("#boton_formulario"); 
-let modal = new bootstrap.Modal("#modal_usuario"); 
+let modal = new bootstrap.Modal("#modal_usuario");
+let modal_carga = new bootstrap.Modal("#modal_carga");
+let peticionesActivas = 0;
+let ultimaPeticion = 0;
+let tiempoCarga;
+let tiempoInicio;
+
 let formulario_usar = document.querySelector(`#form_usuario`); 
 let tabla_usuarios;
 
@@ -13,8 +19,8 @@ consultar();
 document.querySelector(`#modal_usuario`).addEventListener("hide.bs.modal",()=>{
 	formulario_usar.reset();
 	boton_formulario.removeAttribute("modificar");
-	boton_formulario.removeAttribute("id_modificar");	
-	boton_formulario.textContent = "Registrar";
+	boton_formulario.removeAttribute("id_modificar");
+	boton_formulario.textContent = "Guardar";
 	document.getElementById('titulo_modal').textContent = "Registrar Usuario";		
 	
 	formulario_usar.querySelector("#confir_contra").parentElement.previousElementSibling.textContent = "Confirmar Contraseña";
@@ -58,12 +64,11 @@ document.querySelectorAll('.contra').forEach(boton=>{
 	});
 });
 
-const resizeObserver = new ResizeObserver(entries => {
-	if (tabla_usuarios) {
-		tabla_usuarios.draw();
-	}
+document.getElementById('header-toggle').addEventListener("click",e=>{
+	setTimeout(function(){
+		tabla_usuarios.columns.adjust().draw();
+	},450);
 });
-resizeObserver.observe(document.querySelector("#tabla_usuario"));
 
 function envio(operacion) {	
 	if (operacion == "Editar") {
@@ -76,6 +81,50 @@ function envio(operacion) {
 		mensajes('error',4000,'Atencion',
 		'Ha ocurrido un error durante la operacion, intentelo nuevamente')
 	}
+}
+
+function eventosCargaDataTable(id_tabla,modal){	
+	$('#'+id_tabla).on("preXhr.dt",function (e, settings, data) {
+		peticionesActivas++;
+
+		tiempoInicio = performance.now();
+
+		ultimaPeticion = tiempoInicio;
+
+		if (peticionesActivas === 1) {
+			tiempoCarga = setTimeout(()=>{
+				modal_carga.show();
+			}, 300);
+		}
+	});
+
+	$('#'+id_tabla).on("xhr.dt",function (e, settings, json, xhr) {
+		peticionesActivas--;
+
+		if (peticionesActivas === 0) {
+			const espera = 50;
+			setTimeout(()=>{
+				if (peticionesActivas === 0) {
+					clearTimeout(tiempoCarga);
+
+					const tiempoTranscurido = performance.now() - tiempoInicio;
+					const tiempoEsperaMin = 700;
+
+					if (tiempoTranscurido < tiempoEsperaMin) {
+						const restante = tiempoEsperaMin - tiempoTranscurido;
+						setTimeout(()=>{
+							if (performance.now() - ultimaPeticion >= restante) {
+								modal_carga.hide();
+							}
+						},restante);
+					}
+					else{
+						modal_carga.hide();
+					}
+				}
+			}, espera);
+		}
+    });
 }
 
 function crearDataTable(id_tabla,estructura_filas,datos_paramentros, configuraciones_post_creacion = ()=>{}){
@@ -190,6 +239,8 @@ function mensajes(icono,tiempo,titulo,mensaje){
 }
 
 async function consultar() {
+	eventosCargaDataTable('tabla_usuario',modal_carga);
+
 	const paramentros_consulta = (data)=>{data.operacion = 'consulta';}
 	const estructura_tabla_usuarios = [
  		{
@@ -231,7 +282,7 @@ async function consultar() {
  		Array.from(row.children).map(td=>td.setAttribute("class",'align-middle'));
  		 		
 		row.setAttribute("id",`fila-${data.id_usuario}`); 		
- 		row.querySelector(".editar")?.addEventListener('click',modificar_formulario);
+ 		row.querySelector(".editar")?.addEventListener('click',preparar_formulario);
  		row.querySelector(".eliminar")?.addEventListener('click',eventoEliminar);
  	}
 
@@ -271,7 +322,7 @@ async function registrar() {
 	mensajes('success',4000,'Atencion','El registro se ha realizado exitosamente');
 }
 
-async function modificar_formulario(e) {
+async function preparar_formulario(e) {
 	datos_consulta = new FormData();
 		
 	let id = e.target.value;
@@ -301,7 +352,7 @@ async function modificar_formulario(e) {
 	
 	boton_formulario.setAttribute("modificar",true);
 	boton_formulario.setAttribute("id_modificar",data.id_usuario);
-	boton_formulario.textContent = "Modificar";
+	boton_formulario.textContent = "Guardar Cambios";
 	document.getElementById('titulo_modal').textContent = "Modificar Usuario";
 	formulario_usar.querySelector("#confir_contra").parentElement.previousElementSibling.textContent = "Nueva Contraseña" 
 	formulario_usar.querySelector("#confir_contra").placeholder = "Escriba su Nueva Contraseña" 
@@ -343,7 +394,7 @@ async function modificar(id) {
 
 	boton_formulario.removeAttribute("modificar");
 	boton_formulario.removeAttribute("id_modificar");	
-	boton_formulario.textContent = "Registrar";
+	boton_formulario.textContent = "Guardar";
 
 	document.getElementById('titulo_modal').textContent = "Registrar Usuario";
 
@@ -360,9 +411,9 @@ function eventoEliminar(e){
 
 	Swal.fire({
 		title: "¿Estás seguro?",
-		text: "¿Está seguro que desea eliminar este presupuesto?",
+		text: "¿Está seguro que desea eliminar este Usuario?",
 		showCancelButton: true,
-		confirmButtonText: "Eliminar",
+		confirmButtonText: "Si, Eliminar",
 		confirmButtonColor: "#e01d22",
 		cancelButtonText: "Cancelar",
 		icon: "warning"
@@ -393,8 +444,6 @@ async function eliminar(id) {
 }
 
 async function query(datos) {
-	let modal_carga = new bootstrap.Modal("#modal_carga");
-
 	let tiempoCarga = setTimeout(()=>{
 		modal_carga.show();
 	}, 100);

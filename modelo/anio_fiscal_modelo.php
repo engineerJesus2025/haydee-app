@@ -65,15 +65,12 @@ class Anio_fiscal extends Conexion
         return $this->descripcion;
     }
 
-    public function realizar_consulta($accion,$prueba = false){
+    public function realizar_consulta($accion){
         switch ($accion) {
             case 'consultar':
                 $respuesta = $this->consultar();
 
-                if ($respuesta["resultado"]) {
-                    if (!$prueba) {
-                        $this->registrar_bitacora(CONSULTAR, GESTIONAR_ANIO_FISCAL, "TODOS LOS AÑOS FISCALES");
-                    }                
+                if ($respuesta["resultado"]) {                        
                     return $respuesta["datos"];
                 } 
                 else {
@@ -96,10 +93,7 @@ class Anio_fiscal extends Conexion
 
                 $respuesta = $this->registrar();
 
-                if ($respuesta) {
-                    if (!$prueba) {
-                        $this->registrar_bitacora(REGISTRAR, GESTIONAR_ANIO_FISCAL, $this->fecha_inicio . " - " . $this->estado);
-                    }
+                if ($respuesta) {                        
                     return ["estatus"=>true,"mensaje"=>"OK"];
                 } 
                 else {
@@ -112,11 +106,7 @@ class Anio_fiscal extends Conexion
 
                 $respuesta = $this->editar();
 
-                if ($respuesta) {
-                    if (!$prueba) {
-                        $this->registrar_bitacora(MODIFICAR, GESTIONAR_ANIO_FISCAL, $this->fecha_inicio . " - " . $this->estado);//registramos en la bitacora
-                    }                    
-
+                if ($respuesta) {                        
                     return ["estatus"=>true,"mensaje"=>"OK"];
                 } 
                 else {
@@ -125,17 +115,11 @@ class Anio_fiscal extends Conexion
 
             case 'eliminar':
                 $validaciones = $this->validarDatos("eliminar");
-                if(!($validaciones["estatus"])){return $validaciones;}
-
-                $anio_alterado = $this->consultar_anio_fiscal();
+                if(!($validaciones["estatus"])){return $validaciones;}                
 
                 $respuesta = $this->eliminar();
 
                 if ($respuesta) {
-                    if (!$prueba) {
-                        $this->registrar_bitacora(ELIMINAR, GESTIONAR_ANIO_FISCAL, $anio_alterado["fecha_inicio"] . " - " . $anio_alterado["estado"]);
-                    }
-                    
                     return ["estatus"=>true,"mensaje"=>"OK"];
                 } 
                 else {
@@ -238,7 +222,7 @@ class Anio_fiscal extends Conexion
     }
         
     private function validarDatos($consulta = "registrar")
-    {   
+    {
         if ($consulta == "editar" || $consulta == "eliminar") {
             if (!(isset($this->id_anio_fiscal))) {return ["estatus"=>false,"mensaje"=>"El id del Año Fiscal requerido no se recibio correctamente"];}
 

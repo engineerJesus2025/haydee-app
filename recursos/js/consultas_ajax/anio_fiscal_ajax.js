@@ -12,7 +12,7 @@ document.querySelector(`#modal_anio_fiscal`).addEventListener("hidden.bs.modal",
 	formulario_usar.reset();
 	boton_formulario.removeAttribute("modificar");
 	boton_formulario.removeAttribute("id_modificar");	
-	boton_formulario.textContent = "Registrar";
+	boton_formulario.textContent = "Guardar";
 	document.getElementById('titulo_modal').textContent = "Registrar Año Fiscal";	
 	formulario_usar.querySelectorAll("[class='w-100']").forEach(el=>el.textContent="");
 	formulario_usar.querySelector("#fecha_cierre").setAttribute("disabled","");
@@ -22,12 +22,11 @@ document.querySelector(`#modal_anio_fiscal`).addEventListener("hidden.bs.modal",
 	document.querySelectorAll('.is-invalid').forEach(input=>input.classList.remove('is-invalid'));
 });
 
-const resizeObserver = new ResizeObserver(entries => {
-	if (tabla_anio_fiscal) {
-		tabla_anio_fiscal.draw();
-	}
+document.getElementById('header-toggle').addEventListener("click",e=>{
+	setTimeout(function(){
+		tabla_anio_fiscal.columns.adjust().draw();
+	},450);
 });
-resizeObserver.observe(document.querySelector("#tabla_anio_fiscal"));
 
 function envio(operacion) {	
 	if (operacion == "Editar") {
@@ -178,6 +177,18 @@ function eventosCargaDataTable(id_tabla,modal){
     });
 }
 
+function formatearFecha(fecha) {
+    if (!fecha) {
+        return "Aún sin Cerrar";
+    }
+
+    const partes = fecha.split("-");
+    if (partes.length === 3) {
+        return `${partes[2]}-${partes[1]}-${partes[0]}`; // DD-MM-AAAA
+    }
+    return fecha;
+}
+
 async function consultar() {
 	eventosCargaDataTable('tabla_anio_fiscal',modal_carga);
 
@@ -185,20 +196,23 @@ async function consultar() {
 	const estructura_tabla_anio_fiscal = [
  		{
  			"data": null,
-            "render": function (data, type, row) {            	
-                return `${row.estado}`;
-            }  
+            "render": function (data, type, row) {
+            	let spam = document.createElement("span");
+                spam.setAttribute("class",row.estado == "Cerrada"?"badge bg-secondary":"badge bg-primary");
+                spam.textContent = row.estado;
+            	return `${spam.outerHTML}`;                
+            }
         },
 		{ 
 			"data": null, 
 			"render": function (data, type, row) {                
-                return `${row["fecha_inicio"]}`;
+                return `${formatearFecha(row["fecha_inicio"])}`;
             }
         },
         { 
             "data": null, 
             "render": function (data, type, row) {
-            	return `${row["fecha_cierre"] || "Aun sin Cerrar"}`;
+            	return `${row.estado == "Cerrada"?formatearFecha(row["fecha_cierre"]):"Aún sin cerrar"}`;
             }
         },
 		{ 
@@ -268,7 +282,7 @@ function eventoEliminar(e){
 		title: "¿Estás seguro?",
 		text: "¿Está seguro que desea eliminar este presupuesto?",
 		showCancelButton: true,
-		confirmButtonText: "Eliminar",
+		confirmButtonText: "Si, Eliminar",
 		confirmButtonColor: "#e01d22",
 		cancelButtonText: "Cancelar",
 		icon: "warning"
@@ -338,7 +352,7 @@ async function modificar_formulario(e) {
 	// aqui cambiamos los datos del boton para registrar, para saber que ahora se va es a modificar un registro
 	boton_formulario.setAttribute("modificar",true);
 	boton_formulario.setAttribute("id_modificar",anio_fiscal.id_anio_fiscal);
-	boton_formulario.textContent = "Modificar";
+	boton_formulario.textContent = "Guardar Cambios";
 	document.getElementById('titulo_modal').textContent = "Modificar Año Fiscal";
 	formulario_usar.querySelector("#fecha_cierre").removeAttribute("disabled");
 	formulario_usar.querySelector("#estado").removeAttribute("disabled");
@@ -374,7 +388,7 @@ async function modificar(id) {
 
 	boton_formulario.removeAttribute("modificar");
 	boton_formulario.removeAttribute("id_modificar");	
-	boton_formulario.textContent = "Registrar";
+	boton_formulario.textContent = "Guardar";
 
 	document.getElementById('titulo_modal').textContent = "Registrar Año Fiscal";
 

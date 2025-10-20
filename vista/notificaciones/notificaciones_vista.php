@@ -9,7 +9,7 @@
     ?>
 </head>
 
-<body class="body-pd">
+<body id="body-pd" class="body-pd">
     <div class="container-fluid">
         <div class="row flex-nowrap ">
             <?php
@@ -41,15 +41,6 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <!-- <?php foreach ($registros as $registro): ?>
-                                            <tr>
-                                                <td><?php echo $registro["nombre"] ?></td>
-                                                <td><?php echo $registro["titulo"] ?></td>
-                                                <td><?php echo $registro["descripcion"] ?></td>
-                                                <td><?php echo $registro["fecha"] ?></td>
-                                                <td><?php echo ($registro["activo"] == 1) ? "SI" : "NO"; ?></td>
-                                            </tr>
-                                        <?php endforeach; ?> -->
                                     </tbody>
                                 </table>
                             </div>

@@ -215,6 +215,46 @@ class NotificacionesTest extends TestCase
         $this->assertFalse($resultado["estatus"]);
         $this->assertStringContainsString("El id de la notificacion se envio vacío", $resultado["mensaje"]);
     }
+
+    //Metodo marcar_todas_como_leidas
+    public function testMarcarTodasDatosCorrectos(){
+        $this->notificaciones->set_usuario_id(5);
+
+        $resultado = $this->notificaciones->realizar_consulta('marcar_todas_como_leidas');
+        
+        $this->assertIsArray($resultado);
+        $this->assertNotEmpty($resultado);
+        $this->assertCount(2, $resultado);
+        
+        $this->assertTrue($resultado["estatus"]);
+        $this->assertStringContainsString('OK', $resultado["mensaje"]);
+    }
+
+    public function testMarcarTodasIDIncorrecto(){
+        $this->notificaciones->set_usuario_id(8212319);
+
+        $resultado = $this->notificaciones->realizar_consulta('marcar_todas_como_leidas');
+        
+        $this->assertIsArray($resultado);
+        $this->assertNotEmpty($resultado);
+        $this->assertCount(2, $resultado);
+        
+        $this->assertFalse($resultado["estatus"]);
+        $this->assertStringContainsString("El id del usuario seleccionado no existe", $resultado["mensaje"]);
+    }
+
+    public function testMarcarTodasIDVacios(){
+        $this->notificaciones->set_usuario_id('');        
+
+        $resultado = $this->notificaciones->realizar_consulta('marcar_todas_como_leidas');
+        
+        $this->assertIsArray($resultado);
+        $this->assertNotEmpty($resultado);
+        $this->assertCount(2, $resultado);
+        
+        $this->assertFalse($resultado["estatus"]);
+        $this->assertStringContainsString("El id del usuario se envio vacío", $resultado["mensaje"]);
+    }
 }
 
 ?>

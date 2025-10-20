@@ -9,7 +9,7 @@
     ?>
 </head>
 
-<body class="body-pd">
+<body id="body-pd" class="body-pd">
     <div class="container-fluid">
         <div class="row flex-nowrap ">
             <?php
@@ -79,7 +79,7 @@
                             <div class="card mb-3 shadow" title="Click para ver opciones para el cuadro de gastos">
                                 <button type="button" class="btn text-decoration-none text-black" data-bs-toggle="modal"
                                     data-bs-target="#modal_gastos_mensual">
-                                    <div class="card-header text-center bg-white border-bottom-0 p-0">
+                                    <div class="card-header text-center bg-white border-bottom-0">
                                         <i class="bi bi-receipt-cutoff" style="font-size: 5rem !important;"></i>
                                     </div>
                                     <div class="card-body text-center p-0 mb-3">

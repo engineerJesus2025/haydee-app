@@ -54,15 +54,12 @@ class Presupuesto extends Conexion
         return $this->observacion;
     }
 
-    public function realizar_consulta($accion,$prueba = false){
+    public function realizar_consulta($accion){
         switch ($accion) {
-            case 'consultar':                
+            case 'consultar':
                 $respuesta = $this->consultar();
 
-                if ($respuesta["resultado"]) {
-                    if (!$prueba) {
-                        $this->registrar_bitacora(CONSULTAR, GESTIONAR_PRESUPUESTO, "TODOS LOS PRESUPUESTOS");
-                    }                
+                if ($respuesta["resultado"]) {                        
                     return $respuesta["datos"];
                 } 
                 else {
@@ -77,6 +74,7 @@ class Presupuesto extends Conexion
                 else {
                     return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
                 }
+
             case 'consultar_presupuesto':
                 $respuesta = $this->consultar_presupuesto();
                 if ($respuesta["resultado"]) {
@@ -101,10 +99,7 @@ class Presupuesto extends Conexion
 
                 $respuesta = $this->registrar();
 
-                if ($respuesta) {
-                    if (!$prueba) {
-                        $this->registrar_bitacora(REGISTRAR, GESTIONAR_PRESUPUESTO, "Presupuesto del " . $this->fecha);
-                    }
+                if ($respuesta) {                    
                     return ["estatus"=>true,"mensaje"=>"OK"];
                 } 
                 else {
@@ -118,10 +113,6 @@ class Presupuesto extends Conexion
                 $respuesta = $this->editar();
 
                 if ($respuesta) {
-                    if (!$prueba) {
-                        $this->registrar_bitacora(MODIFICAR, GESTIONAR_PRESUPUESTO, "Presupuesto del " . $this->fecha);
-                    }                    
-
                     return ["estatus"=>true,"mensaje"=>"OK"];
                 } 
                 else {
@@ -131,15 +122,10 @@ class Presupuesto extends Conexion
             case 'eliminar':
                 $validaciones = $this->validarDatos("eliminar");
                 if(!($validaciones["estatus"])){return $validaciones;}
-
-                $presupuesto_eliminado = $this->consultar_presupuesto();
-
+                
                 $respuesta = $this->eliminar();
-                if ($respuesta) {
-                    if (!$prueba) {
-                        $this->registrar_bitacora(ELIMINAR, GESTIONAR_PRESUPUESTO, "Presupuesto del " . $presupuesto_eliminado["fecha"]);
-                    }
-                    
+                
+                if ($respuesta) {                    
                     return ["estatus"=>true,"mensaje"=>"OK"];
                 } 
                 else {

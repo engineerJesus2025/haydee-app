@@ -5,3 +5,4 @@ body{
 .img_svg {
   filter: invert(30%) sepia(10%) saturate(200%) hue-rotate(-21deg) brightness(1000%) contrast(200%);
 }
+

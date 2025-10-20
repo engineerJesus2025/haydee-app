@@ -67,7 +67,7 @@
     </style>
 </head>
 
-<body class="body-pd">
+<body id="body-pd" class="body-pd">
     <input type="hidden" id="id_usuario" value="<?php echo $usuario["id_usuario"] ?>">
     <div class="container-fluid">
         <div class="row flex-nowrap ">
@@ -109,19 +109,21 @@
                                 <div class="card-header bg-primary text-white">
                                     <div class="d-flex align-items-center">
                                         <div class="mx-1" id="titulo_icono">
-                                            <div class="spinner-border text-light me-3 my-auto" role="status" style="width: 3rem; height: 3rem; z-index: 1000">
-                                                <span class="visually-hidden">Loading...</span>
+                                            <div class="card-text placeholder-glow my-3" style="width: 4rem;">
+                                                <span class="placeholder w-100 rounded" style="height: 4rem"></span>
                                             </div>
                                         </div>
-                                        <div>
-                                            <h4 class="mb-1" id="titulo_nombre">
-                                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                                <span class="visually-hidden">Loading...</span>
+                                        <div class="flex-grow-1">
+                                            <h4 class="mb-1" id="titulo_nombre">    
+                                                <div class="card-title placeholder-glow">
+                                                  <span class="placeholder placeholder-lg w-100 rounded"></span>
+                                                </div>
                                             </h4>
-                                            <p class="text-white" id="titulo_rol">
-                                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                                <span class="visually-hidden">Loading...</span>
-                                            </p>
+                                            <div class="text-white" id="titulo_rol">
+                                                <div class="card-text placeholder-glow">
+                                                    <span class="placeholder w-100 rounded"></span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -134,23 +136,24 @@
                                                     <i class="bi bi-person text-primary me-2"></i>
                                                     <small class="text-muted text-uppercase fw-bold">Nombre</small>
                                                 </div>
-                                                <p class="mb-0 fs-5" id="p_nombre">
-                                                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                                    <span class="visually-hidden">Loading...</span>
-                                                </p>
+                                                <div class="mb-0 fs-5" id="p_nombre">
+                                                    <div class="card-title placeholder-glow">
+                                                        <span class="placeholder placeholder-lg w-100 rounded bg-dark"></span>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-
                                         <div class="col-md-6">
                                             <div class="border rounded p-3 h-100">
                                                 <div class="d-flex align-items-center mb-2">
                                                     <i class="bi bi-person text-primary me-2"></i>
                                                     <small class="text-muted text-uppercase fw-bold">Apellido</small>
                                                 </div>
-                                                <p class="mb-0 fs-5" id="p_apellido">
-                                                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                                    <span class="visually-hidden">Loading...</span>
-                                                </p>
+                                                <div class="mb-0 fs-5" id="p_apellido">
+                                                    <div class="card-title placeholder-glow">
+                                                        <span class="placeholder placeholder-lg w-100 rounded"></span>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
 
@@ -160,10 +163,11 @@
                                                     <i class="bi bi-envelope text-primary me-2"></i>
                                                     <small class="text-muted text-uppercase fw-bold">Correo Electrónico</small>
                                                 </div>
-                                                <p class="mb-0 fs-5" id="p_correo">
-                                                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                                    <span class="visually-hidden">Loading...</span>
-                                                </p>
+                                                <div class="mb-0 fs-5" id="p_correo">
+                                                    <div class="card-title placeholder-glow">
+                                                        <span class="placeholder placeholder-lg w-100 rounded"></span>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
 
@@ -174,8 +178,9 @@
                                                     <small class="text-muted text-uppercase fw-bold">Rol en el Condominio</small>
                                                 </div>
                                                 <span id="spam_rol">
-                                                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                                    <span class="visually-hidden">Loading...</span>
+                                                    <div class="card-title placeholder-glow">
+                                                        <span class="placeholder placeholder-lg w-100 rounded"></span>
+                                                    </div>
                                                 </span>
                                             </div>
                                         </div>
@@ -245,8 +250,9 @@
                                                 <span class="fw-bold">Último acceso:</span>
                                             </div>
                                             <span class="text-muted" id="ultimo_acceso">
-                                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                                <span class="visually-hidden">Loading...</span>
+                                                <div class="card-title placeholder-glow">
+                                                    <span class="placeholder placeholder-lg w-100 rounded"></span>
+                                                </div>
                                             </span>
                                         </div>
                                     </div>

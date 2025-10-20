@@ -57,7 +57,7 @@ $(document).ready(function(){
 				title: "¿Estás seguro?",
 				text: `¿Está seguro que desea ${accion} a este Habitante?`,
 				showCancelButton: true,
-				confirmButtonText: accion,
+				confirmButtonText: "Sí, "+accion,
 				confirmButtonColor: "#1b8a40",
 				cancelButtonText: "Cancelar",
 				icon: "warning"
@@ -99,6 +99,15 @@ $(document).ready(function(){
 			datos.append('cedula',$(this).val());
 			verificar_duplicados_habitantes(datos);
         }		
+	})
+
+	$("#tipo_vinculo").on("change",function(e){
+		if (this.value == tipo_vinculo_an) {return;}
+		let datos = new FormData();
+		datos.append('validar','tipo_vinculo');
+		datos.append('tipo_vinculo',$(this).val());
+		datos.append('apartamento_id',$("#apartamento_id").val());
+		verificar_duplicados_habitantes(datos);
 	})
 
 });	//Fin de AJAX
@@ -208,10 +217,23 @@ async function validarEnvio_habitantes(accion = "Registrar"){
 		datos = new FormData(); 
 		datos.append('validar','cedula');
 		datos.append('cedula',$("#cedula").val());
-		res = await verificar_duplicados(datos);
-		// revisamos si esta duplicado con otro usuario
+		res = await verificar_duplicados_habitantes(datos);
+		// revisamos si esta duplicado con otra cedula
 		if(res){
 			mensajes('error',4000,'Esta cedula ya esta registrada','Esta cedula esta registrada, debe ingresar otra.');
+			return false;
+		}
+	}
+	
+	if(tipo_vinculo_an != $("#tipo_vinculo").val()){
+		datos = new FormData(); 
+		datos.append('validar','tipo_vinculo');
+		datos.append('tipo_vinculo',$("#tipo_vinculo").val());
+		datos.append('apartamento_id',$("#apartamento_id").val());
+		res = await verificar_duplicados_habitantes(datos);
+		// revisamos si hay un propietario ya registrado
+		if(res){
+			mensajes('error',4000,'Ya existe un propietario registrado para este apartamento','Solo puede haber un propietario por apartamento.');
 			return false;
 		}
 	}

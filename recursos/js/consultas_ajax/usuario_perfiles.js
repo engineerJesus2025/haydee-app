@@ -1,5 +1,5 @@
 let correo_an;
-let modal = new bootstrap.Modal("#modal_contra");
+
 let formulario_usar = document.querySelector(`#modal_contra`); 
 //Eventos:
 document.querySelector(`#modal_contra`).addEventListener("hide.bs.modal",()=>{
@@ -70,7 +70,7 @@ async function llenarCardUsuario(){
 	datos_consulta.append('operacion','consultar_perfil_usuario');
 
 	let usuario = await query(datos_consulta);
-
+	
 	let [clases_badge_rol,clases_icono_rol] = definirColorBadge(usuario.nombre_rol);
 
 	document.getElementById("titulo_nombre").textContent = `${usuario.nombre_usuario} ${usuario.apellido}`
@@ -119,9 +119,13 @@ function definirColorBadge(nombre_rol){
 }
 
 function formatearUltimoAcceso(fecha) {
+	const ahora = new Date();
+	if(!fecha){
+		return ahora.toLocaleDateString('es-ES');
+	}
     const fechaISO = fecha.replace(" ", "T");
     const fechaAcceso = new Date(fechaISO);
-    const ahora = new Date();
+    
 
     const diffMs = ahora - fechaAcceso;
     const diffDias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
@@ -205,40 +209,14 @@ async function modificarContra() {
 
 
 async function query(datos) {	
-	let modal_carga = new bootstrap.Modal("#modal_carga");
-	let mostrarModal = false;
-    let tiempoCarga;
-
-	tiempoCarga = setTimeout(()=>{
-		mostrarModal = true;
-		modal_carga.show();
-	}, 200);
-	
 	try{
-		const tiempoInicio = performance.now();
-
 		const res = await fetch("", { method: "POST", body: datos });
     	const data = await res.json();
-
-		const tiempoTranscurido = performance.now() - tiempoInicio;
-		const tiempoEsperaMin = 700;
-		
-		if (mostrarModal && tiempoTranscurido < tiempoEsperaMin) {
-			
-			const restante = tiempoEsperaMin - tiempoTranscurido;
-			await new Promise(resolve => setTimeout(resolve,restante));
-		}
 
 		return data;
 	}
 	catch(error){
 		return {estatus:false,mensaje:"A ocurrido un error durante la consulta",error}
-	}
-	finally{
-		clearTimeout(tiempoCarga);
-		if (mostrarModal) {
-			modal_carga.hide();
-		}
 	}
 }
 

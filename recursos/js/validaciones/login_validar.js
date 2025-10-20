@@ -1,3 +1,8 @@
+let peticionesActivas = 0;
+let ultimaPeticion = 0;
+let tiempoCarga;
+let modal_carga = new bootstrap.Modal("#modal_carga");
+
 let recuperacion_contrasenia = {
 	enviada: false,
 	tiempo: null
@@ -23,18 +28,25 @@ document.getElementById('enviar').addEventListener("click",async e=>{
 	if(await validarEnvio()==true){
 		let datos_consulta = new FormData();
 
-		let usuario = document.getElementById('correo_login').value;
-		let contra = document.getElementById('contra').value;
+		let usuario = document.getElementById('correo_login').value,
+		contra = document.getElementById('contra').value,
+		mantener_sesion = document.getElementById('checkbox_mantener_sesion').checked,
+		reCAPTCHA = document.getElementById('g-recaptcha-response').value;
 
 		datos_consulta.append("usuario",usuario);
 		datos_consulta.append("contra",contra);
+		datos_consulta.append("mantener_sesion",mantener_sesion);
+		datos_consulta.append("g-recaptcha-response",reCAPTCHA);
 		datos_consulta.append("operacion","entrar");
 
 		let resultado = await query(datos_consulta);
 		
 		if (resultado.estatus) {
-			window.location = "?pagina=inicio_controlador.php&accion=inicio"
-		}else if (resultado.estatus == false){
+			await obtenerTasaDolar();
+
+			window.location = "?pagina=inicio_controlador.php&accion=inicio";
+		}
+		else if (resultado.estatus == false){
 			mensajes('error',4000,resultado.mensaje,
 		'Intenta nuevamente');
 		}
@@ -89,6 +101,7 @@ function mensajes(icono,tiempo,titulo,mensaje){
 }
 
 function validarEnvio(){
+
 	if(validarKeyUp(
         /^[-A-Za-z0-9_.]{3,20}[@][A-Za-z0-9]{3,10}[.][A-Za-z]{2,3}$/,
         document.getElementById('correo_login'),'Ejemplo: alguien@servidor.com'
@@ -109,6 +122,11 @@ function validarEnvio(){
 		
 		return false;
 	}
+	const recaptchaResponse = grecaptcha.getResponse();
+    if (recaptchaResponse.length === 0) {
+        mensajes('error',4000,'Verifique el reCAPTCHA','Debe completar la validación.');
+        return false;
+    }
 
 	return true;
 }
@@ -140,38 +158,56 @@ function validarKeyUp(er, etiqueta, mensaje = '') {
 	}
 }
 
-
 async function query(datos) {
-	let modal_carga = new bootstrap.Modal("#modal_carga");
-	//Toda esta parte es culpa de boostrap y su retraso por animacion del modal
-	let tiempoCarga = setTimeout(()=>{
-		modal_carga.show();
-	}, 100);
-	
-	try{
-		const tiempoInicio = performance.now();
+	peticionesActivas++;
 
+	const tiempoInicio = performance.now();
+
+	ultimaPeticion = tiempoInicio;
+
+	if (peticionesActivas === 1) {
+		tiempoCarga = setTimeout(()=>{
+			modal_carga.show();
+		}, 200);
+	}
+
+	try{
 		let data = await fetch("",{method:"POST", body:datos}).then(res=>{		
 		let result = res.json()
 			return result;//Convertimos el resultado de json a js y lo mandamos
 		});
-
-		const tiempoTranscurido = performance.now() - tiempoInicio;
-		const tiempoEsperaMin = 500; //lo mini que debe durar la peticion
-
-		if (tiempoTranscurido < tiempoEsperaMin) {
-			const restante = tiempoEsperaMin - tiempoTranscurido;
-			await new Promise(resolve => setTimeout(resolve,restante));
-		}
-
 		return data;
 	}
 	catch(error){
+		console.log(error);
 		return {estatus:false,mensaje:"A ocurrido un error durante la consulta",error}
 	}
 	finally{
-		clearTimeout(tiempoCarga);
-		modal_carga.hide();
+		peticionesActivas--;
+
+		if (peticionesActivas === 0) {
+			const espera = 50;
+			setTimeout(()=>{
+				if (peticionesActivas === 0) {
+					clearTimeout(tiempoCarga);
+
+					const tiempoTranscurido = performance.now() - tiempoInicio;
+					const tiempoEsperaMin = 400; //lo mini que debe durar la peticion
+
+					if (tiempoTranscurido < tiempoEsperaMin) {
+						const restante = tiempoEsperaMin - tiempoTranscurido;
+						setTimeout(()=>{
+							if (performance.now() - ultimaPeticion >= restante) {
+								modal_carga.hide();
+							}
+						},restante);
+					}
+					else{
+						modal_carga.hide();
+					}
+				}
+			}, espera);
+		}
 	}
 }
 
@@ -182,4 +218,79 @@ function generarToken(longitud) {
     token += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
   }
   return token;
+}
+
+async function obtenerTasaDolar(){
+	let fecha_tasa_guardada = localStorage.getItem('fecha_tasa_dolar');
+	if (fecha_tasa_guardada) {
+		let [anio,mes,dia] = fecha_tasa_guardada.split("-");
+		let fecha_tasa = new Date(anio,mes -1,dia);
+		let fecha_actual = new Date();		
+		if (!(fecha_tasa < fecha_actual)) return;		
+	}
+
+	peticionesActivas++;
+
+	const tiempoInicio = performance.now();
+
+	ultimaPeticion = tiempoInicio;
+
+	if (peticionesActivas === 1) {
+		tiempoCarga = setTimeout(()=>{
+			modal_carga.show();
+		}, 200);
+	}
+
+	try{
+		await fetch("https://bcvapi.tech/api/v1/dolar")
+		.then(respuesta=>respuesta.json())
+		.then(data=>{		
+			localStorage.setItem('fecha_tasa_dolar', data.fecha);
+			localStorage.setItem('tasa_dolar', data.tasa);
+		})
+	}
+	catch(error){
+		console.log(error);
+		return {estatus:false,mensaje:"A ocurrido un error durante la consulta",error}
+	}
+	finally{
+		peticionesActivas--;
+
+		if (peticionesActivas === 0) {
+			const espera = 50;
+			setTimeout(()=>{
+				if (peticionesActivas === 0) {
+					clearTimeout(tiempoCarga);
+
+					const tiempoTranscurido = performance.now() - tiempoInicio;
+					const tiempoEsperaMin = 400; //lo mini que debe durar la peticion
+
+					if (tiempoTranscurido < tiempoEsperaMin) {
+						const restante = tiempoEsperaMin - tiempoTranscurido;
+						setTimeout(()=>{
+							if (performance.now() - ultimaPeticion >= restante) {
+								modal_carga.hide();
+							}
+						},restante);
+					}
+					else{
+						modal_carga.hide();
+					}
+				}
+			}, espera);
+		}
+	}
+}
+
+// Callbacks para reCAPTCHA
+function onRecaptchaSuccess(token) {
+    document.getElementById('enviar').disabled = false;    
+}
+
+function onRecaptchaExpired() {
+    document.getElementById('enviar').disabled = true;    
+}
+
+function onRecaptchaError() {
+    document.getElementById('enviar').disabled = true;    
 }

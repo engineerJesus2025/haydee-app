@@ -6,10 +6,12 @@ class Mensualidad extends Conexion
 {
     private $id_mensualidad;
     private $monto;
-    private $monto_dolar;
+    private $tasa_dolar;
     private $mes;
     private $anio;
     private $apartamento_id;
+    private $porcentaje_interes;
+    private $limite_mensualidad;
 
     public function __construct()
     {
@@ -36,14 +38,14 @@ class Mensualidad extends Conexion
         return $this->monto;
     }
 
-    public function set_monto_dolar($monto_dolar)
+    public function set_tasa_dolar($tasa_dolar)
     {
-        $this->monto_dolar = $monto_dolar;
+        $this->tasa_dolar = $tasa_dolar;
     }
 
-    public function get_monto_dolar()
+    public function get_tasa_dolar()
     {
-        return $this->monto_dolar;
+        return $this->tasa_dolar;
     }
 
     public function set_mes($mes)
@@ -76,7 +78,27 @@ class Mensualidad extends Conexion
         return $this->apartamento_id;
     }
 
-    public function realizar_consulta($accion, $prueba = false){
+    public function set_porcentaje_interes($porcentaje_interes)
+    {
+        $this->porcentaje_interes = $porcentaje_interes;
+    }
+
+    public function get_porcentaje_interes()
+    {
+        return $this->porcentaje_interes;
+    }
+
+    public function set_limite_mensualidad($limite_mensualidad)
+    {
+        $this->limite_mensualidad = $limite_mensualidad;
+    }
+
+    public function get_limite_mensualidad()
+    {
+        return $this->limite_mensualidad;
+    }
+
+    public function realizar_consulta($accion){
         switch ($accion) {
             case 'verificarMeses':
                 $respuesta = $this->verificarMeses();
@@ -91,11 +113,7 @@ class Mensualidad extends Conexion
             case 'consultarPorMeses':
                 $respuesta = $this->consultarPorMeses();
 
-                if ($respuesta["resultado"]) {
-                    if (!$prueba) {
-                        $this->registrar_bitacora(CONSULTAR, GESTIONAR_MENSUALIDAD, "TODOS LAS MENSUALIDADES");
-                    }
-                    
+                if ($respuesta["resultado"]) {                    
                     return $respuesta["datos"];
                 } 
                 else {
@@ -122,10 +140,6 @@ class Mensualidad extends Conexion
                 $respuesta = $this->registrar();
 
                 if ($respuesta["resultado"]) {
-                    if (!$prueba) {
-                        $this->registrar_bitacora(REGISTRAR, GESTIONAR_MENSUALIDAD, "Mensualidad del mes " . $this->mes . " del ". $this->anio);
-                    }
-
                     return ["estatus"=>true,"mensaje"=>"OK","lastId"=>$respuesta["lastId"]];
                 } else {
                     return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar esta Mensualidad"];
@@ -138,10 +152,6 @@ class Mensualidad extends Conexion
                 $respuesta = $this->editar();
 
                 if ($respuesta) {
-                    if (!$prueba) {
-                        $this->registrar_bitacora(MODIFICAR, GESTIONAR_MENSUALIDAD, "Mensualidad del mes " . $this->mes . " del ". $this->anio);
-                    }
-                    
                     return ["estatus"=>true,"mensaje"=>"OK"];
                 }
                 else {
@@ -155,10 +165,6 @@ class Mensualidad extends Conexion
                 $respuesta = $this->eliminar();
 
                 if ($respuesta) {
-                    if (!$prueba) {
-                        $this->registrar_bitacora(ELIMINAR, GESTIONAR_MENSUALIDAD, "Mensualidad del mes " . $this->mes . " del ". $this->anio);
-                    }
-
                     return ["estatus"=>true,"mensaje"=>"OK"];
                 }
                 else {
@@ -183,8 +189,8 @@ class Mensualidad extends Conexion
                     return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
                 }
 
-            case 'consultar_monto_dolar_mensualidades':
-                $respuesta = $this->consultar_monto_dolar_mensualidades();
+            case 'consultar_tasa_dolar_mensualidades':
+                $respuesta = $this->consultar_tasa_dolar_mensualidades();
                 if ($respuesta["resultado"] == true) {
                     return $respuesta["datos"];
                 } 
@@ -222,10 +228,33 @@ class Mensualidad extends Conexion
 
     private function consultarPorMeses()
     {
-        $sql = "SELECT GROUP_CONCAT(id_mensualidad) as ids, GROUP_CONCAT(apartamento_id) as ids_apartamentos, SUM(monto) as monto, SUM(monto_dolar) as monto_dolar, mes, anio,
-        SUM(COALESCE((SELECT SUM(detalles_pagos.monto) FROM detalles_pagos INNER JOIN pagos_mensualidad ON detalles_pagos.id_detalle_pago = pagos_mensualidad.detalle_pago_id WHERE pagos_mensualidad.mensualidad_id = mensualidad.id_mensualidad),0)) as pagado,
-        SUM(COALESCE((SELECT SUM(detalles_pagos.monto_dolar) FROM detalles_pagos INNER JOIN pagos_mensualidad ON detalles_pagos.id_detalle_pago = pagos_mensualidad.detalle_pago_id WHERE pagos_mensualidad.mensualidad_id = mensualidad.id_mensualidad),0)) as pagado_dolar
-         FROM mensualidad GROUP BY mes, anio";
+        $sql = "SELECT
+                    GROUP_CONCAT(sub.ids) as ids,
+                    GROUP_CONCAT(sub.ids_apartamentos) as ids_apartamentos,
+                    SUM(sub.monto_individual) as monto,
+                    sub.tasa_dolar,
+                    sub.mes,
+                    sub.anio,    
+                    SUM(LEAST(sub.monto_individual, COALESCE(sub.total_pagado_bruto, 0))) as pagado,
+                    sub.porcentaje_interes,
+                    sub.limite_mensualidad
+                FROM (
+                    SELECT
+                        m.id_mensualidad as ids,
+                        m.apartamento_id as ids_apartamentos,
+                        m.monto as monto_individual,
+                        m.tasa_dolar,
+                        m.mes,
+                        m.anio,
+                        m.porcentaje_interes,
+                        m.limite_mensualidad, 
+                        (SELECT SUM(detalles_pagos.monto)
+                         FROM detalles_pagos
+                         INNER JOIN pagos_mensualidad ON detalles_pagos.id_detalle_pago = pagos_mensualidad.detalle_pago_id
+                         WHERE pagos_mensualidad.mensualidad_id = m.id_mensualidad) as total_pagado_bruto
+                    FROM mensualidad m
+                ) as sub
+                GROUP BY sub.mes, sub.anio;";
 
         $conexion = $this->get_conex()->prepare($sql);
 
@@ -239,7 +268,7 @@ class Mensualidad extends Conexion
     {
         $mes_entero = intval($this->mes);
         $anio_entero = intval($this->anio);
-        $sql = "SELECT id_mensualidad, id_apartamento , mensualidad.mes as mes, mensualidad.anio as anio, apartamentos.nro_apartamento as nro_apartamento, habitantes.nombre as nombre, habitantes.apellido as apellido, mensualidad.monto as monto, mensualidad.monto_dolar as monto_dolar, 
+        $sql = "SELECT id_mensualidad, id_apartamento , mensualidad.mes as mes, mensualidad.anio as anio, apartamentos.nro_apartamento as nro_apartamento, habitantes.nombre as nombre, habitantes.apellido as apellido, mensualidad.monto as monto, mensualidad.tasa_dolar as tasa_dolar, 
             COALESCE((SELECT SUM(detalles_pagos.monto) FROM detalles_pagos INNER JOIN pagos_mensualidad ON detalles_pagos.id_detalle_pago = pagos_mensualidad.detalle_pago_id WHERE pagos_mensualidad.mensualidad_id = mensualidad.id_mensualidad),0) as pagado,
             COALESCE((SELECT SUM(detalles_pagos.monto_dolar) FROM detalles_pagos INNER JOIN pagos_mensualidad ON detalles_pagos.id_detalle_pago = pagos_mensualidad.detalle_pago_id WHERE pagos_mensualidad.mensualidad_id = mensualidad.id_mensualidad),0) as pagado_dolar 
             FROM mensualidad INNER JOIN apartamentos ON mensualidad.apartamento_id = apartamentos.id_apartamento INNER JOIN habitantes_apartamentos ON habitantes_apartamentos.apartamento_id = apartamentos.id_apartamento INNER JOIN habitantes ON habitantes_apartamentos.habitante_id = habitantes.id_habitante WHERE mensualidad.mes = :mes && mensualidad.anio = :anio && habitantes_apartamentos.tipo_vinculo = 'Propietario'";
@@ -255,34 +284,52 @@ class Mensualidad extends Conexion
     }
 
     private function registrar()
-    {           
-        $sql = "INSERT INTO mensualidad(monto,monto_dolar,mes,anio,apartamento_id) VALUES (:monto,:monto_dolar,:mes,:anio,:apartamento_id)";
+    {
+        $sql = "INSERT INTO mensualidad(
+        monto,
+        tasa_dolar,
+        mes,
+        anio,
+        apartamento_id,
+        porcentaje_interes,
+        limite_mensualidad) VALUES (
+        :monto,
+        :tasa_dolar,
+        :mes,
+        :anio,
+        :apartamento_id,
+        :porcentaje_interes,
+        :limite_mensualidad)";
         
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":monto", $this->monto);
-        $conexion->bindParam(":monto_dolar", $this->monto_dolar);
+        $conexion->bindParam(":tasa_dolar", $this->tasa_dolar);
         $conexion->bindParam(":mes", $this->mes);
         $conexion->bindParam(":anio", $this->anio);
         $conexion->bindParam(":apartamento_id", $this->apartamento_id);
+        $conexion->bindParam(":porcentaje_interes", $this->porcentaje_interes);
+        $conexion->bindParam(":limite_mensualidad", $this->limite_mensualidad);
         $result = $conexion->execute();
 
-        $conexion = $this->get_conex();//otra conexion para buscar el ultimo id
+        $conexion = $this->get_conex();
         $res = $conexion->lastInsertId();
 
-        return ["resultado"=>$result,"lastId"=>$res];        
+        return ["resultado"=>$result,"lastId"=>$res];
     }
 
     private function editar()
     {           
-        $sql = "UPDATE mensualidad SET monto = :monto, monto_dolar = :monto_dolar, mes = :mes, anio = :anio, apartamento_id = :apartamento_id WHERE id_mensualidad = :id_mensualidad";
+        $sql = "UPDATE mensualidad SET monto = :monto, tasa_dolar = :tasa_dolar, mes = :mes, anio = :anio, apartamento_id = :apartamento_id, porcentaje_interes=:porcentaje_interes, limite_mensualidad=:limite_mensualidad WHERE id_mensualidad = :id_mensualidad";
         
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":monto", $this->monto);
-        $conexion->bindParam(":monto_dolar", $this->monto_dolar);
+        $conexion->bindParam(":tasa_dolar", $this->tasa_dolar);
         $conexion->bindParam(":mes", $this->mes);
         $conexion->bindParam(":anio", $this->anio);
         $conexion->bindParam(":apartamento_id", $this->apartamento_id);
         $conexion->bindParam(":id_mensualidad", $this->id_mensualidad);
+        $conexion->bindParam(":porcentaje_interes", $this->porcentaje_interes);
+        $conexion->bindParam(":limite_mensualidad", $this->limite_mensualidad);
         $result = $conexion->execute();
   
         return $result;
@@ -381,15 +428,17 @@ class Mensualidad extends Conexion
         return ["resultado"=>$result,"datos"=>$datos];
     }    
 
-    private function consultar_monto_dolar_mensualidades()
+    private function consultar_tasa_dolar_mensualidades()
     {
-        $sql = "SELECT MAX(mes) as mes, MAX(anio) as anio, mensualidad.monto_dolar FROM mensualidad;";
-        $conexion = $this->get_conex()->prepare($sql);         
+        $sql = "SELECT MAX(mes) as mes, MAX(anio) as anio, MAX(mensualidad.tasa_dolar) as tasa_dolar FROM mensualidad WHERE anio = :anio && mes = :mes";
+        $conexion = $this->get_conex()->prepare($sql);
+        $conexion->bindParam(":mes", $this->mes);
+        $conexion->bindParam(":anio", $this->anio);
         $result = $conexion->execute();
         
         $datos = $conexion->fetch(PDO::FETCH_ASSOC);        
         
-        $datos["tasa_dolar"] = $this->obtenerTasaDolarAPI();
+        // $datos["tasa_dolar"] = $this->obtenerTasaDolarAPI();
 
         return ["resultado"=>$result,"datos"=>$datos];
     }
@@ -510,15 +559,15 @@ class Mensualidad extends Conexion
             else{return ["estatus"=>false,"mensaje"=>"El id de la mensualidad tiene debe ser un valor numerico entero"];}
         }
 
-        if (!(isset($this->monto) && isset($this->monto_dolar) && isset($this->mes) && isset($this->anio) && isset($this->apartamento_id))) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos no se recibieron correctamente"];}
+        if (!(isset($this->monto) && isset($this->tasa_dolar) && isset($this->mes) && isset($this->anio) && isset($this->apartamento_id))) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos no se recibieron correctamente"];}
 
-        if (empty($this->monto) || empty($this->monto_dolar) || empty($this->mes) || empty($this->anio) || empty($this->apartamento_id)) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos estan vacios"];}        
+        if (empty($this->monto) || empty($this->tasa_dolar) || empty($this->mes) || empty($this->anio) || empty($this->apartamento_id)) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos estan vacios"];}        
 
         if(!(is_string($this->monto)) || !(preg_match("/^[0-9]{0,12}[,.]{0,1}[0-9]{0,2}$/",$this->monto))){
             return ["estatus"=>false,"mensaje"=>"Uno de los 'montos' no posee un valor valido"];
         }
 
-        if(!(is_string($this->monto_dolar)) || !(preg_match("/^[0-9]{0,12}[,.]{0,1}[0-9]{0,2}$/",$this->monto_dolar))){
+        if(!(is_string($this->tasa_dolar)) || !(preg_match("/^[0-9]{0,12}[,.]{0,1}[0-9]{0,2}$/",$this->tasa_dolar))){
             return ["estatus"=>false,"mensaje"=>"Uno de los 'montos en dolar' no posee un valor valido"];
         }
 
@@ -570,6 +619,7 @@ class Mensualidad extends Conexion
 
         return ($result)?true:false;
     }
+    
 
 }
 ?>

@@ -141,74 +141,78 @@
     <h2>REPORTE ESTADÍSTICO DE INGRESOS Y EGRESOS</h2>
 </div>
 <h4><?php echo $fecha; ?></h4>
-<div class="text-center" id="contenedor">
-    <h3>Gráfico de Barras</h3>
-    <div >
-        <div style="position: relative; height:500px;">
-            <img src="<?php echo($barra) ?>" width="100%" height="100%" alt="Imagen de Grafico">
-        </div>
-    </div>    
-</div>
-<div class="container my-5" id="contenedor_estadistica">
-    <br><br><br><br><br>
-   <h3 class="text-center">Datos de Estadísticas:</h3>
-    <div class="row justify-content-center mt-4" style="margin-left: 25vw; margin-bottom: 5vh">
-        <div class="col-8 card text-center">
-          <div class="card-header">
-            Resumen de Estadísticas:
+<?php if ($selecion == "solo_grafico" || $selecion == "grafico_texto") { ?>
+  <div class="text-center" id="contenedor">
+      <h3>Gráfico de Barras</h3>
+      <div >
+          <div style="position: relative; height:500px;">
+              <img src="<?php echo($barra) ?>" width="100%" height="100%" alt="Imagen de Grafico">
           </div>
-          <div class="card-body">
-            <p id="total_pagos">Total de Pagos realizados: <?php echo $total_pagos ?></p>
-            <p id="total_gastos">Total de Gastos Realizados: <?php echo $total_gastos ?></p>      
-          </div>
-        </div>
-    </div>
-    <br><br>
-    <hr>
-    <br><br>
-    <div class="row justify-content-around mt-4">
-        <div class="col-5 card text-center" style="display: inline-block; margin-left: 5vw; margin-top: 5vh; margin-bottom: 5vh">
-          <div class="card-header">
-            Metodos de pago (gastos):
-          </div>
-          <div class="card-body">
-            <p id="gastos_efectivo">Gastos por Efectivo: <?php echo $gastos_efectivo ?></p>
-            <p id="gastos_transferencia">Gastos por Transferencia: <?php echo $gastos_transferencia ?></p>
-            <p id="gastos_pago_movil">Gastos por Pago Movil: <?php echo $gastos_pago_movil ?></p>
-          </div>
-        </div>
-        <div class="col-5 card text-center" style="display: inline-block; margin-left: 5vw; margin-top: 5vh; margin-bottom: 5vh">
-          <div class="card-header">
-            Metodos de pago (Pagos):
-          </div>
-          <div class="card-body">
-            <p id="pagos_efectivo">Pagos por Efectivo: <?php echo $pagos_efectivo ?></p>
-            <p id="pagos_transferencia">Pagos por Transferencia: <?php echo $pagos_transferencia ?></p>
-            <p id="pagos_pago_movil">Pagos por Pago Movil: <?php echo $pagos_pago_movil ?></p>
-          </div>
-        </div>
-    </div>
-    <hr>
-    <br><br>
-    <div class="row justify-content-around mt-4">
-        <div class="col-5 card text-center"style="display: inline-block; margin-left: 5vw;">
-          <div class="card-header">
-            Marcas de Tiempo (Pagos):
-          </div>
-          <div class="card-body" id="fecha_pagos">
-            <?php echo $fecha_pagos ?>
-          </div>
-        </div>
-        <div class="col-5 card text-center"style="display: inline-block; margin-left: 5vw;">
-          <div class="card-header">
-            Marcas de Tiempo (Gastos):
-          </div>
-          <div class="card-body" id="fecha_gastos">
-            <?php echo $fecha_gastos ?>
-          </div>
-        </div>
-    </div>
-</div>
+      </div>    
+  </div>
+<?php } ?>
+<?php if ($selecion == "solo_texto" || $selecion == "grafico_texto") { ?>
+  <div class="container my-5" id="contenedor_estadistica">
+      <br><br><br><br><br>
+     <h3 class="text-center">Datos de Estadísticas:</h3>
 
+      <div class="row justify-content-center mt-4" style="margin-left: 25vw; margin-bottom: 5vh">
+          <div class="col-8 card text-center">
+            <div class="card-header">
+              Resumen de Estadísticas:
+            </div>
+            <div class="card-body">
+              <p id="total_pagos">Total de Pagos realizados: <?php echo $total_pagos ?></p>
+              <p id="total_gastos">Total de Gastos Realizados: <?php echo $total_gastos ?></p>      
+            </div>
+          </div>
+      </div>
+      <br><br>
+      <hr>
+      <br><br>
+      <div class="row justify-content-around mt-4">
+          <div class="col-5 card text-center" style="display: inline-block; margin-left: 5vw; margin-top: 5vh; margin-bottom: 5vh">
+            <div class="card-header">
+              Metodos de pago (gastos):
+            </div>
+            <div class="card-body">
+              <p id="gastos_efectivo">Gastos por Efectivo: <?php echo $gastos_efectivo ?></p>
+              <p id="gastos_transferencia">Gastos por Transferencia: <?php echo $gastos_transferencia ?></p>
+              <p id="gastos_pago_movil">Gastos por Pago Movil: <?php echo $gastos_pago_movil ?></p>
+            </div>
+          </div>
+          <div class="col-5 card text-center" style="display: inline-block; margin-left: 5vw; margin-top: 5vh; margin-bottom: 5vh">
+            <div class="card-header">
+              Metodos de pago (Pagos):
+            </div>
+            <div class="card-body">
+              <p id="pagos_efectivo">Pagos por Efectivo: <?php echo $pagos_efectivo ?></p>
+              <p id="pagos_transferencia">Pagos por Transferencia: <?php echo $pagos_transferencia ?></p>
+              <p id="pagos_pago_movil">Pagos por Pago Movil: <?php echo $pagos_pago_movil ?></p>
+            </div>
+          </div>
+      </div>
+      <hr>
+      <br><br>
+      <div class="row justify-content-around mt-4">
+          <div class="col-5 card text-center"style="display: inline-block; margin-left: 5vw;">
+            <div class="card-header">
+              Marcas de Tiempo (Pagos):
+            </div>
+            <div class="card-body" id="fecha_pagos">
+              <?php echo $fecha_pagos ?>
+            </div>
+          </div>
+          <div class="col-5 card text-center"style="display: inline-block; margin-left: 5vw;">
+            <div class="card-header">
+              Marcas de Tiempo (Gastos):
+            </div>
+            <div class="card-body" id="fecha_gastos">
+              <?php echo $fecha_gastos ?>
+            </div>
+          </div>
+      </div>
+  </div>
+<?php } ?>
 </body>
 </html>

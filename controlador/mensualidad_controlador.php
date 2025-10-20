@@ -1,4 +1,5 @@
 <?php 
+require_once "vista/componentes/sesion.php";
 require_once "modelo/mensualidad_modelo.php";
 require_once "modelo/apartamentos_modelo.php";
 require_once "modelo/notificaciones_modelo.php";
@@ -15,6 +16,9 @@ if (isset($_POST["operacion"])){
     }
     else if ($operacion == "consultar_mensualidades_mes"){
         $mensualidad_obj = new Mensualidad();
+
+        $mensualidad_obj->registrar_bitacora(CONSULTAR, GESTIONAR_MENSUALIDAD, "TODOS LAS MENSUALIDADES");
+
         echo json_encode($mensualidad_obj->realizar_consulta('consultarPorMeses'));
     }
     else if ($operacion == "consultar_mensualidades_apartamentos"){
@@ -42,22 +46,28 @@ if (isset($_POST["operacion"])){
     else if($operacion == "registrar_mensualidad"){
         $mensualidad_obj = new Mensualidad();
         $monto = $_POST["monto"];
-        $monto_dolar = $_POST["monto_dolar"];
+        $tasa_dolar = $_POST["tasa_dolar"];
         $mes = $_POST["mes"];
         $anio = $_POST["anio"];
         $apartamento_id = $_POST["apartamento_id"];
+        $porcentaje_interes = $_POST["porcentaje_interes"];
+        $limite_mensualidad = $_POST["limite_mensualidad"];
 
         $mensualidad_obj->set_monto($monto);
-        $mensualidad_obj->set_monto_dolar($monto_dolar);
+        $mensualidad_obj->set_tasa_dolar($tasa_dolar);
         $mensualidad_obj->set_mes($mes);
         $mensualidad_obj->set_anio($anio);
         $mensualidad_obj->set_apartamento_id($apartamento_id);
+        $mensualidad_obj->set_porcentaje_interes($porcentaje_interes);
+        $mensualidad_obj->set_limite_mensualidad($limite_mensualidad);
 
         $resultado = $mensualidad_obj->realizar_consulta('registrar');
 
         if ($resultado["estatus"]) {
+            $mensualidad_obj->registrar_bitacora(REGISTRAR, GESTIONAR_MENSUALIDAD, "Mensualidad del mes " . $mes . " del ". $anio . ". De " . $monto . " Bs.");        
+
             $usuario_obj = new Usuario();
-            $registro_usuarios = $usuario_obj->consultar();
+            $registro_usuarios = $usuario_obj->realizar_consulta('consultar');
 
             $notificacion_obj = new Notificaciones();
             foreach ($registro_usuarios as $usuarios) {
@@ -106,13 +116,9 @@ if (isset($_POST["operacion"])){
 
             $resultado_consulta = $presupuesto_mensualidad_obj->realizar_consulta('consultar_presupuestos_asociados');
             
-            if (!$resultado_consulta["estatus"]) {
-                echo json_encode($resultado_consulta);
-                exit;
-            }
-            else{
-                array_push($resultado, $resultado_consulta["mensaje"]);
-            }
+            
+            array_push($resultado, $resultado_consulta);
+            
         }
         echo json_encode($resultado);
     }
@@ -120,20 +126,30 @@ if (isset($_POST["operacion"])){
         $mensualidad_obj = new Mensualidad();
 
         $monto = $_POST["monto"];
-        $monto_dolar = $_POST["monto_dolar"];
+        $tasa_dolar = $_POST["tasa_dolar"];
         $mes = $_POST["mes"];
         $anio = $_POST["anio"];
         $apartamento_id = $_POST["apartamento_id"];
         $id_mensualidad = $_POST["id_mensualidad"];
+        $porcentaje_interes = $_POST["porcentaje_interes"];
+        $limite_mensualidad = $_POST["limite_mensualidad"];
 
         $mensualidad_obj->set_monto($monto);
-        $mensualidad_obj->set_monto_dolar($monto_dolar);
+        $mensualidad_obj->set_tasa_dolar($tasa_dolar);
         $mensualidad_obj->set_mes($mes);
         $mensualidad_obj->set_anio($anio);
         $mensualidad_obj->set_apartamento_id($apartamento_id);
         $mensualidad_obj->set_id_mensualidad($id_mensualidad);
+        $mensualidad_obj->set_porcentaje_interes($porcentaje_interes);
+        $mensualidad_obj->set_limite_mensualidad($limite_mensualidad);
 
-        echo json_encode($mensualidad_obj->realizar_consulta('editar'));
+        $resultado = $mensualidad_obj->realizar_consulta('editar');
+            
+        if ($resultado["estatus"]) {
+            $mensualidad_obj->registrar_bitacora(MODIFICAR, GESTIONAR_MENSUALIDAD, "Mensualidad del mes " . $mes . " del " . $anio . ". De " . $monto . " Bs.");
+        }
+            
+        echo json_encode($resultado);        
     }
     else if($operacion == "editar_presupuesto_mensualidades"){
         $presupuesto_mensualidad_obj = new Presupuesto_mensualidad();
@@ -155,9 +171,15 @@ if (isset($_POST["operacion"])){
         list($dia,$mes_buscar,$anio_buscar) = explode('/', $fecha);
 
         $mensualidad_obj->set_mes($mes_buscar);
-        $mensualidad_obj->set_anio($anio_buscar);
-        
-        echo json_encode($mensualidad_obj->realizar_consulta('eliminar'));
+        $mensualidad_obj->set_anio($anio_buscar);            
+
+        $resultado = $mensualidad_obj->realizar_consulta("eliminar");
+
+        if ($resultado["estatus"]){            
+            $mensualidad_obj->registrar_bitacora(ELIMINAR, GESTIONAR_MENSUALIDAD, "Eliminadas menusalidades del mes " . $mes_buscar . " del " . $anio_buscar);
+        }            
+
+        echo  json_encode($resultado);
     }
     exit;
 }

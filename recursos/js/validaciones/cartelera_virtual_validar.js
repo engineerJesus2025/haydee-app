@@ -39,7 +39,7 @@ $(document).ready(function () {
                 title: "¿Estás seguro?",
                 text: `¿Está seguro que desea ${accion} esta publicación?`,
                 showCancelButton: true,
-                confirmButtonText: accion,
+                confirmButtonText: "Si, " + accion,
                 confirmButtonColor: "#1b8a40",
                 cancelButtonText: "Cancelar",
                 icon: "warning"

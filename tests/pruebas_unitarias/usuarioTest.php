@@ -129,6 +129,48 @@ class UsuarioTest extends TestCase
         $this->assertStringContainsString("Token no encontrado", $resultado["mensaje"]);
     }
 
+    //Metodo validar_token_recuerdame
+    public function testValidarTokenRecuerdameCorrecto(){
+        $this->usuario->set_token_recuerdame("token recuerdame de prueba");
+        $this->usuario->set_duracion_token_recuerdame("2023-08-24 16:43:42");
+
+        $resultado = $this->usuario->realizar_consulta('validar_token_recuerdame');
+
+        $this->assertIsArray($resultado);
+        $this->assertNotEmpty($resultado);
+        $this->assertCount(8, $resultado);
+
+        // Revisamos la estructura de un elemento
+        $this->assertArrayHasKey('id_usuario', $resultado);
+        $this->assertArrayHasKey('nombre', $resultado);
+        $this->assertArrayHasKey('apellido', $resultado);
+        $this->assertArrayHasKey('correo', $resultado);
+        $this->assertArrayHasKey('contrasenia', $resultado);
+        $this->assertArrayHasKey('rol_id', $resultado);
+        $this->assertArrayHasKey('token', $resultado);
+        $this->assertArrayHasKey('duracion_token', $resultado);
+    }
+
+    public function testValidarTokenRecuerdameIncorrecto(){
+        $this->usuario->set_token_recuerdame("token_incorrecto");
+        $this->usuario->set_duracion_token_recuerdame("2025-08-24 16:43:41");
+
+        $resultado = $this->usuario->realizar_consulta('validar_token_recuerdame');
+        
+        $this->assertFalse($resultado["estatus"]);
+        $this->assertStringContainsString("Token no encontrado", $resultado["mensaje"]);
+    }
+
+    public function testValidarDuracionTokenRecuerdameIncorrecto(){
+        $this->usuario->set_token_recuerdame("token recuerdame de prueba");
+        $this->usuario->set_duracion_token_recuerdame("2025-10-24 16:43:41");
+
+        $resultado = $this->usuario->realizar_consulta('validar_token_recuerdame');
+        
+        $this->assertFalse($resultado["estatus"]);
+        $this->assertStringContainsString("Token no encontrado", $resultado["mensaje"]);
+    }
+
     //Metodo consultar
     public function testConsultarUsuario(){
         $resultado = $this->usuario->realizar_consulta('consultar',true);
@@ -333,6 +375,54 @@ class UsuarioTest extends TestCase
         $this->assertFalse($resultado["estatus"]);
         $this->assertStringContainsString("Uno o varios de los campos requeridos estan vacios", $resultado["mensaje"]);
     }
+
+
+    // registrar_token_recuerdame
+    public function testRegistrarTokenRecuerdameDatosCorrectos(){
+        $this->usuario->set_token_recuerdame("token de prueba recuerdame agregado");
+        $this->usuario->set_duracion_token_recuerdame("2023-08-24 16:43:41");
+        $this->usuario->set_correo("agregartoken@gmail.com");
+
+        $resultado = $this->usuario->realizar_consulta('registrar_token_recuerdame');
+        
+        $this->assertIsArray($resultado);
+        $this->assertNotEmpty($resultado);
+        $this->assertCount(2, $resultado);
+        
+        $this->assertStringContainsString('OK', $resultado["mensaje"]);
+        $this->assertTrue($resultado["estatus"]);
+    }
+
+    public function testRegistrarTokenRecuerdameDatosIncorrecto(){
+        $this->usuario->set_correo("correo incorrecto");
+        $this->usuario->set_token_recuerdame("token de incorrecto");
+        $this->usuario->set_duracion_token_recuerdame("fecha_incorrecta");
+
+        $resultado = $this->usuario->realizar_consulta('registrar_token_recuerdame');
+        
+        $this->assertIsArray($resultado);
+        $this->assertNotEmpty($resultado);
+        $this->assertCount(2, $resultado);
+        
+        $this->assertFalse($resultado["estatus"]);
+        $this->assertStringContainsString("El campo 'correo' no posee un valor valido", $resultado["mensaje"]);
+    }
+
+    public function testRegistrarTokenRecuerdameDatosVacios(){
+        $this->usuario->set_correo("");
+        $this->usuario->set_token_recuerdame("");
+        $this->usuario->set_duracion_token_recuerdame("");   
+
+        $resultado = $this->usuario->realizar_consulta('registrar_token_recuerdame');
+        
+        $this->assertIsArray($resultado);
+        $this->assertNotEmpty($resultado);
+        $this->assertCount(2, $resultado);
+        
+        $this->assertFalse($resultado["estatus"]);
+        $this->assertStringContainsString("Uno o varios de los campos requeridos estan vacios", $resultado["mensaje"]);
+    }
+
 
     //Metodo editar_usuario
     public function testEditarUsuarioDatosCorrectos(){
@@ -612,6 +702,46 @@ class UsuarioTest extends TestCase
         
         $this->assertFalse($resultado["estatus"]);
         $this->assertStringContainsString("El token requerido esta vacio", $resultado["mensaje"]);
+    }
+
+    //Metodo eliminar_token_recuerdame
+    public function testEliminarTokenCorreoCorrecto(){
+        $this->usuario->set_correo('correoBorrarRecuerdame@gmail.com'); 
+
+        $resultado = $this->usuario->realizar_consulta('eliminar_token_recuerdame');
+        
+        $this->assertIsArray($resultado);
+        $this->assertNotEmpty($resultado);
+        $this->assertCount(2, $resultado);
+        
+        $this->assertStringContainsString('OK', $resultado["mensaje"]);
+        $this->assertTrue($resultado["estatus"]);
+    }
+
+    public function testEliminarTokenCorreoIcorrecto(){
+        $this->usuario->set_correo('correo_incorrecto');
+
+        $resultado = $this->usuario->realizar_consulta('eliminar_token_recuerdame');
+        
+        $this->assertIsArray($resultado);
+        $this->assertNotEmpty($resultado);
+        $this->assertCount(2, $resultado);
+        
+        $this->assertFalse($resultado["estatus"]);
+        $this->assertStringContainsString("El campo 'correo' no posee un valor valido", $resultado["mensaje"]);
+    }
+
+    public function testEliminarTokenCorreoVacio(){
+        $this->usuario->set_correo('');
+
+        $resultado = $this->usuario->realizar_consulta('eliminar_token_recuerdame');
+        
+        $this->assertIsArray($resultado);
+        $this->assertNotEmpty($resultado);
+        $this->assertCount(2, $resultado);
+        
+        $this->assertFalse($resultado["estatus"]);
+        $this->assertStringContainsString("El correo para eliminar el token requerido esta vacío", $resultado["mensaje"]);
     }
 
     //Metodo lastId

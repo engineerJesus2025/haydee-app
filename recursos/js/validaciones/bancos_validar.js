@@ -53,7 +53,7 @@ $(document).ready(function(){
 				title: "¿Estás seguro?",
 				text: `¿Está seguro que desea ${accion} este Banco?`,
 				showCancelButton: true,
-				confirmButtonText: accion,
+				confirmButtonText: "Sí, "+accion,
 				confirmButtonColor: "#1b8a40",
 				cancelButtonText: "Cancelar",
 				icon: "warning"

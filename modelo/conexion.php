@@ -112,18 +112,22 @@ class Conexion extends PDO
         else if($db == "seguridad"){
             $db_copiar = DB_SECURITY;
         }
-
+        //Local
         $mysqldump_path = '"C:\xampp\mysql\bin\mysqldump.exe"';//Importante por lo visto
 
         $backup = 'recursos\Backups\backup_' . $db_copiar . '_' . date("Y-m-d-H-i-s") . '.sql';
-        $comando = $mysqldump_path . " --host=" . DB_HOST . " --user=". DB_USER . " --password= ". DB_PASS . " " . $db_copiar . " > " . $backup;
+        $comando = $mysqldump_path . " --host=" . DB_HOST . " --user=". DB_USER . " --password=". DB_PASS . " " . $db_copiar . " > " . $backup;
+
+        // Hosting
+        // $backup = '/home/condominioshaydee/www/recursos/Backups/backup_' . $db_copiar . '_' . date("Y-m-d-H-i-s") . '.sql'; // Hosting
+        // $comando = "mysqldump --host=" . DB_HOST . " --user=". DB_USER . " --password=". DB_PASS . " " . $db_copiar . " > " . $backup; // Hosting
 
         system($comando . " 2>&1", $resultado);
         
         if ($resultado === 0) {
             return ["estatus"=>true,"mensaje"=>"Copia de seguridad creada exitosamente"];
         } else {
-            return ["estatus"=>false,"mensaje"=>"Error al crear el backup: " . $backup];
+            return ["estatus"=>false,"mensaje"=>"Error al crear el backup: " . $backup, "res"=>$comando];
         }
     }
 
@@ -138,11 +142,16 @@ class Conexion extends PDO
             $db_copiar = DB_SECURITY;
         }
 
-        $mysqldump_path = '"C:\xampp\mysql\bin\mysqldump.exe"';//Importante por lo visto
 
         $backup = 'backup_' . $db_copiar . '_' . date("Y-m-d-H-i-s") . '.sql';
 
-        $comando = $mysqldump_path . " --host=" . DB_HOST . " --user=". DB_USER . " --password= ". DB_PASS . " " . $db_copiar . " > " . $backup;
+        //Local
+        $mysqldump_path = '"C:\xampp\mysql\bin\mysqldump.exe"';//Importante por lo visto
+
+        $comando = $mysqldump_path . " --host=" . DB_HOST . " --user=". DB_USER . " --password=". DB_PASS . " " . $db_copiar . " > " . $backup;
+
+        //Hosting
+        // $comando = "mysqldump --host=" . DB_HOST . " --user=". DB_USER . " --password=". DB_PASS . " " . $db_copiar . " > " . $backup; // Hosting
 
         system($comando, $resultado);
 
@@ -178,6 +187,7 @@ class Conexion extends PDO
 
     public function obtenerCopias()
     { 
+        // $directorio = '/home/condominioshaydee/www/recursos/Backups'; //del hosting
         $directorio = 'recursos\Backups';
         $ficheros = scandir($directorio);
         $aray_ficheros = [];
@@ -203,7 +213,9 @@ class Conexion extends PDO
             $this->cambiar_db_seguridad();
         }
 
-        $sql = file_get_contents('recursos/Backups/' . $fichero);
+        $sql = file_get_contents('recursos/Backups/' . $fichero); //Local
+
+        // $sql = file_get_contents('/home/condominioshaydee/www/recursos/Backups/' . $fichero); //del hosting
         
         $conexion = $this->get_conex()->prepare($sql);
         

@@ -45,11 +45,80 @@
         }
 
         // Metodos CRUD
-        public function registrar_habitante_apartamento(){
+        public function realizar_consulta($accion) {
+            switch ($accion) {
+                case 'validar':
+                    $respuesta = $this->verificar_propietario();
+
+                    if ($respuesta["resultado"]) {
+                        if ($this->tipo_vinculo == "Propietario") {
+                            if ($respuesta["datos"]["total"] > 0) {
+                                return ["estatus"=>true,"busqueda"=>"tipo_vinculo","mensaje"=>"Ya existe un propietario registrado para este apartamento"];
+                            } else {
+                                return ["estatus"=>false,"busqueda"=>"tipo_vinculo"];
+                            }
+                        } else {
+                            return ["estatus"=>false,"busqueda"=>"tipo_vinculo"];
+                        }
+                    } else {
+                        return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar validar el vinculo del habitante"];
+                    }
+                
+                case 'consultar':
+                    $respuesta = $this->consultar_habitantes_por_apartamento();
+
+                    if ($respuesta["resultado"]) {
+                        $this->registrar_bitacora(CONSULTAR, GESTIONAR_HABITANTES, 'HABITANTES EN APARTAMENTO #' . $this->apartamento_id);
+                        return $respuesta["datos"];
+                    } else {
+                        return ["estatus" => false, "mensaje" => "Error al consultar los habitantes del apartamento"];
+                    }
+
+                case 'registrar':
+                    $validaciones = $this->validarDatos(false);
+                    if(!($validaciones["estatus"])){return $validaciones;}
+
+                    $respuesta = $this->registrar_habitante_apartamento();
+
+                    if ($respuesta) {
+                        return ["estatus"=>true,"mensaje"=>"OK"];
+                    } else {
+                        return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar a este habitante en la tabla puente"];
+                    }
+
+                case 'modificar':
+                    $validaciones = $this->validarDatos(false);
+                    if(!($validaciones["estatus"])){return $validaciones;}
+
+                    $respuesta = $this->editar_habitante_apartamento();
+
+                    if ($respuesta["resultado"]) {                        
+                        return ["estatus"=>true,"mensaje"=>"OK"];
+                    } else {
+                        return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar modificar a este habitante en la tabla puente"];
+                    }
+
+                default:
+                    return ["estatus" => false, "mensaje" => "Ha ocurrido un error en el proceso"];
+            }
+        }
+
+        private function verificar_propietario(){  
+            $sql = "SELECT COUNT(*) as total 
+                    FROM habitantes_apartamentos 
+                    WHERE apartamento_id = :apartamento_id 
+                    AND tipo_vinculo = 'Propietario'";
+
+            $conexion = $this->get_conex()->prepare($sql);
+            $conexion->bindParam(":apartamento_id", $this->apartamento_id);
+            $conexion->execute();
+            $datos = $conexion->fetch(PDO::FETCH_ASSOC);
+
+            return ["resultado"=>true,"datos"=>$datos];
+        }
+
+        private function registrar_habitante_apartamento(){
             //Validamos los datos obtenidos del controlador (validaciones back-end)
-            $validaciones = $this->validarDatos(false);
-            if(!($validaciones["estatus"])){return $validaciones;}
-            
             //$this->cambiar_db_seguridad();
 
             $sql = "INSERT INTO habitantes_apartamentos(apartamento_id,habitante_id,tipo_vinculo) VALUES (:apartamento_id,:habitante_id,:tipo_vinculo)";
@@ -60,20 +129,13 @@
             $conexion->bindParam(":tipo_vinculo", $this->tipo_vinculo);
             $result = $conexion->execute();
 
-            $this->cambiar_db_negocio();
+            // $this->cambiar_db_negocio();
 
-            if ($result) {
-                return ["estatus"=>true,"mensaje"=>"OK"];
-            } else {
-                return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar a este habitante"];
-            }
+            return $result;
         }
 
-        public function editar_habitante_apartamento(){
+        private function editar_habitante_apartamento(){
             //Validamos los datos obtenidos del controlador (validaciones back-end)
-            $validaciones = $this->validarDatos(false);
-            if(!($validaciones["estatus"])){return $validaciones;}
-            
             //$this->cambiar_db_seguridad();
 
             $sql = "UPDATE habitantes_apartamentos SET apartamento_id = :apartamento_id, tipo_vinculo = :tipo_vinculo WHERE habitante_id = :habitante_id";
@@ -83,17 +145,14 @@
             $conexion->bindParam(":tipo_vinculo", $this->tipo_vinculo);
             $conexion->bindParam(":habitante_id", $this->habitante_id);
             $result = $conexion->execute();
+            $filas_afectadas = $conexion->rowCount();
 
             //$this->cambiar_db_negocio();
 
-            if ($result) {
-                return ["estatus"=>true,"mensaje"=>"OK"];
-            } else {
-                return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar actualizar a esta habitante"];
-            }
+            return ["resultado"=>$result,"fila_afectada"=>$filas_afectadas];
         }
 
-        public function consultar_habitantes_por_apartamento() {
+        private function consultar_habitantes_por_apartamento() {
             $sql = "SELECT 
                         h.id_habitante,
                         h.nombre,
@@ -116,12 +175,7 @@
             $result = $conexion->execute();
             $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
 
-            if ($result) {
-                $this->registrar_bitacora(CONSULTAR, GESTIONAR_HABITANTES, 'HABITANTES EN APARTAMENTO #' . $this->apartamento_id);
-                return $datos;
-            } else {
-                return ["estatus" => false, "mensaje" => "Error al consultar los habitantes del apartamento."];
-            }
+            return ["resultado"=>$result,"datos"=>$datos];
         }
 
         private function validarDatos($eliminar = false){   
@@ -147,11 +201,11 @@
 
             if(is_numeric($this->habitante_id)){
                 if (!($this->validarClaveForanea("habitantes","id_habitante",$this->habitante_id))) {
-                    return ["estatus"=>false,"mensaje"=>"El ID de Habitante seleccionado para modificar permisos no existe"];
+                    return ["estatus"=>false,"mensaje"=>"El ID de Habitante seleccionado para modificar no existe"];
                 }
             }
             else{
-                return ["estatus"=>false,"mensaje"=>"El id del Habitante para modificar permisos tiene debe ser un valor numerico entero"];
+                return ["estatus"=>false,"mensaje"=>"El id del Habitante para modificar debe ser un valor numerico entero"];
             }
 
             if (!(isset($this->tipo_vinculo))) {return ["estatus"=>false,"mensaje"=>"El tipo de vinculo no se recibio correctamente"];}

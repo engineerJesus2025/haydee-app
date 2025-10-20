@@ -29,14 +29,14 @@ document.querySelector('#modal_proveedores').addEventListener('hidden.bs.modal',
     document.getElementById("titulo_modal").textContent = "Registrar Proveedor";
     formulario_usar.querySelectorAll("[class='w-100").forEach(el => el.textContent = "");
 
-    document.querySelectorAll('.is-valid').forEach(input=>input.classList.remove('is-valid'));
-    document.querySelectorAll('.is-invalid').forEach(input=>input.classList.remove('is-invalid'));
+    document.querySelectorAll('.is-valid').forEach(input => input.classList.remove('is-valid'));
+    document.querySelectorAll('.is-invalid').forEach(input => input.classList.remove('is-invalid'));
 });
 
 // Si queremos registrar:
 
 async function registrar() {
-    datos_consulta = new FormData();
+    let datos_consulta = new FormData();
 
     let nombre = formulario_usar.querySelector("#nombre_proveedor").value,
         servicio = formulario_usar.querySelector("#servicio").value,
@@ -50,32 +50,38 @@ async function registrar() {
     datos_consulta.append("operacion", "registrar");
 
     let respuesta = await query(datos_consulta);
-    console.log("Respuesta al registrar:", respuesta);
-
-
+    
     if (respuesta && respuesta.estatus) {
         modal.hide();
         formulario_usar.reset();
 
-        id_registrado = await last_id();
+        let respuesta_id = await last_id();
+        
+        if (respuesta_id && respuesta_id.estatus) {
+            const nuevo_id = respuesta_id.last_id;
+            let acciones = crearBotones(nuevo_id);
 
-        console.log("ID registrado:", id_registrado);
-        let acciones = crearBotones(id_registrado.mensaje);
+            // 1. Añadimos la fila y guardamos una referencia a su nodo DOM
+            const fila_nueva_nodo = data_table.row.add([
+                nombre,
+                servicio,
+                rif,
+                direccion,
+                acciones.outerHTML
+            ]).draw(false).node(); // .node() nos da el elemento <tr>
 
-        let res_data_table = await data_table.row.add([
-            nombre,
-            servicio,
-            rif,
-            direccion,
-            acciones.outerHTML
-        ]).draw(false); // Evita el reinicio de la paginación
-        reasignarEventos();
+            // 2. CORRECCIÓN: Le asignamos el ID a la nueva fila
+            fila_nueva_nodo.id = `fila-${nuevo_id}`;
 
-        consulta_completada();
+            mensajes('success', 4000, 'Atencion', 'El registro se ha realizado exitosamente');
+        } else {
+             Swal.fire("Error", "No se pudo obtener el ID del nuevo proveedor.", "error");
+        }
+
     } else {
         Swal.fire({
-            title: "Error",
-            text: "No se pudo registrar el proveedor. RIF o Cedula ya existe",
+            title: "Error de Validación",
+            text: respuesta.mensaje || "No se pudo registrar el proveedor.",
             icon: "error",
             confirmButtonText: "Aceptar",
             confirmButtonColor: "#e01d22",
@@ -85,18 +91,33 @@ async function registrar() {
 
 // Si queremos consultar
 async function consultar() {
+    //Creamos el formData
     datos_consulta = new FormData();
-    datos_consulta.append("operacion", "consulta");
 
-    data = await query(datos_consulta);
+    //Aqui decimos que vamos a hacer
+    datos_consulta.append('operacion', 'consulta');
 
-    let cuerpo_tabla = document.querySelector('#tabla_proveedores tbody');
-    cuerpo_tabla.textContent = null;
+    //Llamamos a la funcion para hacer la consulta
+    data = await query(datos_consulta)
+    vaciar_tabla(); //Vaciamos la tabla de lo que tenia antes
 
+    // Resvisamos el resultado
+    if (!(data.estatus == undefined)) {
+        mensajes('error', 4000, 'Atencion', respuesta.mensaje);
+        return;// en caso de error mandamos un mensaje con el error y nos vamos
+    }
+
+    //recorremos los datos y en cada vuelta llamamos una funcion para llenar la tabla
     await data.map(fila => {
         llenarTabla(fila);
     })
-    data_table = init_data_table();
+
+    data_table = init_data_table(); //iniciamos el dataTable de jquery
+}
+
+function vaciar_tabla() {
+    let cuerpo_tabla = document.querySelector(`#tabla_proveedores tbody`);
+    cuerpo_tabla.textContent = null;
 }
 
 function llenarTabla(fila) {
@@ -141,7 +162,7 @@ function crearBotones(id) {
     boton_editar.appendChild(icono_editar);
 
     boton_editar.setAttribute("type", "button");
-    boton_editar.setAttribute("class", "btn btn-success col-lg-3 col-4");
+    boton_editar.setAttribute("class", "btn btn-success col-lg-3 col-4 editar");
     boton_editar.setAttribute("tabindex", "-1");
     boton_editar.setAttribute("role", "button");
     boton_editar.setAttribute("aria-disabled", "true");
@@ -150,7 +171,6 @@ function crearBotones(id) {
 
     boton_editar.setAttribute("title", "Editar");
     boton_editar.setAttribute("value", id);
-    boton_editar.addEventListener("click", modificar_formulario)
 
     acciones.appendChild(boton_editar);
 
@@ -189,15 +209,19 @@ async function eliminar(id) {
 
 // Esta funcion prepara el formulario para editar el registro
 async function modificar_formulario(e) {
-    const boton = e.target.closest("button");
-    const id = boton.getAttribute("value");
+    const boton = e.target.closest('button.editar');
+    const id = boton.value;
 
     const datos_consulta = new FormData();
     datos_consulta.append("id_proveedor", id);
-    datos_consulta.append("operacion", "consulta_especifica");
+    datos_consulta.append("operacion", "consultar_proveedor");
 
-    const respuesta = await query(datos_consulta);
-    const data = respuesta[0];
+    const data = await query(datos_consulta);
+
+    if (!data) {
+        Swal.fire("Error", "No se encontraron los datos del proveedor.", "error");
+        return;
+    }
 
     let nombre = formulario_usar.querySelector("#nombre_proveedor"),
         servicio = formulario_usar.querySelector("#servicio"),
@@ -214,10 +238,12 @@ async function modificar_formulario(e) {
         boton_formulario.setAttribute("disabled", true);
     }
 
+    // Esto ahora se ejecutará correctamente
     boton_formulario.setAttribute("modificar", true);
     boton_formulario.setAttribute("id_modificar", data.id_proveedor);
     boton_formulario.textContent = "Modificar";
-    document.getElementById("titulo_modal").textContent = "Modificar Propietario";
+    // CORRECCIÓN: El título ahora es el correcto
+    document.getElementById("titulo_modal").textContent = "Modificar Proveedor";
     id_modificar = id;
 }
 
@@ -248,10 +274,10 @@ async function modificar(id) {
     let acciones = crearBotones(id);
 
     data_table.row(`#fila-${id}`).data([`${nombre}`,
-        `${servicio}`,
-        `${rif}`,
-        `${direccion}`,
-        `${acciones.outerHTML}`])
+    `${servicio}`,
+    `${rif}`,
+    `${direccion}`,
+    `${acciones.outerHTML}`])
     data_table.draw();
 
     let fila = document.querySelector(`#fila-${id}`);
@@ -262,7 +288,7 @@ async function modificar(id) {
 
 async function last_id() {
     datos_consulta = new FormData();
-    datos_consulta.append("operacion", "ultimo_id");
+    datos_consulta.append("operacion", "lastId");
     let res = await query(datos_consulta);
     return res;
 }
@@ -272,12 +298,12 @@ async function query(datos) {
     let mostrarModal = false;
     let tiempoCarga;
 
-    tiempoCarga = setTimeout(()=>{
+    tiempoCarga = setTimeout(() => {
         mostrarModal = true;
         modal_carga.show();
     }, 300);
-    
-    try{
+
+    try {
         const tiempoInicio = performance.now();
 
         const res = await fetch("", { method: "POST", body: datos });
@@ -285,19 +311,19 @@ async function query(datos) {
 
         const tiempoTranscurido = performance.now() - tiempoInicio;
         const tiempoEsperaMin = 700;
-        
+
         if (mostrarModal && tiempoTranscurido < tiempoEsperaMin) {
-            
+
             const restante = tiempoEsperaMin - tiempoTranscurido;
-            await new Promise(resolve => setTimeout(resolve,restante));
+            await new Promise(resolve => setTimeout(resolve, restante));
         }
 
         return data;
     }
-    catch(error){
-        return {estatus:false,mensaje:"A ocurrido un error durante la consulta",error}
+    catch (error) {
+        return { estatus: false, mensaje: "A ocurrido un error durante la consulta", error }
     }
-    finally{
+    finally {
         clearTimeout(tiempoCarga);
         if (mostrarModal) {
             modal_carga.hide();
@@ -354,36 +380,21 @@ function init_data_table() {
     // si lees esto tienes que saber que ahora odio estos data table, muerte a jquery...
 }
 
-const observer = new MutationObserver(() => {
-    reasignarEventos();
-});
 
-observer.observe(document.querySelector("#tabla_proveedores tbody"), {
-    childList: true,
-    subtree: true
-});
-
-
-function reasignarEventos() {
-    if (id_eliminado) {
-        let existe_fila = tabla.querySelector(`#fila-${id_eliminado}`);
-        if (existe_fila) {
-            data_table.row(`#fila-${id_eliminado}`).remove().draw();
-            id_eliminado = null;
-        }
+document.querySelector("#tabla_proveedores tbody").addEventListener('click', function(e) {
+    // Si el elemento clickeado (o su padre) es un botón de editar
+    const botonEditar = e.target.closest('button.editar');
+    if (botonEditar) {
+        modificar_formulario(e);
     }
 
-    $(".eliminar").on("click", function(e) {
-        // Asegúrate de que el valor se obtenga correctamente
-        const id = e.target.closest("button").getAttribute("value");
-        if (!id) {
-            console.error("No se encontró el ID para eliminar.");
-            return;
-        }
-
+    // Si el elemento clickeado (o su padre) es un botón de eliminar
+    const botonEliminar = e.target.closest('button.eliminar');
+    if (botonEliminar) {
+        const id = botonEliminar.value;
         Swal.fire({
             title: "Atención",
-            text: "¿Está seguro de eliminar este proveedores?",
+            text: "¿Está seguro de eliminar este proveedor?",
             showCancelButton: true,
             confirmButtonText: "Eliminar",
             confirmButtonColor: "#e01d22",
@@ -391,26 +402,8 @@ function reasignarEventos() {
             icon: "warning"
         }).then((resultado) => {
             if (resultado.isConfirmed) {
-                console.log("ID recibido para eliminar:", id);
                 eliminar(id);
             }
         });
-    });
-
-    if (id_registrado && tabla) {
-        let boton_modificar = tabla.querySelector(`[value="${id_registrado.mensaje}"]`);
-        if (boton_modificar){
-            boton_modificar.addEventListener("click", modificar_formulario);
-            boton_modificar.closest("tr").setAttribute("id", `fila-${id_registrado.mensaje}`);
-            id_registrado = null;
-        }
-    }
-
-}
-
-const resizeObserver = new ResizeObserver(entries => {
-    if (data_table) {
-        data_table.draw();
     }
 });
-resizeObserver.observe(tabla);

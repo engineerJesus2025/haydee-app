@@ -15,8 +15,10 @@
     if (isset($_POST["operacion"])){
         $operacion = $_POST["operacion"];
 
-        if ($operacion == "consulta"){            
+        if ($operacion == "consulta"){
             $rol_obj = new Rol();
+
+            $rol_obj->registrar_bitacora(CONSULTAR, GESTIONAR_ROLES, "Todos los roles de usuario");
 
             echo  json_encode($rol_obj->realizar_consulta('consultar'));            
         }
@@ -30,12 +32,13 @@
             $rol_obj->set_nombre($nombre);
  
             $resultado_registro = $rol_obj->realizar_consulta('registrar');
+
             if ($resultado_registro["estatus"]) {
                 $roles_permisos_obj = new Roles_permisos();
 
                 $rol_id = $rol_obj->realizar_consulta('lastId');
 
-                $roles_permisos_obj->set_rol_id($rol_id["mensaje"]);
+                $roles_permisos_obj->set_rol_id($rol_id["last_id"]);
 
                 foreach($permisos as $permiso){
                     $roles_permisos_obj->set_permiso_usuario_id($permiso);
@@ -47,9 +50,13 @@
                         exit();
                     }
                 }
+
+                $rol_obj->registrar_bitacora(REGISTRAR, GESTIONAR_ROLES, "Rol '" . $nombre . "' guardado");
+
                 echo json_encode($resultado_permisos);
                 exit();
-            } else {
+            } 
+            else {
                 echo json_encode($resultado_registro);
                 exit();
             }
@@ -109,6 +116,8 @@
                 }
             }
 
+            $rol_obj->registrar_bitacora(MODIFICAR, GESTIONAR_ROLES, "Rol '" . $nombre . "' cambiado");
+
             echo json_encode($resultado_permisos);
             exit();
         }
@@ -120,7 +129,20 @@
 
             $rol_obj->set_id_rol($id_rol);
 
-            echo  json_encode($rol_obj->realizar_consulta('eliminar_rol'));
+            $rol_alterado = $rol_obj->realizar_consulta('consultar_rol');
+
+            $resultado = $rol_obj->realizar_consulta("eliminar_rol");
+
+            if ($resultado["estatus"]){
+                if ($rol_alterado) {
+                    $rol_obj->registrar_bitacora(ELIMINAR, GESTIONAR_ROLES, "Rol '" . $rol_alterado["nombre"] . "' eliminado");
+                }
+                else {
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta para la bitácora"];
+                }
+            }            
+
+            echo  json_encode($resultado);
         }
         elseif ($operacion == "ultimo_id"){
             $rol_obj = new Rol();

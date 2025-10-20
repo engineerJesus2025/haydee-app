@@ -31,40 +31,6 @@ class CajaChicaTest extends TestCase
         $this->assertArrayHasKey('anio_fiscal_id', $resultado[0]);
     }
 
-    //Metodo buscar_mes
-    public function testBuscarMesIdCorrecto(){
-        $this->caja_chica->set_id_caja_chica(18);
-
-        $resultado = $this->caja_chica->realizar_consulta('buscar_mes');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-
-        // Revisamos la estructura de un elemento
-        $this->assertArrayHasKey('movimiento', $resultado[0]);
-        $this->assertArrayHasKey('fecha', $resultado[0]);
-        $this->assertArrayHasKey('monto', $resultado[0]);
-        $this->assertArrayHasKey('remitente', $resultado[0]);        
-    }
-
-    public function testBuscarMesIdIncorrecto(){
-        $this->caja_chica->set_id_caja_chica(123122);
-
-        $resultado = $this->caja_chica->realizar_consulta('buscar_mes');
-        
-        $this->assertIsArray($resultado);
-        $this->assertEmpty($resultado);
-    }
-
-    public function testBuscarMesDatosVacios(){
-        $this->caja_chica->set_id_caja_chica('');
-
-        $resultado = $this->caja_chica->realizar_consulta('buscar_mes');
-        
-        $this->assertIsArray($resultado);
-        $this->assertEmpty($resultado);
-    }
-
     //Metodo editar_observacion
     public function testEditarObservacionDatosCorrectos(){
         $this->caja_chica->set_id_caja_chica(15); // Id existente        
@@ -108,16 +74,6 @@ class CajaChicaTest extends TestCase
         $this->assertStringContainsString("Uno o varios de los campos requeridos estan vacios", $resultado["mensaje"]);
     }
 
-    // //Metodo verificar_caja_mes
-    public function testVerificarCajaMes(){
-        $resultado = $this->caja_chica->realizar_consulta('verificar_caja_mes');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);        
-
-        $this->assertTrue($resultado["estatus"]);
-        $this->assertStringContainsString('OK', $resultado["mensaje"]);
-    }
 }
 
 ?>

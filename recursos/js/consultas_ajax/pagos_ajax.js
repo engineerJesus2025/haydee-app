@@ -21,6 +21,8 @@ let tiempoInicio;
 // Forma correcta de definir el modal
 let modalVistaPrevia = new bootstrap.Modal(document.querySelector("#modal_vista_previa"));
 
+let detallesActuales = null;
+
 consultar(); // Para llenar la tabla al cargar o entrar a la pagina
 api();
 
@@ -52,13 +54,35 @@ document.querySelector(`#modal_pagos`).addEventListener("hide.bs.modal",()=>{
 
     api();
 
-    document.querySelectorAll(".nombre_imagen_cargada").forEach(el => el.textContent = "");
-    document.querySelectorAll(".boton_eliminar_imagen").forEach(btn => {
-        btn.classList.add("d-none");
-        btn.removeAttribute("data-nombre");
+    const container = formulario_usar.querySelector("#detalles_container");
+    const bloques = container.querySelectorAll(".detalle-pago");
+    bloques.forEach((bloque, index) => {
+        if (index > 0) { // Si es un bloque adicional (no el primero)
+            bloque.remove();
+        }
     });
-    document.querySelectorAll(".imagen").forEach(input => input.value = "");
 
+    formulario_usar.reset();
+
+    const primerBloque = container.querySelector(".detalle-pago");
+    if (primerBloque) {
+        // Limpia el texto del comprobante cargado
+        const nombreImagen = primerBloque.querySelector(".nombre_imagen_cargada");
+        if (nombreImagen) nombreImagen.textContent = '';
+
+        // Oculta el botón de eliminar imagen (si existe)
+        const btnEliminarImagen = primerBloque.querySelector(".boton_eliminar_imagen");
+        if (btnEliminarImagen) {
+            btnEliminarImagen.classList.add('d-none');
+            btnEliminarImagen.removeAttribute("data-nombre");
+        }
+
+        // Elimina el botón "Eliminar este Detalle" que pudo ser añadido en modo edición
+        const btnEliminarDetalle = primerBloque.querySelector('.btn-outline-danger');
+        if (btnEliminarDetalle) btnEliminarDetalle.remove();
+    }
+
+    // 5. Elimina cualquier input oculto que se haya añadido (como 'eliminar_imagen')
     const inputOculto = formulario_usar.querySelector("input[name='eliminar_imagen']");
     if (inputOculto) inputOculto.remove();
 });
@@ -90,13 +114,49 @@ document.querySelector("#apartamento_id").addEventListener("change", async funct
     ];
 
     respuesta.forEach(m => {
+        let pendiente = parseFloat(m.pendiente);
+        if (pendiente <= 0) return;
+
+        let hoy = new Date();
+        let fechaReferencia = new Date(m.anio, m.mes - 1, 1);
+        let diferenciaDias = Math.floor((hoy - fechaReferencia) / (1000 * 60 * 60 * 24));
+
+        // ====== Cálculo del total con interés si ha pasado el límite ======
+        let total = parseFloat(m.monto);
+
+        if (diferenciaDias > m.limite_mensualidad) {
+            total += total * (m.porcentaje_interes / 100);
+        }
+ 
+        total = total.toFixed(2);
+        pendiente = pendiente.toFixed(2);
+
         let opcion = document.createElement("option");
-        let nombre_mes = meses[parseInt(m.mes)]; // Asegúrate de que sea número
+        let nombre_mes = meses[parseInt(m.mes)];
+
         opcion.value = m.id_mensualidad;
-        opcion.textContent = `${nombre_mes}/${m.anio} - ${m.monto} Bs`;
-        opcion.setAttribute("data-monto", m.monto);
+        opcion.textContent = `${nombre_mes}/${m.anio} - Restante: ${pendiente} Bs`;
+        opcion.setAttribute("data-monto", total);
+
         select_mensualidades.appendChild(opcion);
     });
+
+    /* Antiguo por si acaso toca cambiarlo
+    respuesta.forEach(m => {
+        let opcion = document.createElement("option");
+        let nombre_mes = meses[parseInt(m.mes)];
+
+        let pendiente = parseFloat(m.pendiente).toFixed(2);
+        if (pendiente <= 0) return; // saltar si no hay pendiente
+        let total = parseFloat(m.monto).toFixed(2);
+
+        opcion.value = m.id_mensualidad;
+        opcion.textContent = `${nombre_mes}/${m.anio} - Restante: ${pendiente} Bs`;
+        opcion.setAttribute("data-monto", total);
+
+        select_mensualidades.appendChild(opcion);
+    });
+    */
 });
 
 // Esta es para cuandos se selecciona una mensualidad y poder guardarla, se muestra en la consola
@@ -112,11 +172,12 @@ document.querySelector("#mensualidad_id").addEventListener("change", function ()
 
 async function api() {
     try {
-        let response = await fetch('https://pydolarve.org/api/v2/dollar?page=alcambio');
+        let response = await fetch('https://ve.dolarapi.com/v1/dolares');
         let obj_dolar = await response.json();
         console.log(obj_dolar);
 
-        let tasaBCV = obj_dolar?.monitors?.bcv?.price;
+        let oficial = obj_dolar.find(item => item.fuente === 'oficial');
+        let tasaBCV = oficial ? oficial.promedio.toFixed(2) : null;
 
         let inputsTasa = document.querySelectorAll('.tasa_dolar'); // selecciona todos los campos
 
@@ -230,9 +291,9 @@ function obtenerEstado(estado) {
             texto = "Pendiente";
             color = "warning";
             break;
-        case "No procesado":
+        case "No verificado":
         case 3:
-            texto = "No procesado";
+            texto = "No verificado";
             color = "warning";
             break;
         case "Procesado":
@@ -276,6 +337,7 @@ async function registrar() {
     let apartamento_id = formulario_usar.querySelector("#apartamento_id").value;
     let monto_mensualidad = formulario_usar.querySelector("#monto_mensualidad").value;
     let mensualidad_id = formulario_usar.querySelector("#mensualidad_id").value;
+    let monto_total = 0;
 
     // Campos múltiples
     let fechas = formulario_usar.querySelectorAll(".fecha_admin");
@@ -322,6 +384,8 @@ async function registrar() {
         } else {
             datos_consulta.append("imagen[]", ""); // Para mantener alineados los índices
         }
+
+        monto_total += Number(montos[i].value);
     }
 
     datos_consulta.append("operacion", "registrar");
@@ -336,7 +400,7 @@ async function registrar() {
     let fila = {
         id_pago: respuesta.id_pago || "N/A",
         fecha: fechas[0] ? fechas[0].value : "N/A",
-        monto_mensualidad: monto_mensualidad,
+        monto_mensualidad: monto_total,
         estado: estado,
         observacion: observacion,
     };
@@ -359,15 +423,21 @@ async function registrar() {
         acciones.outerHTML || ""
     ];
 
-    let nuevaFila = data_table.row.add(filaDatos).draw(false).node();
-    data_table.row(nuevaFila).data(filaDatos).draw(false);
-    data_table.columns.adjust().draw(false);
+    // let nuevaFila = data_table.row.add(filaDatos).draw(false).node();
+    // data_table.row(nuevaFila).data(filaDatos).draw(false);
+    // data_table.columns.adjust().draw(false);
+
+    await consultar(); // recarga toda la tabla
 
     mensajes("success", 4000, "Éxito", "El registro se ha realizado exitosamente");
 }
 
 //Si queremos consultar
 async function consultar() {
+    if ($.fn.DataTable.isDataTable("#tabla_pagos")) {
+        $('#tabla_pagos').DataTable().clear().destroy();
+    }
+
     //Creamos el formData
     datos_consulta = new FormData();
 
@@ -413,16 +483,18 @@ function llenarTabla(fila) {
     // creamos un td por cada columna que vamos a llenar de la tabla <td></td>
     let fecha_td = document.createElement("td"),
     monto_td = document.createElement("td"),
+    mensualidad_td = document.createElement("td");
     estado_td = document.createElement("td");
-    observacion_td = document.createElement("td");
+    apartamento_td = document.createElement("td");
 
     // le damos el contenido de la consulta
     let datos = fila;
 
     fecha_td.textContent = formatearFecha(datos.primera_fecha_detalle);
-    monto_td.textContent = datos.monto + " Bs";
+    monto_td.textContent = parseFloat(datos.monto).toFixed(2) + " Bs";
+    mensualidad_td.textContent = datos.mensualidad;
     estado_td.innerHTML = obtenerEstado(datos.estado);
-    observacion_td.textContent = datos.observacion;
+    apartamento_td.textContent = "Nro: " + datos.apartamento;
 
     let acciones = crearBotones(id_campo); 
     // creamos los botones de eliminar y modificar
@@ -430,8 +502,9 @@ function llenarTabla(fila) {
     // le ponemos los td a la fila (tr)
     fila_tabla.appendChild(fecha_td);
     fila_tabla.appendChild(monto_td);
+    fila_tabla.appendChild(mensualidad_td);
     fila_tabla.appendChild(estado_td);
-    fila_tabla.appendChild(observacion_td);
+    fila_tabla.appendChild(apartamento_td);
     fila_tabla.appendChild(acciones);
 
     fila_tabla.setAttribute("id",`fila-${id_campo}`);
@@ -535,10 +608,8 @@ async function eliminar(id) {
     mensajes('success',4000,'Atencion','El registro ha sido eliminado correctamente');//Mensaje de que se completo la operacion
 }
 
-// Esta funcion prepara el formulario para editar el registro
+
 async function modificar_formulario(e) {
-    // primero buscamos el registro a modificar
-    //Creamos el formData
     datos_consulta = new FormData();
     
     let id = e.target.value; // tomamos el id
@@ -546,43 +617,30 @@ async function modificar_formulario(e) {
         id = e.target.parentElement.value; 
         //esto es por si seleciona el icono en vez del boton al dar click
     }
-    // le damos el id
+    
     datos_consulta.append("id_pago",id);
-
-    //Aqui decimos que vamos a hacer
     datos_consulta.append('operacion','consulta_especifica');
 
-    //Llamamos a la funcion para hacer la consulta y guardamos los datos
     data = await query(datos_consulta);
     console.log("Modificar formulario:",data);
     console.log("Modificar formulario:",data.detalles);
-    //cargarDatosEnFormulario(data);
-    
-    // Campos simples
-    let estado = formulario_usar.querySelector("#estado");
-    let observacion = formulario_usar.querySelector("#observacion");
-    let apartamento_id = formulario_usar.querySelector("#apartamento_id");
-    let monto_mensualidad = formulario_usar.querySelector("#monto_mensualidad");
-    let mensualidad_id = formulario_usar.querySelector("#mensualidad_id");
 
     const datosPago = data;
     const detalles = data.detalles;
+    
+    // Llenar campos principales
+    formulario_usar.querySelector("#estado").value = datosPago.estado;
+    formulario_usar.querySelector("#observacion").value = datosPago.observacion;
+    formulario_usar.querySelector("#apartamento_id").value = datosPago.apartamento_id;
+    formulario_usar.querySelector("#monto_mensualidad").value = datosPago.monto_mensualidad;
+    formulario_usar.querySelector("#mensualidad_id").value = datosPago.mensualidad_id;
 
-    id_banco_transaccion = data.id_banco_transaccion;
-    for(let i = 0; i < detalles.length; i++){
-        id_detalle_pago.push(detalles[i].id_detalle_pago);          
-    } // Guardar el id del detalle si existe
+    id_detalle_pago = detalles.map(d => d.id_detalle_pago); // Puede que falle porque se le puso un null
+    id_banco_transaccion = detalles.map(d => d.id_banco_transaccion || null);
 
     console.log("Ids almacenados: ", id_detalle_pago);
 
     cantidad = detalles.length;
-
-    // le damos valor
-    estado.value = datosPago.estado;
-    observacion.value = datosPago.observacion;
-    apartamento_id.value = datosPago.apartamento_id;
-    monto_mensualidad.value = datosPago.monto_mensualidad;
-    mensualidad_id.value = datosPago.mensualidad_id;
 
     // Para hacer parecer los inputs de los detalles
     const detallesContainer = formulario_usar.querySelector("#detalles_container");
@@ -612,10 +670,20 @@ async function modificar_formulario(e) {
             nuevoBloque.querySelector(".tipo_pago_admin").value = detalle.tipo_pago;
             nuevoBloque.querySelector(".referencia").value = detalle.referencia;
             nuevoBloque.querySelector(".banco_admin").value = detalle.banco_id || "";
-            nuevoBloque.querySelector(".imagen").value = detalle.imagen || "";
+
+            if (detalle.imagen) {
+                nuevoBloque.querySelector(".nombre_imagen_cargada").textContent = `Comprobante cargado: ${detalle.imagen}`;
+            }
+
+            if (detalle.imagen && detalle.imagen.trim() !== "") {
+                const inputImagenExistente = document.createElement('input');
+                inputImagenExistente.type = 'hidden';
+                inputImagenExistente.name = 'imagen_existente[]';
+                inputImagenExistente.value = detalle.imagen;
+                nuevoBloque.appendChild(inputImagenExistente);
+            }
 
             mostrarCamposPorTipo(detalle.tipo_pago, nuevoBloque);
-
             detallesContainer.appendChild(nuevoBloque);
         })
     }
@@ -649,21 +717,6 @@ async function modificar_formulario(e) {
 
         mensualidad_id.appendChild(opcion);
     });
- 
-    // Mostrar nombre de imagen, esos id estan en el formulario
-    // const nombreImagen = document.querySelector("#nombre_imagen_cargada");
-    // const botonEliminarImagen = document.querySelector("#boton_eliminar_imagen");
-
-    // if (data.detalles.imagen && data.detalles.imagen !== "") {
-    //     let nombre_archivo = data.imagen.split("/").pop();
-    //     nombreImagen.textContent = `Imagen cargada: ${nombre_archivo}`;
-    //     botonEliminarImagen.classList.remove("d-none");
-    //     botonEliminarImagen.setAttribute("data-nombre", nombre_archivo);
-    // } else {
-    //     nombreImagen.textContent = "No hay imagen cargada.";
-    //     botonEliminarImagen.classList.add("d-none");
-    //     botonEliminarImagen.removeAttribute("data-nombre");
-    // }
 
     // este if revisa si tiene permiso para editar, en caso de que no, quitamos el boton
     if(!permiso_editar){
@@ -681,76 +734,6 @@ async function modificar_formulario(e) {
     id_modificar = id;
     //referencia_an = referencia.value;
     //guardamos el orginal del correo, para que no choquen con las validaciones
-}
-
-function cargarDatosEnFormulario(data) {
-    // 1. Campos simples
-    formulario_usar.querySelector("#apartamento_id").value = data.apartamento_id || "";
-    formulario_usar.querySelector("#mensualidad_id").innerHTML = "<option value=''>Cargando mensualidades...</option>";
-    formulario_usar.querySelector("#monto_mensualidad").value = data.monto_mensualidad || "";
-    formulario_usar.querySelector("#estado").value = data.estado || "";
-    formulario_usar.querySelector("#observacion").value = data.observacion || "";
-
-    // 2. Carga mensualidades dinámicamente según apartamento_id
-    // Asumiendo tienes función para esto, sino repite lógica similar a la que tienes:
-    cargarMensualidadesModificar(data.apartamento_id, data.mensualidad_id);
-
-    // 3. Limpiar detalles existentes
-    const container = document.getElementById("detalles_container");
-    container.innerHTML = "";
-
-    if (!data.detalles || !Array.isArray(data.detalles) || data.detalles.length === 0) {
-        // Si no hay detalles, crea al menos un bloque vacío para que el usuario pueda agregar
-        agregarDetalleVacio();
-        return;
-    }
-
-    // 4. Por cada detalle, clona el bloque base y llena los valores
-    data.detalles.forEach(detalle => {
-        const detallesOriginal = document.querySelector(".detalle-pago"); // Bloque base
-        const nuevoDetalle = detallesOriginal.cloneNode(true);
-
-        // Limpiar valores por si acaso
-        nuevoDetalle.querySelectorAll("input, select").forEach(el => el.value = "");
-
-        // Llenar campos del detalle
-        nuevoDetalle.querySelector(".fecha").value = detalle.fecha || "";
-        nuevoDetalle.querySelector(".tipo_pago").value = detalle.tipo_pago || "";
-        nuevoDetalle.querySelector(".monto").value = detalle.monto || "";
-        nuevoDetalle.querySelector(".tasa_dolar").value = detalle.tasa_dolar || "";
-        nuevoDetalle.querySelector(".monto_dolar").value = detalle.monto_dolar || "";
-        nuevoDetalle.querySelector(".referencia").value = detalle.referencia || "";
-        nuevoDetalle.querySelector(".banco").value = detalle.banco_id || "";
-
-        // Manejar imagen si existe (opcional, puede ser solo mostrar nombre)
-        if (detalle.imagen) {
-            const nombreImagen = nuevoDetalle.querySelector(".nombre-imagen-cargada");
-            if (nombreImagen) {
-                const archivo = detalle.imagen.split("/").pop();
-                nombreImagen.textContent = `Imagen cargada: ${archivo}`;
-                const botonEliminar = nuevoDetalle.querySelector(".boton_eliminar_imagen");
-                if (botonEliminar) {
-                    botonEliminar.classList.remove("d-none");
-                    botonEliminar.setAttribute("data-nombre", archivo);
-                }
-            }
-        }
-
-        // Ajusta campos según tipo de pago
-        mostrarCamposPorTipo(detalle.tipo_pago, nuevoDetalle);
-
-        // Agregar botón eliminar para el bloque si no existe
-        if (!nuevoDetalle.querySelector(".btn-outline-danger")) {
-            const eliminarBtn = document.createElement("button");
-            eliminarBtn.className = "btn btn-sm btn-outline-danger mb-3";
-            eliminarBtn.innerHTML = '<i class="bi bi-x-circle"></i> Eliminar este Detalle';
-            eliminarBtn.onclick = () => nuevoDetalle.remove();
-            nuevoDetalle.querySelector(".card-body").prepend(eliminarBtn);
-        }
-
-        // Agregar el nuevo bloque al contenedor
-        container.appendChild(nuevoDetalle);
-    });
 }
 
 function mostrarCamposPorTipo(tipo_pago, formulario) {
@@ -802,6 +785,7 @@ async function mostrarVistaPrevia(e) {
     document.getElementById("vista_observacion").textContent = data.observacion;
 
     document.getElementById("apartamento_id_detalles").value = pago_actual.apartamento_id;
+    apartamento_seleccionado = pago_actual.apartamento_id;
     await cargarMensualidades(pago_actual.apartamento_id); // Llenamos el select
     document.getElementById("mensualidad_id_detalles").value = pago_actual.mensualidad_id;
     document.getElementById("monto_mensualidad_detalles").value = pago_actual.monto_mensualidad;
@@ -809,12 +793,13 @@ async function mostrarVistaPrevia(e) {
     console.log("Mostrar vista previa TABLA PRINCIPAL");
     console.log("Respuesta obtenida:", respuesta);
 
+    await verificar_detalles(data.id_pago);
     await consultar_detalles(data.id_pago);
 
     // Mostrar el modal como los otros
     modalVistaPrevia.show();
 
-    asignarEventoRegistrar();
+    // asignarEventoRegistrar();
 }
 
 function asignarEventoRegistrar() {
@@ -850,81 +835,9 @@ document.getElementById('modal_detalles_pagos').addEventListener('hidden.bs.moda
 //si queremos modificar
 async function modificar(id) {  
     //Creamos el formData
-    let datos_consulta = new FormData();
+    let datos_consulta = new FormData(formulario_usar);
 
-    // Campos simples
-    let estado = formulario_usar.querySelector("#estado").value;
-    let observacion = formulario_usar.querySelector("#observacion").value;
-    let apartamento_id = formulario_usar.querySelector("#apartamento_id").value;
-    let monto_mensualidad = formulario_usar.querySelector("#monto_mensualidad").value;
-    let mensualidad_id = formulario_usar.querySelector("#mensualidad_id").value;
-
-    // Campos múltiples
-    let fechas = formulario_usar.querySelectorAll(".fecha_admin");
-    let montos = formulario_usar.querySelectorAll(".monto");
-    let tasas = formulario_usar.querySelectorAll(".tasa_dolar");
-    let montos_dolar = formulario_usar.querySelectorAll(".monto_dolar");
-    let tipos_pago = formulario_usar.querySelectorAll(".tipo_pago_admin");
-    let referencias = formulario_usar.querySelectorAll(".referencia");
-    let bancos = formulario_usar.querySelectorAll(".banco_admin");
-    let imagenes = formulario_usar.querySelectorAll(".imagen");
-
-    // Le ponemos los datos del formulario
-    datos_consulta.append("id_pago",id);
-    
-    if (Array.isArray(id_detalle_pago)) {
-    id_detalle_pago.forEach(id => {
-        datos_consulta.append("id_detalle_pago[]", id);
-    });
-    } else {
-        datos_consulta.append("id_detalle_pago[]", id_detalle_pago);
-    }   
-
-    console.log("Id recibidos:", id_detalle_pago);
-    datos_consulta.append("id_banco_transaccion",id_banco_transaccion);
-
-    datos_consulta.append("estado", estado);
-    datos_consulta.append("observacion", observacion);
-    datos_consulta.append("apartamento_id", apartamento_id);
-    datos_consulta.append("monto_mensualidad", monto_mensualidad);
-    datos_consulta.append("mensualidad_id", mensualidad_id);
-
-    let total = fechas.length;
-    console.log("Fechas:", fechas);
-    console.log("Total de detalles:", total);
-
-    if (
-        montos.length !== total ||
-        tasas.length !== total ||
-        montos_dolar.length !== total ||
-        tipos_pago.length !== total ||
-        referencias.length !== total ||
-        bancos.length !== total ||
-        imagenes.length !== total
-    ) {
-        mensajes("error", 4000, "Error", "Hay un desajuste en los campos de detalles");
-        return;
-    }
-
-    for (let i = 0; i < total; i++) {
-
-        datos_consulta.append("fecha[]", fechas[i].value);
-        datos_consulta.append("monto[]", montos[i].value);
-        datos_consulta.append("tasa_dolar[]", tasas[i].value);
-        datos_consulta.append("monto_dolar[]", montos_dolar[i].value);
-        datos_consulta.append("tipo_pago[]", tipos_pago[i].value);
-        datos_consulta.append("referencia[]", referencias[i].value);
-        datos_consulta.append("banco_id[]", bancos[i].value);
-
-        if (imagenes[i] && imagenes[i].files[0]) {
-             datos_consulta.append("imagen[]", imagenes[i].files[0]);
-        } else {
-             datos_consulta.append("imagen[]", ""); // Para mantener alineados los índices
-        }
-    }
-    // ...
-
-    //Aqui decimos que vamos a hacer
+    datos_consulta.append("id_pago", id);
     datos_consulta.append('operacion','modificar');
 
     //Llamamos a la funcion para hacer la consulta
@@ -937,8 +850,6 @@ async function modificar(id) {
         return;// en caso de error mandamos un mensaje con el error y nos vamos
     }
 
-    // al terminar le damos al boton su valores originales
-
     boton_formulario.removeAttribute("modificar");
     boton_formulario.removeAttribute("id_modificar");   
     boton_formulario.textContent = "Registrar";
@@ -947,74 +858,52 @@ async function modificar(id) {
 
     mensajes('success',4000,'Atencion','El registro se ha modificado exitosamente');//Mensaje de que se completo la operacion
 
-    // Obtener ruta de imagen actualizada o previa
-     //const rutaImagen = respuesta.imagen_url || "recursos/img/default.jpg";
-
-    // esto de abajo es para editar la fila que se modifico en el data table
-    let acciones = crearBotones(id); // creamos otro botones (no se que tan necesario sea esto)
-
-    let fila_datos = {
-        id_pago: respuesta.id_pago || "N/A",
-         fecha: fechas[0] ? fechas[0].value : "N/A",
-         monto: montos[0] ? montos[0].value : "N/A",
-         estado: estado,
-         observacion: observacion,
-    };
-
-    formulario_usar.reset(); //Limpiamos el formulario
+    //formulario_usar.reset(); //Limpiamos el formulario
     modal.hide(); // escondemos el modal
  
     // Elimina todos los bloques excepto el primero
-     const bloques = formulario_usar.querySelectorAll(".detalle-pago");
-     bloques.forEach((bloque, i) => i > 0 && bloque.remove());
+    const bloques = formulario_usar.querySelectorAll(".detalle-pago");
+    bloques.forEach((bloque, i) => i > 0 && bloque.remove());
 
-    let datos = fila_datos;
-
-    data_table.row(`#fila-${id}`).data([
-        formatearFecha(datos.fecha),
-        datos.monto + " Bs",
-        obtenerEstado(datos.estado),
-        datos.observacion,
-        acciones.outerHTML
-    ]).draw();
+    await consultar();
 
     // se le vuelve a poner el evento al boton
     let fila = document.querySelector(`#fila-${id}`);
-if (fila) {
+    if (fila) {
         fila.querySelector(`[value='${id}']`).addEventListener("click",modificar_formulario);
-}
+    }
 
     // Vaciamos por si acaso
-id_detalle_pago = null;
-id_banco_transaccion = null;
+    id_detalle_pago = null;
+    id_banco_transaccion = null;
 }
 
+let cerrarBtns = [
+    document.getElementById('cerrar_modal_vista_previa'),
+    document.getElementById('cerrar_modal_vista_previa_x')
+];
 
-// BOTON PARA ELIMINAR LA IMAGEN EN EL FORMULARIO DE EDITAR
-document.querySelectorAll(".boton_eliminar_imagen").forEach(boton => {
-    boton.addEventListener("click", function () {
-        Swal.fire({
-            title: "¿Eliminar imagen?",
-            text: "La imagen cargada será eliminada de esta publicación.",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#e01d22",
-            cancelButtonText: "Cancelar",
-            confirmButtonText: "Sí, eliminar"
-        }).then((result) => {
+cerrarBtns.forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+        // Usamos la variable global en vez de revisar el DOM
+        if (!detallesActuales || detallesActuales.length === 0) {
+            e.preventDefault(); // prevenimos el cierre automático
+
+            const result = await Swal.fire({
+                title: "⚠ Este pago no tiene detalles registrados",
+                text: "Si cierra ahora, el registro principal se eliminará. ¿Desea continuar?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#e01d22",
+                cancelButtonText: "Cancelar",
+                confirmButtonText: "Sí, eliminar"
+            });
+
             if (result.isConfirmed) {
-                const hiddenEliminar = document.createElement("input");
-                hiddenEliminar.type = "hidden";
-                hiddenEliminar.name = "eliminar_imagen";
-                hiddenEliminar.value = "1";
-                formulario_usar.appendChild(hiddenEliminar);
-
-                // Solo en esta tarjeta, no en todas
-                const tarjeta = boton.closest(".card");
-                tarjeta.querySelector(".nombre_imagen_cargada").textContent = "Imagen eliminada.";
-                boton.classList.add("d-none");
+                // Eliminamos el registro principal    
+                eliminar(pago_actual.id);
             }
-        });
+        }
     });
 });
 
@@ -1193,6 +1082,7 @@ function envio_detalles(operacion) {
     else if(operacion == "Registrar"){
         //sino a registrar
         registrar_detalles();
+        
     }else{
         // esto es imposible que pase pero aja
         mensajes('error',4000,'Atencion',
@@ -1205,7 +1095,14 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!modal_detalles) return console.error("❌ No se encontró el modal de detalles en el DOM.");
 
     modal_detalles.addEventListener("hide.bs.modal", () => {
+        let mensualidad_valor_select = formulario_usar_detalles.querySelector('#mensualidad_id_detalles').value,
+        apartamento_valor_select = formulario_usar_detalles.querySelector('#apartamento_id_detalles').value;
+
         formulario_usar_detalles.reset();
+
+        formulario_usar_detalles.querySelector('#mensualidad_id_detalles').value = mensualidad_valor_select;
+        formulario_usar_detalles.querySelector('#apartamento_id_detalles').value = apartamento_valor_select;
+
         boton_formulario_detalles.removeAttribute("modificar");
         boton_formulario_detalles.removeAttribute("id_modificar");
         boton_formulario_detalles.textContent = "Registrar";
@@ -1296,6 +1193,7 @@ async function registrar_detalles() {
     //Creamos el formData
     let datos_consulta = new FormData();
     //Creamos las variables con los datos de los inputs
+
     let monto = formulario_usar_detalles.querySelector("#monto_detalles").value,
     fecha = formulario_usar_detalles.querySelector("#fecha_detalles").value;
     monto_dolar = formulario_usar_detalles.querySelector("#monto_dolar_detalles").value;
@@ -1333,13 +1231,13 @@ async function registrar_detalles() {
         return;// en caso de error mandamos un mensaje con el error y nos vamos
     }
 
-    id_registrado_detalles = await last_id(); //Guarda el nuevo id registrado, para darselo al evento de modificar
+    id_registrado_detalles = await last_id_detalles(); //Guarda el nuevo id registrado, para darselo al evento de modificar
     
-    let acciones = crearBotones_detalles(id_registrado_detalles.mensaje); //Crea botones
+    let acciones = crearBotones_detalles(id_registrado_detalles.last_id); //Crea botones
     
     // esta variable no hace nada, pero me dio error cuando la quite XD
     let fila = {
-        id_detalles_pago: id_registrado_detalles.mensaje,
+        id_detalles_pago: id_registrado_detalles.last_id,
         fecha, // importante para los botones
         monto,
         monto_dolar,
@@ -1378,11 +1276,15 @@ async function cargarMensualidades(apartamento_id) {
         "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 
     respuesta.forEach(m => {
+        console.log(m);
         let opcion = document.createElement("option");
         let nombre_mes = meses[parseInt(m.mes)];
+        let pendiente = parseFloat(m.pendiente).toFixed(2);
+        if (pendiente <= 0) return; // saltar si no hay pendiente
+        let total = parseFloat(m.monto).toFixed(2);
         opcion.value = m.id_mensualidad;
-        opcion.textContent = `${nombre_mes}/${m.anio} - ${m.monto}$`;
-        opcion.setAttribute("data-monto", m.monto);
+        opcion.textContent = `${nombre_mes}/${m.anio} - ${total} Bs - Restante: ${pendiente} Bs`;
+        opcion.setAttribute("data-monto", total);
         select.appendChild(opcion);
     });
 }
@@ -1417,6 +1319,24 @@ async function consultar_detalles(id_pago) {
     data_table_detalles = init_data_table_detalles(); //iniciamos el dataTable de jquery
 }
 
+async function verificar_detalles(id_pago) {
+
+    datos_consulta = new FormData();
+    datos_consulta.append('operacion','consultar_detalles');
+    datos_consulta.append('id_pago', id_pago);
+
+    const data = await query(datos_consulta)
+    
+    if(!(data.estatus == undefined)){
+        mensajes('error',4000,'Atencion', data.mensaje);
+        detallesActuales = [];
+        return;// en caso de error mandamos un mensaje con el error y nos vamos
+    }
+
+    detallesActuales = data;
+    return detallesActuales.length > 0;
+}
+
 function vaciar_tabla_detalles() {
     let cuerpo_tabla = document.querySelector(`#tabla_detalles_pagos tbody`);
     cuerpo_tabla.textContent = null;
@@ -1442,8 +1362,8 @@ function llenarTabla_detalles(fila) {
     let datos = fila;
 
     fecha_td.textContent = formatearFecha(datos.fecha);
-    monto_td.textContent = datos.monto + " Bs";
-    monto_dolar_td.textContent = datos.monto_dolar;
+    monto_td.textContent = parseFloat(datos.monto).toFixed(2) + " Bs";
+    monto_dolar_td.textContent = parseFloat(datos.monto_dolar).toFixed(2) + " $";
     tipo_pago_td.textContent = datos.tipo_pago;
 
     let acciones = crearBotones_detalles(id_campo); 
@@ -1483,45 +1403,45 @@ function crearBotones_detalles(id) {
     acciones.appendChild(boton_vista_previa);
 
     // Lo mismo que arriba, pero con modificar
-    let boton_editar = document.createElement("button");
-    let icono_editar = document.createElement("i");
-    icono_editar.setAttribute("class", "bi bi-pencil-square")
-    boton_editar.appendChild(icono_editar);
-    boton_editar.setAttribute("type", "button");
-    boton_editar.setAttribute("class", "btn btn-success btn-sm col-3");
-    boton_editar.setAttribute("tabindex", "-1");
-    boton_editar.setAttribute("role", "button");
-    boton_editar.setAttribute("aria-disabled", "true");
-    boton_editar.setAttribute("data-bs-toggle", "modal");
-    boton_editar.setAttribute("data-bs-target", "#modal_detalles_pagos");
-    boton_editar.setAttribute("title","Editar Detalles");
-    boton_editar.setAttribute("value",id);
-    boton_editar.addEventListener("click",modificar_formulario_detalles)//Esa funcion esta mas abajo
+    // let boton_editar = document.createElement("button");
+    // let icono_editar = document.createElement("i");
+    // icono_editar.setAttribute("class", "bi bi-pencil-square")
+    // boton_editar.appendChild(icono_editar);
+    // boton_editar.setAttribute("type", "button");
+    // boton_editar.setAttribute("class", "btn btn-success btn-sm col-3");
+    // boton_editar.setAttribute("tabindex", "-1");
+    // boton_editar.setAttribute("role", "button");
+    // boton_editar.setAttribute("aria-disabled", "true");
+    // boton_editar.setAttribute("data-bs-toggle", "modal");
+    // boton_editar.setAttribute("data-bs-target", "#modal_detalles_pagos");
+    // boton_editar.setAttribute("title","Editar Detalles");
+    // boton_editar.setAttribute("value",id);
+    // boton_editar.addEventListener("click",modificar_formulario_detalles)//Esa funcion esta mas abajo
 
-    //Le ponemos los botones al <td><td> de las acciones
-    acciones.appendChild(boton_editar);
+    // //Le ponemos los botones al <td><td> de las acciones
+    // acciones.appendChild(boton_editar);
 
-    if (permiso_eliminar) {
-        //creamos el boton de eliminar, le damos valor, y le asignamos la funcion para eliminar
-        let boton_eliminar = document.createElement("button");
+    // if (permiso_eliminar) {
+    //     //creamos el boton de eliminar, le damos valor, y le asignamos la funcion para eliminar
+    //     let boton_eliminar = document.createElement("button");
 
-        let icono_eliminar = document.createElement("i");// le ponemos un icono
-        icono_eliminar.setAttribute("class", "bi bi-trash");// y estilos
-        boton_eliminar.appendChild(icono_eliminar);
+    //     let icono_eliminar = document.createElement("i");// le ponemos un icono
+    //     icono_eliminar.setAttribute("class", "bi bi-trash");// y estilos
+    //     boton_eliminar.appendChild(icono_eliminar);
         
-        // le ponemos todos los atributos que lleva este boton
-        boton_eliminar.setAttribute("type", "button");
-        boton_eliminar.setAttribute("class", "btn btn-danger btn-sm eliminar col-3");
-        boton_eliminar.setAttribute("tabindex", "-1"); 
-        boton_eliminar.setAttribute("role", "button");
-        boton_eliminar.setAttribute("aria-disabled", "true");
-        // no se para que sirven la mayoria, pero bueno... boostrap
+    //     // le ponemos todos los atributos que lleva este boton
+    //     boton_eliminar.setAttribute("type", "button");
+    //     boton_eliminar.setAttribute("class", "btn btn-danger btn-sm eliminar_detalles col-3");
+    //     boton_eliminar.setAttribute("tabindex", "-1"); 
+    //     boton_eliminar.setAttribute("role", "button");
+    //     boton_eliminar.setAttribute("aria-disabled", "true");
+    //     // no se para que sirven la mayoria, pero bueno... boostrap
 
-        boton_eliminar.setAttribute("title","Eliminar Detalles");
-        boton_eliminar.setAttribute("value",id);// el valor del id para eliminar    
+    //     boton_eliminar.setAttribute("title","Eliminar Detalles");
+    //     boton_eliminar.setAttribute("value",id);// el valor del id para eliminar    
 
-        acciones.appendChild(boton_eliminar);
-    }
+    //     acciones.appendChild(boton_eliminar);
+    // }
 
     td.appendChild(acciones);
 
@@ -1552,6 +1472,8 @@ async function eliminar_detalles(id) {
     // en caso de que lo de abajo no lo elimine
 
     data_table_detalles.row(`#fila-${id}`).remove().draw(); // esto es para eliminar la fila del data table
+
+    await verificar_detalles(pago_actual.id);
 
     mensajes('success',4000,'Atencion','El registro ha sido eliminado correctamente');//Mensaje de que se completo la operacion
 }
@@ -1702,7 +1624,7 @@ async function mostrarVistaPrevia_detalles(e) {
     console.log("Respuesta obtenida:", respuesta);
 
     const imagen = (data.imagen && data.imagen !== "")
-        ? `recursos/img/${data.imagen}`
+        ? `recursos/img/pagos/${data.imagen}`
         : "";
 
     document.getElementById("vista_imagen_detalles").setAttribute("src", imagen);
@@ -1837,6 +1759,13 @@ document.querySelector("#boton_eliminar_imagen_detalles").addEventListener("clic
     });
 });
 
+async function last_id_detalles() {
+    datos_consulta = new FormData()
+    datos_consulta.append('operacion','ultimo_id_detalle');
+    let res = await query(datos_consulta);
+    return res;
+}
+
 function init_data_table_detalles() {
     return new DataTable("#tabla_detalles_pagos",{
             destroy: true,
@@ -1869,7 +1798,7 @@ function reasignarEventos_detalles() {
     }
 
     // Se asigna el evento eliminar para los botones, esta aqui porque pasa algo parecido a lo de arriba
-    $(".eliminar").on("click",function(e){
+    $(".eliminar_detalles").on("click",function(e){
         id = e.target.value;
         if (id == undefined) {  
             id = e.target.parentElement.value;

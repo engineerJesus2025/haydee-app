@@ -17,44 +17,50 @@
             <p hidden="" id="resultado_cambio">true</p>
         <?php }
     } ?>
-    <header>
-        <nav class="navbar ">
-            <div class="container-fluid justify-content-around">
-                <span class="navbar-text text-white fs-5 text-center">
-                    
-                </span>
-            </div>
-        </nav>
-    </header>
     <main>
         <div class="container-fluid">
             <div class="row p-5">
                 <div class="col">                    
                 </div>
                 <div class="col-md-6 col-lg-4 col-sm-12">
-                    <div class="card mt-5 shadow-lg rounded">
+                    <div class="card mt-5 shadow-lg rounded p-2 px-3">
                         <div class="card-body">
                             <form action="?pagina=login_controlador.php&accion=entrar" method="POST" id="form-login">
                                 <h5 class="card-title text-center p-3">Iniciar sesión</h5>
                                 <div class="row">
-                                    <div class="col-md-12">
+                                    <div class="col-12">
                                         <div class="input-group mb-3">
                                             <span class="input-group-text" id="basic-addon1"><i class="bi bi-person"></i></span>
                                             <input type="email" name="usuario" class="form-control" placeholder="Correo" name="correo_login" id="correo_login" aria-label="Username" aria-describedby="basic-addon1">
                                             <span class="w-100 invalid-feedback"></span>
                                         </div>
                                     </div>
-                                    <div class="col-md-12">
-                                        <div class="input-group mb-3">
+                                    <div class="col-12">
+                                        <div class="input-group mb-2">
                                             <span class="input-group-text" id="basic-addon1"><i class="bi bi-lock"></i></span>
                                             <input type="password" name="contra" class="form-control" placeholder="Contraseña" id="contra" aria-label="Username" aria-describedby="basic-addon1">
                                             <span class="w-100 invalid-feedback"></span>
                                         </div>
                                     </div>
                                     <div class="col-12">
+                                        <div class="form-check mb-2 text-muted">
+                                            <input type="checkbox" class="form-check-input" id="checkbox_mantener_sesion" name="mantener_sesion">
+                                            <label class="form-check-label" for="checkbox_mantener_sesion">Mantener sesión</label>
+                                        </div>
+                                    </div>                                    
+                                    <div class="col-12">
                                         <a data-bs-toggle="modal" data-bs-target="#modal_recuperar_contrasenia" type="button" class="link">Recuperar Contraseña</a>
                                     </div>
-                                    <div class="col-md-12 text-center p-3">
+                                    <div class="g-recaptcha my-2 mt-4" 
+                                         data-sitekey="<?php echo(CLAVE_SITIO_RECAPTCHA); ?>" 
+                                         data-theme="light" 
+                                         data-size="normal"
+                                         data-tabindex="0"
+                                         data-callback="onRecaptchaSuccess"
+                                         data-expired-callback="onRecaptchaExpired"
+                                         data-error-callback="onRecaptchaError">
+                                    </div>
+                                    <div class="col-12 text-center p-3 pb-0">
                                         <button type="submit" class="btn btn-primary rounded shadow" id="enviar">Ingresar <i class="bi bi-send-fill"></i></button>
                                     </div>
                                 </div>
@@ -64,7 +70,7 @@
                     </div>
 
                     <div class="modal fade" id="modal_recuperar_contrasenia" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered modal-md">
+                        <div class="modal-dialog modal-md">
                             <div class="modal-content">
                                 <div class="modal-header bg-primary text-white">
                                     <h1 class="modal-title fs-5" id="titulo_modal">Recuperar Contraseña</h1>
@@ -74,13 +80,13 @@
                                     <form method="POST" action="?pagina=login_controlador.php&accion=recuperar_contrasenia" class="row">
                                         <div class="col mb-4">
                                             <h6>Ingrese aquí su correo para recuperar contraseña.</h6>
-                                            <p>Se usara este correo para crear una nueva contraseña.</p>
+                                            <p>Se usará este correo para crear una nueva contraseña.</p>
                                         </div>
                                         <div class="col-md-11 mb-4">
-                                            <label class="mb-2" for="correo">Correo electrónico</label>
+                                            <label class="mb-2" for="correo">Correo electrónico:</label>
                                             <div class="input-group mb-3">
                                                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-envelope-at"></i></span>
-                                                <input type="text" class="form-control" name="correo_recuperar" id="correo_recuperar" placeholder="Ingrese aqui su Correo electrónico" aria-label="correo" aria-describedby="basic-addon1" minlength="3" maxlength="60">
+                                                <input type="text" class="form-control" name="correo_recuperar" id="correo_recuperar" placeholder="Ingrese aquí su Correo electrónico" aria-label="correo" aria-describedby="basic-addon1" minlength="3" maxlength="60">
                                                 <span class="w-100 invalid-feedback"></span>
                                             </div>
                                         </div>
@@ -104,6 +110,7 @@
     </footer>
     <script src="recursos/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="recursos/bootstrap/js/sweetalert2.js"></script>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <script type="text/javascript" src="recursos/js/validaciones/login_validar.js"></script>
 </body>
 

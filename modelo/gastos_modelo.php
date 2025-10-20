@@ -3,13 +3,12 @@ require_once("modelo/conexion.php");
 
 class Gastos extends Conexion
 {
-    private $id_gasto;    
+    private $id_gasto;
     private $tipo;
     private $metodo_pago;
     private $descripcion_gasto;
     private $solicitud_id;
     private $tipo_gasto_id;
-    private $caja_id;
     private $proveedor_id;
 
     public function __construct()
@@ -80,19 +79,64 @@ class Gastos extends Conexion
         return $this->tipo_gasto_id;
     }
 
-    public function set_caja_id($caja_id)
+
+    public function realizar_consulta($accion)
     {
-        $this->caja_id = $caja_id;
-    }
-    public function get_caja_id()
-    {
-        return $this->caja_id;
+        switch ($accion) {
+            case 'consultar':
+                $respuesta = $this->consultar();
+                if ($respuesta["resultado"]) {
+                    $this->registrar_bitacora(CONSULTAR, GESTIONAR_GASTOS, "TODOS LOS GASTOS");
+                    return $respuesta["datos"];
+                } else {
+                    return ["estatus" => false, "mensaje" => "Ha ocurrido un error con la consulta"];
+                }
+            case 'consultar_gasto':
+                return $this->consultar_gasto();
+
+
+            case 'registrar':
+                $validacion = $this->validar_datos('registrar');
+                if (!$validacion["estatus"]) {
+                    return $validacion; // Si falla, retorna el mensaje de error
+                }
+                $respuesta = $this->registrar();
+                if ($respuesta) {
+
+                    $this->registrar_bitacora(REGISTRAR, GESTIONAR_GASTOS, "Gasto de " . $this->descripcion_gasto);
+                    return ["estatus" => true, "mensaje" => "OK"];
+                } else {
+                    return ["estatus" => false, "mensaje" => "Ha ocurrido un error con el registro"];
+                }
+
+
+            case 'editar_gasto':
+                $validacion = $this->validar_datos('editar_gasto');
+                if (!$validacion["estatus"]) {
+                    return $validacion; // Si falla, retorna el mensaje de error
+                }
+                $respuesta = $this->editar_gasto();
+                if ($respuesta) {
+                    $this->registrar_bitacora(MODIFICAR, GESTIONAR_GASTOS, "Gasto de " . $this->descripcion_gasto);
+                    return ["estatus" => true, "mensaje" => "OK"];
+                } else {
+                    return ["estatus" => false, "mensaje" => "Ha ocurrido un error con la edición"];
+                }
+
+
+            case 'eliminar_gasto':
+                return $this->eliminar_gasto();
+            case 'lastId':
+                return $this->lastId();
+            default:
+                return ["estatus" => false, "mensaje" => "Acción no reconocida"];
+        }
     }
 
 
-public function consultar()
-{
-    $sql = "SELECT
+    private function consultar()
+    {
+        $sql = "SELECT
                 g.*,
                 SUM(dg.monto) AS monto_total,
                 MAX(dg.fecha) AS ultima_fecha,
@@ -117,21 +161,15 @@ public function consultar()
                 ultima_fecha DESC
             ";
 
-    $conexion = $this->get_conex()->prepare($sql);
-    $result = $conexion->execute();
-    $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
-    
-    if ($result == true) {
-        $this->registrar_bitacora(CONSULTAR, GESTIONAR_GASTOS, "TODOS LOS GASTOS");
-        return $datos;
-    } else {
-        return ["estatus" => false, "mensaje" => "Ha ocurrido un error con la consulta"];
+        $conexion = $this->get_conex()->prepare($sql);
+        $result = $conexion->execute();
+        $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
+        return ["resultado" => $result, "datos" => $datos];
     }
-}
 
-public function consultar_gasto()
-{
-    $sql = "SELECT
+    private function consultar_gasto()
+    {
+        $sql = "SELECT
                 g.*,
                 p.nombre_proveedor,
                 sg.descripcion_necesidad,
@@ -160,19 +198,19 @@ public function consultar_gasto()
                 g.id_gasto, p.id_proveedor, sg.id_solicitud
             ";
 
-    $conexion = $this->get_conex()->prepare($sql);
-    $conexion->bindParam(":id_gasto", $this->id_gasto);
-    $result = $conexion->execute();
-    $datos = $conexion->fetch(PDO::FETCH_ASSOC);
+        $conexion = $this->get_conex()->prepare($sql);
+        $conexion->bindParam(":id_gasto", $this->id_gasto);
+        $result = $conexion->execute();
+        $datos = $conexion->fetch(PDO::FETCH_ASSOC);
 
-    if ($result) {
-        return $datos;
-    } else {
-        return ["estatus" => false, "mensaje" => "Ha ocurrido un error con la consulta"];
+        if ($result) {
+            return $datos;
+        } else {
+            return ["estatus" => false, "mensaje" => "Ha ocurrido un error con la consulta"];
+        }
     }
-}
 
-    public function registrar()
+    private function registrar()
     {
         // Ya no se insertan metodo_pago, etc.
         $sql = "INSERT INTO gastos (tipo, descripcion_gasto, tipo_gasto_id, solicitud_id, proveedor_id) VALUES (:tipo, :descripcion_gasto, :tipo_gasto_id, :solicitud_id, :proveedor_id)";
@@ -183,18 +221,11 @@ public function consultar_gasto()
         $conexion->bindParam(":solicitud_id", $this->solicitud_id);
         $conexion->bindParam(":proveedor_id", $this->proveedor_id);
         $result = $conexion->execute();
-        if ($result) {
+        return $result;
 
-            // $this->registrar_bitacora(REGISTRAR, GESTIONAR_GASTOS, "Gasto de " . $this->monto . " Del " . $this->fecha);
-            return ["estatus"=>true,"mensaje"=>"OK"];
-        } else {
-            $error = $conexion->errorInfo();
-            error_log("ERROR EN REGISTRO DE GASTO: " . print_r($error, true));
-            return false;
-        }
     }
 
-    public function editar_gasto()
+    private function editar_gasto()
     {
         $sql = "UPDATE gastos SET tipo = :tipo, descripcion_gasto = :descripcion_gasto, tipo_gasto_id = :tipo_gasto_id, solicitud_id = :solicitud_id, proveedor_id = :proveedor_id WHERE id_gasto = :id_gasto";
         $conexion = $this->get_conex()->prepare($sql);
@@ -205,161 +236,136 @@ public function consultar_gasto()
         $conexion->bindParam(":descripcion_gasto", $this->descripcion_gasto);
         $conexion->bindParam(":proveedor_id", $this->proveedor_id);
         $result = $conexion->execute();
-        if ($result) {
-            // $this->registrar_bitacora(accion: MODIFICAR, GESTIONAR_GASTOS, "Gasto de " . $this->monto . " Por " . $this->metodo_pago);
-            return ["estatus" => true, "mensaje" => "OK"];
-        } else {
-            return ["estatus" => false, "mensaje" => "Ha ocurrido un error al intentar editar este gasto"];
-        }
+        return $result;
     }
 
-    public function eliminar_gasto()
+    private function eliminar_gasto()
     {
+        // Obtener la lista de imágenes ANTES de borrar los registros de la BD.
+        $nombres_imagenes = $this->obtener_nombres_imagenes_asociadas();
+
+        // Eliminar el registro del gasto de la base de datos.
         $sql = "DELETE FROM gastos WHERE id_gasto = :id_gasto";
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":id_gasto", $this->id_gasto);
-        $result = $conexion->execute();
-        if ($result) {
-            // $this->registrar_bitacora(ELIMINAR, GESTIONAR_GASTOS, "Gasto de " . $this->monto . " Por " . $this->metodo_pago);
-            return ["estatus" => true, "mensaje" => "OK"];
+        $resultado_db = $conexion->execute();
+
+        // Si la BD se actualizó, borramos los archivos de la ruta.
+        if ($resultado_db) {
+            $ruta_base = "recursos/img/gastos/";
+
+            foreach ($nombres_imagenes as $nombre_archivo) {
+                $ruta_completa = $ruta_base . $nombre_archivo;
+
+                // Verificamos que el archivo exista antes de intentar borrarlo para evitar errores.
+                if (file_exists($ruta_completa)) {
+                    unlink($ruta_completa);
+                }
+            }
+
+            // $this->registrar_bitacora(ELIMINAR, GESTIONAR_GASTOS, "Gasto con ID " . $this->id_gasto);
+
+            return ["estatus" => true, "mensaje" => "Gasto y comprobantes eliminados correctamente"];
         } else {
-            return ["estatus" => false, "mensaje" => "Ha ocurrido un error al intentar eliminar este gasto"];
+            return ["estatus" => false, "mensaje" => "Error al eliminar el gasto de la base de datos"];
         }
     }
 
-    public function lastId()
+private function lastId()
     {
         $sql = "SELECT MAX(id_gasto) as last_id FROM gastos";
         $conexion = $this->get_conex()->prepare($sql);
         $result = $conexion->execute();
         $datos = $conexion->fetch(PDO::FETCH_ASSOC);
-        if ($result == true) {
-            return ["estatus" => true, "mensaje" => $datos["last_id"]];
-        } else {
-            return ["estatus" => false, "mensaje" => "Ha ocurrido un error con la consulta"];
-        }
+
+        return $result ? ["estatus" => true, "mensaje" => $datos["last_id"]] : ["estatus" => false, "mensaje" => "Ha ocurrido un error con la consulta"];
     }
 
-    public function validarClaveForanea($tabla, $nombreClave, $valor)
+    private function validarClaveForanea($tabla, $nombreClave, $valor)
     {
-        $sql = "SELECT * FROM $tabla WHERE $nombreClave =:valor";
+        $sql = "SELECT 1 FROM $tabla WHERE $nombreClave = :valor LIMIT 1";
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":valor", $valor);
         $conexion->execute();
-        $result = $conexion->fetch(PDO::FETCH_ASSOC);
-        return ($result) ? true : false;
+        return $conexion->fetch() !== false;
     }
 
+    private function obtener_nombres_imagenes_asociadas()
+    {
+        $sql = "SELECT bt.imagen
+            FROM banco_transacciones bt
+            JOIN detalles_gastos dg ON bt.detalle_gasto_id = dg.id_detalle_gasto
+            WHERE dg.gasto_id = :id_gasto AND bt.imagen IS NOT NULL AND bt.imagen != ''";
 
-//     public function listar_gastos_mes()
-//     {
-//         //Cambie la consulta y ahora solo usa el propio gasto
-//         $sql = "SELECT g.fecha , MONTH(g.fecha) as mes, YEAR(g.fecha) as anio
-//             FROM gastos g     
-//             GROUP BY MONTH(g.fecha), YEAR(g.fecha)
-//             ORDER BY YEAR(g.fecha) DESC,  MONTH(g.fecha) DESC";
+        $conexion = $this->get_conex()->prepare($sql);
+        $conexion->bindParam(":id_gasto", $this->id_gasto);
+        $conexion->execute();
 
-//         $conexion = $this->get_conex()->prepare($sql);
-//         $conexion->execute();
+        // Devuelve un array simple con los nombres de archivo: ['img1.jpg', 'img2.png']
+        return $conexion->fetchAll(PDO::FETCH_COLUMN);
+    }
 
-//         $this->registrar_bitacora(CONSULTAR, GESTIONAR_GASTOS, "TODOS LOS GASTOS");
+    public function validar_datos($accion)
+    {
+        // 1. Validar campos obligatorios
+        if (empty(trim($this->tipo))) {
+            return ["estatus" => false, "mensaje" => "El campo 'Tipo' no puede estar vacío."];
+        }
+        if (empty(trim($this->descripcion_gasto))) {
+            return ["estatus" => false, "mensaje" => "La descripción del gasto no puede estar vacía."];
+        }
+        if (empty($this->tipo_gasto_id)) {
+            return ["estatus" => false, "mensaje" => "Debe seleccionar un tipo de gasto."];
+        }
 
-//         return $conexion->fetchAll(PDO::FETCH_ASSOC);
-//     }
+        // 2. Validar valores específicos
+        if (!in_array($this->tipo, ['fijo', 'variable'])) {
+            return ["estatus" => false, "mensaje" => "El valor para 'Tipo' no es válido."];
+        }
 
-//     public function filtrar_por_mes()
-// {
-//     list($anio_buscar, $mes_buscar) = explode('-', $this->fecha);
+        // 3. Validar claves foráneas obligatorias
+        if (!$this->validarClaveForanea('tipo_gasto', 'id_tipo_gasto', $this->tipo_gasto_id)) {
+            return ["estatus" => false, "mensaje" => "El tipo de gasto seleccionado no existe."];
+        }
 
-//     $sql = "SELECT
-//                 g.id_gasto,
-//                 g.monto AS monto_gasto,
-//                 g.fecha AS fecha_gasto,
-//                 g.tipo,
-//                 g.descripcion_gasto,
-                
-//                 tg.nombre_tipo_gasto,
-//                 p.nombre_proveedor
-
-//             FROM 
-//                 gastos g
-//             LEFT JOIN tipo_gasto tg ON g.tipo_gasto_id = tg.id_tipo_gasto
-//             LEFT JOIN proveedores p ON g.proveedor_id = p.id_proveedor
-            
-//             WHERE 
-//                 MONTH(g.fecha) = :mes AND YEAR(g.fecha) = :anio
-//             ORDER BY
-//                 g.fecha DESC";
-
-//     $conexion = $this->get_conex()->prepare($sql);
-//     $conexion->bindParam(":mes", $mes_buscar);
-//     $conexion->bindParam(":anio", $anio_buscar);
-//     $conexion->execute();
-//     return $conexion->fetchAll(PDO::FETCH_ASSOC);
-// }
-
-//     public function total_por_metodo_pago()
-//     {
-//         list($anio_buscar, $mes_buscar) = explode('-', $this->fecha);
-//         $sql = "SELECT metodo_pago, SUM(monto) as total FROM detalle_pagos_gastos WHERE MONTH(detalle_pagos_gastos.fecha) = :mes && YEAR(detalle_pagos_gastos.fecha) = :anio GROUP BY metodo_pago";
-
-//         $conexion = $this->get_conex()->prepare($sql);
-//         $conexion->bindParam(":mes", $mes_buscar);
-//         $conexion->bindParam(":anio", $anio_buscar);
-//         $conexion->execute();
-//         return $conexion->fetchAll(PDO::FETCH_ASSOC);
-//     }
-
-
-
-        public function consultarCajaActual() {
-            $sql = "SELECT 
-                    id_caja_chica 
-                FROM caja_chica 
-                WHERE MONTH(fecha_apertura) = :mes 
-                AND YEAR(fecha_apertura) = :anio 
-                AND estado = 'Abierta'
-                LIMIT 1";
-
-            $mes = date('m'); // mes actual del sistema
-            $anio = date('Y'); // año actual del sistema
-
-            $conexion = $this->get_conex()->prepare($sql);
-            $conexion->bindParam(":mes", $mes);
-            $conexion->bindParam(":anio", $anio);
-
-            $resultado = $conexion->execute();
-            $datos = $conexion->fetch(PDO::FETCH_ASSOC); // fetch en singular porque es un solo registro
-
-            if ($resultado && $datos) {
-                return $datos; // Devuelve ['id_caja' => ...]
-            } else {
-                return ["estatus" => false, "mensaje" => "No hay caja abierta en el mes actual"];
+        if ($this->proveedor_id) {
+            if (!$this->validarClaveForanea('proveedores', 'id_proveedor', $this->proveedor_id)) {
+                return ["estatus" => false, "mensaje" => "El proveedor seleccionado no existe."];
+            }
+        }
+        if ($this->solicitud_id) {
+            if (!$this->validarClaveForanea('solicitudes_gasto', 'id_solicitud', $this->solicitud_id)) {
+                return ["estatus" => false, "mensaje" => "La solicitud de gasto seleccionada no existe."];
             }
         }
 
-    // METODO PARA EL REPORTE DE GASTOS (FRANCISCO)
-public function obtenerDatosReporteMensual($mes, $anio)
-{
-    try {
-        $db = $this->get_conex();
+        return ["estatus" => true]; // Si todo está bien
+    }
 
-        //  1. OBTENER GASTOS FIJOS DEL MES (DESDE DETALLES)
-        $sql_fijos = "SELECT 
+
+
+    // METODO PARA EL REPORTE DE GASTOS (FRANCISCO)
+    public function obtenerDatosReporteMensual($mes, $anio)
+    {
+        try {
+            $db = $this->get_conex();
+
+            //  1. OBTENER GASTOS FIJOS DEL MES (DESDE DETALLES)
+            $sql_fijos = "SELECT 
                         g.descripcion_gasto, 
                         dg.monto 
                       FROM detalles_gastos dg
                       JOIN gastos g ON dg.gasto_id = g.id_gasto
                       WHERE MONTH(dg.fecha) = :mes AND YEAR(dg.fecha) = :anio AND g.tipo = 'Fijo'";
-        
-        $stmt_fijos = $db->prepare($sql_fijos);
-        $stmt_fijos->bindParam(':mes', $mes, PDO::PARAM_INT);
-        $stmt_fijos->bindParam(':anio', $anio, PDO::PARAM_INT);
-        $stmt_fijos->execute();
-        $gastos_fijos = $stmt_fijos->fetchAll(PDO::FETCH_ASSOC);
 
-        //  2. OBTENER GASTOS VARIABLES DEL MES (EXCLUYENDO GAS LARA)
-        $sql_variables = "SELECT 
+            $stmt_fijos = $db->prepare($sql_fijos);
+            $stmt_fijos->bindParam(':mes', $mes, PDO::PARAM_INT);
+            $stmt_fijos->bindParam(':anio', $anio, PDO::PARAM_INT);
+            $stmt_fijos->execute();
+            $gastos_fijos = $stmt_fijos->fetchAll(PDO::FETCH_ASSOC);
+
+            //  2. OBTENER GASTOS VARIABLES DEL MES (EXCLUYENDO GAS LARA)
+            $sql_variables = "SELECT 
                             g.descripcion_gasto, 
                             dg.monto 
                           FROM detalles_gastos dg
@@ -368,15 +374,15 @@ public function obtenerDatosReporteMensual($mes, $anio)
                           WHERE MONTH(dg.fecha) = :mes AND YEAR(dg.fecha) = :anio 
                           AND g.tipo = 'Variable' 
                           AND (p.nombre_proveedor != 'Gas Lara' OR p.nombre_proveedor IS NULL)";
-                          
-        $stmt_variables = $db->prepare($sql_variables);
-        $stmt_variables->bindParam(':mes', $mes, PDO::PARAM_INT);
-        $stmt_variables->bindParam(':anio', $anio, PDO::PARAM_INT);
-        $stmt_variables->execute();
-        $gastos_variables = $stmt_variables->fetchAll(PDO::FETCH_ASSOC);
 
-        //  3. OBTENER GASTO DE GAS LARA POR SEPARADO (SUMANDO SUS POSIBLES DETALLES)
-        $sql_gas = "SELECT 
+            $stmt_variables = $db->prepare($sql_variables);
+            $stmt_variables->bindParam(':mes', $mes, PDO::PARAM_INT);
+            $stmt_variables->bindParam(':anio', $anio, PDO::PARAM_INT);
+            $stmt_variables->execute();
+            $gastos_variables = $stmt_variables->fetchAll(PDO::FETCH_ASSOC);
+
+            //  3. OBTENER GASTO DE GAS LARA POR SEPARADO (SUMANDO SUS POSIBLES DETALLES)
+            $sql_gas = "SELECT 
                         g.descripcion_gasto, 
                         SUM(dg.monto) as monto 
                     FROM detalles_gastos dg
@@ -385,36 +391,36 @@ public function obtenerDatosReporteMensual($mes, $anio)
                     WHERE MONTH(dg.fecha) = :mes AND YEAR(dg.fecha) = :anio 
                     AND p.nombre_proveedor = 'Gas Lara'
                     GROUP BY g.id_gasto";
-                    
-        $stmt_gas = $db->prepare($sql_gas);
-        $stmt_gas->bindParam(':mes', $mes, PDO::PARAM_INT);
-        $stmt_gas->bindParam(':anio', $anio, PDO::PARAM_INT);
-        $stmt_gas->execute();
-        $gasto_gas = $stmt_gas->fetch(PDO::FETCH_ASSOC);
 
-        // 4. OBTENER TASA DEL DÓLAR (sin cambios)
-        $tasa_dolar = $this->obtenerTasaDolarAPI();
+            $stmt_gas = $db->prepare($sql_gas);
+            $stmt_gas->bindParam(':mes', $mes, PDO::PARAM_INT);
+            $stmt_gas->bindParam(':anio', $anio, PDO::PARAM_INT);
+            $stmt_gas->execute();
+            $gasto_gas = $stmt_gas->fetch(PDO::FETCH_ASSOC);
 
-        // 5. OBTENER NÚMERO TOTAL DE APARTAMENTOS (sin cambios)
-        $sql_aptos = "SELECT COUNT(*) as total FROM apartamentos";
-        $stmt_aptos = $db->query($sql_aptos);
-        $total_aptos = $stmt_aptos->fetch(PDO::FETCH_ASSOC)['total'];
+            // 4. OBTENER TASA DEL DÓLAR (sin cambios)
+            $tasa_dolar = $this->obtenerTasaDolarAPI();
 
-        // Devolvemos todos los datos juntos
-        return [
-            'gastos_fijos' => $gastos_fijos,
-            'gastos_variables' => $gastos_variables,
-            'gasto_gas' => $gasto_gas ?: ['monto' => 0], // Si no hay gasto de gas, devuelve 0
-            'tasa_dolar' => $tasa_dolar,
-            'total_aptos' => $total_aptos
-        ];
+            // 5. OBTENER NÚMERO TOTAL DE APARTAMENTOS (sin cambios)
+            $sql_aptos = "SELECT COUNT(*) as total FROM apartamentos";
+            $stmt_aptos = $db->query($sql_aptos);
+            $total_aptos = $stmt_aptos->fetch(PDO::FETCH_ASSOC)['total'];
 
-    } catch (PDOException $e) {
-        // Manejo de errores
-        error_log("Error en el reporte de gastos: " . $e->getMessage());
-        return null;
+            // Devolvemos todos los datos juntos
+            return [
+                'gastos_fijos' => $gastos_fijos,
+                'gastos_variables' => $gastos_variables,
+                'gasto_gas' => $gasto_gas ?: ['monto' => 0], // Si no hay gasto de gas, devuelve 0
+                'tasa_dolar' => $tasa_dolar,
+                'total_aptos' => $total_aptos
+            ];
+
+        } catch (PDOException $e) {
+            // Manejo de errores
+            error_log("Error en el reporte de gastos: " . $e->getMessage());
+            return null;
+        }
     }
-}
     /**
      * Obtiene la tasa del dólar desde la API pydolarve.org usando cURL.
      * @return float La tasa de cambio, o 0 si falla.
@@ -456,6 +462,17 @@ public function obtenerDatosReporteMensual($mes, $anio)
 
         // Si la respuesta no es la esperada, devuelve 0
         return 0;
+    }
+
+    public function listar_meses_con_gastos()
+    {
+        $sql = "SELECT DISTINCT YEAR(fecha) as anio, MONTH(fecha) as mes 
+                FROM detalles_gastos 
+                ORDER BY anio DESC, mes DESC";
+        
+        $conexion = $this->get_conex()->prepare($sql);
+        $conexion->execute();
+        return $conexion->fetchAll(PDO::FETCH_ASSOC);
     }
 
     //Metodo para el reporte estadistico (jesus)

@@ -61,26 +61,116 @@
             return $this->banco_id;
         }
 
-        public function verificar_bancos_transacciones(){
+        public function realizar_consulta($accion){
+            switch ($accion) {
+                case 'validar':
+                    $respuesta = $this->verificar_bancos_transacciones();
+
+                    if ($respuesta["resultado"]) {
+                        if (isset($respuesta["datos"]["referencia"])) {
+                            return ["estatus"=>true,"busqueda"=>"referencia"];
+                        } else {
+                            return ["estatus"=>false,"busqueda"=>"referencia"];
+                        }
+                    } else {
+                        return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la validación de la transaccion bancaria"];
+                    }
+
+                case 'consultar':
+                    $respuesta = $this->consultar();
+
+                    if ($respuesta["resultado"]) {
+                        $this->registrar_bitacora(CONSULTAR, GESTIONAR_PAGOS, "TODOS LOS DETALLES DE UN PAGO");
+                        return $respuesta["datos"];
+                    } else {
+                        return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+                    }
+
+                case 'consulta_especifica':
+                    $respuesta = $this->consultar_banco_transaccion();
+
+                    if ($respuesta["resultado"]) {
+                        return $respuesta["datos"];
+                    } else {
+                        return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta de esta transaccion bancaria"];
+                    }
+
+                case 'registrar':
+                    $respuesta = $this->registrar_banco_transaccion();
+
+                    if ($respuesta) {
+                        $id_ultimo = $this->lastId();
+                        $this->set_id_banco_transaccion($id_ultimo["datos"]["last_id"]);
+                        $pago_alterado = $this->consultar_banco_transaccion();
+                        $this->registrar_bitacora(REGISTRAR, GESTIONAR_PAGOS, $pago_alterado["datos"]["referencia"]);
+                        return ["estatus"=>true,"mensaje"=>"OK"];
+                    } else {
+                        return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar esta transaccion de banco"];
+                    }
+                
+                case 'modificar':
+                    $respuesta = $this->editar_banco_transaccion();
+
+                    if ($respuesta["resultado"]) {
+                        if ($respuesta["fila_afectada"] < 1) {
+                            return ["estatus"=>false,"mensaje"=>"No se realizaron cambios en la transaccion bancaria"];
+                        }
+
+                        $pago_alterado = $this->consultar_banco_transaccion();
+                        $this->registrar_bitacora(MODIFICAR, GESTIONAR_PAGOS, $this->referencia);
+                        return ["estatus"=>true,"mensaje"=>"OK"];
+                    } else {
+                        return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar editar esta transaccion de banco"];
+                    }
+
+                case 'eliminar':
+                    $pago_alterado = $this->consultar_banco_transaccion();
+
+                    if (empty($pago_alterado) || !isset($pago_alterado["datos"]["referencia"])) {
+                        return ["estatus" => true, "mensaje" => "No hay transacción bancaria que eliminar"];
+                    }
+
+                    $respuesta = $this->eliminar_banco_transaccion();
+
+                    if ($respuesta["resultado"]) {
+                        if ($respuesta["fila_afectada"] < 1) {
+                            return ["estatus"=>false,"mensaje"=>"No se pudo eliminar esta transaccion bancaria"];
+                        }
+
+                        $this->registrar_bitacora(ELIMINAR, GESTIONAR_PAGOS, $pago_alterado["datos"]["referencia"]);
+                        return ["estatus"=>true,"mensaje"=>"OK"];
+                    } else {
+                        return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar eliminar esta transaccion de banco"];
+                    }
+
+                case 'lastId':
+                    $respuesta = $this->lastId();
+                    
+                    if ($respuesta["resultado"]) {
+                        return $respuesta["datos"];
+                    } 
+                    else {
+                        return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+                    }
+
+                default:
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error en el proceso"];
+                    break;
+            }
+        }
+
+        private function verificar_bancos_transacciones(){
             
             $sql = "SELECT * FROM banco_transacciones WHERE referencia = :referencia"; 
             $conexion = $this->get_conex()->prepare($sql);
             $conexion->bindParam(":referencia", $this->referencia);
-            $conexion->execute();
+            $result = $conexion->execute();
             $datos = $conexion->fetch(PDO::FETCH_ASSOC);
 
-            if (isset($datos["referencia"])) {   
-                $r["estatus"] = true; 
-                $r["busqueda"] = "referencia"; 
-                return $r; 
-            } else { 
-                $r["estatus"] = false;
-                $r["busqueda"] = "referencia";
-                return $r;
-            }
+            return ["resultado" => $result, "datos" => $datos];
         }
 
-        public function consultar(){
+        private function consultar(){
 
             //$this->cambiar_db_seguridad();
             $sql = "SELECT * FROM banco_transacciones ORDER BY id_banco_transaccion";
@@ -90,16 +180,10 @@
 
             //$this->cambiar_db_negocio();
 
-            if ($result == true) {
-                $this->registrar_bitacora(CONSULTAR, GESTIONAR_PAGOS, "TODOS LOS DETALLES DE UN PAGO");//registra cuando se entra al modulo de pagos
-
-                return $datos;
-            } else {
-                return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
-            }
+            return ["resultado" => $result, "datos" => $datos];
         }
 
-        public function consultar_banco_transaccion(){
+        private function consultar_banco_transaccion(){
 
             //$this->cambiar_db_seguridad();
             //$this->cambiar_db_negocio();
@@ -107,16 +191,16 @@
             $conexion = $this->get_conex()->prepare($sql);
             $conexion->bindParam(":id_banco_transaccion", $this->id_banco_transaccion);
             $result = $conexion->execute();        
-            $datos = $conexion->fetch(PDO::FETCH_ASSOC);
+            $filas = $conexion->fetch(PDO::FETCH_ASSOC);
 
-            if ($result == true && $datos) {
-                return $datos;
-            } else {
-                return ["estatus" => false, "mensaje" => "Ha ocurrido un error con la consulta"];
+            if (!$filas || count($filas) === 0) {
+                return ["resultado" => false, "mensaje" => "null"];
             }
+
+            return ["resultado" => $result, "datos" => $filas];
         }
 
-        public function registrar_banco_transaccion(){
+        private function registrar_banco_transaccion(){
             //Validamos los datos obtenidos del controlador (validaciones back-end)
             //$validaciones = $this->validarDatos();
             //if(!($validaciones["estatus"])){return $validaciones;}
@@ -134,20 +218,34 @@
 
             //$this->cambiar_db_negocio();
 
-            if ($result) {
-                $id_ultimo = $this->lastId();//obtenemos el ultimo id
-                $this->set_id_banco_transaccion($id_ultimo["mensaje"]);
-                $pago_alterado = $this->consultar_banco_transaccion();//lo consultamos
-
-                $this->registrar_bitacora(REGISTRAR, GESTIONAR_PAGOS, $pago_alterado["referencia"]);//registramos en la bitacora
-                //$this->registrar_notificacion();
-                return ["estatus"=>true,"mensaje"=>"OK"];
-            } else {
-                return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar esta transaccion de banco"];
-            }
+            return $result;
         }
 
-        public function editar_banco_transaccion(){
+        private function editar_banco_transaccion(){
+            //Validamos los datos obtenidos del controlador
+            //$validaciones = $this->validarDatos("editar");
+            //if(!($validaciones["estatus"])){return $validaciones;}        
+
+            //$this->cambiar_db_seguridad();
+
+            $sql = "UPDATE banco_transacciones 
+            SET referencia=:referencia,
+                imagen=:imagen,
+                banco_id=:banco_id
+            WHERE detalle_pago_id=:detalle_pago_id";
+
+            $conexion = $this->get_conex()->prepare($sql);    
+            $conexion->bindParam(":referencia", $this->referencia);
+            $conexion->bindParam(":imagen", $this->imagen);
+            $conexion->bindParam(":detalle_pago_id", $this->detalle_pago_id);
+            $conexion->bindParam(":banco_id", $this->banco_id);
+            $result = $conexion->execute();
+            $filas_afectadas = $conexion->rowCount();
+        
+            return ["resultado" => $result, "fila_afectada" => $filas_afectadas];
+        }
+
+        private function editar_banco_transaccion_original(){
             //Validamos los datos obtenidos del controlador
             //$validaciones = $this->validarDatos("editar");
             //if(!($validaciones["estatus"])){return $validaciones;}        
@@ -155,37 +253,28 @@
             //$this->cambiar_db_seguridad();
 
             $sql = "UPDATE banco_transacciones SET referencia=:referencia,imagen=:imagen,detalle_pago_id=:detalle_pago_id,banco_id=:banco_id WHERE id_banco_transaccion=:id_banco_transaccion";
+            $conexion = $this->get_conex()->prepare($sql); 
+            $conexion->bindParam(":id_banco_transaccion", $this->id_banco_transaccion); 
+            $conexion->bindParam(":referencia", $this->referencia); 
+            $conexion->bindParam(":imagen", $this->imagen); 
+            $conexion->bindParam(":detalle_pago_id", $this->detalle_pago_id); 
+            $conexion->bindParam(":banco_id", $this->banco_id); 
+            $result = $conexion->execute(); 
+            $filas_afectadas = $conexion->rowCount();
 
-            $conexion = $this->get_conex()->prepare($sql);    
-            $conexion->bindParam(":id_banco_transaccion", $this->id_banco_transaccion);
-            $conexion->bindParam(":referencia", $this->referencia);
-            $conexion->bindParam(":imagen", $this->imagen);
-            $conexion->bindParam(":detalle_pago_id", $this->detalle_pago_id);
-            $conexion->bindParam(":banco_id", $this->banco_id);
-            $result = $conexion->execute();
-
-            //$this->cambiar_db_negocio();        
-            
-            if ($result) {
-                $pago_alterado = $this->consultar_banco_transaccion();
-                $this->registrar_bitacora(MODIFICAR, GESTIONAR_PAGOS, $pago_alterado["referencia"]);
-
-                return ["estatus"=>true,"mensaje"=>"OK"];
-            } else {
-                return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar editar esta transaccion de banco"];
-            }
+            return ["resultado" => $result, "fila_afectada" => $filas_afectadas];
         }
 
-        public function eliminar_banco_transaccion(){
+        private function eliminar_banco_transaccion(){
             //Validamos los datos obtenidos del controlador
             //$validaciones = $this->validarDatos("eliminar");
             //if(!($validaciones["estatus"])){return $validaciones;}
             
-            $pago_alterado = $this->consultar_banco_transaccion();
+            // $pago_alterado = $this->consultar_banco_transaccion();
 
-            if (empty($pago_alterado) || !isset($pago_alterado["referencia"])) {
-                return ["estatus" => true, "mensaje" => "No hay transacción bancaria que eliminar"];
-            }
+            // if (empty($pago_alterado) || !isset($pago_alterado["referencia"])) {
+            //     return ["estatus" => true, "mensaje" => "No hay transacción bancaria que eliminar"];
+            // }
 
             //$this->cambiar_db_seguridad();
 
@@ -197,16 +286,10 @@
 
             //$this->cambiar_db_negocio();
             
-            if ($result) {
-                $this->registrar_bitacora(ELIMINAR, GESTIONAR_PAGOS, $pago_alterado["referencia"]);
-
-                return ["estatus"=>true,"mensaje"=>"OK"];
-            } else {
-                return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar eliminar esta transaccion de banco"];
-            }
+            return ["resultado" => $result, "fila_afectada" => $conexion->rowCount()];
         }
 
-        public function lastId(){
+        private function lastId(){
             //$this->cambiar_db_seguridad();
             $sql = "SELECT MAX(id_banco_transaccion) as last_id FROM banco_transacciones";
             $conexion = $this->get_conex()->prepare($sql);
@@ -214,11 +297,7 @@
             $datos = $conexion->fetch(PDO::FETCH_ASSOC);
             //$this->cambiar_db_negocio();
 
-            if ($result) {
-                return ["estatus"=>true,"mensaje"=>$datos["last_id"]];
-            } else {
-                return ["estatus"=>false,"mensaje"=>"Error en la consulta"];
-            } 
+            return ["resultado" => $result, "datos" => $datos];
         }
 
         public function obtener_imagen_actual(){
@@ -251,16 +330,18 @@
             $conexion->bindParam(":imagen", $this->imagen);
             $conexion->bindParam(":detalle_gasto_id", $this->detalle_gasto_id);
             $conexion->bindParam(":banco_id", $this->banco_id);
+            
             $result = $conexion->execute();
 
             //$this->cambiar_db_negocio();
 
             if ($result) {
                 $id_ultimo = $this->lastId();//obtenemos el ultimo id
-                $this->set_id_banco_transaccion($id_ultimo["mensaje"]);
+                $this->set_id_banco_transaccion($id_ultimo["datos"]["last_id"]);
                 $gasto_alterado = $this->consultar_banco_transaccion();//lo consultamos
 
-                $this->registrar_bitacora(REGISTRAR, GESTIONAR_GASTOS, $gasto_alterado["referencia"]);//registramos en la bitacora
+                // var_dump($gasto_alterado);
+                $this->registrar_bitacora(REGISTRAR, GESTIONAR_GASTOS, $gasto_alterado['datos']["referencia"]);//registramos en la bitacora
                 //$this->registrar_notificacion();
                 return ["estatus"=>true,"mensaje"=>"OK"];
             } else {

@@ -7,6 +7,7 @@
 	<?php
 		require_once "vista/componentes/estilos.php";
 	?>
+	<link rel="stylesheet" type="text/css" href="recursos/css/publicaciones_inicio.css">
 </head>
 
 <body id="body-pd" class="body-pd mb-5">
@@ -24,7 +25,6 @@
 				
 				require_once "vista/componentes/header.php";
 			?>
-
 				<main class="col ps-md-2 pt-2">
 					<div class="page-header pt-3">
 						<h2>INICIO</h2>

@@ -25,6 +25,27 @@ if (isset($_POST["operacion"])){
         }
         echo json_encode($resultado);
     }
+    if ($operacion == "marcar_todas_leidas") {
+        $notificaciones_obj = new Notificaciones();
+
+        // Obtenemos el ID del usuario de la sesión
+        $id_usuario = $_SESSION["id_usuario"];
+        $notificaciones_obj->set_usuario_id($id_usuario);
+
+        // Llamamos a la nueva acción en el modelo
+        $resultado = $notificaciones_obj->realizar_consulta('marcar_todas_leidas');
+
+        if ($resultado["estatus"]) {
+            // Si la BD se actualizó, vaciamos las notificaciones de la sesión
+            $_SESSION["notificaciones"] = [];
+        }
+
+        header('Content-Type: application/json');
+
+        echo json_encode($resultado);
+
+        exit;
+    }
     exit;
 }
 

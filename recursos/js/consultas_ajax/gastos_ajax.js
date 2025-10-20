@@ -85,123 +85,32 @@ document.querySelector('#modal_gastos').addEventListener('hidden.bs.modal', () =
 // Si queremos registrar:
 
 async function registrar() {
-    let datos_consulta = new FormData();
+    // 1. Creamos el FormData directamente desde el formulario.
+    //    Esto es más simple y respeta los campos deshabilitados automáticamente.
+    let datos_consulta = new FormData(formulario_usar);
 
-    // Campos simples
-    let tipo = document.querySelector("#tipo").value,
-        tipo_gasto = document.querySelector("#tipo_gasto").value,
-        solicitud = document.querySelector("#solicitud").value,
-        proveedor = formulario_usar.querySelector("#proveedor").value,
-        descripcion_gasto = formulario_usar.querySelector("#descripcion_gasto").value;
-
-    datos_consulta.append("tipo", tipo);
-    datos_consulta.append("tipo_gasto", tipo_gasto);
-    datos_consulta.append("solicitud", solicitud);
-    datos_consulta.append("proveedor", proveedor);
-    datos_consulta.append("descripcion_gasto", descripcion_gasto);
-
-    // Bloques de detalle
-    let bloques_detalle = formulario_usar.querySelectorAll(".detalle-gasto");
-    let total = bloques_detalle.length;
-
-    if (total === 0) {
-        mensajes("error", 4000, "Error", "Debes agregar al menos un detalle de gasto.");
-        return;
-    }
-
-    let monto_total = 0;
-    let ultima_fecha = "";
-
-    for (let i = 0; i < total; i++) {
-        const bloque = bloques_detalle[i];
-
-        let metodo_pago = bloque.querySelector(".metodo_pago"),
-            fecha = bloque.querySelector(".fecha_detalle"),
-            referencia = bloque.querySelector(".referencia"),
-            descripcion = bloque.querySelector(".descripcion_detalle"),
-            banco = bloque.querySelector(".banco"),
-            imagen = bloque.querySelector(".imagen"),
-            monto = bloque.querySelector(".monto");
-
-        if (
-            !metodo_pago || !fecha || !referencia || !descripcion ||
-            !banco || !monto
-        ) {
-            mensajes("error", 4000, "Error", "Faltan campos en uno de los detalles.");
-            return;
-        }
-
-        datos_consulta.append("metodo_pago[]", metodo_pago.value);
-        datos_consulta.append("fecha_detalle[]", fecha.value);
-        datos_consulta.append("referencia[]", referencia.value);
-        datos_consulta.append("descripcion_detalle[]", descripcion.value);
-        datos_consulta.append("banco[]", banco.value);
-        datos_consulta.append("monto[]", monto.value);
-
-        monto_total += parseFloat(monto.value) || 0;
-        if (fecha.value) {
-            ultima_fecha = fecha.value;
-        }
-
-        if (imagen && imagen.files[0]) {
-            datos_consulta.append("imagen[]", imagen.files[0]);
-        } else {
-            datos_consulta.append("imagen[]", ""); // Para mantener alineados los índices
-        }
-    }
-
+    // 2. Añadimos la operación que vamos a realizar.
     datos_consulta.append("operacion", "registrar");
 
+    // 3. Enviamos la consulta (el resto de la lógica para manejar la respuesta es similar)
     let respuesta = await query(datos_consulta);
     if (respuesta && !respuesta.estatus) {
         mensajes("error", 4000, "Atención", respuesta.mensaje);
         return;
     }
 
-    let fila = {
-        id_gasto: respuesta.gasto.id_gasto,
-        tipo: respuesta.gasto.tipo,
-        tipo_gasto: respuesta.gasto.tipo_gasto,
-        proveedor: respuesta.gasto.proveedor,
-        descripcion_gasto: respuesta.gasto.descripcion_gasto,
-        monto_total: respuesta.gasto.monto_total,
-        ultima_fecha: respuesta.gasto.ultima_fecha
-    };
-
     modal.hide();
-
-
-    formulario_usar.reset();
-    mensajes("success", 4000, "Éxito", "El registro se ha realizado exitosamenteeeeeeeee");
-
-    // Elimina todos los bloques excepto el primero
-    const bloques = formulario_usar.querySelectorAll(".detalle-gasto");
-    bloques.forEach((bloque, i) => i > 0 && bloque.remove());
-
-    // Crear acciones y añadir fila a la tabla
-    let acciones = crearBotones(fila.id_gasto);
-
-    const filaDatos = [
-        formatearFecha(respuesta.gasto.ultima_fecha) || "N/A",
-        formatearMontoConMoneda(respuesta.gasto.monto_total, respuesta.gasto.metodo_pago_predominante),
-        mayuscula(respuesta.gasto.tipo) || "N/A",
-        mayuscula(respuesta.gasto.nombre_tipo_gasto) || "N/A", // Corregido
-        respuesta.gasto.nombre_proveedor || "N/A",            // Corregido
-        respuesta.gasto.descripcion_gasto || "N/A",
-        acciones.outerHTML || ""
-    ];
-
-    let nuevaFila = data_table.row.add(filaDatos).draw(false).node();
-    data_table.row(nuevaFila).data(filaDatos).draw(false);
-    data_table.columns.adjust().draw(false);
-
-    id_registrado = { mensaje: fila.id_gasto };
-
-    setTimeout(() => {
-        reasignarEventos();
-    }, 100); // Esperamos 100 milisegundos antes de reasignar los eventos
-
+    
+    // El resto de tu código para actualizar la tabla y mostrar el mensaje de éxito
+    // puede permanecer igual o adaptarse si es necesario.
+    // Esta es una versión simplificada que puedes adaptar:
     mensajes("success", 4000, "Éxito", "El registro se ha realizado exitosamente");
+    
+    // Para recargar la tabla con todos los datos actualizados de forma segura:
+    if (typeof data_table !== 'undefined') {
+        data_table.destroy();
+    }
+    consultar(); // Esta función ya la tienes y recarga toda la tabla desde cero.
 }
 
 
@@ -215,7 +124,7 @@ async function consultar() {
 
 
     if (!(data.estatus == undefined)) {
-        mensajes('error', 4000, 'Atencion', respuesta.mensaje);
+        mensajes('error', 4000, 'Atencion', data.mensaje);
         return;// en caso de error mandamos un mensaje con el error y nos vamos
     }
 
@@ -243,11 +152,16 @@ function formatearMonto(monto) {
 }
 
 function formatearFecha(fechaStr) {
+    // Si la fecha es nula, indefinida o vacía, devuelve un texto por defecto.
+    if (!fechaStr) {
+        return "N/A"; // O puedes devolver una cadena vacía: ""
+    }
+
     const partes = fechaStr.split("-");
     if (partes.length === 3) {
         return `${partes[2]}-${partes[1]}-${partes[0]}`; // DD-MM-AAAA
     }
-    return fechaStr; // En caso de error, retorna original
+    return fechaStr; // En caso de formato inesperado, retorna original
 }
 
 
@@ -503,9 +417,7 @@ function actualizarVisibilidadCamposVistaPrevia(metodo_pago) {
 
 
 async function modificar(id) {
-    // ✅ CAMBIO CLAVE: Se crea el FormData a partir del formulario HTML.
-    // Esto captura AUTOMÁTICAMENTE todos los campos: textos, selects, archivos 
-    // y, lo más importante, el input oculto 'imagen_existente[]'.
+    
     let datos_consulta = new FormData(formulario_usar);
 
     // Ahora, solo añadimos los datos que NO están en el formulario.
@@ -731,10 +643,30 @@ function actualizarVisibilidadCampos(select) {
     // Determina si los campos deben mostrarse
     const mostrarCampos = (valor === "pago movil" || valor === "transferencia");
 
-    // Usa classList para añadir o quitar la clase d-none
+    // 1. Alterna la visibilidad de los grupos (esto ya lo hacías bien)
     grupoReferencia.classList.toggle('d-none', !mostrarCampos);
     grupoBanco.classList.toggle('d-none', !mostrarCampos);
     grupoImagen.classList.toggle('d-none', !mostrarCampos);
+
+    // --- INICIO DE LA CORRECCIÓN ---
+
+    // 2. Selecciona los campos de input/select DENTRO de los grupos
+    const inputReferencia = grupoReferencia.querySelector('.referencia');
+    const selectBanco = grupoBanco.querySelector('.banco');
+    const inputImagen = grupoImagen.querySelector('.imagen');
+
+    // 3. Habilita o deshabilita los campos. Un campo deshabilitado no se envía.
+    if (inputReferencia) inputReferencia.disabled = !mostrarCampos;
+    if (selectBanco) selectBanco.disabled = !mostrarCampos;
+    if (inputImagen) inputImagen.disabled = !mostrarCampos;
+
+    // 4. (Opcional pero recomendado) Limpia los valores si se ocultan los campos
+    if (!mostrarCampos) {
+        if (inputReferencia) inputReferencia.value = '';
+        if (selectBanco) selectBanco.value = '';
+        if (inputImagen) inputImagen.value = null; // Para inputs de tipo file
+    }
+    // --- FIN DE LA CORRECCIÓN ---
 }
 
 function agregarEventosMetodoPago(bloque) {

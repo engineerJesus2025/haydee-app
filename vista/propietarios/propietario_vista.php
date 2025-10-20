@@ -9,7 +9,7 @@
     ?>
 </head>
 
-<body class="body-pd">
+<body id="body-pd" class="body-pd">
     <input type="text" hidden="" id="permiso_eliminar"
         value="<?php echo Propietario::tiene_permiso(GESTIONAR_PROPIETARIOS, ELIMINAR) ?>">
     <input type="text" hidden="" id="permiso_editar"

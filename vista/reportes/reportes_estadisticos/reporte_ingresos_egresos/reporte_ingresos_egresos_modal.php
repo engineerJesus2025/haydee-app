@@ -73,6 +73,8 @@
     <input type="hidden" name="fecha_pagos_input" id="fecha_pagos_input">
     <input type="hidden" name="fecha_gastos_input" id="fecha_gastos_input">
 
+    <input type="hidden" name="mostrar_datos_input" id="mostrar_datos_input">
+
 		<button class="btn btn-success" id="boton_generar">Generar Reporte</button>
 	</form>
 </div>

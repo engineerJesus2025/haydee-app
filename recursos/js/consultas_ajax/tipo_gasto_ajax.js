@@ -41,39 +41,39 @@ document.querySelector(`#modal_tipo_gasto`).addEventListener("hide.bs.modal",()=
 
 //Si queremos registrar:
 async function registrar() {
-	// el async vuelve la funcion asincrona	
-	//Creamos el formData
-	datos_consulta = new FormData();
-	//Creamos las variables con los datos de los inputs
+	let datos_consulta = new FormData();
 	let nombre_tipo_gasto = formulario_usar.querySelector("#nombre_tipo_gasto").value;
 
-	// le pasamos los datos por el formData
-	datos_consulta.append("nombre_tipo_gasto",nombre_tipo_gasto);
-
-	//Aqui decimos que vamos a hacer
-	datos_consulta.append('operacion','registrar');
+	datos_consulta.append("nombre_tipo_gasto", nombre_tipo_gasto);
+	datos_consulta.append('operacion','registrar'); // Asegúrate que coincida con el case del modelo PHP
 	
-	//Llamamos a la funcion para hacer la consulta
-	let respuesta = await query(datos_consulta); // El await es para que espere el resultado, al ser asincrono, normalmente no lo esperaria
-	// wait = esperar (english)
-	modal.hide(); //Esconde el modal
-	formulario_usar.reset();//Limpia el formulario
+	let respuesta = await query(datos_consulta);
+	modal.hide();
+	formulario_usar.reset();
 
-	// Resvisamos el resultado
 	if (!respuesta.estatus) {
-		mensajes('error',4000,'Atencion',respuesta.mensaje);
-		return;// en caso de error mandamos un mensaje con el error y nos vamos
+		mensajes('error', 4000, 'Atencion', respuesta.mensaje);
+		return;
 	}
 
-	id_registrado = await last_id(); //Guarda el nuevo id registrado, para darselo al evento de modificar
+	let respuesta_id = await last_id();
+    
+    if (respuesta_id && respuesta_id.last_id) {
+        const nuevo_id = respuesta_id.last_id;
+	    let acciones = crearBotones(nuevo_id);
 	
-	let acciones = crearBotones(id_registrado.mensaje); //Crea botones
-	
-	// esta variable no hace nada, pero me dio error cuando la quite XD
-	let res_data_table = await data_table.row.add([`${nombre_tipo_gasto}`,`${acciones.outerHTML}`]).draw();
-	// Tiene el await para que lo espere, sino no la pone en la tabla
+	    const fila_nueva_nodo = data_table.row.add([
+            nombre_tipo_gasto,
+            acciones.outerHTML
+        ]).draw(false).node();
+        
+        // Le asignamos el ID a la fila para poder encontrarla después
+        fila_nueva_nodo.id = `fila-${nuevo_id}`;
 
-	mensajes('success',4000,'Atencion','El registro se ha realizado exitosamente');//Mensaje de que se completo la operacion
+	    mensajes('success', 4000, 'Atencion', 'El registro se ha realizado exitosamente');
+    } else {
+        Swal.fire("Error", "No se pudo obtener el ID del nuevo registro.", "error");
+    }
 }
 
 //Si queremos consultar
@@ -90,7 +90,7 @@ async function consultar() {
 	
 	// Resvisamos el resultado
 	if(!(data.estatus == undefined)){
-		mensajes('error',4000,'Atencion', respuesta.mensaje);
+		mensajes('error',4000,'Atencion', data.mensaje);
 		return;// en caso de error mandamos un mensaje con el error y nos vamos
 	}
 
@@ -154,7 +154,7 @@ function crearBotones(id) {
 	boton_editar.appendChild(icono_editar);
 
 	boton_editar.setAttribute("type", "button");
-	boton_editar.setAttribute("class", "btn btn-success col-lg-2 col-sm-3 col-4");
+	boton_editar.setAttribute("class", "btn btn-success col-lg-2 col-sm-3 col-4 editar");
 	boton_editar.setAttribute("tabindex", "-1");
 	boton_editar.setAttribute("role", "button");
 	boton_editar.setAttribute("aria-disabled", "true");
@@ -163,7 +163,6 @@ function crearBotones(id) {
 
 	boton_editar.setAttribute("title","Editar");
 	boton_editar.setAttribute("value",id);
-	boton_editar.addEventListener("click",modificar_formulario)//Esa funcion esta mas abajo
 
 	//Le ponemos los botones al <td><td> de las acciones
 	acciones.appendChild(boton_editar);
@@ -326,7 +325,7 @@ async function modificar(id) {
 // esta funcion obtiene el ultimo id registrado en la base de datos
 async function last_id() {
 	datos_consulta = new FormData()
-	datos_consulta.append('operacion','ultimo_id');
+	datos_consulta.append('operacion','lastId');
 	let res = await query(datos_consulta);
 	return res;
 }
@@ -422,35 +421,19 @@ function init_data_table() {
     // si lees esto tienes que saber que ahora odio estos data table, muerte a jquery...
 }
  
-// un observador que detecte cuando cambie la tabla, si detecta cambio ejecuta la esa funcion
-// yo la puse porque jquery cuando hace la paginacion en la tabla, borra los elementos, 
-// entonces se pierden los eventos asignados, y cuando vuelven a aparecer, no los tienen.
-// Esto es para reasinarle estos eventos (para eliminar, modificar, etc)
-const observer = new MutationObserver(() => {
-	reasignarEventos();
-});
+document.querySelector("#tabla_tipo_gasto tbody").addEventListener('click', function(e) {
+    // Si se hace clic en un botón de editar
+    const botonEditar = e.target.closest('button.editar');
+    if (botonEditar) {
+        // Pasamos el objeto 'e' del evento a la función
+        modificar_formulario(e);
+    }
 
-observer.observe(tabla, {childList:true});
-
-// esta funcion pone los eventos de eliminar y modificar
-function reasignarEventos() {
-	console.log("me ejecuto");
-	if (id_eliminado){ //Si hay un eliminado que no se ha quitado de la tabla
-		let existe_fila = tabla.querySelector(`#fila-${id_eliminado}`)
-		if (existe_fila) {
-			data_table.row(`#fila-${id_eliminado}`).remove().draw();
-			id_eliminado = null;	
-		}
-	//Esto es porque si la tabla esta paginada, como que no encuentra cual borrar hasta que esta en la pagina que la contiene
-	}
-
-	// Se asigna el evento eliminar para los botones, esta aqui porque pasa algo parecido a lo de arriba
-	$(".eliminar").on("click",function(e){
-		id = e.target.value;
-		if (id == undefined) {	
-			id = e.target.parentElement.value;
-		}
-		Swal.fire({
+    // Si se hace clic en un botón de eliminar
+    const botonEliminar = e.target.closest('button.eliminar');
+    if (botonEliminar) {
+        const id = botonEliminar.value;
+        Swal.fire({
 			title: "¿Estás seguro?",
 			text: "¿Está seguro que desea eliminar este tipo de gasto?",
 			showCancelButton: true,
@@ -458,28 +441,10 @@ function reasignarEventos() {
 			confirmButtonColor: "#e01d22",
 			cancelButtonText: "Cancelar",
 			icon: "warning"
-			}).then((resultado) => {
-				if (resultado.isConfirmed) {
-					eliminar(id);				
-				}
-			});
-	});
-
-	if (id_registrado) { // en caso de que se haya registrado y no se haya añadido a la tabla
-		let boton_modificar = tabla.querySelector(`[value='${id_registrado.mensaje}']`); 
-		// captura el boton de editar, sino lo encuentra es que no esta en su pagina, y no tiene caso ponerle evento
-		if (boton_modificar) {
-			// si lo encuentra le pone el evento de modificar
-			boton_modificar.addEventListener("click",modificar_formulario);
-			boton_modificar.parentElement.parentElement.parentElement.setAttribute("id",`fila-${id_registrado.mensaje}`);
-			id_registrado = null;
-		}
-	}
-}
-
-const resizeObserver = new ResizeObserver(entries => {
-	if (data_table) {
-		data_table.draw();
-	}
+		}).then((resultado) => {
+			if (resultado.isConfirmed) {
+				eliminar(id);				
+			}
+		});
+    }
 });
-resizeObserver.observe(tabla);

@@ -67,7 +67,7 @@
     </style>
 </head>
 
-<body class="body-pd">
+<body id="body-pd" class="body-pd">
     <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Usuario::tiene_permiso(GESTIONAR_USUARIOS, ELIMINAR) ?>">
     <input type="text" hidden="" id="permiso_editar" value="<?php echo Usuario::tiene_permiso(GESTIONAR_USUARIOS, MODIFICAR) ?>">
     <div class="container-fluid">
@@ -86,7 +86,7 @@
 
                 <main class="col ps-md-2 pt-2 mb-5">
                     <div class="page-header pt-3">
-                        <h2>USUARIOS</h2>
+                        <h2>GESTIONAR USUARIOS</h2>
                     </div>
                     <p class="lead"></p>
                     <hr>
@@ -96,10 +96,10 @@
                             <div class="card p-4">
                                 <?php if (Usuario::tiene_permiso(GESTIONAR_USUARIOS, REGISTRAR)) : ?>
                                     <div class="button mb-4">
-                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_usuario">Registrar</a>
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_usuario">Nuevo Usuario</a>
                                     </div><br>
                                 <?php endif; ?>
-                                <div class="table-responsive">
+                                <!-- <div class="table-responsive"> -->
                                     <table id="tabla_usuario" class="table table-striped table-hover" style="width:97%">
                                         <thead>
                                             <tr>
@@ -110,13 +110,10 @@
                                                 <th class="text-center">ACCIONES</th>
                                             </tr>
                                         </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td colspan="7"><h4>Cargando...</h4></td>
-                                            </tr>
+                                        <tbody>                                            
                                         </tbody>
                                     </table>
-                                </div>
+                                <!-- </div> -->
                                 <div class="modal fade" id="modal_usuario" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
                                     <div class="modal-dialog modal-lg">
                                         <div class="modal-content">
@@ -147,9 +144,6 @@
             </div>
         </div>
     </div>
-
-    
-
 
 <script type="text/javascript" src="recursos/js/validaciones/usuario_validar.js"></script>
 <script type="text/javascript" src="recursos/js/consultas_ajax/usuario_ajax.js"></script>

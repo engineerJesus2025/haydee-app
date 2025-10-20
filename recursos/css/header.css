@@ -40,8 +40,8 @@ header{
 	top: 0;
 	left: -30%;
 	width: 68px;
-	height: calc(100vh - 3rem);
-	background-color: #4723D9;
+	height: calc(100vh - 1.8rem);
+	background-color: #3939a9;
 	padding: .5rem 1rem 0 0;
 	transition: .5s;
 	z-index: 100
@@ -67,8 +67,7 @@ header{
 
 
 .nav_name{
-	font-weight: bold;
-	
+	font-weight: 800;
 }
 
 .nav_logo{margin-bottom: 2rem}
@@ -108,19 +107,23 @@ header{
 		padding-left: calc(35px + 2rem)
 	}
 
-.header{
-	position: absolute;
-	height: calc(3rem + 1rem);
-	padding: 2rem calc(60px + 2rem)}
+	.header{
+		position: absolute;
+		height: calc(3rem + 1rem);
+		padding: 2rem calc(60px + 2rem)}
 
-.header_img{width: 40px;height: 40px}
+	.header_img{width: 40px;height: 40px}
 
-.header_img img{width: 45px}
+	.header_img img{width: 45px}
 
-.l-navbar{left: 0;padding: 1rem 1rem 0 0}
+	.l-navbar{
+		left: 0;
+		padding: 1rem 1rem 0 0;
+		
+	}
 
-.header .show{width: calc(60px + 156px)}
+	.header .show{width: calc(60px + 156px)}
 
-.body-pd{padding-left: calc(28px + 188px)}
+	.body-pd{padding-left: calc(28px + 188px)}
 
 }

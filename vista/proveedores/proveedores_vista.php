@@ -9,7 +9,7 @@
     ?>
 </head>
 
-<body class="body-pd">
+<body id="body-pd" class="body-pd">
 <input type="text" hidden="" id="permiso_eliminar"
        value="<?php echo Proveedores::tiene_permiso(GESTIONAR_PROVEEDORES, ELIMINAR) ?>">
 <input type="text" hidden="" id="permiso_editar"

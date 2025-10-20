@@ -10,7 +10,7 @@
     ?>
 </head>
 
-<body class="body-pd">
+<body id="body-pd" class="body-pd">
     <input type="text" hidden="" id="permiso_eliminar"
         value="<?php echo Solicitud_gasto::tiene_permiso(GESTIONAR_SOLICITUD_GASTO, ELIMINAR) ?>">
     <input type="text" hidden="" id="permiso_editar"

@@ -10,13 +10,14 @@ if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
 
     if ($operacion == "consulta") {
-        echo json_encode($solicitud_gasto_obj->consultar());
+        echo json_encode($solicitud_gasto_obj->realizar_consulta('consultar'));
+        
         exit;
     } 
 
     elseif ($operacion == "consulta_especifica") {
     $solicitud_gasto_obj->set_id_solicitud($_POST["id_solicitud"]);
-    echo json_encode($solicitud_gasto_obj->consultar_solicitud_id());
+    echo json_encode($solicitud_gasto_obj->realizar_consulta('consultar_solicitud_id'));
     exit;
 }
 
@@ -59,7 +60,7 @@ if (isset($_POST["operacion"])) {
         $solicitud_gasto_obj->set_presupuesto_id($presupuesto_id); // <-- CAMBIO
         $solicitud_gasto_obj->set_prioridad($_POST["prioridad"]);
 
-        echo json_encode($solicitud_gasto_obj->registrar());
+        echo json_encode($solicitud_gasto_obj->realizar_consulta('registrar'));
         exit;
     } 
     
@@ -78,14 +79,14 @@ if (isset($_POST["operacion"])) {
         $solicitud_gasto_obj->set_presupuesto_id($presupuesto_id); // <-- CAMBIO
         $solicitud_gasto_obj->set_prioridad($_POST["prioridad"]);
 
-        echo json_encode($solicitud_gasto_obj->editar_solicitud());
+        echo json_encode($solicitud_gasto_obj->realizar_consulta('modificar'));
         exit;
     } elseif ($operacion == "eliminar") {
         $id_solicitud = $_POST["id_solicitud"];
         $solicitud_gasto_obj->set_id_solicitud($id_solicitud);
-        echo json_encode($solicitud_gasto_obj->eliminar_solicitud());
+        echo json_encode($solicitud_gasto_obj->realizar_consulta('eliminar'));
     } elseif ($operacion == "ultimo_id") {
-        echo json_encode($solicitud_gasto_obj->lastId());
+        echo json_encode($solicitud_gasto_obj->realizar_consulta('lastId'));
     }
 
     exit;

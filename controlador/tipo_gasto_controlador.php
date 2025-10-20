@@ -8,7 +8,9 @@
 
         if ($operacion == "consulta"){
             // llamamos a la funcion, lo convertimos a json y la mandamos al js con echo
-            echo  json_encode($obj_tipo_gasto->consultar());
+            echo  json_encode($obj_tipo_gasto->realizar_consulta("consultar"));
+
+            
             // la hice para que retorne un arreglo, si sale vacio solo mandara un array con false
         }
         //Despues de cada echo se regresa al javascript como respuesta en json
@@ -21,7 +23,7 @@
             $obj_tipo_gasto->set_nombre_tipo_gasto($nombre_tipo_gasto);
 
             //se ejecuta la funcion:
-            echo  json_encode($obj_tipo_gasto->registrar_tipo_gasto());
+            echo  json_encode($obj_tipo_gasto->realizar_consulta("registrar"));
             //igual puse para que siempre retorne un arreglo que dara true o false de acuerdo al resultado
         }
         elseif ($operacion == "consulta_especifica"){
@@ -32,7 +34,7 @@
             $obj_tipo_gasto->set_id_tipo_gasto($id_tipo_gasto);
 
             // llamamos a la funcion, lo convertimos a json y la mandamos al js con echo
-            echo  json_encode($obj_tipo_gasto->consultar_tipo_gasto());
+            echo  json_encode($obj_tipo_gasto->realizar_consulta("consultar_tipo_gasto"));
             // igual hice para que retorne un arreglo, si sale vacio solo mandara un array con false
         }
 
@@ -46,7 +48,7 @@
             $obj_tipo_gasto->set_nombre_tipo_gasto($nombre_tipo_gasto);
 
             //se ejecuta la funcion:
-            echo  json_encode($obj_tipo_gasto->editar_tipo_gasto());
+            echo  json_encode($obj_tipo_gasto->realizar_consulta("modificar"));
             //igual puse para que siempre retorne un arreglo que dara true o false de acuerdo al resultado
         }
 
@@ -58,10 +60,10 @@
             $obj_tipo_gasto->set_id_tipo_gasto($id_tipo_gasto);
 
             //se ejecuta la funcion:
-            echo  json_encode($obj_tipo_gasto->eliminar_tipo_gasto());
+            echo  json_encode($obj_tipo_gasto->realizar_consulta("eliminar"));
             //igual puse para que siempre retorne un arreglo que dara true o false de acuerdo al resultado
-        }elseif ($operacion == "ultimo_id"){
-            echo json_encode($obj_tipo_gasto->lastId());
+        }elseif ($operacion == "lastId"){
+            echo json_encode($obj_tipo_gasto->realizar_consulta("lastId"));
         }
 
         exit;//es salida en ingles... No puede faltar

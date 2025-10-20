@@ -188,17 +188,13 @@ class MensualidadTest extends TestCase
         $this->mensualidad->set_mes("2");
         $this->mensualidad->set_anio("2025");
         $this->mensualidad->set_apartamento_id(11);
-
-        $resultado = $this->mensualidad->realizar_consulta('editar',true);
-        
+        $resultado = $this->mensualidad->realizar_consulta('editar',true);     
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        
+        $this->assertCount(2, $resultado);   
         $this->assertTrue($resultado["estatus"]);
         $this->assertStringContainsString('OK', $resultado["mensaje"]);
     }
-
     public function testEditarMensualidadDatosIncorrecto(){
         $this->mensualidad->set_id_mensualidad(238); // Id existente
         $this->mensualidad->set_monto("11.11");
@@ -206,17 +202,13 @@ class MensualidadTest extends TestCase
         $this->mensualidad->set_mes("4");
         $this->mensualidad->set_anio("2025");
         $this->mensualidad->set_apartamento_id(11);
-
-        $resultado = $this->mensualidad->realizar_consulta('editar',true);
-        
+        $resultado = $this->mensualidad->realizar_consulta('editar',true);     
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        
+        $this->assertCount(2, $resultado);      
         $this->assertFalse($resultado["estatus"]);
         $this->assertStringContainsString("Uno de los 'montos en dolar' no posee un valor valido", $resultado["mensaje"]);
     }
-
     public function testEditarMensualidadIDIncorrecto(){
         $this->mensualidad->set_id_mensualidad(12312312); // Id inexistente
         $this->mensualidad->set_monto("11.11");
@@ -224,13 +216,10 @@ class MensualidadTest extends TestCase
         $this->mensualidad->set_mes("4");
         $this->mensualidad->set_anio("2025");
         $this->mensualidad->set_apartamento_id(11);
-
-        $resultado = $this->mensualidad->realizar_consulta('editar',true);
-        
+        $resultado = $this->mensualidad->realizar_consulta('editar',true);    
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        
+        $this->assertCount(2, $resultado);     
         $this->assertFalse($resultado["estatus"]);
         $this->assertStringContainsString("La mensualidad seleccionada no existe", $resultado["mensaje"]);
     }
@@ -339,7 +328,6 @@ class MensualidadTest extends TestCase
         $this->assertArrayHasKey('accion', $resultado[0]);
         $this->assertArrayHasKey('valor', $resultado[0]);        
     }
-
     //Metodo consultar_meses_mensualidad
     public function testConsultarMesesMensualidad(){
         $resultado = $this->mensualidad->realizar_consulta('consultar_meses_mensualidad');
@@ -351,7 +339,6 @@ class MensualidadTest extends TestCase
         $this->assertArrayHasKey('mes', $resultado[0]);
         $this->assertArrayHasKey('anio', $resultado[0]);        
     }
-
     //Metodo consultar_monto_dolar_mensualidades
     public function testConsultarMontoEnDolares(){
         $resultado = $this->mensualidad->realizar_consulta('consultar_monto_dolar_mensualidades');
@@ -366,7 +353,6 @@ class MensualidadTest extends TestCase
         $this->assertArrayHasKey('monto_dolar', $resultado);
         $this->assertArrayHasKey('tasa_dolar', $resultado);
     }
-
     //Metodo consultar_mensualidades_pendientes
     public function testConsultarMensualidadesPendientes(){
         $resultado = $this->mensualidad->realizar_consulta('consultar_mensualidades_pendientes');

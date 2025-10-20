@@ -9,7 +9,7 @@
     ?>
 </head>
 
-<body class="body-pd">
+<body id="body-pd" class="body-pd">
     <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Habitantes::tiene_permiso(GESTIONAR_HABITANTES, ELIMINAR) ?>">
     <input type="text" hidden="" id="permiso_editar" value="<?php echo Habitantes::tiene_permiso(GESTIONAR_HABITANTES, MODIFICAR) ?>">
     <div class="container-fluid">

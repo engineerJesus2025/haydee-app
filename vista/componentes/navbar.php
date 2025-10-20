@@ -35,7 +35,7 @@
                         </a>
                     <?php endif; ?>
                     <?php if (Conexion::tiene_permiso(GESTIONAR_MENSUALIDAD, CONSULTAR)) : ?> 
-                    <a href="?pagina=mensualidad_controlador.php&accion=inicio" class="nav_link <?php echo ($_GET["pagina"] == "mensualidad_controlador.php")?"active":''; ?>" title="Control de Caja"> 
+                    <a href="?pagina=mensualidad_controlador.php&accion=inicio" class="nav_link <?php echo ($_GET["pagina"] == "mensualidad_controlador.php")?"active":''; ?>" title="Mensualidad"> 
                         <i class="bi bi-piggy-bank-fill nav_logo-icon"></i>
                         <span class="nav_name">Mensualidad</span> 
                     </a>
@@ -55,13 +55,7 @@
                             <i class="bi bi-building nav_logo-icon"></i>
                             <span class="nav_name">Apartamentos</span>
                         </a>
-                    <?php endif; ?>
-                    <?php if (Conexion::tiene_permiso(GESTIONAR_HABITANTES, CONSULTAR)) : ?>
-                    <a href="?pagina=habitantes_controlador.php&accion=inicio" class="nav_link <?php echo ($_GET["pagina"] == "habitantes_controlador.php")?"active":''; ?>" title="Habitantes"> 
-                        <i class="bi bi-people-fill nav_logo-icon"></i>
-                        <span class="nav_name">Habitantes</span> 
-                    </a>
-                    <?php endif; ?>
+                    <?php endif; ?>                    
                     <?php if (Conexion::tiene_permiso(GESTIONAR_SOLICITUD_GASTO, CONSULTAR)) : ?>
                     <a href="?pagina=solicitud_gasto_controlador.php&accion=inicio" class="nav_link <?php echo ($_GET["pagina"] == "solicitud_gasto_controlador.php")?"active":''; ?>" title="Solicitud Gasto"> 
                         <i class="bi-clipboard-check nav_logo-icon"></i>
@@ -90,11 +84,11 @@
                         <span class="nav_name">Reportes</span> 
                     </a>
                     <div class="collapse mb-2 <?php echo ($reporte)?'show':'';?>" id="collapse_reporte"> 
-                            <a href="?pagina=reportes_controlador.php&accion=reportes_pdf" class="nav_link <?php echo ($_GET['accion'] == 'reportes_pdf')?'active':''; ?>" title="Gestionar Proveedores"> 
+                            <a href="?pagina=reportes_controlador.php&accion=reportes_pdf" class="nav_link <?php echo ($_GET['accion'] == 'reportes_pdf')?'active':''; ?>" title="Reportes PDF"> 
                                 <i class="bi bi-filetype-pdf nav_logo-icon"></i>
                                 <span class="nav_name">Reportes PDF</span> 
                             </a>
-                            <a href="?pagina=reportes_controlador.php&accion=reportes_estadisticos" class="nav_link <?php echo ($_GET['accion'] == 'reportes_estadisticos')?'active':''; ?>" title="Gestionar Proveedores"> 
+                            <a href="?pagina=reportes_controlador.php&accion=reportes_estadisticos" class="nav_link <?php echo ($_GET['accion'] == 'reportes_estadisticos')?'active':''; ?>" title="Reportes Estadísticos"> 
                                 <i class="bi bi-clipboard-data nav_logo-icon"></i>
                                 <span class="nav_name">Reportes Estadísticos</span> 
                             </a>
@@ -159,7 +153,7 @@
                             <?php if (Conexion::tiene_permiso(GESTIONAR_BITACORA, CONSULTAR)): ?>
                             <a href="?pagina=bitacora_controlador.php&accion=inicio" class="nav_link <?php echo ($_GET["pagina"] == "bitacora_controlador.php")?"active":''; ?>" title="Gestionar Bitacora"> 
                                 <i class="bi bi-arrows-move nav_logo-icon"></i>
-                                <span class="nav_name">Bitacora</span> 
+                                <span class="nav_name">Bitácora</span> 
                             </a>
                             <?php endif; ?>
                         </div>

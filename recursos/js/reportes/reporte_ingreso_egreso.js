@@ -2,7 +2,7 @@ let graficaChart;
 let modal = new bootstrap.Modal(document.getElementById("modal_reporte"));
 const meses = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
 let fechas_asignadas_ingresos,fechas_asignadas_egresos;
-
+let tasa_dolar = parseFloat(localStorage.getItem("tasa_dolar")).toFixed(2) || 1;
 document.getElementById("filtro").addEventListener("change",e=>{
 	if (e.target.value == "Otro") {
 		document.getElementById("label_fechas").removeAttribute("hidden");
@@ -98,7 +98,6 @@ document.getElementById("boton_vista_previa").addEventListener("click",async e=>
 
 	let resultado_estadisticas = await query(datos_consulta);
 
-	console.log(resultado_estadisticas);
 	if(!(resultado_estadisticas.estatus)){
 		mensajes('error',4000,'Atencion', resultado_estadisticas.mensaje);
 		return;
@@ -334,16 +333,18 @@ document.getElementById("boton_vista_previa").addEventListener("click",async e=>
 document.getElementById("balance").addEventListener("change",e=>{
 	let select = document.getElementById("select_balance");
 	if (select.getAttribute("disabled") == null) {
+		if(select.value == "Ingresos"){
+			document.getElementById("select_tipo_gasto").parentElement.removeAttribute("hidden");
+			document.getElementById("tipo_gasto").parentElement.removeAttribute("hidden");
+			document.getElementById("select_tipo_gasto").value = "Todos";
+			document.getElementById("select_tipo_gasto").setAttribute("disabled","true");
+		}
+
+		select.value = "Todos";
 		select.setAttribute("disabled","true");
 	}else{
 		select.removeAttribute("disabled");
-	}
-	
-	if (select.value == "Ingresos"){
-		document.getElementById("select_tipo_gasto").setAttribute("hidden","");
-	}else{
-		document.getElementById("select_tipo_gasto").removeAttribute("hidden");
-	}
+	}	
 });
 
 document.getElementById("select_balance").addEventListener("change",e=>{
@@ -363,6 +364,7 @@ document.getElementById("select_balance").addEventListener("change",e=>{
 document.getElementById("metodo_pago").addEventListener("change",e=>{
 	let select = document.getElementById("select_metodo_pago");
 	if (select.getAttribute("disabled") == null) {
+		document.getElementById("select_metodo_pago").value = "Todos";
 		select.setAttribute("disabled","");
 	}
 	else{
@@ -373,6 +375,7 @@ document.getElementById("metodo_pago").addEventListener("change",e=>{
 document.getElementById("tipo_gasto").addEventListener("change",e=>{
 	let select = document.getElementById("select_tipo_gasto");
 	if (select.getAttribute("disabled") == null) {
+		select.value = "Todos";
 		select.setAttribute("disabled","true");
 	}else{
 		select.removeAttribute("disabled");
@@ -394,8 +397,7 @@ document.getElementById("boton_generar").addEventListener("click",e=>{
 	document.getElementById('pagos_pago_movil_input').value = document.getElementById('pagos_pago_movil').textContent;
 	document.getElementById('fecha_pagos_input').value = document.getElementById('fecha_pagos').textContent;
 	document.getElementById('fecha_gastos_input').value = document.getElementById('fecha_gastos').textContent;
-
-
+	document.getElementById('mostrar_datos_input').value = document.getElementById('select_mostrar_datos').value;
 
 	modal.hide();
 	e.target.closest("form").submit();
@@ -423,7 +425,8 @@ function mensajes(icono,tiempo,titulo,mensaje){
 	});
 }
 
-function crearContanierEstadistica(arreglo_estadisticas) {	
+function crearContanierEstadistica(arreglo_estadisticas) {
+	console.log(arreglo_estadisticas);
 	limpiarContainerEstadistica();
 	arreglo_estadisticas.map(registro=>{
 		let estadistica = Object.values(registro);		
@@ -434,37 +437,70 @@ function crearContanierEstadistica(arreglo_estadisticas) {
 			if (elemento == null) return;
 			if (estadistica[0] == null) {
 				elemento.textContent += 0 + "Bs.";
+				elemento.removeAttribute("no-asignado");
 				return;
 			}
-			elemento.textContent += estadistica[0] + "Bs.";			
+			elemento.textContent += estadistica[0] + "Bs. / " + (estadistica[0] / tasa_dolar).toFixed(2) + "$";
+			elemento.removeAttribute("no-asignado");
 		}
 	});
 	let fragment_fecha_pagos = document.createDocumentFragment();
 	for(let tiempo in fechas_asignadas_ingresos){
 		let p = document.createElement("p");
-		p.textContent = tiempo + ": " + fechas_asignadas_ingresos[tiempo] + "Bs.";
+		p.textContent = tiempo + ": " + fechas_asignadas_ingresos[tiempo] + "Bs. / " + (fechas_asignadas_ingresos[tiempo] / tasa_dolar).toFixed(2) + "$";
 		fragment_fecha_pagos.appendChild(p);
 	}
-	let fragment_echa_gastos = document.createDocumentFragment();
+	let fragment_fecha_gastos = document.createDocumentFragment();
 	for(let tiempo in fechas_asignadas_egresos){
 		let p = document.createElement("p");
-		p.textContent = tiempo + ": " + fechas_asignadas_egresos[tiempo] + "Bs.";
-		fragment_echa_gastos.appendChild(p);
+		p.textContent = tiempo + ": " + fechas_asignadas_egresos[tiempo] + "Bs. / " + (fechas_asignadas_egresos[tiempo] / tasa_dolar).toFixed(2) + "$";
+		fragment_fecha_gastos.appendChild(p);
+	}
+
+	if(fragment_fecha_pagos.children.length == 0){
+		let p = document.createElement("p");
+		p.textContent = "No hay marcas de tiempo";
+		fragment_fecha_pagos.appendChild(p);
+	}
+	if(fragment_fecha_gastos.children.length == 0){
+		let p = document.createElement("p");
+		p.textContent = "No hay marcas de tiempo";
+		fragment_fecha_gastos.appendChild(p);
 	}
 
 	document.getElementById('fecha_pagos').appendChild(fragment_fecha_pagos);
-	document.getElementById('fecha_gastos').appendChild(fragment_echa_gastos);
+	document.getElementById('fecha_gastos').appendChild(fragment_fecha_gastos);
+
+	document.querySelectorAll("[no-asignado]").forEach(elemento=>{
+		elemento.textContent += 0 + "Bs.";
+	});
 }
 
 function limpiarContainerEstadistica() {
     document.getElementById('total_pagos').textContent = "Total de Pagos realizados: ";
+    document.getElementById('total_pagos').setAttribute("no-asignado","");
+
     document.getElementById('total_gastos').textContent = "Total de Gastos Realizados: ";
+    document.getElementById('total_gastos').setAttribute("no-asignado","");
+
     document.getElementById('gastos_efectivo').textContent = "Gastos por Efectivo: ";
+    document.getElementById('gastos_efectivo').setAttribute("no-asignado","");
+
     document.getElementById('gastos_transferencia').textContent = "Gastos por Transferencia: ";
+    document.getElementById('gastos_transferencia').setAttribute("no-asignado","");
+
     document.getElementById('gastos_pago_movil').textContent = "Gastos por Pago Movil: ";
+    document.getElementById('gastos_pago_movil').setAttribute("no-asignado","");
+
     document.getElementById('pagos_efectivo').textContent = "Pagos por Efectivo: ";
+    document.getElementById('pagos_efectivo').setAttribute("no-asignado","");
+
     document.getElementById('pagos_transferencia').textContent = "Pagos por Transferencia: ";
+    document.getElementById('pagos_transferencia').setAttribute("no-asignado","");
+
     document.getElementById('pagos_pago_movil').textContent = "Pagos por Pago Movil: ";
+    document.getElementById('pagos_pago_movil').setAttribute("no-asignado","");
+
     document.getElementById('fecha_pagos').textContent = null;
-	document.getElementById('fecha_gastos').textContent = null;
+	document.getElementById('fecha_gastos').textContent = null;	
 }

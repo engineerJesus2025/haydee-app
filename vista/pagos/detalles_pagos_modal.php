@@ -17,14 +17,14 @@
             <label for="mensualidad">Mensualidad</label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-bank2"></i></span>
-                    <select class="form-select mensualidad_id" aria-label="Default select example" id="mensualidad_id_detalles" name="mensualidad_id">
+                    <select class="form-select mensualidad_id" aria-label="Default select example" id="mensualidad_id_detalles" name="mensualidad_id" disabled>
                         <option selected hidden value="">Escoja primero un Apartamento</option> 
                     </select>
                 <span class="w-100"></span>
             </div>
         </div>
     </div>
-    <div class="row m-3">
+    <div class="row m-3 detalle-pago">
         <div class="col-lg-3 col-sm-6">
             <label for="fecha">Fecha</label>
             <div class="input-group mb-3">
@@ -54,11 +54,12 @@
                 <span class="w-100"></span>
             </div>
         </div>-->
-        <div class="col-lg-3 col-sm-6">
-            <label for="monto_dolar">Monto Dolar</label>
+        
+        <div class="col-lg-2 col-sm-6 campo-monto d-none">
+            <label for="monto">Monto</label>
             <div class="input-group mb-3">
-                <span class="input-group-text" id="basic-addon1"><i class="bi bi-coin"></i></span>
-                <input type="text" class="form-control monto_dolar" name="monto_dolar" id="monto_dolar_detalles" placeholder="Tasa del Dolar" aria-label="tasa_dolar" aria-describedby="basic-addon1" minlength="3" maxlength="60">
+                <span class="input-group-text" id="basic-addon1"><i class="bi bi-cash-coin"></i></span>
+                <input type="text" class="form-control monto" name="monto" id="monto_detalles" placeholder="Monto" aria-label="monto" aria-describedby="basic-addon1" minlength="3" maxlength="30">
                 <span class="w-100"></span>
             </div>
         </div>
@@ -70,21 +71,30 @@
                 <span class="w-100"></span>
             </div>
         </div>-->
-        <div class="col-lg-3 col-sm-6">
-            <label for="monto_mensualidad">Monto Mensualidad</label>
+        <div class="col-lg-2 col-sm-6">
+            <label for="tasa_dolar">Tasa del Dólar</label>
             <div class="input-group mb-3">
-                <span class="input-group-text" id="basic-addon1"><i class="bi bi-cash-coin"></i></span>
-                <input type="text" class="form-control monto" name="monto_mensualidad" id="monto_mensualidad_detalles" placeholder="Monto Mensualidad" aria-label="monto_mensualidad" aria-describedby="basic-addon1" minlength="3" maxlength="30" readonly>
+                <span class="input-group-text"><i class="bi bi-coin"></i></span>
+                <input type="text" class="form-control tasa_dolar" name="tasa_dolar" id="tasa_dolar_detalles" placeholder="Tasa">
+                <span class="mensaje-error text-danger small"></span>
+            </div>
+        </div>
+        <div class="col-lg-2 col-sm-6">
+            <label for="monto_dolar">Monto Dolar</label>
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="basic-addon1"><i class="bi bi-coin"></i></span>
+                <input type="text" class="form-control monto_dolar" name="monto_dolar" id="monto_dolar_detalles" placeholder="Monto Dolar" aria-label="monto_dolar" aria-describedby="basic-addon1" minlength="3" maxlength="60">
                 <span class="w-100"></span>
             </div>
         </div>
     </div> 
     <div class="row m-3">
-        <div class="col-lg-3 col-sm-6 campo-monto d-none">
-            <label for="monto">Monto</label>
+        
+        <div class="col-lg-3 col-sm-6">
+            <label for="monto_mensualidad">Monto Mensualidad</label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-cash-coin"></i></span>
-                <input type="text" class="form-control monto" name="monto" id="monto_detalles" placeholder="Monto" aria-label="monto" aria-describedby="basic-addon1" minlength="3" maxlength="30">
+                <input type="text" class="form-control monto" name="monto_mensualidad" id="monto_mensualidad_detalles" placeholder="Monto Mensualidad" aria-label="monto_mensualidad" aria-describedby="basic-addon1" minlength="3" maxlength="30" readonly>
                 <span class="w-100"></span>
             </div>
         </div>

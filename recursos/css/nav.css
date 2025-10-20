@@ -1,0 +1,19 @@
+.notification-item:hover {
+	background-color: #f8f9fa;
+}
+
+.dropdown-menu {
+	min-width: 280px;
+}
+
+@media (max-width: 576px) {
+	.dropdown-menu {
+		width: 100vw;
+		min-width: 100vw;
+	    margin-right: -1rem;
+	}
+}
+
+.dropdown button .badge{
+	transform: translate(-30%,-40%) !important;
+}

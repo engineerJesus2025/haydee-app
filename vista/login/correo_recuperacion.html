@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restablecer Contraseña</title>
+    <style>
+        /* Estilos generales y para reinicio */
+        body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+        table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+        img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+        table { border-collapse: collapse !important; }
+        body { height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; background-color: #f4f4f4; }
+
+        /* Estilos para el botón de acción */
+        .button-link {
+            display: inline-block;
+            padding: 16px 36px;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 16px;
+            font-weight: bold;
+            color: #ffffff !important;
+            text-decoration: none;
+            background-color: #3498db;
+            border-radius: 8px;
+            border-top: 1px solid #4eaadd;
+            border-right: 1px solid #2588c9;
+            border-bottom: 1px solid #1e6fa8;
+            border-left: 1px solid #2588c9;
+        }
+
+        /* Adaptación para dispositivos móviles */
+        @media screen and (max-width: 600px) {
+            .content-table {
+                width: 100% !important;
+            }
+            .header a {
+                font-size: 24px !important;
+            }
+        }
+    </style>
+</head>
+<body style="margin: 0 !important; padding: 0 !important; background-color: #f4f4f4;">
+
+    <!-- Evita que Outlook añada espacios no deseados -->
+    <!--[if (gte mso 9)|(IE)]>
+    <table align="center" border="0" cellpadding="0" cellspacing="0" width="600">
+    <tr>
+    <td align="center" valign="top" width="600">
+    <![endif]-->
+
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+        <!-- Sección del Pre-encabezado (texto de vista previa) -->
+        <tr>
+            <td align="center">
+                <div style="display: none; font-size: 1px; color: #f4f4f4; line-height: 1px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">
+                    Hemos recibido una solicitud para restablecer la contraseña de tu cuenta.
+                </div>
+            </td>
+        </tr>
+
+        <!-- Contenido principal del correo -->
+        <tr>
+            <td align="center" style="padding: 20px 0;">
+                <table border="0" cellpadding="0" cellspacing="0" width="600" class="content-table" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+
+                    <!-- Encabezado con el Logo -->
+                    <tr>
+                        <td align="center" style="padding: 40px 30px 20px 30px;" class="header">
+                             <!-- Reemplaza 'URL_DEL_LOGO' con la URL de tu logo. Puede ser un texto si no tienes logo. -->
+                             <a href="https://condominioshaydee.alwaysdata.net/" target="_blank" style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333333; font-size: 28px; font-weight: bold; text-decoration: none;">
+                                Junta de Condominio Edificio Haydee
+                                <!-- O si tienes un logo en imagen: -->
+                                <!-- <img src="URL_DEL_LOGO" alt="Logo de Gestión Condominio" width="180" style="display: block; width: 180px;"> -->
+                             </a>
+                        </td>
+                    </tr>
+
+                    <!-- Cuerpo del Mensaje -->
+                    <tr>
+                        <td align="left" style="padding: 20px 30px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 24px; color: #555555;">
+                            <h1 style="font-size: 22px; font-weight: bold; margin: 0 0 15px 0; color: #333333;">Restablecer tu Contraseña</h1>
+                            <p style="margin: 0 0 15px 0;">Hola, %usuario%,</p>
+                            <p style="margin: 0 0 25px 0;">Hemos recibido una solicitud para restablecer la contraseña de tu cuenta. Para continuar, haz clic en el siguiente botón:</p>
+
+                            <!-- Botón de Acción -->
+                            <table border="0" cellspacing="0" cellpadding="0" width="100%">
+                                <tr>
+                                    <td align="center">
+                                         <!-- Reemplaza '#' con la URL real para el reseteo de contraseña -->
+                                        <a href="%url%" target="_blank" class="button-link">Restablecer Contraseña</a>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p style="margin: 25px 0 15px 0;">El enlace para restablecer la contraseña es válido por 10 minutos.</p>
+                            <p style="margin: 0;">Si no solicitaste un cambio de contraseña, puedes ignorar este correo electrónico de forma segura. Tu cuenta permanece protegida.</p>
+                        </td>
+                    </tr>
+
+                    <!-- Pie de Página -->
+                    <tr>
+                        <td align="center" style="padding: 30px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 12px; line-height: 18px; color: #999999;">
+                            <p style="margin: 0;">Recibiste este correo porque se realizó una solicitud de recuperación en nuestro sistema.</p>
+                            <p style="margin: 10px 0 0 0;">&copy; 2024 Junta de Condominio Edificio Haydee. Todos los derechos reservados.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <!--[if (gte mso 9)|(IE)]>
+    </td>
+    </tr>
+    </table>
+    <![endif]-->
+
+</body>
+</html>

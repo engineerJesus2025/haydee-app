@@ -1,11 +1,12 @@
-let data_table_habitantes, id_eliminado_habitantes, id_registrado_habitantes, id_modificar_habitantes, cedula_an;
+let data_table_habitantes, id_eliminado_habitantes, id_registrado_habitantes, id_modificar_habitantes; 
+let cedula_an, tipo_vinculo_an;
 //let permiso_eliminar_habitantes = document.querySelector("#permiso_eliminar").value;
 //let permiso_editar_habitantes = document.querySelector("#permiso_editar").value;
 let tabla_habitantes = document.querySelector("#tabla_habitantes"); //La tabla
 let boton_formulario_habitantes = document.querySelector("#boton_formulario_habitantes"); // el boton
 let formulario_usar_habitantes = document.querySelector(`#form_habitantes`); // el form
 let modal_habitantes = new bootstrap.Modal("#modal_habitantes"); // el modal
-let modalVistaPrevia_habitantes = new bootstrap.Modal(document.querySelector("#modal_vista_previa")); // Boton vista previa
+let modalVistaPrevia_habitantes = new bootstrap.Modal(document.querySelector("#modal_vista_previa_habitantes")); // Boton vista previa
 
 //En caso de que se envie un formulario
 function envio_habitantes(operacion) {
@@ -53,13 +54,13 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // Al parecer funciona bien
-// document.querySelector("#boton_registrar").addEventListener("click", function(){
-// 	let apartamento_id = formulario_usar_habitantes.querySelector("#apartamento_id");
-// 	let apartamento = formulario_usar_habitantes.querySelector("#apartamento_id").selectedOptions[0].text;
+ document.querySelector("#boton_registrar").addEventListener("click", function(){
+ 	let apartamento_id = formulario_usar_habitantes.querySelector("#apartamento_id");
+ 	let apartamento = formulario_usar_habitantes.querySelector("#apartamento_id").selectedOptions[0].text;
 
-// 	apartamento_id.value = datos_apartamento.id_apartamento;
-// 	apartamento.value = datos_apartamento.nro_apartamento;
-// });
+ 	apartamento_id.value = datos_apartamento.id_apartamento;
+ 	apartamento.value = datos_apartamento.nro_apartamento;
+ });
 // ...
 
 function formatearFecha(fechaStr) {
@@ -121,11 +122,13 @@ async function registrar_habitantes() {
 
 	id_registrado_habitantes = await last_id_habitantes(); //Guarda el nuevo id registrado, para darselo al evento de modificar
 	
-	let acciones = crearBotonesHabitantes(id_registrado_habitantes.mensaje); //Crea botones
+	let acciones = crearBotonesHabitantes(id_registrado_habitantes.last_id); //Crea botones
 	
 	// esta variable no hace nada, pero me dio error cuando la quite XD
-	let res_data_table = await data_table_habitantes.row.add([`${nombre}`,`${apellido}`,`${cedula}`,`${apartamento}`,`${acciones.outerHTML}`]).draw();
+	// let res_data_table = await data_table_habitantes.row.add([`${nombre}`,`${apellido}`,`${cedula}`,`${apartamento}`,`${acciones.outerHTML}`]).draw();
 	// Tiene el await para que lo espere, sino no la pone en la tabla
+
+	await consultar_habitantes(apartamento_id); // Vuelve a consultar para actualizar la tabla
 
 	mensajes('success',4000,'Atencion','El registro se ha realizado exitosamente');//Mensaje de que se completo la operacion
 }
@@ -258,7 +261,7 @@ function crearBotonesHabitantes(id) {
 	//Le ponemos los botones al <td><td> de las acciones
 	acciones.appendChild(boton_editar);
 
-	if (permiso_eliminar) {
+	if (permiso_eliminar_habitantes) {
 		//creamos el boton de eliminar, le damos valor, y le asignamos la funcion para eliminar
 		let boton_eliminar = document.createElement("button");
 
@@ -297,6 +300,8 @@ async function mostrarVistaPrevia_habitantes(e) {
     let respuesta = await query(datos_consulta);
 
     let data = respuesta;
+
+	console.log("Datos Habitante: ",data);
 
 	document.getElementById("vista_nombre").textContent = data.nombre;
 	document.getElementById("vista_apellido").textContent = data.apellido;
@@ -393,7 +398,7 @@ async function modificar_formulario_habitante(e) {
 	tipo_vinculo.value = data.tipo_vinculo;
 
 	// este if revisa si tiene permiso para editar, en caso de que no, quitamos el boton
-	if(!permiso_editar){
+	if(!permiso_editar_habitantes){
 		boton_formulario_habitantes.setAttribute("hidden",true);
 		boton_formulario_habitantes.setAttribute("disabled",true);
 		//si no los tiene apaga el boton.
@@ -402,11 +407,12 @@ async function modificar_formulario_habitante(e) {
 	// aqui cambiamos los datos del boton para registrar, para saber que ahora se va es a modificar un registro
 	boton_formulario_habitantes.setAttribute("modificar",true);
 	boton_formulario_habitantes.setAttribute("id_modificar",data.id_habitante);
-	boton_formulario_habitantes.textContent = "Modificar";
+	boton_formulario_habitantes.textContent = "Guardar";
 	document.getElementById('titulo_modal_habitantes').textContent = "Modificar Habitante";
 
 	id_modificar_habitantes = id;
 	cedula_an = cedula.value;
+	tipo_vinculo_an = tipo_vinculo.value;
 	//guardamos el orginal del correo, para que no choquen con las validaciones
 }
 
@@ -471,14 +477,16 @@ async function modificar_habitantes(id) {
 	// esto de abajo es para editar la fila que se modifico en el data table
 	let acciones = crearBotonesHabitantes(id); // creamos otro botones (no se que tan necesario sea esto)
 
-	data_table_habitantes.row(`#fila-${id}`).data([`${nombre}`,`${apellido}`,`${cedula}`,`${apartamento}`,`${acciones.outerHTML}`])
-	data_table_habitantes.draw(); // esta funcion refresca la tabla, por si le da sed
+	//data_table_habitantes.row(`#fila-${id}`).data([`${nombre}`,`${apellido}`,`${cedula}`,`${apartamento}`,`${acciones.outerHTML}`])
+	//data_table_habitantes.draw(); // esta funcion refresca la tabla, por si le da sed
+
+	await consultar_habitantes(apartamento_id); // Vuelve a consultar para actualizar la tabla
 
 	// se le vuelve a poner el evento al boton
-	let fila = document.querySelector(`#fila-${id}`);
-	if (fila) {
-		fila.querySelector(`[value='${id}']`).addEventListener("click",modificar_formulario_habitante);
-	}	
+	// let fila = document.querySelector(`#fila-${id}`);
+	// if (fila) {
+	// 	fila.querySelector(`[value='${id}']`).addEventListener("click",modificar_formulario_habitante);
+	// }	
 }
 
 // esta funcion obtiene el ultimo id registrado en la base de datos
@@ -609,12 +617,13 @@ function reasignarEventos_habitantes() {
     });
 
 	if (id_registrado_habitantes) { // en caso de que se haya registrado y no se haya añadido a la tabla
-		let boton_modificar = tabla_habitantes.querySelector(`[value='${id_registrado_habitantes.mensaje}']`); 
+		console.log("Revisar: ",id_registrado_habitantes);
+		let boton_modificar = tabla_habitantes.querySelector(`[value='${id_registrado_habitantes.last_id}']`); 
 		// captura el boton de editar, sino lo encuentra es que no esta en su pagina, y no tiene caso ponerle evento
 		if (boton_modificar) {
 			// si lo encuentra le pone el evento de modificar
 			boton_modificar.addEventListener("click",modificar_formulario_habitante);
-			boton_modificar.parentElement.parentElement.parentElement.setAttribute("id",`fila-${id_registrado_habitantes.mensaje}`);
+			boton_modificar.parentElement.parentElement.parentElement.setAttribute("id",`fila-${id_registrado_habitantes.last_id}`);
 			id_registrado_habitantes = null;
 		}
 	}

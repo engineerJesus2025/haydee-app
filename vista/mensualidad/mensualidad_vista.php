@@ -8,14 +8,13 @@
     require_once "vista/componentes/estilos.php";
     ?>
 </head>
-<body class="body-pd">
+<body id="body-pd" class="body-pd">
     <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Mensualidad::tiene_permiso(GESTIONAR_MENSUALIDAD, ELIMINAR) ?>">
     <input type="text" hidden="" id="permiso_editar" value="<?php echo Mensualidad::tiene_permiso(GESTIONAR_MENSUALIDAD, MODIFICAR) ?>">
     <div class="container-fluid">
         <div class="row flex-nowrap">
 
-            <?php
-            require_once "vista/componentes/sesion.php";
+            <?php            
             require_once "vista/componentes/navbar.php";
             ?>
 
@@ -38,7 +37,7 @@
                             <div class="card p-4 row">
                                 <div class="col-12 row">
                                     <div class="col" hidden="">                       
-                                        <button class="btn btn-primary my-2" id="boton_registrar" title="Presione para Registrar Nueva Mensualidad" type="button" data-bs-toggle="modal" data-bs-target="#modal_mensualidad">Registrar Mensualidad</button>
+                                        <button class="btn btn-primary my-2" id="boton_registrar" title="Presione para Registrar Nueva Mensualidad" type="button" data-bs-toggle="modal" data-bs-target="#modal_mensualidad">Nueva Mensualidad</button>
                                         <p class="text-danger"></p>
                                     </div>
                                 </div>

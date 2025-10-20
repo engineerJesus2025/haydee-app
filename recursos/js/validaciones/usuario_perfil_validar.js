@@ -53,7 +53,7 @@ $(document).ready(function(){
 			title: "¿Estás seguro?",
 			text: `¿Está seguro que desea editar estos datos?`,
 			showCancelButton: true,
-			confirmButtonText: "Editar",
+			confirmButtonText: "Si, Editar",
 			confirmButtonColor: "#1b8a40",
 			cancelButtonText: "Cancelar",
 			icon: "warning"
@@ -71,9 +71,9 @@ $(document).ready(function(){
 		if(await validarEnvioContra()==true){
 			Swal.fire({
 			title: "¿Estás seguro?",
-			text: `¿Está seguro que desea editar estos datos?`,
+			text: `¿Está seguro que desea cambiar su contraseña?`,
 			showCancelButton: true,
-			confirmButtonText: "Editar",
+			confirmButtonText: "Si, Cambiar",
 			confirmButtonColor: "#1b8a40",
 			cancelButtonText: "Cancelar",
 			icon: "warning"

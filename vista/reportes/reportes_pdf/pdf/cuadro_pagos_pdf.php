@@ -65,13 +65,13 @@
 <body>
 	<div>
 		<h1>CUADRO DE PAGOS</h1>
-		<p class="subtitle">ESTADO DE CUENTAS RESIDENCIAS HAYDEE (TASA <?php echo "01-" . $tasa_dolar["mes"] . "-" . $tasa_dolar["anio"] ?> BCV <?php echo $tasa_dolar["tasa_dolar"] ?>Bs.*$)</p>
+		<p class="subtitle">ESTADO DE CUENTAS RESIDENCIAS HAYDEE (TASA <?php echo "01-" . $tasa_dolar["mes"] . "-" . $tasa_dolar["anio"] ?> BCV <?php echo $tasa_dolar["tasa_dolar"] ?> Bs.*$)</p>
 		<table>
 				
 			<thead>
 			<tr>
 				<th>APTO.</th>
-				<?php foreach ($meses_seleccionados as $mes) {?>
+				<?php foreach ($cebecera_tabla as $mes) {?>
 					<th>Cuota <?php echo $mes ?></th>
 				<?php } ?>
 				<th>Total Deuda</th>
@@ -79,7 +79,7 @@
 			</thead>
 			<tbody>
 			<?php 			
-			foreach ($deudas_filtradas as $nro_apartamento => $apartamento) {
+			foreach ($cuerpo_tabla as $nro_apartamento => $apartamento) {
 				$total = 0;
 				$nombre_ap = false;
 				?>
@@ -108,24 +108,26 @@
 						}
 					}
 				?>
-					<td><?php echo ($valor_deuda < 1)?"Sin deuda":sprintf("%.2f",$valor_deuda) ?></td>
+					<td><?php echo ($valor_deuda < 1)?"Sin deuda":sprintf("%.2f",($valor_deuda/$tasa_dolar["tasa_dolar"])) . " $"; ?></td>
+
 
 				<?php } ?>
-					<td><?php echo sprintf("%.2f",$total); ?></td>
+					<td><?php echo sprintf("%.2f",($total/$tasa_dolar["tasa_dolar"])) . " $"; ?></td>
 				</tr>
 			<?php } ?>
 			<tr>
 				<td>Total:</td>
 				<?php $total = 0;
 			foreach ($total_mensual as $total_mes) {
-				if ($total_mes == 0) {
-					continue;
+				if ($total_mes == 0) {  ?>
+					<td>Sin deuda</td>
+					<?php continue;
 				}
 					$total += $total_mes;
 					?>
-				<td><?php echo sprintf("%.2f",$total_mes); ?></td>
+				<td><?php echo sprintf("%.2f",($total_mes/$tasa_dolar["tasa_dolar"])) . " $"; ?></td>
 			<?php } ?>
-				<td><?php echo sprintf("%.2f",$total); ?></td>
+				<td><?php echo sprintf("%.2f",($total/$tasa_dolar["tasa_dolar"])) . " $"; ?></td>
 			</tr>
 			</tbody>
 		</table>

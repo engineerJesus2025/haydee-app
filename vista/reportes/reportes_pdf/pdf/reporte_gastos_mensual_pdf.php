@@ -3,7 +3,6 @@
 $total_fijos_bs = 0;
 $total_variables_bs = 0;
 $total_gas_bs = $datos_reporte['gasto_gas']['monto'] ?? 0; // Usamos el valor que viene del modelo
-$tasa_dolar = $datos_reporte['tasa_dolar'];
 $total_aptos = $datos_reporte['total_aptos'];
 
 // Array para traducir los meses a español

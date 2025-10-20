@@ -75,7 +75,7 @@ async function registrar() {
 
 	id_registrado = await last_id(); //Guarda el nuevo id registrado, para darselo al evento de modificar
 	
-	let acciones = crearBotones(id_registrado.mensaje); //Crea botones
+	let acciones = crearBotones(id_registrado.last_id); //Crea botones
 	
 	// esta variable no hace nada, pero me dio error cuando la quite XD
 	let res_data_table = await data_table.row.add([`${nombre_banco}`,`${codigo}`,`${numero_cuenta}`,`${telefono_afiliado}`,`${cedula_afiliada}`,`${acciones.outerHTML}`]).draw();
@@ -288,7 +288,7 @@ async function modificar_formulario(e) {
 	// aqui cambiamos los datos del boton para registrar, para saber que ahora se va es a modificar un registro
 	boton_formulario.setAttribute("modificar",true);
 	boton_formulario.setAttribute("id_modificar",data.id_banco);
-	boton_formulario.textContent = "Modificar";
+	boton_formulario.textContent = "Guardar";
 	document.getElementById('titulo_modal').textContent = "Modificar Banco";
 	//formulario_usar.querySelector("#confir_contra").parentElement.previousElementSibling.textContent = "Nueva Contraseña" 
 	//formulario_usar.querySelector("#confir_contra").placeholder = "Nueva Contraseña" 
@@ -442,6 +442,11 @@ const observer = new MutationObserver(() => {
 
 observer.observe(tabla, {childList:true});
 
+document.querySelectorAll("button[title='Editar']").forEach(btn => {
+    btn.removeEventListener("click", modificar_formulario);
+    btn.addEventListener("click", modificar_formulario);
+});
+
 // esta funcion pone los eventos de eliminar y modificar
 function reasignarEventos() {
 	console.log("me ejecuto");
@@ -476,12 +481,12 @@ function reasignarEventos() {
 	});
 
 	if (id_registrado) { // en caso de que se haya registrado y no se haya añadido a la tabla
-		let boton_modificar = tabla.querySelector(`[value='${id_registrado.mensaje}']`); 
+		let boton_modificar = tabla.querySelector(`[value='${id_registrado.last_id}']`); 
 		// captura el boton de editar, sino lo encuentra es que no esta en su pagina, y no tiene caso ponerle evento
 		if (boton_modificar) {
 			// si lo encuentra le pone el evento de modificar
 			boton_modificar.addEventListener("click",modificar_formulario);
-			boton_modificar.parentElement.parentElement.parentElement.setAttribute("id",`fila-${id_registrado.mensaje}`);
+			boton_modificar.parentElement.parentElement.parentElement.setAttribute("id",`fila-${id_registrado.last_id}`);
 			id_registrado = null;
 		}
 	}

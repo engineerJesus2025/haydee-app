@@ -1,6 +1,5 @@
 <?php
 require_once "modelo/gastos_modelo.php";
-require_once "modelo/propietario_modelo.php";
 require_once "modelo/mensualidad_modelo.php";
 require_once "modelo/habitantes_modelo.php";
 
@@ -14,8 +13,6 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 $gastos_obj = new Gastos();
 
 $habitantes_obj = new Habitantes(); // Objeto habitante
-
-$propietarios_obj = new Propietario();//Ojo
 
 if (isset($_POST["operacion"])){
     $operacion = $_POST["operacion"];
@@ -49,6 +46,10 @@ if (isset($_POST["operacion"])){
         $mensualidad_obj = new Mensualidad();
         echo  json_encode($mensualidad_obj->realizar_consulta('consultar_meses_mensualidad'));
     }
+    elseif ($operacion == "consultar_meses_con_gastos") {
+        echo json_encode($gastos_obj->listar_meses_con_gastos());
+        exit;
+    }
     else if ($operacion == "consultar_habitantes") {
         // Recolectar datos del POST
         $rango_edades = $_POST['rango_edades'] ?? 'todos';
@@ -78,7 +79,7 @@ if ($accion == "solvencia") {
 
     $habitantes_obj->set_id_habitante($id_habitante);
 
-    $registro_porpietario = $habitantes_obj->consultar_habitante();
+    $registro_porpietario = $habitantes_obj->realizar_consulta('consulta_especifica');
     $fecha = new DateTime();
     $fecha->modify("+1 month");
     $mes_fin = $fecha->format("n");
@@ -100,8 +101,8 @@ if ($accion == "residencia") {
     $id_habitante = $_POST["select_reporte"];
 
     $habitantes_obj->set_id_habitante($id_habitante);
-    $registro_porpietario = $habitantes_obj->consultar_habitante();
-
+    $registro_porpietario = $habitantes_obj->realizar_consulta('consulta_especifica');
+    
     ob_start();
     require_once "vista/reportes/reportes_pdf/pdf/reporte_residencia_pdf.php";
 
@@ -122,11 +123,54 @@ if ($accion == "cuadro_pagos"){
     $anio_limite = explode("-", $_POST["select_reporte"])[1];    
 
     $deudas_filtradas =[];
-    $meses_seleccionados = [];
+    $meses_seleccionados = [];    
 
     $deudas_globales = $mensualidad_obj->realizar_consulta('consultar_mensualidades_pendientes');
 
-    foreach ($deudas_globales as $deuda) {        
+    foreach ($deudas_globales as $deuda) {
+        if (intval($deuda["anio"]) <= intval($anio_limite)){
+            if (intval($deuda["anio"]) == intval($anio_limite)) {
+                if (intval($deuda["mes"]) <= intval($mes_limite)){
+                    if (array_search($meses_nombres[$deuda["mes"]-1], $meses_seleccionados) === false) {
+                        array_push($meses_seleccionados, $meses_nombres[$deuda["mes"]-1]);
+                    }
+                }
+            }
+        }
+    }
+
+    $meses_apartamento = [];
+    $incluido = false;
+    $apartamentos = [];
+    foreach ($deudas_globales as $indice_deudas_globales => $deuda){
+        if (!(array_key_exists($deuda["nro_apartamento"],$apartamentos))) {
+            $apartamentos[$deuda["nro_apartamento"]] = [];
+        }
+        array_push($apartamentos[$deuda["nro_apartamento"]], [$meses_nombres[$deuda["mes"]-1],$indice_deudas_globales,$deuda["anio"]]);
+    }
+    $cantidad_incluida = 0;
+    foreach ($meses_seleccionados as $mes) {
+        foreach ($apartamentos as $nro_apartamento => $apartamento) {
+            $meses_apartamento = array_column($apartamento, 0);
+            $indice_apartamento = array_search($mes, $meses_apartamento);
+
+            if ($indice_apartamento === false) {
+                $array_nuevo = [
+                    "nro_apartamento" => $nro_apartamento,
+                    "anio"=>$apartamento[0][2],
+                    "mes"=> strval(array_search($mes, $meses_nombres) + 1),
+                    "cambio_neto_mes"=>0,
+                    "deuda_acumulada"=>0,                    
+                ];
+                $apartamento[0][1] = $apartamento[0][1] + $cantidad_incluida;
+                $cantidad_incluida++;
+
+                array_splice($deudas_globales, $apartamento[0][1],0,[$array_nuevo]);
+            }
+        }
+    }
+    
+    foreach ($deudas_globales as $deuda) {
         if (intval($deuda["anio"]) <= intval($anio_limite)){
             if (intval($deuda["anio"]) == intval($anio_limite)) {
                 if (intval($deuda["mes"]) <= intval($mes_limite)){
@@ -135,11 +179,7 @@ if ($accion == "cuadro_pagos"){
                         $deudas_filtradas[$deuda["nro_apartamento"]] = [];
                     }
                     
-                    array_push($deudas_filtradas[$deuda["nro_apartamento"]], $deuda["deuda_acumulada"]);
-
-                    if (array_search($meses_nombres[$deuda["mes"]-1], $meses_seleccionados) === false) {                        
-                        array_push($meses_seleccionados, $meses_nombres[$deuda["mes"]-1]);
-                    }
+                    array_push($deudas_filtradas[$deuda["nro_apartamento"]], $deuda["deuda_acumulada"]);                    
                 }
             }
             else{
@@ -151,10 +191,65 @@ if ($accion == "cuadro_pagos"){
             }
         }        
     }
+
+    $mensualidad_obj->set_mes($mes_limite);
+    $mensualidad_obj->set_anio($anio_limite);
     
-    $tasa_dolar = $mensualidad_obj->realizar_consulta('consultar_monto_dolar_mensualidades');
+    $tasa_dolar = $mensualidad_obj->realizar_consulta('consultar_tasa_dolar_mensualidades');
 
     $total_mensual = [];
+
+    $cantidadParaAgrupar = 5;
+
+    $cebecera_tabla = [];
+    $cuerpo_tabla = [];
+
+    if (count($meses_seleccionados) > $cantidadParaAgrupar){        
+        $mesesAGrupar = array_slice($meses_seleccionados, 0, $cantidadParaAgrupar);
+
+        if (!empty($mesesAGrupar)) {
+            // 2. **Crear la Agrupación Única**
+            $mesInicio = reset($mesesAGrupar); // Obtiene el primer elemento
+            $mesFin = end($mesesAGrupar);       // Obtiene el último elemento
+
+            if ($mesInicio === $mesFin) {
+                // Caso de agrupar solo 1 elemento
+                $arregloResultante[] = $mesInicio;
+            } else {
+                // Agrupación normal de N > 1 elementos
+                $agrupacion = "{$mesInicio} / {$mesFin}";
+                $arregloResultante[] = $agrupacion;
+            }
+        }
+
+        $mesesRestantes = array_slice($meses_seleccionados, $cantidadParaAgrupar);
+
+        $cebecera_tabla = array_merge($arregloResultante, $mesesRestantes);
+
+        $meses_sin_agrupar = count($cebecera_tabla) - 1;
+        
+        foreach ($deudas_filtradas as $nro_apartamento => $apartamento) {            
+            if (!(array_key_exists($nro_apartamento,$cuerpo_tabla))) {
+                $cuerpo_tabla[$nro_apartamento] = [];
+            }
+            if (!(array_key_exists("grupo",$cuerpo_tabla[$nro_apartamento]))) {
+                $cuerpo_tabla[$nro_apartamento]["grupo"] = 0;
+            }
+            // var_dump($deudas_filtradas);
+            // for ($i=0; $i < count($apartamento)-($meses_sin_agrupar); $i++) {
+            //     // echo $apartamento[$i] . "<br><br>";
+            //     $cuerpo_tabla[$nro_apartamento]["grupo"] += $apartamento[$i];
+            // }
+            $cuerpo_tabla[$nro_apartamento]["grupo"] += $apartamento[count($apartamento)-($meses_sin_agrupar)-1];
+            for ($i= count($apartamento)-($meses_sin_agrupar); $i < count($apartamento); $i++) { 
+                // echo $apartamento[$i] . "<br><br>";
+                array_push($cuerpo_tabla[$nro_apartamento], $apartamento[$i]);
+            }
+        }
+    }
+
+    // var_dump($cuerpo_tabla);echo "<br><br>";
+    // var_dump($cebecera_tabla);
 
     ob_start();
     require_once "vista/reportes/reportes_pdf/pdf/cuadro_pagos_pdf.php";
@@ -178,9 +273,13 @@ if ($accion == "gastos_mensual") {
 if ($accion == "generar_reporte_gastos_mensual") {
     $mes = $_POST['mes'];
     $anio = $_POST['anio'];
+    $tasa_dolar = isset($_POST['tasa_dolar']) ? (float)$_POST['tasa_dolar'] : 0;
+
+
     $datos_reporte = $gastos_obj->obtenerDatosReporteMensual($mes, $anio);
 
-    if ($datos_reporte === null || $datos_reporte['tasa_dolar'] == 0) {
+    if ($datos_reporte === null || $tasa_dolar == 0) {
+
         echo "No se encontraron datos para generar el reporte.";
         exit;
     }
@@ -206,6 +305,8 @@ if ($accion == "ingreso_egreso") {
     require_once "vista/reportes/reportes_estadisticos/reporte_ingresos_egresos/reporte_ingreso_egreso_vista.php";
 }
 if ($accion == "generar_reporte_ingresos_egresos") {
+    $selecion = $_POST["mostrar_datos_input"];    
+
     $barra = $_POST["barra"];
     $fecha = $_POST["fecha_grafico_input"];
 

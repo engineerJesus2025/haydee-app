@@ -28,7 +28,7 @@
 
                 <main class="col ps-md-2 pt-2 mb-5">
                     <div class="page-header pt-3">
-                        <h2>PAGOS</h2>
+                        <h2>GESTIONAR PAGOS</h2>
                     </div>
                     <p class="lead"></p>
                     <hr>
@@ -38,8 +38,9 @@
                             <div class="card p-4">
                                 <?php if (Pagos::tiene_permiso(GESTIONAR_PAGOS, REGISTRAR)) : ?>
                                     <div class="button mb-4">
-                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_pagos">Registrar</a>
-                                    </div><br>
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_pagos">Nuevo Pago</a>
+                                    </div>
+                                    <br>
                                 <?php endif; ?>
 
                                 <?php if (isset($_SESSION["mensaje"])) : ?>
@@ -54,14 +55,14 @@
                                         </div>
                                     </div>
                                 <?php endif; ?>
-                                <div class="table-responsive">
-                                    <table id="tabla_pagos" class="table table-striped table-hover" style="width:97%">
+                                <table id="tabla_pagos" class="table table-striped table-hover"  style="width:97%">
                                         <thead>
                                             <tr>
                                                 <th>FECHA</th>
-                                                <th>MONTO MENSUALIDAD</th>
+                                                <th>MONTO</th>
+                                                <th>MENSUALIDAD</th>
                                                 <th>ESTADO</th>
-                                                <th>OBSERVACION</th>
+                                                <th>APARTAMENTO</th>
                                                 <th class="text-center">ACCIONES</th>
                                             </tr>
                                         </thead>
@@ -70,12 +71,11 @@
                                                 <td colspan="7"><h4>No hay pagos registrados</h4></td>
                                             </tr>
                                         </tbody>
-                                    </table>
-                                </div>
+                                </table>                                
                                 <div class="modal fade" id="modal_pagos" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
                                     <div class="modal-dialog modal-xl">
-                                        <div class="modal-content">
-                                            <div class="modal-header bg-primary text-white">
+                                        <div class="modal-content card shadow-sm border-primary mt-4 mb-4">
+                                            <div class="modal-header card-header bg-primary text-white fw-bold">
                                                 <h1 class="modal-title fs-5" id="titulo_modal">Registrar Pago</h1>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                             </div>
@@ -105,7 +105,7 @@
                         <div class="modal-content">
                             <div class="modal-header bg-primary text-white">
                                 <h5 class="modal-title">Detalles del Pago</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                <button id="cerrar_modal_vista_previa_x" type="button" class="btn-close" data-bs-dismiss="modal"
                                     aria-label="Cerrar"></button>
                             </div>
                             <div class="modal-body">
@@ -122,9 +122,9 @@
                                     <span id="vista_observacion" style="font-family: monospace;"></span>
                                 </p>
                                 <?php if (Pagos::tiene_permiso(GESTIONAR_PAGOS, REGISTRAR)) : ?>
-                                    <div class="button mb-4">
+                                    <!-- <div class="button mb-4">
                                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_detalles_pagos">Registrar</a>
-                                    </div><br>
+                                    </div><br> -->
                                 <?php endif; ?>
 
                                 
@@ -133,7 +133,7 @@
                                         <tr>
                                             <th>FECHA</th>
                                             <th>MONTO</th>
-                                            <th>MONTO DOLAR</th>
+                                            <th>MONTO EN DOLARES</th>
                                             <th>TIPO DE PAGO</th>
                                             <th class="text-center">ACCIONES</th>
                                         </tr>
@@ -153,7 +153,7 @@
                                 </div>-->
                             </div>
                             <div class="modal-footer">
-                                <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                                <button id="cerrar_modal_vista_previa" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                             </div>
                         </div>
                     </div>
@@ -168,7 +168,7 @@
                                 <div class="modal-body">
 
                                 <?php
-                                require_once "vista/pagos/detalles_pagos_propietarios_modal.php";
+                                require_once "vista/pagos/detalles_pagos_modal.php";
                                 ?>
 
                             </div>
@@ -189,7 +189,7 @@
                             <div class="modal-body">
                                 <p><strong>Fecha:</strong> <span id="vista_fecha_detalles"></span></p>
                                 <p><strong>Monto:</strong> <span id="vista_monto_detalles"></span></p>
-                                <p><strong>Tasa Dolar:</strong> <span id="vista_monto_dolar_detalles"></span></p>
+                                <p><strong>Monto Dolar:</strong> <span id="vista_monto_dolar_detalles"></span></p>
                                 <p><strong>Tipo de Pago:</strong> <span id="vista_tipo_pago_detalles"></span></p>
                                 <p><strong>Banco:</strong> <span id="vista_nombre_banco_detalles"></span></p>
                                 <p><strong>Referencia:</strong> <span id="vista_referencia_detalles"></span></p>
@@ -209,9 +209,9 @@
                     </div>
                 </div>
 
-<script type="text/javascript" src="recursos/js/validaciones/detalles_pagos_propietarios_validar.js"></script>
-<script type="text/javascript" src="recursos/js/validaciones/pagos_propietarios_validar.js"></script>
-<script type="text/javascript" src="recursos/js/consultas_ajax/pagos_propietarios_ajax.js"></script>
+<script type="text/javascript" src="recursos/js/validaciones/detalles_pagos_validar.js"></script>
+<script type="text/javascript" src="recursos/js/validaciones/pagos_validar.js"></script>
+<script type="text/javascript" src="recursos/js/consultas_ajax/pagos_ajax.js"></script>
 
 </body>
 

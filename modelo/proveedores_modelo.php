@@ -1,7 +1,8 @@
 <?php
-require_once ("modelo/conexion.php");
+require_once("modelo/conexion.php");
 
-class Proveedores extends Conexion{
+class Proveedores extends Conexion
+{
     private $id_proveedor;
     private $nombre_proveedor;
     private $servicio;
@@ -13,66 +14,131 @@ class Proveedores extends Conexion{
         parent::__construct();
     }
 
-    public function set_id_proveedor($id_proveedor){
+    public function set_id_proveedor($id_proveedor)
+    {
         $this->id_proveedor = $id_proveedor;
     }
-    public function get_id_proveedor(){
+    public function get_id_proveedor()
+    {
         return $this->id_proveedor;
     }
-    public function set_nombre_proveedor($nombre_proveedor){
+    public function set_nombre_proveedor($nombre_proveedor)
+    {
         $this->nombre_proveedor = $nombre_proveedor;
     }
-    public function get_nombre_proveedor(){
+    public function get_nombre_proveedor()
+    {
         return $this->nombre_proveedor;
     }
-    public function set_servicio($servicio){
+    public function set_servicio($servicio)
+    {
         $this->servicio = $servicio;
     }
-    public function get_servicio(){
+    public function get_servicio()
+    {
         return $this->servicio;
     }
-    public function set_rif($rif){
+    public function set_rif($rif)
+    {
         $this->rif = $rif;
     }
-    public function get_rif(){
+    public function get_rif()
+    {
         return $this->rif;
     }
-    public function set_direccion($direccion){
+    public function set_direccion($direccion)
+    {
         $this->direccion = $direccion;
     }
-    public function get_direccion(){
+    public function get_direccion()
+    {
         return $this->direccion;
     }
 
-    public function consultar(){
+    public function realizar_consulta($accion)
+    {
+        switch ($accion) {
+            case "consultar":
+                $respuesta = $this->consultar();
+                if ($respuesta["resultado"]) {
+                    $this->registrar_bitacora(CONSULTAR, GESTIONAR_PROVEEDORES, "TODOS LOS PROVEEDORES");
+                    return $respuesta["datos"];
+                } else {
+                    return ["estatus" => false, "mensaje" => "Error al consultar los proveedores"];
+                }
+
+            case "consultar_proveedor":
+                $respuesta = $this->consultar_proveedor();
+                if ($respuesta["resultado"]) {
+                    return $respuesta["datos"];
+                } else {
+                    return ["estatus" => false, "mensaje" => "Error al consultar el proveedor"];
+                }
+            case "registrar":
+                $validacion = $this->validar_datos('registrar');
+                if (!$validacion["estatus"]) {
+                    return $validacion; // Si falla, retorna el mensaje de error
+                }
+                $respuesta = $this->registrar();
+                if ($respuesta) {
+                    $this->registrar_bitacora(REGISTRAR, GESTIONAR_PROVEEDORES, "Proveedor " . $this->nombre_proveedor . " de " . $this->servicio);
+                    return ["estatus" => true, "mensaje" => "Proveedor registrado correctamente"];
+                } else {
+                    return ["estatus" => false, "mensaje" => "Error al registrar el proveedor"];
+                }
+            case "modificar":
+                $validacion = $this->validar_datos('modificar');
+                if (!$validacion["estatus"]) {
+                    return $validacion; // Si falla, retorna el mensaje de error
+                }
+                $respuesta = $this->editar_proveedor();
+                if ($respuesta) {
+                    $this->registrar_bitacora(MODIFICAR, GESTIONAR_PROVEEDORES, "Proveedor " . $this->nombre_proveedor . " de " . $this->servicio);
+                    return ["estatus" => true, "mensaje" => "Proveedor modificado correctamente"];
+                } else {
+                    return ["estatus" => false, "mensaje" => "Error al modificar el proveedor"];
+                }
+            case "eliminar":
+                $respuesta = $this->eliminar_proveedor();
+                if ($respuesta) {
+                    $this->registrar_bitacora(ELIMINAR, GESTIONAR_PROVEEDORES, "Proveedor " . $this->nombre_proveedor . " de " . $this->servicio);
+                    return ["estatus" => true, "mensaje" => "Proveedor eliminado correctamente"];
+                } else {
+                    return ["estatus" => false, "mensaje" => "Error al eliminar el proveedor"];
+                }
+
+            case "lastId":
+                return $this->lastId();
+
+
+            default:
+                return ["estatus" => false, "mensaje" => "Acción no válida"];
+                break;
+        }
+    }
+
+    private function consultar()
+    {
         $sql = "SELECT id_proveedor,nombre_proveedor,servicio,rif,direccion FROM proveedores";
         $conexion = $this->get_conex()->prepare($sql);
         $result = $conexion->execute();
         //$this->registrar_bitacora(CONSULTAR, GESTIONAR_PROPIETARIOS, "TODOS LOS USUARIOS");//registra cuando se entra al modulo de propietarios
         $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
-
-        if ($result) {
-            $this->registrar_bitacora(CONSULTAR, GESTIONAR_PROVEEDORES, "TODOS LOS PROVEEDORES");
-            return $datos;
-        } else {
-            return ["estatus"=>false, "mensaje"=>"Error al consultar los proveedores"];
-        }
+        return ["resultado" => $result, "datos" => $datos];
     }
 
-    public function consultar_proveedor(){
+    private function consultar_proveedor()
+    {
         $sql = "SELECT id_proveedor,nombre_proveedor,servicio,rif, direccion FROM proveedores WHERE id_proveedor = :id_proveedor";
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":id_proveedor", $this->id_proveedor);
         $result = $conexion->execute();
-        $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
-        if ($result == true) {
-            return $datos;
-        } else {
-            return ["estatus"=>false, "mensaje"=>"Error al consultar el proveedor"];
-        }
-        }
+        $datos = $conexion->fetch(PDO::FETCH_ASSOC);
+        return ["resultado" => $result, "datos" => $datos];
+    }
 
-    public function registrar(){
+    private function registrar()
+    {
         //
         $sql = "INSERT INTO proveedores (nombre_proveedor, servicio, rif, direccion) VALUES (:nombre_proveedor, :servicio, :rif, :direccion)";
         $conexion = $this->get_conex()->prepare($sql);
@@ -81,18 +147,12 @@ class Proveedores extends Conexion{
         $conexion->bindParam(":rif", $this->rif);
         $conexion->bindParam(":direccion", $this->direccion);
         $result = $conexion->execute();
-        //$this->registrar_bitacora(REGISTRAR, GESTIONAR_PROPIETARIOS, "Propietario: ".$this->nombre." ".$this->apellido);
-
-        if($result == true){
-            $this->registrar_bitacora(REGISTRAR, GESTIONAR_PROVEEDORES, "Proveedor " . $this->nombre_proveedor . " de " . $this->servicio);
-            return ["estatus"=>true, "mensaje"=>"Proveedor registrado correctamente"];
-        } else{
-            return ["estatus"=>false, "mensaje"=>"Error al registrar el proveedor"];
-        }
+        return $result;
 
     }
 
-    public function editar_proveedor(){
+    private function editar_proveedor()
+    {
         $sql = "UPDATE proveedores SET nombre_proveedor = :nombre_proveedor, servicio = :servicio, rif = :rif, direccion = :direccion WHERE id_proveedor = :id_proveedor";
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":id_proveedor", $this->id_proveedor);
@@ -101,49 +161,96 @@ class Proveedores extends Conexion{
         $conexion->bindParam(":rif", $this->rif);
         $conexion->bindParam(":direccion", $this->direccion);
         $result = $conexion->execute();
-
-        if($result == true){
-            $this->registrar_bitacora(MODIFICAR, GESTIONAR_PROVEEDORES, "Proveedor " . $this->nombre_proveedor . " de " . $this->servicio);
-            return ["estatus"=>true, "mensaje"=>"Proveedor actualizado correctamente"];
-        } else{
-            return ["estatus"=>false, "mensaje"=>"Error al actualizar el proveedor"];
-        }
+        return $result;
     }
-    public function eliminar_proveedor(){
+
+    private function eliminar_proveedor()
+    {
         $sql = "DELETE FROM proveedores WHERE id_proveedor = :id_proveedor";
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":id_proveedor", $this->id_proveedor);
         $result = $conexion->execute();
-        if($result == true){
+        return $result;
+        if ($result == true) {
             $this->registrar_bitacora(ELIMINAR, GESTIONAR_PROVEEDORES, "Proveedor " . $this->nombre_proveedor . " de " . $this->servicio);
-            return ["estatus"=>true, "mensaje"=>"Proveedor eliminado correctamente"];
-        } else{
-            return ["estatus"=>false, "mensaje"=>"Error al eliminar el proveedor"];
-        }
-    }
-
-    public function lastId(){
-        $sql = "SELECT MAX(id_proveedor) as last_id FROM proveedores";
-        $conexion = $this->get_conex()->prepare($sql);
-        $result = $conexion->execute();
-        $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
-
-        if($result == true){
-            return ["estatus"=>true, "mensaje"=>$datos[0]["last_id"]];
+            return ["estatus" => true, "mensaje" => "Proveedor eliminado correctamente"];
         } else {
-            return ["estatus"=>false, "mensaje"=>"Error al consultar el último id"];
+            return ["estatus" => false, "mensaje" => "Error al eliminar el proveedor"];
         }
     }
 
-    private function validarClaveForanea($tabla,$nombreClave,$valor)
+private function lastId()
+{
+    $sql = "SELECT MAX(id_proveedor) as last_id FROM proveedores";
+    $conexion = $this->get_conex()->prepare($sql);
+    $conexion->execute();
+    $datos = $conexion->fetch(PDO::FETCH_ASSOC);
+
+    return ["estatus" => true, "last_id" => $datos['last_id']];
+}
+
+    private function validarClaveForanea($tabla, $nombreClave, $valor)
     {
-        $sql="SELECT * FROM $tabla WHERE $nombreClave =:valor";
+        $sql = "SELECT * FROM $tabla WHERE $nombreClave =:valor";
 
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":valor", $valor);
         $conexion->execute();
         $result = $conexion->fetch(PDO::FETCH_ASSOC);
 
-        return ($result)?true:false;
+        return ($result) ? true : false;
+    }
+
+    public function validar_datos($accion)
+    {
+        // 1. Validación de campos no vacíos
+        if (empty(trim($this->nombre_proveedor))) {
+            return ["estatus" => false, "mensaje" => "El nombre del proveedor no puede estar vacío."];
+        }
+        if (empty(trim($this->servicio))) {
+            return ["estatus" => false, "mensaje" => "El servicio no puede estar vacío."];
+        }
+        if (empty(trim($this->rif))) {
+            return ["estatus" => false, "mensaje" => "El RIF no puede estar vacío."];
+        }
+        if (empty(trim($this->direccion))) {
+            return ["estatus" => false, "mensaje" => "La dirección no puede estar vacía."];
+        }
+
+        // 3. Validación de unicidad (que no exista otro proveedor con el mismo nombre o RIF)
+        $validacion_nombre = $this->verificar_campo_unico('nombre_proveedor', $this->nombre_proveedor);
+        if ($validacion_nombre['existe']) {
+            return ["estatus" => false, "mensaje" => "Ya existe un proveedor con ese nombre."];
+        }
+
+        $validacion_rif = $this->verificar_campo_unico('rif', $this->rif);
+        if ($validacion_rif['existe']) {
+            return ["estatus" => false, "mensaje" => "Ya existe un proveedor con ese RIF."];
+        }
+
+        // Si todas las validaciones pasan
+        return ["estatus" => true];
+    }
+
+    private function verificar_campo_unico($campo, $valor)
+    {
+        $sql = "SELECT COUNT(*) FROM proveedores WHERE $campo = :valor";
+
+        // Si estamos modificando, excluimos el registro actual
+        if (!empty($this->id_proveedor)) {
+            $sql .= " AND id_proveedor != :id_proveedor";
+        }
+
+        $conexion = $this->get_conex()->prepare($sql);
+        $conexion->bindParam(":valor", $valor);
+
+        if (!empty($this->id_proveedor)) {
+            $conexion->bindParam(":id_proveedor", $this->id_proveedor);
+        }
+
+        $conexion->execute();
+        $count = $conexion->fetchColumn();
+
+        return ["existe" => $count > 0];
     }
 }

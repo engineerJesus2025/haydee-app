@@ -81,7 +81,112 @@
         }
 
         // Metodos CRUD
-        public function verificar_habitante(){  
+        public function realizar_consulta($accion){
+            switch($accion){
+                case 'validar':
+                    $respuesta = $this->verificar_habitante();
+
+                    if ($respuesta["resultado"]) {
+                        if (isset($respuesta["datos"]["cedula"])) {
+                            return ["estatus"=>true,"busqueda"=>"cedula"];
+                        } else {
+                            return ["estatus"=>false,"busqueda"=>"cedula"];
+                        }
+                    } else {
+                        return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar validar el habitante"];
+                    }
+                
+                case 'consultar':
+                    $respuesta = $this->consultar();
+
+                    if ($respuesta["resultado"]) {
+                        $this->registrar_bitacora(CONSULTAR, GESTIONAR_HABITANTES, "TODAS LOS HABITANTES");
+                        return $respuesta["datos"];
+                    } else {
+                        return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar consultar los habitantes de este apartamento"];
+                    }
+
+                case 'registrar':
+                    // Validaciones
+                    $validaciones = $this->validarDatos();
+                    if(!($validaciones["estatus"])){return $validaciones;}
+
+                    $respuesta = $this->registrar_habitante();
+
+                    if ($respuesta) {
+                        $id_ultimo = $this->lastId();
+                        $this->set_id_habitante($id_ultimo["datos"]["last_id"]);
+                        //$habitante_alterado = $this->consultar_habitante();
+                        //var_dump("Habitante registrado:", $habitante_alterado);
+                        // Por Razones raras del destino la vaina da error con la forma traducional y toco dejarlo así
+                        $this->registrar_bitacora(REGISTRAR, GESTIONAR_HABITANTES, $this->cedula . " (" . $this->nombre . ")");
+                        return ["estatus"=>true,"mensaje"=>"OK"];
+                    } else {
+                        return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar a este habitante"];
+                    }
+
+                case 'consulta_especifica':
+                    $respuesta = $this->consultar_habitante();
+
+                    if ($respuesta["resultado"]) {
+                        return $respuesta["datos"];
+                    } else {
+                        return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar consultar a este habitante"];
+                    }
+
+                case 'modificar':
+                    // Validaciones
+                    $validaciones = $this->validarDatos("editar");
+                    if(!($validaciones["estatus"])){return $validaciones;}
+
+                    $respuesta = $this->editar_habitante();
+
+                    if ($respuesta["resultado"]) {                       
+                       // Aqui también dice eso pero por alguna razon no falla, solo pasa en el registrar
+                        //$habitante_alterado = $this->consultar_habitante();
+                        $this->registrar_bitacora(MODIFICAR, GESTIONAR_HABITANTES, $this->cedula . " (" . $this->nombre . ")");
+                        return ["estatus"=>true,"mensaje"=>"OK"];
+                    } else {
+                        return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar modificar a este habitante"];
+                    }
+
+                case 'eliminar':
+                    // Validaciones
+                    $validaciones = $this->validarDatos("eliminar");
+                    if(!($validaciones["estatus"])){return $validaciones;}
+
+                    //$habitante_alterado = $this->consultar_habitante();
+
+                    $respuesta = $this->eliminar_habitante();
+
+                    if ($respuesta["resultado"]) {
+                        if ($respuesta["fila_afectada"] < 1) {
+                            return ["estatus"=>false,"mensaje"=>"No se pudo eliminar a este habitante"];
+                        }
+                        // Aqui también dice eso pero por alguna razon no falla, solo pasa en el registrar
+                        $this->registrar_bitacora(ELIMINAR, GESTIONAR_HABITANTES, $this->cedula . " (" . $this->nombre . ")");
+                        return ["estatus"=>true,"mensaje"=>"OK"];
+                    } else {
+                        return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar eliminar a este habitante"];
+                    }
+
+                case 'lastId':
+                    $respuesta = $this->lastId();
+
+                    if ($respuesta["resultado"]) {
+                        return $respuesta["datos"];
+                    } else {
+                        return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar obtener el ultimo id del habitante"];
+                    }
+
+                default:
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error en el proceso"];
+                    break;
+
+            }
+        }
+
+        private function verificar_habitante(){  
 
             //$this->cambiar_db_seguridad();
 
@@ -94,18 +199,10 @@
 
             //$this->cambiar_db_negocio();
         
-            if (isset($datos["cedula"])) {
-                $r["estatus"] = true; 
-                $r["busqueda"] = "cedula";
-                return $r;
-            } else {
-                $r["estatus"] = false;
-                $r["busqueda"] = "cedula";
-                return $r;
-            }
+            return ["resultado"=>true,"datos"=>$datos];
         }
 
-        public function consultar(){
+        private function consultar(){
 
             //$this->cambiar_db_seguridad();
 
@@ -130,16 +227,10 @@
 
             $this->cambiar_db_negocio();
 
-            if ($result == true) {
-                $this->registrar_bitacora(CONSULTAR, GESTIONAR_HABITANTES, "TODAS LOS HABITANTES");//registra cuando se entra al modulo de bancos
-
-                return $datos;
-            } else {
-                return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
-            }
+            return ["resultado"=>$result,"datos"=>$datos];
         }
 
-        public function consultar_habitante(){
+        private function consultar_habitante(){
             //var_dump("ID recibido:", $this->id_habitantes);
 
             //$this->cambiar_db_seguridad();
@@ -163,22 +254,20 @@
             $conexion = $this->get_conex()->prepare($sql);
             $conexion->bindParam(":id_habitante", $this->id_habitante);
             $result = $conexion->execute();        
-            $datos = $conexion->fetch(PDO::FETCH_ASSOC);
+            $filas = $conexion->fetch(PDO::FETCH_ASSOC);
 
             //$this->cambiar_db_negocio();
-            //var_dump("Resultado SQL:", $datos);
+            //var_dump("Resultado SQL:", $filas);
 
-            if ($result && $datos) {
-                return $datos;
-            } else {
-                return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
-            }
+            if (!$filas || count($filas) === 0) {
+                return ["resultado"=>false,"datos"=>null];
+            } 
+                
+            return ["resultado"=>$result,"datos"=>$filas];
         }
 
-        public function registrar_habitante(){
+        private function registrar_habitante(){
             //Validamos los datos obtenidos del controlador (validaciones back-end)
-            $validaciones = $this->validarDatos();
-            if(!($validaciones["estatus"])){return $validaciones;}
             
             //$this->cambiar_db_seguridad();
 
@@ -196,24 +285,11 @@
 
             //$this->cambiar_db_negocio();
 
-            if ($result) {
-                $id_ultimo = $this->lastId();//obtenemos el ultimo id
-                $this->set_id_habitante($id_ultimo["mensaje"]);
-                $habitante_alterado = $this->consultar_habitante();//lo consultamos
-
-                $this->registrar_bitacora(REGISTRAR, GESTIONAR_HABITANTES, $habitante_alterado["cedula"] . " (" . $habitante_alterado["nombre"] . ")");//registramos en la bitacora
-
-                return ["estatus"=>true,"mensaje"=>"OK"];
-            } else {
-                return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar a este habitante"];
-            }
+            return $result;
         }
 
-        public function editar_habitante(){
-            //Validamos los datos obtenidos del controlador
-            $validaciones = $this->validarDatos("editar");
-            if(!($validaciones["estatus"])){return $validaciones;}        
-
+        private function editar_habitante(){
+            //Validamos los datos obtenidos del controlador     
             //$this->cambiar_db_seguridad();
 
             $sql = "UPDATE habitantes SET nombre=:nombre,apellido=:apellido,cedula=:cedula,telefono=:telefono,correo=:correo,fecha_nacimiento=:fecha_nacimiento,sexo=:sexo WHERE id_habitante=:id_habitante";
@@ -229,25 +305,16 @@
             $conexion->bindParam(":sexo", $this->sexo);
 
             $result = $conexion->execute();
+            $filas_afectadas = $conexion->rowCount();
 
-            $this->cambiar_db_negocio();        
+            // $this->cambiar_db_negocio();        
             
-            if ($result) {
-                $habitante_alterado = $this->consultar_habitante();
-                $this->registrar_bitacora(MODIFICAR, GESTIONAR_HABITANTES, $habitante_alterado["cedula"] . " (" . $habitante_alterado["nombre"] . ")");
-
-                return ["estatus"=>true,"mensaje"=>"OK"];
-            } else {
-                return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar editar a este habitante"];
-            }
+            return ["resultado"=>$result,"fila_afectada"=>$filas_afectadas];
         }
 
-        public function eliminar_habitante(){
+        private function eliminar_habitante(){
             //Validamos los datos obtenidos del controlador
-            $validaciones = $this->validarDatos("eliminar");
-            if(!($validaciones["estatus"])){return $validaciones;}
-            
-            $habitante_alterado = $this->consultar_habitante();
+            //$habitante_alterado = $this->consultar_habitante();
 
             //$this->cambiar_db_seguridad();
 
@@ -256,31 +323,22 @@
             $conexion = $this->get_conex()->prepare($sql);
             $conexion->bindParam(":id_habitante", $this->id_habitante);
             $result = $conexion->execute();
+            $filas_afectadas = $conexion->rowCount();
 
             //$this->cambiar_db_negocio();
             
-            if ($result) {
-                $this->registrar_bitacora(ELIMINAR, GESTIONAR_HABITANTES, $habitante_alterado["cedula"] . " (" . $habitante_alterado["nombre"] . ")");
-
-                return ["estatus"=>true,"mensaje"=>"OK"];
-            } else {
-                return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar eliminar a este habitante"];
-            }
+            return ["resultado"=>$result,"fila_afectada"=>$filas_afectadas];
         }
 
-        public function lastId(){
+        private function lastId(){
             //$this->cambiar_db_seguridad();
             $sql = "SELECT MAX(id_habitante) as last_id FROM habitantes";
             $conexion = $this->get_conex()->prepare($sql);
             $result = $conexion->execute();
             $datos = $conexion->fetch(PDO::FETCH_ASSOC);
-            $this->cambiar_db_negocio();
+            // $this->cambiar_db_negocio();
 
-            if ($result) {
-                return ["estatus"=>true,"mensaje"=>$datos["last_id"]];
-            } else {
-                return ["estatus"=>false,"mensaje"=>"Error en la consulta"];
-            } 
+            return ["resultado"=>$result,"datos"=>$datos]; 
         }
 
         private function validarDatos($consulta = "registrar"){   

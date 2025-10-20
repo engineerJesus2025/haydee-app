@@ -6,6 +6,8 @@
 
         if ($operacion == "consultar_anios_fiscales"){
             $anio_fiscal_obj = new Anio_fiscal();
+            $anio_fiscal_obj->registrar_bitacora(CONSULTAR, GESTIONAR_ANIO_FISCAL, "TODOS LOS AÑOS FISCALES");
+
             echo  json_encode($anio_fiscal_obj->realizar_consulta("consultar"));
         }
 
@@ -22,7 +24,13 @@
             $anio_fiscal_obj->set_estado($estado);
             $anio_fiscal_obj->set_descripcion($descripcion);
 
-            echo  json_encode($anio_fiscal_obj->realizar_consulta("registrar"));
+            $resultado = $anio_fiscal_obj->realizar_consulta("registrar");
+
+            if ($resultado["estatus"]) {
+                $anio_fiscal_obj->registrar_bitacora(REGISTRAR, GESTIONAR_ANIO_FISCAL, $fecha_inicio . " - " . $estado);
+            }
+            
+            echo  json_encode($resultado);
         }
         elseif ($operacion == "consulta_especifica"){
             $anio_fiscal_obj = new Anio_fiscal();
@@ -48,8 +56,14 @@
             $anio_fiscal_obj->set_fecha_cierre($fecha_cierre);
             $anio_fiscal_obj->set_estado($estado);
             $anio_fiscal_obj->set_descripcion($descripcion);
+
+            $resultado = $anio_fiscal_obj->realizar_consulta("editar");
             
-            echo  json_encode($anio_fiscal_obj->realizar_consulta("editar"));            
+            if ($resultado["estatus"]) {
+                $anio_fiscal_obj->registrar_bitacora(MODIFICAR, GESTIONAR_ANIO_FISCAL, $fecha_inicio . " - " . $estado);
+            }
+            
+            echo  json_encode($resultado);
         }
 
         elseif ($operacion == "eliminar") {
@@ -59,7 +73,20 @@
             
             $anio_fiscal_obj->set_id_anio_fiscal($id_anio_fiscal);
 
-            echo  json_encode($anio_fiscal_obj->realizar_consulta("eliminar"));
+            $anio_alterado = $anio_fiscal_obj->realizar_consulta('consultar_anio_fiscal');
+
+            $resultado = $anio_fiscal_obj->realizar_consulta("eliminar");
+
+            if ($resultado["estatus"]){
+                if ($anio_alterado) {
+                    $anio_fiscal_obj->registrar_bitacora(ELIMINAR, GESTIONAR_ANIO_FISCAL, $anio_alterado["fecha_inicio"] . " - " . $anio_alterado["estado"]);
+                }
+                else {
+                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta para la bitácora"];
+                }
+            }            
+
+            echo  json_encode($resultado);
         }
 
         exit;

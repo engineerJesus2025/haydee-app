@@ -15,6 +15,18 @@ window.addEventListener("scroll",e=>{
   	}
 });
 
+function formatearFecha(fecha) {
+    if (!fecha) {
+        return "N/A";
+    }
+
+    const partes = fecha.split("-");
+    if (partes.length === 3) {
+        return `${partes[2]}-${partes[1]}-${partes[0]}`; // DD-MM-AAAA
+    }
+    return fecha;
+}
+
 async function cargaInicio() {
 	consultarPublicaciones();
 
@@ -122,53 +134,65 @@ async function consultarPublicaciones() {
     let fragment = document.createDocumentFragment();
     data.map(publicacion=>{
     	let div_card = document.createElement("div");
-	    div_card.setAttribute("class","card p-4 col-10 my-4");
+	    div_card.setAttribute("class","col-11 card post-card mx-auto shadow-lg my-4 px-0");
 
 	    let div_row = document.createElement("div");
-	    div_row.setAttribute("class","row");
+	    div_row.setAttribute("class","row g-0 h-100");
 
-	    let div_col_1 = document.createElement("div");
-	    div_col_1.setAttribute("class","col-md-7 mt-2 d-flex flex-column");
+	    let div_col_contenido = document.createElement("div");
+	    div_col_contenido.setAttribute("class","col-md-7 order-md-1");
 
-	    let h5 = document.createElement("h2");
-	    h5.setAttribute("class","card-title");
-	    h5.textContent = publicacion.titulo;
+	    let div_content_area = document.createElement("div");
+	    div_content_area.setAttribute("class","content-area");
 
-	    let p_fecha = document.createElement("p");
-	    p_fecha.setAttribute("class","card-text");
+	    let h2 = document.createElement("h2");
+	    h2.setAttribute("class","post-title h3");
+	    h2.textContent = publicacion.titulo;
+
+	    let div_autor_fecha = document.createElement("div");
+	    div_autor_fecha.setAttribute("class","post-meta my-2 mb-5");	    
 
 	    let small_fecha = document.createElement("small");
-	    small_fecha.setAttribute("class","text-body-secondary");
-	    small_fecha.textContent = `Publicado el ${publicacion.fecha}`;
+	    small_fecha.setAttribute("class","text-uppercase fw-bold");
+	    small_fecha.textContent = `Publicado el ${formatearFecha(publicacion.fecha)}`;
 
-	    let p_contenido = document.createElement("p");
-	    p_contenido.setAttribute("class","card-text flex-grow-1");
-	    p_contenido.textContent = publicacion.descripcion;
-
-	    let spam_usuario = document.createElement("span");
-	    spam_usuario.setAttribute("class","badge bg-primary align-self-start");
+		let spam_usuario = document.createElement("span");
+	    spam_usuario.setAttribute("class","author-badge");
 	    spam_usuario.textContent = `Publicado por ${publicacion.nombre_usuario}`;
 
-	    let div_col_2 = document.createElement("div");
-	    div_col_2.setAttribute("class","col-md-5 mt-2");
+	    div_autor_fecha.appendChild(small_fecha);
+	    div_autor_fecha.appendChild(spam_usuario);
+
+	    let p_contenido = document.createElement("p");
+	    p_contenido.setAttribute("class","post-description flex-grow-1");
+	    p_contenido.textContent = publicacion.descripcion;
+
+	    div_content_area.appendChild(h2);
+	    div_content_area.appendChild(div_autor_fecha);
+	    div_content_area.appendChild(p_contenido);
+
+	    div_col_contenido.appendChild(div_content_area);
+
+
+	    let div_col_imagen = document.createElement("div");
+	    div_col_imagen.setAttribute("class","col-md-5 order-md-2 d-flex align-items-center");
 
 	    if (publicacion.imagen != "") {
+	    	let div_imagen = document.createElement("div");
+	    	div_imagen.setAttribute("class","image-container w-100");
+
 	    	let img = document.createElement("img");
-			img.setAttribute("class","img-fluid rounded");
-			img.setAttribute("src",`recursos/img/${publicacion.imagen}`);
+			img.setAttribute("class","post-image");
+			img.setAttribute("alt","Imagen de la publicación o evento");
+			img.setAttribute("onerror","this.onerror=null; this.src='https://placehold.co/800x500/42a5f5/ffffff?text=Sin+Imagen';");
+			img.setAttribute("src",`recursos/img/cartelera/${publicacion.imagen}`);
 
-			div_col_2.appendChild(img);
-	    }
+			div_imagen.appendChild(img);
+			div_col_imagen.appendChild(div_imagen);
+	    }		
 
-		p_fecha.appendChild(small_fecha);
-
-		div_col_1.appendChild(h5);
-		div_col_1.appendChild(p_fecha);
-		div_col_1.appendChild(p_contenido);
-		div_col_1.appendChild(spam_usuario);
-
-		div_row.appendChild(div_col_1);
-		div_row.appendChild(div_col_2);
+		div_row.appendChild(div_col_contenido);
+		div_row.appendChild(div_col_imagen);
 
 		div_card.appendChild(div_row);
 
@@ -180,7 +204,7 @@ async function consultarPublicaciones() {
 	contenido_principal.appendChild(fragment);
 }
 
-async function query(datos) {	
+async function query(datos) {
 	let modal_carga = new bootstrap.Modal("#modal_carga");
 	let mostrarModal = false;
     let tiempoCarga;

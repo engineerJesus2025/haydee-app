@@ -102,8 +102,8 @@ async function registrar() {
 	}
 
 	id_registrado = await last_id();
-	
-	let acciones = crearBotones(id_registrado.mensaje);
+
+	let acciones = crearBotones(id_registrado.last_id);
 	
 	let res_data_table = await data_table.row.add([`${"Nro: " + nro_apartamento}`,`${porcentaje_formateado}`,`${gas_texto}`,`${agua_texto}`,`${alquilado_texto}`,`${acciones.outerHTML}`]).draw();
 
@@ -193,7 +193,7 @@ function crearBotones(id) {
 	// BOTON DE VISTA PREVIA CON EL OJITO
     let boton_vista_previa = document.createElement("button");
     let icono_ver = document.createElement("i");
-    icono_ver.setAttribute("class", "bi bi-eye-fill");
+    icono_ver.setAttribute("class", "bi bi-people-fill");
     boton_vista_previa.appendChild(icono_ver);
     boton_vista_previa.setAttribute("type", "button");
     boton_vista_previa.setAttribute("class", "btn btn-primary btn-sm col-3");
@@ -361,7 +361,7 @@ async function modificar_formulario(e) {
 
 	boton_formulario.setAttribute("modificar",true);
 	boton_formulario.setAttribute("id_modificar",data.apartamento.id_apartamento);
-	boton_formulario.textContent = "Modificar";
+	boton_formulario.textContent = "Guardar";
 	document.getElementById('titulo_modal').textContent = "Modificar Apartamento";
 
 	id_modificar = id;
@@ -419,7 +419,7 @@ async function modificar(id) {
 	let fila = document.querySelector(`#fila-${id}`);
 	if (fila) {
 		fila.querySelector(`[value='${id}']`).addEventListener("click",modificar_formulario);
-	}	
+	}
 }
 
 async function last_id() {
@@ -564,12 +564,12 @@ function reasignarEventos() {
     });
 
 	if (id_registrado) {
-		let boton_modificar = tabla.querySelector(`[value='${id_registrado.mensaje}']`); 
+		let boton_modificar = tabla.querySelector(`[value='${id_registrado.last_id}']`); 
 		
 		if (boton_modificar) {
 			
 			boton_modificar.addEventListener("click",modificar_formulario);
-			boton_modificar.parentElement.parentElement.parentElement.setAttribute("id",`fila-${id_registrado.mensaje}`);
+			boton_modificar.parentElement.parentElement.parentElement.setAttribute("id",`fila-${id_registrado.last_id}`);
 			id_registrado = null;
 		}
 	}

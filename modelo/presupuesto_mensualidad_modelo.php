@@ -55,7 +55,7 @@ class Presupuesto_mensualidad extends Conexion
                     return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
                 }
             case 'registrar':
-                $validaciones = $this->validarDatos();
+                $validaciones = $this->validarDatos('registrar');
                 if(!($validaciones["estatus"])){return $validaciones;}
 
                 $respuesta = $this->registrar();
@@ -66,7 +66,6 @@ class Presupuesto_mensualidad extends Conexion
                 else {
                     return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar asignar las mensualidades con los presupuestos"];
                 }
-
             case 'registrar_presupuesto_mensualidad':
                 $validaciones = $this->validarDatos();
                 if(!($validaciones["estatus"])){return $validaciones;}
@@ -78,12 +77,9 @@ class Presupuesto_mensualidad extends Conexion
                 } 
                 else {
                     return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar asignar las mensualidades con los presupuestos"];
-                }
-
-            
-
+                }  
             case 'editar':
-                $validaciones = $this->validarDatos();
+                $validaciones = $this->validarDatos('editar');
                 if(!($validaciones["estatus"])){return $validaciones;}
                 
                 $respuesta = $this->editar();
@@ -153,19 +149,40 @@ class Presupuesto_mensualidad extends Conexion
         return $result;
     }
 
-    private function validarDatos()
+    private function validarDatos($consulta = '')
     {
-        if (!(isset($this->presupuesto_id))) {return ["estatus"=>false,"mensaje"=>"El id del Presupuesto requerido no se recibio correctamente"];}
+        if ($consulta == "editar") {
+            foreach (explode(",",$this->presupuesto_id) as $detalle_presupuesto) {
+                if (!(isset($detalle_presupuesto))) {return ["estatus"=>false,"mensaje"=>"El id del detalle del presupuesto requerido no se recibio correctamente"];}
 
-        if (empty($this->presupuesto_id)) {return ["estatus"=>false,"mensaje"=>"El id del Presupuesto requerido esta vacio"];}
+                if (empty($detalle_presupuesto)) {return ["estatus"=>false,"mensaje"=>"El id del detalle del presupuesto requerido esta vacio"];}
 
-        if(is_numeric($this->presupuesto_id)){
-            if (!($this->validarClaveForanea("detalles_presupuesto","id_detalle_presupuesto",$this->presupuesto_id))) {
-                return ["estatus"=>false,"mensaje"=>"El presupuesto seleccionado no existe"];
+                if(is_numeric($detalle_presupuesto)){
+                    if (!($this->validarClaveForanea("detalles_presupuesto","id_detalle_presupuesto",$detalle_presupuesto))) {
+                            return ["estatus"=>false,"mensaje"=>"El detalle de presupuesto seleccionado no existe"];
+                    }
+                }
+                else{return ["estatus"=>false,"mensaje"=>"El id del detalle presupuesto debe ser un valor numerico entero"];}
             }
         }
-        else{return ["estatus"=>false,"mensaje"=>"El id del presupuesto debe ser un valor numerico entero"];}      
-        
+        else{
+            if (!(isset($this->presupuesto_id))) {return ["estatus"=>false,"mensaje"=>"El id del Presupuesto requerido no se recibio correctamente"];}
+
+            if (empty($this->presupuesto_id)) {return ["estatus"=>false,"mensaje"=>"El id del Presupuesto requerido esta vacio"];}
+
+            if(is_numeric($this->presupuesto_id)){
+                if ($consulta == 'registrar') {
+                    if (!($this->validarClaveForanea("detalles_presupuesto","presupuesto_id",$this->presupuesto_id))) {
+                        return ["estatus"=>false,"mensaje"=>"El presupuesto seleccionado no existe"];
+                    }                
+                }
+                else if (!($this->validarClaveForanea("detalles_presupuesto","id_detalle_presupuesto",$this->presupuesto_id))) {
+                    return ["estatus"=>false,"mensaje"=>"El detalle de presupuesto seleccionado no existe"];
+                }
+            }
+            else{return ["estatus"=>false,"mensaje"=>"El id del presupuesto debe ser un valor numerico entero"];}      
+        }
+
         if (empty($this->mensualidad_id)) {return ["estatus"=>false,"mensaje"=>"El id de la Mensualidad requerida esta vacio"];}
 
         if (!(isset($this->mensualidad_id))) {return ["estatus"=>false,"mensaje"=>"El id de la Mensualidad requerida no se recibio correctamente"];}

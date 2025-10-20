@@ -6,9 +6,15 @@ window.addEventListener('DOMContentLoaded',()=>{
   consultar();  
 });
 
+document.getElementById('header-toggle').addEventListener("click",e=>{
+    setTimeout(function(){
+        tabla_notificaciones.columns.adjust().draw();
+    },450);
+});
+
 function crearDataTable(id_tabla,estructura_filas,datos_paramentros, configuraciones_post_creacion = ()=>{}){
   return new DataTable(`#${id_tabla}`,{
-    destroy: true,
+        destroy: true,
         responsive: true,
         "scrollX": true,
         "pageLength": 10,

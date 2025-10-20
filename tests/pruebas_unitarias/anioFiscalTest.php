@@ -29,7 +29,7 @@ class AnioFiscalTest extends TestCase
         $this->assertArrayHasKey('descripcion', $resultado[0]);
     }
 
-    //Metodo consultar_anio_fiscal
+    // Metodo consultar_anio_fiscal
     public function testConsultarAnioFiscalUnicoIdCorrecto(){
         $this->anio_fiscal->set_id_anio_fiscal(1);
 
@@ -114,7 +114,7 @@ class AnioFiscalTest extends TestCase
         $this->assertStringContainsString("Uno o varios de los campos requeridos estan vacios", $resultado["mensaje"]);
     }
 
-    //Metodo editar
+    // //Metodo editar
     public function testEditarAnioFiscalDatosCorrectos(){
         $this->anio_fiscal->set_id_anio_fiscal(1); // Id existente
         $this->anio_fiscal->set_fecha_inicio("2025-01-01");
@@ -185,7 +185,7 @@ class AnioFiscalTest extends TestCase
 
     //Metodo eliminar
     public function testEliminarAnioFiscalDatosCorrectos(){
-        $this->anio_fiscal->set_id_anio_fiscal(32); // Id existente
+        $this->anio_fiscal->set_id_anio_fiscal(4); // Id existente
 
         $resultado = $this->anio_fiscal->realizar_consulta('eliminar',true);
         
@@ -228,7 +228,7 @@ class AnioFiscalTest extends TestCase
         $resultado = $this->anio_fiscal->realizar_consulta('verificar_anio_fiscal');
         
         $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);        
+        $this->assertNotEmpty($resultado);
 
         $this->assertTrue($resultado["estatus"]);
         $this->assertStringContainsString('OK', $resultado["mensaje"]);

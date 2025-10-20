@@ -14,7 +14,7 @@
     </style>
 </head>
 
-<body class="body-pd">
+<body id="body-pd" class="body-pd">
     <div class="container-fluid">
         <div class="row flex-nowrap ">
 

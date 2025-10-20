@@ -4,8 +4,8 @@
             <label for="apartamento">Apartamento</label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-building"></i></span>
-                <select class="form-select apartamento_id" aria-label="Default select example" id="apartamento_id_detalles" name="apartamento_id">
-                    <option selected hidden value="">Seleccione su Apartamento</option>
+                <select class="form-select apartamento_id" aria-label="Default select example" id="apartamento_id_detalles" name="apartamento_id" disabled>
+                    <option selected hidden value="">Seleccione un Apartamento</option>
                     <?php foreach($registro_apartamento as $apartamento): ?>
                         <option value="<?php echo $apartamento["id_apartamento"]?>"><?php echo "Nro: ".$apartamento["nro_apartamento"] ?></option>
                     <?php endforeach; ?>
@@ -17,19 +17,19 @@
             <label for="mensualidad">Mensualidad</label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-bank2"></i></span>
-                    <select class="form-select mensualidad_id" aria-label="Default select example" id="mensualidad_id_detalles" name="mensualidad_id">
+                    <select class="form-select mensualidad_id" aria-label="Default select example" id="mensualidad_id_detalles" name="mensualidad_id" disabled>
                         <option selected hidden value="">Escoja primero un Apartamento</option> 
                     </select>
                 <span class="w-100"></span>
             </div>
         </div>
     </div>
-    <div class="row m-3">
+    <div class="row m-3 detalle-pago">
         <div class="col-lg-3 col-sm-6">
             <label for="fecha">Fecha</label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-calendar-date"></i></span>
-                <input type="date" class="form-control fecha" name="fecha" id="fecha_detalles" placeholder="Fecha" aria-label="fecha" aria-describedby="basic-addon1" minlength="3" maxlength="30">
+                <input type="date" class="form-control" name="fecha" id="fecha_detalles" placeholder="Fecha" aria-label="fecha" aria-describedby="basic-addon1" minlength="3" maxlength="30">
                 <span class="w-100"></span>
             </div>
         </div>
@@ -54,11 +54,12 @@
                 <span class="w-100"></span>
             </div>
         </div>-->
-        <div class="col-lg-3 col-sm-6">
-            <label for="monto_dolar">Tasa del Dolar</label>
+        
+        <div class="col-lg-2 col-sm-6 campo-monto d-none">
+            <label for="monto">Monto</label>
             <div class="input-group mb-3">
-                <span class="input-group-text" id="basic-addon1"><i class="bi bi-coin"></i></span>
-                <input type="text" class="form-control monto_dolar" name="monto_dolar" id="monto_dolar_detalles" placeholder="Tasa del Dolar" aria-label="tasa_dolar" aria-describedby="basic-addon1" minlength="3" maxlength="60">
+                <span class="input-group-text" id="basic-addon1"><i class="bi bi-cash-coin"></i></span>
+                <input type="text" class="form-control monto" name="monto" id="monto_detalles" placeholder="Monto" aria-label="monto" aria-describedby="basic-addon1" minlength="3" maxlength="30">
                 <span class="w-100"></span>
             </div>
         </div>
@@ -70,21 +71,30 @@
                 <span class="w-100"></span>
             </div>
         </div>-->
-        <div class="col-lg-3 col-sm-6">
-            <label for="monto_mensualidad">Monto Mensualidad</label>
+        <div class="col-lg-2 col-sm-6">
+            <label for="tasa_dolar">Tasa del Dólar</label>
             <div class="input-group mb-3">
-                <span class="input-group-text" id="basic-addon1"><i class="bi bi-cash-coin"></i></span>
-                <input type="text" class="form-control monto" name="monto_mensualidad" id="monto_mensualidad_detalles" placeholder="Monto Mensualidad" aria-label="monto_mensualidad" aria-describedby="basic-addon1" minlength="3" maxlength="30" readonly>
+                <span class="input-group-text"><i class="bi bi-coin"></i></span>
+                <input type="text" class="form-control tasa_dolar" name="tasa_dolar" id="tasa_dolar_detalles" placeholder="Tasa">
+                <span class="mensaje-error text-danger small"></span>
+            </div>
+        </div>
+        <div class="col-lg-2 col-sm-6">
+            <label for="monto_dolar">Monto Dolar</label>
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="basic-addon1"><i class="bi bi-coin"></i></span>
+                <input type="text" class="form-control monto_dolar" name="monto_dolar" id="monto_dolar_detalles" placeholder="Monto Dolar" aria-label="monto_dolar" aria-describedby="basic-addon1" minlength="3" maxlength="60">
                 <span class="w-100"></span>
             </div>
         </div>
     </div> 
     <div class="row m-3">
-        <div class="col-lg-3 col-sm-6 campo-monto d-none">
-            <label for="monto">Monto</label>
+        
+        <div class="col-lg-3 col-sm-6">
+            <label for="monto_mensualidad">Monto Mensualidad</label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-cash-coin"></i></span>
-                <input type="text" class="form-control monto" name="monto" id="monto_detalles" placeholder="Monto" aria-label="monto" aria-describedby="basic-addon1" minlength="3" maxlength="30">
+                <input type="text" class="form-control monto" name="monto_mensualidad" id="monto_mensualidad_detalles" placeholder="Monto Mensualidad" aria-label="monto_mensualidad" aria-describedby="basic-addon1" minlength="3" maxlength="30" readonly>
                 <span class="w-100"></span>
             </div>
         </div>
@@ -96,7 +106,7 @@
                 <span class="w-100"></span>
             </div>
         </div>
-        <div class="col-md-6 campos-bancarios d-none">
+        <div class="col-lg-6 campos-bancarios d-none">
             <label for="banco_id">Banco</label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-bank2"></i></span>

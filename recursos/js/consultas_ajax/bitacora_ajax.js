@@ -6,6 +6,12 @@ window.addEventListener('DOMContentLoaded',()=>{
 	consultar();	
 });
 
+document.getElementById('header-toggle').addEventListener("click",e=>{
+    setTimeout(function(){
+        tabla_bitacora.columns.adjust().draw();
+    },450);
+});
+
 function crearDataTable(id_tabla,estructura_filas,datos_paramentros, configuraciones_post_creacion = ()=>{}){
 	return new DataTable(`#${id_tabla}`,{
 		destroy: true,
@@ -56,6 +62,60 @@ function crearDataTable(id_tabla,estructura_filas,datos_paramentros, configuraci
         },
         "createdRow": configuraciones_post_creacion
 	});
+}
+
+function formatearFechaHora(fechaHoraStr) {
+  // 1. Crear un objeto de fecha a partir del texto
+  const fecha = new Date(fechaHoraStr);
+
+  // 2. Obtener las partes de la fecha y la hora
+  let horas = fecha.getHours();
+  let minutos = fecha.getMinutes();
+  let segundos = fecha.getSeconds();
+  
+  const dia = String(fecha.getDate()).padStart(2, '0');
+  const mes = String(fecha.getMonth() + 1).padStart(2, '0'); // Se suma 1 porque los meses van de 0 a 11
+  const anio = fecha.getFullYear();
+
+  // 3. Convertir la hora a formato de 12 horas y determinar AM/PM
+  const ampm = horas >= 12 ? 'PM' : 'AM';
+  horas = horas % 12;
+  horas = horas ? horas : 12; // La hora '0' debe ser '12'
+
+  // 4. Asegurar que los componentes de la hora tengan dos dígitos
+  const horasFormateadas = String(horas).padStart(2, '0');
+  const minutosFormateados = String(minutos).padStart(2, '0');
+  const segundosFormateados = String(segundos).padStart(2, '0');
+
+  // 5. Unir todo en el formato final
+  return `${horasFormateadas}:${minutosFormateados}:${segundosFormateados} ${ampm} ${dia}-${mes}-${anio}`;
+}
+
+function definirColorAccion(nombre_accion){
+    switch (nombre_accion){
+        case 'consultar':
+            return "badge bg-info text-dark";
+            break;
+        case 'eliminar':
+            return "badge bg-danger";
+            break;
+        case 'registrar':
+            return "badge bg-primary";
+            break;
+
+        case 'modificar':
+            return "badge bg-success";
+            break;
+        case 'iniciar sesion':
+            return "badge bg-warning text-dark";
+            break;
+        case 'cerrar sesion':
+            return "badge bg-secondary";
+            break;
+        default:
+        return "badge bg-secondary";
+        break;
+    }
 }
 
 function eventosCargaDataTable(id_tabla,modal){
@@ -113,19 +173,22 @@ async function consultar() {
         { 
             "data": null, 
             "render": function (data, type, row) {
-            	return `${row["fecha_hora"]}`;
+            	return `${formatearFechaHora(row["fecha_hora"])}`;
             }
         },
 		{ 
             "data": null,
             "render": function (data, type, row) {
-            	return `${row["nombre_modulo"]}`;
+            	return `${row["nombre_modulo"].split("_").join(" ")}`;
             }
         },
         { 
             "data": null,
             "render": function (data, type, row) {
-            	return `${row["accion"]}`;
+                let spam = document.createElement("span");
+                spam.setAttribute("class",definirColorAccion(row["accion"]));
+                spam.textContent = row["accion"];
+            	return `${spam.outerHTML}`;
             }
         },
         { 
