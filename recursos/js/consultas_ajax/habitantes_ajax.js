@@ -42,7 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		formulario_usar_habitantes.reset();
 		boton_formulario_habitantes.removeAttribute("modificar");
 		boton_formulario_habitantes.removeAttribute("id_modificar");
-		boton_formulario_habitantes.textContent = "Registrar";
+		boton_formulario_habitantes.textContent = "Guardar";
 
 		const tituloModal = document.getElementById('titulo_modal_habitantes');
 		if (tituloModal) {
@@ -186,6 +186,7 @@ function llenarTablaHabitantes(fila) {
 	apellido_td = document.createElement("td"),	
 	cedula_td = document.createElement("td"),
 	apartamento_td = document.createElement("td");
+	tipo_vinculo_td = document.createElement("td");
 	/*telefono_td = document.createElement("td");
     correo_td = document.createElement("td");
     fecha_nacimiento_td = document.createElement("td");
@@ -196,6 +197,7 @@ function llenarTablaHabitantes(fila) {
 	apellido_td.textContent = fila["apellido"];
 	cedula_td.textContent = fila["cedula"];
 	apartamento_td.textContent = "Nro: " + fila["nro_apartamento"];
+	tipo_vinculo_td.textContent = fila["tipo_vinculo"];
 	/*telefono_td.textContent = fila["telefono"];
     correo_td.textContent = fila["correo"];
     fecha_nacimiento_td.textContent = fila["fecha_nacimiento"];
@@ -209,6 +211,7 @@ function llenarTablaHabitantes(fila) {
 	fila_tabla.appendChild(apellido_td);
 	fila_tabla.appendChild(cedula_td);
 	fila_tabla.appendChild(apartamento_td);
+	fila_tabla.appendChild(tipo_vinculo_td);
 	/*fila_tabla.appendChild(telefono_td);
 	fila_tabla.appendChild(correo_td);
     fila_tabla.appendChild(fecha_nacimiento_td);
@@ -407,7 +410,7 @@ async function modificar_formulario_habitante(e) {
 	// aqui cambiamos los datos del boton para registrar, para saber que ahora se va es a modificar un registro
 	boton_formulario_habitantes.setAttribute("modificar",true);
 	boton_formulario_habitantes.setAttribute("id_modificar",data.id_habitante);
-	boton_formulario_habitantes.textContent = "Guardar";
+	boton_formulario_habitantes.textContent = "Guardar Cambios";
 	document.getElementById('titulo_modal_habitantes').textContent = "Modificar Habitante";
 
 	id_modificar_habitantes = id;

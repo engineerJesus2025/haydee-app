@@ -61,7 +61,6 @@ class Proveedores extends Conexion
             case "consultar":
                 $respuesta = $this->consultar();
                 if ($respuesta["resultado"]) {
-                    $this->registrar_bitacora(CONSULTAR, GESTIONAR_PROVEEDORES, "TODOS LOS PROVEEDORES");
                     return $respuesta["datos"];
                 } else {
                     return ["estatus" => false, "mensaje" => "Error al consultar los proveedores"];
@@ -81,7 +80,6 @@ class Proveedores extends Conexion
                 }
                 $respuesta = $this->registrar();
                 if ($respuesta) {
-                    $this->registrar_bitacora(REGISTRAR, GESTIONAR_PROVEEDORES, "Proveedor " . $this->nombre_proveedor . " de " . $this->servicio);
                     return ["estatus" => true, "mensaje" => "Proveedor registrado correctamente"];
                 } else {
                     return ["estatus" => false, "mensaje" => "Error al registrar el proveedor"];
@@ -93,15 +91,17 @@ class Proveedores extends Conexion
                 }
                 $respuesta = $this->editar_proveedor();
                 if ($respuesta) {
-                    $this->registrar_bitacora(MODIFICAR, GESTIONAR_PROVEEDORES, "Proveedor " . $this->nombre_proveedor . " de " . $this->servicio);
                     return ["estatus" => true, "mensaje" => "Proveedor modificado correctamente"];
                 } else {
                     return ["estatus" => false, "mensaje" => "Error al modificar el proveedor"];
                 }
             case "eliminar":
+                $validacion = $this->validar_datos('eliminar');
+                if (!$validacion["estatus"]) {
+                    return $validacion; // Si falla, retorna el mensaje de error
+                }
                 $respuesta = $this->eliminar_proveedor();
                 if ($respuesta) {
-                    $this->registrar_bitacora(ELIMINAR, GESTIONAR_PROVEEDORES, "Proveedor " . $this->nombre_proveedor . " de " . $this->servicio);
                     return ["estatus" => true, "mensaje" => "Proveedor eliminado correctamente"];
                 } else {
                     return ["estatus" => false, "mensaje" => "Error al eliminar el proveedor"];
@@ -203,6 +203,28 @@ private function lastId()
 
     public function validar_datos($accion)
     {
+         if ($accion == "modificar" || $accion == "eliminar") {
+            
+            // Validación 1.1: ID vacío
+            if (empty(trim($this->id_proveedor))) {
+                return ["estatus" => false, "mensaje" => "El id del proveedor requerido esta vacio"];
+            }
+
+            // Validación 1.2: ID no es numérico
+            if (!is_numeric($this->id_proveedor)) {
+                 return ["estatus"=>false, "mensaje"=>"El id del proveedor debe ser un valor numerico"];
+            }
+
+            // Validación 1.3: ID no existe en la BD
+            if (!($this->validarClaveForanea("proveedores", "id_proveedor", $this->id_proveedor))) {
+                return ["estatus" => false, "mensaje" => "El proveedor seleccionado no existe"];
+            }
+
+            // Si la acción es 'eliminar' y pasó las validaciones de ID, terminamos.
+            if ($accion == "eliminar") {
+                return ["estatus" => true, "mensaje" => "OK"];
+            }
+        }
         // 1. Validación de campos no vacíos
         if (empty(trim($this->nombre_proveedor))) {
             return ["estatus" => false, "mensaje" => "El nombre del proveedor no puede estar vacío."];

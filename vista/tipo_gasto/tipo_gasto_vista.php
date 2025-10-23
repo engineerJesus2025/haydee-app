@@ -28,7 +28,7 @@
 
                 <main class="col ps-md-2 pt-2 mb-5">
                     <div class="page-header pt-3">
-                        <h2>TIPOS DE GASTOS</h2>
+                        <h2>GESTIONAR TIPOS DE GASTOS</h2>
                     </div>
                     <p class="lead"></p>
                     <hr>
@@ -38,7 +38,7 @@
                             <div class="card p-4">
                                 <?php if (Tipo_gasto::tiene_permiso(GESTIONAR_TIPO_GASTO, REGISTRAR)) : ?>
                                     <div class="button mb-4">
-                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_tipo_gasto">Registrar</button>
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_tipo_gasto">Nuevo Tipo</button>
                                     </div><br>
                                 <?php endif; ?>
 

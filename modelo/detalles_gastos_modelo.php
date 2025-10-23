@@ -102,6 +102,10 @@ class Detalles_gasto extends Conexion
                 return $this->editar_detalle_gasto();
 
             case 'eliminar':
+                 $validacion = $this->validar_datos('eliminar');
+                if (!$validacion["estatus"]) {
+                    return $validacion;
+                }
                 return $this->eliminar_detalle_gasto();
 
             case 'eliminar_por_gasto':
@@ -169,9 +173,7 @@ class Detalles_gasto extends Conexion
         if ($result) {
             $id_ultimo = $this->lastId();//obtenemos el ultimo id
             $this->set_id_detalle_gasto($id_ultimo["mensaje"]);
-            $gasto_alterado = $this->consultar_detalle_gasto();//lo consultamos
 
-            $this->registrar_bitacora(REGISTRAR, GESTIONAR_GASTOS, $gasto_alterado["fecha"] . " (" . "Detalle gasto anexado: " . $gasto_alterado["monto"] . ")");//registramos en la bitacora
             //$this->registrar_notificacion();
             return ["estatus" => true, "mensaje" => "OK"];
         } else {
@@ -223,8 +225,6 @@ class Detalles_gasto extends Conexion
 
 
     if ($resultado_trans && $resultado_det) {
-        // 3. REGISTRAR EN BITÁCORA Y DEVOLVER ÉXITO
-        $this->registrar_bitacora(ELIMINAR, GESTIONAR_GASTOS, "Eliminados todos los detalles del Gasto ID: " . $this->gasto_id);
         return ["estatus" => true, "mensaje" => "OK"];
     } else {
         return ["estatus" => false, "mensaje" => "Ha ocurrido un error al intentar eliminar los detalles del gasto."];
@@ -280,6 +280,29 @@ class Detalles_gasto extends Conexion
 
 public function validar_datos($accion)
     {
+        if ($accion == "editar" || $accion == "eliminar") {
+            
+            // Validación 1.1: ID vacío
+            if (empty(trim($this->id_detalle_gasto))) {
+                return ["estatus" => false, "mensaje" => "El id del detalle de gasto requerido esta vacio"];
+            }
+
+            // Validación 1.2: ID no es numérico
+            if (!is_numeric($this->id_detalle_gasto)) {
+                 return ["estatus"=>false, "mensaje"=>"El id del detalle de gasto debe ser un valor numerico"];
+            }
+
+            // Validación 1.3: ID no existe en la BD
+            if (!($this->validarClaveForanea("detalles_gastos", "id_detalle_gasto", $this->id_detalle_gasto))) {
+                return ["estatus" => false, "mensaje" => "El detalle de gasto seleccionado no existe"];
+            }
+
+            // Si la acción es 'eliminar' y pasó las validaciones de ID, terminamos.
+            if ($accion == "eliminar") {
+                return ["estatus" => true, "mensaje" => "OK"];
+            }
+        }
+        
         if (empty($this->fecha)) {
             return ["estatus" => false, "mensaje" => "La fecha no puede estar vacía."];
         }

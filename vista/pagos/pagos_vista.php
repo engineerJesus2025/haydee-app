@@ -136,7 +136,7 @@
                                 <?php endif; ?>
 
 
-                                <table id="tabla_detalles_pagos" style="width:97%">
+                                <table id="tabla_detalles_pagos" class="table table-striped table-hover" style="width:97%">
                                     <thead>
                                         <tr>
                                             <th>FECHA</th>

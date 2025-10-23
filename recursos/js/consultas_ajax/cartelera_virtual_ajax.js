@@ -155,7 +155,7 @@ function formatearFecha(fechaStr) {
 
     const partes = fechaStr.split("-");
     if (partes.length === 3) {
-        return `${partes[2]}-${partes[1]}-${partes[0]}`; // DD-MM-AAAA
+        return `${partes[2]}/${partes[1]}/${partes[0]}`; // DD-MM-AAAA
     }
     return fechaStr; // En caso de formato inesperado, retorna original
 }
@@ -302,7 +302,7 @@ async function modificar_formulario(e) {
 
     boton_formulario.setAttribute("modificar", true);
     boton_formulario.setAttribute("id_modificar", data.id_cartelera);
-    boton_formulario.textContent = "Modificar";
+    boton_formulario.textContent = "Guardar Cambios";
     document.getElementById("titulo_modal").textContent = "Modificar Publicación";
     id_modificar = id;
 }

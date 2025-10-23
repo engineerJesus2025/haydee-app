@@ -68,7 +68,7 @@ class NotificacionesTest extends TestCase
         $this->notificaciones->set_titulo("Notificacion de prueba");
         $this->notificaciones->set_descripcion("preuba unitaria mensualidad registrada");
         $this->notificaciones->set_fecha("2021-01-01");
-        $this->notificaciones->set_usuario_id(1);
+        $this->notificaciones->set_usuario_id(53);
 
         $resultado = $this->notificaciones->realizar_consulta('agregar_notificacion');
         
@@ -84,7 +84,7 @@ class NotificacionesTest extends TestCase
         $this->notificaciones->set_titulo("prueba erronea");
         $this->notificaciones->set_descripcion("prueba erronea");
         $this->notificaciones->set_fecha("fecha incorrecta");
-        $this->notificaciones->set_usuario_id(1);
+        $this->notificaciones->set_usuario_id(53);
 
         $resultado = $this->notificaciones->realizar_consulta('agregar_notificacion');
         
@@ -148,7 +148,6 @@ class NotificacionesTest extends TestCase
         $this->notificaciones->set_titulo("titulo erroneo: 123123`p+´´ç");
         $this->notificaciones->set_descripcion("prueba erronea");
         $this->notificaciones->set_fecha("2021-01-01");
-        $this->notificaciones->set_usuario_id(1);
 
         $resultado = $this->notificaciones->realizar_consulta('notificar_pago');
         
@@ -164,7 +163,6 @@ class NotificacionesTest extends TestCase
         $this->notificaciones->set_titulo("");
         $this->notificaciones->set_descripcion("");
         $this->notificaciones->set_fecha("");
-        $this->notificaciones->set_usuario_id("");
 
         $resultado = $this->notificaciones->realizar_consulta('notificar_pago');
         
@@ -216,11 +214,11 @@ class NotificacionesTest extends TestCase
         $this->assertStringContainsString("El id de la notificacion se envio vacío", $resultado["mensaje"]);
     }
 
-    //Metodo marcar_todas_como_leidas
+    //Metodo marcar_todas_leidas
     public function testMarcarTodasDatosCorrectos(){
-        $this->notificaciones->set_usuario_id(5);
+        $this->notificaciones->set_usuario_id(53);
 
-        $resultado = $this->notificaciones->realizar_consulta('marcar_todas_como_leidas');
+        $resultado = $this->notificaciones->realizar_consulta('marcar_todas_leidas');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -233,7 +231,7 @@ class NotificacionesTest extends TestCase
     public function testMarcarTodasIDIncorrecto(){
         $this->notificaciones->set_usuario_id(8212319);
 
-        $resultado = $this->notificaciones->realizar_consulta('marcar_todas_como_leidas');
+        $resultado = $this->notificaciones->realizar_consulta('marcar_todas_leidas');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -246,7 +244,7 @@ class NotificacionesTest extends TestCase
     public function testMarcarTodasIDVacios(){
         $this->notificaciones->set_usuario_id('');        
 
-        $resultado = $this->notificaciones->realizar_consulta('marcar_todas_como_leidas');
+        $resultado = $this->notificaciones->realizar_consulta('marcar_todas_leidas');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);

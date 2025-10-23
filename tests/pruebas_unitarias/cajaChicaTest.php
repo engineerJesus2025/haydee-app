@@ -6,6 +6,8 @@ class CajaChicaTest extends TestCase
 {
     private $caja_chica;
 
+    private $id_caja = 23;
+
     public function setUp(): void{
         $this->caja_chica = new Caja_chica();
     }
@@ -22,21 +24,21 @@ class CajaChicaTest extends TestCase
         $this->assertNotEmpty($resultado);        
 
         // Revisamos la estructura de un elemento
-        $this->assertArrayHasKey('fecha_apertura', $resultado[0]);
         $this->assertArrayHasKey('id_caja_chica', $resultado[0]);
+        $this->assertArrayHasKey('fondo_fijo', $resultado[0]);
         $this->assertArrayHasKey('saldo_actual', $resultado[0]);
-        $this->assertArrayHasKey('monto_inicial', $resultado[0]);
         $this->assertArrayHasKey('estado', $resultado[0]);
-        $this->assertArrayHasKey('observaciones', $resultado[0]);
+        $this->assertArrayHasKey('descripcion', $resultado[0]);
+        $this->assertArrayHasKey('fecha_creacion', $resultado[0]);
         $this->assertArrayHasKey('anio_fiscal_id', $resultado[0]);
     }
 
-    //Metodo editar_observacion
+    //Metodo editar_descripcion
     public function testEditarObservacionDatosCorrectos(){
-        $this->caja_chica->set_id_caja_chica(15); // Id existente        
-        $this->caja_chica->set_observaciones("Ejecutada prueba de edicion");
+        $this->caja_chica->set_id_caja_chica($this->id_caja); // Id existente        
+        $this->caja_chica->set_descripcion("Ejecutada prueba de edicion");
 
-        $resultado = $this->caja_chica->realizar_consulta('editar_observacion');
+        $resultado = $this->caja_chica->realizar_consulta('editar_descripcion');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -48,9 +50,9 @@ class CajaChicaTest extends TestCase
 
     public function testEditarObservacionIDIncorrecto(){
         $this->caja_chica->set_id_caja_chica(12312312); // Id inexistente
-        $this->caja_chica->set_observaciones("Prueba erronea");
+        $this->caja_chica->set_descripcion("Prueba erronea");
 
-        $resultado = $this->caja_chica->realizar_consulta('editar_observacion');
+        $resultado = $this->caja_chica->realizar_consulta('editar_descripcion');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -61,10 +63,10 @@ class CajaChicaTest extends TestCase
     }
 
     public function testEditarObservacionDatosVacios(){
-        $this->caja_chica->set_id_caja_chica(15);
-        $this->caja_chica->set_observaciones("");
+        $this->caja_chica->set_id_caja_chica($this->id_caja);
+        $this->caja_chica->set_descripcion("");
 
-        $resultado = $this->caja_chica->realizar_consulta('editar_observacion');
+        $resultado = $this->caja_chica->realizar_consulta('editar_descripcion');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);

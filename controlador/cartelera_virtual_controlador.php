@@ -11,14 +11,12 @@ if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
 
     if ($operacion == "consulta") {
-        // llamamos a la funcion, lo convertimos a json y la mandamos al js con echo
+        $cartelera_virtual_obj->registrar_bitacora(CONSULTAR, GESTIONAR_CARTELERA_VIRTUAL, "TODAS LAS PUBLICACIONES");
         echo json_encode($cartelera_virtual_obj->realizar_consulta('consultar'));
-        // la hice para que retorne un arreglo, si sale vacio solo mandara un array con false
     }
     $usuario_id = $_SESSION["id_usuario"];
     $cartelera_virtual_obj->set_usuario_id($usuario_id);
 
-    //Despues de cada echo se regresa al javascript como respuesta en json
 
     // ----------- REGISTRAR ---------------
     if ($operacion == "registrar") {
@@ -55,19 +53,20 @@ if (isset($_POST["operacion"])) {
         $cartelera_virtual_obj->set_imagen($nombre_archivo);
         $cartelera_virtual_obj->set_prioridad($prioridad);
 
-        echo json_encode($cartelera_virtual_obj->realizar_consulta('registrar'));
+        $respuesta = $cartelera_virtual_obj->realizar_consulta('registrar');
+
+        if ($respuesta["estatus"]) {
+            $cartelera_virtual_obj->registrar_bitacora(REGISTRAR, GESTIONAR_CARTELERA_VIRTUAL, $titulo . " - " . $fecha);
+        }
+        echo json_encode($respuesta);
 
 
     } elseif ($operacion == "consulta_especifica") {
-        //se guardan el id para buscar
         $id_cartelera = $_POST["id_cartelera"];
 
-        //se usan el setter correspondientes
         $cartelera_virtual_obj->set_id_cartelera($id_cartelera);
 
-        // llamamos a la funcion, lo convertimos a json y la mandamos al js con echo
         echo json_encode($cartelera_virtual_obj->realizar_consulta('consultar_cartelera_id'));
-        // igual hice para que retorne un arreglo, si sale vacio solo mandara un array con false
 
         // ----------- MODIFICAR ---------------
     } elseif ($operacion == "modificar") {
@@ -115,10 +114,17 @@ if (isset($_POST["operacion"])) {
         $cartelera_virtual_obj->set_imagen($nombre_archivo);
         $cartelera_virtual_obj->set_prioridad($prioridad);
 
-        echo json_encode($cartelera_virtual_obj->realizar_consulta("editar_publicacion"));
+        $respuesta = $cartelera_virtual_obj->realizar_consulta("editar_publicacion");
 
-    } elseif ($operacion == "eliminar") {
-    // Se guarda el id de la publicación a eliminar
+        if ($respuesta["estatus"]) {
+            $cartelera_virtual_obj->registrar_bitacora(MODIFICAR, GESTIONAR_CARTELERA_VIRTUAL, $titulo . " - " . $fecha);
+        }
+
+        echo json_encode($respuesta);
+
+    } 
+    
+    elseif ($operacion == "eliminar") {
     $id_cartelera = $_POST["id_cartelera"];
     $cartelera_virtual_obj->set_id_cartelera($id_cartelera);
 
@@ -126,8 +132,17 @@ if (isset($_POST["operacion"])) {
     $datos = $cartelera_virtual_obj->realizar_consulta("consultar_cartelera_id"); // debe retornar imagen
 
     // 🗑 Eliminar la publicación de la base de datos
-    echo json_encode($cartelera_virtual_obj->realizar_consulta("eliminar_publicacion"));
-} elseif ($operacion == "ultimo_id") {
+    $resultado = $cartelera_virtual_obj->realizar_consulta("eliminar_publicacion");
+
+    if ($resultado["estatus"]) {
+        if ($datos){
+            $cartelera_virtual_obj->registrar_bitacora(ELIMINAR, GESTIONAR_CARTELERA_VIRTUAL, $datos["titulo"] . " - " . $datos["fecha"]);
+        }
+    }
+    echo json_encode($resultado);
+} 
+
+elseif ($operacion == "ultimo_id") {
         echo json_encode($cartelera_virtual_obj->realizar_consulta("lastId"));
     }
 

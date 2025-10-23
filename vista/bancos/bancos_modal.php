@@ -29,8 +29,8 @@
         <div class="col-lg-6">
             <label for="telefono_afiliado">Teléfono Afiliado</label>
             <div class="input-group mb-3">
-                <span class="input-group-text" id="basic-addon1"><i class="bi bi-telephone-fill"></i></span>
-                <input type="text" class="form-control telefono_afiliado" name="telefono_afiliado" id="telefono_afiliado" placeholder="Teléfono Afiliado" aria-label="telefono_afiliado" aria-describedby="basic-addon1" minlength="3" maxlength="60">
+                <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-telephone-fill"></i></span>
+                <input type="text" class="border border-dark form-control telefono_afiliado" name="telefono_afiliado" id="telefono_afiliado" placeholder="Teléfono Afiliado" aria-label="telefono_afiliado" aria-describedby="basic-addon1" minlength="3" maxlength="60">
                 <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
@@ -47,7 +47,7 @@
     </div>
     <div class="row m-3">
         <div class="col-md-12 text-center">
-            <button class="btn btn-primary" type="submit" id="boton_formulario">Registrar</button>
+            <button class="btn btn-primary" type="submit" id="boton_formulario">Guardar</button>
         </div>
     </div>
 </form>

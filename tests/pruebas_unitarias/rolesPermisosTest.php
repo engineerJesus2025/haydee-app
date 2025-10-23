@@ -17,9 +17,8 @@ class RolesPermisosTest extends TestCase
     //Metodo consultar_roles_permisos
     public function testConsultarRolesPermisosIdCorrecto(){
         $this->roles_permisos->set_rol_id(2);
-
         $resultado = $this->roles_permisos->realizar_consulta('consultar_roles_permisos');
-        
+ 
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
         $this->assertCount(3, $resultado[0]);
@@ -83,7 +82,7 @@ class RolesPermisosTest extends TestCase
 
     //Metodo registrar_permisos_roles
     public function testRegistrarPermisosRolesDatosCorrectos(){
-        $this->roles_permisos->set_rol_id(37);
+        $this->roles_permisos->set_rol_id(27);
         $this->roles_permisos->set_permiso_usuario_id(1);
 
         $resultado = $this->roles_permisos->realizar_consulta('registrar_permisos_roles');
@@ -111,7 +110,7 @@ class RolesPermisosTest extends TestCase
     }
 
     public function testRegistrarPermisosRolesIDPermisoIncorrecto(){
-        $this->roles_permisos->set_rol_id(37);
+        $this->roles_permisos->set_rol_id(27);
         $this->roles_permisos->set_permiso_usuario_id(1234234);
 
         $resultado = $this->roles_permisos->realizar_consulta('registrar_permisos_roles');
@@ -140,7 +139,7 @@ class RolesPermisosTest extends TestCase
 
     //Metodo eliminar_roles_permisos
     public function testEliminarRolesPermisosDatosCorrectos(){
-        $this->roles_permisos->set_rol_id(34);
+        $this->roles_permisos->set_rol_id(50);
 
         $resultado = $this->roles_permisos->realizar_consulta('eliminar_roles_permisos');
         

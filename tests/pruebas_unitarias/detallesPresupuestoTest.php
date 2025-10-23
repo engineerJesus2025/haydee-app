@@ -6,6 +6,9 @@ class DetallesPresupuestoTest extends TestCase
 {
     private $detalles_presupuesto;
 
+    private $id_presupuesto = 70;
+    private $id_presupuesto_borrar = 70;
+
     public function setUp(): void{
         $this->detalles_presupuesto = new Detalles_presupuesto();
     }
@@ -31,7 +34,7 @@ class DetallesPresupuestoTest extends TestCase
 
     //Metodo consultar_detalles_presupuestos
     public function testConsultarDetallesPresupuestoIdCorrecto(){
-        $this->detalles_presupuesto->set_presupuesto_id(39);
+        $this->detalles_presupuesto->set_presupuesto_id($this->id_presupuesto);
 
         $resultado = $this->detalles_presupuesto->realizar_consulta('consultar_detalles_presupuestos');
         
@@ -69,11 +72,10 @@ class DetallesPresupuestoTest extends TestCase
     public function testRegistrarDetallesPresupuestoDatosCorrectos(){
         $this->detalles_presupuesto->set_monto_detalle("123");
         $this->detalles_presupuesto->set_nombre_detalle("detalle prueba");
-        $this->detalles_presupuesto->set_presupuesto_id(39);
+        $this->detalles_presupuesto->set_presupuesto_id($this->id_presupuesto);
         $this->detalles_presupuesto->set_tipo_gasto_id(1);
-
         $resultado = $this->detalles_presupuesto->realizar_consulta('registrar');
-        
+ 
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
         $this->assertCount(2, $resultado);
@@ -85,7 +87,7 @@ class DetallesPresupuestoTest extends TestCase
     public function testRegistrarDetallesPresupuestoDatosIncorrecto(){
         $this->detalles_presupuesto->set_monto_detalle("monto incorrecto");
         $this->detalles_presupuesto->set_nombre_detalle("2detalle prueba");
-        $this->detalles_presupuesto->set_presupuesto_id(39);
+        $this->detalles_presupuesto->set_presupuesto_id($this->id_presupuesto);
         $this->detalles_presupuesto->set_tipo_gasto_id(1);
 
         $resultado = $this->detalles_presupuesto->realizar_consulta('registrar');
@@ -132,7 +134,7 @@ class DetallesPresupuestoTest extends TestCase
 
     //Metodo eliminar
     public function testEliminarDetallesPresupuestoDatosCorrectos(){
-        $this->detalles_presupuesto->set_presupuesto_id(40); // Id existente
+        $this->detalles_presupuesto->set_presupuesto_id($this->id_presupuesto_borrar); // Id existente
 
         $resultado = $this->detalles_presupuesto->realizar_consulta('eliminar');
         

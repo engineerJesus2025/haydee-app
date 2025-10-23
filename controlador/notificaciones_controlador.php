@@ -1,4 +1,5 @@
 <?php 
+require_once "vista/componentes/sesion.php";
 require_once "modelo/notificaciones_modelo.php";
 
 if (isset($_POST["operacion"])){

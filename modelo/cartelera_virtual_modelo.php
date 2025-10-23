@@ -91,7 +91,6 @@ class Cartelera_virtual extends Conexion
                 $this->cambiar_db_negocio();
 
                 if ($respuesta["resultado"]) {
-                    $this->registrar_bitacora(CONSULTAR, GESTIONAR_CARTELERA_VIRTUAL, "TODAS LAS PUBLICACIONES");//registra cuando se entra al modulo de cart virtual
                     return $respuesta["datos"];
                 } else {
                     return ["estatus" => false, "mensaje" => "Error al consultar los datos"];
@@ -100,25 +99,26 @@ class Cartelera_virtual extends Conexion
             case 'consultar_cartelera_id':
                 $respuesta = $this->consultar_cartelera_id();
                 $this->cambiar_db_negocio();
-                if ($respuesta) {
+                if ($respuesta["resultado"]) {
                     return $respuesta["datos"];
                 } else {
                     return ["estatus" => false, "mensaje" => "Error al consultar los datos"];
                 }
 
             case 'registrar':
-                // La conexión ya está en la BD de seguridad, lo cual es CORRECTO.
+                $validacion = $this->validar_datos('registrar');
+                if (!$validacion["estatus"]) {
+                    $this->cambiar_db_negocio(); // Importante: revertir la BD antes de salir
+                    return $validacion;
+                }
                 $respuesta = $this->registrar();
 
                 if ($respuesta) {
                     $id_ultimo = $this->lastId(); // Esto también debe correr en la BD de seguridad.
                     $this->set_id_cartelera($id_ultimo['datos']['last_id']);
 
-                    // La bitácora y las notificaciones también son de seguridad, así que no hay que cambiar de BD.
-                    $this->registrar_bitacora(REGISTRAR, GESTIONAR_CARTELERA_VIRTUAL, "Titulo: " . $this->titulo);
                     $this->registrar_notificacion();
 
-                    // Al terminar todas las operaciones, dejamos la conexión en la BD de negocio.
                     $this->cambiar_db_negocio();
 
                     return ["estatus" => true, "mensaje" => "OK"];
@@ -129,24 +129,30 @@ class Cartelera_virtual extends Conexion
                 }
 
             case 'editar_publicacion':
+                $validacion = $this->validar_datos('editar_publicacion');
+                if (!$validacion["estatus"]) {
+                    $this->cambiar_db_negocio(); // Importante: revertir la BD antes de salir
+                    return $validacion;
+                }
                 $respuesta = $this->editar_publicacion();
 
                 $this->cambiar_db_negocio();
-                if ($respuesta["resultado"]) {
-                    $cartelera_alterada = $this->consultar_cartelera_id();
-                    $this->registrar_bitacora(MODIFICAR, GESTIONAR_CARTELERA_VIRTUAL, "Titulo: " . $this->titulo);
+                if ($respuesta) {
                     return ["estatus" => true, "mensaje" => "Edición exitosa"];
                 } else {
                     return ["estatus" => false, "mensaje" => "Error al editar los datos"];
                 }
 
             case 'eliminar_publicacion':
-                $publicacion_alterada = $this->consultar_cartelera_id();
+                $validacion = $this->validar_datos('eliminar_publicacion');
+                if (!$validacion["estatus"]) {
+                    $this->cambiar_db_negocio(); // Importante: revertir la BD antes de salir
+                    return $validacion;
+                }
                 $respuesta = $this->eliminar_publicacion();
 
                 $this->cambiar_db_negocio();
-                if ($respuesta["resultado"]) {
-                    $this->registrar_bitacora(ELIMINAR, GESTIONAR_CARTELERA_VIRTUAL, "Titulo: " . $publicacion_alterada["titulo"]);
+                if ($respuesta) {
                     return ["estatus" => true, "mensaje" => "Eliminacion exitosa"];
                 } else {
                     return ["estatus" => false, "mensaje" => "Error al eliminar los datos"];
@@ -155,9 +161,7 @@ class Cartelera_virtual extends Conexion
                 $respuesta = $this->lastId();
 
                 $this->cambiar_db_negocio();
-                // CORRECCIÓN: Leemos la nueva estructura simple
                 if ($respuesta["resultado"] && isset($respuesta["datos"]["last_id"])) {
-                    // Devolvemos un objeto JSON simple y predecible
                     return ["estatus" => true, "last_id" => $respuesta["datos"]["last_id"]];
                 } else {
                     return ["estatus" => false, "mensaje" => "Error al consultar el último ID"];
@@ -215,7 +219,6 @@ class Cartelera_virtual extends Conexion
 
     private function registrar_notificacion()
     {
-        $this->cambiar_db_seguridad();
         $titulo = "Cartelera Virtual";
         $descripcion = "Se ha registrado una nueva publicación en la cartelera virtual.";
         $fecha = date('Y-m-d');
@@ -264,8 +267,7 @@ class Cartelera_virtual extends Conexion
         $conexion->bindParam(":prioridad", $this->prioridad);
         $conexion->bindParam(":usuario_id", $this->usuario_id);
         $result = $conexion->execute();
-        return ["resultado" => $result];
-        // $this->registrar_bitacora(MODIFICAR, GESTIONAR_CARTELERA_VIRTUAL, "ID: ".$this->id_cartelera);//registra cuando se edita un cartelera
+        return $result;
 
 
     }
@@ -289,7 +291,7 @@ class Cartelera_virtual extends Conexion
             }
         }
 
-        return ["resultado" => $result];
+        return $result;
     }
 
     private function lastId()
@@ -333,52 +335,61 @@ class Cartelera_virtual extends Conexion
         return $resultado ? $resultado["imagen"] : null;
     }
 
-    private function validarDatos($operacion = "registrar")
+    private function validar_datos($accion = "registrar")
     {
-        // Validar ID de usuario en todos los casos
+        // === 1. VALIDACIÓN DE ID (para editar y eliminar) ===
+        if (in_array($accion, ["editar_publicacion", "eliminar_publicacion"])) {
+
+            if (!isset($this->id_cartelera) || empty(trim($this->id_cartelera))) {
+                return ["estatus" => false, "mensaje" => "El ID de la publicación es requerido"];
+            }
+            if (!is_numeric($this->id_cartelera)) {
+                return ["estatus" => false, "mensaje" => "El ID de la publicación debe ser numérico"];
+            }
+            // Validamos contra la BD de seguridad (el 'true' es correcto)
+            if (!$this->validarClaveForanea("cartelera_virtual", "id_cartelera", $this->id_cartelera, false)) {
+                return ["estatus" => false, "mensaje" => "La publicación seleccionada no existe"];
+            }
+        }
+
+        // Si es 'eliminar' y el ID es válido, la validación termina aquí.
+        if ($accion == "eliminar_publicacion") {
+            return ["estatus" => true, "mensaje" => "OK"];
+        }
+
+
         if (!isset($this->usuario_id) || empty($this->usuario_id)) {
             return ["estatus" => false, "mensaje" => "El usuario no fue especificado correctamente"];
         }
-
         if (!is_numeric($this->usuario_id)) {
             return ["estatus" => false, "mensaje" => "El ID del usuario debe ser numérico"];
         }
-
-        if (!$this->validarClaveForanea("usuarios", "id_usuario", $this->usuario_id, true)) {
+        if (!$this->validarClaveForanea("usuarios", "id_usuario", $this->usuario_id, false)) {
             return ["estatus" => false, "mensaje" => "El usuario asociado no existe"];
         }
 
-        // Solo validamos el resto de campos si es registrar o editar
-        if (in_array($operacion, ["registrar", "editar"])) {
 
-            if (!isset($this->titulo, $this->descripcion, $this->fecha, $this->prioridad)) {
-                return ["estatus" => false, "mensaje" => "Uno o varios campos requeridos no se recibieron correctamente"];
-            }
+        if (!isset($this->titulo, $this->descripcion, $this->fecha, $this->prioridad)) {
+            return ["estatus" => false, "mensaje" => "Uno o varios campos requeridos no se recibieron correctamente"];
+        }
 
-            if (empty($this->titulo) || empty($this->descripcion) || empty($this->fecha) || empty($this->prioridad)) {
-                return ["estatus" => false, "mensaje" => "Uno o varios campos requeridos están vacíos"];
-            }
+        if (empty($this->titulo) || empty($this->descripcion) || empty($this->fecha) || empty($this->prioridad)) {
+            return ["estatus" => false, "mensaje" => "Uno o varios campos requeridos están vacíos"];
+        }
 
-            // Validación de título y descripción: letras, números, signos básicos, acentos, etc.
-            $textoRegex = "/^[A-Za-zÁÉÍÓÚáéíóú0-9.,;()'\"!?¡¿%°\- ]{3,200}$/";
-
-            if (!preg_match($textoRegex, $this->titulo)) {
-                return ["estatus" => false, "mensaje" => "El título no posee un formato válido"];
-            }
-
-            if (!preg_match($textoRegex, $this->descripcion)) {
-                return ["estatus" => false, "mensaje" => "La descripción no posee un formato válido"];
-            }
-
-            // Validación de fecha con formato YYYY-MM-DD
-            if (!preg_match("/^\d{4}-\d{2}-\d{2}$/", $this->fecha)) {
-                return ["estatus" => false, "mensaje" => "La fecha no tiene un formato válido (YYYY-MM-DD)"];
-            }
-
-            // Validación de prioridad como numérica (o puedes hacer lista de valores válidos si aplica)
-            if (!is_numeric($this->prioridad)) {
-                return ["estatus" => false, "mensaje" => "La prioridad debe ser un valor numérico"];
-            }
+        // Regex de tu lógica original
+        $textoRegex = "/^[A-Za-zÁÉÍÓÚáéíóú0-9.,;()'\"!?¡¿%°\- ]{3,200}$/";
+        if (!preg_match($textoRegex, $this->titulo)) {
+            return ["estatus" => false, "mensaje" => "El título no posee un formato válido"];
+        }
+        if (!preg_match($textoRegex, $this->descripcion)) {
+            return ["estatus" => false, "mensaje" => "La descripción no posee un formato válido"];
+        }
+        if (!preg_match("/^\d{4}-\d{2}-\d{2}$/", $this->fecha)) {
+            return ["estatus" => false, "mensaje" => "La fecha no tiene un formato válido (YYYY-MM-DD)"];
+        }
+        if (!is_numeric($this->prioridad)) {
+            return ["estatus" => false, "mensaje" => "La prioridad debe ser un valor numérico"];
         }
 
         return ["estatus" => true, "mensaje" => "OK"];

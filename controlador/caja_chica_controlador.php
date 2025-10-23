@@ -1,4 +1,5 @@
 <?php 
+require_once "vista/componentes/sesion.php";
 require_once "modelo/caja_chica_modelo.php";
 require_once "modelo/movimientos_caja_modelo.php";
 require_once "modelo/gastos_modelo.php";
@@ -15,8 +16,7 @@ if (isset($_POST["operacion"])){
         echo  json_encode($caja_obj->realizar_consulta('consultar'));
     }
     else if ($operacion == "consultar_movimientos_caja"){
-        $movimientos_caja_obj = new Movimientos_caja();
-        $caja_obj = new Caja_chica();
+        $movimientos_caja_obj = new Movimientos_caja();        
 
         $caja_chica_id = $_POST["caja_chica_id"];
 

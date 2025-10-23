@@ -31,7 +31,7 @@
             <main class="col ps-md-2 pt-2 mb-5">
 
                 <div class="page-header pt-3">
-                    <h2>PROVEEDORES</h2>
+                    <h2>GESTIONAR PROVEEDORES</h2>
                 </div>
                 <p class="lead"></p>
                 <hr>
@@ -42,7 +42,7 @@
                             <?php if (Proveedores::tiene_permiso(GESTIONAR_PROVEEDORES, REGISTRAR)): ?>
                                 <div class="button mb-4">
                                     <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                                            data-bs-target="#modal_proveedores">Registrar</button>
+                                            data-bs-target="#modal_proveedores">Nuevo Proveedor</button>
                                 </div><br>
                             <?php endif; ?>
 

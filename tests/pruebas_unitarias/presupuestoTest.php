@@ -6,6 +6,9 @@ class PresupuestoTest extends TestCase
 {
     private $presupuesto;
 
+    private $id_presupuesto = 67;
+    private $id_presupuesto_borrar = 70;
+
     public function setUp(): void{
         $this->presupuesto = new Presupuesto();
     }
@@ -16,7 +19,7 @@ class PresupuestoTest extends TestCase
 
     //Metodo consultar
     public function testConsultarPresupuestos(){
-        $resultado = $this->presupuesto->realizar_consulta('consultar',true);
+        $resultado = $this->presupuesto->realizar_consulta('consultar');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -32,7 +35,7 @@ class PresupuestoTest extends TestCase
     //Metodo consultar_meses_faltantes
     public function testConsultarMesesFaltantes(){
         $resultado = $this->presupuesto->realizar_consulta('consultar_meses_faltantes');
-        
+
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
 
@@ -42,7 +45,7 @@ class PresupuestoTest extends TestCase
 
     //Metodo consultar_presupuesto
     public function testConsultarPresupuestoUnicoIdCorrecto(){
-        $this->presupuesto->set_id_presupuesto(39);
+        $this->presupuesto->set_id_presupuesto($this->id_presupuesto);
 
         $resultado = $this->presupuesto->realizar_consulta('consultar_presupuesto');
         
@@ -117,7 +120,7 @@ class PresupuestoTest extends TestCase
         $this->presupuesto->set_cuota_reserva("1000");
         $this->presupuesto->set_observacion("Prueba unitaria");
 
-        $resultado = $this->presupuesto->realizar_consulta('registrar',true);
+        $resultado = $this->presupuesto->realizar_consulta('registrar');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -132,7 +135,7 @@ class PresupuestoTest extends TestCase
         $this->presupuesto->set_cuota_reserva("1111");
         $this->presupuesto->set_observacion("Prueba unitaria");
 
-        $resultado = $this->presupuesto->realizar_consulta('registrar',true);
+        $resultado = $this->presupuesto->realizar_consulta('registrar');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -147,7 +150,7 @@ class PresupuestoTest extends TestCase
         $this->presupuesto->set_cuota_reserva('');
         $this->presupuesto->set_observacion('');
 
-        $resultado = $this->presupuesto->realizar_consulta('registrar',true);
+        $resultado = $this->presupuesto->realizar_consulta('registrar');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -159,12 +162,12 @@ class PresupuestoTest extends TestCase
 
     //Metodo editar
     public function testEditarPresupuestoDatosCorrectos(){
-        $this->presupuesto->set_id_presupuesto(39); // Id existente
+        $this->presupuesto->set_id_presupuesto($this->id_presupuesto); // Id existente
         $this->presupuesto->set_fecha("2025-02-01");
         $this->presupuesto->set_cuota_reserva("150");
         $this->presupuesto->set_observacion("Prueba unitaria editada");
 
-        $resultado = $this->presupuesto->realizar_consulta('editar',true);
+        $resultado = $this->presupuesto->realizar_consulta('editar');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -175,12 +178,12 @@ class PresupuestoTest extends TestCase
     }
 
     public function testEditarPresupuestoDatosIncorrecto(){
-        $this->presupuesto->set_id_presupuesto(39); // Id existente
+        $this->presupuesto->set_id_presupuesto($this->id_presupuesto); // Id existente
         $this->presupuesto->set_fecha("fecha_incoreccta");
         $this->presupuesto->set_cuota_reserva("1111");
         $this->presupuesto->set_observacion("Prueba unitaria erronea");
 
-        $resultado = $this->presupuesto->realizar_consulta('editar',true);
+        $resultado = $this->presupuesto->realizar_consulta('editar');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -196,7 +199,7 @@ class PresupuestoTest extends TestCase
         $this->presupuesto->set_cuota_reserva("1111");
         $this->presupuesto->set_observacion("Prueba unitaria");
 
-        $resultado = $this->presupuesto->realizar_consulta('editar',true);
+        $resultado = $this->presupuesto->realizar_consulta('editar');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -207,12 +210,12 @@ class PresupuestoTest extends TestCase
     }
 
     public function testEditarPresupuestoUnicoDatosVacios(){
-        $this->presupuesto->set_id_presupuesto(39);
+        $this->presupuesto->set_id_presupuesto($this->id_presupuesto);
         $this->presupuesto->set_fecha("");
         $this->presupuesto->set_cuota_reserva('');
         $this->presupuesto->set_observacion("");
 
-        $resultado = $this->presupuesto->realizar_consulta('editar',true);
+        $resultado = $this->presupuesto->realizar_consulta('editar');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -224,9 +227,9 @@ class PresupuestoTest extends TestCase
 
     //Metodo eliminar
     public function testEliminarPresupuestoDatosCorrectos(){
-        $this->presupuesto->set_id_presupuesto(44); // Id existente
+        $this->presupuesto->set_id_presupuesto($this->id_presupuesto_borrar); // Id existente
 
-        $resultado = $this->presupuesto->realizar_consulta('eliminar',true);
+        $resultado = $this->presupuesto->realizar_consulta('eliminar');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -239,7 +242,7 @@ class PresupuestoTest extends TestCase
     public function testEliminarPresupuestoIDIncorrecto(){
         $this->presupuesto->set_id_presupuesto(12312312); // Id inexistente
 
-        $resultado = $this->presupuesto->realizar_consulta('eliminar',true);
+        $resultado = $this->presupuesto->realizar_consulta('eliminar');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -252,7 +255,7 @@ class PresupuestoTest extends TestCase
     public function testEliminarPresupuestoUnicoDatosVacios(){
         $this->presupuesto->set_id_presupuesto('');
 
-        $resultado = $this->presupuesto->realizar_consulta('eliminar',true);
+        $resultado = $this->presupuesto->realizar_consulta('eliminar');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);

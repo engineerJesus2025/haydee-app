@@ -64,7 +64,7 @@
 
             <div class="row mb-3">
                 <div class="col-md-12 text-center">
-                    <button class="btn btn-primary" type="submit" id="boton_formulario">Registrar</button>
+                    <button class="btn btn-primary" type="submit" id="boton_formulario">Guardar</button>
                 </div>
             </div>
         </div>

@@ -96,6 +96,9 @@
                     }
 
                 case 'registrar':
+                    $validaciones = $this->validarDatos();
+                    if(!($validaciones["estatus"])){return $validaciones;}
+
                     $respuesta = $this->registrar_banco_transaccion();
 
                     if ($respuesta) {
@@ -109,6 +112,9 @@
                     }
                 
                 case 'modificar':
+                    $validaciones = $this->validarDatos("editar");
+                    if(!($validaciones["estatus"])){return $validaciones;}
+
                     $respuesta = $this->editar_banco_transaccion();
 
                     if ($respuesta["resultado"]) {
@@ -124,6 +130,9 @@
                     }
 
                 case 'eliminar':
+                    $validaciones = $this->validarDatos("eliminar");
+                    if(!($validaciones["estatus"])){return $validaciones;}
+
                     $pago_alterado = $this->consultar_banco_transaccion();
 
                     if (empty($pago_alterado) || !isset($pago_alterado["datos"]["referencia"])) {
@@ -406,6 +415,52 @@
             } else {
                 return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar eliminar esta transaccion de banco"];
             }
+        }
+
+        private function validarDatos($consulta = "registrar"){
+            if ($consulta == "editar" || $consulta == "eliminar"){
+                if (!(isset($this->id_banco_transaccion))) {return ["estatus"=>false,"mensaje"=>"El id del Banco Transacción requerido no se recibio correctamente"];}
+
+                if (empty($this->id_banco_transaccion)) {return ["estatus"=>false,"mensaje"=>"El id del Banco Transacción requerido esta vacio"];}
+                
+                if(is_numeric($this->id_banco_transaccion)){
+                    if (!($this->validarClaveForanea("banco_transacciones","id_banco_transaccion",$this->id_banco_transaccion))) {
+                        return ["estatus"=>false,"mensaje"=>"El Banco Transacción seleccionado no existe"];
+                    }
+                    if ($consulta == "eliminar") {return ["estatus"=>true,"mensaje"=>"OK"];}
+                }
+                else{return ["estatus"=>false,"mensaje"=>"El id del Banco Transacción debe ser un valor numerico entero"];}
+            }
+
+            if (!(isset($this->referencia) && isset($this->imagen) && isset($this->detalle_pago_id) && isset($this->banco_id))) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos no se recibieron correctamente"];}
+
+            if (empty($this->referencia) || empty($this->imagen) || empty($this->detalle_pago_id) || empty($this->banco_id)) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos estan vacios"];}
+        
+            if(!(is_string($this->referencia))){
+                return ["estatus"=>false,"mensaje"=>"El campo 'Referencia' no posee un valor valido"];
+            }
+            if(!(is_string($this->imagen))){
+                return ["estatus"=>false,"mensaje"=>"El campo 'Imagen' no posee un valor valido"];
+            }
+            if(!(is_numeric($this->detalle_pago_id))){
+                return ["estatus"=>false,"mensaje"=>"El id del Detalle Pago asociado no posee un valor valido"];
+            }
+            if(!(is_numeric($this->banco_id))){
+                return ["estatus"=>false,"mensaje"=>"El id del Banco asociado no posee un valor valido"];
+            }
+
+            return ["estatus"=>true,"mensaje"=>"OK"];
+        }
+
+        private function validarClaveForanea($tabla,$nombreClave,$valor){
+            $sql="SELECT * FROM $tabla WHERE $nombreClave =:valor";
+
+            $conexion = $this->get_conex()->prepare($sql);
+            $conexion->bindParam(":valor", $valor);
+            $conexion->execute();
+            $result = $conexion->fetch(PDO::FETCH_ASSOC);
+
+            return ($result)?true:false;
         }
     }
 ?>

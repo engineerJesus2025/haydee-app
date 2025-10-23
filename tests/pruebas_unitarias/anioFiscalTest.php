@@ -6,6 +6,9 @@ class AnioFiscalTest extends TestCase
 {
     private $anio_fiscal;
 
+    private $id_anio_fiscal = 24;
+    private $id_anio_fiscal_borrar = 31;
+
     public function setUp(): void{
         $this->anio_fiscal = new Anio_fiscal();
     }
@@ -14,9 +17,9 @@ class AnioFiscalTest extends TestCase
         unset($this->anio_fiscal);
     }
 
-    //Metodo consultar
+    // //Metodo consultar
     public function testConsultarAniosFiscales(){
-        $resultado = $this->anio_fiscal->realizar_consulta('consultar',true);
+        $resultado = $this->anio_fiscal->realizar_consulta('consultar');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);        
@@ -31,7 +34,7 @@ class AnioFiscalTest extends TestCase
 
     // Metodo consultar_anio_fiscal
     public function testConsultarAnioFiscalUnicoIdCorrecto(){
-        $this->anio_fiscal->set_id_anio_fiscal(1);
+        $this->anio_fiscal->set_id_anio_fiscal($this->id_anio_fiscal);
 
         $resultado = $this->anio_fiscal->realizar_consulta('consultar_anio_fiscal');
         
@@ -72,7 +75,7 @@ class AnioFiscalTest extends TestCase
         $this->anio_fiscal->set_estado("Abierto");
         $this->anio_fiscal->set_descripcion("Prueba unitaria");
 
-        $resultado = $this->anio_fiscal->realizar_consulta('registrar',true);
+        $resultado = $this->anio_fiscal->realizar_consulta('registrar');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -88,7 +91,7 @@ class AnioFiscalTest extends TestCase
         $this->anio_fiscal->set_estado("Abierto");
         $this->anio_fiscal->set_descripcion("Prueba unitaria");
 
-        $resultado = $this->anio_fiscal->realizar_consulta('registrar',true);
+        $resultado = $this->anio_fiscal->realizar_consulta('registrar');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -104,7 +107,7 @@ class AnioFiscalTest extends TestCase
         $this->anio_fiscal->set_estado("");
         $this->anio_fiscal->set_descripcion("");
 
-        $resultado = $this->anio_fiscal->realizar_consulta('registrar',true);
+        $resultado = $this->anio_fiscal->realizar_consulta('registrar');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -114,9 +117,9 @@ class AnioFiscalTest extends TestCase
         $this->assertStringContainsString("Uno o varios de los campos requeridos estan vacios", $resultado["mensaje"]);
     }
 
-    // //Metodo editar
+    //Metodo editar
     public function testEditarAnioFiscalDatosCorrectos(){
-        $this->anio_fiscal->set_id_anio_fiscal(1); // Id existente
+        $this->anio_fiscal->set_id_anio_fiscal($this->id_anio_fiscal); // Id existente
         $this->anio_fiscal->set_fecha_inicio("2025-01-01");
         $this->anio_fiscal->set_fecha_cierre("2026-01-01");
         $this->anio_fiscal->set_estado("Abierto");
@@ -133,7 +136,7 @@ class AnioFiscalTest extends TestCase
     }
 
     public function testEditarAnioFiscalDatosIncorrecto(){
-        $this->anio_fiscal->set_id_anio_fiscal(1); // Id existente
+        $this->anio_fiscal->set_id_anio_fiscal($this->id_anio_fiscal); // Id existente
         $this->anio_fiscal->set_fecha_inicio("2021-01-01");
         $this->anio_fiscal->set_fecha_cierre("fecha_icorrecto");
         $this->anio_fiscal->set_estado("Abierto");
@@ -167,7 +170,7 @@ class AnioFiscalTest extends TestCase
     }
 
     public function testEditarAnioFiscalUnicoDatosVacios(){
-        $this->anio_fiscal->set_id_anio_fiscal(1);
+        $this->anio_fiscal->set_id_anio_fiscal($this->id_anio_fiscal);
         $this->anio_fiscal->set_fecha_inicio("");
         $this->anio_fiscal->set_fecha_cierre("");
         $this->anio_fiscal->set_estado("");
@@ -185,9 +188,9 @@ class AnioFiscalTest extends TestCase
 
     //Metodo eliminar
     public function testEliminarAnioFiscalDatosCorrectos(){
-        $this->anio_fiscal->set_id_anio_fiscal(4); // Id existente
+        $this->anio_fiscal->set_id_anio_fiscal($this->id_anio_fiscal_borrar); // Id existente
 
-        $resultado = $this->anio_fiscal->realizar_consulta('eliminar',true);
+        $resultado = $this->anio_fiscal->realizar_consulta('eliminar');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -200,7 +203,7 @@ class AnioFiscalTest extends TestCase
     public function testEliminarAnioFiscalIDIncorrecto(){
         $this->anio_fiscal->set_id_anio_fiscal(12312312); // Id inexistente
 
-        $resultado = $this->anio_fiscal->realizar_consulta('eliminar',true);
+        $resultado = $this->anio_fiscal->realizar_consulta('eliminar');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -213,7 +216,7 @@ class AnioFiscalTest extends TestCase
     public function testEliminarAnioFiscalUnicoDatosVacios(){
         $this->anio_fiscal->set_id_anio_fiscal('');
 
-        $resultado = $this->anio_fiscal->realizar_consulta('eliminar',true);
+        $resultado = $this->anio_fiscal->realizar_consulta('eliminar');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);

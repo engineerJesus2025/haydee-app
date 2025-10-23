@@ -443,7 +443,7 @@ async function eliminar(id) {
 	mensajes('success',4000,'Atencion','El registro ha sido eliminado correctamente');//Mensaje de que se completo la operacion
 }
 
-async function query(datos) {
+async function query(datos) {	
 	let tiempoCarga = setTimeout(()=>{
 		modal_carga.show();
 	}, 100);

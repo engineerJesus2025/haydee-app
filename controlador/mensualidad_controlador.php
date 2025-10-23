@@ -45,6 +45,7 @@ if (isset($_POST["operacion"])){
     }
     else if($operacion == "registrar_mensualidad"){
         $mensualidad_obj = new Mensualidad();
+        
         $monto = $_POST["monto"];
         $tasa_dolar = $_POST["tasa_dolar"];
         $mes = $_POST["mes"];

@@ -96,7 +96,6 @@ class Solicitud_gasto extends Conexion
                 $respuesta = $this->consultar();
 
                 if ($respuesta["resultado"]) {
-                    $this->registrar_bitacora(CONSULTAR, GESTIONAR_SOLICITUD_GASTO, "TODOS LAS SOLICITUDES");//registra cuando se entra al modulo de solicitudes de gasto
                     return $respuesta["datos"];
                 } else {
                     return ["estatus" => false, "mensaje" => "Ha ocurrido un error con la consulta"];
@@ -118,7 +117,6 @@ class Solicitud_gasto extends Conexion
                 $respuesta = $this->registrar();
 
                 if ($respuesta) {
-                    $this->registrar_bitacora(REGISTRAR, GESTIONAR_SOLICITUD_GASTO, "Solicitud de Gasto " . $this->nombre_solicitante . " por " . $this->monto_estimado);
                     return ["estatus" => true, "mensaje" => "OK"];
                 } else {
                     return ["estatus" => false, "mensaje" => "Ha ocurrido un error al intentar registrar la solicitud"];
@@ -132,13 +130,16 @@ class Solicitud_gasto extends Conexion
                 $respuesta = $this->editar_solicitud();
 
                 if ($respuesta) {
-                    $this->registrar_bitacora(MODIFICAR, GESTIONAR_SOLICITUD_GASTO, "Solicitud de Gasto " . $this->nombre_solicitante . " por " . $this->monto_estimado);
                     return ["estatus" => true, "mensaje" => "OK"];
                 } else {
                     return ["estatus" => false, "mensaje" => "Ha ocurrido un error al intentar editar la solicitud"];
                 }
 
             case 'eliminar':
+                 $validacion = $this->validar_datos('eliminar');
+                if (!$validacion["estatus"]) {
+                    return $validacion; // Si la validación falla, retorna el mensaje de error
+                }
                 $respuesta = $this->eliminar_solicitud();
 
                 if ($respuesta) {
@@ -403,6 +404,30 @@ class Solicitud_gasto extends Conexion
 
     public function validar_datos($accion)
     {
+        if ($accion == "modificar" || $accion == "eliminar") {
+            
+            // Validación 1.1: ID vacío
+            if (empty(trim($this->id_solicitud))) {
+                return ["estatus" => false, "mensaje" => "El id de la solicitud requerida esta vacio"];
+            }
+
+            // Validación 1.2: ID no es numérico
+            if (!is_numeric($this->id_solicitud)) {
+                 return ["estatus"=>false, "mensaje"=>"El id de la solicitud debe ser un valor numerico"];
+            }
+
+            // Validación 1.3: ID no existe en la BD
+            if (!($this->validarClaveForanea("solicitudes_gasto", "id_solicitud", $this->id_solicitud))) {
+                return ["estatus" => false, "mensaje" => "La solicitud seleccionada no existe"];
+            }
+
+            // Si la acción es 'eliminar' y pasó las validaciones de ID, terminamos.
+            if ($accion == "eliminar") {
+                return ["estatus" => true, "mensaje" => "OK"];
+            }
+        }
+
+
         if (empty(trim($this->descripcion_necesidad))) {
             return ["estatus" => false, "mensaje" => "La descripción de la necesidad no puede estar vacía."];
         }

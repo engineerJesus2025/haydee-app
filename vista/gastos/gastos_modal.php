@@ -181,7 +181,7 @@
         <div class="row">
             <div class="col-md-12 text-center">
                 <button class="btn btn-primary px-4" type="submit" id="boton_formulario">
-                    <i class="bi bi-save me-1"></i> Registrar
+                    <i class="bi bi-save me-1"></i> Guardar
                 </button>
             </div>
         </div>

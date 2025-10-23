@@ -8,7 +8,15 @@
     <!-- <link rel="icon" href="recursos/img/logo_ico.png"> -->
     <link rel="stylesheet" href="recursos/css/estilos_login.css">
     <link rel="stylesheet" href="recursos/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" href="recursos/bootstrap-icons/bootstrap-icons.min.css">    
+    <link rel="stylesheet" href="recursos/bootstrap-icons/bootstrap-icons.min.css"> 
+    <style type="text/css">
+        @media only screen and (max-width: 500px) {
+    .g-recaptcha {
+        transform:scale(0.70);
+        transform-origin:0 0;
+    }
+}
+    </style>  
 </head>
 
 <body>
@@ -51,7 +59,7 @@
                                     <div class="col-12">
                                         <a data-bs-toggle="modal" data-bs-target="#modal_recuperar_contrasenia" type="button" class="link">Recuperar Contraseña</a>
                                     </div>
-                                    <div class="g-recaptcha my-2 mt-4" 
+                                    <div class="g-recaptcha my-2 mt-4 col-12" 
                                          data-sitekey="<?php echo(CLAVE_SITIO_RECAPTCHA); ?>" 
                                          data-theme="light" 
                                          data-size="normal"

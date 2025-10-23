@@ -22,6 +22,7 @@ if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
 
     if ($operacion == "consulta") {
+        $gastos_obj->registrar_bitacora(CONSULTAR, GESTIONAR_GASTOS, "TODOS LOS GASTOS");
         echo json_encode($gastos_obj->realizar_consulta("consultar"));
         exit;
     }
@@ -32,7 +33,11 @@ if (isset($_POST["operacion"])) {
         $gastos_obj->set_tipo_gasto_id($_POST["tipo_gasto"]);
         $gastos_obj->set_solicitud_id($_POST["solicitud"]);
         $gastos_obj->set_proveedor_id($_POST["proveedor"]);
-        $gastos_obj->realizar_consulta("registrar");
+        $resultado = $gastos_obj->realizar_consulta("registrar");
+
+        if ($resultado["estatus"]) {
+            $gastos_obj->registrar_bitacora(REGISTRAR, GESTIONAR_GASTOS, $gastos_obj->get_descripcion_gasto());
+        }
 
         $gasto_id_respuesta = $gastos_obj->realizar_consulta("lastId");
         $gasto_id = $gasto_id_respuesta["mensaje"];
@@ -115,7 +120,11 @@ if (isset($_POST["operacion"])) {
         $gastos_obj->set_tipo_gasto_id($_POST["tipo_gasto"]);
         $gastos_obj->set_solicitud_id($_POST["solicitud"]);
         $gastos_obj->set_proveedor_id($_POST["proveedor"]);
-        $gastos_obj->realizar_consulta("editar_gasto");
+        $resultado = $gastos_obj->realizar_consulta("editar_gasto");
+
+        if ($resultado["estatus"]) {
+            $gastos_obj->registrar_bitacora(MODIFICAR, GESTIONAR_GASTOS, $gastos_obj->get_descripcion_gasto());
+        }
 
         $detalles_gastos_obj->set_gasto_id($id_gasto);
         // CORRECCIÓN: Se usa la acción 'eliminar_por_gasto' del modelo de detalles
@@ -181,7 +190,12 @@ if (isset($_POST["operacion"])) {
 
     elseif ($operacion == "eliminar") {
         $gastos_obj->set_id_gasto($_POST["id_gasto"]);
-        echo json_encode($gastos_obj->realizar_consulta("eliminar_gasto"));
+        $gasto_alterado = $gastos_obj->realizar_consulta('consultar_gasto');
+        $resultado = $gastos_obj->realizar_consulta("eliminar_gasto");
+        if ($resultado["estatus"]) {
+            $gastos_obj->registrar_bitacora(ELIMINAR, GESTIONAR_GASTOS,  $gasto_alterado["descripcion_gasto"]);
+        }
+        echo json_encode($resultado);
         exit;
     }
 

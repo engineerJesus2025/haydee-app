@@ -1,4 +1,5 @@
 <?php
+    require_once "vista/componentes/sesion.php";
     require_once("modelo/rol_modelo.php");
     require_once "ayuda/ayuda.php";
     require_once "modelo/permisos_usuarios_modelo.php";

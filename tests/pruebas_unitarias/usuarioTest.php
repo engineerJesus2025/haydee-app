@@ -6,6 +6,10 @@ class UsuarioTest extends TestCase
 {
     private $usuario;
 
+    private $id_usuario = 1;
+    private $id_usuario_eliminar = 82;
+    private $id_usuario_editar = 53;
+
     public function setUp(): void{
         $this->usuario = new Usuario();
     }
@@ -18,7 +22,7 @@ class UsuarioTest extends TestCase
     public function testValidarUsuarioCorreoCorrecto(){
         $this->usuario->set_correo("administrador@gmail.com");
 
-        $resultado = $this->usuario->realizar_consulta('validar_usuario',true);
+        $resultado = $this->usuario->realizar_consulta('validar_usuario');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -36,7 +40,7 @@ class UsuarioTest extends TestCase
     public function testValidarUsuarioCorreoIncorrecto(){
         $this->usuario->set_correo("correo_incorrecto");
 
-        $resultado = $this->usuario->realizar_consulta('validar_usuario',true);
+        $resultado = $this->usuario->realizar_consulta('validar_usuario');
         
         $this->assertFalse($resultado["estatus"]);
         $this->assertStringContainsString("Usuario no encontrado", $resultado["mensaje"]);
@@ -45,7 +49,7 @@ class UsuarioTest extends TestCase
     public function testValidarUsuarioCorreoInexistente(){
         $this->usuario->set_correo("correo_inexistenete@gmail.com");
 
-        $resultado = $this->usuario->realizar_consulta('validar_usuario',true);
+        $resultado = $this->usuario->realizar_consulta('validar_usuario');
         
         $this->assertFalse($resultado["estatus"]);
         $this->assertStringContainsString("Usuario no encontrado", $resultado["mensaje"]);
@@ -54,7 +58,7 @@ class UsuarioTest extends TestCase
     public function testValidarUsuarioDatosVacios(){
         $this->usuario->set_correo('');
 
-        $resultado = $this->usuario->realizar_consulta('validar_usuario',true);
+        $resultado = $this->usuario->realizar_consulta('validar_usuario');
         
         $this->assertFalse($resultado["estatus"]);
         $this->assertStringContainsString("Usuario no encontrado", $resultado["mensaje"]);
@@ -96,7 +100,7 @@ class UsuarioTest extends TestCase
 
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
-        $this->assertCount(8, $resultado);
+        $this->assertCount(10, $resultado);
 
         // Revisamos la estructura de un elemento
         $this->assertArrayHasKey('id_usuario', $resultado);
@@ -107,6 +111,8 @@ class UsuarioTest extends TestCase
         $this->assertArrayHasKey('rol_id', $resultado);
         $this->assertArrayHasKey('token', $resultado);
         $this->assertArrayHasKey('duracion_token', $resultado);
+        $this->assertArrayHasKey('token_recuerdame', $resultado);
+        $this->assertArrayHasKey('duracion_token_recuerdame', $resultado);
     }
 
     public function testValidarTokenIncorrecto(){
@@ -115,8 +121,7 @@ class UsuarioTest extends TestCase
 
         $resultado = $this->usuario->realizar_consulta('validar_token');
         
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("Token no encontrado", $resultado["mensaje"]);
+        $this->assertFalse($resultado);
     }
 
     public function testValidarDuracionTokenIncorrecto(){
@@ -125,14 +130,12 @@ class UsuarioTest extends TestCase
 
         $resultado = $this->usuario->realizar_consulta('validar_token');
         
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("Token no encontrado", $resultado["mensaje"]);
+        $this->assertFalse($resultado);
     }
 
     //Metodo validar_token_recuerdame
     public function testValidarTokenRecuerdameCorrecto(){
-        $this->usuario->set_token_recuerdame("token recuerdame de prueba");
-        $this->usuario->set_duracion_token_recuerdame("2023-08-24 16:43:42");
+        $this->usuario->set_correo("recuerdame2@gmaiil.com");
 
         $resultado = $this->usuario->realizar_consulta('validar_token_recuerdame');
 
@@ -142,38 +145,28 @@ class UsuarioTest extends TestCase
 
         // Revisamos la estructura de un elemento
         $this->assertArrayHasKey('id_usuario', $resultado);
-        $this->assertArrayHasKey('nombre', $resultado);
-        $this->assertArrayHasKey('apellido', $resultado);
+        $this->assertArrayHasKey('nombre_usuario', $resultado);
+        $this->assertArrayHasKey('nombre_rol', $resultado);
+        $this->assertArrayHasKey('id_rol', $resultado);
         $this->assertArrayHasKey('correo', $resultado);
-        $this->assertArrayHasKey('contrasenia', $resultado);
-        $this->assertArrayHasKey('rol_id', $resultado);
-        $this->assertArrayHasKey('token', $resultado);
-        $this->assertArrayHasKey('duracion_token', $resultado);
+        $this->assertArrayHasKey('contrasenia', $resultado);                
+        $this->assertArrayHasKey('token_recuerdame', $resultado);
+        $this->assertArrayHasKey('duracion_token_recuerdame', $resultado);
     }
 
-    public function testValidarTokenRecuerdameIncorrecto(){
-        $this->usuario->set_token_recuerdame("token_incorrecto");
-        $this->usuario->set_duracion_token_recuerdame("2025-08-24 16:43:41");
+    public function testValidarTokenRecuerdameCorreoIncorrecto(){
+        $this->usuario->set_correo("correo_incorrecto");
 
         $resultado = $this->usuario->realizar_consulta('validar_token_recuerdame');
         
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("Token no encontrado", $resultado["mensaje"]);
+        $this->assertFalse($resultado);
     }
 
-    public function testValidarDuracionTokenRecuerdameIncorrecto(){
-        $this->usuario->set_token_recuerdame("token recuerdame de prueba");
-        $this->usuario->set_duracion_token_recuerdame("2025-10-24 16:43:41");
 
-        $resultado = $this->usuario->realizar_consulta('validar_token_recuerdame');
-        
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("Token no encontrado", $resultado["mensaje"]);
-    }
 
     //Metodo consultar
     public function testConsultarUsuario(){
-        $resultado = $this->usuario->realizar_consulta('consultar',true);
+        $resultado = $this->usuario->realizar_consulta('consultar');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);        
@@ -188,15 +181,16 @@ class UsuarioTest extends TestCase
         $this->assertArrayHasKey('nombre_rol', $resultado[0]);
     }
 
+
     //Metodo consultar_usuario
     public function testConsultarUsuarioUnicoIdCorrecto(){
-        $this->usuario->set_id_usuario(1);
+        $this->usuario->set_id_usuario($this->id_usuario);
 
         $resultado = $this->usuario->realizar_consulta('consultar_usuario');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
-        $this->assertCount(6, $resultado);
+        $this->assertCount(7, $resultado);
 
         // Revisamos la estructura de un elemento
         $this->assertArrayHasKey('id_usuario', $resultado);
@@ -205,6 +199,7 @@ class UsuarioTest extends TestCase
         $this->assertArrayHasKey('correo', $resultado);
         $this->assertArrayHasKey('nombre_rol', $resultado);
         $this->assertArrayHasKey('contrasenia', $resultado);
+        $this->assertArrayHasKey('rol_id', $resultado);
     }
 
     public function testConsultarUsuarioUnicoIdIncorrecto(){
@@ -227,7 +222,7 @@ class UsuarioTest extends TestCase
 
     //Metodo consultar_perfil_usuario
     public function testConsultarPerfilUsuarioUnicoIdCorrecto(){
-        $this->usuario->set_id_usuario(1);
+        $this->usuario->set_id_usuario($this->id_usuario);
 
         $resultado = $this->usuario->realizar_consulta('consultar_perfil_usuario');
         
@@ -380,7 +375,8 @@ class UsuarioTest extends TestCase
     // registrar_token_recuerdame
     public function testRegistrarTokenRecuerdameDatosCorrectos(){
         $this->usuario->set_token_recuerdame("token de prueba recuerdame agregado");
-        $this->usuario->set_duracion_token_recuerdame("2023-08-24 16:43:41");
+        $expiracion = time() + (30 * 24 * 60 * 60); // 30 días
+        $this->usuario->set_duracion_token_recuerdame($expiracion);
         $this->usuario->set_correo("agregartoken@gmail.com");
 
         $resultado = $this->usuario->realizar_consulta('registrar_token_recuerdame');
@@ -426,14 +422,14 @@ class UsuarioTest extends TestCase
 
     //Metodo editar_usuario
     public function testEditarUsuarioDatosCorrectos(){
-        $this->usuario->set_id_usuario(53); // Id existente
+        $this->usuario->set_id_usuario($this->id_usuario_editar); // Id existente
         $this->usuario->set_apellido("apellido editado");
         $this->usuario->set_nombre("nombre editado");
         $this->usuario->set_correo("pruebaEditada@gmail.com");
         $this->usuario->set_contra("contraseñadepruebaeditada");
         $this->usuario->set_rol_id(4);
 
-        $resultado = $this->usuario->realizar_consulta('editar_usuario',true);
+        $resultado = $this->usuario->realizar_consulta('editar_usuario');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -444,14 +440,14 @@ class UsuarioTest extends TestCase
     }
 
     public function testEditarUsuarioDatosIncorrecto(){
-        $this->usuario->set_id_usuario(53); // Id existente
+        $this->usuario->set_id_usuario($this->id_usuario_editar); // Id existente
         $this->usuario->set_apellido("12312aasdas");
         $this->usuario->set_nombre("123asdas");
         $this->usuario->set_correo("prueba incorecta");
         $this->usuario->set_contra("++`´ç´ç´ç");
         $this->usuario->set_rol_id(4);
 
-        $resultado = $this->usuario->realizar_consulta('editar_usuario',true);
+        $resultado = $this->usuario->realizar_consulta('editar_usuario');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -469,7 +465,7 @@ class UsuarioTest extends TestCase
         $this->usuario->set_contra("contraseña de prueba editada");
         $this->usuario->set_rol_id(4);
 
-        $resultado = $this->usuario->realizar_consulta('editar_usuario',true);
+        $resultado = $this->usuario->realizar_consulta('editar_usuario');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -480,14 +476,14 @@ class UsuarioTest extends TestCase
     }
 
     public function testEditarUsuarioIDRolIncorrecto(){
-        $this->usuario->set_id_usuario(53); // Id existente
+        $this->usuario->set_id_usuario($this->id_usuario_editar); // Id existente
         $this->usuario->set_apellido("apelllido");
         $this->usuario->set_nombre("nombre");
         $this->usuario->set_correo("prueba@gmai.com");
         $this->usuario->set_contra("contraseniaprueba");
         $this->usuario->set_rol_id(123123);
 
-        $resultado = $this->usuario->realizar_consulta('editar_usuario',true);
+        $resultado = $this->usuario->realizar_consulta('editar_usuario');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -498,14 +494,14 @@ class UsuarioTest extends TestCase
     }
 
     public function testEditarUsuarioUnicoDatosVacios(){
-        $this->usuario->set_id_usuario(53); // Id existente
+        $this->usuario->set_id_usuario($this->id_usuario_editar); // Id existente
         $this->usuario->set_apellido("");
         $this->usuario->set_nombre("");
         $this->usuario->set_correo("");
         $this->usuario->set_contra("");
         $this->usuario->set_rol_id('');
 
-        $resultado = $this->usuario->realizar_consulta('editar_usuario',true);
+        $resultado = $this->usuario->realizar_consulta('editar_usuario');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -517,10 +513,10 @@ class UsuarioTest extends TestCase
 
     //Metodo editar_perfil
     public function testEditarPerfilUsuarioDatosCorrectos(){
-        $this->usuario->set_id_usuario(56); // Id existente
+        $this->usuario->set_id_usuario($this->id_usuario_editar); // Id existente
         $this->usuario->set_apellido("perfil editado");
         $this->usuario->set_nombre("perfil editado");
-        $this->usuario->set_correo("perfilEditada@gmail.com");        
+        $this->usuario->set_correo("UsuarioperfilEditada@gmail.com");        
 
         $resultado = $this->usuario->realizar_consulta('editar_perfil');
         
@@ -533,7 +529,7 @@ class UsuarioTest extends TestCase
     }
 
     public function testEditarPerfilUsuarioDatosIncorrecto(){
-        $this->usuario->set_id_usuario(56); // Id existente
+        $this->usuario->set_id_usuario($this->id_usuario_editar); // Id existente
         $this->usuario->set_apellido("12312aasdas");
         $this->usuario->set_nombre("123asdas");
         $this->usuario->set_correo("prueba incorecta");        
@@ -565,7 +561,7 @@ class UsuarioTest extends TestCase
     }
 
     public function testEditarPerfilUsuarioUnicoDatosVacios(){
-        $this->usuario->set_id_usuario(53); // Id existente
+        $this->usuario->set_id_usuario($this->id_usuario_editar); // Id existente
         $this->usuario->set_apellido("");
         $this->usuario->set_nombre("");
         $this->usuario->set_correo("");        
@@ -639,9 +635,9 @@ class UsuarioTest extends TestCase
 
     //Metodo eliminar_usuario
     public function testEliminarUsuarioDatosCorrectos(){
-        $this->usuario->set_id_usuario(52); // Id existente
+        $this->usuario->set_id_usuario($this->id_usuario_eliminar); // Id existente
 
-        $resultado = $this->usuario->realizar_consulta('eliminar_usuario',true);
+        $resultado = $this->usuario->realizar_consulta('eliminar_usuario');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -654,7 +650,7 @@ class UsuarioTest extends TestCase
     public function testEliminarUsuarioIDIncorrecto(){
         $this->usuario->set_id_usuario(12312312); // Id inexistente
 
-        $resultado = $this->usuario->realizar_consulta('eliminar_usuario',true);
+        $resultado = $this->usuario->realizar_consulta('eliminar_usuario');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -667,7 +663,7 @@ class UsuarioTest extends TestCase
     public function testEliminarUsuarioDatosVacios(){
         $this->usuario->set_id_usuario('');
 
-        $resultado = $this->usuario->realizar_consulta('eliminar_usuario',true);
+        $resultado = $this->usuario->realizar_consulta('eliminar_usuario');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -701,7 +697,7 @@ class UsuarioTest extends TestCase
         $this->assertCount(2, $resultado);
         
         $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("El token requerido esta vacio", $resultado["mensaje"]);
+        $this->assertStringContainsString("El tiempo del token requerido esta vacio", $resultado["mensaje"]);
     }
 
     //Metodo eliminar_token_recuerdame

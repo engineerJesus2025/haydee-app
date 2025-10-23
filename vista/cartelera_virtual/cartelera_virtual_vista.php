@@ -32,7 +32,7 @@
                 <main class="col ps-md-2 pt-2 mb-5">
 
                     <div class="page-header pt-3">
-                        <h2>CARTELERA VIRTUAL</h2>
+                        <h2>GESTIONAR CARTELERA VIRTUAL</h2>
                     </div>
                     <p class="lead"></p>
                     <hr>
@@ -43,7 +43,7 @@
                                 <?php if (Cartelera_virtual::tiene_permiso(GESTIONAR_CARTELERA_VIRTUAL, REGISTRAR)): ?>
                                     <div class="button mb-4">
                                         <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                                            data-bs-target="#modal_cartelera">Registrar Publicación</a>
+                                            data-bs-target="#modal_cartelera">Nueva Publicación</button>
                                     </div><br>
                                 <?php endif; ?>
 

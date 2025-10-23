@@ -14,18 +14,6 @@ class RolTest extends TestCase
         unset($this->rol);
     }
 
-    //Metodo consultar
-    public function testConsultarRoles(){
-        $resultado = $this->rol->realizar_consulta('consultar',true);
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);        
-
-        // Revisamos la estructura de un elemento
-        $this->assertArrayHasKey('id_rol', $resultado[0]);
-        $this->assertArrayHasKey('nombre', $resultado[0]);        
-    }
-
     //Metodo verificar_nombre
     public function testBuscarRolExistente(){
         $this->rol->set_nombre("Administrador");
@@ -53,18 +41,17 @@ class RolTest extends TestCase
         $this->assertStringContainsString('nombre', $resultado["busqueda"]);
     }
 
-    //Metodo consultar_roles
-    public function testConsultarRolesExternos(){
-        $resultado = $this->rol->realizar_consulta('consultar_roles');
+    //Metodo consultar
+    public function testConsultarRoles(){
+        $resultado = $this->rol->realizar_consulta('consultar');
         
         $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
+        $this->assertNotEmpty($resultado);        
 
         // Revisamos la estructura de un elemento
         $this->assertArrayHasKey('id_rol', $resultado[0]);
         $this->assertArrayHasKey('nombre', $resultado[0]);        
-    }
-
+    }    
 
     //Metodo consultar_rol
     public function testConsultarRolUnicoIdCorrecto(){
@@ -103,7 +90,7 @@ class RolTest extends TestCase
     public function testRegistrarRolDatosCorrectos(){
         $this->rol->set_nombre("rol de prueba");
 
-        $resultado = $this->rol->realizar_consulta('registrar',true);
+        $resultado = $this->rol->realizar_consulta('registrar');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -116,7 +103,7 @@ class RolTest extends TestCase
     public function testRegistrarRolDatosIncorrecto(){
         $this->rol->set_nombre("rol_incorrecto+`+´123");
 
-        $resultado = $this->rol->realizar_consulta('registrar',true);
+        $resultado = $this->rol->realizar_consulta('registrar');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -129,7 +116,7 @@ class RolTest extends TestCase
     public function testRegistrarRolDatosVacios(){
         $this->rol->set_nombre("");        
 
-        $resultado = $this->rol->realizar_consulta('registrar',true);
+        $resultado = $this->rol->realizar_consulta('registrar');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -144,7 +131,7 @@ class RolTest extends TestCase
         $this->rol->set_id_rol(27); // Id existente
         $this->rol->set_nombre("rol de prueba editado");
 
-        $resultado = $this->rol->realizar_consulta('editar_rol',true);
+        $resultado = $this->rol->realizar_consulta('editar_rol');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -158,7 +145,7 @@ class RolTest extends TestCase
         $this->rol->set_id_rol(27); // Id existente
         $this->rol->set_nombre("rol_incorrecto asd`++`213+");
 
-        $resultado = $this->rol->realizar_consulta('editar_rol',true);
+        $resultado = $this->rol->realizar_consulta('editar_rol');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -172,7 +159,7 @@ class RolTest extends TestCase
         $this->rol->set_id_rol(23423); 
         $this->rol->set_nombre("rol de prueba editado");
 
-        $resultado = $this->rol->realizar_consulta('editar_rol',true);
+        $resultado = $this->rol->realizar_consulta('editar_rol');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -186,7 +173,7 @@ class RolTest extends TestCase
         $this->rol->set_id_rol(27);
         $this->rol->set_nombre("");
 
-        $resultado = $this->rol->realizar_consulta('editar_rol',true);
+        $resultado = $this->rol->realizar_consulta('editar_rol');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -198,7 +185,7 @@ class RolTest extends TestCase
 
     //Metodo eliminar_rol
     public function testEliminarRolDatosCorrectos(){
-        $this->rol->set_id_rol(39); // Id existente
+        $this->rol->set_id_rol(41); // Id existente
 
         $resultado = $this->rol->realizar_consulta('eliminar_rol',true);
         

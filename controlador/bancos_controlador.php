@@ -1,4 +1,5 @@
 <?php
+require_once "vista/componentes/sesion.php";
     require_once("modelo/banco_modelo.php");
 
     $obj_banco = new Banco(); // Objeto banco 

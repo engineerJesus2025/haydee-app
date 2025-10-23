@@ -1,5 +1,5 @@
 <?php 
-
+require_once "vista/componentes/sesion.php";
 require_once "modelo/conexion.php";
 
 $conexion = new Conexion();

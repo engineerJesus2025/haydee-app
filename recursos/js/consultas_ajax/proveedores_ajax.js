@@ -241,7 +241,7 @@ async function modificar_formulario(e) {
     // Esto ahora se ejecutará correctamente
     boton_formulario.setAttribute("modificar", true);
     boton_formulario.setAttribute("id_modificar", data.id_proveedor);
-    boton_formulario.textContent = "Modificar";
+    boton_formulario.textContent = "Guardar Cambios";
     // CORRECCIÓN: El título ahora es el correcto
     document.getElementById("titulo_modal").textContent = "Modificar Proveedor";
     id_modificar = id;

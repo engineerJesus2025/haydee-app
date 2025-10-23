@@ -1,4 +1,5 @@
 <?php
+require_once "vista/componentes/sesion.php";
 require_once "modelo/gastos_modelo.php";
 require_once "modelo/mensualidad_modelo.php";
 require_once "modelo/habitantes_modelo.php";

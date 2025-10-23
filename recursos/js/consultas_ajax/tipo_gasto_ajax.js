@@ -260,7 +260,7 @@ async function modificar_formulario(e) {
 	// aqui cambiamos los datos del boton para registrar, para saber que ahora se va es a modificar un registro
 	boton_formulario.setAttribute("modificar",true);
 	boton_formulario.setAttribute("id_modificar",data.id_tipo_gasto);
-	boton_formulario.textContent = "Modificar";
+	boton_formulario.textContent = "Guardar Cambios";
 	document.getElementById('titulo_modal').textContent = "Modificar Tipo de Gasto";
 	//formulario_usar.querySelector("#confir_contra").parentElement.previousElementSibling.textContent = "Nueva Contraseña" 
 	//formulario_usar.querySelector("#confir_contra").placeholder = "Nueva Contraseña" 

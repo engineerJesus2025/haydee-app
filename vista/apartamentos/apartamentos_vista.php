@@ -138,6 +138,7 @@
                                                 <th>APELLIDO</th>
                                                 <th>CEDULA</th>
                                                 <th>APARTAMENTO</th>
+                                                <th>TIPO VINCULO</th>
                                                 <th class="text-center">ACCIONES</th>
                                             </tr>
                                         </thead>

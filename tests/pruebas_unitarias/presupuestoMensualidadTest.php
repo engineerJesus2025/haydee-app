@@ -6,6 +6,10 @@ class PresupuestoMensualidadTest extends TestCase
 {
     private $presupuesto_mensualidad;
 
+    private $id_mensualidad = 318;
+    private $id_presupuesto = 70;
+    private $id_detalle_presupuesto = 56;
+
     public function setUp(): void{
         $this->presupuesto_mensualidad = new Presupuesto_mensualidad();
     }
@@ -16,7 +20,7 @@ class PresupuestoMensualidadTest extends TestCase
 
     //Metodo consultar_presupuestos_asociados
     public function testConsultarPresupuestosAsociadosIdMensualidadCorrecto(){
-        $this->presupuesto_mensualidad->set_mensualidad_id(232);
+        $this->presupuesto_mensualidad->set_mensualidad_id($this->id_mensualidad);
 
         $resultado = $this->presupuesto_mensualidad->realizar_consulta('consultar_presupuestos_asociados');
         
@@ -49,35 +53,33 @@ class PresupuestoMensualidadTest extends TestCase
 
     //Metodo registrar
     public function testRegistrarPresupuestoMensualidadDatosCorrectos(){
-        $this->presupuesto_mensualidad->set_mensualidad_id(232);
-        $this->presupuesto_mensualidad->set_presupuesto_id(337);
+        $this->presupuesto_mensualidad->set_mensualidad_id($this->id_mensualidad);
+        $this->presupuesto_mensualidad->set_presupuesto_id($this->id_presupuesto);
 
         $resultado = $this->presupuesto_mensualidad->realizar_consulta('registrar');
-        
+
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
         $this->assertCount(2, $resultado);
-        
+
         $this->assertTrue($resultado["estatus"]);
         $this->assertStringContainsString('OK', $resultado["mensaje"]);
     }
-
     public function testRegistrarPresupuestoMensualidadIDMensualidadIncorrecto(){
         $this->presupuesto_mensualidad->set_mensualidad_id(123122);
-        $this->presupuesto_mensualidad->set_presupuesto_id(337);
+        $this->presupuesto_mensualidad->set_presupuesto_id($this->id_presupuesto);
 
         $resultado = $this->presupuesto_mensualidad->realizar_consulta('registrar');
-        
+
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
         $this->assertCount(2, $resultado);
-        
+
         $this->assertFalse($resultado["estatus"]);
         $this->assertStringContainsString("La mensualidad seleccionada no existe", $resultado["mensaje"]);
     }
-
-    public function testRegistrarPresupuestoMensualidadIDPresupuestoIncorrecto(){
-        $this->presupuesto_mensualidad->set_mensualidad_id(232);
+    public function testRegistrarPresupuestoMensualidadIDPresupuestoIncorrecto(){   
+        $this->presupuesto_mensualidad->set_mensualidad_id($this->id_mensualidad);
         $this->presupuesto_mensualidad->set_presupuesto_id(123122);
 
         $resultado = $this->presupuesto_mensualidad->realizar_consulta('registrar');
@@ -106,8 +108,8 @@ class PresupuestoMensualidadTest extends TestCase
 
     //Metodo registrar_presupuesto_mensualidad
     public function testRegistrarUnicoPresupuestoMensualidadDatosCorrectos(){
-        $this->presupuesto_mensualidad->set_mensualidad_id(232);
-        $this->presupuesto_mensualidad->set_presupuesto_id(337);
+        $this->presupuesto_mensualidad->set_mensualidad_id($this->id_mensualidad);
+        $this->presupuesto_mensualidad->set_presupuesto_id($this->id_detalle_presupuesto);
 
         $resultado = $this->presupuesto_mensualidad->realizar_consulta('registrar_presupuesto_mensualidad');
         
@@ -121,7 +123,7 @@ class PresupuestoMensualidadTest extends TestCase
 
     public function testRegistrarUnicoPresupuestoMensualidadIDMensualidadIncorrecto(){
         $this->presupuesto_mensualidad->set_mensualidad_id(123122);
-        $this->presupuesto_mensualidad->set_presupuesto_id(337);
+        $this->presupuesto_mensualidad->set_presupuesto_id($this->id_detalle_presupuesto);
 
         $resultado = $this->presupuesto_mensualidad->realizar_consulta('registrar_presupuesto_mensualidad');
         
@@ -134,7 +136,7 @@ class PresupuestoMensualidadTest extends TestCase
     }
 
     public function testRegistrarUnicoPresupuestoMensualidadIDPresupuestoIncorrecto(){
-        $this->presupuesto_mensualidad->set_mensualidad_id(232);
+        $this->presupuesto_mensualidad->set_mensualidad_id($this->id_mensualidad);
         $this->presupuesto_mensualidad->set_presupuesto_id(123122);
 
         $resultado = $this->presupuesto_mensualidad->realizar_consulta('registrar_presupuesto_mensualidad');
@@ -144,7 +146,7 @@ class PresupuestoMensualidadTest extends TestCase
         $this->assertCount(2, $resultado);
         
         $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("El presupuesto seleccionado no existe", $resultado["mensaje"]);
+        $this->assertStringContainsString("El detalle de presupuesto seleccionado no existe", $resultado["mensaje"]);
     }
 
     public function testRegistrarUnicoPresupuestoMensualidadDatosVacios(){
@@ -162,61 +164,61 @@ class PresupuestoMensualidadTest extends TestCase
     }
 
     //Metodo editar
-    // public function testEditarPresupuestoMensualidadDatosCorrectos(){
-    //     $this->presupuesto_mensualidad->set_mensualidad_id(232);
-    //     $this->presupuesto_mensualidad->set_presupuesto_id(337);
+    public function testEditarPresupuestoMensualidadDatosCorrectos(){
+        $this->presupuesto_mensualidad->set_mensualidad_id($this->id_mensualidad);
+        $this->presupuesto_mensualidad->set_presupuesto_id($this->id_detalle_presupuesto);
 
-    //     $resultado = $this->presupuesto_mensualidad->realizar_consulta('editar');
+        $resultado = $this->presupuesto_mensualidad->realizar_consulta('editar');
         
-    //     $this->assertIsArray($resultado);
-    //     $this->assertNotEmpty($resultado);
-    //     $this->assertCount(2, $resultado);
+        $this->assertIsArray($resultado);
+        $this->assertNotEmpty($resultado);
+        $this->assertCount(2, $resultado);
         
-    //     $this->assertTrue($resultado["estatus"]);
-    //     $this->assertStringContainsString('OK', $resultado["mensaje"]);
-    // }
+        $this->assertTrue($resultado["estatus"]);
+        $this->assertStringContainsString('OK', $resultado["mensaje"]);
+    }
 
-    // public function testEditarPresupuestoMensualidadIDMensualidadIncorrecto(){
-    //     $this->presupuesto_mensualidad->set_mensualidad_id(123122);
-    //     $this->presupuesto_mensualidad->set_presupuesto_id(337);
+    public function testEditarPresupuestoMensualidadIDMensualidadIncorrecto(){
+        $this->presupuesto_mensualidad->set_mensualidad_id(123122);
+        $this->presupuesto_mensualidad->set_presupuesto_id($this->id_detalle_presupuesto);
 
-    //     $resultado = $this->presupuesto_mensualidad->realizar_consulta('editar');
+        $resultado = $this->presupuesto_mensualidad->realizar_consulta('editar');
         
-    //     $this->assertIsArray($resultado);
-    //     $this->assertNotEmpty($resultado);
-    //     $this->assertCount(2, $resultado);
+        $this->assertIsArray($resultado);
+        $this->assertNotEmpty($resultado);
+        $this->assertCount(2, $resultado);
         
-    //     $this->assertFalse($resultado["estatus"]);
-    //     $this->assertStringContainsString("La mensualidad seleccionada no existe", $resultado["mensaje"]);
-    // }
+        $this->assertFalse($resultado["estatus"]);
+        $this->assertStringContainsString("La mensualidad seleccionada no existe", $resultado["mensaje"]);
+    }
 
-    // public function testEditarPresupuestoMensualidadIDPresupuestoIncorrecto(){
-    //     $this->presupuesto_mensualidad->set_mensualidad_id(232);
-    //     $this->presupuesto_mensualidad->set_presupuesto_id(123122);
+    public function testEditarPresupuestoMensualidadIDPresupuestoIncorrecto(){
+        $this->presupuesto_mensualidad->set_mensualidad_id($this->id_mensualidad);
+        $this->presupuesto_mensualidad->set_presupuesto_id(123122);
 
-    //     $resultado = $this->presupuesto_mensualidad->realizar_consulta('editar');
+        $resultado = $this->presupuesto_mensualidad->realizar_consulta('editar');
         
-    //     $this->assertIsArray($resultado);
-    //     $this->assertNotEmpty($resultado);
-    //     $this->assertCount(2, $resultado);
+        $this->assertIsArray($resultado);
+        $this->assertNotEmpty($resultado);
+        $this->assertCount(2, $resultado);
         
-    //     $this->assertFalse($resultado["estatus"]);
-    //     $this->assertStringContainsString("El presupuesto seleccionado no existe", $resultado["mensaje"]);
-    // }
+        $this->assertFalse($resultado["estatus"]);
+        $this->assertStringContainsString("El detalle de presupuesto seleccionado no existe", $resultado["mensaje"]);
+    }
 
-    // public function testEditarPresupuestoMensualidadDatosVacios(){
-    //     $this->presupuesto_mensualidad->set_mensualidad_id('');
-    //     $this->presupuesto_mensualidad->set_presupuesto_id('');
+    public function testEditarPresupuestoMensualidadDatosVacios(){
+        $this->presupuesto_mensualidad->set_mensualidad_id('');
+        $this->presupuesto_mensualidad->set_presupuesto_id('');
 
-    //     $resultado = $this->presupuesto_mensualidad->realizar_consulta('editar');
+        $resultado = $this->presupuesto_mensualidad->realizar_consulta('editar');
         
-    //     $this->assertIsArray($resultado);
-    //     $this->assertNotEmpty($resultado);
-    //     $this->assertCount(2, $resultado);
+        $this->assertIsArray($resultado);
+        $this->assertNotEmpty($resultado);
+        $this->assertCount(2, $resultado);
         
-    //     $this->assertFalse($resultado["estatus"]);
-    //     $this->assertStringContainsString("El id del Presupuesto requerido esta vacio", $resultado["mensaje"]);
-    // }
+        $this->assertFalse($resultado["estatus"]);
+        $this->assertStringContainsString("El id del detalle del presupuesto requerido esta vacio", $resultado["mensaje"]);
+    }
 }
 
 ?>

@@ -7,69 +7,67 @@
         $operacion = $_POST["operacion"];
 
         if ($operacion == "consulta"){
-            // llamamos a la funcion, lo convertimos a json y la mandamos al js con echo
+            $obj_tipo_gasto->registrar_bitacora(CONSULTAR, GESTIONAR_TIPO_GASTO, "TODOS LOS TIPOS DE GASTO");
             echo  json_encode($obj_tipo_gasto->realizar_consulta("consultar"));
-
             
-            // la hice para que retorne un arreglo, si sale vacio solo mandara un array con false
         }
-        //Despues de cada echo se regresa al javascript como respuesta en json
 
         elseif ($operacion == "registrar") {
-            //se guardan las variables a registrar
             $nombre_tipo_gasto = $_POST["nombre_tipo_gasto"];
 
-            //se usan los setters correspondientes
             $obj_tipo_gasto->set_nombre_tipo_gasto($nombre_tipo_gasto);
 
-            //se ejecuta la funcion:
-            echo  json_encode($obj_tipo_gasto->realizar_consulta("registrar"));
-            //igual puse para que siempre retorne un arreglo que dara true o false de acuerdo al resultado
+            $resultado = $obj_tipo_gasto->realizar_consulta("registrar");
+            if ($resultado["estatus"]) {
+                $obj_tipo_gasto->registrar_bitacora(REGISTRAR, GESTIONAR_TIPO_GASTO, $nombre_tipo_gasto);
+            }
+            echo  json_encode($resultado);
         }
         elseif ($operacion == "consulta_especifica"){
-            //se guardan el id para buscar
             $id_tipo_gasto = $_POST["id_tipo_gasto"];
 
-            //se usan el setter correspondientes
             $obj_tipo_gasto->set_id_tipo_gasto($id_tipo_gasto);
 
-            // llamamos a la funcion, lo convertimos a json y la mandamos al js con echo
             echo  json_encode($obj_tipo_gasto->realizar_consulta("consultar_tipo_gasto"));
-            // igual hice para que retorne un arreglo, si sale vacio solo mandara un array con false
+            
         }
 
         elseif ($operacion == "modificar") {
-            //se guardan las variables a modificar
             $id_tipo_gasto = $_POST["id_tipo_gasto"];
             $nombre_tipo_gasto = $_POST["nombre_tipo_gasto"];  
 
-            //se usan los setters correspondientes
             $obj_tipo_gasto->set_id_tipo_gasto($id_tipo_gasto);
             $obj_tipo_gasto->set_nombre_tipo_gasto($nombre_tipo_gasto);
 
-            //se ejecuta la funcion:
-            echo  json_encode($obj_tipo_gasto->realizar_consulta("modificar"));
-            //igual puse para que siempre retorne un arreglo que dara true o false de acuerdo al resultado
+            $resultado = $obj_tipo_gasto->realizar_consulta("modificar");
+            if ($resultado["estatus"]) {
+                $obj_tipo_gasto->registrar_bitacora(MODIFICAR, GESTIONAR_TIPO_GASTO, $nombre_tipo_gasto);
+            }
+            echo  json_encode($resultado);
         }
 
         elseif ($operacion == "eliminar") {
-            //se guardan el id de la variable a eliminar
             $id_tipo_gasto = $_POST["id_tipo_gasto"];
 
-            //se usan el setter correspondientes
             $obj_tipo_gasto->set_id_tipo_gasto($id_tipo_gasto);
+            $tipo_alterado = $obj_tipo_gasto->realizar_consulta("consultar_tipo_gasto");
 
-            //se ejecuta la funcion:
-            echo  json_encode($obj_tipo_gasto->realizar_consulta("eliminar"));
-            //igual puse para que siempre retorne un arreglo que dara true o false de acuerdo al resultado
-        }elseif ($operacion == "lastId"){
+            $resultado = $obj_tipo_gasto->realizar_consulta("eliminar");
+
+            if ($resultado["estatus"]) {
+                if($tipo_alterado){
+                    $obj_tipo_gasto->registrar_bitacora(ELIMINAR, GESTIONAR_TIPO_GASTO, $tipo_alterado["nombre_tipo_gasto"]);
+                }
+            }
+            echo  json_encode($resultado);
+        }
+        
+        elseif ($operacion == "lastId"){
             echo json_encode($obj_tipo_gasto->realizar_consulta("lastId"));
         }
 
-        exit;//es salida en ingles... No puede faltar
+        exit;
     }
 
-
-    //FIN de AJAX
     require_once "vista/tipo_gasto/tipo_gasto_vista.php";
 ?>

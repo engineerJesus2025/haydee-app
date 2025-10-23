@@ -2,7 +2,6 @@
 require_once "modelo/solicitud_gasto_modelo.php";
 
 $solicitud_gasto_obj = new Solicitud_gasto();
-// <-- CAMBIO: Se ajusta la llamada a la nueva función del modelo
 $fecha_actual = date("Y-m");
 $presupuestos = $solicitud_gasto_obj->consultar_presupuesto($fecha_actual);
 
@@ -10,6 +9,7 @@ if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
 
     if ($operacion == "consulta") {
+        $solicitud_gasto_obj->registrar_bitacora(CONSULTAR, GESTIONAR_SOLICITUD_GASTO, "TODAS LAS SOLICITUDES DE GASTO");
         echo json_encode($solicitud_gasto_obj->realizar_consulta('consultar'));
         
         exit;
@@ -50,25 +50,28 @@ if (isset($_POST["operacion"])) {
     } 
     
     elseif ($operacion == "registrar") {
-        // <-- CAMBIO: Se usa presupuesto_id en lugar de presupuesto_mensual_id
         $presupuesto_id = $_POST["presupuesto_id"];
         $solicitud_gasto_obj->set_fecha_reporte($_POST["fecha"]);
         $solicitud_gasto_obj->set_descripcion_necesidad($_POST["descripcion"]);
         $solicitud_gasto_obj->set_nombre_solicitante($_POST["nombre"]);
         $solicitud_gasto_obj->set_monto_estimado($_POST["monto_estimado"]);
         $solicitud_gasto_obj->set_estado($_POST["estado"]);
-        $solicitud_gasto_obj->set_presupuesto_id($presupuesto_id); // <-- CAMBIO
+        $solicitud_gasto_obj->set_presupuesto_id($presupuesto_id);
         $solicitud_gasto_obj->set_prioridad($_POST["prioridad"]);
 
-        echo json_encode($solicitud_gasto_obj->realizar_consulta('registrar'));
+        $respuesta = $solicitud_gasto_obj->realizar_consulta('registrar');
+
+        if ($respuesta["estatus"]) {
+            $solicitud_gasto_obj->registrar_bitacora(REGISTRAR, GESTIONAR_SOLICITUD_GASTO, "Solicitud "  . $_POST["descripcion"] . " de " . $_POST["nombre"]);
+        }
+        echo json_encode($respuesta);
         exit;
     } 
     
     elseif ($operacion == "modificar") {
-        // <-- CAMBIO: Se usan los nombres correctos de las variables y $_POST
         $id_solicitud = $_POST["id_solicitud"];
         $presupuesto_id = $_POST["presupuesto_id"];
-        $monto_estimado = $_POST["monto_estimado"]; // <-- CAMBIO: Corregido de 'monto' a 'monto_estimado'
+        $monto_estimado = $_POST["monto_estimado"];
 
         $solicitud_gasto_obj->set_id_solicitud($id_solicitud);
         $solicitud_gasto_obj->set_fecha_reporte($_POST["fecha"]);
@@ -76,16 +79,30 @@ if (isset($_POST["operacion"])) {
         $solicitud_gasto_obj->set_nombre_solicitante($_POST["nombre"]);
         $solicitud_gasto_obj->set_monto_estimado($monto_estimado);
         $solicitud_gasto_obj->set_estado($_POST["estado"]);
-        $solicitud_gasto_obj->set_presupuesto_id($presupuesto_id); // <-- CAMBIO
+        $solicitud_gasto_obj->set_presupuesto_id($presupuesto_id);
         $solicitud_gasto_obj->set_prioridad($_POST["prioridad"]);
 
-        echo json_encode($solicitud_gasto_obj->realizar_consulta('modificar'));
+        $resultado = $solicitud_gasto_obj->realizar_consulta('modificar');
+        if ($resultado["estatus"]) {
+            $solicitud_gasto_obj->registrar_bitacora(MODIFICAR, GESTIONAR_SOLICITUD_GASTO, "Solicitud "  . $_POST["descripcion"] . " de " . $_POST["nombre"]);
+        }
+        echo json_encode($resultado);
         exit;
+
+
     } elseif ($operacion == "eliminar") {
         $id_solicitud = $_POST["id_solicitud"];
         $solicitud_gasto_obj->set_id_solicitud($id_solicitud);
-        echo json_encode($solicitud_gasto_obj->realizar_consulta('eliminar'));
-    } elseif ($operacion == "ultimo_id") {
+        $solicitud_alterada = $solicitud_gasto_obj->realizar_consulta('consultar_solicitud_id');
+        $resultado = $solicitud_gasto_obj->realizar_consulta('eliminar');
+
+        if ($resultado["estatus"]) {
+            $solicitud_gasto_obj->registrar_bitacora(ELIMINAR, GESTIONAR_SOLICITUD_GASTO, "Solicitud " . $solicitud_alterada["descripcion_necesidad"] . " de " . $solicitud_alterada["nombre_solicitante"]);
+        }
+        echo json_encode($resultado);
+    }
+
+    elseif ($operacion == "ultimo_id") {
         echo json_encode($solicitud_gasto_obj->realizar_consulta('lastId'));
     }
 

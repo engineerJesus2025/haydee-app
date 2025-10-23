@@ -1,9 +1,7 @@
 <?php
-
+    require_once "vista/componentes/sesion.php";
     require_once "modelo/usuario_modelo.php";
     require_once 'modelo/rol_modelo.php';
-
-    
 
     $rol_obj = new Rol(); 
     $roles = $rol_obj->realizar_consulta('consultar_roles'); 

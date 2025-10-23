@@ -144,9 +144,6 @@ class Notificaciones extends Conexion
                     return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar marcar esta notificacion"];
                 }
             case 'marcar_todas_leidas':
-                $validaciones = $this->validarDatos('marcar_todas');
-                if(!($validaciones["estatus"])){return $validaciones;}
-
                 $respuesta = $this->marcar_todas_como_leidas();
 
                 $this->cambiar_db_negocio();
@@ -252,16 +249,6 @@ class Notificaciones extends Conexion
             }
             if (!($this->validarClaveForanea("notificaciones","id_notificacion",$this->id_notificacion))) {
                 return ["estatus"=>false,"mensaje"=>"El id de la notificacion seleccionada no existe"];
-            }
-            return ["estatus"=>true,"mensaje"=>"OK"];
-        }
-
-        if ($consulta == "marcar_todas") {
-            if (empty($this->usuario_id)){
-                return ["estatus"=>false,"mensaje"=>"El id del usuario se envio vacío"];
-            }
-            if (!($this->validarClaveForanea("usuarios","id_usuario",$this->usuario_id))) {
-                return ["estatus"=>false,"mensaje"=>"El id del usuario seleccionado no existe"];
             }
             return ["estatus"=>true,"mensaje"=>"OK"];
         }

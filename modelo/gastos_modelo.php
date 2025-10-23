@@ -86,7 +86,6 @@ class Gastos extends Conexion
             case 'consultar':
                 $respuesta = $this->consultar();
                 if ($respuesta["resultado"]) {
-                    $this->registrar_bitacora(CONSULTAR, GESTIONAR_GASTOS, "TODOS LOS GASTOS");
                     return $respuesta["datos"];
                 } else {
                     return ["estatus" => false, "mensaje" => "Ha ocurrido un error con la consulta"];
@@ -102,8 +101,6 @@ class Gastos extends Conexion
                 }
                 $respuesta = $this->registrar();
                 if ($respuesta) {
-
-                    $this->registrar_bitacora(REGISTRAR, GESTIONAR_GASTOS, "Gasto de " . $this->descripcion_gasto);
                     return ["estatus" => true, "mensaje" => "OK"];
                 } else {
                     return ["estatus" => false, "mensaje" => "Ha ocurrido un error con el registro"];
@@ -117,7 +114,6 @@ class Gastos extends Conexion
                 }
                 $respuesta = $this->editar_gasto();
                 if ($respuesta) {
-                    $this->registrar_bitacora(MODIFICAR, GESTIONAR_GASTOS, "Gasto de " . $this->descripcion_gasto);
                     return ["estatus" => true, "mensaje" => "OK"];
                 } else {
                     return ["estatus" => false, "mensaje" => "Ha ocurrido un error con la edición"];
@@ -125,6 +121,10 @@ class Gastos extends Conexion
 
 
             case 'eliminar_gasto':
+                $validacion = $this->validar_datos('eliminar_gasto');
+                if (!$validacion["estatus"]) {
+                    return $validacion; // Si falla, retorna el mensaje de error
+                }
                 return $this->eliminar_gasto();
             case 'lastId':
                 return $this->lastId();
@@ -307,6 +307,29 @@ private function lastId()
 
     public function validar_datos($accion)
     {
+
+        if ($accion == "editar_gasto" || $accion == "eliminar_gasto") {
+            
+            // Validación 1.1: ID vacío
+            if (empty(trim($this->id_gasto))) {
+                return ["estatus" => false, "mensaje" => "El id del gasto requerido esta vacio"];
+            }
+
+            // Validación 1.2: ID no es numérico
+            if (!is_numeric($this->id_gasto)) {
+                 return ["estatus"=>false, "mensaje"=>"El id del gasto debe ser un valor numerico"];
+            }
+
+            // Validación 1.3: ID no existe en la BD
+            if (!($this->validarClaveForanea("gastos", "id_gasto", $this->id_gasto))) {
+                return ["estatus" => false, "mensaje" => "El gasto seleccionado no existe"];
+            }
+
+            // Si la acción es 'eliminar' y pasó las validaciones de ID, terminamos.
+            if ($accion == "eliminar_gasto") {
+                return ["estatus" => true, "mensaje" => "OK"];
+            }
+        }
         // 1. Validar campos obligatorios
         if (empty(trim($this->tipo))) {
             return ["estatus" => false, "mensaje" => "El campo 'Tipo' no puede estar vacío."];
@@ -464,7 +487,7 @@ private function lastId()
         return 0;
     }
 
-    public function listar_meses_con_gastos()
+        public function listar_meses_con_gastos()
     {
         $sql = "SELECT DISTINCT YEAR(fecha) as anio, MONTH(fecha) as mes 
                 FROM detalles_gastos 

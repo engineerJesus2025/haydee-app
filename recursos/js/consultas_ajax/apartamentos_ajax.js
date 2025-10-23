@@ -29,7 +29,7 @@ document.querySelector(`#modal_apartamentos`).addEventListener("hide.bs.modal",(
 	formulario_usar.reset();
 	boton_formulario.removeAttribute("modificar");
 	boton_formulario.removeAttribute("id_modificar");	
-	boton_formulario.textContent = "Registrar";
+	boton_formulario.textContent = "Guardar";
 	document.getElementById('titulo_modal').textContent = "Registrar Apartamento";	
 	formulario_usar.querySelectorAll("[class='w-100']").forEach(el=>el.textContent="");
 	document.querySelectorAll('.is-valid').forEach(input=>input.classList.remove('is-valid'));
@@ -361,7 +361,7 @@ async function modificar_formulario(e) {
 
 	boton_formulario.setAttribute("modificar",true);
 	boton_formulario.setAttribute("id_modificar",data.apartamento.id_apartamento);
-	boton_formulario.textContent = "Guardar";
+	boton_formulario.textContent = "Guardar Cambios";
 	document.getElementById('titulo_modal').textContent = "Modificar Apartamento";
 
 	id_modificar = id;
@@ -405,7 +405,7 @@ async function modificar(id) {
 
 	boton_formulario.removeAttribute("modificar");
 	boton_formulario.removeAttribute("id_modificar");	
-	boton_formulario.textContent = "Registrar";
+	boton_formulario.textContent = "Guardar Cambios";
 
 	document.getElementById('titulo_modal').textContent = "Registrar Apartamento";
 

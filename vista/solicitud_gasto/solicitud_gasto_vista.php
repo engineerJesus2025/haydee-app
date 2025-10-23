@@ -32,7 +32,7 @@
                 <main class="col ps-md-2 pt-2 mb-5">
 
                     <div class="page-header pt-3">
-                        <h2>SOLICITUD DE GASTOS</h2>
+                        <h2>GESTIONAR SOLICITUD DE GASTOS</h2>
                     </div>
                     <p class="lead"></p>
                     <hr>
@@ -43,7 +43,7 @@
                                 <?php if (Solicitud_gasto::tiene_permiso(GESTIONAR_SOLICITUD_GASTO, REGISTRAR)): ?>
                                     <div class="button mb-4">
                                         <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                                            data-bs-target="#modal_solicitud_gasto">Registrar Solicitud de Gasto</a>
+                                            data-bs-target="#modal_solicitud_gasto">Nueva Solicitud</a>
                                     </div><br>
                                 <?php endif; ?>
 

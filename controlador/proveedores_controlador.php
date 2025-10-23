@@ -5,6 +5,7 @@ $proveedor = new Proveedores();
 if(isset($_POST["operacion"])){
     $operacion = $_POST["operacion"];
     if($operacion == "consulta"){
+        $proveedor->registrar_bitacora(CONSULTAR, GESTIONAR_PROVEEDORES, "TODOS LOS PROVEEDORES");
         echo json_encode($proveedor->realizar_consulta("consultar"));
     }
 
@@ -18,7 +19,12 @@ if(isset($_POST["operacion"])){
         $proveedor->set_servicio($servicio);
         $proveedor->set_rif($rif);
         $proveedor->set_direccion($direccion);
-        echo json_encode($proveedor->realizar_consulta("registrar"));
+        $resultado = $proveedor->realizar_consulta("registrar");
+
+        if ($resultado["estatus"]) {
+            $proveedor->registrar_bitacora(REGISTRAR, GESTIONAR_PROVEEDORES, $nombre . " - " . $rif);
+        }
+        echo json_encode($resultado);
     }
 
     elseif($operacion == "consultar_proveedor"){
@@ -40,13 +46,23 @@ if(isset($_POST["operacion"])){
         $proveedor->set_rif($rif);
         $proveedor->set_direccion($direccion);
 
-        echo json_encode($proveedor->realizar_consulta("modificar"));
+        $resultado = $proveedor->realizar_consulta("modificar");
+
+        if ($resultado["estatus"]) {
+            $proveedor->registrar_bitacora(MODIFICAR, GESTIONAR_PROVEEDORES, $nombre . " - " . $rif);
+        }
     }
 
     elseif ($operacion == "eliminar"){
         $id_proveedor = $_POST["id_proveedor"];
         $proveedor->set_id_proveedor($id_proveedor);
-        echo json_encode($proveedor->realizar_consulta("eliminar"));
+        $proveedor_alterado = $proveedor->realizar_consulta("consultar_proveedor");
+        $resultado = $proveedor->realizar_consulta("eliminar");
+
+        if ($resultado["estatus"]) {
+            $proveedor->registrar_bitacora(ELIMINAR, GESTIONAR_PROVEEDORES, $proveedor_alterado["nombre_proveedor"] . " - " . $proveedor_alterado["rif"]);
+        }
+        echo json_encode($resultado);
     }
 
     elseif ($operacion == "lastId"){

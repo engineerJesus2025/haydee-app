@@ -40,7 +40,6 @@ class Tipo_gasto extends Conexion
                 $respuesta = $this->consultar();
 
                 if ($respuesta["resultado"]) {
-                    $this->registrar_bitacora(CONSULTAR, GESTIONAR_TIPO_GASTO, "TODOS LOS TIPOS DE GASTO");//registra cuando se entra al modulo de tipos de gasto
                     return $respuesta["datos"];
                 } else {
                     return ["estatus" => false, "mensaje" => "Ha ocurrido un error con la consulta"];
@@ -64,9 +63,6 @@ class Tipo_gasto extends Conexion
                 $respuesta = $this->registrar_tipo_gasto();
 
                 if ($respuesta) {
-
-                    $this->registrar_bitacora(REGISTRAR, GESTIONAR_TIPO_GASTO, "Tipo Gasto " . $this->nombre_tipo_gasto);//registramos en la bitacora
-
                     return ["estatus" => true, "mensaje" => "OK"];
                 } else {
                     return ["estatus" => false, "mensaje" => "Ha ocurrido un error al intentar registrar este tipo de gasto"];
@@ -75,23 +71,23 @@ class Tipo_gasto extends Conexion
             case 'modificar':
             $validacion = $this->validar_datos('modificar');
             if (!$validacion["estatus"]) {
-                return $validacion; // Si la validación falla, devuelve el error y termina
+                return $validacion; 
             }
 
                 $respuesta = $this->editar_tipo_gasto();
                 if ($respuesta) {
-                    $this->registrar_bitacora(MODIFICAR, GESTIONAR_TIPO_GASTO, "Tipo Gasto " . $this->nombre_tipo_gasto);
-
                     return ["estatus" => true, "mensaje" => "OK"];
                 } else {
                     return ["estatus" => false, "mensaje" => "Ha ocurrido un error al intentar editar este tipo de gasto"];
                 }
 
             case 'eliminar':
+                 $validacion = $this->validar_datos('eliminar');
+            if (!$validacion["estatus"]) {
+                return $validacion; 
+            }
                 $respuesta = $this->eliminar_tipo_gasto();
                 if ($respuesta) {
-                    $this->registrar_bitacora(ELIMINAR, GESTIONAR_TIPO_GASTO, "Tipo Gasto " . $this->nombre_tipo_gasto);
-
                     return ["estatus" => true, "mensaje" => "OK"];
                 } else {
                     return ["estatus" => false, "mensaje" => "Ha ocurrido un error al intentar eliminar este tipo de gasto"];
@@ -206,14 +202,36 @@ class Tipo_gasto extends Conexion
         return ($result) ? true : false;
     }
 
-    public function validar_datos($accion)
+    public function validar_datos($accion = "registrar")
     {
-        // 1. Validación de campo no vacío
+        if ($accion == "modificar" || $accion == "eliminar") {
+            
+            // Validación 1.1: ID vacío
+            if (empty(trim($this->id_tipo_gasto))) {
+                return ["estatus" => false, "mensaje" => "El id del tipo de gasto requerido esta vacio"];
+            }
+
+            // Validación 1.2: ID no es numérico
+            if (!is_numeric($this->id_tipo_gasto)) {
+                 return ["estatus"=>false, "mensaje"=>"El id del tipo de gasto debe ser un valor numerico"];
+            }
+
+            // Validación 1.3: ID no existe en la BD
+            if (!($this->validarClaveForanea("tipo_gasto", "id_tipo_gasto", $this->id_tipo_gasto))) {
+                return ["estatus" => false, "mensaje" => "El tipo de gasto seleccionado no existe"];
+            }
+
+            // Si la acción es 'eliminar' y pasó las validaciones de ID, terminamos.
+            if ($accion == "eliminar") {
+                return ["estatus" => true, "mensaje" => "OK"];
+            }
+        }
+
         if (empty(trim($this->nombre_tipo_gasto))) {
             return ["estatus" => false, "mensaje" => "El nombre del tipo de gasto no puede estar vacío."];
         }
 
-        // 2. Validación de longitud
+        // Validación 2.2: Longitud
         if (strlen($this->nombre_tipo_gasto) < 3) {
             return ["estatus" => false, "mensaje" => "El nombre debe tener al menos 3 caracteres."];
         }
@@ -221,18 +239,17 @@ class Tipo_gasto extends Conexion
             return ["estatus" => false, "mensaje" => "El nombre no puede exceder los 50 caracteres."];
         }
 
-        // 3. Validación de formato
+        // Validación 2.3: Formato
         if (!preg_match('/^[a-zA-Z\sñÑáéíóúÁÉÍÓÚ]+$/u', $this->nombre_tipo_gasto)) {
             return ["estatus" => false, "mensaje" => "El nombre solo puede contener letras y espacios."];
         }
 
-        // 4. Validación de nombre único (que no exista ya en la BD)
         if ($this->verificar_nombre_existente()) {
             return ["estatus" => false, "mensaje" => "Ya existe un tipo de gasto con este nombre."];
         }
 
         // Si todas las validaciones pasan
-        return ["estatus" => true];
+        return ["estatus" => true, "mensaje" => "OK"];
     }
 
     private function verificar_nombre_existente()

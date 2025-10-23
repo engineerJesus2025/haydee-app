@@ -222,7 +222,7 @@ class Anio_fiscal extends Conexion
     }
         
     private function validarDatos($consulta = "registrar")
-    {
+    {   
         if ($consulta == "editar" || $consulta == "eliminar") {
             if (!(isset($this->id_anio_fiscal))) {return ["estatus"=>false,"mensaje"=>"El id del Año Fiscal requerido no se recibio correctamente"];}
 

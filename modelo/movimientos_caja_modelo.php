@@ -109,7 +109,7 @@ class Movimientos_caja extends Conexion
 
             case 'reponer_caja':
                 
-                if(!(is_string($this->monto)) || !(preg_match("/^[0-9]{1,12}[,.]{0,1}[0-9]{0,2}$/",$this->monto))){
+                if(!(is_string($this->monto)) || !(preg_match("/^[0-9]{0,12}[,.]{0,1}[0-9]{0,2}$/",$this->monto))){
                     return ["estatus"=>false,"mensaje"=>"El campo 'monto' no posee un valor valido"];
                 }
 

@@ -692,7 +692,7 @@ async function modificar() {
 
 		//Por cada mensualidad registrada se registra en la puente los gastos asignados		
 		let id_presupuestos = [];
-		tr.querySelectorAll("td").forEach(td=>{			
+		tr.querySelectorAll("td").forEach(td=>{
 			if(td.firstElementChild != null){
 				if(td.firstElementChild.checked){
 					let grupo_id = td.firstElementChild.getAttribute("id_presupuestos_asociados").split(",");

@@ -1,5 +1,5 @@
 <?php
-
+    require_once "vista/componentes/sesion.php";
     require_once "modelo/presupuesto_modelo.php";    
     require_once "modelo/detalles_presupuesto_modelo.php";
     require_once "modelo/tipo_gasto_modelo.php";

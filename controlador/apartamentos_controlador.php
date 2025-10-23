@@ -1,4 +1,5 @@
 <?php
+    require_once "vista/componentes/sesion.php";
     require_once("modelo/apartamentos_modelo.php");
     require_once("modelo/habitantes_modelo.php");
     require_once("modelo/habitantes_apartamentos_modelo.php");
