@@ -1,38 +1,67 @@
 function asignarEventos(){
+	$(".fecha_admin").on("keyup",function(){
+		validarKeyUp(/^\d{4}-\d{2}-\d{2}$/,
+			this,"Debe ingresar una fecha adecuada")
+	});
+
 	$(".monto").on("keypress",function(e){
-		validarKeyPress(/^\d*\.?\d*$/, e);
+		validarKeyPress(/^[0-9,.]*$/, e);
 	});
 
 	$(".monto").on("keyup",function(){
-		validarKeyUp(/^\d{1,6}(\.\d{1,2})?$/,
-		$(this),"Debe ingresar el monto del pago");
+		validarKeyUp(/^[0-9]{1,12}[,.]{0,1}[0-9]{0,2}$/,
+		this,"Debe ingresar el monto del pago");
 	});
 
 	$(".monto_dolar").on("keypress",function(e){
-		validarKeyPress(/^\d*\.?\d*$/, e);
+		validarKeyPress(/^[0-9,.]*$/, e);
 	});
 
 	$(".monto_dolar").on("keyup",function(){
-		validarKeyUp(/^\d{1,6}(\.\d{1,2})?$/,
-		$(this),"Debe ingresar el monto del dolar");
+		validarKeyUp(/^[0-9]{1,12}[,.]{0,1}[0-9]{0,2}$/,
+		this,"Debe ingresar el monto del dolar");
 	});
 
 	$(".tasa_dolar").on("keypress",function(e){
-		validarKeyPress(/^\d*\.?\d*$/, e);
+		validarKeyPress(/^[0-9,.]*$/, e);
 	});
 
 	$(".tasa_dolar").on("keyup",function(){
-		validarKeyUp(/^\d{1,6}(\.\d{1,2})?$/,
-		$(this),"Debe ingresar la tasa del día de hoy");
+		validarKeyUp(/^[0-9]{1,12}[,.]{0,1}[0-9]{0,2}$/,
+		this,"Debe ingresar la tasa del día de hoy");
 	});
 
 	$(".referencia").on("keypress",function(e){
 		validarKeyPress(/^[0-9\b]*$/, e);
 	});
 
-	$(".referencia").on("keyup",function(){
-		validarKeyUp(/^[0-9\b]{3,10}$/,
-		$(this),"Debe ingresar la referencia del pago");
+	$(".referencia").on("keyup",function(e){
+		if (validarKeyUp(
+        /^[0-9\b]{3,10}$/,
+        this,'Solo números entre 3 y 10 dígitos'
+        )) {
+        	if (this.value == referencia_an) {return;}
+			let datos = new FormData();
+			datos.append('validar','referencia');
+			datos.append('referencia',$(this).val());
+			verificar_duplicados(datos,this);
+        }		
+	})
+
+	formulario_usar.querySelectorAll("select").forEach(select=>{
+		select.addEventListener("change",()=>{
+			select.classList.add('is-valid');
+			select.classList.remove('is-invalid');
+			select.nextElementSibling.textContent = "";
+		});
+	});
+
+	formulario_usar.querySelectorAll("[type='date']").forEach(input=>{
+		input.addEventListener("change",()=>{
+			input.classList.add('is-valid');
+			input.classList.remove('is-invalid');
+			input.nextElementSibling.textContent = "";
+		});
 	});
 }
 
@@ -64,21 +93,7 @@ $(document).ready(function(){
 
 	$("#agregar_detalle").on("click",function(e){
 		asignarEventos();
-	});
-
-	$(".referencia").on("keyup",function(e){
-		if (validarKeyUp(
-        /^[0-9]{3,10}$/,
-        $(".referencia"),document.querySelector(".referencia").nextElementSibling,'Solo deben ser números y tener entre 3 y 10 dígitos'
-        )) {
-        	if (this.value == referencia_an) {return;}
-			let datos = new FormData();
-			datos.append('validar','referencia');
-			datos.append('referencia',$(this).val());
-			verificar_duplicados(datos);
-        }		
-	})
-
+	});	
 });	//Fin de AJAX
 
 function mensajes(icono,tiempo,titulo,mensaje){
@@ -93,102 +108,37 @@ function mensajes(icono,tiempo,titulo,mensaje){
 	});
 }
 
-// async function validarEnvio(accion = "Registrar"){	
-// 	if(validarKeyUp(
-//         /^[0-9,]{1,8}$/,
-//         $(".monto"),'Debe ingresar el monto del pago'
-//         )==0)
-// 	{
-// 		mensajes('error',4000,'Debe ingresar el monto del pago',
-// 		'El formato del monto debe ser sólo en numeros');
-		
-// 		return false;
-// 	}
-// 	else if(validarKeyUp(
-//         /^\d{1,6}(\.\d{1,2})?$/,
-//         $(".tasa_dolar"),'Debe ingresar la tasa del dolar de hoy'
-//         )==0)
-// 	{
-// 		mensajes('error',4000,'Debe ingresar la tasa del dolar de hoy',
-// 		'El formato de la tasa del dolar debe ser sólo en números');
-		
-// 		return false;
-// 	}
-	
-// 	else if($(".referencia").is(":visible") && 
-// 		validarKeyUp(
-//         /^[0-9]{3,10}$/,
-//         $(".referencia"),'Debe ingresar la referencia del pago'
-//         )==0)
-// 	{
-// 		mensajes('error',4000,'Debe ingresar la referencia del pago',
-// 		'El formato de la referencia debe ser sólo en números');
-		
-// 		return false;
-// 	}
-// 	else if(validar_select("mensualidad_id")==0)
-// 	{
-// 		mensajes('error',4000,'Debe ingresar la mensualidad',
-// 		'Debe seleccionar una opción de mensualidad');
-		
-// 		return false;
-// 	}
-// 	else if(validar_select("apartamento_id")==0)
-// 	{
-// 		mensajes('error',4000,'Debe ingresar el apartamento',
-// 		'Debe seleccionar una opción de apartamento');
-		
-// 		return false;
-// 	}
-// 	if (accion == "Registrar") {
-// 		if(validar_contra()==0)
-// 		{
-// 			mensajes('error',4000,'Verifique nuevamente la contraseña',
-// 			'El campo "contraseña" y el campo "confirmar contraseña" no coinciden');
-			
-// 			return false;
-// 		}
-// 	}else if (accion == "Editar"){
-// 		datos = new FormData();
-// 		//datos.append("validar",'contra');
-// 		datos.append("id_pago",id_modificar);
-// 		/*datos.append("contra",$("#contra").val());
-// 		res = await verificar_contra(datos);
-// 		// revisamos si la contraseña que puso es la correcta
-// 		if(!res){
-// 			mensajes('error',4000,'Contraseña Icorrecta','La contraseña ingresada no es correcta, para poder realizar cambios debe ingresar la contraseña correcta');
-// 			return false;
-// 		}
-
-// 		if ($("#confir_contra").val() != '') {
-// 			if(validarKeyUp(/^[A-Za-z0-9_.+*$#%&@]{5,50}$/,$("#confir_contra"),document.querySelector("#confir_contra").nextElementSibling,'Debe ingresar una contraseña')==0)
-// 			{
-// 				mensajes('error',4000,'Error en la nueva contraseña',
-// 				'El formato debe tener mínimo 5 caracteres, utilizar letras, numeros y caracteres especiales como: _.+*$#%&/ ');
-				
-// 				return false;
-// 			}
-// 		}*/
-// 	}
-// 	// si el valor de correo no es el mismo de antes:
-// 	if(referencia_an != $(".referencia").val()){
-// 		datos = new FormData(); 
-// 		datos.append('validar','referencia');
-// 		datos.append('referencia',$(".referencia").val());
-// 		res = await verificar_duplicados(datos);
-// 		// revisamos si esta duplicado con otro usuario
-// 		if(res){
-// 			mensajes('error',4000,'Referencia ya registrada','Esta referencia esta registrada, debe ingresar otra.');
-// 			return false;
-// 		}
-// 	}
-	
-// 	return true;
-// }
-
 async function validarEnvio(accion = "Registrar"){	
-	if(validarKeyUp(
-        /^[0-9,]{1,8}$/,
+	if(validar_select("apartamento_id")==0)
+	{
+		mensajes('error',4000,'Debe ingresar el apartamento',
+		'Debe seleccionar una opción de apartamento');
+		
+		return false;
+	}
+	else if(validar_select("mensualidad_id")==0)
+	{
+		mensajes('error',4000,'Debe ingresar la mensualidad',
+		'Debe seleccionar una opción de mensualidad');
+		
+		return false;
+	}
+	else if(validarFecha($(".fecha_admin"))==false)
+	{
+		mensajes('error',4000,'Fecha no válida',
+		'La fecha debe ser posterior a 1900 y no puede ser futura');
+		
+		return false;
+	}
+	else if(validar_select_multiple("tipo_pago_admin")==0)
+	{
+		mensajes('error',4000,'Debe ingresar un metodo de pago',
+		'Debe seleccionar una opción de metodo de pago');
+		
+		return false;
+	}
+	else if(validarKeyUp(
+        /^[0-9]{1,12}[,.]{0,1}[0-9]{0,2}$/,
         $(".monto"),'Debe ingresar el monto del pago'
         )==0)
 	{
@@ -197,8 +147,8 @@ async function validarEnvio(accion = "Registrar"){
 		
 		return false;
 	}
-	if(validarKeyUp(
-        /^[0-9,]{1,8}$/,
+	else if(validarKeyUp(
+        /^[0-9]{1,12}[,.]{0,1}[0-9]{0,2}$/,
         $(".monto_dolar"),'Debe ingresar el monto del dolar'
         )==0)
 	{
@@ -208,7 +158,7 @@ async function validarEnvio(accion = "Registrar"){
 		return false;
 	}
 	else if(validarKeyUp(
-        /^\d{1,6}(\.\d{1,2})?$/,
+        /^[0-9]{1,12}[,.]{0,1}[0-9]{0,2}$/,
         $(".tasa_dolar"),'Debe ingresar la tasa del dolar de hoy'
         )==0)
 	{
@@ -217,7 +167,6 @@ async function validarEnvio(accion = "Registrar"){
 		
 		return false;
 	}
-	
 	else if($(".referencia").is(":visible") && 
 		validarKeyUp(
         /^[0-9]{3,10}$/,
@@ -229,13 +178,7 @@ async function validarEnvio(accion = "Registrar"){
 		
 		return false;
 	}
-	else if(validar_select_multiple("tipo_pago_admin")==0)
-	{
-		mensajes('error',4000,'Debe ingresar un tipo de pago',
-		'Debe seleccionar una opción de tipo de pago');
-		
-		return false;
-	}
+	
 	else if(validar_select_multiple("banco_admin")==0)
 	{
 		mensajes('error',4000,'Debe ingresar un banco',
@@ -250,28 +193,7 @@ async function validarEnvio(accion = "Registrar"){
 		
 		return false;
 	}
-	else if(validar_select("mensualidad_id")==0)
-	{
-		mensajes('error',4000,'Debe ingresar la mensualidad',
-		'Debe seleccionar una opción de mensualidad');
-		
-		return false;
-	}
-	else if(validar_select("apartamento_id")==0)
-	{
-		mensajes('error',4000,'Debe ingresar el apartamento',
-		'Debe seleccionar una opción de apartamento');
-		
-		return false;
-	}
-	else if(validarFecha($(".fecha_admin"))==false)
-	{
-		mensajes('error',4000,'Fecha no válida',
-		'La fecha debe ser posterior a 1900 y no puede ser futura');
-		
-		return false;
-	}
-
+	
 	return true;
 }
 
@@ -284,40 +206,77 @@ function validarKeyPress(er, e) {
     }
 }
 
-
 function validarKeyUp(er,etiqueta,mensaje){
-	let etiquetamensaje;
-	etiqueta.map(etiqueta_selec=>{			
+	if (etiqueta.length != undefined){
+		let error = false;
+		for (let etiqueta_selec of etiqueta){
+			if (!(etiqueta_selec.checkVisibility())) continue;
 
-		etiquetamensaje = etiqueta[etiqueta_selec].nextElementSibling;
-		a = er.test(etiqueta[etiqueta_selec].value);
+			let etiquetamensaje = etiqueta_selec.nextElementSibling;
+			a = er.test(etiqueta_selec.value);
+
+			if(a){
+				etiqueta_selec.classList.add('is-valid');
+				etiqueta_selec.classList.remove('is-invalid');
+				etiquetamensaje.textContent = "";
+			}
+			else{
+				etiqueta_selec.classList.add('is-invalid')
+				etiqueta_selec.classList.remove('is-valid');
+				etiquetamensaje.textContent = mensaje;
+				error = true;
+				break;
+			}
+		}
+		return !error;
+	}
+	else{
+		if (!(etiqueta.checkVisibility())) return;
+
+		let etiquetamensaje = etiqueta.nextElementSibling;
+		a = er.test(etiqueta.value);
 
 		if(a){
+			etiqueta.classList.add('is-valid');
+			etiqueta.classList.remove('is-invalid');
 			etiquetamensaje.textContent = "";
-				return 1;
+			return 1;
 		}
 		else{
+			etiqueta.classList.add('is-invalid')
+			etiqueta.classList.remove('is-valid');
 			etiquetamensaje.textContent = mensaje;
-				return 0;
+			return 0;
 		}
-	});
+	}	
 }
 
 function validar_select(id) {
 	let selec = document.querySelector("#"+id);
 	if (selec.value == '') {
+		selec.classList.add('is-invalid')
+		selec.classList.remove('is-valid');
+		selec.nextElementSibling.textContent = "Debe seleccionar una opcion";
 		return false;
-	}else{
+	}
+	else{
+		selec.classList.add('is-valid');
+		selec.classList.remove('is-invalid');
+		selec.nextElementSibling.textContent = "";
 		return true;
 	}
 }
 
 function validar_select_multiple(id) {
-	let selec = document.querySelectorAll("."+id);
+	let selects = document.querySelectorAll("."+id);
 	let resultado = true;
-	selec.forEach(etiqueta_selec=>{
+	selects.forEach(etiqueta_selec=>{
 		if (etiqueta_selec.checkVisibility()) {
+			console.log(etiqueta_selec,etiqueta_selec.checkVisibility())
 			if (etiqueta_selec.value == '') {
+				etiqueta_selec.classList.add('is-invalid')
+				etiqueta_selec.classList.remove('is-valid');
+				etiqueta_selec.nextElementSibling.textContent = "Debe seleccionar una opcion";
 				resultado = false;
 			}
 		}
@@ -325,27 +284,100 @@ function validar_select_multiple(id) {
 	return resultado;
 }
 
+// function validar_input_multiple(er,etiqueta,mensaje) {
+// 	let selects = document.querySelectorAll("."+id);
+// 	let resultado = true;
+// 	selects.forEach(etiqueta_selec=>{
+// 		if (etiqueta_selec.checkVisibility()) {
+// 			console.log(etiqueta_selec,etiqueta_selec.checkVisibility())
+// 			if (etiqueta_selec.value == '') {
+// 				etiqueta_selec.classList.add('is-invalid')
+// 				etiqueta_selec.classList.remove('is-valid');
+// 				etiqueta_selec.nextElementSibling.textContent = "Debe seleccionar una opcion";
+// 				resultado = false;
+// 			}
+// 		}
+// 	});
+// 	return resultado;
+
+// 	if (etiqueta.length != undefined){
+// 		let error = false;
+// 		for (let etiqueta_selec of etiqueta){
+// 			if (!(etiqueta_selec.checkVisibility())) continue;
+
+// 			let etiquetamensaje = etiqueta_selec.nextElementSibling;
+// 			a = er.test(etiqueta_selec.value);
+
+// 			if(a){
+// 				etiqueta_selec.classList.add('is-valid');
+// 				etiqueta_selec.classList.remove('is-invalid');
+// 				etiquetamensaje.textContent = "";
+// 			}
+// 			else{
+// 				etiqueta_selec.classList.add('is-invalid')
+// 				etiqueta_selec.classList.remove('is-valid');
+// 				etiquetamensaje.textContent = mensaje;
+// 				error = true;
+// 				break;
+// 			}
+// 		}
+// 		return !error;
+// 	}
+// 	else{
+// 		let etiquetamensaje = etiqueta.nextElementSibling;
+// 		a = er.test(etiqueta.value);
+
+// 		if(a){
+// 			etiqueta.classList.add('is-valid');
+// 			etiqueta.classList.remove('is-invalid');
+// 			etiquetamensaje.textContent = "";
+// 			return 1;
+// 		}
+// 		else{
+// 			etiqueta.classList.add('is-invalid')
+// 			etiqueta.classList.remove('is-valid');
+// 			etiquetamensaje.textContent = mensaje;
+// 			return 0;
+// 		}
+// 	}
+// }
+
 function validarFecha(fecha_arreglo){
 	let resultado = true;
 
 	fecha_arreglo.map(fecha=>{
 		if (!(fecha_arreglo[fecha].value)) {
+			fecha_arreglo[fecha].classList.add('is-invalid')
+			fecha_arreglo[fecha].classList.remove('is-valid');
+			fecha_arreglo[fecha].nextElementSibling.textContent = "Debe seleccionar una opcion";
 			resultado = false;
 		}
 
 		let	fecha_validar = new Date(fecha_arreglo[fecha].value);
-		console.log(fecha_validar);
+		
 		if (fecha_validar.getFullYear() < 1900 || fecha_validar.getFullYear() > new Date().getFullYear()) {
+			fecha_arreglo[fecha].classList.add('is-invalid')
+			fecha_arreglo[fecha].classList.remove('is-valid');
+			fecha_arreglo[fecha].nextElementSibling.textContent = "Posterior a 1900 hasta la actualidad";
+
 			mensajes('error',4000,'Fecha no válida','La fecha debe ser posterior a 1900 y no puede ser futura');
 			resultado = false;
 		}
 		else if (fecha_validar.getFullYear() == new Date().getFullYear()){
 			if (fecha_validar.getMonth() > new Date().getMonth()) {
+				fecha_arreglo[fecha].classList.add('is-invalid')
+				fecha_arreglo[fecha].classList.remove('is-valid');
+				fecha_arreglo[fecha].nextElementSibling.textContent = "El mes no puede ser futuro";
+
 				mensajes('error',4000,'Fecha no válida','El Mes seleccionado no puede ser futuro');
 				resultado = false;
 			}
 			else if (fecha_validar.getMonth() == new Date().getMonth()) {
 				if (fecha_validar.getDate()+1 > new Date().getDate()) {
+					fecha_arreglo[fecha].classList.add('is-invalid')
+					fecha_arreglo[fecha].classList.remove('is-valid');
+					fecha_arreglo[fecha].nextElementSibling.textContent = "El dia no puede ser fututo";
+
 					mensajes('error',4000,'Fecha no válida','El Dia seleccionado no puede ser futuro');
 					resultado = false;
 				}
@@ -353,18 +385,34 @@ function validarFecha(fecha_arreglo){
 		}
 		
 		if (fecha_validar.getMonth() < 0 || fecha_validar.getMonth() > 11) {
+			fecha_arreglo[fecha].classList.add('is-invalid')
+			fecha_arreglo[fecha].classList.remove('is-valid');
+			fecha_arreglo[fecha].nextElementSibling.textContent = 'El mes debe estar entre 0 y 11';
+
 			mensajes('error',4000,'Fecha no válida','El mes debe estar entre 0 y 11');
 			resultado = false;
 		}
 		if (fecha_validar.getDate() < 1 || fecha_validar.getDate() > 31) {
+			fecha_arreglo[fecha].classList.add('is-invalid')
+			fecha_arreglo[fecha].classList.remove('is-valid');
+			fecha_arreglo[fecha].nextElementSibling.textContent = 'El día debe estar entre 1 y 31';
+
 			mensajes('error',4000,'Fecha no válida','El día debe estar entre 1 y 31');
 			resultado = false;
 		}
 		if (fecha_validar.getDate() > 28 && fecha_validar.getMonth() == 1) {
+			fecha_arreglo[fecha].classList.add('is-invalid')
+			fecha_arreglo[fecha].classList.remove('is-valid');
+			fecha_arreglo[fecha].nextElementSibling.textContent = 'Febrero solo tiene 28 días';
+
 			mensajes('error',4000,'Fecha no válida','Febrero solo tiene 28 días');
 			resultado = false;
 		}
 		if ((fecha_validar.getDate() == 31) && (fecha_validar.getMonth() == 3 || fecha_validar.getMonth() == 5 || fecha_validar.getMonth() == 8 || fecha_validar.getMonth() == 10)) {
+			fecha_arreglo[fecha].classList.add('is-invalid')
+			fecha_arreglo[fecha].classList.remove('is-valid');
+			fecha_arreglo[fecha].nextElementSibling.textContent = 'Los meses de abril, junio, septiembre y noviembre solo tienen 30 días';
+
 			mensajes('error',4000,'Fecha no válida','Los meses de abril, junio, septiembre y noviembre solo tienen 30 días');
 			resultado = false;
 		}
@@ -373,7 +421,7 @@ function validarFecha(fecha_arreglo){
 	return resultado;
 }
 
-async function verificar_duplicados(datos){
+async function verificar_duplicados(datos,etiqueta){
 	// Solo es un fetching de datos, en body mandamos los datos
 	// Estos datos se mandan al controdalor	
 	let data = await fetch("",{method:"POST", body:datos}).then(res=>{		
@@ -382,7 +430,7 @@ async function verificar_duplicados(datos){
 	})
 	// aqui revisamos el estatus, si es true es porque esta duplicado y mandamos un mensaje	
 	if(data.estatus){
-		document.querySelector(`.${data.busqueda}`).nextElementSibling.textContent = `${data.busqueda} ya registrado/a`
+		etiqueta.nextElementSibling.textContent = `${data.busqueda} ya registrado/a`
 		return true;
 	}
 	return false;

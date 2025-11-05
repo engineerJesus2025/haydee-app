@@ -12,6 +12,8 @@ let boton_formulario = document.querySelector("#boton_formulario"); // el boton
 let modal = new bootstrap.Modal("#modal_pagos");
 let formulario_usar = document.querySelector(`#form_pagos`); // el form
 
+let tasa_dolar = parseFloat(localStorage.getItem("tasa_dolar")).toFixed(2) || 1;
+
 let modal_carga = new bootstrap.Modal("#modal_carga");
 let peticionesActivas = 0;
 let ultimaPeticion = 0;
@@ -24,7 +26,6 @@ let modalVistaPrevia = new bootstrap.Modal(document.querySelector("#modal_vista_
 let detallesActuales = null;
 
 consultar(); // Para llenar la tabla al cargar o entrar a la pagina
-api();
 
 //En caso de que se envie un formulario
 function envio(operacion) { 
@@ -52,8 +53,6 @@ document.querySelector(`#modal_pagos`).addEventListener("hide.bs.modal",()=>{
     document.getElementById('titulo_modal').textContent = "Registrar Pago"; 
     formulario_usar.querySelectorAll("[class='w-100']").forEach(el=>el.textContent="");
 
-    api();
-
     const container = formulario_usar.querySelector("#detalles_container");
     const bloques = container.querySelectorAll(".detalle-pago");
     bloques.forEach((bloque, index) => {
@@ -61,6 +60,9 @@ document.querySelector(`#modal_pagos`).addEventListener("hide.bs.modal",()=>{
             bloque.remove();
         }
     });
+
+    document.querySelectorAll('.is-valid').forEach(input=>input.classList.remove('is-valid'));
+    document.querySelectorAll('.is-invalid').forEach(input=>input.classList.remove('is-invalid'));
 
     formulario_usar.reset();
 
@@ -85,6 +87,8 @@ document.querySelector(`#modal_pagos`).addEventListener("hide.bs.modal",()=>{
     // 5. Elimina cualquier input oculto que se haya añadido (como 'eliminar_imagen')
     const inputOculto = formulario_usar.querySelector("input[name='eliminar_imagen']");
     if (inputOculto) inputOculto.remove();
+
+    document.querySelectorAll(".tasa_dolar").forEach(input=> input.value = tasa_dolar);
 });
 
 document.querySelector("#apartamento_id").addEventListener("change", async function () {
@@ -96,9 +100,7 @@ document.querySelector("#apartamento_id").addEventListener("change", async funct
     datos_consulta.append("operacion", "consultar_mensualidades");
     datos_consulta.append("apartamento_id", id_apartamento);
 
-    let respuesta = await query(datos_consulta);
-
-    console.log(respuesta);
+    let respuesta = await query(datos_consulta,'text-secondary');    
 
     if (respuesta.estatus === false) {
         mensajes('error', 4000, 'Error', respuesta.mensaje);
@@ -170,38 +172,12 @@ document.querySelector("#mensualidad_id").addEventListener("change", function ()
     document.querySelector("#monto_mensualidad").value = monto;
 });
 
-async function api() {
-    try {
-        let response = await fetch('https://ve.dolarapi.com/v1/dolares');
-        let obj_dolar = await response.json();
-        console.log(obj_dolar);
+document.querySelectorAll(".tasa_dolar").forEach(input=> input.value = tasa_dolar);
 
-        let oficial = obj_dolar.find(item => item.fuente === 'oficial');
-        let tasaBCV = oficial ? oficial.promedio.toFixed(2) : null;
-
-        let inputsTasa = document.querySelectorAll('.tasa_dolar'); // selecciona todos los campos
-
-        if (tasaBCV) {
-            inputsTasa.forEach(input => input.value = tasaBCV);
-            calcularDolares();
-        } else {
-            inputsTasa.forEach(input => input.value = "No disponible");
-        }
-
-    } catch (error) {
-        console.error('Error al obtener la tasa del dólar bcv:', error);
-
-        document.querySelectorAll('.tasa_dolar').forEach(input => {
-            input.value = "Error";
-        });
-    }
-}
-
-// Calcular dolares o bolivares en vivo y directo
-function calcularDolares() {
-    const tarjetas = document.querySelectorAll(".detalle-pago");
-
-    tarjetas.forEach(tarjeta => {
+document.addEventListener("input", function(e) {
+    if (e.target.matches(".monto")) {
+        const tarjeta = e.target.closest(".detalle-pago")
+        
         const inputBs = tarjeta.querySelector(".monto");
         const inputTasa = tarjeta.querySelector(".tasa_dolar");
         const inputDolar = tarjeta.querySelector(".monto_dolar");
@@ -214,13 +190,7 @@ function calcularDolares() {
             inputDolar.value = dolares.toFixed(2);
         } else {
             inputDolar.value = "";
-        }
-    });
-}
-
-document.addEventListener("input", function(e) {
-    if (e.target.matches(".monto")) {
-        calcularDolares();
+        }        
     }
 });
 // ...
@@ -232,7 +202,8 @@ document.getElementById('agregar_detalle').addEventListener('click', () => {
 
     // Limpia los inputs del nuevo bloque
     nuevoDetalle.querySelectorAll('input, select').forEach(el => {
-        if (el.type !== 'hidden') el.value = '';
+        if (el.type !== 'hidden') el.value = '';        
+        if (el.classList.contains("tasa_dolar")) el.value = tasa_dolar;
     });
 
     // Crea un botón para eliminar el bloque
@@ -246,7 +217,6 @@ document.getElementById('agregar_detalle').addEventListener('click', () => {
     cardBody.prepend(eliminarBtn);
 
     container.appendChild(nuevoDetalle);
-    api();
 });
 
 // Cambiar Inputs al seleccionar un metodo de pago
@@ -390,7 +360,7 @@ async function registrar() {
 
     datos_consulta.append("operacion", "registrar");
 
-    let respuesta = await query(datos_consulta);
+    let respuesta = await query(datos_consulta,'text-secondary');
     if (!respuesta.estatus) {
         mensajes("error", 4000, "Atención", respuesta.mensaje);
         return;
@@ -461,7 +431,7 @@ async function consultar() {
     
     data_table = init_data_table(); //iniciamos el dataTable de jquery
 }
- 
+
 // Esta funcion hace lo que dice
 function vaciar_tabla() {
     let cuerpo_tabla = document.querySelector(`#tabla_pagos tbody`);
@@ -470,8 +440,7 @@ function vaciar_tabla() {
 
 // esta tambien, se ve larga, pero no es tan complicada  **********
 // esta funcion crea filas para la tabla al momento de consultar
-function llenarTabla(fila) {
-    console.log("Se llena la tabla: ",fila);
+function llenarTabla(fila) {    
     // seleccionamos el cuerpo de la tabla que vamos a llenar
     let cuerpo_tabla = document.querySelector(`#tabla_pagos tbody`);
 
@@ -610,7 +579,7 @@ async function eliminar(id) {
 
 
 async function modificar_formulario(e) {
-    datos_consulta = new FormData();
+    let datos_consulta = new FormData();
     
     let id = e.target.value; // tomamos el id
     if (id === undefined) {
@@ -621,36 +590,35 @@ async function modificar_formulario(e) {
     datos_consulta.append("id_pago",id);
     datos_consulta.append('operacion','consulta_especifica');
 
-    data = await query(datos_consulta);
-    console.log("Modificar formulario:",data);
-    console.log("Modificar formulario:",data.detalles);
+    data = await query(datos_consulta,'text-secondary');
+    // console.log("Modificar formulario:",data);
+    // console.log("Modificar formulario:",data.detalles);
 
     const datosPago = data;
     const detalles = data.detalles;
     
+    console.log(data)    
+
     // Llenar campos principales
     formulario_usar.querySelector("#estado").value = datosPago.estado;
     formulario_usar.querySelector("#observacion").value = datosPago.observacion;
     formulario_usar.querySelector("#apartamento_id").value = datosPago.apartamento_id;
-    formulario_usar.querySelector("#monto_mensualidad").value = datosPago.monto_mensualidad;
-    formulario_usar.querySelector("#mensualidad_id").value = datosPago.mensualidad_id;
+    formulario_usar.querySelector("#monto_mensualidad").value = datosPago.monto_mensualidad;    
 
     id_detalle_pago = detalles.map(d => d.id_detalle_pago); // Puede que falle porque se le puso un null
     id_banco_transaccion = detalles.map(d => d.id_banco_transaccion || null);
 
-    console.log("Ids almacenados: ", id_detalle_pago);
-
-    cantidad = detalles.length;
+    // console.log("Ids almacenados: ", id_detalle_pago);
 
     // Para hacer parecer los inputs de los detalles
     const detallesContainer = formulario_usar.querySelector("#detalles_container");
     detallesContainer.innerHTML = ""; // Limpiar detalles existentes
-    const plantilla = document.getElementById("plantilla-detalle-pago");
+    const fragmentoDetallesContainer = document.createDocumentFragment();
 
+    const plantilla = document.getElementById("plantilla-detalle-pago");
     if (detalles && detalles.length > 0) {
         detalles.forEach((detalle, index) => {
             const nuevoBloque = plantilla.content.firstElementChild.cloneNode(true);
-            api();
 
             // Añadir botón de eliminar si no es el primer detalle
             if (index > 0) {
@@ -665,7 +633,7 @@ async function modificar_formulario(e) {
             // Llenar los inputs de detalles
             nuevoBloque.querySelector(".fecha_admin").value = detalle.fecha;
             nuevoBloque.querySelector(".monto").value = detalle.monto;
-            nuevoBloque.querySelector(".tasa_dolar").value = detalle.tasa_dolar;
+            nuevoBloque.querySelector(".tasa_dolar").value = tasa_dolar;
             nuevoBloque.querySelector(".monto_dolar").value = detalle.monto_dolar;
             nuevoBloque.querySelector(".tipo_pago_admin").value = detalle.tipo_pago;
             nuevoBloque.querySelector(".referencia").value = detalle.referencia;
@@ -684,24 +652,25 @@ async function modificar_formulario(e) {
             }
 
             mostrarCamposPorTipo(detalle.tipo_pago, nuevoBloque);
-            detallesContainer.appendChild(nuevoBloque);
+            fragmentoDetallesContainer.appendChild(nuevoBloque);
         })
     }
-
+    detallesContainer.appendChild(fragmentoDetallesContainer);
     // Mensualidad
     let mensualidades_respuesta = new FormData();
     mensualidades_respuesta.append("operacion", "consultar_mensualidades");
     mensualidades_respuesta.append("apartamento_id", data.apartamento_id);
 
-    let mensualidades = await query(mensualidades_respuesta);
-
-    // Limpiar mensualidades
-    mensualidad_id.innerHTML = "<option value=''>Seleccione una mensualidad</option>";
+    let mensualidades = await query(mensualidades_respuesta,'text-secondary');
 
     const meses = [
-        "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", 
+        "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
         "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
     ];
+
+    // Limpiar mensualidades
+    let mensualidad_id = document.querySelector("#mensualidad_id");
+    mensualidad_id.innerHTML = "<option selected hidden value=''>Escoja primero un Apartamento</option>";
 
     mensualidades.forEach(m => {
         let opcion = document.createElement("option");
@@ -732,6 +701,8 @@ async function modificar_formulario(e) {
     document.getElementById('titulo_modal').textContent = "Modificar Pago";
 
     id_modificar = id;
+
+    asignarEventos();
     //referencia_an = referencia.value;
     //guardamos el orginal del correo, para que no choquen con las validaciones
 }
@@ -802,14 +773,6 @@ async function mostrarVistaPrevia(e) {
     // asignarEventoRegistrar();
 }
 
-function asignarEventoRegistrar() {
-    const btnRegistrar = document.querySelector('#modal_vista_previa .btn-primary'); // ajusta selector si tu botón tiene otra clase o id
-
-    if (btnRegistrar) {
-        btnRegistrar.removeEventListener('click', abrirModalRegistrar);
-        btnRegistrar.addEventListener('click', abrirModalRegistrar);
-    }
-}
 
 function abrirModalRegistrar() {
     const modalVistaPreviaEl = document.getElementById('modal_vista_previa');
@@ -833,16 +796,86 @@ document.getElementById('modal_detalles_pagos').addEventListener('hidden.bs.moda
 });
 
 //si queremos modificar
-async function modificar(id) {  
+async function modificar(id) {
     //Creamos el formData
-    let datos_consulta = new FormData(formulario_usar);
+    let datos_consulta = new FormData();
+
+    // Campos simples
+    let estado = formulario_usar.querySelector("#estado").value;
+    let observacion = formulario_usar.querySelector("#observacion").value;
+    let apartamento_id = formulario_usar.querySelector("#apartamento_id").value;
+    let monto_mensualidad = formulario_usar.querySelector("#monto_mensualidad").value;
+    let mensualidad_id = formulario_usar.querySelector("#mensualidad_id").value;
+    let monto_total = 0;
+
+    // Campos múltiples
+    let fechas = formulario_usar.querySelectorAll(".fecha_admin");
+    let montos = formulario_usar.querySelectorAll(".monto");
+    let tasas = formulario_usar.querySelectorAll(".tasa_dolar");
+    let montos_dolar = formulario_usar.querySelectorAll(".monto_dolar");
+    let tipos_pago = formulario_usar.querySelectorAll(".tipo_pago_admin");
+    let referencias = formulario_usar.querySelectorAll(".referencia");
+    let bancos = formulario_usar.querySelectorAll(".banco_admin");
+    let imagenes = formulario_usar.querySelectorAll(".imagen");
+    let imagenes_existentes = formulario_usar.querySelectorAll('[name="imagen_existente[]"]');
+
+    datos_consulta.append("estado", estado);
+    datos_consulta.append("observacion", observacion);
+    datos_consulta.append("apartamento_id", apartamento_id);
+    datos_consulta.append("monto_mensualidad", monto_mensualidad);
+    datos_consulta.append("mensualidad_id", mensualidad_id);
+
+    let total = fechas.length;
+
+    if (
+        montos.length !== total ||
+        tasas.length !== total ||
+        montos_dolar.length !== total ||
+        tipos_pago.length !== total ||
+        referencias.length !== total ||
+        bancos.length !== total ||
+        imagenes.length !== total
+    ) {
+        mensajes("error", 4000, "Error", "Hay un desajuste en los campos de detalles");
+        return;
+    }
+
+    let indice_imagen_existente = 0;
+    for (let i = 0; i < total; i++) {
+        datos_consulta.append("fecha[]", fechas[i].value);
+        datos_consulta.append("monto[]", montos[i].value);
+        datos_consulta.append("tasa_dolar[]", tasas[i].value);
+        datos_consulta.append("monto_dolar[]", montos_dolar[i].value);
+        datos_consulta.append("tipo_pago[]", tipos_pago[i].value);
+
+        if (bancos[i].value == '') {
+            datos_consulta.append("imagen_nueva[]", 2);
+            continue;
+        }
+
+        datos_consulta.append("referencia[]", referencias[i].value);
+        datos_consulta.append("banco_id[]", bancos[i].value);
+        
+        if (imagenes[i] && imagenes[i].files[0]) {
+            datos_consulta.append("imagen[]", imagenes[i].files[0]);
+            datos_consulta.append("imagen_nueva[]", 0);
+        }
+        else if (imagenes_existentes[indice_imagen_existente] && imagenes_existentes[indice_imagen_existente].value) {
+            datos_consulta.append("imagen_existente[]", imagenes_existentes[indice_imagen_existente].value);
+            datos_consulta.append("imagen_nueva[]", 1);
+            indice_imagen_existente++;
+        }
+
+        monto_total += Number(montos[i].value);
+    }
 
     datos_consulta.append("id_pago", id);
     datos_consulta.append('operacion','modificar');
-
+    console.log(datos_consulta)
+    // return;
     //Llamamos a la funcion para hacer la consulta
-    let respuesta = await query(datos_consulta);
-    console.log("Respuesta de modificar:", respuesta);
+    let respuesta = await query(datos_consulta,'text-secondary');
+    console.log("Respuesta de modificar:", datos_consulta);
 
     // Resvisamos el resultado
     if (!respuesta.estatus) {
@@ -916,7 +949,9 @@ async function last_id() {
 }
 
 // Aqui se hace la peticion AJAX
-async function query(datos) {
+async function query(datos,color_carga = 'text-light') {
+    document.getElementById('icono_carga').setAttribute("class",`spinner-border ${color_carga}`);
+
     peticionesActivas++;
 
     const tiempoInicio = performance.now();
@@ -1008,7 +1043,7 @@ observer.observe(tabla, {childList:true});
 
 // esta funcion pone los eventos de eliminar y modificar
 function reasignarEventos() {
-    console.log("me ejecuto");
+    // console.log("me ejecuto");
     if (id_eliminado){ //Si hay un eliminado que no se ha quitado de la tabla
         let existe_fila = tabla.querySelector(`#fila-${id_eliminado}`)
         if (existe_fila) {
@@ -1597,7 +1632,7 @@ async function mostrarVistaPrevia_detalles(e) {
     datos_consulta.append("id_detalle_pago", id);
     datos_consulta.append("operacion", "consulta_especifica_detalles");
 
-    const respuesta = await query(datos_consulta);
+    const respuesta = await query(datos_consulta,'text-secondary');
     const data = respuesta;
 
     document.getElementById("vista_fecha_detalles").textContent = formatearFecha(data.fecha);

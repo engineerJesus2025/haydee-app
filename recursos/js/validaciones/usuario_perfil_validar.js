@@ -143,43 +143,7 @@ async function validarEnvio(accion = "Registrar"){
 		
 		return false;
 	}
-	/*
-	else if(validarKeyUp(
-        /^[A-Za-z0-9_.+*$#%&@]{5,50}$/,
-        document.querySelector("#contra"),document.querySelector("#contra").nextElementSibling.nextElementSibling,'Debe ingresar una contraseña'
-        )==0)
-	{
-		mensajes('error',4000,'Debe ingresar una contraseña',
-		'El formato debe tener mínimo 5 caracteres, utilizar letras, numeros y caracteres especiales como: _.+*$#%&/ ');
-		
-		return false;
-	}
 	
-	datos = new FormData();
-	datos.append("validar",'contra');
-	datos.append("id_usuario",id_modificar);
-	datos.append("contra",$("#contra").val());
-	res = await verificar_contra(datos);
-	// revisamos si la contraseña que puso es la correcta
-	if(!res){
-		document.querySelector("#contra").classList.add('is-invalid')
-		document.querySelector("#contra").classList.remove('is-valid');			
-		document.querySelector("#contra").nextElementSibling.nextElementSibling.textContent = `La contraseña ingresada no es correcta`;
-
-		mensajes('error',4000,'Contraseña Icorrecta','La contraseña ingresada no es correcta, para poder realizar cambios debe ingresar la contraseña correcta');
-		return false;
-	}
-
-	if ($("#confir_contra").val() != '') {
-		if(validarKeyUp(/^[A-Za-z0-9_.+*$#%&@]{5,50}$/,document.querySelector("#confir_contra"),document.querySelector("#confir_contra").nextElementSibling.nextElementSibling,'Debe ingresar una contraseña')==0)
-		{
-			mensajes('error',4000,'Error en la nueva contraseña',
-			'El formato debe tener mínimo 5 caracteres, utilizar letras, numeros y caracteres especiales como: _.+*$#%&/ ');
-			
-			return false;
-		}
-	}
-	*/
 	// si el valor de correo no es el mismo de antes:
 	if(correo_an != $("#correo").val()){
 		datos = new FormData(); 

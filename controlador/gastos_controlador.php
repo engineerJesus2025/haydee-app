@@ -1,5 +1,6 @@
 <?php
 // -------------------- 1. INCLUDES Y OBJETOS --------------------
+require_once "vista/componentes/sesion.php";
 require_once "modelo/gastos_modelo.php";
 require_once "modelo/banco_modelo.php";
 require_once "modelo/proveedores_modelo.php";

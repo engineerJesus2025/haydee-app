@@ -337,7 +337,7 @@
 
         public function consultarPorCorreo($correo) {
             $sql = "SELECT 
-                p.*, 
+                p.id_pago,
                 (SELECT SUM(detalles_pagos.monto) 
                 FROM detalles_pagos 
                 WHERE detalles_pagos.pago_id = p.id_pago) AS monto,
@@ -347,12 +347,23 @@
                     WHERE dp.pago_id = p.id_pago
                     ORDER BY dp.fecha ASC
                     LIMIT 1
-                ) AS primera_fecha_detalle
+                ) AS primera_fecha_detalle,
+                p.estado,
+                a.nro_apartamento AS apartamento,
+                CONCAT(
+                    CASE m.mes
+                        WHEN 1 THEN 'Enero' WHEN 2 THEN 'Febrero' WHEN 3 THEN 'Marzo'
+                        WHEN 4 THEN 'Abril' WHEN 5 THEN 'Mayo' WHEN 6 THEN 'Junio'
+                        WHEN 7 THEN 'Julio' WHEN 8 THEN 'Agosto' WHEN 9 THEN 'Septiembre'
+                        WHEN 10 THEN 'Octubre' WHEN 11 THEN 'Noviembre' WHEN 12 THEN 'Diciembre'
+                    END, ' ', m.anio
+                ) AS mensualidad
+
             FROM pagos p
             LEFT JOIN detalles_pagos dp ON dp.pago_id = p.id_pago
-            LEFT JOIN pagos_mensualidad pm ON pm.detalle_pago_id = dp.id_detalle_pago
-            LEFT JOIN mensualidad m ON m.id_mensualidad = pm.mensualidad_id
-            LEFT JOIN apartamentos a ON a.id_apartamento = m.apartamento_id
+            LEFT JOIN pagos_mensualidad pm ON dp.id_detalle_pago = pm.detalle_pago_id
+            LEFT JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
+            LEFT JOIN apartamentos a ON m.apartamento_id = a.id_apartamento
             LEFT JOIN habitantes_apartamentos pa ON pa.apartamento_id = a.id_apartamento
             LEFT JOIN habitantes per ON per.id_habitante = pa.habitante_id
             WHERE per.correo = :correo
@@ -433,6 +444,7 @@
                 "mensualidad_id" => $primera["mensualidad_id"],
                 "monto_mensualidad" => $primera["monto_mensualidad"],
                 "nro_apartamento" => $primera["nro_apartamento"],
+                "mes_mensualida" => $primera["mes"],
                 "detalles" => []
             ];
 
@@ -700,6 +712,38 @@
             $conexion->bindParam(":id_apartamento", $id_apartamento);
             $result = $conexion->execute();
             $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
+
+            if ($result == true) {
+                return $datos;
+            } else {
+                return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
+            }
+        }
+
+        public function consultarMensualidadEspecifica() {
+            $sql = "SELECT 
+                m.id_mensualidad,
+                m.monto,
+                m.tasa_dolar,
+                m.mes,
+                m.anio,
+                m.porcentaje_interes,
+                m.limite_mensualidad,
+                COALESCE(SUM(dp.monto), 0) AS total_pagado,
+                (m.monto - COALESCE(SUM(dp.monto), 0)) AS pendiente
+            FROM mensualidad m
+            LEFT JOIN pagos_mensualidad pm ON m.id_mensualidad = pm.mensualidad_id
+            LEFT JOIN detalles_pagos dp ON pm.detalle_pago_id = dp.id_detalle_pago
+            WHERE m.id_mensualidad = :mensualidad_id
+            GROUP BY 
+                m.id_mensualidad, m.monto, m.tasa_dolar, 
+                m.mes, m.anio, m.porcentaje_interes, m.limite_mensualidad
+            ORDER BY m.anio, m.mes";
+
+            $conexion = $this->get_conex()->prepare($sql);
+            $conexion->bindParam(":mensualidad_id", $this->mensualidad_id);
+            $result = $conexion->execute();
+            $datos = $conexion->fetch(PDO::FETCH_ASSOC);
 
             if ($result == true) {
                 return $datos;

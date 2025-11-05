@@ -1,5 +1,6 @@
-let data_table, id_eliminado, id_registrado,id_modificar, nro_apartamento_an;
-let datos_apartamento;
+let nro_apartamento_an;
+let tabla_apartamentos;
+let id_apartamento_seleccionado;
 let permiso_eliminar = document.querySelector("#permiso_eliminar").value;
 let permiso_editar = document.querySelector("#permiso_editar").value;
 
@@ -12,9 +13,9 @@ let modalVistaPrevia = new bootstrap.Modal(document.querySelector("#modal_vista_
 
 consultar();
 
-function envio(operacion) {	
+function envio(operacion) {
 	if (operacion == "Editar") {
-		id_modificar = boton_formulario.getAttribute("id_modificar");
+		let id_modificar = boton_formulario.getAttribute("id_modificar");
 		modificar(id_modificar);
 	}
 	else if(operacion == "Registrar"){
@@ -36,37 +37,16 @@ document.querySelector(`#modal_apartamentos`).addEventListener("hide.bs.modal",(
 	document.querySelectorAll('.is-invalid').forEach(input=>input.classList.remove('is-invalid'));
 });
 
-// Para que se vuelva abrir el modal de vista previa y esas cosas
-function asignarEventoRegistrar() {
-    const btnRegistrar = document.querySelector('#modal_vista_previa .btn-primary'); // ajusta selector si tu botón tiene otra clase o id
-
-    if (btnRegistrar) {
-        btnRegistrar.removeEventListener('click', abrirModalRegistrar);
-        btnRegistrar.addEventListener('click', abrirModalRegistrar);
-    }
-}
-
-function abrirModalRegistrar() {
-    const modalVistaPreviaEl = document.getElementById('modal_vista_previa');
-
-    function abrirHabitantes() {
-        modal_habitantes.show();
-        modalVistaPreviaEl.removeEventListener('hidden.bs.modal', abrirHabitantes);
-    }
-
-    // Primero elimina para evitar duplicados
-    modalVistaPreviaEl.removeEventListener('hidden.bs.modal', abrirHabitantes);
-    // Luego añade el listener
-    modalVistaPreviaEl.addEventListener('hidden.bs.modal', abrirHabitantes);
-
-    // Finalmente cierra la vista previa
-    modalVistaPrevia.hide();
-}
-
 document.getElementById('modal_habitantes').addEventListener('hidden.bs.modal', () => {
     modalVistaPrevia.show();
 });
-// ...
+
+document.getElementById('header-toggle').addEventListener("click",e=>{
+	setTimeout(function(){
+		tabla_apartamentos.columns.adjust().draw();
+	},450);
+});
+
 
 async function registrar() {
 	datos_consulta = new FormData();
@@ -91,7 +71,7 @@ async function registrar() {
 
 	datos_consulta.append('operacion','registrar');
 	
-	let respuesta = await query(datos_consulta); 
+	let respuesta = await query(datos_consulta,'text-secondary'); 
 
 	modal.hide();
 	formulario_usar.reset();
@@ -101,44 +81,70 @@ async function registrar() {
 		return;
 	}
 
-	id_registrado = await last_id();
-
-	let acciones = crearBotones(id_registrado.last_id);
-	
-	let res_data_table = await data_table.row.add([`${"Nro: " + nro_apartamento}`,`${porcentaje_formateado}`,`${gas_texto}`,`${agua_texto}`,`${alquilado_texto}`,`${acciones.outerHTML}`]).draw();
+	tabla_apartamentos.ajax.reload();	
 
 	mensajes('success',4000,'Atencion','El registro se ha realizado exitosamente');
 }
 
 async function consultar() {
-	datos_consulta = new FormData();
+	const paramentros_consulta = (data)=>{data.operacion = 'consulta';}
+	const estructura_tabla_apartamentos = [
+ 		{
+ 			"data": null,
+            "render": function (row) {            
+                return `Nro: ${row.nro_apartamento}`;                 
+            }  
+        },
+		{ 
+			"data": null, 
+			"render": function (row) {                
+                return `${row.porcentaje_participacion + '%'}`;
+            }
+        },
+        { 
+            "data": null, 
+            "render": function (row) {
+            	return `${(row.gas == 1) ? 'TIENE' : 'NO TIENE'}`;
+            }
+        },
+		{ 
+            "data": null, 
+            "render": function (row) {
+            	return `${(row.agua == 1) ? 'TIENE' : 'NO TIENE'}`;
+            }
+        },
+        { 
+            "data": null, 
+            "render": function (row) {
+            	return `${(row.alquilado == 1) ? 'SI' : 'NO'}`;
+            }
+        },     
+        { 
+            "data": null, 
+            "render": function (row) {
+            	let id_campo = row.id_apartamento;
+               	let acciones = crearBotones(id_campo);
 
-	datos_consulta.append('operacion','consulta');
+                return `${acciones.innerHTML}`;
+        	}
+        } 		
+ 	];
 
-	data = await query(datos_consulta)
-	vaciar_tabla();
-	
-	if(!(data.estatus == undefined)){
-		mensajes('error',4000,'Atencion', respuesta.mensaje);
-		return;
-	}
+ 	const configuraciones_tabla_apartamentos = (row, data)=>{
+ 		const option = new Option(data.nro_apartamento, data.id_apartamento);
+ 		document.getElementById("apartamento_id").add(option);
 
-	await data.map(fila=>{
-		llenarTabla(fila);
-	})
-	
-	data_table = init_data_table();
-}
+		row.setAttribute("id",`fila-${data.id_apartamento}`); 		
+		row.querySelector(".vista_previa")?.addEventListener('click',mostrarVistaPrevia);
+ 		row.querySelector(".editar")?.addEventListener('click',modificar_formulario);
+ 		row.querySelector(".eliminar")?.addEventListener('click',eventoEliminar);
+ 	}
 
-function vaciar_tabla() {
-	let cuerpo_tabla = document.querySelector(`#tabla_apartamentos tbody`);
-	cuerpo_tabla.textContent = null;
+ 	tabla_apartamentos = crearDataTable('tabla_apartamentos',estructura_tabla_apartamentos,paramentros_consulta,configuraciones_tabla_apartamentos);
 }
 
 function llenarTabla(fila) {
 	let cuerpo_tabla = document.querySelector(`#tabla_apartamentos tbody`);
-
-	console.log(fila);
 
 	let gas = fila["gas"];
 	let agua = fila["agua"];
@@ -196,10 +202,10 @@ function crearBotones(id) {
     icono_ver.setAttribute("class", "bi bi-people-fill");
     boton_vista_previa.appendChild(icono_ver);
     boton_vista_previa.setAttribute("type", "button");
-    boton_vista_previa.setAttribute("class", "btn btn-primary btn-sm col-3");
+    boton_vista_previa.setAttribute("class", "btn btn-primary btn-sm col-3 vista_previa");
     boton_vista_previa.setAttribute("title", "Detalles Apartamento");
     boton_vista_previa.setAttribute("value", id);
-    boton_vista_previa.addEventListener("click", mostrarVistaPrevia);
+    // boton_vista_previa.addEventListener("click", mostrarVistaPrevia);
     acciones.appendChild(boton_vista_previa);
 	// ...
 
@@ -209,7 +215,7 @@ function crearBotones(id) {
 	icono_editar.setAttribute("class", "bi bi-pencil-square")
 	boton_editar.appendChild(icono_editar);
 	boton_editar.setAttribute("type", "button");
-	boton_editar.setAttribute("class", "btn btn-success btn-sm col-3");
+	boton_editar.setAttribute("class", "btn btn-success btn-sm col-3 editar");
 	boton_editar.setAttribute("tabindex", "-1");
 	boton_editar.setAttribute("role", "button");
 	boton_editar.setAttribute("aria-disabled", "true");
@@ -217,7 +223,7 @@ function crearBotones(id) {
 	boton_editar.setAttribute("data-bs-target", "#modal_apartamentos");
 	boton_editar.setAttribute("title","Editar");
 	boton_editar.setAttribute("value",id);
-	boton_editar.addEventListener("click",modificar_formulario)
+	// boton_editar.addEventListener("click",modificar_formulario)
 	//...
 
 	//Le ponemos los botones al <td><td> de las acciones
@@ -247,64 +253,41 @@ function crearBotones(id) {
 	return td;
 }
 
-//FUNCIONALIDAD DE LA VISTA PREVIA
 async function mostrarVistaPrevia(e) {
-    let boton = e.target.closest("button");
-    let id = boton.getAttribute("value");
+    let id = e.target.closest("button").getAttribute("value");
 
     let datos_consulta = new FormData();
     datos_consulta.append("id_apartamento", id);
     datos_consulta.append("operacion", "consulta_especifica");
 
-    let respuesta = await query(datos_consulta);
+    let data = await query(datos_consulta);
 
-    let data = respuesta;
-
-	console.log("Mostrar vista previa del apartamento");
-	console.log(data);
-
-	datos_apartamento = data.apartamento;
-
-	console.log("Datos del Apartamento: ",datos_apartamento);
+	id_apartamento_seleccionado = data.apartamento.id_apartamento;
 	
 	await consultar_habitantes(data.apartamento.id_apartamento);
 
-    // Mostrar el modal como los otros
     modalVistaPrevia.show();
-
-	asignarEventoRegistrar()
 }
 
-function mostrarHabitantes(detalles) {
-    let cuerpoTabla = document.querySelector("#tabla_apartamentos tbody");
-    cuerpoTabla.innerHTML = ""; // Limpia cualquier contenido anterior
+function eventoEliminar(e){
+	let boton_eliminar = e.target;
+	if (boton_eliminar.value == undefined) {
+		boton_eliminar = boton_eliminar.parentElement;
+	}
 
-    // Filtramos solo los habitantes
-    let habitantes = detalles.filter(habitante => habitante.tipo_vinculo === "Habitante");
-
-    if (habitantes.length === 0) {
-        cuerpoTabla.innerHTML = `
-            <tr>
-                <td colspan="3" class="text-center text-muted">
-                    <em>No hay habitantes registrados</em>
-                </td>
-            </tr>
-        `;
-        return;
-    }
-    
-    // Creamos una fila por cada habitante
-    habitantes.forEach(habitante => {
-        let fila = document.createElement("tr");
-
-        fila.innerHTML = `
-            <td>${habitante.cedula}</td>
-            <td>${habitante.nombre}</td>
-            <td>${habitante.apellido}</td>
-        `;
-
-        cuerpoTabla.appendChild(fila);
-    });
+	Swal.fire({
+		title: "¿Estás seguro?",
+		text: "¿Está seguro que desea eliminar este apartamento?",
+		showCancelButton: true,
+		confirmButtonText: "Si, Eliminar",
+		confirmButtonColor: "#e01d22",
+		cancelButtonText: "Cancelar",
+		icon: "warning"
+	}).then((resultado) => {
+		if (resultado.isConfirmed) {
+			eliminar(boton_eliminar.value);				
+		}
+	});
 }
 
 async function eliminar(id) {
@@ -321,9 +304,7 @@ async function eliminar(id) {
 		return;
 	}
 
-	id_eliminado = id; 
-
-	data_table.row(`#fila-${id}`).remove().draw();
+	tabla_apartamentos.ajax.reload();
 
 	mensajes('success',4000,'Atencion','El registro ha sido eliminado correctamente');
 }
@@ -340,7 +321,7 @@ async function modificar_formulario(e) {
 
 	datos_consulta.append('operacion','consulta_especifica');
 
-	data = await query(datos_consulta);	
+	data = await query(datos_consulta,'text-secondary');	
 	
 	let nro_apartamento = formulario_usar.querySelector("#nro_apartamento"),
 	porcentaje_participacion = formulario_usar.querySelector("#porcentaje_participacion"),	
@@ -364,11 +345,10 @@ async function modificar_formulario(e) {
 	boton_formulario.textContent = "Guardar Cambios";
 	document.getElementById('titulo_modal').textContent = "Modificar Apartamento";
 
-	id_modificar = id;
 	nro_apartamento_an = nro_apartamento.value;
 }
 
-async function modificar(id) {	
+async function modificar(id) {
 	let datos_consulta = new FormData();
 
 	let nro_apartamento = formulario_usar.querySelector("#nro_apartamento").value,
@@ -393,7 +373,7 @@ async function modificar(id) {
 	
 	datos_consulta.append('operacion','modificar');
 
-	let respuesta = await query(datos_consulta);
+	let respuesta = await query(datos_consulta,'text-secondary');
 
 	formulario_usar.reset();
  	modal.hide();
@@ -405,21 +385,13 @@ async function modificar(id) {
 
 	boton_formulario.removeAttribute("modificar");
 	boton_formulario.removeAttribute("id_modificar");	
-	boton_formulario.textContent = "Guardar Cambios";
+	boton_formulario.textContent = "Guardar";
 
 	document.getElementById('titulo_modal').textContent = "Registrar Apartamento";
 
 	mensajes('success',4000,'Atencion','El registro se ha modificado exitosamente');
 
-	let acciones = crearBotones(id);
-
-	data_table.row(`#fila-${id}`).data([`${"Nro: " + nro_apartamento}`,`${porcentaje_formateado}`,`${gas_texto}`,`${agua_texto}`,`${alquilado_texto}`,`${acciones.outerHTML}`])
-	data_table.draw();
-
-	let fila = document.querySelector(`#fila-${id}`);
-	if (fila) {
-		fila.querySelector(`[value='${id}']`).addEventListener("click",modificar_formulario);
-	}
+	tabla_apartamentos.ajax.reload();
 }
 
 async function last_id() {
@@ -429,7 +401,9 @@ async function last_id() {
 	return res;
 }
 
-async function query(datos) {
+async function query(datos,color_carga = 'text-light') {
+    document.getElementById('icono_carga').setAttribute("class",`spinner-border ${color_carga}`);
+
 	let mostrarModal = false;
     let tiempoCarga;
 
@@ -477,107 +451,54 @@ function mensajes(icono,tiempo,titulo,mensaje){
 	});
 }
 
-function init_data_table() {
-	return new DataTable("#tabla_apartamentos",{
-            destroy: true,
-            responsive: true,
-            "scrollX": true,
-            "pageLength": 10,
-            "aaSorting": [],
-            language: {
-                "processing": "Procesando...",
-                "lengthMenu": "Mostrar _MENU_ registros",
-                "zeroRecords": "No se encontraron resultados",
-                "emptyTable": "Ningún dato disponible en esta tabla",
-                "info": "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
-                "infoEmpty": "Mostrando registros del 0 al 0 de un total de 0 registros",
-                "infoFiltered": "(filtrado de un total de _MAX_ registros)",
-                "infoPostFix": "",
-                "search": "Buscar:",
-                "url": "",
-                "infoThousands": ",",
-                "loadingRecords": "Cargando...",
-                "paginate": {
-                    "first": "Primero",
-                    "last": "Último",
-                    "next": "<i class='bi bi-caret-right'></i>",
-                    "previous": "<i class='bi bi-caret-left'></i>"
-                },
-                "aria": {
-                    "sortAscending": ": Activar para ordenar la columna de manera ascendente",
-                    "sortDescending": ": Activar para ordenar la columna de manera descendente"
-                },
-                "buttons": {
-                    "copy": "Copiar",
-                    "colvis": "Visibilidad"
-                }
+function crearDataTable(id_tabla,estructura_filas,datos_paramentros, configuraciones_post_creacion = ()=>{}){
+	return new DataTable(`#${id_tabla}`,{
+		destroy: true,
+        responsive: true,
+        "scrollX": true,
+        "pageLength": 10,
+        "aaSorting": [],
+        language: {
+            "processing": "Procesando...",
+            "lengthMenu": "Mostrar _MENU_ registros",
+            "zeroRecords": "No se encontraron resultados",
+            "emptyTable": "Ningún dato disponible en esta tabla",
+            "info": "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+            "infoEmpty": "Mostrando registros del 0 al 0 de un total de 0 registros",
+            "infoFiltered": "(filtrado de un total de _MAX_ registros)",
+            "infoPostFix": "",
+            "search": "Buscar:",
+            "url": "",
+            "infoThousands": ",",
+            "loadingRecords": "Cargando...",
+            "paginate": {
+                "first": "Primero",
+                "last": "Último",
+                "next": "<i class='bi bi-caret-right'></i>",
+                "previous": "<i class='bi bi-caret-left'></i>"
+            },
+            "aria": {
+                "sortAscending": ": Activar para ordenar la columna de manera ascendente",
+                "sortDescending": ": Activar para ordenar la columna de manera descendente"
+            },
+            "buttons": {
+                "copy": "Copiar",
+                "colvis": "Visibilidad"
             }
-    })
-    // si lees esto tienes que saber que ahora odio estos data table, muerte a jquery...
-}
-
-const observer = new MutationObserver(() => {
-	reasignarEventos();
-});
-
-observer.observe(tabla, {childList:true});
-
-function reasignarEventos() {
-	console.log("me ejecuto");
-	if (id_eliminado){
-		let existe_fila = tabla.querySelector(`#fila-${id_eliminado}`)
-		if (existe_fila) {
-			data_table.row(`#fila-${id_eliminado}`).remove().draw();
-			id_eliminado = null;	
-		}
-	
-	}
-
-	$(".eliminar").on("click",function(e){
-		id = e.target.value;
-		if (id == undefined) {	
-			id = e.target.parentElement.value;
-		}
-		Swal.fire({
-			title: "¿Estás seguro?",
-			text: "¿Está seguro que desea eliminar este apartamento?",
-			showCancelButton: true,
-			confirmButtonText: "Eliminar",
-			confirmButtonColor: "#e01d22",
-			cancelButtonText: "Cancelar",
-			icon: "warning"
-			}).then((resultado) => {
-				if (resultado.isConfirmed) {
-					eliminar(id);				
-				}
-			});
+        },
+        "ajax": {
+            "url": "",
+            "dataSrc": "",
+            "type": "POST", // Especifica el método de la petición
+            "data": datos_paramentros
+        },
+        "columns":estructura_filas,
+        "drawCallback": function( settings ) {            
+            $(this).DataTable().columns.adjust();
+        },
+        "error": function(jqXHR, textStatus, errorThrown) {            
+            console.log(jqXHR,textStatus,errorThrown)
+        },
+        "createdRow": configuraciones_post_creacion
 	});
-
-	document.querySelectorAll("button[title='Detalles Apartamento']").forEach(btn => {
-        btn.removeEventListener("click", mostrarVistaPrevia);
-        btn.addEventListener("click", mostrarVistaPrevia);
-    });
-
-	document.querySelectorAll("button[title='Editar']").forEach(btn => {
-        btn.removeEventListener("click", modificar_formulario);
-        btn.addEventListener("click", modificar_formulario);
-    });
-
-	if (id_registrado) {
-		let boton_modificar = tabla.querySelector(`[value='${id_registrado.last_id}']`); 
-		
-		if (boton_modificar) {
-			
-			boton_modificar.addEventListener("click",modificar_formulario);
-			boton_modificar.parentElement.parentElement.parentElement.setAttribute("id",`fila-${id_registrado.last_id}`);
-			id_registrado = null;
-		}
-	}
 }
-
-const resizeObserver = new ResizeObserver(entries => {
-	if (data_table) {
-		data_table.draw();
-	}
-});
-resizeObserver.observe(tabla);

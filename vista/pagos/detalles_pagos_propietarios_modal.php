@@ -10,7 +10,7 @@
                         <option value="<?php echo $apartamento["id_apartamento"]?>"><?php echo "Nro: ".$apartamento["nro_apartamento"] ?></option>
                     <?php endforeach; ?>
                 </select>
-                <span class="w-100"></span>
+                <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
         <div class="col-md-6">
@@ -20,7 +20,7 @@
                     <select class="form-select mensualidad_id" aria-label="Default select example" id="mensualidad_id_detalles" name="mensualidad_id" disabled>
                         <option selected hidden value="">Escoja primero un Apartamento</option> 
                     </select>
-                <span class="w-100"></span>
+                <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
     </div>
@@ -30,7 +30,7 @@
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-calendar-date"></i></span>
                 <input type="date" class="form-control" name="fecha" id="fecha_detalles" placeholder="Fecha" aria-label="fecha" aria-describedby="basic-addon1" minlength="3" maxlength="30">
-                <span class="w-100"></span>
+                <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
         <div class="col-lg-3 col-sm-6">
@@ -43,7 +43,7 @@
                         <option value="Efectivo">Efectivo</option>
                         <option value="Pago Movil">Pago Movil</option>
                     </select>
-                <span class="w-100"></span>
+                <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
         <!--<div class="col-md-2">
@@ -51,7 +51,7 @@
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-coin"></i></span>
                 <input type="text" class="form-control tasa_dolar" name="tasa_dolar" id="monto_dolares" placeholder="USD" aria-label="tasa_dolar" aria-describedby="basic-addon1" minlength="3" maxlength="60">
-                <span class="w-100"></span>
+                <span class="w-100 invalid-feedback"></span>
             </div>
         </div>-->
         
@@ -60,7 +60,7 @@
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-cash-coin"></i></span>
                 <input type="text" class="form-control monto" name="monto" id="monto_detalles" placeholder="Monto" aria-label="monto" aria-describedby="basic-addon1" minlength="3" maxlength="30">
-                <span class="w-100"></span>
+                <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
         <!--<div class="col-md-2">
@@ -68,7 +68,7 @@
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-coin"></i></span>
                 <input type="text" class="form-control tasa_dolar" name="tasa_dolar" id="monto_bolivares" placeholder="Bolivares" aria-label="tasa_dolar" aria-describedby="basic-addon1" minlength="3" maxlength="60">
-                <span class="w-100"></span>
+                <span class="w-100 invalid-feedback"></span>
             </div>
         </div>-->
         <div class="col-lg-2 col-sm-6">
@@ -76,7 +76,7 @@
             <div class="input-group mb-3">
                 <span class="input-group-text"><i class="bi bi-coin"></i></span>
                 <input type="text" class="form-control tasa_dolar" name="tasa_dolar" id="tasa_dolar_detalles" placeholder="Tasa">
-                <span class="mensaje-error text-danger small"></span>
+                <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
         <div class="col-lg-2 col-sm-6">
@@ -84,7 +84,7 @@
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-coin"></i></span>
                 <input type="text" class="form-control monto_dolar" name="monto_dolar" id="monto_dolar_detalles" placeholder="Monto Dolar" aria-label="monto_dolar" aria-describedby="basic-addon1" minlength="3" maxlength="60">
-                <span class="w-100"></span>
+                <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
     </div> 
@@ -95,7 +95,7 @@
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-cash-coin"></i></span>
                 <input type="text" class="form-control monto" name="monto_mensualidad" id="monto_mensualidad_detalles" placeholder="Monto Mensualidad" aria-label="monto_mensualidad" aria-describedby="basic-addon1" minlength="3" maxlength="30" readonly>
-                <span class="w-100"></span>
+                <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
         <div class="col-lg-3 col-sm-6 campos-bancarios d-none">
@@ -103,7 +103,7 @@
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-receipt"></i></span>
                     <input type="text" class="form-control referencia" name="referencia" id="referencia_detalles" placeholder="Referencia" aria-label="referencia" aria-describedby="basic-addon1" minlength="3" maxlength="60">
-                <span class="w-100"></span>
+                <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
         <div class="col-lg-6 campos-bancarios d-none">
@@ -116,7 +116,7 @@
                             <option value="<?php echo $banco["id_banco"]?>"><?php echo $banco["nombre_banco"] ?></option>
                         <?php endforeach; ?>
                     </select>
-                <span class="w-100"></span>
+                <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
     </div>
@@ -130,7 +130,7 @@
                     <button type="button" id="boton_eliminar_imagen_detalles" class="btn btn-sm btn-outline-danger mt-2 d-none">
                         <i class="bi bi-trash3"></i> Eliminar imagen cargada
                     </button>
-                <span class="w-100"></span>
+                <span class="w-100 invalid-feedback"></span>
             </div>
         </div> 
     </div>

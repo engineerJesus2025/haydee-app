@@ -1,14 +1,27 @@
 document.addEventListener("DOMContentLoaded", function(event) {
    
 	const showNavbar = (toggleId, navId, bodyId, headerId) =>{
+		const anchoVentana = window.innerWidth;
 		let toggle = document.getElementById(toggleId),
 		nav = document.getElementById(navId),
 		bodypd = document.getElementById(bodyId),
 		headerpd = document.getElementById(headerId);
+
+		let enlaces = document.querySelectorAll(".collapse a");
+
 		if (bodypd === null) {
 			bodypd = document.querySelector("body")
 		}
 		if(toggle && nav && bodypd && headerpd){
+			if (anchoVentana < 769) {
+				enlaces.forEach(a=>{
+					a.classList.add('ps-2');
+					a.parentElement.classList.remove('rounded');
+					a.parentElement.classList.remove('ms-4');
+					a.parentElement.classList.add('ms-3');
+				});
+			}
+
 			toggle.addEventListener('click', ()=>{
 				
 				nav.classList.toggle('show');
@@ -19,6 +32,20 @@ document.addEventListener("DOMContentLoaded", function(event) {
 				
 				headerpd.classList.toggle('body-pd');
 
+				if (anchoVentana < 769) return;
+				
+				let id_submenu = '';
+				enlaces.forEach(a=>{
+					a.classList.toggle('ps-2');
+
+					if (!(id_submenu == a.parentElement.id)) {
+						a.parentElement.classList.toggle('rounded');
+						a.parentElement.classList.toggle('ms-4');
+						a.parentElement.classList.toggle('ms-3');
+
+						id_submenu = a.parentElement.id;
+					}
+				});
 			});
 		}
 	}
@@ -43,7 +70,9 @@ function cambiarClasesMovil(toggleId, navId, bodyId, headerId) {
 	let toggle = document.getElementById(toggleId),
 	nav = document.getElementById(navId),
 	bodypd = document.getElementById(bodyId),
-	headerpd = document.getElementById(headerId)
+	headerpd = document.getElementById(headerId);
+
+	let enlaces = document.querySelectorAll(".collapse a");
 
 	if (anchoVentana < 769) {
 		if(toggle && nav && bodypd && headerpd){	
@@ -54,6 +83,18 @@ function cambiarClasesMovil(toggleId, navId, bodyId, headerId) {
 			bodypd.classList.remove('body-pd');
 			
 			headerpd.classList.remove('body-pd');
+
+			// let id_submenu = '';
+			// enlaces.forEach(a=>{
+			// 	a.classList.remove('ps-2');
+			// 	console.log(a.parentElement)
+			// 	a.parentElement.classList.remove('rounded');
+			// 	a.parentElement.classList.remove('ms-4');
+			// 	a.parentElement.classList.remove('ms-3');
+
+			// 	id_submenu = a.parentElement.id;
+				
+			// });
 		}
 	}
 }

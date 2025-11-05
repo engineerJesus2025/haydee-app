@@ -75,10 +75,6 @@
             <div class="input-group mb-3">
                 <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-building"></i></span>
                 <select class="border border-dark form-select apartamento_id" aria-label="Default select example" id="apartamento_id" name="apartamento_id" disabled>
-                    <option selected hidden value="">Seleccione un Apartamento</option>
-                    <?php foreach($registro_apartamento as $apartamento): ?>
-                        <option value="<?php echo $apartamento["id_apartamento"]?>"><?php echo "Nro: ".$apartamento["nro_apartamento"] ?></option>
-                    <?php endforeach; ?>
                 </select>
                 <span class="w-100 invalid-feedback"></span>
             </div>

@@ -156,14 +156,6 @@ async function validarEnvio(accion = "Registrar"){
 		return false;
 	}
 
-	if (accion == "Registrar") {
-		
-	}else if (accion == "Editar"){
-		datos = new FormData();
-		
-		datos.append("id_apartamento",id_modificar);
-	}
-
 	// si el valor de correo no es el mismo de antes:
 	if(nro_apartamento_an != $("#nro_apartamento").val()){
 		datos = new FormData(); 

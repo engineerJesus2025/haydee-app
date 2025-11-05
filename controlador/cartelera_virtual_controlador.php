@@ -1,5 +1,5 @@
 <?php
-
+require_once "vista/componentes/sesion.php";
 require_once "modelo/cartelera_virtual_modelo.php";
 require_once "modelo/usuario_modelo.php";
 

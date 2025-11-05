@@ -227,6 +227,23 @@ function crearBotones(id) {
 	return td;
 }
 
+function definirColorBadge(nombre_rol){
+	switch (nombre_rol){
+		case 'Administrador Global':
+			return "badge bg-warning text-dark";
+		case 'Administrador':
+			return "badge bg-primary";
+		case 'Propietario':
+			return "badge bg-success";
+		case 'Contador':
+			return "badge bg-danger";
+		case 'Presidente':
+			return "badge bg-info text-dark";
+		default:
+		return "badge bg-secondary";
+	}
+}
+
 function mensajes(icono,tiempo,titulo,mensaje){
 	Swal.fire({
 	icon:icono,
@@ -245,31 +262,34 @@ async function consultar() {
 	const estructura_tabla_usuarios = [
  		{
  			"data": null,
-            "render": function (data, type, row) {            	
+            "render": function (row) {            	
                 return `${row.nombre_usuario}`;
             }  
         },
 		{ 
 			"data": null, 
-			"render": function (data, type, row) {                
+			"render": function (row) {                
                 return `${row["apellido"]}`;
             }
         },
         { 
             "data": null, 
-            "render": function (data, type, row) {
+            "render": function (row) {
             	return `${row["correo"]}`;
             }
         },
 		{ 
             "data": null,
-            "render": function (data, type, row) {
-            	return `${row["nombre_rol"]}`;
+            "render": function (row) {
+				let spam = document.createElement("span");
+                spam.setAttribute("class",definirColorBadge(row["nombre_rol"]));
+                spam.textContent = row["nombre_rol"];
+            	return `${spam.outerHTML}`;
             }
         },      
         { 
             "data": null, 
-            "render": function (data, type, row) {
+            "render": function (row) {
             	let id_campo = row["id_usuario"];
                	let acciones = crearBotones(id_campo);
 
@@ -278,7 +298,7 @@ async function consultar() {
         } 		
  	];
 
- 	const configuraciones_tabla_usuarios = (row, data, dataIndex)=>{
+ 	const configuraciones_tabla_usuarios = (row, data)=>{
  		Array.from(row.children).map(td=>td.setAttribute("class",'align-middle'));
  		 		
 		row.setAttribute("id",`fila-${data.id_usuario}`); 		
@@ -307,7 +327,7 @@ async function registrar() {
 
 	datos_consulta.append('operacion','registrar');
 	
-	let respuesta = await query(datos_consulta);
+	let respuesta = await query(datos_consulta,'text-secondary');
 
 	modal.hide();
 	formulario_usar.reset();
@@ -333,7 +353,7 @@ async function preparar_formulario(e) {
 
 	datos_consulta.append('operacion','consulta_especifica');
 
-	data = await query(datos_consulta);	
+	data = await query(datos_consulta,'text-secondary');	
 	
 	let nombre = formulario_usar.querySelector("#nombre"),
 	apellido = formulario_usar.querySelector("#apellido"),	
@@ -382,7 +402,7 @@ async function modificar(id) {
 
 	datos_consulta.append('operacion','editar_usuario');
 
-	let respuesta = await query(datos_consulta);
+	let respuesta = await query(datos_consulta,'text-secondary');
 
 	formulario_usar.reset();
  	modal.hide();
@@ -443,7 +463,9 @@ async function eliminar(id) {
 	mensajes('success',4000,'Atencion','El registro ha sido eliminado correctamente');//Mensaje de que se completo la operacion
 }
 
-async function query(datos) {	
+async function query(datos,color_carga = 'text-light') {
+    document.getElementById('icono_carga').setAttribute("class",`spinner-border ${color_carga}`);
+    
 	let tiempoCarga = setTimeout(()=>{
 		modal_carga.show();
 	}, 100);

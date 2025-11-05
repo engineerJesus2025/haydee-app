@@ -62,7 +62,7 @@ async function registrar() {
 	datos_consulta.append('operacion','registrar');
 	
 	//Llamamos a la funcion para hacer la consulta
-	let respuesta = await query(datos_consulta); // El await es para que espere el resultado, al ser asincrono, normalmente no lo esperaria
+	let respuesta = await query(datos_consulta,'text-secondary'); // El await es para que espere el resultado, al ser asincrono, normalmente no lo esperaria
 	// wait = esperar (english)
 	modal.hide(); //Esconde el modal
 	formulario_usar.reset();//Limpia el formulario
@@ -262,7 +262,7 @@ async function modificar_formulario(e) {
 	datos_consulta.append('operacion','consulta_especifica');
 
 	//Llamamos a la funcion para hacer la consulta y guardamos los datos
-	data = await query(datos_consulta);	
+	data = await query(datos_consulta,'text-secondary');	
 	
 	// ahora seleccionamos los inputs
 	let nombre = formulario_usar.querySelector("#nombre_banco"),
@@ -324,7 +324,7 @@ async function modificar(id) {
 	datos_consulta.append('operacion','modificar');
 
 	//Llamamos a la funcion para hacer la consulta
-	let respuesta = await query(datos_consulta);
+	let respuesta = await query(datos_consulta,'text-secondary');
 
 	formulario_usar.reset(); //Limpiamos el formulario
  	modal.hide(); // escondemos el modal
@@ -367,7 +367,9 @@ async function last_id() {
 }
 
 // Aqui se hace la peticion AJAX
-async function query(datos) {
+async function query(datos,color_carga = 'text-light') {
+    document.getElementById('icono_carga').setAttribute("class",`spinner-border ${color_carga}`);
+    
     let modal_carga = new bootstrap.Modal("#modal_carga");
     let mostrarModal = false;
     let tiempoCarga;
@@ -449,7 +451,6 @@ document.querySelectorAll("button[title='Editar']").forEach(btn => {
 
 // esta funcion pone los eventos de eliminar y modificar
 function reasignarEventos() {
-	console.log("me ejecuto");
 	if (id_eliminado){ //Si hay un eliminado que no se ha quitado de la tabla
 		let existe_fila = tabla.querySelector(`#fila-${id_eliminado}`)
 		if (existe_fila) {

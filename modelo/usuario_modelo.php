@@ -688,6 +688,20 @@ class Usuario extends Conexion
         if(!(is_string($this->correo)) || !(preg_match("/^[a-zA-Z0-9._+-]{3,35}@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/",$this->correo))){
             return ["estatus"=>false,"mensaje"=>"El campo 'correo' no posee un valor valido"];
         }
+        if ($consulta == "editar") {
+            if (!($this->validarCampoUnico("usuarios","correo",$this->correo,"id_usuario",$this->id_usuario))) {
+                if ($this->validarClaveForanea("usuarios","correo",$this->correo)) {
+                    return ["estatus"=>false,"mensaje"=>"El correo ingresado ya esta registrado"];
+                }
+            }
+        }
+        else{
+            if ($this->validarClaveForanea("usuarios","correo",$this->correo)) {
+                return ["estatus"=>false,"mensaje"=>"El correo ingresado ya esta registrado"];
+            }
+        }
+        
+
         if (!$perfil) {
             if(!(is_string($this->contra)) || !(preg_match("/^[A-Za-z0-9_.+*$#%&@ñÑ]{5,50}$/",$this->contra))){
                 return ["estatus"=>false,"mensaje"=>"El campo 'contraseña' no posee un valor valido"];
@@ -783,6 +797,19 @@ class Usuario extends Conexion
 
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":valor", $valor);
+        $conexion->execute();
+        $result = $conexion->fetch(PDO::FETCH_ASSOC);
+
+        return ($result)?true:false;
+    }
+
+    private function validarCampoUnico($tabla,$nombreClave,$valor,$nombreId,$id)
+    {
+        $sql="SELECT * FROM $tabla WHERE $nombreClave =:valor and $nombreId = :id";
+
+        $conexion = $this->get_conex()->prepare($sql);
+        $conexion->bindParam(":valor", $valor);
+        $conexion->bindParam(":id", $id);
         $conexion->execute();
         $result = $conexion->fetch(PDO::FETCH_ASSOC);
 

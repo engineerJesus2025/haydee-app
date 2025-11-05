@@ -129,7 +129,7 @@ async function consultar_mensualidades() {
 	const estructura_tabla_mensualidades = [
  		{
  			"data": null, // No asignamos una clave específica aquí
-            "render": function (data, type, row) {
+            "render": function (row) {
             	let fecha = new Date(`${row["mes"]}/01/${row["anio"]}`);
 				let mes = `${fecha.toLocaleString("es-ES",{month: 'long'})[0].toUpperCase()}${fecha.toLocaleString("es-ES",{month: 'long'}).slice(1)}`;
 				let anio = fecha.getFullYear();
@@ -139,13 +139,13 @@ async function consultar_mensualidades() {
         },
 		{ 
 			"data": null, // No asignamos una clave específica aquí
-			"render": function (data, type, row) {				
+			"render": function (row) {				
                 return `${row["monto"].toFixed(2)} Bs. / ${(row["monto"] / row["tasa_dolar"]).toFixed(2)} $`;
             }
         },
         { 
             "data": null, // No asignamos una clave específica aquí
-            "render": function (data, type, row) {
+            "render": function (row) {
             	let deuda_cancelada = ((row.monto - row.pagado) < 0)?true:false;
             	let pagado = (deuda_cancelada)?'Deuda Cancelada':(row.monto - row["pagado"]).toFixed(2) + " Bs.";
 				let pagado_dolar = (deuda_cancelada)?'':' / ' + ((row.monto - row["pagado"]) / row["tasa_dolar"]).toFixed(2) + ' $';
@@ -155,7 +155,7 @@ async function consultar_mensualidades() {
         },
         { 
             "data": null, // No asignamos una clave específica aquí
-            "render": function (data, type, row) {
+            "render": function (row) {
             	let id_campo = row["ids"]; // guardamos el id que nos interese
 				let ids_apartamentos = row["ids_apartamentos"];
                	let acciones = crearBotones(id_campo,ids_apartamentos);
@@ -165,7 +165,7 @@ async function consultar_mensualidades() {
         } 		
  	] 	
 
- 	const configuraciones_tabla_mensualidad = (row, data, dataIndex)=>{
+ 	const configuraciones_tabla_mensualidad = (row, data)=>{
 
  		
  		Array.from(row.children).map(td=>td.setAttribute("class",'align-middle'))
@@ -354,7 +354,7 @@ async function llenarTablaNueva(fecha) {
 	datos_consulta.append("fecha",fecha);
 	datos_consulta.append("operacion","consultar_presupuestos_mensualidades");
 
-	let detalles_presupuesto = await query(datos_consulta);
+	let detalles_presupuesto = await query(datos_consulta,'text-secondary');
 
 	if(!(detalles_presupuesto.estatus == undefined)){
 		mensajes('error',4000,'Atencion', detalles_presupuesto.mensaje);
@@ -451,7 +451,7 @@ async function llenarTablaEditar(boton_editar) {
 	//Aqui decimos que vamos a hacer
 	datos_consulta.append('operacion','consultar_presupuestos_asociados');
 
-	let presupuesto_mes = await query(datos_consulta);
+	let presupuesto_mes = await query(datos_consulta,'text-secondary');
 	// Resvisamos el resultado
 	if(!(presupuesto_mes.estatus == undefined)){
 		mensajes('error',4000,'Atencion', presupuesto_mes.mensaje);
@@ -605,7 +605,7 @@ async function registrar_mensualidad() {
 		datos_consulta.append("limite_mensualidad",limite_mensualidad);
 		datos_consulta.append("porcentaje_interes",porcentaje_interes);
 		
-		let respuesta = await query(datos_consulta);
+		let respuesta = await query(datos_consulta,'text-secondary');
 		
 		if (!respuesta.estatus) {
 			mensajes('error',4000,'Atencion',respuesta.mensaje);
@@ -631,7 +631,7 @@ async function registrar_mensualidad() {
 		datos_consulta.append("id_mensualidad",id_mensualidad);
 		datos_consulta.append("id_presupuestos",id_presupuestos);
 		
-		respuesta = await query(datos_consulta);
+		respuesta = await query(datos_consulta,'text-secondary');
 
 		if (!respuesta.estatus) {
 			mensajes('error',4000,'Atencion',respuesta.mensaje);
@@ -683,7 +683,7 @@ async function modificar() {
 		datos_consulta.append("limite_mensualidad",limite_mensualidad);
 		datos_consulta.append("porcentaje_interes",porcentaje_interes);
 
-		let respuesta = await query(datos_consulta);
+		let respuesta = await query(datos_consulta,'text-secondary');
 
 		if (!respuesta.estatus) {
 			mensajes('error',4000,'Atencion',respuesta.mensaje);
@@ -709,7 +709,7 @@ async function modificar() {
 		datos_consulta.append("id_mensualidad",id_mensualidad);
 		datos_consulta.append("id_presupuestos",id_presupuestos);
 
-		respuesta = await query(datos_consulta);
+		respuesta = await query(datos_consulta,'text-secondary');
 
 		if (!respuesta.estatus) {
 			mensajes('error',4000,'Atencion',respuesta.mensaje);
@@ -741,20 +741,6 @@ async function eliminar(fecha) {
 	mensajes('success',4000,'Atencion','Se ha eliminado la mensualidad exitosamente');
 }
 
-async function api() {
-    try {
-        let response = await fetch('https://pydolarve.org/api/v2/dollar?page=alcambio');
-        let obj_dolar = await response.json();
-		dolar.bcv = obj_dolar.monitors.bcv.price;
-		dolar.paralelo = obj_dolar.monitors.enparalelovzla.price;
-    } 
-    catch (error) {
-    	console.log("Ha ocurrido un error al tratar de consultar el precio del dolar");
-    	dolar.bcv = 0;
-		dolar.paralelo = 0;
-    }
-}
-
 function mensajes(icono,tiempo,titulo,mensaje){
 	Swal.fire({
 	icon:icono,
@@ -767,7 +753,9 @@ function mensajes(icono,tiempo,titulo,mensaje){
 }
 
 // Aqui se hace la peticion AJAX
-async function query(datos) {
+async function query(datos,color_carga = 'text-light') {
+    document.getElementById('icono_carga').setAttribute("class",`spinner-border ${color_carga}`);
+    
 	peticionesActivas++;
 
 	const tiempoInicio = performance.now();

@@ -100,42 +100,55 @@ function eventosCargaDataTable(id_tabla,modal){
     });
 }
 
+function formatearFechaHora(fechaHoraStr) {  
+  const fecha = new Date(fechaHoraStr);
+
+  const dia = String(fecha.getDate()).padStart(2, '0');
+  const mes = String(fecha.getMonth() + 1).padStart(2, '0'); // Se suma 1 porque los meses van de 0 a 11
+  const anio = fecha.getFullYear();  
+  
+  return `${dia}-${mes}-${anio}`;
+}
+
 async function consultar() {
   const paramentros_consulta = (data)=>{data.operacion = 'consultar';}
   const estructura_tabla_notificaciones = [
     {
       "data": null,
-            "render": function (data, type, row) {              
+            "render": function (row) {              
                 return `${row["nombre"]}`;
             }  
         },
     { 
       "data": null, 
-      "render": function (data, type, row) {                
+      "render": function (row) {                
                 return `${row["titulo"]}`;
             }
         },
         { 
             "data": null, 
-            "render": function (data, type, row) {
+            "render": function (row) {
               return `${row["descripcion"]}`;
             }
         },
     { 
             "data": null,
-            "render": function (data, type, row) {
-              return `${row["fecha"]}`;
+            "render": function (row) {
+              return `${formatearFechaHora(row["fecha"])}`;
             }
         },
-        { 
+        {
             "data": null,
-            "render": function (data, type, row) {
-              return (row["activo"] == 1) ? "SI" : "NO";
+            "render": function (row) {
+              let spam = document.createElement("span");
+                spam.setAttribute("class",(row["activo"] == 1)?"badge bg-primary":"badge bg-warning text-dark");
+                spam.textContent = (row["activo"] == 1) ? "SI" : "NO";
+            	return `${spam.outerHTML}`;
             }
         }
   ];
 
-  const configuraciones_tabla_notificaciones = (row, data, dataIndex)=>{
+  const configuraciones_tabla_notificaciones = (row)=>{
     Array.from(row.children).map(td=>td.setAttribute("class",'align-middle'));
   }
 

@@ -19,7 +19,7 @@
             </div>
         </div>
         <div class="col-lg-1 col-2 d-flex justify-content-center align-items-center mt-2">
-            <button class="btn btn-outline-info boton_intercambio_cuota" title="Presione para cambiar el tipo de moneda">
+            <button class="btn btn-outline-info boton_intercambio_cuota" title="Presione para cambiar el tipo de moneda" tabindex="-1">
                 <span><i class="bi bi-arrow-left-right"></i></span>
             </button>            
         </div>

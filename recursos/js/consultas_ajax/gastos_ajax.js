@@ -19,7 +19,9 @@ let tiempoInicio;
 consultar();
 
 // En caso de que se envie un formulario
-function envio(operacion) {
+function envio(operacion,color_carga = 'text-light') {
+    document.getElementById('icono_carga').setAttribute("class",`spinner-border ${color_carga}`);
+    
     if (operacion == "Editar") {
         id_modificar = boton_formulario.getAttribute("id_modificar");
         modificar(id_modificar);
@@ -93,7 +95,7 @@ async function registrar() {
     datos_consulta.append("operacion", "registrar");
 
     // 3. Enviamos la consulta (el resto de la lógica para manejar la respuesta es similar)
-    let respuesta = await query(datos_consulta);
+    let respuesta = await query(datos_consulta,'text-secondary');
     if (respuesta && !respuesta.estatus) {
         mensajes("error", 4000, "Atención", respuesta.mensaje);
         return;
@@ -279,7 +281,7 @@ async function modificar_formulario(e) {
     datos_consulta.append("id_gasto", id);
     datos_consulta.append("operacion", "consulta_especifica");
 
-    const respuesta = await query(datos_consulta);
+    const respuesta = await query(datos_consulta,'text-secondary');
 
     if (!respuesta || !respuesta.gasto) {
         mensajes("error", 4000, "Error", "No se pudieron cargar los datos para modificar.");
@@ -425,7 +427,7 @@ async function modificar(id) {
     datos_consulta.append("operacion", "modificar");
 
     // El resto de la función para enviar y procesar la respuesta es igual.
-    let respuesta = await query(datos_consulta);
+    let respuesta = await query(datos_consulta,'text-secondary');
 
     if (respuesta && !respuesta.estatus) {
         mensajes("error", 4000, "Atención", respuesta.mensaje);

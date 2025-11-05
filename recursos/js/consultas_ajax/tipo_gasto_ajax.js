@@ -47,7 +47,7 @@ async function registrar() {
 	datos_consulta.append("nombre_tipo_gasto", nombre_tipo_gasto);
 	datos_consulta.append('operacion','registrar'); // Asegúrate que coincida con el case del modelo PHP
 	
-	let respuesta = await query(datos_consulta);
+	let respuesta = await query(datos_consulta,'text-secondary');
 	modal.hide();
 	formulario_usar.reset();
 
@@ -241,7 +241,7 @@ async function modificar_formulario(e) {
 	datos_consulta.append('operacion','consulta_especifica');
 
 	//Llamamos a la funcion para hacer la consulta y guardamos los datos
-	data = await query(datos_consulta);	
+	data = await query(datos_consulta,'text-secondary');	
 	
 	// ahora seleccionamos los inputs
 	let nombre = formulario_usar.querySelector("#nombre_tipo_gasto");
@@ -288,7 +288,7 @@ async function modificar(id) {
 	datos_consulta.append('operacion','modificar');
 
 	//Llamamos a la funcion para hacer la consulta
-	let respuesta = await query(datos_consulta);
+	let respuesta = await query(datos_consulta,'text-secondary');
 
 	formulario_usar.reset(); //Limpiamos el formulario
  	modal.hide(); // escondemos el modal
@@ -331,7 +331,9 @@ async function last_id() {
 }
 
 // Aqui se hace la peticion AJAX
-async function query(datos) {
+async function query(datos,color_carga = 'text-light') {
+    document.getElementById('icono_carga').setAttribute("class",`spinner-border ${color_carga}`);
+    
     let modal_carga = new bootstrap.Modal("#modal_carga");
     let mostrarModal = false;
     let tiempoCarga;

@@ -73,7 +73,6 @@
             
             echo  json_encode($resultado);
         }
-
         elseif ($operacion == "eliminar") {
             $usuario_obj = new Usuario();
 
@@ -120,6 +119,12 @@
             $usuario_obj->set_apellido($apellido);
             $usuario_obj->set_nombre($nombre);
             $usuario_obj->set_correo($correo);
+
+            $resultado = $usuario_obj->realizar_consulta("editar_perfil");
+
+            if ($resultado["estatus"]) {
+                $_SESSION["nombre_completo"] = $nombre;
+            }
 
             echo  json_encode($usuario_obj->realizar_consulta('editar_perfil'));
         }

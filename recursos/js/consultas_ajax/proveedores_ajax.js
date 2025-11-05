@@ -49,7 +49,7 @@ async function registrar() {
     datos_consulta.append("direccion", direccion);
     datos_consulta.append("operacion", "registrar");
 
-    let respuesta = await query(datos_consulta);
+    let respuesta = await query(datos_consulta,'text-secondary');
     
     if (respuesta && respuesta.estatus) {
         modal.hide();
@@ -216,7 +216,7 @@ async function modificar_formulario(e) {
     datos_consulta.append("id_proveedor", id);
     datos_consulta.append("operacion", "consultar_proveedor");
 
-    const data = await query(datos_consulta);
+    const data = await query(datos_consulta,'text-secondary');
 
     if (!data) {
         Swal.fire("Error", "No se encontraron los datos del proveedor.", "error");
@@ -261,7 +261,7 @@ async function modificar(id) {
     datos_consulta.append("direccion", direccion);
     datos_consulta.append("operacion", "modificar");
 
-    await query(datos_consulta);
+    await query(datos_consulta,'text-secondary');
     formulario_usar.reset();
     modal.hide();
 
@@ -293,7 +293,9 @@ async function last_id() {
     return res;
 }
 
-async function query(datos) {
+async function query(datos,color_carga = 'text-light') {
+    document.getElementById('icono_carga').setAttribute("class",`spinner-border ${color_carga}`);
+    
     let modal_carga = new bootstrap.Modal("#modal_carga");
     let mostrarModal = false;
     let tiempoCarga;

@@ -8,6 +8,10 @@ let recuperacion_contrasenia = {
 	tiempo: null
 };
 
+if (!(navigator.onLine)) {
+	document.querySelector(".g-recaptcha").style.display = 'none'
+}
+
 document.getElementById('correo_login').addEventListener("keyup",e=>{
 	validarKeyPress(/^[A-Za-z0-9_ .@\b]*$/, e);
 	validarKeyUp(/^[A-Za-z0-9_ .]{3,20}[@][A-Za-z0-9]{3,10}[.][A-Za-z]{2,3}$/,document.getElementById('correo_login'),'Ejemplo: alguien@servidor.com');
@@ -30,8 +34,14 @@ document.getElementById('enviar').addEventListener("click",async e=>{
 
 		let usuario = document.getElementById('correo_login').value,
 		contra = document.getElementById('contra').value,
-		mantener_sesion = document.getElementById('checkbox_mantener_sesion').checked,
-		reCAPTCHA = document.getElementById('g-recaptcha-response').value;
+		mantener_sesion = document.getElementById('checkbox_mantener_sesion').checked;
+		let reCAPTCHA;
+		if (!(navigator.onLine)) {
+			reCAPTCHA = "no_internet";
+		}
+		else{
+			reCAPTCHA = document.getElementById('g-recaptcha-response').value;
+		}
 
 		datos_consulta.append("usuario",usuario);
 		datos_consulta.append("contra",contra);
@@ -122,11 +132,13 @@ function validarEnvio(){
 		
 		return false;
 	}
-	const recaptchaResponse = grecaptcha.getResponse();
-    if (recaptchaResponse.length === 0) {
-        mensajes('error',4000,'Verifique el reCAPTCHA','Debe completar la validación.');
-        return false;
-    }
+	if (navigator.onLine) {
+		const recaptchaResponse = grecaptcha.getResponse();
+	    if (recaptchaResponse.length === 0) {
+	        mensajes('error',4000,'Verifique el reCAPTCHA','Debe completar la validación.');
+	        return false;
+	    }
+	}	
 
 	return true;
 }

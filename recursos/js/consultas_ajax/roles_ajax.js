@@ -233,13 +233,13 @@ async function consultar() {
 	const estructura_tabla_roles = [
  		{
  			"data": null,
-            "render": function (data, type, row) {            	
+            "render": function (row) {            	
                 return `${row.nombre}`;
             }  
         }, 
         { 
             "data": null, 
-            "render": function (data, type, row) {
+            "render": function (row) {
             	let id_campo = row["id_rol"];
                	let acciones = crearBotones(id_campo);
 
@@ -248,7 +248,7 @@ async function consultar() {
         } 		
  	];
 
- 	const configuraciones_tabla_roles = (row, data, dataIndex)=>{
+ 	const configuraciones_tabla_roles = (row, data)=>{
  		row.setAttribute("id",`fila-${data.id_rol}`); 		
  		row.querySelector(".editar")?.addEventListener('click',modificar_formulario);
  		row.querySelector(".eliminar")?.addEventListener('click',eventoEliminar);
@@ -285,7 +285,7 @@ async function registrar() {
 
 	datos_consulta.append('operacion','registrar_rol');
 
-	let respuesta = await query(datos_consulta);
+	let respuesta = await query(datos_consulta,'text-secondary');
 
 	if (!respuesta.estatus) {
 		mensajes('error',4000,'Atencion',respuesta.mensaje);
@@ -351,7 +351,7 @@ async function modificar_formulario(e) {
 
 	datos_consulta.append('operacion','consulta_especifica');
 
-	let data = await query(datos_consulta);
+	let data = await query(datos_consulta,'text-secondary');
 
 	let nombre = formulario_usar.querySelector("#nombre");
 
@@ -408,7 +408,7 @@ async function modificar(id) {
 
 	datos_consulta.append('operacion','modificar');
 
-	let respuesta = await query(datos_consulta);
+	let respuesta = await query(datos_consulta,'text-secondary');
  	
 	if (!respuesta.estatus) {
 		mensajes('error',4000,'Atencion',respuesta.mensaje);
@@ -427,7 +427,9 @@ async function modificar(id) {
 	mensajes('success',4000,'Atencion','El registro se ha modificado exitosamente');
 }
 
-async function query(datos) {
+async function query(datos,color_carga = 'text-light') {
+    document.getElementById('icono_carga').setAttribute("class",`spinner-border ${color_carga}`);
+    
 	let mostrarModal = false;
     let tiempoCarga;
 

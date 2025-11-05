@@ -46,7 +46,7 @@
         <!-- Usuario -->
         <div class="col-auto dropdown mt-1">
             <button class="btn bg-none text-white dropdown-toggle" type="button" data-bs-toggle="dropdown"
-                aria-expanded="false">
+                aria-expanded="false" id="boton_accion_usuario">
                 Hola, <?php echo $_SESSION["nombre_completo"] . " (" . $_SESSION["rol"] . ")"; ?>
             </button>
             <ul class="dropdown-menu dropdown-menu-end">

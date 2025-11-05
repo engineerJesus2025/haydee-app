@@ -1,4 +1,5 @@
 <?php
+require_once "vista/componentes/sesion.php";
 require_once "modelo/solicitud_gasto_modelo.php";
 
 $solicitud_gasto_obj = new Solicitud_gasto();

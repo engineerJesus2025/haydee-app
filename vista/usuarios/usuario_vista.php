@@ -74,7 +74,6 @@
         <div class="row flex-nowrap ">
 
             <?php
-            require_once "vista/componentes/sesion.php";
             require_once "vista/componentes/navbar.php";
             ?>
 

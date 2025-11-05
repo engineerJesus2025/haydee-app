@@ -1,4 +1,5 @@
 <?php
+    require_once "vista/componentes/sesion.php";
     require_once("modelo/tipo_gasto_modelo.php");
 
     $obj_tipo_gasto = new Tipo_gasto(); // Objeto tipo_gasto

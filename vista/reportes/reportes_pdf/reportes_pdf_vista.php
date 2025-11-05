@@ -13,7 +13,6 @@
     <div class="container-fluid">
         <div class="row flex-nowrap ">
             <?php
-            require_once "vista/componentes/sesion.php";
             require_once "vista/componentes/navbar.php";
             ?>
 
@@ -78,9 +77,11 @@
                         <div class="col-lg-3 col-md-6">
                             <div class="card mb-3 shadow" title="Click para ver opciones para el cuadro de gastos">
                                 <button type="button" class="btn text-decoration-none text-black" data-bs-toggle="modal"
-                                    data-bs-target="#modal_gastos_mensual">
+                                    data-bs-target="#modal_gastos_mensual" id="boton_cuadro_gastos" disabled>
                                     <div class="card-header text-center bg-white border-bottom-0">
-                                        <i class="bi bi-receipt-cutoff" style="font-size: 5rem !important;"></i>
+                                        <div class="spinner-grow text-dark" role="status" style="width: 5rem; height: 5rem; z-index: 1000">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>  
                                     </div>
                                     <div class="card-body text-center p-0 mb-3">
                                         <p class="card-title fw-bold">Relación de Gastos</p>
@@ -158,6 +159,7 @@
     <script type="text/javascript" src="recursos/js/reportes/solvencia.js"></script>
     <script type="text/javascript" src="recursos/js/reportes/residencia.js"></script>
     <script type="text/javascript" src="recursos/js/reportes/cuadro_pagos.js"></script>
+    <script type="text/javascript" src="recursos/js/reportes/reporte_gastos.js"></script>
 </body>
 
 </html>

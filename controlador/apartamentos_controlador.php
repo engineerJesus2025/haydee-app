@@ -7,8 +7,6 @@
     $obj_apartamento = new Apartamento(); // Objeto Apartamento
     $obj_habitante = new Habitantes(); // Objeto Habitante
     $obj_habitantes_apartamentos = new Habitantes_apartamentos(); // Objeto Habitantes_Apartamentos
-
-    $registro_apartamento = $obj_apartamento->realizar_consulta('consultar');
  
     if(isset($_POST["operacion"])){
         $operacion = $_POST["operacion"];

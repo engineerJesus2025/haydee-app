@@ -92,29 +92,24 @@ async function llenarCardUsuario(){
 	document.getElementById("titulo_icono").appendChild(icono_rol);	
 
 	document.getElementById("spam_rol").setAttribute('class',clases_badge_rol);
+
+	document.getElementById('boton_editar').removeAttribute('disabled');
 }
 
 function definirColorBadge(nombre_rol){
 	switch (nombre_rol){
 		case 'Administrador Global':
 			return ["badge bg-warning text-dark","bi bi-globe me-3"];
-			break;
 		case 'Administrador':
 			return ["badge bg-primary","bi bi-person-fill-gear me-3"];
-			break;
 		case 'Propietario':
 			return ["badge bg-success","bi bi-key-fill me-3"];
-			break;
-
 		case 'Contador':
 			return ["badge bg-danger","bi bi-calculator-fill me-3"];
-			break;
 		case 'Presidente':
 			return ["badge bg-info text-dark","bi bi-award-fill me-3"];
-			break;
 		default:
 		return ["badge bg-secondary","bi bi-person-circle me-3"];
-		break;
 	}
 }
 
@@ -159,11 +154,10 @@ async function modificar() {
 	datos_consulta.append("nombre",nombre);
 	datos_consulta.append("apellido",apellido);	
 	datos_consulta.append("correo",correo);
-	// datos_consulta.append("contra",nueva_contra);
 
 	datos_consulta.append('operacion','editar_perfil');
 
-	let respuesta = await query(datos_consulta);
+	let respuesta = await query(datos_consulta,'text-secondary');
 
 	if (!respuesta.estatus) {
 		mensajes('error',4000,'Atencion',respuesta.mensaje);
@@ -171,6 +165,10 @@ async function modificar() {
 	}
 
 	document.querySelectorAll('input').forEach(input=>input.value = '');
+
+	let boton_accion_usuario = document.getElementById('boton_accion_usuario');
+
+	boton_accion_usuario.textContent = boton_accion_usuario.textContent.replace(boton_accion_usuario.textContent.trim().split(" ")[1],nombre);
 
  	llenarCardUsuario();
 
@@ -192,7 +190,7 @@ async function modificarContra() {
 
 	datos_consulta.append('operacion','cambiar_contrasenia');
 
-	let respuesta = await query(datos_consulta);
+	let respuesta = await query(datos_consulta,'text-secondary');
 
 	if (!respuesta.estatus) {
 		mensajes('error',4000,'Atencion',respuesta.mensaje);
@@ -206,9 +204,9 @@ async function modificarContra() {
 	modal.hide();
 }
 
-
-
-async function query(datos) {	
+async function query(datos,color_carga = 'text-light') {
+    document.getElementById('icono_carga').setAttribute("class",`spinner-border ${color_carga}`);
+    
 	try{
 		const res = await fetch("", { method: "POST", body: datos });
     	const data = await res.json();

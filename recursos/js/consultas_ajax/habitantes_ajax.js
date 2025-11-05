@@ -24,16 +24,6 @@ function envio_habitantes(operacion) {
 	}
 }
 
-/* Esto es en caso de que uno quite el formulario, le devuelve los valores que tenia
-document.querySelector(`#modal_habitantes`).addEventListener("hide.bs.modal",()=>{
-	formulario_usar_habitantes.reset();
-	boton_formulario_habitantes.removeAttribute("modificar");
-	boton_formulario_habitantes.removeAttribute("id_modificar");	
-	boton_formulario_habitantes.textContent = "Registrar";
-	document.getElementById('titulo_modal_habitantes').textContent = "Registrar Habitante";	
-	formulario_usar_habitantes.querySelectorAll("[class='w-100']").forEach(el=>el.textContent="");
-});*/
-
 document.addEventListener("DOMContentLoaded", () => {
 	const modal_habitantes = document.querySelector(`#modal_habitantes`);
 	if (!modal_habitantes) return console.error("❌ No se encontró el modal de detalles en el DOM.");
@@ -53,15 +43,9 @@ document.addEventListener("DOMContentLoaded", () => {
 	});
 });
 
-// Al parecer funciona bien
  document.querySelector("#boton_registrar").addEventListener("click", function(){
- 	let apartamento_id = formulario_usar_habitantes.querySelector("#apartamento_id");
- 	let apartamento = formulario_usar_habitantes.querySelector("#apartamento_id").selectedOptions[0].text;
-
- 	apartamento_id.value = datos_apartamento.id_apartamento;
- 	apartamento.value = datos_apartamento.nro_apartamento;
+ 	formulario_usar_habitantes.querySelector("#apartamento_id").value = id_apartamento_seleccionado;
  });
-// ...
 
 function formatearFecha(fechaStr) {
     const partes = fechaStr.split("-");
@@ -109,7 +93,7 @@ async function registrar_habitantes() {
 	datos_consulta.append('operacion','registrar_habitantes');
 	
 	//Llamamos a la funcion para hacer la consulta
-	let respuesta = await query(datos_consulta); // El await es para que espere el resultado, al ser asincrono, normalmente no lo esperaria
+	let respuesta = await query(datos_consulta,'text-secondary'); // El await es para que espere el resultado, al ser asincrono, normalmente no lo esperaria
 	// wait = esperar (english)
 	modal_habitantes.hide(); //Esconde el modal
 	formulario_usar_habitantes.reset();//Limpia el formulario
@@ -456,7 +440,7 @@ async function modificar_habitantes(id) {
 	datos_consulta.append('operacion','modificar_habitantes');
 
 	//Llamamos a la funcion para hacer la consulta
-	let respuesta = await query(datos_consulta);
+	let respuesta = await query(datos_consulta,'text-secondary');
 
 	formulario_usar_habitantes.reset(); //Limpiamos el formulario
  	modal_habitantes.hide(); // escondemos el modal
@@ -499,31 +483,6 @@ async function last_id_habitantes() {
 	let res = await query(datos_consulta);
 	return res;
 }
-
-// Aqui se hace la peticion AJAX
-/*async function query(datos){
-	// Solo es un fetching de datos, en body mandamos los datos
-	// Estos datos se mandan al controdalor
-	let data = await fetch("",{method:"POST", body:datos}).then(res=>{		
-		let result = res.json();		
-		return result;//Convertimos el resultado de json a js y lo mandamos
-	})
-	// console.log(data);
-	return data;
-}
-
-// esto solo es para decir que se completo o fallo una operacion
-function mensajes(icono,tiempo,titulo,mensaje){
-	Swal.fire({
-	icon:icono,
-    timer:tiempo,	
-    title:titulo,
-	text:mensaje,
-	confirmButtonText:'Aceptar',
-	confirmButtonColor: "#e01d22",
-	});
-}
-*/
 
 // esta funcion es para incializar el data table
 function init_data_table_habitantes() {

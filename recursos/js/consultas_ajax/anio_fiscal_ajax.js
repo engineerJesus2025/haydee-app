@@ -196,7 +196,7 @@ async function consultar() {
 	const estructura_tabla_anio_fiscal = [
  		{
  			"data": null,
-            "render": function (data, type, row) {
+            "render": function (row) {
             	let spam = document.createElement("span");
                 spam.setAttribute("class",row.estado == "Cerrada"?"badge bg-secondary":"badge bg-primary");
                 spam.textContent = row.estado;
@@ -205,25 +205,25 @@ async function consultar() {
         },
 		{ 
 			"data": null, 
-			"render": function (data, type, row) {                
+			"render": function (row) {                
                 return `${formatearFecha(row["fecha_inicio"])}`;
             }
         },
         { 
             "data": null, 
-            "render": function (data, type, row) {
+            "render": function (row) {
             	return `${row.estado == "Cerrada"?formatearFecha(row["fecha_cierre"]):"Aún sin cerrar"}`;
             }
         },
 		{ 
             "data": null,
-            "render": function (data, type, row) {
+            "render": function (row) {
             	return `${row["descripcion"]}`;
             }
         },   
         { 
             "data": null, 
-            "render": function (data, type, row) {
+            "render": function (row) {
             	let id_campo = row["id_anio_fiscal"];
                	let acciones = crearBotones(id_campo);
 
@@ -232,7 +232,7 @@ async function consultar() {
         } 		
  	];
 
- 	const configuraciones_tabla_anio_fiscal = (row, data, dataIndex)=>{
+ 	const configuraciones_tabla_anio_fiscal = (row, data)=>{
  		Array.from(row.children).map(td=>td.setAttribute("class",'align-middle'));
  		 		
 		row.setAttribute("id",`fila-${data.id_anio_fiscal}`); 		
@@ -258,7 +258,7 @@ async function registrar() {
 
 	datos_consulta.append('operacion','registrar');
 	
-	let respuesta = await query(datos_consulta);
+	let respuesta = await query(datos_consulta,'text-secondary');
 
 	if (!respuesta.estatus) {
 		mensajes('error',4000,'Atencion',respuesta.mensaje);
@@ -328,7 +328,7 @@ async function modificar_formulario(e) {
 	datos_consulta.append('operacion','consulta_especifica');
 
 	//Llamamos a la funcion para hacer la consulta y guardamos los datos
-	anio_fiscal = await query(datos_consulta);	
+	anio_fiscal = await query(datos_consulta,'text-secondary');	
 	
 	// ahora seleccionamos los inputs
 	let fecha_inicio = formulario_usar.querySelector("#fecha_inicio"),
@@ -360,7 +360,7 @@ async function modificar_formulario(e) {
 	id_modificar = id;
 }
 
-async function modificar(id) {	
+async function modificar(id) {
 	let datos_consulta = new FormData();
 
 	let fecha_inicio = formulario_usar.querySelector("#fecha_inicio").value,
@@ -377,7 +377,7 @@ async function modificar(id) {
 
 	datos_consulta.append('operacion','modificar');
 
-	let respuesta = await query(datos_consulta);
+	let respuesta = await query(datos_consulta,'text-secondary');
 	
  	modal.hide();
 
@@ -397,7 +397,9 @@ async function modificar(id) {
 	mensajes('success',4000,'Atencion','El registro se ha modificado exitosamente');
 }
 
-async function query(datos) {
+async function query(datos,color_carga = 'text-light') {
+    document.getElementById('icono_carga').setAttribute("class",`spinner-border ${color_carga}`);
+    
 	let mostrarModal = false;
     let tiempoCarga;
 

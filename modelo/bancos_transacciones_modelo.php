@@ -435,10 +435,24 @@
             if (!(isset($this->referencia) && isset($this->imagen) && isset($this->detalle_pago_id) && isset($this->banco_id))) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos no se recibieron correctamente"];}
 
             if (empty($this->referencia) || empty($this->imagen) || empty($this->detalle_pago_id) || empty($this->banco_id)) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos estan vacios"];}
-        
+
             if(!(is_string($this->referencia))){
                 return ["estatus"=>false,"mensaje"=>"El campo 'Referencia' no posee un valor valido"];
             }
+            if ($consulta == "editar") {
+                if (!($this->validarCampoUnico("banco_transacciones","referencia",$this->referencia,"id_banco_transaccion",$this->id_banco_transaccion))) {
+                    if ($this->validarClaveForanea("banco_transacciones","referencia",$this->referencia)) {
+                        return ["estatus"=>false,"mensaje"=>"El referencia ingresada ya esta registrado"];
+                    }
+                }
+            }
+            else{
+                if ($this->validarClaveForanea("banco_transacciones","referencia",$this->referencia)) {
+                    return ["estatus"=>false,"mensaje"=>"El referencia ingresada ya esta registrado"];
+                }
+            }
+
+
             if(!(is_string($this->imagen))){
                 return ["estatus"=>false,"mensaje"=>"El campo 'Imagen' no posee un valor valido"];
             }
@@ -457,6 +471,19 @@
 
             $conexion = $this->get_conex()->prepare($sql);
             $conexion->bindParam(":valor", $valor);
+            $conexion->execute();
+            $result = $conexion->fetch(PDO::FETCH_ASSOC);
+
+            return ($result)?true:false;
+        }
+
+        private function validarCampoUnico($tabla,$nombreClave,$valor,$nombreId,$id)
+        {
+            $sql="SELECT * FROM $tabla WHERE $nombreClave =:valor and $nombreId = :id";
+
+            $conexion = $this->get_conex()->prepare($sql);
+            $conexion->bindParam(":valor", $valor);
+            $conexion->bindParam(":id", $id);
             $conexion->execute();
             $result = $conexion->fetch(PDO::FETCH_ASSOC);
 

@@ -40,6 +40,13 @@ if (isset($_SESSION["rol"]) && $_SESSION["rol"] != "Propietario") {
             $mensualidades = $obj_pago->consultarMensualidadPendiente($apartamento_id);
             echo json_encode($mensualidades);
         }
+        elseif ($operacion == "consultar_mensualidad_especifica") {
+            $mensualidad_id = $_POST["mensualidad_id"];
+            $obj_pago->set_mensualidad_id($mensualidad_id);
+            
+            $mensualidades = $obj_pago->consultarMensualidadEspecifica();
+            echo json_encode($mensualidades);
+        }
         // ---------- Todo este bloque es para registrar los detalles de un pago ----------
         elseif ($operacion == "consultar_detalles") {
             $obj_detalles_pago->set_pago_id($_POST["id_pago"]);
@@ -462,13 +469,15 @@ if (isset($_SESSION["rol"]) && $_SESSION["rol"] != "Propietario") {
 
                 $metodo_actual = $_POST["tipo_pago"][$indice];
 
-                if ($metodo_actual === "Transferencia" || $metodo_actual === "Pago Movil") {
-
+                if ($metodo_actual === "Transferencia" || $metodo_actual === "Pago Movil") {                    
                     $banco_id = $_POST["banco_id"][$banco_index++] ?? null;
                     $referencia = $_POST["referencia"][$referencia_index++] ?? null;
 
-                    $imagen_detalle = '';
-                    if (isset($_FILES['imagen']['name'][$imagen_bancaria_index]) && $_FILES['imagen']['error'][$imagen_bancaria_index] === 0) {
+                    $imagen_detalle = '';                    
+
+                    if ($_POST['imagen_nueva'][$indice] == '0' && 
+                        isset($_FILES['imagen']['name'][$imagen_bancaria_index]) && 
+                        $_FILES['imagen']['error'][$imagen_bancaria_index] === 0) {
                         // ... (código para mover el archivo nuevo) ...
                         $nombre_original = $_FILES['imagen']['name'][$imagen_bancaria_index];
                         $temporal = $_FILES['imagen']['tmp_name'][$imagen_bancaria_index];
@@ -479,10 +488,13 @@ if (isset($_SESSION["rol"]) && $_SESSION["rol"] != "Propietario") {
                         if (move_uploaded_file($temporal, $ruta_destino)) {
                             $imagen_detalle = $nombre_unico;
                         }
-                    } elseif (isset($_POST['imagen_existente'][$imagen_existente_index])) {
-                        $imagen_detalle = $_POST['imagen_existente'][$imagen_existente_index++];
+                        $imagen_bancaria_index++;
                     }
-                    $imagen_bancaria_index++;
+// [1,2,0,1]
+                    elseif ($_POST['imagen_nueva'][$indice] == '1' && isset($_POST['imagen_existente'][$imagen_existente_index])) {
+                        $imagen_detalle = $_POST['imagen_existente'][$imagen_existente_index];
+                        $imagen_existente_index++;
+                    }
 
                     if (!empty($banco_id)) {
                         $obj_bancos_transacciones->set_referencia($referencia);
@@ -537,7 +549,7 @@ if (isset($_SESSION["rol"]) && $_SESSION["rol"] != "Propietario") {
         if ($operacion == "consulta") {
             // llamamos a la funcion, lo convertimos a json y la mandamos al js con echo
             echo json_encode($obj_pago->consultarPorCorreo($_SESSION["usuario"]));
-            // la hice para que retorne un arreglo, si sale vacio solo mandara un array con false
+            // la hice para que retorne un arreglo, si sale vacio solo mandara un array con false  consultar
         }
         //Despues de cada echo se regresa al javascript como respuesta en json
         elseif ($operacion == "consultar_mensualidades") {
@@ -804,7 +816,7 @@ if (isset($_SESSION["rol"]) && $_SESSION["rol"] != "Propietario") {
         } elseif ($operacion == "ultimo_id_detalle") {
             echo json_encode($obj_detalles_pago->realizar_consulta('lastId'));
         } elseif ($operacion == "registrar") {
-            $monto_mensualidad = $_POST["monto_mensualidad"];
+           $monto_mensualidad = $_POST["monto_mensualidad"];
             $estado = $_POST["estado"];
             $observacion = $_POST["observacion"];
 
@@ -861,7 +873,7 @@ if (isset($_SESSION["rol"]) && $_SESSION["rol"] != "Propietario") {
                         $nombre_sanitizado = preg_replace("/[^a-zA-Z0-9-\.]/", "", pathinfo($nombre_original, PATHINFO_FILENAME));
                         $imagen_detalle = $nombre_sanitizado . '' . time() . '' . rand(100, 999) . '.' . $extension;
 
-                        $ruta_destino = "recursos/img/";
+                        $ruta_destino = "recursos/img/pagos/";
                         if (!is_dir($ruta_destino)) {
                             mkdir($ruta_destino, 0777, true);
                         }
@@ -907,15 +919,14 @@ if (isset($_SESSION["rol"]) && $_SESSION["rol"] != "Propietario") {
                 "referencia" => $referencia,
                 "imagen" => $imagen
             ]);
-            exit;
         } elseif ($operacion == "consulta_especifica") { // Traer los otros consultar especificos
             $id_pago = $_POST["id_pago"];
             $obj_pago->set_id_pago($id_pago);
             echo json_encode($obj_pago->realizar_consulta('consulta_especifica'));
         } elseif ($operacion == "modificar") {
-            $id_pago = $_POST["id_pago"];
-            $id_detalle_pago = $_POST["id_detalle_pago"];
-            $id_banco_transaccion = $_POST["id_banco_transaccion"];
+             $id_pago = $_POST["id_pago"];
+            // $id_detalle_pago = $_POST["id_detalle_pago"];
+            // $id_banco_transaccion = $_POST["id_banco_transaccion"];
 
             // Modificar un Pago
             $monto_mensualidad = $_POST["monto_mensualidad"];
@@ -926,122 +937,83 @@ if (isset($_SESSION["rol"]) && $_SESSION["rol"] != "Propietario") {
             $obj_pago->set_observacion($observacion);
             $resultado_modificar_pago = $obj_pago->realizar_consulta('modificar');  // Modificar el pago
             if (!$resultado_modificar_pago["estatus"]) {
-                echo json_encode(["estatus" => false, "mensaje" => "Error al modificar el pago"]);
+                echo json_encode(["estatus" => false, "mensaje" => "Error al modificar el pago", 'err' => $resultado_modificar_pago["mensaje"]]);
                 exit;
             }
             // ...
 
+            $obj_detalles_pago->set_pago_id($id_pago);
+            $obj_detalles_pago->eliminar_detalles_por_pago();
+
+            $banco_index = 0;
+            $referencia_index = 0;
+            $imagen_bancaria_index = 0;
+            $imagen_existente_index = 0;
+
             // Modificar Detalles del Pago
-            $monto = $_POST["monto"];
+            // $monto = $_POST["monto"];
             $fecha = $_POST["fecha"];
-            $monto_dolar = $_POST["monto_dolar"];
-            $tipo_pago = $_POST["tipo_pago"];
-            $banco_id = $_POST["banco_id"];
-            $referencia = $_POST["referencia"];
-            $imagen = '';
+            // $monto_dolar = $_POST["monto_dolar"];
+            // $tipo_pago = $_POST["tipo_pago"];
+
             $apartamento_id = $_POST["apartamento_id"];
-            $mensualidad_id = $_POST["mensualidad_id"];
+            //$mensualidad_id = $_POST["mensualidad_id"];
 
-            $indice_imagen = 0;
-
-            for ($i = 0; $i < count($fecha); $i++) {
-                $obj_detalles_pago->set_id_detalle_pago($id_detalle_pago[$i]);
-                $obj_detalles_pago->set_fecha($fecha[$i]);
-                $obj_detalles_pago->set_monto($monto[$i]);
-                $obj_detalles_pago->set_monto_dolar($monto_dolar[$i] ?? 0);
-                $obj_detalles_pago->set_tipo_pago($tipo_pago[$i]);
+            foreach ($fecha as $indice => $f) {
+                $obj_detalles_pago->set_fecha($f);
+                $obj_detalles_pago->set_monto($_POST["monto"][$indice]);
+                $obj_detalles_pago->set_monto_dolar($_POST["monto_dolar"][$indice]);
+                $obj_detalles_pago->set_tipo_pago($_POST["tipo_pago"][$indice]);
                 $obj_detalles_pago->set_pago_id($id_pago);
+                $obj_detalles_pago->realizar_consulta('registrar_detalles');
+                $id_detalle = $obj_detalles_pago->realizar_consulta('lastId')["last_id"];
 
-                $resultado_modificar_detalle = $obj_detalles_pago->realizar_consulta('modificar_detalles');
-                // if (!$resultado_modificar_detalle["estatus"]) {
-                //     echo json_encode(["estatus" => false, "mensaje" => "Error al modificar detalle del pago en $i"]);
-                //     exit;
-                // }
+                $metodo_actual = $_POST["tipo_pago"][$indice];
 
-                if (!empty($referencia[$i])) {
-                    $eliminar_imagen = isset($_POST['eliminar_imagen'][$i]);
+                if ($metodo_actual === "Transferencia" || $metodo_actual === "Pago Movil") {                    
+                    $banco_id = $_POST["banco_id"][$banco_index++] ?? null;
+                    $referencia = $_POST["referencia"][$referencia_index++] ?? null;
 
-                    $imagen_actual = null;
+                    $imagen_detalle = '';                    
 
-                    if (!empty($id_banco_transaccion[$i])) {
-                        $obj_bancos_transacciones->set_id_banco_transaccion($id_banco_transaccion[$i]);
-                        $imagen_actual = $obj_bancos_transacciones->obtener_imagen_actual();
-                    }
-
-                    if ($eliminar_imagen && !empty($imagen_actual) && file_exists("recursos/img/" . $imagen_actual)) {
-                        unlink("recursos/img/" . $imagen_actual);
-                        $imagen_actual = ''; // Para que no quede en la base
-                    }
-
-                    if (isset($_FILES['imagen']['name'][$indice_imagen]) && $_FILES['imagen']['error'][$indice_imagen] === 0) {
-                        if (!empty($imagen_actual) && file_exists("recursos/img/" . $imagen_actual)) {
-                            unlink("recursos/img/" . $imagen_actual);
-                        }
-
-                        $nombre_original = $_FILES['imagen']['name'][$indice_imagen];
-                        $temporal = $_FILES['imagen']['tmp_name'][$indice_imagen];
+                    if ($_POST['imagen_nueva'][$indice] == '0' && 
+                        isset($_FILES['imagen']['name'][$imagen_bancaria_index]) && 
+                        $_FILES['imagen']['error'][$imagen_bancaria_index] === 0) {
+                        // ... (código para mover el archivo nuevo) ...
+                        $nombre_original = $_FILES['imagen']['name'][$imagen_bancaria_index];
+                        $temporal = $_FILES['imagen']['tmp_name'][$imagen_bancaria_index];
                         $extension = pathinfo($nombre_original, PATHINFO_EXTENSION);
-
-                        $nombre_sanitizado = preg_replace("/[^a-zA-Z0-9-\.]/", "", pathinfo($nombre_original, PATHINFO_FILENAME));
-                        $imagen_detalle = $nombre_sanitizado . '' . time() . '' . rand(100, 999) . '.' . $extension;
-
-                        $ruta_destino = "recursos/img/";
-                        if (!is_dir($ruta_destino)) {
-                            mkdir($ruta_destino, 0777, true);
+                        $nombre_sanitizado = preg_replace("/[^a-zA-Z0-9-_\.]/", "_", pathinfo($nombre_original, PATHINFO_FILENAME));
+                        $nombre_unico = $nombre_sanitizado . '_' . time() . '_' . rand(100, 999) . '.' . $extension;
+                        $ruta_destino = "recursos/img/pagos/" . $nombre_unico;
+                        if (move_uploaded_file($temporal, $ruta_destino)) {
+                            $imagen_detalle = $nombre_unico;
                         }
-
-                        move_uploaded_file($temporal, $ruta_destino . $imagen_detalle);
-                    } else {
-                        $imagen_detalle = $imagen_actual;
+                        $imagen_bancaria_index++;
+                    }
+// [1,2,0,1]
+                    elseif ($_POST['imagen_nueva'][$indice] == '1' && isset($_POST['imagen_existente'][$imagen_existente_index])) {
+                        $imagen_detalle = $_POST['imagen_existente'][$imagen_existente_index];
+                        $imagen_existente_index++;
                     }
 
-                    $obj_bancos_transacciones->set_referencia($referencia[$i]);
-                    $obj_bancos_transacciones->set_imagen($imagen_detalle);
-                    $obj_bancos_transacciones->set_banco_id($banco_id[$i]);
-                    $obj_bancos_transacciones->set_detalle_pago_id($id_detalle_pago[$i]);
-
-                    $resultado_banco = $obj_bancos_transacciones->realizar_consulta('modificar');
-
-                    // if (!$resultado_banco["estatus"]) {
-                    //     echo json_encode([
-                    //         "estatus" => false,
-                    //         "mensaje" => "Error al modificar banco en detalle $i",
-                    //         "debug" => [
-                    //             "referencia" => $referencia[$i] ?? null,
-                    //             "imagen" => $imagen_detalle ?? null,
-                    //             "banco_id" => $banco_id[$i] ?? null,
-                    //             "detalle_pago_id" => $id_detalle_pago[$i] ?? null
-                    //         ]
-                    //     ]);
-                    //     exit;
-                    // }
-                    $indice_imagen++;
+                    if (!empty($banco_id)) {
+                        $obj_bancos_transacciones->set_referencia($referencia);
+                        $obj_bancos_transacciones->set_imagen($imagen_detalle);
+                        $obj_bancos_transacciones->set_banco_id($banco_id);
+                        $obj_bancos_transacciones->set_detalle_pago_id($id_detalle);
+                        $obj_bancos_transacciones->realizar_consulta('registrar');
+                    }
                 }
 
-                $obj_pagos_mensualidad->set_detalle_pago_id($id_detalle_pago[$i]);
-
-                // Aquí ojo con mensualidad_id, si es array usa $mensualidad_id[$i]
-                if (is_array($mensualidad_id)) {
-                    $obj_pagos_mensualidad->set_mensualidad_id($mensualidad_id[$i]);
-                } else {
-                    $obj_pagos_mensualidad->set_mensualidad_id($mensualidad_id);
-                }
-
-                $resultado_puente = $obj_pagos_mensualidad->realizar_consulta('modificar');
-                if (!$resultado_puente["estatus"]) {
-                    echo json_encode(["estatus" => false, "mensaje" => "Error al asociar mensualidad en detalle $i"]);
-                    exit;
-                }
+                $obj_pagos_mensualidad->set_detalle_pago_id($id_detalle);
+                $obj_pagos_mensualidad->set_mensualidad_id($_POST["mensualidad_id"]);
+                $obj_pagos_mensualidad->realizar_consulta('registrar');
             }
 
-            echo json_encode([
-                "estatus" => true,
-                "mensaje" => "Pago modificado con éxito",
-                "id_pago" => $id_pago,
-                "id_detalle_pago" => $id_detalle_pago,
-                "referencia" => $referencia
-            ]);
-            exit;
+            $obj_pago->set_id_pago($id_pago);
+            $pago_completo = $obj_pago->realizar_consulta('consulta_especifica');
+            echo json_encode(["estatus" => true, "mensaje" => "Pago modificado correctamente", "pago" => $pago_completo]);
         } elseif ($operacion == "eliminar") {
             //se guardan el id de la variable a eliminar
             $id_pago = $_POST["id_pago"];

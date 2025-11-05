@@ -236,7 +236,7 @@ function validarKeyPress(er, e) {
 
 function validarKeyUp(er,etiqueta,mensaje){
 	let etiquetamensaje;
-	etiqueta.map(etiqueta_selec=>{			
+	etiqueta.map(etiqueta_selec=>{
 		etiquetamensaje = etiqueta[etiqueta_selec].nextElementSibling;
 		a = er.test(etiqueta[etiqueta_selec].value);
 

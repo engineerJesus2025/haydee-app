@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="recursos/img/utils/logo-haydee.ico" type="image/x-icon">
     <title>Inicio de Sesión</title>
     <!-- <link rel="icon" href="recursos/img/logo_ico.png"> -->
     <link rel="stylesheet" href="recursos/css/estilos_login.css">
@@ -11,14 +12,13 @@
     <link rel="stylesheet" href="recursos/bootstrap-icons/bootstrap-icons.min.css"> 
     <style type="text/css">
         @media only screen and (max-width: 500px) {
-    .g-recaptcha {
-        transform:scale(0.70);
-        transform-origin:0 0;
-    }
-}
-    </style>  
+            .g-recaptcha {
+                transform:scale(0.70);
+                transform-origin:0 0;
+            }
+        }
+    </style>    
 </head>
-
 <body>
     <?php if (isset($_GET['r'])) {
         if ($_GET['r'] == 1) {?>
@@ -27,9 +27,7 @@
     } ?>
     <main>
         <div class="container-fluid">
-            <div class="row p-5">
-                <div class="col">                    
-                </div>
+            <div class="row p-5 justify-content-end">                
                 <div class="col-md-6 col-lg-4 col-sm-12">
                     <div class="card mt-5 shadow-lg rounded p-2 px-3">
                         <div class="card-body">
@@ -72,7 +70,6 @@
                                         <button type="submit" class="btn btn-primary rounded shadow" id="enviar">Ingresar <i class="bi bi-send-fill"></i></button>
                                     </div>
                                 </div>
-                                
                             </form>
                         </div>
                     </div>
@@ -113,7 +110,7 @@
     <?php 
     require_once 'vista/componentes/modal_carga.php';
      ?>
-    <footer class="py-3 fixed-bottom" style="background-color: #3939a9;">
+    <footer class="py-2 fixed-bottom" style="background-color: #3939a9;">
         <div class="text-center text-white"><h5>Junta de Condominios Edificio Haydee C.A.</h5></div>
     </footer>
     <script src="recursos/bootstrap/js/bootstrap.bundle.min.js"></script>

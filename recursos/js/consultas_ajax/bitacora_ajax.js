@@ -95,26 +95,18 @@ function definirColorAccion(nombre_accion){
     switch (nombre_accion){
         case 'consultar':
             return "badge bg-info text-dark";
-            break;
         case 'eliminar':
             return "badge bg-danger";
-            break;
         case 'registrar':
             return "badge bg-primary";
-            break;
-
         case 'modificar':
             return "badge bg-success";
-            break;
         case 'iniciar sesion':
             return "badge bg-warning text-dark";
-            break;
         case 'cerrar sesion':
             return "badge bg-secondary";
-            break;
         default:
         return "badge bg-secondary";
-        break;
     }
 }
 
@@ -160,31 +152,31 @@ async function consultar() {
 	const estructura_tabla_bitacora = [
  		{
  			"data": null,
-            "render": function (data, type, row) {            	
+            "render": function (row) {            	
                 return `${row.nombre_usuario}`;
             }  
         },
 		{ 
 			"data": null, 
-			"render": function (data, type, row) {                
+			"render": function (row) {                
                 return `${row["nombre_rol"]}`;
             }
         },
         { 
             "data": null, 
-            "render": function (data, type, row) {
+            "render": function (row) {
             	return `${formatearFechaHora(row["fecha_hora"])}`;
             }
         },
 		{ 
             "data": null,
-            "render": function (data, type, row) {
+            "render": function (row) {
             	return `${row["nombre_modulo"].split("_").join(" ")}`;
             }
         },
         { 
             "data": null,
-            "render": function (data, type, row) {
+            "render": function (row) {
                 let spam = document.createElement("span");
                 spam.setAttribute("class",definirColorAccion(row["accion"]));
                 spam.textContent = row["accion"];
@@ -193,13 +185,13 @@ async function consultar() {
         },
         { 
             "data": null,
-            "render": function (data, type, row) {
+            "render": function (row) {
             	return `${row["registro_alterado"]}`;
             }
         }
  	];
 
- 	const configuraciones_tabla_bitacora = (row, data, dataIndex)=>{
+ 	const configuraciones_tabla_bitacora = (row)=>{
  		Array.from(row.children).map(td=>td.setAttribute("class",'align-middle'));
  	}
 

@@ -160,6 +160,7 @@ function agregar_fila_presupuesto(e) {
 	div_intercambio.setAttribute("class","col-lg-1 col-2 mt-sm-0 mt-2 d-flex justify-content-center align-items-center");
 
 	let boton_intercambio = document.createElement("button");
+	boton_intercambio.setAttribute('tabindex','-1');
 	boton_intercambio.setAttribute("class","btn btn-outline-info boton_intercambio");
 
 	let spam_intercambio = document.createElement("spam");
@@ -207,6 +208,7 @@ function agregar_fila_presupuesto(e) {
 	let boton_agregar = document.createElement("button");
 	boton_agregar.setAttribute('title','presione aquí para añadir otro monto');
 	boton_agregar.setAttribute('class','btn btn-success');
+	boton_agregar.setAttribute('tabindex','-1');
 	boton_agregar.setAttribute('accion',`agregar`);
 
 	let icono_agregar = document.createElement('i');
@@ -216,6 +218,7 @@ function agregar_fila_presupuesto(e) {
 
 	let boton_eliminar = document.createElement("button");
 	boton_eliminar.setAttribute('title','eliminar monto');
+	boton_eliminar.setAttribute('tabindex','-1');
 	boton_eliminar.setAttribute('class','btn btn-danger');	
 
 	let icono_eliminar = document.createElement('i');
@@ -352,6 +355,7 @@ function eliminar_fila_presupuesto(e) {
 		let boton_agregar = document.createElement("button");
 		boton_agregar.setAttribute('title','presione aquí para añadir otro monto');
 		boton_agregar.setAttribute('class','btn btn-success');
+		boton_agregar.setAttribute('tabindex','-1');
 		boton_agregar.setAttribute('accion',`agregar`);
 
 		let icono_agregar = document.createElement('i');
@@ -529,6 +533,7 @@ function agregarGastoFijo(nombre_gasto,ultimo = false) {
 	div_intercambio.setAttribute("class","col-lg-1 col-2 mt-sm-0 mt-2 d-flex justify-content-center align-items-center");
 
 	let boton_intercambio = document.createElement("button");
+	boton_intercambio.setAttribute('tabindex','-1');
 	boton_intercambio.setAttribute("class","btn btn-outline-info boton_intercambio");	
 
 	let spam_intercambio = document.createElement("spam");
@@ -577,6 +582,7 @@ function agregarGastoFijo(nombre_gasto,ultimo = false) {
 		let boton_agregar = document.createElement("button");
 		boton_agregar.setAttribute('title','presione aquí para añadir otro monto');
 		boton_agregar.setAttribute('class','btn btn-success');
+		boton_agregar.setAttribute('tabindex','-1');
 		boton_agregar.setAttribute('accion',`agregar`);
 
 		let icono_agregar = document.createElement('i');
@@ -773,7 +779,7 @@ async function consultar() {
 	const estructura_tabla_presupuetos = [
  		{
  			"data": null,
-            "render": function (data, type, row) {
+            "render": function (row) {
             	let fecha = new Date(`${row["mes_fecha"]}/01/${row["anio_fecha"]}`);
 				let mes = `${fecha.toLocaleString("es-ES",{month: 'long'})[0].toUpperCase()}${fecha.toLocaleString("es-ES",{month: 'long'}).slice(1)}`;
 				let anio = fecha.getFullYear();
@@ -783,25 +789,25 @@ async function consultar() {
         },
 		{ 
 			"data": null,
-			"render": function (data, type, row) {                
+			"render": function (row) {                
                 return `${(row["monto_estimado"]).toFixed(2)} Bs. / ${(row["monto_estimado"] / tasa_dolar).toFixed(2)} $.`;
             }
         },
         { 
             "data": null,
-            "render": function (data, type, row) {
+            "render": function (row) {
             	return `${parseFloat(row["cuota_reserva"]).toFixed(2)} Bs. / ${(row["cuota_reserva"] / tasa_dolar).toFixed(2)} $.`;
             }
         },
 		{ 
             "data": null,
-            "render": function (data, type, row) {
+            "render": function (row) {
             	return `${row["observacion"]}`;
             }
         },      
         { 
             "data": null, 
-            "render": function (data, type, row) {
+            "render": function (row) {
             	let id_campo = row["id_presupuesto"];
                	let acciones = crearBotones(id_campo);
 
@@ -810,7 +816,7 @@ async function consultar() {
         } 		
  	]
 
- 	const configuraciones_tabla_presupuetos = (row, data, dataIndex)=>{
+ 	const configuraciones_tabla_presupuetos = (row, data)=>{
  		Array.from(row.children).map(td=>td.setAttribute("class",'align-middle'));
  		 		
 		row.setAttribute("id",`fila-${data.id_presupuesto}`); 		
@@ -894,6 +900,7 @@ async function llenarDetallesPresupuestos() {
 		boton_acordeon.setAttribute('data-bs-toggle','collapse');
 		boton_acordeon.setAttribute('data-bs-target',`#${nombre_format}-body`);
 		boton_acordeon.setAttribute('aria-expanded','true');
+		boton_acordeon.setAttribute('tabindex','-1');
 		boton_acordeon.setAttribute('aria-controls',`${nombre_format}-body`);
 
 		boton_acordeon.textContent = tipo_gasto.nombre_tipo_gasto;
@@ -988,7 +995,7 @@ async function registrar() {
 
 	datos_consulta.append('operacion','registrar');
 	
-	let respuesta = await query(datos_consulta); 	
+	let respuesta = await query(datos_consulta,'text-secondary'); 	
 	
 	if (!respuesta.estatus) {
 		mensajes('error',4000,'Atencion',respuesta.mensaje);
@@ -1035,7 +1042,7 @@ async function registrar() {
 		datos_consulta.append('tipo_gasto_id',tipo_gasto_id);
 		datos_consulta.append('presupuesto_id',id_registrado);
 
-		respuesta = await query(datos_consulta); 	
+		respuesta = await query(datos_consulta,'text-secondary'); 	
 
 		if (!respuesta.estatus) {
 			error = true;
@@ -1068,7 +1075,7 @@ async function registrarMensualidad(id_presupuesto_registrado){
 
 	datos_consulta.append('operacion','consultar_apartamentos');
 	
-	let apartamentos = await query(datos_consulta)	
+	let apartamentos = await query(datos_consulta,'text-secondary')	
 	
 	if(!(apartamentos.estatus == undefined)){
 		mensajes('error',4000,'Atencion', apartamentos.mensaje);
@@ -1093,7 +1100,7 @@ async function registrarMensualidad(id_presupuesto_registrado){
 
 		datos_consulta.append('operacion','registrar_mensualidad');
 
-		let respuesta = await query(datos_consulta);
+		let respuesta = await query(datos_consulta,'text-secondary');
 
 		if (!respuesta.estatus) {			
 			error = true;
@@ -1107,7 +1114,7 @@ async function registrarMensualidad(id_presupuesto_registrado){
 	
 		datos_consulta.append('operacion','registrar_presupuesto_mensualidad');
 
-		respuesta = await query(datos_consulta);
+		respuesta = await query(datos_consulta,'text-secondary');
 
 		if (!respuesta.estatus) {			
 			error = true;
@@ -1133,7 +1140,7 @@ async function modificar_formulario(e) {
 
 	datos_consulta.append('operacion','consulta_especifica');
 
-	let presupuesto = await query(datos_consulta);	
+	let presupuesto = await query(datos_consulta,'text-secondary');	
 	
 	let fecha = formulario_usar.querySelector("#fecha"),
 	cuota_reserva = formulario_usar.querySelector("#cuota_reserva"),
@@ -1176,7 +1183,7 @@ async function modificar_formulario(e) {
 
 	datos_consulta.append('operacion','consultar_detalles_presupuestos');
 
-	let detalles_presupuestos = await query(datos_consulta);
+	let detalles_presupuestos = await query(datos_consulta,'text-secondary');
 
 	detalles_presupuestos.map((detalle)=>{
 		let gasto_fijo = false;
@@ -1230,7 +1237,7 @@ async function modificar(id) {
 	
 	datos_consulta.append('operacion','editar_presupuesto');
 
-	let respuesta = await query(datos_consulta);
+	let respuesta = await query(datos_consulta,'text-secondary');
 
 	if (!respuesta.estatus) {
 		mensajes('error',4000,'Atencion',respuesta.mensaje);
@@ -1241,7 +1248,7 @@ async function modificar(id) {
 	datos_consulta.append("presupuesto_id",id);
 	datos_consulta.append('operacion','eliminar_detalles_presupuestos');
 
-	respuesta = await query(datos_consulta);
+	respuesta = await query(datos_consulta,'text-secondary');
 
 	if (!respuesta.estatus) {
 		mensajes('error',4000,'Atencion',respuesta.mensaje);
@@ -1284,7 +1291,7 @@ async function modificar(id) {
 		datos_consulta.append('tipo_gasto_id',tipo_gasto_id);
 		datos_consulta.append('presupuesto_id',id);
 
-		respuesta = await query(datos_consulta); 	
+		respuesta = await query(datos_consulta,'text-secondary'); 	
 
 		if (!respuesta.estatus) {
 			error = true;
@@ -1352,7 +1359,9 @@ async function last_id() {
 	return res;
 }
 
-async function query(datos) {
+async function query(datos,color_carga = 'text-light') {
+    document.getElementById('icono_carga').setAttribute("class",`spinner-border ${color_carga}`);
+    
 	peticionesActivas++;
 
 	const tiempoInicio = performance.now();

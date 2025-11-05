@@ -22,7 +22,6 @@
         <div class="row flex-nowrap ">
 
             <?php
-            require_once "vista/componentes/sesion.php";
             require_once "vista/componentes/navbar.php";
             ?>
 
@@ -74,12 +73,7 @@
                                                 <th class="text-center">ACCIONES</th>
                                             </tr>
                                         </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td colspan="7">
-                                                    <h4>No hay apartamentos registrados</h4>
-                                                </td>
-                                            </tr>
+                                        <tbody>                                     
                                         </tbody>
                                     </table>
                                 </div>

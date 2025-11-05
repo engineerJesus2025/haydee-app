@@ -73,7 +73,6 @@
         <div class="row flex-nowrap ">
 
             <?php
-            require_once "vista/componentes/sesion.php";
             require_once "vista/componentes/navbar.php";
             ?>
 
@@ -100,7 +99,7 @@
                                     </h2>
                                 <p class="text-muted mb-0">Información personal del usuario</p>
                               </div>              
-                                <button class="btn btn-outline-primary" title="Editar Información" id="boton_editar">
+                                <button class="btn btn-outline-primary" title="Editar Información" id="boton_editar" disabled="">
                                   <i class="bi bi-pencil me-1"></i>
                                   Editar
                                 </button>              

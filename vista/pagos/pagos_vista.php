@@ -18,7 +18,6 @@
         <div class="row flex-nowrap ">
 
             <?php
-            require_once "vista/componentes/sesion.php";
             require_once "vista/componentes/navbar.php";
             ?>
 
@@ -71,8 +70,8 @@
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td colspan="5">
-                                                <h4>No hay pagos registrados</h4>
+                                            <td colspan="6">
+                                                <h4>Cargando...</h4>
                                             </td>
                                         </tr>
                                     </tbody>

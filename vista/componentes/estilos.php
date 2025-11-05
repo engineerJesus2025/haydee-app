@@ -1,3 +1,4 @@
+<link rel="shortcut icon" href="recursos/img/utils/logo-haydee.ico" type="image/x-icon">
 <link rel="stylesheet" href="recursos/bootstrap/css/bootstrap.min.css">
 <link rel="stylesheet" href="recursos/bootstrap-icons/bootstrap-icons.min.css">
 <link rel="stylesheet" href="recursos/bootstrap/css/dataTables.bootstrap5.min.css">

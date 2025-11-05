@@ -25,21 +25,22 @@
             //validamos el reCAPTCHA
             $recaptchaResponse = $_POST['g-recaptcha-response'] ?? '';
 
-            if (empty($recaptchaResponse)) {
-                echo json_encode(["estatus"=>false,"mensaje"=>"Por favor, completa el reCAPTCHA"]);                
-                exit;
+            if ($recaptchaResponse != "no_internet") {
+                if (empty($recaptchaResponse)) {
+                    echo json_encode(["estatus"=>false,"mensaje"=>"Por favor, completa el reCAPTCHA"]);                
+                    exit;
+                }
+
+                $resultadoRecaptcha = $usuario_obj->verificarRecaptcha($recaptchaResponse);
+
+                if (!$resultadoRecaptcha['success']) {
+                    $errors = $resultadoRecaptcha['error-codes'];
+                    $mensaje_error = (in_array('timeout-or-duplicate', $errors))?"reCAPTCHA expirado, por favor inténtalo de nuevo.":"Ha ocurrido un error al tratar de validar el reCAPTCHA";
+
+                    echo json_encode(["estatus"=>false,"mensaje"=>$mensaje_error,"err"=>$resultadoRecaptcha['error-codes']]);                
+                    exit;
+                }
             }
-
-            $resultadoRecaptcha = $usuario_obj->verificarRecaptcha($recaptchaResponse);
-
-            if (!$resultadoRecaptcha['success']) {
-                $errors = $resultadoRecaptcha['error-codes'];
-                $mensaje_error = (in_array('timeout-or-duplicate', $errors))?"reCAPTCHA expirado, por favor inténtalo de nuevo.":"Ha ocurrido un error al tratar de validar el reCAPTCHA";
-
-                echo json_encode(["estatus"=>false,"mensaje"=>$mensaje_error,"err"=>$resultadoRecaptcha['error-codes']]);                
-                exit;
-            }
-
             //Validamos el usuario
 
             $usuario_obj->set_correo($_POST["usuario"]);

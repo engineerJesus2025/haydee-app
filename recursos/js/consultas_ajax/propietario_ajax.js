@@ -49,7 +49,7 @@ async function registrar() {
     datos_consulta.append("correo", correo);
     datos_consulta.append("operacion", "registrar");
 
-    let respuesta = await query(datos_consulta);
+    let respuesta = await query(datos_consulta,'text-secondary');
     console.log("Respuesta al registrar:", respuesta);
 
 
@@ -203,7 +203,7 @@ async function modificar_formulario(e) {
     datos_consulta.append("id_propietario", id);
     datos_consulta.append("operacion", "consulta_especifica");
 
-    const respuesta = await query(datos_consulta);
+    const respuesta = await query(datos_consulta,'text-secondary');
     const data = respuesta[0];
 
     let nombre = formulario_usar.querySelector("#nombre"),
@@ -246,7 +246,7 @@ async function modificar(id) {
     datos_consulta.append("correo", correo);
     datos_consulta.append("operacion", "modificar");
 
-    await query(datos_consulta);
+    await query(datos_consulta,'text-secondary');
     formulario_usar.reset();
     modal.hide();
 
@@ -279,7 +279,9 @@ async function last_id() {
     return res;
 }
 
-async function query(datos) {
+async function query(datos,color_carga = 'text-light') {
+    document.getElementById('icono_carga').setAttribute("class",`spinner-border ${color_carga}`);
+    
     let res = await fetch("", {
         method: "POST",
         body: datos

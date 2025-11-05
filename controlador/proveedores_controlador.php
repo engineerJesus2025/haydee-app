@@ -1,4 +1,5 @@
 <?php
+require_once "vista/componentes/sesion.php";
 require_once "modelo/proveedores_modelo.php";
 $proveedor = new Proveedores();
 

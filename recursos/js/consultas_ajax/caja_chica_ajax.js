@@ -405,31 +405,31 @@ async function llenarTablaRegistrosSistema(){
 	const estructura_tabla_movimientos = [
  		{
  			"data": null,
-            "render": function (data, type, row) {            	
+            "render": function (row) {            	
                 return `${formatearFecha(row.fecha)}`;
             }  
         },
 		{ 
 			"data": null, 
-			"render": function (data, type, row) {                
+			"render": function (row) {                
                 return `${row.monto.toFixed(2)} Bs. / ${(row.monto / tasa_dolar).toFixed(2)} $.`;
             }
         },
         { 
             "data": null, 
-            "render": function (data, type, row) {
+            "render": function (row) {
             	return `${row.concepto}`;
             }
         },
 		{ 
             "data": null,
-            "render": function (data, type, row) {
+            "render": function (row) {
             	return `${row.estado}`;
             }
         },
         { 
             "data": null, 
-            "render": function (data, type, row) {
+            "render": function (row) {
             	let id_campo = row["id_movimiento_caja"];
                	let acciones = crearBotones(id_campo);
 
@@ -438,7 +438,7 @@ async function llenarTablaRegistrosSistema(){
         } 		
  	];
 
- 	const configuraciones_tabla_movimientos = (row, data, dataIndex)=>{
+ 	const configuraciones_tabla_movimientos = (row, data)=>{
  		row.setAttribute("id",`fila-${data.id_movimiento_caja}`); 		
  		row.querySelector(".editar")?.addEventListener('click',preparar_formulario);
  		row.querySelector(".eliminar")?.addEventListener('click',eventoEliminar); 		
@@ -469,7 +469,7 @@ async function registrar() {
 
 	datos_consulta.append('operacion','registrar');
 
-	let respuesta = await query(datos_consulta);
+	let respuesta = await query(datos_consulta,'text-secondary');
 
 	if (!respuesta.estatus) {
 		mensajes('error',4000,'Atencion',respuesta.mensaje);
@@ -500,7 +500,7 @@ async function preparar_formulario(e) {
 
 	datos_consulta.append('operacion','consultar_movimiento');
 
-	data = await query(datos_consulta);	
+	data = await query(datos_consulta,'text-secondary');	
 	
 	let fecha = document.querySelector("#fecha"),
 	monto = document.querySelector("#monto"),	
@@ -558,7 +558,7 @@ async function modificar(id) {
 
 	datos_consulta.append('operacion','editar');
 
-	let respuesta = await query(datos_consulta);
+	let respuesta = await query(datos_consulta,'text-secondary');
 
 	if (!respuesta.estatus) {
 		mensajes('error',4000,'Atencion',respuesta.mensaje);
@@ -594,7 +594,7 @@ async function editarObservacion(id_caja) {
 	datos_consulta.append('operacion','editar_observacion');
 	
 	//Llamamos a la funcion para hacer la consulta
-	let respuesta = await query(datos_consulta); 
+	let respuesta = await query(datos_consulta,'text-secondary'); 
 	
 	modal_observacion.hide(); //Esconde el modal
 
@@ -673,7 +673,7 @@ async function reponer_caja(){
 	
 	datos_consulta.append('operacion','reponer_caja');
 
-	let respuesta = await query(datos_consulta);
+	let respuesta = await query(datos_consulta,'text-secondary');
 
 	if (!respuesta.estatus) {
 		mensajes('error',4000,'Atencion',respuesta.mensaje);
@@ -687,7 +687,9 @@ async function reponer_caja(){
 	mensajes('success',4000,'Atencion','Se ha repuesto la caja exitosamente');
 }
 
-async function query(datos) {
+async function query(datos,color_carga = 'text-light') {
+    document.getElementById('icono_carga').setAttribute("class",`spinner-border ${color_carga}`);
+    
 	peticionesActivas++;
 
 	const tiempoInicio = performance.now();
