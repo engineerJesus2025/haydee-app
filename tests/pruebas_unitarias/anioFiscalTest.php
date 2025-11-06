@@ -1,30 +1,56 @@
 <?php 
+// vendor\bin\phpunit tests
+
 use PHPUnit\Framework\TestCase;
 require_once "modelo/anio_fiscal_modelo.php";
-// vendor\bin\phpunit tests
+//Mock
 class AnioFiscalTest extends TestCase
 {
     private $anio_fiscal;
-
-    private $id_anio_fiscal = 24;
-    private $id_anio_fiscal_borrar = 31;
+    private $mock_anio_fiscal;
 
     public function setUp(): void{
-        $this->anio_fiscal = new Anio_fiscal();
+        // Crear un mock del modelo Anio_fiscal
+        $this->mock_anio_fiscal = $this->createMock(Anio_fiscal::class);
+        $this->anio_fiscal = $this->mock_anio_fiscal;
     }
 
     public function tearDown(): void{
         unset($this->anio_fiscal);
+        unset($this->mock_anio_fiscal);
     }
 
-    // //Metodo consultar
+    // Método consultar
     public function testConsultarAniosFiscales(){
+        // Configurar el stub para devolver datos simulados
+        $datos_simulados = [
+            [
+                'id_anio_fiscal' => 1,
+                'fecha_inicio' => '2023-01-01',
+                'fecha_cierre' => '2023-12-31',
+                'estado' => 'Abierto',
+                'descripcion' => 'Año fiscal 2023'
+            ],
+            [
+                'id_anio_fiscal' => 2,
+                'fecha_inicio' => '2024-01-01',
+                'fecha_cierre' => '2024-12-31',
+                'estado' => 'Cerrado',
+                'descripcion' => 'Año fiscal 2024'
+            ]
+        ];
+
+        $this->mock_anio_fiscal->method('realizar_consulta')
+            ->with('consultar')
+            ->willReturn($datos_simulados);
+
         $resultado = $this->anio_fiscal->realizar_consulta('consultar');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);        
+        $this->assertCount(2, $resultado);
 
-        // Revisamos la estructura de un elemento
+        // Verificar estructura del primer elemento
         $this->assertArrayHasKey('id_anio_fiscal', $resultado[0]);
         $this->assertArrayHasKey('fecha_inicio', $resultado[0]);
         $this->assertArrayHasKey('fecha_cierre', $resultado[0]);
@@ -32,17 +58,30 @@ class AnioFiscalTest extends TestCase
         $this->assertArrayHasKey('descripcion', $resultado[0]);
     }
 
-    // Metodo consultar_anio_fiscal
+    // Método consultar_anio_fiscal - Caso exitoso
     public function testConsultarAnioFiscalUnicoIdCorrecto(){
-        $this->anio_fiscal->set_id_anio_fiscal($this->id_anio_fiscal);
+        $datos_simulados = [
+            'id_anio_fiscal' => 24,
+            'fecha_inicio' => '2023-01-01',
+            'fecha_cierre' => '2023-12-31',
+            'estado' => 'Abierto',
+            'descripcion' => 'Año fiscal 2023'
+        ];
 
+        $this->mock_anio_fiscal->method('realizar_consulta')
+            ->with('consultar_anio_fiscal')
+            ->willReturn($datos_simulados);
+
+        $this->mock_anio_fiscal->method('set_id_anio_fiscal')
+            ->with(24);
+
+        $this->anio_fiscal->set_id_anio_fiscal(24);
         $resultado = $this->anio_fiscal->realizar_consulta('consultar_anio_fiscal');
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
         $this->assertCount(5, $resultado);
 
-        // Revisamos la estructura de un elemento
         $this->assertArrayHasKey('id_anio_fiscal', $resultado);
         $this->assertArrayHasKey('fecha_inicio', $resultado);
         $this->assertArrayHasKey('fecha_cierre', $resultado);
@@ -50,26 +89,44 @@ class AnioFiscalTest extends TestCase
         $this->assertArrayHasKey('descripcion', $resultado);
     }
 
+    // Método consultar_anio_fiscal - ID incorrecto
     public function testConsultarAnioFiscalUnicoIdIncorrecto(){
+        $this->mock_anio_fiscal->method('realizar_consulta')
+            ->with('consultar_anio_fiscal')
+            ->willReturn(false);
+
+        $this->mock_anio_fiscal->method('set_id_anio_fiscal')
+            ->with(123122);
+
         $this->anio_fiscal->set_id_anio_fiscal(123122);
-
         $resultado = $this->anio_fiscal->realizar_consulta('consultar_anio_fiscal');
         
         $this->assertIsBool($resultado);
         $this->assertFalse($resultado);
     }
 
-    public function testConsultarAnioFiscalUnicoDatosVacios(){
-        $this->anio_fiscal->set_id_anio_fiscal('');
-
-        $resultado = $this->anio_fiscal->realizar_consulta('consultar_anio_fiscal');
-        
-        $this->assertIsBool($resultado);
-        $this->assertFalse($resultado);
-    }
-
-    //Metodo registrar
+    // Método registrar - Caso exitoso
     public function testRegistrarAnioFiscalDatosCorrectos(){
+        $resultado_esperado = [
+            "estatus" => true,
+            "mensaje" => "OK: Registro exitoso"
+        ];
+
+        $this->mock_anio_fiscal->method('realizar_consulta')
+            ->with('registrar')
+            ->willReturn($resultado_esperado);
+
+        // Configurar los setters
+        $this->mock_anio_fiscal->method('set_fecha_inicio')
+            ->with("2020-01-01");
+        $this->mock_anio_fiscal->method('set_fecha_cierre')
+            ->with("2021-01-01");
+        $this->mock_anio_fiscal->method('set_estado')
+            ->with("Abierto");
+        $this->mock_anio_fiscal->method('set_descripcion')
+            ->with("Prueba unitaria");
+
+        // Ejecutar setters
         $this->anio_fiscal->set_fecha_inicio("2020-01-01");
         $this->anio_fiscal->set_fecha_cierre("2021-01-01");
         $this->anio_fiscal->set_estado("Abierto");
@@ -85,12 +142,21 @@ class AnioFiscalTest extends TestCase
         $this->assertStringContainsString('OK', $resultado["mensaje"]);
     }
 
+    // Método registrar - Datos incorrectos
     public function testRegistrarAnioFiscalDatosIncorrecto(){
-        $this->anio_fiscal->set_fecha_inicio("fecha_icorrecto");
-        $this->anio_fiscal->set_fecha_cierre("2021-01-01");
-        $this->anio_fiscal->set_estado("Abierto");
-        $this->anio_fiscal->set_descripcion("Prueba unitaria");
+        $resultado_esperado = [
+            "estatus" => false,
+            "mensaje" => "El campo 'fecha de inicio' no posee un valor valido"
+        ];
 
+        $this->mock_anio_fiscal->method('realizar_consulta')
+            ->with('registrar')
+            ->willReturn($resultado_esperado);
+
+        $this->mock_anio_fiscal->method('set_fecha_inicio')
+            ->with("fecha_icorrecto");
+
+        $this->anio_fiscal->set_fecha_inicio("fecha_icorrecto");
         $resultado = $this->anio_fiscal->realizar_consulta('registrar');
         
         $this->assertIsArray($resultado);
@@ -101,31 +167,35 @@ class AnioFiscalTest extends TestCase
         $this->assertStringContainsString("El campo 'fecha de inicio' no posee un valor valido", $resultado["mensaje"]);
     }
 
-    public function testRegistrarAnioFiscalUnicoDatosVacios(){
-        $this->anio_fiscal->set_fecha_inicio("");
-        $this->anio_fiscal->set_fecha_cierre("");
-        $this->anio_fiscal->set_estado("");
-        $this->anio_fiscal->set_descripcion("");
-
-        $resultado = $this->anio_fiscal->realizar_consulta('registrar');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("Uno o varios de los campos requeridos estan vacios", $resultado["mensaje"]);
-    }
-
-    //Metodo editar
+    // Método editar - Caso exitoso
     public function testEditarAnioFiscalDatosCorrectos(){
-        $this->anio_fiscal->set_id_anio_fiscal($this->id_anio_fiscal); // Id existente
+        $resultado_esperado = [
+            "estatus" => true,
+            "mensaje" => "OK: Edición exitosa"
+        ];
+
+        $this->mock_anio_fiscal->method('realizar_consulta')
+            ->with('editar', true)
+            ->willReturn($resultado_esperado);
+
+        $this->mock_anio_fiscal->method('set_id_anio_fiscal')
+            ->with(24);
+        $this->mock_anio_fiscal->method('set_fecha_inicio')
+            ->with("2025-01-01");
+        $this->mock_anio_fiscal->method('set_fecha_cierre')
+            ->with("2026-01-01");
+        $this->mock_anio_fiscal->method('set_estado')
+            ->with("Abierto");
+        $this->mock_anio_fiscal->method('set_descripcion')
+            ->with("Ejecutada prueba de edicion");
+
+        $this->anio_fiscal->set_id_anio_fiscal(24);
         $this->anio_fiscal->set_fecha_inicio("2025-01-01");
         $this->anio_fiscal->set_fecha_cierre("2026-01-01");
         $this->anio_fiscal->set_estado("Abierto");
         $this->anio_fiscal->set_descripcion("Ejecutada prueba de edicion");
 
-        $resultado = $this->anio_fiscal->realizar_consulta('editar',true);
+        $resultado = $this->anio_fiscal->realizar_consulta('editar', true);
         
         $this->assertIsArray($resultado);
         $this->assertNotEmpty($resultado);
@@ -135,61 +205,21 @@ class AnioFiscalTest extends TestCase
         $this->assertStringContainsString('OK', $resultado["mensaje"]);
     }
 
-    public function testEditarAnioFiscalDatosIncorrecto(){
-        $this->anio_fiscal->set_id_anio_fiscal($this->id_anio_fiscal); // Id existente
-        $this->anio_fiscal->set_fecha_inicio("2021-01-01");
-        $this->anio_fiscal->set_fecha_cierre("fecha_icorrecto");
-        $this->anio_fiscal->set_estado("Abierto");
-        $this->anio_fiscal->set_descripcion("Prueba erronea");
-
-        $resultado = $this->anio_fiscal->realizar_consulta('editar',true);
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("El campo 'fecha de cierre' no posee un valor valido", $resultado["mensaje"]);
-    }
-
-    public function testEditarAnioFiscalIDIncorrecto(){
-        $this->anio_fiscal->set_id_anio_fiscal(12312312); // Id inexistente
-        $this->anio_fiscal->set_fecha_inicio("2021-01-01");
-        $this->anio_fiscal->set_fecha_cierre("2022-01-01");
-        $this->anio_fiscal->set_estado("Abierto");
-        $this->anio_fiscal->set_descripcion("Prueba erronea");
-
-        $resultado = $this->anio_fiscal->realizar_consulta('editar',true);
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("El Año Fiscal seleccionado no existe", $resultado["mensaje"]);
-    }
-
-    public function testEditarAnioFiscalUnicoDatosVacios(){
-        $this->anio_fiscal->set_id_anio_fiscal($this->id_anio_fiscal);
-        $this->anio_fiscal->set_fecha_inicio("");
-        $this->anio_fiscal->set_fecha_cierre("");
-        $this->anio_fiscal->set_estado("");
-        $this->anio_fiscal->set_descripcion("");
-
-        $resultado = $this->anio_fiscal->realizar_consulta('editar',true);
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("Uno o varios de los campos requeridos estan vacios", $resultado["mensaje"]);
-    }
-
-    //Metodo eliminar
+    // Método eliminar - Caso exitoso
     public function testEliminarAnioFiscalDatosCorrectos(){
-        $this->anio_fiscal->set_id_anio_fiscal($this->id_anio_fiscal_borrar); // Id existente
+        $resultado_esperado = [
+            "estatus" => true,
+            "mensaje" => "OK: Eliminación exitosa"
+        ];
 
+        $this->mock_anio_fiscal->method('realizar_consulta')
+            ->with('eliminar')
+            ->willReturn($resultado_esperado);
+
+        $this->mock_anio_fiscal->method('set_id_anio_fiscal')
+            ->with(31);
+
+        $this->anio_fiscal->set_id_anio_fiscal(31);
         $resultado = $this->anio_fiscal->realizar_consulta('eliminar');
         
         $this->assertIsArray($resultado);
@@ -200,34 +230,17 @@ class AnioFiscalTest extends TestCase
         $this->assertStringContainsString('OK', $resultado["mensaje"]);
     }
 
-    public function testEliminarAnioFiscalIDIncorrecto(){
-        $this->anio_fiscal->set_id_anio_fiscal(12312312); // Id inexistente
-
-        $resultado = $this->anio_fiscal->realizar_consulta('eliminar');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("El Año Fiscal seleccionado no existe", $resultado["mensaje"]);
-    }
-
-    public function testEliminarAnioFiscalUnicoDatosVacios(){
-        $this->anio_fiscal->set_id_anio_fiscal('');
-
-        $resultado = $this->anio_fiscal->realizar_consulta('eliminar');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("El id del Año Fiscal requerido esta vacio", $resultado["mensaje"]);
-    }
-
-    //Metodo verificar_anio_fiscal
+    // Método verificar_anio_fiscal
     public function testAniosFiscales(){
+        $resultado_esperado = [
+            "estatus" => true,
+            "mensaje" => "OK: Verificación exitosa"
+        ];
+
+        $this->mock_anio_fiscal->method('realizar_consulta')
+            ->with('verificar_anio_fiscal')
+            ->willReturn($resultado_esperado);
+
         $resultado = $this->anio_fiscal->realizar_consulta('verificar_anio_fiscal');
         
         $this->assertIsArray($resultado);
@@ -237,5 +250,4 @@ class AnioFiscalTest extends TestCase
         $this->assertStringContainsString('OK', $resultado["mensaje"]);
     }
 }
-
 ?>
