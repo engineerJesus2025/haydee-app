@@ -39,6 +39,12 @@ document.querySelector(`#modal_banco`).addEventListener("hide.bs.modal",()=>{
 	document.querySelectorAll('.is-invalid').forEach(input=>input.classList.remove('is-invalid'));
 });
 
+document.getElementById('header-toggle').addEventListener("click",e=>{
+	setTimeout(function(){
+		data_table.columns.adjust().draw();
+	},450);
+});
+
 //Si queremos registrar:
 async function registrar() {
 	// el async vuelve la funcion asincrona	
@@ -62,7 +68,7 @@ async function registrar() {
 	datos_consulta.append('operacion','registrar');
 	
 	//Llamamos a la funcion para hacer la consulta
-	let respuesta = await query(datos_consulta,'text-secondary'); // El await es para que espere el resultado, al ser asincrono, normalmente no lo esperaria
+	let respuesta = await query(datos_consulta,true); // El await es para que espere el resultado, al ser asincrono, normalmente no lo esperaria
 	// wait = esperar (english)
 	modal.hide(); //Esconde el modal
 	formulario_usar.reset();//Limpia el formulario
@@ -262,7 +268,7 @@ async function modificar_formulario(e) {
 	datos_consulta.append('operacion','consulta_especifica');
 
 	//Llamamos a la funcion para hacer la consulta y guardamos los datos
-	data = await query(datos_consulta,'text-secondary');	
+	data = await query(datos_consulta,true);	
 	
 	// ahora seleccionamos los inputs
 	let nombre = formulario_usar.querySelector("#nombre_banco"),
@@ -324,7 +330,7 @@ async function modificar(id) {
 	datos_consulta.append('operacion','modificar');
 
 	//Llamamos a la funcion para hacer la consulta
-	let respuesta = await query(datos_consulta,'text-secondary');
+	let respuesta = await query(datos_consulta,true);
 
 	formulario_usar.reset(); //Limpiamos el formulario
  	modal.hide(); // escondemos el modal
@@ -367,8 +373,9 @@ async function last_id() {
 }
 
 // Aqui se hace la peticion AJAX
-async function query(datos,color_carga = 'text-light') {
-    document.getElementById('icono_carga').setAttribute("class",`spinner-border ${color_carga}`);
+async function query(datos,oscuro = false) {
+    if (oscuro) {document.getElementById('icono_carga').setAttribute("class",`loader_dark`);}
+    else{document.getElementById('icono_carga').setAttribute("class",`loader`);}
     
     let modal_carga = new bootstrap.Modal("#modal_carga");
     let mostrarModal = false;
@@ -492,10 +499,3 @@ function reasignarEventos() {
 		}
 	}
 }
-
-const resizeObserver = new ResizeObserver(entries => {
-	if (data_table) {
-		data_table.draw();
-	}
-});
-resizeObserver.observe(tabla);

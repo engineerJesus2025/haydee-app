@@ -1,12 +1,14 @@
 <?php
-    require_once "vista/componentes/sesion.php";
-    require_once("modelo/habitantes_modelo.php");
-    require_once("modelo/apartamentos_modelo.php");
-    require_once("modelo/habitantes_apartamentos_modelo.php");
+    use haydee\ayuda\Sesiones;
+    Sesiones::verificarSesion();
+
+    use haydee\modelo\Habitantes;
+    use haydee\modelo\Apartamento;
+    use haydee\modelo\HabitantesApartamentos;
 
     $obj_apartamento = new Apartamento(); // Objeto apartamento
     $obj_habitante = new Habitantes(); // Objeto habitante
-    $obj_habitantes_apartamentos = new Habitantes_apartamentos(); // Objeto habiantes_apartamentos
+    $obj_habitantes_apartamentos = new HabitantesApartamentos(); // Objeto habiantes_apartamentos
  
     $registro_apartamento = $obj_apartamento->consultar();
 

@@ -24,6 +24,13 @@ boton_cuadro_pagos.addEventListener("click",e=>{
 		fragment.appendChild(option);
 	});
 	select_reporte.appendChild(fragment);
+
+	regex = /^[0-9]{1,2}-[0-9]{4}$/;
+	mensajes_err.invalido = 'La fecha seleccionada no es válida';
+	mensajes_err.inexistente = '';
+	verificar.tabla = '';
+	verificar.id = '';
+	verificar.basico = true;
 });
 
 function consultar_propietarios() {

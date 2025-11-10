@@ -63,7 +63,7 @@ function consultarPeriodosDeGastos() {
 
 // Añade este nuevo evento 'submit'
 formReporte.addEventListener('submit', function(event) {
-    const tasaDolar = localStorage.getItem('tasa_dolar');
+    let tasa_dolar = parseFloat(isNaN(localStorage.getItem("tasa_dolar"))?1:localStorage.getItem("tasa_dolar")).toFixed(2);
 
     if (tasaDolar) {
         document.getElementById('tasa_dolar_reporte').value = tasaDolar;

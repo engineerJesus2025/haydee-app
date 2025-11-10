@@ -1,17 +1,12 @@
 <?php
-    require_once "modelo/usuario_modelo.php";
-    require_once "modelo/bitacora_modelo.php";
-    require_once "modelo/notificaciones_modelo.php";
-    require_once "modelo/roles_permisos_modelo.php";
-    require_once "modelo/caja_chica_modelo.php";
-    require_once "modelo/anio_fiscal_modelo.php";
-    require_once "ayuda/ayuda.php";
-
-    require 'vendor/autoload.php';
+    use haydee\modelo\Usuario;    
+    use haydee\modelo\Notificaciones;
+    use haydee\modelo\RolesPermisos;    
+    use haydee\modelo\AnioFiscal;
 
     use PHPMailer\PHPMailer\PHPMailer;
     use PHPMailer\PHPMailer\Exception;
-    
+        
     $fecha_actual = date("Y-m-d H:i:s");
 
     if (isset($_POST["operacion"])) {
@@ -81,7 +76,7 @@
                 //Notificaciones y datos de sesion
 
                 $notificaciones_obj = new Notificaciones();
-                $roles_permisos_obj = new Roles_permisos();
+                $roles_permisos_obj = new RolesPermisos();
 
                 session_start();
 
@@ -102,7 +97,7 @@
                 // $caja_obj = new Caja_chica();
                 // $caja_obj->realizar_consulta('verificar_caja_mes');
                 
-                $anio_fiscal_obj = new Anio_fiscal();
+                $anio_fiscal_obj = new AnioFiscal();
                 $result_anio = $anio_fiscal_obj->realizar_consulta("verificar_anio_fiscal");
 
                 echo json_encode(["estatus"=>true,"mensaje"=>"OK"]);

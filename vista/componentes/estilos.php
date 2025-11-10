@@ -9,3 +9,5 @@
 <link rel="stylesheet" type="text/css" href="recursos/css/header.css">
 <link rel="stylesheet" type="text/css" href="recursos/css/nav.css">
 <link rel="stylesheet" type="text/css" href="recursos/css/estilos_generales.css">
+<link rel="stylesheet" type="text/css" href="recursos/css/notificaciones.css">
+<link rel="stylesheet" type="text/css" href="recursos/css/estilos_modal_carga.css">

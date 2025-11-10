@@ -17,7 +17,7 @@ let tiempoInicio;
 let total_monto = 0;
 let fecha_seleccionada;
 
-let tasa_dolar = parseFloat(localStorage.getItem("tasa_dolar")).toFixed(2) || 1;
+let tasa_dolar = parseFloat(isNaN(localStorage.getItem("tasa_dolar"))?1:localStorage.getItem("tasa_dolar")).toFixed(2);
 
 consultar();
 
@@ -995,7 +995,7 @@ async function registrar() {
 
 	datos_consulta.append('operacion','registrar');
 	
-	let respuesta = await query(datos_consulta,'text-secondary'); 	
+	let respuesta = await query(datos_consulta,true); 	
 	
 	if (!respuesta.estatus) {
 		mensajes('error',4000,'Atencion',respuesta.mensaje);
@@ -1042,7 +1042,7 @@ async function registrar() {
 		datos_consulta.append('tipo_gasto_id',tipo_gasto_id);
 		datos_consulta.append('presupuesto_id',id_registrado);
 
-		respuesta = await query(datos_consulta,'text-secondary'); 	
+		respuesta = await query(datos_consulta,true); 	
 
 		if (!respuesta.estatus) {
 			error = true;
@@ -1100,7 +1100,7 @@ async function registrarMensualidad(id_presupuesto_registrado){
 
 		datos_consulta.append('operacion','registrar_mensualidad');
 
-		let respuesta = await query(datos_consulta,'text-secondary');
+		let respuesta = await query(datos_consulta,true);
 
 		if (!respuesta.estatus) {			
 			error = true;
@@ -1114,7 +1114,7 @@ async function registrarMensualidad(id_presupuesto_registrado){
 	
 		datos_consulta.append('operacion','registrar_presupuesto_mensualidad');
 
-		respuesta = await query(datos_consulta,'text-secondary');
+		respuesta = await query(datos_consulta,true);
 
 		if (!respuesta.estatus) {			
 			error = true;
@@ -1140,7 +1140,7 @@ async function modificar_formulario(e) {
 
 	datos_consulta.append('operacion','consulta_especifica');
 
-	let presupuesto = await query(datos_consulta,'text-secondary');	
+	let presupuesto = await query(datos_consulta,true);	
 	
 	let fecha = formulario_usar.querySelector("#fecha"),
 	cuota_reserva = formulario_usar.querySelector("#cuota_reserva"),
@@ -1183,7 +1183,7 @@ async function modificar_formulario(e) {
 
 	datos_consulta.append('operacion','consultar_detalles_presupuestos');
 
-	let detalles_presupuestos = await query(datos_consulta,'text-secondary');
+	let detalles_presupuestos = await query(datos_consulta,true);
 
 	detalles_presupuestos.map((detalle)=>{
 		let gasto_fijo = false;
@@ -1237,7 +1237,7 @@ async function modificar(id) {
 	
 	datos_consulta.append('operacion','editar_presupuesto');
 
-	let respuesta = await query(datos_consulta,'text-secondary');
+	let respuesta = await query(datos_consulta,true);
 
 	if (!respuesta.estatus) {
 		mensajes('error',4000,'Atencion',respuesta.mensaje);
@@ -1248,7 +1248,7 @@ async function modificar(id) {
 	datos_consulta.append("presupuesto_id",id);
 	datos_consulta.append('operacion','eliminar_detalles_presupuestos');
 
-	respuesta = await query(datos_consulta,'text-secondary');
+	respuesta = await query(datos_consulta,true);
 
 	if (!respuesta.estatus) {
 		mensajes('error',4000,'Atencion',respuesta.mensaje);
@@ -1291,7 +1291,7 @@ async function modificar(id) {
 		datos_consulta.append('tipo_gasto_id',tipo_gasto_id);
 		datos_consulta.append('presupuesto_id',id);
 
-		respuesta = await query(datos_consulta,'text-secondary'); 	
+		respuesta = await query(datos_consulta,true); 	
 
 		if (!respuesta.estatus) {
 			error = true;
@@ -1359,8 +1359,9 @@ async function last_id() {
 	return res;
 }
 
-async function query(datos,color_carga = 'text-light') {
-    document.getElementById('icono_carga').setAttribute("class",`spinner-border ${color_carga}`);
+async function query(datos,oscuro = false) {
+    if (oscuro) {document.getElementById('icono_carga').setAttribute("class",`loader_dark`);}
+    else{document.getElementById('icono_carga').setAttribute("class",`loader`);}
     
 	peticionesActivas++;
 

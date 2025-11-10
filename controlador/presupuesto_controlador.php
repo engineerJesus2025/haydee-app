@@ -1,11 +1,13 @@
 <?php
-    require_once "vista/componentes/sesion.php";
-    require_once "modelo/presupuesto_modelo.php";    
-    require_once "modelo/detalles_presupuesto_modelo.php";
-    require_once "modelo/tipo_gasto_modelo.php";
-    require_once "modelo/mensualidad_modelo.php";
-    require_once "modelo/presupuesto_mensualidad_modelo.php";
-    require_once "modelo/apartamentos_modelo.php";
+    use haydee\ayuda\Sesiones;
+    Sesiones::verificarSesion();
+
+    use haydee\modelo\Apartamento;
+    use haydee\modelo\TipoGasto;
+    use haydee\modelo\Mensualidad;
+    use haydee\modelo\Presupuesto;
+    use haydee\modelo\DetallesPresupuesto;
+    use haydee\modelo\PresupuestoMensualidad;
 
     if (isset($_POST["operacion"])){
         $operacion = $_POST["operacion"];
@@ -22,7 +24,7 @@
             echo  json_encode($presupuesto_obj->realizar_consulta('consultar_meses_faltantes'));
         }
         else if($operacion == "consultar_tipo_gastos"){
-            $tipo_gasto_obj = new Tipo_gasto();
+            $tipo_gasto_obj = new TipoGasto();
             echo  json_encode($tipo_gasto_obj->realizar_consulta('consultar'));
         }
         else if ($operacion == "consultar_apartamentos"){
@@ -49,7 +51,7 @@
             echo  json_encode($resultado);
         }
         elseif ($operacion == "registrar_detalles_presupuestos"){
-            $detalles_presupuesto_obj = new Detalles_presupuesto();
+            $detalles_presupuesto_obj = new DetallesPresupuesto();
 
             $nombres_detalles_presupuestos = explode(",", $_POST["nombres_detalles_presupuestos"]);
             $montos_detalles_presupuestos = explode(",", $_POST["montos_detalles_presupuestos"]);
@@ -92,7 +94,7 @@
             echo  json_encode($mensualidad_obj->realizar_consulta('registrar'));
         }
         elseif ($operacion == "registrar_presupuesto_mensualidad"){
-            $presupuesto_mensualidad_obj = new Presupuesto_mensualidad();
+            $presupuesto_mensualidad_obj = new PresupuestoMensualidad();
 
             $mensualidad_id = $_POST["mensualidad_id"];
             $presupuesto_id = $_POST["presupuesto_id"];
@@ -103,7 +105,7 @@
             echo  json_encode($presupuesto_mensualidad_obj->realizar_consulta('registrar'));
         }
         elseif ($operacion == "registrar_presupuesto_mensualidad"){
-            $presupuesto_mensualidad_obj = new Presupuesto_mensualidad();
+            $presupuesto_mensualidad_obj = new PresupuestoMensualidad();
 
             $mensualidad_id = $_POST["mensualidad_id"];
             $presupuesto_id = $_POST["presupuesto_id"];
@@ -121,7 +123,7 @@
             echo  json_encode($presupuesto_obj->realizar_consulta('consultar_presupuesto'));
         }
         elseif ($operacion == "consultar_detalles_presupuestos"){
-            $detalles_presupuesto_obj = new Detalles_presupuesto();
+            $detalles_presupuesto_obj = new DetallesPresupuesto();
 
             $id_presupuesto = $_POST["id_presupuesto"];
 
@@ -149,7 +151,7 @@
             echo  json_encode($resultado);
         }
         else if ($operacion == "eliminar_detalles_presupuestos") {
-            $detalles_presupuesto_obj = new Detalles_presupuesto();
+            $detalles_presupuesto_obj = new DetallesPresupuesto();
 
             $presupuesto_id = $_POST["presupuesto_id"];
 

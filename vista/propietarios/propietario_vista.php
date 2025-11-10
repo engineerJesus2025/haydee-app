@@ -1,6 +1,6 @@
+
 <!DOCTYPE html>
 <html>
-
 <head>
     <title>Propietarios | Inicio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,10 +10,7 @@
 </head>
 
 <body id="body-pd" class="body-pd">
-    <input type="text" hidden="" id="permiso_eliminar"
-        value="<?php echo Propietario::tiene_permiso(GESTIONAR_PROPIETARIOS, ELIMINAR) ?>">
-    <input type="text" hidden="" id="permiso_editar"
-        value="<?php echo Propietario::tiene_permiso(GESTIONAR_PROPIETARIOS, MODIFICAR) ?>">
+    
     <div class="container-fluid">
         <div class="row flex-nowrap ">
 
@@ -38,12 +35,12 @@
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="card p-4">
-                                <?php if (Propietario::tiene_permiso(GESTIONAR_PROPIETARIOS, REGISTRAR)): ?>
+                                
                                     <div class="button mb-4">
                                         <button type="button" class="btn btn-primary" data-bs-toggle="modal"
                                             data-bs-target="#modal_propietario">Registrar</a>
                                     </div><br>
-                                <?php endif; ?>
+                                
 
                                 <?php if (isset($_SESSION["mensaje"])): ?>
                                     <div class="row ">
@@ -100,14 +97,13 @@
                     </div>
                 </main>
                 <?php
-                require_once "vista/componentes/footer.php";
                 require_once "vista/componentes/script.php";
                 ?>
             </div>
         </div>
     </div>
-    </body>
+    <?php require_once "vista/componentes/footer.php"; ?>
     <script type="text/javascript" src="recursos/js/validaciones/propietario_validar.js"></script>
     <script type="text/javascript" src="recursos/js/consultas_ajax/propietario_ajax.js"></script>
-
+</body>
 </html>

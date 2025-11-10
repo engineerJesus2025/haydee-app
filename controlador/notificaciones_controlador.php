@@ -1,6 +1,8 @@
 <?php 
-require_once "vista/componentes/sesion.php";
-require_once "modelo/notificaciones_modelo.php";
+use haydee\ayuda\Sesiones;
+Sesiones::verificarSesion();
+
+use haydee\modelo\Notificaciones;
 
 if (isset($_POST["operacion"])){
     $operacion = $_POST["operacion"];

@@ -258,7 +258,7 @@ async function registrar() {
 
 	datos_consulta.append('operacion','registrar');
 	
-	let respuesta = await query(datos_consulta,'text-secondary');
+	let respuesta = await query(datos_consulta,true);
 
 	if (!respuesta.estatus) {
 		mensajes('error',4000,'Atencion',respuesta.mensaje);
@@ -328,7 +328,7 @@ async function modificar_formulario(e) {
 	datos_consulta.append('operacion','consulta_especifica');
 
 	//Llamamos a la funcion para hacer la consulta y guardamos los datos
-	anio_fiscal = await query(datos_consulta,'text-secondary');	
+	anio_fiscal = await query(datos_consulta,true);	
 	
 	// ahora seleccionamos los inputs
 	let fecha_inicio = formulario_usar.querySelector("#fecha_inicio"),
@@ -377,7 +377,7 @@ async function modificar(id) {
 
 	datos_consulta.append('operacion','modificar');
 
-	let respuesta = await query(datos_consulta,'text-secondary');
+	let respuesta = await query(datos_consulta,true);
 	
  	modal.hide();
 
@@ -397,8 +397,9 @@ async function modificar(id) {
 	mensajes('success',4000,'Atencion','El registro se ha modificado exitosamente');
 }
 
-async function query(datos,color_carga = 'text-light') {
-    document.getElementById('icono_carga').setAttribute("class",`spinner-border ${color_carga}`);
+async function query(datos,oscuro = false) {
+    if (oscuro) {document.getElementById('icono_carga').setAttribute("class",`loader_dark`);}
+    else{document.getElementById('icono_carga').setAttribute("class",`loader`);}
     
 	let mostrarModal = false;
     let tiempoCarga;

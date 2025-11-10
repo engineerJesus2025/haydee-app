@@ -39,18 +39,19 @@
                                         <div class="accordion-body">
                                             <div class="row">
                                                 <?php 
-                                                foreach ($registros_permisos_usuarios as $registro_permiso) {    
+                                                foreach ($registros_permisos_usuarios as $registro_permiso) {
                                                     if ($registro_permiso["modulo_id"] == $registro_modulo["id_modulo"]) { ?>
-                                                            <div class="col">
-                                                                <label>
-                                                                    <input class="form-check-input" type="checkbox" name="permisos[]" value="<?php echo $registro_permiso["id_permiso_usuario"]; ?>"/>
-                                                                    <span> <?php echo $registro_permiso["nombre_accion"] ?></span>
-                                                                </label>
-                                                            </div>
-                                                             <?php 
+                                                        <div class="col">
+                                                            <label>
+                                                                <input class="form-check-input" type="checkbox" name="permisos[]" value="<?php echo $registro_permiso["id_permiso_usuario"]; ?>" error='0'/>
+                                                                <span> <?php echo $registro_permiso["nombre_accion"] ?></span>
+                                                            </label>
+                                                        </div>
+                                                        <?php 
                                                     }
                                                 }
                                                 ?>
+                                                <span style="width: 100%; margin-top: .25rem;font-size: .875em; color: var(--bs-form-invalid-color);"></span>
                                             </div>
                                         </div>
                                     </div>

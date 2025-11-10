@@ -1,6 +1,6 @@
+<?php use haydee\modelo\Banco; ?>
 <!DOCTYPE html>
 <html>
-
 <head>
     <title>Bancos | Inicio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -102,14 +102,13 @@
                     </div>
                 </main>
                 <?php
-                require_once 'vista/componentes/modal_carga.php';
-                require_once "vista/componentes/footer.php";
+                require_once 'vista/componentes/modal_carga.php';                
                 require_once "vista/componentes/script.php";
                 ?>
             </div>
         </div>
     </div>
-
+    <?php require_once "vista/componentes/footer.php"; ?>
     <script type="text/javascript" src="recursos/js/validaciones/bancos_validar.js"></script>
     <script type="text/javascript" src="recursos/js/consultas_ajax/bancos_ajax.js"></script>
 

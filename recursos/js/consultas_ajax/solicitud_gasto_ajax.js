@@ -59,6 +59,12 @@ document.querySelector("#modal_solicitud_gasto").addEventListener("show.bs.modal
     document.getElementById("selector_anio").value = "";
 });
 
+document.getElementById('header-toggle').addEventListener("click",e=>{
+    setTimeout(function(){
+        data_table.columns.adjust().draw();
+    },450);
+});
+
 // Si queremos registrar:
 
 async function registrar() {
@@ -90,7 +96,7 @@ async function registrar() {
     datos_consulta.append("prioridad", prioridad);
     datos_consulta.append("operacion", "registrar");
 
-    let respuesta = await query(datos_consulta,'text-secondary');
+    let respuesta = await query(datos_consulta,true);
 
     if (respuesta && respuesta.estatus) {
         modal.hide();
@@ -322,7 +328,7 @@ async function modificar_formulario(e) {
     datos_consulta.append("id_solicitud", id);
     datos_consulta.append("operacion", "consulta_especifica");
 
-    const respuesta = await query(datos_consulta,'text-secondary');
+    const respuesta = await query(datos_consulta,true);
     const data = respuesta;
 
     if (!data || !data.id_solicitud) {
@@ -419,7 +425,7 @@ async function modificar(id) {
     datos_consulta.append("prioridad", prioridad);
     datos_consulta.append("operacion", "modificar");
 
-    let respuesta = await query(datos_consulta,'text-secondary');
+    let respuesta = await query(datos_consulta,true);
 
     // Resetear el modal
     modal.hide();
@@ -446,8 +452,9 @@ async function last_id() {
     return res;
 }
 
-async function query(datos,color_carga = 'text-light') {
-    document.getElementById('icono_carga').setAttribute("class",`spinner-border ${color_carga}`);
+async function query(datos,oscuro = false) {
+    if (oscuro) {document.getElementById('icono_carga').setAttribute("class",`loader_dark`);}
+    else{document.getElementById('icono_carga').setAttribute("class",`loader`);}
     
     try {
         const res = await fetch("", { method: "POST", body: datos });
@@ -557,10 +564,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const selectorMes = document.querySelector("#selector_mes");
     const selectorAnio = document.querySelector("#selector_anio");
 
-    if (selectorMes && selectorAnio) {
-        selectorMes.addEventListener("change", buscarPresupuesto);
-        selectorAnio.addEventListener("change", buscarPresupuesto);
-    }
+    // if (selectorMes && selectorAnio) {
+    //     selectorMes.addEventListener("change", buscarPresupuesto);
+    //     selectorAnio.addEventListener("change", buscarPresupuesto);
+    // }
 });
 
 async function buscarPresupuesto() {
@@ -599,7 +606,7 @@ async function buscarPresupuesto() {
         infoPresupuesto.style.display = "flex";
         camposFormulario.style.display = "block";
     } else {
-        mensajes("error", 4000, "Presupuesto no encontrado", data.mensaje || "No hay presupuesto para esa fecha.");
+        mensajes("error", 4000, "Presupuesto no encontrado", respuesta.mensaje || "No hay presupuesto para esa fecha.");
         infoPresupuesto.style.display = "none";
         camposFormulario.style.display = "none";
         inputPresupuestoId.value = "";
@@ -682,8 +689,8 @@ async function cargarMesesYAniosConPresupuesto() {
         const selectorAnio = document.getElementById("selector_anio");
 
         // Limpiar actuales
-        selectorMes.innerHTML = `<option value="">Seleccione mes</option>`;
-        selectorAnio.innerHTML = `<option value="">Seleccione año</option>`;
+        selectorMes.innerHTML = `<option selected="" hidden="" value="">Seleccione mes</option>`;
+        selectorAnio.innerHTML = `<option selected="" hidden="" value="">Seleccione año</option>`;
 
         const mesesUnicos = new Set();
         const aniosUnicos = new Set();

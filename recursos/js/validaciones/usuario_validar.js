@@ -40,10 +40,30 @@ $(document).ready(function(){
         )
 	});
 
-	document.getElementById('rol').addEventListener("change",e=>{
-		e.target.classList.add('is-valid');
-		e.target.classList.remove('is-invalid');
-		e.target.nextElementSibling.textContent = "";
+	document.getElementById('rol').addEventListener("change",async e=>{
+		let valido = validarKeyUp(/^[0-9]{1,11}$/,
+		e.target,e.target.nextElementSibling,"El valor del rol no es válido");
+
+		if (!valido) return;
+
+		let datos = new FormData();
+		datos.append('validar','validar_clave_foranea');
+		datos.append('tabla','roles');
+		datos.append('nombre_clave','id_rol');
+		datos.append('valor',e.target.value);
+
+		valido = await verificar_clave_foranea(datos);
+		
+		if (valido) {
+			e.target.classList.add('is-valid');
+			e.target.classList.remove('is-invalid');
+			e.target.nextElementSibling.textContent = "";
+		}
+		else{
+			e.target.classList.remove('is-valid');
+			e.target.classList.add('is-invalid');
+			e.target.nextElementSibling.textContent = "El rol seleccionado no existe";
+		}
 	});
 	
 	$("#boton_formulario").on("click",async function(e){
@@ -75,7 +95,7 @@ $(document).ready(function(){
         	if (this.value == correo_an) {return;}
 			let datos = new FormData();
 			datos.append('validar','correo');
-			datos.append('correo',$(this).val());			
+			datos.append('correo',$(this).val());
 			verificar_duplicados(datos);
         }		
 	})
@@ -141,7 +161,8 @@ async function validarEnvio(accion = "Registrar"){
 		'Debe seleccionar una opción');
 		
 		return false;
-	}
+	}	
+
 	if (accion == "Registrar") {
 		if(validar_contra()==0)
 		{
@@ -150,7 +171,8 @@ async function validarEnvio(accion = "Registrar"){
 			
 			return false;
 		}
-	}else if (accion == "Editar"){
+	}
+	else if (accion == "Editar"){
 		datos = new FormData();
 		datos.append("validar",'contra');
 		datos.append("id_usuario",id_modificar);
@@ -178,7 +200,7 @@ async function validarEnvio(accion = "Registrar"){
 	}
 	
 	if(correo_an != $("#correo").val()){
-		datos = new FormData(); 
+		let datos = new FormData(); 
 		datos.append('validar','correo');
 		datos.append('correo',$("#correo").val());
 		res = await verificar_duplicados(datos);
@@ -188,27 +210,56 @@ async function validarEnvio(accion = "Registrar"){
 			return false;
 		}
 	}
+
+	let rol = document.getElementById('rol');	
+	let valido = validarKeyUp(/^[0-9]{1,11}$/,rol,rol.nextElementSibling,"el valor del rol no es válido");
+
+	if (!valido) {
+		mensajes('error',4000,'Atencion','El valor del rol no es válido');
+		return false;
+	}
+
+	let datos = new FormData();
+	datos.append('validar','validar_clave_foranea');
+	datos.append('tabla','roles');
+	datos.append('nombre_clave','id_rol');
+	datos.append('valor',rol.value);
+
+	valido = await verificar_clave_foranea(datos);
 	
+	if (valido) {
+		rol.classList.add('is-valid');
+		rol.classList.remove('is-invalid');
+		rol.nextElementSibling.textContent = "";
+	}
+	else{
+		rol.classList.remove('is-valid');
+		rol.classList.add('is-invalid');
+		rol.nextElementSibling.textContent = "El rol seleccionado no existe";
+		mensajes('error',4000,'Atencion','El rol seleccionado no existe');
+		return false;
+	}
+
 	return true;
 }
 
-function validarKeyUp(er,etiqueta,etiquetamensaje,
-mensaje){
-	a = er.test(etiqueta.value);
+// function validarKeyUp(er,etiqueta,etiquetamensaje,
+// mensaje){
+// 	a = er.test(etiqueta.value);
 	
-	if(a){
-		etiqueta.classList.add('is-valid');
-		etiqueta.classList.remove('is-invalid');
-		etiquetamensaje.textContent = "";
-		return 1;
-	}
-	else{
-		etiqueta.classList.add('is-invalid')
-		etiqueta.classList.remove('is-valid');
-		etiquetamensaje.textContent = mensaje;
-		return 0;
-	}
-}
+// 	if(a){
+// 		etiqueta.classList.add('is-valid');
+// 		etiqueta.classList.remove('is-invalid');
+// 		etiquetamensaje.textContent = "";
+// 		return 1;
+// 	}
+// 	else{
+// 		etiqueta.classList.add('is-invalid')
+// 		etiqueta.classList.remove('is-valid');
+// 		etiquetamensaje.textContent = mensaje;
+// 		return 0;
+// 	}
+// }
 
 function validarKeyPress(er, e) {
     key = e.keyCode;
@@ -287,8 +338,7 @@ async function verificar_duplicados(datos){
 		return result;//Convertimos el resultado de json a js y lo mandamos
 	})
 	// aqui revisamos el estatus, si es true es porque esta duplicado y mandamos un mensaje	
-	if(data.estatus){
-		console.log(document.querySelector(`#${data.busqueda}`))
+	if(data.estatus){	
 		document.querySelector(`#${data.busqueda}`).nextElementSibling.textContent = `${data.busqueda} ya registrado/a`
 		document.querySelector(`#${data.busqueda}`).classList.add('is-invalid');
 		document.querySelector(`#${data.busqueda}`).classList.remove('is-valid');
@@ -304,4 +354,13 @@ async function verificar_contra(datos){
 	})
 	// aqui revisamos el estatus, si es true es porque es correcta la contraseña		
 	return data;
+}
+
+async function verificar_clave_foranea(datos){	
+	let data = await fetch("",{method:"POST", body:datos}).then(res=>{		
+		let result = res.json()
+		return result;
+	});
+
+	return data		
 }

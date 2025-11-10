@@ -1,6 +1,6 @@
+<?php use haydee\modelo\Presupuesto; ?>
 <!DOCTYPE html>
 <html>
-
 <head>
     <title>Presupuesto Mensual | Inicio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -79,12 +79,12 @@
                 </main>
                 <?php
                 require_once 'vista/componentes/modal_carga.php';
-                require_once "vista/componentes/footer.php";
                 require_once "vista/componentes/script.php";
                 ?>
             </div>
         </div>
     </div>
+    <?php require_once "vista/componentes/footer.php"; ?>
     <script type="text/javascript" src="recursos/js/validaciones/presupuesto_validar.js"></script>
     <script type="text/javascript" src="recursos/js/consultas_ajax/presupuesto_ajax.js"></script>
 </body>

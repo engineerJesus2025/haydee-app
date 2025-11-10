@@ -1,6 +1,5 @@
 <?php
 
-
 use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 
 class  Ayuda{
@@ -12,7 +11,7 @@ class  Ayuda{
 
         /*Agregando imagenes*/
         $drawing = new Drawing();
-        $drawing->setPath('./recursos/img/mercal_logo.png');
+        $drawing->setPath('./recursos/img/logo.png');
         $drawing->setCoordinates('A1');
         $drawing->setWorksheet($hojaActiva);
         $drawing->setWidth(900);

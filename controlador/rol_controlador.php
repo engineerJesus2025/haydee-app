@@ -1,16 +1,16 @@
 <?php
-    require_once "vista/componentes/sesion.php";
-    require_once("modelo/rol_modelo.php");
-    require_once "ayuda/ayuda.php";
-    require_once "modelo/permisos_usuarios_modelo.php";
-    require_once "modelo/modulos_modelo.php";
-    require_once "modelo/roles_permisos_modelo.php";
-    require_once "vista/componentes/sesion.php";
+    use haydee\ayuda\Sesiones;
+    Sesiones::verificarSesion();
+
+    use haydee\modelo\Rol;
+    use haydee\modelo\Modulos;
+    use haydee\modelo\RolesPermisos;
+    use haydee\modelo\PermisosUsuarios;
 
     $modulo_obj = new Modulos();
     $registros_modulos = $modulo_obj->realizar_consulta('consultar');
 
-    $permisos_usuarios_obj = new Permisos_usuarios();
+    $permisos_usuarios_obj = new PermisosUsuarios();
     $registros_permisos_usuarios = $permisos_usuarios_obj->realizar_consulta('consultar');
 
     if (isset($_POST["operacion"])){
@@ -35,7 +35,7 @@
             $resultado_registro = $rol_obj->realizar_consulta('registrar');
 
             if ($resultado_registro["estatus"]) {
-                $roles_permisos_obj = new Roles_permisos();
+                $roles_permisos_obj = new RolesPermisos();
 
                 $rol_id = $rol_obj->realizar_consulta('lastId');
 
@@ -74,7 +74,7 @@
         }
 
         elseif ($operacion == "consulta_permisos"){
-            $roles_permisos_obj = new Roles_permisos();
+            $roles_permisos_obj = new RolesPermisos();
 
             $id_rol = $_POST["id_rol"];
 
@@ -98,7 +98,7 @@
                 exit();
             }
 
-            $roles_permisos_obj = new Roles_permisos();
+            $roles_permisos_obj = new RolesPermisos();
 
             $roles_permisos_obj->set_rol_id($id_rol);
 
@@ -160,6 +160,17 @@
 
             $rol_obj->set_nombre($_POST["nombre"]);
             echo  json_encode($rol_obj->realizar_consulta('verificar_nombre'));
+        }
+        elseif ($validar == "validar_clave_foranea") {
+            $rol_obj = new Rol();
+
+            $tabla = $_POST["tabla"];
+            $nombre_clave = $_POST["nombre_clave"];
+            $valor = $_POST["valor"];
+            
+            $resultado = $rol_obj->realizar_consulta('validar_clave_foranea',["tabla"=>$tabla,"nombre_clave"=>$nombre_clave,"valor"=>$valor]);
+            
+            echo json_encode($resultado);
         }
         exit;
     }

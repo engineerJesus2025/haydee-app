@@ -1,6 +1,6 @@
+<?php use haydee\modelo\Gastos; ?>
 <!DOCTYPE html>
 <html>
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -105,7 +105,6 @@
             </main>
             <?php
             require_once 'vista/componentes/modal_carga.php';
-            require_once "vista/componentes/footer.php";
             require_once "vista/componentes/script.php";
             ?>
             <div class="modal fade" id="modal_vista_previa" tabindex="-1" aria-labelledby="modal_vista_previa_label"
@@ -202,6 +201,7 @@
     </div>
     </div>
 </body>
+<?php require_once "vista/componentes/footer.php"; ?>
 <script type="text/javascript" src="recursos/js/validaciones/gastos_validar.js"></script>
 <script type="text/javascript" src="recursos/js/consultas_ajax/gastos_ajax.js"></script>
 

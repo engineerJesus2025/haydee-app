@@ -1,8 +1,10 @@
 <?php
-    require_once "vista/componentes/sesion.php";
-    require_once("modelo/tipo_gasto_modelo.php");
+    use haydee\ayuda\Sesiones;
+    Sesiones::verificarSesion();
+    
+    use haydee\modelo\TipoGasto;
 
-    $obj_tipo_gasto = new Tipo_gasto(); // Objeto tipo_gasto
+    $obj_tipo_gasto = new TipoGasto(); // Objeto tipo_gasto
 
     if(isset($_POST["operacion"])){
         $operacion = $_POST["operacion"];

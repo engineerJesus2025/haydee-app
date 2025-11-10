@@ -1,3 +1,4 @@
+<?php use haydee\modelo\Conexion; ?>
 <div class="header body-pd" id="header">
     <div class="l-navbar show" id="nav-bar">
         <nav class="nav">
@@ -83,7 +84,7 @@
                         <i class="bi bi-card-checklist nav_logo-icon"></i>
                         <span class="nav_name">Reportes</span> 
                     </a>
-                    <div class="collapse mb-2 ms-4 pb-2 bg-light rounded <?php echo ($reporte)?'show':'';?>" id="collapse_reporte" style="width: auto;"> 
+                    <div class="collapse my-2 ms-4 pb-2 bg-light rounded <?php echo ($reporte)?'show':'';?>" id="collapse_reporte" style="width: auto;"> 
                             <a href="?pagina=reportes_controlador.php&accion=reportes_pdf" class="nav_link <?php echo ($_GET['accion'] == 'reportes_pdf')?'active':''; ?>" title="Reportes PDF"> 
                                 <i class="bi bi-filetype-pdf nav_logo-icon text-dark"></i>
                                 <span class="nav_name text-dark">Reportes PDF</span> 
@@ -104,7 +105,7 @@
                             <i class="bi bi-gear-wide-connected nav_logo-icon"></i>
                             <span class="nav_name">Configuración</span>
                         </a>
-                        <div class="collapse mb-2 ms-4 pb-2 bg-light rounded <?php echo ($configuracion)?'show':'';?>" id="collapse_configuracion" style="width: auto;">
+                        <div class="collapse my-2 ms-4 pb-2 bg-light rounded <?php echo ($configuracion)?'show':'';?>" id="collapse_configuracion" style="width: auto;">
                             <?php if (Conexion::tiene_permiso(GESTIONAR_PROVEEDORES, CONSULTAR)): ?>
                             <a href="?pagina=proveedores_controlador.php&accion=inicio" class="nav_link <?php echo ($_GET["pagina"] == "proveedores_controlador.php")?"active":''; ?>" title="Gestionar Proveedores"> 
                                 <i class="bi bi-truck nav_logo-icon text-dark"></i>
@@ -143,7 +144,7 @@
                             <i class="bi bi-shield-fill-check nav_logo-icon"></i>
                             <span class="nav_name">Seguridad</span>
                         </a>
-                        <div class="collapse mb-2 ms-4 pb-2 bg-light rounded <?php echo ($seguridad)?'show':'';?>" id="collapse_seguridad" style="width: auto;">
+                        <div class="collapse my-2 ms-4 pb-2 bg-light rounded <?php echo ($seguridad)?'show':'';?>" id="collapse_seguridad" style="width: auto;">
                             <?php if (Conexion::tiene_permiso(GESTIONAR_ROLES, CONSULTAR)): ?>
                             <a href="?pagina=rol_controlador.php&accion=inicio" class="nav_link <?php echo ($_GET["pagina"] == "rol_controlador.php")?"active":''; ?>" title="Gestionar Roles"> 
                                 <i class="bi bi-person-gear nav_logo-icon text-dark"></i>
@@ -173,7 +174,8 @@
                         </a>
                     <?php endif; ?>
                 </div>
-            </div>
+            </div>            
         </nav>
+        <div class="barra_inferior"></div>
     </div>
 </div>

@@ -35,6 +35,7 @@ document.getElementById('enviar').addEventListener("click",async e=>{
 		let usuario = document.getElementById('correo_login').value,
 		contra = document.getElementById('contra').value,
 		mantener_sesion = document.getElementById('checkbox_mantener_sesion').checked;
+
 		let reCAPTCHA;
 		if (!(navigator.onLine)) {
 			reCAPTCHA = "no_internet";
@@ -233,13 +234,24 @@ function generarToken(longitud) {
 }
 
 async function obtenerTasaDolar(){
-	let fecha_tasa_guardada = localStorage.getItem('fecha_tasa_dolar');
-	if (fecha_tasa_guardada) {
-		let [anio,mes,dia] = fecha_tasa_guardada.split("-");
-		let fecha_tasa = new Date(anio,mes -1,dia);
-		let fecha_actual = new Date();		
-		if (!(fecha_tasa < fecha_actual)) return;		
-	}
+	const fechaTasaGuardada = localStorage.getItem('fecha_tasa_dolar');
+    const tasaGuardada = localStorage.getItem('tasa_dolar');
+
+	if (fechaTasaGuardada && tasaGuardada) {
+        // Convertir la fecha ISO guardada a objeto Date
+        const fechaTasa = new Date(fechaTasaGuardada);
+        const fechaActual = new Date();
+        
+        // Comparar solo año, mes y día (ignorar hora)
+        if (fechaTasa.toDateString() === fechaActual.toDateString()) {
+            return { 
+                estatus: true, 
+                tasa: parseFloat(tasaGuardada),
+                mensaje: "Tasa en cache",
+                fecha: fechaTasaGuardada
+            };
+        }
+    }
 
 	peticionesActivas++;
 
@@ -254,16 +266,14 @@ async function obtenerTasaDolar(){
 	}
 
 	try{
-		await fetch("https://bcvapi.tech/api/v1/dolar")
-		.then(respuesta=>respuesta.json())
-		.then(data=>{		
-			localStorage.setItem('fecha_tasa_dolar', data.fecha);
-			localStorage.setItem('tasa_dolar', data.tasa);
-		})
+		const respuesta = await fetch("https://ve.dolarapi.com/v1/dolares/oficial"); 
+        const data = await respuesta.json();
+		
+		localStorage.setItem('fecha_tasa_dolar', data.fechaActualizacion); // "2025-11-07T20:02:28.091Z"
+		localStorage.setItem('tasa_dolar', data.promedio.toString()); 
 	}
-	catch(error){
-		console.log(error);
-		return {estatus:false,mensaje:"A ocurrido un error durante la consulta",error}
+	catch (error){
+		localStorage.setItem('error_tasa_dolar', error);
 	}
 	finally{
 		peticionesActivas--;
@@ -293,6 +303,47 @@ async function obtenerTasaDolar(){
 		}
 	}
 }
+
+// VALIDACIÓN CORREGIDA
+// async function obtenerTasaDolar() {
+//     const fechaTasaGuardada = localStorage.getItem('fecha_tasa_dolar');
+//     const tasaGuardada = localStorage.getItem('tasa_dolar');
+    
+//     if (fechaTasaGuardada && tasaGuardada) {
+//         // Convertir la fecha ISO guardada a objeto Date
+//         const fechaTasa = new Date(fechaTasaGuardada);
+//         const fechaActual = new Date();
+        
+//         // Comparar solo año, mes y día (ignorar hora)
+//         if (fechaTasa.toDateString() === fechaActual.toDateString()) {
+//             return { 
+//                 estatus: true, 
+//                 tasa: parseFloat(tasaGuardada),
+//                 mensaje: "Tasa en cache",
+//                 fecha: fechaTasaGuardada
+//             };
+//         }
+//     }
+
+//     // Si llegamos aquí, necesitamos actualizar
+//     try {
+//         const respuesta = await fetch("https://dolarapi.com/v1/dolares/blue"); // o el endpoint correcto
+//         const data = await respuesta.json();
+        
+//         // Guardar la fecha COMPLETA que viene de la API
+//         localStorage.setItem('fecha_tasa_dolar', data.fechaActualizacion); // "2025-11-07T20:02:28.091Z"
+//         localStorage.setItem('tasa_dolar', data.venta.toString()); // Asumiendo que usas 'venta'
+        
+//         return {
+//             estatus: true,
+//             tasa: data.venta,
+//             mensaje: "Tasa actualizada correctamente",
+//             fecha: data.fechaActualizacion
+//         };
+//     } catch (error) {
+//         // Manejo de errores...
+//     }
+// }
 
 // Callbacks para reCAPTCHA
 function onRecaptchaSuccess(token) {

@@ -1,18 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    // -----------------------------------------------------------------
-    // FUNCIÓN AJAX CORREGIDA Y SIMPLIFICADA
-    // -----------------------------------------------------------------
     async function query(datos) {
-        try {
-            // Obtenemos la 'operacion' desde el objeto FormData que recibimos
+        try {            
             const operacion = datos.get('operacion');
-            if (!operacion) {
-                // Medida de seguridad por si la operación no viene en los datos
+            if (!operacion) {                
                 throw new Error("La 'operacion' no fue especificada en los datos.");
             }
             
-            // Construimos la URL correcta
             const url = `?pagina=notificaciones_controlador.php&accion=${operacion}`;
 
             const res = await fetch(url, { method: "POST", body: datos });
@@ -23,20 +17,25 @@ document.addEventListener('DOMContentLoaded', () => {
             return { estatus: false, mensaje: "Ha ocurrido un error durante la consulta", error };
         }
     }
+    
+    // --- INICIO DE CAMBIOS ---
+    // Antes: const notificacionesItems = document.querySelectorAll("#notificaciones-list .notification-item");
+    // Ahora: Buscamos los *nuevos botones* de eliminar
+    const removeButtons = document.querySelectorAll("#notificaciones-list .notif-remove-btn");
 
-    // -----------------------------------------------------------------
-    // LÓGICA PARA MARCAR UNA NOTIFICACIÓN (Ahora funciona con la nueva query)
-    // -----------------------------------------------------------------
-    const notificacionesItems = document.querySelectorAll("#notificaciones-list .notification-item");
+    removeButtons.forEach(button => {
+        // Antes: notificacion.addEventListener("click", ...)
+        // Ahora: button.addEventListener("click", ...)
+        button.addEventListener("click", async e => {
+            e.preventDefault(); // Prevenir la acción por defecto del botón
+            e.stopPropagation(); // MUY IMPORTANTE: Evita que el clic se propague al enlace <a> padre
 
-    notificacionesItems.forEach(notificacion => {
-        notificacion.addEventListener("click", async e => {
-            e.preventDefault();
             const datos_consulta = new FormData();
-            datos_consulta.append('id', notificacion.dataset.id);
+            // Antes: datos_consulta.append('id', notificacion.dataset.id);
+            // Ahora: Obtenemos el ID desde el 'button'
+            datos_consulta.append('id', button.dataset.id);
             datos_consulta.append('operacion', "quitar_notificacion");
 
-            // La llamada (con un solo parámetro) ahora es correcta
             const resultado = await query(datos_consulta);
 
             if (!resultado.estatus) {
@@ -44,14 +43,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // ... (el resto del código para actualizar la interfaz sigue igual)
-            const division = notificacion.nextElementSibling;
-            if (division && division.classList.contains("dropdown-divider")) {
-                division.remove();
+            // --- Lógica para eliminar el elemento (un poco diferente) ---
+            
+            // 1. Encontrar el <li> contenedor padre para eliminarlo
+            // Antes: notificacion.remove();
+            // Ahora:
+            const itemContainer = button.parentElement;
+
+            if (itemContainer) {
+                // 2. Encontrar y eliminar el divisor (que es el *siguiente* <li>)
+                const division = itemContainer.nextElementSibling;
+                if (division && division.classList.contains("dropdown-divider")) {
+                    division.remove();
+                }
+                
+                // 3. Eliminar el <li> de la notificación
+                itemContainer.remove();
             }
-            notificacion.remove();
+
+            // --- El resto de la lógica para actualizar el contador es igual ---
             const countLabelGeneral = document.getElementById('count-label');
-            let count = document.querySelectorAll("#notificaciones-list .notification-item").length;
+            
+            // Actualizamos la forma de contar: contamos los botones que quedan
+            let count = document.querySelectorAll("#notificaciones-list .notif-remove-btn").length;
+            
             if (count > 0) {
                 countLabelGeneral.textContent = count > 99 ? '+99' : count;
             } else {
@@ -69,13 +84,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+    // --- FIN DE CAMBIOS ---
 
-    // -----------------------------------------------------------------
-    // LÓGICA PARA MARCAR TODAS COMO LEÍDAS (Ahora funciona con la nueva query)
-    // -----------------------------------------------------------------
+    
     const botonMarcarTodas = document.getElementById('marcar-todas-leidas');
 
     if (botonMarcarTodas) {
+        // (Esta función de "Marcar todas" no necesita cambios y seguirá funcionando)
         botonMarcarTodas.addEventListener('click', async function(e) {
             e.preventDefault();
             const contador = document.getElementById('count-label');
@@ -86,11 +101,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const datos = new FormData();
             datos.append('operacion', 'marcar_todas_leidas');
 
-            // La llamada (con un solo parámetro) ahora es correcta
             const resultado = await query(datos);
 
             if (resultado && resultado.estatus) {
-                // ... (el resto del código para actualizar la interfaz sigue igual)
                 const listaItems = document.getElementById('lista-notificaciones-items');
                 contador.textContent = '0';
                 contador.classList.add('d-none');

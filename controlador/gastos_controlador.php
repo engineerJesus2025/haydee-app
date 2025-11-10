@@ -1,22 +1,22 @@
 <?php
-// -------------------- 1. INCLUDES Y OBJETOS --------------------
-require_once "vista/componentes/sesion.php";
-require_once "modelo/gastos_modelo.php";
-require_once "modelo/banco_modelo.php";
-require_once "modelo/proveedores_modelo.php";
-require_once "modelo/solicitud_gasto_modelo.php";
-require_once "modelo/caja_chica_modelo.php";
-require_once "modelo/tipo_gasto_modelo.php";
-require_once "modelo/detalles_gastos_modelo.php";
-require_once "modelo/bancos_transacciones_modelo.php";
+use haydee\ayuda\Sesiones;
+Sesiones::verificarSesion();
+
+use haydee\modelo\Banco;
+use haydee\modelo\BancosTransacciones;
+use haydee\modelo\Gastos;
+use haydee\modelo\TipoGasto;
+use haydee\modelo\Proveedores;
+use haydee\modelo\DetallesGasto;
+use haydee\modelo\SolicitudGasto;
 
 $gastos_obj = new Gastos();
 $banco_obj = new Banco();
 $proveedor_obj = new Proveedores();
-$solicitud_gasto_obj = new Solicitud_Gasto();
-$detalles_gastos_obj = new Detalles_Gasto();
-$tipo_gasto_obj = new Tipo_Gasto();
-$bancos_transacciones_obj = new Bancos_Transacciones();
+$solicitud_gasto_obj = new SolicitudGasto();
+$detalles_gastos_obj = new DetallesGasto();
+$tipo_gasto_obj = new TipoGasto();
+$bancos_transacciones_obj = new BancosTransacciones();
 
 // -------------------- 2. MANEJO DE OPERACIONES (AJAX) --------------------
 if (isset($_POST["operacion"])) {
@@ -80,8 +80,8 @@ if (isset($_POST["operacion"])) {
                 $imagen_bancaria_index++;
 
                 if (!empty($banco_id)) {
-                    // Este modelo (Bancos_Transacciones) no lo hemos refactorizado, así que se queda con la llamada directa
-                    $transaccion_especifica = new Bancos_Transacciones(); 
+                    // Este modelo (BancosTransacciones) no lo hemos refactorizado, así que se queda con la llamada directa
+                    $transaccion_especifica = new BancosTransacciones(); 
                     $transaccion_especifica->set_referencia($referencia);
                     $transaccion_especifica->set_imagen($imagen_detalle);
                     $transaccion_especifica->set_banco_id($banco_id);
@@ -174,7 +174,7 @@ if (isset($_POST["operacion"])) {
 
             // Guardamos la transacción
             if (!empty($banco_id)) {
-                $transaccion_especifica = new Bancos_Transacciones(); 
+                $transaccion_especifica = new BancosTransacciones(); 
                 $transaccion_especifica->set_referencia($referencia);
                 $transaccion_especifica->set_imagen($imagen_detalle);
                 $transaccion_especifica->set_banco_id($banco_id);
@@ -241,7 +241,34 @@ if (isset($_POST["operacion"])) {
     }
 
 } // Fin del if (isset($_POST["operacion"]))
+elseif (isset($_POST["validar"])) {
+    $validar = $_POST["validar"];
 
+    if ($validar == "validar_clave_foranea") {
+        // $gastos_obj = new Usuario();
+
+        $tabla = $_POST["tabla"];
+        $nombre_clave = $_POST["nombre_clave"];
+        $valor = $_POST["valor"];
+        
+        $resultado = $gastos_obj->realizar_consulta('validar_clave_foranea',["tabla"=>$tabla,"nombre_clave"=>$nombre_clave,"valor"=>$valor]);
+        
+        echo json_encode($resultado);
+    }
+    // elseif ($validar == "correo"){
+    //     $usuario_obj = new Usuario();
+
+    //     $usuario_obj->set_correo($_POST["correo"]);
+    //     echo  json_encode($usuario_obj->realizar_consulta('verificar_correo'));
+    // }
+    // elseif ($validar == "correo"){
+    //     $usuario_obj = new Usuario();
+
+    //     $usuario_obj->set_correo($_POST["correo"]);
+    //     echo  json_encode($usuario_obj->realizar_consulta('verificar_correo'));
+    // }
+    exit();
+}
 // -------------------- 3. CARGA DE DATOS PARA LA VISTA --------------------
 // Estos datos se cargan para los <select> en el formulario cuando la página se carga por primera vez
 $proveedores = $proveedor_obj->realizar_consulta("consultar");

@@ -1,6 +1,6 @@
+<?php use haydee\modelo\Mensualidad; ?>
 <!DOCTYPE html>
 <html>
-
 <head>
     <title>Mensualidad | Inicio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -96,17 +96,13 @@
                     </div>                        
                 </main>
                 <?php
-                    require_once 'vista/componentes/modal_carga.php';
-                    require_once "vista/componentes/footer.php";
+                    require_once 'vista/componentes/modal_carga.php';                    
                     require_once "vista/componentes/script.php";
                 ?>
             </div>
         </div>
     </div>
-
-    
-</body>
-
+<?php require_once "vista/componentes/footer.php"; ?>
 <script type="text/javascript" src="recursos/js/consultas_ajax/mensualidades_ajax.js"></script>
 <script type="text/javascript" src="recursos/js/validaciones/mensualidad_validar.js"></script>
 

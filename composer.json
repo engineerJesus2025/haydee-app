@@ -1,4 +1,17 @@
 {
+    "autoload": {
+        "psr-4": {
+          "haydee\\controlador\\": "controlador/",
+          "haydee\\modelo\\": "modelo/",
+          "haydee\\vista\\": "vista/",
+          "haydee\\ayuda\\": "ayuda/"
+        },
+        "files": [
+            "config/acciones.php",
+            "config/modulos.php",
+            "config/config.php"
+        ]
+    },
     "require": {
         "dompdf/dompdf": "^2.0",
         "phpoffice/phpspreadsheet": "^1.29",
@@ -13,8 +26,5 @@
         "allow-plugins": {
             "php-http/discovery": true
         }
-    },
-    "require-dev": {
-        "phpunit/phpunit": "11"
     }
 }

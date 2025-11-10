@@ -327,7 +327,7 @@ async function registrar() {
 
 	datos_consulta.append('operacion','registrar');
 	
-	let respuesta = await query(datos_consulta,'text-secondary');
+	let respuesta = await query(datos_consulta,true);
 
 	modal.hide();
 	formulario_usar.reset();
@@ -353,7 +353,7 @@ async function preparar_formulario(e) {
 
 	datos_consulta.append('operacion','consulta_especifica');
 
-	data = await query(datos_consulta,'text-secondary');	
+	data = await query(datos_consulta,true);	
 	
 	let nombre = formulario_usar.querySelector("#nombre"),
 	apellido = formulario_usar.querySelector("#apellido"),	
@@ -402,7 +402,7 @@ async function modificar(id) {
 
 	datos_consulta.append('operacion','editar_usuario');
 
-	let respuesta = await query(datos_consulta,'text-secondary');
+	let respuesta = await query(datos_consulta,true);
 
 	formulario_usar.reset();
  	modal.hide();
@@ -463,8 +463,9 @@ async function eliminar(id) {
 	mensajes('success',4000,'Atencion','El registro ha sido eliminado correctamente');//Mensaje de que se completo la operacion
 }
 
-async function query(datos,color_carga = 'text-light') {
-    document.getElementById('icono_carga').setAttribute("class",`spinner-border ${color_carga}`);
+async function query(datos,oscuro = false) {
+    if (oscuro) {document.getElementById('icono_carga').setAttribute("class",`loader_dark`);}
+    else{document.getElementById('icono_carga').setAttribute("class",`loader`);}
     
 	let tiempoCarga = setTimeout(()=>{
 		modal_carga.show();

@@ -597,14 +597,13 @@
                     </div>
                 </main>
 
-                <?php
-                require_once "vista/componentes/footer.php";
+                <?php                
                 require_once "vista/componentes/script.php";
                 ?>
             </div>
         </div>
     </div>
-
+    <?php require_once "vista/componentes/footer.php"; ?>
     <script type="text/javascript" src="recursos/js/ayuda.js"></script>
 </body>
 

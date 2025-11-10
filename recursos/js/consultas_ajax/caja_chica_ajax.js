@@ -469,7 +469,7 @@ async function registrar() {
 
 	datos_consulta.append('operacion','registrar');
 
-	let respuesta = await query(datos_consulta,'text-secondary');
+	let respuesta = await query(datos_consulta,true);
 
 	if (!respuesta.estatus) {
 		mensajes('error',4000,'Atencion',respuesta.mensaje);
@@ -500,7 +500,7 @@ async function preparar_formulario(e) {
 
 	datos_consulta.append('operacion','consultar_movimiento');
 
-	data = await query(datos_consulta,'text-secondary');	
+	data = await query(datos_consulta,true);	
 	
 	let fecha = document.querySelector("#fecha"),
 	monto = document.querySelector("#monto"),	
@@ -558,7 +558,7 @@ async function modificar(id) {
 
 	datos_consulta.append('operacion','editar');
 
-	let respuesta = await query(datos_consulta,'text-secondary');
+	let respuesta = await query(datos_consulta,true);
 
 	if (!respuesta.estatus) {
 		mensajes('error',4000,'Atencion',respuesta.mensaje);
@@ -594,7 +594,7 @@ async function editarObservacion(id_caja) {
 	datos_consulta.append('operacion','editar_observacion');
 	
 	//Llamamos a la funcion para hacer la consulta
-	let respuesta = await query(datos_consulta,'text-secondary'); 
+	let respuesta = await query(datos_consulta,true); 
 	
 	modal_observacion.hide(); //Esconde el modal
 
@@ -673,7 +673,7 @@ async function reponer_caja(){
 	
 	datos_consulta.append('operacion','reponer_caja');
 
-	let respuesta = await query(datos_consulta,'text-secondary');
+	let respuesta = await query(datos_consulta,true);
 
 	if (!respuesta.estatus) {
 		mensajes('error',4000,'Atencion',respuesta.mensaje);
@@ -687,8 +687,9 @@ async function reponer_caja(){
 	mensajes('success',4000,'Atencion','Se ha repuesto la caja exitosamente');
 }
 
-async function query(datos,color_carga = 'text-light') {
-    document.getElementById('icono_carga').setAttribute("class",`spinner-border ${color_carga}`);
+async function query(datos,oscuro = false) {
+    if (oscuro) {document.getElementById('icono_carga').setAttribute("class",`loader_dark`);}
+    else{document.getElementById('icono_carga').setAttribute("class",`loader`);}
     
 	peticionesActivas++;
 

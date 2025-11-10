@@ -8,36 +8,6 @@ $(document).ready(function(){
 		this,this.nextElementSibling,"Debe ingresar el número del apartamento");
 	});
 
-	/* 
-	Por si tocar cambiarlo
-
-	$("#nro_apartamento").on("keypress", function(e){
-		let tecla = String.fromCharCode(e.which || e.keyCode);
-		let valor = $(this).val();
-
-		// Permitir números siempre
-		if(/[0-9]/.test(tecla)){
-			return;
-		}
-
-		// Permitir guion solo si hay **exactamente 2 números antes** y aún no hay guion
-		if(tecla === '-' && /^[0-9]{2}$/.test(valor)){
-			return;
-		}
-
-		// Bloquear cualquier otra tecla
-		e.preventDefault();
-	});
-
-	$("#nro_apartamento").on("keyup", function(){
-		validarKeyUp(/^[0-9]{2}-[0-9]$/, 
-			this,
-			this.nextElementSibling,
-			"Formato válido: 10-1"
-		);
-	});
-	*/
-
 	$("#porcentaje_participacion").on("keypress",function(e){
 		validarKeyPress(/[0-9.]$/, e);
 	});
@@ -48,21 +18,24 @@ $(document).ready(function(){
 	});
 
 	document.getElementById('gas').addEventListener("change",e=>{
-		e.target.classList.add('is-valid');
-		e.target.classList.remove('is-invalid');
-		e.target.nextElementSibling.textContent = "";
+		let valido = validarKeyUp(/^[0-9]{1}$/,
+        e.target,e.target.nextElementSibling,"El valor del gas ingresado no es válido");
+
+        if (!valido) return;
 	});
 
 	document.getElementById('agua').addEventListener("change",e=>{
-		e.target.classList.add('is-valid');
-		e.target.classList.remove('is-invalid');
-		e.target.nextElementSibling.textContent = "";
+		let valido = validarKeyUp(/^[0-9]{1}$/,
+        e.target,e.target.nextElementSibling,"El valor del agua ingresado no es válido");
+
+        if (!valido) return;
 	});
 
 	document.getElementById('alquilado').addEventListener("change",e=>{
-		e.target.classList.add('is-valid');
-		e.target.classList.remove('is-invalid');
-		e.target.nextElementSibling.textContent = "";
+		let valido = validarKeyUp(/^[0-9]{1}$/,
+        e.target,e.target.nextElementSibling,"El valor de 'alquilado' no es válido");
+
+        if (!valido) return;
 	});
 	
 	$("#boton_formulario").on("click",async function(e){
@@ -155,6 +128,25 @@ async function validarEnvio(accion = "Registrar"){
 		
 		return false;
 	}
+
+	let valido = validarKeyUp(/^[0-9]{1}$/,
+    document.getElementById('gas'),document.getElementById('gas').nextElementSibling,"El valor del gas no es válido");
+    if (!valido) {
+        mensajes("error", 2000, "Atención", "El valor del gas ingresado no es válido");
+        return false;
+    }
+    valido = validarKeyUp(/^[0-9]{1}$/,
+    document.getElementById('agua'),document.getElementById('agua').nextElementSibling,"El valor del agua no es válido");
+    if (!valido) {
+        mensajes("error", 2000, "Atención", "El valor del agua ingresado no es válido");
+        return false;
+    }
+    valido = validarKeyUp(/^[0-9]{1}$/,
+    document.getElementById('alquilado'),document.getElementById('alquilado').nextElementSibling,"El valor de 'alquilado' no es válido");
+    if (!valido) {
+        mensajes("error", 2000, "Atención", "El valor de ¿Es Alquilado? no es válido");
+        return false;
+    }
 
 	// si el valor de correo no es el mismo de antes:
 	if(nro_apartamento_an != $("#nro_apartamento").val()){

@@ -18,4 +18,7 @@ return array(
     '79f66bc0a1900f77abe4a9a299057a0a' => $vendorDir . '/starkbank/ecdsa/src/ellipticcurve.php',
     'ec07570ca5a812141189b1fa81503674' => $vendorDir . '/phpunit/phpunit/src/Framework/Assert/Functions.php',
     '0754989a10baadda533479884b399278' => $vendorDir . '/resend/resend-php/src/Resend.php',
+    '45444b0beefb92a98f8cd71d64878146' => $baseDir . '/config/acciones.php',
+    '5f6ea70646faeb1e98e0fc6d80552182' => $baseDir . '/config/modulos.php',
+    '42e3dc2cf7383276e8c418f14b63f194' => $baseDir . '/config/config.php',
 );

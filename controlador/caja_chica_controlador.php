@@ -1,22 +1,25 @@
 <?php 
-require_once "vista/componentes/sesion.php";
-require_once "modelo/caja_chica_modelo.php";
-require_once "modelo/movimientos_caja_modelo.php";
-require_once "modelo/gastos_modelo.php";
-require_once "modelo/detalles_gastos_modelo.php";
+use haydee\ayuda\Sesiones;
+Sesiones::verificarSesion();
+
+use haydee\modelo\Gastos;
+use haydee\modelo\CajaChica;
+use haydee\modelo\DetallesGasto;
+use haydee\modelo\MovimientosCaja;
+
 
 if (isset($_POST["operacion"])){
     $operacion = $_POST["operacion"];
 
     if ($operacion == "consultar_cajas_chicas"){
-        $caja_obj = new Caja_chica();
+        $caja_obj = new CajaChica();
 
         $caja_obj->registrar_bitacora(CONSULTAR, GESTIONAR_CAJA_CHICA, "TODOS LAS CAJAS");
 
         echo  json_encode($caja_obj->realizar_consulta('consultar'));
     }
     else if ($operacion == "consultar_movimientos_caja"){
-        $movimientos_caja_obj = new Movimientos_caja();        
+        $movimientos_caja_obj = new MovimientosCaja();        
 
         $caja_chica_id = $_POST["caja_chica_id"];
 
@@ -25,7 +28,7 @@ if (isset($_POST["operacion"])){
         echo  json_encode($movimientos_caja_obj->realizar_consulta('consultar_movimientos_caja'));
     }
     else if ($operacion == "consultar_movimiento"){
-        $movimientos_caja_obj = new Movimientos_caja();
+        $movimientos_caja_obj = new MovimientosCaja();
 
         $id_movimiento_caja = $_POST["id_movimiento_caja"];
 
@@ -34,7 +37,7 @@ if (isset($_POST["operacion"])){
         echo  json_encode($movimientos_caja_obj->realizar_consulta('consultar_movimiento'));
     }
     else if ($operacion == "registrar"){
-        $movimientos_caja_obj = new Movimientos_caja();
+        $movimientos_caja_obj = new MovimientosCaja();
 
         $concepto = $_POST["concepto"];
         $monto = $_POST["monto"];
@@ -59,7 +62,7 @@ if (isset($_POST["operacion"])){
         echo  json_encode($resultado);
     }
     else if ($operacion == "editar"){
-        $movimientos_caja_obj = new Movimientos_caja();
+        $movimientos_caja_obj = new MovimientosCaja();
 
         $concepto = $_POST["concepto"];
         $monto = $_POST["monto"];
@@ -82,7 +85,7 @@ if (isset($_POST["operacion"])){
         echo  json_encode($resultado);
     }
     else if ($operacion == "editar_observacion"){
-        $caja_obj = new Caja_chica();
+        $caja_obj = new CajaChica();
 
         $descripcion = $_POST["descripcion"];
         $id_caja = $_POST["id_caja"];
@@ -93,7 +96,7 @@ if (isset($_POST["operacion"])){
         echo  json_encode($caja_obj->realizar_consulta('editar_descripcion'));
     }
     else if ($operacion == "eliminar"){
-        $movimientos_caja_obj = new Movimientos_caja();
+        $movimientos_caja_obj = new MovimientosCaja();
 
         $id_movimiento_caja = $_POST["id_movimiento_caja"];
 
@@ -115,9 +118,9 @@ if (isset($_POST["operacion"])){
         echo  json_encode($resultado);        
     }
     else if ($operacion == "reponer_caja"){
-        $movimientos_caja_obj = new Movimientos_caja();
+        $movimientos_caja_obj = new MovimientosCaja();
         $gastos_obj = new Gastos();
-        $detalles_gastos_obj = new Detalles_Gasto();
+        $detalles_gastos_obj = new DetallesGasto();
 
         $id_caja_chica = $_POST["id_caja_chica"];
         $monto = $_POST["monto"];
@@ -165,7 +168,22 @@ if (isset($_POST["operacion"])){
 
     exit;
 }
+if (isset($_POST["validar"])) {
+        $validar = $_POST["validar"];
 
+        if ($validar == "validar_clave_foranea") {
+            $caja_obj = new CajaChica();
+
+            $tabla = $_POST["tabla"];
+            $nombre_clave = $_POST["nombre_clave"];
+            $valor = $_POST["valor"];
+            
+            $resultado = $caja_obj->realizar_consulta('validar_clave_foranea',["tabla"=>$tabla,"nombre_clave"=>$nombre_clave,"valor"=>$valor]);
+            
+            echo json_encode($resultado);
+        }
+        exit;
+    }
 if($accion == "inicio"){    
     require_once "vista/caja_chica/caja_chica_vista.php";
 }

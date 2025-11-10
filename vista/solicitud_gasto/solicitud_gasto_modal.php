@@ -6,14 +6,14 @@
             <div class="col-md-6 mb-3">
                 <label for="selector_mes">Mes del presupuesto</label>
                 <select class="form-select" id="selector_mes" required>
-                    <option value="">Seleccione mes</option>
+                    <option selected="" hidden="" value="">Seleccione mes</option>
                 </select>
                 <span class="w-100 invalid-feedback"></span>
             </div>
             <div class="col-md-6 mb-3">
                 <label for="selector_anio">Año del presupuesto</label>
                 <select class="form-select" id="selector_anio" required>
-                    <option value="">Seleccione año</option>
+                    <option selected="" hidden="" value="">Seleccione año</option>
                 </select>
                 <span class="w-100 invalid-feedback"></span>
             </div>

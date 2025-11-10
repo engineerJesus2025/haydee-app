@@ -14,7 +14,7 @@ let ultimaPeticion = 0;
 let tiempoCarga;
 let modal_carga = new bootstrap.Modal("#modal_carga");
 
-let tasa_dolar = parseFloat(localStorage.getItem("tasa_dolar")).toFixed(2) || 1;
+let tasa_dolar = parseFloat(isNaN(localStorage.getItem("tasa_dolar"))?1:localStorage.getItem("tasa_dolar")).toFixed(2);
 
 //Eventos
 select_mes_asignar.addEventListener("change",e=>{
@@ -128,7 +128,7 @@ async function consultar_mensualidades() {
 	
 	const estructura_tabla_mensualidades = [
  		{
- 			"data": null, // No asignamos una clave específica aquí
+ 			"data": null,
             "render": function (row) {
             	let fecha = new Date(`${row["mes"]}/01/${row["anio"]}`);
 				let mes = `${fecha.toLocaleString("es-ES",{month: 'long'})[0].toUpperCase()}${fecha.toLocaleString("es-ES",{month: 'long'}).slice(1)}`;
@@ -138,13 +138,13 @@ async function consultar_mensualidades() {
             }  
         },
 		{ 
-			"data": null, // No asignamos una clave específica aquí
+			"data": null, 
 			"render": function (row) {				
                 return `${row["monto"].toFixed(2)} Bs. / ${(row["monto"] / row["tasa_dolar"]).toFixed(2)} $`;
             }
         },
         { 
-            "data": null, // No asignamos una clave específica aquí
+            "data": null,
             "render": function (row) {
             	let deuda_cancelada = ((row.monto - row.pagado) < 0)?true:false;
             	let pagado = (deuda_cancelada)?'Deuda Cancelada':(row.monto - row["pagado"]).toFixed(2) + " Bs.";
@@ -154,9 +154,9 @@ async function consultar_mensualidades() {
             }
         },
         { 
-            "data": null, // No asignamos una clave específica aquí
+            "data": null, 
             "render": function (row) {
-            	let id_campo = row["ids"]; // guardamos el id que nos interese
+            	let id_campo = row["ids"]; 
 				let ids_apartamentos = row["ids_apartamentos"];
                	let acciones = crearBotones(id_campo,ids_apartamentos);
 
@@ -165,13 +165,12 @@ async function consultar_mensualidades() {
         } 		
  	] 	
 
- 	const configuraciones_tabla_mensualidad = (row, data)=>{
-
- 		
+ 	const configuraciones_tabla_mensualidad = (row, data)=>{ 		
  		Array.from(row.children).map(td=>td.setAttribute("class",'align-middle'))
 
  		row.firstElementChild.id = `${data["mes"]}/${data["anio"]}`;
  		row.setAttribute("id",`fila-01/${data["mes"]}/${data["anio"]}`);
+ 		row.setAttribute("data-id",`fila-01/${data["mes"]}/${data["anio"]}`);
  		row.setAttribute("intereses",data["porcentaje_interes"]);
  		row.setAttribute("limite",data["limite_mensualidad"]);
 
@@ -208,6 +207,8 @@ async function consultar_mensualidades() {
  	}
 
  	tabla_mensualidades = crearDataTable('tabla_mensualidad',estructura_tabla_mensualidades,paramentros_consulta,configuraciones_tabla_mensualidad);
+
+ 	setTimeout(seleccionarMensualidadPorNotificacion, 500);
 }
 
 function crearBotones(ids_mensualidades,ids_apartamentos) {
@@ -281,11 +282,10 @@ function crearBotones(ids_mensualidades,ids_apartamentos) {
 	boton_editar.setAttribute("aria-disabled", "true");
 	boton_editar.setAttribute("data-bs-toggle", "modal");
 	boton_editar.setAttribute("data-bs-target", "#modal_mensualidad");
+	boton_editar.setAttribute("value",ids_mensualidades);// el valor del id para eliminar	
+	boton_editar.setAttribute("ids_apartamentos",ids_apartamentos);
 
 	boton_editar.setAttribute("title","Editar");
-	boton_editar.setAttribute("value",ids_mensualidades);
-
-	boton_editar.setAttribute("ids_apartamentos",ids_apartamentos);
 	//Le ponemos los botones al <td><td> de las acciones
 
 	div_editar.appendChild(boton_editar);
@@ -308,10 +308,7 @@ function crearBotones(ids_mensualidades,ids_apartamentos) {
 		boton_eliminar.setAttribute("role", "button");
 		boton_eliminar.setAttribute("aria-disabled", "true");
 
-		boton_eliminar.setAttribute("title","Eliminar");
-		
-		boton_eliminar.setAttribute("value",ids_mensualidades);// el valor del id para eliminar	
-		boton_eliminar.setAttribute("ids_apartamentos",ids_apartamentos);
+		boton_eliminar.setAttribute("title","Eliminar");		
 
 		div_eliminar.appendChild(boton_eliminar);
 
@@ -354,8 +351,8 @@ async function llenarTablaNueva(fecha) {
 	datos_consulta.append("fecha",fecha);
 	datos_consulta.append("operacion","consultar_presupuestos_mensualidades");
 
-	let detalles_presupuesto = await query(datos_consulta,'text-secondary');
-
+	let detalles_presupuesto = await query(datos_consulta);
+	
 	if(!(detalles_presupuesto.estatus == undefined)){
 		mensajes('error',4000,'Atencion', detalles_presupuesto.mensaje);
 		return;
@@ -433,7 +430,6 @@ async function llenarTablaNueva(fecha) {
 	td_footer.textContent = 0;
 	let td_footer_2 = document.createElement("td");
 	td_footer_2.textContent = "Bs.";
-	
 
 	fragment_footer.appendChild(td_footer);
 	fragment_footer.appendChild(td_footer_2);
@@ -451,7 +447,7 @@ async function llenarTablaEditar(boton_editar) {
 	//Aqui decimos que vamos a hacer
 	datos_consulta.append('operacion','consultar_presupuestos_asociados');
 
-	let presupuesto_mes = await query(datos_consulta,'text-secondary');
+	let presupuesto_mes = await query(datos_consulta,true);
 	// Resvisamos el resultado
 	if(!(presupuesto_mes.estatus == undefined)){
 		mensajes('error',4000,'Atencion', presupuesto_mes.mensaje);
@@ -605,7 +601,7 @@ async function registrar_mensualidad() {
 		datos_consulta.append("limite_mensualidad",limite_mensualidad);
 		datos_consulta.append("porcentaje_interes",porcentaje_interes);
 		
-		let respuesta = await query(datos_consulta,'text-secondary');
+		let respuesta = await query(datos_consulta,true);
 		
 		if (!respuesta.estatus) {
 			mensajes('error',4000,'Atencion',respuesta.mensaje);
@@ -614,7 +610,7 @@ async function registrar_mensualidad() {
 		
 		let id_mensualidad = respuesta.lastId;
 		let id_presupuestos = [];
-		tr.querySelectorAll("td").forEach(td=>{			
+		tr.querySelectorAll("td").forEach(td=>{
 			if(td.firstElementChild != null){
 				if(td.firstElementChild.checked){
 					let grupo_id = td.firstElementChild.getAttribute("id_presupuestos_asociados").split(",");
@@ -631,7 +627,7 @@ async function registrar_mensualidad() {
 		datos_consulta.append("id_mensualidad",id_mensualidad);
 		datos_consulta.append("id_presupuestos",id_presupuestos);
 		
-		respuesta = await query(datos_consulta,'text-secondary');
+		respuesta = await query(datos_consulta,true);
 
 		if (!respuesta.estatus) {
 			mensajes('error',4000,'Atencion',respuesta.mensaje);
@@ -642,13 +638,31 @@ async function registrar_mensualidad() {
 		ids_apartamentos.push(apartamento_id);
 	}
 
+	datos_consulta = new FormData();
+
+	datos_consulta.append("operacion","registrar_bitacora");
+
+	datos_consulta.append("monto",monto);
+	datos_consulta.append("mes",mes);
+	datos_consulta.append("anio",anio);	
+	
+	let respuesta_bitacora = await query(datos_consulta,true);
+
+	if (!respuesta_bitacora.estatus) {
+		modal.hide();		
+ 		tabla_mensualidades.ajax.reload();
+ 		await verificarMes();
+ 		
+		mensajes('error',4000,'Atencion',respuesta_bitacora.mensaje);
+		return;
+	}
+
 	modal.hide();
 
  	tabla_mensualidades.ajax.reload();
 
+	await verificarMes();
 	mensajes('success',4000,'Atencion','El registro se ha realizado exitosamente');
-
-	verificarMes();
 }
 
 async function modificar() {
@@ -683,7 +697,7 @@ async function modificar() {
 		datos_consulta.append("limite_mensualidad",limite_mensualidad);
 		datos_consulta.append("porcentaje_interes",porcentaje_interes);
 
-		let respuesta = await query(datos_consulta,'text-secondary');
+		let respuesta = await query(datos_consulta,true);
 
 		if (!respuesta.estatus) {
 			mensajes('error',4000,'Atencion',respuesta.mensaje);
@@ -709,7 +723,7 @@ async function modificar() {
 		datos_consulta.append("id_mensualidad",id_mensualidad);
 		datos_consulta.append("id_presupuestos",id_presupuestos);
 
-		respuesta = await query(datos_consulta,'text-secondary');
+		respuesta = await query(datos_consulta,true);
 
 		if (!respuesta.estatus) {
 			mensajes('error',4000,'Atencion',respuesta.mensaje);
@@ -752,9 +766,9 @@ function mensajes(icono,tiempo,titulo,mensaje){
 	});
 }
 
-// Aqui se hace la peticion AJAX
-async function query(datos,color_carga = 'text-light') {
-    document.getElementById('icono_carga').setAttribute("class",`spinner-border ${color_carga}`);
+async function query(datos,oscuro = false) {
+    if (oscuro) {document.getElementById('icono_carga').setAttribute("class",`loader_dark`);}
+    else{document.getElementById('icono_carga').setAttribute("class",`loader`);}
     
 	peticionesActivas++;
 
@@ -862,3 +876,56 @@ function crearDataTable(id_tabla,estructura_filas,datos_paramentros, configuraci
 
 consultar_mensualidades(); 
 verificarMes();
+
+function seleccionarMensualidadPorNotificacion() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const idMensualidad = urlParams.get('referencia');
+    
+    if (idMensualidad) {
+        // Esperar a que la DataTable esté completamente cargada
+        const checkDataTable = setInterval(() => {
+            if (tabla_mensualidades && tabla_mensualidades.rows().count() > 0) {
+                clearInterval(checkDataTable);
+                
+                // Buscar la fila que coincida con el ID
+                let filaEncontrada = null;
+                
+                tabla_mensualidades.rows().every(function() {
+                    const data = this.data();
+                    const row = this.node();
+                    const rowId = row.getAttribute('id'); // Esto debería ser 'fila-01/MM/YYYY'
+                    
+                    // Verificar si esta fila coincide con el ID que buscamos
+                    if (rowId && rowId.includes(idMensualidad)) {
+                        filaEncontrada = this;
+                        return false; // Salir del bucle
+                    }
+                });
+                
+                if (filaEncontrada) {
+                    // Seleccionar y resaltar la fila
+                    const node = filaEncontrada.node();
+                    
+                    // Remover highlight previo
+                    tabla_mensualidades.rows().nodes().to$().removeClass('table-primary highlight-row');
+                    
+                    // Aplicar highlight
+                    $(node).addClass('table-primary highlight-row');
+                    
+                    // Hacer scroll a la fila
+                    $('html, body').animate({
+                        scrollTop: $(node).offset().top - 100
+                    }, 1000);                    
+                }
+            }
+        }, 100);
+    }
+}
+
+// Opcional: Abrir automáticamente los detalles
+// setTimeout(() => {
+// const botonVer = node.querySelector('.vista_previa');
+//     if (botonVer) {
+//         botonVer.click();
+//     }
+// }, 1500);

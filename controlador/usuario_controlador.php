@@ -1,7 +1,9 @@
 <?php
-    require_once "vista/componentes/sesion.php";
-    require_once "modelo/usuario_modelo.php";
-    require_once 'modelo/rol_modelo.php';
+    use haydee\ayuda\Sesiones;
+    Sesiones::verificarSesion();
+
+    use haydee\modelo\Rol;
+    use haydee\modelo\Usuario;
 
     $rol_obj = new Rol(); 
     $roles = $rol_obj->realizar_consulta('consultar_roles'); 
@@ -171,6 +173,17 @@
             $usuario_validar = $usuario_obj->realizar_consulta('consultar_usuario');
 
             echo json_encode(password_verify($contra, $usuario_validar["contrasenia"]));
+        }
+        elseif ($validar == "validar_clave_foranea") {
+            $usuario_obj = new Usuario();
+
+            $tabla = $_POST["tabla"];
+            $nombre_clave = $_POST["nombre_clave"];
+            $valor = $_POST["valor"];
+            
+            $resultado = $usuario_obj->realizar_consulta('validar_clave_foranea',["tabla"=>$tabla,"nombre_clave"=>$nombre_clave,"valor"=>$valor]);
+            
+            echo json_encode($resultado);
         }
         exit;
     }

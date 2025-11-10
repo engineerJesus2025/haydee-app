@@ -47,7 +47,6 @@ document.getElementById('header-toggle').addEventListener("click",e=>{
 	},450);
 });
 
-
 async function registrar() {
 	datos_consulta = new FormData();
 	
@@ -71,7 +70,7 @@ async function registrar() {
 
 	datos_consulta.append('operacion','registrar');
 	
-	let respuesta = await query(datos_consulta,'text-secondary'); 
+	let respuesta = await query(datos_consulta,true); 
 
 	modal.hide();
 	formulario_usar.reset();
@@ -321,7 +320,7 @@ async function modificar_formulario(e) {
 
 	datos_consulta.append('operacion','consulta_especifica');
 
-	data = await query(datos_consulta,'text-secondary');	
+	data = await query(datos_consulta,true);
 	
 	let nro_apartamento = formulario_usar.querySelector("#nro_apartamento"),
 	porcentaje_participacion = formulario_usar.querySelector("#porcentaje_participacion"),	
@@ -373,7 +372,7 @@ async function modificar(id) {
 	
 	datos_consulta.append('operacion','modificar');
 
-	let respuesta = await query(datos_consulta,'text-secondary');
+	let respuesta = await query(datos_consulta,true);
 
 	formulario_usar.reset();
  	modal.hide();
@@ -401,8 +400,9 @@ async function last_id() {
 	return res;
 }
 
-async function query(datos,color_carga = 'text-light') {
-    document.getElementById('icono_carga').setAttribute("class",`spinner-border ${color_carga}`);
+async function query(datos,oscuro = false) {
+    if (oscuro) {document.getElementById('icono_carga').setAttribute("class",`loader_dark`);}
+    else{document.getElementById('icono_carga').setAttribute("class",`loader`);}
 
 	let mostrarModal = false;
     let tiempoCarga;

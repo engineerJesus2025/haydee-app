@@ -1,3 +1,4 @@
+<?php use haydee\modelo\Habitantes; ?>
 <!DOCTYPE html>
 <html>
  
@@ -95,7 +96,6 @@
                 </main>
                 <?php
                 require_once 'vista/componentes/modal_carga.php';
-                require_once "vista/componentes/footer.php";
                 require_once "vista/componentes/script.php";
                 ?>
                 <div class="modal fade" id="modal_vista_previa" tabindex="-1" aria-labelledby="modal_vista_previa_label"
@@ -127,6 +127,7 @@
             </div>
         </div>
     </div>
+<?php require_once "vista/componentes/footer.php"; ?>
 
 <script type="text/javascript" src="recursos/js/validaciones/habitantes_validar.js"></script>
 <script type="text/javascript" src="recursos/js/consultas_ajax/habitantes_ajax.js"></script>

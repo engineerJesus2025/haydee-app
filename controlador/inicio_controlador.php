@@ -1,13 +1,15 @@
 <?php
-require_once "vista/componentes/sesion.php";
-require_once "modelo/cartelera_virtual_modelo.php";
-require_once "modelo/mensualidad_modelo.php";
+use haydee\ayuda\Sesiones;
+Sesiones::verificarSesion();
+
+use haydee\modelo\Mensualidad;
+use haydee\modelo\CarteleraVirtual;
 
 if (isset($_POST["operacion"])) {
   $operacion = $_POST["operacion"];
 
   if ($operacion == "consulta_inicio") {
-    $cartelera_virtual_obj = new Cartelera_virtual();
+    $cartelera_virtual_obj = new CarteleraVirtual();
 
   	$limite = $_POST["limite"];
 

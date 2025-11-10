@@ -2,7 +2,10 @@
 	<div class="col-sm-5">
 		<select class="form-select" id="mes_select_asignar">
 			<option hidden="" selected="" value="">Seleccione el mes para asignar</option>
+			<option value="1/2/202123">fecha incorrecatoa</option>
+			<option value="1/2/2026">fecha inecistete</option>
 		</select>
+		<span class="w-100 invalid-feedback"></span>
 	</div>
 </div>
 <div class="table-responsive">

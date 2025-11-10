@@ -12,7 +12,7 @@ let boton_formulario = document.querySelector("#boton_formulario"); // el boton
 let modal = new bootstrap.Modal("#modal_pagos");
 let formulario_usar = document.querySelector(`#form_pagos`); // el form
 
-let tasa_dolar = parseFloat(localStorage.getItem("tasa_dolar")).toFixed(2) || 1;
+let tasa_dolar = parseFloat(isNaN(localStorage.getItem("tasa_dolar"))?1:localStorage.getItem("tasa_dolar")).toFixed(2);
 
 let modal_carga = new bootstrap.Modal("#modal_carga");
 let peticionesActivas = 0;
@@ -92,15 +92,40 @@ document.querySelector(`#modal_pagos`).addEventListener("hide.bs.modal",()=>{
 });
 
 document.querySelector("#apartamento_id").addEventListener("change", async function () {
-    let id_apartamento = this.value;
+    let valido = validarKeyUpSelect(/^[0-9]{1,11}$/,
+    this,this.nextElementSibling,"El valor del apartamento no es válido");
 
+    if (!valido) return;
+
+    let datos = new FormData();
+    datos.append('validar','validar_clave_foranea');
+    datos.append('tabla','apartamentos');
+    datos.append('nombre_clave','id_apartamento');
+    datos.append('valor',this.value);
+
+    valido = await verificar_clave_foranea(datos);
+    
+    if (valido) {
+        this.classList.add('is-valid');
+        this.classList.remove('is-invalid');
+        this.nextElementSibling.textContent = "";
+    }
+    else{
+        this.classList.remove('is-valid');
+        this.classList.add('is-invalid');
+        this.nextElementSibling.textContent = "El apartamento seleccionado no existe";
+
+        return;
+    }
+
+    let id_apartamento = this.value;    
     if (!id_apartamento) return;
 
     let datos_consulta = new FormData();
     datos_consulta.append("operacion", "consultar_mensualidades");
     datos_consulta.append("apartamento_id", id_apartamento);
 
-    let respuesta = await query(datos_consulta,'text-secondary');    
+    let respuesta = await query(datos_consulta,true);    
 
     if (respuesta.estatus === false) {
         mensajes('error', 4000, 'Error', respuesta.mensaje);
@@ -206,6 +231,39 @@ document.getElementById('agregar_detalle').addEventListener('click', () => {
         if (el.classList.contains("tasa_dolar")) el.value = tasa_dolar;
     });
 
+    nuevoDetalle.querySelector('.tipo_pago_admin').addEventListener("change",async e=>{
+        let valido = validarKeyUpSelect(/^[a-zA-z ]{3,20}$/,
+        e.target,e.target.nextElementSibling,"El valor del método de pago no es válido");
+
+        if (!valido) return;
+    });
+
+    nuevoDetalle.querySelector('.banco_admin').addEventListener("change",async e=>{
+        let valido = validarKeyUpSelect(/^[0-9]{1,11}$/,
+        e.target,e.target.nextElementSibling,"El valor del banco no es válido");
+
+        if (!valido) return;
+
+        let datos = new FormData();
+        datos.append('validar','validar_clave_foranea');
+        datos.append('tabla','bancos');
+        datos.append('nombre_clave','id_banco');
+        datos.append('valor',e.target.value);
+
+        valido = await verificar_clave_foranea(datos);
+        
+        if (valido) {
+            e.target.classList.add('is-valid');
+            e.target.classList.remove('is-invalid');
+            e.target.nextElementSibling.textContent = "";
+        }
+        else{
+            e.target.classList.remove('is-valid');
+            e.target.classList.add('is-invalid');
+            e.target.nextElementSibling.textContent = "El banco seleccionado no existe";
+        }
+    });
+
     // Crea un botón para eliminar el bloque
     const eliminarBtn = document.createElement('button');
     eliminarBtn.className = 'btn btn-sm btn-outline-danger mb-3';
@@ -244,6 +302,12 @@ document.addEventListener("change", function (e) {
             tarjeta.querySelectorAll(".campo-monto, .campos-bancarios").forEach(campo => campo.classList.remove("d-none"));
         }
     }
+});
+
+document.getElementById('header-toggle').addEventListener("click",e=>{
+    setTimeout(function(){
+        data_table.columns.adjust().draw();
+    },450);
 });
 
 function obtenerEstado(estado) {
@@ -360,7 +424,7 @@ async function registrar() {
 
     datos_consulta.append("operacion", "registrar");
 
-    let respuesta = await query(datos_consulta,'text-secondary');
+    let respuesta = await query(datos_consulta,true);
     if (!respuesta.estatus) {
         mensajes("error", 4000, "Atención", respuesta.mensaje);
         return;
@@ -590,7 +654,7 @@ async function modificar_formulario(e) {
     datos_consulta.append("id_pago",id);
     datos_consulta.append('operacion','consulta_especifica');
 
-    data = await query(datos_consulta,'text-secondary');
+    data = await query(datos_consulta,true);
     // console.log("Modificar formulario:",data);
     // console.log("Modificar formulario:",data.detalles);
 
@@ -661,7 +725,7 @@ async function modificar_formulario(e) {
     mensualidades_respuesta.append("operacion", "consultar_mensualidades");
     mensualidades_respuesta.append("apartamento_id", data.apartamento_id);
 
-    let mensualidades = await query(mensualidades_respuesta,'text-secondary');
+    let mensualidades = await query(mensualidades_respuesta,true);
 
     const meses = [
         "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -874,7 +938,7 @@ async function modificar(id) {
     console.log(datos_consulta)
     // return;
     //Llamamos a la funcion para hacer la consulta
-    let respuesta = await query(datos_consulta,'text-secondary');
+    let respuesta = await query(datos_consulta,true);
     console.log("Respuesta de modificar:", datos_consulta);
 
     // Resvisamos el resultado
@@ -949,8 +1013,9 @@ async function last_id() {
 }
 
 // Aqui se hace la peticion AJAX
-async function query(datos,color_carga = 'text-light') {
-    document.getElementById('icono_carga').setAttribute("class",`spinner-border ${color_carga}`);
+async function query(datos,oscuro = false) {
+    if (oscuro) {document.getElementById('icono_carga').setAttribute("class",`loader_dark`);}
+    else{document.getElementById('icono_carga').setAttribute("class",`loader`);}
 
     peticionesActivas++;
 
@@ -1632,7 +1697,7 @@ async function mostrarVistaPrevia_detalles(e) {
     datos_consulta.append("id_detalle_pago", id);
     datos_consulta.append("operacion", "consulta_especifica_detalles");
 
-    const respuesta = await query(datos_consulta,'text-secondary');
+    const respuesta = await query(datos_consulta,true);
     const data = respuesta;
 
     document.getElementById("vista_fecha_detalles").textContent = formatearFecha(data.fecha);
@@ -1874,11 +1939,3 @@ function reasignarEventos_detalles() {
         }
     }
 }
-
-const resizeObserver = new ResizeObserver(entries => {
-    if (data_table_detalles){
-        data_table_detalles.draw();
-    }
-})
-
-resizeObserver.observe(tabla_detalles);

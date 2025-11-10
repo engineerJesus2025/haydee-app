@@ -1,6 +1,8 @@
 <?php 
-require_once "vista/componentes/sesion.php";
-require_once "modelo/conexion.php";
+use haydee\ayuda\Sesiones;
+Sesiones::verificarSesion();
+
+use haydee\modelo\Conexion;
 
 $conexion = new Conexion();
 
@@ -9,11 +11,22 @@ if (isset($_POST["operacion"])){
 
     if ($operacion == "generar_copia_seguridad"){
         $db = $_POST["db"];
-        echo json_encode($conexion->generarCopiaSeguridad($db));
+
+        if ($db == "seguridad" || $db == "negocio") {
+            echo json_encode($conexion->generarCopiaSeguridad($db));
+        }
+        else{
+            return ["estatus"=>false,"mensaje"=>"No existe la Base de datos seleccionada"];;
+        }
     }
     if ($operacion == "descargar_copia_seguridad"){
-        $db = $_POST["db"];//Esto no usa ajax xd
-        $conexion->descargarCopiaSeguridad($db);
+        $db = $_POST["db"];
+        if ($db == "seguridad" || $db == "negocio") {
+            $conexion->descargarCopiaSeguridad($db);
+        }
+        else{
+            return ["estatus"=>false,"mensaje"=>"No existe la Base de datos seleccionada"];;
+        }        
     }
     if ($operacion == "obtener_copias") {
         echo json_encode($conexion->obtenerCopias());
@@ -21,6 +34,13 @@ if (isset($_POST["operacion"])){
     if ($operacion == "importar_copia_seguridad"){
         $db = $_POST["db"];
         $fichero = $_POST["fichero"];
+
+        if ($db == "seguridad" || $db == "negocio") {            
+            echo json_encode($conexion->importarCopiaSeguridad($db,$fichero));
+        }
+        else{
+            return ["estatus"=>false,"mensaje"=>"No existe la Base de datos seleccionada"];;
+        }
 
         echo json_encode($conexion->importarCopiaSeguridad($db,$fichero));
     }

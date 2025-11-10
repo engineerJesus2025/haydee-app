@@ -1,3 +1,4 @@
+<?php use haydee\modelo\AnioFiscal; ?>
 <!DOCTYPE html>
 <html>
 
@@ -10,8 +11,8 @@
 </head>
 
 <body id="body-pd" class="body-pd">
-    <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Anio_fiscal::tiene_permiso(GESTIONAR_ANIO_FISCAL, ELIMINAR) ?>">
-    <input type="text" hidden="" id="permiso_editar" value="<?php echo Anio_fiscal::tiene_permiso(GESTIONAR_ANIO_FISCAL, MODIFICAR) ?>">
+    <input type="text" hidden="" id="permiso_eliminar" value="<?php echo AnioFiscal::tiene_permiso(GESTIONAR_ANIO_FISCAL, ELIMINAR) ?>">
+    <input type="text" hidden="" id="permiso_editar" value="<?php echo AnioFiscal::tiene_permiso(GESTIONAR_ANIO_FISCAL, MODIFICAR) ?>">
     <div class="container-fluid">
         <div class="row flex-nowrap ">
 
@@ -19,7 +20,7 @@
             require_once "vista/componentes/navbar.php";
             ?>
 
-            <div class="col d-flex flex-column  min-vh-100 gris">
+            <div class="col d-flex flex-column gris">
 
                 <?php
                 require_once "vista/componentes/header.php";
@@ -35,7 +36,7 @@
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="card p-4">
-                                <?php if (Anio_fiscal::tiene_permiso(GESTIONAR_ANIO_FISCAL, REGISTRAR)) : ?>
+                                <?php if (AnioFiscal::tiene_permiso(GESTIONAR_ANIO_FISCAL, REGISTRAR)) : ?>
                                     <div class="button mb-4">
                                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_anio_fiscal">Nuevo Año Fiscal</a>
                                     </div><br>
@@ -80,15 +81,15 @@
                 </main>
                 <?php
                 require_once 'vista/componentes/modal_carga.php';
-                require_once "vista/componentes/footer.php";
                 require_once "vista/componentes/script.php";
                 ?>
             </div>
-        </div>
-    </div>
-<script type="text/javascript" src="recursos/js/validaciones/anio_fiscal_validar.js"></script>
-<script type="text/javascript" src="recursos/js/consultas_ajax/anio_fiscal_ajax.js"></script>
+        </div>        
+    </div>    
+    <script type="text/javascript" src="recursos/js/validaciones/anio_fiscal_validar.js"></script>
+    <script type="text/javascript" src="recursos/js/consultas_ajax/anio_fiscal_ajax.js"></script>
 
+    <?php require_once "vista/componentes/footer.php"; ?>
 </body>
 
 </html>

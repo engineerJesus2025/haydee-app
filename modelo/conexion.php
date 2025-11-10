@@ -1,12 +1,14 @@
 <?php
 
 //NO MODIFICAR ESTO, POR FAVOR
+namespace haydee\modelo;
 
-require_once "config/config.php";
+use \PDO;
+use PDOException;
 
 class Conexion extends PDO
 {
-    private $conex;    
+    private $conex;
 
     public function __construct()
     {
@@ -18,7 +20,6 @@ class Conexion extends PDO
                 PDO::ATTR_ERRMODE,
                 PDO::ERRMODE_EXCEPTION
             );
-            
         } catch (PDOException $e) {
             die("Conexión Fallida" . $e->getMessage());
         }
@@ -34,7 +35,8 @@ class Conexion extends PDO
         return $this->conex;
     }
 
-    public function registrar_bitacora($accion, $modulo_id, $registro_alt){
+    public function registrar_bitacora($accion, $modulo_id, $registro_alt)
+    {
         $this->cambiar_db_seguridad();
 
         $sql = "INSERT INTO bitacora(fecha_hora, accion, registro_alterado, usuario_id, modulo_id)
@@ -42,10 +44,10 @@ class Conexion extends PDO
         $conexion = $this->get_conex()->prepare($sql);
         date_default_timezone_set('America/Caracas');
         $timestamp = time();
-        $fecha = date("Y-m-d H:i:s", $timestamp);         
+        $fecha = date("Y-m-d H:i:s", $timestamp);
         $usuario = $_SESSION["id_usuario"];
 
-        $conexion->bindParam(":fecha_hora",$fecha);
+        $conexion->bindParam(":fecha_hora", $fecha);
         $conexion->bindParam(":accion", $accion);
         $conexion->bindParam(":registro_alterado", $registro_alt);
         $conexion->bindParam(":usuario_id", $usuario);
@@ -62,7 +64,7 @@ class Conexion extends PDO
         $conex_string = "mysql:host=" . DB_HOST . ";dbname=" . DB_SECURITY . ";charset=utf8";
 
         try {
-            $this->conex = new PDO($conex_string, DB_USER, DB_PASS,[PDO::MYSQL_ATTR_FOUND_ROWS => true]);
+            $this->conex = new PDO($conex_string, DB_USER, DB_PASS, [PDO::MYSQL_ATTR_FOUND_ROWS => true]);
             $this->conex->setAttribute(
                 PDO::ATTR_ERRMODE,
                 PDO::ERRMODE_EXCEPTION
@@ -87,13 +89,13 @@ class Conexion extends PDO
         }
     }
 
-    public static function tiene_permiso($modulo,$accion)
+    public static function tiene_permiso($modulo, $accion)
     {
-        $permiso =false;
+        $permiso = false;
 
-        foreach($_SESSION["permisos"] AS $permisos){
+        foreach ($_SESSION["permisos"] as $permisos) {
 
-            if($permisos["id_modulo"] == $modulo && $permisos["nombre_permiso"] == $accion){
+            if ($permisos["id_modulo"] == $modulo && $permisos["nombre_permiso"] == $accion) {
                 $permiso = true;
                 break;
             }
@@ -108,26 +110,25 @@ class Conexion extends PDO
 
         if ($db == "negocio") {
             $db_copiar = DB_NAME;
-        }
-        else if($db == "seguridad"){
+        } else if ($db == "seguridad") {
             $db_copiar = DB_SECURITY;
         }
         //Local
-        $mysqldump_path = '"C:\xampp\mysql\bin\mysqldump.exe"';//Importante por lo visto
+        $mysqldump_path = '"C:\xampp\mysql\bin\mysqldump.exe"'; //Importante por lo visto
 
         $backup = 'recursos\Backups\backup_' . $db_copiar . '_' . date("Y-m-d-H-i-s") . '.sql';
-        $comando = $mysqldump_path . " --host=" . DB_HOST . " --user=". DB_USER . " --password=". DB_PASS . " " . $db_copiar . " > " . $backup;
+        $comando = $mysqldump_path . " --host=" . DB_HOST . " --user=" . DB_USER . " --password=" . DB_PASS . " " . $db_copiar . " > " . $backup;
 
         // Hosting
         // $backup = '/home/condominioshaydee/www/recursos/Backups/backup_' . $db_copiar . '_' . date("Y-m-d-H-i-s") . '.sql'; // Hosting
         // $comando = "mysqldump --host=" . DB_HOST . " --user=". DB_USER . " --password=". DB_PASS . " " . $db_copiar . " > " . $backup; // Hosting
 
         system($comando . " 2>&1", $resultado);
-        
+
         if ($resultado === 0) {
-            return ["estatus"=>true,"mensaje"=>"Copia de seguridad creada exitosamente"];
+            return ["estatus" => true, "mensaje" => "Copia de seguridad creada exitosamente"];
         } else {
-            return ["estatus"=>false,"mensaje"=>"Error al crear el backup: " . $backup, "res"=>$comando];
+            return ["estatus" => false, "mensaje" => "Error al crear el backup: " . $backup, "res" => $comando];
         }
     }
 
@@ -137,8 +138,7 @@ class Conexion extends PDO
 
         if ($db == "negocio") {
             $db_copiar = DB_NAME;
-        }
-        else if($db == "seguridad"){
+        } else if ($db == "seguridad") {
             $db_copiar = DB_SECURITY;
         }
 
@@ -146,9 +146,9 @@ class Conexion extends PDO
         $backup = 'backup_' . $db_copiar . '_' . date("Y-m-d-H-i-s") . '.sql';
 
         //Local
-        $mysqldump_path = '"C:\xampp\mysql\bin\mysqldump.exe"';//Importante por lo visto
+        $mysqldump_path = '"C:\xampp\mysql\bin\mysqldump.exe"'; //Importante por lo visto
 
-        $comando = $mysqldump_path . " --host=" . DB_HOST . " --user=". DB_USER . " --password=". DB_PASS . " " . $db_copiar . " > " . $backup;
+        $comando = $mysqldump_path . " --host=" . DB_HOST . " --user=" . DB_USER . " --password=" . DB_PASS . " " . $db_copiar . " > " . $backup;
 
         //Hosting
         // $comando = "mysqldump --host=" . DB_HOST . " --user=". DB_USER . " --password=". DB_PASS . " " . $db_copiar . " > " . $backup; // Hosting
@@ -186,7 +186,7 @@ class Conexion extends PDO
     }
 
     public function obtenerCopias()
-    { 
+    {
         // $directorio = '/home/condominioshaydee/www/recursos/Backups'; //del hosting
         $directorio = 'recursos\Backups';
         $ficheros = scandir($directorio);
@@ -197,56 +197,51 @@ class Conexion extends PDO
                     array_push($aray_ficheros, $fichero);
                 }
             }
-        } 
-        else {
-            return ["estatus"=>false,"mensaje"=>"No se pudo abrir el directorio de las copias de seguridad"];
+        } else {
+            return ["estatus" => false, "mensaje" => "No se pudo abrir el directorio de las copias de seguridad"];
         }
-        return ["estatus"=>true,"mensaje"=>$aray_ficheros];
+        return ["estatus" => true, "mensaje" => $aray_ficheros];
     }
 
-    public function importarCopiaSeguridad($db,$fichero)
+    public function importarCopiaSeguridad($db, $fichero)
     {
         if ($db == "negocio") {
             $this->cambiar_db_negocio();
-        }
-        else if($db == "seguridad"){
+        } else if ($db == "seguridad") {
             $this->cambiar_db_seguridad();
         }
 
         $sql = file_get_contents('recursos/Backups/' . $fichero); //Local
 
         // $sql = file_get_contents('/home/condominioshaydee/www/recursos/Backups/' . $fichero); //del hosting
-        
-        $conexion = $this->get_conex()->prepare($sql);
-        
-        $result = $conexion->execute(); 
 
-        if ($result) {            
-            return ["estatus"=>true,"mensaje"=>"La copia de seguridad se ha importado exitosamente"];
+        $conexion = $this->get_conex()->prepare($sql);
+
+        $result = $conexion->execute();
+
+        if ($result) {
+            return ["estatus" => true, "mensaje" => "La copia de seguridad se ha importado exitosamente"];
         } else {
-            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar importar la copia de seguridad"];
+            return ["estatus" => false, "mensaje" => "Ha ocurrido un error al intentar importar la copia de seguridad"];
         }
     }
 
-    public function importarSQL($sql,$db = 'negocio')
+    public function importarSQL($sql, $db = 'negocio')
     {
         if ($db == "negocio") {
             $this->cambiar_db_negocio();
-        }
-        else if($db == "seguridad"){
+        } else if ($db == "seguridad") {
             $this->cambiar_db_seguridad();
         }
-        
-        $conexion = $this->get_conex()->prepare($sql);
-        
-        $result = $conexion->execute(); 
 
-        if ($result) {            
-            return ["estatus"=>true,"mensaje"=>"La copia de seguridad se ha importado exitosamente"];
+        $conexion = $this->get_conex()->prepare($sql);
+
+        $result = $conexion->execute();
+
+        if ($result) {
+            return ["estatus" => true, "mensaje" => "La copia de seguridad se ha importado exitosamente"];
         } else {
-            return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar importar la copia de seguridad"];
+            return ["estatus" => false, "mensaje" => "Ha ocurrido un error al intentar importar la copia de seguridad"];
         }
     }
 }
-
-?>

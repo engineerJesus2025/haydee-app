@@ -50,14 +50,13 @@
                 </main>
                 <?php
                 require_once 'vista/componentes/modal_carga.php';
-                require_once "vista/componentes/footer.php";
                 require_once "vista/componentes/script.php";
                 ?>
             </div>
         </div>
     </div>
+    <?php require_once "vista/componentes/footer.php"; ?>
     <script type="text/javascript" src="recursos/js/consultas_ajax/bitacora_ajax.js"></script>
-
 </body>
 
 </html>

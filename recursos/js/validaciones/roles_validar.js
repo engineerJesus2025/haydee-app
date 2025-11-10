@@ -1,5 +1,4 @@
 $(document).ready(function(){
-
 	$("#nombre").on("keypress",function(e){
 		validarKeyPress(/^[A-Za-z \b]*$/, e);
 	});
@@ -39,6 +38,50 @@ $(document).ready(function(){
 			verificar_duplicados(datos);			
         }
 	})
+
+	document.querySelectorAll("[name='permisos[]']").forEach(checkbox=>{
+		checkbox.addEventListener("click",async e=>{
+			if (!checkbox.checked){
+				if (checkbox.getAttribute("error") == 1){
+					checkbox.setAttribute('error',0);
+					checkbox.classList.remove('is-invalid');
+					if (checkbox.closest(".row").querySelector("[error='1']") == null){
+						checkbox.closest(".row").lastElementChild.textContent = "";
+					}
+				}
+				return;
+			}
+
+			let valido = validarKeyUp(/^[0-9]{1,11}$/,
+			checkbox,checkbox.closest(".row").lastElementChild,"El valor de uno o mas permisos no es válido");
+
+			if (!valido) {
+				checkbox.setAttribute('error',1);
+				return;
+			}
+
+			let datos = new FormData();
+			datos.append('validar','validar_clave_foranea');
+			datos.append('tabla','permisos_usuarios');
+			datos.append('nombre_clave','id_permiso_usuario');
+			datos.append('valor',checkbox.value);
+
+			valido = await verificar_clave_foranea(datos);
+			
+			if (valido) {
+				checkbox.classList.remove('is-invalid');
+				if (checkbox.closest(".row").querySelector("[error='1']") == null){
+					checkbox.closest(".row").lastElementChild.textContent = "";
+				}
+			}
+			else{
+				checkbox.setAttribute('error',1);
+				// console.log(checkbox)
+				checkbox.classList.add('is-invalid');
+				checkbox.closest(".row").lastElementChild.textContent = "El valor de uno o mas permisos no existe";
+			}
+		});
+	});
 });
 
 function mensajes(icono,tiempo,titulo,mensaje){
@@ -76,6 +119,44 @@ async function validarEnvio(){
 			return false;
 		}
 	}
+	error = false;
+	for (let checkbox of document.querySelectorAll("[name='permisos[]']")){	
+		if (!(checkbox.checked)) {continue;}
+		let valido = validarKeyUp(/^[0-9]{1,11}$/,
+		checkbox,checkbox.closest(".row").lastElementChild,"El valor de uno o mas permisos no es válido");
+
+		if (!valido) {
+			error = true;
+			mensajes('error',4000,'Atención','El valor de uno o mas permisos no es válido');
+			break;
+		}
+
+		let datos = new FormData();
+		datos.append('validar','validar_clave_foranea');
+		datos.append('tabla','permisos_usuarios');
+		datos.append('nombre_clave','id_permiso_usuario');
+		datos.append('valor',checkbox.value);
+
+		valido = await verificar_clave_foranea(datos);
+		
+		if (valido) {
+			checkbox.classList.add('is-valid');
+			checkbox.classList.remove('is-invalid');
+			checkbox.closest(".row").lastElementChild.textContent = "";
+		}
+		else{
+			checkbox.classList.remove('is-valid');
+			checkbox.classList.add('is-invalid');
+			checkbox.closest(".row").lastElementChild.textContent = "El valor de uno o mas permisos no existe";
+
+			error = true;
+			mensajes('error',4000,'Atención','El valor de uno o mas permisos no existe');
+			break;
+		}
+	}
+
+	if (error) {return false;}
+
 	return true;
 }
 
@@ -93,14 +174,16 @@ mensaje){
 	a = er.test(etiqueta.value);
 	
 	if(a){
-		etiqueta.classList.add('is-valid');
+		if (etiqueta.type != "checkbox") {etiqueta.classList.add('is-valid');}
 		etiqueta.classList.remove('is-invalid');
-		etiquetamensaje.textContent = "";
+		if (etiqueta.closest(".row").querySelector("[error='1']") == null){
+			etiquetamensaje.textContent = "";
+		}
 		return 1;
 	}
 	else{
-		etiqueta.classList.add('is-invalid')
-		etiqueta.classList.remove('is-valid');
+		if (etiqueta.type != "checkbox") {etiqueta.classList.remove('is-valid');}
+		etiqueta.classList.add('is-invalid');
 		etiquetamensaje.textContent = mensaje;
 		return 0;
 	}
@@ -121,4 +204,13 @@ async function verificar_duplicados(datos){
 		return true;
 	}
 	return false;
+}
+
+async function verificar_clave_foranea(datos){	
+	let data = await fetch("",{method:"POST", body:datos}).then(res=>{		
+		let result = res.json()
+		return result;
+	});
+
+	return data		
 }

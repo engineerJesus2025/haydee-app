@@ -1,6 +1,6 @@
+<?php use haydee\modelo\CajaChica; ?>
 <!DOCTYPE html>
 <html>
-
 <head>
 	<title>Caja chica</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,9 +10,9 @@
 </head>
 
 <body id="body-pd" class="body-pd">  
-  <input type="text" hidden="" id="permiso_registrar" value="<?php echo Caja_chica::tiene_permiso(GESTIONAR_CAJA_CHICA, REGISTRAR) ?>">
-  <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Caja_chica::tiene_permiso(GESTIONAR_CAJA_CHICA, ELIMINAR) ?>">
-  <input type="text" hidden="" id="permiso_editar" value="<?php echo Caja_chica::tiene_permiso(GESTIONAR_CAJA_CHICA, MODIFICAR) ?>">
+  <input type="text" hidden="" id="permiso_registrar" value="<?php echo CajaChica::tiene_permiso(GESTIONAR_CAJA_CHICA, REGISTRAR) ?>">
+  <input type="text" hidden="" id="permiso_eliminar" value="<?php echo CajaChica::tiene_permiso(GESTIONAR_CAJA_CHICA, ELIMINAR) ?>">
+  <input type="text" hidden="" id="permiso_editar" value="<?php echo CajaChica::tiene_permiso(GESTIONAR_CAJA_CHICA, MODIFICAR) ?>">
 	<div class="container-fluid">
 		<div class="row flex-nowrap mb-2">
 			<?php
@@ -38,6 +38,7 @@
 						        <select class="form-select " aria-label="Default select example" name="mes_seleccionado" id="mes_select">
                       <option>Cargando registros...<option>
 						        </select>
+                    <span class="w-100 invalid-feedback"></span>
 						      </div>
 						    </div>
 						    <span id="span_fondo_fijo" class="text-muted mb-2 mt-1">
@@ -136,12 +137,12 @@
 				</main>
 				<?php
         require_once 'vista/componentes/modal_carga.php';
-				require_once "vista/componentes/footer.php";
 				require_once "vista/componentes/script.php";
 				?>
 			</div>
 		</div>
 	</div>
+  <?php require_once "vista/componentes/footer.php"; ?>
 	<script type="text/javascript" src="recursos/js/consultas_ajax/caja_chica_ajax.js"></script>
   <script type="text/javascript" src="recursos/js/validaciones/caja_chica_validar.js"></script>
 </body>

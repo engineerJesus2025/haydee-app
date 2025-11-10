@@ -48,20 +48,79 @@ function asignarEventos(){
         }		
 	})
 
-	formulario_usar.querySelectorAll("select").forEach(select=>{
-		select.addEventListener("change",()=>{
-			select.classList.add('is-valid');
-			select.classList.remove('is-invalid');
-			select.nextElementSibling.textContent = "";
-		});
-	});
-
 	formulario_usar.querySelectorAll("[type='date']").forEach(input=>{
 		input.addEventListener("change",()=>{
 			input.classList.add('is-valid');
 			input.classList.remove('is-invalid');
 			input.nextElementSibling.textContent = "";
 		});
+	});
+
+	// Validaciones de selects
+	document.getElementById('mensualidad_id').addEventListener("change",async e=>{
+		let valido = validarKeyUpSelect(/^[0-9]{1,11}$/,
+		e.target,e.target.nextElementSibling,"El valor de la mensualidad no es válido");
+
+		if (!valido) return;
+
+		let datos = new FormData();
+		datos.append('validar','validar_clave_foranea');
+		datos.append('tabla','mensualidad');
+		datos.append('nombre_clave','id_mensualidad');
+		datos.append('valor',e.target.value);
+
+		valido = await verificar_clave_foranea(datos);
+		
+		if (valido) {
+			e.target.classList.add('is-valid');
+			e.target.classList.remove('is-invalid');
+			e.target.nextElementSibling.textContent = "";
+		}
+		else{
+			e.target.classList.remove('is-valid');
+			e.target.classList.add('is-invalid');
+			e.target.nextElementSibling.textContent = "La mensualidad seleccionada no existe";
+		}
+	});
+
+	document.getElementById('estado').addEventListener("change",async e=>{
+		let valido = validarKeyUpSelect(/^[a-zA-z ]{3,20}$/,
+		e.target,e.target.nextElementSibling,"El valor del estado no es válido");
+
+		if (!valido) return;
+	});
+
+	document.querySelector('.tipo_pago_admin').addEventListener("change",async e=>{
+		let valido = validarKeyUpSelect(/^[a-zA-z ]{3,20}$/,
+		e.target,e.target.nextElementSibling,"El valor del método de pago no es válido");
+
+		if (!valido) return;
+	});
+
+	document.querySelector('.banco_admin').addEventListener("change",async e=>{
+		let valido = validarKeyUpSelect(/^[0-9]{1,11}$/,
+		e.target,e.target.nextElementSibling,"El valor del banco no es válido");
+
+		if (!valido) return;
+
+		let datos = new FormData();
+		datos.append('validar','validar_clave_foranea');
+		datos.append('tabla','bancos');
+		datos.append('nombre_clave','id_banco');
+		datos.append('valor',e.target.value);
+
+		valido = await verificar_clave_foranea(datos);
+		
+		if (valido) {
+			e.target.classList.add('is-valid');
+			e.target.classList.remove('is-invalid');
+			e.target.nextElementSibling.textContent = "";
+		}
+		else{
+			e.target.classList.remove('is-valid');
+			e.target.classList.add('is-invalid');
+			e.target.nextElementSibling.textContent = "El banco seleccionado no existe";
+		}
 	});
 }
 
@@ -178,7 +237,6 @@ async function validarEnvio(accion = "Registrar"){
 		
 		return false;
 	}
-	
 	else if(validar_select_multiple("banco_admin")==0)
 	{
 		mensajes('error',4000,'Debe ingresar un banco',
@@ -193,6 +251,138 @@ async function validarEnvio(accion = "Registrar"){
 		
 		return false;
 	}
+
+	//Validar integridad de selects
+	const apartamento = document.getElementById("apartamento_id"),
+	mensualidad = document.getElementById("mensualidad_id"),
+	estado = document.getElementById("estado"),
+	metodo_pago_total = document.querySelectorAll(".tipo_pago_admin"),
+	banco_total = document.querySelectorAll(".banco_admin");
+
+	// Apartamento
+	let valido = validarKeyUpSelect(/^[0-9]{1,11}$/,
+	apartamento,apartamento.nextElementSibling,"El valor del apartamento no es válido");
+
+	if (!valido) {
+		mensajes('error',4000,'Atención','El valor del apartamento no es válido');
+		return false;
+	}
+
+	let datos = new FormData();
+	datos.append('validar','validar_clave_foranea');
+	datos.append('tabla','apartamentos');
+	datos.append('nombre_clave','id_apartamento');
+	datos.append('valor',apartamento.value);
+
+	valido = await verificar_clave_foranea(datos);
+	
+	if (valido) {
+		apartamento.classList.add('is-valid');
+		apartamento.classList.remove('is-invalid');
+		apartamento.nextElementSibling.textContent = "";
+	}
+	else{
+		apartamento.classList.remove('is-valid');
+		apartamento.classList.add('is-invalid');
+		apartamento.nextElementSibling.textContent = "El apartamento seleccionado no existe";
+
+		mensajes('error',4000,'Atención','El apartamento seleccionado no existe');
+		return false;
+	}
+
+	// Mensualidad
+	valido = validarKeyUpSelect(/^[0-9]{1,11}$/,
+	mensualidad,mensualidad.nextElementSibling,"El valor de la mensualidad no es válido");
+
+	if (!valido) {
+		mensajes('error',4000,'Atención','El valor de la mensualidad no es válido');
+		return false;
+	}
+
+	datos = new FormData();
+	datos.append('validar','validar_clave_foranea');
+	datos.append('tabla','mensualidad');
+	datos.append('nombre_clave','id_mensualidad');
+	datos.append('valor',mensualidad.value);
+
+	valido = await verificar_clave_foranea(datos);
+	
+	if (valido) {
+		mensualidad.classList.add('is-valid');
+		mensualidad.classList.remove('is-invalid');
+		mensualidad.nextElementSibling.textContent = "";
+	}
+	else{
+		mensualidad.classList.remove('is-valid');
+		mensualidad.classList.add('is-invalid');
+		mensualidad.nextElementSibling.textContent = "La mensualidad seleccionada no existe";
+
+		mensajes('error',4000,'Atención','La mensualidad seleccionada no existe');
+		return false;
+	}
+
+	// Estado
+	valido = validarKeyUpSelect(/^[a-zA-z ]{3,20}$/,
+	estado,estado.nextElementSibling,"El valor del estado no es válido");
+
+	if (!valido) {
+		mensajes('error',4000,'Atención','El valor del estado no es válido');
+		return false;
+	}
+
+	// Metodo de pago
+	let error = false;
+	for (let metodo_pago of metodo_pago_total){
+		valido = validarKeyUpSelect(/^[a-zA-z ]{3,20}$/,
+		metodo_pago,metodo_pago.nextElementSibling,"El valor del método de pago no es válido");
+
+		if (!valido) {
+			mensajes('error',4000,'Atención','El valor del método de pago no es válido');
+			error = true;
+			break;
+		}
+	}
+
+	if (error) {return false;}
+
+	// Banco
+	error = false;
+
+	for (let banco of banco_total){
+		if (!(banco.checkVisibility())) continue;
+		valido = validarKeyUpSelect(/^[0-9]{1,11}$/,
+		banco,banco.nextElementSibling,"El valor del banco no es válido");
+
+		if (!valido) {
+			mensajes('error',4000,'Atención','El valor del banco no es válido');
+			error = true;
+			break;
+		}
+
+		datos = new FormData();
+		datos.append('validar','validar_clave_foranea');
+		datos.append('tabla','bancos');
+		datos.append('nombre_clave','id_banco');
+		datos.append('valor',banco.value);
+
+		valido = await verificar_clave_foranea(datos);
+		
+		if (valido) {
+			banco.classList.add('is-valid');
+			banco.classList.remove('is-invalid');
+			banco.nextElementSibling.textContent = "";
+		}
+		else{
+			banco.classList.remove('is-valid');
+			banco.classList.add('is-invalid');
+			banco.nextElementSibling.textContent = "El banco seleccionado no existe";
+
+			mensajes('error',4000,'Atención','El banco seleccionado no existe');
+			error = true;
+		}
+	}
+	
+	if (error) {return false;}
 	
 	return true;
 }
@@ -271,8 +461,7 @@ function validar_select_multiple(id) {
 	let selects = document.querySelectorAll("."+id);
 	let resultado = true;
 	selects.forEach(etiqueta_selec=>{
-		if (etiqueta_selec.checkVisibility()) {
-			console.log(etiqueta_selec,etiqueta_selec.checkVisibility())
+		if (etiqueta_selec.checkVisibility()) {			
 			if (etiqueta_selec.value == '') {
 				etiqueta_selec.classList.add('is-invalid')
 				etiqueta_selec.classList.remove('is-valid');
@@ -434,4 +623,47 @@ async function verificar_duplicados(datos,etiqueta){
 		return true;
 	}
 	return false;
+}
+
+function validarKeyUpSelect(er,etiqueta,etiquetamensaje,
+mensaje){
+    a = er.test(etiqueta.value);
+    
+    if(a){
+        etiqueta.classList.add('is-valid');
+        etiqueta.classList.remove('is-invalid');
+
+        if (etiqueta.id == "contra" || etiqueta.id == "confir_contra") {
+            etiqueta.nextElementSibling.classList.remove('border-danger');
+            etiqueta.nextElementSibling.classList.remove('text-danger');
+
+            etiqueta.nextElementSibling.classList.add('border-success');
+            etiqueta.nextElementSibling.classList.add('text-success');
+        }
+        etiquetamensaje.textContent = "";
+        return 1;
+    }
+    else{
+        etiqueta.classList.add('is-invalid');
+        etiqueta.classList.remove('is-valid');
+
+        if (etiqueta.id == "contra" || etiqueta.id == "confir_contra") {
+            etiqueta.nextElementSibling.classList.remove('border-success');
+            etiqueta.nextElementSibling.classList.remove('text-success');
+
+            etiqueta.nextElementSibling.classList.add('border-danger');
+            etiqueta.nextElementSibling.classList.add('text-danger');
+        }
+        etiquetamensaje.textContent = mensaje;
+        return 0;
+    }
+}
+
+async function verificar_clave_foranea(datos){	
+	let data = await fetch("",{method:"POST", body:datos}).then(res=>{		
+		let result = res.json()
+		return result;
+	});
+
+	return data		
 }

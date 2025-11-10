@@ -1,19 +1,21 @@
 <?php    
-    require_once "vista/componentes/sesion.php";
-    require_once "modelo/anio_fiscal_modelo.php";    
+    use haydee\ayuda\Sesiones;
+    Sesiones::verificarSesion();
+
+    use haydee\modelo\AnioFiscal;
 
     if (isset($_POST["operacion"])){        
         $operacion = $_POST["operacion"];
 
         if ($operacion == "consultar_anios_fiscales"){
-            $anio_fiscal_obj = new Anio_fiscal();
+            $anio_fiscal_obj = new AnioFiscal();
             $anio_fiscal_obj->registrar_bitacora(CONSULTAR, GESTIONAR_ANIO_FISCAL, "TODOS LOS AÑOS FISCALES");
 
             echo  json_encode($anio_fiscal_obj->realizar_consulta("consultar"));
         }
 
         elseif ($operacion == "registrar") {
-            $anio_fiscal_obj = new Anio_fiscal();
+            $anio_fiscal_obj = new AnioFiscal();
 
             $fecha_inicio = $_POST["fecha_inicio"];
             $fecha_cierre = $_POST["fecha_cierre"];
@@ -34,7 +36,7 @@
             echo  json_encode($resultado);
         }
         elseif ($operacion == "consulta_especifica"){
-            $anio_fiscal_obj = new Anio_fiscal();
+            $anio_fiscal_obj = new AnioFiscal();
 
             $id_anio_fiscal = $_POST["id_anio_fiscal"];
 
@@ -44,7 +46,7 @@
         }
 
         elseif ($operacion == "modificar") {
-            $anio_fiscal_obj = new Anio_fiscal();
+            $anio_fiscal_obj = new AnioFiscal();
 
             $id_anio_fiscal = $_POST["id_anio_fiscal"];
             $fecha_inicio = $_POST["fecha_inicio"];
@@ -68,7 +70,7 @@
         }
 
         elseif ($operacion == "eliminar") {
-            $anio_fiscal_obj = new Anio_fiscal();
+            $anio_fiscal_obj = new AnioFiscal();
             
             $id_anio_fiscal = $_POST["id_anio_fiscal"];
             

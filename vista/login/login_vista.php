@@ -6,10 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="shortcut icon" href="recursos/img/utils/logo-haydee.ico" type="image/x-icon">
     <title>Inicio de Sesión</title>
-    <!-- <link rel="icon" href="recursos/img/logo_ico.png"> -->
     <link rel="stylesheet" href="recursos/css/estilos_login.css">
     <link rel="stylesheet" href="recursos/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" href="recursos/bootstrap-icons/bootstrap-icons.min.css"> 
+    <link rel="stylesheet" href="recursos/bootstrap-icons/bootstrap-icons.min.css">
+    <link rel="stylesheet" type="text/css" href="recursos/css/estilos_modal_carga.css">
     <style type="text/css">
         @media only screen and (max-width: 500px) {
             .g-recaptcha {
@@ -27,7 +27,7 @@
     } ?>
     <main>
         <div class="container-fluid">
-            <div class="row p-5 justify-content-end">                
+            <div class="row p-5 justify-content-end">
                 <div class="col-md-6 col-lg-4 col-sm-12">
                     <div class="card mt-5 shadow-lg rounded p-2 px-3">
                         <div class="card-body">

@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html>
-
 <head>
     <title>Usuarios | Perfil</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -76,7 +75,7 @@
             require_once "vista/componentes/navbar.php";
             ?>
 
-            <div class="col d-flex flex-column  min-vh-100 gris">
+            <div class="col d-flex flex-column min-vh-100 gris">
 
                 <?php
                 require_once "vista/componentes/header.php";
@@ -299,12 +298,12 @@
 
                 <?php
                 require_once 'vista/componentes/modal_carga.php';
-                require_once "vista/componentes/footer.php";
                 require_once "vista/componentes/script.php";
                 ?>
             </div>
         </div>
     </div>
+    <?php require_once "vista/componentes/footer.php"; ?>
     <script type="text/javascript" src="recursos/js/validaciones/usuario_perfil_validar.js"></script>
     <script type="text/javascript" src="recursos/js/consultas_ajax/usuario_perfiles.js"></script>
 

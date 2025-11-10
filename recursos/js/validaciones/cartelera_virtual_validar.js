@@ -25,9 +25,10 @@ $(document).ready(function () {
 
 
     document.getElementById('prioridad').addEventListener("change",e=>{
-        e.target.classList.add('is-valid');
-        e.target.classList.remove('is-invalid');
-        e.target.nextElementSibling.textContent = "";
+        let valido = validarKeyUp(/^[0-9]{1}$/,
+        e.target,e.target.nextElementSibling,"El valor de la prioridad no es válido");
+
+        if (!valido) return;
     });
 
     /* ----------  BOTÓN  ---------- */
@@ -60,7 +61,7 @@ function mensajes(icono, tiempo, titulo, mensaje) {
         confirmButtonColor: "#e01d22",
     });
 } // Fin de mensajes
-document.getElementById('')
+
 async function validarEnvio(accion, regexTexto) {
     if (!validarKeyUp(/^[A-Za-zÁÉÍÓÚáéíóú0-9.,;()'"!?¡¿%°\- ]{3,100}$/, document.getElementById("titulo"), document.getElementById("titulo").nextElementSibling, 'ingresar un título válido (mín. 3 caracteres y max. 100)'))
         { mensajes("error", 2000, "Error", "Debe ingresar un título válido"); return false; }
@@ -73,6 +74,13 @@ async function validarEnvio(accion, regexTexto) {
     }
     if (!validar_select("prioridad")) {
         mensajes("error", 2000, "Error", "Debe seleccionar la prioridad"); return false;
+    }else{
+        let valido = validarKeyUp(/^[0-9]{1}$/,
+        document.getElementById('prioridad'),document.getElementById('prioridad').nextElementSibling,"El valor de la prioridad no es válido");
+        if (!valido) {
+            mensajes("error", 2000, "Atención", "El valor de la prioridad no es válido");
+            return false;
+        }
     }
     return true;
 }

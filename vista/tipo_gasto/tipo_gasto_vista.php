@@ -1,6 +1,6 @@
+<?php use haydee\modelo\TipoGasto; ?>
 <!DOCTYPE html>
 <html>
-
 <head>
     <title>Tipos de Gastos | Inicio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,8 +10,8 @@
 </head>
 
 <body id="body-pd" class="body-pd">
-    <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Tipo_gasto::tiene_permiso(GESTIONAR_TIPO_GASTO, ELIMINAR) ?>">
-    <input type="text" hidden="" id="permiso_editar" value="<?php echo Tipo_gasto::tiene_permiso(GESTIONAR_TIPO_GASTO, MODIFICAR) ?>">
+    <input type="text" hidden="" id="permiso_eliminar" value="<?php echo TipoGasto::tiene_permiso(GESTIONAR_TIPO_GASTO, ELIMINAR) ?>">
+    <input type="text" hidden="" id="permiso_editar" value="<?php echo TipoGasto::tiene_permiso(GESTIONAR_TIPO_GASTO, MODIFICAR) ?>">
     <div class="container-fluid">
         <div class="row flex-nowrap ">
 
@@ -35,7 +35,7 @@
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="card p-4">
-                                <?php if (Tipo_gasto::tiene_permiso(GESTIONAR_TIPO_GASTO, REGISTRAR)) : ?>
+                                <?php if (TipoGasto::tiene_permiso(GESTIONAR_TIPO_GASTO, REGISTRAR)) : ?>
                                     <div class="button mb-4">
                                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_tipo_gasto">Nuevo Tipo</button>
                                     </div><br>
@@ -92,15 +92,14 @@
                 </main>
                 <?php
                 require_once 'vista/componentes/modal_carga.php';
-                require_once "vista/componentes/footer.php";
                 require_once "vista/componentes/script.php";
                 ?>
             </div>
         </div>
     </div>
-
-<script type="text/javascript" src="recursos/js/validaciones/tipo_gasto_validar.js"></script>
-<script type="text/javascript" src="recursos/js/consultas_ajax/tipo_gasto_ajax.js"></script>
+    <?php require_once "vista/componentes/footer.php"; ?>
+    <script type="text/javascript" src="recursos/js/validaciones/tipo_gasto_validar.js"></script>
+    <script type="text/javascript" src="recursos/js/consultas_ajax/tipo_gasto_ajax.js"></script>
 
 </body>
 

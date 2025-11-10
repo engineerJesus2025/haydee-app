@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 		headerpd = document.getElementById(headerId);
 
 		let enlaces = document.querySelectorAll(".collapse a");
+		let barra_inferior = document.querySelector(".barra_inferior");
 
 		if (bodypd === null) {
 			bodypd = document.querySelector("body")
@@ -31,6 +32,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
 				bodypd.classList.toggle('body-pd');
 				
 				headerpd.classList.toggle('body-pd');
+
+				barra_inferior.classList.toggle('ajustar');
 
 				if (anchoVentana < 769) return;
 				

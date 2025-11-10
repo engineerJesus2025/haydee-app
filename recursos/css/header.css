@@ -4,7 +4,7 @@
 
 body{	
 	font-family: 'Nunito', sans-serif;
-	transition: .5s
+	transition: padding-left .5s
 }
 
 header{
@@ -23,7 +23,7 @@ header{
 	justify-content: space-between;
 	padding: 0 1rem;	
 	z-index: 100;
-	transition: .5s
+	transition:  .5s
 }
 
 .header_toggle{
@@ -43,7 +43,7 @@ header{
 	height: calc(100vh - 1.8rem);
 	background-color: #3939a9;
 	padding: .5rem 1rem 0 0;
-	transition: .5s;
+	transition: width .5s, left .5s;
 	z-index: 100
 }
 
@@ -70,14 +70,15 @@ header{
 	font-weight: 800;
 }
 
-.nav_logo{margin-bottom: 2rem}
+.nav_logo{margin-bottom: 1rem}
 .nav_logo-icon{font-size: 1.25rem;color: #c7c6cB}
 .nav_logo-name{color: #F7F6FB;font-weight: 700}
 
 .nav_link{
 	position: relative;
 	color: #AFA5D9;
-	margin-bottom: .3rem;transition: .3s}
+	transition: .3s;
+}
 
 .nav_link:hover{color: #e7e6eB;}
 
@@ -99,7 +100,18 @@ header{
 	background-color: #F7F6FB
 }
 
+.barra_inferior{
+	height: 100%;
+  	background-color: #3939a9;
+  	width: 68px;
+  	transition: width .5s;
+}
+
 .height-100{height:100vh}
+
+.ajustar{
+	width: 68px !important;
+}
 
 @media screen and (min-width: 768px)
 {
@@ -119,11 +131,13 @@ header{
 	.l-navbar{
 		left: 0;
 		padding: 1rem 1rem 0 0;
-		
 	}
 
 	.header .show{width: calc(60px + 156px)}
 
 	.body-pd{padding-left: calc(28px + 188px)}
 
+	.barra_inferior{
+	  	width: calc(60px + 156px);
+	}
 }

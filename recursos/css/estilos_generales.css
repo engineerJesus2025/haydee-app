@@ -1,8 +1,18 @@
 body{
 	background-color: rgb(245, 245, 245);
+	position: relative;
+	min-height: 100vh;
 }
 
 .img_svg {
   filter: invert(30%) sepia(10%) saturate(200%) hue-rotate(-21deg) brightness(1000%) contrast(200%);
 }
 
+#footer_global{
+	position: absolute;
+  	right: 0;  	
+  	left: 0;
+  	bottom: 0;
+  	z-index: 1030;
+  	background-color: #3939a9;
+}

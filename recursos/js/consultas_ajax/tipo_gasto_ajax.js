@@ -39,6 +39,12 @@ document.querySelector(`#modal_tipo_gasto`).addEventListener("hide.bs.modal",()=
 	document.querySelectorAll('.is-invalid').forEach(input=>input.classList.remove('is-invalid'));
 });	
 
+document.getElementById('header-toggle').addEventListener("click",e=>{
+	setTimeout(function(){
+		data_table.columns.adjust().draw();
+	},450);
+});
+
 //Si queremos registrar:
 async function registrar() {
 	let datos_consulta = new FormData();
@@ -47,7 +53,7 @@ async function registrar() {
 	datos_consulta.append("nombre_tipo_gasto", nombre_tipo_gasto);
 	datos_consulta.append('operacion','registrar'); // Asegúrate que coincida con el case del modelo PHP
 	
-	let respuesta = await query(datos_consulta,'text-secondary');
+	let respuesta = await query(datos_consulta,true);
 	modal.hide();
 	formulario_usar.reset();
 
@@ -241,7 +247,7 @@ async function modificar_formulario(e) {
 	datos_consulta.append('operacion','consulta_especifica');
 
 	//Llamamos a la funcion para hacer la consulta y guardamos los datos
-	data = await query(datos_consulta,'text-secondary');	
+	data = await query(datos_consulta,true);	
 	
 	// ahora seleccionamos los inputs
 	let nombre = formulario_usar.querySelector("#nombre_tipo_gasto");
@@ -288,7 +294,7 @@ async function modificar(id) {
 	datos_consulta.append('operacion','modificar');
 
 	//Llamamos a la funcion para hacer la consulta
-	let respuesta = await query(datos_consulta,'text-secondary');
+	let respuesta = await query(datos_consulta,true);
 
 	formulario_usar.reset(); //Limpiamos el formulario
  	modal.hide(); // escondemos el modal
@@ -331,8 +337,9 @@ async function last_id() {
 }
 
 // Aqui se hace la peticion AJAX
-async function query(datos,color_carga = 'text-light') {
-    document.getElementById('icono_carga').setAttribute("class",`spinner-border ${color_carga}`);
+async function query(datos,oscuro = false) {
+    if (oscuro) {document.getElementById('icono_carga').setAttribute("class",`loader_dark`);}
+    else{document.getElementById('icono_carga').setAttribute("class",`loader`);}
     
     let modal_carga = new bootstrap.Modal("#modal_carga");
     let mostrarModal = false;

@@ -19,9 +19,19 @@ class ComposerStaticInitac2d307f4ed514763a8119f3523066bb
         '79f66bc0a1900f77abe4a9a299057a0a' => __DIR__ . '/..' . '/starkbank/ecdsa/src/ellipticcurve.php',
         'ec07570ca5a812141189b1fa81503674' => __DIR__ . '/..' . '/phpunit/phpunit/src/Framework/Assert/Functions.php',
         '0754989a10baadda533479884b399278' => __DIR__ . '/..' . '/resend/resend-php/src/Resend.php',
+        '45444b0beefb92a98f8cd71d64878146' => __DIR__ . '/../..' . '/config/acciones.php',
+        '5f6ea70646faeb1e98e0fc6d80552182' => __DIR__ . '/../..' . '/config/modulos.php',
+        '42e3dc2cf7383276e8c418f14b63f194' => __DIR__ . '/../..' . '/config/config.php',
     );
 
     public static $prefixLengthsPsr4 = array (
+        'h' => 
+        array (
+            'haydee\\vista\\' => 13,
+            'haydee\\modelo\\' => 14,
+            'haydee\\controlador\\' => 19,
+            'haydee\\ayuda\\' => 13,
+        ),
         'Z' => 
         array (
             'ZipStream\\' => 10,
@@ -98,6 +108,22 @@ class ComposerStaticInitac2d307f4ed514763a8119f3523066bb
     );
 
     public static $prefixDirsPsr4 = array (
+        'haydee\\vista\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/vista',
+        ),
+        'haydee\\modelo\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/modelo',
+        ),
+        'haydee\\controlador\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/controlador',
+        ),
+        'haydee\\ayuda\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/ayuda',
+        ),
         'ZipStream\\' => 
         array (
             0 => __DIR__ . '/..' . '/maennchen/zipstream-php/src',

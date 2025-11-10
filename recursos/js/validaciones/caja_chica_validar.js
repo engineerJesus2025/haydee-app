@@ -86,10 +86,10 @@ $(document).ready(function(){
         }
 	});
 	
-	$("#boton_gasto_caja").on("click",function(e){
+	$("#boton_gasto_caja").on("click",async function(e){
 		let accion = (e.target.getAttribute("modificar"))?"Editar":"Registrar";		
 		e.preventDefault();
-		if(validarEnvio(accion)==true){
+		if(await validarEnvio(accion)==true){
 				Swal.fire({
 				title: "¿Estás seguro?",
 				text: `¿Está seguro que desea ${accion} este gasto?`,
@@ -141,6 +141,32 @@ $(document).ready(function(){
 			}			
 		}	
 	});
+
+	document.getElementById('mes_select').addEventListener("change",async e=>{
+		let valido = validarKeyUp(/^[0-9]{1,11}$/,
+		e.target,e.target.nextElementSibling,"El valor de la caja no es válido");
+
+		if (!valido) return;
+
+		let datos = new FormData();
+		datos.append('validar','validar_clave_foranea');
+		datos.append('tabla','caja_chica');
+		datos.append('nombre_clave','id_caja_chica');
+		datos.append('valor',e.target.value);
+
+		valido = await verificar_clave_foranea(datos);
+		
+		if (valido) {
+			e.target.classList.add('is-valid');
+			e.target.classList.remove('is-invalid');
+			e.target.nextElementSibling.textContent = "";
+		}
+		else{
+			e.target.classList.remove('is-valid');
+			e.target.classList.add('is-invalid');
+			e.target.nextElementSibling.textContent = "La caja chica seleccionada no existe";
+		}
+	});
 });
 
 document.getElementById("boton_formulario_observacion").addEventListener("click",e=>{
@@ -181,7 +207,7 @@ document.getElementById("descripcion_input").addEventListener("keyup",e=>{
 	validarKeyUp(/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]{0,100}$/, document.getElementById("descripcion_input"),document.getElementById("descripcion_input").nextElementSibling,'Numeros y letras, Maximo 100 caracteres');
 });
 
-function validarEnvio(){
+async function validarEnvio(){
 	if(validarFecha(document.getElementById("fecha"))==0)
 	{
 		mensajes('error',4000,'Verifique la fecha Ingresada',
@@ -218,15 +244,45 @@ function validarEnvio(){
         document.querySelector("#concepto"),document.querySelector("#concepto").nextElementSibling,'Solo texto, no mas de 100 caracteres'
         )==0)
 	{
-		mensajes('error',4000,'Atención',
-		'El formato debe ser sólo en letras, no mas de 100 caracteres');
+		mensajes('error',4000,'Atención','El formato debe ser sólo en letras, no mas de 100 caracteres');
 		
 		return false;
 	}
+
+	const caja_chica = document.getElementById('mes_select');
+	let valido = validarKeyUp(/^[0-9]{1,11}$/,caja_chica,caja_chica.nextElementSibling,"El valor de la caja no es válido");
+
+	if (!valido) {
+		mensajes('error',4000,'Atención','El valor de la caja no es válido');
+		return false;
+	}
+
+	let datos = new FormData();
+	datos.append('validar','validar_clave_foranea');
+	datos.append('tabla','caja_chica');
+	datos.append('nombre_clave','id_caja_chica');
+	datos.append('valor',caja_chica.value);
+
+	valido = await verificar_clave_foranea(datos);
+	
+	if (valido) {
+		caja_chica.classList.add('is-valid');
+		caja_chica.classList.remove('is-invalid');
+		caja_chica.nextElementSibling.textContent = "";
+	}
+	else{
+		caja_chica.classList.remove('is-valid');
+		caja_chica.classList.add('is-invalid');
+		caja_chica.nextElementSibling.textContent = "La caja chica seleccionada no existe";
+
+		mensajes('error',4000,'Atención','La caja chica seleccionada no existe');
+		return false;
+	}
+
 	return true;
 }
 
-function validarEnvioReponerCaja(){
+async function validarEnvioReponerCaja(){
 	if(document.querySelector("#monto_reponer").value == 0)
 	{
 		document.querySelector("#monto_reponer").classList.add('is-invalid');
@@ -250,7 +306,38 @@ function validarEnvioReponerCaja(){
 		'El monto colocado no cubre todos los gasto de caja');
 
 		return false;
-	}	
+	}
+
+	const caja_chica = document.getElementById('mes_select');
+	let valido = validarKeyUp(/^[0-9]{1,11}$/,caja_chica,caja_chica.nextElementSibling,"El valor de la caja no es válido");
+
+	if (!valido) {
+		mensajes('error',4000,'Atención','El valor de la caja no es válido');
+		return false;
+	}
+
+	let datos = new FormData();
+	datos.append('validar','validar_clave_foranea');
+	datos.append('tabla','caja_chica');
+	datos.append('nombre_clave','id_caja_chica');
+	datos.append('valor',caja_chica.value);
+
+	valido = await verificar_clave_foranea(datos);
+	
+	if (valido) {
+		caja_chica.classList.add('is-valid');
+		caja_chica.classList.remove('is-invalid');
+		caja_chica.nextElementSibling.textContent = "";
+	}
+	else{
+		caja_chica.classList.remove('is-valid');
+		caja_chica.classList.add('is-invalid');
+		caja_chica.nextElementSibling.textContent = "La caja chica seleccionada no existe";
+
+		mensajes('error',4000,'Atención','La caja chica seleccionada no existe');
+		return false;
+	}
+	
 	return true;
 }
 
@@ -359,4 +446,13 @@ function verificarReposicionExcedente(){
 		let input_cambio = document.getElementById("monto_cambio_reponer");
 		return (parseFloat(input_cambio.value) > fondo_gastado);
 	}
+}
+
+async function verificar_clave_foranea(datos){	
+	let data = await fetch("",{method:"POST", body:datos}).then(res=>{		
+		let result = res.json()
+		return result;
+	});
+
+	return data		
 }

@@ -71,18 +71,48 @@ $(document).ready(function(){
 	});
 
 	document.getElementById('sexo').addEventListener("change",e=>{
+		let valido = validarKeyUp(/^[A-Za-z\b]{3,20}$/,
+		e.target,e.target.nextElementSibling,"El valor del sexo ingresado no es válido");
+
+		if (!valido) return;
+
 		e.target.classList.add('is-valid');
 		e.target.classList.remove('is-invalid');
 		e.target.nextElementSibling.textContent = "";
 	});
 
-	document.getElementById('apartamento_id').addEventListener("change",e=>{
-		e.target.classList.add('is-valid');
-		e.target.classList.remove('is-invalid');
-		e.target.nextElementSibling.textContent = "";
+	document.getElementById('apartamento_id').addEventListener("change",async e=>{
+		let valido = validarKeyUp(/^[0-9]{1,11}$/,
+		e.target,e.target.nextElementSibling,"El valor del apartamento ingresado no es válido");
+
+		if (!valido) return;
+
+		let datos = new FormData();
+		datos.append('validar','validar_clave_foranea');
+		datos.append('tabla','apartamentos');
+		datos.append('nombre_clave','id_apartamento');
+		datos.append('valor',e.target.value);
+
+		valido = await verificar_clave_foranea(datos);
+		
+		if (valido) {
+			e.target.classList.add('is-valid');
+			e.target.classList.remove('is-invalid');
+			e.target.nextElementSibling.textContent = "";
+		}
+		else{
+			e.target.classList.remove('is-valid');
+			e.target.classList.add('is-invalid');
+			e.target.nextElementSibling.textContent = "El apartamento seleccionado no existe";
+		}		
 	});
 
 	document.getElementById('tipo_vinculo').addEventListener("change",e=>{
+		let valido = validarKeyUp(/^[A-Za-z\b]{3,20}$/,
+		e.target,e.target.nextElementSibling,"El valor del tipo de vinculo ingresado no es válido");
+
+		if (!valido) return;
+
 		e.target.classList.add('is-valid');
 		e.target.classList.remove('is-invalid');
 		e.target.nextElementSibling.textContent = "";
@@ -134,6 +164,17 @@ async function validarEnvio_habitantes(accion = "Registrar"){
 		'El formato debe ser sólo en números');
 		
 		return false;
+	}
+	else if(cedula_an != $("#cedula").val()){
+		let datos = new FormData(); 
+		datos.append('validar','cedula');
+		datos.append('cedula',$("#cedula").val());
+		res = await verificar_duplicados_habitantes(datos);
+		// revisamos si esta duplicado con otra cedula
+		if(res){
+			mensajes('error',4000,'Esta cedula ya esta registrada','Esta cedula esta registrada, debe ingresar otra.');
+			return false;
+		}
 	}
 	else if(validarKeyUp(
         /^[A-Za-z \b]{3,30}$/,
@@ -203,30 +244,8 @@ async function validarEnvio_habitantes(accion = "Registrar"){
 		
 		return false;
 	}
-	
-	if (accion == "Registrar") {
-		
-	}else if (accion == "Editar"){
-		datos = new FormData();
-		
-		datos.append("id_habitane",id_modificar_habitantes);
-	}
-	
-	// si el valor de correo no es el mismo de antes:
-	if(cedula_an != $("#cedula").val()){
-		datos = new FormData(); 
-		datos.append('validar','cedula');
-		datos.append('cedula',$("#cedula").val());
-		res = await verificar_duplicados_habitantes(datos);
-		// revisamos si esta duplicado con otra cedula
-		if(res){
-			mensajes('error',4000,'Esta cedula ya esta registrada','Esta cedula esta registrada, debe ingresar otra.');
-			return false;
-		}
-	}
-	
-	if(tipo_vinculo_an != $("#tipo_vinculo").val()){
-		datos = new FormData(); 
+	else if(tipo_vinculo_an != $("#tipo_vinculo").val()){
+		let datos = new FormData(); 
 		datos.append('validar','tipo_vinculo');
 		datos.append('tipo_vinculo',$("#tipo_vinculo").val());
 		datos.append('apartamento_id',$("#apartamento_id").val());
@@ -238,6 +257,72 @@ async function validarEnvio_habitantes(accion = "Registrar"){
 		}
 	}
 	
+	if (accion == "Registrar") {
+		
+	}else if (accion == "Editar"){
+		let  datos = new FormData();		
+		datos.append("id_habitane",id_modificar_habitantes);
+	}
+
+	let sexo = document.getElementById('sexo');
+	let valido = validarKeyUp(/^[A-Za-z\b]{3,20}$/,
+	sexo,sexo.nextElementSibling,"El valor del sexo ingresado no es válido");
+
+	if (!valido) {
+		mensajes('error',4000,'Atención','El valor del sexo ingresado no es válido');
+		return false;
+	}
+
+	sexo.classList.add('is-valid');
+	sexo.classList.remove('is-invalid');
+	sexo.nextElementSibling.textContent = "";
+	
+
+	let apartamento = document.getElementById('apartamento_id');
+	valido = validarKeyUp(/^[0-9]{1,11}$/,
+	apartamento,apartamento.nextElementSibling,"El valor del apartamento ingresado no es válido");
+
+	if (!valido) {
+		mensajes('error',4000,'Atención','El valor del apartamento ingresado no es válido');
+		return false;
+	}
+
+	let datos = new FormData();
+	datos.append('validar','validar_clave_foranea');
+	datos.append('tabla','apartamentos');
+	datos.append('nombre_clave','id_apartamento');
+	datos.append('valor',apartamento.value);
+
+	valido = await verificar_clave_foranea(datos);
+	
+	if (valido) {
+		apartamento.classList.add('is-valid');
+		apartamento.classList.remove('is-invalid');
+		apartamento.nextElementSibling.textContent = "";
+	}
+	else{
+		apartamento.classList.remove('is-valid');
+		apartamento.classList.add('is-invalid');
+		apartamento.nextElementSibling.textContent = "El apartamento seleccionado no existe";
+		mensajes('error',4000,'Atención','El apartamento seleccionado no existe');
+		return false;
+	}		
+	
+
+	let tipo_vinculo = document.getElementById('tipo_vinculo');
+	valido = validarKeyUp(/^[A-Za-z\b]{3,20}$/,
+	tipo_vinculo,tipo_vinculo.nextElementSibling,"El valor del tipo de vinculo ingresado no es válido");
+
+	if (!valido) {
+		mensajes('error',4000,'Atención','El valor del tipo de vinculo ingresado no es válido');
+		return false;
+	}
+
+	tipo_vinculo.classList.add('is-valid');
+	tipo_vinculo.classList.remove('is-invalid');
+	tipo_vinculo.nextElementSibling.textContent = "";
+	
+
 	return true;
 }
 
@@ -330,4 +415,13 @@ async function verificar_duplicados_habitantes(datos){
 		return true;
 	}
 	return false;
+}
+
+async function verificar_clave_foranea(datos){	
+	let data = await fetch("",{method:"POST", body:datos}).then(res=>{		
+		let result = res.json()
+		return result;
+	});
+
+	return data		
 }

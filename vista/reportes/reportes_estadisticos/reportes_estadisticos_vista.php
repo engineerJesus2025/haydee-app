@@ -56,13 +56,12 @@
                         </div>
                     </div>
                 </main>
-                <?php
-                require_once "vista/componentes/footer.php";
+                <?php                
                 require_once "vista/componentes/script.php";
                 ?>
             </div>
         </div>
     </div>
+<?php require_once "vista/componentes/footer.php"; ?>
 </body>
-
 </html>

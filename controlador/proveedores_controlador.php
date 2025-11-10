@@ -1,6 +1,9 @@
 <?php
-require_once "vista/componentes/sesion.php";
-require_once "modelo/proveedores_modelo.php";
+use haydee\ayuda\Sesiones;
+Sesiones::verificarSesion();
+
+use haydee\modelo\Proveedores;
+
 $proveedor = new Proveedores();
 
 if(isset($_POST["operacion"])){

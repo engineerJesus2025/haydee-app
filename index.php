@@ -1,7 +1,6 @@
 <?php
-    require_once "config/acciones.php";
-    require_once "config/modulos.php";
-    require_once "ayuda/ayuda.php";
+    require_once 'vendor/autoload.php';
+    
     session_start();
     $pagina = "login_controlador.php";
 
@@ -15,6 +14,4 @@
     if(is_file("controlador/" . $pagina)){
         require_once "controlador/" . $pagina;
     }
-
-
 ?>

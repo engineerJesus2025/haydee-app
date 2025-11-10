@@ -1,6 +1,6 @@
+<?php use haydee\modelo\Pagos; ?>
 <!DOCTYPE html>
 <html>
-
 <head>
     <title>Pagos | Inicio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -95,7 +95,6 @@
                 </main>
                 <?php
                 require_once 'vista/componentes/modal_carga.php';
-                require_once "vista/componentes/footer.php";
                 require_once "vista/componentes/script.php";
                 ?>
                 <div class="modal fade" id="modal_vista_previa" tabindex="-1" aria-labelledby="modal_vista_previa_label"
@@ -207,7 +206,7 @@
                         </div>
                     </div>
                 </div>
-
+<?php require_once "vista/componentes/footer.php"; ?>
 <script type="text/javascript" src="recursos/js/validaciones/detalles_pagos_validar.js"></script>
 <script type="text/javascript" src="recursos/js/validaciones/pagos_validar.js"></script>
 <script type="text/javascript" src="recursos/js/consultas_ajax/pagos_ajax.js"></script>

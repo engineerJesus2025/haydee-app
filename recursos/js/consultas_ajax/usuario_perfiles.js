@@ -157,7 +157,7 @@ async function modificar() {
 
 	datos_consulta.append('operacion','editar_perfil');
 
-	let respuesta = await query(datos_consulta,'text-secondary');
+	let respuesta = await query(datos_consulta,true);
 
 	if (!respuesta.estatus) {
 		mensajes('error',4000,'Atencion',respuesta.mensaje);
@@ -190,7 +190,7 @@ async function modificarContra() {
 
 	datos_consulta.append('operacion','cambiar_contrasenia');
 
-	let respuesta = await query(datos_consulta,'text-secondary');
+	let respuesta = await query(datos_consulta,true);
 
 	if (!respuesta.estatus) {
 		mensajes('error',4000,'Atencion',respuesta.mensaje);
@@ -204,8 +204,9 @@ async function modificarContra() {
 	modal.hide();
 }
 
-async function query(datos,color_carga = 'text-light') {
-    document.getElementById('icono_carga').setAttribute("class",`spinner-border ${color_carga}`);
+async function query(datos,oscuro = false) {
+    if (oscuro) {document.getElementById('icono_carga').setAttribute("class",`loader_dark`);}
+    else{document.getElementById('icono_carga').setAttribute("class",`loader`);}
     
 	try{
 		const res = await fetch("", { method: "POST", body: datos });

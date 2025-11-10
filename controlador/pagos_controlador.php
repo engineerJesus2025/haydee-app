@@ -1,19 +1,21 @@
 <?php
-require_once "vista/componentes/sesion.php";
-require_once("modelo/pagos_modelo.php");
-require_once("modelo/banco_modelo.php");
-require_once("modelo/detalles_pago_modelo.php");
-require_once("modelo/pagos_mensualidad_modelo.php");
-require_once("modelo/bancos_transacciones_modelo.php");
-require_once("modelo/apartamentos_modelo.php");
-require_once("modelo/notificaciones_modelo.php");
+use haydee\ayuda\Sesiones;
+Sesiones::verificarSesion();
+
+use haydee\modelo\Banco;
+use haydee\modelo\Pagos;
+use haydee\modelo\Apartamento;
+use haydee\modelo\DetallesPago;
+use haydee\modelo\PagosMensualidad;
+use haydee\modelo\BancosTransacciones;
+use haydee\modelo\Notificaciones;
 
 $obj_pago = new Pagos(); // Objeto pago
 $obj_banco = new Banco(); // Objeto banco
 $obj_apartamento = new Apartamento(); // Objeto apartamento
-$obj_detalles_pago = new Detalles_pago(); // Objeto detalles pago
-$obj_pagos_mensualidad = new Pagos_mensualidad(); // Objeto pagos mensualidad
-$obj_bancos_transacciones = new Bancos_transacciones(); // Objeto bancos transacciones
+$obj_detalles_pago = new DetallesPago(); // Objeto detalles pago
+$obj_pagos_mensualidad = new PagosMensualidad(); // Objeto pagos mensualidad
+$obj_bancos_transacciones = new BancosTransacciones(); // Objeto bancos transacciones
 $notificacion_obj = new Notificaciones(); // Objeto notificaciones
 
 if (isset($_SESSION["rol"]) && $_SESSION["rol"] != "Propietario") {
@@ -490,7 +492,6 @@ if (isset($_SESSION["rol"]) && $_SESSION["rol"] != "Propietario") {
                         }
                         $imagen_bancaria_index++;
                     }
-// [1,2,0,1]
                     elseif ($_POST['imagen_nueva'][$indice] == '1' && isset($_POST['imagen_existente'][$imagen_existente_index])) {
                         $imagen_detalle = $_POST['imagen_existente'][$imagen_existente_index];
                         $imagen_existente_index++;
@@ -535,6 +536,15 @@ if (isset($_SESSION["rol"]) && $_SESSION["rol"] != "Propietario") {
             $obj_bancos_transacciones->set_referencia($_POST["referencia"]);
             echo json_encode($obj_bancos_transacciones->realizar_consulta('validar'));
         }
+        elseif ($validar == "validar_clave_foranea") {
+            $tabla = $_POST["tabla"];
+            $nombre_clave = $_POST["nombre_clave"];
+            $valor = $_POST["valor"];
+            
+            $resultado = $obj_pago->realizar_consulta('validar_clave_foranea',["tabla"=>$tabla,"nombre_clave"=>$nombre_clave,"valor"=>$valor]);
+            
+            echo json_encode($resultado);
+        }
 
         exit;
     }
@@ -542,7 +552,8 @@ if (isset($_SESSION["rol"]) && $_SESSION["rol"] != "Propietario") {
     require_once "vista/pagos/pagos_vista.php";
 
     // ===================== USUARIO ========================
-} else { //date("Y-m-d")  ==================================== DETALLES PAGOS ====================================
+} 
+else { //date("Y-m-d")  ==================================== DETALLES PAGOS 
     if (isset($_POST["operacion"])) {
         $operacion = $_POST["operacion"];
 
@@ -991,7 +1002,6 @@ if (isset($_SESSION["rol"]) && $_SESSION["rol"] != "Propietario") {
                         }
                         $imagen_bancaria_index++;
                     }
-// [1,2,0,1]
                     elseif ($_POST['imagen_nueva'][$indice] == '1' && isset($_POST['imagen_existente'][$imagen_existente_index])) {
                         $imagen_detalle = $_POST['imagen_existente'][$imagen_existente_index];
                         $imagen_existente_index++;
@@ -1033,6 +1043,15 @@ if (isset($_SESSION["rol"]) && $_SESSION["rol"] != "Propietario") {
         if ($validar == "referencia") {
             $obj_bancos_transacciones->set_referencia($_POST["referencia"]);
             echo json_encode($obj_bancos_transacciones->realizar_consulta('validar'));
+        }
+        elseif ($validar == "validar_clave_foranea") {
+            $tabla = $_POST["tabla"];
+            $nombre_clave = $_POST["nombre_clave"];
+            $valor = $_POST["valor"];
+            
+            $resultado = $obj_pago->realizar_consulta('validar_clave_foranea',["tabla"=>$tabla,"nombre_clave"=>$nombre_clave,"valor"=>$valor]);
+            
+            echo json_encode($resultado);
         }
 
         exit;

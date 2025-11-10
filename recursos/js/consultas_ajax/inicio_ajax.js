@@ -37,17 +37,48 @@ async function cargaInicio() {
     datos_consulta.append("operacion", "consulta_inicio_grafico");
 
     let data = await query(datos_consulta);
-	console.log(data)
+	
     if(!(data.estatus == undefined)){
 		mensajes('error',4000,'Atencion', data.mensaje);
 		return;
 	}
-	const ctx_1 = document.getElementById('canva_1').getContext('2d');
-	const ctx_2 = document.getElementById('canva_2').getContext('2d');	
 
-	if (!(data[0].valor == 0 && data[1].valor == 0)) {
-		document.getElementById('b_moroso').textContent = (data[0]?.valor?.toFixed(2) || 0) + " Bs.";
-		document.getElementById('b_solvente').textContent = (data[1]?.valor?.toFixed(2) || 0) + " Bs.";
+	const titulo_1 = document.createElement("h5"),
+	titulo_2 = document.createElement("h5");
+
+	titulo_1.classList.add("text-center");
+	titulo_1.textContent = "Deudas de apartamentos";
+	titulo_2.classList.add("text-center");
+	titulo_2.textContent = "Resumen de balance del mes";
+
+	document.getElementById("esqueleto_titulo_1").replaceWith(titulo_1);
+	document.getElementById("esqueleto_titulo_2").replaceWith(titulo_2);
+
+	const ctx_1 = document.getElementById('canva_1').getContext('2d');
+	const ctx_2 = document.getElementById('canva_2').getContext('2d');
+
+	if (!(data[0].valor == 0 && data[1].valor == 0) && !(data[0].valor == null && data[1].valor == null)) {
+		const dato_1_1 = document.createElement("p"), b_dato_1_1 = document.createElement("b"),
+		dato_2_1 = document.createElement("p"), b_dato_2_1 = document.createElement("b");
+
+		dato_1_1.id = "b_moroso";
+		dato_1_1.textContent = "Total de deuda de los apartamentos: " ;
+
+		b_dato_1_1.classList.add("text-danger");
+		b_dato_1_1.textContent = (data[0]?.valor?.toFixed(2) || 0) + " Bs.";
+
+		dato_2_1.textContent = "Total de ingresos de los apartamentos: " ;
+		dato_2_1.id = "b_solvente";
+
+		b_dato_2_1.textContent = (data[1]?.valor?.toFixed(2) || 0) + " Bs.";
+		b_dato_2_1.classList.add("text-success");
+
+		dato_1_1.appendChild(b_dato_1_1);
+		dato_2_1.appendChild(b_dato_2_1);
+
+		document.getElementById('esqueleto_dato_1_1').replaceWith(dato_1_1);
+		document.getElementById('esqueleto_dato_2_1').replaceWith(dato_2_1);
+
 		graficaChart_1 = new Chart(ctx_1, {
 		    type: 'pie',
 		    data: {
@@ -66,20 +97,38 @@ async function cargaInicio() {
 		        }
 		    }
 		});
+		document.getElementById('esqueleto_canva_1').remove();
+		document.getElementById("canva_1").removeAttribute("hidden");
 	}
 	else{
-		document.getElementById('div_alert_1').textContent = "No hay Datos para el gráfico";
 		document.getElementById('div_alert_1').removeAttribute("hidden");
-		canva_borrar_1 = document.getElementById('canva_1');
-		canva_borrar_1.parentElement.removeChild(canva_borrar_1);
-
-		document.getElementById('b_moroso').setAttribute("hidden");
-		document.getElementById('b_solvente').setAttribute("hidden");
+		document.getElementById('esqueleto_canva_1').remove();
+		document.getElementById('canva_1').remove();
+		document.getElementById('esqueleto_dato_1_1').remove();
+		document.getElementById('esqueleto_dato_2_1').remove();
 	}
-
+	
 	if (!(data[2].valor == null && data[3].valor == null)) {
-		document.getElementById('b_gastos').textContent = (data[2]?.valor?.toFixed(2) || 0) + " Bs.";
-		document.getElementById('b_ingresos').textContent = (data[3]?.valor?.toFixed(2) || 0) + " Bs.";
+		const dato_1_2 = document.createElement("p"), b_dato_1_2 = document.createElement("b"),
+		dato_2_2 = document.createElement("p"), b_dato_2_2 = document.createElement("b");
+
+		dato_1_2.textContent = "Total de deuda de los apartamentos: " ;
+		dato_1_2.id = "b_gastos";
+
+		b_dato_1_2.textContent = (data[2]?.valor?.toFixed(2) || 0) + " Bs.";
+		b_dato_1_2.classList.add("text-danger");	
+
+		dato_2_2.textContent = "Total de ingresos de los apartamentos: " ;
+		dato_2_2.id = "b_ingresos";
+
+		b_dato_2_2.textContent = (data[3]?.valor?.toFixed(2) || 0) + " Bs.";
+		b_dato_2_2.classList.add("text-success");
+
+		dato_1_2.appendChild(b_dato_1_2);
+		dato_2_2.appendChild(b_dato_2_2);
+
+		document.getElementById('esqueleto_dato_1_2').replaceWith(dato_1_2);
+		document.getElementById('esqueleto_dato_2_2').replaceWith(dato_2_2);
 
 		graficaChart_2 = new Chart(ctx_2, {
 		    type: 'bar',
@@ -100,21 +149,21 @@ async function cargaInicio() {
 		        }
 		    }
 		});
+		document.getElementById('esqueleto_canva_2').remove();
+		document.getElementById("canva_1").removeAttribute("hidden");
 	}
 	else{
-		document.getElementById('div_alert_2').textContent = "No hay Datos para el gráfico";
 		document.getElementById('div_alert_2').removeAttribute("hidden");
-		canva_borrar_2 = document.getElementById('canva_2');
-		canva_borrar_2.parentElement.setAttribute("class","col-4");
-		canva_borrar_2.parentElement.removeChild(canva_borrar_2);
-
-		document.getElementById('b_gastos').parentElement.setAttribute("hidden",'');
-		document.getElementById('b_ingresos').parentElement.setAttribute("hidden",'');
+		document.getElementById('esqueleto_canva_2').remove();
+		document.getElementById('canva_2').remove();
+		document.getElementById('esqueleto_dato_1_2').remove();
+		document.getElementById('esqueleto_dato_2_2').remove();
 	}
 }
 
 async function consultarPublicaciones() {
 	if (fin) {return}
+	document.getElementById('carga_publicaciones').removeAttribute('hidden');
 
 	let datos_consulta = new FormData();
 
@@ -122,15 +171,21 @@ async function consultarPublicaciones() {
     datos_consulta.append("limite", limite);
     let data = await query(datos_consulta);
 
+    document.getElementById('carga_publicaciones').setAttribute('hidden','');
+
     if (data.length == 0) {
+    	fin = true;
+    	let mensaje = (limite === 0)?"No hay publicaciones":"No hay más resultados";
+
     	let div_no_hay = document.createElement("div");
     	div_no_hay.setAttribute("class","col-10 text-center my-2");
-    	div_no_hay.textContent = "No hay más resultados";
+    	div_no_hay.textContent = mensaje;
 
     	contenido_principal.appendChild(div_no_hay);
-    	fin = true;
+    	
     	return;
-    }
+    }    
+
     let fragment = document.createDocumentFragment();
     data.map(publicacion=>{
     	let div_card = document.createElement("div");
@@ -240,6 +295,17 @@ async function query(datos) {
 			modal_carga.hide();
 		}
 	}
+}
+
+function mensajes(icono,tiempo,titulo,mensaje){
+	Swal.fire({
+	icon:icono,
+    timer:tiempo,	
+    title:titulo,
+	text:mensaje,
+	confirmButtonText:'Aceptar',
+	confirmButtonColor: "#e01d22",
+	});
 }
 
 cargaInicio();

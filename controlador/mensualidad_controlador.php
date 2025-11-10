@@ -1,11 +1,12 @@
 <?php 
-require_once "vista/componentes/sesion.php";
-require_once "modelo/mensualidad_modelo.php";
-require_once "modelo/apartamentos_modelo.php";
-require_once "modelo/notificaciones_modelo.php";
-require_once "modelo/usuario_modelo.php";
-require_once "modelo/presupuesto_modelo.php";
-require_once "modelo/presupuesto_mensualidad_modelo.php";
+use haydee\ayuda\Sesiones;
+Sesiones::verificarSesion();
+
+use haydee\modelo\Mensualidad;
+use haydee\modelo\Presupuesto;
+use haydee\modelo\Notificaciones;
+use haydee\modelo\PresupuestoMensualidad;
+use haydee\modelo\Apartamento;
 
 if (isset($_POST["operacion"])){
     $operacion = $_POST["operacion"];
@@ -37,8 +38,7 @@ if (isset($_POST["operacion"])){
 
         $fecha = $_POST["fecha"];
         $fecha_formateada = str_replace('/', '-', $fecha);
-        $fecha_ymd = date("Y-m-d", strtotime($fecha_formateada));
-        
+        $fecha_ymd = date("Y-m-d", strtotime($fecha_formateada));        
         $presupuesto_obj->set_fecha($fecha_ymd); 
 
         echo json_encode($presupuesto_obj->realizar_consulta('consultar_presupuestos_mensualidades'));
@@ -63,31 +63,29 @@ if (isset($_POST["operacion"])){
         $mensualidad_obj->set_limite_mensualidad($limite_mensualidad);
 
         $resultado = $mensualidad_obj->realizar_consulta('registrar');
+        // lastId
+        // if ($resultado["estatus"]) {
+        //     $mensualidad_obj->registrar_bitacora(REGISTRAR, GESTIONAR_MENSUALIDAD, "Mensualidad del mes " . $mes . " del ". $anio . ". De " . $monto . " Bs.");
 
-        if ($resultado["estatus"]) {
-            $mensualidad_obj->registrar_bitacora(REGISTRAR, GESTIONAR_MENSUALIDAD, "Mensualidad del mes " . $mes . " del ". $anio . ". De " . $monto . " Bs.");        
+        //     $notificacion_obj = new Notificaciones();
+        //     $notificacion_obj->set_titulo("Mensualidad de Apartamentos");
+        //     $notificacion_obj->set_descripcion("Ya se asginaron las mensualidades de este mes");
+        //     $notificacion_obj->set_fecha(date("Y-m-d"));
+        //     $notificacion_obj->set_nombre_modulo('mensualidad');
+        //     $notificacion_obj->set_referencia($mes . "/" . $anio);
 
-            $usuario_obj = new Usuario();
-            $registro_usuarios = $usuario_obj->realizar_consulta('consultar');
+        //     $resultado_notificacion = $notificacion_obj->realizar_consulta('notificar_administradores');
 
-            $notificacion_obj = new Notificaciones();
-            foreach ($registro_usuarios as $usuarios) {
-                $notificacion_obj->set_titulo("Mensualidad de Apartamentos");
-                $notificacion_obj->set_descripcion("Ya se asginaron las mensualidades de este mes");
-                $notificacion_obj->set_fecha(date("Y-m-d"));
-                $notificacion_obj->set_usuario_id($usuarios["id_usuario"]);
-                $resultado_notificacion = $notificacion_obj->realizar_consulta('agregar_notificacion');
-
-                if (!$resultado_notificacion["estatus"]) {
-                    echo json_encode($resultado_notificacion);
-                    exit();
-                }
-            }
-        }
+        //     if (!$resultado_notificacion["estatus"]) {
+        //         echo json_encode($resultado_notificacion);
+        //         exit();
+        //     }
+            
+        // }
         echo json_encode($resultado);
     }
     else if($operacion == "registrar_presupuestos_mensualidades"){
-        $presupuesto_mensualidad_obj = new Presupuesto_mensualidad();
+        $presupuesto_mensualidad_obj = new PresupuestoMensualidad();
 
         $id_mensualidad = $_POST["id_mensualidad"];
         $id_presupuestos = explode(",", $_POST["id_presupuestos"]);
@@ -106,8 +104,33 @@ if (isset($_POST["operacion"])){
         }
         echo json_encode($resultado);
     }
+    else if($operacion == "registrar_bitacora"){
+        $monto = $_POST["monto"];
+        $mes = $_POST["mes"];
+        $anio = $_POST["anio"];
+
+        $mensualidad_obj = new Mensualidad();
+
+        $mensualidad_obj->registrar_bitacora(REGISTRAR, GESTIONAR_MENSUALIDAD, "Mensualidad del mes " . $mes . " del ". $anio . ". De " . $monto . " Bs.");
+
+        $notificacion_obj = new Notificaciones();
+        $notificacion_obj->set_titulo("Mensualidad de Apartamentos");
+        $notificacion_obj->set_descripcion("Ya se asginaron las mensualidades de este mes");
+        $notificacion_obj->set_fecha(date("Y-m-d"));
+        $notificacion_obj->set_nombre_modulo('mensualidad');
+        $notificacion_obj->set_referencia($mes . "/" . $anio);
+
+        $resultado_notificacion = $notificacion_obj->realizar_consulta('notificar_administradores');
+
+        if (!$resultado_notificacion["estatus"]) {
+            echo json_encode($resultado_notificacion);
+            exit();
+        }
+
+        echo json_encode($resultado_notificacion);
+    }
     else if ($operacion == "consultar_presupuestos_asociados"){
-        $presupuesto_mensualidad_obj = new Presupuesto_mensualidad();
+        $presupuesto_mensualidad_obj = new PresupuestoMensualidad();
 
         $ids_mensualidades = explode(",", $_POST["ids_mensualidades"]);
 
@@ -153,7 +176,7 @@ if (isset($_POST["operacion"])){
         echo json_encode($resultado);        
     }
     else if($operacion == "editar_presupuesto_mensualidades"){
-        $presupuesto_mensualidad_obj = new Presupuesto_mensualidad();
+        $presupuesto_mensualidad_obj = new PresupuestoMensualidad();
 
         $id_mensualidad = $_POST["id_mensualidad"];
         $id_presupuestos = $_POST["id_presupuestos"];

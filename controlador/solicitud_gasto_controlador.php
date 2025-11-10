@@ -1,8 +1,11 @@
 <?php
-require_once "vista/componentes/sesion.php";
-require_once "modelo/solicitud_gasto_modelo.php";
+use haydee\ayuda\Sesiones;
+Sesiones::verificarSesion();
 
-$solicitud_gasto_obj = new Solicitud_gasto();
+use haydee\modelo\Presupuesto;
+use haydee\modelo\SolicitudGasto;
+
+$solicitud_gasto_obj = new SolicitudGasto();
 $fecha_actual = date("Y-m");
 $presupuestos = $solicitud_gasto_obj->consultar_presupuesto($fecha_actual);
 
@@ -17,10 +20,10 @@ if (isset($_POST["operacion"])) {
     } 
 
     elseif ($operacion == "consulta_especifica") {
-    $solicitud_gasto_obj->set_id_solicitud($_POST["id_solicitud"]);
-    echo json_encode($solicitud_gasto_obj->realizar_consulta('consultar_solicitud_id'));
-    exit;
-}
+        $solicitud_gasto_obj->set_id_solicitud($_POST["id_solicitud"]);
+        echo json_encode($solicitud_gasto_obj->realizar_consulta('consultar_solicitud_id'));
+        exit;
+    }
 
     elseif ($operacion == "consultar_presupuesto") {
         // <-- CAMBIO: Se usan las variables correctas
@@ -32,13 +35,13 @@ if (isset($_POST["operacion"])) {
     }
 
     elseif ($operacion == "meses_anios_con_presupuesto") {
-    $respuesta = $solicitud_gasto_obj->listar_meses_anios_con_presupuesto();
-    echo json_encode([
-        "estatus" => true,
-        "data" => $respuesta
-    ]);
-    exit;
-}
+        $respuesta = $solicitud_gasto_obj->listar_meses_anios_con_presupuesto();
+        echo json_encode([
+            "estatus" => true,
+            "data" => $respuesta
+        ]);
+        exit;
+    }
 
     elseif ($operacion == "buscar_presupuesto_por_mes_anio") {
         // <-- CAMBIO: Se construye la fecha y se llama a la función correcta
@@ -105,6 +108,26 @@ if (isset($_POST["operacion"])) {
 
     elseif ($operacion == "ultimo_id") {
         echo json_encode($solicitud_gasto_obj->realizar_consulta('lastId'));
+    }
+
+    exit;
+}
+if (isset($_POST["validar"])) {
+    $validar = $_POST["validar"];
+
+    if ($validar == "validar_mes"){
+        $presupuesto_obj = new Presupuesto();
+
+        $presupuesto_obj->set_fecha($_POST["fecha"]);
+        
+        echo  json_encode($presupuesto_obj->realizar_consulta('consultar_mes_presupuesto'));
+    }
+    elseif ($validar == "validar_anio"){
+        $presupuesto_obj = new Presupuesto();
+
+        $presupuesto_obj->set_fecha($_POST["fecha"]);
+
+        echo  json_encode($presupuesto_obj->realizar_consulta('consultar_anio_presupuesto'));
     }
 
     exit;

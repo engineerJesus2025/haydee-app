@@ -1,12 +1,14 @@
 <?php
-    require_once "vista/componentes/sesion.php";
-    require_once("modelo/apartamentos_modelo.php");
-    require_once("modelo/habitantes_modelo.php");
-    require_once("modelo/habitantes_apartamentos_modelo.php");
+    use haydee\ayuda\Sesiones;
+    Sesiones::verificarSesion();
+
+    use haydee\modelo\Apartamento;
+    use haydee\modelo\Habitantes;
+    use haydee\modelo\HabitantesApartamentos;
 
     $obj_apartamento = new Apartamento(); // Objeto Apartamento
     $obj_habitante = new Habitantes(); // Objeto Habitante
-    $obj_habitantes_apartamentos = new Habitantes_apartamentos(); // Objeto Habitantes_Apartamentos
+    $obj_habitantes_apartamentos = new HabitantesApartamentos(); // Objeto Habitantes_Apartamentos
  
     if(isset($_POST["operacion"])){
         $operacion = $_POST["operacion"];
@@ -199,21 +201,26 @@
     if (isset($_POST["validar"])) {
         $validar = $_POST["validar"];
         if ($validar == "nro_apartamento"){
-
             $obj_apartamento->set_nro_apartamento($_POST["nro_apartamento"]);
             echo  json_encode($obj_apartamento->realizar_consulta('validar'));
 
         }elseif ($validar == "cedula"){
-
             $obj_habitante->set_cedula($_POST["cedula"]);
             echo  json_encode($obj_habitante->realizar_consulta('validar'));
 
         }elseif ($validar == "tipo_vinculo"){
-
             $obj_habitantes_apartamentos->set_tipo_vinculo($_POST["tipo_vinculo"]);
             $obj_habitantes_apartamentos->set_apartamento_id($_POST["apartamento_id"]);
             echo  json_encode($obj_habitantes_apartamentos->realizar_consulta('validar'));
-
+        }        
+        elseif ($validar == "validar_clave_foranea") {        
+            $tabla = $_POST["tabla"];
+            $nombre_clave = $_POST["nombre_clave"];
+            $valor = $_POST["valor"];
+            
+            $resultado = $obj_habitante->realizar_consulta('validar_clave_foranea',["tabla"=>$tabla,"nombre_clave"=>$nombre_clave,"valor"=>$valor]);
+            
+            echo json_encode($resultado);
         }
         
         exit;

@@ -47,6 +47,12 @@ document.querySelector('#modal_cartelera').addEventListener('hidden.bs.modal', (
     document.querySelectorAll('.is-invalid').forEach(input => input.classList.remove('is-invalid'));
 });
 
+document.getElementById('header-toggle').addEventListener("click",e=>{
+    setTimeout(function(){
+        data_table.columns.adjust().draw();
+    },450);
+});
+
 // Si queremos registrar:
 
 async function registrar() {
@@ -54,7 +60,7 @@ async function registrar() {
     let datos_consulta = new FormData(formulario_usar);
     datos_consulta.append("operacion", "registrar");
 
-    let respuesta = await query(datos_consulta,'text-secondary');
+    let respuesta = await query(datos_consulta,true);
 
     if (respuesta && respuesta.estatus) {
         modal.hide();
@@ -263,7 +269,7 @@ async function modificar_formulario(e) {
     datos_consulta.append("id_cartelera", id);
     datos_consulta.append("operacion", "consulta_especifica");
 
-    const data = await query(datos_consulta,'text-secondary');
+    const data = await query(datos_consulta,true);
 
     if (!data) {
         Swal.fire("Error", "No se pudieron cargar los datos de la publicación.", "error");
@@ -364,7 +370,7 @@ async function modificar(id) {
         datos_consulta.append("imagen", imagen);
     }
 
-    let respuesta = await query(datos_consulta,'text-secondary');
+    let respuesta = await query(datos_consulta,true);
     formulario_usar.reset();
     modal.hide();
 
@@ -427,8 +433,9 @@ async function last_id() {
     return res;
 }
 
-async function query(datos,color_carga = 'text-light') {
-    document.getElementById('icono_carga').setAttribute("class",`spinner-border ${color_carga}`);
+async function query(datos,oscuro = false) {
+    if (oscuro) {document.getElementById('icono_carga').setAttribute("class",`loader_dark`);}
+    else{document.getElementById('icono_carga').setAttribute("class",`loader`);}
     
     let mostrarModal = false;
     let tiempoCarga;

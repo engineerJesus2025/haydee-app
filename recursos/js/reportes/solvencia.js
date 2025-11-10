@@ -20,6 +20,12 @@ boton_solvencia.addEventListener("click",e=>{
 		fragment.appendChild(option);
 	});
 	select_reporte.appendChild(fragment);
+
+	regex = /^[0-9]{1,11}$/;
+	mensajes_err.invalido = 'El valor del habitante no es válido';
+	mensajes_err.inexistente = 'El habitante no existe';
+	verificar.tabla = 'habitantes';
+	verificar.id = 'id_habitante';
 });
 
 function consultar_propietarios() {

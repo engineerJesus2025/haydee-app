@@ -1,6 +1,8 @@
 <?php
-require_once "vista/componentes/sesion.php";
-    require_once("modelo/banco_modelo.php");
+    use haydee\ayuda\Sesiones;
+    Sesiones::verificarSesion();
+
+    use haydee\modelo\Banco;
 
     $obj_banco = new Banco(); // Objeto banco 
  

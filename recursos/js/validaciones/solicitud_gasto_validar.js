@@ -26,21 +26,64 @@ $(document).ready(function () {
     });
 
     document.getElementById('prioridad').addEventListener("change",e=>{
+        let valido = validarKeyUp(/^[0-9]{1}$/,
+        e.target,e.target.nextElementSibling,"El valor de la prioridad no es válido");
+        console.log(e.target,e.target.value)
+        if (!valido) return;
+
         e.target.classList.add('is-valid');
         e.target.classList.remove('is-invalid');
         e.target.nextElementSibling.textContent = "";
     });
 
-    document.getElementById('selector_mes').addEventListener("change",e=>{
-        e.target.classList.add('is-valid');
-        e.target.classList.remove('is-invalid');
-        e.target.nextElementSibling.textContent = "";
+    document.getElementById('selector_mes').addEventListener("change",async e=>{
+        let valido = validarKeyUp(/^[0-9]{1,2}$/,
+        e.target,e.target.nextElementSibling,"El valor del mes seleccionado no es válido");
+
+        if (!valido) return;
+
+        let datos = new FormData();
+        datos.append('validar','validar_mes');
+        datos.append('fecha',e.target.value);
+
+        valido = await verificar_clave_foranea(datos);
+        
+        if (valido) {
+            e.target.classList.add('is-valid');
+            e.target.classList.remove('is-invalid');
+            e.target.nextElementSibling.textContent = "";
+            buscarPresupuesto()
+        }
+        else{
+            e.target.classList.remove('is-valid');
+            e.target.classList.add('is-invalid');
+            e.target.nextElementSibling.textContent = "El mes seleccionado no dispone de presupuesto";
+        }
     });
 
-    document.getElementById('selector_anio').addEventListener("change",e=>{
-        e.target.classList.add('is-valid');
-        e.target.classList.remove('is-invalid');
-        e.target.nextElementSibling.textContent = "";
+    document.getElementById('selector_anio').addEventListener("change",async e=>{
+        let valido = validarKeyUp(/^[0-9]{1,4}$/,
+        e.target,e.target.nextElementSibling,"El valor del año seleccionado no es válido");
+
+        if (!valido) return;
+
+        let datos = new FormData();
+        datos.append('validar','validar_anio');
+        datos.append('fecha',e.target.value);
+
+        valido = await verificar_clave_foranea(datos);
+        
+        if (valido) {
+            e.target.classList.add('is-valid');
+            e.target.classList.remove('is-invalid');
+            e.target.nextElementSibling.textContent = "";
+            buscarPresupuesto()
+        }
+        else{
+            e.target.classList.remove('is-valid');
+            e.target.classList.add('is-invalid');
+            e.target.nextElementSibling.textContent = "El año seleccionado no dispone de presupuesto";
+        }
     });
 
     $("#boton_formulario").on("click", async function (e) {
@@ -102,12 +145,69 @@ async function validarEnvio(accion = "Registrar") {
         return false;
     }
 
+    let valido = validarKeyUp(/^[0-9]{1,2}$/,
+    mesInput,mesInput.nextElementSibling,"El valor del mes seleccionado no es válido");
+
+    if (!valido) {
+        mensajes('error', 3000, 'Atención', 'El valor del mes seleccionado no es válido');
+        return false;
+    }
+
+    let datos = new FormData();
+    datos.append('validar','validar_mes');
+    datos.append('fecha',mesInput.value);
+
+    valido = await verificar_clave_foranea(datos);
+    
+    if (valido) {
+        mesInput.classList.add('is-valid');
+        mesInput.classList.remove('is-invalid');
+        mesInput.nextElementSibling.textContent = "";
+        buscarPresupuesto()
+    }
+    else{
+        mesInput.classList.remove('is-valid');
+        mesInput.classList.add('is-invalid');
+        mesInput.nextElementSibling.textContent = "El mes seleccionado no dispone de presupuesto";
+        mensajes('error', 3000, 'Atención', 'El mes seleccionado no dispone de presupuesto');
+        return false;
+    }
+       
+
     // Validar año
     if (anioInput.value === "") {
         anioInput.classList.add('is-invalid');
         anioInput.classList.remove('is-valid');
-        anioInput.nextElementSibling.textContent = 'ebe seleccionar el año del presupuesto';
+        anioInput.nextElementSibling.textContent = 'Debe seleccionar el año del presupuesto';
         mensajes('error', 3000, 'Año no seleccionado', 'Debe seleccionar el año del presupuesto.');
+        return false;
+    }
+
+    valido = validarKeyUp(/^[0-9]{1,4}$/,
+    anioInput,anioInput.nextElementSibling,"El valor del año seleccionado no es válido");
+
+    if (!valido) {
+        mensajes('error', 3000, 'Atención', 'El valor del año seleccionado no es válido');
+        return false;
+    }
+
+    datos = new FormData();
+    datos.append('validar','validar_anio');
+    datos.append('fecha',anioInput.value);
+
+    valido = await verificar_clave_foranea(datos);    
+    
+    if (valido) {
+        anioInput.classList.add('is-valid');
+        anioInput.classList.remove('is-invalid');
+        anioInput.nextElementSibling.textContent = "";
+        buscarPresupuesto()
+    }
+    else{
+        anioInput.classList.remove('is-valid');
+        anioInput.classList.add('is-invalid');
+        anioInput.nextElementSibling.textContent = "El año seleccionado no dispone de presupuesto";
+        mensajes('error', 3000, 'Atención', 'El año seleccionado no dispone de presupuesto');
         return false;
     }
 
@@ -159,6 +259,17 @@ async function validarEnvio(accion = "Registrar") {
         mensajes('error', 3000, 'Prioridad no seleccionada', 'Debe seleccionar una prioridad.');
         return false;
     }
+    valido = validarKeyUp(/^[0-9]{1}$/,
+    prioridadInput,prioridadInput.nextElementSibling,"El valor de la prioridad no es válido");
+
+    if (!valido) {
+        mensajes('error', 3000, 'Atención', 'El valor de la prioridad seleccionada no es válido.');
+        return false;
+    }
+
+    prioridadInput.classList.add('is-valid');
+    prioridadInput.classList.remove('is-invalid');
+    prioridadInput.nextElementSibling.textContent = "";
 
     // Validar presupuesto
     if (isNaN(disponible_real) || isNaN(montoEstimado)) {
@@ -199,4 +310,13 @@ mensaje){
         etiquetamensaje.textContent = mensaje;
         return 0;
     }
+}
+
+async function verificar_clave_foranea(datos){  
+    let data = await fetch("",{method:"POST", body:datos}).then(res=>{      
+        let result = res.json()
+        return result;
+    });
+
+    return data     
 }

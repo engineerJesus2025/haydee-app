@@ -1,19 +1,19 @@
 <?php
-require_once "vista/componentes/sesion.php";
-require_once "modelo/gastos_modelo.php";
-require_once "modelo/mensualidad_modelo.php";
-require_once "modelo/habitantes_modelo.php";
+use haydee\ayuda\Sesiones;
+Sesiones::verificarSesion();
 
-require_once 'vendor/autoload.php';
+use haydee\modelo\Habitantes;
+use haydee\modelo\Gastos;
+use haydee\modelo\Mensualidad;
 
 use Dompdf\Dompdf;
-use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+// use PhpOffice\PhpSpreadsheet\Spreadsheet;
+// use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+// use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 
 $gastos_obj = new Gastos();
 
-$habitantes_obj = new Habitantes(); // Objeto habitante
+$habitantes_obj = new Habitantes(); 
 
 if (isset($_POST["operacion"])){
     $operacion = $_POST["operacion"];
@@ -65,8 +65,24 @@ if (isset($_POST["operacion"])){
         header('Content-Type: application/json');
         echo json_encode($resultado['mensaje']);
     }
+    exit();
+}
 
-exit();
+if (isset($_POST["validar"])) {
+    $validar = $_POST["validar"];
+
+    if ($validar == "validar_clave_foranea") {
+        $gastos_obj = new Gastos();
+
+        $tabla = $_POST["tabla"];
+        $nombre_clave = $_POST["nombre_clave"];
+        $valor = $_POST["valor"];
+        
+        $resultado = $gastos_obj->realizar_consulta('validar_clave_foranea',["tabla"=>$tabla,"nombre_clave"=>$nombre_clave,"valor"=>$valor]);
+        
+        echo json_encode($resultado);
+    }
+    exit;
 }
 
 if ($accion == "reportes_pdf") {
@@ -338,5 +354,7 @@ if ($accion == "generar_reporte_ingresos_egresos") {
 if ($accion == "habitantes") {
     require_once "vista/reportes/reportes_estadisticos/reporte_habitantes/reporte_habitantes_vista.php";
 }
+
+
 
 ?>

@@ -84,6 +84,12 @@ document.querySelector('#modal_gastos').addEventListener('hidden.bs.modal', () =
     if (inputOculto) inputOculto.remove();
 });
 
+document.getElementById('header-toggle').addEventListener("click",e=>{
+    setTimeout(function(){
+        data_table.columns.adjust().draw();
+    },450);
+});
+
 // Si queremos registrar:
 
 async function registrar() {
@@ -95,7 +101,7 @@ async function registrar() {
     datos_consulta.append("operacion", "registrar");
 
     // 3. Enviamos la consulta (el resto de la lógica para manejar la respuesta es similar)
-    let respuesta = await query(datos_consulta,'text-secondary');
+    let respuesta = await query(datos_consulta,true);
     if (respuesta && !respuesta.estatus) {
         mensajes("error", 4000, "Atención", respuesta.mensaje);
         return;
@@ -281,7 +287,7 @@ async function modificar_formulario(e) {
     datos_consulta.append("id_gasto", id);
     datos_consulta.append("operacion", "consulta_especifica");
 
-    const respuesta = await query(datos_consulta,'text-secondary');
+    const respuesta = await query(datos_consulta,true);
 
     if (!respuesta || !respuesta.gasto) {
         mensajes("error", 4000, "Error", "No se pudieron cargar los datos para modificar.");
@@ -427,7 +433,7 @@ async function modificar(id) {
     datos_consulta.append("operacion", "modificar");
 
     // El resto de la función para enviar y procesar la respuesta es igual.
-    let respuesta = await query(datos_consulta,'text-secondary');
+    let respuesta = await query(datos_consulta,true);
 
     if (respuesta && !respuesta.estatus) {
         mensajes("error", 4000, "Atención", respuesta.mensaje);
@@ -469,7 +475,10 @@ async function last_id() {
     return res;
 }
 
-async function query(datos) {
+async function query(datos,oscuro = false) {
+    if (oscuro) {document.getElementById('icono_carga').setAttribute("class",`loader_dark`);}
+    else{document.getElementById('icono_carga').setAttribute("class",`loader`);}
+    
     peticionesActivas++;
 
     const tiempoInicio = performance.now();
@@ -674,6 +683,11 @@ function actualizarVisibilidadCampos(select) {
 function agregarEventosMetodoPago(bloque) {
     const metodoPagoSelect = bloque.querySelector('.metodo_pago');
     metodoPagoSelect.addEventListener('change', function () {
+        let valido = validarKeyUpSelect(/^[a-zA-z ]{3,20}$/,
+        metodoPagoSelect,metodoPagoSelect.nextElementSibling,"El valor del metodo de pago no es válido");
+
+        if (!valido) return;
+        
         actualizarVisibilidadCampos(this);
     });
 
@@ -697,6 +711,35 @@ document.addEventListener('DOMContentLoaded', () => {
     nuevoDetalle.querySelectorAll('input, select, textarea').forEach(el => {
         if (el.type !== 'hidden') el.value = '';
     });
+
+    //validaciones de banco
+    const banco = nuevoDetalle.querySelector(".banco");
+    banco.addEventListener('change',async e=>{
+        let valido = validarKeyUpSelect(/^[0-9]{1,11}$/,
+        banco,banco.nextElementSibling,"El valor del banco no es válido");
+        
+        if (!valido) return;
+
+        let datos = new FormData();
+        datos.append('validar','validar_clave_foranea');
+        datos.append('tabla','bancos');
+        datos.append('nombre_clave','id_banco');
+        datos.append('valor',banco.value);
+
+        valido = await verificar_clave_foranea(datos);
+        
+        if (valido) {
+            banco.classList.add('is-valid');
+            banco.classList.remove('is-invalid');
+            banco.nextElementSibling.textContent = "";
+        }
+        else{
+            banco.classList.remove('is-valid');
+            banco.classList.add('is-invalid');
+            banco.nextElementSibling.textContent = "El banco seleccionado no existe";
+        }
+    });
+
     const nombreImagen = nuevoDetalle.querySelector('.nombre_imagen_cargada');
     if (nombreImagen) nombreImagen.textContent = '';
     
@@ -1068,11 +1111,3 @@ function init_data_table_detalles() {
     })
     // si lees esto tienes que saber que ahora odio estos data table, muerte a jquery...
 }
-
-const resizeObserver = new ResizeObserver(entries => {
-    if (data_table_detalles) {
-        data_table_detalles.draw();
-    }
-});
-
-resizeObserver.observe(tabla_detalles);

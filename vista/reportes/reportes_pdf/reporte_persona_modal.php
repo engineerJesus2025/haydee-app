@@ -6,6 +6,7 @@
             <select class="form-select" aria-label="Default select example" name="select_reporte" id="select_reporte" form="form_reporte">
                 <option selected hidden value="">Propietario</option>
             </select>
+            <span class="w-100 invalid-feedback"></span>
         </div>
     </div>
     <div class="col-6 mx-auto mb-3 d-flex justify-content-center">

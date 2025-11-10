@@ -1,9 +1,11 @@
 <?php
-require_once "vista/componentes/sesion.php";
-require_once "modelo/cartelera_virtual_modelo.php";
-require_once "modelo/usuario_modelo.php";
+use haydee\ayuda\Sesiones;
+Sesiones::verificarSesion();
 
-$cartelera_virtual_obj = new Cartelera_virtual();
+use haydee\modelo\Usuario;
+use haydee\modelo\CarteleraVirtual;
+
+$cartelera_virtual_obj = new CarteleraVirtual();
 $usuario_obj = new Usuario(); //objeto usuario
 $usuarios = $usuario_obj->realizar_consulta('consultar'); // consulta todos los usuarios
 

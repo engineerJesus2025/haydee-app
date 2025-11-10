@@ -93,7 +93,7 @@ async function registrar_habitantes() {
 	datos_consulta.append('operacion','registrar_habitantes');
 	
 	//Llamamos a la funcion para hacer la consulta
-	let respuesta = await query(datos_consulta,'text-secondary'); // El await es para que espere el resultado, al ser asincrono, normalmente no lo esperaria
+	let respuesta = await query(datos_consulta,true); // El await es para que espere el resultado, al ser asincrono, normalmente no lo esperaria
 	// wait = esperar (english)
 	modal_habitantes.hide(); //Esconde el modal
 	formulario_usar_habitantes.reset();//Limpia el formulario
@@ -440,7 +440,7 @@ async function modificar_habitantes(id) {
 	datos_consulta.append('operacion','modificar_habitantes');
 
 	//Llamamos a la funcion para hacer la consulta
-	let respuesta = await query(datos_consulta,'text-secondary');
+	let respuesta = await query(datos_consulta,true);
 
 	formulario_usar_habitantes.reset(); //Limpiamos el formulario
  	modal_habitantes.hide(); // escondemos el modal

@@ -8,19 +8,55 @@ let boton_exportar = document.getElementById('boton_exportar'),
  input_file = document.getElementById('input_file_importar');
 
 boton_exportar.parentElement.setAttribute("hidden",'');
-		boton_descargar.parentElement.setAttribute("hidden",'');
+boton_descargar.parentElement.setAttribute("hidden",'');
 
 select_db.addEventListener("change",e=>{
 	if (e.target.value != '') {
-		boton_exportar.parentElement.removeAttribute("hidden");
-		boton_descargar.parentElement.removeAttribute("hidden");
-		document.getElementById('o').removeAttribute('hidden');
+		let valido = /^negocio|seguridad/.test(e.target.value);
+
+		if (!valido) {
+			e.target.classList.remove('is-valid');
+			e.target.classList.add('is-invalid');
+			e.target.nextElementSibling.textContent = "La base de datos seleccionada no existe";
+
+			boton_exportar.parentElement.setAttribute("hidden",'');
+			boton_descargar.parentElement.setAttribute("hidden",'');
+			document.getElementById('o').setAttribute('hidden','');
+		}
+		else{
+			e.target.classList.add('is-valid');
+			e.target.classList.remove('is-invalid');
+			e.target.nextElementSibling.textContent = "";
+
+			boton_exportar.parentElement.removeAttribute("hidden");
+			boton_descargar.parentElement.removeAttribute("hidden");
+			document.getElementById('o').removeAttribute('hidden');
+		}
 	}
 });
 select_copias.addEventListener("change",e=>{
-	if (e.target.value != '') {
+	if (e.target.value != '') {		
+		let valido = /^backup(_seguridad)?_haydee_db_\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}\.sql$/.test(select_copias.value);
+
+		if (!valido) {
+			select_copias.classList.remove('is-valid');
+			select_copias.classList.add('is-invalid');
+			select_copias.nextElementSibling.textContent = "La copia de seguridad seleccionada no existe";
+
+			boton_importar.setAttribute("hidden",'');
+
+			return;
+		}
+		else{
+			select_copias.classList.add('is-valid');
+			select_copias.classList.remove('is-invalid');
+			select_copias.nextElementSibling.textContent = "";
+
+			boton_importar.removeAttribute("hidden");
+		}
+
 		input_file.value = '';
-		boton_importar.removeAttribute("hidden");
+		// boton_importar.removeAttribute("hidden");
 	}
 });
 input_file.addEventListener("change",e=>{
@@ -31,10 +67,37 @@ input_file.addEventListener("change",e=>{
 });
 
 boton_exportar.addEventListener("click",async e=>{
-	if (select_db.value == "") {
+	if (select_db.value == "") {		
 		mensajes('error',4000,'Atención',
 			'Debe seleccionar una Base de Datos para la copia de seguridad');
 		return;
+	}
+	else{
+		let valido = /^negocio|seguridad/.test(select_db.value);
+
+		if (!valido) {
+			select_db.classList.remove('is-valid');
+			select_db.classList.add('is-invalid');
+			select_db.nextElementSibling.textContent = "La base de datos seleccionada no existe";
+
+			mensajes('error',4000,'Atención',
+			'La base de datos seleccionada no existe');
+
+			boton_exportar.parentElement.setAttribute("hidden",'');
+			boton_descargar.parentElement.setAttribute("hidden",'');
+			document.getElementById('o').setAttribute('hidden','');
+
+			return;
+		}
+		else{
+			select_db.classList.add('is-valid');
+			select_db.classList.remove('is-invalid');
+			select_db.nextElementSibling.textContent = "";
+
+			boton_exportar.parentElement.removeAttribute("hidden");
+			boton_descargar.parentElement.removeAttribute("hidden");
+			document.getElementById('o').removeAttribute('hidden');
+		}
 	}
 	Swal.fire({
 		title: "¿Estás seguro?",
@@ -58,6 +121,33 @@ boton_descargar.addEventListener("click",async e=>{
 			'Debe seleccionar una Base de Datos para descargar la copia de seguridad');
 		return;
 	}
+	else{
+		let valido = /^negocio|seguridad/.test(select_db.value);
+
+		if (!valido) {
+			select_db.classList.remove('is-valid');
+			select_db.classList.add('is-invalid');
+			select_db.nextElementSibling.textContent = "La base de datos seleccionada no existe";
+
+			mensajes('error',4000,'Atención',
+			'La base de datos seleccionada no existe');
+
+			boton_exportar.parentElement.setAttribute("hidden",'');
+			boton_descargar.parentElement.setAttribute("hidden",'');
+			document.getElementById('o').setAttribute('hidden','');
+
+			return;
+		}
+		else{
+			select_db.classList.add('is-valid');
+			select_db.classList.remove('is-invalid');
+			select_db.nextElementSibling.textContent = "";
+
+			boton_exportar.parentElement.removeAttribute("hidden");
+			boton_descargar.parentElement.removeAttribute("hidden");
+			document.getElementById('o').removeAttribute('hidden');
+		}
+	}
 	Swal.fire({
 		title: "¿Estás seguro?",
 		text: `¿Está seguro que desea descargar esta base de datos?`,
@@ -79,6 +169,32 @@ boton_importar.addEventListener("click",async e=>{
 		mensajes('error',4000,'Atención',
 			'Debe seleccionar una Base de Datos para la copia de seguridad, o importar un archivo compatible');
 		return;
+	}
+	else if (select_copias.value != ''){
+		let valido = /^backup(_seguridad)?_haydee_db_\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}\.sql$/.test(select_copias.value);
+
+		if (!valido) {
+			select_copias.classList.remove('is-valid');
+			select_copias.classList.add('is-invalid');
+			select_copias.nextElementSibling.textContent = "La copia de seguridad seleccionada no existe";
+
+			boton_importar.parentElement.setAttribute("hidden",'');
+			boton_descargar.parentElement.setAttribute("hidden",'');
+			document.getElementById('o').setAttribute('hidden','');
+
+			mensajes('error',4000,'Atención','La copia de seguridad seleccionada no existe');
+
+			return;
+		}
+		else{
+			select_copias.classList.add('is-valid');
+			select_copias.classList.remove('is-invalid');
+			select_copias.nextElementSibling.textContent = "";
+
+			boton_importar.parentElement.removeAttribute("hidden");
+			boton_descargar.parentElement.removeAttribute("hidden");
+			document.getElementById('o').removeAttribute('hidden');
+		}
 	}
 	Swal.fire({
 		title: "¿Estás seguro?",
@@ -133,7 +249,10 @@ async function obtenerCopiasGuardadas() {
 	select_copias.appendChild(fragment);
 }
 
-async function query(datos) {	
+async function query(datos,oscuro = false) {
+    if (oscuro) {document.getElementById('icono_carga').setAttribute("class",`loader_dark`);}
+    else{document.getElementById('icono_carga').setAttribute("class",`loader`);}
+    
 	let modal_carga = new bootstrap.Modal("#modal_carga");
 	let mostrarModal = false;
     let tiempoCarga;

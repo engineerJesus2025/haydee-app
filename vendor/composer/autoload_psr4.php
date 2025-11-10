@@ -6,6 +6,10 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
+    'haydee\\vista\\' => array($baseDir . '/vista'),
+    'haydee\\modelo\\' => array($baseDir . '/modelo'),
+    'haydee\\controlador\\' => array($baseDir . '/controlador'),
+    'haydee\\ayuda\\' => array($baseDir . '/ayuda'),
     'ZipStream\\' => array($vendorDir . '/maennchen/zipstream-php/src'),
     'Symfony\\Polyfill\\Php80\\' => array($vendorDir . '/symfony/polyfill-php80'),
     'Symfony\\Component\\OptionsResolver\\' => array($vendorDir . '/symfony/options-resolver'),

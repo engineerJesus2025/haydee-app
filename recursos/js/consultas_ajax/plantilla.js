@@ -552,8 +552,9 @@ async function last_id() {
 }
 
 // Aqui se hace la peticion AJAX
-async function query(datos,color_carga = 'text-light') {
-    document.getElementById('icono_carga').setAttribute("class",`spinner-border ${color_carga}`);
+async function query(datos,oscuro = false) {
+    if (oscuro) {document.getElementById('icono_carga').setAttribute("class",`loader_dark`);}
+    else{document.getElementById('icono_carga').setAttribute("class",`loader`);}
     
 	// Solo es un fetching de datos, en body mandamos los datos
 	// Estos datos se mandan al controdalor

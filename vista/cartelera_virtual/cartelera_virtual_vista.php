@@ -1,6 +1,6 @@
+<?php use haydee\modelo\CarteleraVirtual; ?>
 <!DOCTYPE html>
 <html>
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,9 +12,9 @@
 
 <body id="body-pd" class="body-pd">
     <input type="text" hidden="" id="permiso_eliminar"
-        value="<?php echo Cartelera_virtual::tiene_permiso(GESTIONAR_CARTELERA_VIRTUAL, ELIMINAR) ?>">
+        value="<?php echo CarteleraVirtual::tiene_permiso(GESTIONAR_CARTELERA_VIRTUAL, ELIMINAR) ?>">
     <input type="text" hidden="" id="permiso_editar"
-        value="<?php echo Cartelera_virtual::tiene_permiso(GESTIONAR_CARTELERA_VIRTUAL, MODIFICAR) ?>">
+        value="<?php echo CarteleraVirtual::tiene_permiso(GESTIONAR_CARTELERA_VIRTUAL, MODIFICAR) ?>">
     <div class="container-fluid">
         <div class="row flex-nowrap">
 
@@ -39,7 +39,7 @@
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="card p-4">
-                                <?php if (Cartelera_virtual::tiene_permiso(GESTIONAR_CARTELERA_VIRTUAL, REGISTRAR)): ?>
+                                <?php if (CarteleraVirtual::tiene_permiso(GESTIONAR_CARTELERA_VIRTUAL, REGISTRAR)): ?>
                                     <div class="button mb-4">
                                         <button type="button" class="btn btn-primary" data-bs-toggle="modal"
                                             data-bs-target="#modal_cartelera">Nueva Publicación</button>
@@ -102,7 +102,6 @@
                 </main>
                 <?php
                 require_once 'vista/componentes/modal_carga.php';
-                require_once "vista/componentes/footer.php";
                 require_once "vista/componentes/script.php";
                 ?>
                 <div class="modal fade" id="modal_vista_previa" tabindex="-1" aria-labelledby="modal_vista_previa_label"
@@ -140,6 +139,7 @@
         </div>
     </div>
 </body>
+<?php require_once "vista/componentes/footer.php"; ?>
 <script type="text/javascript" src="recursos/js/validaciones/cartelera_virtual_validar.js"></script>
 <script type="text/javascript" src="recursos/js/consultas_ajax/cartelera_virtual_ajax.js"></script>
 

@@ -1,6 +1,6 @@
+<?php use haydee\modelo\Proveedores; ?>
 <!DOCTYPE html>
 <html>
-
 <head>
     <title>Proveedores | Inicio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -101,14 +101,13 @@
             </main>
             <?php
             require_once 'vista/componentes/modal_carga.php';
-            require_once "vista/componentes/footer.php";
             require_once "vista/componentes/script.php";
             ?>
         </div>
     </div>
 </div>
-</body>
+<?php require_once "vista/componentes/footer.php"; ?>
 <script type="text/javascript" src="recursos/js/validaciones/proveedores_validar.js"></script>
 <script type="text/javascript" src="recursos/js/consultas_ajax/proveedores_ajax.js"></script>
-
+</body>
 </html>

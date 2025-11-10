@@ -48,6 +48,7 @@
                                             <option value="negocio">Base de datos Edificio Haydee</option>
                                             <option value="seguridad">Base de datos de Seguridad</option>
                                         </select>
+                                        <span class="w-100 invalid-feedback"></span>
                                     </div>
                                     <div hidden="" class="col-lg-3 col-sm-5 d-flex flex-column align-items-center text-center">
                                         <label>¿Guardar copia en el sistema?</label>
@@ -73,6 +74,7 @@
                                         <select class="form-select" id="select_copias">
                                             <option selected="" hidden="" value="">Seleccione la Copia de Seguridad</option>
                                         </select>
+                                        <span class="w-100 invalid-feedback"></span>
                                     </div>
 
                                     <div class="col-sm-1 text-center mt-4 my-4 my-sm-0">O</div>
@@ -92,12 +94,12 @@
                 </main>
                 <?php
                 require_once 'vista/componentes/modal_carga.php';
-                require_once "vista/componentes/footer.php";
                 require_once "vista/componentes/script.php";
                 ?>
             </div>
         </div>
     </div>
+    <?php require_once "vista/componentes/footer.php"; ?>
     <script type="text/javascript" src="recursos/js/consultas_ajax/mantenimiento_ajax.js"></script>
 </body>
 

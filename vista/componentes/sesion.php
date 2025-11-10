@@ -1,7 +1,11 @@
 <?php 
+    use haydee\modelo\Usuario;
+    use haydee\modelo\AnioFiscal;
+    use haydee\modelo\RolesPermisos;
+    use haydee\modelo\Notificaciones;
+
 	if(!(isset($_SESSION["usuario"]))){
         if (isset($_COOKIE['token_recuerdame']) && isset($_COOKIE['correo_usuario'])){
-            require_once "modelo/usuario_modelo.php";
             $usuario_obj = new Usuario();
 
             $token_recuerdame = $_COOKIE['token_recuerdame'];
@@ -17,13 +21,10 @@
                 $fecha_expiracion = strtotime($resultado['duracion_token_recuerdame']);
                 if ($fecha_expiracion !== false && $fecha_expiracion > time()) {
                     if (password_verify($token_recuerdame, $resultado['token_recuerdame'])) {
-                        // Token válido, crear sesión
-                        require_once "modelo/notificaciones_modelo.php";
-                        require_once "modelo/roles_permisos_modelo.php";
-                        require_once "modelo/anio_fiscal_modelo.php";
+                        // Token válido, crear sesión                        
 
                         $notificaciones_obj = new Notificaciones();
-                        $roles_permisos_obj = new Roles_permisos();
+                        $roles_permisos_obj = new RolesPermisos();
 
                         if (!(session_status() == PHP_SESSION_ACTIVE)) {
                             session_start();
@@ -45,7 +46,7 @@
                             $notificaciones_obj->set_usuario_id($resultado["id_usuario"]);
                             $_SESSION["notificaciones"] = $notificaciones_obj->realizar_consulta('consultar_notificaciones_usuario');
 
-                            $anio_fiscal_obj = new Anio_fiscal();
+                            $anio_fiscal_obj = new AnioFiscal();
                             $result_anio = $anio_fiscal_obj->realizar_consulta("verificar_anio_fiscal");
                             
                         } else {

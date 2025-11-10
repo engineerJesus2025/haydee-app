@@ -19,9 +19,10 @@ $(document).ready(function(){
 	});
 
 	document.getElementById('estado').addEventListener("change",e=>{
-		e.target.classList.add('is-valid');
-		e.target.classList.remove('is-invalid');
-		e.target.nextElementSibling.textContent = "";
+		let valido = validarKeyUp(/^[a-zA-z]{3,15}$/,
+		e.target,e.target.nextElementSibling,"El valor del estado no es válido");
+
+		if (!valido) return;
 	});
 	
 	$("#boton_formulario").on("click",async function(e){
@@ -108,6 +109,14 @@ async function validarEnvio(){
 		mensajes('error',4000,'Verifique la descripción Ingresada',
 		'Solo texto, no mas de 50 caracteres');
 		
+		return false;
+	}
+
+	let valido = validarKeyUp(/^[a-zA-z]{3,15}$/,
+	document.getElementById('estado'),document.getElementById('estado').nextElementSibling,"El valor del estado no es válido");
+
+	if (!valido) {
+		mensajes('error',4000,'Atención','El valor del estado ingresado no es válido');
 		return false;
 	}
 	
