@@ -9,7 +9,7 @@
     ?>
 </head>
 
-<body id="body-pd" class="body-pd mb-5">
+<body id="body-pd" class="body-pd">
     <div class="container-fluid">
         <div class="row flex-nowrap ">
             <?php
@@ -135,13 +135,13 @@
 
                     
                 </main>
-                <?php
-                require_once "vista/componentes/footer.php";
+                <?php                
                 require_once "vista/componentes/script.php";
                 ?>
             </div>
         </div>
     </div>
+    <?php require_once "vista/componentes/footer.php"; ?>
     <script type="text/javascript" src="recursos/estadisticas/chart.js"></script>
     <script type="text/javascript" src="recursos/js/reportes/reporte_ingreso_egreso.js"></script>
 </body>

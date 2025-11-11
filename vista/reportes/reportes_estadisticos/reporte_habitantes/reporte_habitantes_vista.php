@@ -9,7 +9,7 @@
     ?>
 </head> 
 
-<body id="body-pd" class="body-pd mb-5">
+<body id="body-pd" class="body-pd">
     <div class="container-fluid">
         <div class="row flex-nowrap ">
             <?php
@@ -229,18 +229,17 @@
                 </main>
 
                 <?php
-                require_once "vista/componentes/footer.php";
                 require_once "vista/componentes/script.php";
                 ?>
             </div>
         </div>
     </div>
-
+    
     <script type="text/javascript" src="recursos/estadisticas/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script type="text/javascript" src="recursos/js/reportes/reporte_habitantes.js"></script>
-
+    <?php require_once "vista/componentes/footer.php"; ?>
 </body>
 
 </html>

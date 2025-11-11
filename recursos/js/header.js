@@ -19,7 +19,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
 					a.classList.add('ps-2');
 					a.parentElement.classList.remove('rounded');
 					a.parentElement.classList.remove('ms-4');
-					a.parentElement.classList.add('ms-3');
 				});
 			}
 
@@ -44,7 +43,6 @@ document.addEventListener("DOMContentLoaded", function(event) {
 					if (!(id_submenu == a.parentElement.id)) {
 						a.parentElement.classList.toggle('rounded');
 						a.parentElement.classList.toggle('ms-4');
-						a.parentElement.classList.toggle('ms-3');
 
 						id_submenu = a.parentElement.id;
 					}

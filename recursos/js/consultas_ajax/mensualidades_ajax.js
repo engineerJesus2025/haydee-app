@@ -642,7 +642,9 @@ async function registrar_mensualidad() {
 
 	datos_consulta.append("operacion","registrar_bitacora");
 
-	datos_consulta.append("monto",monto);
+	let monto_total_mensualidades = document.querySelector("tfoot tr").lastElementChild.previousElementSibling.textContent;
+
+	datos_consulta.append("monto",monto_total_mensualidades);
 	datos_consulta.append("mes",mes);
 	datos_consulta.append("anio",anio);	
 	

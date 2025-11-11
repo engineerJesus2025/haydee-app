@@ -9,7 +9,7 @@
                     data-bs-toggle="dropdown" aria-expanded="false" id="notificaciones-toggle">
                     <i class="bi bi-bell-fill fs-5" id="boton_notificaciones"></i>
                     <span id="count-label"
-                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger <?php echo (count($_SESSION["notificaciones"]) == 0) ? 'd-none' : ''; ?>">
+                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger <?php echo (count($_SESSION['notificaciones']) == 0) ? 'd-none' : ''; ?>">
                         <?php echo (count($_SESSION["notificaciones"]) > 99) ? '+99' : count($_SESSION["notificaciones"]); ?>
                     </span>
                 </button>
@@ -40,7 +40,7 @@
                                                 </div>
                                             </div>
                                             <div>
-                                                <div class="notif-date"><?php echo date('d/m/Y H:i', strtotime($notificacion['fecha_creacion'] ?? 'now')); ?></div>
+                                                <div class="notif-date"><?php echo date('d/m/Y', strtotime($notificacion['fecha'] ?? 'now')); ?></div>
                                             </div>
                                         </div>
                                     </a>

@@ -100,12 +100,12 @@ function eventosCargaDataTable(id_tabla,modal){
     });
 }
 
-function formatearFechaHora(fechaHoraStr) {  
+function formatearFechaHora(fechaHoraStr) {
   const fecha = new Date(fechaHoraStr);
-
-  const dia = String(fecha.getDate()).padStart(2, '0');
-  const mes = String(fecha.getMonth() + 1).padStart(2, '0'); // Se suma 1 porque los meses van de 0 a 11
-  const anio = fecha.getFullYear();  
+  
+  const dia = String(fecha.getUTCDate()).padStart(2, '0');
+  const mes = String(fecha.getUTCMonth() + 1).padStart(2, '0');
+  const anio = fecha.getUTCFullYear();  
   
   return `${dia}-${mes}-${anio}`;
 }

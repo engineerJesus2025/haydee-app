@@ -1,7 +1,7 @@
 <?php use haydee\modelo\Conexion; ?>
 <div class="header body-pd" id="header">
     <div class="l-navbar show" id="nav-bar">
-        <nav class="nav">
+        <nav class="nav ps-3">
             <div>
                 <?php echo ($_GET["pagina"] == "") ? "active" : ''; ?>
                 <a href="?pagina=inicio_controlador.php&accion=inicio"
@@ -76,22 +76,22 @@
                     </a>
                     <?php endif; ?>
 
-
                     <?php if (Conexion::tiene_permiso(GESTIONAR_REPORTES, CONSULTAR)) : 
-                        $reporte = ($_GET["accion"] == "reportes_estadisticos" || $_GET["accion"] == "reportes_pdf" )?true:false;
+                        $reporte = ($_GET["accion"] === "reportes_pdf")?1:0;
+                        $reporte_estadistico = (in_array($_GET["accion"], ['reportes_estadisticos','habitantes','ingreso_egreso'],true))?1:0;
                         ?>
                     <a title="Reportes" class="nav_link" data-bs-toggle="collapse" href="#collapse_reporte" role="button" aria-expanded="false" aria-controls="collapse_reporte"> 
                         <i class="bi bi-card-checklist nav_logo-icon"></i>
                         <span class="nav_name">Reportes</span> 
                     </a>
-                    <div class="collapse my-2 ms-4 pb-2 bg-light rounded <?php echo ($reporte)?'show':'';?>" id="collapse_reporte" style="width: auto;"> 
-                            <a href="?pagina=reportes_controlador.php&accion=reportes_pdf" class="nav_link <?php echo ($_GET['accion'] == 'reportes_pdf')?'active':''; ?>" title="Reportes PDF"> 
+                    <div class="collapse my-2 ms-4 py-2 bg-light rounded <?php echo ($reporte || $reporte_estadistico)?'show':'';?>" id="collapse_reporte" style="width: auto;"> 
+                            <a href="?pagina=reportes_controlador.php&accion=reportes_pdf" class="nav_link <?php echo ($reporte)?'active':''; ?>" title="Reportes PDF"> 
                                 <i class="bi bi-filetype-pdf nav_logo-icon text-dark"></i>
-                                <span class="nav_name text-dark">Reportes PDF</span> 
+                                <span class="nav_name">Reportes PDF</span> 
                             </a>
-                            <a href="?pagina=reportes_controlador.php&accion=reportes_estadisticos" class="nav_link <?php echo ($_GET['accion'] == 'reportes_estadisticos')?'active':''; ?>" title="Reportes Estadísticos"> 
+                            <a href="?pagina=reportes_controlador.php&accion=reportes_estadisticos" class="nav_link <?php echo ($reporte_estadistico)?'active':''; ?>" title="Reportes Estadísticos"> 
                                 <i class="bi bi-clipboard-data nav_logo-icon text-dark"></i>
-                                <span class="nav_name text-dark">Reportes<br>Estadísticos</span> 
+                                <span class="nav_name">Reportes<br>Estadísticos</span> 
                             </a>
                         </div>
                     <?php endif; ?>
@@ -105,23 +105,23 @@
                             <i class="bi bi-gear-wide-connected nav_logo-icon"></i>
                             <span class="nav_name">Configuración</span>
                         </a>
-                        <div class="collapse my-2 ms-4 pb-2 bg-light rounded <?php echo ($configuracion)?'show':'';?>" id="collapse_configuracion" style="width: auto;">
+                        <div class="collapse my-2 ms-4 py-2 bg-light rounded <?php echo ($configuracion)?'show':'';?>" id="collapse_configuracion" style="width: auto;">
                             <?php if (Conexion::tiene_permiso(GESTIONAR_PROVEEDORES, CONSULTAR)): ?>
                             <a href="?pagina=proveedores_controlador.php&accion=inicio" class="nav_link <?php echo ($_GET["pagina"] == "proveedores_controlador.php")?"active":''; ?>" title="Gestionar Proveedores"> 
                                 <i class="bi bi-truck nav_logo-icon text-dark"></i>
-                                <span class="nav_name text-dark">Proveedores</span> 
+                                <span class="nav_name">Proveedores</span> 
                             </a>
                             <?php endif; ?>
                             <?php if (Conexion::tiene_permiso(GESTIONAR_BANCOS, CONSULTAR)): ?>
                             <a href="?pagina=bancos_controlador.php&accion=inicio" class="nav_link <?php echo ($_GET["pagina"] == "bancos_controlador.php")?"active":''; ?>" title="Gestionar Bancos"> 
                                 <i class="bi bi-piggy-bank nav_logo-icon text-dark"></i>
-                                <span class="nav_name text-dark">Bancos</span> 
+                                <span class="nav_name">Bancos</span> 
                             </a>
                             <?php endif; ?>
                             <?php if (Conexion::tiene_permiso(GESTIONAR_TIPO_GASTO, CONSULTAR)): ?>
                             <a href="?pagina=tipo_gasto_controlador.php&accion=inicio" class="nav_link <?php echo ($_GET["pagina"] == "tipo_gasto_controlador.php")?"active":''; ?>" title="Gestionar Tipo de Gasto"> 
                                 <i class="bi bi-columns-gap nav_logo-icon text-dark"></i>
-                                <span class="nav_name text-dark">Tipo de Gasto</span> 
+                                <span class="nav_name">Tipo de Gasto</span> 
                             </a>
                             <?php endif; ?>
                         </div>
@@ -144,17 +144,17 @@
                             <i class="bi bi-shield-fill-check nav_logo-icon"></i>
                             <span class="nav_name">Seguridad</span>
                         </a>
-                        <div class="collapse my-2 ms-4 pb-2 bg-light rounded <?php echo ($seguridad)?'show':'';?>" id="collapse_seguridad" style="width: auto;">
+                        <div class="collapse my-2 ms-4 py-2 bg-light rounded <?php echo ($seguridad)?'show':'';?>" id="collapse_seguridad" style="width: auto;">
                             <?php if (Conexion::tiene_permiso(GESTIONAR_ROLES, CONSULTAR)): ?>
                             <a href="?pagina=rol_controlador.php&accion=inicio" class="nav_link <?php echo ($_GET["pagina"] == "rol_controlador.php")?"active":''; ?>" title="Gestionar Roles"> 
                                 <i class="bi bi-person-gear nav_logo-icon text-dark"></i>
-                                <span class="nav_name text-dark">Roles</span> 
+                                <span class="nav_name">Roles</span> 
                             </a>
                             <?php endif; ?>
                             <?php if (Conexion::tiene_permiso(GESTIONAR_BITACORA, CONSULTAR)): ?>
                             <a href="?pagina=bitacora_controlador.php&accion=inicio" class="nav_link <?php echo ($_GET["pagina"] == "bitacora_controlador.php")?"active":''; ?>" title="Gestionar Bitacora"> 
                                 <i class="bi bi-arrows-move nav_logo-icon text-dark"></i>
-                                <span class="nav_name text-dark">Bitácora</span> 
+                                <span class="nav_name">Bitácora</span> 
                             </a>
                             <?php endif; ?>
                         </div>

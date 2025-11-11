@@ -99,8 +99,12 @@
                                 <p class="text-muted mb-0">Información personal del usuario</p>
                               </div>              
                                 <button class="btn btn-outline-primary" title="Editar Información" id="boton_editar" disabled="">
-                                  <i class="bi bi-pencil me-1"></i>
-                                  Editar
+                                    <div class="spinner-border text-primary" role="status" style="width: 1rem; height: 1rem; z-index: 1000">
+                                        <span class="visually-hidden">Cargando...</span>
+                                    </div>
+                                    Cargando...
+                                    <!-- <i class="bi bi-pencil me-1"></i>
+                                    Editar -->
                                 </button>              
                             </div>
                             <div class="card shadow-sm">
@@ -265,6 +269,10 @@
                                 </div>
                                 <div class="card-body">
                                     <div class="d-grid gap-2 d-md-flex">
+                                        <button class="btn btn-outline-warning" title="Presione aquí para ver sus notificaciones" id="notificaciones" disabled type="button" data-bs-toggle="modal" data-bs-target="#modal_notificaciones">
+                                            <i class="bi bi-bell me-1"></i>
+                                            Notificaciones
+                                        </button>
                                         <button class="btn btn-outline-primary" title="Presione aquí para cambiar su contraseña" id="cambiar_contra" type="button" data-bs-toggle="modal" data-bs-target="#modal_contra">
                                             <i class="bi bi-key me-1"></i>
                                             Cambiar Contraseña
@@ -290,6 +298,22 @@
                             <div class="modal-body">
                                 <?php
                                 require_once 'vista/usuarios/usuario_modal_contra.php';
+                                ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal fade" id="modal_notificaciones" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header bg-primary text-white">
+                                <h1 class="modal-title fs-5" id="titulo_modal">Notificaciones</h1>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <?php
+                                require_once 'vista/usuarios/usuario_modal_notificaciones.php';
                                 ?>
                             </div>
                         </div>

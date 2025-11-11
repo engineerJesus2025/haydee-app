@@ -4,8 +4,9 @@
 
     use haydee\modelo\Rol;
     use haydee\modelo\Usuario;
+    use haydee\modelo\Notificaciones;
 
-    $rol_obj = new Rol(); 
+    $rol_obj = new Rol();
     $roles = $rol_obj->realizar_consulta('consultar_roles'); 
 
     if (isset($_POST["operacion"])){
@@ -108,6 +109,14 @@
             
             $usuario_obj->set_id_usuario($id_usuario);            
             echo  json_encode($usuario_obj->realizar_consulta('consultar_perfil_usuario'));
+        }
+        elseif ($operacion == "consultar_notificaciones_usuario") {
+            $notificaciones_obj = new Notificaciones();
+
+            $id_usuario = $_SESSION["id_usuario"];
+            
+            $notificaciones_obj->set_usuario_id($id_usuario);
+            echo  json_encode($notificaciones_obj->realizar_consulta('consultar_notificaciones_usuario'));
         }
         elseif ($operacion == "editar_perfil") {
             $usuario_obj = new Usuario();

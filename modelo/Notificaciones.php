@@ -200,7 +200,7 @@ class Notificaciones extends Conexion
     }
 
     private function consultar()
-    {        
+    {
         $sql = "SELECT nombre, titulo, descripcion, fecha,
             activo FROM notificaciones INNER JOIN usuarios ON 
             usuarios.id_usuario = notificaciones.usuario_id";
@@ -213,7 +213,7 @@ class Notificaciones extends Conexion
 
     private function consultar_notificaciones_usuario()
     {        
-        $sql = "SELECT id_notificacion, titulo, descripcion, nombre_modulo, referencia FROM notificaciones WHERE notificaciones.usuario_id = :usuario_id and notificaciones.activo = 0";
+        $sql = "SELECT id_notificacion, titulo, descripcion, nombre_modulo, referencia, fecha FROM notificaciones WHERE notificaciones.usuario_id = :usuario_id and notificaciones.activo = 0";
 
         $conexion = $this->get_conex()->prepare($sql);
         $conexion->bindParam(":usuario_id", $this->usuario_id);

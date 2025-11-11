@@ -13,15 +13,16 @@
                         <select class="form-select" id="anio_reporte" name="anio" required>
                             <option value="">Seleccione un año...</option>
                         </select>
+                        <span class="w-100 invalid-feedback"></span>
                     </div>
                     <div class="mb-3">
                         <label for="mes_reporte" class="form-label">Mes:</label>
                         <select class="form-select" id="mes_reporte" name="mes" required disabled>
                             <option value="">Seleccione un mes...</option>
                         </select>
+                        <span class="w-100 invalid-feedback"></span>
                     </div>
                         <input type="hidden" id="tasa_dolar_reporte" name="tasa_dolar">
-
                 </form>
             </div>
             <div class="modal-footer">

@@ -6,8 +6,15 @@ const formReporte = document.getElementById('form_gastos_mensual');
 
 let periodosDisponibles = {};
 const nombresMeses = ["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-
+// /^[0-9]{1,2}-[0-9]{4}$/
 anioSelect.addEventListener('change', () => {
+    let valido = validarKeyUp(/^[0-9]{4}$/,anioSelect,anioSelect.nextElementSibling,'El año seleccionado no es válido');
+
+    if (!valido) {
+        btnGenerar.disabled = true;
+        return;
+    }
+
     const anioSeleccionado = anioSelect.value;
     
     mesSelect.innerHTML = '<option value="">Seleccione un mes...</option>';
@@ -23,6 +30,13 @@ anioSelect.addEventListener('change', () => {
 });
 
 mesSelect.addEventListener('change', () => {
+    let valido = validarKeyUp(/^[0-9]{1,2}$/,mesSelect,mesSelect.nextElementSibling,'El mes seleccionado no es válido');
+
+    if (!valido) {
+        btnGenerar.disabled = true;
+        return;
+    }
+
     btnGenerar.disabled = !mesSelect.value;
 });
 
@@ -65,8 +79,8 @@ function consultarPeriodosDeGastos() {
 formReporte.addEventListener('submit', function(event) {
     let tasa_dolar = parseFloat(isNaN(localStorage.getItem("tasa_dolar"))?1:localStorage.getItem("tasa_dolar")).toFixed(2);
 
-    if (tasaDolar) {
-        document.getElementById('tasa_dolar_reporte').value = tasaDolar;
+    if (tasa_dolar) {
+        document.getElementById('tasa_dolar_reporte').value = tasa_dolar;
     } else {
         alert("Error: No se encontró la tasa del dólar para generar el reporte.");
         event.preventDefault(); // Detiene el envío del formulario

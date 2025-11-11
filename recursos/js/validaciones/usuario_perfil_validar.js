@@ -272,13 +272,11 @@ mensaje){
 }
 
 async function verificar_duplicados(datos){
-	// Solo es un fetching de datos, en body mandamos los datos
-	// Estos datos se mandan al controdalor	
 	let data = await fetch("",{method:"POST", body:datos}).then(res=>{		
 		let result = res.json()
-		return result;//Convertimos el resultado de json a js y lo mandamos
+		return result;
 	})
-	// aqui revisamos el estatus, si es true es porque esta duplicado y mandamos un mensaje	
+	
 	if(data.estatus){
 		document.querySelector(`#${data.busqueda}`).nextElementSibling.textContent = `${data.busqueda} ya registrado/a`;
 		document.querySelector(`#${data.busqueda}`).classList.add('is-invalid');
@@ -288,11 +286,11 @@ async function verificar_duplicados(datos){
 	return false;
 }
 
+
 async function verificar_contra(datos){
-	let data = await fetch("",{method:"POST", body:datos}).then(res=>{		
+	let data = await fetch("",{method:"POST", body:datos}).then(res=>{
 		let result = res.json()
-		return result;//Convertimos el resultado de json a js y lo mandamos
-	})
-	// aqui revisamos el estatus, si es true es porque es correcta la contraseña		
+		return result;
+	});
 	return data;
 }

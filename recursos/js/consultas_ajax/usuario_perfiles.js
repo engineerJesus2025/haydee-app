@@ -1,7 +1,12 @@
 let correo_an;
 
-let formulario_usar = document.querySelector(`#modal_contra`); 
+let tabla_notificaciones;
 //Eventos:
+window.addEventListener('DOMContentLoaded',()=>{
+	llenarCardUsuario();
+	llenarTablaNotificaciones();
+});
+
 document.querySelector(`#modal_contra`).addEventListener("hide.bs.modal",()=>{
 	document.querySelectorAll('.is-valid').forEach(input=>input.classList.remove('is-valid'));
 	document.querySelectorAll('.is-invalid').forEach(input=>input.classList.remove('is-invalid'));
@@ -64,6 +69,12 @@ document.getElementById('boton_cancelar').addEventListener('click',e=>{
 	document.getElementById('boton_editar').removeAttribute('disabled','');
 });
 
+document.getElementById('notificaciones').addEventListener('click',e=>{	
+	setTimeout(()=>{
+		tabla_notificaciones.draw();
+	},500);
+});
+
 async function llenarCardUsuario(){
 	let datos_consulta = new FormData();
 
@@ -94,6 +105,74 @@ async function llenarCardUsuario(){
 	document.getElementById("spam_rol").setAttribute('class',clases_badge_rol);
 
 	document.getElementById('boton_editar').removeAttribute('disabled');
+	document.getElementById('boton_editar').innerHTML = `<i class="bi bi-pencil me-1"></i>Editar`;
+}
+
+function llenarTablaNotificaciones() {
+  const paramentros_consulta = (data)=>{data.operacion = 'consultar_notificaciones_usuario';}
+  const estructura_tabla_notificaciones = [
+    {	
+		"data": null,
+      	"render": function (row) {                
+        	return `${row["titulo"]}`;
+        }
+    },
+    {
+        "data": null, 
+        "render": function (row) {
+        	return `${row["descripcion"]}`;
+        }
+    },
+    { 
+        "data": null,
+        "render": function (row) {
+        	return `${formatearFechaHora(row["fecha"])}`;
+        }
+    },
+    {
+        "data": null,
+        "render": function (row) {
+        	let spam = document.createElement("span");
+            spam.setAttribute("class",(row["activo"] == 1)?"badge bg-primary":"badge bg-warning text-dark");
+            spam.textContent = (row["activo"] == 1) ? "SI" : "NO";
+        	return `${spam.outerHTML}`;
+        }
+    },
+	{
+        "data": null,
+        "render": function (row) {
+        	let botonVerNotificacion = document.createElement("button");
+			botonVerNotificacion.setAttribute("class","btn btn-sm btn-primary");
+			botonVerNotificacion.setAttribute("title","Ver Notificación");
+			botonVerNotificacion.setAttribute("type","button");
+			botonVerNotificacion.setAttribute("data-bs-toggle","tooltip");
+			botonVerNotificacion.setAttribute("data-nombre_modulo",row["nombre_modulo"]);
+			botonVerNotificacion.setAttribute("data-referencia",row["referencia"]);
+			let iconoVer = document.createElement("i");
+			iconoVer.setAttribute("class","bi bi-eye");
+			botonVerNotificacion.appendChild(iconoVer);
+        	return `${botonVerNotificacion.outerHTML}`;
+        }
+    }
+  ];
+
+  const configuraciones_tabla_notificaciones = (row)=>{
+    Array.from(row.children).map(td=>td.setAttribute("class",'align-middle'));
+
+	// seleccionamos el boton de la ultima columna
+	let botonVer = row.children[row.children.length - 1].firstElementChild;
+	botonVer.parentElement.setAttribute('class','align-middle text-center');
+
+	botonVer.addEventListener('click',()=>{
+		//Tal vez incluir un mensaje de confirmacion de redireccionamiento				
+		let url = `?pagina=${botonVer.dataset.nombre_modulo}_controlador.php&accion=inicio&referencia=${botonVer.dataset.referencia}`;
+		window.location.href = url;
+	});
+  }
+
+  tabla_notificaciones = crearDataTable('tabla_notificaciones',estructura_tabla_notificaciones,paramentros_consulta,configuraciones_tabla_notificaciones);
+
+  document.getElementById('notificaciones').removeAttribute('disabled');
 }
 
 function definirColorBadge(nombre_rol){
@@ -142,6 +221,79 @@ function formatearUltimoAcceso(fecha) {
     } else {
         return fechaAcceso.toLocaleDateString('es-ES') + ` a las ${horaFormateada}`;
     }
+}
+
+function formatearFechaHora(fechaHoraStr) {
+  const fecha = new Date(fechaHoraStr);
+  
+  const dia = String(fecha.getUTCDate()).padStart(2, '0');
+  const mes = String(fecha.getUTCMonth() + 1).padStart(2, '0');
+  const anio = fecha.getUTCFullYear();  
+  
+  return `${dia}-${mes}-${anio}`;
+}
+
+function mensajes(icono,tiempo,titulo,mensaje){
+	Swal.fire({
+	icon:icono,
+    timer:tiempo,	
+    title:titulo,
+	text:mensaje,
+	confirmButtonText:'Aceptar',
+	confirmButtonColor: "#e01d22",
+	});
+}
+
+function crearDataTable(id_tabla,estructura_filas,datos_paramentros, configuraciones_post_creacion = ()=>{}){
+  return new DataTable(`#${id_tabla}`,{
+        destroy: true,
+        responsive: true,
+        "scrollX": true,
+        "pageLength": 10,
+        "aaSorting": [],
+        language: {
+            "processing": "Procesando...",
+            "lengthMenu": "Mostrar _MENU_ registros",
+            "zeroRecords": "No se encontraron resultados",
+            "emptyTable": "Ningún dato disponible en esta tabla",
+            "info": "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+            "infoEmpty": "Mostrando registros del 0 al 0 de un total de 0 registros",
+            "infoFiltered": "(filtrado de un total de _MAX_ registros)",
+            "infoPostFix": "",
+            "search": "Buscar:",
+            "url": "",
+            "infoThousands": ",",
+            "loadingRecords": "Cargando...",
+            "paginate": {
+                "first": "Primero",
+                "last": "Último",
+                "next": "<i class='bi bi-caret-right'></i>",
+                "previous": "<i class='bi bi-caret-left'></i>"
+            },
+            "aria": {
+                "sortAscending": ": Activar para ordenar la columna de manera ascendente",
+                "sortDescending": ": Activar para ordenar la columna de manera descendente"
+            },
+            "buttons": {
+                "copy": "Copiar",
+                "colvis": "Visibilidad"
+            }
+        },
+        "ajax": {
+            "url": "",
+            "dataSrc": "",
+            "type": "POST", 
+            "data": datos_paramentros
+        },
+        "columns":estructura_filas,
+        "drawCallback": function( settings ) {
+            $(this).DataTable().columns.adjust();
+        },
+        "error": function(jqXHR, textStatus, errorThrown) {            
+            console.log(jqXHR,textStatus,errorThrown)
+        },
+        "createdRow": configuraciones_post_creacion
+  });
 }
 
 async function modificar() {
@@ -219,15 +371,3 @@ async function query(datos,oscuro = false) {
 	}
 }
 
-function mensajes(icono,tiempo,titulo,mensaje){
-	Swal.fire({
-	icon:icono,
-    timer:tiempo,	
-    title:titulo,
-	text:mensaje,
-	confirmButtonText:'Aceptar',
-	confirmButtonColor: "#e01d22",
-	});
-}
-
-llenarCardUsuario();
