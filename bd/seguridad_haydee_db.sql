@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 29-10-2025 a las 06:41:35
+-- Tiempo de generación: 12-11-2025 a las 03:47:24
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -111,7 +111,9 @@ CREATE TABLE `notificaciones` (
   `descripcion` text NOT NULL,
   `fecha` date NOT NULL,
   `activo` varchar(20) NOT NULL,
-  `usuario_id` int(11) NOT NULL
+  `usuario_id` int(11) NOT NULL,
+  `nombre_modulo` varchar(50) DEFAULT NULL,
+  `referencia` varchar(20) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -220,11 +222,7 @@ INSERT INTO `roles` (`id_rol`, `nombre`) VALUES
 (2, 'Administrador'),
 (3, 'Propietario'),
 (4, 'Contador'),
-(23, 'Presidente'),
-(27, 'rol de prueba editado'),
-(48, 'rol de pruebas'),
-(50, 'rol borar permisos'),
-(51, 'rol de prueba');
+(23, 'Presidente');
 
 -- --------------------------------------------------------
 
@@ -382,13 +380,6 @@ INSERT INTO `roles_permisos` (`id_rol_permiso`, `rol_id`, `permiso_usuario_id`) 
 (840, 1, 85),
 (841, 1, 86),
 (842, 1, 87),
-(883, 27, 13),
-(884, 27, 14),
-(885, 27, 30),
-(886, 27, 54),
-(887, 27, 57),
-(888, 27, 58),
-(889, 27, 65),
 (907, 23, 2),
 (908, 23, 6),
 (909, 23, 10),
@@ -404,10 +395,7 @@ INSERT INTO `roles_permisos` (`id_rol_permiso`, `rol_id`, `permiso_usuario_id`) 
 (919, 23, 84),
 (920, 23, 85),
 (921, 23, 86),
-(922, 23, 87),
-(930, 27, 1),
-(931, 27, 1),
-(948, 27, 1);
+(922, 23, 87);
 
 -- --------------------------------------------------------
 
@@ -518,7 +506,7 @@ ALTER TABLE `usuarios`
 -- AUTO_INCREMENT de la tabla `bitacora`
 --
 ALTER TABLE `bitacora`
-  MODIFY `id_bitacora` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4279;
+  MODIFY `id_bitacora` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `cartelera_virtual`
@@ -536,7 +524,7 @@ ALTER TABLE `modulos`
 -- AUTO_INCREMENT de la tabla `notificaciones`
 --
 ALTER TABLE `notificaciones`
-  MODIFY `id_notificacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1910;
+  MODIFY `id_notificacion` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `permisos_usuarios`
