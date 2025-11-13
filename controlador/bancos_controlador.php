@@ -3,13 +3,12 @@
     Sesiones::verificarSesion();
 
     use haydee\modelo\Banco;
-
-    $obj_banco = new Banco(); // Objeto banco 
  
     if(isset($_POST["operacion"])){
         $operacion = $_POST["operacion"];
 
         if ($operacion == "consulta"){
+            $obj_banco = new Banco(); // Objeto banco 
             // llamamos a la funcion, lo convertimos a json y la mandamos al js con echo
             echo  json_encode($obj_banco->realizar_consulta('consultar'));
             // la hice para que retorne un arreglo, si sale vacio solo mandara un array con false
@@ -17,6 +16,7 @@
         //Despues de cada echo se regresa al javascript como respuesta en json
 
         elseif ($operacion == "registrar") {
+            $obj_banco = new Banco(); // Objeto banco 
             //se guardan las variables a registrar
             $nombre_banco = $_POST["nombre_banco"];  
             $codigo = $_POST["codigo"];  
@@ -36,6 +36,7 @@
             //igual puse para que siempre retorne un arreglo que dara true o false de acuerdo al resultado
         }
         elseif ($operacion == "consulta_especifica"){
+            $obj_banco = new Banco(); // Objeto banco 
             //se guardan el id para buscar
             $id_banco = $_POST["id_banco"];
 
@@ -48,6 +49,7 @@
         }
 
         elseif ($operacion == "modificar") {
+            $obj_banco = new Banco(); // Objeto banco 
             //se guardan las variables a modificar
             $id_banco = $_POST["id_banco"];
             $nombre_banco = $_POST["nombre_banco"];  
@@ -72,6 +74,7 @@
         }
 
         elseif ($operacion == "eliminar") {
+            $obj_banco = new Banco(); // Objeto banco 
             //se guardan el id de la variable a eliminar
             $id_banco = $_POST["id_banco"];
 
@@ -82,6 +85,7 @@
             echo  json_encode($obj_banco->realizar_consulta('eliminar'));
             //igual puse para que siempre retorne un arreglo que dara true o false de acuerdo al resultado
         }elseif ($operacion == "ultimo_id"){
+            $obj_banco = new Banco(); // Objeto banco 
             echo json_encode($obj_banco->realizar_consulta('lastId'));
         }
 
@@ -89,6 +93,7 @@
     }
 
     if (isset($_POST["validar"])) {
+        $obj_banco = new Banco(); // Objeto banco 
         $validar = $_POST["validar"]; //Esto es igual pero para las validaciones
         if ($validar == "numero_cuenta"){
             $obj_banco->set_numero_cuenta($_POST["numero_cuenta"]);

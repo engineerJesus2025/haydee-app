@@ -5,23 +5,23 @@
     use haydee\modelo\Apartamento;
     use haydee\modelo\Habitantes;
     use haydee\modelo\HabitantesApartamentos;
-
-    $obj_apartamento = new Apartamento(); // Objeto Apartamento
-    $obj_habitante = new Habitantes(); // Objeto Habitante
-    $obj_habitantes_apartamentos = new HabitantesApartamentos(); // Objeto Habitantes_Apartamentos
  
     if(isset($_POST["operacion"])){
         $operacion = $_POST["operacion"];
 
         if ($operacion == "consulta"){
-
+            $obj_apartamento = new Apartamento(); // Objeto Apartamento
             echo  json_encode($obj_apartamento->realizar_consulta('consultar'));
 
         }elseif ($operacion == "consultar_habitantes") {
+            $obj_habitantes_apartamentos = new HabitantesApartamentos(); // Objeto Habitantes_Apartamentos
             $obj_habitantes_apartamentos->set_apartamento_id($_POST["id_apartamento"]);
             echo json_encode($obj_habitantes_apartamentos->realizar_consulta('consultar'));
             exit;
         }elseif ($operacion == "registrar_habitantes"){
+            $obj_habitante = new Habitantes(); // Objeto Habitante
+            $obj_habitantes_apartamentos = new HabitantesApartamentos(); // Objeto Habitantes_Apartamentos
+
             $nombre = $_POST["nombre"];  
             $apellido = $_POST["apellido"]; 
             $cedula = $_POST["cedula"];
@@ -76,11 +76,15 @@
             exit;
         }elseif ($operacion == "consulta_especifica_habitante"){
 
+            $obj_habitante = new Habitantes(); // Objeto Habitante
             $id_habitante = $_POST["id_habitante"];
             $obj_habitante->set_id_habitante($id_habitante);
             echo  json_encode($obj_habitante->realizar_consulta('consulta_especifica'));
 
         }elseif ($operacion == "modificar_habitantes"){
+            $obj_habitante = new Habitantes(); // Objeto Habitante
+            $obj_habitantes_apartamentos = new HabitantesApartamentos(); // Objeto Habitantes_Apartamentos
+
             $id_habitante = $_POST["id_habitante"];
             $nombre = $_POST["nombre"];  
             $apellido = $_POST["apellido"]; 
@@ -132,16 +136,20 @@
                 ]);
             }
         }elseif ($operacion == "eliminar_habitantes"){
-
+            
+            $obj_habitante = new Habitantes(); // Objeto Habitante
             $id_habitante = $_POST["id_habitante"];
             $obj_habitante->set_id_habitante($id_habitante);
             echo  json_encode($obj_habitante->realizar_consulta('eliminar'));
 
         }elseif ($operacion == "ultimo_id_habitante") {
 
+            $obj_habitante = new Habitantes(); // Objeto Habitante
             echo json_encode($obj_habitante->realizar_consulta('lastId'));
 
         }elseif ($operacion == "registrar") {
+            $obj_apartamento = new Apartamento(); // Objeto Apartamento
+
             $nro_apartamento = $_POST["nro_apartamento"];  
             $porcentaje_participacion = $_POST["porcentaje_participacion"];
             $gas = $_POST["gas"]; 
@@ -170,6 +178,8 @@
 
             echo json_encode($respuesta);
         }elseif ($operacion == "modificar") {
+            $obj_apartamento = new Apartamento(); // Objeto Apartamento
+
             $id_apartamento = $_POST["id_apartamento"];
             $nro_apartamento = $_POST["nro_apartamento"];  
             $porcentaje_participacion = $_POST["porcentaje_participacion"];
@@ -186,12 +196,14 @@
             
             echo  json_encode($obj_apartamento->realizar_consulta('modificar'));
         }elseif ($operacion == "eliminar") {
+            $obj_apartamento = new Apartamento(); // Objeto Apartamento
             $id_apartamento = $_POST["id_apartamento"];
 
             $obj_apartamento->set_id_apartamento($id_apartamento);
 
             echo  json_encode($obj_apartamento->realizar_consulta('eliminar'));
         }elseif ($operacion == "ultimo_id"){
+            $obj_apartamento = new Apartamento(); // Objeto Apartamento
             echo json_encode($obj_apartamento->realizar_consulta('lastId'));
         }
 
@@ -201,19 +213,23 @@
     if (isset($_POST["validar"])) {
         $validar = $_POST["validar"];
         if ($validar == "nro_apartamento"){
+            $obj_apartamento = new Apartamento(); // Objeto Apartamento
             $obj_apartamento->set_nro_apartamento($_POST["nro_apartamento"]);
             echo  json_encode($obj_apartamento->realizar_consulta('validar'));
 
         }elseif ($validar == "cedula"){
+            $obj_habitante = new Habitantes(); // Objeto Habitante
             $obj_habitante->set_cedula($_POST["cedula"]);
             echo  json_encode($obj_habitante->realizar_consulta('validar'));
 
         }elseif ($validar == "tipo_vinculo"){
+            $obj_habitantes_apartamentos = new HabitantesApartamentos(); // Objeto Habitantes_Apartamentos
             $obj_habitantes_apartamentos->set_tipo_vinculo($_POST["tipo_vinculo"]);
             $obj_habitantes_apartamentos->set_apartamento_id($_POST["apartamento_id"]);
             echo  json_encode($obj_habitantes_apartamentos->realizar_consulta('validar'));
         }        
-        elseif ($validar == "validar_clave_foranea") {        
+        elseif ($validar == "validar_clave_foranea") {  
+            $obj_habitante = new Habitantes(); // Objeto Habitante      
             $tabla = $_POST["tabla"];
             $nombre_clave = $_POST["nombre_clave"];
             $valor = $_POST["valor"];
