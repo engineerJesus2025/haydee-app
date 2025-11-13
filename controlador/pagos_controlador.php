@@ -10,39 +10,43 @@ use haydee\modelo\PagosMensualidad;
 use haydee\modelo\BancosTransacciones;
 use haydee\modelo\Notificaciones;
 
-$obj_pago = new Pagos(); // Objeto pago
-$obj_banco = new Banco(); // Objeto banco
-$obj_apartamento = new Apartamento(); // Objeto apartamento
-$obj_detalles_pago = new DetallesPago(); // Objeto detalles pago
-$obj_pagos_mensualidad = new PagosMensualidad(); // Objeto pagos mensualidad
-$obj_bancos_transacciones = new BancosTransacciones(); // Objeto bancos transacciones
+//$obj_pago = new Pagos(); // Objeto pago
+//$obj_banco = new Banco(); // Objeto banco
+//$obj_apartamento = new Apartamento(); // Objeto apartamento
+//$obj_detalles_pago = new DetallesPago(); // Objeto detalles pago
+//$obj_pagos_mensualidad = new PagosMensualidad(); // Objeto pagos mensualidad
+//$obj_bancos_transacciones = new BancosTransacciones(); // Objeto bancos transacciones
 $notificacion_obj = new Notificaciones(); // Objeto notificaciones
 
+$obj_banco = new Banco();
+$registro_banco = $obj_banco->realizar_consulta('consultar');
+
 if (isset($_SESSION["rol"]) && $_SESSION["rol"] != "Propietario") {
-    //$registro_mensualidad = $obj_pago->consultarMensualidad();
+    $obj_apartamento = new Apartamento(); // Objeto apartamento
     $registro_apartamento = $obj_apartamento->realizar_consulta('consultar');
 } else {
+    $obj_apartamento = new Apartamento(); // Objeto apartamento
     $registro_apartamento = $obj_apartamento->consultar_propietario($_SESSION["usuario"]);
 }
-
-$registro_banco = $obj_banco->realizar_consulta('consultar');
 
 if (isset($_SESSION["rol"]) && $_SESSION["rol"] != "Propietario") {
     if (isset($_POST["operacion"])) {
         $operacion = $_POST["operacion"];
 
         if ($operacion == "consulta") {
-
+            $obj_pago = new Pagos();
             echo json_encode($obj_pago->realizar_consulta('consultar'));
 
         }
         // ---- Para cargar las mensualidades en el select en base al apartamento seleccionado ------
         elseif ($operacion == "consultar_mensualidades") {
+            $obj_pago = new Pagos();
             $apartamento_id = $_POST["apartamento_id"];
             $mensualidades = $obj_pago->consultarMensualidadPendiente($apartamento_id);
             echo json_encode($mensualidades);
         }
         elseif ($operacion == "consultar_mensualidad_especifica") {
+            $obj_pago = new Pagos();
             $mensualidad_id = $_POST["mensualidad_id"];
             $obj_pago->set_mensualidad_id($mensualidad_id);
             
@@ -51,10 +55,14 @@ if (isset($_SESSION["rol"]) && $_SESSION["rol"] != "Propietario") {
         }
         // ---------- Todo este bloque es para registrar los detalles de un pago ----------
         elseif ($operacion == "consultar_detalles") {
+            $obj_detalles_pago = new DetallesPago();
             $obj_detalles_pago->set_pago_id($_POST["id_pago"]);
             echo json_encode($obj_detalles_pago->realizar_consulta('consultar_detalles'));
             exit;
         } elseif ($operacion == "registrar_detalles") {
+            $obj_detalles_pago = new DetallesPago();
+            $obj_bancos_transacciones = new BancosTransacciones();
+            $obj_pagos_mensualidad = new PagosMensualidad();
             // Validación básica
             if (!isset($_POST["pago_id"]) || !isset($_POST["mensualidad_id"])) {
                 echo json_encode(["estatus" => false, "mensaje" => "Faltan datos obligatorios"]);
@@ -132,10 +140,14 @@ if (isset($_SESSION["rol"]) && $_SESSION["rol"] != "Propietario") {
                 "id_detalle" => $detalle_pago_id
             ]);
         } elseif ($operacion == "consulta_especifica_detalles") {
+            $obj_detalles_pago = new DetallesPago();
             $obj_detalles_pago->set_id_detalle_pago($_POST["id_detalle_pago"]);
             echo json_encode($obj_detalles_pago->realizar_consulta('consulta_especifica_detalles'));
             exit;
         } elseif ($operacion == "modificar_detalles") {
+            $obj_detalles_pago = new DetallesPago();
+            $obj_bancos_transacciones = new BancosTransacciones();
+            $obj_pagos_mensualidad = new PagosMensualidad();
             $id_pago = $_POST["id_pago"];
             $id_detalle_pago = $_POST["id_detalle_pago"];
             $id_banco_transaccion = $_POST["id_banco_transaccion"] ?? null;
@@ -255,6 +267,9 @@ if (isset($_SESSION["rol"]) && $_SESSION["rol"] != "Propietario") {
             ]);
             exit;
         } elseif ($operacion == "eliminar_detalles") {
+            $obj_detalles_pago = new DetallesPago();
+            $obj_bancos_transacciones = new BancosTransacciones();
+            $obj_pagos_mensualidad = new PagosMensualidad();
             $id_detalle_pago = $_POST["id_detalle_pago"];
 
             // Seteamos el ID en cada objeto
@@ -308,10 +323,15 @@ if (isset($_SESSION["rol"]) && $_SESSION["rol"] != "Propietario") {
 
             exit;
         } elseif ($operacion == "ultimo_id_detalle") {
+            $obj_detalles_pago = new DetallesPago();
             echo json_encode($obj_detalles_pago->realizar_consulta('lastId'));
         }
         // ---------------------- Todo este bloque es para registrar un pago ----------------------
         elseif ($operacion == "registrar") {
+            $obj_pago = new Pagos();
+            $obj_detalles_pago = new DetallesPago();
+            $obj_bancos_transacciones = new BancosTransacciones();
+            $obj_pagos_mensualidad = new PagosMensualidad();
 
             $monto_mensualidad = $_POST["monto_mensualidad"];
             $estado = $_POST["estado"];
@@ -419,12 +439,17 @@ if (isset($_SESSION["rol"]) && $_SESSION["rol"] != "Propietario") {
             exit;
         } elseif ($operacion == "consulta_especifica") { // Metodo privado
 
+            $obj_pago = new Pagos();
             $id_pago = $_POST["id_pago"];
             $obj_pago->set_id_pago($id_pago);
             echo json_encode($obj_pago->realizar_consulta('consulta_especifica'));
 
         } elseif ($operacion == "modificar") { // Metodo privado
 
+            $obj_pago = new Pagos();
+            $obj_detalles_pago = new DetallesPago();
+            $obj_bancos_transacciones = new BancosTransacciones();
+            $obj_pagos_mensualidad = new PagosMensualidad();
             $id_pago = $_POST["id_pago"];
             // $id_detalle_pago = $_POST["id_detalle_pago"];
             // $id_banco_transaccion = $_POST["id_banco_transaccion"];
@@ -517,6 +542,7 @@ if (isset($_SESSION["rol"]) && $_SESSION["rol"] != "Propietario") {
 
         } elseif ($operacion == "eliminar") {
             
+            $obj_pago = new Pagos();
             //se guardan el id de la variable a eliminar
             $id_pago = $_POST["id_pago"];
             $obj_pago->set_id_pago($id_pago);
@@ -524,6 +550,7 @@ if (isset($_SESSION["rol"]) && $_SESSION["rol"] != "Propietario") {
             echo json_encode($obj_pago->realizar_consulta('eliminar'));
 
         } elseif ($operacion == "ultimo_id") {
+            $obj_pago = new Pagos();
             echo json_encode($obj_pago->realizar_consulta('lastId'));
         }
 
@@ -533,10 +560,12 @@ if (isset($_SESSION["rol"]) && $_SESSION["rol"] != "Propietario") {
     if (isset($_POST["validar"])) {
         $validar = $_POST["validar"]; //Esto es igual pero para las validaciones
         if ($validar == "referencia") {
+            $obj_bancos_transacciones = new BancosTransacciones();
             $obj_bancos_transacciones->set_referencia($_POST["referencia"]);
             echo json_encode($obj_bancos_transacciones->realizar_consulta('validar'));
         }
         elseif ($validar == "validar_clave_foranea") {
+            $obj_pago = new Pagos();
             $tabla = $_POST["tabla"];
             $nombre_clave = $_POST["nombre_clave"];
             $valor = $_POST["valor"];
@@ -558,20 +587,26 @@ else { //date("Y-m-d")  ==================================== DETALLES PAGOS
         $operacion = $_POST["operacion"];
 
         if ($operacion == "consulta") {
+            $obj_pago = new Pagos();
             // llamamos a la funcion, lo convertimos a json y la mandamos al js con echo
             echo json_encode($obj_pago->consultarPorCorreo($_SESSION["usuario"]));
             // la hice para que retorne un arreglo, si sale vacio solo mandara un array con false  consultar
         }
         //Despues de cada echo se regresa al javascript como respuesta en json
         elseif ($operacion == "consultar_mensualidades") {
+            $obj_pago = new Pagos();
             $apartamento_id = $_POST["apartamento_id"];
             $mensualidades = $obj_pago->consultarMensualidadPendiente($apartamento_id);
             echo json_encode($mensualidades);
         } elseif ($operacion == "consultar_detalles") {
+            $obj_detalles_pago = new DetallesPago();
             $obj_detalles_pago->set_pago_id($_POST["id_pago"]);
             echo json_encode($obj_detalles_pago->realizar_consulta('consultar_detalles'));
             exit;
         } elseif ($operacion == "registrar_detalles") {
+            $obj_detalles_pago = new DetallesPago();
+            $obj_bancos_transacciones = new BancosTransacciones();
+            $obj_pagos_mensualidad = new PagosMensualidad();
             // Validación básica
             if (!isset($_POST["pago_id"]) || !isset($_POST["mensualidad_id"])) {
                 echo json_encode(["estatus" => false, "mensaje" => "Faltan datos obligatorios"]);
@@ -649,10 +684,14 @@ else { //date("Y-m-d")  ==================================== DETALLES PAGOS
                 "id_detalle" => $detalle_pago_id
             ]);
         } elseif ($operacion == "consulta_especifica_detalles") {
+            $obj_detalles_pago = new DetallesPago();
             $obj_detalles_pago->set_id_detalle_pago($_POST["id_detalle_pago"]);
             echo json_encode($obj_detalles_pago->realizar_consulta('consulta_especifica_detalles'));
             exit;
         } elseif ($operacion == "modificar_detalles") {
+            $obj_detalles_pago = new DetallesPago();
+            $obj_bancos_transacciones = new BancosTransacciones();
+            $obj_pagos_mensualidad = new PagosMensualidad();
             $id_pago = $_POST["id_pago"];
             $id_detalle_pago = $_POST["id_detalle_pago"];
             $id_banco_transaccion = $_POST["id_banco_transaccion"] ?? null;
@@ -772,6 +811,9 @@ else { //date("Y-m-d")  ==================================== DETALLES PAGOS
             ]);
             exit;
         } elseif ($operacion == "eliminar_detalles") {
+            $obj_detalles_pago = new DetallesPago();
+            $obj_bancos_transacciones = new BancosTransacciones();
+            $obj_pagos_mensualidad = new PagosMensualidad();
             $id_detalle_pago = $_POST["id_detalle_pago"];
 
             // Seteamos el ID en cada objeto
@@ -825,9 +867,14 @@ else { //date("Y-m-d")  ==================================== DETALLES PAGOS
 
             exit;
         } elseif ($operacion == "ultimo_id_detalle") {
+            $obj_detalles_pago = new DetallesPago();
             echo json_encode($obj_detalles_pago->realizar_consulta('lastId'));
         } elseif ($operacion == "registrar") {
-           $monto_mensualidad = $_POST["monto_mensualidad"];
+            $obj_pago = new Pagos();
+            $obj_detalles_pago = new DetallesPago();
+            $obj_bancos_transacciones = new BancosTransacciones();
+            $obj_pagos_mensualidad = new PagosMensualidad();
+            $monto_mensualidad = $_POST["monto_mensualidad"];
             $estado = $_POST["estado"];
             $observacion = $_POST["observacion"];
 
@@ -931,11 +978,16 @@ else { //date("Y-m-d")  ==================================== DETALLES PAGOS
                 "imagen" => $imagen
             ]);
         } elseif ($operacion == "consulta_especifica") { // Traer los otros consultar especificos
+            $obj_pago = new Pagos();
             $id_pago = $_POST["id_pago"];
             $obj_pago->set_id_pago($id_pago);
             echo json_encode($obj_pago->realizar_consulta('consulta_especifica'));
         } elseif ($operacion == "modificar") {
-             $id_pago = $_POST["id_pago"];
+            $obj_pago = new Pagos();
+            $obj_detalles_pago = new DetallesPago();
+            $obj_bancos_transacciones = new BancosTransacciones();
+            $obj_pagos_mensualidad = new PagosMensualidad();
+            $id_pago = $_POST["id_pago"];
             // $id_detalle_pago = $_POST["id_detalle_pago"];
             // $id_banco_transaccion = $_POST["id_banco_transaccion"];
 
@@ -1025,6 +1077,7 @@ else { //date("Y-m-d")  ==================================== DETALLES PAGOS
             $pago_completo = $obj_pago->realizar_consulta('consulta_especifica');
             echo json_encode(["estatus" => true, "mensaje" => "Pago modificado correctamente", "pago" => $pago_completo]);
         } elseif ($operacion == "eliminar") {
+            $obj_pago = new Pagos();
             //se guardan el id de la variable a eliminar
             $id_pago = $_POST["id_pago"];
             $obj_pago->set_id_pago($id_pago);
@@ -1032,6 +1085,7 @@ else { //date("Y-m-d")  ==================================== DETALLES PAGOS
             echo json_encode($obj_pago->realizar_consulta('eliminar'));
 
         } elseif ($operacion == "ultimo_id") {
+            $obj_pago = new Pagos();
             echo json_encode($obj_pago->realizar_consulta('lastId'));
         }
 
@@ -1039,8 +1093,11 @@ else { //date("Y-m-d")  ==================================== DETALLES PAGOS
     }
 
     if (isset($_POST["validar"])) {
+        $obj_pago = new Pagos();
+
         $validar = $_POST["validar"]; //Esto es igual pero para las validaciones
         if ($validar == "referencia") {
+            $obj_bancos_transacciones = new BancosTransacciones();
             $obj_bancos_transacciones->set_referencia($_POST["referencia"]);
             echo json_encode($obj_bancos_transacciones->realizar_consulta('validar'));
         }
