@@ -13,12 +13,20 @@ use PhpXmlRpc\Encoder;
 $TESTLINK_API_KEY  = '30779eda0efadc81d9088c35d61b0394'; // Cambian esto por su API Key de testlink
 $TESTLINK_URL      = 'http://localhost:8080/testlink/lib/api/xmlrpc.php'; // No vayan a cambiar esto
 $TEST_PROJECT_NAME = 'Proyecto Haydee'; // Aqui ponen el nombre del proyecto que usan en TestLink
-$TEST_CASE_ID      = '1-1'; // En este caso, el ID externo del caso de prueba en TestLink
+$TEST_CASE_ID      = '1-10'; // En este caso, el ID externo del caso de prueba en TestLink
 $BUILD_NAME        = 'Version 1.3'; // Nombre de la build que estan probando
 $TEST_PLAN_ID      = 2; // Y el ID del plan de pruebas en TestLink
 // -----------------------------------------------------------------
 
-$command = 'vendor\bin\phpunit tests\selenium\loginTest.php';
+// --- Esto es puro para mostrar colores en la consola y sea mas entendible el resultado ---
+define('COLOR_VERDE', "\033[0;32m");
+define('COLOR_ROJO', "\033[0;31m");
+define('COLOR_RESET', "\033[0m");
+// ------------------------------------
+
+// --- IMPORTANTE: ---
+// Aqui abajo van los comandos para ejecutar la prueba de selenium con phpunit
+$command = 'vendor\bin\phpunit tests/Selenium/habitantesConsultarTest.php';
 $output = [];
 $returnCode = 0; 
 
@@ -27,9 +35,11 @@ exec($command, $output, $returnCode);
 
 $fullOutput = implode("\n", $output);
 $resultStatus = ($returnCode === 0) ? 'p' : 'f'; // 'p' = passed, 'f' = failed (NO CAMBIAR ESTO)
-$mensaje = ($resultStatus === 'p') ? 'Aprobado' : 'Fallido'; // Aqui lo puse asi para que no saliera solamente una "P" o "F" en el resultado
 
-echo "Prueba de Selenium finalizada. Resultado: $mensaje\n";
+// --- Aqui le hice el cambio con los colores y se vea bonito :v ---
+$mensaje = ($resultStatus === 'p') ? (COLOR_VERDE . 'Aprobado' . COLOR_RESET) : (COLOR_ROJO . 'Fallido' . COLOR_RESET); 
+
+//echo "Prueba de Selenium finalizada. Resultado: $mensaje\n";
 echo "====================================================\n\n";
 echo "Salida de PHPUnit:\n$fullOutput\n";
 echo "--- Reportando resultado a TestLink... ---\n";
@@ -54,9 +64,8 @@ try {
 
     $response = $client->send($request);
 
-    // --- LÓGICA DE VERIFICACIÓN FINAL ---
     if ($response->faultCode()) {
-        echo "Error: La API de TestLink devolvio un error (faultCode):\n";
+        echo COLOR_ROJO . "Error: La API de TestLink devolvio un error (faultCode):\n" . COLOR_RESET;
         echo "Codigo: " . $response->faultCode() . "\n";
         echo "Mensaje: " . $response->faultString() . "\n";
         exit(1);
@@ -67,21 +76,23 @@ try {
         if (is_array($first_response) && isset($first_response['message'])) {
             
             if ($first_response['message'] === 'Success!') {
-                echo "Conexion Exitosa - Resultado reportado a TestLink.\n";
+                echo "Prueba de Selenium finalizada. Resultado: $mensaje\n";
+                echo COLOR_VERDE . "Conexion Exitosa - Resultado reportado a TestLink.\n" . COLOR_RESET;
                 exit(0);
             } else {
-                echo "Conexion Fallida - TestLink rechazó el resultado:\n";
+                echo "Prueba de Selenium finalizada. Resultado: $mensaje\n";
+                echo COLOR_ROJO . "Conexion Fallida - TestLink rechazó el resultado:\n" . COLOR_RESET;
                 echo "Mensaje de TestLink: " . $first_response['message'] . "\n";
                 print_r($data);
                 exit(1);
             }
         } else {
-             echo "Exito - Resultado reportado a TestLink (Respuesta genérica).\n";
+             echo COLOR_VERDE . "Exito - Resultado reportado a TestLink (Respuesta genérica).\n" . COLOR_RESET;
              print_r($data);
              exit(0);
         }
     }
 } catch (Exception $e) {
-    echo "Error de Conexión: No se pudo reportar a TestLink: " . $e->getMessage() . "\n";
+    echo COLOR_ROJO . "Error de Conexión: No se pudo reportar a TestLink: " . $e->getMessage() . "\n" . COLOR_RESET;
     exit(1); 
 }
