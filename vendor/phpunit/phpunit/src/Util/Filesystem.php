@@ -9,13 +9,17 @@
  */
 namespace PHPUnit\Util;
 
+use const DIRECTORY_SEPARATOR;
+use function basename;
+use function dirname;
 use function is_dir;
-use function is_string;
 use function mkdir;
 use function realpath;
 use function str_starts_with;
 
 /**
+ * @no-named-arguments Parameter names are not covered by the backward compatibility promise for PHPUnit
+ *
  * @internal This class is not covered by the backward compatibility promise for PHPUnit
  */
 final readonly class Filesystem
@@ -26,20 +30,20 @@ final readonly class Filesystem
     }
 
     /**
-     * @psalm-param non-empty-string $path
+     * @param non-empty-string $path
      *
      * @return false|non-empty-string
      */
-    public static function resolvePathOrStream(string $path): false|string
+    public static function resolveStreamOrFile(string $path): false|string
     {
         if (str_starts_with($path, 'php://') || str_starts_with($path, 'socket://')) {
             return $path;
         }
 
-        $path = realpath($path);
+        $directory = dirname($path);
 
-        if (is_string($path) && !empty($path)) {
-            return $path;
+        if (is_dir($directory)) {
+            return realpath($directory) . DIRECTORY_SEPARATOR . basename($path);
         }
 
         return false;

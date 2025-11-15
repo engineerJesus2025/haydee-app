@@ -150,7 +150,7 @@ async function cargaInicio() {
 		    }
 		});
 		document.getElementById('esqueleto_canva_2').remove();
-		document.getElementById("canva_2").removeAttribute("hidden");
+		document.getElementById("canva_1").removeAttribute("hidden");
 	}
 	else{
 		document.getElementById('div_alert_2').removeAttribute("hidden");

@@ -26,7 +26,7 @@ use PHPUnit\Framework\UnknownTypeException;
 /**
  * @no-named-arguments Parameter names are not covered by the backward compatibility promise for PHPUnit
  */
-final readonly class IsType extends Constraint
+final class IsType extends Constraint
 {
     /**
      * @var string
@@ -94,7 +94,7 @@ final readonly class IsType extends Constraint
     public const TYPE_ITERABLE = 'iterable';
 
     /**
-     * @psalm-var array<string,bool>
+     * @var array<string,bool>
      */
     private const KNOWN_TYPES = [
         'array'             => true,
@@ -117,12 +117,12 @@ final readonly class IsType extends Constraint
     ];
 
     /**
-     * @psalm-var 'array'|'boolean'|'bool'|'double'|'float'|'integer'|'int'|'null'|'numeric'|'object'|'real'|'resource'|'resource (closed)'|'string'|'scalar'|'callable'|'iterable'
+     * @var 'array'|'bool'|'boolean'|'callable'|'double'|'float'|'int'|'integer'|'iterable'|'null'|'numeric'|'object'|'real'|'resource (closed)'|'resource'|'scalar'|'string'
      */
-    private string $type;
+    private readonly string $type;
 
     /**
-     * @psalm-param 'array'|'boolean'|'bool'|'double'|'float'|'integer'|'int'|'null'|'numeric'|'object'|'real'|'resource'|'resource (closed)'|'string'|'scalar'|'callable'|'iterable' $type
+     * @param 'array'|'bool'|'boolean'|'callable'|'double'|'float'|'int'|'integer'|'iterable'|'null'|'numeric'|'object'|'real'|'resource (closed)'|'resource'|'scalar'|'string' $type
      *
      * @throws UnknownTypeException
      */

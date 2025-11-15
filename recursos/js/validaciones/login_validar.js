@@ -8,9 +8,9 @@ let recuperacion_contrasenia = {
 	tiempo: null
 };
 
-if (!(navigator.onLine)) {
-	document.querySelector(".g-recaptcha").style.display = 'none'
-}
+// if (!(navigator.onLine)) {
+// 	document.querySelector(".g-recaptcha").style.display = 'none'
+// }
 
 document.getElementById('correo_login').addEventListener("keyup",e=>{
 	validarKeyPress(/^[A-Za-z0-9_ .@\b]*$/, e);
@@ -37,17 +37,17 @@ document.getElementById('enviar').addEventListener("click",async e=>{
 		mantener_sesion = document.getElementById('checkbox_mantener_sesion').checked;
 
 		let reCAPTCHA;
-		if (!(navigator.onLine)) {
-			reCAPTCHA = "no_internet";
-		}
-		else{
-			reCAPTCHA = document.getElementById('g-recaptcha-response').value;
-		}
+		// if ((navigator.onLine)) {
+		// 	reCAPTCHA = "no_internet";
+		// }
+		// else{
+		// 	reCAPTCHA = document.getElementById('g-recaptcha-response').value;
+		// }
 
 		datos_consulta.append("usuario",usuario);
 		datos_consulta.append("contra",contra);
 		datos_consulta.append("mantener_sesion",mantener_sesion);
-		datos_consulta.append("g-recaptcha-response",reCAPTCHA);
+		// datos_consulta.append("g-recaptcha-response",reCAPTCHA);
 		datos_consulta.append("operacion","entrar");
 
 		let resultado = await query(datos_consulta);
@@ -133,13 +133,13 @@ function validarEnvio(){
 		
 		return false;
 	}
-	if (navigator.onLine) {
-		const recaptchaResponse = grecaptcha.getResponse();
-	    if (recaptchaResponse.length === 0) {
-	        mensajes('error',4000,'Verifique el reCAPTCHA','Debe completar la validación.');
-	        return false;
-	    }
-	}	
+	// if (!navigator.onLine) {
+	// 	const recaptchaResponse = grecaptcha.getResponse();
+	//     if (recaptchaResponse.length === 0) {
+	//         mensajes('error',4000,'Verifique el reCAPTCHA','Debe completar la validación.');
+	//         return false;
+	//     }
+	// }	
 
 	return true;
 }

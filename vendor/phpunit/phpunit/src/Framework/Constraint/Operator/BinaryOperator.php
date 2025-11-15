@@ -15,12 +15,12 @@ use function count;
 /**
  * @no-named-arguments Parameter names are not covered by the backward compatibility promise for PHPUnit
  */
-abstract readonly class BinaryOperator extends Operator
+abstract class BinaryOperator extends Operator
 {
     /**
-     * @psalm-var list<Constraint>
+     * @var list<Constraint>
      */
-    private array $constraints;
+    private readonly array $constraints;
 
     protected function __construct(mixed ...$constraints)
     {
@@ -75,7 +75,7 @@ abstract readonly class BinaryOperator extends Operator
     }
 
     /**
-     * @psalm-return list<Constraint>
+     * @return list<Constraint>
      */
     final protected function constraints(): array
     {

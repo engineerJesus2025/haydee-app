@@ -164,6 +164,7 @@
 
             echo  json_encode($obj_apartamento->realizar_consulta('registrar'));
         }elseif ($operacion == "consulta_especifica"){
+            $obj_apartamento = new Apartamento();
             $id_apartamento = $_POST["id_apartamento"];
 
             $obj_apartamento->set_id_apartamento($id_apartamento);

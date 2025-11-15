@@ -7,11 +7,11 @@ Options All -Indexes
 # - Carpeta recursos y todo su contenido
 # - Carpeta vendor y todo su contenido  
 # - Carpeta vista y todo su contenido
-RewriteCond %{REQUEST_URI} !^/haydee-app/?$
-RewriteCond %{REQUEST_URI} !^/haydee-app/index\.php$
-RewriteCond %{REQUEST_URI} !^/haydee-app/recursos/ [OR]
-RewriteCond %{REQUEST_URI} !^/haydee-app/vendor/ [OR] 
-RewriteCond %{REQUEST_URI} !^/haydee-app/vista/
+RewriteCond %{REQUEST_URI} !^/haydee/?$
+RewriteCond %{REQUEST_URI} !^/haydee/index\.php$
+RewriteCond %{REQUEST_URI} !^/haydee/recursos/ [OR]
+RewriteCond %{REQUEST_URI} !^/haydee/vendor/ [OR] 
+RewriteCond %{REQUEST_URI} !^/haydee/vista/
 RewriteRule .* - [S=4]  # Salta las próximas 4 reglas si alguna condición anterior es verdadera
 
 # Bloquear todo lo demás
