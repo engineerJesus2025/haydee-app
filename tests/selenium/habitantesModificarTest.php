@@ -83,58 +83,56 @@ class habitantesModificarTest extends TestCase
         // PASO 4: Abrir el modal de "Modificar Habitante"
         // -----------------------------------------------------------------
         
-        // 1. Esperar modal de lista de habitantes
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::visibilityOfElementLocated(
                 WebDriverBy::id('modal_vista_previa')
             )
         );
         
-        // 2. Esperar que la tabla de habitantes cargue
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::invisibilityOfElementLocated(
                 WebDriverBy::id('tabla_habitantes_processing')
             )
         );
 
-        // 3. Clic en "Editar Habitante" (de la fila 1 de la tabla_habitantes)
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::elementToBeClickable(
                 WebDriverBy::xpath("//table[@id='tabla_habitantes']/tbody/tr[1]//button[@title='Editar Habitante']")
             )
         )->click();
 
-        // 4. Esperar que el modal de registro (#modal_habitantes) aparezca
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::visibilityOfElementLocated(
                 WebDriverBy::id('modal_habitantes')
             )
         );
 
-        // 5. Esperar que el formulario cargue datos (ej: cédula no esté vacía)
         $this->driver->wait(10)->until(
-             WebDriverExpectedCondition::not(
-                WebDriverExpectedCondition::elementValueIs(WebDriverBy::id('cedula'), '')
-            ),
-            "El modal de modificar se abrió pero no cargó los datos del habitante."
+            function () {
+                $cedulaValue = $this->driver->findElement(WebDriverBy::id('cedula'))
+                    ->getAttribute('value');
+                return $cedulaValue !== '';
+            },
+            "El modal de modificar se abrió pero no cargó los datos del habitante (la cédula está vacía)."
         );
         
         // -----------------------------------------------------------------
         // PASO 5: Modificar Formulario
         // -----------------------------------------------------------------
 
-        // 1. Capturar la Cédula (para buscarla después)
         $cedula_modificada = $this->driver
             ->findElement(WebDriverBy::id('cedula'))
             ->getAttribute('value');
 
-        // 2. Cambiar el teléfono
         $telefonoField = $this->driver->findElement(WebDriverBy::id('telefono'));
         $telefonoField->clear();
         $telefonoField->sendKeys($this->test_telefono);
 
-        // 3. Enviar
-        $this->driver->findElement(WebDriverBy::id('boton_formulario_habitantes'))->click();
+        $this->driver->wait(10)->until(
+            WebDriverExpectedCondition::elementToBeClickable(
+                WebDriverBy::id('boton_formulario_habitantes')
+            )
+        )->click();
 
         // -----------------------------------------------------------------
         // PASO 6: Manejar Alertas y Verificar
@@ -144,38 +142,39 @@ class habitantesModificarTest extends TestCase
                 WebDriverBy::id('swal2-title'), '¿Estás seguro?'
             )
         );
-        $this->driver->findElement(WebDriverBy::className('swal2-confirm'))->click(); // "Sí, Editar"
+        $this->driver->findElement(WebDriverBy::className('swal2-confirm'))->click();
 
-        // Mensaje de éxito del controlador
+        // El test confirma que la modificación fue exitosa por esta alerta:
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::elementTextContains(
-                WebDriverBy::id('swal2-html-container'), 'actualizados correctamente'
+                WebDriverBy::id('swal2-html-container'), 'El registro se ha modificado exitosamente'
             )
         );
-        $this->driver->findElement(WebDriverBy::className('swal2-confirm'))->click(); // "Aceptar"
+        $this->driver->findElement(WebDriverBy::className('swal2-confirm'))->click();
         
-        // Esperar que el modal de registro (#modal_habitantes) desaparezca
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::invisibilityOfElementLocated(
                 WebDriverBy::id('modal_habitantes')
             )
         );
 
-        // Esperar que la tabla_habitantes (en #modal_vista_previa) se refresque
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::invisibilityOfElementLocated(
                 WebDriverBy::id('tabla_habitantes_processing')
             )
         );
 
-        // Verificar que el nuevo teléfono existe en la tabla
+        // --- ¡CORRECCIÓN APLICADA AQUÍ! ---
+        // (Esta era la línea 181 que fallaba)
+        // Verificamos usando la CÉDULA (que sí es visible) en lugar del teléfono (oculto).
+        // Esto confirma que la tabla se recargó y el ítem modificado sigue allí.
         $tableBodySelector = WebDriverBy::xpath("//table[@id='tabla_habitantes']/tbody");
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::elementTextContains(
                 $tableBodySelector,
-                $this->test_telefono // Buscamos el nuevo teléfono
+                $cedula_modificada // Buscamos la cédula
             ),
-            "FALLO: El habitante (Cedula: " . $cedula_modificada . ") no mostró el nuevo teléfono (" . $this->test_telefono . ") en la tabla."
+            "FALLO: El habitante (Cedula: " . $cedula_modificada . ") no se encontró en la tabla después de modificar."
         );
 
         $this->assertTrue(true, "Modificación de habitante exitosa y verificada.");

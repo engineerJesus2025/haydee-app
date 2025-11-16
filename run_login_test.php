@@ -1,5 +1,5 @@
 <?php
-// 1. Cargar Composer
+// .\msedgedriver.exe --port=4444
 require 'vendor/autoload.php';
 
 use PhpXmlRpc\Client;
@@ -13,7 +13,7 @@ use PhpXmlRpc\Encoder;
 $TESTLINK_API_KEY  = '30779eda0efadc81d9088c35d61b0394'; // Cambian esto por su API Key de testlink
 $TESTLINK_URL      = 'http://localhost:8080/testlink/lib/api/xmlrpc.php'; // No vayan a cambiar esto
 $TEST_PROJECT_NAME = 'Proyecto Haydee'; // Aqui ponen el nombre del proyecto que usan en TestLink
-$TEST_CASE_ID      = '1-10'; // En este caso, el ID externo del caso de prueba en TestLink
+$TEST_CASE_ID      = '1-17'; // En este caso, el ID externo del caso de prueba en TestLink
 $BUILD_NAME        = 'Version 1.3'; // Nombre de la build que estan probando
 $TEST_PLAN_ID      = 2; // Y el ID del plan de pruebas en TestLink
 // -----------------------------------------------------------------
@@ -26,7 +26,7 @@ define('COLOR_RESET', "\033[0m");
 
 // --- IMPORTANTE: ---
 // Aqui abajo van los comandos para ejecutar la prueba de selenium con phpunit
-$command = 'vendor\bin\phpunit tests/Selenium/habitantesConsultarTest.php';
+$command = 'vendor\bin\phpunit tests/Selenium/pagosEliminarTest.php';
 $output = [];
 $returnCode = 0; 
 

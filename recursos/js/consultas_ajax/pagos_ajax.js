@@ -23,6 +23,15 @@ let tiempoInicio;
 // Forma correcta de definir el modal
 let modalVistaPrevia = new bootstrap.Modal(document.querySelector("#modal_vista_previa"));
 
+// Por si la tabla se descuadra
+let modalVistaPreviaEl = document.querySelector("#modal_vista_previa");
+
+modalVistaPreviaEl.addEventListener('shown.bs.modal', function () {
+    if ($.fn.DataTable.isDataTable("#tabla_detalles_pagos")) {
+        $('#tabla_detalles_pagos').DataTable().columns.adjust().responsive.recalc();
+    }
+});
+
 let detallesActuales = null;
 
 consultar(); // Para llenar la tabla al cargar o entrar a la pagina

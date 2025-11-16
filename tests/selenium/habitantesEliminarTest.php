@@ -99,7 +99,11 @@ class habitantesEliminarTest extends TestCase
         );
 
         // 2. Clic en "Nuevo Habitante"
-        $this->driver->findElement(WebDriverBy::id('boton_registrar'))->click();
+        $this->driver->wait(10)->until(
+            WebDriverExpectedCondition::elementToBeClickable(
+                WebDriverBy::id('boton_registrar')
+            )
+        )->click();
 
         // 3. Esperar modal de registro
         $this->driver->wait(10)->until(
@@ -107,15 +111,25 @@ class habitantesEliminarTest extends TestCase
                 WebDriverBy::id('modal_habitantes')
             )
         );
+        
+        // --- ¡CORRECCIÓN APLICADA AQUÍ! ---
+        // 4. Esperar que el PRIMER CAMPO (cedula) sea interactuable
+        //    (Esto asegura que la animación del modal ha terminado)
+        $this->driver->wait(10)->until(
+            WebDriverExpectedCondition::elementToBeClickable(
+                WebDriverBy::id('cedula')
+            )
+        );
+        // --------------------------------
 
-        // 4. Llenar formulario
+        // 5. Llenar formulario (antes 4)
         $this->driver->findElement(WebDriverBy::id('cedula'))
             ->sendKeys($this->test_cedula);
         $this->driver->findElement(WebDriverBy::id('nombre'))
             ->sendKeys('Temporal');
         $this->driver->findElement(WebDriverBy::id('apellido'))
             ->sendKeys('Para Borrar');
-        $this->driver->findElement(WebDriverBy::id('fecha_nacimiento'))
+        $this->driver->findElement(WebDriverBy::id('fecha_nacimiento')) // (Esta era la línea 118 que fallaba)
             ->sendKeys('01/01/1990');
         $this->driver->findElement(WebDriverBy::id('telefono'))
             ->sendKeys('04129876543');
@@ -125,18 +139,24 @@ class habitantesEliminarTest extends TestCase
             ->selectByValue('Femenino');
         (new WebDriverSelect($this->driver->findElement(WebDriverBy::id('tipo_vinculo'))))
             ->selectByValue('Habitante');
-        $this->driver->findElement(WebDriverBy::id('boton_formulario_habitantes'))->click();
+        
+        $this->driver->wait(10)->until(
+            WebDriverExpectedCondition::elementToBeClickable(
+                WebDriverBy::id('boton_formulario_habitantes')
+            )
+        )->click();
 
-        // 5. Manejar Alertas de Registro
+        // 6. Manejar Alertas de Registro (antes 5)
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::elementTextContains(
                 WebDriverBy::id('swal2-title'), '¿Estás seguro?'
             )
         );
         $this->driver->findElement(WebDriverBy::className('swal2-confirm'))->click();
+        
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::elementTextContains(
-                WebDriverBy::id('swal2-html-container'), 'registrados correctamente'
+                WebDriverBy::id('swal2-html-container'), 'El registro se ha realizado exitosamente'
             )
         );
         $this->driver->findElement(WebDriverBy::className('swal2-confirm'))->click();
@@ -146,7 +166,7 @@ class habitantesEliminarTest extends TestCase
             )
         );
         
-        // 6. Esperar que la tabla se refresque con el nuevo registro
+        // 7. Esperar que la tabla se refresque con el nuevo registro (antes 6)
          $this->driver->wait(10)->until(
             WebDriverExpectedCondition::invisibilityOfElementLocated(
                 WebDriverBy::id('tabla_habitantes_processing')
@@ -163,13 +183,9 @@ class habitantesEliminarTest extends TestCase
         // PASO 5: Buscar y Eliminar el Habitante Creado
         // -----------------------------------------------------------------
         
-        // 1. Ubicar la fila (tr) que contiene la cédula única
         $rowXPath = "//table[@id='tabla_habitantes']/tbody/tr[contains(., '" . $this->test_cedula . "')]";
-        
-        // 2. Ubicar el botón de eliminar DENTRO de esa fila
         $deleteButtonXPath = $rowXPath . "//button[@title='Eliminar Habitante']";
 
-        // 3. Clic en el botón de eliminar
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::elementToBeClickable(
                 WebDriverBy::xpath($deleteButtonXPath)
@@ -181,37 +197,32 @@ class habitantesEliminarTest extends TestCase
         // PASO 6: Manejar Alertas de Eliminación y Verificar
         // -----------------------------------------------------------------
         
-        // 1. Alerta de Confirmación
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::elementTextContains(
                 WebDriverBy::id('swal2-title'), '¿Estás seguro?'
             )
         );
-        $this->driver->findElement(WebDriverBy::className('swal2-confirm'))->click(); // "Si, Eliminar"
+        $this->driver->findElement(WebDriverBy::className('swal2-confirm'))->click();
 
-        // 2. Alerta de Éxito
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::elementTextContains(
                 WebDriverBy::id('swal2-html-container'), 'eliminado correctamente'
             )
         );
-        $this->driver->findElement(WebDriverBy::className('swal2-confirm'))->click(); // "Aceptar"
+        $this->driver->findElement(WebDriverBy::className('swal2-confirm'))->click();
         
-        // 3. Esperar que la alerta desaparezca
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::invisibilityOfElementLocated(
                 WebDriverBy::className('swal2-popup')
             )
         );
 
-        // 4. Esperar que la tabla se refresque
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::invisibilityOfElementLocated(
                 WebDriverBy::id('tabla_habitantes_processing')
             )
         );
 
-        // 5. Verificación Final: El texto de la cédula NO debe estar en la tabla
         $tableBodySelector = WebDriverBy::xpath("//table[@id='tabla_habitantes']/tbody");
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::not(

@@ -20,7 +20,6 @@ class habitantesRegistrarTest extends TestCase
         $capabilities = [ 'browserName' => 'MicrosoftEdge' ];
         $this->driver = RemoteWebDriver::create($host, $capabilities);
         
-        // Generamos datos únicos para evitar conflictos de validación
         $this->test_cedula = (string)rand(10000000, 99999999);
         $this->test_correo = "selenium" . rand(1000, 9999) . "@test.com";
     }
@@ -80,7 +79,7 @@ class habitantesRegistrarTest extends TestCase
         
         $viewInhabitantsButton = $this->driver->wait(10)->until(
             WebDriverExpectedCondition::elementToBeClickable(
-                // ¡CORREGIDO! Usando el title='Detalles Apartamento'
+                // Usando el title='Detalles Apartamento' que confirmaste
                 WebDriverBy::xpath("//table[@id='tabla_apartamentos']/tbody/tr[1]//button[@title='Detalles Apartamento']")
             )
         );
@@ -104,8 +103,15 @@ class habitantesRegistrarTest extends TestCase
             )
         );
 
-        // 3. Clic en "Nuevo Habitante" (ID de apartamentos_vista.php)
-        $this->driver->findElement(WebDriverBy::id('boton_registrar'))->click();
+        // --- ¡CORRECCIÓN APLICADA AQUÍ! ---
+        // (Esta era la línea 119 que fallaba)
+        // En lugar de findElement()->click(), esperamos a que el botón 
+        // sea CLICABLE, para evitar la "race condition" con la animación del modal.
+        $this->driver->wait(10)->until(
+            WebDriverExpectedCondition::elementToBeClickable(
+                WebDriverBy::id('boton_registrar')
+            )
+        )->click();
 
         // 4. Esperar que el modal de registro (#modal_habitantes) aparezca
         $this->driver->wait(10)->until(
@@ -131,7 +137,7 @@ class habitantesRegistrarTest extends TestCase
         $this->driver->findElement(WebDriverBy::id('apellido'))
             ->sendKeys('Registro');
         $this->driver->findElement(WebDriverBy::id('fecha_nacimiento'))
-            ->sendKeys('01/01/1990'); // O '1990-01-01' si es type="date"
+            ->sendKeys('01/01/1990');
         $this->driver->findElement(WebDriverBy::id('telefono'))
             ->sendKeys('04121234567');
         $this->driver->findElement(WebDriverBy::id('correo'))
@@ -139,13 +145,9 @@ class habitantesRegistrarTest extends TestCase
 
         (new WebDriverSelect($this->driver->findElement(WebDriverBy::id('sexo'))))
             ->selectByValue('Masculino');
-        
-        // Asumimos 'Habitante' para evitar el conflicto de 'Propietario' único
         (new WebDriverSelect($this->driver->findElement(WebDriverBy::id('tipo_vinculo'))))
             ->selectByValue('Habitante');
         
-        // NOTA: El 'apartamento_id' se autocompleta por JS, no es necesario seleccionarlo.
-
         $this->driver->findElement(WebDriverBy::id('boton_formulario_habitantes'))->click();
 
         // -----------------------------------------------------------------
@@ -158,22 +160,20 @@ class habitantesRegistrarTest extends TestCase
         );
         $this->driver->findElement(WebDriverBy::className('swal2-confirm'))->click(); 
 
-        // Mensaje de éxito del controlador
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::elementTextContains(
-                WebDriverBy::id('swal2-html-container'), 'registrados correctamente'
-            )
+                WebDriverBy::id('swal2-html-container'), 'El registro se ha realizado exitosamente'
+            ),
+            "La alerta de 'Éxito' no apareció o el texto no coincidía."
         );
         $this->driver->findElement(WebDriverBy::className('swal2-confirm'))->click();
         
-        // Esperar que el modal de registro (#modal_habitantes) desaparezca
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::invisibilityOfElementLocated(
                 WebDriverBy::id('modal_habitantes')
             )
         );
         
-        // Esperar que la tabla_habitantes (en #modal_vista_previa) se refresque
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::invisibilityOfElementLocated(
                 WebDriverBy::id('tabla_habitantes_processing')
