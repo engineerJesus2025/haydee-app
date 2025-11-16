@@ -30,7 +30,7 @@
             <label for="telefono_afiliado">Teléfono Afiliado</label>
             <div class="input-group mb-3">
                 <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-telephone-fill"></i></span>
-                <input type="text" class="border border-dark form-control telefono_afiliado" name="telefono_afiliado" id="telefono_afiliado" placeholder="Teléfono Afiliado" aria-label="telefono_afiliado" aria-describedby="basic-addon1" minlength="3" maxlength="60">
+                <input type="text" class="border border-dark form-control telefono_afiliado" name="telefono_afiliado" id="telefono_afiliado" placeholder="Ejem: 04127721822" aria-label="telefono_afiliado" aria-describedby="basic-addon1" minlength="3" maxlength="60">
                 <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
