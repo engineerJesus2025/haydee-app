@@ -358,7 +358,10 @@ if (isset($_SESSION["rol"]) && $_SESSION["rol"] != "Propietario") {
             $imagen = '';
             $apartamento_id = $_POST["apartamento_id"];
             $mensualidad_id = $_POST["mensualidad_id"];
-
+            // 5 Megabytes en bytes
+            $MAX_SIZE = 5 * 1024 * 1024; // 5 MB en bytes
+            $ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png'];
+            // ...
             $detalle_pago_id = null;
 
             $indice_imagen = 0; // porque lo del ajax lo ignora
@@ -383,6 +386,37 @@ if (isset($_SESSION["rol"]) && $_SESSION["rol"] != "Propietario") {
 
                     $imagen_detalle = '';
                     if (isset($_FILES['imagen']['name'][$indice_imagen]) && $_FILES['imagen']['error'][$indice_imagen] === 0) {
+                        // --- INICIO DE CÓDIGO A INSERTAR (Validación) ---
+
+                        $file_size = $_FILES['imagen']['size'][$indice_imagen];
+                        $file_mime_type = $_FILES['imagen']['type'][$indice_imagen];
+
+                        // 1. Validar Tamaño (Máximo 5 MB)
+                        if ($file_size > $MAX_SIZE) {
+                            echo json_encode([
+                                "estatus" => false,
+                                "mensaje" => "Error en la imagen del detalle ".($i+1).": La imagen excede el límite de 5 MB."
+                            ]);
+                            exit;
+                        }
+
+                        // 2. Validar Tipo (Solo JPG/JPEG y PNG)
+                        if (!in_array($file_mime_type, $ALLOWED_MIME_TYPES)) {
+                            // En caso de que el MIME type no sea detectado correctamente, se verifica la extensión
+                            $extension = pathinfo($_FILES['imagen']['name'][$indice_imagen], PATHINFO_EXTENSION);
+                            $extension = strtolower($extension);
+
+                            if ($extension !== 'jpg' && $extension !== 'jpeg' && $extension !== 'png') {
+                                echo json_encode([
+                                    "estatus" => false,
+                                    "mensaje" => "Error en la imagen del detalle ".($i+1).": Solo se permiten archivos JPG y PNG."
+                                ]);
+                                exit;
+                            }
+                        }
+
+                        // --- FIN DE CÓDIGO A INSERTAR (Validación) ---
+                        
                         $nombre_original = $_FILES['imagen']['name'][$indice_imagen];
                         $temporal = $_FILES['imagen']['tmp_name'][$indice_imagen];
                         $extension = pathinfo($nombre_original, PATHINFO_EXTENSION);

@@ -31,6 +31,18 @@ function asignarEventos(){
 		this,"Debe ingresar la tasa del día de hoy");
 	});
 
+	$(".imagen").on("change",function(){
+		validarImagen(this, 5 * 1024 * 1024); // Llama a la función de validación con límite de 5MB
+	});
+
+	$(".observacion").on("keyup",function(){
+		validarKeyUp(
+			/^[a-zA-Z0-9\sáéíóúñÁÉÍÓÚÑ.,-]{3,60}$/,
+			this,
+			"Debe ingresar una descripción de 3 a 60 caracteres (letras, números, espacios y puntos/comas)"
+		);
+	});
+
 	$(".referencia").on("keypress",function(e){
 		validarKeyPress(/^[0-9\b]*$/, e);
 	});
@@ -225,6 +237,15 @@ async function validarEnvio(accion = "Registrar"){
 		'El formato de la tasa del dolar debe ser sólo en números');
 		
 		return false;
+	}else if(validarKeyUp(
+        /^[a-zA-Z0-9\sáéíóúñÁÉÍÓÚÑ.,-]{3,60}$/,
+        $("#observacion"),'Debe ingresar una observación válida'
+        )==0)
+	{
+		mensajes('error',4000,'Debe ingresar una observación',
+		'La observación debe ser de 3 a 60 caracteres (letras, números y espacios)');
+		
+		return false;
 	}
 	else if($(".referencia").is(":visible") && 
 		validarKeyUp(
@@ -383,6 +404,19 @@ async function validarEnvio(accion = "Registrar"){
 	}
 	
 	if (error) {return false;}
+
+	// --- INICIO DE CÓDIGO A INSERTAR (AQUÍ DEBE IR) ---
+	let imagen_total = document.querySelectorAll(".imagen");
+	
+	for (let imagen_input of imagen_total) {
+		if (imagen_input.checkVisibility()) { 
+			if (!validarImagen(imagen_input, 5 * 1024 * 1024)) {
+				mensajes('error', 4000, 'Error en Imagen', 'Una de las imágenes seleccionadas no es válida (tamaño o tipo).');
+				return false; 
+			}
+		}
+	}
+	// --- FIN DE CÓDIGO A INSERTAR ---
 	
 	return true;
 }
@@ -623,6 +657,44 @@ async function verificar_duplicados(datos,etiqueta){
 		return true;
 	}
 	return false;
+}
+
+function validarImagen(input, limiteBytes) {
+    const file = input.files[0];
+    const maxFileSize = limiteBytes; // 5 MB en bytes (ejemplo)
+    const allowedTypes = ['image/jpeg', 'image/png'];
+
+    if (!file) {
+        // No hay archivo seleccionado, se considera válido si no es requerido
+        input.classList.remove('is-invalid');
+        input.classList.remove('is-valid');
+        // El span con el mensaje de error es el siguiente elemento, pero el input de file está en un input-group
+        // Buscamos el siguiente span.invalid-feedback dentro del contenedor
+        $(input).closest('.input-group').nextAll('.invalid-feedback').text("");
+        return true;
+    }
+
+    // 1. Validar Tipo de Archivo (PNG o JPG)
+    if (!allowedTypes.includes(file.type)) {
+        input.classList.add('is-invalid');
+        input.classList.remove('is-valid');
+        $(input).closest('.input-group').nextAll('.invalid-feedback').text("Solo se permiten archivos PNG y JPG.");
+        return false;
+    }
+
+    // 2. Validar Tamaño del Archivo (Máx 5MB)
+    if (file.size > maxFileSize) {
+        input.classList.add('is-invalid');
+        input.classList.remove('is-valid');
+        $(input).closest('.input-group').nextAll('.invalid-feedback').text("La imagen no debe superar los 5 MB.");
+        return false;
+    }
+
+    // Si todo es correcto
+    input.classList.add('is-valid');
+    input.classList.remove('is-invalid');
+    $(input).closest('.input-group').nextAll('.invalid-feedback').text("");
+    return true;
 }
 
 function validarKeyUpSelect(er,etiqueta,etiquetamensaje,
