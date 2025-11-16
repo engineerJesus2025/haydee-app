@@ -1,6 +1,6 @@
 <?php
 use PHPUnit\Framework\TestCase;
-require_once "modelo/gastos_modelo.php";
+use haydee\modelo\Gastos;
 // .\vendor\bin\phpunit tests\pruebas_unitarias\GastosTest.php --testdox
 
 class GastosTest extends TestCase

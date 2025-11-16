@@ -1,12 +1,12 @@
 <?php
 use PHPUnit\Framework\TestCase;
-require_once "modelo/tipo_gasto_modelo.php";
+use haydee\modelo\TipoGasto;
 
 class TipoGastoTest extends TestCase{
     private $tipo_gasto;
 
     public function setUp(): void{
-        $this->tipo_gasto = new Tipo_gasto();
+        $this->tipo_gasto = new TipoGasto();
 
         $this->tipo_gasto->get_conex()->beginTransaction();
     }

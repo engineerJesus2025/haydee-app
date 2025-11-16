@@ -1,7 +1,7 @@
 <?php 
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
-require_once "modelo/mensualidad_modelo.php";
+use haydee\modelo\Mensualidad;
 // vendor\bin\phpunit tests
 class MensualidadTest extends TestCase
 {

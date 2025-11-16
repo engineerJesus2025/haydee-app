@@ -5,7 +5,7 @@ use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\Attributes\Test;
-require_once "modelo/pagos_modelo.php";
+use haydee\modelo\Pagos;
 
 final class PagoTest extends TestCase
 {

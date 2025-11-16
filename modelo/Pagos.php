@@ -806,6 +806,9 @@
             if(!(is_string($this->estado))){
                 return ["estatus"=>false,"mensaje"=>"El campo 'Estado' no posee un valor valido"];
             }
+            if(!(is_string($this->observacion)) || !(preg_match("/^[a-zA-Z0-9\sáéíóúñÁÉÍÓÚÑ.,-]{3,60}$/",$this->observacion))){
+                return ["estatus"=>false,"mensaje"=>"El campo 'Observacion' no posee un valor valido"];
+            }
 
             return ["estatus"=>true,"mensaje"=>"OK"];
         }

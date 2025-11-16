@@ -1,6 +1,6 @@
 <?php
 use PHPUnit\Framework\TestCase;
-require_once "modelo/detalles_gastos_modelo.php";
+use haydee\modelo\DetallesGasto;
 // .\vendor\bin\phpunit tests\pruebas_unitarias\detallesGastosTest.php --testdox
 
 class DetallesGastosTest extends TestCase
@@ -9,7 +9,7 @@ class DetallesGastosTest extends TestCase
 
     public function setUp(): void
     {
-        $this->detallesGastos = new Detalles_gasto();
+        $this->detallesGastos = new DetallesGasto();
 
         $this->detallesGastos->get_conex()->beginTransaction();
     }

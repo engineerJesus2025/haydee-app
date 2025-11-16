@@ -5,15 +5,15 @@ use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\Attributes\Test;
-require_once "modelo/detalles_pago_modelo.php";
+use haydee\modelo\DetallesPago;
 
 final class DetallesPagosTest extends TestCase
 {
-    protected Detalles_pago $detalles_pago;
+    protected DetallesPago $detalles_pago;
 
     protected function setUp(): void
     {
-        $this->detalles_pago = new Detalles_pago();
+        $this->detalles_pago = new DetallesPago();
     }
 
     #[TestDox('Registro Correctamente un Detalle Pago con datos válidos')]
@@ -23,7 +23,7 @@ final class DetallesPagosTest extends TestCase
         $this->detalles_pago->set_fecha('2025-10-22');
         $this->detalles_pago->set_monto(100);
         $this->detalles_pago->set_monto_dolar(5);
-        $this->detalles_pago->set_tipo_pago('Transferencia');
+        $this->detalles_pago->set_tipo_pago('Efectivo');
         $this->detalles_pago->set_pago_id(80);
 
         $resultado = $this->detalles_pago->realizar_consulta('registrar_detalles');

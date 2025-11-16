@@ -5,15 +5,15 @@ use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\Attributes\Test;
-require_once "modelo/bancos_transacciones_modelo.php";
+use haydee\modelo\BancosTransacciones;
 
 final class BancosTransaccionesTest extends TestCase
 {
-    protected Bancos_transacciones $bancos_transacciones;
+    protected BancosTransacciones $bancos_transacciones;
 
     protected function setUp(): void
     {
-        $this->bancos_transacciones = new Bancos_transacciones();
+        $this->bancos_transacciones = new BancosTransacciones();
     }
 
     // #[TestDox('Registro Correctamente un Banco transacción con datos válidos')]

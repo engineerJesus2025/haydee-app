@@ -5,7 +5,7 @@ use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\Attributes\Test;
-require_once "modelo/habitantes_modelo.php";
+use haydee\modelo\Habitantes;
 
 final class HabitantesTest extends TestCase
 {

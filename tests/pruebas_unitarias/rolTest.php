@@ -1,6 +1,6 @@
 <?php 
 use PHPUnit\Framework\TestCase;
-require_once "modelo/rol_modelo.php";
+use haydee\modelo\Rol;
 // vendor\bin\phpunit tests
 class RolTest extends TestCase
 {

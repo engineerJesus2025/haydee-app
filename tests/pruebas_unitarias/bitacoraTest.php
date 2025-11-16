@@ -1,6 +1,6 @@
 <?php 
 use PHPUnit\Framework\TestCase;
-require_once "modelo/bitacora_modelo.php";
+use haydee\modelo\Bitacora;
 //Mock
 class BitacoraTest extends TestCase
 {

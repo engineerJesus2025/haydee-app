@@ -6,7 +6,7 @@ use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\Attributes\Test;
-require_once "modelo/banco_modelo.php";
+use haydee\modelo\Banco;
 //require_once 'vendor/autoload.php';
 
 // para usarlo en el cmd: vendor\bin\phpunit --testdox tests\pruebas_unitarias\BancoTest.php

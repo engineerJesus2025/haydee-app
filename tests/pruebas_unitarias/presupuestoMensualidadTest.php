@@ -1,6 +1,6 @@
 <?php 
 use PHPUnit\Framework\TestCase;
-require_once "modelo/presupuesto_mensualidad_modelo.php";
+use haydee\modelo\PresupuestoMensualidad;
 
 class PresupuestoMensualidadTest extends TestCase
 {
@@ -14,7 +14,7 @@ class PresupuestoMensualidadTest extends TestCase
 
     public function setUp(): void{
         // Crear el mock
-        $this->mock_presupuesto_mensualidad = $this->createMock(Presupuesto_mensualidad::class);
+        $this->mock_presupuesto_mensualidad = $this->createMock(PresupuestoMensualidad::class);
         $this->presupuesto_mensualidad = $this->mock_presupuesto_mensualidad;
     }
 

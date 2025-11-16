@@ -1,6 +1,6 @@
 <?php 
 use PHPUnit\Framework\TestCase;
-require_once "modelo/detalles_presupuesto_modelo.php";
+use haydee\modelo\DetallesPresupuesto;
 //Mock
 class DetallesPresupuestoTest extends TestCase
 {
@@ -8,7 +8,7 @@ class DetallesPresupuestoTest extends TestCase
     private $mock_detalles_presupuesto;
 
     public function setUp(): void{
-        $this->mock_detalles_presupuesto = $this->createMock(Detalles_presupuesto::class);
+        $this->mock_detalles_presupuesto = $this->createMock(DetallesPresupuesto::class);
         $this->detalles_presupuesto = $this->mock_detalles_presupuesto;
     }
 

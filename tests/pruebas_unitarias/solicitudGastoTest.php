@@ -1,12 +1,12 @@
 <?php
 use PHPUnit\Framework\TestCase;
-require_once "modelo/solicitud_gasto_modelo.php";
+use haydee\modelo\SolicitudGasto;
 
 class SolicitudGastoTest extends TestCase{
     private $solicitud_gasto;
 
     public function setUp(): void{
-        $this->solicitud_gasto = new Solicitud_gasto();
+        $this->solicitud_gasto = new SolicitudGasto();
 
         $this->solicitud_gasto->get_conex()->beginTransaction();
     }

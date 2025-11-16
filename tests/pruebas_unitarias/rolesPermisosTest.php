@@ -1,6 +1,6 @@
 <?php 
 use PHPUnit\Framework\TestCase;
-require_once "modelo/roles_permisos_modelo.php";
+use haydee\modelo\RolesPermisos;
 // vendor\bin\phpunit tests
 class RolesPermisosTest extends TestCase
 {
@@ -9,7 +9,7 @@ class RolesPermisosTest extends TestCase
 
     public function setUp(): void{
         // Crear el mock del modelo
-        $this->mock_roles_permisos = $this->createMock(Roles_permisos::class);
+        $this->mock_roles_permisos = $this->createMock(RolesPermisos::class);
         // Usar el mock en lugar de la instancia real
         $this->roles_permisos = $this->mock_roles_permisos;
     }

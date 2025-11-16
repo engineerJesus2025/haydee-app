@@ -1,6 +1,6 @@
 <?php 
 use PHPUnit\Framework\TestCase;
-require_once "modelo/notificaciones_modelo.php";
+use haydee\modelo\Notificaciones;
 // vendor\bin\phpunit tests
 class NotificacionesTest extends TestCase
 {

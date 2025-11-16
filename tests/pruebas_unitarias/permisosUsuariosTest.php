@@ -1,6 +1,6 @@
 <?php 
 use PHPUnit\Framework\TestCase;
-require_once "modelo/permisos_usuarios_modelo.php";
+use haydee\modelo\PermisosUsuarios;
 //Mock
 class PermisosUsuariosTest extends TestCase
 {
@@ -8,7 +8,7 @@ class PermisosUsuariosTest extends TestCase
     private $mock_permisos_usuarios;
 
     public function setUp(): void{
-        $this->mock_permisos_usuarios = $this->createMock(Permisos_usuarios::class);
+        $this->mock_permisos_usuarios = $this->createMock(PermisosUsuarios::class);
         $this->permisos_usuarios = $this->mock_permisos_usuarios;
     }
 

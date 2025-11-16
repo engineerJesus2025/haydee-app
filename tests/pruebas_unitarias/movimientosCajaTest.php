@@ -1,6 +1,6 @@
 <?php 
 use PHPUnit\Framework\TestCase;
-require_once "modelo/movimientos_caja_modelo.php";
+use haydee\modelo\MovimientosCaja;
 // vendor\bin\phpunit tests
 class MovimientosCajaTest extends TestCase
 {
@@ -17,7 +17,7 @@ class MovimientosCajaTest extends TestCase
 
     public function setUp(): void{
         // Crear el mock
-        $this->mock_movimientos_caja = $this->createMock(Movimientos_caja::class);
+        $this->mock_movimientos_caja = $this->createMock(MovimientosCaja::class);
         $this->movimientos_caja = $this->mock_movimientos_caja;
     }
 

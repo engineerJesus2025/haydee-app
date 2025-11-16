@@ -1,6 +1,6 @@
 <?php 
 use PHPUnit\Framework\TestCase;
-require_once "modelo/usuario_modelo.php";
+use haydee\modelo\Usuario;
 // vendor\bin\phpunit tests
 class UsuarioTest extends TestCase
 {

@@ -1,6 +1,6 @@
 <?php 
 use PHPUnit\Framework\TestCase;
-require_once "modelo/caja_chica_modelo.php";
+use haydee\modelo\CajaChica;
 //Mock
 class CajaChicaTest extends TestCase
 {
@@ -8,7 +8,7 @@ class CajaChicaTest extends TestCase
     private $mock_caja_chica;
 
     public function setUp(): void{
-        $this->mock_caja_chica = $this->createMock(Caja_chica::class);
+        $this->mock_caja_chica = $this->createMock(CajaChica::class);
         $this->caja_chica = $this->mock_caja_chica;
     }
 

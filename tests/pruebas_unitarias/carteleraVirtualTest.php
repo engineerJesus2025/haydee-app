@@ -1,6 +1,6 @@
 <?php
 use PHPUnit\Framework\TestCase;
-require_once "modelo/cartelera_virtual_modelo.php";
+use haydee\modelo\CarteleraVirtual;
 // .\vendor\bin\phpunit tests\pruebas_unitarias\CarteleraVirtualTest.php --testdox
 
 class CarteleraVirtualTest extends TestCase{
@@ -8,7 +8,7 @@ class CarteleraVirtualTest extends TestCase{
 
     public function setUp(): void
     {
-        $this->carteleraVirtual = new Cartelera_virtual();
+        $this->carteleraVirtual = new CarteleraVirtual();
     }
 
     public function tearDown(): void

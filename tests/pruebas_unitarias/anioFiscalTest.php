@@ -2,7 +2,7 @@
 // vendor\bin\phpunit tests
 
 use PHPUnit\Framework\TestCase;
-require_once "modelo/anio_fiscal_modelo.php";
+use haydee\modelo\AnioFiscal;
 //Mock
 class AnioFiscalTest extends TestCase
 {
@@ -11,7 +11,7 @@ class AnioFiscalTest extends TestCase
 
     public function setUp(): void{
         // Crear un mock del modelo Anio_fiscal
-        $this->mock_anio_fiscal = $this->createMock(Anio_fiscal::class);
+        $this->mock_anio_fiscal = $this->createMock(AnioFiscal::class);
         $this->anio_fiscal = $this->mock_anio_fiscal;
     }
 

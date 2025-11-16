@@ -1,6 +1,6 @@
 <?php 
 use PHPUnit\Framework\TestCase;
-require_once "modelo/modulos_modelo.php";
+use haydee\modelo\Modulos;
 //Mock
 class ModulosTest extends TestCase
 {

@@ -1,6 +1,6 @@
 <?php
 use PHPUnit\Framework\TestCase;
-require_once "modelo/proveedores_modelo.php";
+use haydee\modelo\Proveedores;
 // .\vendor\bin\phpunit tests\pruebas_unitarias\ProveedoresTest.php --testdox
 
 class ProveedoresTest extends TestCase
