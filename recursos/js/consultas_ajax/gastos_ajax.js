@@ -1111,3 +1111,9 @@ function init_data_table_detalles() {
     })
     // si lees esto tienes que saber que ahora odio estos data table, muerte a jquery...
 }
+
+document.getElementById('modal_vista_previa').addEventListener('shown.bs.modal', function () {
+    if ($.fn.DataTable.isDataTable('#tabla_detalles_gastos')) {
+        $('#tabla_detalles_gastos').DataTable().columns.adjust().draw();
+    }
+});
