@@ -14,6 +14,7 @@
         value="<?php echo Apartamento::tiene_permiso(GESTIONAR_APARTAMENTOS, ELIMINAR) ?>">
     <input type="text" hidden="" id="permiso_editar"
         value="<?php echo Apartamento::tiene_permiso(GESTIONAR_APARTAMENTOS, MODIFICAR) ?>">
+        <?php echo Habitantes::tiene_permiso(GESTIONAR_HABITANTES, ELIMINAR)?>
     <input type="text" hidden="" id="permiso_eliminar_habitantes"
         value="<?php echo Habitantes::tiene_permiso(GESTIONAR_HABITANTES, ELIMINAR) ?>">
     <input type="text" hidden="" id="permiso_editar_habitantes"

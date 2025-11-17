@@ -55,6 +55,12 @@ document.querySelector(`#modal_mensualidad`).addEventListener("hidden.bs.modal",
 	}
 });
 
+document.getElementById('modal_mensualidades_apartamentos').addEventListener('shown.bs.modal', function () {
+    if ($.fn.DataTable.isDataTable("#mensualidades_apartamentos")) {
+        $('#mensualidades_apartamentos').DataTable().columns.adjust().responsive.recalc();
+    }
+});
+
 function envio(operacion,boton_eliminar = '') {	
 	if (operacion == "Editar") {
 		// id_modificar = boton_formulario.getAttribute("id_modificar");//obtenemos el id del registro

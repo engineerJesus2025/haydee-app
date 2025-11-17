@@ -1,15 +1,15 @@
 $(document).ready(function () {
 
     /* UN solo carácter permitido (letra, número, símbolos básicos) */
-    const regexChar  = /[A-Za-zÁÉÍÓÚáéíóú0-9.,;()'"!?¡¿%°\- ]/;
+    const regexChar  = /[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()'"!?¡¿%°\- ]/;
 
     /* Texto completo: 3-200 caracteres con los mismos símbolos */
-    const regexTexto = /^[A-Za-zÁÉÍÓÚáéíóú0-9.,;()'"!?¡¿%°\- ]{3,200}$/;
+    const regexTexto = /^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()'"!?¡¿%°\- ]{3,200}$/;
 
     /* ----------  TÍTULO  ---------- */
     $("#titulo").on("keypress", e => validarKeyPress(regexChar, e));
     $("#titulo").on("keyup",   function () {
-        validarKeyUp(/^[A-Za-zÁÉÍÓÚáéíóú0-9.,;()'"!?¡¿%°\- ]{3,100}$/, this, this.nextElementSibling,
+        validarKeyUp(/^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()'"!?¡¿%°\- ]{3,100}$/, this, this.nextElementSibling,
                       "Debe ingresar un título válido (mín. 3 caracteres y max. 100)");
     });
 
@@ -63,7 +63,7 @@ function mensajes(icono, tiempo, titulo, mensaje) {
 } // Fin de mensajes
 
 async function validarEnvio(accion, regexTexto) {
-    if (!validarKeyUp(/^[A-Za-zÁÉÍÓÚáéíóú0-9.,;()'"!?¡¿%°\- ]{3,100}$/, document.getElementById("titulo"), document.getElementById("titulo").nextElementSibling, 'ingresar un título válido (mín. 3 caracteres y max. 100)'))
+    if (!validarKeyUp(/^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()'"!?¡¿%°\- ]{3,100}$/, document.getElementById("titulo"), document.getElementById("titulo").nextElementSibling, 'ingresar un título válido (mín. 3 caracteres y max. 100)'))
         { mensajes("error", 2000, "Error", "Debe ingresar un título válido"); return false; }
 
     if (!validarKeyUp(regexTexto, document.getElementById("descripcion"), document.getElementById("descripcion").nextElementSibling, 'ingresar una descripción válida (mín. 3 caracteres y max. 200)'))

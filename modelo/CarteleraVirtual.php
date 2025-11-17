@@ -380,8 +380,8 @@ class CarteleraVirtual extends Conexion
         }
 
         // Regex de tu lógica original
-        $textoRegex = "/^[A-Za-zÁÉÍÓÚáéíóú0-9.,;()'\"!?¡¿%°\- ]{3,200}$/";
-        if (!preg_match($textoRegex, $this->titulo)) {
+        $textoRegex = "/^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()'\"!?¡¿%°\- ]{3,200}$/";
+        if (!preg_match("/^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()'\"!?¡¿%°\- ]{3,100}$/", $this->titulo)) {
             return ["estatus" => false, "mensaje" => "El título no posee un formato válido"];
         }
         if (!preg_match($textoRegex, $this->descripcion)) {

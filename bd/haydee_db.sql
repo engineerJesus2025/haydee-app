@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 29-10-2025 a las 06:23:23
+-- Tiempo de generación: 17-11-2025 a las 16:12:00
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -174,8 +174,7 @@ CREATE TABLE `anio_fiscal` (
 --
 
 INSERT INTO `anio_fiscal` (`id_anio_fiscal`, `fecha_inicio`, `fecha_cierre`, `estado`, `descripcion`) VALUES
-(24, '2025-01-01', '2026-01-01', 'Abierto', 'Año fiscal 2025'),
-(29, '2024-01-01', '2025-01-01', 'Cerrada', 'Año fiscal 2024');
+(24, '2025-01-01', '2026-01-01', 'Abierto', 'Año fiscal 2025');
 
 -- --------------------------------------------------------
 
@@ -278,8 +277,7 @@ CREATE TABLE `caja_chica` (
 --
 
 INSERT INTO `caja_chica` (`id_caja_chica`, `fondo_fijo`, `saldo_actual`, `estado`, `descripcion`, `fecha_creacion`, `anio_fiscal_id`) VALUES
-(21, 115, 105, 'Abierto', 'Caja chica 2025', '2025-01-01', 24),
-(22, 100, 100, 'Cerrada', 'Caja chica 2024', '2024-01-01', 29);
+(21, 115, 105, 'Abierto', 'Caja chica 2025', '2025-01-01', 24);
 
 -- --------------------------------------------------------
 
@@ -643,9 +641,7 @@ CREATE TABLE `movimientos_caja` (
 
 INSERT INTO `movimientos_caja` (`id_movimiento_caja`, `concepto`, `monto`, `fecha`, `estado`, `caja_chica_id`, `gasto_id`) VALUES
 (1, 'Comprar cafe', 10, '2025-10-04', 'Reposado', 21, 109),
-(2, 'mas cafe', 15, '2024-10-02', 'Pendiente por reposicion', 22, NULL),
 (3, 'arroz', 11, '2025-10-04', 'Reposado', 21, 109),
-(7, 'pasta', 4, '2024-10-01', 'Pendiente por reposicion', 22, NULL),
 (8, 'soda', 12, '2010-10-10', 'Reposado', 21, 109),
 (9, 'gasto menor', 0.55, '2025-10-03', 'Reposado', 21, 109),
 (10, 'gasto menor', 54.39, '2025-10-01', 'Reposado', 21, 109),
@@ -1208,6 +1204,12 @@ ALTER TABLE `tipo_gasto`
 --
 
 --
+-- Filtros para la tabla `anio_fiscal`
+--
+ALTER TABLE `anio_fiscal`
+  ADD CONSTRAINT `anio_fiscal_ibfk_1` FOREIGN KEY (`id_anio_fiscal`) REFERENCES `caja_chica` (`anio_fiscal_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
 -- Filtros para la tabla `banco_transacciones`
 --
 ALTER TABLE `banco_transacciones`
@@ -1265,8 +1267,8 @@ ALTER TABLE `mensualidad`
 -- Filtros para la tabla `movimientos_caja`
 --
 ALTER TABLE `movimientos_caja`
-  ADD CONSTRAINT `movimientos_caja_ibfk_1` FOREIGN KEY (`caja_chica_id`) REFERENCES `caja_chica` (`id_caja_chica`),
-  ADD CONSTRAINT `movimientos_caja_ibfk_2` FOREIGN KEY (`gasto_id`) REFERENCES `gastos` (`id_gasto`);
+  ADD CONSTRAINT `movimientos_caja_ibfk_1` FOREIGN KEY (`caja_chica_id`) REFERENCES `caja_chica` (`id_caja_chica`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `movimientos_caja_ibfk_2` FOREIGN KEY (`gasto_id`) REFERENCES `gastos` (`id_gasto`) ON DELETE SET NULL ON UPDATE SET NULL;
 
 --
 -- Filtros para la tabla `pagos_mensualidad`

@@ -9,7 +9,7 @@ boton_residencia.addEventListener("click",e=>{
 	boton_generar.setAttribute("reporte","residencia");
 
 	let select_reporte = document.getElementById('select_reporte');
-	select_reporte.selectedOptions[0].textContent = "Seleccione el Propietario";
+	select_reporte.selectedOptions[0].textContent = "Seleccione el Residente";
 	//Llenar el select
 	let fragment = document.createDocumentFragment();
 	array_propietarios_residentes.map(propietario=>{

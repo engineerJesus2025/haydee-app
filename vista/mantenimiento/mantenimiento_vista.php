@@ -72,7 +72,6 @@
                                     <div class="col-lg-4 col-sm-5">
                                         <label class="mb-2" for="select_copias">Copias de Seguridad Guardas:</label>
                                         <select class="form-select" id="select_copias">
-                                            <option selected="" hidden="" value="">Seleccione la Copia de Seguridad</option>
                                         </select>
                                         <span class="w-100 invalid-feedback"></span>
                                     </div>

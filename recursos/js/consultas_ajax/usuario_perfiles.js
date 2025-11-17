@@ -69,11 +69,12 @@ document.getElementById('boton_cancelar').addEventListener('click',e=>{
 	document.getElementById('boton_editar').removeAttribute('disabled','');
 });
 
-document.getElementById('notificaciones').addEventListener('click',e=>{	
-	setTimeout(()=>{
-		tabla_notificaciones.draw();
-	},500);
+document.getElementById('modal_notificaciones').addEventListener('shown.bs.modal', function () {
+    if ($.fn.DataTable.isDataTable("#tabla_notificaciones")) {
+        $('#tabla_notificaciones').DataTable().columns.adjust().responsive.recalc();
+    }
 });
+
 
 async function llenarCardUsuario(){
 	let datos_consulta = new FormData();

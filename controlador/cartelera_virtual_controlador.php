@@ -79,6 +79,8 @@ if (isset($_POST["operacion"])) {
         $prioridad = $_POST["prioridad"];
         $eliminar_imagen = isset($_POST["eliminar_imagen"]);
 
+        $cartelera_virtual_obj->set_id_cartelera($id_cartelera);
+
         $nombre_archivo = $cartelera_virtual_obj->obtener_imagen_actual();
         if (!empty($nombre_archivo)) {
             $ruta_imagen = "recursos/img/cartelera/" . $nombre_archivo;
