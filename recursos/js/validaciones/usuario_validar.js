@@ -173,7 +173,7 @@ async function validarEnvio(accion = "Registrar"){
 		}
 	}
 	else if (accion == "Editar"){
-		datos = new FormData();
+		let datos = new FormData();
 		datos.append("validar",'contra');
 		datos.append("id_usuario",id_modificar);
 		datos.append("contra",$("#contra").val());

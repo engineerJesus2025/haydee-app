@@ -34,6 +34,7 @@ select_db.addEventListener("change",e=>{
 		}
 	}
 });
+
 select_copias.addEventListener("change",e=>{
 	if (e.target.value != '') {		
 		let valido = /^backup(_seguridad)?_haydee_db_\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}\.sql$/.test(select_copias.value);
@@ -59,6 +60,7 @@ select_copias.addEventListener("change",e=>{
 		// boton_importar.removeAttribute("hidden");
 	}
 });
+
 input_file.addEventListener("change",e=>{
 	if (e.target.value != '') {
 		select_copias.value = '';		
@@ -235,7 +237,16 @@ async function obtenerCopiasGuardadas() {
 		return;
 	}
 
+	select_copias.innerHTML = '';
 	let fragment = document.createDocumentFragment();
+
+	let option_1 = document.createElement("option");
+	option_1.textContent = 'Seleccione la Copia de Seguridad';
+	option_1.value = '';
+	option_1.setAttribute('selected','');
+	option_1.setAttribute('hidden','');
+
+	fragment.appendChild(option_1);
 
 	respuesta.mensaje.map(fichero=>{
 		let option = document.createElement("option");
@@ -359,6 +370,8 @@ async function generarCopiaSeguridad() {
 		mensajes('error',4000,'Atencion',respuesta.mensaje);
 		return;// en caso de error mandamos un mensaje con el error y nos vamos
 	}
+
+	obtenerCopiasGuardadas();
 
 	mensajes('success',4000,'Atencion',respuesta.mensaje);
 }

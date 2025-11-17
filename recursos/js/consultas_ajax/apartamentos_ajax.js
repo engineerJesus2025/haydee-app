@@ -47,6 +47,12 @@ document.getElementById('header-toggle').addEventListener("click",e=>{
 	},450);
 });
 
+document.getElementById('modal_vista_previa').addEventListener('shown.bs.modal', function () {
+    if ($.fn.DataTable.isDataTable("#tabla_habitantes")) {
+        $('#tabla_habitantes').DataTable().columns.adjust(); //Con lo demas daba error -_--(O_O)--_-
+    }
+});
+
 async function registrar() {
 	datos_consulta = new FormData();
 	

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 12-11-2025 a las 03:47:24
+-- Tiempo de generación: 17-11-2025 a las 16:12:18
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -35,6 +35,42 @@ CREATE TABLE `bitacora` (
   `usuario_id` int(11) NOT NULL,
   `modulo_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `bitacora`
+--
+
+INSERT INTO `bitacora` (`id_bitacora`, `fecha_hora`, `accion`, `registro_alterado`, `usuario_id`, `modulo_id`) VALUES
+(1, '2025-11-17 10:59:28', 'consultar', 'TODOS LAS MENSUALIDADES', 1, 3),
+(2, '2025-11-17 10:59:31', 'consultar', 'TODOS LOS APARTAMENTOS', 1, 6),
+(3, '2025-11-17 10:59:33', 'consultar', 'HABITANTES EN APARTAMENTO #11', 1, 19),
+(4, '2025-11-17 10:59:37', 'consultar', 'TODOS LAS MENSUALIDADES', 1, 3),
+(5, '2025-11-17 10:59:41', 'consultar', 'TODOS LOS APARTAMENTOS', 1, 6),
+(6, '2025-11-17 10:59:42', 'consultar', 'HABITANTES EN APARTAMENTO #11', 1, 19),
+(7, '2025-11-17 10:59:48', 'consultar', 'Todos los roles de usuario', 1, 17),
+(8, '2025-11-17 11:00:20', 'consultar', 'TODOS LAS MENSUALIDADES', 1, 3),
+(9, '2025-11-17 11:02:44', 'consultar', 'TODOS LAS MENSUALIDADES', 1, 3),
+(10, '2025-11-17 11:03:00', 'consultar', 'TODOS LOS APARTAMENTOS', 1, 6),
+(11, '2025-11-17 11:03:02', 'consultar', 'HABITANTES EN APARTAMENTO #11', 1, 19),
+(12, '2025-11-17 11:03:23', 'consultar', 'HABITANTES EN APARTAMENTO #11', 1, 19),
+(13, '2025-11-17 11:04:09', 'consultar', 'TODOS LOS APARTAMENTOS', 1, 6),
+(14, '2025-11-17 11:04:15', 'consultar', 'HABITANTES EN APARTAMENTO #11', 1, 19),
+(15, '2025-11-17 11:04:18', 'consultar', 'HABITANTES EN APARTAMENTO #15', 1, 19),
+(16, '2025-11-17 11:05:04', 'consultar', 'TODOS LOS APARTAMENTOS', 1, 6),
+(17, '2025-11-17 11:05:07', 'consultar', 'HABITANTES EN APARTAMENTO #11', 1, 19),
+(18, '2025-11-17 11:06:08', 'consultar', 'TODOS LOS APARTAMENTOS', 1, 6),
+(19, '2025-11-17 11:06:13', 'consultar', 'HABITANTES EN APARTAMENTO #11', 1, 19),
+(20, '2025-11-17 11:06:18', 'consultar', 'HABITANTES EN APARTAMENTO #15', 1, 19),
+(21, '2025-11-17 11:07:01', 'consultar', 'TODOS LOS APARTAMENTOS', 1, 6),
+(22, '2025-11-17 11:07:03', 'consultar', 'HABITANTES EN APARTAMENTO #11', 1, 19),
+(23, '2025-11-17 11:07:14', 'consultar', 'TODOS LOS APARTAMENTOS', 1, 6),
+(24, '2025-11-17 11:07:16', 'consultar', 'HABITANTES EN APARTAMENTO #11', 1, 19),
+(25, '2025-11-17 11:07:20', 'consultar', 'HABITANTES EN APARTAMENTO #12', 1, 19),
+(26, '2025-11-17 11:07:22', 'consultar', 'HABITANTES EN APARTAMENTO #15', 1, 19),
+(27, '2025-11-17 11:07:24', 'consultar', 'HABITANTES EN APARTAMENTO #16', 1, 19),
+(28, '2025-11-17 11:08:54', 'consultar', 'TODOS LOS AÑOS FISCALES', 1, 9),
+(29, '2025-11-17 11:11:42', 'eliminar', '2024-01-01 - Cerrada', 1, 9),
+(30, '2025-11-17 11:11:43', 'consultar', 'TODOS LOS AÑOS FISCALES', 1, 9);
 
 -- --------------------------------------------------------
 
@@ -97,7 +133,7 @@ INSERT INTO `modulos` (`id_modulo`, `nombre`) VALUES
 (17, 'GESTIONAR_ROLES'),
 (18, 'GESTIONAR_BITACORA'),
 (19, 'GESTIONAR_MANTENIMIENTO'),
-(21, 'GESTIONAR_PERSONAS');
+(21, 'GESTIONAR_HABITANTES');
 
 -- --------------------------------------------------------
 
@@ -506,7 +542,7 @@ ALTER TABLE `usuarios`
 -- AUTO_INCREMENT de la tabla `bitacora`
 --
 ALTER TABLE `bitacora`
-  MODIFY `id_bitacora` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_bitacora` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
 
 --
 -- AUTO_INCREMENT de la tabla `cartelera_virtual`

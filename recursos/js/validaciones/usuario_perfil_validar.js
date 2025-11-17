@@ -146,7 +146,7 @@ async function validarEnvio(accion = "Registrar"){
 	
 	// si el valor de correo no es el mismo de antes:
 	if(correo_an != $("#correo").val()){
-		datos = new FormData(); 
+		let datos = new FormData(); 
 		datos.append('validar','correo');
 		datos.append('correo',$("#correo").val());
 		res = await verificar_duplicados(datos);
