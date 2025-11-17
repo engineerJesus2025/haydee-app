@@ -1,12 +1,12 @@
 <?php
-// tests/Selenium/LoginUITest.php
 
 use PHPUnit\Framework\TestCase;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\WebDriverBy;
+use Facebook\WebDriver\WebDriverExpectedCondition; // Necesario para la espera
 
-class loginTest extends TestCase
+class gastosConsultarTest extends TestCase
 {
     private $driver;
 
@@ -24,52 +24,66 @@ class loginTest extends TestCase
         $this->driver->quit(); 
     }
 
-    public function testLoginTest()
+    public function testConsultarGastosUI()
     {
-        // 1. Ir a la página de login
+        // -----------------------------------------------------------------
+        // PASO 1: Realizar el Login
+        // -----------------------------------------------------------------
         $this->driver->get('http://localhost/haydee-app/index.php');
 
         $ID_CORREO = 'correo_login';
         $ID_CLAVE  = 'contra';
         $ID_FORM   = 'form-login';
 
-        // 2. Llenar el formulario
         $this->driver->findElement(WebDriverBy::id($ID_CORREO))
             ->sendKeys('administrador@gmail.com');
             
         $this->driver->findElement(WebDriverBy::id($ID_CLAVE))
-            ->sendKeys('12345'); // Asegúrate que esta sea la clave correcta
+            ->sendKeys('12345'); 
 
-        // 3. --- ¡EL ARREGLO MÁGICO! ---
-        // Inyectamos los campos ocultos que el AJAX normalmente enviaría
-        
-        // Inyecta: <input type="hidden" name="operacion" value="entrar">
         $this->driver->executeScript(
             "document.getElementById('".$ID_FORM."').insertAdjacentHTML('beforeend', '<input type=\"hidden\" name=\"operacion\" value=\"entrar\">');"
         );
-        // Inyecta: <input type="hidden" name="mantener_sesion" value="false">
-        // (Tu controlador lo necesita para el 'else' en la línea 69)
         $this->driver->executeScript(
             "document.getElementById('".$ID_FORM."').insertAdjacentHTML('beforeend', '<input type=\"hidden\" name=\"mantener_sesion\" value=\"false\">');"
         );
 
-        // 4. Enviar el formulario (¡Ahora SÍ enviará 'operacion=entrar'!)
         $this->driver->findElement(WebDriverBy::id($ID_FORM))
             ->submit();
         
-        // 5. Pausa breve (1 seg) para que el servidor cree la sesión
         sleep(1); 
 
-        // 6. Navegamos manualmente al dashboard (¡ya tienes la URL correcta!)
+        // -----------------------------------------------------------------
+        // PASO 2: Confirmar que estamos en el Dashboard
+        // -----------------------------------------------------------------
         $this->driver->get('http://localhost/haydee-app/?pagina=inicio_controlador.php&accion=inicio');
 
-        // 7. Esperamos por 'b_gastos'
+        // --- Corrección 1 (Línea 62) ---
         $this->driver->wait(10, 500)->until(
             function () {
                 return $this->driver->findElement(WebDriverBy::id('contenido'));
             }
         );
 
-        $this->assertTrue(true, "Login exitoso, se encontró el elemento 'b_gastos'.");
+
+        $this->driver->get('http://localhost/haydee-app/?pagina=gastos_controlador.php&accion=inicio');
+
+        // 3.2. Esperamos a que aparezca el título H2
+        $this->driver->wait(10, 500)->until(
+            function () {
+                return $this->driver->findElement(WebDriverBy::xpath("//h2[contains(text(), 'GESTIONAR GASTOS')]"));
+            }
+        );
+
+        // 3.3. Definimos el *selector* del elemento "Cargando..."
+        $loadingSelector = WebDriverBy::xpath("//table[@id='tabla_gastos']//h4[contains(text(), 'Cargando...')]");
+
+
+        $this->driver->wait(10)->until(
+            WebDriverExpectedCondition::invisibilityOfElementLocated($loadingSelector)
+        );
+
+        // 3.5. Si la espera anterior no falló, la prueba es exitosa.
+        $this->assertTrue(true, "La tabla de tipo gastos se cargó correctamente (desapareció 'Cargando...').");
     }
 }
