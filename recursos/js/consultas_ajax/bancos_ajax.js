@@ -32,9 +32,10 @@ document.querySelector(`#modal_banco`).addEventListener("hide.bs.modal",()=>{
 	boton_formulario.removeAttribute("modificar");
 	boton_formulario.removeAttribute("id_modificar");	
 	boton_formulario.textContent = "Registrar";
-	document.getElementById('titulo_modal').textContent = "Registrar Banco";	
+	document.getElementById('titulo_modal').textContent = "Registrar Banco";
+
 	formulario_usar.querySelectorAll("[class='w-100']").forEach(el=>el.textContent="");
-	
+	formulario_usar.querySelector("#documento_afiliado").setAttribute("disabled",'');
 	document.querySelectorAll('.is-valid').forEach(input=>input.classList.remove('is-valid'));
 	document.querySelectorAll('.is-invalid').forEach(input=>input.classList.remove('is-invalid'));
 });
@@ -55,14 +56,16 @@ async function registrar() {
 	codigo = formulario_usar.querySelector("#codigo").value,	
 	numero_cuenta = formulario_usar.querySelector("#numero_cuenta").value, 
 	telefono_afiliado = formulario_usar.querySelector("#telefono_afiliado").value,
-    cedula_afiliada = formulario_usar.querySelector("#cedula_afiliada").value;
+	tipo_documento = formulario_usar.querySelector("#tipo_documento").value,
+    documento_afiliado = formulario_usar.querySelector("#documento_afiliado").value;
 
+    documento_afiliado = tipo_documento + documento_afiliado;
 	// le pasamos los datos por el formData
 	datos_consulta.append("nombre_banco",nombre_banco);
 	datos_consulta.append("codigo",codigo);	
 	datos_consulta.append("numero_cuenta",numero_cuenta);
 	datos_consulta.append("telefono_afiliado",telefono_afiliado);
-	datos_consulta.append("cedula_afiliada",cedula_afiliada);
+	datos_consulta.append("documento_afiliado",documento_afiliado);
 
 	//Aqui decimos que vamos a hacer
 	datos_consulta.append('operacion','registrar');
@@ -84,7 +87,7 @@ async function registrar() {
 	let acciones = crearBotones(id_registrado.last_id); //Crea botones
 	
 	// esta variable no hace nada, pero me dio error cuando la quite XD
-	let res_data_table = await data_table.row.add([`${nombre_banco}`,`${codigo}`,`${numero_cuenta}`,`${telefono_afiliado}`,`${cedula_afiliada}`,`${acciones.outerHTML}`]).draw();
+	let res_data_table = await data_table.row.add([`${nombre_banco}`,`${codigo}`,`${numero_cuenta}`,`${telefono_afiliado}`,`${documento_afiliado}`,`${acciones.outerHTML}`]).draw();
 	// Tiene el await para que lo espere, sino no la pone en la tabla
 
 	mensajes('success',4000,'Atencion','El registro se ha realizado exitosamente');//Mensaje de que se completo la operacion
@@ -138,14 +141,14 @@ function llenarTabla(fila) {
 	codigo_td = document.createElement("td"),	
 	numero_cuenta_td = document.createElement("td"), 
 	telefono_afiliado_td = document.createElement("td");
-    cedula_afiliada_td = document.createElement("td");
+    documento_afiliado_td = document.createElement("td");
 
 	// le damos el contenido de la consulta
 	nombre_td.textContent = fila["nombre_banco"];
 	codigo_td.textContent = fila["codigo"];
 	numero_cuenta_td.textContent = fila["numero_cuenta"];
 	telefono_afiliado_td.textContent = fila["telefono_afiliado"];
-    cedula_afiliada_td.textContent = fila["cedula_afiliada"];
+    documento_afiliado_td.textContent = fila["cedula_afiliada"];
 
 	let acciones = crearBotones(id_campo); 
 	// creamos los botones de eliminar y modificar
@@ -155,7 +158,7 @@ function llenarTabla(fila) {
 	fila_tabla.appendChild(codigo_td);
 	fila_tabla.appendChild(numero_cuenta_td);
 	fila_tabla.appendChild(telefono_afiliado_td);
-	fila_tabla.appendChild(cedula_afiliada_td);
+	fila_tabla.appendChild(documento_afiliado_td);
     fila_tabla.appendChild(acciones);
 
 	fila_tabla.setAttribute("id",`fila-${id_campo}`);
@@ -274,15 +277,17 @@ async function modificar_formulario(e) {
 	let nombre = formulario_usar.querySelector("#nombre_banco"),
 	codigo = formulario_usar.querySelector("#codigo"),	
 	numero_cuenta = formulario_usar.querySelector("#numero_cuenta"),	
-	telefono_afiliado = formulario_usar.querySelector("#telefono_afiliado");
-    cedula_afiliada = formulario_usar.querySelector("#cedula_afiliada");	
+	telefono_afiliado = formulario_usar.querySelector("#telefono_afiliado"),
+	tipo_documento = formulario_usar.querySelector("#tipo_documento"),
+    documento_afiliado = formulario_usar.querySelector("#documento_afiliado");
 
 	// le damos valor
 	nombre.value = data.nombre_banco;
 	codigo.value = data.codigo;	
 	numero_cuenta.value = data.numero_cuenta;
 	telefono_afiliado.value = data.telefono_afiliado;
-    cedula_afiliada.value = data.cedula_afiliada;
+    documento_afiliado.value = data.cedula_afiliada.slice(1);
+    tipo_documento.value = data.cedula_afiliada.slice(0,1);
 
 	// este if revisa si tiene permiso para editar, en caso de que no, quitamos el boton
 	if(!permiso_editar){
@@ -314,8 +319,10 @@ async function modificar(id) {
 	codigo = formulario_usar.querySelector("#codigo").value,
 	numero_cuenta = formulario_usar.querySelector("#numero_cuenta").value, 	
 	telefono_afiliado = formulario_usar.querySelector("#telefono_afiliado").value,
-	cedula_afiliada = formulario_usar.querySelector("#cedula_afiliada").value;
+	tipo_documento = formulario_usar.querySelector("#tipo_documento").value,
+	documento_afiliado = formulario_usar.querySelector("#documento_afiliado").value;
 
+	documento_afiliado = tipo_documento + documento_afiliado;
 	// Le ponemos los datos del formulario
 	datos_consulta.append("id_banco",id);
 
@@ -323,7 +330,7 @@ async function modificar(id) {
 	datos_consulta.append("codigo",codigo);	
 	datos_consulta.append("numero_cuenta",numero_cuenta);
 	datos_consulta.append("telefono_afiliado",telefono_afiliado);
-	datos_consulta.append("cedula_afiliada",cedula_afiliada);
+	datos_consulta.append("documento_afiliado",documento_afiliado);
 	// ...
 
 	//Aqui decimos que vamos a hacer
@@ -354,7 +361,7 @@ async function modificar(id) {
 	// esto de abajo es para editar la fila que se modifico en el data table
 	let acciones = crearBotones(id); // creamos otro botones (no se que tan necesario sea esto)
 
-	data_table.row(`#fila-${id}`).data([`${nombre_banco}`,`${codigo}`,`${numero_cuenta}`,`${telefono_afiliado}`,`${cedula_afiliada}`,`${acciones.outerHTML}`])
+	data_table.row(`#fila-${id}`).data([`${nombre_banco}`,`${codigo}`,`${numero_cuenta}`,`${telefono_afiliado}`,`${documento_afiliado}`,`${acciones.outerHTML}`])
 	data_table.draw(); // esta funcion refresca la tabla, por si le da sed
 
 	// se le vuelve a poner el evento al boton

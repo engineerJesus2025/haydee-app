@@ -12,8 +12,6 @@
                         <option value="" disabled selected>Seleccione un tipo</option>
                         <option value="fijo">Fijo</option>
                         <option value="variable">Variable</option>
-                        <option value="fijo asdad">no</option>
-                        <option value="123123">no 2</option>
                     </select>
                     <span class="w-100 invalid-feedback"></span>
                 </div>
@@ -28,8 +26,6 @@
                             <option value="<?php echo $tipo["id_tipo_gasto"] ?>"><?php echo $tipo["nombre_tipo_gasto"] ?>
                             </option>
                         <?php endforeach; ?>
-                        <option value="fijo asdad">no</option>
-                        <option value="19234">no 2</option>
                     </select>
                     <span class="w-100 invalid-feedback"></span>
                 </div>
@@ -43,7 +39,7 @@
                 <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-card-text"></i></span>
                     <textarea name="descripcion_gasto" id="descripcion_gasto" class="form-control" rows="3"
-                        placeholder="Describa el detalle del gasto realizado..." required>Testso eje esaasda</textarea>
+                        placeholder="Describa el detalle del gasto realizado..." required></textarea>
                     <span class="w-100 invalid-feedback"></span>
                     <small class="form-text text-danger mensaje-validacion" data-for="descripcion_gasto"></small>
                 </div>
@@ -63,8 +59,6 @@
                                 <?php echo $proveedor["nombre_proveedor"] ?>
                             </option>
                         <?php endforeach; ?>
-                        <option value="fijo asdad">no</option>
-                        <option value="123123">no 2</option>
                     </select>
                     <span class="w-100 invalid-feedback"></span>
                 </div>
@@ -80,8 +74,6 @@
                                 <?php echo $solicitud["descripcion_necesidad"] ?>
                             </option>
                         <?php endforeach; ?>
-                        <option value="fijo asdad">no</option>
-                        <option value="123123">no 2</option>
                     </select>
                     <span class="w-100 invalid-feedback"></span>
                 </div>
@@ -101,7 +93,7 @@
                                 Gasto</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
-                                <input type="date" value="2025-10-10" class="form-control fecha_detalle" name="fecha_detalle[]" required>
+                                <input type="date" class="form-control fecha_detalle" name="fecha_detalle[]" required>
                                 <span class="w-100 invalid-feedback"></span>
                                 <small class="form-text text-danger mensaje-validacion"
                                     data-for="fecha_detalle"></small>
@@ -116,8 +108,6 @@
                                     <option value="Pago Movil">Pago Movil</option>
                                     <option value="Transferencia">Transferencia</option>
                                     <option value="Efectivo">Efectivo ($)</option>
-                                    <option value="fijo asdad">no</option>
-                                    <option value="123123">no 2</option>
                                 </select>
                                 <span class="w-100 invalid-feedback"></span>
                             </div>
@@ -126,7 +116,7 @@
                             <label for="monto" class="form-label fw-semibold">Monto</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-currency-dollar"></i></span>
-                                <input type="text" value="10" inputmode="decimal" pattern="^[0-9]+([.,][0-9]{1,2})?$"
+                                <input type="text" inputmode="decimal" pattern="^[0-9]+([.,][0-9]{1,2})?$"
                                     class="form-control monto" name="monto[]" required>
                                 <small class="form-text text-danger mensaje-validacion" data-for="monto"></small>
 
@@ -138,7 +128,7 @@
                             <label for="referencia" class="form-label fw-semibold">Referencia/N° Comprobante</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-receipt"></i></span>
-                                <input type="text" value="23423" class="form-control referencia" name="referencia[]">
+                                <input type="text" class="form-control referencia" name="referencia[]">
                                 <small class="form-text text-danger mensaje-validacion" data-for="referencia"></small>
                                 <span class="w-100"></span>
                             </div>
@@ -154,8 +144,6 @@
                                             <?php echo $banco["nombre_banco"] ?>
                                         </option>
                                     <?php endforeach; ?>
-                                    <option value="fijo asdad">no</option>
-                                    <option value="123123">no 2</option>
                                 </select>
                                 <span class="w-100 invalid-feedback"></span>
                             </div>
@@ -166,7 +154,7 @@
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-card-text"></i></span>
                                 <textarea name="descripcion_detalle[]" class="form-control descripcion_detalle" rows="3"
-                                    placeholder="Describa el detalle específico del pago..." required>texto de ejemploasd</textarea>
+                                    placeholder="Describa el detalle específico del pago..." required></textarea>
                                 <span class="w-100"></span>
                                 <small class="form-text text-danger mensaje-validacion" data-for="descripcion_detalle"></small>
                             </div>

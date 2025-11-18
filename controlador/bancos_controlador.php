@@ -22,7 +22,7 @@
             $codigo = $_POST["codigo"];  
             $numero_cuenta = $_POST["numero_cuenta"]; 
             $telefono_afiliado = $_POST["telefono_afiliado"];
-            $cedula_afiliada = $_POST["cedula_afiliada"];              
+            $cedula_afiliada = $_POST["documento_afiliado"];              
 
             //se usan los setters correspondientes
             $obj_banco->set_nombre_banco($nombre_banco);
@@ -56,7 +56,7 @@
             $codigo = $_POST["codigo"];  
             $numero_cuenta = $_POST["numero_cuenta"]; 
             $telefono_afiliado = $_POST["telefono_afiliado"];
-            $cedula_afiliada = $_POST["cedula_afiliada"];
+            $cedula_afiliada = $_POST["documento_afiliado"];
             // ...
 
             //se usan los setters correspondientes

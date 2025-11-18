@@ -98,6 +98,19 @@
                     } else {
                         return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar validar el habitante"];
                     }
+
+                case 'verificar_correo':
+                    $respuesta = $this->verificar_correo();
+
+                    if ($respuesta["resultado"]) {
+                        if (isset($respuesta["datos"]["correo"])) {
+                            return ["estatus"=>true,"busqueda"=>"correo"];
+                        } else {
+                            return ["estatus"=>false,"busqueda"=>"correo"];
+                        }
+                    } else {
+                        return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar validar el correo del habitante"];
+                    }
                 
                 case 'consultar':
                     $respuesta = $this->consultar();
@@ -210,6 +223,17 @@
             //$this->cambiar_db_negocio();
         
             return ["resultado"=>true,"datos"=>$datos];
+        }
+
+        private function verificar_correo()
+        {
+            $sql = "SELECT * FROM habitantes WHERE correo = :correo";
+            $conexion = $this->get_conex()->prepare($sql);
+            $conexion->bindParam(":correo", $this->correo);
+            $result = $conexion->execute();
+            $datos = $conexion->fetch(PDO::FETCH_ASSOC);
+
+            return ["resultado"=>$result,"datos"=>$datos];
         }
 
         private function consultar(){
@@ -376,7 +400,7 @@
 
             // Verificamos si los valores tienen los datos que deberian
             
-            if(!(is_string($this->cedula)) || !(preg_match("/^[0-9\b]{7,8}$/",$this->cedula))){
+            if(!(is_string($this->cedula)) || !(preg_match("/^[VE\b]{1}[0-9\b]{7,8}$/",$this->cedula))){
                 return ["estatus"=>false,"mensaje"=>"El campo 'Cedula' no posee un valor valido"];
             }
             if(!(is_string($this->nombre)) || !(preg_match("/^[A-Za-z \b]{3,30}$/",$this->nombre))){

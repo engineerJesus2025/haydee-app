@@ -29,6 +29,7 @@ document.querySelector('#modal_proveedores').addEventListener('hidden.bs.modal',
     document.getElementById("titulo_modal").textContent = "Registrar Proveedor";
     formulario_usar.querySelectorAll("[class='w-100").forEach(el => el.textContent = "");
 
+    formulario_usar.querySelector("#rif").setAttribute("disabled",'');
     document.querySelectorAll('.is-valid').forEach(input => input.classList.remove('is-valid'));
     document.querySelectorAll('.is-invalid').forEach(input => input.classList.remove('is-invalid'));
 });
@@ -46,8 +47,11 @@ async function registrar() {
 
     let nombre = formulario_usar.querySelector("#nombre_proveedor").value,
         servicio = formulario_usar.querySelector("#servicio").value,
+        tipo_documento = formulario_usar.querySelector("#tipo_documento").value,
         rif = formulario_usar.querySelector("#rif").value,
         direccion = formulario_usar.querySelector("#direccion").value;
+
+        rif = tipo_documento + rif;
 
     datos_consulta.append("nombre_proveedor", nombre);
     datos_consulta.append("servicio", servicio);
@@ -232,11 +236,13 @@ async function modificar_formulario(e) {
     let nombre = formulario_usar.querySelector("#nombre_proveedor"),
         servicio = formulario_usar.querySelector("#servicio"),
         rif = formulario_usar.querySelector("#rif"),
+        tipo_documento = formulario_usar.querySelector("#tipo_documento"),
         direccion = formulario_usar.querySelector("#direccion");
 
     nombre.value = data.nombre_proveedor;
     servicio.value = data.servicio;
-    rif.value = data.rif;
+    rif.value = data.rif.slice(1);
+    tipo_documento.value = data.rif.slice(0,1);
     direccion.value = data.direccion;
 
     if (!permiso_editar) {
@@ -244,7 +250,8 @@ async function modificar_formulario(e) {
         boton_formulario.setAttribute("disabled", true);
     }
 
-    // Esto ahora se ejecutará correctamente
+    formulario_usar.querySelector("#rif").removeAttribute("disabled");
+
     boton_formulario.setAttribute("modificar", true);
     boton_formulario.setAttribute("id_modificar", data.id_proveedor);
     boton_formulario.textContent = "Guardar Cambios";
@@ -257,8 +264,12 @@ async function modificar(id) {
     let datos_consulta = new FormData();
     let nombre = formulario_usar.querySelector("#nombre_proveedor").value,
         servicio = formulario_usar.querySelector("#servicio").value,
+        tipo_documento = formulario_usar.querySelector("#tipo_documento").value,
         rif = formulario_usar.querySelector("#rif").value,
         direccion = formulario_usar.querySelector("#direccion").value;
+
+
+    rif = tipo_documento + rif;
 
     datos_consulta.append("id_proveedor", id);
     datos_consulta.append("nombre_proveedor", nombre);

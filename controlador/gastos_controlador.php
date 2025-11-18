@@ -66,15 +66,59 @@ if (isset($_POST["operacion"])) {
                 $referencia = $_POST['referencia'][$referencia_index++] ?? null;
                 $imagen_detalle = '';
 
-                if (isset($_FILES['imagen']['name'][$imagen_bancaria_index]) && $_FILES['imagen']['error'][$imagen_bancaria_index] === 0) {
-                    $nombre_original = $_FILES['imagen']['name'][$imagen_bancaria_index];
+                // VALIDACIÓN DE IMAGEN
+                // Usamos el índice $imagen_bancaria_index para acceder al archivo específico en el array
+                if (isset($_FILES['imagen']['name'][$imagen_bancaria_index]) && $_FILES['imagen']['error'][$imagen_bancaria_index] !== UPLOAD_ERR_NO_FILE) {
+                    
+                    // 1. Verificar errores de subida (ej. archivo corrupto o error de servidor)
+                    if ($_FILES['imagen']['error'][$imagen_bancaria_index] !== UPLOAD_ERR_OK) {
+                        echo json_encode([
+                            "estatus" => false, 
+                            "mensaje" => "Error al subir el comprobante #".($imagen_bancaria_index+1).". Intente nuevamente."
+                        ]);
+                        exit;
+                    }
+
+                    // 2. Validar Peso (Máximo 2MB)
+                    $peso_maximo = 2 * 1024 * 1024; 
+                    if ($_FILES['imagen']['size'][$imagen_bancaria_index] > $peso_maximo) {
+                        echo json_encode([
+                            "estatus" => false, 
+                            "mensaje" => "El comprobante #".($imagen_bancaria_index+1)." es muy pesado (Máx 2MB)."
+                        ]);
+                        exit;
+                    }
+
+                    // 3. Validar Tipo MIME (Solo imágenes reales)
                     $temporal = $_FILES['imagen']['tmp_name'][$imagen_bancaria_index];
+                    $tipos_permitidos = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                    $mime = finfo_file($finfo, $temporal);
+                    finfo_close($finfo);
+
+                    if (!in_array($mime, $tipos_permitidos)) {
+                        echo json_encode([
+                            "estatus" => false, 
+                            "mensaje" => "El archivo #".($imagen_bancaria_index+1)." no es una imagen válida. Use JPG, PNG, GIF o WEBP."
+                        ]);
+                        exit;
+                    }
+
+                    // 4. Procesar y Mover Archivo
+                    $nombre_original = $_FILES['imagen']['name'][$imagen_bancaria_index];
                     $extension = pathinfo($nombre_original, PATHINFO_EXTENSION);
                     $nombre_sanitizado = preg_replace("/[^a-zA-Z0-9-_\.]/", "_", pathinfo($nombre_original, PATHINFO_FILENAME));
                     $nombre_unico = $nombre_sanitizado . '_' . time() . '_' . rand(100, 999) . '.' . $extension;
                     $ruta_destino = "recursos/img/gastos/" . $nombre_unico;
+                    
+                    // Crear carpeta si no existe (por seguridad)
+                    if (!is_dir("recursos/img/gastos/")) { mkdir("recursos/img/gastos/", 0777, true); }
+
                     if (move_uploaded_file($temporal, $ruta_destino)) {
                         $imagen_detalle = $nombre_unico;
+                    } else {
+                        echo json_encode(["estatus" => false, "mensaje" => "Error al guardar la imagen en el servidor."]);
+                        exit;
                     }
                 }
                 $imagen_bancaria_index++;
@@ -156,18 +200,54 @@ if (isset($_POST["operacion"])) {
 
             // Procesamos la imagen (nueva o existente) usando su propio índice
             $imagen_detalle = '';
-            if (isset($_FILES['imagen']['name'][$imagen_bancaria_index]) && $_FILES['imagen']['error'][$imagen_bancaria_index] === 0) {
-                // ... (código para mover el archivo nuevo) ...
-                $nombre_original = $_FILES['imagen']['name'][$imagen_bancaria_index];
+
+            // VALIDACIÓN DE IMAGEN
+            if (isset($_FILES['imagen']['name'][$imagen_bancaria_index]) && $_FILES['imagen']['error'][$imagen_bancaria_index] !== UPLOAD_ERR_NO_FILE) {
+                
+                // 1. Validar Errores de carga
+                if ($_FILES['imagen']['error'][$imagen_bancaria_index] !== UPLOAD_ERR_OK) {
+                    echo json_encode(["estatus" => false, "mensaje" => "Error al subir el comprobante nuevo."]);
+                    exit;
+                }
+
+                // 2. Validar Peso
+                $peso_maximo = 2 * 1024 * 1024;
+                if ($_FILES['imagen']['size'][$imagen_bancaria_index] > $peso_maximo) {
+                    echo json_encode(["estatus" => false, "mensaje" => "El comprobante nuevo es muy pesado (Máx 2MB)."]);
+                    exit;
+                }
+
+                // 3. Validar Tipo
                 $temporal = $_FILES['imagen']['tmp_name'][$imagen_bancaria_index];
+                $tipos_permitidos = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                $mime = finfo_file($finfo, $temporal);
+                finfo_close($finfo);
+
+                if (!in_array($mime, $tipos_permitidos)) {
+                    echo json_encode(["estatus" => false, "mensaje" => "Formato inválido en comprobante nuevo. Use JPG, PNG, GIF o WEBP."]);
+                    exit;
+                }
+
+                // 4. Mover Archivo
+                $nombre_original = $_FILES['imagen']['name'][$imagen_bancaria_index];
                 $extension = pathinfo($nombre_original, PATHINFO_EXTENSION);
                 $nombre_sanitizado = preg_replace("/[^a-zA-Z0-9-_\.]/", "_", pathinfo($nombre_original, PATHINFO_FILENAME));
                 $nombre_unico = $nombre_sanitizado . '_' . time() . '_' . rand(100, 999) . '.' . $extension;
                 $ruta_destino = "recursos/img/gastos/" . $nombre_unico;
+                
+                if (!is_dir("recursos/img/gastos/")) { mkdir("recursos/img/gastos/", 0777, true); }
+
                 if (move_uploaded_file($temporal, $ruta_destino)) {
                     $imagen_detalle = $nombre_unico;
+                    
+                    // NOTA: En gastos, como borramos todos los detalles viejos y los creamos de nuevo,
+                    // no hace falta un 'unlink' explícito de la imagen vieja aquí mismo, 
+                    // aunque idealmente deberías limpiar imágenes huérfanas en un mantenimiento del sistema.
                 }
+
             } elseif (isset($_POST['imagen_existente'][$imagen_existente_index])) {
+                // Si no subió imagen nueva, mantenemos la vieja
                 $imagen_detalle = $_POST['imagen_existente'][$imagen_existente_index++];
             }
             $imagen_bancaria_index++;

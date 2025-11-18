@@ -4,7 +4,12 @@
             <label for="cedula">Cedula</label>
             <div class="input-group mb-3">
                 <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-person-vcard-fill"></i></span>
-                <input type="text" class="border border-dark form-control cedula" name="cedula" id="cedula" placeholder="Cedula" aria-label="cedula" aria-describedby="basic-addon1" minlength="3" maxlength="30">
+                <select class="form-select border border-dark" id="tipo_cedula" aria-label="Default select example" for="tipo_cedula" name="tipo_cedula">
+                    <option selected="" hidden="" value="">N/A</option>
+                    <option value="V">V</option>
+                    <option value="E">E</option>
+                </select>
+                <input type="text" class="border border-dark form-control cedula" name="cedula" id="cedula" placeholder="Cedula" aria-label="cedula" aria-describedby="basic-addon1" minlength="3" maxlength="30" style="flex-grow: 7" value="Seleccione el tipo de cedula" disabled="">
                 <span class="w-100 invalid-feedback"></span>
             </div>
         </div>

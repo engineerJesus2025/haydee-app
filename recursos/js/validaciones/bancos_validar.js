@@ -36,12 +36,12 @@ $(document).ready(function(){
 		this,this.nextElementSibling,"Solo numeros, ejemplo xxxx-xxxxxxx");
 	});
 
-    $("#cedula_afiliada").on("keypress",function(e){
+    $("#documento_afiliado").on("keypress",function(e){
 		validarKeyPress(/^[0-9\b]*$/, e);
 	});
 
-	$("#cedula_afiliada").on("keyup",function(){
-		validarKeyUp(/^[0-9\b]{7,8}$/,
+	$("#documento_afiliado").on("keyup",function(){
+		validarKeyUp(/^[0-9\b]{7,9}$/,
 		this,this.nextElementSibling,"Solo numeros, no mas de 8 caracteres");
 	});
 	
@@ -79,6 +79,20 @@ $(document).ready(function(){
         }		
 	})
 
+	document.getElementById('tipo_documento').addEventListener('change',e=>{
+		let documento_afiliado = document.getElementById('documento_afiliado');
+		documento_afiliado.removeAttribute("disabled");
+		documento_afiliado.value = "";
+
+		let valido = validarKeyUp(/^[VEJG\b]{1}$/,
+		e.target,documento_afiliado.nextElementSibling,"Tipo de documento no válido");
+
+		if (!valido) return;
+
+		documento_afiliado.classList.add('is-valid');
+		documento_afiliado.classList.remove('is-invalid');
+		documento_afiliado.nextElementSibling.textContent = "";
+	});
 });	//Fin de AJAX
 
 function mensajes(icono,tiempo,titulo,mensaje){
@@ -136,12 +150,22 @@ async function validarEnvio(accion = "Registrar"){
 		return false;
 	}
 	else if(validarKeyUp(
-        /^[0-9]{7,8}$/,
-        document.querySelector("#cedula_afiliada"),document.querySelector("#cedula_afiliada").nextElementSibling,'Solo numeros, no mas de 8 caracteres'
+        /^[0-9]{7,9}$/,
+        document.querySelector("#documento_afiliado"),document.querySelector("#documento_afiliado").nextElementSibling,'Solo numeros, no mas de 8 caracteres'
         )==0)
 	{
 		mensajes('error',4000,'Debe ingresar una cedula afiliada',
 		'El formato debe ser sólo en números');
+		
+		return false;
+	}
+
+	if(validarKeyUp(
+        /^[VEJG\b]{1}$/,
+        document.getElementById('tipo_documento'),document.querySelector("#documento_afiliado").nextElementSibling,'Tipo de documento no válido'
+        )==0)
+	{
+		mensajes('error',4000,'Debe ingresar el tipo de documento','El valor del tipo de documento ingresado no es válido');
 		
 		return false;
 	}

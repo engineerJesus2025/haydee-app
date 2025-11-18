@@ -60,8 +60,8 @@ document.querySelector(`#modal_pagos`).addEventListener("hide.bs.modal",()=>{
     boton_formulario.removeAttribute("id_modificar");   
     boton_formulario.textContent = "Guardar";
     document.getElementById('titulo_modal').textContent = "Registrar Pago"; 
+    document.getElementById("mensualidad_id").setAttribute('disabled','');
     formulario_usar.querySelectorAll("[class='w-100']").forEach(el=>el.textContent="");
-
     const container = formulario_usar.querySelector("#detalles_container");
     const bloques = container.querySelectorAll(".detalle-pago");
     bloques.forEach((bloque, index) => {
@@ -149,6 +149,8 @@ document.querySelector("#apartamento_id").addEventListener("change", async funct
         "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
     ];
 
+    let fragmentoSelectMensualidades = document.createDocumentFragment();
+
     respuesta.forEach(m => {
         let pendiente = parseFloat(m.pendiente);
         if (pendiente <= 0) return;
@@ -174,9 +176,11 @@ document.querySelector("#apartamento_id").addEventListener("change", async funct
         opcion.textContent = `${nombre_mes}/${m.anio} - Restante: ${pendiente} Bs`;
         opcion.setAttribute("data-monto", total);
 
-        select_mensualidades.appendChild(opcion);
+        fragmentoSelectMensualidades.appendChild(opcion);
     });
 
+    select_mensualidades.appendChild(fragmentoSelectMensualidades);
+    select_mensualidades.removeAttribute('disabled');
     /* Antiguo por si acaso toca cambiarlo
     respuesta.forEach(m => {
         let opcion = document.createElement("option");
@@ -669,8 +673,6 @@ async function modificar_formulario(e) {
 
     const datosPago = data;
     const detalles = data.detalles;
-    
-    console.log(data)    
 
     // Llenar campos principales
     formulario_usar.querySelector("#estado").value = datosPago.estado;
@@ -745,6 +747,8 @@ async function modificar_formulario(e) {
     let mensualidad_id = document.querySelector("#mensualidad_id");
     mensualidad_id.innerHTML = "<option selected hidden value=''>Escoja primero un Apartamento</option>";
 
+    let fragmentoSelectMensualidades = document.createDocumentFragment();
+
     mensualidades.forEach(m => {
         let opcion = document.createElement("option");
         let nombre_mes = meses[parseInt(m.mes)];
@@ -756,9 +760,11 @@ async function modificar_formulario(e) {
             opcion.selected = true;
             monto_mensualidad.value = m.monto;
         }
-
-        mensualidad_id.appendChild(opcion);
+        fragmentoSelectMensualidades.appendChild(opcion);
     });
+
+    mensualidad_id.appendChild(fragmentoSelectMensualidades);
+    mensualidad_id.removeAttribute('disabled');
 
     // este if revisa si tiene permiso para editar, en caso de que no, quitamos el boton
     if(!permiso_editar){

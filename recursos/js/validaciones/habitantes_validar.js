@@ -70,6 +70,21 @@ $(document).ready(function(){
 		}	
 	});
 
+	document.getElementById('tipo_cedula').addEventListener('change',e=>{
+		let cedula = document.getElementById('cedula');
+		cedula.removeAttribute("disabled");
+		cedula.value = "";
+
+		let valido = validarKeyUp(/^[VE\b]{1}$/,
+		e.target,cedula.nextElementSibling,"El valor del tipo de cédula ingresado no es válido");
+
+		if (!valido) return;
+
+		cedula.classList.add('is-valid');
+		cedula.classList.remove('is-invalid');
+		cedula.nextElementSibling.textContent = "";
+	});
+
 	document.getElementById('sexo').addEventListener("change",e=>{
 		let valido = validarKeyUp(/^[A-Za-z\b]{3,20}$/,
 		e.target,e.target.nextElementSibling,"El valor del sexo ingresado no es válido");
@@ -123,10 +138,13 @@ $(document).ready(function(){
         /^[0-9\b]{7,8}$/,
         document.querySelector("#cedula"),document.querySelector("#cedula").nextElementSibling,'El formato debe ser en números'
         )) {
+        	if (document.querySelector("#tipo_cedula").value == '') {return;}
         	if (this.value == cedula_an) {return;}
+			let cedula = document.querySelector("#tipo_cedula").value + $(this).val()
 			let datos = new FormData();
+
 			datos.append('validar','cedula');
-			datos.append('cedula',$(this).val());
+			datos.append('cedula',cedula);
 			verificar_duplicados_habitantes(datos);
         }		
 	})
@@ -138,6 +156,19 @@ $(document).ready(function(){
 		datos.append('tipo_vinculo',$(this).val());
 		datos.append('apartamento_id',$("#apartamento_id").val());
 		verificar_duplicados_habitantes(datos);
+	})
+
+	$("#correo").on("keyup",function(e){
+		if (validarKeyUp(
+       /^[a-zA-Z0-9._+-]{3,35}@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,3}$/,
+        document.querySelector("#correo"),document.querySelector("#correo").nextElementSibling,'El formato debe ser ejemplo@gmail.com'
+        )) {
+        	if (this.value == correo_an) {return;}
+			let datos = new FormData();
+			datos.append('validar','correo');
+			datos.append('correo',$(this).val());
+			verificar_duplicados_habitantes(datos);
+        }		
 	})
 
 });	//Fin de AJAX
@@ -156,6 +187,15 @@ function mensajes(icono,tiempo,titulo,mensaje){
 
 async function validarEnvio_habitantes(accion = "Registrar"){	
 	if(validarKeyUp(
+        /^[VE\b]{1}$/,
+        document.getElementById('tipo_cedula'),document.querySelector("#cedula").nextElementSibling,'Debe ingresar el tipo de cedula'
+        )==0)
+	{
+		mensajes('error',4000,'Debe ingresar el tipo de cedula','El valor del tipo de cédula ingresado no es válido');
+		
+		return false;
+	}
+	else if(validarKeyUp(
         /^[0-9\b]{7,8}$/,
         document.querySelector("#cedula"),document.querySelector("#cedula").nextElementSibling,'Debe ingresar la cedula'
         )==0)
@@ -166,9 +206,10 @@ async function validarEnvio_habitantes(accion = "Registrar"){
 		return false;
 	}
 	else if(cedula_an != $("#cedula").val()){
+		let cedula = document.querySelector("#tipo_cedula").value + $("#cedula").val();
 		let datos = new FormData(); 
 		datos.append('validar','cedula');
-		datos.append('cedula',$("#cedula").val());
+		datos.append('cedula',cedula);
 		res = await verificar_duplicados_habitantes(datos);
 		// revisamos si esta duplicado con otra cedula
 		if(res){
@@ -176,7 +217,7 @@ async function validarEnvio_habitantes(accion = "Registrar"){
 			return false;
 		}
 	}
-	else if(validarKeyUp(
+	if(validarKeyUp(
         /^[A-Za-z \b]{3,30}$/,
         document.querySelector("#nombre"),document.querySelector("#nombre").nextElementSibling,'Solo letras, no mas de 30 caracteres'
         )==0)
@@ -187,7 +228,7 @@ async function validarEnvio_habitantes(accion = "Registrar"){
 		return false;
 	}
 	
-	else if(validarKeyUp(
+	if(validarKeyUp(
         /^[A-Za-z \b]{3,30}$/,
         document.querySelector("#apellido"),document.querySelector("#apellido").nextElementSibling,'Solo letras, no mas de 30 caracteres'
         )==0)
@@ -197,12 +238,12 @@ async function validarEnvio_habitantes(accion = "Registrar"){
 		
 		return false;
 	}
-	else if(validarFechaNacimiento(document.querySelector("#fecha_nacimiento")) == false)
+	if(validarFechaNacimiento(document.querySelector("#fecha_nacimiento")) == false)
 	{
 
 		return false;
 	}
-	else if(validarKeyUp(
+	if(validarKeyUp(
         /^[0-9\b]{11}$/,
         document.querySelector("#telefono"),document.querySelector("#telefono").nextElementSibling,'Solo numeros'
         )==0)
@@ -212,8 +253,15 @@ async function validarEnvio_habitantes(accion = "Registrar"){
 		
 		return false;
 	}
-	else if(validarKeyUp(
-        /^[-A-Za-z0-9_.]{3,35}[@][A-Za-z0-9]{3,10}[.][A-Za-z]{2,3}$/,
+	if(validar_select("sexo")==0)
+	{
+		mensajes('error',4000,'Debe seleccionar un sexo',
+		'Debe seleccionar una opción');
+		
+		return false;
+	}
+	if(validarKeyUp(
+        /^[a-zA-Z0-9._+-]{3,35}@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,3}$/,
         document.querySelector("#correo"),document.querySelector("#correo").nextElementSibling,'Ejemplo: alguien@servidor.com'
         )==0)
 	{
@@ -222,13 +270,18 @@ async function validarEnvio_habitantes(accion = "Registrar"){
 		
 		return false;
 	}
-	else if(validar_select("sexo")==0)
-	{
-		mensajes('error',4000,'Debe seleccionar un sexo',
-		'Debe seleccionar una opción');
+	else if(correo_an != $("#correo").val()){
+		let datos = new FormData();
+		datos.append('validar','correo');
+		datos.append('correo',$('#correo').val());
+		let res = await verificar_duplicados_habitantes(datos);
 		
-		return false;
+		if(res){
+			mensajes('error',4000,'Este correo ya esta registrado','Este correo esta registrado, debe ingresar otro.');
+			return false;
+		}
 	}
+	
 	else if(validar_select("apartamento_id")==0)
 	{
 		mensajes('error',4000,'Debe seleccionar un apartamento',
@@ -244,7 +297,7 @@ async function validarEnvio_habitantes(accion = "Registrar"){
 		
 		return false;
 	}
-	else if(tipo_vinculo_an != $("#tipo_vinculo").val()){
+	if(tipo_vinculo_an != $("#tipo_vinculo").val()){
 		let datos = new FormData(); 
 		datos.append('validar','tipo_vinculo');
 		datos.append('tipo_vinculo',$("#tipo_vinculo").val());
@@ -257,9 +310,7 @@ async function validarEnvio_habitantes(accion = "Registrar"){
 		}
 	}
 	
-	if (accion == "Registrar") {
-		
-	}else if (accion == "Editar"){
+	if (accion == "Editar"){
 		let  datos = new FormData();		
 		datos.append("id_habitane",id_modificar_habitantes);
 	}
@@ -337,6 +388,7 @@ function validarKeyPress(er, e) {
 
 function validarKeyUp(er,etiqueta,etiquetamensaje,
 mensaje){
+	
 	a = er.test(etiqueta.value);
 	
 	if(a){
@@ -411,7 +463,14 @@ async function verificar_duplicados_habitantes(datos){
 	});
 	// aqui revisamos el estatus, si es true es porque esta duplicado y mandamos un mensaje	
 	if(data.estatus){
-		document.querySelector(`#${data.busqueda}`).nextElementSibling.textContent = `${data.busqueda} ya registrado/a`
+		if (data.busqueda == "tipo_vinculo") {
+			document.querySelector(`#${data.busqueda}`).nextElementSibling.textContent = `Este apartamento ya tiene propietario`
+		}
+		else{
+			document.querySelector(`#${data.busqueda}`).nextElementSibling.textContent = `${data.busqueda.split("_").join(" ")} ya registrada/o`
+		}
+		document.querySelector(`#${data.busqueda}`).classList.add('is-invalid');
+		document.querySelector(`#${data.busqueda}`).classList.remove('is-valid');
 		return true;
 	}
 	return false;

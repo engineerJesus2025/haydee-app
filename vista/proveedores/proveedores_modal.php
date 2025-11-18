@@ -25,9 +25,16 @@
             <label for="rif">RIF</label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-person-badge"></i></span>
+                <select class="form-select" id="tipo_documento" aria-label="Default select example" for="tipo_documento" name="tipo_documento">
+                    <option selected="" hidden="" value="">N/A</option>
+                    <option value="V">V</option>
+                    <option value="E">E</option>
+                    <option value="J">J</option>
+                    <option value="G">G</option>
+                </select>
                 <input type="text" class="form-control rif" name="rif" id="rif"
                        placeholder="RIF" aria-label="rif" aria-describedby="basic-addon1"
-                       minlength="3" maxlength="30">
+                       minlength="3" maxlength="30" disabled style="flex-grow: 7">
                 <span class="w-100 invalid-feedback"></span>
             </div>
         </div>

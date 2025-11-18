@@ -35,8 +35,6 @@
                     <?php foreach ($roles as $rol) : ?>
                         <option value="<?php echo $rol["id_rol"] ?>"><?php echo $rol["nombre"] ?></option>
                     <?php endforeach; ?>
-                    <option value="asdasdasd">defectuoso valor</option>
-                    <option value="125124">rol inexistente</option>
                 </select>
                 <span class="w-100 invalid-feedback"></span>
             </div>

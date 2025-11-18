@@ -37,10 +37,17 @@
     </div>
     <div class="row m-3">
         <div class="col-lg-6">
-            <label for="cedula_afiliada">Cedula Afiliada</label>
+            <label for="documento_afiliado">Documento Afiliado</label>
             <div class="input-group mb-3">
                 <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-person-vcard-fill"></i></span>
-                <input type="text" class="border border-dark form-control cedula_afiliada" name="cedula_afiliada" id="cedula_afiliada" placeholder="Cedula Afiliada" aria-label="cedula_afiliada" aria-describedby="basic-addon1" minlength="3" maxlength="60">
+                <select class="form-select border border-dark" id="tipo_documento" aria-label="Default select example" for="tipo_documento" name="tipo_documento">
+                    <option selected="" hidden="" value="">N/A</option>
+                    <option value="V">V</option>
+                    <option value="E">E</option>
+                    <option value="J">J</option>
+                    <option value="G">G</option>
+                </select>
+                <input type="text" class="border border-dark form-control documento_afiliado" name="documento_afiliado" id="documento_afiliado" placeholder="Ejem 12345678" aria-label="documento_afiliado" aria-describedby="basic-addon1" minlength="3" maxlength="60" disabled style="flex-grow: 7">
                 <span class="w-100 invalid-feedback"></span>
             </div>
         </div>

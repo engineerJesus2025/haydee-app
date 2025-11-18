@@ -67,10 +67,7 @@
                     ]);
                 }
             }else{
-                echo json_encode([
-                    "estatus" => false,
-                    "mensaje" => "Error al registrar habitante"
-                ]);
+                echo json_encode($resultado_registro_habitante);
             }
 
             exit;
@@ -238,6 +235,12 @@
             $resultado = $obj_habitante->realizar_consulta('validar_clave_foranea',["tabla"=>$tabla,"nombre_clave"=>$nombre_clave,"valor"=>$valor]);
             
             echo json_encode($resultado);
+        }
+        if ($validar == "correo"){
+            $obj_habitante = new Habitantes();
+
+            $obj_habitante->set_correo($_POST["correo"]);
+            echo  json_encode($obj_habitante->realizar_consulta('verificar_correo'));
         }
         
         exit;

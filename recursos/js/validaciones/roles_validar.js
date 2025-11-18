@@ -78,7 +78,7 @@ $(document).ready(function(){
 				checkbox.setAttribute('error',1);
 				// console.log(checkbox)
 				checkbox.classList.add('is-invalid');
-				checkbox.closest(".row").lastElementChild.textContent = "El valor de uno o mas permisos no existe";
+				checkbox.closest(".row").lastElementChild.textContent = "Se detectaron permisos inexistentes";
 			}
 		});
 	});
@@ -109,7 +109,7 @@ async function validarEnvio(){
 	}
 
 	if(nombre_anterior != $("#nombre").val()){
-		datos = new FormData(); 
+		let datos = new FormData(); 
 		datos.append('validar','nombre');
 		datos.append('nombre',$("#nombre").val());
 		res = await verificar_duplicados(datos);
@@ -120,8 +120,10 @@ async function validarEnvio(){
 		}
 	}
 	error = false;
-	for (let checkbox of document.querySelectorAll("[name='permisos[]']")){	
+
+	for (let checkbox of document.querySelectorAll("[name='permisos[]']")){
 		if (!(checkbox.checked)) {continue;}
+
 		let valido = validarKeyUp(/^[0-9]{1,11}$/,
 		checkbox,checkbox.closest(".row").lastElementChild,"El valor de uno o mas permisos no es válido");
 
@@ -130,32 +132,37 @@ async function validarEnvio(){
 			mensajes('error',4000,'Atención','El valor de uno o mas permisos no es válido');
 			break;
 		}
-
-		let datos = new FormData();
-		datos.append('validar','validar_clave_foranea');
-		datos.append('tabla','permisos_usuarios');
-		datos.append('nombre_clave','id_permiso_usuario');
-		datos.append('valor',checkbox.value);
-
-		valido = await verificar_clave_foranea(datos);
-		
-		if (valido) {
-			checkbox.classList.add('is-valid');
-			checkbox.classList.remove('is-invalid');
-			checkbox.closest(".row").lastElementChild.textContent = "";
-		}
-		else{
-			checkbox.classList.remove('is-valid');
-			checkbox.classList.add('is-invalid');
-			checkbox.closest(".row").lastElementChild.textContent = "El valor de uno o mas permisos no existe";
-
-			error = true;
-			mensajes('error',4000,'Atención','El valor de uno o mas permisos no existe');
-			break;
-		}
 	}
 
 	if (error) {return false;}
+
+	const checkbox = document.querySelectorAll("[name='permisos[]']");
+	const checkboxActivados = Array.from(checkbox).filter(checkbox=>checkbox.checked).map(checkbox=>checkbox.value);
+
+	let datos = new FormData();
+	datos.append('validar','validar_permisos_usuarios');
+
+	checkboxActivados.forEach(id => {
+    	datos.append('valor[]', id); 
+	});
+
+	let valido = await verificar_clave_foranea(datos);
+	
+	if (!valido["estatus"]) {
+
+		if (valido.ids_no_encontrados) {
+			valido.ids_no_encontrados.map(id_errorneo=>{
+				let checkbox = document.querySelector(`[value='${id_errorneo}']`)
+				checkbox.classList.remove('is-valid');
+				checkbox.classList.add('is-invalid');
+				checkbox.closest(".row").lastElementChild.textContent = "Se detectaron permisos inexistentes";
+			});
+		}
+
+		mensajes('error',4000,'Atención',valido.mensaje);
+
+		return false;
+	}
 
 	return true;
 }

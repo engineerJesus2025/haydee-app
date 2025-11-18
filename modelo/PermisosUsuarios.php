@@ -58,6 +58,13 @@ class PermisosUsuarios extends Conexion
                 else {
                     return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
                 }
+            case 'validar_permisos_usuarios':
+                $respuesta = $this->validar_permisos_usuarios();
+
+                $this->cambiar_db_negocio();
+
+                return $respuesta;
+
             default:
                 return ["estatus"=>false,"mensaje"=>"A ocurrido un error en la consulta"];
                 break;
@@ -72,6 +79,51 @@ class PermisosUsuarios extends Conexion
         $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
 
         return ["resultado"=>$result,"datos"=>$datos];        
+    }
+
+    public function validar_permisos_usuarios()
+    {
+        $ids_a_validar = $this->id_permiso_usuario;
+
+        if (!is_array($ids_a_validar) || empty($ids_a_validar)) {
+            return ["estatus" => false, "mensaje" => "Datos inválidos: Se esperaba un arreglo de IDs."];
+        }
+
+        $placeholders = str_repeat('?,', count($ids_a_validar) - 1) . '?';
+
+        $sql = "SELECT id_permiso_usuario FROM permisos_usuarios WHERE id_permiso_usuario IN ($placeholders)";
+
+        // LE meti un try catch porque soy try hard
+        try {
+            $conexion = $this->get_conex()->prepare($sql);
+            
+            $conexion->execute($ids_a_validar);
+            
+            $ids_encontrados = $conexion->fetchAll(PDO::FETCH_COLUMN);
+
+            $ids_faltantes = array_diff($ids_a_validar, $ids_encontrados);
+
+            if (empty($ids_faltantes)) {
+                // Si el array de faltantes está vacío, significa que encontró todos
+                return [
+                    "estatus" => true, 
+                    "mensaje" => "ok"
+                ];
+            } else {
+                // Si hay elementos, devolvemos el error y la lista de culpables :)
+                return [
+                    "estatus" => false, 
+                    "mensaje" => "Se detectaron registros inexistentes en la base de datos.",
+                    "ids_no_encontrados" => array_values($ids_faltantes) 
+                ];
+            }
+
+        } catch (\Exception $e) {
+            return [
+                "estatus" => false, 
+                "mensaje" => "Error interno al validar IDs: " . $e->getMessage()
+            ];
+        }
     }
 
 }

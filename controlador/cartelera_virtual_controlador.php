@@ -31,8 +31,32 @@ if (isset($_POST["operacion"])) {
         // PARA INSERTAR UNA IMAGEN (ESTO FUE UN PEO)
         $nombre_archivo = '';
         if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === 0) {
+            $peso_maximo = 2 * 1024 * 1024; // 2 MB en bytes
+            $tipos_permitidos = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
             $nombre_original = $_FILES['imagen']['name'];
             $temporal = $_FILES['imagen']['tmp_name'];
+            $tamano_archivo = $_FILES['imagen']['size']; // Peso del archivo
+            if ($tamano_archivo > $peso_maximo) {
+                echo json_encode([
+                    "estatus" => false, 
+                    "mensaje" => "La imagen es muy pesada. El límite es de 2MB."
+                ]);
+                exit;
+            }
+
+            // VALIDAR QUE SEA REALMENTE UNA IMAGEN (MIME TYPE)
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime = finfo_file($finfo, $temporal);
+            finfo_close($finfo);
+
+            if (!in_array($mime, $tipos_permitidos)) {
+                echo json_encode([
+                    "estatus" => false, 
+                    "mensaje" => "El archivo no es una imagen válida. Use JPG, PNG, GIF o WEBP."
+                ]);
+                exit;
+            }
+
             $extension = pathinfo($nombre_original, PATHINFO_EXTENSION);
 
             // ESTO ES PARA QUE SE GUARDE LA IMAGEN CON EL NOMBRE ORIGINAL + UNOS NUMEROS RANDOM PARA EVITAR DUPLICACION
@@ -73,6 +97,7 @@ if (isset($_POST["operacion"])) {
         // ----------- MODIFICAR ---------------
     } elseif ($operacion == "modificar") {
         $id_cartelera = $_POST["id_cartelera"];
+        $cartelera_virtual_obj->set_id_cartelera($id_cartelera);
         $titulo = $_POST["titulo"];
         $descripcion = $_POST["descripcion"];
         $fecha = $_POST["fecha"];
@@ -94,24 +119,68 @@ if (isset($_POST["operacion"])) {
             $ruta_imagen = ''; // No hay imagen previa
         }
 
-        //  Reemplazo de imagen
-        if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === 0) {
-            // Si hay imagen previa, se elimina
-            if (!empty($nombre_archivo) && file_exists("recursos/img/cartelera/" . $nombre_archivo) && is_file("recursos/img/cartelera/" . $nombre_archivo)) {
-                unlink("recursos/img/cartelera/" . $nombre_archivo);
-            }
+        // 1. Verificamos si se intentó subir un archivo
+        if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] !== UPLOAD_ERR_NO_FILE) {
             
-            // LO MISMO QUE EN REGISTRAR
+            // 2. Primero verificamos si hubo error en la carga (ej. excede post_max_size del servidor)
+            if ($_FILES['imagen']['error'] !== UPLOAD_ERR_OK) {
+                echo json_encode([
+                    "estatus" => false, 
+                    "mensaje" => "Error al subir el archivo. Posiblemente el archivo es demasiado grande o está corrupto."
+                ]);
+                exit;
+            }
+
+            $peso_maximo = 2 * 1024 * 1024; // 2 MB
             $nombre_original = $_FILES['imagen']['name'];
             $temporal = $_FILES['imagen']['tmp_name'];
+            $tamano_archivo = $_FILES['imagen']['size'];
+
+            if ($tamano_archivo > $peso_maximo) {
+                echo json_encode([
+                    "estatus" => false, 
+                    "mensaje" => "La imagen es muy pesada. El límite es de 2MB."
+                ]);
+                exit;
+            }
+
+            $tipos_permitidos = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime = finfo_file($finfo, $temporal);
+            finfo_close($finfo);
+
+            if (!in_array($mime, $tipos_permitidos)) {
+                echo json_encode([
+                    "estatus" => false, 
+                    "mensaje" => "Formato inválido. Use JPG, PNG, GIF o WEBP."
+                ]);
+                exit;
+            }
+
+            // 5. Preparar nombre nuevo
             $extension = pathinfo($nombre_original, PATHINFO_EXTENSION);
             $nombre_sanitizado = preg_replace("/[^a-zA-Z0-9-_\.]/", "_", pathinfo($nombre_original, PATHINFO_FILENAME));
-            $nombre_archivo = $nombre_sanitizado . '_' . time() . '.' . $extension;
+            $nuevo_nombre_archivo = $nombre_sanitizado . '_' . time() . '.' . $extension;
 
-            move_uploaded_file($temporal, "recursos/img/cartelera/" . $nombre_archivo);
+            // 6. Guardar la nueva imagen
+            if (move_uploaded_file($temporal, "recursos/img/cartelera/" . $nuevo_nombre_archivo)) {
+                
+                if (!empty($nombre_archivo) && file_exists("recursos/img/cartelera/" . $nombre_archivo) && is_file("recursos/img/cartelera/" . $nombre_archivo)) {
+                    unlink("recursos/img/cartelera/" . $nombre_archivo);
+                }
+
+                // Actualizamos la variable $nombre_archivo para que se guarde en la BD el nuevo nombre
+                $nombre_archivo = $nuevo_nombre_archivo; 
+
+            } else {
+                echo json_encode([
+                    "estatus" => false, 
+                    "mensaje" => "Error al guardar la imagen en el servidor."
+                ]);
+                exit;
+            }
         }
 
-        $cartelera_virtual_obj->set_id_cartelera($id_cartelera);
         $cartelera_virtual_obj->set_titulo($titulo);
         $cartelera_virtual_obj->set_descripcion($descripcion);
         $cartelera_virtual_obj->set_fecha($fecha);

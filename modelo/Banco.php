@@ -311,8 +311,8 @@
             if(!(is_numeric($this->telefono_afiliado)) || !(preg_match("/^[0-9\b]{11}$/",$this->telefono_afiliado))){
                 return ["estatus"=>false,"mensaje"=>"El campo 'Telefono Afiliado' no posee un valor valido"];
             }
-            if(!(is_numeric($this->cedula_afiliada)) || !(preg_match("/^[0-9\b]{7,8}$/",$this->cedula_afiliada))){
-                return ["estatus"=>false,"mensaje"=>"El campo 'Cedula Afiliada' no posee un valor valido"];
+            if(!(is_string($this->cedula_afiliada)) || !(preg_match("/^[VEJG\b]{1}[0-9\b]{7,10}$/",$this->cedula_afiliada))){
+                return ["estatus"=>false,"mensaje"=>"El campo 'Documento Afiliado' no posee un valor valido"];
             }
             
             return ["estatus"=>true,"mensaje"=>"OK"];

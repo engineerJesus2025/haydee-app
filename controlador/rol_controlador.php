@@ -172,6 +172,18 @@
             
             echo json_encode($resultado);
         }
+        elseif ($validar == "validar_permisos_usuarios") {
+            $permisos_usuarios_obj = new PermisosUsuarios();
+
+            $arreglo_id_permisos = $_POST["valor"];
+
+            $permisos_usuarios_obj->set_id_permiso_usuario($arreglo_id_permisos);
+            
+            $resultado = $permisos_usuarios_obj->realizar_consulta('validar_permisos_usuarios');
+            
+            echo json_encode($resultado);
+        }
+        
         exit;
     }
 

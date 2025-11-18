@@ -1,5 +1,5 @@
 let data_table_habitantes, id_eliminado_habitantes, id_registrado_habitantes, id_modificar_habitantes; 
-let cedula_an, tipo_vinculo_an;
+let cedula_an, tipo_vinculo_an, correo_an;
 //let permiso_eliminar_habitantes = document.querySelector("#permiso_eliminar").value;
 //let permiso_editar_habitantes = document.querySelector("#permiso_editar").value;
 let tabla_habitantes = document.querySelector("#tabla_habitantes"); //La tabla
@@ -30,6 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 	modal_habitantes.addEventListener("hide.bs.modal", () => {
 		formulario_usar_habitantes.reset();
+		formulario_usar_habitantes.querySelector("#cedula").setAttribute("disabled",'');
 		boton_formulario_habitantes.removeAttribute("modificar");
 		boton_formulario_habitantes.removeAttribute("id_modificar");
 		boton_formulario_habitantes.textContent = "Guardar";
@@ -40,12 +41,14 @@ document.addEventListener("DOMContentLoaded", () => {
 		}
 
 		formulario_usar_habitantes.querySelectorAll("[class='w-100']").forEach(el => el.textContent = "");
+		formulario_usar_habitantes.querySelectorAll('.is-valid').forEach(input=>input.classList.remove('is-valid'));
+		formulario_usar_habitantes.querySelectorAll('.is-invalid').forEach(input=>input.classList.remove('is-invalid'));
 	});
 });
 
- document.querySelector("#boton_registrar").addEventListener("click", function(){
- 	formulario_usar_habitantes.querySelector("#apartamento_id").value = id_apartamento_seleccionado;
- });
+document.querySelector("#boton_registrar").addEventListener("click", function(){
+	formulario_usar_habitantes.querySelector("#apartamento_id").value = id_apartamento_seleccionado;
+});
 
 function formatearFecha(fechaStr) {
     const partes = fechaStr.split("-");
@@ -63,6 +66,7 @@ async function registrar_habitantes() {
 	//Creamos las variables con los datos de los inputs
 	let nombre = formulario_usar_habitantes.querySelector("#nombre").value,	
 	apellido = formulario_usar_habitantes.querySelector("#apellido").value,
+	tipo_cedula = formulario_usar_habitantes.querySelector("#tipo_cedula").value,
 	cedula = formulario_usar_habitantes.querySelector("#cedula").value,
 	telefono = formulario_usar_habitantes.querySelector("#telefono").value,
 	correo = formulario_usar_habitantes.querySelector("#correo").value,
@@ -74,6 +78,8 @@ async function registrar_habitantes() {
 	tipo_vinculo = formulario_usar_habitantes.querySelector("#tipo_vinculo").value,
 	vinculo = formulario_usar_habitantes.querySelector("#tipo_vinculo").selectedOptions[0].text;
 
+
+	cedula = tipo_cedula + cedula;
 	/*apartamento.value = datos_apartamento.nro_apartamento;
 
 	console.log("Nro del Apartamento",apartamento);*/
@@ -360,11 +366,12 @@ async function modificar_formulario_habitante(e) {
 	//Llamamos a la funcion para hacer la consulta y guardamos los datos
 	data = await query(datos_consulta);
 
-	console.log(data);
+	// console.log(data);
 
 	// ahora seleccionamos los inputs
 	let nombre = formulario_usar_habitantes.querySelector("#nombre"),
 	apellido = formulario_usar_habitantes.querySelector("#apellido"),	
+ 	tipo_cedula = formulario_usar_habitantes.querySelector("#tipo_cedula"),
 	cedula = formulario_usar_habitantes.querySelector("#cedula"),	
 	telefono = formulario_usar_habitantes.querySelector("#telefono");
     correo = formulario_usar_habitantes.querySelector("#correo");
@@ -372,11 +379,12 @@ async function modificar_formulario_habitante(e) {
     sexo = formulario_usar_habitantes.querySelector("#sexo");
 	apartamento_id = formulario_usar_habitantes.querySelector("#apartamento_id");
 	tipo_vinculo = formulario_usar_habitantes.querySelector("#tipo_vinculo");
- 
+
 	// le damos valor
 	nombre.value = data.nombre;
 	apellido.value = data.apellido;	
-	cedula.value = data.cedula;
+	cedula.value = data.cedula.slice(1);
+	tipo_cedula.value = data.cedula.slice(0,1);
 	telefono.value = data.telefono;
     correo.value = data.correo;
     fecha_nacimiento.value = data.fecha_nacimiento;
@@ -398,8 +406,10 @@ async function modificar_formulario_habitante(e) {
 	document.getElementById('titulo_modal_habitantes').textContent = "Modificar Habitante";
 
 	id_modificar_habitantes = id;
+
 	cedula_an = cedula.value;
 	tipo_vinculo_an = tipo_vinculo.value;
+	correo_an = correo.value;
 	//guardamos el orginal del correo, para que no choquen con las validaciones
 }
 
@@ -411,6 +421,7 @@ async function modificar_habitantes(id) {
 	//Guardamos los datos del formulario
 	let nombre = formulario_usar_habitantes.querySelector("#nombre").value;
 	let apellido = formulario_usar_habitantes.querySelector("#apellido").value;
+	let tipo_cedula = formulario_usar_habitantes.querySelector("#tipo_cedula").value;
 	let cedula = formulario_usar_habitantes.querySelector("#cedula").value;
 	let telefono = formulario_usar_habitantes.querySelector("#telefono").value;
 	let correo = formulario_usar_habitantes.querySelector("#correo").value;
@@ -422,6 +433,7 @@ async function modificar_habitantes(id) {
 	let tipo_vinculo = formulario_usar_habitantes.querySelector("#tipo_vinculo").value;
 	let vinculo = formulario_usar_habitantes.querySelector("#tipo_vinculo").selectedOptions[0].text;
 
+	cedula = tipo_cedula + cedula;
 	// Le ponemos los datos del formulario
 	datos_consulta.append("id_habitante",id);
 

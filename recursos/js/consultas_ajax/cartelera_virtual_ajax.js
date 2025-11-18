@@ -370,33 +370,52 @@ async function modificar(id) {
         datos_consulta.append("imagen", imagen);
     }
 
-    let respuesta = await query(datos_consulta,true);
-    formulario_usar.reset();
-    modal.hide();
+    // Enviamos la petición
+    let respuesta = await query(datos_consulta, true);
 
-    boton_formulario.removeAttribute("modificar");
-    boton_formulario.removeAttribute("id_modificar");
-    boton_formulario.textContent = "Registrar";
-    document.getElementById("titulo_modal").textContent = "Registrar Publicación";
-    consulta_completada();
+    // --- AQUI ESTABA EL ERROR ---
+    // Debemos verificar si estatus es TRUE antes de cerrar todo
+    if (respuesta && respuesta.estatus) {
+        
+        formulario_usar.reset();
+        modal.hide();
 
-    // Obtener ruta de imagen actualizada o previa
-    const rutaImagen = respuesta.imagen_url || "recursos/img/default.jpg";
-    const prioridadHTML = obtenerPrioridadTexto(prioridad);
+        boton_formulario.removeAttribute("modificar");
+        boton_formulario.removeAttribute("id_modificar");
+        boton_formulario.textContent = "Registrar";
+        document.getElementById("titulo_modal").textContent = "Registrar Publicación";
+        
+        consulta_completada(); // Muestra el Swal de éxito
 
-    const acciones = crearBotones(id);
+        // Actualizamos la tabla visualmente solo si hubo éxito
+        const prioridadHTML = obtenerPrioridadTexto(prioridad);
+        
+        // Obtenemos los botones actualizados
+        const acciones = crearBotones(id);
 
-    data_table.row(`#fila-${id}`).data([
-        formatearFecha(fecha),
-        titulo,
-        nombre_usuario,
-        prioridadHTML,
-        acciones.outerHTML
-    ]).draw();
+        data_table.row(`#fila-${id}`).data([
+            formatearFecha(fecha),
+            titulo,
+            nombre_usuario,
+            prioridadHTML,
+            acciones.outerHTML
+        ]).draw();
 
-    const fila = document.querySelector(`#fila-${id}`);
-    if (fila) {
-        fila.querySelector(`[value="${id}"]`).addEventListener("click", modificar_formulario);
+        const fila = document.querySelector(`#fila-${id}`);
+        if (fila) {
+            fila.querySelector(`[value="${id}"]`).addEventListener("click", modificar_formulario);
+        }
+
+    } else {
+        // Si PHP devuelve error (por ejemplo, imagen inválida), mostramos el error
+        // y NO cerramos el modal para que el usuario pueda corregir.
+        Swal.fire({
+            title: "Error",
+            text: respuesta.mensaje || "Ocurrió un error al modificar.",
+            icon: "error",
+            confirmButtonColor: "#e01d22"
+        });
+        document.querySelector("#imagen").value = "";
     }
 }
 

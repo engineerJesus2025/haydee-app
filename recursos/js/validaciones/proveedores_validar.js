@@ -1,6 +1,4 @@
 $(document).ready(function() {
-
-
     $("#fecha").on("keyup",function(){
         validarKeyUp(/^(?:(?:1[6-9]|[2-9]\d)?\d{2})(?:(?:(\/|-|\.)(?:0?[13578]|1[02])\1(?:31))|(?:(\/|-|\.)(?:0?[13-9]|1[0-2])\2(?:29|30)))$|^(?:(?:(?:1[6-9]|[2-9]\d)?(?:0[48]|[2468][048]|[13579][26])|(?:(?:16|[2468][048]|[3579][26])00)))(\/|-|\.)0?2\3(?:29)$|^(?:(?:1[6-9]|[2-9]\d)?\d{2})(\/|-|\.)(?:(?:0?[1-9])|(?:1[0-2]))\4(?:0?[1-9]|1\d|2[0-8])$/,
         this,this.nextElementSibling,"Ingrese una fecha valida");
@@ -31,22 +29,13 @@ $(document).ready(function() {
     $("#rif").on("keypress", function(e) {
         let valor = $(this).val();
         let tecla = String.fromCharCode(e.which);
-
-        if (valor.length === 0) {
-            // Solo permitir V, E, J o P como primera letra
-            if (!/^[VEJPvejp]$/.test(tecla)) {
-                e.preventDefault();
-            }
-        } else {
-            // Después de la letra, solo números
-            if (!/[0-9]/.test(tecla)) {
-                e.preventDefault();
-            }
+        if (!/[0-9]/.test(tecla)) {
+            e.preventDefault();
         }
     });
 
     $("#rif").on("keyup", function() {
-        validarKeyUp(/^[VEJPvejp][0-9]{5,9}$/,
+        validarKeyUp(/^[0-9]{7,9}$/,
             this, this.nextElementSibling, "Debe ingresar el RIF del proveedor. Ejemplo: V-E-J-P12345678");
     });
     $("#direccion").on("keypress", function(e) {
@@ -77,6 +66,22 @@ $(document).ready(function() {
             });
         }
     })
+
+    document.getElementById('tipo_documento').addEventListener('change',e=>{
+        let documento_afiliado = document.getElementById('rif');
+        documento_afiliado.removeAttribute("disabled");
+        documento_afiliado.value = "";
+
+        let valido = validarKeyUp(/^[VEJG\b]{1}$/,
+        e.target,documento_afiliado.nextElementSibling,"Tipo de documento no válido");
+
+        if (!valido) return;
+
+        documento_afiliado.classList.add('is-valid');
+        documento_afiliado.classList.remove('is-invalid');
+        documento_afiliado.nextElementSibling.textContent = "";
+    });
+
 }); // Fin de AJAX
 
 function mensajes(icono, tiempo, titulo, mensaje){
@@ -109,7 +114,16 @@ async function validarEnvio(accion = "Registrar"){
         return false;
     }
     if(validarKeyUp(
-        /^[VEJPvejp][0-9]{5,9}$/,
+        /^[VEJG\b]{1}$/,
+        document.getElementById('tipo_documento'),document.querySelector("#rif").nextElementSibling,'Tipo de documento no válido'
+        )==0)
+    {
+        mensajes('error',4000,'Debe ingresar el tipo de documento','El valor del tipo de documento ingresado no es válido');
+        
+        return false;
+    }
+    if(validarKeyUp(
+        /^[0-9]{7,9}$/,
         document.querySelector("#rif"), document.querySelector("#rif").nextElementSibling, 'Debe ingresar el RIF del proveedor'
     ) === 0) {
         mensajes('error', 4000, 'Debe ingresar el RIF del proveedor',

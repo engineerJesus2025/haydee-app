@@ -69,10 +69,7 @@
                     ]);
                 }
             }else{
-                echo json_encode([
-                    "estatus" => false,
-                    "mensaje" => "Error al registrar habitante"
-                ]);
+                echo json_encode($resultado_registro_habitante);
             }
 
             exit;

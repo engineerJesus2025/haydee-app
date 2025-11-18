@@ -12,8 +12,6 @@
                         <option value="<?php echo $apartamento["id_apartamento"] ?>">
                             <?php echo "Nro: " . $apartamento["nro_apartamento"] ?></option>
                     <?php endforeach; ?>
-                    <option value="fijo asdad">no</option>
-                    <option value="19234">no 2</option>
                 </select>
                 <span class="w-100 invalid-feedback"></span>
             </div>
@@ -23,11 +21,8 @@
             <div class="input-group mb-3">
                 <span class="border border-primary input-group-text" id="basic-addon1"><i
                         class="bi bi-bank2"></i></span>
-                <select class="border border-dark form-select mensualidad_id" aria-label="Default select example"
-                    id="mensualidad_id" name="mensualidad_id">
+                <select class="border border-dark form-select mensualidad_id" aria-label="Default select example" id="mensualidad_id" name="mensualidad_id" disabled="">
                     <option selected hidden value="">Escoja primero un Apartamento</option>
-                    <option value="fijo asdad">no</option>
-                    <option value="19234">no 2</option>
                 </select>
                 <span class="w-100 invalid-feedback"></span>
             </div>
@@ -37,7 +32,7 @@
             <div class="input-group mb-3">
                 <span class="border border-primary input-group-text" id="basic-addon1"><i
                         class="bi bi-cash-coin"></i></span>
-                <input type="text" value="20" class="border border-dark form-control monto_mensualidad" name="monto_mensualidad"
+                <input type="text" class="border border-dark form-control monto_mensualidad" name="monto_mensualidad"
                     id="monto_mensualidad" placeholder="Monto Mensualidad" aria-label="monto_mensualidad"
                     aria-describedby="basic-addon1" minlength="3" maxlength="30" readonly>
                 <span class="w-100 invalid-feedback"></span>
@@ -57,7 +52,7 @@
                         <div class="input-group mb-3">
                             <span class="border border-primary input-group-text"><i
                                     class="bi bi-calendar-date"></i></span>
-                            <input type="date" value="2025-10-10" class="border border-dark form-control fecha_admin" name="fecha[]">
+                            <input type="date" class="border border-dark form-control fecha_admin" name="fecha[]">
                             <span class="w-100 invalid-feedback"></span>
                         </div>
                     </div>
@@ -71,8 +66,6 @@
                                 <option value="Transferencia">Transferencia</option>
                                 <option value="Efectivo">Efectivo</option>
                                 <option value="Pago Movil">Pago Movil</option>
-                                <option value="fijo asdad">no</option>
-                                <option value="19234">no 2</option>
                             </select>
                             <span class="w-100 invalid-feedback"></span>
                         </div>
@@ -81,7 +74,7 @@
                         <label for="monto">Monto</label>
                         <div class="input-group mb-3">
                             <span class="border border-primary input-group-text"><i class="bi bi-cash-coin"></i></span>
-                            <input type="text" value="10" class="border border-dark form-control monto" name="monto[]"
+                            <input type="text" class="border border-dark form-control monto" name="monto[]"
                                 placeholder="Monto">
                             <span class="w-100 invalid-feedback"></span>
                         </div>
@@ -99,7 +92,7 @@
                         <label for="monto_dolar">Monto Dólar</label>
                         <div class="input-group mb-3">
                             <span class="border border-primary input-group-text"><i class="bi bi-cash-coin"></i></span>
-                            <input type="text" value="10" class="border border-dark form-control monto_dolar" name="monto_dolar[]"
+                            <input type="text" class="border border-dark form-control monto_dolar" name="monto_dolar[]"
                                 placeholder="Dólar">
                             <span class="w-100 invalid-feedback"></span>
                         </div>
@@ -110,7 +103,7 @@
                         <label for="referencia">Referencia</label>
                         <div class="input-group mb-3">
                             <span class="border border-primary input-group-text"><i class="bi bi-receipt"></i></span>
-                            <input type="text" value="575694" class="border border-dark form-control referencia" name="referencia[]"
+                            <input type="text" class="border border-dark form-control referencia" name="referencia[]"
                                 placeholder="Referencia">
                             <span class="w-100 invalid-feedback"></span>
                         </div>
@@ -125,8 +118,6 @@
                                     <option value="<?php echo $banco["id_banco"] ?>"><?php echo $banco["nombre_banco"] ?>
                                     </option>
                                 <?php endforeach; ?>
-                                <option value="fijo asdad">no</option>
-                                <option value="19234">no 2</option>
                             </select>
                             <span class="w-100 invalid-feedback"></span>
                         </div>
@@ -164,8 +155,6 @@
                     <option selected hidden value="">Seleccione estado</option>
                     <option value="Procesado">PROCESADO</option>
                     <option value="No verificado">NO VERIFICADO</option>
-                    <option value="fijo asdad">no</option>
-                    <option value="19234">no 2</option>
                 </select>
                 <span class="w-100 invalid-feedback"></span>
             </div>
