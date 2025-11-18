@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 17-11-2025 a las 16:12:00
+-- Tiempo de generación: 18-11-2025 a las 04:51:56
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -196,13 +196,19 @@ CREATE TABLE `apartamentos` (
 --
 
 INSERT INTO `apartamentos` (`id_apartamento`, `nro_apartamento`, `porcentaje_participacion`, `gas`, `agua`, `alquilado`) VALUES
-(11, '1-1', 5.23, 1, 1, 1),
-(12, '1-2', 5.25, 2, 1, 1),
-(15, '2-1', 4, 1, 2, 1),
-(16, '2-2', 5, 1, 1, 1),
-(24, '2-3', 2, 1, 1, 2),
-(25, '4-1', 21, 1, 1, 1),
-(26, '4-2', 5, 1, 2, 1);
+(30, '1-2', 23, 1, 1, 1);
+
+--
+-- Disparadores `apartamentos`
+--
+DELIMITER $$
+CREATE TRIGGER `after_delete_apartamento` AFTER DELETE ON `apartamentos` FOR EACH ROW BEGIN
+    DELETE habitantes FROM habitantes
+    LEFT JOIN habitantes_apartamentos ON habitantes.id_habitante = habitantes_apartamentos.habitante_id
+    WHERE habitantes_apartamentos.habitante_id IS NULL;
+END
+$$
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -249,12 +255,7 @@ CREATE TABLE `banco_transacciones` (
 INSERT INTO `banco_transacciones` (`id_banco_transaccion`, `referencia`, `imagen`, `detalle_pago_id`, `detalle_gasto_id`, `banco_id`) VALUES
 (102, '1212', '', NULL, 118, 1),
 (106, '123123', 'lenguaje_comun_1758973341_948.PNG', NULL, 120, 6),
-(116, '12312', '1729083773_julio_1759864670_790.png', NULL, 142, 1),
-(166, '11111', 'coloresinicio11761618066212.PNG', 264, NULL, 1),
-(167, '11112', 'coloresinicio11761618161966.PNG', 265, NULL, 1),
-(172, '312342', 'cog_1761703743_583.PNG', 272, NULL, 1),
-(176, '1242', 'CSS-Logo_1761707301_725.jpg', 280, NULL, 1),
-(179, '234234', 'CSS-Logo_1761709395_832.jpg', 298, NULL, 1);
+(116, '12312', '1729083773_julio_1759864670_790.png', NULL, 142, 1);
 
 -- --------------------------------------------------------
 
@@ -310,7 +311,9 @@ INSERT INTO `detalles_gastos` (`id_detalle_gasto`, `fecha`, `monto`, `monto_dola
 (142, '2025-10-07', 10, 0, 'Transferencia', 112, 'Pago en transferencia'),
 (143, '2010-10-10', 10, 0, 'Efectivo', 112, 'Pago en efectivo'),
 (146, '2025-10-07', 15, 0, 'Efectivo', 114, 'Reposición de Caja Chica'),
-(148, '2025-10-13', 15, 0, 'Efectivo', 116, 'Reposición de Caja Chica');
+(148, '2025-10-13', 15, 0, 'Efectivo', 116, 'Reposición de Caja Chica'),
+(149, '2010-10-10', 11, 0, 'Pago Movil', 117, 'texto de ejemploasd'),
+(150, '2010-10-10', 11, 0, 'Pago Movil', 118, 'texto de ejemploasd');
 
 -- --------------------------------------------------------
 
@@ -332,18 +335,7 @@ CREATE TABLE `detalles_pagos` (
 --
 
 INSERT INTO `detalles_pagos` (`id_detalle_pago`, `fecha`, `monto`, `monto_dolar`, `tipo_pago`, `pago_id`) VALUES
-(264, '2010-10-10', 10, 0.05, 'Transferencia', 93),
-(265, '2010-10-10', 10, 0.05, 'Transferencia', 94),
-(272, '2025-10-01', 10, 0.05, 'Pago Movil', 96),
-(273, '2025-10-01', 13, 0.06, 'Efectivo', 96),
-(280, '2010-10-10', 10, 0.05, 'Transferencia', 97),
-(281, '2025-10-02', 11, 0.05, 'Efectivo', 97),
-(290, '2010-10-10', 10, 0.05, 'Efectivo', 98),
-(291, '2010-10-10', 31, 0.14, 'Efectivo', 98),
-(294, '2025-10-01', 12, 0.05, 'Efectivo', 99),
-(295, '2025-10-02', 13, 0.06, 'Transferencia', 99),
-(298, '2025-10-01', 1, 0, 'Transferencia', 100),
-(299, '2025-10-01', 1, 0, 'Efectivo', 100);
+(304, '2025-11-04', 10, 0.04, 'Efectivo', 105);
 
 -- --------------------------------------------------------
 
@@ -502,7 +494,9 @@ INSERT INTO `gastos` (`id_gasto`, `tipo`, `tipo_gasto_id`, `solicitud_id`, `prov
 (111, 'variable', 10, NULL, NULL, 'Reposición de Caja Chica'),
 (112, 'fijo', 1, 8, 1, 'pago del gas'),
 (114, 'variable', 10, NULL, NULL, 'Reposición de Caja Chica'),
-(116, 'variable', 10, NULL, NULL, 'Reposición de Caja Chica');
+(116, 'variable', 10, NULL, NULL, 'Reposición de Caja Chica'),
+(117, 'fijo', 1, 8, 2, 'Testso eje esaasda'),
+(118, 'fijo', 1, 8, 2, 'Testso eje esaasda');
 
 -- --------------------------------------------------------
 
@@ -521,22 +515,6 @@ CREATE TABLE `habitantes` (
   `sexo` varchar(10) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Volcado de datos para la tabla `habitantes`
---
-
-INSERT INTO `habitantes` (`id_habitante`, `nombre`, `apellido`, `cedula`, `telefono`, `correo`, `fecha_nacimiento`, `sexo`) VALUES
-(14, 'pepe', 'pipas', '12341212', '10128545122', 'pepe@gmail.com', '2000-10-10', 'Masculino'),
-(15, 'sexo', 'jaaaj', '12131313', '12323122321', 'asdasd@gas.com', '2001-09-03', 'Masculino'),
-(17, 'Juan', 'Jimeneez', '12312312', '12312312222', 'juan@gmail.com', '1999-10-10', 'Masculino'),
-(19, 'Rafael', 'Guiterez', '12345678', '12312322222', 'rafita@gmail.com', '1999-10-10', 'Masculino'),
-(20, 'Francisco', 'Mendoza', '1231232', '23122221112', 'fran@gmail.com', '1999-10-10', 'Masculino'),
-(21, 'Maria', 'Mendoza', '1111111', '11212111111', 'asdasd@gasd.com', '1900-11-11', 'Femenino'),
-(22, 'asdasd', 'asdasd', '1112111', '12312312222', 'asdasda2@gasf.cmo', '1999-11-11', 'Femenino'),
-(24, 'Pedro', 'Pedro', '12121212', '21212121212', 'pedro@gmail.com', '1999-10-10', 'Femenino'),
-(25, 'Juan', 'Perez', '41223212', '04224223322', 'juab@gami.com', '2000-10-10', 'Masculino'),
-(27, 'jesus', 'escalona', '1231231', '04120231222', 'jesus@gamil.com', '2003-10-10', 'Masculino');
-
 -- --------------------------------------------------------
 
 --
@@ -549,20 +527,6 @@ CREATE TABLE `habitantes_apartamentos` (
   `habitante_id` int(11) NOT NULL,
   `tipo_vinculo` varchar(20) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Volcado de datos para la tabla `habitantes_apartamentos`
---
-
-INSERT INTO `habitantes_apartamentos` (`id_habitante_apartamento`, `apartamento_id`, `habitante_id`, `tipo_vinculo`) VALUES
-(15, 11, 14, 'Propietario'),
-(17, 11, 17, 'Habitante'),
-(19, 12, 19, 'Habitante'),
-(20, 12, 20, 'Habitante'),
-(21, 12, 21, 'Propietario'),
-(24, 15, 24, 'Propietario'),
-(25, 16, 25, 'Propietario'),
-(27, 26, 27, 'Propietario');
 
 -- --------------------------------------------------------
 
@@ -586,38 +550,7 @@ CREATE TABLE `mensualidad` (
 --
 
 INSERT INTO `mensualidad` (`id_mensualidad`, `monto`, `tasa_dolar`, `mes`, `anio`, `apartamento_id`, `porcentaje_interes`, `limite_mensualidad`) VALUES
-(367, 0.16, 195.25, '2', '2025', 11, 10, 15),
-(368, 0.79, 195.25, '2', '2025', 12, 10, 15),
-(369, 0.48, 195.25, '2', '2025', 15, 10, 15),
-(370, 0.55, 195.25, '2', '2025', 16, 10, 15),
-(372, 29.14, 195.25, '3', '2025', 11, 10, 15),
-(373, 29.14, 195.25, '3', '2025', 12, 10, 15),
-(374, 95.98, 195.25, '3', '2025', 15, 10, 15),
-(375, 8.97, 195.25, '3', '2025', 16, 10, 15),
-(377, 30.45, 195.25, '4', '2025', 11, 10, 15),
-(378, 30.45, 195.25, '4', '2025', 12, 10, 15),
-(379, 23.2, 195.25, '4', '2025', 15, 10, 15),
-(380, 29, 195.25, '4', '2025', 16, 10, 15),
-(382, 8.24, 195.25, '5', '2025', 11, 10, 15),
-(383, 304.08, 195.25, '5', '2025', 12, 10, 15),
-(384, 1.68, 195.25, '5', '2025', 15, 10, 15),
-(385, 2.45, 195.25, '5', '2025', 16, 10, 15),
-(387, 1.05, 195.25, '6', '2025', 11, 10, 15),
-(388, 1.05, 195.25, '6', '2025', 12, 10, 15),
-(389, 0.8, 195.25, '6', '2025', 15, 10, 15),
-(390, 1, 195.25, '6', '2025', 16, 10, 15),
-(392, 0.84, 195.25, '7', '2025', 11, 10, 15),
-(393, 0.84, 195.25, '7', '2025', 12, 10, 15),
-(394, 0.64, 195.25, '7', '2025', 15, 10, 15),
-(395, 0.8, 195.25, '7', '2025', 16, 10, 15),
-(397, 2.15, 195.25, '8', '2025', 11, 10, 15),
-(398, 2.15, 195.25, '8', '2025', 12, 10, 15),
-(399, 1.64, 195.25, '8', '2025', 15, 10, 15),
-(400, 2.05, 195.25, '8', '2025', 16, 10, 15),
-(417, 0.05, 197.25, '1', '2025', 11, 10, 15),
-(418, 0.05, 197.25, '1', '2025', 12, 10, 15),
-(419, 0.04, 197.25, '1', '2025', 15, 10, 15),
-(420, 0.05, 197.25, '1', '2025', 16, 10, 15);
+(427, 11.5, 236.46, '1', '2025', 30, 10, 15);
 
 -- --------------------------------------------------------
 
@@ -707,13 +640,7 @@ CREATE TABLE `pagos` (
 --
 
 INSERT INTO `pagos` (`id_pago`, `estado`, `observacion`) VALUES
-(93, 'No verificado', '1'),
-(94, 'Procesado', '2'),
-(96, 'No verificado', 'pago de pepe'),
-(97, 'No verificado', 'si pagas'),
-(98, 'No verificado', 'test'),
-(99, 'No verificado', 'pago'),
-(100, 'No verificado', '2');
+(105, 'Procesado', 'asdasd');
 
 -- --------------------------------------------------------
 
@@ -732,18 +659,7 @@ CREATE TABLE `pagos_mensualidad` (
 --
 
 INSERT INTO `pagos_mensualidad` (`id_pago_mensualidad`, `detalle_pago_id`, `mensualidad_id`) VALUES
-(240, 264, 367),
-(241, 265, 417),
-(247, 272, 372),
-(248, 273, 372),
-(255, 280, 377),
-(256, 281, 377),
-(265, 290, 372),
-(266, 291, 372),
-(269, 294, 387),
-(270, 295, 387),
-(273, 298, 368),
-(274, 299, 368);
+(279, 304, 427);
 
 -- --------------------------------------------------------
 
@@ -790,69 +706,18 @@ CREATE TABLE `presupuesto_mensualidad` (
 --
 
 INSERT INTO `presupuesto_mensualidad` (`id_presupuesto_mensualidad`, `presupuesto_id`, `mensualidad_id`) VALUES
-(1901, 750, 367),
-(1902, 750, 368),
-(1903, 753, 368),
-(1904, 754, 368),
-(1905, 755, 368),
-(1906, 756, 368),
-(1907, 753, 369),
-(1908, 754, 369),
-(1909, 755, 369),
-(1910, 756, 369),
-(1911, 745, 370),
-(1912, 746, 370),
-(1913, 751, 370),
-(1914, 752, 370),
-(1920, 769, 372),
-(1921, 770, 372),
-(1922, 769, 373),
-(1923, 770, 373),
-(1924, 765, 374),
-(1925, 766, 374),
-(1926, 767, 374),
-(1927, 768, 374),
-(1928, 759, 374),
-(1929, 759, 375),
-(1932, 781, 377),
-(1933, 782, 377),
-(1934, 781, 378),
-(1935, 782, 378),
-(1936, 781, 379),
-(1937, 782, 379),
-(1938, 781, 380),
-(1939, 782, 380),
-(1942, 670, 382),
-(1943, 671, 382),
-(1944, 667, 382),
-(1945, 667, 383),
-(1946, 663, 383),
-(1947, 664, 383),
-(1948, 665, 383),
-(1949, 666, 383),
-(1950, 660, 384),
-(1951, 661, 385),
-(1952, 662, 385),
-(1955, 819, 387),
-(1956, 819, 388),
-(1957, 819, 389),
-(1958, 819, 390),
-(1960, 832, 392),
-(1961, 833, 392),
-(1962, 832, 393),
-(1963, 833, 393),
-(1964, 832, 394),
-(1965, 833, 394),
-(1966, 832, 395),
-(1967, 833, 395),
-(1970, 910, 397),
-(1971, 910, 398),
-(1972, 910, 399),
-(1973, 910, 400),
-(2066, 740, 417),
-(2067, 740, 418),
-(2068, 740, 419),
-(2069, 740, 420);
+(2146, 743, 427),
+(2147, 744, 427),
+(2148, 740, 427),
+(2149, 736, 427),
+(2150, 737, 427),
+(2151, 738, 427),
+(2152, 739, 427),
+(2153, 733, 427),
+(2154, 734, 427),
+(2155, 735, 427),
+(2156, 741, 427),
+(2157, 742, 427);
 
 -- --------------------------------------------------------
 
@@ -873,10 +738,10 @@ CREATE TABLE `proveedores` (
 --
 
 INSERT INTO `proveedores` (`id_proveedor`, `nombre_proveedor`, `servicio`, `rif`, `direccion`) VALUES
-(1, 'Gas Lara', 'Gas', 'v123124', 'Lara'),
-(2, 'Proimca', 'Luz', 'v1231231', 'Quibor'),
-(3, 'Jardinero', 'Trabajos en jardineria', 'E13123', 'terminal'),
-(4, 'Reparaciones CA', 'Reparar', 'V234234', 'Zona industrial');
+(1, 'Gas Lara', 'Gas', 'V2352345', 'Lara'),
+(2, 'Proimca', 'Luz', 'V3434523', 'Quibor'),
+(3, 'Jardinero', 'Trabajos en jardineria', 'E13123343', 'terminal'),
+(4, 'Reparaciones CA', 'Reparara', 'V2342344', 'Zona industrial');
 
 -- --------------------------------------------------------
 
@@ -1089,13 +954,13 @@ ALTER TABLE `anio_fiscal`
 -- AUTO_INCREMENT de la tabla `apartamentos`
 --
 ALTER TABLE `apartamentos`
-  MODIFY `id_apartamento` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
+  MODIFY `id_apartamento` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
 
 --
 -- AUTO_INCREMENT de la tabla `bancos`
 --
 ALTER TABLE `bancos`
-  MODIFY `id_banco` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id_banco` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT de la tabla `banco_transacciones`
@@ -1113,13 +978,13 @@ ALTER TABLE `caja_chica`
 -- AUTO_INCREMENT de la tabla `detalles_gastos`
 --
 ALTER TABLE `detalles_gastos`
-  MODIFY `id_detalle_gasto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=149;
+  MODIFY `id_detalle_gasto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=151;
 
 --
 -- AUTO_INCREMENT de la tabla `detalles_pagos`
 --
 ALTER TABLE `detalles_pagos`
-  MODIFY `id_detalle_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=300;
+  MODIFY `id_detalle_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=305;
 
 --
 -- AUTO_INCREMENT de la tabla `detalles_presupuesto`
@@ -1131,25 +996,25 @@ ALTER TABLE `detalles_presupuesto`
 -- AUTO_INCREMENT de la tabla `gastos`
 --
 ALTER TABLE `gastos`
-  MODIFY `id_gasto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=117;
+  MODIFY `id_gasto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=119;
 
 --
 -- AUTO_INCREMENT de la tabla `habitantes`
 --
 ALTER TABLE `habitantes`
-  MODIFY `id_habitante` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
+  MODIFY `id_habitante` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 
 --
 -- AUTO_INCREMENT de la tabla `habitantes_apartamentos`
 --
 ALTER TABLE `habitantes_apartamentos`
-  MODIFY `id_habitante_apartamento` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
+  MODIFY `id_habitante_apartamento` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 
 --
 -- AUTO_INCREMENT de la tabla `mensualidad`
 --
 ALTER TABLE `mensualidad`
-  MODIFY `id_mensualidad` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=427;
+  MODIFY `id_mensualidad` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=428;
 
 --
 -- AUTO_INCREMENT de la tabla `movimientos_caja`
@@ -1161,13 +1026,13 @@ ALTER TABLE `movimientos_caja`
 -- AUTO_INCREMENT de la tabla `pagos`
 --
 ALTER TABLE `pagos`
-  MODIFY `id_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=101;
+  MODIFY `id_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=106;
 
 --
 -- AUTO_INCREMENT de la tabla `pagos_mensualidad`
 --
 ALTER TABLE `pagos_mensualidad`
-  MODIFY `id_pago_mensualidad` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=275;
+  MODIFY `id_pago_mensualidad` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=280;
 
 --
 -- AUTO_INCREMENT de la tabla `presupuesto`
@@ -1179,13 +1044,13 @@ ALTER TABLE `presupuesto`
 -- AUTO_INCREMENT de la tabla `presupuesto_mensualidad`
 --
 ALTER TABLE `presupuesto_mensualidad`
-  MODIFY `id_presupuesto_mensualidad` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2146;
+  MODIFY `id_presupuesto_mensualidad` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2158;
 
 --
 -- AUTO_INCREMENT de la tabla `proveedores`
 --
 ALTER TABLE `proveedores`
-  MODIFY `id_proveedor` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id_proveedor` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT de la tabla `solicitudes_gasto`
