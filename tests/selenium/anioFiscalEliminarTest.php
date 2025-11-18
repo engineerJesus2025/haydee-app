@@ -1,12 +1,13 @@
 <?php
-// tests/Selenium/proveedoresEliminarTest.php
+// tests/Selenium/anioFiscalEliminarTest.php
 
 use PHPUnit\Framework\TestCase;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\WebDriverExpectedCondition;
+use Facebook\WebDriver\WebDriverSelect;
 
-class proveedoresEliminarTest extends TestCase
+class anioFiscalEliminarTest extends TestCase
 {
     private $driver;
 
@@ -24,74 +25,70 @@ class proveedoresEliminarTest extends TestCase
         $this->driver->quit();
     }
 
-    public function testEliminarProveedorExitosoUI()
+    public function testEliminarAnioFiscalUI()
     {
         // -----------------------------------------------------------------
-        // PASO 1: Login y Navegación al Dashboard
+        // PASO 1: Login y Navegación
         // -----------------------------------------------------------------
         $this->driver->get('http://localhost/haydee-app/index.php');
 
-        $this->driver->findElement(WebDriverBy::id('correo_login'))
-            ->sendKeys('administrador@gmail.com');
-        $this->driver->findElement(WebDriverBy::id('contra'))
-            ->sendKeys('12345');
+        $this->driver->findElement(WebDriverBy::id('correo_login'))->sendKeys('administrador@gmail.com');
+        $this->driver->findElement(WebDriverBy::id('contra'))->sendKeys('12345');
 
-        $this->driver->executeScript(
-            "document.getElementById('form-login').insertAdjacentHTML('beforeend', '<input type=\"hidden\" name=\"operacion\" value=\"entrar\">');"
-        );
-        $this->driver->executeScript(
-            "document.getElementById('form-login').insertAdjacentHTML('beforeend', '<input type=\"hidden\" name=\"mantener_sesion\" value=\"false\">');"
-        );
+        $this->driver->executeScript("document.getElementById('form-login').insertAdjacentHTML('beforeend', '<input type=\"hidden\" name=\"operacion\" value=\"entrar\">');");
+        $this->driver->executeScript("document.getElementById('form-login').insertAdjacentHTML('beforeend', '<input type=\"hidden\" name=\"mantener_sesion\" value=\"false\">');");
         $this->driver->findElement(WebDriverBy::id('form-login'))->submit();
         sleep(1);
 
         $this->driver->get('http://localhost/haydee-app/?pagina=inicio_controlador.php&accion=inicio');
-        $this->driver->wait(10, 500)->until(
-            fn() => $this->driver->findElement(WebDriverBy::id('contenido'))
-        );
+        $this->driver->wait(10, 500)->until(fn() => $this->driver->findElement(WebDriverBy::id('contenido')));
 
         // -----------------------------------------------------------------
-        // PASO 2: Navegar a Proveedores y esperar a que la tabla cargue
+        // PASO 2: Navegar a Años fiscales
         // -----------------------------------------------------------------
-        $this->driver->get('http://localhost/haydee-app/?pagina=proveedores_controlador.php&accion=inicio');
+        $this->driver->get('http://localhost/haydee-app/?pagina=anio_fiscal_controlador.php&accion=inicio');
 
         $this->driver->wait(10, 500)->until(
-            fn() => $this->driver->findElement(WebDriverBy::xpath("//h2[contains(text(), 'GESTIONAR PROVEEDORES')]"))
+            WebDriverExpectedCondition::visibilityOfElementLocated(
+                WebDriverBy::xpath("//h2[contains(text(), 'GESTIONAR AÑOS FISCALES')]")
+            )
         );
+       $loadingSelector = WebDriverBy::xpath("//table[@id='tabla_anio_fiscal']//h4[contains(text(), 'Cargando...')]");
 
-        $loadingSelector = WebDriverBy::xpath("//table[@id='tabla_proveedores']//h4[contains(text(), 'Cargando...')]");
+
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::invisibilityOfElementLocated($loadingSelector)
         );
 
         // -----------------------------------------------------------------
-        // PASO 3: REGISTRAR un Proveedor (Para luego eliminarlo)
+        // PASO 3: CREAR un año fiscal (Para luego eliminarlo)
         // -----------------------------------------------------------------
-        usleep(100000); 
-        // 3.1 Generar datos únicos
-        $unique_part = rand(100000, 999999);
-        $test_rif = 'v' . $unique_part;         // Ej: "v839201"
-        $test_nombre = 'Proveedor Eliminar Selenium'; // Nombre único para buscar fácil
-        $test_servicio = 'Servicio Temporal';
-        $test_direccion = 'Direccion Temporal';
+        
+        $unique_id = rand(10000, 99999);
+        $test_descripcion = 'anio Eliminar ' . $unique_id; // Nombre único para buscar
+        $test_monto = '25.00';
+        $test_fecha = date('d-m-Y');
+        
+        // 3.1 Clic en botón Nueva Solicitud
+        $this->driver->findElement(WebDriverBy::xpath("//button[@data-bs-target='#modal_anio_fiscal']"))->click();
 
-        // 3.2 Abrir modal
-        $this->driver->findElement(WebDriverBy::xpath("//button[@data-bs-target='#modal_proveedores']"))
-            ->click();
-
+        // 3.2 Esperar a que el modal sea visible
         $this->driver->wait(10)->until(
-            WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::id('titulo_modal'))
+            WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::id('form_anio_fiscal'))
         );
 
-        // 3.3 Rellenar Formulario
-        $this->driver->findElement(WebDriverBy::id('nombre_proveedor'))->sendKeys($test_nombre);
-        $this->driver->findElement(WebDriverBy::id('rif'))->sendKeys($test_rif);
-        $this->driver->findElement(WebDriverBy::id('servicio'))->sendKeys($test_servicio);
-        $this->driver->findElement(WebDriverBy::id('direccion'))->sendKeys($test_direccion);
+        // 1. Fecha del detalle
+        // Usamos CSS Selector porque es una clase dentro del array de detalles
+        $this->driver->findElement(WebDriverBy::cssSelector('#fecha_inicio'))->sendKeys($test_fecha);
 
+
+        // 2. Descripción
+        $this->driver->findElement(WebDriverBy::id('descripcion'))->sendKeys($test_descripcion);
+
+        // Guardar
         $this->driver->findElement(WebDriverBy::id('boton_formulario'))->click();
 
-        // 3.4 Confirmar Creación (Alertas)
+        // Confirmar Creación
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::elementTextContains(WebDriverBy::id('swal2-title'), '¿Estás seguro?')
         );
@@ -102,50 +99,49 @@ class proveedoresEliminarTest extends TestCase
         );
         $this->driver->findElement(WebDriverBy::className('swal2-confirm'))->click();
         
-        // Esperar a que desaparezca la alerta de éxito antes de intentar interactuar con la tabla
+        // Esperar cierre de alerta
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::invisibilityOfElementLocated(WebDriverBy::className('swal2-popup'))
         );
 
         // -----------------------------------------------------------------
-        // PASO 4: BUSCAR Y ELIMINAR el Proveedor creado
+        // PASO 4: BUSCAR Y ELIMINAR el año creado
         // -----------------------------------------------------------------
 
-        // 4.1 Buscar el proveedor recién creado
+        // 4.1 Buscar por la descripción única
         $searchInput = $this->driver->findElement(
-            WebDriverBy::xpath("//div[@id='tabla_proveedores_filter']//input[@type='search']")
+            WebDriverBy::xpath("//div[@id='tabla_anio_fiscal_filter']//input[@type='search']")
         );
         $searchInput->clear();
-        $searchInput->sendKeys($test_nombre);
+        $searchInput->sendKeys($test_descripcion);
 
         // 4.2 Esperar a que aparezca el botón ELIMINAR en la fila correcta
-        // Usamos XPath para buscar la fila (tr) que contiene el texto ($test_nombre) 
-        // y dentro el botón eliminar.
-        $botonEliminarXPath = "//table[@id='tabla_proveedores']/tbody/tr[contains(., '$test_nombre')]//button[contains(@class, 'eliminar')]";
+        // Buscamos la fila (tr) que contiene el texto de la descripción y dentro el botón eliminar
+        $botonEliminarXPath = "//table[@id='tabla_anio_fiscal']/tbody/tr[contains(., '$test_descripcion')]//button[contains(@class, 'eliminar')]";
         
         $botonEliminar = $this->driver->wait(10)->until(
             WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::xpath($botonEliminarXPath))
         );
 
-        // Pequeña pausa para asegurar que DataTables terminó de redibujar
+        // Pausa de seguridad para renderizado de tabla
         usleep(500000); 
 
-        // 4.3 Clic en eliminar
+        // 4.3 Clic en Eliminar
         $botonEliminar->click();
 
         // -----------------------------------------------------------------
-        // PASO 5: Confirmar la Eliminación (Alertas)
+        // PASO 5: Confirmar Eliminación
         // -----------------------------------------------------------------
 
         // 1. Alerta "¿Estás seguro de eliminar?"
         $this->driver->wait(10)->until(
-            WebDriverExpectedCondition::elementTextContains(WebDriverBy::id('swal2-title'), 'Atención')
+            WebDriverExpectedCondition::elementTextContains(WebDriverBy::id('swal2-title'), '¿Estás seguro?')
         );
         $this->driver->findElement(WebDriverBy::className('swal2-confirm'))->click();
 
         // 2. Alerta "Eliminado correctamente"
         $this->driver->wait(10)->until(
-            WebDriverExpectedCondition::elementTextContains(WebDriverBy::id('swal2-html-container'), 'La operacion se ha realizado correctamente')
+            WebDriverExpectedCondition::elementTextContains(WebDriverBy::id('swal2-html-container'), 'El registro ha sido eliminado correctamente')
         );
         $this->driver->findElement(WebDriverBy::className('swal2-confirm'))->click();
 
@@ -153,23 +149,23 @@ class proveedoresEliminarTest extends TestCase
         // PASO 6: Verificación Final (ASSERT)
         // -----------------------------------------------------------------
 
-        // 6.1 Esperar que cierre la alerta
+        // 6.1 Esperar cierre de alerta
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::invisibilityOfElementLocated(WebDriverBy::className('swal2-popup'))
         );
 
         // 6.2 Verificar que la tabla diga "No se encontraron resultados"
-        // (Como el filtro sigue activo con el nombre, la tabla debe quedar vacía)
-        $tableBodySelector = WebDriverBy::xpath("//table[@id='tabla_proveedores']/tbody");
+        // (Como el filtro sigue activo con el nombre único, la tabla debe quedar vacía)
+        $tableBodySelector = WebDriverBy::xpath("//table[@id='tabla_anio_fiscal']/tbody");
 
         $this->driver->wait(10)->until(
             WebDriverExpectedCondition::elementTextContains(
                 $tableBodySelector,
                 "No se encontraron resultados"
             ),
-            "FALLO: El proveedor ($test_nombre) sigue apareciendo en la tabla después de eliminar."
+            "FALLO: El año eliminado ($test_descripcion) sigue apareciendo en la tabla."
         );
 
-        $this->assertTrue(true, "Ciclo completo: Proveedor creado y eliminado exitosamente.");
+        $this->assertTrue(true, "Ciclo completo: año creado y eliminado exitosamente.");
     }
 }

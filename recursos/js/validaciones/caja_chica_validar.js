@@ -52,11 +52,11 @@ $(document).ready(function(){
 	});
 
 	$("#concepto").on("keypress",function(e){	
-		validarKeyPress(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, e);
+		validarKeyPress(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s]+$/, e);
 	});
 
 	$("#concepto").on("keyup",function(e){
-		validarKeyUp(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,100}$/,
+		validarKeyUp(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s]{3,100}$/,
 		this,this.nextElementSibling,"Solo texto, no mas de 100 caracteres");
 	});
 
@@ -240,7 +240,7 @@ async function validarEnvio(){
 		return false;
 	}
 	else if(validarKeyUp(
-        /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,100}$/,
+        /^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s]{3,100}$/,
         document.querySelector("#concepto"),document.querySelector("#concepto").nextElementSibling,'Solo texto, no mas de 100 caracteres'
         )==0)
 	{

@@ -27,7 +27,7 @@
 
                 <main class="col ps-md-2 pt-2 mb-5">
                     <div class="page-header pt-3">
-                        <h2>MENSUALIDAD</h2>
+                        <h2>GESTIONAR MENSUALIDAD</h2>
                     </div>
                     <p class="lead"></p>
                     <hr>

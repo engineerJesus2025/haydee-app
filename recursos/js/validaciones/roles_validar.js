@@ -1,10 +1,10 @@
 $(document).ready(function(){
 	$("#nombre").on("keypress",function(e){
-		validarKeyPress(/^[A-Za-z \b]*$/, e);
+		validarKeyPress(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/, e);
 	});
 
 	$("#nombre").on("keyup",function(){
-		validarKeyUp(/^[A-Za-z \b]{3,30}$/,
+		validarKeyUp(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,30}$/,
 		this,this.nextElementSibling,"Solo letras entre 3 y 30 caracteres");
 	});
 	
@@ -29,7 +29,7 @@ $(document).ready(function(){
 		}	
 	});
 	$("#nombre").on("keyup",function(e){
-		if (validarKeyUp(/^[A-Za-z \b]{3,30}$/,
+		if (validarKeyUp(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,30}$/,
 		this,this.nextElementSibling,"Solo letras entre 3 y 30 caracteres")) {
 			if(this.value == nombre_anterior){return}
 			let datos = new FormData();
@@ -98,7 +98,7 @@ function mensajes(icono,tiempo,titulo,mensaje){
 
 async function validarEnvio(){
 	if(validarKeyUp(
-        /^[A-Za-z ]{3,30}$/,
+        /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,30}$/,
         document.getElementById('nombre'),document.getElementById('nombre').nextElementSibling,'El formato debe ser en letras'
         )==0)
 	{
