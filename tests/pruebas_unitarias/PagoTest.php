@@ -48,7 +48,7 @@ final class PagoTest extends TestCase
     //     $this->assertFalse($resultado['estatus']);
     //     $this->assertStringContainsString($expectedMessageFragment, $resultado['mensaje']);
     // }
-
+ 
     // public static function providerDatosInvalidosRegistrar(): array
     // {
     //     return [
@@ -63,6 +63,14 @@ final class PagoTest extends TestCase
     //         'Estado inválido (no string)' => [
     //             ['estado' => 123, 'observacion' => 'Todo bien'],
     //             "El campo 'Estado' no posee un valor valido"
+    //         ],
+    //         'Observación con caracteres inválidos' => [
+    //             ['estado' => 'PENDIENTE', 'observacion' => 'Pago con @simbolo'], // El @ no está permitido en tu regex
+    //             "El campo 'Observacion' no posee un valor valido"
+    //         ],
+    //         'Observación muy corta' => [
+    //             ['estado' => 'PENDIENTE', 'observacion' => 'Ok'], // Menos de 3 caracteres
+    //             "El campo 'Observacion' no posee un valor valido"
     //         ],
     //     ];
     // }
@@ -103,6 +111,7 @@ final class PagoTest extends TestCase
     //     $this->assertTrue($resModificar['estatus'], 'La modificación debe retornar estatus true');
     // }
 
+    // NOTA, SI NO EXISTE UN ID DE PAGO EN LA BASE DE DATOS, ESTOS TESTS FALLARÁN.
     // #[TestDox('Prueba de ingreso de datos inválidos al modificar un pago (validaciones back-end)')] // Modificar Validaciones
     // #[DataProvider('providerDatosInvalidosModificar')]
     // #[Test]
@@ -136,12 +145,20 @@ final class PagoTest extends TestCase
     //             "El id del Pago requerido esta vacio"
     //         ],
     //         'Campos Vacios' => [
-    //             ['id_pago' => 102, 'estado' => '', 'observacion' => ''],
+    //             ['id_pago' => 107, 'estado' => '', 'observacion' => ''],
     //             "Uno o varios de los campos requeridos estan vacios"
     //         ],
     //         'Estado inválido (no string)' => [
-    //             ['id_pago' => 102, 'estado' => 123, 'observacion' => 'Todo bien'],
+    //             ['id_pago' => 107, 'estado' => 123, 'observacion' => 'Todo bien'],
     //             "El campo 'Estado' no posee un valor valido"
+    //         ],
+    //         'ID No Numérico' => [
+    //             ['id_pago' => 'abc'],
+    //             "El id del Pago debe ser un valor numerico entero"
+    //         ],
+    //         'Observación inválida (caracteres prohibidos)' => [
+    //             ['id_pago' => 107, 'estado' => 'PENDIENTE', 'observacion' => 'Pago #Invalido'], 
+    //             "El campo 'Observacion' no posee un valor valido"
     //         ],
     //     ];
     // }
@@ -150,6 +167,12 @@ final class PagoTest extends TestCase
     #[Test]
     public function testEliminarExitoso()
     {
+        // Simular sesión de usuario para la bitácora
+        if (session_status() == PHP_SESSION_NONE) {
+            session_start();
+        }
+        $_SESSION['id_usuario'] = 1;
+        
         $this->pagos->set_estado('Procesado');
         $this->pagos->set_observacion('Pago Observacion');
         $resRegistro = $this->pagos->realizar_consulta('registrar');
@@ -201,7 +224,7 @@ final class PagoTest extends TestCase
             ],
             'ID inexistente' => [
                 ['id_pago' => 999999],
-                "pago seleccionado no existe"
+                "El Pago seleccionado no existe"
             ],
         ];
     }
