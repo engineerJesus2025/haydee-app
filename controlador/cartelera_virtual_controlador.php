@@ -32,7 +32,8 @@ if (isset($_POST["operacion"])) {
         $nombre_archivo = '';
         if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === 0) {
             $peso_maximo = 2 * 1024 * 1024; // 2 MB en bytes
-            $tipos_permitidos = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            $tipos_permitidos = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];            
+            $nombre_original = $_FILES['imagen']['name'];
             $nombre_original = $_FILES['imagen']['name'];
             $temporal = $_FILES['imagen']['tmp_name'];
             $tamano_archivo = $_FILES['imagen']['size']; // Peso del archivo
