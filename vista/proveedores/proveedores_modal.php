@@ -6,7 +6,7 @@
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
                 <input type="text" class="form-control nombre_proveedor" name="nombre_proveedor" id="nombre_proveedor" placeholder="Ejem: Hidrolara"
-                       aria-label="nombre_proveedor" aria-describedby="basic-addon1" minlength="3" maxlength="30">
+                       aria-label="nombre_proveedor" aria-describedby="basic-addon1" minlength="3" maxlength="20">
                 <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
@@ -15,7 +15,7 @@
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
                 <input type="text" class="form-control servicio" name="servicio" id="servicio" placeholder="Ejem: Agua"
-                       aria-label="servicio" aria-describedby="basic-addon1" minlength="3" maxlength="30">
+                       aria-label="servicio" aria-describedby="basic-addon1" minlength="3" maxlength="20">
                 <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
@@ -34,7 +34,7 @@
                 </select>
                 <input type="text" class="form-control rif" name="rif" id="rif"
                        placeholder="Ejem: 7236483" aria-label="rif" aria-describedby="basic-addon1"
-                       minlength="3" maxlength="30" disabled style="flex-grow: 7">
+                       minlength="7" maxlength="9" disabled style="flex-grow: 7">
                 <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
@@ -43,7 +43,7 @@
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-map"></i></span>
                 <input type="text" class="form-control direccion" name="direccion" id="direccion" placeholder="Ejem: Calle 123, Urbanización XYZ..."
-                       aria-label="direccion" aria-describedby="basic-addon1" minlength="3" maxlength="30">
+                       aria-label="direccion" aria-describedby="basic-addon1" minlength="3" maxlength="100">
                 <span class="w-100 invalid-feedback"></span>
             </div>
         </div>

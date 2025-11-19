@@ -50,7 +50,7 @@
                     <label for="nombre">Nombre del Solicitante</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-person"></i></span>
-                        <input type="text" class="form-control" name="nombre" id="nombre" placeholder="Ejem: Raul" required>
+                        <input type="text" class="form-control" name="nombre" id="nombre" placeholder="Ejem: Raul" minlength="3" maxlength="40" required>
                         <span class="w-100 invalid-feedback"></span>
                     </div>
                 </div>
@@ -62,7 +62,7 @@
                     <label for="monto_estimado">Monto Estimado</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-currency-dollar"></i></span>
-                        <input type="number" step="0.01" min="0" class="form-control" name="monto" id="monto_estimado" required>
+                        <input type="number" step="0.01" min="0" class="form-control" name="monto" id="monto_estimado" maxlength="12" placeholder="0" required>
                         <span class="w-100 invalid-feedback"></span>
                     </div>
                 </div>
@@ -87,7 +87,7 @@
                     <label for="descripcion">Descripción</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-card-text"></i></span>
-                        <textarea name="descripcion" id="descripcion" class="form-control" rows="3" placeholder="Describa la solicitud..." required></textarea>
+                        <textarea name="descripcion" id="descripcion" class="form-control" rows="3" placeholder="Describa la solicitud..." minlength="3" maxlength="60" required></textarea>
                         <span class="w-100 invalid-feedback"></span>
                     </div>
                 </div>
