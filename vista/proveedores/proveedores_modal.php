@@ -5,7 +5,7 @@
             <label for="nombre_proveedor">Nombre del Proveedor</label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
-                <input type="text" class="form-control nombre_proveedor" name="nombre_proveedor" id="nombre_proveedor" placeholder="Nombre"
+                <input type="text" class="form-control nombre_proveedor" name="nombre_proveedor" id="nombre_proveedor" placeholder="Ejem: Hidrolara"
                        aria-label="nombre_proveedor" aria-describedby="basic-addon1" minlength="3" maxlength="30">
                 <span class="w-100 invalid-feedback"></span>
             </div>
@@ -14,7 +14,7 @@
             <label for="servicio">Servicio</label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
-                <input type="text" class="form-control servicio" name="servicio" id="servicio" placeholder="Servicio"
+                <input type="text" class="form-control servicio" name="servicio" id="servicio" placeholder="Ejem: Agua"
                        aria-label="servicio" aria-describedby="basic-addon1" minlength="3" maxlength="30">
                 <span class="w-100 invalid-feedback"></span>
             </div>
@@ -33,7 +33,7 @@
                     <option value="G">G</option>
                 </select>
                 <input type="text" class="form-control rif" name="rif" id="rif"
-                       placeholder="RIF" aria-label="rif" aria-describedby="basic-addon1"
+                       placeholder="Ejem: 7236483" aria-label="rif" aria-describedby="basic-addon1"
                        minlength="3" maxlength="30" disabled style="flex-grow: 7">
                 <span class="w-100 invalid-feedback"></span>
             </div>
@@ -42,7 +42,7 @@
             <label for="direccion">Dirección</label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-map"></i></span>
-                <input type="text" class="form-control direccion" name="direccion" id="direccion" placeholder="Dirección"
+                <input type="text" class="form-control direccion" name="direccion" id="direccion" placeholder="Ejem: Calle 123, Urbanización XYZ..."
                        aria-label="direccion" aria-describedby="basic-addon1" minlength="3" maxlength="30">
                 <span class="w-100 invalid-feedback"></span>
             </div>
