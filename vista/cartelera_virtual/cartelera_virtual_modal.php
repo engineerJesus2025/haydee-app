@@ -6,7 +6,7 @@
                 <label for="titulo">Título de la publicación</label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-type"></i></span>
-                    <input type="text" class="form-control" name="titulo" id="titulo" placeholder="Título"
+                    <input type="text" class="form-control" name="titulo" id="titulo" placeholder="Ingrese un título..."
                         aria-label="titulo" minlength="3" maxlength="30" required>
                         <span class="w-100 invalid-feedback"></span>
                 </div>

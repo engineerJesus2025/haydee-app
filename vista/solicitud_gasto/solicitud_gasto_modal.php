@@ -50,7 +50,7 @@
                     <label for="nombre">Nombre del Solicitante</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-person"></i></span>
-                        <input type="text" class="form-control" name="nombre" id="nombre" required>
+                        <input type="text" class="form-control" name="nombre" id="nombre" placeholder="Ejem: Raul" required>
                         <span class="w-100 invalid-feedback"></span>
                     </div>
                 </div>
