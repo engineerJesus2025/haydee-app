@@ -62,7 +62,7 @@ class solicitudGastoRegistrarTest extends TestCase
         // -----------------------------------------------------------------
         // PASO 3: Abrir Modal y Cargar Presupuesto (AJAX)
         // -----------------------------------------------------------------
-        
+
         // 3.1 Clic en botón Nueva Solicitud
         $this->driver->findElement(WebDriverBy::xpath("//button[@data-bs-target='#modal_solicitud_gasto']"))->click();
 
@@ -71,7 +71,8 @@ class solicitudGastoRegistrarTest extends TestCase
             WebDriverExpectedCondition::visibilityOfElementLocated(WebDriverBy::id('form_solicitud_gasto'))
         );
 
-        // 3.3 Seleccionar MES y AÑO
+        // 3.3 Seleccionar fecha
+
         // Nota: Tu JS carga estos selects vía Ajax (cargarMesesYAniosConPresupuesto) al abrir el modal.
         
         // Esperamos a que el select de mes tenga opciones (más allá del placeholder)

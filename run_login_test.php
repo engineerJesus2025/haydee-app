@@ -10,7 +10,7 @@ use PhpXmlRpc\Encoder;
 // -----------------------------------------------------------------
 // --- CONFIGURACIÓN (aqui configuramos cada testcase muchachos) ---
 // -----------------------------------------------------------------
-$TESTLINK_API_KEY  = '30779eda0efadc81d9088c35d61b0394'; // Cambian esto por su API Key de testlink
+$TESTLINK_API_KEY  = '8314e3ce9557da4c3b74a9f175ac7fac'; // Cambian esto por su API Key de testlink
 $TESTLINK_URL      = 'http://localhost:8080/testlink/lib/api/xmlrpc.php'; // No vayan a cambiar esto
 $TEST_PROJECT_NAME = 'Proyecto Haydee'; // Aqui ponen el nombre del proyecto que usan en TestLink
 $TEST_CASE_ID      = '1-1'; // En este caso, el ID externo del caso de prueba en TestLink

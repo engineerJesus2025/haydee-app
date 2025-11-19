@@ -15,6 +15,7 @@ let tiempoCarga;
 let modal_carga = new bootstrap.Modal("#modal_carga");
 
 let tasa_dolar = parseFloat(isNaN(localStorage.getItem("tasa_dolar"))?1:localStorage.getItem("tasa_dolar")).toFixed(2);
+tasa_dolar = isNaN(tasa_dolar)?1:tasa_dolar;
 
 //Eventos
 select_mes_asignar.addEventListener("change",e=>{
@@ -111,7 +112,7 @@ async function verificarMes(){
 		let option = document.createElement("option");
 
 		let fecha = new Date(`${mes.split("/")[1]}-01-${mes.split("/")[2]}`);
-		mes_buscar = fecha.toLocaleString("es-ES",{month: 'long'});
+		mes_buscar = fecha.toLocaleString("es-ES",{month: 'long'})[0].toUpperCase() + fecha.toLocaleString("es-ES",{month: 'long'}).slice(1);
 		anio_buscar = fecha.getFullYear();
 		
 		option.setAttribute("id",fecha.toLocaleDateString());
@@ -739,9 +740,9 @@ async function modificar() {
 		}
 	}
 	tabla_mensualidades.ajax.reload();
-
-	mensajes('success',4000,'Atencion','Se han editado las mensualidades exitosamente');
 	modal.hide();
+	modal_carga.hide();
+	mensajes('success',4000,'Atencion','Se han editado las mensualidades exitosamente');
 }
 
 async function eliminar(fecha) {

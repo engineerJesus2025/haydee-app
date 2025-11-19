@@ -571,7 +571,7 @@ class Mensualidad extends Conexion
         }
 
         if(!(is_string($this->tasa_dolar)) || !(preg_match("/^[0-9]{0,12}[,.]{0,1}[0-9]{0,2}$/",$this->tasa_dolar))){
-            return ["estatus"=>false,"mensaje"=>"Uno de los 'montos en dolar' no posee un valor valido"];
+            return ["estatus"=>false,"mensaje"=>"Uno de los 'tasa dolar' no posee un valor valido"];
         }
 
         if(!(is_string($this->mes)) || !(preg_match("/^[0-9]{1,2}$/",$this->mes))){

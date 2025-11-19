@@ -18,6 +18,8 @@ let total_monto = 0;
 let fecha_seleccionada;
 
 let tasa_dolar = parseFloat(isNaN(localStorage.getItem("tasa_dolar"))?1:localStorage.getItem("tasa_dolar")).toFixed(2);
+tasa_dolar = isNaN(tasa_dolar)?1:tasa_dolar;
+
 
 consultar();
 
@@ -773,7 +775,7 @@ function crearBotones(id) {
 }
 
 async function consultar() {
-	eventosCargaDataTable('tabla_presupuesto',modal_carga);
+	// eventosCargaDataTable('tabla_presupuesto',modal_carga);
 	const paramentros_consulta = (data)=>{data.operacion = 'consulta';}
 
 	const estructura_tabla_presupuetos = [
@@ -1306,7 +1308,7 @@ async function modificar(id) {
 	tabla_presupuesto.ajax.reload();
 	
  	modal.hide();
-
+ 	
 	mensajes('success',4000,'Atencion','El registro se ha modificado exitosamente');
 }
 
