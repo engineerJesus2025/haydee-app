@@ -359,6 +359,7 @@ if (isset($_SESSION["rol"]) && $_SESSION["rol"] != "Propietario") {
             $imagen = '';
             $apartamento_id = $_POST["apartamento_id"];
             $mensualidad_id = $_POST["mensualidad_id"];
+
             // 5 Megabytes en bytes
             $MAX_SIZE = 5 * 1024 * 1024; // 5 MB en bytes
             $ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png'];

@@ -33,7 +33,7 @@
                 <span class="border border-primary input-group-text" id="basic-addon1"><i
                         class="bi bi-cash-coin"></i></span>
                 <input type="text" class="border border-dark form-control monto_mensualidad" name="monto_mensualidad"
-                    id="monto_mensualidad" placeholder="Monto Mensualidad" aria-label="monto_mensualidad"
+                    id="monto_mensualidad" placeholder="No hay selección" aria-label="monto_mensualidad"
                     aria-describedby="basic-addon1" minlength="3" maxlength="30" readonly>
                 <span class="w-100 invalid-feedback"></span>
             </div>
@@ -43,7 +43,7 @@
     <div id="detalles_container">
         <div class="detalle-pago card shadow-sm border-primary mt-4 mb-4">
             <div class="card-header bg-primary text-white fw-bold">
-                <i class="bi bi-receipt-cutoff me-2"></i> Detalles del Pago
+                <i class="bi bi-receipt-cutoff me-2"></i> 1) Detalles del Pago
             </div>
             <div class="card-body">
                 <div class="row">
@@ -75,7 +75,7 @@
                         <div class="input-group mb-3">
                             <span class="border border-primary input-group-text"><i class="bi bi-cash-coin"></i></span>
                             <input type="text" class="border border-dark form-control monto" name="monto[]"
-                                placeholder="Monto">
+                                placeholder="0" maxlength="12">
                             <span class="w-100 invalid-feedback"></span>
                         </div>
                     </div>
@@ -84,7 +84,7 @@
                         <div class="input-group mb-3">
                             <span class="border border-primary input-group-text"><i class="bi bi-coin"></i></span>
                             <input type="text" class="border border-dark form-control tasa_dolar" name="tasa_dolar[]"
-                                placeholder="Tasa">
+                                placeholder="0" maxlength="12">
                             <span class="w-100 invalid-feedback"></span>
                         </div>
                     </div>
@@ -93,7 +93,7 @@
                         <div class="input-group mb-3">
                             <span class="border border-primary input-group-text"><i class="bi bi-cash-coin"></i></span>
                             <input type="text" class="border border-dark form-control monto_dolar" name="monto_dolar[]"
-                                placeholder="Dólar">
+                                placeholder="0" maxlength="12">
                             <span class="w-100 invalid-feedback"></span>
                         </div>
                     </div>
@@ -104,7 +104,7 @@
                         <div class="input-group mb-3">
                             <span class="border border-primary input-group-text"><i class="bi bi-receipt"></i></span>
                             <input type="text" class="border border-dark form-control referencia" name="referencia[]"
-                                placeholder="Referencia">
+                                placeholder="Ejem: 123456789" minlength="3" maxlength="10">
                             <span class="w-100 invalid-feedback"></span>
                         </div>
                     </div>
@@ -113,7 +113,7 @@
                         <div class="input-group mb-3">
                             <span class="border border-primary input-group-text"><i class="bi bi-bank2"></i></span>
                             <select class="border border-dark form-select banco_admin" name="banco_id[]">
-                                <option selected hidden value="">Escoga el Banco</option>
+                                <option selected hidden value="">Escoja el Banco</option>
                                 <?php foreach ($registro_banco as $banco): ?>
                                     <option value="<?php echo $banco["id_banco"] ?>"><?php echo $banco["nombre_banco"] ?>
                                     </option>
@@ -123,7 +123,7 @@
                         </div>
                     </div>
                     <div class="col-lg-6 campos-bancarios d-none">
-                        <label for="imagen">Imagen</label>
+                        <label for="imagen">Imagen (Solo formato JPG o PNG)</label>
                         <div class="input-group mb-3">
                             <span class="border border-primary input-group-text"><i class="bi bi-image-fill"></i></span>
                             <input type="file" class="border border-dark form-control imagen" name="imagen[]">
@@ -212,7 +212,7 @@
                     <div class="input-group mb-3">
                         <span class="border border-primary input-group-text"><i class="bi bi-cash-coin"></i></span>
                         <input type="text" class="border border-dark form-control monto" name="monto[]"
-                            placeholder="Monto">
+                            placeholder="0" maxlength="12">
                         <span class="w-100 invalid-feedback"></span>
                     </div>
                 </div>
@@ -221,7 +221,7 @@
                     <div class="input-group mb-3">
                         <span class="border border-primary input-group-text"><i class="bi bi-coin"></i></span>
                         <input type="text" class="border border-dark form-control tasa_dolar" name="tasa_dolar[]"
-                            placeholder="Tasa">
+                            placeholder="0" maxlength="12">
                         <span class="w-100 invalid-feedback"></span>
                     </div>
                 </div>
@@ -230,7 +230,7 @@
                     <div class="input-group mb-3">
                         <span class="border border-primary input-group-text"><i class="bi bi-cash-coin"></i></span>
                         <input type="text" class="border border-dark form-control monto_dolar" name="monto_dolar[]"
-                            placeholder="Dólar">
+                            placeholder="0" maxlength="12">
                         <span class="w-100 invalid-feedback"></span>
                     </div>
                 </div>
@@ -241,7 +241,7 @@
                     <div class="input-group mb-3">
                         <span class="border border-primary input-group-text"><i class="bi bi-receipt"></i></span>
                         <input type="text" class="border border-dark form-control referencia" name="referencia[]"
-                            placeholder="Referencia">
+                            placeholder="Ejem: 123456789" minlength="3" maxlength="10">
                         <span class="w-100 invalid-feedback"></span>
                     </div>
                 </div>
@@ -250,7 +250,7 @@
                     <div class="input-group mb-3">
                         <span class="border border-primary input-group-text"><i class="bi bi-bank2"></i></span>
                         <select class="border border-dark form-select banco_admin" name="banco_id[]">
-                            <option selected hidden value="">Escoga el Banco</option>
+                            <option selected hidden value="">Escoja el Banco</option>
                             <?php foreach ($registro_banco as $banco): ?>
                                 <option value="<?php echo $banco["id_banco"] ?>"><?php echo $banco["nombre_banco"] ?>
                                 </option>
@@ -260,7 +260,7 @@
                     </div>
                 </div>
                 <div class="col-md-6 campos-bancarios d-none">
-                    <label for="imagen">Imagen</label>
+                    <label for="imagen">Imagen (Solo formato JPG o PNG)</label>
                     <div class="input-group mb-3">
                         <span class="border border-primary input-group-text"><i class="bi bi-image-fill"></i></span>
                         <input type="file" class="border border-dark form-control imagen" name="imagen[]">
