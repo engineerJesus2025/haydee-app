@@ -31,7 +31,7 @@ document.querySelector(`#modal_banco`).addEventListener("hide.bs.modal",()=>{
 	formulario_usar.reset();
 	boton_formulario.removeAttribute("modificar");
 	boton_formulario.removeAttribute("id_modificar");	
-	boton_formulario.textContent = "Registrar";
+	boton_formulario.textContent = "Guardar";
 	document.getElementById('titulo_modal').textContent = "Registrar Banco";
 
 	formulario_usar.querySelectorAll("[class='w-100']").forEach(el=>el.textContent="");
@@ -299,7 +299,7 @@ async function modificar_formulario(e) {
 	// aqui cambiamos los datos del boton para registrar, para saber que ahora se va es a modificar un registro
 	boton_formulario.setAttribute("modificar",true);
 	boton_formulario.setAttribute("id_modificar",data.id_banco);
-	boton_formulario.textContent = "Guardar";
+	boton_formulario.textContent = "Guardar Cambios";
 	document.getElementById('titulo_modal').textContent = "Modificar Banco";
 	//formulario_usar.querySelector("#confir_contra").parentElement.previousElementSibling.textContent = "Nueva Contraseña" 
 	//formulario_usar.querySelector("#confir_contra").placeholder = "Nueva Contraseña" 
@@ -352,7 +352,7 @@ async function modificar(id) {
 
 	boton_formulario.removeAttribute("modificar");
 	boton_formulario.removeAttribute("id_modificar");	
-	boton_formulario.textContent = "Registrar";
+	boton_formulario.textContent = "Guardar";
 
 	document.getElementById('titulo_modal').textContent = "Registrar Banco";
 
