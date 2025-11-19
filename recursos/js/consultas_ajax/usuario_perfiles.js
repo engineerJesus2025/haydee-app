@@ -10,7 +10,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 document.querySelector(`#modal_contra`).addEventListener("hide.bs.modal",()=>{
 	document.querySelectorAll('.is-valid').forEach(input=>input.classList.remove('is-valid'));
 	document.querySelectorAll('.is-invalid').forEach(input=>input.classList.remove('is-invalid'));
-
+	correo_an = null;
 	document.querySelectorAll('input').forEach(input=>{
 		if (input.id.includes('contra')) {
 			input.nextElementSibling.classList.remove('border-danger');

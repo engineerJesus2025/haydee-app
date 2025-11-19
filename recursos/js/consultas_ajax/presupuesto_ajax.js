@@ -491,9 +491,11 @@ function agregarGastoFijo(nombre_gasto,ultimo = false) {
 	let input_nombre = document.createElement("input");
 	input_nombre.setAttribute('class','form-control');
 	input_nombre.setAttribute('type','text');
-	input_nombre.setAttribute('disabled','');
 	input_nombre.setAttribute('placeholder','nombre del gasto');
-	input_nombre.setAttribute('value',nombre_gasto);	
+	input_nombre.setAttribute('value',nombre_gasto);
+	if (nombre_gasto !== '') {
+		input_nombre.setAttribute('disabled','');
+	}
 
 	let spam_nombre = document.createElement("spam");
 	spam_nombre.setAttribute('class','w-100 invalid-feedback');

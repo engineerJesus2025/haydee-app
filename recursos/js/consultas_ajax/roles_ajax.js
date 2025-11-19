@@ -23,7 +23,7 @@ document.querySelector(`#modal_roles`).addEventListener("hide.bs.modal",()=>{
 		input.closest(".accordion-collapse").previousElementSibling.children[0].classList.add("collapsed");
 		input.closest(".accordion-collapse").previousElementSibling.children[0].setAttribute("aria-expanded",false)		
 	});
-
+	nombre_anterior = null;
 	document.querySelectorAll('.is-valid').forEach(input=>input.classList.remove('is-valid'));
 	document.querySelectorAll('.is-invalid').forEach(input=>input.classList.remove('is-invalid'));
 });
