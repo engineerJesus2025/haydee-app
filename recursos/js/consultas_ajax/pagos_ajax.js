@@ -98,6 +98,8 @@ document.querySelector(`#modal_pagos`).addEventListener("hide.bs.modal",()=>{
     if (inputOculto) inputOculto.remove();
 
     document.querySelectorAll(".tasa_dolar").forEach(input=> input.value = tasa_dolar);
+
+    renumerarDetalles();
 });
 
 document.querySelector("#apartamento_id").addEventListener("change", async function () {
@@ -152,51 +154,41 @@ document.querySelector("#apartamento_id").addEventListener("change", async funct
     let fragmentoSelectMensualidades = document.createDocumentFragment();
 
     respuesta.forEach(m => {
-        let pendiente = parseFloat(m.pendiente);
-        if (pendiente <= 0) return;
+        let pendiente_base = parseFloat(m.pendiente);
+        if (pendiente_base <= 0) return; // Si no hay pendiente base, saltar
 
         let hoy = new Date();
-        let fechaReferencia = new Date(m.anio, m.mes - 1, 1);
+        let fechaReferencia = new Date(m.anio, m.mes - 1, 1); 
         let diferenciaDias = Math.floor((hoy - fechaReferencia) / (1000 * 60 * 60 * 24));
 
-        // ====== Cálculo del total con interés si ha pasado el límite ======
-        let total = parseFloat(m.monto);
+        let monto_base = parseFloat(m.monto);
+        let recargo = 0;
 
+        // 1. Aplicar recargo si aplica
         if (diferenciaDias > m.limite_mensualidad) {
-            total += total * (m.porcentaje_interes / 100);
+            recargo = monto_base * (m.porcentaje_interes / 100);
         }
- 
-        total = total.toFixed(2);
-        pendiente = pendiente.toFixed(2);
+        
+        let monto_total_con_interes = monto_base + recargo;
+        let total_pagado = monto_base - pendiente_base;
+        let saldo_deuda_pendiente = monto_total_con_interes - total_pagado;
+        
+        saldo_deuda_pendiente = Math.max(0, saldo_deuda_pendiente);
 
         let opcion = document.createElement("option");
         let nombre_mes = meses[parseInt(m.mes)];
 
         opcion.value = m.id_mensualidad;
-        opcion.textContent = `${nombre_mes}/${m.anio} - Restante: ${pendiente} Bs`;
-        opcion.setAttribute("data-monto", total);
+        opcion.textContent = `${nombre_mes}/${m.anio} - Restante: ${saldo_deuda_pendiente.toFixed(2)} Bs`;
+        
+        opcion.setAttribute("data-monto", monto_total_con_interes.toFixed(2));
 
         fragmentoSelectMensualidades.appendChild(opcion);
     });
 
     select_mensualidades.appendChild(fragmentoSelectMensualidades);
     select_mensualidades.removeAttribute('disabled');
-    /* Antiguo por si acaso toca cambiarlo
-    respuesta.forEach(m => {
-        let opcion = document.createElement("option");
-        let nombre_mes = meses[parseInt(m.mes)];
 
-        let pendiente = parseFloat(m.pendiente).toFixed(2);
-        if (pendiente <= 0) return; // saltar si no hay pendiente
-        let total = parseFloat(m.monto).toFixed(2);
-
-        opcion.value = m.id_mensualidad;
-        opcion.textContent = `${nombre_mes}/${m.anio} - Restante: ${pendiente} Bs`;
-        opcion.setAttribute("data-monto", total);
-
-        select_mensualidades.appendChild(opcion);
-    });
-    */
 });
 
 // Esta es para cuandos se selecciona una mensualidad y poder guardarla, se muestra en la consola
@@ -237,6 +229,13 @@ document.getElementById('agregar_detalle').addEventListener('click', () => {
     const container = document.getElementById('detalles_container');
     const detallesOriginal = container.querySelector('.card');
     const nuevoDetalle = detallesOriginal.cloneNode(true);
+
+    // Contar cuántos bloques hay, incluyendo el que se va a añadir.
+    const totalDetalles = container.querySelectorAll('.detalle-pago').length + 1;
+    
+    // Asignar el nuevo título numerado al encabezado.
+    const cardHeader = nuevoDetalle.querySelector('.card-header');
+    cardHeader.innerHTML = `<i class="bi bi-receipt-cutoff me-2"></i> ${totalDetalles}) Detalles del Pago`;
 
     // Limpia los inputs del nuevo bloque
     nuevoDetalle.querySelectorAll('input, select').forEach(el => {
@@ -280,8 +279,11 @@ document.getElementById('agregar_detalle').addEventListener('click', () => {
     // Crea un botón para eliminar el bloque
     const eliminarBtn = document.createElement('button');
     eliminarBtn.className = 'btn btn-sm btn-outline-danger mb-3';
-    eliminarBtn.innerHTML = '<i class="bi bi-x-circle"></i> Eliminar este Detalle';
-    eliminarBtn.onclick = () => nuevoDetalle.remove();
+    eliminarBtn.innerHTML = '<i class="bi bi-x-circle"></i> Eliminar este Detalle'; 
+    eliminarBtn.onclick = () => {
+        nuevoDetalle.remove();
+        renumerarDetalles(); // <--- Llamar a la nueva función
+    };
 
     // Lo pone en el body de la tarjeta
     const cardBody = nuevoDetalle.querySelector('.card-body');
@@ -289,6 +291,17 @@ document.getElementById('agregar_detalle').addEventListener('click', () => {
 
     container.appendChild(nuevoDetalle);
 });
+
+function renumerarDetalles() {
+    const container = document.getElementById('detalles_container');
+    const bloques = container.querySelectorAll('.detalle-pago');
+    
+    bloques.forEach((bloque, index) => {
+        const cardHeader = bloque.querySelector('.card-header');
+        // El index es base 0, por lo que sumamos 1 para el número de detalle
+        cardHeader.innerHTML = `<i class="bi bi-receipt-cutoff me-2"></i> ${index + 1}) Detalles del Pago`;
+    });
+}
 
 // Cambiar Inputs al seleccionar un metodo de pago
 document.addEventListener("change", function (e) {
@@ -673,6 +686,7 @@ async function modificar_formulario(e) {
 
     const datosPago = data;
     const detalles = data.detalles;
+    const monto_final = 0;
 
     // Llenar campos principales
     formulario_usar.querySelector("#estado").value = datosPago.estado;
@@ -701,7 +715,10 @@ async function modificar_formulario(e) {
                 eliminarBtn.className = 'btn btn-sm btn-outline-danger mb-3';
                 eliminarBtn.type = 'button';
                 eliminarBtn.innerHTML = '<i class="bi bi-x-circle"></i> Eliminar este Detalle';
-                eliminarBtn.onclick = () => nuevoBloque.remove();
+                eliminarBtn.onclick = () => {
+                    nuevoBloque.remove();
+                    renumerarDetalles(); // <-- AÑADIR LLAMADA AQUÍ
+                };
                 nuevoBloque.querySelector('.card-body').prepend(eliminarBtn);
             }
 
@@ -731,6 +748,9 @@ async function modificar_formulario(e) {
         })
     }
     detallesContainer.appendChild(fragmentoDetallesContainer);
+    
+    renumerarDetalles();
+
     // Mensualidad
     let mensualidades_respuesta = new FormData();
     mensualidades_respuesta.append("operacion", "consultar_mensualidades");
@@ -750,15 +770,47 @@ async function modificar_formulario(e) {
     let fragmentoSelectMensualidades = document.createDocumentFragment();
 
     mensualidades.forEach(m => {
+        let pendiente_base = parseFloat(m.pendiente);
+        let es_mensualidad_actual = (m.id_mensualidad == data.mensualidad_id);
+
+        let hoy = new Date();
+        let fechaReferencia = new Date(m.anio, m.mes - 1, 1); 
+        let diferenciaDias = Math.floor((hoy - fechaReferencia) / (1000 * 60 * 60 * 24));
+
+        let monto_base = parseFloat(m.monto);
+        let recargo = 0;
+        
+        if (diferenciaDias > m.limite_mensualidad) {
+            recargo = monto_base * (m.porcentaje_interes / 100);
+        }
+        let monto_total_con_interes = monto_base + recargo;
+
+        let total_pagado = monto_base - pendiente_base;
+        let saldo_deuda_pendiente = monto_total_con_interes - total_pagado;
+        saldo_deuda_pendiente = Math.max(0, saldo_deuda_pendiente);
+
+        // *** LÓGICA DE TEXTO "PAGADO" ***
+        let texto_restante = '';
+
+        // Si es la mensualidad actual (o cualquier otra con saldo <= 0)
+        if (saldo_deuda_pendiente <= 0) {
+            texto_restante = "Pagado";
+        } else {
+            texto_restante = `Restante: ${saldo_deuda_pendiente.toFixed(2)} Bs`;
+        }
+
         let opcion = document.createElement("option");
         let nombre_mes = meses[parseInt(m.mes)];
+        
         opcion.value = m.id_mensualidad;
-        opcion.text = `${nombre_mes}/${m.anio} - ${m.monto} Bs`;
-        opcion.setAttribute("data-monto", m.monto);
+        // El texto ahora usa el texto_restante ("Restante: XX Bs" o "Pagado")
+        opcion.textContent = `${nombre_mes}/${m.anio} - ${texto_restante}`; 
+        opcion.setAttribute("data-monto", monto_total_con_interes.toFixed(2)); 
 
-        if (m.id_mensualidad == data.mensualidad_id) {
+        if (es_mensualidad_actual) { // Si es el ID del pago que estoy modificando
             opcion.selected = true;
-            monto_mensualidad.value = m.monto;
+            // Asignación inmediata del monto total con intereses
+            formulario_usar.querySelector("#monto_mensualidad").value = monto_total_con_interes.toFixed(2);
         }
         fragmentoSelectMensualidades.appendChild(opcion);
     });
@@ -782,6 +834,7 @@ async function modificar_formulario(e) {
     id_modificar = id;
 
     asignarEventos();
+
     //referencia_an = referencia.value;
     //guardamos el orginal del correo, para que no choquen con las validaciones
 }
@@ -1391,17 +1444,53 @@ async function cargarMensualidades(apartamento_id) {
         "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 
     respuesta.forEach(m => {
-        console.log(m);
-        let opcion = document.createElement("option");
-        let nombre_mes = meses[parseInt(m.mes)];
-        let pendiente = parseFloat(m.pendiente).toFixed(2);
-        if (pendiente <= 0) return; // saltar si no hay pendiente
-        let total = parseFloat(m.monto).toFixed(2);
-        opcion.value = m.id_mensualidad;
-        opcion.textContent = `${nombre_mes}/${m.anio} - ${total} Bs - Restante: ${pendiente} Bs`;
-        opcion.setAttribute("data-monto", total);
-        select.appendChild(opcion);
-    });
+        let pendiente_base = parseFloat(m.pendiente);
+        if (pendiente_base <= 0) return; // Si no hay pendiente base, saltar
+
+        let hoy = new Date();
+        // NOTA: Usamos m.mes - 1 porque JavaScript usa 0=Enero (0-11)
+        let fechaReferencia = new Date(m.anio, m.mes - 1, 1);
+        let diferenciaDias = Math.floor((hoy - fechaReferencia) / (1000 * 60 * 60 * 24));
+
+        // *************************************************************************
+        // *** LÓGICA DE CÁLCULO SEGURO ***
+        // *************************************************************************
+
+        let monto_base = parseFloat(m.monto);
+        let recargo = 0;
+
+        // 1. Aplicar recargo si aplica
+        if (diferenciaDias > m.limite_mensualidad) {
+            recargo = monto_base * (m.porcentaje_interes / 100);
+        }
+        
+        // 2. Monto total adeudado (Monto Base + Recargo)
+        let monto_total_con_interes = monto_base + recargo;
+
+        // 3. Calcular cuánto se ha pagado hasta ahora (Monto Base - Pendiente Base)
+        let total_pagado = monto_base - pendiente_base;
+        
+        // 4. Saldo a mostrar en el dropdown: (Deuda Total Real - Total Pagado Anteriormente)
+        let saldo_deuda_pendiente = monto_total_con_interes - total_pagado;
+        
+        saldo_deuda_pendiente = Math.max(0, saldo_deuda_pendiente); // Evita valores negativos
+
+        // *************************************************************************
+        // *** FIN LÓGICA DE CÁLCULO SEGURO ***
+        // *************************************************************************
+
+        let opcion = document.createElement("option");
+        let nombre_mes = meses[parseInt(m.mes)];
+
+        opcion.value = m.id_mensualidad;
+        // El texto ahora muestra el SALDO REAL pendiente (incluyendo intereses no cubiertos)
+        opcion.textContent = `${nombre_mes}/${m.anio} - Restante: ${saldo_deuda_pendiente.toFixed(2)} Bs`;
+        
+        // data-monto guarda el MONTO TOTAL ADEUDADO (Monto Base + Intereses)
+        opcion.setAttribute("data-monto", monto_total_con_interes.toFixed(2));
+        
+        select.appendChild(opcion);
+    });
 }
 
 async function consultar_detalles(id_pago) {

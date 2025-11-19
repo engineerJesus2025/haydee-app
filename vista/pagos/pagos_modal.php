@@ -43,7 +43,7 @@
     <div id="detalles_container">
         <div class="detalle-pago card shadow-sm border-primary mt-4 mb-4">
             <div class="card-header bg-primary text-white fw-bold">
-                <i class="bi bi-receipt-cutoff me-2"></i> Detalles del Pago
+                <i class="bi bi-receipt-cutoff me-2"></i> 1) Detalles del Pago
             </div>
             <div class="card-body">
                 <div class="row">
