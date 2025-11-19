@@ -1,7 +1,8 @@
 <?php
     use haydee\ayuda\Sesiones;
     Sesiones::verificarSesion();
-
+    Sesiones::verificarPermiso(GESTIONAR_PRESUPUESTO, CONSULTAR);
+    
     use haydee\modelo\Apartamento;
     use haydee\modelo\TipoGasto;
     use haydee\modelo\Mensualidad;

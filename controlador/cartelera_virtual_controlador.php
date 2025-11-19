@@ -1,6 +1,7 @@
 <?php
 use haydee\ayuda\Sesiones;
 Sesiones::verificarSesion();
+Sesiones::verificarPermiso(GESTIONAR_CARTELERA_VIRTUAL, CONSULTAR);
 
 use haydee\modelo\Usuario;
 use haydee\modelo\CarteleraVirtual;

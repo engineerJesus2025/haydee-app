@@ -1,6 +1,8 @@
 <?php
 use haydee\ayuda\Sesiones;
 Sesiones::verificarSesion();
+Sesiones::verificarPermiso(GESTIONAR_SOLICITUD_GASTO, CONSULTAR);
+
 
 use haydee\modelo\Presupuesto;
 use haydee\modelo\SolicitudGasto;

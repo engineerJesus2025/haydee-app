@@ -28,7 +28,7 @@ let modalVistaPreviaEl = document.querySelector("#modal_vista_previa");
 
 modalVistaPreviaEl.addEventListener('shown.bs.modal', function () {
     if ($.fn.DataTable.isDataTable("#tabla_detalles_pagos")) {
-        $('#tabla_detalles_pagos').DataTable().columns.adjust().responsive.recalc();
+        $('#tabla_detalles_pagos').DataTable().columns.adjust().draw();
     }
 });
 

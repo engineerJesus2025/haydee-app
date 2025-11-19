@@ -13,5 +13,9 @@
 
     if(is_file("controlador/" . $pagina)){
         require_once "controlador/" . $pagina;
+        
+    }
+    else{
+        require_once "vista/error/404_vista.php";
     }
 ?>

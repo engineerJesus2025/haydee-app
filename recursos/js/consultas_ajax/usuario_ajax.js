@@ -399,6 +399,7 @@ async function modificar(id) {
 	datos_consulta.append("correo",correo);
 	datos_consulta.append("contra",nueva_contra);
 	datos_consulta.append("rol",rol);
+	datos_consulta.append("rol_nombre",rol_nombre);
 
 	datos_consulta.append('operacion','editar_usuario');
 
@@ -410,6 +411,12 @@ async function modificar(id) {
 	if (!respuesta.estatus) {
 		mensajes('error',4000,'Atencion',respuesta.mensaje);
 		return;
+	}
+
+	if (respuesta.actual){
+		let boton_accion_usuario = document.getElementById('boton_accion_usuario');
+
+		boton_accion_usuario.textContent = `Hola, ${nombre} (${rol_nombre})`
 	}
 
 	boton_formulario.removeAttribute("modificar");

@@ -1,7 +1,6 @@
 <?php
     use haydee\ayuda\Sesiones;
     Sesiones::verificarSesion();
-    Sesiones::verificarPermiso(GESTIONAR_USUARIOS, CONSULTAR);
 
     use haydee\modelo\Rol;
     use haydee\modelo\Usuario;
@@ -13,105 +12,7 @@
     if (isset($_POST["operacion"])){
         $operacion = $_POST["operacion"];
 
-        if ($operacion == "consulta"){
-            $usuario_obj = new Usuario();
-
-            $usuario_obj->registrar_bitacora(CONSULTAR, GESTIONAR_USUARIOS, "TODOS LOS USUARIOS");
-
-            echo  json_encode($usuario_obj->realizar_consulta('consultar'));            
-        }        
-        elseif ($operacion == "registrar") {
-            $usuario_obj = new Usuario();
-
-            $apellido = $_POST["apellido"];
-            $nombre = $_POST["nombre"];  
-            $correo = $_POST["correo"];  
-            $contra = $_POST["contra"];
-            $rol = $_POST["rol"];              
-
-            $usuario_obj->set_apellido($apellido);
-            $usuario_obj->set_nombre($nombre);
-            $usuario_obj->set_correo($correo);
-            $usuario_obj->set_contra($contra);
-            $usuario_obj->set_rol_id($rol);
-
-            $resultado = $usuario_obj->realizar_consulta("registrar");
-
-            if ($resultado["estatus"]) {
-                $usuario_obj->registrar_bitacora(REGISTRAR, GESTIONAR_USUARIOS, $nombre . " " . $apellido);
-            }
-            
-            echo  json_encode($resultado);
-        }
-        elseif ($operacion == "consulta_especifica"){
-            $usuario_obj = new Usuario();
-
-            $id_usuario = $_POST["id_usuario"];
-
-            $usuario_obj->set_id_usuario($id_usuario);
-
-            echo  json_encode($usuario_obj->realizar_consulta('consultar_usuario'));
-        }
-        elseif ($operacion == "editar_usuario") {
-            $usuario_obj = new Usuario();
-
-            $id_usuario = $_POST["id_usuario"];
-            $apellido = $_POST["apellido"];
-            $nombre = $_POST["nombre"];  
-            $correo = $_POST["correo"];  
-            $contra = $_POST["contra"];
-            $rol = $_POST["rol"];
-
-            $usuario_obj->set_id_usuario($id_usuario);
-            $usuario_obj->set_apellido($apellido);
-            $usuario_obj->set_nombre($nombre);
-            $usuario_obj->set_correo($correo);
-            $usuario_obj->set_contra($contra);
-            $usuario_obj->set_rol_id($rol);        
-
-            $resultado = $usuario_obj->realizar_consulta("editar_usuario");
-
-            if ($resultado["estatus"]) {
-                $usuario_obj->registrar_bitacora(MODIFICAR, GESTIONAR_USUARIOS, $nombre . " " . $apellido);
-
-                if ($id_usuario == $_SESSION["id_usuario"]){
-                    $_SESSION["usuario"] = $correo;
-                    $_SESSION["nombre_completo"] = $nombre;
-                    $_SESSION["rol"] = $_POST["rol_nombre"];
-
-                    $resultado["actual"] = true;
-                }
-            }
-            
-            echo  json_encode($resultado);
-        }
-        elseif ($operacion == "eliminar") {
-            $usuario_obj = new Usuario();
-
-            $id_usuario = $_POST["id_usuario"];
-
-            $usuario_obj->set_id_usuario($id_usuario);
-
-            $usuario_alterado = $usuario_obj->realizar_consulta('consultar_usuario');
-
-            $resultado = $usuario_obj->realizar_consulta("eliminar_usuario");
-
-            if ($resultado["estatus"]){
-                if ($usuario_alterado) {
-                    $usuario_obj->registrar_bitacora(ELIMINAR, GESTIONAR_USUARIOS, $usuario_alterado["nombre_usuario"] . " " . $usuario_alterado["apellido"]);
-                }
-                else {
-                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta para la bitácora"];
-                }
-            }            
-
-            echo  json_encode($resultado);
-        }
-        elseif ($operacion == "ultimo_id"){
-            $usuario_obj = new Usuario();
-            echo json_encode($usuario_obj->realizar_consulta('lastId'));
-        }
-        elseif ($operacion == "consultar_perfil_usuario") {
+        if ($operacion == "consultar_perfil_usuario") {
             $usuario_obj = new Usuario();
 
             $id_usuario = $_SESSION["id_usuario"];

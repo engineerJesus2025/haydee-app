@@ -58,7 +58,7 @@ document.querySelector(`#modal_mensualidad`).addEventListener("hidden.bs.modal",
 
 document.getElementById('modal_mensualidades_apartamentos').addEventListener('shown.bs.modal', function () {
     if ($.fn.DataTable.isDataTable("#mensualidades_apartamentos")) {
-        $('#mensualidades_apartamentos').DataTable().columns.adjust().responsive.recalc();
+        $('#mensualidades_apartamentos').DataTable().columns.adjust().draw();
     }
 });
 

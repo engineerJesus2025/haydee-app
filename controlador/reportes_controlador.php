@@ -1,6 +1,7 @@
 <?php
 use haydee\ayuda\Sesiones;
 Sesiones::verificarSesion();
+Sesiones::verificarPermiso(GESTIONAR_REPORTES, CONSULTAR);
 
 use haydee\modelo\Habitantes;
 use haydee\modelo\Gastos;

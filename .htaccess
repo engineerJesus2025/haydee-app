@@ -1,18 +1,19 @@
+ErrorDocument 404 /haydee-app/vista/error/404_vista.php
+ErrorDocument 403 /haydee-app/vista/error/403_vista.php
+
 RewriteEngine On
 Options All -Indexes
 
-# Permitir acceso a: (me toco cambiarlo :)
-# - La ruta base (con o sin barra final)
+# Permitir acceso a:
+# - La ruta base
 # - index.php
-# - Carpeta recursos y todo su contenido
-# - Carpeta vendor y todo su contenido  
-# - Carpeta vista y todo su contenido
+# - Carpeta recursos, vendor y vista
 RewriteCond %{REQUEST_URI} !^/haydee/?$
 RewriteCond %{REQUEST_URI} !^/haydee/index\.php$
 RewriteCond %{REQUEST_URI} !^/haydee/recursos/ [OR]
 RewriteCond %{REQUEST_URI} !^/haydee/vendor/ [OR] 
 RewriteCond %{REQUEST_URI} !^/haydee/vista/
-RewriteRule .* - [S=4]  # Salta las próximas 4 reglas si alguna condición anterior es verdadera
+RewriteRule .* - [S=4]  
 
-# Bloquear todo lo demás
+# Bloquear todo lo demás (Error 403)
 RewriteRule ^ - [F]

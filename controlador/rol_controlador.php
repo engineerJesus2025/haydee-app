@@ -1,6 +1,7 @@
 <?php
     use haydee\ayuda\Sesiones;
     Sesiones::verificarSesion();
+    Sesiones::verificarPermiso(GESTIONAR_ROLES, CONSULTAR);
 
     use haydee\modelo\Rol;
     use haydee\modelo\Modulos;

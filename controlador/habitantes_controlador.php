@@ -1,7 +1,8 @@
 <?php
     use haydee\ayuda\Sesiones;
     Sesiones::verificarSesion();
-
+    Sesiones::verificarPermiso(GESTIONAR_HABITANTES, CONSULTAR);
+    
     use haydee\modelo\Habitantes;
     use haydee\modelo\Apartamento;
     use haydee\modelo\HabitantesApartamentos;

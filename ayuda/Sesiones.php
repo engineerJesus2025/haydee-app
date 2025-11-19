@@ -132,9 +132,47 @@ class Sesiones
         self::redirigirALogin();
     }
 
-    // Método para verificar si el usuario está logueado
+    // Método para verificar si el usuario está logueado espoiler: nunca lo use
     public static function estaLogueado()
     {
         return isset($_SESSION["usuario"]);
+    }
+
+    public static function verificarPermiso($modulo, $accion)
+    {
+        // Primero aseguramos que haya sesión iniciada
+        self::verificarSesion();
+
+        // Si no tiene el permiso, lo mandamos al 403
+        if (!self::tienePermiso($modulo, $accion)) {
+            // Opción A: Redirección (si usas .htaccess con redirección)
+            // header("Location: vista/403_vista.php");
+            
+            // Opción B: Carga directa (recomendada si usas rutas absolutas en estilos)
+            // Esto mantiene la URL original pero muestra el error
+            http_response_code(403);
+            require_once "vista/error/403_vista.php"; 
+            exit(); // ¡Importante! Matar el script aquí para que no cargue el resto del controlador
+        }
+        
+        // Si tiene permiso, el código sigue ejecutándose normalmente
+    }
+
+    public static function tienePermiso($modulo, $accion)
+    {
+        // Si no hay permisos cargados en sesión, denegar
+        if (!isset($_SESSION["permisos"]) || !is_array($_SESSION["permisos"])) {
+            return false;
+        }
+
+        // Recorremos el array de permisos de la sesión
+        foreach ($_SESSION["permisos"] as $permiso) {
+            // Ajusta las claves ('id_modulo', 'nombre_permiso') según tu base de datos real
+            if ($permiso["id_modulo"] == $modulo && $permiso["nombre_permiso"] == $accion) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

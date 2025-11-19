@@ -1,6 +1,7 @@
 <?php
     use haydee\ayuda\Sesiones;
     Sesiones::verificarSesion();
+    Sesiones::verificarPermiso(GESTIONAR_BANCOS, CONSULTAR);
 
     use haydee\modelo\Banco;
  

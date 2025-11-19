@@ -405,7 +405,7 @@ class CarteleraVirtual extends Conexion
         $sql = "SELECT id_cartelera, titulo, prioridad, fecha, imagen, descripcion, usuarios.nombre as nombre_usuario 
             FROM cartelera_virtual
             INNER JOIN usuarios ON usuarios.id_usuario = cartelera_virtual.usuario_id
-            ORDER BY fecha LIMIT 2 OFFSET $limite_int";
+            ORDER BY prioridad ASC, fecha DESC LIMIT 2 OFFSET $limite_int";
 
         $conexion = $this->get_conex()->prepare($sql);
         // $conexion->bindParam(":limite", $limite_int);

@@ -301,6 +301,7 @@ async function modificar_formulario(e) {
 	boton_formulario.setAttribute("id_modificar",data.id_banco);
 	boton_formulario.textContent = "Guardar Cambios";
 	document.getElementById('titulo_modal').textContent = "Modificar Banco";
+	formulario_usar.querySelector("#documento_afiliado").removeAttribute("disabled");
 	//formulario_usar.querySelector("#confir_contra").parentElement.previousElementSibling.textContent = "Nueva Contraseña" 
 	//formulario_usar.querySelector("#confir_contra").placeholder = "Nueva Contraseña" 
 

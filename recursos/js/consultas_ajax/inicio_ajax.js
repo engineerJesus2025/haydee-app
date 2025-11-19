@@ -107,7 +107,7 @@ async function cargaInicio() {
 		document.getElementById('esqueleto_dato_1_1').remove();
 		document.getElementById('esqueleto_dato_2_1').remove();
 	}
-	
+	console.log(data)
 	if (!(data[2].valor == null && data[3].valor == null)) {
 		const dato_1_2 = document.createElement("p"), b_dato_1_2 = document.createElement("b"),
 		dato_2_2 = document.createElement("p"), b_dato_2_2 = document.createElement("b");
@@ -150,7 +150,7 @@ async function cargaInicio() {
 		    }
 		});
 		document.getElementById('esqueleto_canva_2').remove();
-		document.getElementById("canva_1").removeAttribute("hidden");
+		document.getElementById("canva_2").removeAttribute("hidden");
 	}
 	else{
 		document.getElementById('div_alert_2').removeAttribute("hidden");

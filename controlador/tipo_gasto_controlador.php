@@ -1,7 +1,8 @@
 <?php
     use haydee\ayuda\Sesiones;
     Sesiones::verificarSesion();
-    
+    Sesiones::verificarPermiso(GESTIONAR_TIPO_GASTO, CONSULTAR);
+
     use haydee\modelo\TipoGasto;
 
     $obj_tipo_gasto = new TipoGasto(); // Objeto tipo_gasto

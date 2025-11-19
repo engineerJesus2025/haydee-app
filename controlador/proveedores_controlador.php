@@ -1,6 +1,7 @@
 <?php
 use haydee\ayuda\Sesiones;
 Sesiones::verificarSesion();
+Sesiones::verificarPermiso(GESTIONAR_PROVEEDORES, CONSULTAR);
 
 use haydee\modelo\Proveedores;
 

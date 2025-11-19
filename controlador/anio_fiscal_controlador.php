@@ -1,7 +1,8 @@
 <?php    
     use haydee\ayuda\Sesiones;
     Sesiones::verificarSesion();
-
+    Sesiones::verificarPermiso(GESTIONAR_ANIO_FISCAL, CONSULTAR);
+    
     use haydee\modelo\AnioFiscal;
 
     if (isset($_POST["operacion"])){        

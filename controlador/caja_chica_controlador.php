@@ -1,6 +1,7 @@
 <?php 
 use haydee\ayuda\Sesiones;
 Sesiones::verificarSesion();
+Sesiones::verificarPermiso(GESTIONAR_CAJA_CHICA, CONSULTAR);
 
 use haydee\modelo\Gastos;
 use haydee\modelo\CajaChica;

@@ -1,6 +1,7 @@
 <?php 
 use haydee\ayuda\Sesiones;
 Sesiones::verificarSesion();
+Sesiones::verificarPermiso(GESTIONAR_MENSUALIDAD, CONSULTAR);
 
 use haydee\modelo\Mensualidad;
 use haydee\modelo\Presupuesto;

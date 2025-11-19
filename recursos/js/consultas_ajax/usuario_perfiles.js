@@ -71,7 +71,7 @@ document.getElementById('boton_cancelar').addEventListener('click',e=>{
 
 document.getElementById('modal_notificaciones').addEventListener('shown.bs.modal', function () {
     if ($.fn.DataTable.isDataTable("#tabla_notificaciones")) {
-        $('#tabla_notificaciones').DataTable().columns.adjust().responsive.recalc();
+        $('#tabla_notificaciones').DataTable().columns.adjust().draw();
     }
 });
 
