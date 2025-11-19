@@ -467,7 +467,7 @@ async function modificar_habitantes(id) {
 
 	boton_formulario_habitantes.removeAttribute("modificar");
 	boton_formulario_habitantes.removeAttribute("id_modificar");	
-	boton_formulario_habitantes.textContent = "Registrar";
+	boton_formulario_habitantes.textContent = "Guardar";
 
 	document.getElementById('titulo_modal_habitantes').textContent = "Registrar Habitante";
 

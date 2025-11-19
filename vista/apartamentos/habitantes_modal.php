@@ -9,7 +9,7 @@
                     <option value="V">V</option>
                     <option value="E">E</option>
                 </select>
-                <input type="text" class="border border-dark form-control cedula" name="cedula" id="cedula" placeholder="Cedula" aria-label="cedula" aria-describedby="basic-addon1" minlength="3" maxlength="30" style="flex-grow: 7" value="Seleccione el tipo de cedula" disabled="">
+                <input type="text" class="border border-dark form-control cedula" name="cedula" id="cedula" placeholder="Cedula" aria-label="cedula" aria-describedby="basic-addon1" minlength="3" maxlength="30" style="flex-grow: 7" value="Selección de documento" disabled="">
                 <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
@@ -17,7 +17,7 @@
             <label for="nombre">Nombre</label>
             <div class="input-group mb-3">
                 <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
-                <input type="text" class="border border-dark form-control nombre" name="nombre" id="nombre" placeholder="Nombre" aria-label="nombre" aria-describedby="basic-addon1" minlength="3" maxlength="30">
+                <input type="text" class="border border-dark form-control nombre" name="nombre" id="nombre" placeholder="Ejem: Carlos" aria-label="nombre" aria-describedby="basic-addon1" minlength="3" maxlength="30">
                 <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
@@ -27,7 +27,7 @@
             <label for="apellido">Apellido</label>
             <div class="input-group mb-3">
                 <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
-                <input type="text" class="border border-dark form-control apellido" name="apellido" id="apellido" placeholder="Apellido" aria-label="apellido" aria-describedby="basic-addon1" minlength="3" maxlength="60">
+                <input type="text" class="border border-dark form-control apellido" name="apellido" id="apellido" placeholder="Ejem: Rodriguez" aria-label="apellido" aria-describedby="basic-addon1" minlength="3" maxlength="60">
                 <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
@@ -45,7 +45,7 @@
             <label for="telefono">Telefono</label>
             <div class="input-group mb-3">
                 <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-telephone-fill"></i></span>
-                <input type="text" class="border border-dark form-control telefono" name="telefono" id="telefono" placeholder="Telefono" aria-label="telefono" aria-describedby="basic-addon1" minlength="3" maxlength="60">
+                <input type="text" class="border border-dark form-control telefono" name="telefono" id="telefono" placeholder="Ejem: 04167121830" aria-label="telefono" aria-describedby="basic-addon1" minlength="3" maxlength="60">
                 <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
@@ -68,7 +68,7 @@
             <label for="correo">Correo electrónico</label>
             <div class="input-group mb-3">
                 <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-envelope-at"></i></span>
-                <input type="text" class="border border-dark form-control correo" name="correo" id="correo" placeholder="Correo electrónico" aria-label="correo" aria-describedby="basic-addon1" minlength="3" maxlength="60">
+                <input type="text" class="border border-dark form-control correo" name="correo" id="correo" placeholder="Ejem: usuario@gmail.com" aria-label="correo" aria-describedby="basic-addon1" minlength="3" maxlength="60">
                 <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
