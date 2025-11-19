@@ -64,25 +64,7 @@ if (isset($_POST["operacion"])){
         $mensualidad_obj->set_limite_mensualidad($limite_mensualidad);
 
         $resultado = $mensualidad_obj->realizar_consulta('registrar');
-        // lastId
-        // if ($resultado["estatus"]) {
-        //     $mensualidad_obj->registrar_bitacora(REGISTRAR, GESTIONAR_MENSUALIDAD, "Mensualidad del mes " . $mes . " del ". $anio . ". De " . $monto . " Bs.");
 
-        //     $notificacion_obj = new Notificaciones();
-        //     $notificacion_obj->set_titulo("Mensualidad de Apartamentos");
-        //     $notificacion_obj->set_descripcion("Ya se asginaron las mensualidades de este mes");
-        //     $notificacion_obj->set_fecha(date("Y-m-d"));
-        //     $notificacion_obj->set_nombre_modulo('mensualidad');
-        //     $notificacion_obj->set_referencia($mes . "/" . $anio);
-
-        //     $resultado_notificacion = $notificacion_obj->realizar_consulta('notificar_administradores');
-
-        //     if (!$resultado_notificacion["estatus"]) {
-        //         echo json_encode($resultado_notificacion);
-        //         exit();
-        //     }
-            
-        // }
         echo json_encode($resultado);
     }
     else if($operacion == "registrar_presupuestos_mensualidades"){

@@ -192,8 +192,7 @@ async function consultar_mensualidades() {
 				boton_cuadro_pagos = e.target.parentElement;
 			}
 
-			let fecha_buscar = boton_cuadro_pagos.closest("tr").firstElementChild.id.split("/").join("-");		
-			// let select_reporte = document.getElementById('mes_select').selectedOptions[0].id.split("/").join("-").split("1-")[1];
+			let fecha_buscar = boton_cuadro_pagos.closest("tr").firstElementChild.id.split("/").join("-");
 
 			boton_cuadro_pagos.previousElementSibling.value = fecha_buscar;
 
@@ -412,7 +411,27 @@ async function llenarTablaNueva(fecha) {
 				if (checkbox.checked) {
 					fila.lastElementChild.previousElementSibling.textContent = (parseFloat(fila.lastElementChild.previousElementSibling.textContent) + monto_apartamento).toFixed(2);
 					filas_footer.lastElementChild.previousElementSibling.textContent = (parseFloat(filas_footer.lastElementChild.previousElementSibling.textContent) + monto_apartamento).toFixed(2);
-				}else{
+
+					const filas = tabla_mensualidad_asignar.querySelectorAll('tbody tr');
+					let indiceTabla = checkbox.parentElement.cellIndex;
+					let boton_marcar = tabla_mensualidad_asignar.querySelector("thead tr").cells[indiceTabla].querySelector(".seleccionar-todos");
+
+					let todasLlenas = true;
+					for(let fila of filas){
+						if (!(fila.cells[indiceTabla].querySelector('input[type="checkbox"]').checked)){
+							todasLlenas = false;
+							break;
+						}
+					}
+
+					if (todasLlenas) {
+						boton_marcar.textContent = `X Quitar`;
+						boton_marcar.setAttribute("title",boton_marcar.getAttribute("title").replace("Marcar","Desmarcar"));
+						boton_marcar.setAttribute("class","btn btn-sm btn-outline-danger ms-2 seleccionar-todos");
+						boton_marcar.setAttribute("marcar",0);
+					}
+				}
+				else{
 					fila.lastElementChild.previousElementSibling.textContent = (parseFloat(fila.lastElementChild.previousElementSibling.textContent) - monto_apartamento).toFixed(2);
 					filas_footer.lastElementChild.previousElementSibling.textContent = (parseFloat(filas_footer.lastElementChild.previousElementSibling.textContent) - monto_apartamento).toFixed(2);
 
@@ -515,6 +534,25 @@ async function llenarTablaEditar(boton_editar) {
 
 								fila_tabla.lastElementChild.previousElementSibling.textContent = (parseFloat(fila_tabla.lastElementChild.previousElementSibling.textContent) + monto_apartamento).toFixed(2);
 								filas_footer.lastElementChild.previousElementSibling.textContent = (parseFloat(filas_footer.lastElementChild.previousElementSibling.textContent) + monto_apartamento).toFixed(2);
+
+								const filas = tabla_mensualidad_asignar.querySelectorAll('tbody tr');
+								let indiceTabla = checkbox.parentElement.cellIndex;
+								let boton_marcar = tabla_mensualidad_asignar.querySelector("thead tr").cells[indiceTabla].querySelector(".seleccionar-todos");
+
+								let todasLlenas = true;
+								for(let fila of filas){
+									if (!(fila.cells[indiceTabla].querySelector('input[type="checkbox"]').checked)){
+										todasLlenas = false;
+										break;
+									}
+								}
+
+								if (todasLlenas) {
+									boton_marcar.textContent = `X Quitar`;
+									boton_marcar.setAttribute("title",boton_marcar.getAttribute("title").replace("Marcar","Desmarcar"));
+									boton_marcar.setAttribute("class","btn btn-sm btn-outline-danger ms-2 seleccionar-todos");
+									boton_marcar.setAttribute("marcar",0);
+								}
 							}
 						}
 					});
@@ -720,15 +758,19 @@ async function modificar() {
 		id_mensualidad = tr.lastElementChild.previousElementSibling.id;
 
 		let datos_consulta = new FormData();
-
-		datos_consulta.append("operacion","editar_mensualidad");
+		if (id_mensualidad) {
+			datos_consulta.append("operacion","editar_mensualidad");
+			datos_consulta.append("id_mensualidad",id_mensualidad);
+		}
+		else{
+			datos_consulta.append("operacion","registrar_mensualidad");
+		}
 
 		datos_consulta.append("monto",monto);
 		datos_consulta.append("tasa_dolar",tasa_dolar);
 		datos_consulta.append("mes",mes);
 		datos_consulta.append("anio",anio);
 		datos_consulta.append("apartamento_id",apartamento_id);
-		datos_consulta.append("id_mensualidad",id_mensualidad);
 		datos_consulta.append("limite_mensualidad",limite_mensualidad);
 		datos_consulta.append("porcentaje_interes",porcentaje_interes);
 
@@ -755,7 +797,7 @@ async function modificar() {
 		datos_consulta = new FormData();
 
 		datos_consulta.append("operacion","editar_presupuesto_mensualidades");
-		datos_consulta.append("id_mensualidad",id_mensualidad);
+		datos_consulta.append("id_mensualidad",id_mensualidad || respuesta.lastId);
 		datos_consulta.append("id_presupuestos",id_presupuestos);
 
 		respuesta = await query(datos_consulta,true);
