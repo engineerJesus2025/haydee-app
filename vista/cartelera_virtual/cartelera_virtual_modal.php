@@ -7,7 +7,7 @@
                 <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-type"></i></span>
                     <input type="text" class="form-control" name="titulo" id="titulo" placeholder="Ingrese un título..."
-                        aria-label="titulo" minlength="3" maxlength="30" required>
+                        aria-label="titulo" minlength="3" maxlength="100" required>
                         <span class="w-100 invalid-feedback"></span>
                 </div>
             </div>
@@ -19,7 +19,7 @@
                 <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-card-text"></i></span>
                     <textarea name="descripcion" id="descripcion" class="form-control" rows="4"
-                        placeholder="Describe el contenido..." required></textarea>
+                        placeholder="Describe el contenido..." minlength="3" maxlength="200" required></textarea>
                         <span class="w-100 invalid-feedback"></span>
                 </div>
             </div>

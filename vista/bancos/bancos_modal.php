@@ -4,7 +4,7 @@
             <label for="nombre_banco">Nombre del Banco</label>
             <div class="input-group mb-3">
                 <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
-                <input type="text" class="border border-dark form-control nombre_banco" name="nombre_banco" id="nombre_banco" placeholder="Ejem: Venezuela" aria-label="nombre_banco" aria-describedby="basic-addon1" minlength="3" maxlength="30">
+                <input type="text" class="border border-dark form-control nombre_banco" name="nombre_banco" id="nombre_banco" placeholder="Ejem: Venezuela" aria-label="nombre_banco" aria-describedby="basic-addon1" minlength="3" maxlength="20">
                 <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
@@ -12,7 +12,7 @@
             <label for="codigo">Código del Banco</label>
             <div class="input-group mb-3">
                 <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-123"></i></span>
-                <input type="text" class="border border-dark form-control codigo" name="codigo" id="codigo" placeholder="Ejem: 0102" aria-label="codigo" aria-describedby="basic-addon1" minlength="3" maxlength="30">
+                <input type="text" class="border border-dark form-control codigo" name="codigo" id="codigo" placeholder="Ejem: 0102" aria-label="codigo" aria-describedby="basic-addon1" maxlength="4">
                 <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
@@ -22,7 +22,7 @@
             <label for="numero_cuenta">Número de Cuenta</label>
             <div class="input-group mb-3">
                 <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-piggy-bank-fill"></i></span>
-                <input type="text" class="border border-dark form-control numero_cuenta" name="numero_cuenta" id="numero_cuenta" placeholder="Ejem: 010237843287..." aria-label="numero_cuenta" aria-describedby="basic-addon1" minlength="3" maxlength="60">
+                <input type="text" class="border border-dark form-control numero_cuenta" name="numero_cuenta" id="numero_cuenta" placeholder="Ejem: 010237843287..." aria-label="numero_cuenta" aria-describedby="basic-addon1" minlength="3" maxlength="30">
                 <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
@@ -30,7 +30,7 @@
             <label for="telefono_afiliado">Teléfono Afiliado</label>
             <div class="input-group mb-3">
                 <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-telephone-fill"></i></span>
-                <input type="text" class="border border-dark form-control telefono_afiliado" name="telefono_afiliado" id="telefono_afiliado" placeholder="Ejem: 04127721822" aria-label="telefono_afiliado" aria-describedby="basic-addon1" minlength="3" maxlength="60">
+                <input type="text" class="border border-dark form-control telefono_afiliado" name="telefono_afiliado" id="telefono_afiliado" placeholder="Ejem: 04127721822" aria-label="telefono_afiliado" aria-describedby="basic-addon1" maxlength="11">
                 <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
@@ -47,7 +47,7 @@
                     <option value="J">J</option>
                     <option value="G">G</option>
                 </select>
-                <input type="text" class="border border-dark form-control documento_afiliado" name="documento_afiliado" id="documento_afiliado" placeholder="Ejem: 12345678" aria-label="documento_afiliado" aria-describedby="basic-addon1" minlength="3" maxlength="60" disabled style="flex-grow: 7">
+                <input type="text" class="border border-dark form-control documento_afiliado" name="documento_afiliado" id="documento_afiliado" placeholder="Ejem: 12345678" aria-label="documento_afiliado" aria-describedby="basic-addon1" minlength="7" maxlength="9" disabled style="flex-grow: 7">
                 <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
