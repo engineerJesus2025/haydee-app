@@ -39,7 +39,7 @@
                 <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-card-text"></i></span>
                     <textarea name="descripcion_gasto" id="descripcion_gasto" class="form-control" rows="3"
-                        placeholder="Describa el detalle del gasto realizado..." required></textarea>
+                        placeholder="Describa el detalle del gasto realizado..." minlength="10" required></textarea>
                     <span class="w-100 invalid-feedback"></span>
                     <small class="form-text text-danger mensaje-validacion" data-for="descripcion_gasto"></small>
                 </div>
@@ -128,7 +128,7 @@
                             <label for="referencia" class="form-label fw-semibold">Referencia/N° Comprobante</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-receipt"></i></span>
-                                <input type="text" class="form-control referencia" name="referencia[]">
+                                <input type="text" class="form-control referencia" minlength="4" maxlength="20" name="referencia[]">
                                 <small class="form-text text-danger mensaje-validacion" data-for="referencia"></small>
                                 <span class="w-100"></span>
                             </div>
@@ -154,7 +154,7 @@
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-card-text"></i></span>
                                 <textarea name="descripcion_detalle[]" class="form-control descripcion_detalle" rows="3"
-                                    placeholder="Describa el detalle específico del pago..." required></textarea>
+                                    placeholder="Describa el detalle específico del pago..." minlength="10" required></textarea>
                                 <span class="w-100"></span>
                                 <small class="form-text text-danger mensaje-validacion" data-for="descripcion_detalle"></small>
                             </div>
