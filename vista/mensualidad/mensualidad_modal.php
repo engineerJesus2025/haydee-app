@@ -18,7 +18,7 @@
 		</thead>
 		<tbody>
 			<?php foreach ($registos_apartamentos as $registro) { ?>
-				<tr id="<?php echo($registro["id_apartamento"]); ?>" participacion="<?php echo($registro["porcentaje_participacion"]) ?>">
+				<tr id="<?php echo($registro["id_apartamento"]); ?>" data-participacion="<?php echo($registro["porcentaje_participacion"]) ?>" data-gas="<?php echo($registro["gas"]) ?>">
 					<td><?php echo $registro["nro_apartamento"]; ?></td>
 				</tr>
 			<?php } ?> 

@@ -27,6 +27,8 @@ document.querySelector(`#modal_usuario`).addEventListener("hide.bs.modal",()=>{
 	formulario_usar.querySelector("#confir_contra").placeholder = "Confirmar Contraseña";
 	formulario_usar.querySelector("#contra").placeholder = "Contraseña";
 
+	correo_an = null;
+
 	document.querySelectorAll('.is-valid').forEach(input=>input.classList.remove('is-valid'));
 	document.querySelectorAll('.is-invalid').forEach(input=>input.classList.remove('is-invalid'));
 	document.querySelectorAll('input').forEach(input=>{

@@ -9,6 +9,9 @@ let boton_formulario = document.querySelector("#boton_formulario");
 let modal = new bootstrap.Modal(document.querySelector("#modal_solicitud_gasto"));
 let formulario_usar = document.querySelector("#form_solicitud_gasto");
 
+let tasa_dolar = parseFloat(isNaN(localStorage.getItem("tasa_dolar"))?1:localStorage.getItem("tasa_dolar")).toFixed(2);
+tasa_dolar = isNaN(tasa_dolar)?1:tasa_dolar;
+
 // En caso de que se envie un formulario
 function envio(operacion) {
     if (operacion == "Editar") {
@@ -23,7 +26,6 @@ function envio(operacion) {
             'Ha ocurrido un error durante la operacion, intentelo nuevamente')
     }
 }
-
 
 // Esto es en caso de que uno quite el formulario, le devuelve los valores que tenia
 document.querySelector("#modal_solicitud_gasto").addEventListener("hide.bs.modal", () => {
@@ -50,6 +52,7 @@ document.querySelector("#modal_solicitud_gasto").addEventListener("hide.bs.modal
     document.querySelectorAll('.is-valid').forEach(input=>input.classList.remove('is-valid'));
     document.querySelectorAll('.is-invalid').forEach(input=>input.classList.remove('is-invalid'));
 });
+
 document.querySelector("#modal_solicitud_gasto").addEventListener("show.bs.modal", async () => {
     await cargarMesesYAniosConPresupuesto();
     document.getElementById("info_presupuesto").style.display = "none";
@@ -197,6 +200,7 @@ async function consultar() {
         data_table.columns.adjust().draw();
     }, 300);
 }
+
 function vaciar_tabla() {
     let cuerpo_tabla = document.querySelector('#tabla_solicitud_gasto tbody');
     cuerpo_tabla.textContent = null;
@@ -319,8 +323,6 @@ async function eliminar(id) {
 
 // Esta función prepara el formulario para editar el registro
 async function modificar_formulario(e) {
-
-
     const boton = e.target.closest("button");
     const id = boton.getAttribute("value");
 
@@ -359,8 +361,13 @@ async function modificar_formulario(e) {
     document.querySelector("#prioridad").value = data.prioridad;
     document.querySelector("#presupuesto_id").value = data.presupuesto_id;
 
-    document.querySelector("#presupuesto_total").textContent = data.monto_presupuesto_total || "-";
-    document.querySelector("#presupuesto_disponible").textContent = data.disponible || "-";
+    const spanTotal = document.querySelector("#presupuesto_total");
+    const spanDisponible = document.querySelector("#presupuesto_disponible");
+
+    spanTotal.textContent = data.monto_presupuesto_total || "-";
+    spanTotal.textContent += (data.monto_presupuesto_total == 0)?``: `/ Bs. ${(data.monto_presupuesto_total * tasa_dolar).toFixed(2)}`;
+    spanDisponible.textContent = data.disponible || "-";
+    spanDisponible.textContent += (data.disponible == 0)?'': `/ Bs. ${(data.disponible * tasa_dolar).toFixed(2)}`;
 
     // Configuración del botón
     if (!permiso_editar) {
@@ -444,8 +451,8 @@ async function modificar(id) {
     consulta_completada();
     reasignarEventos();
 }
-
 async function last_id() {
+
     datos_consulta = new FormData();
     datos_consulta.append("operacion", "ultimo_id");
     let res = await query(datos_consulta);
@@ -598,8 +605,10 @@ async function buscarPresupuesto() {
         if (isNaN(disponible)) disponible = 0;
 
         // Se muestra el número formateado a 2 decimales.
-        spanTotal.textContent = total.toFixed(2);
-        spanDisponible.textContent = disponible.toFixed(2);
+        spanTotal.textContent = `${total.toFixed(2)}`; 
+        spanTotal.textContent += (total === 0)?``: `/ Bs. ${(total * tasa_dolar).toFixed(2)}`;
+        spanDisponible.textContent = `${disponible.toFixed(2)}`;
+        spanDisponible.textContent += (disponible === 0)?'': `/ Bs. ${(disponible * tasa_dolar).toFixed(2)}`;
 
         inputPresupuestoId.value = respuesta.id_presupuesto;
 

@@ -60,7 +60,6 @@
 			<?php				
 				require_once "vista/componentes/navbar.php";
 			?>
-
 			<div class="col d-flex flex-column gris">
 
 				<?php require_once "vista/componentes/header.php"; ?>

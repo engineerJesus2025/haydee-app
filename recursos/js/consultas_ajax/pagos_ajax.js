@@ -70,6 +70,8 @@ document.querySelector(`#modal_pagos`).addEventListener("hide.bs.modal",()=>{
         }
     });
 
+    referencia_an = null;
+
     document.querySelectorAll('.is-valid').forEach(input=>input.classList.remove('is-valid'));
     document.querySelectorAll('.is-invalid').forEach(input=>input.classList.remove('is-invalid'));
 

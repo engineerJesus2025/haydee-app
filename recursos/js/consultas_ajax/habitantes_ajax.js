@@ -40,6 +40,10 @@ document.addEventListener("DOMContentLoaded", () => {
 			tituloModal.textContent = "Registrar Habitante";
 		}
 
+		cedula_an = null;
+		tipo_vinculo_an = null;
+		correo_an = null;
+
 		formulario_usar_habitantes.querySelectorAll("[class='w-100']").forEach(el => el.textContent = "");
 		formulario_usar_habitantes.querySelectorAll('.is-valid').forEach(input=>input.classList.remove('is-valid'));
 		formulario_usar_habitantes.querySelectorAll('.is-invalid').forEach(input=>input.classList.remove('is-invalid'));
@@ -404,7 +408,7 @@ async function modificar_formulario_habitante(e) {
 	boton_formulario_habitantes.setAttribute("id_modificar",data.id_habitante);
 	boton_formulario_habitantes.textContent = "Guardar Cambios";
 	document.getElementById('titulo_modal_habitantes').textContent = "Modificar Habitante";
-
+	formulario_usar_habitantes.querySelector("#cedula").removeAttribute("disabled");
 	id_modificar_habitantes = id;
 
 	cedula_an = cedula.value;

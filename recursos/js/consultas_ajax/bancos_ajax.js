@@ -38,6 +38,8 @@ document.querySelector(`#modal_banco`).addEventListener("hide.bs.modal",()=>{
 	formulario_usar.querySelector("#documento_afiliado").setAttribute("disabled",'');
 	document.querySelectorAll('.is-valid').forEach(input=>input.classList.remove('is-valid'));
 	document.querySelectorAll('.is-invalid').forEach(input=>input.classList.remove('is-invalid'));
+
+	numero_cuenta_an = null;
 });
 
 document.getElementById('header-toggle').addEventListener("click",e=>{

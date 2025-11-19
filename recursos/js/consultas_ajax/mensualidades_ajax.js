@@ -374,10 +374,25 @@ async function llenarTablaNueva(fecha) {
 	
 	detalles_presupuesto.map(detalle=>{		
 		let th = document.createElement("th");
-		
-		th.textContent = detalle.nombre;		
+		th.textContent = detalle.nombre;
 		th.setAttribute("class","text-center");
-		
+
+		let br = document.createElement("br");
+		let botonMarcarTodos = document.createElement("button");
+		botonMarcarTodos.setAttribute("type","button");
+		botonMarcarTodos.setAttribute("class","btn btn-sm btn-outline-primary ms-2 seleccionar-todos");
+		botonMarcarTodos.setAttribute("data-nombre",detalle.nombre);
+		botonMarcarTodos.setAttribute("marcar",1);
+		botonMarcarTodos.textContent = `✓ Todos`;
+		botonMarcarTodos.setAttribute("title",`Marcar todos los ${detalle.nombre}`);
+
+		botonMarcarTodos.addEventListener('click',()=>{
+			marcarTodosCheckboxes(botonMarcarTodos,detalle.nombre);
+		});
+
+		th.appendChild(br);
+		th.appendChild(botonMarcarTodos);
+
 		filas_cuerpo.forEach(fila=>{
 			let td = document.createElement("td");
 			td.setAttribute("class","text-center");
@@ -388,9 +403,10 @@ async function llenarTablaNueva(fecha) {
 			checkbox.setAttribute("style","cursor:pointer;");
 			checkbox.setAttribute("detalle_monto",detalle.monto);
 			checkbox.setAttribute("id_presupuestos_asociados",detalle.id_presupuestos_asociados);
+			checkbox.setAttribute("title",`Click para marcar ${detalle.nombre}`);
 			//Asignar el evento a los checkbox
 			checkbox.addEventListener("change",e=>{
-				let participacion = fila.getAttribute("participacion");
+				let participacion = fila.dataset.participacion;
 				let monto_apartamento = (participacion * checkbox.getAttribute("detalle_monto")) / 100;
 
 				if (checkbox.checked) {
@@ -399,6 +415,14 @@ async function llenarTablaNueva(fecha) {
 				}else{
 					fila.lastElementChild.previousElementSibling.textContent = (parseFloat(fila.lastElementChild.previousElementSibling.textContent) - monto_apartamento).toFixed(2);
 					filas_footer.lastElementChild.previousElementSibling.textContent = (parseFloat(filas_footer.lastElementChild.previousElementSibling.textContent) - monto_apartamento).toFixed(2);
+
+					let indiceTabla = checkbox.parentElement.cellIndex;
+					let boton_marcar = tabla_mensualidad_asignar.querySelector("thead tr").cells[indiceTabla].querySelector(".seleccionar-todos");
+
+					boton_marcar.setAttribute("class","btn btn-sm btn-outline-primary ms-2 seleccionar-todos");
+					boton_marcar.setAttribute("marcar",1);
+					boton_marcar.textContent = `✓ Todos`;
+					boton_marcar.setAttribute("title",`Marcar todos los ${detalle.nombre}`);
 				}
 			});
 
@@ -442,6 +466,8 @@ async function llenarTablaNueva(fecha) {
 	fragment_footer.appendChild(td_footer_2);
 
 	filas_footer.appendChild(fragment_footer);
+
+	marcarCheckboxesSegunDatos('Servicio de Gas','gas');
 }
 
 async function llenarTablaEditar(boton_editar) {
@@ -482,7 +508,7 @@ async function llenarTablaEditar(boton_editar) {
 						if (checkbox.getAttribute("id_presupuestos_asociados").includes(mensualidad.id_detalle_presupuesto)) {
 							if (!checkbox.checked) {
 								checkbox.checked = true;
-								let participacion = fila_tabla.getAttribute("participacion");
+								let participacion = fila_tabla.dataset.participacion
 								let monto_apartamento = (participacion * checkbox.getAttribute("detalle_monto")) / 100;
 
 								fila_tabla.lastElementChild.previousElementSibling.setAttribute("id",mensualidad.id_mensualidad);
@@ -883,9 +909,6 @@ function crearDataTable(id_tabla,estructura_filas,datos_paramentros, configuraci
 	});
 }
 
-consultar_mensualidades(); 
-verificarMes();
-
 function seleccionarMensualidadPorNotificacion() {
     const urlParams = new URLSearchParams(window.location.search);
     const idMensualidad = urlParams.get('referencia');
@@ -931,10 +954,113 @@ function seleccionarMensualidadPorNotificacion() {
     }
 }
 
-// Opcional: Abrir automáticamente los detalles
-// setTimeout(() => {
-// const botonVer = node.querySelector('.vista_previa');
-//     if (botonVer) {
-//         botonVer.click();
-//     }
-// }, 1500);
+function marcarCheckboxesSegunDatos(nombreTh,nombreDataSet) {
+    // Buscar el índice de la columna "Servicio de Gas" en el header
+    const headers = tabla_mensualidad_asignar.querySelectorAll('thead th');
+    let indiceTh = -1;
+    
+    headers.forEach((header, index) => {
+        // Clonar el header para manipularlo sin afectar el DOM real
+        const headerClone = header.cloneNode(true);
+        
+        // Remover los botones "seleccionar todos" del clon
+        const botones = headerClone.querySelectorAll('.seleccionar-todos');
+        botones.forEach(boton => boton.remove());
+        
+        // Comparar el texto limpio (sin botones)
+        if (headerClone.textContent.trim() === nombreTh) {
+            indiceTh = index;
+        }
+    });
+    
+    // Si no encontramos la columna, salir
+    if (indiceTh === -1) {
+        return;
+    }
+    
+    // Recorrer todas las filas del tbody
+    const filas = tabla_mensualidad_asignar.querySelectorAll('tbody tr');
+    
+    filas.forEach(fila => {
+        // Obtener el valor de data-gas
+        const tieneValor = fila.dataset[nombreDataSet];
+        
+        // Encontrar el checkbox en la columna correcta
+        // Sumamos 1 porque las celdas TD empiezan después del TH de APTO
+        const celdas = fila.querySelectorAll('td');
+        if (celdas.length > indiceTh) {
+            const celdaSeleccionada = celdas[indiceTh];
+            const checkboxSeleccionado = celdaSeleccionada.querySelector('input[type="checkbox"]');
+
+            // Marcar el checkbox si data-gas es "1"
+            if (checkboxSeleccionado && tieneValor === '1') {
+                checkboxSeleccionado.checked = true;
+                let participacion = fila.dataset.participacion;
+				let monto_apartamento = (participacion * checkboxSeleccionado.getAttribute("detalle_monto")) / 100;
+
+				fila.lastElementChild.previousElementSibling.textContent = (parseFloat(fila.lastElementChild.previousElementSibling.textContent) + monto_apartamento).toFixed(2);
+
+				let filas_footer = tabla_mensualidad_asignar.querySelector("tfoot tr");
+				filas_footer.lastElementChild.previousElementSibling.textContent = (parseFloat(filas_footer.lastElementChild.previousElementSibling.textContent) + monto_apartamento).toFixed(2);
+            }
+        }
+    });
+}
+
+// Función para seleccionar/deseleccionar todos los checkboxes de una columna
+function marcarTodosCheckboxes(boton,dataNombre) {
+	let marcar = boton.getAttribute("marcar");
+    const headers = tabla_mensualidad_asignar.querySelectorAll('thead th');
+    let indiceTh = -1;
+    
+    for (let i = 1; i < headers.length; i++) {
+    	let boton = headers[i].querySelector('.seleccionar-todos');
+    	if (boton.dataset.nombre === dataNombre) {
+    		indiceTh = i;
+	        break; // Detiene el bucle una vez que lo encuentra
+    	}
+	}
+
+    if (indiceTh === -1) {
+        return;
+    }
+    
+    // Recorrer todas las filas del tbody
+    const filas = tabla_mensualidad_asignar.querySelectorAll('tbody tr');
+    for(let fila of filas){
+        const celdas = fila.querySelectorAll('td');
+        if (celdas.length > indiceTh) {
+            const celdaSeleccionada = celdas[indiceTh];
+            const checkboxSeleccionado = celdaSeleccionada.querySelector('input[type="checkbox"]');
+
+            if (marcar == 1 && checkboxSeleccionado.checked == true) {continue;}
+            if (marcar == 0 && checkboxSeleccionado.checked == false) {continue;}
+
+            let participacion = fila.dataset.participacion;
+			let monto_apartamento = (participacion * checkboxSeleccionado.getAttribute("detalle_monto")) / 100;
+			let filas_footer = tabla_mensualidad_asignar.querySelector("tfoot tr");
+
+			if (marcar == 1) {
+				fila.lastElementChild.previousElementSibling.textContent = (parseFloat(fila.lastElementChild.previousElementSibling.textContent) + monto_apartamento).toFixed(2);
+				filas_footer.lastElementChild.previousElementSibling.textContent = (parseFloat(filas_footer.lastElementChild.previousElementSibling.textContent) + monto_apartamento).toFixed(2);
+				checkboxSeleccionado.checked = true;
+				boton.textContent = `X Quitar`;
+				boton.setAttribute("title",boton.getAttribute("title").replace("Marcar","Desmarcar"));
+				boton.setAttribute("class","btn btn-sm btn-outline-danger ms-2 seleccionar-todos");
+			}
+			else{
+				fila.lastElementChild.previousElementSibling.textContent = (parseFloat(fila.lastElementChild.previousElementSibling.textContent) - monto_apartamento).toFixed(2);
+				filas_footer.lastElementChild.previousElementSibling.textContent = (parseFloat(filas_footer.lastElementChild.previousElementSibling.textContent) - monto_apartamento).toFixed(2);
+				checkboxSeleccionado.checked = false;
+				boton.textContent = `✓ Todos`;
+				boton.setAttribute("title",boton.getAttribute("title").replace("Desmarcar","Marcar"));
+				boton.setAttribute("class","btn btn-sm btn-outline-primary ms-2 seleccionar-todos");
+			}
+        }
+    }
+    
+	boton.setAttribute("marcar",marcar == 1?0:1);
+}
+
+consultar_mensualidades(); 
+verificarMes();
