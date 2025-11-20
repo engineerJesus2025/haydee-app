@@ -583,24 +583,33 @@ function crearBotones(id) {
     // le damos la clases de boostrap para que se vea tu sabe'
 
     // BOTON DE VISTA PREVIA CON EL OJITO
+    let div_vista_previa = document.createElement("div");
+    div_vista_previa.setAttribute("class", "col-lg-3 col-6 mt-2 mt-lg-0");
+
     let boton_vista_previa = document.createElement("button");
     let icono_ver = document.createElement("i");
     icono_ver.setAttribute("class", "bi bi-eye-fill");
     boton_vista_previa.appendChild(icono_ver);
     boton_vista_previa.setAttribute("type", "button");
-    boton_vista_previa.setAttribute("class", "btn btn-primary btn-sm col-3");
+    boton_vista_previa.setAttribute("class", "btn btn-primary");
     boton_vista_previa.setAttribute("title", "Vista previa");
     boton_vista_previa.setAttribute("value", id);
     boton_vista_previa.addEventListener("click", mostrarVistaPrevia);
-    acciones.appendChild(boton_vista_previa);
+    
+    div_vista_previa.appendChild(boton_vista_previa);
+
+    acciones.appendChild(div_vista_previa);
 
     // Lo mismo que arriba, pero con modificar
+    let div_editar = document.createElement("div");
+    div_editar.setAttribute("class", "col-lg-3 col-6 mt-2 mt-lg-0");
+
     let boton_editar = document.createElement("button");
     let icono_editar = document.createElement("i");
     icono_editar.setAttribute("class", "bi bi-pencil-square")
     boton_editar.appendChild(icono_editar);
     boton_editar.setAttribute("type", "button");
-    boton_editar.setAttribute("class", "btn btn-success btn-sm col-3");
+    boton_editar.setAttribute("class", "btn btn-success");
     boton_editar.setAttribute("tabindex", "-1");
     boton_editar.setAttribute("role", "button");
     boton_editar.setAttribute("aria-disabled", "true");
@@ -611,10 +620,58 @@ function crearBotones(id) {
     boton_editar.addEventListener("click",modificar_formulario)//Esa funcion esta mas abajo
 
     //Le ponemos los botones al <td><td> de las acciones
-    acciones.appendChild(boton_editar);
+    div_editar.appendChild(boton_editar);
+
+    acciones.appendChild(div_editar);
+
+    //Boton para el cuadro de pagos
+    let formulario_recibo = document.createElement("form");
+    formulario_recibo.setAttribute("class", "col-lg-3 col-6 mt-2 mt-lg-0");
+    formulario_recibo.setAttribute("action", "?pagina=reportes_controlador.php&accion=recibo_pago");
+    formulario_recibo.setAttribute("method", "POST");
+
+    let input_select_recibo = document.createElement("input");
+    input_select_recibo.setAttribute("type", "hidden");
+    input_select_recibo.setAttribute("name", "select_reporte");
+    input_select_recibo.setAttribute("value", id);
+
+    let boton_recibo = document.createElement("button");
+    let icono_recibo = document.createElement("i");
+    icono_recibo.setAttribute("class", "bi bi-card-checklist")
+    boton_recibo.appendChild(icono_recibo);
+
+    boton_recibo.setAttribute("class", "btn btn-outline-light cuadro_recibo"); 
+    boton_recibo.setAttribute("title","click para generar cuadro de pagos");
+    boton_recibo.setAttribute("style", "background-color:#3939a9");
+    boton_recibo.setAttribute("type","submit");
+
+    boton_recibo.addEventListener('click',e=>{
+        e.preventDefault(); 
+        Swal.fire({
+            title: "¿Estás seguro?",
+            text: "¿Está seguro que desea generar el recibo de este pago?",
+            showCancelButton: true,
+            confirmButtonText: "Si, Generar",
+            confirmButtonColor: "#1b8a40",
+            cancelButtonText: "Cancelar",
+            icon: "warning"
+        }).then((resultado) => {
+            if (resultado.isConfirmed) {
+                formulario_recibo.submit();
+            }
+        });         
+    });
+
+    formulario_recibo.appendChild(input_select_recibo);
+    formulario_recibo.appendChild(boton_recibo);
+
+    acciones.appendChild(formulario_recibo);
 
     if (permiso_eliminar) {
         //creamos el boton de eliminar, le damos valor, y le asignamos la funcion para eliminar
+        let div_eliminar = document.createElement("div");
+        div_eliminar.setAttribute("class", "col-lg-3 col-6 mt-2 mt-lg-0");
+
         let boton_eliminar = document.createElement("button");
 
         let icono_eliminar = document.createElement("i");// le ponemos un icono
@@ -623,7 +680,7 @@ function crearBotones(id) {
         
         // le ponemos todos los atributos que lleva este boton
         boton_eliminar.setAttribute("type", "button");
-        boton_eliminar.setAttribute("class", "btn btn-danger btn-sm eliminar col-3");
+        boton_eliminar.setAttribute("class", "btn btn-danger eliminar");
         boton_eliminar.setAttribute("tabindex", "-1"); 
         boton_eliminar.setAttribute("role", "button");
         boton_eliminar.setAttribute("aria-disabled", "true");
@@ -632,7 +689,9 @@ function crearBotones(id) {
         boton_eliminar.setAttribute("title","Eliminar");
         boton_eliminar.setAttribute("value",id);// el valor del id para eliminar    
 
-        acciones.appendChild(boton_eliminar);
+        div_eliminar.appendChild(boton_eliminar);
+
+        acciones.appendChild(div_eliminar);
     }
 
     td.appendChild(acciones);

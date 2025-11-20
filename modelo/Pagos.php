@@ -169,11 +169,21 @@
                     }
 
                 case 'validar_clave_foranea':
-                $respuesta = $this->validarClaveForanea($parametros['tabla'],$parametros['nombre_clave'],$parametros['valor']);
+                    $respuesta = $this->validarClaveForanea($parametros['tabla'],$parametros['nombre_clave'],$parametros['valor']);
 
-                $this->cambiar_db_negocio();
+                    $this->cambiar_db_negocio();
 
-                return $respuesta;
+                    return $respuesta;
+
+                case 'consultarReciboPago':
+
+                    $respuesta = $this->consultarReciboPago();
+
+                    if ($respuesta["resultado"]){
+                        return $respuesta["datos"];
+                    } else {
+                        return ["estatus"=>false,"mensaje"=>"No se encontró el pago"];
+                    }
 
                 default:
                     return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error en el proceso"];
@@ -760,6 +770,78 @@
                 return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
             }
         }
+
+        private function consultarReciboPago() {
+            $sql = "SELECT 
+                        h.nombre,
+                        h.apellido,
+                        a.nro_apartamento,
+                        MAX(dp.fecha) as fecha_pago,
+                        m.mes,
+                        m.anio,
+                        p.id_pago,
+                        
+                        SUM(dp.monto) as total,
+                        COUNT(CASE WHEN dp.tipo_pago = 'Transferencia' THEN 1 END) as count_transferencia,
+                        COUNT(CASE WHEN dp.tipo_pago = 'Pago Movil' THEN 1 END) as count_pago_movil,
+                        COUNT(CASE WHEN dp.tipo_pago = 'Efectivo' THEN 1 END) as count_efectivo,
+                        
+                        GROUP_CONCAT(DISTINCT b.nombre_banco SEPARATOR ', ') as bancos,
+                        GROUP_CONCAT(DISTINCT bt.referencia SEPARATOR ', ') as referencias
+    
+                        FROM pagos p
+                        INNER JOIN detalles_pagos dp ON p.id_pago = dp.pago_id
+                        INNER JOIN pagos_mensualidad pm ON dp.id_detalle_pago = pm.detalle_pago_id
+                        INNER JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
+                        INNER JOIN apartamentos a ON m.apartamento_id = a.id_apartamento
+                        INNER JOIN habitantes_apartamentos ha ON a.id_apartamento = ha.apartamento_id
+                        INNER JOIN habitantes h ON ha.habitante_id = h.id_habitante
+                        LEFT JOIN banco_transacciones bt ON dp.id_detalle_pago = bt.detalle_pago_id
+                        LEFT JOIN bancos b ON bt.banco_id = b.id_banco
+                        WHERE p.id_pago = :id_pago
+                        AND ha.tipo_vinculo = 'Propietario'
+                        GROUP BY p.id_pago, h.nombre, h.apellido, a.nro_apartamento, m.mes, m.anio;";
+
+            $conexion = $this->get_conex()->prepare($sql);
+            $conexion->bindParam(":id_pago", $this->id_pago);
+            $result = $conexion->execute();
+            $datos = $conexion->fetch(PDO::FETCH_ASSOC);
+
+            return ["resultado"=>$result,"datos"=>$datos];
+        }
+
+
+        /*
+SELECT 
+    h.nombre,
+    h.apellido,
+    a.nro_apartamento,
+    MAX(dp.fecha) as fecha_pago,
+    m.mes,
+    m.anio,
+    p.id_pago,
+    
+    SUM(dp.monto) as total,
+    COUNT(CASE WHEN dp.tipo_pago = 'Transferencia' THEN 1 END) as count_transferencia,
+    COUNT(CASE WHEN dp.tipo_pago = 'Pago Movil' THEN 1 END) as count_pago_movil,
+    COUNT(CASE WHEN dp.tipo_pago = 'Efectivo' THEN 1 END) as count_efectivo,
+    
+    GROUP_CONCAT(DISTINCT b.nombre_banco SEPARATOR ', ') as bancos,
+    GROUP_CONCAT(DISTINCT bt.referencia SEPARATOR ', ') as referencias
+    
+FROM pagos p
+INNER JOIN detalles_pagos dp ON p.id_pago = dp.pago_id
+INNER JOIN pagos_mensualidad pm ON dp.id_detalle_pago = pm.detalle_pago_id
+INNER JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
+INNER JOIN apartamentos a ON m.apartamento_id = a.id_apartamento
+INNER JOIN habitantes_apartamentos ha ON a.id_apartamento = ha.apartamento_id
+INNER JOIN habitantes h ON ha.habitante_id = h.id_habitante
+LEFT JOIN banco_transacciones bt ON dp.id_detalle_pago = bt.detalle_pago_id
+LEFT JOIN bancos b ON bt.banco_id = b.id_banco
+WHERE p.id_pago = :id_pago
+AND ha.tipo_vinculo = 'Propietario'
+GROUP BY p.id_pago, h.nombre, h.apellido, a.nro_apartamento, m.mes, m.anio;
+        */
 
         /*public function consultarMensualidad($id_apartamento) {
             $sql = "SELECT 

@@ -6,6 +6,7 @@ Sesiones::verificarPermiso(GESTIONAR_REPORTES, CONSULTAR);
 use haydee\modelo\Habitantes;
 use haydee\modelo\Gastos;
 use haydee\modelo\Mensualidad;
+use haydee\modelo\Pagos;
 
 use Dompdf\Dompdf;
 // use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -310,6 +311,33 @@ if ($accion == "generar_reporte_gastos_mensual") {
     $dompdf->loadHtml($html);
     $dompdf->render();
     $dompdf->stream("relacion_gastos_".$mes."_".$anio.".pdf",);
+}
+
+if ($accion == "recibo_pago") {
+    $obj_pago = new Pagos();
+
+    $id_pago = $_POST['select_reporte'];
+    $obj_pago->set_id_pago($id_pago);
+    $detalles_recibo = $obj_pago->realizar_consulta('consultarReciboPago');
+
+    if ($detalles_recibo == false) {
+        echo "No se encontraron datos para generar el reporte.";
+        exit;
+    }
+    date_default_timezone_set('America/Caracas');
+    $meses_nombres = array("Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre");
+
+    $fecha_pago = new DateTime($detalles_recibo['fecha_pago']);
+    // echo "recibo_pago_". $detalles_recibo['nombre'] ."_" . $detalles_recibo['apellido'] . "_" . $fecha_pago->format('Y-m-d') . ".pdf";
+    // var_dump($fecha_pago->format('Y-m-d H:i'));
+    // ob_start();
+    require_once "vista/reportes/reportes_pdf/pdf/recibo_pago_pdf.php";
+    // $html = ob_get_clean();
+
+    // $dompdf = new Dompdf(['enable_remote' => true]);
+    // $dompdf->loadHtml($html);
+    // $dompdf->render();
+    // $dompdf->stream("recibo_pago_". $detalles_recibo['nombre'] ."_" . $detalles_recibo['apellido'] . "_" . $fecha_pago->format('Y-m-d') . ".pdf");
 }
 
 // Estadisticos

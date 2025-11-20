@@ -31,7 +31,7 @@
                                 <i class="bi bi-escape me-2"></i>
                                 Volver atrás
                             </a>
-                            <a href="/haydee-app/index.php" class="btn btn-primary btn-lg px-4">
+                            <a href="/haydee-app/?pagina=inicio_controlador.php&accion=inicio" class="btn btn-primary btn-lg px-4">
                                 <i class="bi bi-house-door-fill me-2"></i>
                                 Ir al Inicio
                             </a>
