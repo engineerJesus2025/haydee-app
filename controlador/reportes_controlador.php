@@ -328,16 +328,15 @@ if ($accion == "recibo_pago") {
     $meses_nombres = array("Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre");
 
     $fecha_pago = new DateTime($detalles_recibo['fecha_pago']);
-    // echo "recibo_pago_". $detalles_recibo['nombre'] ."_" . $detalles_recibo['apellido'] . "_" . $fecha_pago->format('Y-m-d') . ".pdf";
-    // var_dump($fecha_pago->format('Y-m-d H:i'));
-    // ob_start();
+    
+    ob_start();
     require_once "vista/reportes/reportes_pdf/pdf/recibo_pago_pdf.php";
-    // $html = ob_get_clean();
+    $html = ob_get_clean();
 
-    // $dompdf = new Dompdf(['enable_remote' => true]);
-    // $dompdf->loadHtml($html);
-    // $dompdf->render();
-    // $dompdf->stream("recibo_pago_". $detalles_recibo['nombre'] ."_" . $detalles_recibo['apellido'] . "_" . $fecha_pago->format('Y-m-d') . ".pdf");
+    $dompdf = new Dompdf(['enable_remote' => true]);
+    $dompdf->loadHtml($html);
+    $dompdf->render();
+    $dompdf->stream("recibo_pago_". $detalles_recibo['nombre'] ."_" . $detalles_recibo['apellido'] . "_" . $fecha_pago->format('Y-m-d') . ".pdf");
 }
 
 // Estadisticos

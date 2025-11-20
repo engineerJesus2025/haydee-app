@@ -38,7 +38,8 @@ select_db.addEventListener("change",e=>{
 select_copias.addEventListener("change",e=>{
 	if (e.target.value != '') {		
 		let valido = /^backup(_seguridad)?_haydee_db_\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}\.sql$/.test(select_copias.value);
-
+		// Hosting 
+		// let valido = /^backup_condominioshaydee(_seguridad)?_haydee_\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}\.sql$/.test(select_copias.value);
 		if (!valido) {
 			select_copias.classList.remove('is-valid');
 			select_copias.classList.add('is-invalid');
@@ -174,7 +175,8 @@ boton_importar.addEventListener("click",async e=>{
 	}
 	else if (select_copias.value != ''){
 		let valido = /^backup(_seguridad)?_haydee_db_\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}\.sql$/.test(select_copias.value);
-
+		// Hosting 
+		// let valido = /^backup_condominioshaydee(_seguridad)?_haydee_\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}\.sql$/.test(select_copias.value);
 		if (!valido) {
 			select_copias.classList.remove('is-valid');
 			select_copias.classList.add('is-invalid');

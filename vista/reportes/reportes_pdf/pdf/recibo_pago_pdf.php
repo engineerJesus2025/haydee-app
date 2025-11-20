@@ -176,7 +176,7 @@
                 <div class="line-item">
                     <span class="field-box">
                       <strong class="text-left">Por .:</strong>
-                      <?php echo htmlspecialchars($detalles_recibo['total'] . " Bs."); ?>
+                      <?php echo htmlspecialchars(number_format($detalles_recibo['total'], 2, '.', ',') . " Bs."); ?>
                       </span>
                 </div>
             </div>
@@ -194,7 +194,7 @@
             <div class="line-item">
                 <span class="bold">La Cantidad de:</span>
                 <span class="item-right">
-                    <?php echo htmlspecialchars($detalles_recibo['total'] . " Bs."); ?>
+                    <?php echo htmlspecialchars(number_format($detalles_recibo['total'], 2, '.', ',') . " Bs."); ?>
                 </span>
             </div>
             <div class="line-item">
@@ -240,13 +240,13 @@
                 <div class="payment-method-item">
                     <span class="field-box">
                       <strong class="text-left">Banco:</strong>
-                      <?php echo htmlspecialchars($detalles_recibo['bancos']); ?>
+                      <?php echo htmlspecialchars($detalles_recibo['bancos']?$detalles_recibo['bancos']:''); ?>
                     </span>
                 </div>
                 <div class="payment-method-item">
                     <span class="field-box">
                       <strong class="text-left">Referencia / Serial #:</strong>
-                      <?php echo htmlspecialchars($detalles_recibo['referencias']); ?>
+                      <?php echo htmlspecialchars($detalles_recibo['referencias']?$detalles_recibo['referencias']:''); ?>
                     </span>
                 </div>
             </div>

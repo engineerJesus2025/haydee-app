@@ -42,8 +42,6 @@ if (isset($_POST["operacion"])){
         else{
             return ["estatus"=>false,"mensaje"=>"No existe la Base de datos seleccionada"];;
         }
-
-        echo json_encode($conexion->importarCopiaSeguridad($db,$fichero));
     }
 
     if ($operacion == "importar_archivo_sql"){

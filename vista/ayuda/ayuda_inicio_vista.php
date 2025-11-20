@@ -66,7 +66,7 @@
 
                                         <h5 class="mt-3">📷 Ejemplo visual:</h5>
                                         <p>A continuación, una imagen referencial del formulario de pagos:</p>
-                                        <img src="recursos/img/ayuda/pagos/2.WEBP" alt="Formulario de pago" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
+                                        <img src="recursos/img/ayuda/pagos/2.webp" alt="Formulario de pago" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
 
                                         <br><br>
                                         <p>Este módulo está diseñado para garantizar el control total sobre los pagos, su trazabilidad, y la generación automática de comprobantes. Es una herramienta clave para el seguimiento financiero del sistema y la transparencia con los propietarios.</p>
@@ -108,7 +108,7 @@
 
                                         <h5 class="mt-3">📷 Ejemplo visual:</h5>
                                         <p>A continuación, una imagen representativa del formulario de gastos:</p>
-                                        <img src="recursos/img/ayuda/gastos/2.WEBP" alt="Formulario de gasto" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
+                                        <img src="recursos/img/ayuda/gastos/2.webp" alt="Formulario de gasto" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
 
                                         <br><br>
                                         <p>Este módulo está diseñado para brindar un control preciso y transparente de todas las salidas financieras, fomentando una gestión responsable y eficiente del presupuesto del conjunto residencial.</p>
@@ -147,7 +147,7 @@
 
                                         <h5 class="mt-3">📷 Ejemplo visual:</h5>
                                         <p>A continuación, un ejemplo del formulario de caja chica donde se registran movimientos:</p>
-                                        <img src="recursos/img/ayuda/caja_chica/formulario.png" alt="Formulario de caja chica" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
+                                        <img src="recursos/img/ayuda/caja_chica/formulario.PNG" alt="Formulario de caja chica" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
 
                                         <br><br>
                                         <p>Este módulo es fundamental para la gestión ágil y transparente de los gastos menores, contribuyendo a la estabilidad financiera y el buen manejo de los recursos del conjunto residencial.</p>
@@ -188,7 +188,7 @@
 
                                         <h5 class="mt-3">📷 Ejemplo visual:</h5>
                                         <p>Este es un ejemplo del formulario donde se registran las mensualidades por apartamento:</p>
-                                        <img src="recursos/img/ayuda/mensualidad/2.WEBP" alt="Formulario de mensualidades" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
+                                        <img src="recursos/img/ayuda/mensualidad/2.webp" alt="Formulario de mensualidades" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
 
                                         <br><br>
                                         <p>Este módulo es clave para garantizar una gestión ordenada de los cobros periódicos. Con él, el sistema mantiene al día el flujo de ingresos, asegurando transparencia, seguimiento y eficiencia en la administración financiera.</p>
@@ -228,7 +228,7 @@
 
                                         <h5 class="mt-3">📷 Ejemplo visual:</h5>
                                         <p>A continuación, un ejemplo de cómo se crea una nueva publicación en la cartelera:</p>
-                                        <img src="recursos/img/ayuda/cartelera/2.WEBP" alt="Formulario de publicación en cartelera" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
+                                        <img src="recursos/img/ayuda/cartelera/2.webp" alt="Formulario de publicación en cartelera" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
 
                                         <br><br>
                                         <p>El módulo de cartelera es más que un tablón de anuncios: es el alma comunicacional del sistema. Con él, mantienes informada a toda la comunidad, fomentas la participación y aseguras que nada importante pase desapercibido.</p>
@@ -267,7 +267,7 @@
 
                                         <h5 class="mt-3">📷 Ejemplo visual:</h5>
                                         <p>Así se muestra el formulario de registro/modificación de un apartamento:</p>
-                                        <img src="recursos/img/ayuda/apartamentos/vista.png" alt="Formulario de apartamento" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
+                                        <img src="recursos/img/ayuda/apartamentos/vista.PNG" alt="Formulario de apartamento" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
 
                                         <br><br>
                                         <p>Este módulo es esencial para llevar un control ordenado y transparente de la infraestructura del conjunto residencial. Desde el gas que fluye hasta el nombre que figura en el buzón, aquí todo queda registrado.</p>
@@ -308,7 +308,7 @@
 
                                         <h5 class="mt-3">📷 Ejemplo visual:</h5>
                                         <p>Vista previa de una persona registrada en el sistema:</p>
-                                        <img src="recursos/img/ayuda/apartamentos/vista_habitante.png" alt="Vista previa de persona" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
+                                        <img src="recursos/img/ayuda/apartamentos/vista_habitante.PNG" alt="Vista previa de persona" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
 
                                         <br><br>
                                         <p>Este módulo es el núcleo humano del sistema. Desde los propietarios hasta los visitantes frecuentes, aquí se construye la red de relaciones que da vida al conjunto residencial.</p>
@@ -346,7 +346,7 @@
 
                                         <h5 class="mt-3">📋 Ejemplo visual:</h5>
                                         <p>Así luce el formulario para registrar una nueva solicitud de gasto:</p>
-                                        <img src="recursos/img/ayuda/solicitud_gasto/formulario.png" alt="Formulario de solicitud de gasto" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
+                                        <img src="recursos/img/ayuda/solicitud_gasto/formulario.PNG" alt="Formulario de solicitud de gasto" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
 
                                         <br><br>
                                         <p>Este módulo fortalece la planificación financiera y la participación colectiva. Porque cada gasto comienza con una idea, y cada idea merece ser escuchada.</p>
@@ -382,7 +382,7 @@
 
                                         <h5 class="mt-3">📈 Ejemplo visual:</h5>
                                         <p>A continuación, una imagen representativa del módulo de presupuesto mensual:</p>
-                                        <img src="recursos/img/ayuda/presupuesto_mensual/vista_inicial.png" alt="Formulario de presupuesto mensual" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
+                                        <img src="recursos/img/ayuda/presupuesto_mensual/vista_inicial.PNG" alt="Formulario de presupuesto mensual" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
 
                                         <br><br>
                                         <p>Este módulo brinda una visión clara de la capacidad financiera del conjunto, promoviendo una gestión estratégica, ordenada y eficiente. Porque no se trata solo de gastar, sino de planificar con inteligencia.</p>
@@ -419,7 +419,7 @@
 
                                         <h5 class="mt-3">📆 Ejemplo visual:</h5>
                                         <p>A continuación, una imagen representativa del formulario de año fiscal:</p>
-                                        <img src="recursos/img/ayuda/anio_fiscal/formulario.png" alt="Formulario de año fiscal" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
+                                        <img src="recursos/img/ayuda/anio_fiscal/formulario.PNG" alt="Formulario de año fiscal" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
 
                                         <br><br>
                                         <p>El módulo de año fiscal garantiza un control riguroso y profesional de los periodos contables, alineando todas las funciones del sistema con los ciclos administrativos vigentes. Donde empieza el orden, comienza la claridad financiera.</p>
@@ -457,9 +457,9 @@
 
                                         <h5 class="mt-3">📊 Ejemplo visual:</h5>
                                         <p>A continuación, una imagen representativa del panel de reportes con opciones de gráficos y exportación:</p>
-                                        <img src="recursos/img/ayuda/reportes/vista_reportes_habitantes.png" alt="Panel de reportes" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
-                                        <img src="recursos/img/ayuda/reportes/vista_reportes_ingresos_egresos.png" alt="Panel de reportes" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
-                                        <img src="recursos/img/ayuda/reportes/grafico_habitantes.png" alt="Panel de reportes" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
+                                        <img src="recursos/img/ayuda/reportes/vista_reportes_habitantes.PNG" alt="Panel de reportes" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
+                                        <img src="recursos/img/ayuda/reportes/vista_reportes_ingresos_egresos.PNG" alt="Panel de reportes" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
+                                        <img src="recursos/img/ayuda/reportes/grafico_habitantes.PNG" alt="Panel de reportes" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
 
                                         <br><br>
                                         <p>Este módulo potencia la capacidad analítica y de gestión del sistema, convirtiendo datos en conocimiento y decisiones acertadas. Con reportes bien hechos, el control financiero se vuelve una sinfonía ordenada y clara.</p>
@@ -487,9 +487,9 @@
 
                                         <h5 class="mt-3">⚙️ Ejemplo visual:</h5>
                                         <p>Vistas simples para gestionar bancos, proveedores y tipos de gastos en el sistema.</p>
-                                        <img src="recursos/img/ayuda/bancos/vista.png" alt="Panel de configuración" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
-                                        <img src="recursos/img/ayuda/proveedores/vista.png" alt="Panel de configuración" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
-                                        <img src="recursos/img/ayuda/tipo_gasto/vista.png" alt="Panel de configuración" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
+                                        <img src="recursos/img/ayuda/bancos/vista.PNG" alt="Panel de configuración" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
+                                        <img src="recursos/img/ayuda/proveedores/vista.PNG" alt="Panel de configuración" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
+                                        <img src="recursos/img/ayuda/tipo_gasto/vista.PNG" alt="Panel de configuración" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
                                     </div>
                                 </div>
                             </div>
@@ -515,7 +515,7 @@
 
                                         <h5 class="mt-3">⚙️ Ejemplo visual:</h5>
                                         <p>Interfaz para administrar usuarios y asignar roles en el sistema.</p>
-                                        <img src="recursos/img/ayuda/usuarios/2.WEBP" alt="Panel de usuarios" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
+                                        <img src="recursos/img/ayuda/usuarios/2.webp" alt="Panel de usuarios" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
                                     </div>
                                 </div>
                             </div>
@@ -547,8 +547,8 @@
 
                                         <h5 class="mt-3">🛡️ Ejemplo visual:</h5>
                                         <p>Vistas para administrar roles y visualizar la bitácora de actividades del sistema.</p>
-                                        <img src="recursos/img/ayuda/roles/vista.png" alt="Panel de seguridad" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
-                                        <img src="recursos/img/ayuda/bitacora/vista.png" alt="Panel de seguridad" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
+                                        <img src="recursos/img/ayuda/roles/vista.PNG" alt="Panel de seguridad" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
+                                        <img src="recursos/img/ayuda/bitacora/vista.PNG" alt="Panel de seguridad" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
                                     </div>
                                 </div>
                             </div>
@@ -565,7 +565,7 @@
                                         Solo notifica y guarda el historial para que nada quede en el aire.
                                         <br><br>
                                         <h5 class="mt-3">📷 Visual:</h5>
-                                        <img src="recursos/img/ayuda/notificaciones/vista.png" alt="Panel de notificaciones" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
+                                        <img src="recursos/img/ayuda/notificaciones/vista.PNG" alt="Panel de notificaciones" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
                                     </div>
                                 </div>
                             </div>
@@ -584,7 +584,7 @@
                                         Nada más. Sin misterios, sin distracciones.
                                         <br><br>
                                         <h5 class="mt-3">📷 Visual:</h5>
-                                        <img src="recursos/img/ayuda/mantenimiento/vista.png" alt="Formulario de mantenimiento" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
+                                        <img src="recursos/img/ayuda/mantenimiento/vista.PNG" alt="Formulario de mantenimiento" class="img-fluid rounded shadow-sm" style="max-width: 100%; height: auto;">
                                     </div>
                                 </div>
                             </div>
