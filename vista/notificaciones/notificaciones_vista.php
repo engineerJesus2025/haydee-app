@@ -32,7 +32,6 @@
                                 <table id="tabla_notificaciones" class="table table-striped table-hover" style="width:100%">
                                     <thead>
                                         <tr>
-                                            <th>USUARIO</th>
                                             <th>ACCIÓN</th>
                                             <th>DESCRIPCIÓN</th>
                                             <th>FECHA</th>

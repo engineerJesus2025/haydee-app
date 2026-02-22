@@ -1,4 +1,4 @@
-<?php use haydee\modelo\Presupuesto; ?>
+<?php use haydee\ayuda\Sesiones; ?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -10,8 +10,8 @@
 </head>
 
 <body id="body-pd" class="body-pd">
-    <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Presupuesto::tiene_permiso(GESTIONAR_PRESUPUESTO, ELIMINAR) ?>">
-    <input type="text" hidden="" id="permiso_editar" value="<?php echo Presupuesto::tiene_permiso(GESTIONAR_PRESUPUESTO, MODIFICAR) ?>">
+    <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_PRESUPUESTO, ELIMINAR) ?>">
+    <input type="text" hidden="" id="permiso_editar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_PRESUPUESTO, MODIFICAR) ?>">
     <div class="container-fluid">
         <div class="row flex-nowrap ">
 
@@ -35,9 +35,9 @@
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="card p-4">
-                                <?php if (Presupuesto::tiene_permiso(GESTIONAR_PRESUPUESTO, REGISTRAR)) : ?>
+                                <?php if (Sesiones::tienePermiso(GESTIONAR_PRESUPUESTO, REGISTRAR)) : ?>
                                     <div class="button mb-4">
-                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_presupuesto" id="boton_registrar">Nuevo Presupuesto</button>
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_presupuesto" id="boton_registrar">Nuevo presupuesto</button>
                                         <span class="text-success"></span>
                                     </div>
                                 <?php endif; ?>

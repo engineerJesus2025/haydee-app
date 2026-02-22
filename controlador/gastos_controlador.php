@@ -1,362 +1,222 @@
 <?php
 use haydee\ayuda\Sesiones;
+use haydee\modelo\Gastos;
+use haydee\modelo\Banco;
+use haydee\modelo\Proveedores;
+use haydee\modelo\SolicitudGasto;
+use haydee\modelo\TipoGasto;
+use haydee\modelo\Bitacora;
+use haydee\ayuda\GestorImagenes;
+use haydee\ayuda\ConstructorDetalles;
+
+// Verificaciones de seguridad
 Sesiones::verificarSesion();
 Sesiones::verificarPermiso(GESTIONAR_GASTOS, CONSULTAR);
 
-use haydee\modelo\Banco;
-use haydee\modelo\BancosTransacciones;
-use haydee\modelo\Gastos;
-use haydee\modelo\TipoGasto;
-use haydee\modelo\Proveedores;
-use haydee\modelo\DetallesGasto;
-use haydee\modelo\SolicitudGasto;
+// Instancia del modelo principal
+$gastos = new Gastos();
 
-$gastos_obj = new Gastos();
-$banco_obj = new Banco();
-$proveedor_obj = new Proveedores();
-$solicitud_gasto_obj = new SolicitudGasto();
-$detalles_gastos_obj = new DetallesGasto();
-$tipo_gasto_obj = new TipoGasto();
-$bancos_transacciones_obj = new BancosTransacciones();
+// Modelos auxiliares para selects (solo para cargar datos en la vista)
+$banco = new Banco();
+$proveedor = new Proveedores();
+$solicitudGasto = new SolicitudGasto();
+$tipoGasto = new TipoGasto();
 
-// -------------------- 2. MANEJO DE OPERACIONES (AJAX) --------------------
 if (isset($_POST["operacion"])) {
+    header('Content-Type: application/json');
+
     $operacion = $_POST["operacion"];
+    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
-    if ($operacion == "consulta") {
-        $gastos_obj->registrar_bitacora(CONSULTAR, GESTIONAR_GASTOS, "TODOS LOS GASTOS");
-        echo json_encode($gastos_obj->realizar_consulta("consultar"));
-        exit;
-    }
-    
-    elseif ($operacion == "registrar") {
-        $gastos_obj->set_tipo($_POST["tipo"]);
-        $gastos_obj->set_descripcion_gasto($_POST["descripcion_gasto"]);
-        $gastos_obj->set_tipo_gasto_id($_POST["tipo_gasto"]);
-        $gastos_obj->set_solicitud_id($_POST["solicitud"]);
-        $gastos_obj->set_proveedor_id($_POST["proveedor"]);
-        $resultado = $gastos_obj->realizar_consulta("registrar");
-
-        if ($resultado["estatus"]) {
-            $gastos_obj->registrar_bitacora(REGISTRAR, GESTIONAR_GASTOS, $gastos_obj->get_descripcion_gasto());
-        }
-
-        $gasto_id_respuesta = $gastos_obj->realizar_consulta("lastId");
-        $gasto_id = $gasto_id_respuesta["mensaje"];
-
-        $banco_index = 0;
-        $referencia_index = 0;
-        $imagen_bancaria_index = 0;
-        $fechas_detalles = $_POST["fecha_detalle"];
-
-        foreach ($fechas_detalles as $indice => $fecha_detalle) {
-            $detalles_gastos_obj->set_fecha($fecha_detalle);
-            $detalles_gastos_obj->set_monto($_POST["monto"][$indice]);
-            $detalles_gastos_obj->set_metodo_pago($_POST["metodo_pago"][$indice]);
-            $detalles_gastos_obj->set_descripcion_detalle_gasto($_POST["descripcion_detalle"][$indice]);
-            $detalles_gastos_obj->set_gasto_id($gasto_id);
-            // CORRECCIÓN: Se usa la acción 'registrar' del modelo de detalles
-            $detalles_gastos_obj->realizar_consulta("registrar");
-            
-            $id_detalle_respuesta = $detalles_gastos_obj->realizar_consulta("lastId");
-            $id_detalle = $id_detalle_respuesta["mensaje"];
-
-            $metodo_actual = $_POST['metodo_pago'][$indice];
-            if ($metodo_actual === 'Pago Movil' || $metodo_actual === 'Transferencia') {
-                $banco_id = $_POST['banco'][$banco_index++] ?? null;
-                $referencia = $_POST['referencia'][$referencia_index++] ?? null;
-                $imagen_detalle = '';
-
-                // VALIDACIÓN DE IMAGEN
-                // Usamos el índice $imagen_bancaria_index para acceder al archivo específico en el array
-                if (isset($_FILES['imagen']['name'][$imagen_bancaria_index]) && $_FILES['imagen']['error'][$imagen_bancaria_index] !== UPLOAD_ERR_NO_FILE) {
-                    
-                    // 1. Verificar errores de subida (ej. archivo corrupto o error de servidor)
-                    if ($_FILES['imagen']['error'][$imagen_bancaria_index] !== UPLOAD_ERR_OK) {
-                        echo json_encode([
-                            "estatus" => false, 
-                            "mensaje" => "Error al subir el comprobante #".($imagen_bancaria_index+1).". Intente nuevamente."
-                        ]);
-                        exit;
-                    }
-
-                    // 2. Validar Peso (Máximo 2MB)
-                    $peso_maximo = 2 * 1024 * 1024; 
-                    if ($_FILES['imagen']['size'][$imagen_bancaria_index] > $peso_maximo) {
-                        echo json_encode([
-                            "estatus" => false, 
-                            "mensaje" => "El comprobante #".($imagen_bancaria_index+1)." es muy pesado (Máx 2MB)."
-                        ]);
-                        exit;
-                    }
-
-                    // 3. Validar Tipo MIME (Solo imágenes reales)
-                    $temporal = $_FILES['imagen']['tmp_name'][$imagen_bancaria_index];
-                    $tipos_permitidos = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-                    $finfo = finfo_open(FILEINFO_MIME_TYPE);
-                    $mime = finfo_file($finfo, $temporal);
-                    finfo_close($finfo);
-
-                    if (!in_array($mime, $tipos_permitidos)) {
-                        echo json_encode([
-                            "estatus" => false, 
-                            "mensaje" => "El archivo #".($imagen_bancaria_index+1)." no es una imagen válida. Use JPG, PNG, GIF o WEBP."
-                        ]);
-                        exit;
-                    }
-
-                    // 4. Procesar y Mover Archivo
-                    $nombre_original = $_FILES['imagen']['name'][$imagen_bancaria_index];
-                    $extension = pathinfo($nombre_original, PATHINFO_EXTENSION);
-                    $nombre_sanitizado = preg_replace("/[^a-zA-Z0-9-_\.]/", "_", pathinfo($nombre_original, PATHINFO_FILENAME));
-                    $nombre_unico = $nombre_sanitizado . '_' . time() . '_' . rand(100, 999) . '.' . $extension;
-                    $ruta_destino = "recursos/img/gastos/" . $nombre_unico;
-                    
-                    // Crear carpeta si no existe (por seguridad)
-                    if (!is_dir("recursos/img/gastos/")) { mkdir("recursos/img/gastos/", 0777, true); }
-
-                    if (move_uploaded_file($temporal, $ruta_destino)) {
-                        $imagen_detalle = $nombre_unico;
-                    } else {
-                        echo json_encode(["estatus" => false, "mensaje" => "Error al guardar la imagen en el servidor."]);
-                        exit;
-                    }
+    try {
+        switch ($operacion) {
+            // =========================================================
+            // CONSULTAS
+            // =========================================================
+            case 'consulta':
+                $respuesta = $gastos->realizar_consulta('consultar_gastos');
+                if ($respuesta['estatus']) {
+                    Bitacora::registrar(CONSULTAR, GESTIONAR_GASTOS, 'Consulta general de gastos');
+                    echo json_encode(['datos' => $respuesta['datos']]);
+                } else {
+                    echo json_encode(['datos' => [], 'error' => $respuesta['mensaje']]);
                 }
-                $imagen_bancaria_index++;
+                exit;
 
-                if (!empty($banco_id)) {
-                    // Este modelo (BancosTransacciones) no lo hemos refactorizado, así que se queda con la llamada directa
-                    $transaccion_especifica = new BancosTransacciones(); 
-                    $transaccion_especifica->set_referencia($referencia);
-                    $transaccion_especifica->set_imagen($imagen_detalle);
-                    $transaccion_especifica->set_banco_id($banco_id);
-                    $transaccion_especifica->set_detalle_gasto_id($id_detalle);
-                    $transaccion_especifica->registrar_banco_transaccion_gasto();
+            case 'consulta_especifica':
+                $gastos->set_id_gasto($_POST['id_gasto'] ?? null);
+                $respuesta = $gastos->realizar_consulta('consultar_gasto_unico');
+                // Se devuelve con estatus/datos (para el formulario de edición)
+                break;
+
+            case 'consultar_detalles':
+                $gastos->set_id_gasto($_POST['id_gasto'] ?? null);
+                $respuesta = $gastos->realizar_consulta('consultar_detalles_por_gasto');
+                if ($respuesta['estatus']) {
+                    echo json_encode($respuesta);
+                } else {
+                    echo json_encode(['datos' => [], 'error' => $respuesta['mensaje']]);
                 }
-            }
-        }
-        
-        $gastos_obj->set_id_gasto($gasto_id);
-        $gasto_completo = $gastos_obj->realizar_consulta("consultar_gasto");
-        echo json_encode(["estatus" => true, "mensaje" => "Gasto registrado correctamente", "gasto" => $gasto_completo]);
-        exit;
-    } 
-    
-    elseif ($operacion == "consulta_especifica") {
-        $gastos_obj->set_id_gasto($_POST["id_gasto"]);
-        $gasto_principal = $gastos_obj->realizar_consulta("consultar_gasto");
-        if (!$gasto_principal) {
-            echo json_encode(["estatus" => false, "mensaje" => "No se encontró el gasto solicitado."]);
-            exit;
-        }
+                exit;
 
-        $detalles_gastos_obj->set_gasto_id($_POST["id_gasto"]);
-        // CORRECCIÓN: Se usa la acción 'consultar_por_gasto' del modelo de detalles
-        $lista_detalles = $detalles_gastos_obj->realizar_consulta("consultar_por_gasto");
+            case 'consulta_especifica_detalles':
+                $gastos->set_id_detalle_gasto($_POST['id_detalle_gasto'] ?? null);
+                $respuesta = $gastos->realizar_consulta('consultar_detalle_unico');
+                break;
 
-        echo json_encode(["gasto" => $gasto_principal, "detalles" => $lista_detalles]);
-        exit;
-    } 
-    
-    elseif ($operacion == "modificar") {
-        $id_gasto = $_POST["id_gasto"];
-        $gastos_obj->set_id_gasto($id_gasto);
-        $gastos_obj->set_tipo($_POST["tipo"]);
-        $gastos_obj->set_descripcion_gasto($_POST["descripcion_gasto"]);
-        $gastos_obj->set_tipo_gasto_id($_POST["tipo_gasto"]);
-        $gastos_obj->set_solicitud_id($_POST["solicitud"]);
-        $gastos_obj->set_proveedor_id($_POST["proveedor"]);
-        $resultado = $gastos_obj->realizar_consulta("editar_gasto");
+            // =========================================================
+            // REGISTRO Y EDICIÓN UNIFICADOS
+            // =========================================================
+            case 'registrar':
+                // Construir array de detalles desde los datos POST
+                $detalles = ConstructorDetalles::ConstruirDetallesGastos($_POST, $_FILES);
+                $gastos->set_detalles($detalles);
 
-        if ($resultado["estatus"]) {
-            $gastos_obj->registrar_bitacora(MODIFICAR, GESTIONAR_GASTOS, $gastos_obj->get_descripcion_gasto());
-        }
+                // Asignar datos de cabecera
+                $gastos->set_clasificacion($_POST['clasificacion'] ?? null);
+                $gastos->set_descripcion_gasto($_POST['descripcion_gasto'] ?? null);
+                $gastos->set_solicitud_id($_POST['solicitud'] ?? null);
+                $gastos->set_tipo_gasto_id($_POST['tipo_gasto'] ?? null);
+                $gastos->set_proveedor_id($_POST['proveedor'] ?? null);
 
-        $detalles_gastos_obj->set_gasto_id($id_gasto);
-        // CORRECCIÓN: Se usa la acción 'eliminar_por_gasto' del modelo de detalles
-        $detalles_gastos_obj->realizar_consulta("eliminar_por_gasto");
-
-        $banco_index = 0;
-        $referencia_index = 0;
-        $imagen_bancaria_index = 0;
-        $imagen_existente_index = 0;
-        $fechas_detalles = $_POST["fecha_detalle"];
-
-        foreach ($fechas_detalles as $indice => $fecha_detalle) {
-        // 1. Registrar el detalle
-        $detalles_gastos_obj->set_fecha($fecha_detalle);
-        $detalles_gastos_obj->set_monto($_POST["monto"][$indice]);
-        $detalles_gastos_obj->set_metodo_pago($_POST["metodo_pago"][$indice]);
-        $detalles_gastos_obj->set_descripcion_detalle_gasto($_POST["descripcion_detalle"][$indice]);
-        $detalles_gastos_obj->set_gasto_id($id_gasto);
-        $detalles_gastos_obj->realizar_consulta("registrar");
-        $id_detalle = $detalles_gastos_obj->realizar_consulta("lastId")["mensaje"];
-
-        // 2. Si el método de pago es bancario, manejar la transacción
-        $metodo_actual = $_POST['metodo_pago'][$indice];
-        if ($metodo_actual === 'Pago Movil' || $metodo_actual === 'Transferencia') {
-            
-            $banco_id = $_POST['banco'][$banco_index++] ?? null;
-            $referencia = $_POST['referencia'][$referencia_index++] ?? null;
-
-            // Procesamos la imagen (nueva o existente) usando su propio índice
-            $imagen_detalle = '';
-
-            // VALIDACIÓN DE IMAGEN
-            if (isset($_FILES['imagen']['name'][$imagen_bancaria_index]) && $_FILES['imagen']['error'][$imagen_bancaria_index] !== UPLOAD_ERR_NO_FILE) {
-                
-                // 1. Validar Errores de carga
-                if ($_FILES['imagen']['error'][$imagen_bancaria_index] !== UPLOAD_ERR_OK) {
-                    echo json_encode(["estatus" => false, "mensaje" => "Error al subir el comprobante nuevo."]);
-                    exit;
+                $respuesta = $gastos->realizar_consulta('registrar');
+                if ($respuesta['estatus']) {
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_GASTOS, $gastos->get_descripcion_gasto());
                 }
+                break;
 
-                // 2. Validar Peso
-                $peso_maximo = 2 * 1024 * 1024;
-                if ($_FILES['imagen']['size'][$imagen_bancaria_index] > $peso_maximo) {
-                    echo json_encode(["estatus" => false, "mensaje" => "El comprobante nuevo es muy pesado (Máx 2MB)."]);
-                    exit;
+            case 'editar':
+                $id_gasto = $_POST['id_gasto'] ?? null;
+                if (!$id_gasto) {
+                    throw new Exception('ID de gasto no proporcionado');
                 }
+                $gastos->set_id_gasto($id_gasto);
 
-                // 3. Validar Tipo
-                $temporal = $_FILES['imagen']['tmp_name'][$imagen_bancaria_index];
-                $tipos_permitidos = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-                $finfo = finfo_open(FILEINFO_MIME_TYPE);
-                $mime = finfo_file($finfo, $temporal);
-                finfo_close($finfo);
+                // Construir detalles (incluyendo imágenes existentes)
+                $detalles = ConstructorDetalles::ConstruirDetallesGastos($_POST, $_FILES, true);
 
-                if (!in_array($mime, $tipos_permitidos)) {
-                    echo json_encode(["estatus" => false, "mensaje" => "Formato inválido en comprobante nuevo. Use JPG, PNG, GIF o WEBP."]);
-                    exit;
+                $gastos->set_detalles($detalles);
+
+                // Asignar datos de cabecera
+                $gastos->set_clasificacion($_POST['clasificacion'] ?? null);
+                $gastos->set_descripcion_gasto($_POST['descripcion_gasto'] ?? null);
+                $gastos->set_solicitud_id($_POST['solicitud'] ?? null);
+                $gastos->set_tipo_gasto_id($_POST['tipo_gasto'] ?? null);
+                $gastos->set_proveedor_id($_POST['proveedor'] ?? null);
+
+                $respuesta = $gastos->realizar_consulta('editar');
+                array_push($respuesta, $_POST);
+                if ($respuesta['estatus']) {
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_GASTOS, $gastos->get_descripcion_gasto());
                 }
+                break;
 
-                // 4. Mover Archivo
-                $nombre_original = $_FILES['imagen']['name'][$imagen_bancaria_index];
-                $extension = pathinfo($nombre_original, PATHINFO_EXTENSION);
-                $nombre_sanitizado = preg_replace("/[^a-zA-Z0-9-_\.]/", "_", pathinfo($nombre_original, PATHINFO_FILENAME));
-                $nombre_unico = $nombre_sanitizado . '_' . time() . '_' . rand(100, 999) . '.' . $extension;
-                $ruta_destino = "recursos/img/gastos/" . $nombre_unico;
-                
-                if (!is_dir("recursos/img/gastos/")) { mkdir("recursos/img/gastos/", 0777, true); }
+            // =========================================================
+            // ELIMINACIÓN
+            // =========================================================
+            case 'eliminar':
+                $gastos->set_id_gasto($_POST['id_gasto'] ?? null);
+                // Obtener datos para bitácora antes de eliminar
+                $copia = clone $gastos;
+                $datosGasto = $copia->realizar_consulta('consultar_gasto_unico');
+                $info = $datosGasto['estatus'] ? ($datosGasto['datos']['descripcion_gasto'] ?? '') : '';
 
-                if (move_uploaded_file($temporal, $ruta_destino)) {
-                    $imagen_detalle = $nombre_unico;
-                    
-                    // NOTA: En gastos, como borramos todos los detalles viejos y los creamos de nuevo,
-                    // no hace falta un 'unlink' explícito de la imagen vieja aquí mismo, 
-                    // aunque idealmente deberías limpiar imágenes huérfanas en un mantenimiento del sistema.
+                $respuesta = $gastos->realizar_consulta('eliminar_gasto');
+                if ($respuesta['estatus']) {
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_GASTOS, $info);
                 }
+                break;
 
-            } elseif (isset($_POST['imagen_existente'][$imagen_existente_index])) {
-                // Si no subió imagen nueva, mantenemos la vieja
-                $imagen_detalle = $_POST['imagen_existente'][$imagen_existente_index++];
-            }
-            $imagen_bancaria_index++;
+            // =========================================================
+            // REPORTES Y OTROS (opcional)
+            // =========================================================
+            case 'listar_gastos_mes':
+                $respuesta = $gastos->realizar_consulta('listar_gastos_mes');
+                if ($respuesta['estatus']) {
+                    echo json_encode(['datos' => $respuesta['datos']]);
+                } else {
+                    echo json_encode(['datos' => [], 'error' => $respuesta['mensaje']]);
+                }
+                exit;
 
-            // Guardamos la transacción
-            if (!empty($banco_id)) {
-                $transaccion_especifica = new BancosTransacciones(); 
-                $transaccion_especifica->set_referencia($referencia);
-                $transaccion_especifica->set_imagen($imagen_detalle);
-                $transaccion_especifica->set_banco_id($banco_id);
-                $transaccion_especifica->set_detalle_gasto_id($id_detalle);
-                $transaccion_especifica->registrar_banco_transaccion_gasto();
-            }
+            case 'filtrar_gastos_mes':
+                $gastos->set_fecha($_POST['fecha'] ?? null);
+                $respuesta = $gastos->realizar_consulta('filtrar_por_mes');
+                if ($respuesta['estatus']) {
+                    echo json_encode(['datos' => $respuesta['datos']]);
+                } else {
+                    echo json_encode(['datos' => [], 'error' => $respuesta['mensaje']]);
+                }
+                exit;
+
+            case 'totales_metodo_pago':
+                $gastos->set_fecha($_POST['fecha'] ?? null);
+                $respuesta = $gastos->realizar_consulta('total_por_metodo_pago');
+                // Se espera que sea un array con totales
+                echo json_encode($respuesta);
+                exit;
+
+            case 'ultimo_id':
+                $respuesta = $gastos->realizar_consulta('lastId');
+                break;
+
+            default:
+                $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
-    }
-        $gastos_obj->set_id_gasto($id_gasto);
-        $gasto_completo = $gastos_obj->realizar_consulta("consultar_gasto");
-        echo json_encode(["estatus" => true, "mensaje" => "Gasto modificado correctamente", "gasto" => $gasto_completo]);
-        exit;
+    } catch (Exception $e) {
+        error_log("Error en controlador gastos: " . $e->getMessage());
+        $respuesta = ['estatus' => false, 'mensaje' => $e->getMessage()];
     }
 
-    elseif ($operacion == "eliminar") {
-        $gastos_obj->set_id_gasto($_POST["id_gasto"]);
-        $gasto_alterado = $gastos_obj->realizar_consulta('consultar_gasto');
-        $resultado = $gastos_obj->realizar_consulta("eliminar_gasto");
-        if ($resultado["estatus"]) {
-            $gastos_obj->registrar_bitacora(ELIMINAR, GESTIONAR_GASTOS,  $gasto_alterado["descripcion_gasto"]);
-        }
-        echo json_encode($resultado);
-        exit;
-    }
-
-    elseif ($operacion == "consultar_detalles") {
-        $detalles_gastos_obj->set_gasto_id($_POST["id_gasto"]);
-        // CORRECCIÓN: Se usa la acción 'consultar_por_gasto'
-        echo json_encode($detalles_gastos_obj->realizar_consulta("consultar_por_gasto"));
-        exit;
-    } 
-    
-    elseif ($operacion == "consulta_especifica_detalles") {
-        $detalles_gastos_obj->set_id_detalle_gasto($_POST["id_detalle_gasto"]);
-        // CORRECCIÓN: Se usa 'realizar_consulta' en lugar de la llamada directa
-        echo json_encode($detalles_gastos_obj->realizar_consulta("consultar_detalle_gasto"));
-        exit;
-    }
-
-    // ================== OPERACIONES DE FILTRADO Y TOTALES ==================
-    elseif ($operacion == "listar_gastos_mes") {
-        echo json_encode($gastos_obj->listar_gastos_mes());
-        exit;
-    } 
-
-    elseif ($operacion == "filtrar_gastos_mes") {
-        $fecha = $_POST["fecha"];
-        $gastos_obj->set_fecha($fecha);
-        echo json_encode($gastos_obj->filtrar_por_mes());
-        exit;
-    } 
-    
-    elseif ($operacion == "totales_metodo_pago") {
-        $fecha = $_POST["fecha"];
-        $gastos_obj->set_fecha($fecha);
-        echo json_encode($gastos_obj->total_por_metodo_pago());
-        exit;
-    } 
-    
-    // ================== OBTENER ÚLTIMO ID ==================
-    elseif ($operacion == "ultimo_id") {
-        echo json_encode($gastos_obj->realizar_consulta("lastId"));
-        exit;
-    }
-
-} // Fin del if (isset($_POST["operacion"]))
-elseif (isset($_POST["validar"])) {
-    $validar = $_POST["validar"];
-
-    if ($validar == "validar_clave_foranea") {
-        // $gastos_obj = new Usuario();
-
-        $tabla = $_POST["tabla"];
-        $nombre_clave = $_POST["nombre_clave"];
-        $valor = $_POST["valor"];
-        
-        $resultado = $gastos_obj->realizar_consulta('validar_clave_foranea',["tabla"=>$tabla,"nombre_clave"=>$nombre_clave,"valor"=>$valor]);
-        
-        echo json_encode($resultado);
-    }
-    // elseif ($validar == "correo"){
-    //     $usuario_obj = new Usuario();
-
-    //     $usuario_obj->set_correo($_POST["correo"]);
-    //     echo  json_encode($usuario_obj->realizar_consulta('verificar_correo'));
-    // }
-    // elseif ($validar == "correo"){
-    //     $usuario_obj = new Usuario();
-
-    //     $usuario_obj->set_correo($_POST["correo"]);
-    //     echo  json_encode($usuario_obj->realizar_consulta('verificar_correo'));
-    // }
-    exit();
+    // Para las acciones que no hicieron echo directo, enviamos JSON
+    echo json_encode($respuesta);
+    exit;
 }
-// -------------------- 3. CARGA DE DATOS PARA LA VISTA --------------------
-// Estos datos se cargan para los <select> en el formulario cuando la página se carga por primera vez
-$proveedores = $proveedor_obj->realizar_consulta("consultar");
-$bancos = $banco_obj->realizar_consulta('consultar');
-$solicitudes_gasto = $solicitud_gasto_obj->realizar_consulta("consultar");
-$tipos_gasto = $tipo_gasto_obj->realizar_consulta("consultar");
 
-// -------------------- 4. INCLUSIÓN DE LA VISTA --------------------
+// =========================================================
+// VALIDACIONES AJAX (opcional, se pueden implementar luego)
+// =========================================================
+// =========================================================
+// VALIDACIONES AJAX
+// =========================================================
+if (isset($_POST["validar"])) {
+    header('Content-Type: application/json');
+    $validar = $_POST["validar"];
+    $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
+
+    try {
+        switch ($validar) {
+            case 'validar_clave_foranea':
+                if (isset($_POST['tabla'], $_POST['nombre_clave'], $_POST['valor'])) {
+                    $existe = $gastos->validarExistenciaExterna(
+                        $_POST['tabla'],
+                        $_POST['nombre_clave'],
+                        $_POST['valor']
+                    );
+                    echo json_encode(['estatus' => $existe]);
+                } else {
+                    echo json_encode(['estatus' => false, 'mensaje' => 'Faltan parámetros']);
+                }
+                exit;
+
+            default:
+                echo json_encode(['estatus' => false, 'mensaje' => 'Validación no implementada']);
+                exit;
+        }
+    } catch (Exception $e) {
+        error_log("Error en validación AJAX: " . $e->getMessage());
+        echo json_encode(['estatus' => false, 'mensaje' => 'Error interno del servidor']);
+        exit;
+    }
+}
+
+// =========================================================
+// CARGA DE DATOS PARA LA VISTA
+// =========================================================
+$proveedores = $proveedor->realizar_consulta('consultar');
+$bancos = $banco->realizar_consulta('consultar');
+$solicitudes_gasto = $solicitudGasto->realizar_consulta('consultar');
+$tipos_gasto = $tipoGasto->realizar_consulta('consultar');
+
 require_once "vista/gastos/gastos_vista.php";
 ?>

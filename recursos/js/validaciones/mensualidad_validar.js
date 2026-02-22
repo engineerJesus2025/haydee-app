@@ -1,144 +1,124 @@
-document.addEventListener('DOMContentLoaded', function() {
-	boton_formulario.addEventListener("click",async e=>{
-		let select =document.getElementById('mes_select_asignar');
-		let valido = validarKeyUp(/^\d{1,2}\/\d{1,2}\/\d{4}$/,
-		select,select.nextElementSibling,"el valor de la fecha no es válido");
+/**
+ * mensualidad_validar.js
+ * Validaciones para el módulo de Mensualidad
+ * Dependencias: validaciones.js, utilidades.js
+ */
 
-		if (!valido) {
-			mensajes('warning',4000,'Atencion', `La Fecha seleccionada no posee un formato valido`);
-			return;
-		}
+$(document).ready(function() {
+    const selectFecha = document.getElementById('mes_select_asignar');
+    const porcentaje = document.getElementById('porcentaje_demora');
+    const diaLimite = document.getElementById('dia_limite');
+    const boton = document.getElementById('boton_formulario');
 
-		let datos = new FormData();
-		datos.append('operacion','consultar_presupuestos_mensualidades');		
-		datos.append('fecha',select.selectedOptions[0].id);
+    // Validación del select de fecha
+    $(selectFecha).on('change', async function() {
+        const fecha = this.selectedOptions[0]?.id;
+        if (!fecha) return;
 
-		valido = await fetch("",{method:"POST", body:datos}).then(res=>{		
-		let result = res.json()
-			return result;
-		});
-		
-		if (valido.length === 0) {
-			select.classList.remove('is-valid');
-			select.classList.add('is-invalid');
-			select.nextElementSibling.textContent = "La Fecha seleccionada no existe";
-			mensajes('warning',4000,'Atencion', `La Fecha seleccionada no es una opcion valida`);
-			return;
-		}
-		else{
-			select.classList.add('is-valid');
-			select.classList.remove('is-invalid');
-			select.nextElementSibling.textContent = "";			
-		}
+        if (!/^\d{4}\-\d{1,2}\-\d{1,2}$/.test(fecha)) {
+            Validaciones.mostrarError(this, 'Formato de fecha inválido');
+            return;
+        }
 
-		let filas_cuerpo = tabla_mensualidad_asignar.querySelectorAll("tbody tr");
-		let asignado = false;
-		for(fila of filas_cuerpo){
-			asignado = false;
-			let apartamento_sin_asignar;
-			
-			let checkbox_fila = fila.querySelectorAll("input");
-			checkbox_fila.forEach(input=>{
-				if(input.checked) {
-					asignado = true;
-				}else{
-					apartamento_sin_asignar = fila.firstElementChild.textContent;
-				}
-			});
-			if(!asignado){
-				mensajes('warning',4000,'Atencion', `Al ${apartamento_sin_asignar} No se asigno Mensualidad`);
-				break;
-			}
-		}
-		if (asignado) {
-			let accion = boton_formulario.getAttribute("op");
-			Swal.fire({
-				title: "¿Estás seguro?",
-				text: `¿Está seguro que desea ${accion} esta Mensualidad?`,
-				showCancelButton: true,
-				confirmButtonText: "Si, " + accion,
-				confirmButtonColor: "#1b8a40",
-				cancelButtonText: "Cancelar",
-				icon: "warning"
-			})
-			.then((result) => {
-				if (result.isConfirmed) {
-					envio(accion);					
-				}
-			});
-		}
-	});
+        // Verificar existencia en el backend
+        const valido = await verificarFechaPresupuesto(fecha);
+        if (valido) {
+            this.classList.add('is-valid');
+            this.classList.remove('is-invalid');
+            if (this.nextElementSibling) this.nextElementSibling.textContent = '';
+        } else {
+            this.classList.remove('is-valid');
+            this.classList.add('is-invalid');
+            if (this.nextElementSibling) this.nextElementSibling.textContent = 'La fecha seleccionada no tiene presupuestos asociados';
+        }
+    });
 
-	document.getElementById('mes_select_asignar').addEventListener("change",async e=>{
-		let valido = validarKeyUp(/^\d{1,2}\/\d{1,2}\/\d{4}$/,
-		e.target,e.target.nextElementSibling,"el valor de la fecha no es válido");
+    // Validación de porcentaje de interés (opcional, entre 0 y 100)
+    $(porcentaje).on('keypress', function(e) {
+        Validaciones.keyPress(/^[\d.]$/, e);
+    });
+    $(porcentaje).on('keyup', function() {
+        Validaciones.keyUp(/^\d{0,2}(\.\d{0,2})?$/, this, this.nextElementSibling, 'Porcentaje inválido (ej: 5 o 5.5)');
+    });
 
-		if (!valido) return;
+    // Validación de día límite (1-31)
+    $(diaLimite).on('keypress', function(e) {
+        Validaciones.keyPress(/^[0-9]$/, e);
+    });
+    $(diaLimite).on('keyup', function() {
+        Validaciones.keyUp(/^([1-9]|[12]\d|3[01])$/, this, this.nextElementSibling, 'Día límite inválido (1-31)');
+    });
 
-		let datos = new FormData();
-		datos.append('operacion','consultar_presupuestos_mensualidades');		
-		datos.append('fecha',e.target.selectedOptions[0].id);
+    // Validación al enviar
+    $(boton).on('click', async function(e) {
+        e.preventDefault();
+        const accion = botonFormulario.dataset.op || "Registrar";
+        if (await validarFormularioCompleto()) {
+           Swal.fire({
+            title: "¿Estás seguro?",
+            text: `¿Desea ${accion.toLowerCase()} esta mensualidad?`,
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#1b8a40",
+            confirmButtonText: `Sí, ${accion}`,
+            cancelButtonText: "Cancelar"
+            }).then(result => {
+                if (result.isConfirmed) {
+                    if (accion === "Registrar") registrarMensualidad();
+                    else editarMensualidad();
+                }
+            }); 
 
-		valido = await fetch("",{method:"POST", body:datos}).then(res=>{		
-		let result = res.json()
-			return result;
-		});
-		
-		if (valido.length === 0) {
-			e.target.classList.remove('is-valid');
-			e.target.classList.add('is-invalid');
-			e.target.nextElementSibling.textContent = "La Fecha seleccionada no existe";
-		}
-		else{
-			e.target.classList.add('is-valid');
-			e.target.classList.remove('is-invalid');
-			e.target.nextElementSibling.textContent = "";
-		}
-	});
-  	
+            return true;
+        }
+        return false;
+    });
 });
 
-function mensajes(icono,tiempo,titulo,mensaje){
-	Swal.fire({
-	icon:icono,
-    timer:tiempo,	
-    title:titulo,
-	text:mensaje,
-	confirmButtonText:'Aceptar',
-	confirmButtonColor: "#e01d22",
-	});
+async function verificarFechaPresupuesto(fecha) {
+    const respuesta = await Utilidades.validar('validar_fecha_presupuesto', { fecha });
+    return respuesta.estatus;
 }
 
-function validarKeyUp(er,etiqueta,etiquetamensaje,
-mensaje){
-	a = er.test(etiqueta.selectedOptions[0].id);
-	
-	if(a){
-		etiqueta.classList.add('is-valid');
-		etiqueta.classList.remove('is-invalid');
+async function validarFormularioCompleto() {
+    const select = document.getElementById('mes_select_asignar');
+    if (!select.value) {
+        Utilidades.mensaje('error', 'Error', 'Debe seleccionar una fecha');
+        return false;
+    }
+    if (!await verificarFechaPresupuesto(select.selectedOptions[0].id)) {
+        Utilidades.mensaje('error', 'Error', 'La fecha seleccionada no es válida');
+        return false;
+    }
 
-		if (etiqueta.id == "contra" || etiqueta.id == "confir_contra") {
-			etiqueta.nextElementSibling.classList.remove('border-danger');
-			etiqueta.nextElementSibling.classList.remove('text-danger');
+    const porcentaje = document.getElementById('porcentaje_demora');
+    if (porcentaje.value && !/^\d{0,2}(\.\d{0,2})?$/.test(porcentaje.value)) {
+        Utilidades.mensaje('error', 'Error', 'Porcentaje de interés inválido');
+        return false;
+    }
 
-			etiqueta.nextElementSibling.classList.add('border-success');
-			etiqueta.nextElementSibling.classList.add('text-success');
-		}
-		etiquetamensaje.textContent = "";
-		return 1;
-	}
-	else{
-		etiqueta.classList.add('is-invalid');
-		etiqueta.classList.remove('is-valid');
+    const diaLimite = document.getElementById('dia_limite');
+    if (diaLimite.value && !/^([1-9]|[12]\d|3[01])$/.test(diaLimite.value)) {
+        Utilidades.mensaje('error', 'Error', 'Día límite inválido (debe ser 1-31)');
+        return false;
+    }
 
-		if (etiqueta.id == "contra" || etiqueta.id == "confir_contra") {
-			etiqueta.nextElementSibling.classList.remove('border-success');
-			etiqueta.nextElementSibling.classList.remove('text-success');
+    // Verificar que cada fila tenga al menos un checkbox marcado
+    const filas = document.querySelectorAll('#tabla_mensualidad_asignar tbody tr');
+    let filasSinCheck = [];
+    filas.forEach(fila => {
+        const checks = fila.querySelectorAll('input[type="checkbox"]:checked');
+        if (checks.length === 0) {
+            // Obtener el número de apartamento (primera celda)
+            const nroApto = fila.cells[0]?.textContent.trim() || fila.id;
+            filasSinCheck.push(nroApto);
+        }
+    });
+    if (filasSinCheck.length > 0) {
+        let mensaje = 'Los siguientes apartamentos no tienen ningún concepto marcado: ' + filasSinCheck.join(', ');
+        Utilidades.mensaje('error', 'Error', mensaje);
+        return false;
+    }
 
-			etiqueta.nextElementSibling.classList.add('border-danger');
-			etiqueta.nextElementSibling.classList.add('text-danger');
-		}
-		etiquetamensaje.textContent = mensaje;
-		return 0;
-	}
+    return true;
 }

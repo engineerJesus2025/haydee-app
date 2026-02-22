@@ -120,7 +120,7 @@
     </div>
     <?php require_once "vista/componentes/footer.php"; ?>
     
-    <script type="text/javascript">
+<!--     <script type="text/javascript">
         let boton_generar = document.getElementById('boton_generar');
         let form = document.getElementById('form_reporte');
         let regex;
@@ -255,10 +255,11 @@
                 return 0;
             }
         }        
-    </script>
+    </script> -->
 
-    <script type="text/javascript" src="recursos/js/reportes/solvencia.js"></script>
-    <script type="text/javascript" src="recursos/js/reportes/residencia.js"></script>
+    <!-- <script type="text/javascript" src="recursos/js/reportes/solvencia.js"></script> -->
+    <!-- <script type="text/javascript" src="recursos/js/reportes/residencia.js"></script> -->
+    <script type="text/javascript" src="recursos/js/reportes/reporte_constancias.js"></script>
     <script type="text/javascript" src="recursos/js/reportes/cuadro_pagos.js"></script>
     <script type="text/javascript" src="recursos/js/reportes/reporte_gastos.js"></script>    
 </body>

@@ -1,213 +1,147 @@
-window.addEventListener('DOMContentLoaded',()=>{
-	$("#cuota_reserva").on("keypress", function (e) {
-        validarKeyPress(/^[0-9,.]*$/, e);
-    });	
-    $("#cuota_reserva").on("keyup", function (e) {
-        let resultado = validarKeyUp(/^[0-9]{1,12}[,.]{0,1}[0-9]{0,2}$/, this,this.nextElementSibling,"Solo numeros, no mas de 15 caracteres y no mas de 2 decimales");
-        if (resultado) {        	
-			let input_convertir = this.closest(".row").querySelector("[convertido]");
-        	if (this.getAttribute("monto") == "bs") {
-				if (this.value <= 0 || this.value == '') {
-					input_convertir.value = 0;
-					return;
-				}
-				input_convertir.value = (parseFloat(this.value) / tasa_dolar).toFixed(2) || 0;
-			}
-			else{
-				if (this.value <= 0 || this.value == '') {
-					input_convertir.value = 0;
-					return;
-				}
-				input_convertir.value = (parseFloat(this.value) * tasa_dolar).toFixed(2);
-			}
+/**
+ * presupuesto_validar.js
+ * Validaciones para el módulo de Presupuesto
+ * Dependencias: validaciones.js, utilidades.js
+ */
+
+$(document).ready(function() {
+    // ============================================================
+    // VALIDACIONES EN TIEMPO REAL
+    // ============================================================
+
+    // Cuota de reserva (número con hasta 2 decimales)
+    $("#cuota_reserva").on("keypress", function(e) {
+        Validaciones.keyPress(/^[0-9.,]$/, e);
+    });
+    $("#cuota_reserva").on("keyup", function() {
+        if (Validaciones.keyUp(/^\d{0,12}([.,]\d{0,2})?$/,
+            this, this.nextElementSibling,
+            "Solo números, máximo 2 decimales")) {
+            
+            let inputConvertir = this.closest(".row").querySelector("[convertido]");
+            if (this.getAttribute("monto") === "bs") {
+                inputConvertir.value = (parseFloat(this.value) / tasa_dolar).toFixed(2) || 0;
+            } else {
+                inputConvertir.value = (parseFloat(this.value) * tasa_dolar).toFixed(2);
+            }
         }
     });
 
-	$("#observacion").on("keypress", function (e) {
-        validarKeyPress(/^[A-Za-z0-9ñ., \b]*$/, e);
-    });	
-    $("#observacion").on("keyup", function (e) {
-        validarKeyUp(/^[A-Za-z0-9ñ., \b]{0,50}$/, this,this.nextElementSibling,"Letras y numeros, no mas de 50 caracteres");
+    // Observación (letras, números, puntos, comas, espacios, máx 50)
+    $("#observacion").on("keypress", function(e) {
+        Validaciones.keyPress(/^[A-Za-z0-9ñ.,\s]$/, e);
+    });
+    $("#observacion").on("keyup", function() {
+        Validaciones.keyUp(/^[A-Za-z0-9ñ.,\s]{0,50}$/,
+            this, this.nextElementSibling,
+            "Máximo 50 caracteres");
     });
 
-	$("#boton_formulario").on("click",async function(e){
-		let accion = (e.target.getAttribute("modificar"))?"Editar":"Registrar";		
-		e.preventDefault();
-		if(await validarEnvio(accion)==true){
-			Swal.fire({
-			title: "¿Estás seguro?",
-			text: `¿Está seguro que desea ${accion} este presupuesto?`,
-			showCancelButton: true,
-			confirmButtonText: "Si, " + accion,
-			confirmButtonColor: "#1b8a40",
-			cancelButtonText: "Cancelar",
-			icon: "warning"
-			}).then((result) => {
-				if (result.isConfirmed) {
-					envio(accion);						
-				}
-			});
-		}	
-	});
+    // Select de fecha
+    $("#fecha").on("change", function() {
+        Validaciones.select(this.id);
+    });
+
+    // ============================================================
+    // ENVÍO DEL FORMULARIO
+    // ============================================================
+    $("#boton_formulario").on("click", async function(e) {
+        e.preventDefault();
+        const accion = $(this).attr("modificar") ? "Editar" : "Registrar";
+
+        if (await validarFormularioCompleto()) {
+            Swal.fire({
+                title: "¿Estás seguro?",
+                text: `¿Desea ${accion.toLowerCase()} este presupuesto?`,
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#1b8a40",
+                confirmButtonText: `Sí, ${accion}`,
+                cancelButtonText: "Cancelar"
+            }).then(result => {
+                if (result.isConfirmed) {
+                    if (accion === "Registrar") {
+                        registrar(); // función de presupuesto_ajax.js
+                    } else {
+                        const id = document.getElementById("boton_formulario").getAttribute("id_modificar");
+                        modificar(id);
+                    }
+                }
+            });
+        }
+    });
 });
 
-function mensajes(icono,tiempo,titulo,mensaje){
-	Swal.fire({
-	icon:icono,
-    timer:tiempo,	
-    title:titulo,
-	text:mensaje,
-	showConfirmButton:true,
-	confirmButtonText:'Aceptar',
-	confirmButtonColor: "#e01d22",
-	});
-}
-
-async function validarEnvio(accion = "Registrar"){	
-	if(validar_select("fecha")==0)
-	{
-		mensajes('error',4000,'Debe ingresar el mes',
-		'Debe seleccionar una opción');
-		
-		return false;
-	}
-	else if(validarKeyUp(/^[0-9]{0,12}[,.]{0,1}[0-9]{0,2}$/, document.getElementById('cuota_reserva'),document.getElementById('cuota_reserva').nextElementSibling,"Letras y numeros, no mas de 50 caracteres")==0)
-	{
-		mensajes('error',4000,'Debe ingresar la cuota de reserva',
-		'Debe seleccionar un monoto válido');
-		
-		return false;
-	}
-	else if(!validarInputsDetalles()){
-		return false;
-	}
-	else if(validarKeyUp(/^[A-Za-z0-9ñ., \b]{0,50}$/, document.querySelector("#observacion"),document.querySelector("#observacion").nextElementSibling,"Letras y numeros, no mas de 50 caracteres")==0)
-	{
-		mensajes('error',4000,'Atención',
-		'Debe ingresar una descripcion valida');
-		
-		return false;
-	}
-
-	return true;
-}
-
-function validarInputsDetalles() {
-	let inputs_texto = form_presupuesto.querySelectorAll("[type='text']");
-	let inputs_montos = form_presupuesto.querySelectorAll("[type='number']");
-	let total_montos = 0;
-	let error = {
-		estatus: false,
-		lugar: '',
-		input: ''
-	};
-	inputs_texto.forEach(input=>{
-		if (input.id == "observacion") {return;}		
-		if (input.value == '') {	
-			error.lugar = input.closest(".accordion-item").querySelector("button").textContent			
-			error.estatus = true;
-			error.input = 'nombre';
-		}
-	});
-	inputs_montos.forEach(input=>{
-		if (input.id == "cuota_reserva" && input.value == '') {
-			error.lugar = "Cuota de reserva";
-			error.estatus = true;
-			error.input = 'monto';
-		}
-		else if (input.value == '') {
-			error.lugar = input.closest(".accordion-item").querySelector("button").textContent			
-			error.estatus = true;
-			error.input = 'monto';
-		}else{
-			total_montos += parseFloat(input.value);
-		}
-	});
-
-	if (total_montos == 0) {
-		mensajes('error',4000,'Atención',
-			`Debe asignar algun monto al presupuesto. No puede ser 0`);
-		return false;
-	}
-
-	if (error.estatus) {
-		mensajes('error',4000,'Atención',
-			`Falta asignar un ${error.input} en el area de ${error.lugar}`);
-		return false;
-	}
-
-	return true;
-}
-
-function validarExpresionesDetalles() {
-	let error = {
-		estatus: false,
-		lugar: '',
-		mensaje: ''
-	};
-	form_presupuesto.querySelectorAll("[type='text']").forEach(input=>{
-		if (input.id == "observacion") {return;}
-		if (!validarKeyUp(/^[A-Za-z áéíóúÁÉÍÓÚñÑ\b]{4,50}$/,input,input.nextElementSibling,'Solo letras, no mas de 50 caracteres')){
-			error.lugar = input.closest(".accordion-item").querySelector("button").textContent			
-			error.estatus = true;
-			error.mensaje = 'Hay un error de escritura en uno de los nombres del area';
-		}
-	});
-	form_presupuesto.querySelectorAll("[type='number']").forEach(input=>{
-		if (!validarKeyUp(/^[0-9]{0,12}[,.]{0,1}[0-9]{0,2}$/,input,input.nextElementSibling,'Solo letras, no mas de 15 caracteres')){
-			error.lugar = input.closest(".accordion-item").querySelector("button").textContent			
-			error.estatus = true;
-			error.mensaje = 'Hay un error de escritura en uno de los montos del area';
-		}
-	});
-
-	if (error.estatus) {
-		mensajes('error',4000,'Atención',
-			`${error.mensaje}: ${error.lugar}`);
-		return false;
-	}
-
-	return true;
-}
-function validarKeyPress(er, e) {
-    key = e.keyCode;
-    tecla = String.fromCharCode(key);
-    a = er.test(tecla);
-    if (!a) {
-        e.preventDefault();
+// ============================================================
+// FUNCIÓN DE VALIDACIÓN COMPLETA
+// ============================================================
+async function validarFormularioCompleto() {
+    // Validar select de fecha
+    if (!Validaciones.select("fecha")) {
+        Utilidades.mensaje("error", "Error", "Debe seleccionar un mes");
+        return false;
     }
 
+    // Validar cuota de reserva (no vacía y formato correcto)
+    const cuota = document.getElementById("cuota_reserva");
+    if (!cuota.value || parseFloat(cuota.value) <= 0) {
+        Validaciones.mostrarError(cuota, "La cuota de reserva debe ser mayor a 0");
+        Utilidades.mensaje("error", "Error", "Cuota de reserva inválida");
+        return false;
+    }
+    if (!Validaciones.keyUp(/^\d{0,12}([.,]\d{0,2})?$/,
+        cuota, cuota.nextElementSibling, "")) {
+        Utilidades.mensaje("error", "Error", "Formato de cuota inválido");
+        return false;
+    }
+
+    // Validar observación (opcional, pero si tiene contenido debe cumplir formato)
+    const obs = document.getElementById("observacion");
+    if (obs.value && !Validaciones.keyUp(/^[A-Za-z0-9ñ.,\s]{0,50}$/,
+        obs, obs.nextElementSibling, "")) {
+        Utilidades.mensaje("error", "Error", "Observación contiene caracteres no permitidos");
+        return false;
+    }
+
+    // Validar detalles del presupuesto
+    return validarDetalles();
 }
 
-function validarKeyUp(er,etiqueta,etiquetamensaje,
-mensaje){
-	a = er.test(etiqueta.value);	
-	if(a){
-		etiqueta.classList.add('is-valid');
-		etiqueta.classList.remove('is-invalid');
-		etiquetamensaje.textContent = "";
-		return 1;
-	}
-	else{
-		etiqueta.classList.add('is-invalid')
-		etiqueta.classList.remove('is-valid');
-		etiquetamensaje.textContent = mensaje;
-		return 0;
-	}
-}
+function validarDetalles() {
+    let todosValidos = true;
+    let primerError = "";
 
-function validar_select(id) {
-	let selec = document.querySelector("#"+id);
-	if (selec.value == '') {
-		selec.classList.add('is-invalid');
-		selec.classList.remove('is-valid');
-		selec.nextElementSibling.textContent = "Debe seleccionar una opcion";
-		return false;
-	}
-	else{
-		selec.classList.add('is-valid');
-		selec.classList.remove('is-invalid');
-		selec.nextElementSibling.textContent = "";
-		return true;
-	}
+    // Validar que todos los campos de texto (nombre) tengan al menos 4 caracteres
+    document.querySelectorAll("#contenedor_presupuestos [type='text']").forEach(input => {
+        if (!Validaciones.keyUp(/^[A-Za-záéíóúñÑ \s]{4,50}$/,
+            input, input.nextElementSibling, "")) {
+            todosValidos = false;
+        console.log(input)
+            if (!primerError) primerError = "Nombre de detalle inválido (mínimo 4 letras)";
+        }
+    });
+
+    // Validar que todos los montos sean > 0 y tengan formato correcto
+    let totalMontos = 0;
+    document.querySelectorAll("#contenedor_presupuestos [type='number']").forEach(input => {
+        if (!Validaciones.keyUp(/^\d{0,12}([.,]\d{0,2})?$/,
+            input, input.nextElementSibling, "")) {
+            todosValidos = false;
+            if (!primerError) primerError = "Formato de monto inválido";
+        } else {
+            totalMontos += parseFloat(input.value) || 0;
+        }
+    });
+
+    if (totalMontos === 0) {
+        Utilidades.mensaje("error", "Error", "Debe haber al menos un monto > 0 en los detalles");
+        return false;
+    }
+
+    if (!todosValidos) {
+        Utilidades.mensaje("error", "Error", primerError || "Revise los detalles del presupuesto");
+        return false;
+    }
+
+    return true;
 }

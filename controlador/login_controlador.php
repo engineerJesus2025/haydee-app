@@ -1,254 +1,136 @@
 <?php
-    use haydee\modelo\Usuario;    
-    use haydee\modelo\Notificaciones;
-    use haydee\modelo\RolesPermisos;    
-    use haydee\modelo\AnioFiscal;
+use haydee\ayuda\Recaptcha;
+use haydee\servicios\Autenticacion;
+use haydee\servicios\Recuperacion;
+use haydee\ayuda\Sesiones;
 
-    use PHPMailer\PHPMailer\PHPMailer;
-    use PHPMailer\PHPMailer\Exception;
-        
-    $fecha_actual = date("Y-m-d H:i:s");
+// Iniciar sesión de forma segura al principio del script
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-    if (isset($_POST["operacion"])) {
-        $operacion = $_POST["operacion"];
-        if ($operacion == "entrar") {
-            if (session_status() == PHP_SESSION_ACTIVE) {
-              session_destroy();
-            }
-            $usuario_obj = new Usuario();
+// Configuración: deshabilitar reCAPTCHA en local (puedes moverlo a un archivo de configuración)
+$recaptchaDeshabilitado = defined('ENTORNO') && ENTORNO === 'local';
 
-            //validamos el reCAPTCHA
-            // $recaptchaResponse = $_POST['g-recaptcha-response'] ?? '';
+// ====================================================================
+// 1. Manejo de Peticiones AJAX (API) - Retornan JSON
+// ====================================================================
+if (isset($_POST["operacion"])) {
+    header('Content-Type: application/json');
+    $operacion = $_POST["operacion"];
+    $respuesta = ['estatus' => false, 'mensaje' => 'Operación desconocida'];
 
-            // if ($recaptchaResponse != "no_internet") {
-            //     if (empty($recaptchaResponse)) {
-            //         echo json_encode(["estatus"=>false,"mensaje"=>"Por favor, completa el reCAPTCHA"]);                
-            //         exit;
-            //     }
+    try {
+        switch ($operacion) {
+            case 'entrar':
+                $recaptchaResponse = $_POST['g-recaptcha-response'] ?? '';
 
-            //     $resultadoRecaptcha = $usuario_obj->verificarRecaptcha($recaptchaResponse);
-
-            //     if (!$resultadoRecaptcha['success']) {
-            //         $errors = $resultadoRecaptcha['error-codes'];
-            //         $mensaje_error = (in_array('timeout-or-duplicate', $errors))?"reCAPTCHA expirado, por favor inténtalo de nuevo.":"Ha ocurrido un error al tratar de validar el reCAPTCHA";
-
-            //         echo json_encode(["estatus"=>false,"mensaje"=>$mensaje_error,"err"=>$resultadoRecaptcha['error-codes']]);                
-            //         exit;
-            //     }
-            // }
-            //Validamos el usuario
-
-            $usuario_obj->set_correo($_POST["usuario"]);
-            $contrasenia = $_POST["contra"];
-
-            $resultado = $usuario_obj->realizar_consulta('validar_usuario');            
-
-            if ($resultado) {
-                if (!password_verify($contrasenia, $resultado["contrasenia"])) {
-                    echo json_encode(["estatus"=>false,"mensaje"=>"Usuario o Contraseña incorrectos"]);
-                    exit();
+                // Validar reCAPTCHA
+                $recaptcha = new Recaptcha(null, $recaptchaDeshabilitado);
+                $validacion = $recaptcha->verificar($recaptchaResponse);
+                if (!$validacion['success']) {
+                    throw new Exception($validacion['error']);
                 }
 
-                //Mantener Sesion
-                $mantener_sesion = $_POST["mantener_sesion"];                
-                if ($mantener_sesion === "true") {
-                    $token = bin2hex(random_bytes(32));
-                    $expiracion = time() + (30 * 24 * 60 * 60); // 30 días
-                    
-                    // Guardar token en los NUEVOS campos para "Recuérdame"
-                    $usuario_obj->set_token_recuerdame($token);
-                    $usuario_obj->set_duracion_token_recuerdame($expiracion);
-
-                    $resultado_token = $usuario_obj->realizar_consulta("registrar_token_recuerdame");
-
-                    if ($resultado_token["estatus"]) {
-                        setcookie('token_recuerdame', $token, $expiracion, '/', '', true, true);
-                        setcookie('correo_usuario', $_POST["usuario"], $expiracion, '/', '', true, true);
-                    }
-                }
-                else {
-                    // Si no marcó "Recuérdame", eliminar cualquier token existente
-                    $resultado_token = $usuario_obj->realizar_consulta("eliminar_token_recuerdame");
-                    if (!$resultado_token["estatus"]) {
-                        echo json_encode(["estatus"=>false,"mensaje"=>$resultado_token["mensaje"]]);
-                    }
-                }
-                //Notificaciones y datos de sesion
-
-                $notificaciones_obj = new Notificaciones();
-                $roles_permisos_obj = new RolesPermisos();
-
-                session_start();
-
-                $_SESSION["id_usuario"] = $resultado["id_usuario"];
-                $_SESSION["usuario"] = $resultado["correo"];
-                $_SESSION["nombre_completo"] = $resultado["nombre_usuario"];
-                $_SESSION["rol"] = $resultado["nombre_rol"];
-
-                $roles_permisos_obj->set_rol_id($resultado["id_rol"]);
-
-                $_SESSION["permisos"] = $roles_permisos_obj->realizar_consulta('consultar_permisos_por_usuario');
-
-                $notificaciones_obj->set_usuario_id($resultado["id_usuario"]);
-
-                $_SESSION["notificaciones"] = $notificaciones_obj->realizar_consulta('consultar_notificaciones_usuario');
-
-                $usuario_obj->registrar_bitacora(INICIAR_SESION,GESTIONAR_USUARIOS,"NINGUNO");
-                // $caja_obj = new Caja_chica();
-                // $caja_obj->realizar_consulta('verificar_caja_mes');
+                // Intentar login
+                $auth = new Autenticacion();
+                $resultado = $auth->login(
+                    $_POST['usuario'] ?? '',
+                    $_POST['contra'] ?? '',
+                    ($_POST['mantener_sesion'] ?? 'false') === 'true'
+                );
                 
-                $anio_fiscal_obj = new AnioFiscal();
-                $result_anio = $anio_fiscal_obj->realizar_consulta("verificar_anio_fiscal");
-
-                echo json_encode(["estatus"=>true,"mensaje"=>"OK"]);
-
-                exit();
-            }
-            else{
-                echo json_encode(["estatus"=>false,"mensaje"=>"Usuario o Contraseña incorrectos"]);
-                exit();
-            }
-        }
-        if ($operacion == "enviar_notificacion") {
-
-            $correo_recuperar = $_POST["correo_recuperar"];
-            $token = $_POST["token"];
-
-            $usuario_obj = new Usuario();
-
-            $usuario_obj->set_correo($correo_recuperar);
-
-            $usuario = $usuario_obj->realizar_consulta('validar_usuario');
-
-            if ($usuario) {
-                // $duracion_token = date("Y-m-d H:i:s");
-
-                $usuario_obj->set_token($token);
-                $usuario_obj->set_duracion_token($fecha_actual);
-
-                $result = $usuario_obj->realizar_consulta('registrar_token');
-
-                if (!$result) {
-                    echo json_encode(["estatus"=>false,"mensaje"=>"Ha ocurrido un error al tratar de guardar el token de recuperacion"]);
+                if ($resultado['estatus']) {
+                    if (isset($resultado['token'])) {
+                        Sesiones::recordar($_POST['usuario'], $resultado['token']);
+                    }
+                    Sesiones::iniciar($resultado['datos']);
+                    session_regenerate_id(true);
                 }
-                                
-                // De momento no
-                $url = 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
-
-                $pos = strpos($url, '?');
-
-                if ($pos !== false) {
-                  $url = substr($url, 0, $pos);
-                }
-
-                $url .= "?pagina=login_controlador.php&accion=recuperar_contrasenia&t=" . $token;
-
-                $mensaje_html = "<h3>Saludos " . $usuario['nombre_usuario'] . "</h3><p>Abre este enlace para ir al formulario de cambio de contraseña:</p><a href='$url'>Cambiar Contraseña Haydee</a>";
-
                 
+                $respuesta = $resultado;
+                break;
 
-                $mail = new PHPMailer(true);
+            case 'enviar_notificacion':
+                $recuperacion = new Recuperacion();
+                $respuesta = $recuperacion->enviarCorreoRecuperacion($_POST['correo_recuperar'] ?? '');
+                break;
 
-                try{
-                    $mail->CharSet = 'UTF-8';
-                    $mail->Encoding = 'base64';
-
-                    $mail->isSMTP();
-                    $mail->Host = 'smtp-condominioshaydee.alwaysdata.net';
-                    $mail->SMTPAuth = true;
-                    $mail->Username = 'condominioshaydee@alwaysdata.net';
-                    $mail->Password = 'Haydee.2025';
-                    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-                    $mail->Port = 587;
-
-                    $mail->setFrom('condominiohaydee@alwaysdata.net','Condominios Haydee');
-                    $mail->addAddress($usuario['correo'],$usuario['nombre_usuario'] . " (" . $usuario["nombre_rol"] . ")");
-
-                    $mail->Subject = 'Recuperar contraseña';
-                    $mail->AltBody = 'Copie este enlace para recuperar contraseña' . $url;
-
-                    // $mail->Body = $mensaje_html;
-
-                    $mail->isHTML(true);
-
-                    $mensaje = file_get_contents("vista/login/correo_recuperacion.html");
-
-                    $mensaje = str_replace('%usuario%', $usuario['nombre_usuario'], $mensaje);
-                    $mensaje = str_replace('%url%', $url, $mensaje);
-
-                    $mail->MsgHTML($mensaje);
-
-                    $mail->send();
-
-                    echo json_encode(["estatus"=>true,"mensaje"=>"Exito "]);
-                } catch(Exception $e){
-                    echo json_encode(["estatus"=>false,"mensaje"=>"Error" . $e->getMessage()]);
-                    exit();
-                }
-
-            }
-            else{
-                echo json_encode(["estatus"=>false,"mensaje"=>"Error"]);
-            }
-            exit();
+            default:
+                throw new Exception('Operación no válida');
         }
+    } catch (Exception $e) {
+        error_log("Error en controlador: " . $e->getMessage());
+        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor', 'err'=>$e->getMessage()];
     }
-    
-    if($accion == "inicio"){
+
+    echo json_encode($respuesta);
+    exit;
+}
+
+// ====================================================================
+// 2. Manejo de Vistas y Redirecciones (GET)
+// ====================================================================
+$accion = $_GET['accion'] ?? 'inicio';
+
+switch ($accion) {
+    case 'cerrar':
+        $auth = new Autenticacion();
+        // Eliminar token de la BD (y cookies)
+        $auth->logout($_SESSION['id_usuario'] ?? 0);
+        // Destruir la sesión y redirigir
+        Sesiones::cerrarSesion();
+        exit;
+
+    case 'recuperar_contrasenia':
+        $token = $_GET['t'] ?? '';
+        $recuperacion = new Recuperacion();
+        $resultado = $recuperacion->validarTokenRecuperacion($token);
+
+        if ($resultado['estatus']) {
+            // Guardar datos temporalmente en sesión (solo para este flujo)
+            $_SESSION['reset_temp'] = [
+                'correo' => $resultado['datos']['correo'],
+                'id'     => $resultado['datos']['id_usuario']
+            ];
+            require_once "vista/login/login_recuperar.php";
+        } else {
+            // Token inválido, redirigir al login con error
+            header("Location: ?pagina=login_controlador.php&accion=inicio&err=2");
+        }
+        break;
+
+    case 'guardar_contrasenia':
+        // Verificar que venimos del paso anterior
+        if (empty($_SESSION['reset_temp'])) {
+            header("Location: ?pagina=login_controlador.php");
+            exit;
+        }
+
+        $recuperacion = new Recuperacion();
+        $res = $recuperacion->cambiarContrasenia(
+            $_SESSION['reset_temp']['correo'],
+            $_POST['contra'] ?? '',
+            $_SESSION['reset_temp']['id']
+        );
+
+        // Limpiar datos temporales
+        unset($_SESSION['reset_temp']);
+
+        $redir = $res['estatus'] ? '?pagina=login_controlador.php&accion=inicio&err=1' : '?pagina=login_controlador.php&accion=inicio&err=3';
+        header("Location: $redir");
+        exit;
+
+    case 'inicio':
+    default:
+        // Si ya está logueado, redirigir al dashboard (no mostrar el login)
+        if (isset($_SESSION['id_usuario'])) {
+            header("Location: ?pagina=inicio_controlador.php&accion=inicio");
+            exit;
+        }
+        $recaptchaDeshabilitado = defined('ENTORNO') && ENTORNO === 'local';
+        echo "<script>const RECAPTCHA_DESACTIVADO = " . ($recaptchaDeshabilitado ? 'true' : 'false') . ";</script>";
+        
         require_once "vista/login/login_vista.php";
-        unset($_SESSION["mensaje"]);
-        session_destroy();
-    }
-    if ($accion == "cerrar") {
-        if (!(session_status() == PHP_SESSION_ACTIVE)) {
-              session_start();
-        }
-        
-        $usuario_obj = new Usuario();
-        $usuario_obj->set_correo($_SESSION["usuario"]);
-
-        $resultado_token = $usuario_obj->realizar_consulta("eliminar_token_recuerdame");
-
-
-        $usuario_obj->registrar_bitacora(CERRAR_SESION,GESTIONAR_USUARIOS,"NINGUNO");
-
-        session_destroy();
-        header("Location:?pagina=login_controlador.php&accion=inicio");
-    }
-
-    if ($accion == "recuperar_contrasenia") {
-        $token = $_GET["t"];
-        $duracion_token = date("Y-m-d H:i:s");
-
-        $usuario_obj = new Usuario();
-
-        $usuario_obj->set_duracion_token($duracion_token);
-        $usuario_obj->set_token($token);
-
-        $resultado = $usuario_obj->realizar_consulta('validar_token');        
-
-        if ($resultado) {
-            $usuario_obj->realizar_consulta('eliminar_token');
-        }
-
-        require_once "vista/login/login_recuperar.php";
-    }
-    if ($accion == "guardar_contrasenia") {
-        $usuario_obj = new Usuario();
-
-        $contrasenia = $_POST["contra"];
-        $correo = $_POST["correo"];
-
-        $usuario_obj->set_correo($correo);
-        $usuario_obj->set_contra($contrasenia);
-
-        $resultado = $usuario_obj->realizar_consulta('cambiar_contrasenia');
-        
-        if ($resultado) {
-            header("Location:?pagina=login_controlador.php&accion=inicio&r=1");
-        }
-        else{
-            header("Location:?pagina=login_controlador.php&accion=inicio&r=0");
-        }
-    }
-?>
+        break;
+}

@@ -1,247 +1,104 @@
-$(document).ready(function(){
-	$("#fecha_inicio").on("keyup",function(){
-		validarKeyUp(/^\d{4}-\d{2}-\d{2}$/,
-		this,this.nextElementSibling,"Debe ingresar una fecha adecuada")
-	});
+$(document).ready(function() {
+    // Validaciones en tiempo real
+    $('#fecha_inicio, #fecha_cierre').on('keyup', function() {
+        Validaciones.campo(this, /^\d{4}-\d{2}-\d{2}$/, 'Debe ingresar una fecha válida (YYYY-MM-DD)');
+    });
 
-	$("#fecha_cierre").on("keyup",function(){
-		validarKeyUp(/^\d{4}-\d{2}-\d{2}$/,
-		this,this.nextElementSibling,"Debe ingresar una fecha adecuada");
-	});
+    $('#descripcion').on('keypress', e => Validaciones.keyPress(/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ,.\s]$/, e));
+    $('#descripcion').on('keyup', function() {
+        Validaciones.campo(this, /^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ,.\s]{0,50}$/, 'Máximo 50 caracteres, solo letras, números y puntuación básica');
+    });
 
-	$("#descripcion").on("keypress",function(e){	
-		validarKeyPress(/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ,.\s]*$/, e);
-	});
+    $('#estado').on('change', function() {
+        Validaciones.campo(this, /^[A-Za-z]{3,15}$/, 'El estado debe tener entre 3 y 15 letras');
+    });
 
-	$("#descripcion").on("keyup",function(e){
-		validarKeyUp(/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ,.\s]{0,50}$/,this,
-		this.nextElementSibling,"Solo texto, no mas de 50 caracteres");
-	});
+    // Auto-calcular fecha de cierre al cambiar fecha de inicio
+    $('#fecha_inicio').on('change', function() {
+        if (Validaciones.campo(this, /^\d{4}-\d{2}-\d{2}$/, '')) {
+            const fecha = new Date(this.value);
+            fecha.setFullYear(fecha.getFullYear() + 1);
+            $('#fecha_cierre').val(fecha.toISOString().split('T')[0]);
+            Validaciones.limpiar($('#fecha_cierre')[0]);
+        }
+    });
 
-	document.getElementById('estado').addEventListener("change",e=>{
-		let valido = validarKeyUp(/^[a-zA-z]{3,15}$/,
-		e.target,e.target.nextElementSibling,"El valor del estado no es válido");
-
-		if (!valido) return;
-	});
-	
-	$("#boton_formulario").on("click",async function(e){
-		let accion = (e.target.getAttribute("modificar"))?"Editar":"Registrar";		
-		e.preventDefault();
-		if(await validarEnvio(accion)==true){
-				Swal.fire({
-				title: "¿Estás seguro?",
-				text: `¿Está seguro que desea ${accion} este usuario?`,
-				showCancelButton: true,
-				confirmButtonText: "Si, " + accion,
-				confirmButtonColor: "#1b8a40",
-				cancelButtonText: "Cancelar",
-				icon: "warning"
-			    }).then((result) => {
-					if (result.isConfirmed) {
-						envio(accion);						
-						correo_an = null;//resetea el valor del correo original (esto es de usuario_ajax.js)
-					}
-			    });
-		}	
-	});
-
-	$("#fecha_inicio").on("change",function(){
-		if(validarKeyUp(/^(?:(?:1[6-9]|[2-9]\d)?\d{2})(?:(?:(\/|-|\.)(?:0?[13578]|1[02])\1(?:31))|(?:(\/|-|\.)(?:0?[13-9]|1[0-2])\2(?:29|30)))$|^(?:(?:(?:1[6-9]|[2-9]\d)?(?:0[48]|[2468][048]|[13579][26])|(?:(?:16|[2468][048]|[3579][26])00)))(\/|-|\.)0?2\3(?:29)$|^(?:(?:1[6-9]|[2-9]\d)?\d{2})(\/|-|\.)(?:(?:0?[1-9])|(?:1[0-2]))\4(?:0?[1-9]|1\d|2[0-8])$/,
-		this,this.nextElementSibling,"Debe ingresar una fecha adecuada")){			
-			nuevaFecha = new Date(this.value);
-			nuevaFecha.setFullYear(nuevaFecha.getFullYear() + 1);
-			$("#fecha_cierre")[0].valueAsDate = nuevaFecha;
-		}
-	});
-
-});	//Fin de AJAX
-let nuevaFecha;
-function mensajes(icono,tiempo,titulo,mensaje){
-	Swal.fire({
-	icon:icono,
-    timer:tiempo,	
-    title:titulo,
-	text:mensaje,
-	showConfirmButton:true,
-	confirmButtonText:'Aceptar',
-	confirmButtonColor: "#e01d22",
-	});
-}
-
-async function validarEnvio(){
-	let fecha_inicio = document.querySelector("#fecha_inicio");
-	let fecha_cierre = document.querySelector("#fecha_cierre");
-
-	if(validarFecha(fecha_inicio)==0)
-	{
-		mensajes('error',4000,'Verifique la fecha de inicio Ingresada',
-		'Debe ingresar una fecha adecuada');
-		
-		return false;
-	}
-	else if(validarFecha(fecha_cierre)==0)
-	{
-		mensajes('error',4000,'Verifique la fecha de cierre Ingresada',
-		'Debe ingresar una fecha adecuada');
-		
-		return false;
-	}
-	else if(validarLogicaFechas(fecha_inicio,fecha_cierre)==0)
-	{
-		mensajes('error',4000,'Verifique la fecha de cierre Ingresada',
-		'Debe ingresar una fecha adecuada');
-		
-		return false;
-	}
-	else if(validar_select("estado")==0)
-	{
-		mensajes('error',4000,'Verifique el estado Ingresado',
-		'Debe seleccionar una opción');
-		
-		return false;
-	}
-	else if(validarKeyUp(
-        /^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ,.\s]{0,50}$/,
-        document.querySelector("#descripcion"),document.querySelector("#descripcion").nextElementSibling,'Err'
-        )==0)
-	{
-		mensajes('error',4000,'Verifique la descripción Ingresada',
-		'Solo texto, no mas de 50 caracteres');
-		
-		return false;
-	}
-
-	let valido = validarKeyUp(/^[a-zA-z]{3,15}$/,
-	document.getElementById('estado'),document.getElementById('estado').nextElementSibling,"El valor del estado no es válido");
-
-	if (!valido) {
-		mensajes('error',4000,'Atención','El valor del estado ingresado no es válido');
-		return false;
-	}
-	
-	return true;
-}
-
-function validarKeyPress(er, e) {
-    key = e.keyCode;
-    tecla = String.fromCharCode(key);
-    a = er.test(tecla);
-    if (!a) {
+    // Validación de envío
+    $('#boton_formulario').on('click', async function(e) {
         e.preventDefault();
-    }
-}
+        const accion = this.dataset.id ? 'Editar' : 'Registrar';
+        if (await validarEnvio(accion)) {
+            Swal.fire({
+                title: '¿Estás seguro?',
+                text: `¿Desea ${accion} este año fiscal?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#1b8a40',
+                confirmButtonText: 'Sí, ' + accion
+            }).then(result => {
+                if (result.isConfirmed) {
+                    accion === 'Editar' ? modificar() : registrar();
+                }
+            });
+        }
+    });
+});
 
-function validarKeyUp(er,etiqueta,etiquetamensaje,
-mensaje){
-	a = er.test(etiqueta.value);
-	
-	if(a){
-		etiqueta.classList.add('is-valid');
-		etiqueta.classList.remove('is-invalid');
-		etiquetamensaje.textContent = "";
-		return 1;
-	}
-	else{
-		etiqueta.classList.add('is-invalid')
-		etiqueta.classList.remove('is-valid');
-		etiquetamensaje.textContent = mensaje;
-		return 0;
-	}
-}
+async function validarEnvio(accion) {
+    // Validar campos obligatorios
+    const campos = [
+        { input: '#fecha_inicio', regex: /^\d{4}-\d{2}-\d{2}$/, msg: 'Fecha de inicio inválida' },
+        { input: '#fecha_cierre', regex: /^\d{4}-\d{2}-\d{2}$/, msg: 'Fecha de cierre inválida' },
+        { input: '#estado', regex: /^[A-Za-z]{3,15}$/, msg: 'Estado inválido' }
+    ];
 
-function validar_select(id) {
-	let selec = document.querySelector("#"+id);
-	if (selec.value == '') {
-		selec.classList.add('is-invalid')
-		selec.classList.remove('is-valid');
-		selec.nextElementSibling.textContent = "Debe seleccionar una opcion";
-		return false;
-	}
-	else{
-		selec.classList.add('is-valid');
-		selec.classList.remove('is-invalid');
-		selec.nextElementSibling.textContent = "";
-		return true;
-	}
-}
-
-function validarFecha(fecha){
-	if (fecha.value == '') {
-		fecha.classList.add('is-invalid')
-		fecha.classList.remove('is-valid');
-		fecha.nextElementSibling.textContent = "Debe seleccionar una opcion";
-		return false;		
-	}
-
-	let expresion = /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
-
-	if (!expresion.test(fecha.value)) {
-		fecha.classList.add('is-invalid')
-		fecha.classList.remove('is-valid');
-		fecha.nextElementSibling.textContent = "Formato de la fecha incorrecto";
-		return false;
-	}
-
-	const [anio, mes, dia] = fecha.value.split('-').map(Number);
-	const fecha_validar = new Date(anio,mes-1,dia);
-	// console.log(fecha_validar,fecha.value);
-
-	if (fecha_validar.getFullYear() !== anio || fecha_validar.getMonth() !== mes - 1 || fecha_validar.getDate() !== dia) {
-        fecha.classList.add('is-invalid')
-		fecha.classList.remove('is-valid');
-		fecha.nextElementSibling.textContent = "La fecha es inválida (ejemplo: 31 de Febrero)";
-		return false;
+    for (const c of campos) {
+        const el = document.querySelector(c.input);
+        if (!el.value || (c.regex && !c.regex.test(el.value))) {
+            Validaciones.mostrarError(el, c.msg);
+            Utilidades.mensaje('error', 'Error', c.msg);
+            return false;
+        }
+        Validaciones.limpiar(el);
     }
 
-	if (fecha_validar.getFullYear() < 2000) {
-		fecha.classList.add('is-invalid')
-		fecha.classList.remove('is-valid');
-		fecha.nextElementSibling.textContent = "La fecha debe ser posterior al 2000";
-		return false;
-	}
+    // Validar lógica de fechas (rango de un año)
+    if (!await validarRangoFechas()) return false;
 
-	fecha.classList.add('is-valid');
-	fecha.classList.remove('is-invalid');
-	fecha.nextElementSibling.textContent = "";
-	return true;
+    // Descripción es opcional, pero si tiene valor validar formato
+    const desc = document.querySelector('#descripcion');
+    if (desc.value && !/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ,.\s]{0,50}$/.test(desc.value)) {
+        Validaciones.mostrarError(desc, 'Descripción inválida');
+        Utilidades.mensaje('error', 'Error', 'La descripción contiene caracteres no permitidos.');
+        return false;
+    }
+
+    return true;
 }
 
-function validarLogicaFechas(inicio,cierre){
-	let [anio_inicio, mes_inicio, dia_inicio] = inicio.value.split('-').map(Number);
-	const fecha_inicio = new Date(anio_inicio,mes_inicio-1,dia_inicio);
+async function validarRangoFechas() {
+    const inicio = document.querySelector('#fecha_inicio');
+    const cierre = document.querySelector('#fecha_cierre');
 
-	let [anio_cierre, mes_cierre, dia_cierre] = cierre.value.split('-').map(Number);
-	const fecha_cierre = new Date(anio_cierre,mes_cierre-1,dia_cierre);
+    const fechaInicio = new Date(inicio.value);
+    const fechaCierre = new Date(cierre.value);
 
-	if (fecha_inicio >= fecha_cierre) {
-		inicio.classList.add('is-invalid')
-		inicio.classList.remove('is-valid');
-		inicio.nextElementSibling.textContent = "La fecha de inicio debe ser anterior que la de cierre";
-		cierre.classList.add('is-invalid')
-		cierre.classList.remove('is-valid');
-		cierre.nextElementSibling.textContent = "La fecha de cierre debe ser posterior que la de inicio";
-		return false;
-	}
+    if (fechaInicio >= fechaCierre) {
+        Validaciones.mostrarError(inicio, 'La fecha de inicio debe ser anterior a la de cierre');
+        Validaciones.mostrarError(cierre, 'La fecha de cierre debe ser posterior a la de inicio');
+        Utilidades.mensaje('error', 'Error', 'La fecha de inicio debe ser anterior a la de cierre.');
+        return false;
+    }
 
-	const dia = 1000 * 60 * 60 * 24;
-	const diferencia = Math.floor((fecha_cierre - fecha_inicio) / dia);
+    const diferencia = Math.round((fechaCierre - fechaInicio) / (1000 * 60 * 60 * 24));
+    if (diferencia < 364 || diferencia > 366) {
+        Validaciones.mostrarError(inicio, `El período debe ser de aproximadamente un año (364-366 días). Días actuales: ${diferencia}`);
+        Validaciones.mostrarError(cierre, `El período debe ser de aproximadamente un año (364-366 días). Días actuales: ${diferencia}`);
+        Utilidades.mensaje('error', 'Error', `El período debe ser de un año (364-366 días). Días calculados: ${diferencia}.`);
+        return false;
+    }
 
-	if (diferencia < 364 || diferencia > 366) {
-		inicio.classList.add('is-invalid')
-		inicio.classList.remove('is-valid');
-		inicio.nextElementSibling.textContent = "El periodo debe ser de 1 año (364-366 dias)";
-		cierre.classList.add('is-invalid')
-		cierre.classList.remove('is-valid');
-		cierre.nextElementSibling.textContent = "El periodo debe ser de 1 año (364-366 dias)";
-		return false;
-	}
-
-	inicio.classList.add('is-valid');
-	inicio.classList.remove('is-invalid');
-	inicio.nextElementSibling.textContent = "";
-	cierre.classList.add('is-valid');
-	cierre.classList.remove('is-invalid');
-	cierre.nextElementSibling.textContent = "";
-	return true;
+    Validaciones.limpiar(inicio);
+    Validaciones.limpiar(cierre);
+    return true;
 }

@@ -1,28 +1,30 @@
+/**
+ * reporte_gastos.js
+ * Generación de reporte mensual de gastos
+ * Dependencias: utilidades.js, validaciones.js
+ */
+
 const anioSelect = document.getElementById('anio_reporte');
 const mesSelect = document.getElementById('mes_reporte');
 const btnGenerar = document.getElementById('btn_generar_reporte_gastos');
-const boton_cuadro_gastos = document.getElementById("boton_cuadro_gastos");
+const botonCuadroGastos = document.getElementById("boton_cuadro_gastos");
 const formReporte = document.getElementById('form_gastos_mensual');
 
 let periodosDisponibles = {};
 const nombresMeses = ["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-// /^[0-9]{1,2}-[0-9]{4}$/
-anioSelect.addEventListener('change', () => {
-    let valido = validarKeyUp(/^[0-9]{4}$/,anioSelect,anioSelect.nextElementSibling,'El año seleccionado no es válido');
 
-    if (!valido) {
+anioSelect.addEventListener('change', () => {
+    if (!Validaciones.keyUp(/^\d{4}$/, anioSelect, anioSelect.nextElementSibling, 'Año inválido')) {
         btnGenerar.disabled = true;
         return;
     }
-
-    const anioSeleccionado = anioSelect.value;
-    
+    const anio = anioSelect.value;
     mesSelect.innerHTML = '<option value="">Seleccione un mes...</option>';
     mesSelect.disabled = true;
     btnGenerar.disabled = true;
 
-    if (anioSeleccionado && periodosDisponibles[anioSeleccionado]) {
-        periodosDisponibles[anioSeleccionado].sort((a, b) => a - b).forEach(mes => {
+    if (anio && periodosDisponibles[anio]) {
+        periodosDisponibles[anio].sort((a, b) => a - b).forEach(mes => {
             mesSelect.add(new Option(nombresMeses[mes], mes));
         });
         mesSelect.disabled = false;
@@ -30,61 +32,50 @@ anioSelect.addEventListener('change', () => {
 });
 
 mesSelect.addEventListener('change', () => {
-    let valido = validarKeyUp(/^[0-9]{1,2}$/,mesSelect,mesSelect.nextElementSibling,'El mes seleccionado no es válido');
-
-    if (!valido) {
+    if (!Validaciones.keyUp(/^\d{1,2}$/, mesSelect, mesSelect.nextElementSibling, 'Mes inválido')) {
         btnGenerar.disabled = true;
         return;
     }
-
     btnGenerar.disabled = !mesSelect.value;
 });
 
 function consultarPeriodosDeGastos() {
-    let datos_consulta = new FormData();
-    datos_consulta.append('operacion', 'consultar_meses_con_gastos');
+    let datos = new FormData();
+    datos.append('operacion', 'listar_meses_con_gastos');
 
-    fetch("", { method: 'POST', body: datos_consulta })
-        .then(res => {
-            if (!res.ok) {
-                throw new Error('La respuesta del servidor no fue exitosa');
-            }
-            return res.json();
-        })
-        .then(periodos => {
-            // Agrupamos los meses por cada año
-            periodosDisponibles = periodos.reduce((acc, item) => {
+    Utilidades.query(datos).then(respuesta => {
+        if (respuesta.estatus && respuesta.datos.length > 0) {
+            // Agrupar por año
+            periodosDisponibles = respuesta.datos.reduce((acc, item) => {
                 const { anio, mes } = item;
                 if (!acc[anio]) acc[anio] = [];
                 acc[anio].push(parseInt(mes));
                 return acc;
             }, {});
 
-            // Llenamos el select de años
             anioSelect.innerHTML = '<option value="">Seleccione un año...</option>';
             Object.keys(periodosDisponibles).sort((a, b) => b - a).forEach(anio => {
                 anioSelect.add(new Option(anio, anio));
             });
 
-            boton_cuadro_gastos.removeAttribute("disabled");
-            boton_cuadro_gastos.querySelector(".spinner-grow").parentElement.innerHTML = `<i class="bi bi-receipt-cutoff" style="font-size: 5rem !important;"></i>`;
-        })
-        .catch(error => {
-            console.error("Error al cargar los períodos:", error);
-            anioSelect.innerHTML = '<option value="">Error al cargar</option>';
-        });
+            botonCuadroGastos.removeAttribute("disabled");
+            let spinnerContainer = botonCuadroGastos.querySelector(".spinner-grow")?.parentElement;
+            if (spinnerContainer) {
+                spinnerContainer.innerHTML = `<i class="bi bi-receipt-cutoff" style="font-size: 5rem !important;"></i>`;
+            }
+        } else {
+            anioSelect.innerHTML = '<option value="">No hay datos</option>';
+            Utilidades.mensaje('info', 'Información', 'No hay gastos registrados para generar reportes');
+        }
+    }).catch(error => {
+        console.error("Error al cargar períodos:", error);
+        anioSelect.innerHTML = '<option value="">Error al cargar</option>';
+    });
 }
 
-// Añade este nuevo evento 'submit'
 formReporte.addEventListener('submit', function(event) {
-    let tasa_dolar = parseFloat(isNaN(localStorage.getItem("tasa_dolar"))?1:localStorage.getItem("tasa_dolar")).toFixed(2);
-
-    if (tasa_dolar) {
-        document.getElementById('tasa_dolar_reporte').value = tasa_dolar;
-    } else {
-        alert("Error: No se encontró la tasa del dólar para generar el reporte.");
-        event.preventDefault(); // Detiene el envío del formulario
-    }
+    let tasaDolar = parseFloat(localStorage.getItem("tasa_dolar") || 1).toFixed(2);
+    document.getElementById('tasa_dolar_reporte').value = tasaDolar;
 });
 
 consultarPeriodosDeGastos();

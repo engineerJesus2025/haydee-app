@@ -1,4 +1,4 @@
-<?php use haydee\modelo\CarteleraVirtual; ?>
+<?php use haydee\ayuda\Sesiones; ?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -12,9 +12,9 @@
 
 <body id="body-pd" class="body-pd">
     <input type="text" hidden="" id="permiso_eliminar"
-        value="<?php echo CarteleraVirtual::tiene_permiso(GESTIONAR_CARTELERA_VIRTUAL, ELIMINAR) ?>">
+        value="<?php echo Sesiones::tienePermiso(GESTIONAR_CARTELERA_VIRTUAL, ELIMINAR) ?>">
     <input type="text" hidden="" id="permiso_editar"
-        value="<?php echo CarteleraVirtual::tiene_permiso(GESTIONAR_CARTELERA_VIRTUAL, MODIFICAR) ?>">
+        value="<?php echo Sesiones::tienePermiso(GESTIONAR_CARTELERA_VIRTUAL, MODIFICAR) ?>">
     <div class="container-fluid">
         <div class="row flex-nowrap">
 
@@ -39,7 +39,7 @@
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="card p-4">
-                                <?php if (CarteleraVirtual::tiene_permiso(GESTIONAR_CARTELERA_VIRTUAL, REGISTRAR)): ?>
+                                <?php if (Sesiones::tienePermiso(GESTIONAR_CARTELERA_VIRTUAL, REGISTRAR)): ?>
                                     <div class="button mb-4">
                                         <button type="button" class="btn btn-primary" data-bs-toggle="modal"
                                             data-bs-target="#modal_cartelera">Nueva Publicación</button>

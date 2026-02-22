@@ -2,8 +2,6 @@
 	<div class="col-sm-5">
 		<select class="form-select" id="mes_select_asignar">
 			<option hidden="" selected="" value="">Seleccione el mes para asignar</option>
-			<option value="1/2/202123">fecha incorrecatoa</option>
-			<option value="1/2/2026">fecha inecistete</option>
 		</select>
 		<span class="w-100 invalid-feedback"></span>
 	</div>
@@ -17,7 +15,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			<?php foreach ($registos_apartamentos as $registro) { ?>
+			<?php foreach ($registros_apartamentos as $registro) { ?>
 				<tr id="<?php echo($registro["id_apartamento"]); ?>" data-participacion="<?php echo($registro["porcentaje_participacion"]) ?>" data-gas="<?php echo($registro["gas"]) ?>">
 					<td><?php echo $registro["nro_apartamento"]; ?></td>
 				</tr>

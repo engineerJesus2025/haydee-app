@@ -1,6 +1,6 @@
 <?php
 namespace haydee\modelo;
-use haydee\modelo\Conexion;
+
 use PDO;
 use PDOException;
 
@@ -14,294 +14,415 @@ class SolicitudGasto extends Conexion
     private $estado;
     private $presupuesto_id;
     private $prioridad;
+    private $activo;
 
-    public function __construct()
-    {
-        parent::__construct();
-    }
+    // Reglas de validación centralizadas
+    private $reglas = [
+        'id_solicitud' => [
+            'regex' => '/^\d+$/',
+            'exists' => ['tabla' => 'solicitudes_gasto', 'campo' => 'id_solicitud']
+        ],
+        'fecha_reporte' => [
+            'regex' => '/^\d{4}-\d{2}-\d{2}$/',
+            'custom' => 'validarFecha'
+        ],
+        'descripcion_necesidad' => [
+            'regex' => '/^[A-Za-z0-9áéíóúÁÉÍÓÚñÑ\s,.;:()\-]{3,255}$/'
+        ],
+        'nombre_solicitante' => [
+            'regex' => '/^[A-Za-záéíóúÁÉÍÓÚñÑ\s]{3,50}$/'
+        ],
+        'monto_estimado' => [
+            'regex' => '/^\d+(\.\d{1,2})?$/'
+        ],
+        'estado' => [
+            'regex' => '/^(pendiente|aprobado|rechazado|asignado)$/i'
+        ],
+        'presupuesto_id' => [
+            'regex' => '/^\d+$/',
+            'exists' => ['tabla' => 'presupuesto', 'campo' => 'id_presupuesto']
+        ],
+        'prioridad' => [
+            'regex' => '/^(1|2|3)$/i'
+        ]
+    ];
 
-    public function set_id_solicitud($id_solicitud)
-    {
-        $this->id_solicitud = $id_solicitud;
-    }
+    // Getters y Setters
+    public function set_id_solicitud($id) { $this->id_solicitud = $id; }
+    public function get_id_solicitud() { return $this->id_solicitud; }
+    public function set_fecha_reporte($f) { $this->fecha_reporte = $f; }
+    public function get_fecha_reporte() { return $this->fecha_reporte; }
+    public function set_descripcion_necesidad($d) { $this->descripcion_necesidad = $d; }
+    public function get_descripcion_necesidad() { return $this->descripcion_necesidad; }
+    public function set_nombre_solicitante($n) { $this->nombre_solicitante = $n; }
+    public function get_nombre_solicitante() { return $this->nombre_solicitante; }
+    public function set_monto_estimado($m) { $this->monto_estimado = $m; }
+    public function get_monto_estimado() { return $this->monto_estimado; }
+    public function set_estado($e) { $this->estado = $e; }
+    public function get_estado() { return $this->estado; }
+    public function set_presupuesto_id($id) { $this->presupuesto_id = $id; }
+    public function get_presupuesto_id() { return $this->presupuesto_id; }
+    public function set_prioridad($p) { $this->prioridad = $p; }
+    public function get_prioridad() { return $this->prioridad; }
+    public function set_activo($activo) { $this->activo = $activo; }
+    public function get_activo() { return $this->activo; }
 
-    public function get_id_solicitud()
-    {
-        return $this->id_solicitud;
-    }
-    public function set_fecha_reporte($fecha_reporte)
-    {
-        $this->fecha_reporte = $fecha_reporte;
-    }
-
-    public function get_fecha_reporte()
-    {
-        return $this->fecha_reporte;
-    }
-    public function set_descripcion_necesidad($descripcion_necesidad)
-    {
-        $this->descripcion_necesidad = $descripcion_necesidad;
-    }
-
-    public function get_descripcion_necesidad()
-    {
-        return $this->descripcion_necesidad;
-    }
-    public function set_nombre_solicitante($nombre_solicitante)
-    {
-        $this->nombre_solicitante = $nombre_solicitante;
-    }
-
-    public function get_nombre_solicitante()
-    {
-        return $this->nombre_solicitante;
-    }
-    public function set_monto_estimado($monto_estimado)
-    {
-        $this->monto_estimado = $monto_estimado;
-    }
-
-    public function get_monto_estimado()
-    {
-        return $this->monto_estimado;
-    }
-    public function set_estado($estado)
-    {
-        $this->estado = $estado;
-    }
-
-    public function get_estado()
-    {
-        return $this->estado;
-    }
-    public function set_presupuesto_id($presupuesto_id)
-    {
-        $this->presupuesto_id = $presupuesto_id;
-    }
-
-    public function get_presupuesto_id()
-    {
-        return $this->presupuesto_id;
-    }
-    public function set_prioridad($prioridad)
-    {
-        $this->prioridad = $prioridad;
-    }
-    public function get_prioridad()
-    {
-        return $this->prioridad;
-    }
-
+    /**
+     * Enruta la acción al método privado correspondiente.
+     */
     public function realizar_consulta($accion)
     {
-        switch ($accion) {
-            case 'consultar':
-                $respuesta = $this->consultar();
-
-                if ($respuesta["resultado"]) {
-                    return $respuesta["datos"];
-                } else {
-                    return ["estatus" => false, "mensaje" => "Ha ocurrido un error con la consulta"];
-                }
-
-            case 'consultar_solicitud_id':
-                $respuesta = $this->consultar_solicitud_id();
-                if ($respuesta["resultado"]) {
-                    return $respuesta["datos"];
-                } else {
-                    return ["estatus" => false, "mensaje" => "Ha ocurrido un error con la consulta"];
-                }
-
-            case 'registrar':
-                $validacion = $this->validar_datos('registrar');
-                if (!$validacion["estatus"]) {
-                    return $validacion; // Si la validación falla, retorna el mensaje de error
-                }
-                $respuesta = $this->registrar();
-
-                if ($respuesta) {
-                    return ["estatus" => true, "mensaje" => "OK"];
-                } else {
-                    return ["estatus" => false, "mensaje" => "Ha ocurrido un error al intentar registrar la solicitud"];
-                }
-
-            case 'modificar':
-                $validacion = $this->validar_datos('modificar');
-                if (!$validacion["estatus"]) {
-                    return $validacion; // Si la validación falla, retorna el mensaje de error
-                }
-                $respuesta = $this->editar_solicitud();
-
-                if ($respuesta) {
-                    return ["estatus" => true, "mensaje" => "OK"];
-                } else {
-                    return ["estatus" => false, "mensaje" => "Ha ocurrido un error al intentar editar la solicitud"];
-                }
-
-            case 'eliminar':
-                 $validacion = $this->validar_datos('eliminar');
-                if (!$validacion["estatus"]) {
-                    return $validacion; // Si la validación falla, retorna el mensaje de error
-                }
-                $respuesta = $this->eliminar_solicitud();
-
-                if ($respuesta) {
-                    $this->registrar_bitacora(ELIMINAR, GESTIONAR_SOLICITUD_GASTO, "Solicitud de " . $this->nombre_solicitante . " por " . $this->monto_estimado);
-                    return ["estatus" => true, "mensaje" => "OK"];
-                } else {
-                    return ["estatus" => false, "mensaje" => "Ha ocurrido un error al intentar eliminar la solicitud"];
-                }
-
-            case 'lastId':
-                $respuesta = $this->lastId();
-
-                if ($respuesta["resultado"]) {
-                    return $respuesta["datos"];
-                } else {
-                    return ["estatus" => false, "mensaje" => "Ha ocurrido un error con la consulta"];
-                }
-
-            
-
-            default:
-                return ["resultado" => false, "mensaje" => "Acción no reconocida"];
+        $metodo = '_' . $accion;
+        if (!method_exists($this, $metodo)) {
+            return ['estatus' => false, 'mensaje' => "La acción '$accion' no está implementada."];
         }
 
+        try {
+            return $this->$metodo();
+        } catch (\Exception $e) {
+            error_log("Error en realizar_consulta ($accion): " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Ocurrió un error interno en el servidor.'];
+        }
     }
 
-    private function consultar()
+    // -----------------------------------------------------------------
+    // Método de validación centralizado
+    // -----------------------------------------------------------------
+
+    private function validar($campos, $contexto = [])
     {
-        $sql = "SELECT * FROM solicitudes_gasto";
-        $conexion = $this->get_conex()->prepare($sql);
-        $result = $conexion->execute();
-        $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($campos as $campo) {
+            if (!isset($this->reglas[$campo])) {
+                return [
+                    'estatus' => false,
+                    'mensaje' => "No hay reglas de validación definidas para el campo '$campo'."
+                ];
+            }
+            $regla = $this->reglas[$campo];
 
-        return ["resultado" => $result, "datos" => $datos];
+            $getter = 'get_' . $campo;
+            if (!method_exists($this, $getter)) {
+                return [
+                    'estatus' => false,
+                    'mensaje' => "El campo '$campo' no tiene un getter definido."
+                ];
+            }
+            $valor = $this->$getter();
 
+            // Requerido
+            if ($valor === null) {
+                return [
+                    'estatus' => false,
+                    'mensaje' => "El campo '$campo' es requerido y no se ha establecido."
+                ];
+            }
+            if (is_string($valor) && trim($valor) === '') {
+                return [
+                    'estatus' => false,
+                    'mensaje' => "El campo '$campo' no puede estar vacío."
+                ];
+            }
+
+            // Validar con expresión regular
+            if (isset($regla['regex'])) {
+                if (!preg_match($regla['regex'], (string)$valor)) {
+                    return [
+                        'estatus' => false,
+                        'mensaje' => "El campo '$campo' no tiene un formato válido."
+                    ];
+                }
+            }
+
+            // Validación personalizada
+            if (isset($regla['custom']) && method_exists($this, $regla['custom'])) {
+                if (!$this->{$regla['custom']}($valor)) {
+                    return [
+                        'estatus' => false,
+                        'mensaje' => "El campo '$campo' no es válido."
+                    ];
+                }
+            }
+
+            // Validar existencia en otra tabla (foránea)
+            if (isset($regla['exists'])) {
+                $tabla = $regla['exists']['tabla'];
+                $campoFor = $regla['exists']['campo'] ?? $campo;
+                if (!$this->existeEnTabla($tabla, $campoFor, $valor)) {
+                    return [
+                        'estatus' => false,
+                        'mensaje' => "El valor del campo '$campo' no existe en la tabla $tabla."
+                    ];
+                }
+            }
+        }
+
+        // Validaciones adicionales que dependen de varios campos
+        if (in_array('monto_estimado', $campos) && in_array('presupuesto_id', $campos)) {
+            $disponible = $this->calcularDisponiblePresupuesto($contexto);
+            if ($disponible !== null && $this->monto_estimado > $disponible) {
+                return [
+                    'estatus' => false,
+                    'mensaje' => "El monto solicitado excede el presupuesto disponible ("
+                        . number_format($disponible, 2, ',', '.') . " Bs)."
+                ];
+            }
+        }
+
+        return ['estatus' => true];
     }
 
-    private function consultar_solicitud_id()
+    /**
+     * Verifica si un valor existe en una tabla específica (usa BD negocio).
+     */
+    private function existeEnTabla($tabla, $campo, $valor)
+    {
+        $sql = "SELECT COUNT(*) as total FROM $tabla WHERE $campo = :valor";
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->bindParam(':valor', $valor);
+            $stmt->execute();
+            $fila = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $fila['total'] > 0;
+        } catch (PDOException $e) {
+            error_log("Error en existeEnTabla: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Validación personalizada para fecha.
+     */
+    private function validarFecha($fecha)
+    {
+        $valores = explode('-', $fecha);
+        return count($valores) == 3 && checkdate((int)$valores[1], (int)$valores[2], (int)$valores[0]);
+    }
+
+    /**
+     * Calcula el presupuesto disponible para un presupuesto dado.
+     * @param array $contexto Puede contener 'id_solicitud' para excluir la solicitud actual en edición.
+     * @return float|null Monto disponible o null si no se pudo calcular.
+     */
+    private function calcularDisponiblePresupuesto($contexto = [])
     {
         $sql = "SELECT 
-                sg.id_solicitud, sg.fecha_reporte, sg.descripcion_necesidad, sg.nombre_solicitante,
-                sg.monto_estimado, sg.monto_estimado AS monto_original, sg.estado, sg.prioridad, sg.presupuesto_id,
-                p.fecha AS fecha_presupuesto,
-                MONTH(p.fecha) AS mes,
-                YEAR(p.fecha) AS anio,
-                (SELECT SUM(dp.monto_detalle) FROM detalles_presupuesto dp WHERE dp.presupuesto_id = p.id_presupuesto) AS monto_presupuesto_total,
-                ((SELECT SUM(dp.monto_detalle) FROM detalles_presupuesto dp WHERE dp.presupuesto_id = p.id_presupuesto) - (
-                    SELECT IFNULL(SUM(sg2.monto_estimado), 0)
-                    FROM solicitudes_gasto sg2
-                    WHERE sg2.presupuesto_id = p.id_presupuesto
-                    AND sg2.estado IN ('pendiente', 'aprobado')
-                )) AS disponible
-            FROM solicitudes_gasto sg
-            JOIN presupuesto p ON sg.presupuesto_id = p.id_presupuesto
-            WHERE sg.id_solicitud = :id
-            LIMIT 1";
-
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":id", $this->id_solicitud);
-        $result = $conexion->execute();
-        $datos = $conexion->fetch(PDO::FETCH_ASSOC);
-        return ["resultado" => $result, "datos" => $datos];
+                    (SELECT SUM(dp.monto) FROM detalles_presupuesto dp WHERE dp.presupuesto_id = p.id_presupuesto) AS total_presupuesto,
+                    COALESCE((
+                        SELECT SUM(sg.monto_estimado) 
+                        FROM solicitudes_gasto sg 
+                        WHERE sg.presupuesto_id = p.id_presupuesto 
+                          AND sg.estado IN ('pendiente', 'aprobado')
+                    ), 0) AS total_solicitado
+                FROM presupuesto p
+                WHERE p.id_presupuesto = :id_presupuesto";
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->bindParam(':id_presupuesto', $this->presupuesto_id);
+            $stmt->execute();
+            $datos = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$datos || $datos['total_presupuesto'] === null) {
+                return null;
+            }
+            $disponible = $datos['total_presupuesto'] - $datos['total_solicitado'];
+            // Si estamos editando, hay que sumar el monto original de esta solicitud (porque ya está incluido en total_solicitado)
+            if (isset($contexto['id_solicitud']) && $contexto['id_solicitud']) {
+                $sql_original = "SELECT monto_estimado FROM solicitudes_gasto WHERE id_solicitud = :id_solicitud";
+                $stmt_orig = $this->get_conex('negocio')->prepare($sql_original);
+                $stmt_orig->bindParam(':id_solicitud', $contexto['id_solicitud']);
+                $stmt_orig->execute();
+                $monto_original = $stmt_orig->fetchColumn();
+                if ($monto_original !== false) {
+                    $disponible += $monto_original;
+                }
+            }
+            return $disponible;
+        } catch (PDOException $e) {
+            error_log("Error en calcularDisponiblePresupuesto: " . $e->getMessage());
+            return null;
+        }
     }
 
-    private function registrar()
+    // -----------------------------------------------------------------
+    // Métodos privados (acciones)
+    // -----------------------------------------------------------------
+
+    private function _consultar()
     {
-        $sql = "INSERT INTO solicitudes_gasto(fecha_reporte,descripcion_necesidad,nombre_solicitante,monto_estimado,estado,presupuesto_id,prioridad)
-                VALUES(:fecha_reporte,:descripcion_necesidad,:nombre_solicitante,:monto_estimado,:estado,:presupuesto_id,:prioridad)";
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":fecha_reporte", $this->fecha_reporte);
-        $conexion->bindParam(":descripcion_necesidad", $this->descripcion_necesidad);
-        $conexion->bindParam(":nombre_solicitante", $this->nombre_solicitante);
-        $conexion->bindParam(":monto_estimado", $this->monto_estimado);
-        $conexion->bindParam(":estado", $this->estado);
-        $conexion->bindParam(":presupuesto_id", $this->presupuesto_id);
-        $conexion->bindParam(":prioridad", $this->prioridad);
-        $result = $conexion->execute();
-        return $result;
+        $sql = "SELECT * FROM solicitudes_gasto WHERE activo = 1";
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->execute();
+            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return ['estatus' => true, 'datos' => $datos];
+        } catch (PDOException $e) {
+            error_log("Error en _consultar: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al consultar solicitudes'];
+        }
     }
 
-    private function editar_solicitud()
+    private function _consultar_solicitud_id()
     {
+        $validacion = $this->validar(['id_solicitud']);
+        if (!$validacion['estatus']) {
+            return $validacion;
+        }
+
+        $sql = "SELECT 
+                    sg.id_solicitud, sg.fecha_reporte, sg.descripcion_necesidad, sg.nombre_solicitante,
+                    sg.monto_estimado, sg.estado, sg.prioridad, sg.presupuesto_id,
+                    p.fecha AS fecha_presupuesto,
+                    MONTH(p.fecha) AS mes,
+                    YEAR(p.fecha) AS anio,
+                    (SELECT SUM(dp.monto) FROM detalles_presupuesto dp WHERE dp.presupuesto_id = p.id_presupuesto) AS monto_presupuesto_total
+                FROM solicitudes_gasto sg
+                JOIN presupuesto p ON sg.presupuesto_id = p.id_presupuesto
+                WHERE sg.id_solicitud = :id_solicitud AND sg.activo = 1";
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->bindParam(':id_solicitud', $this->id_solicitud);
+            $stmt->execute();
+            $datos = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$datos) {
+                return ['estatus' => false, 'mensaje' => 'Solicitud no encontrada'];
+            }
+            return ['estatus' => true, 'datos' => $datos];
+        } catch (PDOException $e) {
+            error_log("Error en _consultar_solicitud_id: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al consultar la solicitud'];
+        }
+    }
+
+    private function _registrar()
+    {
+        $campos = ['fecha_reporte', 'descripcion_necesidad', 'nombre_solicitante', 'monto_estimado', 'estado', 'presupuesto_id', 'prioridad'];
+        $validacion = $this->validar($campos);
+        if (!$validacion['estatus']) {
+            return $validacion;
+        }
+
+        $sql = "INSERT INTO solicitudes_gasto (fecha_reporte, descripcion_necesidad, nombre_solicitante, monto_estimado, estado, presupuesto_id, prioridad)
+                VALUES (:fecha_reporte, :descripcion_necesidad, :nombre_solicitante, :monto_estimado, :estado, :presupuesto_id, :prioridad)";
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->bindParam(':fecha_reporte', $this->fecha_reporte);
+            $stmt->bindParam(':descripcion_necesidad', $this->descripcion_necesidad);
+            $stmt->bindParam(':nombre_solicitante', $this->nombre_solicitante);
+            $stmt->bindParam(':monto_estimado', $this->monto_estimado);
+            $stmt->bindParam(':estado', $this->estado);
+            $stmt->bindParam(':presupuesto_id', $this->presupuesto_id);
+            $stmt->bindParam(':prioridad', $this->prioridad);
+            $stmt->execute();
+            $lastId = $this->get_conex('negocio')->lastInsertId();
+            return ['estatus' => true, 'mensaje' => 'Solicitud registrada correctamente', 'lastId' => $lastId];
+        } catch (PDOException $e) {
+            error_log("Error en _registrar: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al registrar la solicitud'];
+        }
+    }
+
+    private function _modificar()
+    {
+        $campos = ['id_solicitud', 'fecha_reporte', 'descripcion_necesidad', 'nombre_solicitante', 'monto_estimado', 'estado', 'presupuesto_id', 'prioridad'];
+        $contexto = ['id_solicitud' => $this->id_solicitud];
+        $validacion = $this->validar($campos, $contexto);
+        if (!$validacion['estatus']) {
+            return $validacion;
+        }
+
         $sql = "UPDATE solicitudes_gasto SET
-                fecha_reporte = :fecha_reporte,
-                descripcion_necesidad = :descripcion_necesidad,
-                nombre_solicitante = :nombre_solicitante,
-                monto_estimado = :monto_estimado,
-                estado = :estado,
-                presupuesto_id = :presupuesto_id,
-                prioridad = :prioridad
+                    fecha_reporte = :fecha_reporte,
+                    descripcion_necesidad = :descripcion_necesidad,
+                    nombre_solicitante = :nombre_solicitante,
+                    monto_estimado = :monto_estimado,
+                    estado = :estado,
+                    presupuesto_id = :presupuesto_id,
+                    prioridad = :prioridad
                 WHERE id_solicitud = :id_solicitud";
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":id_solicitud", $this->id_solicitud);
-        $conexion->bindParam(":fecha_reporte", $this->fecha_reporte);
-        $conexion->bindParam(":descripcion_necesidad", $this->descripcion_necesidad);
-        $conexion->bindParam(":nombre_solicitante", $this->nombre_solicitante);
-        $conexion->bindParam(":monto_estimado", $this->monto_estimado);
-        $conexion->bindParam(":estado", $this->estado);
-        $conexion->bindParam(":presupuesto_id", $this->presupuesto_id);
-        $conexion->bindParam(":prioridad", $this->prioridad);
-        $result = $conexion->execute();
-        return $result;
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->bindParam(':id_solicitud', $this->id_solicitud);
+            $stmt->bindParam(':fecha_reporte', $this->fecha_reporte);
+            $stmt->bindParam(':descripcion_necesidad', $this->descripcion_necesidad);
+            $stmt->bindParam(':nombre_solicitante', $this->nombre_solicitante);
+            $stmt->bindParam(':monto_estimado', $this->monto_estimado);
+            $stmt->bindParam(':estado', $this->estado);
+            $stmt->bindParam(':presupuesto_id', $this->presupuesto_id);
+            $stmt->bindParam(':prioridad', $this->prioridad);
+            $stmt->execute();
+            return ['estatus' => true, 'mensaje' => 'Solicitud actualizada correctamente'];
+        } catch (PDOException $e) {
+            error_log("Error en _modificar: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al actualizar la solicitud'];
+        }
     }
 
-    private function eliminar_solicitud()
+    private function _eliminar()
     {
-        $sql = "DELETE FROM solicitudes_gasto WHERE id_solicitud = :id_solicitud";
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":id_solicitud", $this->id_solicitud);
-        $result = $conexion->execute();
-        return $result;
+        $validacion = $this->validar(['id_solicitud']);
+        if (!$validacion['estatus']) {
+            return $validacion;
+        }
+
+        $sql = "UPDATE solicitudes_gasto SET activo = 0 WHERE id_solicitud = :id_solicitud";
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->bindParam(':id_solicitud', $this->id_solicitud);
+            $stmt->execute();
+            return ['estatus' => true, 'mensaje' => 'Solicitud eliminada correctamente'];
+        } catch (PDOException $e) {
+            error_log("Error en _eliminar: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al eliminar la solicitud'];
+        }
     }
 
-    private function lastId()
+    private function _lastId()
     {
         $sql = "SELECT MAX(id_solicitud) as last_id FROM solicitudes_gasto";
-        $conexion = $this->get_conex()->prepare($sql);
-        $result = $conexion->execute();
-        $datos = $conexion->fetch(PDO::FETCH_ASSOC);
-        return ["resultado" => $result, "datos" => $datos];
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->execute();
+            $dato = $stmt->fetch(PDO::FETCH_ASSOC);
+            return ['estatus' => true, 'datos' => $dato];
+        } catch (PDOException $e) {
+            error_log("Error en _lastId: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al obtener último ID'];
+        }
     }
 
-    private function validarClaveForanea($tabla, $nombreClave, $valor)
-    {
-        $sql = "SELECT * FROM $tabla WHERE $nombreClave =:valor";
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":valor", $valor);
-        $conexion->execute();
-        $result = $conexion->fetch(PDO::FETCH_ASSOC);
-        return ($result) ? true : false;
-    }
+    // -----------------------------------------------------------------
+    // Métodos públicos auxiliares (reportes, consultas adicionales)
+    // -----------------------------------------------------------------
 
     public function consultar_solicitudes_por_mes($mes, $anio)
     {
         $sql = "SELECT * FROM solicitudes_gasto WHERE MONTH(fecha_reporte) = :mes AND YEAR(fecha_reporte) = :anio";
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":mes", $mes);
-        $conexion->bindParam(":anio", $anio);
-        $result = $conexion->execute();
-        $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
-        if ($result) {
-            return $datos;
-        } else {
-            return ["estatus" => false, "mensaje" => "Ha ocurrido un error con la consulta"];
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->bindParam(':mes', $mes, PDO::PARAM_INT);
+            $stmt->bindParam(':anio', $anio, PDO::PARAM_INT);
+            $stmt->execute();
+            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return ['estatus' => true, 'datos' => $datos];
+        } catch (PDOException $e) {
+            error_log("Error en consultar_solicitudes_por_mes: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al consultar solicitudes por mes'];
         }
     }
 
-
-    // PARA CONSULTAR EL PRESUPUESTO MENSUAL (CAMBIAR HASTA QUE SE HAGA ESE MODULO)
     public function consultar_presupuesto($fecha)
     {
-        list($anio, $mes) = explode('-', $fecha);
+        $partes = explode('-', $fecha);
+        if (count($partes) != 2) {
+            return ['estatus' => false, 'mensaje' => 'Formato de fecha inválido. Use YYYY-MM'];
+        }
+        $anio = $partes[0];
+        $mes = $partes[1];
 
-        // Se añaden alias (sg, dp) a las subconsultas para evitar ambigüedad.
         $sql = "SELECT 
                     p.id_presupuesto, 
                     p.observacion,
-                    (SELECT SUM(dp.monto_detalle) FROM detalles_presupuesto dp WHERE dp.presupuesto_id = p.id_presupuesto) AS monto_presupuesto_total,
-                    ((SELECT SUM(dp.monto_detalle) FROM detalles_presupuesto dp WHERE dp.presupuesto_id = p.id_presupuesto) - (
+                    (SELECT SUM(dp.monto) FROM detalles_presupuesto dp WHERE dp.presupuesto_id = p.id_presupuesto) AS monto_presupuesto_total,
+                    ((SELECT SUM(dp.monto) FROM detalles_presupuesto dp WHERE dp.presupuesto_id = p.id_presupuesto) - (
                         SELECT IFNULL(SUM(sg.monto_estimado), 0)
                         FROM solicitudes_gasto sg 
                         WHERE sg.presupuesto_id = p.id_presupuesto 
@@ -310,189 +431,120 @@ class SolicitudGasto extends Conexion
                 FROM presupuesto p
                 WHERE YEAR(p.fecha) = :anio AND MONTH(p.fecha) = :mes
                 LIMIT 1";
-
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":mes", $mes);
-        $conexion->bindParam(":anio", $anio);
-        $conexion->execute();
-        $datos = $conexion->fetch(PDO::FETCH_ASSOC);
-
-        if ($datos && $datos['id_presupuesto']) {
-            return ["estatus" => true] + $datos;
-        } else {
-            return ["estatus" => false, "mensaje" => "No hay presupuesto registrado para esa fecha."];
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->bindParam(':mes', $mes, PDO::PARAM_INT);
+            $stmt->bindParam(':anio', $anio, PDO::PARAM_INT);
+            $stmt->execute();
+            $datos = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$datos) {
+                return ['estatus' => false, 'mensaje' => 'No hay presupuesto para la fecha indicada'];
+            }
+            return ['estatus' => true] + $datos;
+        } catch (PDOException $e) {
+            error_log("Error en consultar_presupuesto: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al consultar presupuesto'];
         }
     }
 
     public function listar_solicitud_mes()
     {
-        //Cambie la consulta y ahora solo usa el propio gasto
-        $sql = "SELECT sg.fecha , MONTH(sg.fecha) as mes, YEAR(sg.fecha) as anio
-            FROM solicitudes_gasto sg    
-            GROUP BY MONTH(sg.fecha), YEAR(sg.fecha)
-            ORDER BY YEAR(sg.fecha) DESC,  MONTH(sg.fecha) DESC";
-
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->execute();
-        return $conexion->fetchAll(PDO::FETCH_ASSOC);
+        $sql = "SELECT DISTINCT MONTH(fecha_reporte) as mes, YEAR(fecha_reporte) as anio
+                FROM solicitudes_gasto
+                ORDER BY anio DESC, mes DESC";
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->execute();
+            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return ['estatus' => true, 'datos' => $datos];
+        } catch (PDOException $e) {
+            error_log("Error en listar_solicitud_mes: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al listar meses'];
+        }
     }
 
     public function filtrar_por_mes()
     {
-        list($anio_buscar, $mes_buscar) = explode('-', $this->fecha_reporte);
+        if (!$this->fecha_reporte) {
+            return ['estatus' => false, 'mensaje' => 'Fecha no establecida'];
+        }
+        $partes = explode('-', $this->fecha_reporte);
+        if (count($partes) != 2) {
+            return ['estatus' => false, 'mensaje' => 'Formato de fecha inválido. Use YYYY-MM'];
+        }
+        $anio = $partes[0];
+        $mes = $partes[1];
+
         $sql = "SELECT 
                     sg.id_solicitud, sg.fecha_reporte, sg.descripcion_necesidad, sg.nombre_solicitante,
                     sg.monto_estimado, sg.estado, sg.prioridad,
-                    (SELECT SUM(dp.monto_detalle) FROM detalles_presupuesto dp WHERE dp.presupuesto_id = sg.presupuesto_id) AS monto_presupuesto_total
+                    (SELECT SUM(dp.monto) FROM detalles_presupuesto dp WHERE dp.presupuesto_id = sg.presupuesto_id) AS monto_presupuesto_total
                 FROM solicitudes_gasto sg
                 WHERE MONTH(sg.fecha_reporte) = :mes AND YEAR(sg.fecha_reporte) = :anio";
-
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":mes", $mes_buscar);
-        $conexion->bindParam(":anio", $anio_buscar);
-        $conexion->execute();
-        return $conexion->fetchAll(PDO::FETCH_ASSOC);
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->bindParam(':mes', $mes, PDO::PARAM_INT);
+            $stmt->bindParam(':anio', $anio, PDO::PARAM_INT);
+            $stmt->execute();
+            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return ['estatus' => true, 'datos' => $datos];
+        } catch (PDOException $e) {
+            error_log("Error en filtrar_por_mes: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al filtrar solicitudes por mes'];
+        }
     }
 
     public function consultar_presupuesto_disponible()
     {
-        $sql = "SELECT 
-                    (SELECT SUM(dp.monto_detalle) FROM detalles_presupuesto dp WHERE dp.presupuesto_id = p.id_presupuesto) AS monto_presupuesto_total, 
-                    IFNULL(SUM(sg.monto_estimado), 0) AS total_usado,
-                    ((SELECT SUM(dp.monto_detalle) FROM detalles_presupuesto dp WHERE dp.presupuesto_id = p.id_presupuesto) - IFNULL(SUM(sg.monto_estimado), 0)) AS disponible
-                FROM presupuesto p
-                LEFT JOIN solicitudes_gasto sg 
-                    ON sg.presupuesto_id = p.id_presupuesto 
-                    AND sg.estado IN ('pendiente', 'aprobado')
-                WHERE p.id_presupuesto = :id_presupuesto
-                GROUP BY p.id_presupuesto";
+        $validacion = $this->validar(['presupuesto_id']);
+        if (!$validacion['estatus']) {
+            return $validacion;
+        }
 
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":id_presupuesto", $this->presupuesto_id);
-        $conexion->execute();
-        $datos = $conexion->fetch(PDO::FETCH_ASSOC);
-
-        return $datos ? ["estatus" => true] + $datos : ["estatus" => false, "mensaje" => "No se encontró el presupuesto."];
+        $disponible = $this->calcularDisponiblePresupuesto();
+        if ($disponible === null) {
+            return ['estatus' => false, 'mensaje' => 'No se pudo calcular el presupuesto disponible'];
+        }
+        return ['estatus' => true, 'disponible' => $disponible];
     }
 
     public function listar_meses_anios_con_presupuesto()
     {
         $sql = "SELECT DISTINCT MONTH(fecha) as mes, YEAR(fecha) as anio 
-            FROM presupuesto
-            ORDER BY anio DESC, mes DESC";
-
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->execute();
-
-        return $conexion->fetchAll(PDO::FETCH_ASSOC);
+                FROM presupuesto
+                ORDER BY anio DESC, mes DESC";
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->execute();
+            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return ['estatus' => true, 'datos' => $datos];
+        } catch (PDOException $e) {
+            error_log("Error en listar_meses_anios_con_presupuesto: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al listar meses con presupuesto'];
+        }
     }
 
     public function cambiar_estado_asignado()
     {
-        try {
-            $sql = "UPDATE solicitudes_gasto SET estado = 'Asignado' WHERE id_solicitud = :id";
-            $conexion = $this->get_conex()->prepare($sql);
-            $conexion->bindParam(":id", $this->id_solicitud);
-            $conexion->execute();
+        $validacion = $this->validar(['id_solicitud']);
+        if (!$validacion['estatus']) {
+            return $validacion;
+        }
 
-            if ($conexion->rowCount() > 0) {
-                return ["estatus" => true, "mensaje" => "Estado actualizado a 'asignado'"];
+        $sql = "UPDATE solicitudes_gasto SET estado = 'asignado' WHERE id_solicitud = :id_solicitud";
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->bindParam(':id_solicitud', $this->id_solicitud);
+            $stmt->execute();
+            if ($stmt->rowCount() > 0) {
+                return ['estatus' => true, 'mensaje' => 'Estado actualizado a "asignado"'];
             } else {
-                return ["estatus" => false, "mensaje" => "No se encontró la solicitud o ya estaba asignada"];
+                return ['estatus' => false, 'mensaje' => 'No se encontró la solicitud o ya estaba asignada'];
             }
         } catch (PDOException $e) {
-            return ["estatus" => false, "mensaje" => "Error al actualizar estado: " . $e->getMessage()];
+            error_log("Error en cambiar_estado_asignado: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al actualizar estado'];
         }
     }
-
-    public function validar_datos($accion)
-    {
-        if ($accion == "modificar" || $accion == "eliminar") {
-            
-            // Validación 1.1: ID vacío
-            if (empty(trim($this->id_solicitud))) {
-                return ["estatus" => false, "mensaje" => "El id de la solicitud requerida esta vacio"];
-            }
-
-            // Validación 1.2: ID no es numérico
-            if (!is_numeric($this->id_solicitud)) {
-                 return ["estatus"=>false, "mensaje"=>"El id de la solicitud debe ser un valor numerico"];
-            }
-
-            // Validación 1.3: ID no existe en la BD
-            if (!($this->validarClaveForanea("solicitudes_gasto", "id_solicitud", $this->id_solicitud))) {
-                return ["estatus" => false, "mensaje" => "La solicitud seleccionada no existe"];
-            }
-
-            // Si la acción es 'eliminar' y pasó las validaciones de ID, terminamos.
-            if ($accion == "eliminar") {
-                return ["estatus" => true, "mensaje" => "OK"];
-            }
-        }
-
-
-        if (empty(trim($this->descripcion_necesidad))) {
-            return ["estatus" => false, "mensaje" => "La descripción de la necesidad no puede estar vacía."];
-        }
-        if (empty(trim($this->nombre_solicitante))) {
-            return ["estatus" => false, "mensaje" => "El nombre del solicitante no puede estar vacío."];
-        }
-        if (empty($this->fecha_reporte)) {
-            return ["estatus" => false, "mensaje" => "Debe seleccionar una fecha de reporte."];
-        }
-        if (empty($this->presupuesto_id)) {
-            return ["estatus" => false, "mensaje" => "Debe seleccionar un presupuesto."];
-        }
-        if (!is_numeric($this->monto_estimado) || $this->monto_estimado <= 0) {
-            return ["estatus" => false, "mensaje" => "El monto estimado debe ser un número mayor a cero."];
-        }
-
-        // Validar que el presupuesto exista
-        if (!$this->validarClaveForanea('presupuesto', 'id_presupuesto', $this->presupuesto_id)) {
-            return ["estatus" => false, "mensaje" => "El presupuesto seleccionado no es válido."];
-        }
-
-        // Validar que el monto no exceda el presupuesto disponible
-        $presupuesto = $this->consultar_presupuesto_disponible_para_validacion($accion);
-        if (!$presupuesto['estatus']) {
-            return ["estatus" => false, "mensaje" => $presupuesto['mensaje']];
-        }
-
-        if ($this->monto_estimado > $presupuesto['disponible']) {
-            return ["estatus" => false, "mensaje" => "El monto solicitado excede el presupuesto disponible de " . number_format($presupuesto['disponible'], 2, ',', '.') . " Bs."];
-        }
-
-        return ["estatus" => true];
-    }
-
-    private function consultar_presupuesto_disponible_para_validacion($accion)
-    {
-        // Se obtiene el monto original de la solicitud que se está editando
-        $monto_original = 0;
-        if ($accion === 'modificar') {
-            $sql_monto_original = "SELECT monto_estimado FROM solicitudes_gasto WHERE id_solicitud = :id_solicitud";
-            $conexion_monto = $this->get_conex()->prepare($sql_monto_original);
-            $conexion_monto->bindParam(":id_solicitud", $this->id_solicitud);
-            $conexion_monto->execute();
-            $monto_original = $conexion_monto->fetchColumn();
-        }
-
-        // Se calcula el presupuesto disponible, sumando el monto original de la solicitud
-        // en caso de una modificación para no contarlo dos veces.
-        $sql = "SELECT 
-                    (SELECT SUM(dp.monto_detalle) FROM detalles_presupuesto dp WHERE dp.presupuesto_id = p.id_presupuesto) AS monto_total,
-                    (IFNULL((SELECT SUM(sg.monto_estimado) FROM solicitudes_gasto sg WHERE sg.presupuesto_id = p.id_presupuesto AND sg.estado IN ('pendiente', 'aprobado')), 0) - :monto_original) AS total_usado,
-                    ((SELECT SUM(dp.monto_detalle) FROM detalles_presupuesto dp WHERE dp.presupuesto_id = p.id_presupuesto) - IFNULL((SELECT SUM(sg.monto_estimado) FROM solicitudes_gasto sg WHERE sg.presupuesto_id = p.id_presupuesto AND sg.estado IN ('pendiente', 'aprobado')), 0) + :monto_original) AS disponible
-                FROM presupuesto p
-                WHERE p.id_presupuesto = :id_presupuesto";
-
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":id_presupuesto", $this->presupuesto_id);
-        $conexion->bindParam(":monto_original", $monto_original);
-        $conexion->execute();
-        $datos = $conexion->fetch(PDO::FETCH_ASSOC);
-
-        return $datos ? ["estatus" => true] + $datos : ["estatus" => false, "mensaje" => "No se encontró el presupuesto para la validación."];
-    }
-
 }
+?>

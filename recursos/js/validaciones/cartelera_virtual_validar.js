@@ -1,143 +1,109 @@
-$(document).ready(function () {
+/**
+ * cartelera_virtual_validar.js
+ * Validaciones en tiempo real para Cartelera Virtual
+ * Dependencias: validaciones.js, utilidades.js
+ */
 
-    /* UN solo carácter permitido (letra, número, símbolos básicos) */
-    const regexChar  = /[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()'"!?¡¿%°\- ]/;
+$(document).ready(function() {
+    // ============================================
+    // VALIDACIONES EN TIEMPO REAL
+    // ============================================
 
-    /* Texto completo: 3-200 caracteres con los mismos símbolos */
-    const regexTexto = /^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()'"!?¡¿%°\- ]{3,200}$/;
+    const regexChar = /^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()'"!?¡¿%°\-\s]*$/;
+    const regexTitulo = /^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()'"!?¡¿%°\-\s]{3,100}$/;
+    const regexDescripcion = /^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()'"!?¡¿%°\-\s]{3,200}$/;
 
-    /* ----------  TÍTULO  ---------- */
-    $("#titulo").on("keypress", e => validarKeyPress(regexChar, e));
-    $("#titulo").on("keyup",   function () {
-        validarKeyUp(/^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()'"!?¡¿%°\- ]{3,100}$/, this, this.nextElementSibling,
-                      "Debe ingresar un título válido (mín. 3 caracteres y max. 100)");
+    // Título
+    $("#titulo").on("keypress", function(e) {
+        Validaciones.keyPress(regexChar, e);
+    });
+    $("#titulo").on("keyup", function() {
+        Validaciones.keyUp(regexTitulo, this, this.nextElementSibling,
+            "Debe tener entre 3 y 100 caracteres (letras, números y signos básicos)");
     });
 
-    /* ----------  DESCRIPCIÓN  ---------- */
-    $("#descripcion").on("keypress", e => validarKeyPress(regexChar, e));
-    $("#descripcion").on("keyup",   function () {
-        validarKeyUp(regexTexto, this, this.nextElementSibling,
-                      "Debe ingresar una descripción válida (mín. 3 caracteres y max. 200)");
+    // Descripción
+    $("#descripcion").on("keypress", function(e) {
+        Validaciones.keyPress(regexChar, e);
+    });
+    $("#descripcion").on("keyup", function() {
+        Validaciones.keyUp(regexDescripcion, this, this.nextElementSibling,
+            "Debe tener entre 3 y 200 caracteres (letras, números y signos básicos)");
     });
 
-    /* ----------  FECHA  ---------- */
-    $("#fecha").on("keyup change", () => validarFecha(document.getElementById("fecha")));
-
-
-    document.getElementById('prioridad').addEventListener("change",e=>{
-        let valido = validarKeyUp(/^[0-9]{1}$/,
-        e.target,e.target.nextElementSibling,"El valor de la prioridad no es válido");
-
-        if (!valido) return;
+    // Fecha
+    $("#fecha").on("keyup change", function() {
+        const valido = /^\d{4}-\d{2}-\d{2}$/.test(this.value);
+        if (valido) {
+            this.classList.add('is-valid');
+            this.classList.remove('is-invalid');
+            this.nextElementSibling.textContent = "";
+        } else {
+            this.classList.add('is-invalid');
+            this.classList.remove('is-valid');
+            this.nextElementSibling.textContent = "Formato YYYY-MM-DD";
+        }
     });
 
-    /* ----------  BOTÓN  ---------- */
-    $("#boton_formulario").on("click", async function (e) {
-        const accion = e.target.hasAttribute("modificar") ? "Editar" : "Registrar";
+    // Prioridad
+    $("#prioridad").on("change", function() {
+        Validaciones.select('prioridad');
+    });
+
+    // ============================================
+    // ENVÍO DEL FORMULARIO
+    // ============================================
+    $("#boton_formulario").on("click", async function(e) {
         e.preventDefault();
-        if (await validarEnvio(accion, regexTexto)) {
+        const accion = this.hasAttribute("modificar") ? "Editar" : "Registrar";
+
+        if (await validarEnvio(accion)) {
             Swal.fire({
                 title: "¿Estás seguro?",
                 text: `¿Está seguro que desea ${accion} esta publicación?`,
                 showCancelButton: true,
-                confirmButtonText: "Si, " + accion,
+                confirmButtonText: `Sí, ${accion}`,
                 confirmButtonColor: "#1b8a40",
                 cancelButtonText: "Cancelar",
                 icon: "warning"
-            }).then(res => { if (res.isConfirmed) envio(accion); });
+            }).then((result) => {
+                if (result.isConfirmed) envio(accion);
+            });
         }
     });
 });
-// Fin de AJAX
 
-function mensajes(icono, tiempo, titulo, mensaje) {
-    Swal.fire({
-        icon: icono,
-        title: titulo,
-        text: mensaje,
-        timer: tiempo,
-        showConfirmButton: true,
-        confirmButtonText: "Aceptar",
-        confirmButtonColor: "#e01d22",
-    });
-} // Fin de mensajes
+/**
+ * Validación completa del formulario antes del envío
+ */
+async function validarEnvio(accion) {
+    const titulo = document.getElementById("titulo");
+    const descripcion = document.getElementById("descripcion");
+    const fecha = document.getElementById("fecha");
+    const prioridad = document.getElementById("prioridad");
 
-async function validarEnvio(accion, regexTexto) {
-    if (!validarKeyUp(/^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()'"!?¡¿%°\- ]{3,100}$/, document.getElementById("titulo"), document.getElementById("titulo").nextElementSibling, 'ingresar un título válido (mín. 3 caracteres y max. 100)'))
-        { mensajes("error", 2000, "Error", "Debe ingresar un título válido"); return false; }
+    const regexTitulo = /^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()'"!?¡¿%°\-\s]{3,100}$/;
+    const regexDescripcion = /^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()'"!?¡¿%°\-\s]{3,200}$/;
 
-    if (!validarKeyUp(regexTexto, document.getElementById("descripcion"), document.getElementById("descripcion").nextElementSibling, 'ingresar una descripción válida (mín. 3 caracteres y max. 200)'))
-        { mensajes("error", 2000, "Error", "Debe ingresar una descripción válida"); return false; }
-
-    if (!validarFecha(document.getElementById("fecha"))) {
-        mensajes("error", 2000, "Error", "Debe ingresar una fecha válida"); return false;
+    if (!Validaciones.keyUp(regexTitulo, titulo, titulo.nextElementSibling, '')) {
+        Utilidades.mensaje('error', 'Error', 'El título debe tener entre 3 y 100 caracteres.');
+        return false;
     }
-    if (!validar_select("prioridad")) {
-        mensajes("error", 2000, "Error", "Debe seleccionar la prioridad"); return false;
-    }else{
-        let valido = validarKeyUp(/^[0-9]{1}$/,
-        document.getElementById('prioridad'),document.getElementById('prioridad').nextElementSibling,"El valor de la prioridad no es válido");
-        if (!valido) {
-            mensajes("error", 2000, "Atención", "El valor de la prioridad no es válido");
-            return false;
-        }
+
+    if (!Validaciones.keyUp(regexDescripcion, descripcion, descripcion.nextElementSibling, '')) {
+        Utilidades.mensaje('error', 'Error', 'La descripción debe tener entre 3 y 200 caracteres.');
+        return false;
     }
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha.value)) {
+        Utilidades.mensaje('error', 'Error', 'La fecha debe tener formato YYYY-MM-DD.');
+        return false;
+    }
+
+    if (!Validaciones.select('prioridad')) {
+        Utilidades.mensaje('error', 'Error', 'Debe seleccionar una prioridad.');
+        return false;
+    }
+
     return true;
-}
-
-
-function validarKeyPress(er, e) {
-    const key = e.keyCode || e.which;
-    if (!er.test(String.fromCharCode(key))) e.preventDefault();
-}
-
-function validarKeyUp(er,etiqueta,etiquetamensaje,
-mensaje){
-    a = er.test(etiqueta.value);
-    
-    if(a){
-        etiqueta.classList.add('is-valid');
-        etiqueta.classList.remove('is-invalid');
-        etiquetamensaje.textContent = "";
-        return 1;
-    }
-    else{
-        etiqueta.classList.add('is-invalid')
-        etiqueta.classList.remove('is-valid');
-        etiquetamensaje.textContent = mensaje;
-        return 0;
-    }
-}
-
-function validar_select(id) {
-    let selec = document.querySelector("#"+id);
-    if (selec.value == '') {
-        selec.classList.add('is-invalid')
-        selec.classList.remove('is-valid');
-        selec.nextElementSibling.textContent = "Debe seleccionar una opcion";
-        return false;
-    }
-    else{
-        selec.classList.add('is-valid');
-        selec.classList.remove('is-invalid');
-        selec.nextElementSibling.textContent = "";
-        return true;
-    }
-}
-
-function validarFecha($input) {
-    const v = $input.value;
-    let res = /^\d{4}-\d{2}-\d{2}$/.test(v);// yyyy-mm-dd
-    if (res) {
-        $input.classList.add('is-valid');
-        $input.classList.remove('is-invalid');
-        $input.nextElementSibling.textContent = "";
-        return true;
-    }
-    else{
-        $input.classList.add('is-invalid')
-        $input.classList.remove('is-valid');
-        $input.nextElementSibling.textContent = "El formato de la fecha es incorrecta";
-        return false;
-    }
 }

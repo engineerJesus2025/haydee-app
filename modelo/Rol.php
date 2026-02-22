@@ -1,281 +1,392 @@
 <?php
 namespace haydee\modelo;
-use haydee\modelo\Conexion;
+
 use PDO;
+use PDOException;
 
 class Rol extends Conexion
 {
-
+    // ====================================================================
+    // PROPIEDADES
+    // ====================================================================
     private $id_rol;
     private $nombre;
+    private $activo;
 
-    public function __construct()
-    {
-        parent::__construct();        
+    // Propiedades para la asignación de permisos
+    private $permisos_asignados = []; 
+
+    // ====================================================================
+    // VALIDACIONES
+    // ====================================================================
+    private $reglas = [
+        'id_rol' => [
+            'regex' => '/^\d+$/',
+            'exists' => ['tabla' => 'roles', 'campo' => 'id_rol']
+        ],
+        'nombre' => [
+            'regex' => '/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,50}$/',
+            'unique' => ['tabla' => 'roles', 'campo' => 'nombre', 'exclude_field' => 'id_rol']
+        ]
+    ];
+
+    // ====================================================================
+    // GETTERS Y SETTERS
+    // ====================================================================
+    public function set_id_rol($id) { $this->id_rol = $id; }
+    public function get_id_rol() { return $this->id_rol; }
+    
+    public function set_nombre($nombre) { $this->nombre = $nombre; }
+    public function get_nombre() { return $this->nombre; }
+    
+    public function set_activo($activo) { $this->activo = $activo; }
+    public function get_activo() { return $this->activo; }
+
+    public function set_permisos_asignados($permisos) { 
+        $this->permisos_asignados = $permisos; 
+    }
+    public function get_permisos_asignados() { 
+        return $this->permisos_asignados; 
     }
 
-    public function set_id_rol($id_rol)
+    // ====================================================================
+    // ENRUTADOR
+    // ====================================================================
+    public function realizar_consulta($accion)
     {
-        $this->id_rol = $id_rol;
-    }
+        $metodo = '_' . $accion;
+        if (!method_exists($this, $metodo)) {
+            return ['estatus' => false, 'mensaje' => "La acción '$accion' no está implementada."];
+        }
 
-    public function get_id_rol()
-    {
-        return $this->id_rol;
-    }
-
-    public function set_nombre($nombre)
-    {
-        $this->nombre = $nombre;
-    }
-
-    public function get_nombre()
-    {
-        return $this->nombre;
-    }
-
-    public function realizar_consulta($accion,$parametros = []){
-        $this->cambiar_db_seguridad();
-        switch ($accion) {
-            case 'verificar_nombre':
-                $respuesta = $this->verificar_nombre();
-
-                $this->cambiar_db_negocio();
-
-                if ($respuesta["resultado"]) {                    
-                    if (isset($respuesta["datos"]["nombre"])) {                        
-                        return ["estatus"=>true,"busqueda"=>"nombre"];
-                    } else {                        
-                        return ["estatus"=>false,"busqueda"=>"nombre"];
-                    }
-                } 
-                else {
-                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
-                }
-
-            case 'consultar':
-                $respuesta = $this->consultar();
-
-                $this->cambiar_db_negocio();
-
-                if ($respuesta["resultado"]) {                        
-                    return $respuesta["datos"];
-                } 
-                else {
-                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
-                }
-
-            case 'consultar_roles':
-                $respuesta = $this->consultar();
-
-                $this->cambiar_db_negocio();
-
-                if ($respuesta["resultado"]) {
-                    return $respuesta["datos"];
-                } 
-                else {
-                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
-                }
-
-            case 'consultar_rol':
-                $respuesta = $this->consultar_rol();
-
-                $this->cambiar_db_negocio();
-
-                if ($respuesta["resultado"]) {
-                    return $respuesta["datos"];
-                } 
-                else {
-                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
-                }
-
-            case 'registrar':
-                $validaciones = $this->validarDatos();
-                if(!($validaciones["estatus"])){return $validaciones;}
-
-                $respuesta = $this->registrar();
-
-                $this->cambiar_db_negocio();
-
-                if ($respuesta) {
-                    return ["estatus"=>true,"mensaje"=>"OK"];
-                } 
-                else {
-                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar este Rol"];
-                }
-
-            case 'editar_rol':
-                $validaciones = $this->validarDatos("editar");
-                if(!($validaciones["estatus"])){return $validaciones;}
-
-                $respuesta = $this->editar_rol();
-
-                $this->cambiar_db_negocio();
-
-                if ($respuesta) {
-                    return ["estatus"=>true,"mensaje"=>"OK"];
-                } 
-                else {
-                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar editar este Rol"];
-                }
-
-            case 'eliminar_rol':
-                $validaciones = $this->validarDatos("eliminar");
-                if(!($validaciones["estatus"])){return $validaciones;}
-
-                $respuesta = $this->eliminar_rol();
-
-                $this->cambiar_db_negocio();
-
-                if ($respuesta) {                        
-                    return ["estatus"=>true,"mensaje"=>"OK"];
-                } else {
-                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar eliminar este Rol"];
-                }
-
-            case 'lastId':
-                $respuesta = $this->lastId();
-
-                $this->cambiar_db_negocio();
-
-                if ($respuesta["resultado"]) {
-                    return $respuesta["datos"];
-                } 
-                else {
-                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
-                }
-
-            case 'validar_clave_foranea':
-                $respuesta = $this->validarClaveForanea($parametros['tabla'],$parametros['nombre_clave'],$parametros['valor']);
-
-                $this->cambiar_db_negocio();
-
-                return $respuesta;
-
-            default:
-                return ["estatus"=>false,"mensaje"=>"A ocurrido un error en la consulta"];
-                break;
+        try {
+            return $this->$metodo();
+        } catch (\Exception $e) {
+            error_log("Error en realizar_consulta ($accion): " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error interno: ' . $e->getMessage()];
         }
     }
 
-    private function verificar_nombre()
+    // ====================================================================
+    // VALIDACIÓN CENTRALIZADA (Con conexión a Seguridad)
+    // ====================================================================
+    private function validar($campos, $contexto = [])
     {
-        $sql = "SELECT * FROM roles WHERE nombre = :nombre";
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":nombre", $this->nombre);
-        $result = $conexion->execute();
-        $datos = $conexion->fetch(PDO::FETCH_ASSOC);
+        foreach ($campos as $campo) {
+            if (!isset($this->reglas[$campo])) continue;
+            $regla = $this->reglas[$campo];
+            $getter = 'get_' . $campo;
+            $valor = $this->$getter();
 
-        return ["resultado"=>$result,"datos"=>$datos];   
-    }
-
-    private function consultar()
-    {        
-        $sql = "SELECT * FROM roles";
-        $conexion = $this->get_conex()->prepare($sql);
-
-        $result = $conexion->execute();
-        $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
-
-        return ["resultado"=>$result,"datos"=>$datos];
-    }
-
-    private function consultar_rol()
-    {
-        $sql = "SELECT id_rol, nombre FROM roles WHERE id_rol = :rol";
-
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":rol", $this->id_rol);
-
-        $result = $conexion->execute();        
-        $datos = $conexion->fetch(PDO::FETCH_ASSOC);
-
-        return ["resultado"=>$result,"datos"=>$datos];
-    }
-
-    private function registrar()
-    {
-        $sql = "INSERT INTO roles(nombre) VALUES (:nombre)";
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":nombre", $this->nombre);
-        $result = $conexion->execute();
-
-        return $result;
-    }
-
-    private function editar_rol()
-    {
-        $sql = "UPDATE roles SET nombre = :nombre WHERE id_rol = :id_rol";
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":id_rol", $this->id_rol);
-        $conexion->bindParam(":nombre", $this->nombre);
-
-        $result = $conexion->execute();
-        return $result;
-    }
-    private function eliminar_rol()
-    {        
-        $sql = "DELETE FROM roles WHERE id_rol = :id_rol";
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":id_rol", $this->id_rol);
-
-        $result = $conexion->execute();        
-        
-        return $result;
-    }
-
-    private function lastId()
-    {
-        $this->cambiar_db_seguridad();
-        $sql = "SELECT MAX(id_rol) as last_id FROM roles";
-        $conexion = $this->get_conex()->prepare($sql);
-        $result = $conexion->execute();
-        $datos = $conexion->fetch(PDO::FETCH_ASSOC);
-
-        return ["resultado"=>$result,"datos"=>$datos];
-    }
-
-    private function validarDatos($consulta = "registrar")
-    {
-        if ($consulta == "editar" || $consulta == "eliminar") {
-            if (!(isset($this->id_rol))) {return ["estatus"=>false,"mensaje"=>"El ID del rol no se recibio correctamente"];}
-
-            if (empty($this->id_rol)) {return ["estatus"=>false,"mensaje"=>"El ID del Rol se envio vacio"];}
-
-            if(is_numeric($this->id_rol)){
-                if (!($this->validarClaveForanea("roles","id_rol",$this->id_rol))) {
-                    return ["estatus"=>false,"mensaje"=>"El Rol seleccionado no existe"];
-                }
-                
-                if($this->id_rol == 1){return ["estatus"=>false,"mensaje"=>"No se puede Alterar el Rol del Administrador Global"];}
-                
-                if ($consulta == "eliminar") {return ["estatus"=>true,"mensaje"=>"OK"];}
+            // Requerido
+            if ($valor === null || (is_string($valor) && trim($valor) === '')) {
+                return ['estatus' => false, 'mensaje' => "El campo '$campo' es obligatorio."];
             }
-            else{return ["estatus"=>false,"mensaje"=>"El id del Rol tiene debe ser un valor numerico entero"];}
 
-            if($this->id_rol == 1){return ["estatus"=>false,"mensaje"=>"No se puede Alterar el Rol del Administrador Global"];}
+            // Regex
+            if (isset($regla['regex']) && !preg_match($regla['regex'], (string)$valor)) {
+                return ['estatus' => false, 'mensaje' => "Formato inválido para '$campo'."];
+            }
+
+            // Existencia (BD Seguridad)
+            if (isset($regla['exists'])) {
+                if (!$this->existeEnTabla($regla['exists']['tabla'], $regla['exists']['campo'], $valor)) {
+                    return ['estatus' => false, 'mensaje' => "El valor de '$campo' no existe."];
+                }
+            }
+
+            // Unicidad (BD Seguridad)
+            if (isset($regla['unique'])) {
+                $excludeValue = $contexto['exclude_id'] ?? null;
+                if (!$this->esUnico($regla['unique']['tabla'], $regla['unique']['campo'], $valor, $regla['unique']['exclude_field'] ?? null, $excludeValue)) {
+                    return ['estatus' => false, 'mensaje' => "El '$campo' ya está registrado."];
+                }
+            }
         }
-
-        if (!(isset($this->nombre))) {return ["estatus"=>false,"mensaje"=>"El campos 'nombre' no se recibio correctamente"];}
-
-        if (empty($this->nombre)) {return ["estatus"=>false,"mensaje"=>"El campos 'nombre' esta vacio"];}
-        
-        if(!(is_string($this->nombre)) || !(preg_match("/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/",$this->nombre))){
-            return ["estatus"=>false,"mensaje"=>"El campo 'nombre' no posee un valor valido"];
-        }        
-        
-        return ["estatus"=>true,"mensaje"=>"OK"];
+        return ['estatus' => true];
     }
 
-    private function validarClaveForanea($tabla,$nombreClave,$valor,$seguridad = false)
+    private function existeEnTabla($tabla, $campo, $valor) {
+        $sql = "SELECT COUNT(*) as total FROM $tabla WHERE $campo = :valor";
+        $stmt = $this->get_conex('seguridad')->prepare($sql);
+        $stmt->execute([':valor' => $valor]);
+        return $stmt->fetchColumn() > 0;
+    }
+
+    private function esUnico($tabla, $campo, $valor, $excludeField = null, $excludeValue = null) {
+        $sql = "SELECT COUNT(*) as total FROM $tabla WHERE $campo = :valor";
+        if ($excludeField && $excludeValue) $sql .= " AND $excludeField != :exclude_val";
+        
+        $stmt = $this->get_conex('seguridad')->prepare($sql);
+        $stmt->bindParam(':valor', $valor);
+        if ($excludeField && $excludeValue) $stmt->bindParam(':exclude_val', $excludeValue);
+        
+        $stmt->execute();
+        return $stmt->fetchColumn() == 0;
+    }
+
+    // ====================================================================
+    // LÓGICA DE NEGOCIO (ROLES)
+    // ====================================================================
+
+    private function _verificar_nombre()
     {
-        $sql="SELECT * FROM $tabla WHERE $nombreClave =:valor";
+        $v = $this->validar(['nombre']);
+        if (!$v['estatus']) {
+            return $v;
+        }
 
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":valor", $valor);
-        $conexion->execute();
-        $result = $conexion->fetch(PDO::FETCH_ASSOC);
+        $sql = "SELECT id_rol FROM roles WHERE nombre = :nombre AND activo = 1 LIMIT 1";
+        try {
+            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt->execute([':nombre' => $this->nombre]);
+            $existe = $stmt->fetch(PDO::FETCH_ASSOC) ? true : false;
+            return ['estatus' => true, 'existe' => $existe];
+        } catch (PDOException $e) {
+            error_log("Error en _verificar_nombre: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al verificar el nombre del rol'];
+        }
+    }
 
-        return ($result)?true:false;        
+    private function _consultar()
+    {
+        $sql = "SELECT * FROM roles WHERE activo = 1 ORDER BY id_rol";
+        try {
+            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt->execute();
+            return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
+        } catch (PDOException $e) {
+            error_log("Error en _consultar: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al consultar roles'];
+        }
+    }
+
+    private function _consultar_rol()
+    {
+        $v = $this->validar(['id_rol']);
+        if (!$v['estatus']) return $v;
+
+        $sql = "SELECT * FROM roles WHERE id_rol = :id AND activo = 1";
+        try {
+            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt->execute([':id' => $this->id_rol]);
+            $dato = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$dato) return ['estatus' => false, 'mensaje' => 'Rol no encontrado'];
+            return ['estatus' => true, 'datos' => $dato];
+        } catch (PDOException $e) {
+            error_log("Error en _consultar_rol: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al consultar rol'];
+        }
+    }
+
+    private function _registrar()
+    {
+        $v = $this->validar(['nombre']);
+        if (!$v['estatus']) return $v;
+
+        $sql = "INSERT INTO roles (nombre, activo) VALUES (:nombre, 1)";
+        try {
+            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt->execute([':nombre' => $this->nombre]);
+            $lastId = $this->get_conex('seguridad')->lastInsertId();
+            return ['estatus' => true, 'mensaje' => 'Rol creado', 'lastId' => $lastId];
+        } catch (PDOException $e) {
+            error_log("Error en _registrar: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al registrar rol: ' . $e->getMessage()];
+        }
+    }
+
+    private function _editar()
+    {
+        $v = $this->validar(['id_rol', 'nombre'], ['exclude_id' => $this->id_rol]);
+        if (!$v['estatus']) return $v;
+
+        $sql = "UPDATE roles SET nombre = :nombre WHERE id_rol = :id";
+        try {
+            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt->execute([':nombre' => $this->nombre, ':id' => $this->id_rol]);
+            return ['estatus' => true, 'mensaje' => 'Rol actualizado'];
+        } catch (PDOException $e) {
+            error_log("Error en _editar: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al actualizar: ' . $e->getMessage()];
+        }
+    }
+
+    private function _eliminar()
+    {
+        $v = $this->validar(['id_rol']);
+        if (!$v['estatus']) return $v;
+
+        $sql = "UPDATE roles SET activo = 0 WHERE id_rol = :id";
+        try {
+            $this->get_conex('seguridad')->prepare($sql)->execute([':id' => $this->id_rol]);
+            return ['estatus' => true, 'mensaje' => 'Rol eliminado'];
+        } catch (PDOException $e) {
+            error_log("Error en _eliminar: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al eliminar: ' . $e->getMessage()];
+        }
+    }
+
+    // ====================================================================
+    // LÓGICA DE NEGOCIO (PERMISOS) - INTEGRADA
+    // ====================================================================
+
+    /**
+     * Valida que un array de asignaciones de permisos sea correcto.
+     * Verifica que cada elemento tenga modulo_id y un array de permisos, y que existan.
+     * @param array $asignaciones
+     * @return array ['estatus' => bool, 'mensaje' => string]
+     */
+    private function validarAsignacionesPermisos($asignaciones)
+    {
+        if (!is_array($asignaciones)) {
+            return ['estatus' => false, 'mensaje' => 'Los permisos asignados deben ser un array.'];
+        }
+
+        // Obtener todos los módulos y permisos existentes (activos) de una vez para optimizar
+        try {
+            $modulosExistentes = $this->get_conex('seguridad')
+                ->query("SELECT id_modulo FROM modulos WHERE activo = 1")
+                ->fetchAll(PDO::FETCH_COLUMN);
+            $permisosExistentes = $this->get_conex('seguridad')
+                ->query("SELECT id_permiso FROM permisos WHERE activo = 1")
+                ->fetchAll(PDO::FETCH_COLUMN);
+        } catch (PDOException $e) {
+            error_log("Error al cargar módulos/permisos para validación: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error interno al validar permisos.'];
+        }
+
+        foreach ($asignaciones as $index => $asignacion) {
+            // Validar que tenga modulo_id
+            if (!isset($asignacion['modulo_id'])) {
+                return ['estatus' => false, 'mensaje' => "La asignación #$index no tiene modulo_id."];
+            }
+            // Validar que el módulo exista
+            if (!in_array($asignacion['modulo_id'], $modulosExistentes)) {
+                return ['estatus' => false, 'mensaje' => "El módulo ID {$asignacion['modulo_id']} no existe o está inactivo."];
+            }
+
+            // Validar que tenga permisos (array)
+            if (!isset($asignacion['permisos']) || !is_array($asignacion['permisos'])) {
+                return ['estatus' => false, 'mensaje' => "La asignación #$index no tiene un array de permisos válido."];
+            }
+
+            // Validar cada permiso individualmente
+            foreach ($asignacion['permisos'] as $permisoId) {
+                if (!in_array($permisoId, $permisosExistentes)) {
+                    return ['estatus' => false, 'mensaje' => "El permiso ID $permisoId no existe o está inactivo."];
+                }
+            }
+        }
+        return ['estatus' => true];
+    }
+
+    /**
+     * Sincroniza los permisos de un rol (Borrar anteriores -> Insertar nuevos)
+     */
+    private function _sincronizar_permisos()
+    {
+        $v = $this->validar(['id_rol']);
+        if (!$v['estatus']) return $v;
+
+        // Validar que permisos_asignados sea un array (puede ser vacío)
+        if (!is_array($this->permisos_asignados)) {
+            return ['estatus' => false, 'mensaje' => 'Los permisos asignados deben ser un array.'];
+        }
+
+        // Validar cada asignación si hay elementos
+        if (!empty($this->permisos_asignados)) {
+            $val = $this->validarAsignacionesPermisos($this->permisos_asignados);
+            if (!$val['estatus']) return $val;
+        }
+
+        $pdo = $this->get_conex('seguridad');
+        
+        try {
+            $pdo->beginTransaction();
+
+            // 1. Eliminar permisos anteriores
+            $sqlDel = "DELETE FROM asignacion_permisos WHERE rol_id = :rol_id";
+            $stmtDel = $pdo->prepare($sqlDel);
+            $stmtDel->execute([':rol_id' => $this->id_rol]);
+
+            // 2. Insertar nuevos permisos
+            if (!empty($this->permisos_asignados)) {
+                $sqlIns = "INSERT INTO asignacion_permisos (rol_id, modulo_id, permiso_id) VALUES (:rol, :mod, :per)";
+                $stmtIns = $pdo->prepare($sqlIns);
+
+                foreach ($this->permisos_asignados as $asignacion) {
+                    $modulo_id = $asignacion['modulo_id'];
+                    // $asignacion['permisos'] es un ARRAY de IDs
+                    foreach ($asignacion['permisos'] as $permiso_id) {
+                        $stmtIns->execute([
+                            ':rol' => $this->id_rol,
+                            ':mod' => $modulo_id,
+                            ':per' => $permiso_id
+                        ]);
+                    }
+                }
+            }
+
+            $pdo->commit();
+            return ['estatus' => true, 'mensaje' => 'Permisos actualizados correctamente'];
+
+        } catch (PDOException $e) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            error_log("Error en _sincronizar_permisos: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al asignar permisos: ' . $e->getMessage()];
+        }
+    }
+
+    /**
+     * Obtiene la lista de permisos asignados a un rol.
+     */
+    private function _consultar_permisos_asignados()
+    {
+        $v = $this->validar(['id_rol']);
+        if (!$v['estatus']) return $v;
+
+        $sql = "SELECT ap.modulo_id, ap.permiso_id, m.nombre as modulo, p.accion as permiso
+                FROM asignacion_permisos ap
+                JOIN modulos m ON ap.modulo_id = m.id_modulo
+                JOIN permisos p ON ap.permiso_id = p.id_permiso
+                WHERE ap.rol_id = :id";
+        
+        try {
+            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt->execute([':id' => $this->id_rol]);
+            return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
+        } catch (PDOException $e) {
+            error_log("Error en _consultar_permisos_asignados: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al consultar permisos'];
+        }
+    }
+
+    /**
+     * Consulta auxiliar para obtener TODOS los módulos y permisos disponibles
+     */
+    private function _consultar_matriz_permisos()
+    {
+        try {
+            $modulos = $this->get_conex('seguridad')
+                ->query("SELECT * FROM modulos WHERE activo = 1")
+                ->fetchAll(PDO::FETCH_ASSOC);
+            $permisos = $this->get_conex('seguridad')
+                ->query("SELECT * FROM permisos WHERE activo = 1")
+                ->fetchAll(PDO::FETCH_ASSOC);
+
+            return [
+                'estatus' => true,
+                'datos' => [
+                    'modulos' => $modulos,
+                    'permisos' => $permisos
+                ]
+            ];
+        } catch (PDOException $e) {
+            error_log("Error en _consultar_matriz_permisos: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al cargar matriz de permisos'];
+        }
     }
 }
+?>

@@ -4,7 +4,8 @@
           "haydee\\controlador\\": "controlador/",
           "haydee\\modelo\\": "modelo/",
           "haydee\\vista\\": "vista/",
-          "haydee\\ayuda\\": "ayuda/"
+          "haydee\\ayuda\\": "ayuda/",
+          "haydee\\servicios\\": "servicios/"
         },
         "files": [
             "config/acciones.php",

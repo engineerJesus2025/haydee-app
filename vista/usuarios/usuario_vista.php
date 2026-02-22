@@ -1,4 +1,4 @@
-<?php use haydee\modelo\Usuario; ?>
+<?php use haydee\ayuda\Sesiones; ?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -66,10 +66,9 @@
         }
     </style>
 </head>
-
 <body id="body-pd" class="body-pd">
-    <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Usuario::tiene_permiso(GESTIONAR_USUARIOS, ELIMINAR) ?>">
-    <input type="text" hidden="" id="permiso_editar" value="<?php echo Usuario::tiene_permiso(GESTIONAR_USUARIOS, MODIFICAR) ?>">
+    <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_USUARIOS, ELIMINAR) ?>">
+    <input type="text" hidden="" id="permiso_editar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_USUARIOS, MODIFICAR) ?>">
     <div class="container-fluid">
         <div class="row flex-nowrap ">
 
@@ -93,9 +92,9 @@
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="card p-4">
-                                <?php if (Usuario::tiene_permiso(GESTIONAR_USUARIOS, REGISTRAR)) : ?>
+                                <?php if (Sesiones::tienePermiso(GESTIONAR_USUARIOS, REGISTRAR)) : ?>
                                     <div class="button mb-4">
-                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_usuario">Nuevo Usuario</a>
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_usuario">Nuevo usuario</a>
                                     </div><br>
                                 <?php endif; ?>
                                 <!-- <div class="table-responsive"> -->

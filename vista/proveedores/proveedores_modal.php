@@ -6,7 +6,7 @@
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
                 <input type="text" class="form-control nombre_proveedor" name="nombre_proveedor" id="nombre_proveedor" placeholder="Ejem: Hidrolara"
-                       aria-label="nombre_proveedor" aria-describedby="basic-addon1" minlength="3" maxlength="20">
+                       aria-label="nombre_proveedor" aria-describedby="basic-addon1" minlength="3" maxlength="50">
                 <span class="w-100 invalid-feedback"></span>
             </div>
         </div>

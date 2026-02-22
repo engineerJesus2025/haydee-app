@@ -13,7 +13,7 @@
             <label for="fecha_cierre">Fecha Cierre</label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
-                <input type="date" class="form-control" name="fecha_cierre" id="fecha_cierre"  aria-label="fecha_cierre" aria-describedby="basic-addon1" disabled="">
+                <input type="date" class="form-control" name="fecha_cierre" id="fecha_cierre"  aria-label="fecha_cierre" aria-describedby="basic-addon1" readonly>
                 <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
@@ -24,7 +24,7 @@
             <label for="estado">Estado</label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
-                <select class="form-select" aria-label="Default select example" name="estado" id="estado" form="form_anio_fiscal" disabled="">
+                <select class="form-select" aria-label="Default select example" name="estado" id="estado" form="form_anio_fiscal" style="pointer-events: none; background-color: #eee;">
                     <option value="Abierto">Abierta</option>
                     <option value="Cerrada">Cerrada</option>
                 </select>

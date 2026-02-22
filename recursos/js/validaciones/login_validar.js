@@ -1,359 +1,241 @@
+/**
+ * login_validar.js
+ * Validaciones y peticiones para el login y recuperación de contraseña
+ * Dependencias: utilidades.js, validaciones.js
+ */
+
+// ============================================================
+// VARIABLES GLOBALES
+// ============================================================
 let peticionesActivas = 0;
 let ultimaPeticion = 0;
 let tiempoCarga;
-let modal_carga = new bootstrap.Modal("#modal_carga");
+const modalCarga = new bootstrap.Modal("#modal_carga");
 
-let recuperacion_contrasenia = {
-	enviada: false,
-	tiempo: null
+let recuperacionContrasenia = {
+    enviada: false,
+    tiempo: null
 };
 
-// if (!(navigator.onLine)) {
-// 	document.querySelector(".g-recaptcha").style.display = 'none'
-// }
+// Estado de reCAPTCHA
+let recaptchaToken = null;
+let recaptchaWidgetId = null;
+const recaptchaDesactivado = window.RECAPTCHA_DESACTIVADO === true; // true si está desactivado
 
-document.getElementById('correo_login').addEventListener("keyup",e=>{
-	validarKeyPress(/^[A-Za-z0-9_ .@\b]*$/, e);
-	validarKeyUp(/^[A-Za-z0-9_ .]{3,20}[@][A-Za-z0-9]{3,10}[.][A-Za-z]{2,3}$/,document.getElementById('correo_login'),'Ejemplo: alguien@servidor.com');
-});
-
-document.getElementById('correo_recuperar').addEventListener("keyup",e=>{
-	validarKeyPress(/^[-A-Za-z0-9_.@\b]*$/, e);
-	validarKeyUp(/^[-A-Za-z0-9_.]{3,20}[@][A-Za-z0-9]{3,10}[.][A-Za-z]{2,3}$/,document.getElementById('correo_recuperar'),'Ejemplo: alguien@servidor.com');
-});
-
-document.getElementById('contra').addEventListener("keyup",e=>{
-	validarKeyPress(/^[A-Za-z0-9_.+*$#%&/]*$/, e);
-	validarKeyUp(/^[A-Za-z0-9_.+*$#%&/]{5,50}$/,document.getElementById('contra'),'Minimo 5 caracteres, se permiten caracteres especiales');
-});
-
-document.getElementById('enviar').addEventListener("click",async e=>{	
-	e.preventDefault();
-	if(await validarEnvio()==true){
-		let datos_consulta = new FormData();
-
-		let usuario = document.getElementById('correo_login').value,
-		contra = document.getElementById('contra').value,
-		mantener_sesion = document.getElementById('checkbox_mantener_sesion').checked;
-
-		let reCAPTCHA;
-		// if ((navigator.onLine)) {
-		// 	reCAPTCHA = "no_internet";
-		// }
-		// else{
-		// 	reCAPTCHA = document.getElementById('g-recaptcha-response').value;
-		// }
-
-		datos_consulta.append("usuario",usuario);
-		datos_consulta.append("contra",contra);
-		datos_consulta.append("mantener_sesion",mantener_sesion);
-		// datos_consulta.append("g-recaptcha-response",reCAPTCHA);
-		datos_consulta.append("operacion","entrar");
-
-		let resultado = await query(datos_consulta);
-		
-		if (resultado.estatus) {
-			await obtenerTasaDolar();
-
-			window.location = "?pagina=inicio_controlador.php&accion=inicio";
-		}
-		else if (resultado.estatus == false){
-			mensajes('error',4000,resultado.mensaje,
-		'Intenta nuevamente');
-		}
-	}
-});
-
-document.getElementById('boton_recuperar').addEventListener("click",async e=>{	
-	e.preventDefault();
-	//validacion de tiempo de envio
-	if(validarKeyUp(
-        /^[-A-Za-z0-9_.]{3,20}[@][A-Za-z0-9]{3,10}[.][A-Za-z]{2,3}$/,
-        document.getElementById('correo_recuperar'),'Ejemplo: alguien@servidor.com'
-        )){
-
-		let datos_consulta = new FormData();
-
-		let correo_recuperar = document.getElementById('correo_recuperar').value;
-		let token = generarToken(200);
-
-		datos_consulta.append("correo_recuperar",correo_recuperar);
-		datos_consulta.append("token",token);
-		datos_consulta.append("operacion","enviar_notificacion");
-
-		await query(datos_consulta);
-
-		mensajes('warning',8000,'Atencion',"Revise su bandeja de entrada del correo. Si el correo que ingreso está en el sistema, encontrará un enlace para recuperar su contraseña.");
-		recuperacion_contrasenia.enviada = true;
-		recuperacion_contrasenia.tiempo = new Date();
-	}
-	else{
-		mensajes('error',4000,'Verifique el correo de recuperacion',
-		'Ejemplo: alguien@servidor.com');
-		
-		return false;
-	}
-});
-
-if (document.getElementById('resultado_cambio') != null) {
-	mensajes('success',4000,'Atencion','La contraseña se ha cambiado exitosamente');
+// ============================================================
+// FUNCIONES DE CALLBACK PARA reCAPTCHA (deben ser globales)
+// ============================================================
+window.onRecaptchaSuccess = function(token) {
+    recaptchaToken = token;
+    document.getElementById('enviar').disabled = false;
 };
 
-function mensajes(icono,tiempo,titulo,mensaje){
-	Swal.fire({
-	icon:icono,
-    timer:tiempo,	
-    title:titulo,
-	text:mensaje,
-	showConfirmButton:true,
-	confirmButtonText:'Aceptar',
-	confirmButtonColor: "#e01d22",
-	});
-}
+window.onRecaptchaExpired = function() {
+    recaptchaToken = null;
+    document.getElementById('enviar').disabled = true;
+};
 
-function validarEnvio(){
+window.onRecaptchaError = function() {
+    recaptchaToken = null;
+    document.getElementById('enviar').disabled = true;
+};
 
-	if(validarKeyUp(
-        /^[-A-Za-z0-9_.]{3,20}[@][A-Za-z0-9]{3,10}[.][A-Za-z]{2,3}$/,
-        document.getElementById('correo_login'),'Ejemplo: alguien@servidor.com'
-        )==0)
-	{
-		mensajes('error',4000,'Verifique el correo',
-		'El correo esta mal ingresado. Verifique nuevamente. Ejemplo: alguien@servidor.com');
-		
-		return false;
-	}
-	else if(validarKeyUp(
-        /^[A-Za-z0-9_.+*$#%&/]{5,50}$/,
-        document.getElementById('contra'),'Minimo 5 caracteres, se permiten caracteres especiales'
-        )==0)
-	{
-		mensajes('error',4000,'Verifique la contraseña',
-		'El formato debe tener mínimo 5 caracteres, utilizar letras, numeros y caracteres especiales como: _.+*$#%&/ ');
-		
-		return false;
-	}
-	// if (!navigator.onLine) {
-	// 	const recaptchaResponse = grecaptcha.getResponse();
-	//     if (recaptchaResponse.length === 0) {
-	//         mensajes('error',4000,'Verifique el reCAPTCHA','Debe completar la validación.');
-	//         return false;
-	//     }
-	// }	
-
-	return true;
-}
-
-function validarKeyPress(er, e) {
-    key = e.keyCode;
-    tecla = String.fromCharCode(key);
-    a = er.test(tecla);
-    if (!a) {
-    e.preventDefault();
+// ============================================================
+// INICIALIZACIÓN
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+    // Mensaje de resultado de cambio de contraseña (si viene por URL)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('err') === '1') {
+        Utilidades.mensaje('success', 'Atención', 'La contraseña se ha cambiado exitosamente');
+    } else if (urlParams.get('err') === '2') {
+        Utilidades.mensaje('error', 'Error', 'El Token Recibido no es válido');
+    } else if (urlParams.get('err') === '3') {
+        Utilidades.mensaje('error', 'Error', 'No se pudo cambiar la contraseña');
     }
-}
 
-function validarKeyUp(er, etiqueta, mensaje = '') {
-	let etiquetamensaje = etiqueta.nextElementSibling;
-    a = er.test(etiqueta.value);
-	
-	if(a){
-		etiqueta.classList.add('is-valid');
-		etiqueta.classList.remove('is-invalid');
-		etiquetamensaje.textContent = "";
-		return 1;
-	}
-	else{
-		etiqueta.classList.add('is-invalid')
-		etiqueta.classList.remove('is-valid');
-		etiquetamensaje.textContent = mensaje;
-		return 0;
-	}
-}
-
-async function query(datos) {
-	peticionesActivas++;
-
-	const tiempoInicio = performance.now();
-
-	ultimaPeticion = tiempoInicio;
-
-	if (peticionesActivas === 1) {
-		tiempoCarga = setTimeout(()=>{
-			modal_carga.show();
-		}, 200);
-	}
-
-	try{
-		let data = await fetch("",{method:"POST", body:datos}).then(res=>{		
-		let result = res.json()
-			return result;//Convertimos el resultado de json a js y lo mandamos
-		});
-		return data;
-	}
-	catch(error){
-		console.log(error);
-		return {estatus:false,mensaje:"A ocurrido un error durante la consulta",error}
-	}
-	finally{
-		peticionesActivas--;
-
-		if (peticionesActivas === 0) {
-			const espera = 50;
-			setTimeout(()=>{
-				if (peticionesActivas === 0) {
-					clearTimeout(tiempoCarga);
-
-					const tiempoTranscurido = performance.now() - tiempoInicio;
-					const tiempoEsperaMin = 400; //lo mini que debe durar la peticion
-
-					if (tiempoTranscurido < tiempoEsperaMin) {
-						const restante = tiempoEsperaMin - tiempoTranscurido;
-						setTimeout(()=>{
-							if (performance.now() - ultimaPeticion >= restante) {
-								modal_carga.hide();
-							}
-						},restante);
-					}
-					else{
-						modal_carga.hide();
-					}
-				}
-			}, espera);
-		}
-	}
-}
-
-function generarToken(longitud) {
-  let token = '';
-  const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  for (let i = 0; i < longitud; i++) {
-    token += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
-  }
-  return token;
-}
-
-async function obtenerTasaDolar(){
-	const fechaTasaGuardada = localStorage.getItem('fecha_tasa_dolar');
-    const tasaGuardada = localStorage.getItem('tasa_dolar');
-
-	if (fechaTasaGuardada && tasaGuardada) {
-        // Convertir la fecha ISO guardada a objeto Date
-        const fechaTasa = new Date(fechaTasaGuardada);
-        const fechaActual = new Date();
-        
-        // Comparar solo año, mes y día (ignorar hora)
-        if (fechaTasa.toDateString() === fechaActual.toDateString()) {
-            return { 
-                estatus: true, 
-                tasa: parseFloat(tasaGuardada),
-                mensaje: "Tasa en cache",
-                fecha: fechaTasaGuardada
-            };
+    // Si reCAPTCHA está desactivado, habilitar el botón directamente
+    if (recaptchaDesactivado) {
+        document.getElementById('enviar').disabled = false;
+    } else {
+        // Si hay reCAPTCHA en la página, deshabilitar el botón hasta que se complete
+        if (typeof grecaptcha !== 'undefined' && document.querySelector('.g-recaptcha')) {
+            document.getElementById('enviar').disabled = true;
         }
     }
 
-	peticionesActivas++;
+    // Validaciones en tiempo real
+    const correoLogin = document.getElementById('correo_login');
+    if (correoLogin) {
+        correoLogin.addEventListener('keypress', e => Validaciones.keyPress(/^[A-Za-z0-9_ .@]$/, e));
+        correoLogin.addEventListener('keyup', () => 
+            Validaciones.keyUp(/^[A-Za-z0-9_.]{3,20}@[A-Za-z0-9]{3,10}\.[A-Za-z]{2,3}$/, 
+                correoLogin, correoLogin.nextElementSibling, 
+                'Ejemplo: alguien@servidor.com')
+        );
+    }
 
-	const tiempoInicio = performance.now();
+    const correoRecuperar = document.getElementById('correo_recuperar');
+    if (correoRecuperar) {
+        correoRecuperar.addEventListener('keypress', e => Validaciones.keyPress(/^[A-Za-z0-9_ .@]$/, e));
+        correoRecuperar.addEventListener('keyup', () =>
+            Validaciones.keyUp(/^[A-Za-z0-9_.]{3,20}@[A-Za-z0-9]{3,10}\.[A-Za-z]{2,3}$/, 
+                correoRecuperar, correoRecuperar.nextElementSibling, 
+                'Ejemplo: alguien@servidor.com')
+        );
+    }
 
-	ultimaPeticion = tiempoInicio;
+    const contra = document.getElementById('contra');
+    if (contra) {
+        contra.addEventListener('keypress', e => Validaciones.keyPress(/^[A-Za-z0-9_.+*$#%&/]$/, e));
+        contra.addEventListener('keyup', () =>
+            Validaciones.keyUp(/^[A-Za-z0-9_.+*$#%&/]{5,50}$/, 
+                contra, contra.nextElementSibling, 
+                'Mínimo 5 caracteres, se permiten especiales')
+        );
+    }
 
-	if (peticionesActivas === 1) {
-		tiempoCarga = setTimeout(()=>{
-			modal_carga.show();
-		}, 200);
-	}
+    // Evento del botón enviar (login)
+    const btnEnviar = document.getElementById('enviar');
+    if (btnEnviar) {
+        btnEnviar.addEventListener('click', async e => {
+            e.preventDefault();
+            if (await validarLogin()) {
+                await realizarLogin();
+            }
+        });
+    }
 
-	try{
-		const respuesta = await fetch("https://ve.dolarapi.com/v1/dolares/oficial"); 
+    // Evento del botón recuperar
+    const btnRecuperar = document.getElementById('boton_recuperar');
+    if (btnRecuperar) {
+        btnRecuperar.addEventListener('click', async e => {
+            e.preventDefault();
+            await realizarRecuperacion();
+        });
+    }
+
+    // Verificar si reCAPTCHA está presente en la página
+    if (typeof grecaptcha !== 'undefined' && document.querySelector('.g-recaptcha')) {
+        // El botón de enviar comienza deshabilitado hasta que se complete el reCAPTCHA
+        btnEnviar.disabled = true;
+    }
+});
+
+// ============================================================
+// FUNCIONES DE VALIDACIÓN
+// ============================================================
+async function validarLogin() {
+    const correo = document.getElementById('correo_login');
+    const contra = document.getElementById('contra');
+
+    if (!Validaciones.keyUp(/^[A-Za-z0-9_.]{3,20}@[A-Za-z0-9]{3,10}\.[A-Za-z]{2,3}$/, 
+        correo, correo.nextElementSibling, '')) {
+        Utilidades.mensaje('error', 'Verifique el correo', 'El correo ingresado no es válido');
+        return false;
+    }
+
+    if (!Validaciones.keyUp(/^[A-Za-z0-9_.+*$#%&/]{5,50}$/, 
+        contra, contra.nextElementSibling, '')) {
+        Utilidades.mensaje('error', 'Verifique la contraseña', 'La contraseña debe tener al menos 5 caracteres');
+        return false;
+    }
+
+    // Validar reCAPTCHA solo si no está desactivado
+    if (!recaptchaDesactivado && typeof grecaptcha !== 'undefined' && document.querySelector('.g-recaptcha')) {
+        if (!recaptchaToken) {
+            Utilidades.mensaje('error', 'Validación requerida', 'Debe completar el reCAPTCHA');
+            return false;
+        }
+    }
+
+    return true;
+}
+
+// ============================================================
+// FUNCIONES DE PETICIONES AJAX
+// ============================================================
+async function realizarLogin() {
+    const formData = new FormData();
+    formData.append('usuario', document.getElementById('correo_login').value);
+    formData.append('contra', document.getElementById('contra').value);
+    formData.append('mantener_sesion', document.getElementById('checkbox_mantener_sesion')?.checked || false);
+    formData.append('operacion', 'entrar');
+
+    // Agregar token de reCAPTCHA solo si está activo
+    if (!recaptchaDesactivado && recaptchaToken) {
+        formData.append('g-recaptcha-response', recaptchaToken);
+    }
+
+    const resultado = await Utilidades.query(formData, true);
+
+    if (resultado.estatus) {
+        await obtenerTasaDolar();
+        window.location = "?pagina=inicio_controlador.php&accion=inicio";
+    } else {
+        // Si falla, reiniciar reCAPTCHA (si está presente)
+        if (!recaptchaDesactivado && typeof grecaptcha !== 'undefined' && recaptchaWidgetId !== null) {
+            grecaptcha.reset(recaptchaWidgetId);
+            recaptchaToken = null;
+        }
+        Utilidades.mensaje('error', resultado.mensaje || 'Error', 'Intente nuevamente');
+    }
+}
+
+async function realizarRecuperacion() {
+    const correoInput = document.getElementById('correo_recuperar');
+    const correo = correoInput.value;
+
+    if (!Validaciones.keyUp(/^[A-Za-z0-9_.]{3,20}@[A-Za-z0-9]{3,10}\.[A-Za-z]{2,3}$/, 
+        correoInput, correoInput.nextElementSibling, '')) {
+        Utilidades.mensaje('error', 'Verifique el correo', 'El formato del correo no es válido');
+        return;
+    }
+
+    // Evitar envíos repetidos en corto tiempo (opcional)
+    if (recuperacionContrasenia.enviada && (new Date() - recuperacionContrasenia.tiempo) < 60000) {
+        Utilidades.mensaje('warning', 'Espere', 'Ya se envió un correo recientemente, espere un minuto');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('correo_recuperar', correo);
+    formData.append('operacion', 'enviar_notificacion');
+
+    const resultado = await Utilidades.query(formData, true);
+
+    // Siempre mostramos el mismo mensaje por seguridad (no revelar si el correo existe)
+    Utilidades.mensaje('warning', 'Atención', 
+        'Revise su bandeja de entrada del correo. Si el correo ingresado está en el sistema, encontrará un enlace para recuperar su contraseña.');
+
+    recuperacionContrasenia.enviada = true;
+    recuperacionContrasenia.tiempo = new Date();
+}
+
+// ============================================================
+// FUNCIÓN PARA OBTENER TASA DE DÓLAR
+// ============================================================
+async function obtenerTasaDolar() {
+    const fechaGuardada = localStorage.getItem('fecha_tasa_dolar');
+    const tasaGuardada = localStorage.getItem('tasa_dolar');
+
+    if (fechaGuardada && tasaGuardada) {
+        const fechaTasa = new Date(fechaGuardada);
+        const hoy = new Date();
+        if (fechaTasa.toDateString() === hoy.toDateString()) {
+            return; // Tasa vigente, no hacemos nada
+        }
+    }
+
+    // Intentar obtener nueva tasa
+    try {
+        const respuesta = await fetch("https://ve.dolarapi.com/v1/dolares/oficial");
+        if (!respuesta.ok) throw new Error('Error al obtener tasa');
         const data = await respuesta.json();
-		
-		localStorage.setItem('fecha_tasa_dolar', data.fechaActualizacion); // "2025-11-07T20:02:28.091Z"
-		localStorage.setItem('tasa_dolar', data.promedio.toString()); 
-	}
-	catch (error){
-		localStorage.setItem('error_tasa_dolar', error);
-	}
-	finally{
-		peticionesActivas--;
-
-		if (peticionesActivas === 0) {
-			const espera = 50;
-			setTimeout(()=>{
-				if (peticionesActivas === 0) {
-					clearTimeout(tiempoCarga);
-
-					const tiempoTranscurido = performance.now() - tiempoInicio;
-					const tiempoEsperaMin = 400; //lo mini que debe durar la peticion
-
-					if (tiempoTranscurido < tiempoEsperaMin) {
-						const restante = tiempoEsperaMin - tiempoTranscurido;
-						setTimeout(()=>{
-							if (performance.now() - ultimaPeticion >= restante) {
-								modal_carga.hide();
-							}
-						},restante);
-					}
-					else{
-						modal_carga.hide();
-					}
-				}
-			}, espera);
-		}
-	}
-}
-
-// VALIDACIÓN CORREGIDA
-// async function obtenerTasaDolar() {
-//     const fechaTasaGuardada = localStorage.getItem('fecha_tasa_dolar');
-//     const tasaGuardada = localStorage.getItem('tasa_dolar');
-    
-//     if (fechaTasaGuardada && tasaGuardada) {
-//         // Convertir la fecha ISO guardada a objeto Date
-//         const fechaTasa = new Date(fechaTasaGuardada);
-//         const fechaActual = new Date();
-        
-//         // Comparar solo año, mes y día (ignorar hora)
-//         if (fechaTasa.toDateString() === fechaActual.toDateString()) {
-//             return { 
-//                 estatus: true, 
-//                 tasa: parseFloat(tasaGuardada),
-//                 mensaje: "Tasa en cache",
-//                 fecha: fechaTasaGuardada
-//             };
-//         }
-//     }
-
-//     // Si llegamos aquí, necesitamos actualizar
-//     try {
-//         const respuesta = await fetch("https://dolarapi.com/v1/dolares/blue"); // o el endpoint correcto
-//         const data = await respuesta.json();
-        
-//         // Guardar la fecha COMPLETA que viene de la API
-//         localStorage.setItem('fecha_tasa_dolar', data.fechaActualizacion); // "2025-11-07T20:02:28.091Z"
-//         localStorage.setItem('tasa_dolar', data.venta.toString()); // Asumiendo que usas 'venta'
-        
-//         return {
-//             estatus: true,
-//             tasa: data.venta,
-//             mensaje: "Tasa actualizada correctamente",
-//             fecha: data.fechaActualizacion
-//         };
-//     } catch (error) {
-//         // Manejo de errores...
-//     }
-// }
-
-// Callbacks para reCAPTCHA
-function onRecaptchaSuccess(token) {
-    document.getElementById('enviar').disabled = false;    
-}
-
-function onRecaptchaExpired() {
-    document.getElementById('enviar').disabled = true;    
-}
-
-function onRecaptchaError() {
-    document.getElementById('enviar').disabled = true;    
+        localStorage.setItem('fecha_tasa_dolar', data.fechaActualizacion);
+        localStorage.setItem('tasa_dolar', data.promedio.toString());
+    } catch (error) {
+        console.error('No se pudo actualizar la tasa de dólar:', error);
+        // No mostramos error al usuario, solo dejamos la tasa anterior o 1
+    }
 }

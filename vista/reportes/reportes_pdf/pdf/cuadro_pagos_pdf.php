@@ -71,7 +71,7 @@
 			<thead>
 			<tr>
 				<th>APTO.</th>
-				<?php foreach ($cebecera_tabla as $mes) {?>
+				<?php foreach ($cabecera_tabla as $mes) {?>
 					<th>Cuota <?php echo $mes ?></th>
 				<?php } ?>
 				<th>Total Deuda</th>

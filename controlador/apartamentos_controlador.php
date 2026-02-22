@@ -1,251 +1,264 @@
 <?php
-    use haydee\ayuda\Sesiones;
-    Sesiones::verificarSesion();
-    Sesiones::verificarPermiso(GESTIONAR_APARTAMENTOS, CONSULTAR);
-    
-    use haydee\modelo\Apartamento;
-    use haydee\modelo\Habitantes;
-    use haydee\modelo\HabitantesApartamentos;
- 
-    if(isset($_POST["operacion"])){
-        $operacion = $_POST["operacion"];
+use haydee\ayuda\Sesiones;
+use haydee\modelo\Apartamento;
+use haydee\modelo\Habitantes;
+use haydee\modelo\Bitacora;
 
-        if ($operacion == "consulta"){
-            $obj_apartamento = new Apartamento(); // Objeto Apartamento
-            echo  json_encode($obj_apartamento->realizar_consulta('consultar'));
+// Verificaciones de seguridad
+Sesiones::verificarSesion();
+Sesiones::verificarPermiso(GESTIONAR_APARTAMENTOS, CONSULTAR);
 
-        }elseif ($operacion == "consultar_habitantes") {
-            $obj_habitantes_apartamentos = new HabitantesApartamentos(); // Objeto Habitantes_Apartamentos
-            $obj_habitantes_apartamentos->set_apartamento_id($_POST["id_apartamento"]);
-            echo json_encode($obj_habitantes_apartamentos->realizar_consulta('consultar'));
-            exit;
-        }elseif ($operacion == "registrar_habitantes"){
-            $obj_habitante = new Habitantes(); // Objeto Habitante
-            $obj_habitantes_apartamentos = new HabitantesApartamentos(); // Objeto Habitantes_Apartamentos
+// Instancia de modelos
+$apartamento = new Apartamento();
+$habitante = new Habitantes();
 
-            $nombre = $_POST["nombre"];  
-            $apellido = $_POST["apellido"]; 
-            $cedula = $_POST["cedula"];
-            $telefono = $_POST["telefono"];
-            $correo = $_POST["correo"];
-            $fecha_nacimiento = $_POST["fecha_nacimiento"];
-            $sexo = $_POST["sexo"];     
+if (isset($_POST["operacion"])) {
+    header('Content-Type: application/json');
 
-            $apartamento_id = $_POST["apartamento_id"];
-            $tipo_vinculo = $_POST["tipo_vinculo"];  
+    // Asignación masiva para Apartamento
+    $apartamento->set_id_apartamento($_POST['id_apartamento'] ?? null);
+    $apartamento->set_nro_apartamento($_POST['nro_apartamento'] ?? null);
+    $apartamento->set_porcentaje_participacion($_POST['porcentaje_participacion'] ?? null);
+    $apartamento->set_gas($_POST['gas'] ?? null);
+    $apartamento->set_agua($_POST['agua'] ?? null);
+    $apartamento->set_alquilado($_POST['alquilado'] ?? null);
+    $apartamento->set_habitante_id($_POST['habitante_id'] ?? null);
+    $apartamento->set_tipo_vinculo($_POST['tipo_vinculo'] ?? null);
 
-            //se usan los setters correspondientes
-            $obj_habitante->set_nombre($nombre);
-            $obj_habitante->set_apellido($apellido);
-            $obj_habitante->set_cedula($cedula);
-            $obj_habitante->set_telefono($telefono);
-            $obj_habitante->set_correo($correo);
-            $obj_habitante->set_fecha_nacimiento($fecha_nacimiento);
-            $obj_habitante->set_sexo($sexo);
-            
-            $resultado_registro_habitante = $obj_habitante->realizar_consulta('registrar');
- 
-            // Tabla puente
-            if($resultado_registro_habitante["estatus"]){
-                $ultima_habitante = $obj_habitante->realizar_consulta('lastId');
-                $habitante_id = $ultima_habitante["last_id"];
+    // Asignación masiva para Habitantes
+    $habitante->set_id_habitante($_POST['id_habitante'] ?? null);
+    $habitante->set_nombre($_POST['nombre'] ?? null);
+    $habitante->set_apellido($_POST['apellido'] ?? null);
+    $habitante->set_telefono($_POST['telefono'] ?? null);
+    $habitante->set_correo($_POST['correo'] ?? null);
+    $habitante->set_fecha_nacimiento($_POST['fecha_nacimiento'] ?? null);
+    $habitante->set_sexo($_POST['sexo'] ?? null);
 
-                $obj_habitantes_apartamentos->set_habitante_id($habitante_id);
-                $obj_habitantes_apartamentos->set_apartamento_id($apartamento_id);
-                $obj_habitantes_apartamentos->set_tipo_vinculo($tipo_vinculo);
+    $tipo = $_POST['tipo_cedula'] ?? '';
+    $numero = $_POST['cedula'] ?? '';
 
-                $resultado_puente = $obj_habitantes_apartamentos->realizar_consulta('registrar');
+    // Solo llamamos al método si tenemos datos
+    if ($tipo !== '' && $numero !== '') {
+        $habitante->set_cedula($tipo . $numero);
+    }
 
-                if($resultado_puente["estatus"]){
-                    echo json_encode([
-                        "estatus" => true,
-                        "mensaje" => "Habitante y relación registrados correctamente"
-                    ]);
-                }else{
-                    echo json_encode([
-                        "estatus" => false,
-                        "mensaje" => "Error al registrar relación en tabla puente"
-                    ]);
+    $operacion = $_POST["operacion"];
+    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
+
+    try {
+        switch ($operacion) {
+            // ================= APARTAMENTOS =================
+            case 'consulta':
+                $respuesta = $apartamento->realizar_consulta('consultar_listado');
+                if ($respuesta['estatus']) {
+                    Bitacora::registrar(CONSULTAR, GESTIONAR_APARTAMENTOS, 'Consulta general de apartamentos');
                 }
-            }else{
-                echo json_encode($resultado_registro_habitante);
-            }
+                break;
 
-            exit;
-        }elseif ($operacion == "consulta_especifica_habitante"){
+            // case 'consulta_select':
+            //     $respuesta = $apartamento->realizar_consulta('consultar_listado');
+            //     break;
 
-            $obj_habitante = new Habitantes(); // Objeto Habitante
-            $id_habitante = $_POST["id_habitante"];
-            $obj_habitante->set_id_habitante($id_habitante);
-            echo  json_encode($obj_habitante->realizar_consulta('consulta_especifica'));
+            case 'registrar':
+                $respuesta = $apartamento->realizar_consulta('registrar_apartamento');
+                if ($respuesta['estatus']) {
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_APARTAMENTOS,
+                        'Apartamento N° ' . $apartamento->get_nro_apartamento()
+                    );
+                }
+                break;
 
-        }elseif ($operacion == "modificar_habitantes"){
-            $obj_habitante = new Habitantes(); // Objeto Habitante
-            $obj_habitantes_apartamentos = new HabitantesApartamentos(); // Objeto Habitantes_Apartamentos
+            case 'consulta_especifica':
+                $respuesta = $apartamento->realizar_consulta('consultar_detalle_completo');
+                if ($respuesta['estatus']) {
+                    // Reestructurar para mantener compatibilidad con el frontend
+                    $datos = $respuesta['datos'];
+                    $respuesta = [
+                        'estatus' => true,
+                        'apartamento' => $datos,
+                        'detalles' => $datos['habitantes'] ?? []
+                    ];
+                }
+                break;
 
-            $id_habitante = $_POST["id_habitante"];
-            $nombre = $_POST["nombre"];  
-            $apellido = $_POST["apellido"]; 
-            $cedula = $_POST["cedula"];
-            $telefono = $_POST["telefono"];
-            $correo = $_POST["correo"];
-            $fecha_nacimiento = $_POST["fecha_nacimiento"];
-            $sexo = $_POST["sexo"];
-            $apartamento_id = $_POST["apartamento_id"];
-            $tipo_vinculo = $_POST["tipo_vinculo"];
-            
-            $obj_habitante->set_id_habitante($id_habitante);
-            $obj_habitante->set_nombre($nombre);
-            $obj_habitante->set_apellido($apellido);
-            $obj_habitante->set_cedula($cedula);
-            $obj_habitante->set_telefono($telefono);
-            $obj_habitante->set_correo($correo);
-            $obj_habitante->set_fecha_nacimiento($fecha_nacimiento);
-            $obj_habitante->set_sexo($sexo);
+            case 'modificar':
+                $respuesta = $apartamento->realizar_consulta('editar_apartamento');
+                if ($respuesta['estatus']) {
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_APARTAMENTOS,
+                        'Apartamento ID: ' . $apartamento->get_id_apartamento()
+                    );
+                }
+                break;
 
-            $obj_habitantes_apartamentos->set_apartamento_id($apartamento_id);
-            $obj_habitantes_apartamentos->set_tipo_vinculo($tipo_vinculo);
-            $obj_habitantes_apartamentos->set_habitante_id($id_habitante);
+            case 'eliminar':
+                // Obtener datos para bitácora
+                $copia = clone $apartamento;
+                $datosApto = $copia->realizar_consulta('consultar_detalle_completo');
+                $info = $datosApto['estatus'] ? ('Apartamento N° ' . ($datosApto['datos']['nro_apartamento'] ?? '')) : '';
 
-            $registro_modificado = $obj_habitante->realizar_consulta('modificar');
-            
-            if($registro_modificado["estatus"]){
-                
-                $resultado_puente = $obj_habitantes_apartamentos->realizar_consulta('modificar');
+                $respuesta = $apartamento->realizar_consulta('eliminar_apartamento');
+                if ($respuesta['estatus']) {
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_APARTAMENTOS, $info);
+                }
+                break;
 
-                if ($resultado_puente["estatus"]) {
-                    echo json_encode([
-                        "estatus" => true,
-                        "mensaje" => "Habitante y relación actualizados correctamente",
-                        'err'=>$resultado_puente["mensaje"]
-                    ]);
+            case 'ultimo_id':
+                $respuesta = $apartamento->realizar_consulta('lastId');
+                break;
+
+            // ================= HABITANTES =================
+            case 'consultar_habitantes':
+                $apartamento->set_id_apartamento($_POST['id_apartamento'] ?? null);
+                $result = $apartamento->realizar_consulta('consultar_detalle_completo');
+                if ($result['estatus']) {
+                    $respuesta = ['estatus' => true, 'datos' => $result['datos']['habitantes'] ?? []];
                 } else {
-                    echo json_encode([
-                        "estatus" => false,
-                        "mensaje" => "Habitante actualizado, pero error al actualizar relación en tabla puente",
-                        'err'=>$resultado_puente["mensaje"]
-                    ]);
+                    $respuesta = $result;
                 }
-            } else {
-                echo json_encode([
-                    "estatus" => false,
-                    "mensaje" => "Error al actualizar al habitante",
-                    'err'=>$registro_modificado["mensaje"]
-                ]);
-            }
-        }elseif ($operacion == "eliminar_habitantes"){
-            
-            $obj_habitante = new Habitantes(); // Objeto Habitante
-            $id_habitante = $_POST["id_habitante"];
-            $obj_habitante->set_id_habitante($id_habitante);
-            echo  json_encode($obj_habitante->realizar_consulta('eliminar'));
+                break;
 
-        }elseif ($operacion == "ultimo_id_habitante") {
+            case 'registrar_habitantes':
+                // Registrar habitante
+                $respuesta = $habitante->realizar_consulta('registrar');
+                if ($respuesta['estatus']) {
+                    $idHabitante = $respuesta['lastId'];
+                    // Asignar al apartamento
+                    $apartamento->set_habitante_id($idHabitante);
+                    $apartamento->set_id_apartamento($_POST['apartamento_id'] ?? null);
+                    $apartamento->set_tipo_vinculo($_POST['tipo_vinculo'] ?? null);
+                    $resAsignar = $apartamento->realizar_consulta('asignar_habitante');
+                    if ($resAsignar['estatus']) {
+                        $respuesta = ['estatus' => true, 'mensaje' => 'Habitante y relación registrados correctamente'];
+                        Bitacora::registrar(REGISTRAR, GESTIONAR_HABITANTES,
+                            $habitante->get_nombre() . ' ' . $habitante->get_apellido()
+                        );
+                    } else {
+                        // Si falla la asignación, podríamos eliminar el habitante, pero por simplicidad avisamos
+                        $respuesta = ['estatus' => false, 'mensaje' => 'Habitante registrado, pero error al asignar al apartamento: ' . $resAsignar['mensaje']];
+                    }
+                }
+                break;
 
-            $obj_habitante = new Habitantes(); // Objeto Habitante
-            echo json_encode($obj_habitante->realizar_consulta('lastId'));
+            case 'consulta_especifica_habitante':
+                $respuesta = $habitante->realizar_consulta('consultar_habitante');
+                break;
 
-        }elseif ($operacion == "registrar") {
-            $obj_apartamento = new Apartamento(); // Objeto Apartamento
+            case 'modificar_habitantes':
+                // Obtener datos actuales del habitante
+                $habitante->set_id_habitante($_POST['id_habitante'] ?? null);
+                $datosActuales = $habitante->realizar_consulta('consultar_habitante');
+                if (!$datosActuales['estatus']) {
+                    throw new Exception('Habitante no encontrado');
+                }
+                $datosActuales = $datosActuales['datos'];
 
-            $nro_apartamento = $_POST["nro_apartamento"];  
-            $porcentaje_participacion = $_POST["porcentaje_participacion"];
-            $gas = $_POST["gas"]; 
-            $agua = $_POST["agua"];
-            $alquilado = $_POST["alquilado"];
+                // Actualizar habitante
+                $respuesta = $habitante->realizar_consulta('editar');
+                if ($respuesta['estatus']) {
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_HABITANTES,
+                        $habitante->get_nombre() . ' ' . $habitante->get_apellido()
+                    );
 
-            $obj_apartamento->set_nro_apartamento($nro_apartamento);
-            $obj_apartamento->set_porcentaje_participacion($porcentaje_participacion);
-            $obj_apartamento->set_gas($gas);
-            $obj_apartamento->set_agua($agua);
-            $obj_apartamento->set_alquilado($alquilado);
+                    // Verificar si cambió la relación (apartamento o tipo de vínculo)
+                    $nuevoApartamento = $_POST['apartamento_id'] ?? null;
+                    $nuevoTipo = $_POST['tipo_vinculo'] ?? null;
+                    $apartamentoAnterior = $datosActuales['apartamento_id'] ?? null;
+                    $tipoAnterior = $datosActuales['tipo_vinculo'] ?? null;
 
-            echo  json_encode($obj_apartamento->realizar_consulta('registrar'));
-        }elseif ($operacion == "consulta_especifica"){
-            $obj_apartamento = new Apartamento();
-            $id_apartamento = $_POST["id_apartamento"];
+                    if ($apartamentoAnterior != $nuevoApartamento || $tipoAnterior != $nuevoTipo) {
+                        // Desvincular del anterior
+                        if ($apartamentoAnterior) {
+                            $apartamento->set_id_apartamento($apartamentoAnterior);
+                            $apartamento->set_habitante_id($habitante->get_id_habitante());
+                            $apartamento->realizar_consulta('desvincular_habitante');
+                        }
+                        // Vincular al nuevo
+                        if ($nuevoApartamento) {
+                            $apartamento->set_id_apartamento($nuevoApartamento);
+                            $apartamento->set_habitante_id($habitante->get_id_habitante());
+                            $apartamento->set_tipo_vinculo($nuevoTipo);
+                            $resVincular = $apartamento->realizar_consulta('asignar_habitante');
+                            if (!$resVincular['estatus']) {
+                                $respuesta = ['estatus' => false, 'mensaje' => 'Habitante actualizado, pero error al asignar al nuevo apartamento: ' . $resVincular['mensaje']];
+                            }
+                        }
+                    }
+                }
+                break;
 
-            $obj_apartamento->set_id_apartamento($id_apartamento);
+            case 'eliminar_habitantes':
+                // Obtener datos para bitácora
+                $copia = clone $habitante;
+                $datosHab = $copia->realizar_consulta('consultar_habitante');
+                $info = $datosHab['estatus'] ? ($datosHab['datos']['nombre'] . ' ' . $datosHab['datos']['apellido']) : '';
 
-            $datos_apartamento = $obj_apartamento->realizar_consulta('consulta_especifica');
-            $detalles = $obj_apartamento->consultar_detalles();
+                $respuesta = $habitante->realizar_consulta('eliminar');
+                if ($respuesta['estatus']) {
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_HABITANTES, $info);
+                }
+                break;
 
-            $respuesta = [
-                "apartamento" => $datos_apartamento,
-                "detalles" => $detalles
-            ];
+            case 'ultimo_id_habitante':
+                $respuesta = $habitante->realizar_consulta('lastId');
+                break;
 
-            echo json_encode($respuesta);
-        }elseif ($operacion == "modificar") {
-            $obj_apartamento = new Apartamento(); // Objeto Apartamento
-
-            $id_apartamento = $_POST["id_apartamento"];
-            $nro_apartamento = $_POST["nro_apartamento"];  
-            $porcentaje_participacion = $_POST["porcentaje_participacion"];
-            $gas = $_POST["gas"]; 
-            $agua = $_POST["agua"];
-            $alquilado = $_POST["alquilado"];
-
-            $obj_apartamento->set_id_apartamento($id_apartamento);
-            $obj_apartamento->set_nro_apartamento($nro_apartamento);
-            $obj_apartamento->set_porcentaje_participacion($porcentaje_participacion);
-            $obj_apartamento->set_gas($gas);
-            $obj_apartamento->set_agua($agua);
-            $obj_apartamento->set_alquilado($alquilado);
-            
-            echo  json_encode($obj_apartamento->realizar_consulta('modificar'));
-        }elseif ($operacion == "eliminar") {
-            $obj_apartamento = new Apartamento(); // Objeto Apartamento
-            $id_apartamento = $_POST["id_apartamento"];
-
-            $obj_apartamento->set_id_apartamento($id_apartamento);
-
-            echo  json_encode($obj_apartamento->realizar_consulta('eliminar'));
-        }elseif ($operacion == "ultimo_id"){
-            $obj_apartamento = new Apartamento(); // Objeto Apartamento
-            echo json_encode($obj_apartamento->realizar_consulta('lastId'));
+            default:
+                $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
-
-        exit;
-    }
- 
-    if (isset($_POST["validar"])) {
-        $validar = $_POST["validar"];
-        if ($validar == "nro_apartamento"){
-            $obj_apartamento = new Apartamento(); // Objeto Apartamento
-            $obj_apartamento->set_nro_apartamento($_POST["nro_apartamento"]);
-            echo  json_encode($obj_apartamento->realizar_consulta('validar'));
-
-        }elseif ($validar == "cedula"){
-            $obj_habitante = new Habitantes(); // Objeto Habitante
-            $obj_habitante->set_cedula($_POST["cedula"]);
-            echo  json_encode($obj_habitante->realizar_consulta('validar'));
-
-        }elseif ($validar == "tipo_vinculo"){
-            $obj_habitantes_apartamentos = new HabitantesApartamentos(); // Objeto Habitantes_Apartamentos
-            $obj_habitantes_apartamentos->set_tipo_vinculo($_POST["tipo_vinculo"]);
-            $obj_habitantes_apartamentos->set_apartamento_id($_POST["apartamento_id"]);
-            echo  json_encode($obj_habitantes_apartamentos->realizar_consulta('validar'));
-        }        
-        elseif ($validar == "validar_clave_foranea") {  
-            $obj_habitante = new Habitantes(); // Objeto Habitante      
-            $tabla = $_POST["tabla"];
-            $nombre_clave = $_POST["nombre_clave"];
-            $valor = $_POST["valor"];
-            
-            $resultado = $obj_habitante->realizar_consulta('validar_clave_foranea',["tabla"=>$tabla,"nombre_clave"=>$nombre_clave,"valor"=>$valor]);
-            
-            echo json_encode($resultado);
-        }
-        if ($validar == "correo"){
-            $obj_habitante = new Habitantes();
-
-            $obj_habitante->set_correo($_POST["correo"]);
-            echo  json_encode($obj_habitante->realizar_consulta('verificar_correo'));
-        }
-        
-        exit;
+    } catch (Exception $e) {
+        error_log("Error en controlador apartamentos: " . $e->getMessage());
+        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     }
 
-    require_once "vista/apartamentos/apartamentos_vista.php";
-?>
+    echo json_encode($respuesta);
+    exit;
+}
+
+// Validaciones AJAX
+if (isset($_POST["validar"])) {
+    header('Content-Type: application/json');
+    $validar = $_POST["validar"];
+    $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
+
+    try {
+        switch ($validar) {
+            case 'nro_apartamento':
+                $apartamento->set_nro_apartamento($_POST["nro_apartamento"] ?? null);
+                $respuesta = $apartamento->realizar_consulta('validar');
+                break;
+
+            case 'cedula':
+                $habitante->set_cedula($_POST["cedula"] ?? null);
+                $respuesta = $habitante->realizar_consulta('validar');
+                break;
+
+            case 'tipo_vinculo':
+                $apartamento->set_id_apartamento($_POST["apartamento_id"] ?? null);
+                $apartamento->set_tipo_vinculo($_POST["tipo_vinculo"] ?? null);
+                $respuesta = $apartamento->realizar_consulta('verificar_vinculo');
+                break;
+
+            case 'correo':
+                $habitante->set_correo($_POST["correo"] ?? null);
+                $respuesta = $habitante->realizar_consulta('verificar_correo');
+                break;
+
+            case 'validar_clave_foranea':
+                // No implementado en el nuevo esquema
+                $respuesta = ['estatus' => false, 'mensaje' => 'Validación no implementada'];
+                break;
+
+            default:
+                $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
+        }
+    } catch (Exception $e) {
+        error_log("Error en validación AJAX: " . $e->getMessage());
+        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
+    }
+
+    echo json_encode($respuesta);
+    exit;
+}
+
+// Cargar la vista
+require_once "vista/apartamentos/apartamentos_vista.php";

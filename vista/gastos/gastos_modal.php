@@ -5,10 +5,10 @@
         <!-- Fila 2: Tipo + Tipo de Gasto -->
         <div class="row mb-3">
             <div class="col-lg-6 col-12 mb-3">
-                <label for="tipo" class="form-label fw-semibold">Tipo</label>
+                <label for="clasificacion" class="form-label fw-semibold">Tipo</label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-tags"></i></span>
-                    <select class="form-select" name="tipo" id="tipo" required>
+                    <select class="form-select" name="clasificacion" id="clasificacion" required>
                         <option value="" disabled selected>Seleccione un tipo</option>
                         <option value="fijo">Fijo</option>
                         <option value="variable">Variable</option>
@@ -22,7 +22,7 @@
                     <span class="input-group-text"><i class="bi bi-building"></i></span>
                     <select class="form-select" name="tipo_gasto" id="tipo_gasto" required>
                         <option value="" disabled selected>Seleccione un tipo</option>
-                        <?php foreach ($tipos_gasto as $tipo): ?>
+                        <?php foreach ($tipos_gasto['datos'] as $tipo): ?>
                             <option value="<?php echo $tipo["id_tipo_gasto"] ?>"><?php echo $tipo["nombre_tipo_gasto"] ?>
                             </option>
                         <?php endforeach; ?>
@@ -54,7 +54,7 @@
                     <span class="input-group-text"><i class="bi bi-building"></i></span>
                     <select class="form-select" name="proveedor" id="proveedor" required>
                         <option value="" disabled selected>Seleccione un proveedor</option>
-                        <?php foreach ($proveedores as $proveedor): ?>
+                        <?php foreach ($proveedores['datos'] as $proveedor): ?>
                             <option value="<?php echo $proveedor["id_proveedor"] ?>">
                                 <?php echo $proveedor["nombre_proveedor"] ?>
                             </option>
@@ -69,7 +69,7 @@
                     <span class="input-group-text"><i class="bi bi-building"></i></span>
                     <select class="form-select" name="solicitud" id="solicitud" required>
                         <option value="" disabled selected>Seleccione una solicitud</option>
-                        <?php foreach ($solicitudes_gasto as $solicitud): ?>
+                        <?php foreach ($solicitudes_gasto['datos'] as $solicitud): ?>
                             <option value="<?php echo $solicitud["id_solicitud"] ?>">
                                 <?php echo $solicitud["descripcion_necesidad"] ?>
                             </option>
@@ -118,7 +118,7 @@
                                 <span class="input-group-text"><i class="bi bi-currency-dollar"></i></span>
                                 <input type="text" inputmode="decimal" pattern="^[0-9]+([.,][0-9]{1,2})?$"
                                     class="form-control monto" name="monto[]" required>
-                                <small class="form-text text-danger mensaje-validacion" data-for="monto"></small>
+                                <small class="w-100 form-text text-danger mensaje-validacion" data-for="monto"></small>
 
                                 <span class="w-100"></span>
                             </div>
@@ -129,7 +129,7 @@
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-receipt"></i></span>
                                 <input type="text" class="form-control referencia" minlength="4" maxlength="20" name="referencia[]">
-                                <small class="form-text text-danger mensaje-validacion" data-for="referencia"></small>
+                                <small class="w-100 form-text text-danger mensaje-validacion" data-for="referencia"></small>
                                 <span class="w-100"></span>
                             </div>
                         </div>
@@ -137,9 +137,9 @@
                             <label for="banco" class="form-label fw-semibold">Banco</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-bank"></i></span>
-                                <select class="form-select banco" name="banco[]">
+                                <select class="form-select banco" name="banco_id[]">
                                     <option value="" disabled selected>Seleccione un banco</option>
-                                    <?php foreach ($bancos as $banco): ?>
+                                    <?php foreach ($bancos['datos'] as $banco): ?>
                                         <option value="<?php echo $banco["id_banco"] ?>">
                                             <?php echo $banco["nombre_banco"] ?>
                                         </option>
@@ -232,7 +232,7 @@
                         <input type="text" inputmode="decimal" pattern="^[0-9]+([.,][0-9]{1,2})?$"
                             class="form-control monto" name="monto[]" required>
                         <span class="w-100 invalid-feedback"></span>
-                        <small class="form-text text-danger mensaje-validacion" data-for="monto"></small>
+                        <small class="w-100 form-text text-danger mensaje-validacion" data-for="monto"></small>
                     </div>
                     <div class="invalid-feedback" id="mensaje_monto"></div>
                 </div>
@@ -243,7 +243,7 @@
                         <span class="input-group-text"><i class="bi bi-receipt"></i></span>
                         <input type="text" class="form-control referencia" name="referencia[]">
                         <span class="w-100 invalid-feedback"></span>
-                        <small class="form-text text-danger mensaje-validacion" data-for="referencia"></small>
+                        <small class="w-100 form-text text-danger mensaje-validacion" data-for="referencia"></small>
                     </div>
                 </div>
 
@@ -251,9 +251,9 @@
                     <label class="form-label fw-semibold">Banco</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-bank"></i></span>
-                        <select class="form-select banco" name="banco[]">
+                        <select class="form-select banco" name="banco_id[]">
                             <option value="" disabled selected>Seleccione un banco</option>
-                            <?php foreach ($bancos as $banco): ?>
+                            <?php foreach ($bancos['datos'] as $banco): ?>
                                 <option value="<?= $banco["id_banco"] ?>"><?= $banco["nombre_banco"] ?></option>
                             <?php endforeach; ?>
                         </select>

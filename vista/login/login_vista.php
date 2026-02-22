@@ -13,11 +13,6 @@
     
 </head>
 <body>
-    <?php if (isset($_GET['r'])) {
-        if ($_GET['r'] == 1) {?>
-            <p hidden="" id="resultado_cambio">true</p>
-        <?php }
-    } ?>
     <main>
         <div class="container-fluid">
             <div class="row p-5 justify-content-end">
@@ -50,7 +45,17 @@
                                     <div class="col-12">
                                         <a data-bs-toggle="modal" data-bs-target="#modal_recuperar_contrasenia" type="button" class="link">Recuperar Contraseña</a>
                                     </div>
-                                    
+                                    <?php if (!$recaptchaDeshabilitado): ?>
+                                    <div class="g-recaptcha my-2 mt-4" 
+                                         data-sitekey="<?php echo(CLAVE_SITIO_RECAPTCHA); ?>" 
+                                         data-theme="light" 
+                                         data-size="normal"
+                                         data-tabindex="0"
+                                         data-callback="onRecaptchaSuccess"
+                                         data-expired-callback="onRecaptchaExpired"
+                                         data-error-callback="onRecaptchaError">
+                                    </div>
+                                    <?php endif; ?>
                                     <div class="col-12 text-center p-3 pb-0">
                                         <button type="submit" class="btn btn-primary rounded shadow" id="enviar">Ingresar <i class="bi bi-send-fill"></i></button>
                                     </div>
@@ -100,7 +105,11 @@
     </footer>
     <script src="recursos/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="recursos/bootstrap/js/sweetalert2.js"></script>
-    
+    <script src="recursos/js/utilidades.js"></script>
+    <script src="recursos/js/validaciones.js"></script>
+    <?php if (!$recaptchaDeshabilitado): ?>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <?php endif; ?>
     <script type="text/javascript" src="recursos/js/validaciones/login_validar.js"></script>
 </body>
 

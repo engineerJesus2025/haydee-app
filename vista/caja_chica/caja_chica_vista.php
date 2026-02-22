@@ -1,4 +1,4 @@
-<?php use haydee\modelo\CajaChica; ?>
+<?php use haydee\ayuda\Sesiones; ?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -10,9 +10,9 @@
 </head>
 
 <body id="body-pd" class="body-pd">  
-  <input type="text" hidden="" id="permiso_registrar" value="<?php echo CajaChica::tiene_permiso(GESTIONAR_CAJA_CHICA, REGISTRAR) ?>">
-  <input type="text" hidden="" id="permiso_eliminar" value="<?php echo CajaChica::tiene_permiso(GESTIONAR_CAJA_CHICA, ELIMINAR) ?>">
-  <input type="text" hidden="" id="permiso_editar" value="<?php echo CajaChica::tiene_permiso(GESTIONAR_CAJA_CHICA, MODIFICAR) ?>">
+  <input type="text" hidden="" id="permiso_registrar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_CAJA_CHICA, REGISTRAR) ?>">
+  <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_CAJA_CHICA, ELIMINAR) ?>">
+  <input type="text" hidden="" id="permiso_editar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_CAJA_CHICA, MODIFICAR) ?>">
 	<div class="container-fluid">
 		<div class="row flex-nowrap mb-2">
 			<?php

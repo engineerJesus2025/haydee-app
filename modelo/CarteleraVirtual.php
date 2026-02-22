@@ -1,7 +1,9 @@
 <?php
 namespace haydee\modelo;
-use haydee\modelo\Conexion;
+
 use PDO;
+use PDOException;
+use haydee\ayuda\GestorImagenes;
 
 class CarteleraVirtual extends Conexion
 {
@@ -14,411 +16,397 @@ class CarteleraVirtual extends Conexion
     private $prioridad;
     private $usuario_id;
 
-    public function __construct()
-    {
-        parent::__construct();
-    }
-    public function set_id_cartelera($id_cartelera)
-    {
-        $this->id_cartelera = $id_cartelera;
-    }
-    public function get_id_cartelera()
-    {
-        return $this->id_cartelera;
-    }
-    public function set_titulo($titulo)
-    {
-        $this->titulo = $titulo;
-    }
-    public function get_titulo()
-    {
-        return $this->titulo;
-    }
-    public function set_descripcion($descripcion)
-    {
-        $this->descripcion = $descripcion;
-    }
-    public function get_descripcion()
-    {
-        return $this->descripcion;
-    }
-    public function set_fecha($fecha)
-    {
-        $this->fecha = $fecha;
-    }
-    public function get_fecha()
-    {
-        return $this->fecha;
-    }
-    public function set_tipo($tipo)
-    {
-        $this->tipo = $tipo;
-    }
-    public function get_tipo()
-    {
-        return $this->tipo;
-    }
-    public function set_imagen($imagen)
-    {
-        $this->imagen = $imagen;
-    }
-    public function get_imagen()
-    {
-        return $this->imagen;
-    }
-    public function set_prioridad($prioridad)
-    {
-        $this->prioridad = $prioridad;
-    }
-    public function get_prioridad()
-    {
-        return $this->prioridad;
-    }
-    public function set_usuario_id($usuario_id)
-    {
-        $this->usuario_id = $usuario_id;
-    }
-    public function get_usuario_id()
-    {
-        return $this->usuario_id;
-    }
+    // Reglas de validación centralizadas
+    private $reglas = [
+        'id_cartelera' => [
+            'regex' => '/^\d+$/',
+            'exists' => ['tabla' => 'cartelera_virtual', 'campo' => 'id_cartelera']
+        ],
+        'titulo' => [
+            'regex' => '/^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()\'"!?¡¿%°\- ]{3,200}$/'
+        ],
+        'descripcion' => [
+            'regex' => '/^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()\'"!?¡¿%°\- ]{3,200}$/'
+        ],
+        'fecha' => [
+            'regex' => '/^\d{4}-\d{2}-\d{2}$/',
+            'custom' => 'validarFecha'
+        ],
+        'imagen' => [
+            'regex' => '/^[a-zA-Z0-9_.-]+\.(jpg|jpeg|png|gif)$/i',
+            'opcional' => true
+        ],
+        'prioridad' => [
+            'regex' => '/^\d+$/'
+        ],
+        'usuario_id' => [
+            'regex' => '/^\d+$/',
+            'exists' => ['tabla' => 'usuarios', 'campo' => 'id_usuario']
+        ]
+    ];
 
+    // Getters y Setters
+    public function set_id_cartelera($id) { $this->id_cartelera = $id; }
+    public function get_id_cartelera() { return $this->id_cartelera; }
+    public function set_titulo($titulo) { $this->titulo = $titulo; }
+    public function get_titulo() { return $this->titulo; }
+    public function set_descripcion($desc) { $this->descripcion = $desc; }
+    public function get_descripcion() { return $this->descripcion; }
+    public function set_fecha($fecha) { $this->fecha = $fecha; }
+    public function get_fecha() { return $this->fecha; }
+    public function set_tipo($tipo) { $this->tipo = $tipo; }
+    public function get_tipo() { return $this->tipo; }
+    public function set_imagen($img) { $this->imagen = $img; }
+    public function get_imagen() { return $this->imagen; }
+    public function set_prioridad($pri) { $this->prioridad = $pri; }
+    public function get_prioridad() { return $this->prioridad; }
+    public function set_usuario_id($id) { $this->usuario_id = $id; }
+    public function get_usuario_id() { return $this->usuario_id; }
+
+    /**
+     * Enruta la acción al método privado correspondiente.
+     */
     public function realizar_consulta($accion)
     {
-        $this->cambiar_db_seguridad();
-        switch ($accion) {
-            case 'consultar':
-                $respuesta = $this->consultar();
-
-                $this->cambiar_db_negocio();
-
-                if ($respuesta["resultado"]) {
-                    return $respuesta["datos"];
-                } else {
-                    return ["estatus" => false, "mensaje" => "Error al consultar los datos"];
-                }
-
-            case 'consultar_cartelera_id':
-                $respuesta = $this->consultar_cartelera_id();
-                $this->cambiar_db_negocio();
-                if ($respuesta["resultado"]) {
-                    return $respuesta["datos"];
-                } else {
-                    return ["estatus" => false, "mensaje" => "Error al consultar los datos"];
-                }
-
-            case 'registrar':
-                $validacion = $this->validar_datos('registrar');
-                if (!$validacion["estatus"]) {
-                    $this->cambiar_db_negocio(); // Importante: revertir la BD antes de salir
-                    return $validacion;
-                }
-                $respuesta = $this->registrar();
-
-                if ($respuesta) {
-                    $id_ultimo = $this->lastId(); // Esto también debe correr en la BD de seguridad.
-                    $this->set_id_cartelera($id_ultimo['datos']['last_id']);
-
-                    $this->registrar_notificacion();
-
-                    $this->cambiar_db_negocio();
-
-                    return ["estatus" => true, "mensaje" => "OK"];
-                } else {
-                    // Si hay un error, igualmente regresamos la conexión a la BD de negocio.
-                    $this->cambiar_db_negocio();
-                    return ["estatus" => false, "mensaje" => "Error al registrar los datos"];
-                }
-
-            case 'editar_publicacion':
-                $validacion = $this->validar_datos('editar_publicacion');
-                if (!$validacion["estatus"]) {
-                    $this->cambiar_db_negocio(); // Importante: revertir la BD antes de salir
-                    return $validacion;
-                }
-                $respuesta = $this->editar_publicacion();
-
-                $this->cambiar_db_negocio();
-                if ($respuesta) {
-                    return ["estatus" => true, "mensaje" => "Edición exitosa"];
-                } else {
-                    return ["estatus" => false, "mensaje" => "Error al editar los datos"];
-                }
-
-            case 'eliminar_publicacion':
-                $validacion = $this->validar_datos('eliminar_publicacion');
-                if (!$validacion["estatus"]) {
-                    $this->cambiar_db_negocio(); // Importante: revertir la BD antes de salir
-                    return $validacion;
-                }
-                $respuesta = $this->eliminar_publicacion();
-
-                $this->cambiar_db_negocio();
-                if ($respuesta) {
-                    return ["estatus" => true, "mensaje" => "Eliminacion exitosa"];
-                } else {
-                    return ["estatus" => false, "mensaje" => "Error al eliminar los datos"];
-                }
-            case 'lastId':
-                $respuesta = $this->lastId();
-
-                $this->cambiar_db_negocio();
-                if ($respuesta["resultado"] && isset($respuesta["datos"]["last_id"])) {
-                    return ["estatus" => true, "last_id" => $respuesta["datos"]["last_id"]];
-                } else {
-                    return ["estatus" => false, "mensaje" => "Error al consultar el último ID"];
-                }
-
-            default:
-                return ["estatus" => false, "mensaje" => "Operacion no valida"];
-                break;
+        $metodo = '_' . $accion;
+        if (!method_exists($this, $metodo)) {
+            return ['estatus' => false, 'mensaje' => "La acción '$accion' no está implementada."];
         }
 
+        try {
+            return $this->$metodo();
+        } catch (\Exception $e) {
+            error_log("Error en realizar_consulta ($accion): " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Ocurrió un error interno en el servidor.'];
+        }
     }
 
-    private function consultar()
+    // -----------------------------------------------------------------
+    // Método de validación centralizado
+    // -----------------------------------------------------------------
+
+    private function validar($campos)
+    {
+        foreach ($campos as $campo) {
+            if (!isset($this->reglas[$campo])) {
+                return [
+                    'estatus' => false,
+                    'mensaje' => "No hay reglas de validación definidas para el campo '$campo'."
+                ];
+            }
+            $regla = $this->reglas[$campo];
+
+            $getter = 'get_' . $campo;
+            if (!method_exists($this, $getter)) {
+                return [
+                    'estatus' => false,
+                    'mensaje' => "El campo '$campo' no tiene un getter definido."
+                ];
+            }
+            $valor = $this->$getter();
+
+            // Requerido (a menos que sea opcional)
+            $requerido = !(isset($regla['opcional']) && $regla['opcional'] === true);
+            if ($requerido) {
+                if ($valor === null) {
+                    return [
+                        'estatus' => false,
+                        'mensaje' => "El campo '$campo' es requerido y no se ha establecido."
+                    ];
+                }
+                if (is_string($valor) && trim($valor) === '') {
+                    return [
+                        'estatus' => false,
+                        'mensaje' => "El campo '$campo' no puede estar vacío."
+                    ];
+                }
+            } else {
+                // Si es opcional y está vacío, saltamos validaciones adicionales
+                if ($valor === null || (is_string($valor) && trim($valor) === '')) {
+                    continue;
+                }
+            }
+
+            // Validar con expresión regular
+            if (isset($regla['regex'])) {
+                if (!preg_match($regla['regex'], (string)$valor)) {
+                    return [
+                        'estatus' => false,
+                        'mensaje' => "El campo '$campo' no tiene un formato válido."
+                    ];
+                }
+            }
+
+            // Validación personalizada (método dentro de la clase)
+            if (isset($regla['custom']) && method_exists($this, $regla['custom'])) {
+                if (!$this->{$regla['custom']}($valor)) {
+                    return [
+                        'estatus' => false,
+                        'mensaje' => "El campo '$campo' no es válido."
+                    ];
+                }
+            }
+
+            // Validar existencia en otra tabla (foránea)
+            if (isset($regla['exists'])) {
+                $tabla = $regla['exists']['tabla'];
+                $campoFor = $regla['exists']['campo'] ?? $campo;
+                if (!$this->existeEnTabla($tabla, $campoFor, $valor)) {
+                    return [
+                        'estatus' => false,
+                        'mensaje' => "El valor del campo '$campo' no existe en la tabla $tabla."
+                    ];
+                }
+            }
+        }
+        return ['estatus' => true];
+    }
+
+    /**
+     * Verifica si un valor existe en una tabla específica (usa BD seguridad).
+     */
+    private function existeEnTabla($tabla, $campo, $valor)
+    {
+        $sql = "SELECT COUNT(*) as total FROM $tabla WHERE $campo = :valor";
+        try {
+            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt->bindParam(':valor', $valor);
+            $stmt->execute();
+            $fila = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $fila['total'] > 0;
+        } catch (PDOException $e) {
+            error_log("Error en existeEnTabla: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Validación personalizada para fecha.
+     */
+    private function validarFecha($fecha)
+    {
+        $valores = explode('-', $fecha);
+        return count($valores) == 3 && checkdate((int)$valores[1], (int)$valores[2], (int)$valores[0]);
+    }
+
+    // -----------------------------------------------------------------
+    // Métodos privados (acciones)
+    // -----------------------------------------------------------------
+
+    /**
+     * Lista todas las publicaciones (vista resumida).
+     */
+    private function _consultar()
     {
         $sql = "SELECT id_cartelera, titulo, prioridad, fecha, usuarios.nombre as nombre_usuario 
-            FROM cartelera_virtual
-            INNER JOIN usuarios ON usuarios.id_usuario = cartelera_virtual.usuario_id
-            ORDER BY fecha ASC";
-        $conexion = $this->get_conex()->prepare($sql);
-        $result = $conexion->execute();
-
-        $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
-        return ["resultado" => $result, "datos" => $datos];
+                FROM cartelera_virtual
+                INNER JOIN usuarios ON usuarios.id_usuario = cartelera_virtual.usuario_id
+                ORDER BY fecha ASC";
+        try {
+            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt->execute();
+            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return ['estatus' => true, 'datos' => $datos];
+        } catch (PDOException $e) {
+            error_log("Error en _consultar: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al consultar cartelera'];
+        }
     }
 
-    private function consultar_cartelera_id()
+    /**
+     * Consulta detallada de una publicación por ID.
+     */
+    private function _consultar_cartelera_id()
     {
+        $validacion = $this->validar(['id_cartelera']);
+        if (!$validacion['estatus']) {
+            return $validacion;
+        }
+
         $sql = "SELECT cv.*, u.nombre AS nombre_usuario
-        FROM cartelera_virtual cv
-        INNER JOIN usuarios u ON cv.usuario_id = u.id_usuario
-        WHERE cv.id_cartelera = :id_cartelera";
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":id_cartelera", $this->id_cartelera);
-        $result = $conexion->execute();
-
-        $datos = $conexion->fetch(PDO::FETCH_ASSOC);
-        return ["resultado" => $result, "datos" => $datos];
-
-    }
-
-    private function registrar()
-    {
-        $sql = "INSERT INTO cartelera_virtual (titulo, descripcion, fecha, imagen, prioridad, usuario_id) VALUES (:titulo, :descripcion, :fecha, :imagen, :prioridad, :usuario_id)";
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":titulo", $this->titulo);
-        $conexion->bindParam(":descripcion", $this->descripcion);
-        $conexion->bindParam(":fecha", $this->fecha);
-        $conexion->bindParam(":imagen", $this->imagen);
-        $conexion->bindParam(":prioridad", $this->prioridad);
-        $conexion->bindParam(":usuario_id", $this->usuario_id);
-        $result = $conexion->execute();
-        return $result;
-
-    }
-
-    private function registrar_notificacion()
-    {
-        $titulo = "Cartelera Virtual";
-        $descripcion = "Se ha registrado una nueva publicación en la cartelera virtual.";
-        $fecha = date('Y-m-d');
-        $activo = "0";
-
-        // Obtener todos los usuarios con rol de propietario (rol_id = 2)
-        $sql_usuarios = "SELECT id_usuario FROM usuarios WHERE rol_id = 3";
-        $conexion_usuarios = $this->get_conex()->prepare($sql_usuarios);
-        $conexion_usuarios->execute();
-        $usuarios = $conexion_usuarios->fetchAll(PDO::FETCH_ASSOC);
-
-        $sql = "INSERT INTO notificaciones (titulo, descripcion, fecha, usuario_id, activo) 
-            VALUES (:titulo, :descripcion, :fecha, :usuario_id, :activo)";
-        $conexion = $this->get_conex()->prepare($sql);
-
-        $result = true;
-
-        foreach ($usuarios as $usuario) {
-            $usuario_id = $usuario['id_usuario'];
-
-            $conexion->bindParam(":titulo", $titulo);
-            $conexion->bindParam(":descripcion", $descripcion);
-            $conexion->bindParam(":fecha", $fecha);
-            $conexion->bindParam(":usuario_id", $usuario_id);
-            $conexion->bindParam(":activo", $activo);
-            $this->cambiar_db_negocio();
-
-
-            if (!$conexion->execute()) {
-                $result = false;
+                FROM cartelera_virtual cv
+                INNER JOIN usuarios u ON cv.usuario_id = u.id_usuario
+                WHERE cv.id_cartelera = :id_cartelera";
+        try {
+            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt->bindParam(':id_cartelera', $this->id_cartelera);
+            $stmt->execute();
+            $datos = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$datos) {
+                return ['estatus' => false, 'mensaje' => 'Publicación no encontrada'];
             }
+            return ['estatus' => true, 'datos' => $datos];
+        } catch (PDOException $e) {
+            error_log("Error en _consultar_cartelera_id: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al consultar la publicación'];
+        }
+    }
+
+    /**
+     * Registra una nueva publicación.
+     */
+    private function _registrar()
+    {
+        $campos = ['titulo', 'descripcion', 'fecha', 'prioridad', 'usuario_id'];
+        $validacion = $this->validar($campos);
+        if (!$validacion['estatus']) {
+            return $validacion;
         }
 
-        return $result;
+        $sql = "INSERT INTO cartelera_virtual (titulo, descripcion, fecha, imagen, prioridad, usuario_id)
+                VALUES (:titulo, :descripcion, :fecha, :imagen, :prioridad, :usuario_id)";
+        try {
+            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt->bindParam(':titulo', $this->titulo);
+            $stmt->bindParam(':descripcion', $this->descripcion);
+            $stmt->bindParam(':fecha', $this->fecha);
+            $stmt->bindParam(':imagen', $this->imagen);
+            $stmt->bindParam(':prioridad', $this->prioridad);
+            $stmt->bindParam(':usuario_id', $this->usuario_id);
+            $stmt->execute();
+            $lastId = $this->get_conex('seguridad')->lastInsertId();
+            return ['estatus' => true, 'mensaje' => 'Publicación registrada correctamente', 'lastId' => $lastId];
+        } catch (PDOException $e) {
+            error_log("Error en _registrar: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al registrar la publicación'];
+        }
     }
 
-    private function editar_publicacion()
+    /**
+     * Actualiza una publicación existente.
+     */
+    private function _editar_publicacion()
     {
-        $sql = "UPDATE cartelera_virtual SET titulo = :titulo, descripcion = :descripcion, fecha = :fecha, imagen = :imagen, prioridad = :prioridad, usuario_id = :usuario_id WHERE id_cartelera = :id_cartelera";
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":id_cartelera", $this->id_cartelera);
-        $conexion->bindParam(":titulo", $this->titulo);
-        $conexion->bindParam(":descripcion", $this->descripcion);
-        $conexion->bindParam(":fecha", $this->fecha);
-        $conexion->bindParam(":imagen", $this->imagen);
-        $conexion->bindParam(":prioridad", $this->prioridad);
-        $conexion->bindParam(":usuario_id", $this->usuario_id);
-        $result = $conexion->execute();
-        return $result;
+        $campos = ['id_cartelera', 'titulo', 'descripcion', 'fecha', 'prioridad', 'usuario_id'];
+        $validacion = $this->validar($campos);
+        if (!$validacion['estatus']) {
+            return $validacion;
+        }
 
-
+        $sql = "UPDATE cartelera_virtual SET
+                    titulo = :titulo,
+                    descripcion = :descripcion,
+                    fecha = :fecha,
+                    imagen = :imagen,
+                    prioridad = :prioridad,
+                    usuario_id = :usuario_id
+                WHERE id_cartelera = :id_cartelera";
+        try {
+            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt->bindParam(':id_cartelera', $this->id_cartelera);
+            $stmt->bindParam(':titulo', $this->titulo);
+            $stmt->bindParam(':descripcion', $this->descripcion);
+            $stmt->bindParam(':fecha', $this->fecha);
+            $stmt->bindParam(':imagen', $this->imagen);
+            $stmt->bindParam(':prioridad', $this->prioridad);
+            $stmt->bindParam(':usuario_id', $this->usuario_id);
+            $stmt->execute();
+            return ['estatus' => true, 'mensaje' => 'Publicación actualizada correctamente'];
+        } catch (PDOException $e) {
+            error_log("Error en _editar_publicacion: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al actualizar la publicación'];
+        }
     }
 
-    private function eliminar_publicacion()
+    /**
+     * Elimina una publicación (físicamente) y su imagen asociada.
+     */
+    private function _eliminar_publicacion()
     {
-        // PASO 1: Obtener los datos de la publicación, incluyendo el nombre de la imagen.
-        $publicacion_datos = $this->consultar_cartelera_id();
+        $validacion = $this->validar(['id_cartelera']);
+        if (!$validacion['estatus']) {
+            return $validacion;
+        }
 
-        // PASO 2: Eliminar el registro de la base de datos.
+        // Obtener el nombre de la imagen antes de eliminar
+        $imagen = $this->obtenerImagenActual();
+
         $sql = "DELETE FROM cartelera_virtual WHERE id_cartelera = :id_cartelera";
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":id_cartelera", $this->id_cartelera);
-        $result = $conexion->execute();
-
-        // PASO 3: Si la eliminación en la BD fue exitosa, borrar el archivo de imagen físico.
-        if ($result && $publicacion_datos['datos'] && !empty($publicacion_datos['datos']['imagen'])) {
-            $ruta_imagen = "recursos/img/cartelera/" . $publicacion_datos['datos']['imagen'];
-            if (file_exists($ruta_imagen)) {
-                unlink($ruta_imagen);
+        try {
+            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt->bindParam(':id_cartelera', $this->id_cartelera);
+            $stmt->execute();
+            $filas = $stmt->rowCount();
+            if ($filas == 0) {
+                return ['estatus' => false, 'mensaje' => 'No se encontró la publicación'];
             }
-        }
 
-        return $result;
+            // Eliminar archivo de imagen si existe
+            if ($imagen) {
+                GestorImagenes::eliminar($imagen, 'cartelera');
+            }
+
+            return ['estatus' => true, 'mensaje' => 'Publicación eliminada correctamente'];
+        } catch (PDOException $e) {
+            error_log("Error en _eliminar_publicacion: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al eliminar la publicación'];
+        }
     }
 
-    private function lastId()
+    /**
+     * Último ID insertado.
+     */
+    private function _lastId()
     {
         $sql = "SELECT MAX(id_cartelera) as last_id FROM cartelera_virtual";
-        $conexion = $this->get_conex()->prepare($sql);
-        $result = $conexion->execute();
-        $datos = $conexion->fetch(PDO::FETCH_ASSOC);
-        return ["resultado" => $result, "datos" => $datos];
+        try {
+            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt->execute();
+            $dato = $stmt->fetch(PDO::FETCH_ASSOC);
+            return ['estatus' => true, 'datos' => $dato];
+        } catch (PDOException $e) {
+            error_log("Error en _lastId: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al obtener último ID'];
+        }
     }
 
-    private function validarClaveForanea($tabla, $nombreClave, $valor, $seguridad = false)
+    // -----------------------------------------------------------------
+    // Métodos públicos auxiliares
+    // -----------------------------------------------------------------
+
+    /**
+     * Obtiene el nombre de la imagen actual de una publicación.
+     */
+    public function obtenerImagenActual()
     {
-        if ($seguridad) {
-            $this->cambiar_db_seguridad();
+        if (!$this->id_cartelera) {
+            return null;
         }
-        $sql = "SELECT * FROM $tabla WHERE $nombreClave =:valor";
-
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":valor", $valor);
-        $conexion->execute();
-        $result = $conexion->fetch(PDO::FETCH_ASSOC);
-
-        if ($seguridad) {
-            $this->cambiar_db_negocio();
-        }
-        return ($result) ? true : false;
-    }
-
-    // EL MISMO NOMBRE DE LA FUNCION TE DICE PARA QUE ES XD
-    public function obtener_imagen_actual()
-    {
-        $this->cambiar_db_seguridad();
         $sql = "SELECT imagen FROM cartelera_virtual WHERE id_cartelera = :id_cartelera";
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":id_cartelera", $this->id_cartelera);
-        $conexion->execute();
-        $this->cambiar_db_negocio();
-
-        $resultado = $conexion->fetch(PDO::FETCH_ASSOC);
-        return $resultado ? $resultado["imagen"] : null;
+        try {
+            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt->bindParam(':id_cartelera', $this->id_cartelera);
+            $stmt->execute();
+            $res = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $res ? $res['imagen'] : null;
+        } catch (PDOException $e) {
+            error_log("Error en obtener_imagen_actual: " . $e->getMessage());
+            return null;
+        }
     }
 
-    private function validar_datos($accion = "registrar")
-    {
-        // === 1. VALIDACIÓN DE ID (para editar y eliminar) ===
-        if (in_array($accion, ["editar_publicacion", "eliminar_publicacion"])) {
-
-            if (!isset($this->id_cartelera) || empty(trim($this->id_cartelera))) {
-                return ["estatus" => false, "mensaje" => "El ID de la publicación es requerido"];
-            }
-            if (!is_numeric($this->id_cartelera)) {
-                return ["estatus" => false, "mensaje" => "El ID de la publicación debe ser numérico"];
-            }
-            // Validamos contra la BD de seguridad (el 'true' es correcto)
-            if (!$this->validarClaveForanea("cartelera_virtual", "id_cartelera", $this->id_cartelera, false)) {
-                return ["estatus" => false, "mensaje" => "La publicación seleccionada no existe"];
-            }
-        }
-
-        // Si es 'eliminar' y el ID es válido, la validación termina aquí.
-        if ($accion == "eliminar_publicacion") {
-            return ["estatus" => true, "mensaje" => "OK"];
-        }
-
-
-        if (!isset($this->usuario_id) || empty($this->usuario_id)) {
-            return ["estatus" => false, "mensaje" => "El usuario no fue especificado correctamente"];
-        }
-        if (!is_numeric($this->usuario_id)) {
-            return ["estatus" => false, "mensaje" => "El ID del usuario debe ser numérico"];
-        }
-        if (!$this->validarClaveForanea("usuarios", "id_usuario", $this->usuario_id, false)) {
-            return ["estatus" => false, "mensaje" => "El usuario asociado no existe"];
-        }
-
-
-        if (!isset($this->titulo, $this->descripcion, $this->fecha, $this->prioridad)) {
-            return ["estatus" => false, "mensaje" => "Uno o varios campos requeridos no se recibieron correctamente"];
-        }
-
-        if (empty($this->titulo) || empty($this->descripcion) || empty($this->fecha) || empty($this->prioridad)) {
-            return ["estatus" => false, "mensaje" => "Uno o varios campos requeridos están vacíos"];
-        }
-
-        // Regex de tu lógica original
-        $textoRegex = "/^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()'\"!?¡¿%°\- ]{3,200}$/";
-        if (!preg_match($textoRegex, $this->titulo)) {
-            return ["estatus" => false, "mensaje" => "El título no posee un formato válido"];
-        }
-        if (!preg_match($textoRegex, $this->descripcion)) {
-            return ["estatus" => false, "mensaje" => "La descripción no posee un formato válido"];
-        }
-        if (!preg_match("/^\d{4}-\d{2}-\d{2}$/", $this->fecha)) {
-            return ["estatus" => false, "mensaje" => "La fecha no tiene un formato válido (YYYY-MM-DD)"];
-        }
-        if (!is_numeric($this->prioridad)) {
-            return ["estatus" => false, "mensaje" => "La prioridad debe ser un valor numérico"];
-        }
-
-        return ["estatus" => true, "mensaje" => "OK"];
-    }
-
-    // Esta te la metio jesus, francisco
+    /**
+     * Consulta para la página de inicio (con paginación).
+     */
     public function consultar_inicio($limite)
     {
-        $limite_int = intval($limite);
-        $this->cambiar_db_seguridad();
+        $limite_int = (int)$limite;
         $sql = "SELECT id_cartelera, titulo, prioridad, fecha, imagen, descripcion, usuarios.nombre as nombre_usuario 
-            FROM cartelera_virtual
-            INNER JOIN usuarios ON usuarios.id_usuario = cartelera_virtual.usuario_id
-            ORDER BY prioridad ASC, fecha DESC LIMIT 2 OFFSET $limite_int";
-
-        $conexion = $this->get_conex()->prepare($sql);
-        // $conexion->bindParam(":limite", $limite_int);
-        $result = $conexion->execute();
-
-        $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
-
-        $this->cambiar_db_negocio();
-        if ($result) {
-            return $datos;
-        } else {
-            return ["estatus" => false, "mensaje" => "Error al consultar los datos"];
+                FROM cartelera_virtual
+                INNER JOIN usuarios ON usuarios.id_usuario = cartelera_virtual.usuario_id
+                ORDER BY prioridad ASC, fecha DESC LIMIT 2 OFFSET :offset";
+        try {
+            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt->bindParam(':offset', $limite_int, PDO::PARAM_INT);
+            $stmt->execute();
+            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return ['estatus' => true, 'datos' => $datos];
+        } catch (PDOException $e) {
+            error_log("Error en consultar_inicio: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al consultar cartelera para inicio'];
         }
     }
+
+
 }
 ?>

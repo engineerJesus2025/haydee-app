@@ -1,458 +1,275 @@
-$(document).ready(function(){
-	$("#fecha").on("keyup",function(){
-		validarKeyUp(/^\d{4}-\d{2}-\d{2}$/,
-		this,this.nextElementSibling,"Debe ingresar una fecha adecuada");
-	});
+/**
+ * caja_chica_validar.js
+ * Validaciones en tiempo real para Caja Chica
+ * Dependencias: validaciones.js, utilidades.js
+ */
 
-	$("#monto").on("keypress",function(e){
-		validarKeyPress(/^[0-9,.]*$/, e);
-	});
+$(document).ready(function() {
+    // Fecha
+    $("#fecha").on("keyup change", function() {
+        Validaciones.fecha(this, this.nextElementSibling);
+    });
 
-	$("#monto").on("keyup",function(){
-		let resultado = validarKeyUp(/^[0-9]{0,12}[,.]{0,1}[0-9]{0,2}$/, this,this.nextElementSibling.nextElementSibling,"Solo numeros, no mas de 15 caracteres y no mas de 2 decimales");
-        if (resultado) {        	
-			let input_convertir = document.getElementById("monto_cambio");
-        	if (this.getAttribute("monto") == "bs") {
-        		let fondo = document.getElementById("fondos_caja").textContent.split("Bs")[0],
-				etiqueta_fondo_restantes = document.getElementById("fondos_restante");
+    // Monto (permite números con hasta 2 decimales)
+    $("#monto, #monto_reponer").on("keypress", function(e) {
+        Validaciones.keyPress(/^[0-9,.]$/, e);
+    });
 
-				if (this.value <= 0 || this.value == '') {
-					input_convertir.value = 0;
-					etiqueta_fondo_restantes.textContent = document.getElementById("fondos_caja").textContent;
-					return;
-				}
-				input_convertir.value = (parseFloat(this.value) / tasa_dolar).toFixed(2) || 0;
-				
-				if ((fondo - this.value) < 0){
-					etiqueta_fondo_restantes.textContent = "Excedido";
-				}
-				else{
-					etiqueta_fondo_restantes.textContent = (fondo - this.value + diferencia).toFixed(2) + "Bs. / " + ((fondo - this.value + diferencia) / tasa_dolar).toFixed(2) + "$";
-				}
-			}
-			else{
-				let fondo = document.getElementById("fondos_caja").textContent.split("Bs")[0],
-				etiqueta_fondo_restantes = document.getElementById("fondos_restante");
+    $("#monto, #monto_reponer").on("keyup", function() {
+        let valido = Validaciones.keyUp(/^\d{0,12}([.,]\d{0,2})?$/,
+            this, this.nextElementSibling.nextElementSibling,
+            "Solo números, máximo 12 enteros y 2 decimales");
 
-				if (this.value <= 0 || this.value == '') {
-					input_convertir.value = 0;
-					etiqueta_fondo_restantes.textContent = document.getElementById("fondos_caja").textContent;
-					return;
-				}
-				input_convertir.value = (parseFloat(this.value) * tasa_dolar).toFixed(2);
+        if (valido) {
+            let id = this.id;
+            let esBs = this.getAttribute("monto") === "bs";
+            let inputConvertir = document.getElementById(id === "monto" ? "monto_cambio" : "monto_cambio_reponer");
 
-				if ((fondo - input_convertir.value) < 0){
-					etiqueta_fondo_restantes.textContent = "Excedido";
-				}
-				else{
-					etiqueta_fondo_restantes.textContent = (fondo - input_convertir.value + diferencia) + "Bs. / " + ((fondo - input_convertir.value + diferencia) / tasa_dolar).toFixed(2) + "$";
-				}
-			}
+            if (this.value === '' || parseFloat(this.value) === 0) {
+                inputConvertir.value = '';
+                return;
+            }
+
+            if (esBs) {
+                inputConvertir.value = (parseFloat(this.value.replace(',', '.')) / tasa_dolar).toFixed(2);
+            } else {
+                inputConvertir.value = (parseFloat(this.value.replace(',', '.')) * tasa_dolar).toFixed(2);
+            }
+
+            // Actualizar fondo restante si es el monto del formulario de gasto
+            if (id === "monto") {
+                actualizarFondoRestante();
+            }
         }
-	});
+    });
 
-	$("#concepto").on("keypress",function(e){	
-		validarKeyPress(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s]+$/, e);
-	});
+    // Concepto
+    $("#concepto").on("keypress", function(e) {
+        Validaciones.keyPress(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s]$/, e);
+    });
 
-	$("#concepto").on("keyup",function(e){
-		validarKeyUp(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s]{3,100}$/,
-		this,this.nextElementSibling,"Solo texto, no mas de 100 caracteres");
-	});
+    $("#concepto").on("keyup", function() {
+        Validaciones.keyUp(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s]{3,100}$/,
+            this, this.nextElementSibling,
+            "Solo texto, mínimo 3 y máximo 100 caracteres");
+    });
 
-	$("#monto_reponer").on("keypress",function(e){
-		validarKeyPress(/^[0-9,.]*$/, e);
-	});
+    // Select de caja chica
+    $("#mes_select").on("change", async function() {
+        if (!Validaciones.select(this.id)) return;
 
-	$("#monto_reponer").on("keyup",function(){
-		let resultado = validarKeyUp(/^[0-9]{0,12}[,.]{0,1}[0-9]{0,2}$/, this,this.nextElementSibling.nextElementSibling,"Solo numeros, no mas de 15 caracteres y no mas de 2 decimales");
-        if (resultado) {        	
-			let input_convertir = document.getElementById("monto_cambio_reponer");
-        	if (this.getAttribute("monto") == "bs") {
-				if (this.value <= 0 || this.value == '') {
-					input_convertir.value = 0;					
-					return;
-				}
-				input_convertir.value = (parseFloat(this.value) / tasa_dolar).toFixed(2) || 0;
-			}
-			else{				
+        let datos = new FormData();
+        datos.append('validar', 'validar_clave_foranea');
+        datos.append('tabla', 'caja_chica');
+        datos.append('nombre_clave', 'id_caja_chica');
+        datos.append('valor', this.value);
 
-				if (this.value <= 0 || this.value == '') {
-					input_convertir.value = 0;					
-					return;
-				}
-				input_convertir.value = (parseFloat(this.value) * tasa_dolar).toFixed(2);			
-			}
+        let respuesta = await Utilidades.validar('validar_clave_foranea', {
+            tabla: 'caja_chica',
+            nombre_clave: 'id_caja_chica',
+            valor: this.value
+        });
+
+        if (respuesta.estatus) {
+            this.classList.add('is-valid');
+            this.classList.remove('is-invalid');
+            this.nextElementSibling.textContent = '';
+        } else {
+            this.classList.remove('is-valid');
+            this.classList.add('is-invalid');
+            this.nextElementSibling.textContent = 'La caja seleccionada no existe';
         }
-	});
-	
-	$("#boton_gasto_caja").on("click",async function(e){
-		let accion = (e.target.getAttribute("modificar"))?"Editar":"Registrar";		
-		e.preventDefault();
-		if(await validarEnvio(accion)==true){
-				Swal.fire({
-				title: "¿Estás seguro?",
-				text: `¿Está seguro que desea ${accion} este gasto?`,
-				showCancelButton: true,
-				confirmButtonText: "Si, " + accion,
-				confirmButtonColor: "#1b8a40",
-				cancelButtonText: "Cancelar",
-				icon: "warning"
-			    }).then((result) => {
-					if (result.isConfirmed) {
-						envio(accion);						
-					}
-			    });
-		}	
-	});
+    });
 
-	$("#boton_guardar_reposicion").on("click",function(e){
-		e.preventDefault();		
-		if(validarEnvioReponerCaja()==true){
-			if (verificarReposicionExcedente()) {
-				Swal.fire({
-					title: "Advertencia",
-					text: `El monto ingresado hará que se incremente el fondo fijo ¿Está seguro que desea continuar?`,
-					showCancelButton: true,
-					confirmButtonText: "Si, Continuar",
-					confirmButtonColor: "#1b8a40",
-					cancelButtonText: "Cancelar",
-					icon: "warning"
-				}).then((result) => {
-					if (result.isConfirmed) {
-						envio("reponer_caja");						
-					}
-				});
-			}
-			else{
-				Swal.fire({
-					title: "¿Estás seguro?",
-					text: `¿Está seguro que desea reponer la caja chica?`,
-					showCancelButton: true,
-					confirmButtonText: "Si, Reponer",
-					confirmButtonColor: "#1b8a40",
-					cancelButtonText: "Cancelar",
-					icon: "warning"
-				}).then((result) => {
-					if (result.isConfirmed) {
-						envio("reponer_caja");						
-					}
-				});
-			}			
-		}	
-	});
+    // Descripción en modal de observación
+    $("#descripcion_input").on("keypress", function(e) {
+        Validaciones.keyPress(/^[a-zA-Z0-9 áéíóúÁÉÍÓÚñÑ\s-]$/, e);
+    });
 
-	document.getElementById('mes_select').addEventListener("change",async e=>{
-		let valido = validarKeyUp(/^[0-9]{1,11}$/,
-		e.target,e.target.nextElementSibling,"El valor de la caja no es válido");
-
-		if (!valido) return;
-
-		let datos = new FormData();
-		datos.append('validar','validar_clave_foranea');
-		datos.append('tabla','caja_chica');
-		datos.append('nombre_clave','id_caja_chica');
-		datos.append('valor',e.target.value);
-
-		valido = await verificar_clave_foranea(datos);
-		
-		if (valido) {
-			e.target.classList.add('is-valid');
-			e.target.classList.remove('is-invalid');
-			e.target.nextElementSibling.textContent = "";
-		}
-		else{
-			e.target.classList.remove('is-valid');
-			e.target.classList.add('is-invalid');
-			e.target.nextElementSibling.textContent = "La caja chica seleccionada no existe";
-		}
-	});
+    $("#descripcion_input").on("keyup", function() {
+        Validaciones.keyUp(/^[a-zA-Z0-9 áéíóúÁÉÍÓÚñÑ\s-]{0,100}$/,
+            this, this.nextElementSibling,
+            "Máximo 100 caracteres, solo letras/números/espacios/guiones");
+    });
 });
 
-document.getElementById("boton_formulario_observacion").addEventListener("click",e=>{
-	e.preventDefault();
+// ========== FUNCIONES DE VALIDACIÓN ADICIONALES ==========
+function actualizarFondoRestante() {
+    let fondo = parseFloat(document.getElementById("fondos_caja").textContent.split("Bs")[0]);
+    let montoInput = document.getElementById("monto");
+    let etiqueta = document.getElementById("fondos_restante");
 
-	if(validarKeyUp(
-       /^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]{0,100}$/,
-        document.getElementById("descripcion_input"),document.getElementById("descripcion_input").nextElementSibling,'Numeros y letras, Maximo 100 caracteres'
-        )==0)
-	{
-		mensajes('error',4000,'Error en la descripcion',
-		'El formato debe ser sólo letras o números, Máximo 100 caracteres');
-		
-		return false;
-	}
+    if (!montoInput.value || parseFloat(montoInput.value) === 0) {
+        etiqueta.textContent = document.getElementById("fondos_caja").textContent;
+        return;
+    }
 
-	Swal.fire({
-		title: "¿Estás seguro?",
-		text: `¿Está seguro que desea editar esta descripcion?`,
-		showCancelButton: true,
-		confirmButtonText: "Cambiar",
-		confirmButtonColor: "#1b8a40",
-		cancelButtonText: "Cancelar",
-		icon: "warning"
-	}).then((result) => {
-		if (result.isConfirmed) {
-			id_caja = document.getElementById("mes_select").options[document.getElementById("mes_select").selectedIndex].value;
-			editarObservacion(id_caja);// mandamos la confirmacion al envio ajax.js							
-		}
-	});
-});
+    let monto = (montoInput.getAttribute("monto") === "bs")
+        ? parseFloat(montoInput.value.replace(',', '.'))
+        : parseFloat(document.getElementById("monto_cambio").value.replace(',', '.'));
 
-document.getElementById("descripcion_input").addEventListener("keypress",e=>{
-	validarKeyPress(/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]+$/, e);
-});
+    if (isNaN(monto)) return;
 
-document.getElementById("descripcion_input").addEventListener("keyup",e=>{
-	validarKeyUp(/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]{0,100}$/, document.getElementById("descripcion_input"),document.getElementById("descripcion_input").nextElementSibling,'Numeros y letras, Maximo 100 caracteres');
-});
-
-async function validarEnvio(){
-	if(validarFecha(document.getElementById("fecha"))==0)
-	{
-		mensajes('error',4000,'Verifique la fecha Ingresada',
-		'Debe ingresar una fecha adecuada');
-		
-		return false;
-	}
-	else if(document.querySelector("#monto").value == 0)
-	{
-		document.querySelector("#monto").classList.add('is-invalid');
-		document.querySelector("#monto").classList.remove('is-valid');
-		document.querySelector("#monto").nextElementSibling.nextElementSibling.textContent = "El monto esta vacío";
-		mensajes('error',4000,'Atención',
-		'El monto esta vacío');
-		
-		return false;
-	}
-	else if(validarKeyUp(/^[0-9]{0,12}[,.]{0,1}[0-9]{0,2}$/,document.querySelector("#monto"),document.querySelector("#monto").nextElementSibling.nextElementSibling,'Solo numeros, no mas de 15 caracteres y no mas de 2 decimales'
-        )==0)
-	{
-		mensajes('error',4000,'Atención',
-		'Solo se admiten numeros, no mas de 15 caracteres y no mas de 2 decimales');
-		
-		return false;
-	}
-	else if (verificarMontoExcedido()) {
-		mensajes('error',4000,'Atención',
-		'El monto colocado es superior a lo que está en la caja');
-
-		return false;
-	}
-	else if(validarKeyUp(
-        /^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s]{3,100}$/,
-        document.querySelector("#concepto"),document.querySelector("#concepto").nextElementSibling,'Solo texto, no mas de 100 caracteres'
-        )==0)
-	{
-		mensajes('error',4000,'Atención','El formato debe ser sólo en letras, no mas de 100 caracteres');
-		
-		return false;
-	}
-
-	const caja_chica = document.getElementById('mes_select');
-	let valido = validarKeyUp(/^[0-9]{1,11}$/,caja_chica,caja_chica.nextElementSibling,"El valor de la caja no es válido");
-
-	if (!valido) {
-		mensajes('error',4000,'Atención','El valor de la caja no es válido');
-		return false;
-	}
-
-	let datos = new FormData();
-	datos.append('validar','validar_clave_foranea');
-	datos.append('tabla','caja_chica');
-	datos.append('nombre_clave','id_caja_chica');
-	datos.append('valor',caja_chica.value);
-
-	valido = await verificar_clave_foranea(datos);
-	
-	if (valido) {
-		caja_chica.classList.add('is-valid');
-		caja_chica.classList.remove('is-invalid');
-		caja_chica.nextElementSibling.textContent = "";
-	}
-	else{
-		caja_chica.classList.remove('is-valid');
-		caja_chica.classList.add('is-invalid');
-		caja_chica.nextElementSibling.textContent = "La caja chica seleccionada no existe";
-
-		mensajes('error',4000,'Atención','La caja chica seleccionada no existe');
-		return false;
-	}
-
-	return true;
-}
-
-async function validarEnvioReponerCaja(){
-	if(document.querySelector("#monto_reponer").value == 0)
-	{
-		document.querySelector("#monto_reponer").classList.add('is-invalid');
-		document.querySelector("#monto_reponer").classList.remove('is-valid');
-		document.querySelector("#monto_reponer").nextElementSibling.nextElementSibling.textContent = "El monto esta vacío";
-		mensajes('error',4000,'Atención',
-		'El monto esta vacío');
-		
-		return false;
-	}
-	else if(validarKeyUp(/^[0-9]{0,12}[,.]{0,1}[0-9]{0,2}$/,document.querySelector("#monto_reponer"),document.querySelector("#monto_reponer").nextElementSibling.nextElementSibling,'Solo numeros, no mas de 15 caracteres y no mas de 2 decimales'
-        )==0)
-	{
-		mensajes('error',4000,'Atención',
-		'Solo se admiten numeros, no mas de 15 caracteres y no mas de 2 decimales');
-		
-		return false;
-	}
-	else if (verificarReposicionInsuficiente()) {
-		mensajes('error',4000,'Atención',
-		'El monto colocado no cubre todos los gasto de caja');
-
-		return false;
-	}
-
-	const caja_chica = document.getElementById('mes_select');
-	let valido = validarKeyUp(/^[0-9]{1,11}$/,caja_chica,caja_chica.nextElementSibling,"El valor de la caja no es válido");
-
-	if (!valido) {
-		mensajes('error',4000,'Atención','El valor de la caja no es válido');
-		return false;
-	}
-
-	let datos = new FormData();
-	datos.append('validar','validar_clave_foranea');
-	datos.append('tabla','caja_chica');
-	datos.append('nombre_clave','id_caja_chica');
-	datos.append('valor',caja_chica.value);
-
-	valido = await verificar_clave_foranea(datos);
-	
-	if (valido) {
-		caja_chica.classList.add('is-valid');
-		caja_chica.classList.remove('is-invalid');
-		caja_chica.nextElementSibling.textContent = "";
-	}
-	else{
-		caja_chica.classList.remove('is-valid');
-		caja_chica.classList.add('is-invalid');
-		caja_chica.nextElementSibling.textContent = "La caja chica seleccionada no existe";
-
-		mensajes('error',4000,'Atención','La caja chica seleccionada no existe');
-		return false;
-	}
-	
-	return true;
-}
-
-function validarKeyPress(er, e) {
-    key = e.keyCode;
-    tecla = String.fromCharCode(key);
-    a = er.test(tecla);
-    if (!a) {
-        e.preventDefault();
+    let nuevoFondo = fondo - monto + diferencia;
+    if (nuevoFondo < 0) {
+        etiqueta.textContent = "Excedido";
+    } else {
+        etiqueta.textContent = nuevoFondo.toFixed(2) + " Bs. / " + (nuevoFondo / tasa_dolar).toFixed(2) + " $";
     }
 }
 
-function validarKeyUp(er,etiqueta,etiquetamensaje,
-mensaje){
-	a = er.test(etiqueta.value);
-	
-	if(a){
-		etiqueta.classList.add('is-valid');
-		etiqueta.classList.remove('is-invalid');
-		etiquetamensaje.textContent = "";
-		return 1;
-	}
-	else{
-		etiqueta.classList.add('is-invalid')
-		etiqueta.classList.remove('is-valid');
-		etiquetamensaje.textContent = mensaje;
-		return 0;
-	}
-}
-
-function validarFecha(fecha){
-	if (fecha.value == '') {
-		fecha.classList.add('is-invalid')
-		fecha.classList.remove('is-valid');
-		fecha.nextElementSibling.textContent = "Debe seleccionar una opcion";
-		return false;		
-	}
-
-	let expresion = /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
-
-	if (!expresion.test(fecha.value)) {
-		fecha.classList.add('is-invalid')
-		fecha.classList.remove('is-valid');
-		fecha.nextElementSibling.textContent = "Formato de la fecha incorrecto";
-		return false;
-	}
-
-	const [anio, mes, dia] = fecha.value.split('-').map(Number);
-	const fecha_validar = new Date(anio,mes-1,dia);
-	// console.log(fecha_validar,fecha.value);
-
-	if (fecha_validar.getFullYear() !== anio || fecha_validar.getMonth() !== mes - 1 || fecha_validar.getDate() !== dia) {
-        fecha.classList.add('is-invalid')
-		fecha.classList.remove('is-valid');
-		fecha.nextElementSibling.textContent = "La fecha es inválida (ejemplo: 31 de Febrero)";
-		return false;
+async function validarEnvio(accion) {
+    // Validar fecha
+    if (!Validaciones.fecha(document.getElementById("fecha"), null, true)) {
+        Utilidades.mensaje('error', 'Error', 'La fecha es inválida');
+        return false;
     }
 
-	if (fecha_validar.getFullYear() < 2000) {
-		fecha.classList.add('is-invalid')
-		fecha.classList.remove('is-valid');
-		fecha.nextElementSibling.textContent = "La fecha debe ser posterior al 2000";
-		return false;
-	}
+    // Validar monto
+    let montoInput = document.getElementById("monto");
+    if (!montoInput.value || parseFloat(montoInput.value) === 0) {
+        Validaciones.mostrarError(montoInput, 'El monto es obligatorio');
+        Utilidades.mensaje('error', 'Error', 'Debe ingresar un monto');
+        return false;
+    }
 
-	fecha.classList.add('is-valid');
-	fecha.classList.remove('is-invalid');
-	fecha.nextElementSibling.textContent = "";
-	return true;
+    if (!Validaciones.keyUp(/^\d{0,12}([.,]\d{0,2})?$/,
+        montoInput, montoInput.nextElementSibling.nextElementSibling,
+        'Formato inválido')) {
+        Utilidades.mensaje('error', 'Error', 'El monto tiene formato incorrecto');
+        return false;
+    }
+
+    // Validar concepto
+    if (!Validaciones.keyUp(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s]{3,100}$/,
+        document.getElementById("concepto"),
+        document.getElementById("concepto").nextElementSibling,
+        'Concepto inválido')) {
+        Utilidades.mensaje('error', 'Error', 'El concepto debe tener entre 3 y 100 caracteres');
+        return false;
+    }
+
+    // Validar que la caja exista
+    let select = document.getElementById("mes_select");
+    if (!Validaciones.select(select.id)) {
+        Utilidades.mensaje('error', 'Error', 'Debe seleccionar una caja');
+        return false;
+    }
+
+    let valido = await verificarClaveForanea(select.value);
+    if (!valido) {
+        Utilidades.mensaje('error', 'Error', 'La caja seleccionada no existe');
+        return false;
+    }
+
+    // Validar fondos suficientes
+    if (verificarMontoExcedido()) {
+        Utilidades.mensaje('error', 'Error', 'El monto supera el fondo disponible');
+        return false;
+    }
+
+    return true;
 }
 
-function verificarMontoExcedido(){
-	let input_monto = document.getElementById("monto");
-	let fondo = parseFloat(document.getElementById("fondos_caja").textContent.split("Bs")[0]);
+async function validarEnvioReponerCaja() {
+    let montoInput = document.getElementById("monto_reponer");
+    if (!montoInput.value || parseFloat(montoInput.value) === 0) {
+        Validaciones.mostrarError(montoInput, 'El monto es obligatorio');
+        Utilidades.mensaje('error', 'Error', 'Debe ingresar un monto');
+        return false;
+    }
 
-	if (input_monto.getAttribute("monto") == "bs"){
-		return (parseFloat(input_monto.value) > fondo);
-	}
-	else{
-		let input_cambio = document.getElementById("monto_cambio");
-		return (parseFloat(input_cambio.value) > fondo);
-	}
+    if (!Validaciones.keyUp(/^\d{0,12}([.,]\d{0,2})?$/,
+        montoInput, montoInput.nextElementSibling.nextElementSibling,
+        'Formato inválido')) {
+        Utilidades.mensaje('error', 'Error', 'El monto tiene formato incorrecto');
+        return false;
+    }
+
+    let select = document.getElementById("mes_select");
+    if (!Validaciones.select(select.id)) {
+        Utilidades.mensaje('error', 'Error', 'Debe seleccionar una caja');
+        return false;
+    }
+
+    let valido = await verificarClaveForanea(select.value);
+    if (!valido) {
+        Utilidades.mensaje('error', 'Error', 'La caja seleccionada no existe');
+        return false;
+    }
+
+    if (verificarReposicionInsuficiente()) {
+        Utilidades.mensaje('error', 'Error', 'El monto no cubre todos los gastos pendientes');
+        return false;
+    }
+
+    return true;
 }
 
-function verificarReposicionInsuficiente(){
-	let input_monto = document.getElementById("monto_reponer");
-	let fondo_gastado = parseFloat(document.getElementById("fondos_gastados").textContent.split("Bs")[0]);
-
-	if (input_monto.getAttribute("monto") == "bs"){
-		return (parseFloat(input_monto.value) < fondo_gastado);
-	}
-	else{
-		let input_cambio = document.getElementById("monto_cambio_reponer");
-		return (parseFloat(input_cambio.value) < fondo_gastado);
-	}
+function verificarMontoExcedido() {
+    let fondo = parseFloat(document.getElementById("fondos_caja").textContent.split("Bs")[0]);
+    let montoInput = document.getElementById("monto");
+    let monto = (montoInput.getAttribute("monto") === "bs")
+        ? parseFloat(montoInput.value.replace(',', '.'))
+        : parseFloat(document.getElementById("monto_cambio").value.replace(',', '.'));
+    return monto > fondo;
 }
 
-function verificarReposicionExcedente(){
-	let input_monto = document.getElementById("monto_reponer");
-	let fondo_gastado = parseFloat(document.getElementById("fondos_gastados").textContent.split("Bs")[0]);
-
-	if (input_monto.getAttribute("monto") == "bs"){
-		return (parseFloat(input_monto.value) > fondo_gastado);
-	}
-	else{
-		let input_cambio = document.getElementById("monto_cambio_reponer");
-		return (parseFloat(input_cambio.value) > fondo_gastado);
-	}
+function verificarReposicionInsuficiente() {
+    let gastado = parseFloat(document.getElementById("fondos_gastados").textContent.split("Bs")[0]);
+    let montoInput = document.getElementById("monto_reponer");
+    let monto = (montoInput.getAttribute("monto") === "bs")
+        ? parseFloat(montoInput.value.replace(',', '.'))
+        : parseFloat(document.getElementById("monto_cambio_reponer").value.replace(',', '.'));
+    return monto < gastado;
 }
 
-async function verificar_clave_foranea(datos){	
-	let data = await fetch("",{method:"POST", body:datos}).then(res=>{		
-		let result = res.json()
-		return result;
-	});
-
-	return data		
+async function verificarReposicionExcedente() {
+    let gastado = parseFloat(document.getElementById("fondos_gastados").textContent.split("Bs")[0]);
+    let montoInput = document.getElementById("monto_reponer");
+    let monto = (montoInput.getAttribute("monto") === "bs")
+        ? parseFloat(montoInput.value.replace(',', '.'))
+        : parseFloat(document.getElementById("monto_cambio_reponer").value.replace(',', '.'));
+    return monto > gastado;
 }
+
+async function verificarClaveForanea(valor) {
+    let respuesta = await Utilidades.validar('validar_clave_foranea', {
+        tabla: 'caja_chica',
+        nombre_clave: 'id_caja_chica',
+        valor: valor
+    });
+    return respuesta.estatus === true;
+}
+
+// Extensión de Validaciones para fecha (si no existe)
+// if (!Validaciones.fecha) {
+//     Validaciones.fecha = function(input, errorElement, mostrarMensaje = false) {
+//         let valor = input.value;
+//         let regex = /^\d{4}-\d{2}-\d{2}$/;
+//         if (!regex.test(valor)) {
+//             input.classList.add('is-invalid');
+//             input.classList.remove('is-valid');
+//             if (errorElement) errorElement.textContent = 'Formato debe ser YYYY-MM-DD';
+//             return false;
+//         }
+//         let [anio, mes, dia] = valor.split('-').map(Number);
+//         let fecha = new Date(anio, mes-1, dia);
+//         if (fecha.getFullYear() !== anio || fecha.getMonth() !== mes-1 || fecha.getDate() !== dia) {
+//             input.classList.add('is-invalid');
+//             input.classList.remove('is-valid');
+//             if (errorElement) errorElement.textContent = 'Fecha inválida';
+//             return false;
+//         }
+//         if (anio < 2000) {
+//             input.classList.add('is-invalid');
+//             input.classList.remove('is-valid');
+//             if (errorElement) errorElement.textContent = 'Año debe ser ≥ 2000';
+//             return false;
+//         }
+//         input.classList.add('is-valid');
+//         input.classList.remove('is-invalid');
+//         if (errorElement) errorElement.textContent = '';
+//         return true;
+//     };
+// }

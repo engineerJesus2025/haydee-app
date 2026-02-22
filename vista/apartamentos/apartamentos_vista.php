@@ -1,4 +1,4 @@
-<?php use haydee\modelo\Apartamento; use haydee\modelo\Habitantes; ?>
+<?php use haydee\ayuda\Sesiones; ?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -11,13 +11,13 @@
 
 <body id="body-pd" class="body-pd">
     <input type="text" hidden="" id="permiso_eliminar"
-        value="<?php echo Apartamento::tiene_permiso(GESTIONAR_APARTAMENTOS, ELIMINAR) ?>">
+        value="<?php echo Sesiones::tienePermiso(GESTIONAR_APARTAMENTOS, ELIMINAR) ?>">
     <input type="text" hidden="" id="permiso_editar"
-        value="<?php echo Apartamento::tiene_permiso(GESTIONAR_APARTAMENTOS, MODIFICAR) ?>">
+        value="<?php echo Sesiones::tienePermiso(GESTIONAR_APARTAMENTOS, MODIFICAR) ?>">
     <input type="text" hidden="" id="permiso_eliminar_habitantes"
-        value="<?php echo Habitantes::tiene_permiso(GESTIONAR_HABITANTES, ELIMINAR) ?>">
+        value="<?php echo Sesiones::tienePermiso(GESTIONAR_HABITANTES, ELIMINAR) ?>">
     <input type="text" hidden="" id="permiso_editar_habitantes"
-        value="<?php echo Habitantes::tiene_permiso(GESTIONAR_HABITANTES, MODIFICAR) ?>">
+        value="<?php echo Sesiones::tienePermiso(GESTIONAR_HABITANTES, MODIFICAR) ?>">
     <div class="container-fluid">
         <div class="row flex-nowrap ">
 
@@ -41,7 +41,7 @@
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="card p-4">
-                                <?php if (Apartamento::tiene_permiso(GESTIONAR_APARTAMENTOS, REGISTRAR)): ?>
+                                <?php if (Sesiones::tienePermiso(GESTIONAR_APARTAMENTOS, REGISTRAR)): ?>
                                     <div class="button mb-4">
                                         <button type="button" class="btn btn-primary" data-bs-toggle="modal"
                                             data-bs-target="#modal_apartamentos">Nuevo Apartamento</a>
@@ -116,7 +116,7 @@
                                     aria-label="Cerrar"></button>
                             </div>
                             <div class="modal-body">
-                                <?php if (Habitantes::tiene_permiso(GESTIONAR_HABITANTES, REGISTRAR)): ?>
+                                <?php if (Sesiones::tienePermiso(GESTIONAR_HABITANTES, REGISTRAR)): ?>
                                     <div class="button mb-4">
                                         <button type="button" id="boton_registrar" class="btn btn-primary"
                                             data-bs-toggle="modal" data-bs-target="#modal_habitantes">Nuevo Habitante</a>
@@ -200,9 +200,7 @@
     </div>
 
     <script type="text/javascript" src="recursos/js/validaciones/apartamentos_validar.js"></script>
-    <script type="text/javascript" src="recursos/js/consultas_ajax/habitantes_ajax.js"></script>
     <script type="text/javascript" src="recursos/js/consultas_ajax/apartamentos_ajax.js"></script>
-    <script type="text/javascript" src="recursos/js/validaciones/habitantes_validar.js"></script>
 
 <?php require_once "vista/componentes/footer.php"; ?>
 </body>

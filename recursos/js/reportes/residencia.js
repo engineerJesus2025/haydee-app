@@ -1,50 +1,92 @@
-let boton_residencia = document.getElementById('boton_residencia');
-let array_propietarios_residentes = [];
+/**
+ * residencia.js
+ * Gestión de constancias de residencia
+ * Dependencias: utilidades.js, validaciones.js
+ */
 
-boton_residencia.addEventListener("click",e=>{
-	document.getElementById("titulo_modal_persona").textContent = 'Generar constancia de residencia';
-	document.getElementById('label_reporte').textContent = "Seleccione la persona para la Constancia";	
+let botonResidencia = document.getElementById('boton_residencia');
+let arrayPropietariosResidentes = [];
 
-	let boton_generar = document.getElementById('boton_generar');
-	boton_generar.setAttribute("reporte","residencia");
+botonResidencia.addEventListener("click", () => {
+    document.getElementById("titulo_modal_persona").textContent = 'Generar constancia de residencia';
+    document.getElementById('label_reporte').textContent = "Seleccione la persona para la Constancia";
 
-	let select_reporte = document.getElementById('select_reporte');
-	select_reporte.selectedOptions[0].textContent = "Seleccione el Residente";
-	//Llenar el select
-	let fragment = document.createDocumentFragment();
-	array_propietarios_residentes.map(propietario=>{
-		let option = document.createElement("option");
-		option.textContent = `Aptartamento Nº ${propietario.nro_apartamento}, ${propietario.nombre} ${propietario.apellido}`;
-		option.value = propietario.id_habitante;
+    let botonGenerar = document.getElementById('boton_generar');
+    botonGenerar.setAttribute("reporte", "residencia");
 
-		fragment.appendChild(option);
-	});
-	select_reporte.appendChild(fragment);
+    let select = document.getElementById('select_reporte');
+    // Limpiar opciones previas
+    select.innerHTML = '<option selected hidden value="">Seleccione el Residente</option>';
 
-	regex = /^[0-9]{1,11}$/;
-	mensajes_err.invalido = 'El valor del habitante no es válido';
-	mensajes_err.inexistente = 'El habitante no existe';
-	verificar.tabla = 'habitantes';
-	verificar.id = 'id_habitante';
+    let fragment = document.createDocumentFragment();
+    arrayPropietariosResidentes.forEach(prop => {
+        let option = document.createElement("option");
+        option.textContent = `Apartamento Nº ${prop.nro_apartamento}, ${prop.nombre} ${prop.apellido}`;
+        option.value = prop.id_habitante;
+        fragment.appendChild(option);
+    });
+    select.appendChild(fragment);
+
+    // Configurar validación para este modal
+    $(select).off('change').on('change', async function() {
+        if (!Validaciones.select(this.id)) return;
+        // Verificar existencia del habitante
+        let existe = await verificarHabitante(this.value);
+        if (existe) {
+            this.classList.add('is-valid');
+            this.classList.remove('is-invalid');
+            this.nextElementSibling.textContent = '';
+        } else {
+            this.classList.add('is-invalid');
+            this.classList.remove('is-valid');
+            this.nextElementSibling.textContent = 'El habitante no existe';
+        }
+    });
+
+    // Configurar evento del botón generar
+    $('#boton_generar').off('click').on('click', function(e) {
+        e.preventDefault();
+        let select = document.getElementById('select_reporte');
+        if (!Validaciones.select(select.id)) {
+            Utilidades.mensaje('error', 'Atención', 'Debe seleccionar un residente');
+            return;
+        }
+        // Si se requiere verificación adicional, se hace aquí
+        let reporte = this.getAttribute("reporte");
+        document.getElementById('form_reporte').setAttribute('action', `?pagina=reportes_controlador.php&accion=${reporte}`);
+        document.getElementById('form_reporte').submit();
+    });
 });
 
-function consultar_propietarios() {
-	let datos_consulta = new FormData();
-
-	datos_consulta.append('operacion',"consultar_personas_residencia");
-
-	fetch("",{method:"POST", body:datos_consulta})
-	.then(res=>res.json())
-	.then(data=>{
-		if (data.length === 0) {
-			boton_residencia.parentElement.setAttribute('title','No hay habitantes ni propietarios registrados');			
-		}
-		else{
-			boton_residencia.removeAttribute('disabled');
-			array_propietarios_residentes = data;
-		}
-		boton_residencia.querySelector(".spinner-grow").parentElement.innerHTML = `<i class="bi bi-house-fill" style="font-size: 5rem !important;"></i>`;
-	});
+async function verificarHabitante(id) {
+    let respuesta = await Utilidades.validar('validar_clave_foranea', {
+        tabla: 'habitantes',
+        nombre_clave: 'id_habitante',
+        valor: id
+    });
+    return respuesta.estatus;
 }
 
-consultar_propietarios();
+function consultarPropietarios() {
+    let datos = new FormData();
+    datos.append('operacion', "consultar_personas_residencia");
+
+    Utilidades.query(datos).then(respuesta => {
+        if (respuesta.estatus && respuesta.datos.length > 0) {
+            botonResidencia.removeAttribute('disabled');
+            arrayPropietariosResidentes = respuesta.datos;
+        } else {
+            botonResidencia.parentElement.setAttribute('title', 'No hay habitantes ni propietarios registrados');
+        }
+        // Reemplazar spinner por ícono
+        let spinnerContainer = botonResidencia.querySelector(".spinner-grow")?.parentElement;
+        if (spinnerContainer) {
+            spinnerContainer.innerHTML = `<i class="bi bi-house-fill" style="font-size: 5rem !important;"></i>`;
+        }
+    }).catch(error => {
+        console.error("Error al cargar propietarios:", error);
+        Utilidades.mensaje('error', 'Error', 'No se pudieron cargar los propietarios');
+    });
+}
+
+consultarPropietarios();

@@ -1,7 +1,6 @@
-<?php use haydee\modelo\AnioFiscal; ?>
+<?php use haydee\ayuda\Sesiones; ?>
 <!DOCTYPE html>
 <html>
-
 <head>
     <title>Año Fiscal | Inicio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,8 +10,8 @@
 </head>
 
 <body id="body-pd" class="body-pd">
-    <input type="text" hidden="" id="permiso_eliminar" value="<?php echo AnioFiscal::tiene_permiso(GESTIONAR_ANIO_FISCAL, ELIMINAR) ?>">
-    <input type="text" hidden="" id="permiso_editar" value="<?php echo AnioFiscal::tiene_permiso(GESTIONAR_ANIO_FISCAL, MODIFICAR) ?>">
+    <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_ANIO_FISCAL, ELIMINAR) ?>">
+    <input type="text" hidden="" id="permiso_editar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_ANIO_FISCAL, MODIFICAR) ?>">
     <div class="container-fluid">
         <div class="row flex-nowrap ">
 
@@ -36,7 +35,7 @@
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="card p-4">
-                                <?php if (AnioFiscal::tiene_permiso(GESTIONAR_ANIO_FISCAL, REGISTRAR)) : ?>
+                                <?php if (Sesiones::tienePermiso(GESTIONAR_ANIO_FISCAL, REGISTRAR)) : ?>
                                     <div class="button mb-4">
                                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_anio_fiscal">Nuevo Año Fiscal</a>
                                     </div><br>

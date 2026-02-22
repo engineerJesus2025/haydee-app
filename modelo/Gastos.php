@@ -1,749 +1,1125 @@
 <?php
 namespace haydee\modelo;
-use haydee\modelo\Conexion;
+
 use PDO;
 use PDOException;
+use haydee\ayuda\GestorImagenes;
 
 class Gastos extends Conexion
 {
+    // ====================================================================
+    // PROPIEDADES (Mapeo de 4 tablas)
+    // ====================================================================
+
+    // Tabla: gastos (Cabecera)
     private $id_gasto;
-    private $tipo;
-    private $metodo_pago;
+    private $clasificacion;     // 'Fijo' o 'Variable'
     private $descripcion_gasto;
-    private $solicitud_id;
-    private $tipo_gasto_id;
-    private $proveedor_id;
+    private $solicitud_id;      // Opcional (FK a solicitudes_gasto)
+    private $tipo_gasto_id;     // FK a tipo_gasto
+    private $proveedor_id;      // FK a proveedores (opcional)
+    private $activo;
 
-    public function __construct()
-    {
-        parent::__construct();
+    // Tabla: detalles_gastos
+    private $id_detalle_gasto;
+    private $fecha;
+    private $monto;
+    private $monto_dolar;
+    private $metodo_pago;       // 'Efectivo', 'Pago Movil', 'Transferencia', 'Divisa'
+    private $descripcion_detalle;
+
+    private $detalles = [];  // Array de detalles (cada detalle es un array asociativo)
+
+    // Tabla: egresos_bancarios (solo si método bancario)
+    private $referencia;
+    private $imagen;
+    private $banco_id;
+
+    private $filtros_reporte = [];
+
+    // ====================================================================
+    // REGLAS DE VALIDACIÓN CENTRALIZADAS
+    // ====================================================================
+    private $reglas = [
+        'id_gasto' => [
+            'regex' => '/^\d+$/',
+            'exists' => ['tabla' => 'gastos', 'campo' => 'id_gasto']
+        ],
+        'id_detalle_gasto' => [
+            'regex' => '/^\d+$/',
+            'exists' => ['tabla' => 'detalles_gastos', 'campo' => 'id_detalle_gasto']
+        ],
+        'clasificacion' => [
+            'regex' => '/^(Fijo|Variable)$/i'
+        ],
+        'descripcion_gasto' => [
+            'regex' => '/^[a-zA-Z0-9áéíóúñÁÉÍÓÚÑ\s.,-]{3,255}$/'
+        ],
+        'solicitud_id' => [
+            'regex' => '/^\d+$/',
+            'exists' => ['tabla' => 'solicitudes_gasto', 'campo' => 'id_solicitud'],
+            'opcional' => true
+        ],
+        'tipo_gasto_id' => [
+            'regex' => '/^\d+$/',
+            'exists' => ['tabla' => 'tipo_gasto', 'campo' => 'id_tipo_gasto']
+        ],
+        'proveedor_id' => [
+            'regex' => '/^\d+$/',
+            'exists' => ['tabla' => 'proveedores', 'campo' => 'id_proveedor'],
+            'opcional' => true
+        ],
+        'fecha' => [
+            'regex' => '/^\d{4}-\d{2}-\d{2}$/'
+        ],
+        'monto' => [
+            'regex' => '/^\d+(\.\d{1,2})?$/',
+            'min' => 0.01
+        ],
+        'monto_dolar' => [
+            'regex' => '/^\d+(\.\d{1,2})?$/',
+            'opcional' => true
+        ],
+        'metodo_pago' => [
+            'regex' => '/^(Efectivo|Pago Movil|Transferencia|Divisa)$/'
+        ],
+        'descripcion_detalle' => [
+            'regex' => '/^[a-zA-Z0-9áéíóúñÁÉÍÓÚÑ\s.,-]{0,255}$/',
+            'opcional' => true
+        ],
+        'referencia' => [
+            'regex' => '/^[a-zA-Z0-9]{4,20}$/',
+            'opcional' => true,
+            'requerido_si' => ['metodo_pago' => ['Transferencia', 'Pago Movil']]
+        ],
+        'imagen' => [
+            'regex' => '/^[a-zA-Z0-9_.-]+\.(jpg|jpeg|png|gif)$/i',
+            'opcional' => true
+        ],
+        'banco_id' => [
+            'regex' => '/^\d+$/',
+            'exists' => ['tabla' => 'bancos', 'campo' => 'id_banco'],
+            'opcional' => true,
+            'requerido_si' => ['metodo_pago' => ['Transferencia', 'Pago Movil']]
+        ]
+    ];
+
+    // ====================================================================
+    // GETTERS Y SETTERS
+    // ====================================================================
+    public function set_id_gasto($id) { $this->id_gasto = $id; }
+    public function get_id_gasto() { return $this->id_gasto; }
+    public function set_clasificacion($c) { $this->clasificacion = $c; }
+    public function get_clasificacion() { return $this->clasificacion; }
+    public function set_descripcion_gasto($d) { $this->descripcion_gasto = $d; }
+    public function get_descripcion_gasto() { return $this->descripcion_gasto; }
+    public function set_solicitud_id($s) { $this->solicitud_id = $s; }
+    public function get_solicitud_id() { return $this->solicitud_id; }
+    public function set_tipo_gasto_id($t) { $this->tipo_gasto_id = $t; }
+    public function get_tipo_gasto_id() { return $this->tipo_gasto_id; }
+    public function set_proveedor_id($p) { $this->proveedor_id = $p; }
+    public function get_proveedor_id() { return $this->proveedor_id; }
+
+    public function set_id_detalle_gasto($id) { $this->id_detalle_gasto = $id; }
+    public function get_id_detalle_gasto() { return $this->id_detalle_gasto; }
+    public function set_fecha($f) { $this->fecha = $f; }
+    public function get_fecha() { return $this->fecha; }
+    public function set_monto($m) { $this->monto = $m; }
+    public function get_monto() { return $this->monto; }
+    public function set_monto_dolar($md) { $this->monto_dolar = $md; }
+    public function get_monto_dolar() { return $this->monto_dolar; }
+    public function set_metodo_pago($mp) { $this->metodo_pago = $mp; }
+    public function get_metodo_pago() { return $this->metodo_pago; }
+    public function set_descripcion_detalle($dd) { $this->descripcion_detalle = $dd; }
+    public function get_descripcion_detalle() { return $this->descripcion_detalle; }
+
+    public function set_referencia($r) { $this->referencia = $r; }
+    public function get_referencia() { return $this->referencia; }
+    public function set_imagen($i) { $this->imagen = $i; }
+    public function get_imagen() { return $this->imagen; }
+    public function set_banco_id($b) { $this->banco_id = $b; }
+    public function get_banco_id() { return $this->banco_id; }
+
+    public function set_activo($activo) { $this->activo = $activo; }
+    public function get_activo() { return $this->activo; }
+
+    public function set_detalles($detalles) { $this->detalles = $detalles; }
+    public function get_detalles() { return $this->detalles; }
+
+    public function set_filtros_reporte($filtros) {
+        $this->filtros_reporte = $filtros;
     }
-
-    public function set_id_gasto($id_gasto)
+    // ====================================================================
+    // ENRUTADOR CON MANEJO DE EXCEPCIONES
+    // ====================================================================
+    public function realizar_consulta($accion)
     {
-        $this->id_gasto = $id_gasto;
-    }
-    public function get_id_gasto()
-    {
-        return $this->id_gasto;
-    }
-
-    public function set_tipo($tipo)
-    {
-        $this->tipo = $tipo;
-    }
-    public function get_tipo()
-    {
-        return $this->tipo;
-    }
-
-    public function set_metodo_pago($metodo_pago)
-    {
-        $this->metodo_pago = $metodo_pago;
-    }
-    public function get_metodo_pago()
-    {
-        return $this->metodo_pago;
-    }
-
-    public function set_proveedor_id($proveedor_id)
-    {
-        $this->proveedor_id = $proveedor_id;
-    }
-    public function get_proveedor_id()
-    {
-        return $this->proveedor_id;
-    }
-
-    public function set_descripcion_gasto($descripcion_gasto)
-    {
-        $this->descripcion_gasto = $descripcion_gasto;
-    }
-    public function get_descripcion_gasto()
-    {
-        return $this->descripcion_gasto;
-    }
-
-    public function set_solicitud_id($solicitud_id)
-    {
-        $this->solicitud_id = $solicitud_id;
-    }
-    public function get_solicitud_id()
-    {
-        return $this->solicitud_id;
-    }
-
-    public function set_tipo_gasto_id($tipo_gasto_id)
-    {
-        $this->tipo_gasto_id = $tipo_gasto_id;
-    }
-    public function get_tipo_gasto_id()
-    {
-        return $this->tipo_gasto_id;
-    }
-
-
-    public function realizar_consulta($accion,$parametros = [])
-    {
-        switch ($accion) {
-            case 'consultar':
-                $respuesta = $this->consultar();
-                if ($respuesta["resultado"]) {
-                    return $respuesta["datos"];
-                } else {
-                    return ["estatus" => false, "mensaje" => "Ha ocurrido un error con la consulta"];
-                }
-            case 'consultar_gasto':
-                return $this->consultar_gasto();
-
-
-            case 'registrar':
-                $validacion = $this->validar_datos('registrar');
-                if (!$validacion["estatus"]) {
-                    return $validacion; // Si falla, retorna el mensaje de error
-                }
-                $respuesta = $this->registrar();
-                if ($respuesta) {
-                    return ["estatus" => true, "mensaje" => "OK"];
-                } else {
-                    return ["estatus" => false, "mensaje" => "Ha ocurrido un error con el registro"];
-                }
-
-
-            case 'editar_gasto':
-                $validacion = $this->validar_datos('editar_gasto');
-                if (!$validacion["estatus"]) {
-                    return $validacion; // Si falla, retorna el mensaje de error
-                }
-                $respuesta = $this->editar_gasto();
-                if ($respuesta) {
-                    return ["estatus" => true, "mensaje" => "OK"];
-                } else {
-                    return ["estatus" => false, "mensaje" => "Ha ocurrido un error con la edición"];
-                }
-
-
-            case 'eliminar_gasto':
-                $validacion = $this->validar_datos('eliminar_gasto');
-                if (!$validacion["estatus"]) {
-                    return $validacion; // Si falla, retorna el mensaje de error
-                }
-                return $this->eliminar_gasto();
-
-            case 'lastId':
-                return $this->lastId();
-
-            case 'validar_clave_foranea':
-                $respuesta = $this->validarClaveForanea($parametros['tabla'],$parametros['nombre_clave'],$parametros['valor']);
-
-                $this->cambiar_db_negocio();
-
-                return $respuesta;                
-            
-            default:
-                return ["estatus" => false, "mensaje" => "Acción no reconocida"];
-        }
-    }
-
-
-    private function consultar()
-    {
-        $sql = "SELECT
-                g.*,
-                SUM(dg.monto) AS monto_total,
-                MAX(dg.fecha) AS ultima_fecha,
-                tg.nombre_tipo_gasto,
-                p.nombre_proveedor,
-                (SELECT d.metodo_pago 
-                 FROM detalles_gastos d 
-                 WHERE d.gasto_id = g.id_gasto 
-                 ORDER BY d.fecha DESC, d.id_detalle_gasto DESC 
-                 LIMIT 1) AS metodo_pago_predominante
-            FROM
-                gastos g
-            LEFT JOIN
-                detalles_gastos dg ON g.id_gasto = dg.gasto_id
-            LEFT JOIN
-                tipo_gasto tg ON g.tipo_gasto_id = tg.id_tipo_gasto
-            LEFT JOIN
-                proveedores p ON g.proveedor_id = p.id_proveedor
-            GROUP BY
-                g.id_gasto
-            ORDER BY
-                ultima_fecha DESC
-            ";
-
-        $conexion = $this->get_conex()->prepare($sql);
-        $result = $conexion->execute();
-        $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
-        return ["resultado" => $result, "datos" => $datos];
-    }
-
-    private function consultar_gasto()
-    {
-        $sql = "SELECT
-                g.*,
-                p.nombre_proveedor,
-                sg.descripcion_necesidad,
-                SUM(dg.monto) AS monto_total,
-                MAX(dg.fecha) AS ultima_fecha,
-                tg.nombre_tipo_gasto,
-                (SELECT d.metodo_pago 
-                 FROM detalles_gastos d 
-                 WHERE d.gasto_id = g.id_gasto 
-                 ORDER BY d.fecha DESC, d.id_detalle_gasto DESC 
-                 LIMIT 1) AS metodo_pago_predominante
-                
-            FROM
-                gastos g
-            LEFT JOIN
-                detalles_gastos dg ON g.id_gasto = dg.gasto_id
-            LEFT JOIN
-                proveedores p ON g.proveedor_id = p.id_proveedor
-            LEFT JOIN
-                solicitudes_gasto sg ON g.solicitud_id = sg.id_solicitud
-            LEFT JOIN
-                tipo_gasto tg ON g.tipo_gasto_id = tg.id_tipo_gasto
-            WHERE
-                g.id_gasto = :id_gasto
-            GROUP BY
-                g.id_gasto, p.id_proveedor, sg.id_solicitud
-            ";
-
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":id_gasto", $this->id_gasto);
-        $result = $conexion->execute();
-        $datos = $conexion->fetch(PDO::FETCH_ASSOC);
-
-        if ($result) {
-            return $datos;
-        } else {
-            return ["estatus" => false, "mensaje" => "Ha ocurrido un error con la consulta"];
-        }
-    }
-
-    private function registrar()
-    {
-        // Ya no se insertan metodo_pago, etc.
-        $sql = "INSERT INTO gastos (tipo, descripcion_gasto, tipo_gasto_id, solicitud_id, proveedor_id) VALUES (:tipo, :descripcion_gasto, :tipo_gasto_id, :solicitud_id, :proveedor_id)";
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":tipo", $this->tipo);
-        $conexion->bindParam(":descripcion_gasto", $this->descripcion_gasto);
-        $conexion->bindParam(":tipo_gasto_id", $this->tipo_gasto_id);
-        $conexion->bindParam(":solicitud_id", $this->solicitud_id);
-        $conexion->bindParam(":proveedor_id", $this->proveedor_id);
-        $result = $conexion->execute();
-        return $result;
-
-    }
-
-    private function editar_gasto()
-    {
-        $sql = "UPDATE gastos SET tipo = :tipo, descripcion_gasto = :descripcion_gasto, tipo_gasto_id = :tipo_gasto_id, solicitud_id = :solicitud_id, proveedor_id = :proveedor_id WHERE id_gasto = :id_gasto";
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":id_gasto", $this->id_gasto);
-        $conexion->bindParam(":tipo", $this->tipo);
-        $conexion->bindParam(":tipo_gasto_id", $this->tipo_gasto_id);
-        $conexion->bindParam(":solicitud_id", $this->solicitud_id);
-        $conexion->bindParam(":descripcion_gasto", $this->descripcion_gasto);
-        $conexion->bindParam(":proveedor_id", $this->proveedor_id);
-        $result = $conexion->execute();
-        return $result;
-    }
-
-    private function eliminar_gasto()
-    {
-        // Obtener la lista de imágenes ANTES de borrar los registros de la BD.
-        $nombres_imagenes = $this->obtener_nombres_imagenes_asociadas();
-
-        // Eliminar el registro del gasto de la base de datos.
-        $sql = "DELETE FROM gastos WHERE id_gasto = :id_gasto";
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":id_gasto", $this->id_gasto);
-        $resultado_db = $conexion->execute();
-
-        // Si la BD se actualizó, borramos los archivos de la ruta.
-        if ($resultado_db) {
-            $ruta_base = "recursos/img/gastos/";
-
-            foreach ($nombres_imagenes as $nombre_archivo) {
-                $ruta_completa = $ruta_base . $nombre_archivo;
-
-                // Verificamos que el archivo exista antes de intentar borrarlo para evitar errores.
-                if (file_exists($ruta_completa)) {
-                    unlink($ruta_completa);
-                }
-            }
-
-            // $this->registrar_bitacora(ELIMINAR, GESTIONAR_GASTOS, "Gasto con ID " . $this->id_gasto);
-
-            return ["estatus" => true, "mensaje" => "Gasto y comprobantes eliminados correctamente"];
-        } else {
-            return ["estatus" => false, "mensaje" => "Error al eliminar el gasto de la base de datos"];
-        }
-    }
-
-private function lastId()
-    {
-        $sql = "SELECT MAX(id_gasto) as last_id FROM gastos";
-        $conexion = $this->get_conex()->prepare($sql);
-        $result = $conexion->execute();
-        $datos = $conexion->fetch(PDO::FETCH_ASSOC);
-
-        return $result ? ["estatus" => true, "mensaje" => $datos["last_id"]] : ["estatus" => false, "mensaje" => "Ha ocurrido un error con la consulta"];
-    }
-
-    private function validarClaveForanea($tabla, $nombreClave, $valor)
-    {
-        $sql = "SELECT 1 FROM $tabla WHERE $nombreClave = :valor LIMIT 1";
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":valor", $valor);
-        $conexion->execute();
-        return $conexion->fetch() !== false;
-    }
-
-    private function obtener_nombres_imagenes_asociadas()
-    {
-        $sql = "SELECT bt.imagen
-            FROM banco_transacciones bt
-            JOIN detalles_gastos dg ON bt.detalle_gasto_id = dg.id_detalle_gasto
-            WHERE dg.gasto_id = :id_gasto AND bt.imagen IS NOT NULL AND bt.imagen != ''";
-
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->bindParam(":id_gasto", $this->id_gasto);
-        $conexion->execute();
-
-        // Devuelve un array simple con los nombres de archivo: ['img1.jpg', 'img2.png']
-        return $conexion->fetchAll(PDO::FETCH_COLUMN);
-    }
-
-    public function validar_datos($accion)
-    {
-
-        if ($accion == "editar_gasto" || $accion == "eliminar_gasto") {
-            
-            // Validación 1.1: ID vacío
-            if (empty(trim($this->id_gasto))) {
-                return ["estatus" => false, "mensaje" => "El id del gasto requerido esta vacio"];
-            }
-
-            // Validación 1.2: ID no es numérico
-            if (!is_numeric($this->id_gasto)) {
-                 return ["estatus"=>false, "mensaje"=>"El id del gasto debe ser un valor numerico"];
-            }
-
-            // Validación 1.3: ID no existe en la BD
-            if (!($this->validarClaveForanea("gastos", "id_gasto", $this->id_gasto))) {
-                return ["estatus" => false, "mensaje" => "El gasto seleccionado no existe"];
-            }
-
-            // Si la acción es 'eliminar' y pasó las validaciones de ID, terminamos.
-            if ($accion == "eliminar_gasto") {
-                return ["estatus" => true, "mensaje" => "OK"];
-            }
-        }
-        // 1. Validar campos obligatorios
-        if (empty(trim($this->tipo))) {
-            return ["estatus" => false, "mensaje" => "El campo 'Tipo' no puede estar vacío."];
-        }
-        if (empty(trim($this->descripcion_gasto))) {
-            return ["estatus" => false, "mensaje" => "La descripción del gasto no puede estar vacía."];
-        }
-        if (empty($this->tipo_gasto_id)) {
-            return ["estatus" => false, "mensaje" => "Debe seleccionar un tipo de gasto."];
+        $metodo = '_' . $accion;
+        if (!method_exists($this, $metodo)) {
+            return ['estatus' => false, 'mensaje' => "La acción '$accion' no está implementada."];
         }
 
-        // 2. Validar valores específicos
-        if (!in_array($this->tipo, ['fijo', 'variable'])) {
-            return ["estatus" => false, "mensaje" => "El valor para 'Tipo' no es válido."];
-        }
-
-        // 3. Validar claves foráneas obligatorias
-        if (!$this->validarClaveForanea('tipo_gasto', 'id_tipo_gasto', $this->tipo_gasto_id)) {
-            return ["estatus" => false, "mensaje" => "El tipo de gasto seleccionado no existe."];
-        }
-
-        if ($this->proveedor_id) {
-            if (!$this->validarClaveForanea('proveedores', 'id_proveedor', $this->proveedor_id)) {
-                return ["estatus" => false, "mensaje" => "El proveedor seleccionado no existe."];
-            }
-        }
-        if ($this->solicitud_id) {
-            if (!$this->validarClaveForanea('solicitudes_gasto', 'id_solicitud', $this->solicitud_id)) {
-                return ["estatus" => false, "mensaje" => "La solicitud de gasto seleccionada no existe."];
-            }
-        }
-
-        return ["estatus" => true]; // Si todo está bien
-    }
-
-
-
-    // METODO PARA EL REPORTE DE GASTOS (FRANCISCO)
-    public function obtenerDatosReporteMensual($mes, $anio)
-    {
         try {
-            $db = $this->get_conex();
+            return $this->$metodo();
+        } catch (\Exception $e) {
+            error_log("Error en realizar_consulta ($accion): " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Ocurrió un error interno en el servidor.'];
+        }
+    }
 
-            //  1. OBTENER GASTOS FIJOS DEL MES (DESDE DETALLES)
-            $sql_fijos = "SELECT 
-                        g.descripcion_gasto, 
-                        dg.monto 
-                      FROM detalles_gastos dg
-                      JOIN gastos g ON dg.gasto_id = g.id_gasto
-                      WHERE MONTH(dg.fecha) = :mes AND YEAR(dg.fecha) = :anio AND g.tipo = 'Fijo'";
+    // ====================================================================
+    // VALIDACIÓN CENTRALIZADA (CONDICIONAL Y CON EXISTS)
+    // ====================================================================
+    private function validar($campos)
+    {
+        foreach ($campos as $campo) {
+            if (!isset($this->reglas[$campo])) {
+                continue;
+            }
+            $regla = $this->reglas[$campo];
 
-            $stmt_fijos = $db->prepare($sql_fijos);
-            $stmt_fijos->bindParam(':mes', $mes, PDO::PARAM_INT);
-            $stmt_fijos->bindParam(':anio', $anio, PDO::PARAM_INT);
-            $stmt_fijos->execute();
-            $gastos_fijos = $stmt_fijos->fetchAll(PDO::FETCH_ASSOC);
+            $getter = 'get_' . $campo;
+            if (!method_exists($this, $getter)) {
+                return ['estatus' => false, 'mensaje' => "Error interno: getter no encontrado para $campo."];
+            }
+            $valor = $this->$getter();
 
-            //  2. OBTENER GASTOS VARIABLES DEL MES (EXCLUYENDO GAS LARA)
-            $sql_variables = "SELECT 
-                            g.descripcion_gasto, 
-                            dg.monto 
-                          FROM detalles_gastos dg
-                          JOIN gastos g ON dg.gasto_id = g.id_gasto
-                          LEFT JOIN proveedores p ON g.proveedor_id = p.id_proveedor
-                          WHERE MONTH(dg.fecha) = :mes AND YEAR(dg.fecha) = :anio 
-                          AND g.tipo = 'Variable' 
-                          AND (p.nombre_proveedor != 'Gas Lara' OR p.nombre_proveedor IS NULL)";
+            // Determinar si el campo es requerido
+            $requerido = !(isset($regla['opcional']) && $regla['opcional'] === true);
+            
+            // Validación condicional (requerido_si)
+            if (isset($regla['requerido_si'])) {
+                foreach ($regla['requerido_si'] as $campoCond => $valoresCond) {
+                    $getterCond = 'get_' . $campoCond;
+                    $valorCond = $this->$getterCond();
+                    if (in_array($valorCond, $valoresCond)) {
+                        $requerido = true;
+                        break;
+                    }
+                }
+            }
 
-            $stmt_variables = $db->prepare($sql_variables);
-            $stmt_variables->bindParam(':mes', $mes, PDO::PARAM_INT);
-            $stmt_variables->bindParam(':anio', $anio, PDO::PARAM_INT);
-            $stmt_variables->execute();
-            $gastos_variables = $stmt_variables->fetchAll(PDO::FETCH_ASSOC);
+            if ($requerido) {
+                if ($valor === null) {
+                    return ['estatus' => false, 'mensaje' => "El campo '$campo' es requerido y no se ha establecido."];
+                }
+                if (is_string($valor) && trim($valor) === '') {
+                    return ['estatus' => false, 'mensaje' => "El campo '$campo' no puede estar vacío."];
+                }
+            } else {
+                // Si es opcional y está vacío, saltamos validaciones adicionales
+                if ($valor === null || (is_string($valor) && trim($valor) === '')) {
+                    continue;
+                }
+            }
 
-            //  3. OBTENER GASTO DE GAS LARA POR SEPARADO (SUMANDO SUS POSIBLES DETALLES)
-            $sql_gas = "SELECT 
-                        g.descripcion_gasto, 
-                        SUM(dg.monto) as monto 
-                    FROM detalles_gastos dg
-                    JOIN gastos g ON dg.gasto_id = g.id_gasto
-                    JOIN proveedores p ON g.proveedor_id = p.id_proveedor
-                    WHERE MONTH(dg.fecha) = :mes AND YEAR(dg.fecha) = :anio 
-                    AND p.nombre_proveedor = 'Gas Lara'
-                    GROUP BY g.id_gasto";
+            // Validar expresión regular
+            if (isset($regla['regex']) && !preg_match($regla['regex'], (string)$valor)) {
+                return ['estatus' => false, 'mensaje' => "El campo '$campo' no tiene un formato válido."];
+            }
 
-            $stmt_gas = $db->prepare($sql_gas);
-            $stmt_gas->bindParam(':mes', $mes, PDO::PARAM_INT);
-            $stmt_gas->bindParam(':anio', $anio, PDO::PARAM_INT);
-            $stmt_gas->execute();
-            $gasto_gas = $stmt_gas->fetch(PDO::FETCH_ASSOC);
+            // Validar valor mínimo
+            if (isset($regla['min']) && $valor < $regla['min']) {
+                return ['estatus' => false, 'mensaje' => "El campo '$campo' debe ser mayor o igual a " . $regla['min']];
+            }
 
-            // 4. OBTENER TASA DEL DÓLAR (sin cambios)
-            $tasa_dolar = $this->obtenerTasaDolarAPI();
+            // Validar existencia en otra tabla (foránea)
+            if (isset($regla['exists'])) {
+                $tabla = $regla['exists']['tabla'];
+                $campoFor = $regla['exists']['campo'] ?? $campo;
+                if (!$this->existeEnTabla($tabla, $campoFor, $valor)) {
+                    return ['estatus' => false, 'mensaje' => "El valor del campo '$campo' no existe en la tabla $tabla."];
+                }
+            }
+        }
+        return ['estatus' => true];
+    }
 
-            // 5. OBTENER NÚMERO TOTAL DE APARTAMENTOS (sin cambios)
-            $sql_aptos = "SELECT COUNT(*) as total FROM apartamentos";
-            $stmt_aptos = $db->query($sql_aptos);
-            $total_aptos = $stmt_aptos->fetch(PDO::FETCH_ASSOC)['total'];
+    /**
+     * Verifica existencia de un valor en una tabla
+     */
+    private function existeEnTabla($tabla, $campo, $valor)
+    {
+        $sql = "SELECT COUNT(*) as total FROM $tabla WHERE $campo = :valor";
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->bindParam(':valor', $valor);
+            $stmt->execute();
+            $fila = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $fila['total'] > 0;
+        } catch (PDOException $e) {
+            error_log("Error en existeEnTabla: " . $e->getMessage());
+            return false;
+        }
+    }
 
-            // Devolvemos todos los datos juntos
-            return [
-                'gastos_fijos' => $gastos_fijos,
-                'gastos_variables' => $gastos_variables,
-                'gasto_gas' => $gasto_gas ?: ['monto' => 0], // Si no hay gasto de gas, devuelve 0
-                'tasa_dolar' => $tasa_dolar,
-                'total_aptos' => $total_aptos
-            ];
+    private function validarDetalle($datos)
+    {
+        // Normalizar nombres de campos (aceptar alias)
+        $alias = [
+            'fecha_detalle' => 'fecha',
+            'descripcion_detalle_gasto' => 'descripcion_detalle'
+        ];
+        foreach ($alias as $origen => $destino) {
+            if (isset($datos[$origen]) && !isset($datos[$destino])) {
+                $datos[$destino] = $datos[$origen];
+            }
+        }
+        // var_dump($datos);
+        $camposDetalle = ['fecha', 'monto', 'monto_dolar', 'metodo_pago', 'descripcion_detalle', 'referencia', 'banco_id', 'imagen'];
+        foreach ($camposDetalle as $campo) {
+            if (!isset($this->reglas[$campo])) continue;
+            $regla = $this->reglas[$campo];
+            $valor = $datos[$campo] ?? null;
+
+            // Determinar si es requerido (considerando condicionales)
+            $requerido = !(isset($regla['opcional']) && $regla['opcional'] === true);
+            if (isset($regla['requerido_si'])) {
+                foreach ($regla['requerido_si'] as $campoCond => $valoresCond) {
+                    if (in_array($datos[$campoCond] ?? null, $valoresCond)) {
+                        $requerido = true;
+                        break;
+                    }
+                }
+            }
+
+            if ($requerido) {
+                if ($valor === null) {
+                    return ['estatus' => false, 'mensaje' => "El campo '$campo' es requerido en el detalle."];
+                }
+                if (is_string($valor) && trim($valor) === '') {
+                    return ['estatus' => false, 'mensaje' => "El campo '$campo' no puede estar vacío."];
+                }
+            } else {
+                if ($valor === null || (is_string($valor) && trim($valor) === '')) {
+                    continue;
+                }
+            }
+
+            // Validar regex
+            if (isset($regla['regex']) && !preg_match($regla['regex'], (string)$valor)) {
+                return ['estatus' => false, 'mensaje' => "El campo '$campo' del detalle tiene formato inválido."];
+            }
+
+            // Validar mínimo
+            if (isset($regla['min']) && $valor < $regla['min']) {
+                return ['estatus' => false, 'mensaje' => "El campo '$campo' debe ser mayor o igual a " . $regla['min']];
+            }
+
+            // Validar existencia en otra tabla (si aplica)
+            if (isset($regla['exists'])) {
+                $tabla = $regla['exists']['tabla'];
+                $campoFor = $regla['exists']['campo'] ?? $campo;
+                if (!$this->existeEnTabla($tabla, $campoFor, $valor)) {
+                    return ['estatus' => false, 'mensaje' => "El valor de '$campo' no existe en $tabla."];
+                }
+            }
+        }
+        return ['estatus' => true];
+    }
+
+    public function validarExistenciaExterna($tabla, $campo, $valor)
+    {
+        // Lista de tablas permitidas (por seguridad)
+        $tablasPermitidas = ['tipo_gasto', 'proveedores', 'solicitudes_gasto', 'bancos'];
+        if (!in_array($tabla, $tablasPermitidas)) {
+            return false;
+        }
+        return $this->existeEnTabla($tabla, $campo, $valor);
+    }
+
+    // ====================================================================
+    // LÓGICA DE NEGOCIO
+    // ====================================================================
+
+    private function _registrar()
+    {
+        // Validar cabecera
+        $camposCabecera = ['clasificacion', 'descripcion_gasto', 'tipo_gasto_id'];
+        $validacion = $this->validar($camposCabecera);
+        if (!$validacion['estatus']) return $validacion;
+
+        // Validar que haya al menos un detalle
+        if (empty($this->detalles)) {
+            return ['estatus' => false, 'mensaje' => 'Debe proporcionar al menos un detalle de gasto.'];
+        }
+
+        // Validar cada detalle
+        foreach ($this->detalles as $idx => $det) {
+            $valDet = $this->validarDetalle($det);
+            if (!$valDet['estatus']) {
+                return ['estatus' => false, 'mensaje' => "Error en detalle #" . ($idx+1) . ": " . $valDet['mensaje']];
+            }
+        }
+
+        $pdo = $this->get_conex('negocio');
+        try {
+            $pdo->beginTransaction();
+
+            // Insertar cabecera
+            $sqlCab = "INSERT INTO gastos (clasificacion, descripcion_gasto, solicitud_id, tipo_gasto_id, proveedor_id, activo) 
+                       VALUES (:clas, :desc, :sol_id, :tipo_id, :prov_id, 1)";
+            $stmtCab = $pdo->prepare($sqlCab);
+            $stmtCab->execute([
+                ':clas' => $this->clasificacion,
+                ':desc' => $this->descripcion_gasto,
+                ':sol_id' => $this->solicitud_id ?: null,
+                ':tipo_id' => $this->tipo_gasto_id,
+                ':prov_id' => $this->proveedor_id ?: null
+            ]);
+            $id_gasto = $pdo->lastInsertId();
+
+            // Insertar detalles y sus bancarios
+            foreach ($this->detalles as $det) {
+                $sqlDet = "INSERT INTO detalles_gastos (fecha, monto, monto_dolar, metodo_pago, descripcion_detalle_gasto, gasto_id) 
+                           VALUES (:fecha, :monto, :md, :metodo, :desc_det, :gasto_id)";
+                $stmtDet = $pdo->prepare($sqlDet);
+                $stmtDet->execute([
+                    ':fecha' => $det['fecha_detalle'],
+                    ':monto' => $det['monto'],
+                    ':md' => $det['monto_dolar'] ?? 0,
+                    ':metodo' => $det['metodo_pago'],
+                    ':desc_det' => $det['descripcion_detalle'] ?? $this->descripcion_gasto,
+                    ':gasto_id' => $id_gasto
+                ]);
+                $id_detalle = $pdo->lastInsertId();
+
+                // Si el método de pago requiere registro bancario
+                if (in_array($det['metodo_pago'], ['Transferencia', 'Pago Movil'])) {
+                    // Procesar imagen si se subió
+                    $imagen = $det['imagen'] ?? 'default.png';
+                    // Si hay imagen nueva, se debe haber procesado antes (en el controlador) y asignado el nombre
+                    $sqlBan = "INSERT INTO egresos_bancarios (referencia, imagen, banco_id, detalle_gasto_id) 
+                               VALUES (:ref, :img, :banco, :det_id)";
+                    $stmtBan = $pdo->prepare($sqlBan);
+                    $stmtBan->execute([
+                        ':ref' => $det['referencia'],
+                        ':img' => $imagen,
+                        ':banco' => $det['banco_id'],
+                        ':det_id' => $id_detalle
+                    ]);
+                }
+
+                
+            }
+
+            $pdo->commit();
+            return ['estatus' => true, 'mensaje' => 'Gasto registrado con éxito', 'id' => $id_gasto];
 
         } catch (PDOException $e) {
-            // Manejo de errores
-            error_log("Error en el reporte de gastos: " . $e->getMessage());
-            return null;
+            $pdo->rollBack();
+            error_log("Error en _registrar: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error en la base de datos: ' . $e->getMessage()];
         }
     }
+
+    private function _editar()
+    {
+        // Validar ID del gasto
+        $validacion = $this->validar(['id_gasto']);
+        if (!$validacion['estatus']) return $validacion;
+
+        // Validar cabecera (los campos editables)
+        $camposCabecera = ['clasificacion', 'descripcion_gasto', 'tipo_gasto_id', 'proveedor_id'];
+        $validacion = $this->validar($camposCabecera);
+        if (!$validacion['estatus']) return $validacion;
+
+        // Validar detalles (si se proporcionan)
+        if (!empty($this->detalles)) {
+            foreach ($this->detalles as $idx => $det) {
+                $valDet = $this->validarDetalle($det);
+                if (!$valDet['estatus']) {
+                    return ['estatus' => false, 'mensaje' => "Error en detalle #" . ($idx+1) . ": " . $valDet['mensaje']];
+                }
+            }
+        } else {
+            return ['estatus' => false, 'mensaje' => 'Debe proporcionar al menos un detalle para actualizar.'];
+        }
+
+        $pdo = $this->get_conex('negocio');
+        try {
+            $pdo->beginTransaction();
+
+            // Actualizar cabecera
+            $sqlCab = "UPDATE gastos SET 
+                        clasificacion = :clas,
+                        descripcion_gasto = :desc,
+                        solicitud_id = :sol_id,
+                        tipo_gasto_id = :tipo_id,
+                        proveedor_id = :prov_id
+                      WHERE id_gasto = :id";
+            $stmtCab = $pdo->prepare($sqlCab);
+            $stmtCab->execute([
+                ':clas' => $this->clasificacion,
+                ':desc' => $this->descripcion_gasto,
+                ':sol_id' => $this->solicitud_id ?: null,
+                ':tipo_id' => $this->tipo_gasto_id,
+                ':prov_id' => $this->proveedor_id ?: null,
+                ':id' => $this->id_gasto
+            ]);
+
+            // Obtener los IDs de detalles antiguos (para luego eliminar imágenes)
+            $sqlOldDet = "SELECT id_detalle_gasto FROM detalles_gastos WHERE gasto_id = :id";
+            $stmtOld = $pdo->prepare($sqlOldDet);
+            $stmtOld->execute([':id' => $this->id_gasto]);
+            $oldDetalles = $stmtOld->fetchAll(PDO::FETCH_COLUMN);
+
+            // Eliminar registros bancarios y detalles antiguos de la BD
+            $pdo->prepare("DELETE FROM egresos_bancarios WHERE detalle_gasto_id IN (SELECT id_detalle_gasto FROM detalles_gastos WHERE gasto_id = ?)")->execute([$this->id_gasto]);
+            $pdo->prepare("DELETE FROM detalles_gastos WHERE gasto_id = ?")->execute([$this->id_gasto]);
+
+            // Insertar nuevos detalles
+            foreach ($this->detalles as $det) {
+                $sqlDet = "INSERT INTO detalles_gastos (fecha, monto, monto_dolar, metodo_pago, descripcion_detalle_gasto, gasto_id) 
+                           VALUES (:fecha, :monto, :md, :metodo, :desc_det, :gasto_id)";
+                $stmtDet = $pdo->prepare($sqlDet);
+                $stmtDet->execute([
+                    ':fecha' => $det['fecha_detalle'],
+                    ':monto' => $det['monto'],
+                    ':md' => $det['monto_dolar'] ?? 0,
+                    ':metodo' => $det['metodo_pago'],
+                    ':desc_det' => $det['descripcion_detalle'] ?? $this->descripcion_gasto,
+                    ':gasto_id' => $this->id_gasto
+                ]);
+                $id_detalle = $pdo->lastInsertId();
+
+                if (in_array($det['metodo_pago'], ['Transferencia', 'Pago Movil'])) {
+                    $imagen = $det['imagen'];
+                    $sqlBan = "INSERT INTO egresos_bancarios (referencia, imagen, banco_id, detalle_gasto_id) 
+                               VALUES (:ref, :img, :banco, :det_id)";
+                    $stmtBan = $pdo->prepare($sqlBan);
+                    $stmtBan->execute([
+                        ':ref' => $det['referencia'],
+                        ':img' => $imagen,
+                        ':banco' => $det['banco_id'],
+                        ':det_id' => $id_detalle
+                    ]);
+                }
+            }
+
+            // Obtener las imágenes de los nuevos detalles (las que realmente quedaron)
+            $sqlNewImages = "SELECT eb.imagen 
+                             FROM egresos_bancarios eb 
+                             INNER JOIN detalles_gastos dg ON eb.detalle_gasto_id = dg.id_detalle_gasto 
+                             WHERE dg.gasto_id = :gasto_id";
+            $stmtNew = $pdo->prepare($sqlNewImages);
+            $stmtNew->execute([':gasto_id' => $this->id_gasto]);
+            $nuevasImagenes = $stmtNew->fetchAll(PDO::FETCH_COLUMN);
+
+            // Eliminar imágenes físicas antiguas que no estén en las nuevas
+            foreach ($oldDetalles as $idDet) {
+                $imgAnterior = $this->obtenerImagenPorDetalle($idDet);
+                if ($imgAnterior && $imgAnterior !== 'default.png' && !in_array($imgAnterior, $nuevasImagenes)) {
+                    GestorImagenes::eliminar($imgAnterior, 'gastos');
+                }
+            }
+
+            // Actualizar reposición si existe (asumimos que solo puede haber una por gasto)
+            if (!empty($this->movimiento_caja_id)) {
+                // Eliminar la anterior si existe
+                $pdo->prepare("DELETE FROM reposiciones WHERE gasto_id = ?")->execute([$this->id_gasto]);
+                $sqlRep = "INSERT INTO reposiciones (gasto_id, movimiento_caja_id) VALUES (:g_id, :mc_id)";
+                $stmtRep = $pdo->prepare($sqlRep);
+                $stmtRep->execute([
+                    ':g_id' => $this->id_gasto,
+                    ':mc_id' => $this->movimiento_caja_id
+                ]);
+            }
+
+            $pdo->commit();
+            return ['estatus' => true, 'mensaje' => 'Gasto actualizado con éxito', 'e'=>$this->detalles];
+
+        } catch (PDOException $e) {
+            $pdo->rollBack();
+            error_log("Error en _editar: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error en la base de datos: ' . $e->getMessage()];
+        }
+    }
+
     /**
-     * Obtiene la tasa del dólar desde la API pydolarve.org usando cURL.
-     * @return float La tasa de cambio, o 0 si falla.
+     * ELIMINAR GASTO (soft delete)
      */
-    private function obtenerTasaDolarAPI()
+    private function _eliminar_gasto()
     {
-        // 1. La URL exacta de la API
-        $apiUrl = "https://pydolarve.org/api/v2/tipo-cambio?currency=usd";
-
-        // 2. Inicializar cURL
-        $ch = curl_init();
-
-        // 3. Configurar las opciones de cURL
-        curl_setopt($ch, CURLOPT_URL, $apiUrl);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); // Devuelve la respuesta como string
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);   // Tiempo de espera para la conexión
-        curl_setopt($ch, CURLOPT_TIMEOUT, 10);          // Tiempo de espera para la respuesta
-
-        // 4. Ejecutar la petición
-        $response = curl_exec($ch);
-
-        // 5. Cerrar la conexión
-        curl_close($ch);
-
-        // 6. Verificar y procesar la respuesta
-        if ($response === false) {
-            // La petición cURL falló
-            return 0;
+        $validacion = $this->validar(['id_gasto']);
+        if (!$validacion['estatus']) {
+            return $validacion;
         }
 
-        // Decodificar la respuesta JSON
-        $data = json_decode($response, true);
-
-        // Verificar si el JSON es válido y si existe el campo "price"
-        if (json_last_error() === JSON_ERROR_NONE && isset($data['price'])) {
-            // ¡Éxito! Devolvemos el valor del campo "price"
-            return (float) $data['price'];
-        }
-
-        // Si la respuesta no es la esperada, devuelve 0
-        return 0;
-    }
-
-        public function listar_meses_con_gastos()
-    {
-        $sql = "SELECT DISTINCT YEAR(fecha) as anio, MONTH(fecha) as mes 
-                FROM detalles_gastos 
-                ORDER BY anio DESC, mes DESC";
-        
-        $conexion = $this->get_conex()->prepare($sql);
-        $conexion->execute();
-        return $conexion->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    //Metodo para el reporte estadistico (jesus)
-
-    public function obtenerIngresosYEgresos($balance, $metodo_pago, $tipo_gasto, $filtro, $fecha_inicio = '', $fecha_fin = '')
-    {
-        $sql = '';
-        if ($balance != "Todos") {
-            if ($balance == "Egresos") {
-                $sql .= "SELECT SUM(detalles_gastos.monto) as monto, detalles_gastos.fecha, 'Egreso' as balance, detalles_gastos.metodo_pago, gastos.tipo FROM gastos INNER JOIN detalles_gastos ON detalles_gastos.gasto_id = gastos.id_gasto WHERE detalles_gastos.fecha BETWEEN :fecha_inicio AND :fecha_fin";
-
-                if ($tipo_gasto != "Todos") {
-                    $sql .= " && gastos.tipo = :tipo_gasto";
-                }
-                if ($metodo_pago != "Todos") {
-                    $sql .= " && detalles_gastos.metodo_pago = :metodo_pago";
-                }
-
-                if ($filtro == "mes" || $filtro == "trimestre") {
-                    $sql .= " GROUP BY YEAR(detalles_gastos.fecha), WEEK(detalles_gastos.fecha) ORDER BY YEAR(detalles_gastos.fecha), WEEK(detalles_gastos.fecha)";
-                } else if ($filtro == "año" || $filtro == "semestre") {
-                    $sql .= " GROUP BY MONTH(detalles_gastos.fecha) ORDER BY MONTH(detalles_gastos.fecha)";
-                } else if ($filtro == "Otro") {
-                    $sql .= " GROUP BY DAY(detalles_gastos.fecha) ORDER BY DAY(detalles_gastos.fecha)";
-                }
-            } else if ($balance == "Ingresos") {
-                $sql .= "SELECT SUM(detalles_pagos.monto) as monto, detalles_pagos.fecha, 'Ingreso' as balance, detalles_pagos.tipo_pago, 'No Tiene' as tipo_gasto FROM detalles_pagos INNER JOIN pagos ON detalles_pagos.pago_id = pagos.id_pago WHERE detalles_pagos.fecha BETWEEN :fecha_inicio AND :fecha_fin";
-
-                if ($metodo_pago != "Todos") {
-                    $sql .= " && tipo_pago = :metodo_pago";
-                }
-
-                if ($filtro == "mes" || $filtro == "trimestre") {
-                    $sql .= " GROUP BY YEAR(detalles_pagos.fecha), WEEK(detalles_pagos.fecha) ORDER BY YEAR(detalles_pagos.fecha), WEEK(detalles_pagos.fecha)";
-                } else if ($filtro == "año" || $filtro == "semestre") {
-                    $sql .= " GROUP BY MONTH(detalles_pagos.fecha) ORDER BY MONTH(detalles_pagos.fecha)";
-                } else if ($filtro == "Otro") {
-                    $sql .= " GROUP BY DAY(detalles_pagos.fecha) ORDER BY DAY(detalles_pagos.fecha)";
-                }
-            }
-        } else {
-            $sql .= "SELECT SUM(detalles_gastos.monto) as monto, detalles_gastos.fecha, 'Egreso' as balance, detalles_gastos.metodo_pago, gastos.tipo FROM gastos INNER JOIN detalles_gastos ON detalles_gastos.gasto_id = gastos.id_gasto WHERE detalles_gastos.fecha BETWEEN :fecha_inicio AND :fecha_fin";
-
-            if ($tipo_gasto != "Todos") {
-                $sql .= " && gastos.tipo = :tipo_gasto";
-            }
-            if ($metodo_pago != "Todos") {
-                $sql .= " && detalles_gastos.metodo_pago = :metodo_pago";
-            }
-            if ($filtro == "mes" || $filtro == "trimestre") {
-                $sql .= " GROUP BY YEAR(detalles_gastos.fecha), WEEK(detalles_gastos.fecha)";
-            } else if ($filtro == "año" || $filtro == "semestre") {
-                $sql .= " GROUP BY MONTH(detalles_gastos.fecha)";
-            } else if ($filtro == "Otro") {
-                $sql .= " GROUP BY DAY(detalles_gastos.fecha)";
-            }
-
-            $sql .= " UNION ";
-
-            $sql .= "SELECT SUM(detalles_pagos.monto) as monto, detalles_pagos.fecha, 'Ingreso' as balance, detalles_pagos.tipo_pago, 'No Tiene' as tipo_gasto FROM detalles_pagos INNER JOIN pagos ON detalles_pagos.pago_id = pagos.id_pago WHERE detalles_pagos.fecha BETWEEN :fecha_inicio AND :fecha_fin";
-
-            if ($metodo_pago != "Todos") {
-                $sql .= " && tipo_pago = :metodo_pago";
-            }
-
-            if ($filtro == "mes" || $filtro == "trimestre") {
-                $sql .= " GROUP BY YEAR(detalles_pagos.fecha), WEEK(detalles_pagos.fecha) ORDER BY YEAR(fecha), WEEK(fecha)";
-            } else if ($filtro == "año" || $filtro == "semestre") {
-                $sql .= " GROUP BY MONTH(detalles_pagos.fecha) ORDER BY MONTH(fecha);";
-            } else if ($filtro == "Otro") {
-                $sql .= " GROUP BY DAY(detalles_pagos.fecha) ORDER BY DAY(fecha);";
-            }
-        }
-
-        $conexion = $this->get_conex()->prepare($sql);
-
-        $conexion->bindParam(":fecha_inicio", $fecha_inicio);
-        $conexion->bindParam(":fecha_fin", $fecha_fin);
-
-        if ($tipo_gasto != "Todos" && $balance != "Ingresos") {
-            $conexion->bindParam(":tipo_gasto", $tipo_gasto);
-        }
-        if ($metodo_pago != "Todos") {
-            $conexion->bindParam(":metodo_pago", $metodo_pago);
-        }
-
-        $result = $conexion->execute();
-        $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
-
-        if ($result) {
-            return ["estatus" => true, "mensaje" => $datos, "sql" => $sql];
-        } else {
-            return ["estatus" => false, "mensaje" => "Ha ocurrido un error con la consulta"];
+        $sql = "UPDATE gastos SET activo = 0 WHERE id_gasto = :id";
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->bindParam(':id', $this->id_gasto);
+            $stmt->execute();
+            return ['estatus' => true, 'mensaje' => 'Gasto eliminado correctamente'];
+        } catch (PDOException $e) {
+            error_log("Error en _eliminar_gasto: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al eliminar: ' . $e->getMessage()];
         }
     }
 
-    public function estadisticasIngresosYEgresos($balance, $metodo_pago, $tipo_gasto, $filtro, $fecha_inicio = '', $fecha_fin = '')
+    // ====================================================================
+    // CONSULTAS
+    // ====================================================================
+
+    private function _consultar_gastos()
     {
-        $sql = '';
-        if ($balance != "Todos") {
-            if ($balance == "Egresos") {
-                $sql .= "SELECT SUM(detalles_gastos.monto), 'total_gastos' as estadistica FROM detalles_gastos WHERE detalles_gastos.fecha BETWEEN :fecha_inicio AND :fecha_fin";
+        $sql = "SELECT 
+                    g.id_gasto, 
+                    g.descripcion_gasto, 
+                    g.clasificacion, 
+                    SUM(dg.monto) as monto_total,
+                    MAX(dg.fecha) as ultima_fecha,
+                    p.nombre_proveedor as proveedor, 
+                    tg.nombre_tipo_gasto as tipo,
+                    -- Método de pago del último detalle (para mostrar moneda)
+                    (SELECT metodo_pago 
+                     FROM detalles_gastos 
+                     WHERE gasto_id = g.id_gasto 
+                     ORDER BY fecha DESC 
+                     LIMIT 1) as metodo_pago_predominante
+                FROM gastos g
+                LEFT JOIN detalles_gastos dg ON g.id_gasto = dg.gasto_id
+                LEFT JOIN proveedores p ON g.proveedor_id = p.id_proveedor
+                LEFT JOIN tipo_gasto tg ON g.tipo_gasto_id = tg.id_tipo_gasto
+                WHERE g.activo = 1
+                GROUP BY g.id_gasto
+                ORDER BY ultima_fecha DESC";
 
-                $sql .= " UNION ";
-
-                if ($metodo_pago != "Todos") {
-                    $sql .= " SELECT SUM(detalles_gastos.monto), 'gastos_seleccionado' FROM detalles_gastos WHERE detalles_gastos.fecha BETWEEN :fecha_inicio AND :fecha_fin && detalles_gastos.metodo_pago = :metodo_pago";
-                } else {
-                    $sql .= " SELECT SUM(detalles_gastos.monto), 'gastos_efectivo' FROM detalles_gastos WHERE detalles_gastos.fecha BETWEEN :fecha_inicio AND :fecha_fin && detalles_gastos.metodo_pago = 'Efectivo'
-                        UNION
-                        SELECT SUM(detalles_gastos.monto), 'gastos_transferencia' FROM detalles_gastos WHERE detalles_gastos.fecha BETWEEN :fecha_inicio AND :fecha_fin && detalles_gastos.metodo_pago = 'Transferencia'
-                        UNION
-                        SELECT SUM(detalles_gastos.monto), 'gastos_pago_movil' FROM detalles_gastos WHERE detalles_gastos.fecha BETWEEN :fecha_inicio AND :fecha_fin && detalles_gastos.metodo_pago = 'Pago Movil'";
-                }
-
-                $sql .= " UNION ";
-
-                if ($filtro == "mes" || $filtro == "trimestre") {
-                    $sql .= " SELECT SUM(detalles_gastos.monto), CONCAT('gastos_semana_',WEEK(detalles_gastos.fecha)) FROM detalles_gastos WHERE WEEK(detalles_gastos.fecha) >= WEEK(:fecha_inicio) && WEEK(detalles_gastos.fecha) <= WEEK(:fecha_fin) GROUP BY WEEK(detalles_gastos.fecha)";
-                } else {
-                    $sql .= " SELECT SUM(detalles_gastos.monto), CONCAT('gastos_mes_',MONTH(detalles_gastos.fecha)) FROM detalles_gastos WHERE MONTH(detalles_gastos.fecha) >= MONTH(:fecha_inicio) && MONTH(detalles_gastos.fecha) <= MONTH(:fecha_fin) GROUP BY MONTH(detalles_gastos.fecha)";
-                }
-            } else if ($balance == "Ingresos") {
-                $sql .= "SELECT SUM(detalles_pagos.monto), 'total_pagos' as estadistica FROM detalles_pagos WHERE detalles_pagos.fecha BETWEEN :fecha_inicio AND :fecha_fin";
-
-                $sql .= " UNION ";
-
-                if ($metodo_pago != "Todos") {
-                    $sql .= " SELECT SUM(detalles_pagos.monto), 'pagos_seleccionado' FROM detalles_pagos WHERE detalles_pagos.fecha BETWEEN :fecha_inicio AND :fecha_fin && detalles_pagos.tipo_pago = :metodo_pago";
-                } else {
-                    $sql .= " SELECT SUM(detalles_pagos.monto), 'pagos_efectivo' FROM detalles_pagos WHERE detalles_pagos.fecha BETWEEN :fecha_inicio AND :fecha_fin && detalles_pagos.tipo_pago = 'Efectivo'
-                        UNION
-                        SELECT SUM(detalles_pagos.monto), 'pagos_transferencia' FROM detalles_pagos WHERE detalles_pagos.fecha BETWEEN :fecha_inicio AND :fecha_fin && detalles_pagos.tipo_pago = 'Transferencia'
-                        UNION
-                        SELECT SUM(detalles_pagos.monto), 'pagos_pago_movil' FROM detalles_pagos WHERE detalles_pagos.fecha BETWEEN :fecha_inicio AND :fecha_fin && detalles_pagos.tipo_pago = 'Pago Movil'";
-                }
-
-                $sql .= " UNION ";
-
-                if ($filtro == "mes" || $filtro == "trimestre") {
-                    $sql .= " SELECT SUM(detalles_pagos.monto), CONCAT('pagos_semana_',WEEK(detalles_pagos.fecha)) FROM detalles_pagos WHERE WEEK(detalles_pagos.fecha) >= WEEK(:fecha_inicio) && WEEK(detalles_pagos.fecha) <= WEEK(:fecha_fin) GROUP BY WEEK(detalles_pagos.fecha)";
-                } else {
-                    $sql .= " SELECT SUM(detalles_pagos.monto), CONCAT('pagos_mes_',MONTH(detalles_pagos.fecha)) FROM detalles_pagos WHERE MONTH(detalles_pagos.fecha) >= MONTH(:fecha_inicio) && MONTH(detalles_pagos.fecha) <= MONTH(:fecha_fin) GROUP BY MONTH(detalles_pagos.fecha)";
-                }
-            }
-        } else {
-            $sql .= "SELECT SUM(detalles_gastos.monto), 'total_gastos' as estadistica FROM detalles_gastos WHERE detalles_gastos.fecha BETWEEN :fecha_inicio AND :fecha_fin";
-
-            $sql .= ' UNION ';
-
-            if ($metodo_pago != "Todos") {
-                $sql .= " SELECT SUM(detalles_gastos.monto), 'gastos_seleccionado' FROM detalles_gastos WHERE detalles_gastos.fecha BETWEEN :fecha_inicio AND :fecha_fin && detalles_gastos.metodo_pago = :metodo_pago";
-            } else {
-                $sql .= " SELECT SUM(detalles_gastos.monto), 'gastos_efectivo' FROM detalles_gastos WHERE detalles_gastos.fecha BETWEEN :fecha_inicio AND :fecha_fin && detalles_gastos.metodo_pago = 'Efectivo'
-                    UNION
-                    SELECT SUM(detalles_gastos.monto), 'gastos_transferencia' FROM detalles_gastos WHERE detalles_gastos.fecha BETWEEN :fecha_inicio AND :fecha_fin && detalles_gastos.metodo_pago = 'Transferencia'
-                    UNION
-                    SELECT SUM(detalles_gastos.monto), 'gastos_pago_movil' FROM detalles_gastos WHERE detalles_gastos.fecha BETWEEN :fecha_inicio AND :fecha_fin && detalles_gastos.metodo_pago = 'Pago Movil'";
-            }
-
-            $sql .= ' UNION ';
-
-            if ($filtro == "mes" || $filtro == "trimestre") {
-                $sql .= " SELECT SUM(detalles_gastos.monto), CONCAT('gastos_semana_',WEEK(detalles_gastos.fecha)) FROM detalles_gastos WHERE WEEK(detalles_gastos.fecha) >= WEEK(:fecha_inicio) && WEEK(detalles_gastos.fecha) <= WEEK(:fecha_fin) GROUP BY WEEK(detalles_gastos.fecha)";
-            } else {
-                $sql .= " SELECT SUM(detalles_gastos.monto), CONCAT('gastos_mes_',MONTH(detalles_gastos.fecha)) FROM detalles_gastos WHERE MONTH(detalles_gastos.fecha) >= MONTH(:fecha_inicio) && MONTH(detalles_gastos.fecha) <= MONTH(:fecha_fin) GROUP BY MONTH(detalles_gastos.fecha)";
-            }
-
-            $sql .= ' UNION ';
-
-            $sql .= "SELECT SUM(detalles_pagos.monto), 'total_pagos' as estadistica FROM detalles_pagos WHERE detalles_pagos.fecha BETWEEN :fecha_inicio AND :fecha_fin";
-
-            $sql .= " UNION ";
-
-            if ($metodo_pago != "Todos") {
-                $sql .= " SELECT SUM(detalles_pagos.monto), 'pagos_seleccionado' FROM detalles_pagos WHERE detalles_pagos.fecha BETWEEN :fecha_inicio AND :fecha_fin && detalles_pagos.tipo_pago = :metodo_pago";
-            } else {
-                $sql .= " SELECT SUM(detalles_pagos.monto), 'pagos_efectivo' FROM detalles_pagos WHERE detalles_pagos.fecha BETWEEN :fecha_inicio AND :fecha_fin && detalles_pagos.tipo_pago = 'Efectivo'
-                    UNION
-                    SELECT SUM(detalles_pagos.monto), 'pagos_transferencia' FROM detalles_pagos WHERE detalles_pagos.fecha BETWEEN :fecha_inicio AND :fecha_fin && detalles_pagos.tipo_pago = 'Transferencia'
-                    UNION
-                    SELECT SUM(detalles_pagos.monto), 'pagos_pago_movil' FROM detalles_pagos WHERE detalles_pagos.fecha BETWEEN :fecha_inicio AND :fecha_fin && detalles_pagos.tipo_pago = 'Pago Movil'";
-            }
-
-            $sql .= ' UNION ';
-
-            if ($filtro == "mes" || $filtro == "trimestre") {
-                $sql .= " SELECT SUM(detalles_pagos.monto), CONCAT('pagos_semana_',WEEK(detalles_pagos.fecha)) FROM detalles_pagos WHERE WEEK(detalles_pagos.fecha) >= WEEK(:fecha_inicio) && WEEK(detalles_pagos.fecha) <= WEEK(:fecha_fin) GROUP BY WEEK(detalles_pagos.fecha)";
-            } else {
-                $sql .= " SELECT SUM(detalles_pagos.monto), CONCAT('pagos_mes_',MONTH(detalles_pagos.fecha)) FROM detalles_pagos WHERE MONTH(detalles_pagos.fecha) >= MONTH(:fecha_inicio) && MONTH(detalles_pagos.fecha) <= MONTH(:fecha_fin) GROUP BY MONTH(detalles_pagos.fecha)";
-            }
-
-        }
-        // echo $sql;
-        $conexion = $this->get_conex()->prepare($sql);
-
-        $conexion->bindParam(":fecha_inicio", $fecha_inicio);
-        $conexion->bindParam(":fecha_fin", $fecha_fin);
-
-        if ($tipo_gasto != "Todos" && $balance != "Ingresos") {
-            $conexion->bindParam(":tipo_gasto", $tipo_gasto);
-        }
-        if ($metodo_pago != "Todos") {
-            $conexion->bindParam(":metodo_pago", $metodo_pago);
-        }
-
-        $result = $conexion->execute();
-        $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
-
-        if ($result) {
-            return ["estatus" => true, "mensaje" => $datos];
-        } else {
-            return ["estatus" => false, "mensaje" => "Ha ocurrido un error con la consulta"];
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->execute();
+            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return ['estatus' => true, 'datos' => $datos];
+        } catch (PDOException $e) {
+            error_log("Error en _consultar_gastos: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al consultar gastos'];
         }
     }
 
-    // public function consultar_gastos()
-    // {
-    //     list($dia, $mes, $anio) = explode('/', $this->fecha);
-    //     $mes_entero = intval($mes);
-    //     $anio_entero = intval($anio);
+    /**
+     * Consulta un gasto específico con todos sus detalles y datos bancarios asociados
+     */
+    private function _consultar_gasto_unico()
+    {
+        $validacion = $this->validar(['id_gasto']);
+        if (!$validacion['estatus']) {
+            return $validacion;
+        }
 
-    //     $sql = 'SELECT tipo_gasto.nombre_tipo_gasto as nombre, SUM(detalles_gastos.monto) as monto, tipo_gasto.id_tipo_gasto as id_tipo_gasto, GROUP_CONCAT(DISTINCT gastos.id_gasto) as id_gastos_asociados FROM gastos INNER JOIN tipo_gasto ON gastos.tipo_gasto_id = tipo_gasto.id_tipo_gasto INNER JOIN detalles_gastos ON detalles_gastos.gasto_id = gastos.id_gasto WHERE MONTH(detalles_gastos.fecha) = :mes && YEAR(detalles_gastos.fecha) = :anio GROUP BY tipo_gasto.id_tipo_gasto';
-    //     // Que precioso es sql
-    //     $conexion = $this->get_conex()->prepare($sql);
-    //     $conexion->bindParam(":mes", $mes_entero, PDO::PARAM_INT);
-    //     $conexion->bindParam(":anio", $anio_entero, PDO::PARAM_INT);
-    //     $result = $conexion->execute();
+        try {
+            // 1. Obtener datos de la cabecera del gasto
+            $sqlCabecera = "SELECT 
+                                g.id_gasto,
+                                g.clasificacion,
+                                g.descripcion_gasto,
+                                g.solicitud_id,
+                                g.tipo_gasto_id,
+                                g.proveedor_id,
+                                g.activo,
+                                p.nombre_proveedor,
+                                tg.nombre_tipo_gasto
+                            FROM gastos g
+                            LEFT JOIN proveedores p ON g.proveedor_id = p.id_proveedor
+                            LEFT JOIN tipo_gasto tg ON g.tipo_gasto_id = tg.id_tipo_gasto
+                            WHERE g.id_gasto = :id_gasto AND g.activo = 1";
+            
+            $stmtCab = $this->get_conex('negocio')->prepare($sqlCabecera);
+            $stmtCab->execute([':id_gasto' => $this->id_gasto]);
+            $cabecera = $stmtCab->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$cabecera) {
+                return ['estatus' => false, 'mensaje' => 'Gasto no encontrado'];
+            }
 
-    //     $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
+            // 2. Obtener todos los detalles del gasto con sus datos bancarios
+            $sqlDetalles = "SELECT 
+                                dg.id_detalle_gasto,
+                                dg.fecha,
+                                dg.monto,
+                                dg.monto_dolar,
+                                dg.metodo_pago,
+                                dg.descripcion_detalle_gasto,
+                                eb.referencia,
+                                eb.imagen,
+                                eb.banco_id,
+                                b.nombre_banco
+                            FROM detalles_gastos dg
+                            LEFT JOIN egresos_bancarios eb ON dg.id_detalle_gasto = eb.detalle_gasto_id
+                            LEFT JOIN bancos b ON eb.banco_id = b.id_banco
+                            WHERE dg.gasto_id = :id_gasto
+                            ORDER BY dg.fecha DESC";
+            
+            $stmtDet = $this->get_conex('negocio')->prepare($sqlDetalles);
+            $stmtDet->execute([':id_gasto' => $this->id_gasto]);
+            $detalles = $stmtDet->fetchAll(PDO::FETCH_ASSOC);
 
-    //     if ($result == true) {
-    //         return $datos;
-    //     } else {
-    //         return ["estatus" => false, "mensaje" => "Ha ocurrido un error con la consulta"];
-    //     }
-    // }
+            // 3. Estructurar la respuesta
+            $resultado = [
+                'gasto' => $cabecera,
+                'detalles' => $detalles
+            ];
 
+            return ['estatus' => true, 'datos' => $resultado];
+
+        } catch (PDOException $e) {
+            error_log("Error en _consultar_gasto_unico: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al consultar el gasto'];
+        }
+    }
+
+    /**
+     * Consulta todos los detalles de un gasto específico, incluyendo datos bancarios si existen
+     */
+    private function _consultar_detalles_por_gasto()
+    {
+        $validacion = $this->validar(['id_gasto']);
+        if (!$validacion['estatus']) {
+            return $validacion;
+        }
+
+        $sql = "SELECT 
+                    dg.id_detalle_gasto,
+                    dg.fecha,
+                    dg.monto,
+                    dg.monto_dolar,
+                    dg.metodo_pago,
+                    dg.descripcion_detalle_gasto,
+                    eb.referencia,
+                    eb.imagen,
+                    b.nombre_banco,
+                    eb.banco_id
+                FROM detalles_gastos dg
+                LEFT JOIN egresos_bancarios eb ON dg.id_detalle_gasto = eb.detalle_gasto_id
+                LEFT JOIN bancos b ON eb.banco_id = b.id_banco
+                WHERE dg.gasto_id = :id_gasto
+                ORDER BY dg.fecha DESC";
+
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->execute([':id_gasto' => $this->id_gasto]);
+            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return ['estatus' => true, 'datos' => $datos];
+        } catch (PDOException $e) {
+            error_log("Error en _consultar_detalles_por_gasto: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al consultar los detalles del gasto'];
+        }
+    }
+
+    /**
+     * Consulta un detalle específico de gasto por su ID, incluyendo datos bancarios si existen
+     */
+    private function _consultar_detalle_unico()
+    {
+        $validacion = $this->validar(['id_detalle_gasto']);
+        if (!$validacion['estatus']) {
+            return $validacion;
+        }
+
+        $sql = "SELECT 
+                    dg.id_detalle_gasto,
+                    dg.fecha,
+                    dg.monto,
+                    dg.monto_dolar,
+                    dg.metodo_pago,
+                    dg.descripcion_detalle_gasto,
+                    dg.gasto_id,
+                    eb.referencia,
+                    eb.imagen,
+                    eb.banco_id,
+                    b.nombre_banco
+                FROM detalles_gastos dg
+                LEFT JOIN egresos_bancarios eb ON dg.id_detalle_gasto = eb.detalle_gasto_id
+                LEFT JOIN bancos b ON eb.banco_id = b.id_banco
+                WHERE dg.id_detalle_gasto = :id_detalle";
+
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->execute([':id_detalle' => $this->id_detalle_gasto]);
+            $dato = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$dato) {
+                return ['estatus' => false, 'mensaje' => 'Detalle de gasto no encontrado'];
+            }
+            
+            return ['estatus' => true, 'datos' => $dato];
+            
+        } catch (PDOException $e) {
+            error_log("Error en _consultar_detalle_unico: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al consultar el detalle del gasto'];
+        }
+    }
+    
+    // ====================================================================
+    // METODOS PARA REPORTES
+    // ====================================================================    
+
+    /**
+     * Consulta ingresos y egresos con filtros.
+     * @param array $filtros Asociativo con claves: balance, metodo_pago, tipo_gasto, filtro, fecha_inicio, fecha_fin
+     * @return array ['estatus' => bool, 'datos' => array, 'mensaje' => string]
+     */
+   private function _consultar_ingresos_egresos()
+{
+    $f = $this->filtros_reporte;
+    $balance = $f['balance'] ?? 'todos';
+    $metodo_pago = $f['metodo_pago'] ?? 'todos';
+    $tipo_gasto = $f['tipo_gasto'] ?? 'todos';
+    $filtro = $f['filtro'] ?? '';
+    $fecha_inicio = $f['fecha_inicio'] ?? '';
+    $fecha_fin = $f['fecha_fin'] ?? '';
+
+    // Parámetros para egresos e ingresos (los separamos para evitar conflictos)
+    $paramsEgresos = [];
+    $paramsIngresos = [];
+
+    // Condiciones comunes (fecha y método de pago)
+    $whereEgresos = [];
+    $whereIngresos = [];
+
+    // Filtro por fecha
+    if ($filtro === 'Otro' && $fecha_inicio && $fecha_fin) {
+        $whereEgresos[] = "dg.fecha BETWEEN :fecha_ini AND :fecha_fin";
+        $whereIngresos[] = "dp.fecha BETWEEN :fecha_ini AND :fecha_fin";
+        $paramsEgresos[':fecha_ini'] = $fecha_inicio;
+        $paramsEgresos[':fecha_fin'] = $fecha_fin;
+        $paramsIngresos[':fecha_ini'] = $fecha_inicio;
+        $paramsIngresos[':fecha_fin'] = $fecha_fin;
+    } elseif ($filtro === 'mes') {
+        $whereEgresos[] = "dg.fecha >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)";
+        $whereIngresos[] = "dp.fecha >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)";
+    } elseif ($filtro === 'trimestre') {
+        $whereEgresos[] = "dg.fecha >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)";
+        $whereIngresos[] = "dp.fecha >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)";
+    } elseif ($filtro === 'semestre') {
+        $whereEgresos[] = "dg.fecha >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)";
+        $whereIngresos[] = "dp.fecha >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)";
+    } elseif ($filtro === 'año') {
+        $whereEgresos[] = "dg.fecha >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)";
+        $whereIngresos[] = "dp.fecha >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)";
+    }
+
+    // Filtro por método de pago
+    if ($metodo_pago !== 'Todos') {
+        $whereEgresos[] = "dg.metodo_pago = :metodo_pago_egreso";
+        $whereIngresos[] = "dp.tipo_pago = :metodo_pago_ingreso";
+        $paramsEgresos[':metodo_pago_egreso'] = $metodo_pago;
+        $paramsIngresos[':metodo_pago_ingreso'] = $metodo_pago;
+    }
+
+    // Filtro por tipo de gasto (solo para egresos)
+    if ($tipo_gasto !== 'Todos' && $balance !== 'Ingresos') {
+        $whereEgresos[] = "tg.id_tipo_gasto = :tipo_gasto";
+        $paramsEgresos[':tipo_gasto'] = $tipo_gasto;
+    }
+
+    // Construir consultas base
+    $sqlEgresos = "SELECT 
+                    'Egreso' as balance,
+                    dg.fecha,
+                    dg.monto,
+                    dg.metodo_pago as metodo_pago,
+                    g.descripcion_gasto as concepto,
+                    tg.nombre_tipo_gasto as tipo
+                   FROM detalles_gastos dg
+                   INNER JOIN gastos g ON dg.gasto_id = g.id_gasto
+                   LEFT JOIN tipo_gasto tg ON g.tipo_gasto_id = tg.id_tipo_gasto
+                   WHERE g.activo = 1";
+
+    $sqlIngresos = "SELECT 
+                    'Ingreso' as balance,
+                    dp.fecha,
+                    dp.monto,
+                    dp.tipo_pago as metodo_pago,
+                    CONCAT('Pago de mensualidad - Apto ', a.nro_apartamento) as concepto,
+                    NULL as tipo
+                   FROM detalles_pagos dp
+                   INNER JOIN pagos_mensualidad pm ON dp.id_detalle_pago = pm.detalle_pago_id
+                   INNER JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
+                   INNER JOIN apartamentos a ON m.apartamento_id = a.id_apartamento
+                   INNER JOIN pagos p ON dp.pago_id = p.id_pago
+                   WHERE p.activo = 1";
+
+    // Aplicar condiciones WHERE a cada consulta
+    if (!empty($whereEgresos)) {
+        $sqlEgresos .= " AND " . implode(' AND ', $whereEgresos);
+    }
+    if (!empty($whereIngresos)) {
+        $sqlIngresos .= " AND " . implode(' AND ', $whereIngresos);
+    }
+
+    // Determinar la consulta final y los parámetros
+    if ($balance === 'Ingresos') {
+        $sql = $sqlIngresos;
+        $params = $paramsIngresos;
+    } elseif ($balance === 'Egresos') {
+        $sql = $sqlEgresos;
+        $params = $paramsEgresos;
+    } else {
+        $sql = "($sqlEgresos) UNION ALL ($sqlIngresos) ORDER BY fecha DESC";
+        $params = array_merge($paramsEgresos, $paramsIngresos);
+    }
+
+    try {
+        $stmt = $this->get_conex('negocio')->prepare($sql);
+        $stmt->execute($params);
+        $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return ['estatus' => true, 'datos' => $datos, 'sql'=>$sql, 'p'=>$params];
+    } catch (PDOException $e) {
+        error_log("Error en _consultar_ingresos_egresos: " . $e->getMessage() . " SQL: " . $sql);
+        return ['estatus' => false, 'mensaje' => 'Error al consultar ingresos/egresos: ' . $e->getMessage()];
+    }
 }
+
+    /**
+     * Estadísticas de ingresos y egresos según filtros.
+     * @param array $filtros Mismos parámetros que _consultar_ingresos_egresos
+     * @return array ['estatus' => bool, 'datos' => array, 'mensaje' => string]
+     */
+    private function _estadisticas_ingresos_egresos()
+{
+    $f = $this->filtros_reporte;
+    $balance = $f['balance'] ?? 'todos';
+    $metodo_pago = $f['metodo_pago'] ?? 'todos';
+    $tipo_gasto = $f['tipo_gasto'] ?? 'todos';
+    $filtro = $f['filtro'] ?? '';
+    $fecha_inicio = $f['fecha_inicio'] ?? '';
+    $fecha_fin = $f['fecha_fin'] ?? '';
+
+    $resultados = [];
+
+    // --- EG RESOS (gastos) ---
+    if ($balance !== 'Ingresos') {
+        // Construir condiciones para egresos
+        $whereEgresos = ["g.activo = 1"];
+        $paramsEgresos = [];
+
+        // Filtro por método de pago (en detalles_gastos)
+        if ($metodo_pago !== 'todos') {
+            $whereEgresos[] = "dg.metodo_pago = :metodo_pago_egreso";
+            $paramsEgresos[':metodo_pago_egreso'] = $metodo_pago;
+        }
+
+        // Filtro por tipo de gasto (requiere JOIN con tipo_gasto)
+        if ($tipo_gasto !== 'todos') {
+            $whereEgresos[] = "tg.id_tipo_gasto = :tipo_gasto";
+            $paramsEgresos[':tipo_gasto'] = $tipo_gasto;
+            // Asegurar JOIN con tipo_gasto en las consultas
+            $joinTipo = "LEFT JOIN tipo_gasto tg ON g.tipo_gasto_id = tg.id_tipo_gasto";
+        } else {
+            $joinTipo = ""; // No necesario
+        }
+
+        // Filtro por fecha
+        if ($filtro === 'Otro' && $fecha_inicio && $fecha_fin) {
+            $whereEgresos[] = "dg.fecha BETWEEN :fecha_ini_egreso AND :fecha_fin_egreso";
+            $paramsEgresos[':fecha_ini_egreso'] = $fecha_inicio;
+            $paramsEgresos[':fecha_fin_egreso'] = $fecha_fin;
+        } elseif ($filtro === 'mes') {
+            $whereEgresos[] = "dg.fecha >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)";
+        } elseif ($filtro === 'trimestre') {
+            $whereEgresos[] = "dg.fecha >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)";
+        } elseif ($filtro === 'semestre') {
+            $whereEgresos[] = "dg.fecha >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)";
+        } elseif ($filtro === 'año') {
+            $whereEgresos[] = "dg.fecha >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)";
+        }
+
+        $whereClauseEgresos = " WHERE " . implode(" AND ", $whereEgresos);
+
+        // Consulta total de egresos
+        $sqlEgresosTotal = "SELECT 
+                                'total_gastos' as indicador,
+                                SUM(dg.monto) as valor
+                             FROM detalles_gastos dg
+                             INNER JOIN gastos g ON dg.gasto_id = g.id_gasto
+                             $joinTipo
+                             $whereClauseEgresos";
+
+        // Consulta egresos por método de pago
+        $sqlEgresosPorMetodo = "SELECT 
+                                    CONCAT('gastos_', LOWER(REPLACE(dg.metodo_pago, ' ', '_'))) as indicador,
+                                    SUM(dg.monto) as valor
+                                 FROM detalles_gastos dg
+                                 INNER JOIN gastos g ON dg.gasto_id = g.id_gasto
+                                 $joinTipo
+                                 $whereClauseEgresos
+                                 GROUP BY dg.metodo_pago";
+
+        try {
+            $con = $this->get_conex('negocio');
+
+            // Total
+            $stmt = $con->prepare($sqlEgresosTotal);
+            $stmt->execute($paramsEgresos);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($row && $row['valor'] !== null) {
+                $resultados[] = $row;
+            }
+
+            // Por método
+            $stmt = $con->prepare($sqlEgresosPorMetodo);
+            $stmt->execute($paramsEgresos);
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $resultados[] = $row;
+            }
+        } catch (PDOException $e) {
+            error_log("Error en estadísticas egresos: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al obtener estadísticas de egresos: ' . $e->getMessage()];
+        }
+    }
+
+    // --- INGRESOS (pagos) ---
+    if ($balance !== 'Egresos') {
+        // Construir condiciones para ingresos
+        $whereIngresos = ["p.activo = 1"];
+        $paramsIngresos = [];
+
+        // Filtro por método de pago (en detalles_pagos se llama tipo_pago)
+        if ($metodo_pago !== 'todos') {
+            $whereIngresos[] = "dp.tipo_pago = :metodo_pago_ingreso";
+            $paramsIngresos[':metodo_pago_ingreso'] = $metodo_pago;
+        }
+
+        // Filtro por fecha
+        if ($filtro === 'Otro' && $fecha_inicio && $fecha_fin) {
+            $whereIngresos[] = "dp.fecha BETWEEN :fecha_ini_ingreso AND :fecha_fin_ingreso";
+            $paramsIngresos[':fecha_ini_ingreso'] = $fecha_inicio;
+            $paramsIngresos[':fecha_fin_ingreso'] = $fecha_fin;
+        } elseif ($filtro === 'mes') {
+            $whereIngresos[] = "dp.fecha >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)";
+        } elseif ($filtro === 'trimestre') {
+            $whereIngresos[] = "dp.fecha >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)";
+        } elseif ($filtro === 'semestre') {
+            $whereIngresos[] = "dp.fecha >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)";
+        } elseif ($filtro === 'año') {
+            $whereIngresos[] = "dp.fecha >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)";
+        }
+
+        $whereClauseIngresos = " WHERE " . implode(" AND ", $whereIngresos);
+
+        // Consulta total de ingresos
+        $sqlIngresosTotal = "SELECT 
+                                'total_pagos' as indicador,
+                                SUM(dp.monto) as valor
+                             FROM detalles_pagos dp
+                             INNER JOIN pagos p ON dp.pago_id = p.id_pago
+                             $whereClauseIngresos";
+
+        // Consulta ingresos por método de pago
+        $sqlIngresosPorMetodo = "SELECT 
+                                    CONCAT('pagos_', LOWER(REPLACE(dp.tipo_pago, ' ', '_'))) as indicador,
+                                    SUM(dp.monto) as valor
+                                 FROM detalles_pagos dp
+                                 INNER JOIN pagos p ON dp.pago_id = p.id_pago
+                                 $whereClauseIngresos
+                                 GROUP BY dp.tipo_pago";
+
+        try {
+            $con = $this->get_conex('negocio');
+
+            $stmt = $con->prepare($sqlIngresosTotal);
+            $stmt->execute($paramsIngresos);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($row && $row['valor'] !== null) {
+                $resultados[] = $row;
+            }
+
+            $stmt = $con->prepare($sqlIngresosPorMetodo);
+            $stmt->execute($paramsIngresos);
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $resultados[] = $row;
+            }
+        } catch (PDOException $e) {
+            error_log("Error en estadísticas ingresos: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al obtener estadísticas de ingresos: ' . $e->getMessage()];
+        }
+    }
+
+    return ['estatus' => true, 'datos' => $resultados];
+}
+
+    /**
+     * Lista los meses y años con gastos registrados.
+     * @return array ['estatus' => bool, 'datos' => array, 'mensaje' => string]
+     */
+    private function _listar_meses_con_gastos()
+    {
+        $sql = "SELECT DISTINCT 
+                   YEAR(dg.fecha) as anio, 
+                   MONTH(dg.fecha) as mes 
+                FROM detalles_gastos dg
+                INNER JOIN gastos g ON dg.gasto_id = g.id_gasto
+                WHERE g.activo = 1
+                ORDER BY anio DESC, mes DESC";
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->execute();
+            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return ['estatus' => true, 'datos' => $datos];
+        } catch (PDOException $e) {
+            error_log("Error en _listar_meses_con_gastos: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al listar meses con gastos'];
+        }
+    }
+
+    /**
+     * Obtiene datos para el reporte mensual de gastos.
+     * @param int $mes
+     * @param int $anio
+     * @return array ['estatus' => bool, 'datos' => array, 'mensaje' => string]
+     */
+    private function _obtener_datos_reporte_mensual()
+    {
+        $f = $this->filtros_reporte;
+        $mes = $f['mes'] ?? 0;
+        $anio = $f['anio'] ?? 0;
+
+        $sql = "SELECT 
+                    g.clasificacion,
+                    dg.descripcion_detalle_gasto as concepto,
+                    dg.monto
+                FROM detalles_gastos dg
+                INNER JOIN gastos g ON dg.gasto_id = g.id_gasto
+                WHERE g.activo = 1 
+                  AND YEAR(dg.fecha) = :anio 
+                  AND MONTH(dg.fecha) = :mes";
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->execute([':anio' => $anio, ':mes' => $mes]);
+            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return ['estatus' => true, 'datos' => $datos];
+        } catch (PDOException $e) {
+            error_log("Error en _obtener_datos_reporte_mensual: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al obtener datos del reporte mensual'];
+        }
+    }
+
+    // ====================================================================
+    // UTILIDADES (IMÁGENES)
+    // ====================================================================
+
+    private function obtenerImagenPorDetalle($idDetalle)
+    {
+        $sql = "SELECT imagen FROM egresos_bancarios WHERE detalle_gasto_id = :id";
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->bindParam(':id', $idDetalle);
+            $stmt->execute();
+            return $stmt->fetchColumn();
+        } catch (PDOException $e) {
+            error_log("Error en obtenerImagenPorDetalle: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Método público para eliminar imagen asociada a un detalle (útil desde controlador)
+     */
+    public function borrarImagenAsociada($id_detalle_gasto)
+    {
+        $nombre = $this->obtenerImagenPorDetalle($id_detalle_gasto);
+        return GestorImagenes::eliminar($nombre, 'gastos');
+    }
+}
+?>

@@ -1,77 +1,78 @@
 <?php
-    use haydee\ayuda\Sesiones;
-    Sesiones::verificarSesion();
-    Sesiones::verificarPermiso(GESTIONAR_TIPO_GASTO, CONSULTAR);
+use haydee\ayuda\Sesiones;
+use haydee\modelo\TipoGasto;
+use haydee\modelo\Bitacora;
 
-    use haydee\modelo\TipoGasto;
+// Verificaciones de seguridad
+Sesiones::verificarSesion();
+Sesiones::verificarPermiso(GESTIONAR_TIPO_GASTO, CONSULTAR);
 
-    $obj_tipo_gasto = new TipoGasto(); // Objeto tipo_gasto
+// Instancia del modelo
+$tipoGasto = new TipoGasto();
 
-    if(isset($_POST["operacion"])){
-        $operacion = $_POST["operacion"];
+if (isset($_POST["operacion"])) {
+    header('Content-Type: application/json');
 
-        if ($operacion == "consulta"){
-            $obj_tipo_gasto->registrar_bitacora(CONSULTAR, GESTIONAR_TIPO_GASTO, "TODOS LOS TIPOS DE GASTO");
-            echo  json_encode($obj_tipo_gasto->realizar_consulta("consultar"));
-            
-        }
+    // Asignación masiva de campos que pueden llegar
+    $tipoGasto->set_id_tipo_gasto($_POST['id_tipo_gasto'] ?? null);
+    $tipoGasto->set_nombre_tipo_gasto($_POST['nombre_tipo_gasto'] ?? null);
 
-        elseif ($operacion == "registrar") {
-            $nombre_tipo_gasto = $_POST["nombre_tipo_gasto"];
-
-            $obj_tipo_gasto->set_nombre_tipo_gasto($nombre_tipo_gasto);
-
-            $resultado = $obj_tipo_gasto->realizar_consulta("registrar");
-            if ($resultado["estatus"]) {
-                $obj_tipo_gasto->registrar_bitacora(REGISTRAR, GESTIONAR_TIPO_GASTO, $nombre_tipo_gasto);
-            }
-            echo  json_encode($resultado);
-        }
-        elseif ($operacion == "consulta_especifica"){
-            $id_tipo_gasto = $_POST["id_tipo_gasto"];
-
-            $obj_tipo_gasto->set_id_tipo_gasto($id_tipo_gasto);
-
-            echo  json_encode($obj_tipo_gasto->realizar_consulta("consultar_tipo_gasto"));
-            
-        }
-
-        elseif ($operacion == "modificar") {
-            $id_tipo_gasto = $_POST["id_tipo_gasto"];
-            $nombre_tipo_gasto = $_POST["nombre_tipo_gasto"];  
-
-            $obj_tipo_gasto->set_id_tipo_gasto($id_tipo_gasto);
-            $obj_tipo_gasto->set_nombre_tipo_gasto($nombre_tipo_gasto);
-
-            $resultado = $obj_tipo_gasto->realizar_consulta("modificar");
-            if ($resultado["estatus"]) {
-                $obj_tipo_gasto->registrar_bitacora(MODIFICAR, GESTIONAR_TIPO_GASTO, $nombre_tipo_gasto);
-            }
-            echo  json_encode($resultado);
-        }
-
-        elseif ($operacion == "eliminar") {
-            $id_tipo_gasto = $_POST["id_tipo_gasto"];
-
-            $obj_tipo_gasto->set_id_tipo_gasto($id_tipo_gasto);
-            $tipo_alterado = $obj_tipo_gasto->realizar_consulta("consultar_tipo_gasto");
-
-            $resultado = $obj_tipo_gasto->realizar_consulta("eliminar");
-
-            if ($resultado["estatus"]) {
-                if($tipo_alterado){
-                    $obj_tipo_gasto->registrar_bitacora(ELIMINAR, GESTIONAR_TIPO_GASTO, $tipo_alterado["nombre_tipo_gasto"]);
+    $operacion = $_POST["operacion"];
+    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
+    try {
+        switch ($operacion) {
+            case 'consulta':
+                $respuesta = $tipoGasto->realizar_consulta('consultar');
+                if ($respuesta['estatus']) {
+                    Bitacora::registrar(CONSULTAR, GESTIONAR_TIPO_GASTO, 'Consulta general de tipos de gasto');
                 }
-            }
-            echo  json_encode($resultado);
-        }
-        
-        elseif ($operacion == "lastId"){
-            echo json_encode($obj_tipo_gasto->realizar_consulta("lastId"));
-        }
+                break;
 
-        exit;
+            case 'registrar':
+                $respuesta = $tipoGasto->realizar_consulta('registrar');
+                if ($respuesta['estatus']) {
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_TIPO_GASTO, $tipoGasto->get_nombre_tipo_gasto());
+                }
+                break;
+
+            case 'consulta_especifica':
+                $respuesta = $tipoGasto->realizar_consulta('consultar_tipo_gasto');
+                break;
+
+            case 'modificar':
+                $respuesta = $tipoGasto->realizar_consulta('modificar');
+                if ($respuesta['estatus']) {
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_TIPO_GASTO, $tipoGasto->get_nombre_tipo_gasto());
+                }
+                break;
+
+            case 'eliminar':
+                // Primero obtenemos el nombre del tipo a eliminar para la bitácora
+                $tipoEliminar = clone $tipoGasto; // Clon para no perder el ID después de la consulta
+                $datosTipo = $tipoEliminar->realizar_consulta('consultar_tipo_gasto');
+                $nombreTipo = $datosTipo['estatus'] ? ($datosTipo['datos']['nombre_tipo_gasto'] ?? '') : '';
+
+                $respuesta = $tipoGasto->realizar_consulta('eliminar');
+                if ($respuesta['estatus']) {
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_TIPO_GASTO, $nombreTipo);
+                }
+                break;
+
+            case 'lastId':
+                $respuesta = $tipoGasto->realizar_consulta('lastId');
+                break;
+
+            default:
+                $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
+        }
+    } catch (Exception $e) {
+        error_log("Error en controlador: " . $e->getMessage());
+        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     }
 
-    require_once "vista/tipo_gasto/tipo_gasto_vista.php";
-?>
+    echo json_encode($respuesta);
+    exit;
+}
+
+// Cargar la vista
+require_once "vista/tipo_gasto/tipo_gasto_vista.php";

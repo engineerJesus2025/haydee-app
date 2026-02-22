@@ -1,391 +1,288 @@
-obtenerCopiasGuardadas();
-// Elementos
-let boton_exportar = document.getElementById('boton_exportar'),
- boton_descargar = document.getElementById('boton_descargar'),
- boton_importar = document.getElementById('boton_importar'), 
- select_db = document.getElementById('select_db'),
- select_copias = document.getElementById('select_copias'),
- input_file = document.getElementById('input_file_importar');
+/**
+ * Script para la gestión de Mantenimiento (Respaldo y Restauración)
+ * Dependencias: utilidades.js (Objeto Utilidades), SweetAlert2
+ */
 
-boton_exportar.parentElement.setAttribute("hidden",'');
-boton_descargar.parentElement.setAttribute("hidden",'');
+// Elementos del DOM
+const boton_exportar = document.getElementById('boton_exportar');
+const boton_descargar = document.getElementById('boton_descargar');
+const boton_importar = document.getElementById('boton_importar');
+const select_db = document.getElementById('select_db');
+const select_copias = document.getElementById('select_copias');
+const input_file = document.getElementById('input_file_importar');
 
-select_db.addEventListener("change",e=>{
-	if (e.target.value != '') {
-		let valido = /^negocio|seguridad/.test(e.target.value);
-
-		if (!valido) {
-			e.target.classList.remove('is-valid');
-			e.target.classList.add('is-invalid');
-			e.target.nextElementSibling.textContent = "La base de datos seleccionada no existe";
-
-			boton_exportar.parentElement.setAttribute("hidden",'');
-			boton_descargar.parentElement.setAttribute("hidden",'');
-			document.getElementById('o').setAttribute('hidden','');
-		}
-		else{
-			e.target.classList.add('is-valid');
-			e.target.classList.remove('is-invalid');
-			e.target.nextElementSibling.textContent = "";
-
-			boton_exportar.parentElement.removeAttribute("hidden");
-			boton_descargar.parentElement.removeAttribute("hidden");
-			document.getElementById('o').removeAttribute('hidden');
-		}
-	}
+// Inicialización
+document.addEventListener('DOMContentLoaded', () => {
+    obtenerCopiasGuardadas();
+    
+    // Estado inicial de botones
+    alternarVisibilidad(boton_exportar.parentElement, false);
+    alternarVisibilidad(boton_descargar.parentElement, false);
+    
+    // Verificar si venimos de un error de descarga (parametro 'e' en url)
+    verificarErroresURL();
 });
 
-select_copias.addEventListener("change",e=>{
-	if (e.target.value != '') {		
-		let valido = /^backup(_seguridad)?_haydee_db_\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}\.sql$/.test(select_copias.value);
-		// Hosting 
-		// let valido = /^backup_condominioshaydee(_seguridad)?_haydee_\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}\.sql$/.test(select_copias.value);
-		if (!valido) {
-			select_copias.classList.remove('is-valid');
-			select_copias.classList.add('is-invalid');
-			select_copias.nextElementSibling.textContent = "La copia de seguridad seleccionada no existe";
+// -------------------------------------------------------------------------
+// Event Listeners (Interacción Usuario)
+// -------------------------------------------------------------------------
 
-			boton_importar.setAttribute("hidden",'');
+// Seleccionar Base de Datos
+select_db.addEventListener("change", (e) => {
+    const valor = e.target.value;
+    if (!valor) return;
 
-			return;
-		}
-		else{
-			select_copias.classList.add('is-valid');
-			select_copias.classList.remove('is-invalid');
-			select_copias.nextElementSibling.textContent = "";
+    const valido = /^negocio|seguridad/.test(valor);
+    validarInput(e.target, valido, "La base de datos seleccionada no existe");
 
-			boton_importar.removeAttribute("hidden");
-		}
-
-		input_file.value = '';
-		// boton_importar.removeAttribute("hidden");
-	}
+    // Mostrar botones si es válido
+    alternarVisibilidad(boton_exportar.parentElement, valido);
+    alternarVisibilidad(boton_descargar.parentElement, valido);
+    alternarVisibilidad(document.getElementById('o'), valido);
 });
 
-input_file.addEventListener("change",e=>{
-	if (e.target.value != '') {
-		select_copias.value = '';		
-		boton_importar.removeAttribute("hidden");
-	}
+// Seleccionar Copia de Seguridad de la lista
+select_copias.addEventListener("change", (e) => {
+    const valor = e.target.value;
+    if (!valor) return;
+
+    // Regex para validar el nombre del archivo generado por el sistema
+    const valido = /^backup(_seguridad)?_haydee_db_\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}\.sql$/.test(valor);
+    
+    validarInput(e.target, valido, "La copia de seguridad seleccionada no existe");
+    alternarVisibilidad(boton_importar, valido);
+    
+    if (valido) {
+        input_file.value = ''; // Limpiar input file para evitar ambigüedad
+    }
 });
 
-boton_exportar.addEventListener("click",async e=>{
-	if (select_db.value == "") {		
-		mensajes('error',4000,'Atención',
-			'Debe seleccionar una Base de Datos para la copia de seguridad');
-		return;
-	}
-	else{
-		let valido = /^negocio|seguridad/.test(select_db.value);
-
-		if (!valido) {
-			select_db.classList.remove('is-valid');
-			select_db.classList.add('is-invalid');
-			select_db.nextElementSibling.textContent = "La base de datos seleccionada no existe";
-
-			mensajes('error',4000,'Atención',
-			'La base de datos seleccionada no existe');
-
-			boton_exportar.parentElement.setAttribute("hidden",'');
-			boton_descargar.parentElement.setAttribute("hidden",'');
-			document.getElementById('o').setAttribute('hidden','');
-
-			return;
-		}
-		else{
-			select_db.classList.add('is-valid');
-			select_db.classList.remove('is-invalid');
-			select_db.nextElementSibling.textContent = "";
-
-			boton_exportar.parentElement.removeAttribute("hidden");
-			boton_descargar.parentElement.removeAttribute("hidden");
-			document.getElementById('o').removeAttribute('hidden');
-		}
-	}
-	Swal.fire({
-		title: "¿Estás seguro?",
-		text: `¿Está seguro que desea exportar esta base de datos?`,
-		showCancelButton: true,
-		confirmButtonText: "Exportar",
-		confirmButtonColor: "#1b8a40",
-		cancelButtonText: "Cancelar",
-		icon: "warning"
-	}).then((result) => {
-		if (result.isConfirmed) {
-			generarCopiaSeguridad();
-		}
-	});	
+// Subir archivo manual
+input_file.addEventListener("change", (e) => {
+    if (e.target.value !== '') {
+        select_copias.value = ''; // Limpiar select
+        select_copias.classList.remove('is-valid', 'is-invalid'); // Resetear estilos
+        boton_importar.removeAttribute("hidden");
+    }
 });
 
-boton_descargar.addEventListener("click",async e=>{
-	e.preventDefault();
-	if (select_db.value == "") {
-		mensajes('error',4000,'Atención',
-			'Debe seleccionar una Base de Datos para descargar la copia de seguridad');
-		return;
-	}
-	else{
-		let valido = /^negocio|seguridad/.test(select_db.value);
+// Botón Exportar (Generar Backup)
+boton_exportar.addEventListener("click", async () => {
+    if (!validarSeleccionDB()) return;
 
-		if (!valido) {
-			select_db.classList.remove('is-valid');
-			select_db.classList.add('is-invalid');
-			select_db.nextElementSibling.textContent = "La base de datos seleccionada no existe";
+    const confirmacion = await Swal.fire({
+        title: "¿Estás seguro?",
+        text: "¿Está seguro que desea generar una nueva copia de seguridad?",
+        showCancelButton: true,
+        confirmButtonText: "Sí, Exportar",
+        confirmButtonColor: "#1b8a40",
+        cancelButtonText: "Cancelar",
+        icon: "warning"
+    });
 
-			mensajes('error',4000,'Atención',
-			'La base de datos seleccionada no existe');
-
-			boton_exportar.parentElement.setAttribute("hidden",'');
-			boton_descargar.parentElement.setAttribute("hidden",'');
-			document.getElementById('o').setAttribute('hidden','');
-
-			return;
-		}
-		else{
-			select_db.classList.add('is-valid');
-			select_db.classList.remove('is-invalid');
-			select_db.nextElementSibling.textContent = "";
-
-			boton_exportar.parentElement.removeAttribute("hidden");
-			boton_descargar.parentElement.removeAttribute("hidden");
-			document.getElementById('o').removeAttribute('hidden');
-		}
-	}
-	Swal.fire({
-		title: "¿Estás seguro?",
-		text: `¿Está seguro que desea descargar esta base de datos?`,
-		showCancelButton: true,
-		confirmButtonText: "Exportar",
-		confirmButtonColor: "#1b8a40",
-		cancelButtonText: "Cancelar",
-		icon: "warning"
-	}).then((result) => {
-		if (result.isConfirmed) {
-			document.getElementById('db_input').value = select_db.value;
-			e.target.closest("form").submit();
-		}
-	});	
+    if (confirmacion.isConfirmed) {
+        generarCopiaSeguridad();
+    }
 });
 
-boton_importar.addEventListener("click",async e=>{
-	if (select_copias.value == '' && input_file.value == '') {
-		mensajes('error',4000,'Atención',
-			'Debe seleccionar una Base de Datos para la copia de seguridad, o importar un archivo compatible');
-		return;
-	}
-	else if (select_copias.value != ''){
-		let valido = /^backup(_seguridad)?_haydee_db_\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}\.sql$/.test(select_copias.value);
-		// Hosting 
-		// let valido = /^backup_condominioshaydee(_seguridad)?_haydee_\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}\.sql$/.test(select_copias.value);
-		if (!valido) {
-			select_copias.classList.remove('is-valid');
-			select_copias.classList.add('is-invalid');
-			select_copias.nextElementSibling.textContent = "La copia de seguridad seleccionada no existe";
+// Botón Descargar (Submit Formulario tradicional)
+boton_descargar.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (!validarSeleccionDB()) return;
 
-			boton_importar.parentElement.setAttribute("hidden",'');
-			boton_descargar.parentElement.setAttribute("hidden",'');
-			document.getElementById('o').setAttribute('hidden','');
-
-			mensajes('error',4000,'Atención','La copia de seguridad seleccionada no existe');
-
-			return;
-		}
-		else{
-			select_copias.classList.add('is-valid');
-			select_copias.classList.remove('is-invalid');
-			select_copias.nextElementSibling.textContent = "";
-
-			boton_importar.parentElement.removeAttribute("hidden");
-			boton_descargar.parentElement.removeAttribute("hidden");
-			document.getElementById('o').removeAttribute('hidden');
-		}
-	}
-	Swal.fire({
-		title: "¿Estás seguro?",
-		text: `¿Está seguro que desea importar esta base de datos? Esta acción no se puede revertir.`,
-		showCancelButton: true,
-		confirmButtonText: "Importar",
-		confirmButtonColor: "#1b8a40",
-		cancelButtonText: "Cancelar",
-		icon: "warning"
-	}).then((result) => {
-		if (result.isConfirmed) {
-			if (input_file.value == '') {
-				importarCopiaSeguridad();
-			}
-			else{
-				importarSQL();
-			}
-		}
-	});	
+    Swal.fire({
+        title: "¿Estás seguro?",
+        text: "¿Está seguro que desea descargar el archivo SQL?",
+        showCancelButton: true,
+        confirmButtonText: "Sí, Descargar",
+        confirmButtonColor: "#1b8a40",
+        cancelButtonText: "Cancelar",
+        icon: "info"
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Asignar valor al input oculto y enviar form
+            document.getElementById('db_input').value = select_db.value;
+            e.target.closest("form").submit();
+        }
+    });
 });
+
+// Botón Importar (Restaurar)
+boton_importar.addEventListener("click", async () => {
+    const hayCopiaSeleccionada = select_copias.value !== '';
+    const hayArchivoSubido = input_file.value !== '';
+
+    if (!hayCopiaSeleccionada && !hayArchivoSubido) {
+        Utilidades.mensaje('error', 'Atención', 'Debe seleccionar una Copia de Seguridad o subir un archivo SQL.');
+        return;
+    }
+
+    // Advertencia fuerte por ser acción destructiva
+    const confirmacion = await Swal.fire({
+        title: "¡Advertencia de Seguridad!",
+        text: "¿Está seguro que desea restaurar la base de datos? Esta acción ELIMINARÁ todos los datos actuales y los reemplazará por la copia. No se puede deshacer.",
+        showCancelButton: true,
+        confirmButtonText: "Sí, Restaurar",
+        confirmButtonColor: "#d33", // Rojo peligro
+        cancelButtonText: "Cancelar",
+        icon: "warning"
+    });
+
+    if (confirmacion.isConfirmed) {
+        if (hayArchivoSubido) {
+            importarSQL();
+        } else {
+            importarCopiaSeguridad();
+        }
+    }
+});
+
+// -------------------------------------------------------------------------
+// Funciones de Lógica de Negocio (AJAX)
+// -------------------------------------------------------------------------
 
 async function obtenerCopiasGuardadas() {
-	let datos_consulta = new FormData();
+    let datos = new FormData();
+    datos.append('operacion', 'obtener_copias');
 
-	datos_consulta.append('operacion','obtener_copias');
-	
-	let respuesta = await query(datos_consulta);
+    // Usamos Utilidades.query
+    const respuesta = await Utilidades.query(datos);
 
-	if (!respuesta.estatus) {
-		mensajes('error',4000,'Atencion',respuesta.mensaje);
-		return;// en caso de error mandamos un mensaje con el error y nos vamos
-	}
+    if (!respuesta.estatus) {
+        Utilidades.mensaje('error', 'Error', respuesta.mensaje);
+        return;
+    }
 
-	if (respuesta.mensaje.length == 0) {
-		select_copias[0].textContent = "No hay copias guardadas";
-		select_copias[0].value = '';
-		select_copias.setAttribute("disabled","");
-		return;
-	}
+    const listaArchivos = respuesta.datos || []; 
 
-	select_copias.innerHTML = '';
-	let fragment = document.createDocumentFragment();
+    select_copias.innerHTML = ''; // Limpiar select
 
-	let option_1 = document.createElement("option");
-	option_1.textContent = 'Seleccione la Copia de Seguridad';
-	option_1.value = '';
-	option_1.setAttribute('selected','');
-	option_1.setAttribute('hidden','');
+    // Opción por defecto
+    let defaultOption = document.createElement("option");
+    defaultOption.textContent = (listaArchivos.length === 0) ? "No hay copias guardadas" : "Seleccione la Copia de Seguridad";
+    defaultOption.value = '';
+    defaultOption.selected = true;
+    if (listaArchivos.length > 0) defaultOption.hidden = true;
+    select_copias.appendChild(defaultOption);
 
-	fragment.appendChild(option_1);
+    if (listaArchivos.length === 0) {
+        select_copias.disabled = true;
+        return;
+    }
 
-	respuesta.mensaje.map(fichero=>{
-		let option = document.createElement("option");
-
-		option.textContent = fichero;
-		option.value = fichero;
-
-		fragment.appendChild(option);
-	});
-
-	select_copias.appendChild(fragment);
-}
-
-async function query(datos,oscuro = false) {
-    if (oscuro) {document.getElementById('icono_carga').setAttribute("class",`loader_dark`);}
-    else{document.getElementById('icono_carga').setAttribute("class",`loader`);}
+    select_copias.disabled = false;
+    let fragment = document.createDocumentFragment();
     
-	let modal_carga = new bootstrap.Modal("#modal_carga");
-	let mostrarModal = false;
-    let tiempoCarga;
+    listaArchivos.forEach(fichero => {
+        let option = document.createElement("option");
+        option.textContent = fichero;
+        option.value = fichero;
+        fragment.appendChild(option);
+    });
 
-	tiempoCarga = setTimeout(()=>{
-		mostrarModal = true;
-		modal_carga.show();
-	}, 600);
-	
-	try{
-		const tiempoInicio = performance.now();
-
-		const res = await fetch("", { method: "POST", body: datos });
-    	const data = await res.json();
-
-		const tiempoTranscurido = performance.now() - tiempoInicio;
-		const tiempoEsperaMin = 700;
-		
-		if (mostrarModal && tiempoTranscurido < tiempoEsperaMin) {
-			
-			const restante = tiempoEsperaMin - tiempoTranscurido;
-			await new Promise(resolve => setTimeout(resolve,restante));
-		}
-
-		return data;
-	}
-	catch(error){
-		return {estatus:false,mensaje:"A ocurrido un error durante la consulta",error}
-	}
-	finally{
-		clearTimeout(tiempoCarga);
-		if (mostrarModal) {
-			modal_carga.hide();
-		}
-	}
-}
-
-function mensajes(icono,tiempo,titulo,mensaje){
-	Swal.fire({
-	icon:icono,
-    timer:tiempo,	
-    title:titulo,
-	text:mensaje,
-	showConfirmButton:true,
-	confirmButtonText:'Aceptar',
-	confirmButtonColor: "#e01d22",
-	});
-}
-
-async function importarCopiaSeguridad() {
-	let datos_consulta = new FormData();
-
-	let fichero = select_copias.value;
-	let db = (select_copias.value.includes("seguridad"))?'seguridad':'negocio';
-
-	datos_consulta.append("fichero",fichero);
-	datos_consulta.append("db",db);
-	
-	datos_consulta.append('operacion','importar_copia_seguridad');
-	
-	let respuesta = await query(datos_consulta);
-	
-	if (!respuesta.estatus) {
-		mensajes('error',4000,'Atencion',respuesta.mensaje);
-		return;// en caso de error mandamos un mensaje con el error y nos vamos
-	}
-
-	mensajes('success',4000,'Atencion',respuesta.mensaje);
-}
-
-async function importarSQL() {
-	let datos_consulta = new FormData();
-
-	// let fichero = select_copias.value;
-	// let db = (select_copias.value.includes("seguridad"))?'seguridad':'negocio';
-
-	datos_consulta.append("fichero",input_file.files[0]);
-	// datos_consulta.append("db",db);
-	
-	datos_consulta.append('operacion','importar_archivo_sql');
-	
-	let respuesta = await query(datos_consulta);
-	
-	if (!respuesta.estatus) {
-		mensajes('error',4000,'Atencion',respuesta.mensaje);
-		return;// en caso de error mandamos un mensaje con el error y nos vamos
-	}
-
-	mensajes('success',4000,'Atencion',respuesta.mensaje);
+    select_copias.appendChild(fragment);
 }
 
 async function generarCopiaSeguridad() {
-	let datos_consulta = new FormData();
+    let datos = new FormData();
+    datos.append("db", select_db.value);
+    datos.append('operacion', 'generar_copia_seguridad');
 
-	let db = select_db.value;
+    const respuesta = await Utilidades.query(datos);
 
-	datos_consulta.append("db",db);
-
-	datos_consulta.append('operacion','generar_copia_seguridad');
-	
-	let respuesta = await query(datos_consulta);
-
-	if (!respuesta.estatus) {
-		mensajes('error',4000,'Atencion',respuesta.mensaje);
-		return;// en caso de error mandamos un mensaje con el error y nos vamos
-	}
-
-	obtenerCopiasGuardadas();
-
-	mensajes('success',4000,'Atencion',respuesta.mensaje);
+    if (respuesta.estatus) {
+        Utilidades.mensaje('success', 'Éxito', respuesta.mensaje);
+        obtenerCopiasGuardadas(); // Actualizar lista
+    } else {
+        Utilidades.mensaje('error', 'Error', respuesta.mensaje);
+    }
 }
 
-//En caso de error
-const urlParams = new URLSearchParams(window.location.search);
-const error = urlParams.get('e');
-if (error != null) {
-	const currentURL = new URL(window.location.href);
-	const searchParams = new URLSearchParams(currentURL.search);
-	searchParams.delete('e');
-	currentURL.search = searchParams.toString();
-	window.history.replaceState({}, '', currentURL.toString());
-	mensajes('error',4000,'Atencion',"A ocurrido un error");
+async function importarCopiaSeguridad() {
+    let datos = new FormData();
+    const fichero = select_copias.value;
+    // Inferencia simple de la DB basada en el nombre del archivo
+    const db = (fichero.includes("seguridad")) ? 'seguridad' : 'negocio';
+
+    datos.append("fichero", fichero);
+    datos.append("db", db);
+    datos.append('operacion', 'importar_copia_seguridad');
+
+    const respuesta = await Utilidades.query(datos);
+    manejarRespuestaImportacion(respuesta);
+}
+
+async function importarSQL() {
+    let datos = new FormData();
+    // Utilidades.query maneja FormData, así que soporta archivos perfectamente
+    datos.append("fichero", input_file.files[0]);
+    datos.append('operacion', 'importar_archivo_sql');
+
+    const respuesta = await Utilidades.query(datos);
+    manejarRespuestaImportacion(respuesta);
+}
+
+// -------------------------------------------------------------------------
+// Funciones Auxiliares (Locales a este módulo)
+// -------------------------------------------------------------------------
+
+function manejarRespuestaImportacion(respuesta) {
+    if (respuesta.estatus) {
+        Utilidades.mensaje('success', 'Restauración Completada', respuesta.mensaje);
+        // Recargar la página para limpiar estado
+        // setTimeout(() => window.location.reload(), 2000);
+    } else {
+        Utilidades.mensaje('error', 'Fallo en Restauración', respuesta.mensaje);
+    }
+}
+
+function validarSeleccionDB() {
+    if (select_db.value === "") {
+        Utilidades.mensaje('error', 'Atención', 'Debe seleccionar una Base de Datos.');
+        return false;
+    }
+    const valido = /^negocio|seguridad/.test(select_db.value);
+    if (!valido) {
+        validarInput(select_db, false, "La base de datos no es válida");
+        Utilidades.mensaje('error', 'Error', 'La base de datos seleccionada no existe');
+        return false;
+    }
+    validarInput(select_db, true);
+    return true;
+}
+
+/**
+ * Aplica clases de validación de Bootstrap y mensaje de error
+ */
+function validarInput(input, esValido, mensajeError = "") {
+    if (esValido) {
+        input.classList.remove('is-invalid');
+        input.classList.add('is-valid');
+        if(input.nextElementSibling) input.nextElementSibling.textContent = "";
+    } else {
+        input.classList.remove('is-valid');
+        input.classList.add('is-invalid');
+        if(input.nextElementSibling) input.nextElementSibling.textContent = mensajeError;
+    }
+}
+
+function alternarVisibilidad(elemento, mostrar) {
+    if (!elemento) return;
+    if (mostrar) elemento.removeAttribute("hidden");
+    else elemento.setAttribute("hidden", "");
+}
+
+/**
+ * Limpia la URL si hubo error de descarga anteriormente
+ */
+function verificarErroresURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('e')) {
+        Utilidades.mensaje('error', 'Error', 'Ocurrió un error al intentar descargar el archivo.');
+        
+        // Limpiar URL sin recargar
+        const currentURL = new URL(window.location.href);
+        currentURL.searchParams.delete('e');
+        window.history.replaceState({}, '', currentURL.toString());
+    }
 }

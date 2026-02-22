@@ -1,4 +1,4 @@
-<?php use haydee\modelo\Pagos; ?>
+<?php use haydee\ayuda\Sesiones; ?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -10,8 +10,8 @@
 </head>
 
 <body class="body-pd">
-    <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Pagos::tiene_permiso(GESTIONAR_PAGOS, ELIMINAR) ?>">
-    <input type="text" hidden="" id="permiso_editar" value="<?php echo Pagos::tiene_permiso(GESTIONAR_PAGOS, MODIFICAR) ?>">
+    <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_PAGOS, ELIMINAR) ?>">
+    <input type="text" hidden="" id="permiso_editar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_PAGOS, MODIFICAR) ?>">
     <div class="container-fluid">
         <div class="row flex-nowrap ">
 
@@ -27,7 +27,7 @@
 
                 <main class="col ps-md-2 pt-2 mb-5">
                     <div class="page-header pt-3">
-                        <h2>GESTIONAR PAGOS</h2>
+                        <h2>GESTIONAR pagos</h2>
                     </div>
                     <p class="lead"></p>
                     <hr>
@@ -35,7 +35,7 @@
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="card p-4">
-                                <?php if (Pagos::tiene_permiso(GESTIONAR_PAGOS, REGISTRAR)) : ?>
+                                <?php if (Sesiones::tienePermiso(GESTIONAR_PAGOS, REGISTRAR)) : ?>
                                     <div class="button mb-4">
                                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_pagos">Nuevo Pago</a>
                                     </div>
@@ -119,7 +119,7 @@
                                     <strong>Observacion:</strong>
                                     <span id="vista_observacion" style="font-family: monospace;"></span>
                                 </p>
-                                <?php if (Pagos::tiene_permiso(GESTIONAR_PAGOS, REGISTRAR)) : ?>
+                                <?php if (Sesiones::tienePermiso(GESTIONAR_PAGOS, REGISTRAR)) : ?>
                                     <!-- <div class="button mb-4">
                                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_detalles_pagos">Registrar</a>
                                     </div><br> -->

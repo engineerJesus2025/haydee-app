@@ -1,374 +1,271 @@
-let correo_an;
+/**
+ * Script AJAX para el perfil de usuario
+ * Dependencias: utilidades.js (objeto Utilidades), validaciones.js (objeto Validaciones)
+ */
 
+let correo_an; // Para comparar en edición
 let tabla_notificaciones;
-//Eventos:
-window.addEventListener('DOMContentLoaded',()=>{
-	llenarCardUsuario();
-	llenarTablaNotificaciones();
+
+document.addEventListener('DOMContentLoaded', () => {
+    llenarCardUsuario();
+    llenarTablaNotificaciones();
 });
 
-document.querySelector(`#modal_contra`).addEventListener("hide.bs.modal",()=>{
-	document.querySelectorAll('.is-valid').forEach(input=>input.classList.remove('is-valid'));
-	document.querySelectorAll('.is-invalid').forEach(input=>input.classList.remove('is-invalid'));
-	correo_an = null;
-	document.querySelectorAll('input').forEach(input=>{
-		if (input.id.includes('contra')) {
-			input.nextElementSibling.classList.remove('border-danger');
-			input.nextElementSibling.classList.remove('text-danger');
-			input.nextElementSibling.classList.remove('border-success');
-			input.nextElementSibling.classList.remove('text-success');
-
-			input.nextElementSibling.firstElementChild.classList.replace('bi-eye-slash','bi-eye');
-		}
-		input.value = '';
-	});
+// Resetear modal de cambio de contraseña al cerrar
+document.getElementById('modal_contra')?.addEventListener('hide.bs.modal', () => {
+    document.querySelectorAll('.is-valid, .is-invalid').forEach(input => input.classList.remove('is-valid', 'is-invalid'));
+    document.querySelectorAll('input').forEach(input => {
+        if (input.id.includes('contra')) {
+            const iconParent = input.nextElementSibling;
+            if (iconParent) {
+                iconParent.classList.remove('border-danger', 'text-danger', 'border-success', 'text-success');
+                const icon = iconParent.querySelector('i');
+                if (icon) icon.classList.replace('bi-eye-slash', 'bi-eye');
+            }
+        }
+        input.value = '';
+    });
+    correo_an = null;
 });
 
-// Efecto de mostrar/ocultar la constraseña
-document.querySelectorAll('.contra').forEach(boton=>{
-	boton.addEventListener('click',e=>{
-		e.preventDefault();
-
-		let i;
-		if (e.target.firstElementChild == null) {
-			i = e.target;
-		}
-		else{
-			i = e.target.firstElementChild;
-		}
-
-		if (i.classList.contains('bi-eye')){
-			i.parentElement.previousElementSibling.setAttribute('type','text')
-			i.classList.replace('bi-eye','bi-eye-slash');
-		}
-		else{
-			i.parentElement.previousElementSibling.setAttribute('type','password')
-			i.classList.replace('bi-eye-slash','bi-eye');
-		}
-	});
+// Mostrar/ocultar contraseñas
+document.querySelectorAll('.contra').forEach(boton => {
+    boton.addEventListener('click', e => {
+        e.preventDefault();
+        const icon = e.target.tagName === 'I' ? e.target : e.target.querySelector('i');
+        if (!icon) return;
+        const input = icon.parentElement.previousElementSibling;
+        if (icon.classList.contains('bi-eye')) {
+            input.setAttribute('type', 'text');
+            icon.classList.replace('bi-eye', 'bi-eye-slash');
+        } else {
+            input.setAttribute('type', 'password');
+            icon.classList.replace('bi-eye-slash', 'bi-eye');
+        }
+    });
 });
 
-document.getElementById('boton_editar').addEventListener('click',e=>{
-	document.getElementById("nombre").value = document.getElementById("p_nombre").textContent;
-	document.getElementById("apellido").value = document.getElementById("p_apellido").textContent;
-	document.getElementById("correo").value = document.getElementById("p_correo").textContent;
+// Botones de edición/cancelación
+document.getElementById('boton_editar')?.addEventListener('click', () => {
+    document.getElementById('nombre').value = document.getElementById('p_nombre').textContent;
+    document.getElementById('apellido').value = document.getElementById('p_apellido').textContent;
+    document.getElementById('correo').value = document.getElementById('p_correo').textContent;
 
-	document.getElementById('body_perfil').setAttribute('hidden','');
-	document.getElementById('form_perfil').removeAttribute('hidden');
-
-	document.getElementById('boton_editar').setAttribute('disabled','');
+    document.getElementById('body_perfil').setAttribute('hidden', '');
+    document.getElementById('form_perfil').removeAttribute('hidden');
+    document.getElementById('boton_editar').setAttribute('disabled', '');
 });
 
-document.getElementById('boton_cancelar').addEventListener('click',e=>{
-	document.querySelectorAll('.is-valid').forEach(input=>input.classList.remove('is-valid'));
-	document.querySelectorAll('.is-invalid').forEach(input=>input.classList.remove('is-invalid'));
-
-	document.getElementById('form_perfil').setAttribute('hidden','');
-	document.getElementById('body_perfil').removeAttribute('hidden');
-
-	document.getElementById('boton_editar').removeAttribute('disabled','');
+document.getElementById('boton_cancelar')?.addEventListener('click', () => {
+    document.querySelectorAll('.is-valid, .is-invalid').forEach(input => input.classList.remove('is-valid', 'is-invalid'));
+    document.getElementById('form_perfil').setAttribute('hidden', '');
+    document.getElementById('body_perfil').removeAttribute('hidden');
+    document.getElementById('boton_editar').removeAttribute('disabled');
 });
 
-document.getElementById('modal_notificaciones').addEventListener('shown.bs.modal', function () {
-    if ($.fn.DataTable.isDataTable("#tabla_notificaciones")) {
-        $('#tabla_notificaciones').DataTable().columns.adjust().draw();
+// Ajustar DataTable cuando se abre el modal de notificaciones
+document.getElementById('modal_notificaciones')?.addEventListener('shown.bs.modal', () => {
+    if (tabla_notificaciones) {
+        tabla_notificaciones.columns.adjust().draw();
     }
 });
 
+// ============================================
+// FUNCIONES PRINCIPALES
+// ============================================
 
-async function llenarCardUsuario(){
-	let datos_consulta = new FormData();
+async function llenarCardUsuario() {
+    const formData = new FormData();
+    formData.append('operacion', 'consultar_perfil_usuario');
 
-	datos_consulta.append('operacion','consultar_perfil_usuario');
+    const respuesta = await Utilidades.query(formData);
+    if (!respuesta.estatus) {
+        Utilidades.mensaje('error', 'Atención', respuesta.mensaje || 'Error al cargar perfil');
+        return;
+    }
 
-	let usuario = await query(datos_consulta);
-	
-	let [clases_badge_rol,clases_icono_rol] = definirColorBadge(usuario.nombre_rol);
+    const usuario = respuesta.datos;
+    const [claseBadge, claseIcono] = definirColorBadge(usuario.nombre_rol);
 
-	document.getElementById("titulo_nombre").textContent = `${usuario.nombre_usuario} ${usuario.apellido}`
-	document.getElementById("titulo_rol").textContent = usuario.nombre_rol;
-	document.getElementById("p_nombre").textContent = usuario.nombre_usuario;
-	document.getElementById("p_apellido").textContent = usuario.apellido;
-	document.getElementById("p_correo").textContent = usuario.correo;
-	document.getElementById("spam_rol").textContent = usuario.nombre_rol;
-	
-	document.getElementById("ultimo_acceso").textContent = formatearUltimoAcceso(usuario.ultima_vez);
+    document.getElementById('titulo_nombre').textContent = `${usuario.nombre_usuario} ${usuario.apellido}`;
+    document.getElementById('titulo_rol').textContent = usuario.nombre_rol;
+    document.getElementById('p_nombre').textContent = usuario.nombre_usuario;
+    document.getElementById('p_apellido').textContent = usuario.apellido;
+    document.getElementById('p_correo').textContent = usuario.correo;
+    document.getElementById('spam_rol').textContent = usuario.nombre_rol;
+    // document.getElementById('ultimo_acceso').textContent = formatearUltimoAcceso(usuario.ultima_vez);
+    document.getElementById('ultimo_acceso').textContent = FormatoFechas.formatoUltimoAcceso(usuario.ultima_vez);
 
-	correo_an = usuario.correo;
+    correo_an = usuario.correo;
 
-	let icono_rol = document.createElement("i");
-	icono_rol.setAttribute('class',clases_icono_rol);
-	icono_rol.setAttribute('style',"font-size: 4rem !important;");
+    // Icono de rol
+    const iconoRol = document.createElement('i');
+    iconoRol.className = claseIcono;
+    iconoRol.style.fontSize = '4rem';
+    const tituloIcono = document.getElementById('titulo_icono');
+    tituloIcono.textContent = '';
+    tituloIcono.appendChild(iconoRol);
 
-	document.getElementById("titulo_icono").textContent = null;
-	document.getElementById("titulo_icono").appendChild(icono_rol);	
+    const spamRol = document.getElementById('spam_rol');
+    spamRol.className = claseBadge;
 
-	document.getElementById("spam_rol").setAttribute('class',clases_badge_rol);
-
-	document.getElementById('boton_editar').removeAttribute('disabled');
-	document.getElementById('boton_editar').innerHTML = `<i class="bi bi-pencil me-1"></i>Editar`;
+    document.getElementById('boton_editar').removeAttribute('disabled');
+    document.getElementById('boton_editar').innerHTML = '<i class="bi bi-pencil me-1"></i>Editar';
 }
 
 function llenarTablaNotificaciones() {
-  const paramentros_consulta = (data)=>{data.operacion = 'consultar_notificaciones_usuario';}
-  const estructura_tabla_notificaciones = [
-    {	
-		"data": null,
-      	"render": function (row) {                
-        	return `${row["titulo"]}`;
-        }
-    },
-    {
-        "data": null, 
-        "render": function (row) {
-        	return `${row["descripcion"]}`;
-        }
-    },
-    { 
-        "data": null,
-        "render": function (row) {
-        	return `${formatearFechaHora(row["fecha"])}`;
-        }
-    },
-    {
-        "data": null,
-        "render": function (row) {
-        	let spam = document.createElement("span");
-            spam.setAttribute("class",(row["activo"] == 1)?"badge bg-primary":"badge bg-warning text-dark");
-            spam.textContent = (row["activo"] == 1) ? "SI" : "NO";
-        	return `${spam.outerHTML}`;
-        }
-    },
-	{
-        "data": null,
-        "render": function (row) {
-        	let botonVerNotificacion = document.createElement("button");
-			botonVerNotificacion.setAttribute("class","btn btn-sm btn-primary");
-			botonVerNotificacion.setAttribute("title","Ver Notificación");
-			botonVerNotificacion.setAttribute("type","button");
-			botonVerNotificacion.setAttribute("data-bs-toggle","tooltip");
-			botonVerNotificacion.setAttribute("data-nombre_modulo",row["nombre_modulo"]);
-			botonVerNotificacion.setAttribute("data-referencia",row["referencia"]);
-			let iconoVer = document.createElement("i");
-			iconoVer.setAttribute("class","bi bi-eye");
-			botonVerNotificacion.appendChild(iconoVer);
-        	return `${botonVerNotificacion.outerHTML}`;
-        }
-    }
-  ];
+    const parametrosConsulta = (data) => {
+        data.operacion = 'consultar_mis_notificaciones';
+    };
 
-  const configuraciones_tabla_notificaciones = (row)=>{
-    Array.from(row.children).map(td=>td.setAttribute("class",'align-middle'));
+    const estructura = [
+        { data: 'titulo' },
+        { data: 'descripcion' },
+        {
+            data: 'fecha',
+            // render: (fecha) => formatearFechaHora(fecha)
+            render: (fecha) => FormatoFechas.formatoFechaHora(fecha)
+        },
+        {
+            data: null,
+            render: (row) => {
+                const span = document.createElement('span');
+                span.className = (row.leido == 1) ? 'badge bg-primary' : 'badge bg-warning text-dark';
+                span.textContent = (row.leido == 1) ? 'Sí' : 'No';
+                return span.outerHTML;
+            }
+        },
+        {
+            data: null,
+            render: (row) => {
+                const boton = document.createElement('button');
+                boton.className = 'btn btn-sm btn-primary';
+                boton.title = 'Ver Notificación';
+                boton.type = 'button';
+                boton.dataset.tabla_origen = row.tabla_origen;
+                boton.dataset.id_registro_origen = row.id_registro_origen;
+                boton.innerHTML = '<i class="bi bi-eye"></i>';
+                return boton.outerHTML;
+            }
+        }
+    ];
 
-	// seleccionamos el boton de la ultima columna
-	let botonVer = row.children[row.children.length - 1].firstElementChild;
-	botonVer.parentElement.setAttribute('class','align-middle text-center');
+    const configuracionPost = (row, data) => {
+        Array.from(row.children).forEach(td => td.classList.add('align-middle'));
+        const ultimaCelda = row.children[row.children.length - 1];
+        ultimaCelda.classList.add('text-center');
+        const boton = ultimaCelda.firstElementChild;
+        if (boton) {
+            boton.addEventListener('click', () => {
+                const url = `?pagina=${boton.dataset.tabla_origen}_controlador.php&accion=inicio&buscar=${boton.dataset.id_registro_origen}`;
+                window.location.href = url;
+            });
+        }
+    };
 
-	botonVer.addEventListener('click',()=>{
-		//Tal vez incluir un mensaje de confirmacion de redireccionamiento				
-		let url = `?pagina=${botonVer.dataset.nombre_modulo}_controlador.php&accion=inicio&referencia=${botonVer.dataset.referencia}`;
-		window.location.href = url;
-	});
-  }
+    tabla_notificaciones = Utilidades.crearDataTable(
+        'tabla_notificaciones',
+        estructura,
+        parametrosConsulta,
+        configuracionPost
+    );
 
-  tabla_notificaciones = crearDataTable('tabla_notificaciones',estructura_tabla_notificaciones,paramentros_consulta,configuraciones_tabla_notificaciones);
-
-  document.getElementById('notificaciones').removeAttribute('disabled');
+    document.getElementById('notificaciones')?.removeAttribute('disabled');
 }
 
-function definirColorBadge(nombre_rol){
-	switch (nombre_rol){
-		case 'Administrador Global':
-			return ["badge bg-warning text-dark","bi bi-globe me-3"];
-		case 'Administrador':
-			return ["badge bg-primary","bi bi-person-fill-gear me-3"];
-		case 'Propietario':
-			return ["badge bg-success","bi bi-key-fill me-3"];
-		case 'Contador':
-			return ["badge bg-danger","bi bi-calculator-fill me-3"];
-		case 'Presidente':
-			return ["badge bg-info text-dark","bi bi-award-fill me-3"];
-		default:
-		return ["badge bg-secondary","bi bi-person-circle me-3"];
-	}
+function definirColorBadge(nombreRol) {
+    const map = {
+        'Administrador Global': ['badge bg-warning text-dark', 'bi bi-globe me-3'],
+        'Administrador': ['badge bg-primary', 'bi bi-person-fill-gear me-3'],
+        'Propietario': ['badge bg-success', 'bi bi-key-fill me-3'],
+        'Contador': ['badge bg-danger', 'bi bi-calculator-fill me-3'],
+        'Presidente': ['badge bg-info text-dark', 'bi bi-award-fill me-3']
+    };
+    return map[nombreRol] || ['badge bg-secondary', 'bi bi-person-circle me-3'];
 }
 
 function formatearUltimoAcceso(fecha) {
-	const ahora = new Date();
-	if(!fecha){
-		return ahora.toLocaleDateString('es-ES');
-	}
-    const fechaISO = fecha.replace(" ", "T");
-    const fechaAcceso = new Date(fechaISO);
-    
-
+    const ahora = new Date();
+    if (!fecha) return ahora.toLocaleDateString('es-ES');
+    const fechaAcceso = new Date(fecha.replace(' ', 'T'));
     const diffMs = ahora - fechaAcceso;
     const diffDias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
     let hora = fechaAcceso.getHours();
     const minutos = fechaAcceso.getMinutes().toString().padStart(2, '0');
     const amPm = hora >= 12 ? 'p.m.' : 'a.m.';
-    
-    hora = hora % 12 || 12; // Convierte 0 a 12
-    const horaFormateada = `${hora}:${minutos}${amPm}`;
-    
-    if (diffDias === 0) {
-        return `Hoy a las ${horaFormateada}`;
-    } else if (diffDias === 1) {
-        return `Ayer a las ${horaFormateada}`;
-    } else if (diffDias <= 7) {
+    hora = hora % 12 || 12;
+    const horaFormateada = `${hora}:${minutos} ${amPm}`;
+
+    if (diffDias === 0) return `Hoy a las ${horaFormateada}`;
+    if (diffDias === 1) return `Ayer a las ${horaFormateada}`;
+    if (diffDias <= 7) {
         const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
         return `El ${diasSemana[fechaAcceso.getDay()]} a las ${horaFormateada}`;
-    } else {
-        return fechaAcceso.toLocaleDateString('es-ES') + ` a las ${horaFormateada}`;
     }
+    return fechaAcceso.toLocaleDateString('es-ES') + ` a las ${horaFormateada}`;
 }
 
 function formatearFechaHora(fechaHoraStr) {
-  const fecha = new Date(fechaHoraStr);
-  
-  const dia = String(fecha.getUTCDate()).padStart(2, '0');
-  const mes = String(fecha.getUTCMonth() + 1).padStart(2, '0');
-  const anio = fecha.getUTCFullYear();  
-  
-  return `${dia}-${mes}-${anio}`;
+    const fecha = new Date(fechaHoraStr);
+    const dia = String(fecha.getUTCDate()).padStart(2, '0');
+    const mes = String(fecha.getUTCMonth() + 1).padStart(2, '0');
+    const anio = fecha.getUTCFullYear();
+    return `${dia}-${mes}-${anio}`;
 }
 
-function mensajes(icono,tiempo,titulo,mensaje){
-	Swal.fire({
-	icon:icono,
-    timer:tiempo,	
-    title:titulo,
-	text:mensaje,
-	confirmButtonText:'Aceptar',
-	confirmButtonColor: "#e01d22",
-	});
-}
-
-function crearDataTable(id_tabla,estructura_filas,datos_paramentros, configuraciones_post_creacion = ()=>{}){
-  return new DataTable(`#${id_tabla}`,{
-        destroy: true,
-        responsive: true,
-        "scrollX": true,
-        "pageLength": 10,
-        "aaSorting": [],
-        language: {
-            "processing": "Procesando...",
-            "lengthMenu": "Mostrar _MENU_ registros",
-            "zeroRecords": "No se encontraron resultados",
-            "emptyTable": "Ningún dato disponible en esta tabla",
-            "info": "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
-            "infoEmpty": "Mostrando registros del 0 al 0 de un total de 0 registros",
-            "infoFiltered": "(filtrado de un total de _MAX_ registros)",
-            "infoPostFix": "",
-            "search": "Buscar:",
-            "url": "",
-            "infoThousands": ",",
-            "loadingRecords": "Cargando...",
-            "paginate": {
-                "first": "Primero",
-                "last": "Último",
-                "next": "<i class='bi bi-caret-right'></i>",
-                "previous": "<i class='bi bi-caret-left'></i>"
-            },
-            "aria": {
-                "sortAscending": ": Activar para ordenar la columna de manera ascendente",
-                "sortDescending": ": Activar para ordenar la columna de manera descendente"
-            },
-            "buttons": {
-                "copy": "Copiar",
-                "colvis": "Visibilidad"
-            }
-        },
-        "ajax": {
-            "url": "",
-            "dataSrc": "",
-            "type": "POST", 
-            "data": datos_paramentros
-        },
-        "columns":estructura_filas,
-        "drawCallback": function( settings ) {
-            $(this).DataTable().columns.adjust();
-        },
-        "error": function(jqXHR, textStatus, errorThrown) {            
-            console.log(jqXHR,textStatus,errorThrown)
-        },
-        "createdRow": configuraciones_post_creacion
-  });
-}
+// ============================================
+// FUNCIONES DE MODIFICACIÓN (llamadas desde validaciones)
+// ============================================
 
 async function modificar() {
-	let datos_consulta = new FormData();
+    const formData = new FormData();
+    formData.append('nombre', document.getElementById('nombre').value);
+    formData.append('apellido', document.getElementById('apellido').value);
+    formData.append('correo', document.getElementById('correo').value);
+    formData.append('operacion', 'editar_perfil');
 
-	let nombre = document.querySelector("#nombre").value,
-	apellido = document.querySelector("#apellido").value,
-	correo = document.querySelector("#correo").value;	
+    const respuesta = await Utilidades.query(formData);
+    if (!respuesta.estatus) {
+        Utilidades.mensaje('error', 'Atención', respuesta.mensaje);
+        return;
+    }
 
-	datos_consulta.append("nombre",nombre);
-	datos_consulta.append("apellido",apellido);	
-	datos_consulta.append("correo",correo);
+    // Actualizar nombre en el botón de la barra superior (opcional)
+    const botonUsuario = document.getElementById('boton_accion_usuario');
+    if (botonUsuario) {
+        const nuevoNombre = document.getElementById('nombre').value;
+        // botonUsuario.textContent = botonUsuario.textContent.replace(/\s\S+$/, ' ' + nuevoNombre);
+        botonUsuario.textContent = botonUsuario.textContent.replace(botonUsuario.textContent.trim().split(" ")[1],nuevoNombre);
+    }
 
-	datos_consulta.append('operacion','editar_perfil');
+    await llenarCardUsuario(); // Recargar datos
+    Utilidades.mensaje('success', 'Éxito', 'Datos actualizados correctamente');
 
-	let respuesta = await query(datos_consulta,true);
-
-	if (!respuesta.estatus) {
-		mensajes('error',4000,'Atencion',respuesta.mensaje);
-		return;
-	}
-
-	document.querySelectorAll('input').forEach(input=>input.value = '');
-
-	let boton_accion_usuario = document.getElementById('boton_accion_usuario');
-
-	boton_accion_usuario.textContent = boton_accion_usuario.textContent.replace(boton_accion_usuario.textContent.trim().split(" ")[1],nombre);
-
- 	llenarCardUsuario();
-
-	mensajes('success',4000,'Atencion','El registro se ha modificado exitosamente');
-
-	document.getElementById('form_perfil').setAttribute('hidden','');
-	document.getElementById('body_perfil').removeAttribute('hidden');
-	document.getElementById('boton_editar').removeAttribute('disabled','');
+    document.getElementById('form_perfil').setAttribute('hidden', '');
+    document.getElementById('body_perfil').removeAttribute('hidden');
+    document.getElementById('boton_editar').removeAttribute('disabled');
 }
 
 async function modificarContra() {
-	let datos_consulta = new FormData();
+    const formData = new FormData();
+    formData.append('contra', document.getElementById('contra').value);
+    formData.append('correo', document.getElementById('p_correo').textContent);
+    formData.append('operacion', 'cambiar_contrasenia');
 
-	let nueva_contra = document.getElementById("contra").value;	
-	let correo = document.getElementById("p_correo").textContent;
+    const respuesta = await Utilidades.query(formData);
+    if (!respuesta.estatus) {
+        Utilidades.mensaje('error', 'Atención', respuesta.mensaje);
+        return;
+    }
 
-	datos_consulta.append("contra",nueva_contra);
-	datos_consulta.append("correo",correo);
+    // Limpiar campos
+    document.querySelectorAll('input').forEach(input => input.value = '');
+    Utilidades.mensaje('success', 'Éxito', 'Contraseña actualizada correctamente');
 
-	datos_consulta.append('operacion','cambiar_contrasenia');
-
-	let respuesta = await query(datos_consulta,true);
-
-	if (!respuesta.estatus) {
-		mensajes('error',4000,'Atencion',respuesta.mensaje);
-		return;
-	}
-
-	document.querySelectorAll('input').forEach(input=>input.value = '');
-
-	mensajes('success',4000,'Atencion','La contraseña se ha modificado exitosamente');
-	
-	modal.hide();
+    const modal = bootstrap.Modal.getInstance(document.getElementById('modal_contra'));
+    modal?.hide();
 }
 
-async function query(datos,oscuro = false) {
-    if (oscuro) {document.getElementById('icono_carga').setAttribute("class",`loader_dark`);}
-    else{document.getElementById('icono_carga').setAttribute("class",`loader`);}
-    
-	try{
-		const res = await fetch("", { method: "POST", body: datos });
-    	const data = await res.json();
-
-		return data;
-	}
-	catch(error){
-		return {estatus:false,mensaje:"A ocurrido un error durante la consulta",error}
-	}
-}
-
+// Exponer funciones para que las use el validador
+window.modificar = modificar;
+window.modificarContra = modificarContra;

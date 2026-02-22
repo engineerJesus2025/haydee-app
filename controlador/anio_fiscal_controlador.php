@@ -1,100 +1,87 @@
-<?php    
-    use haydee\ayuda\Sesiones;
-    Sesiones::verificarSesion();
-    Sesiones::verificarPermiso(GESTIONAR_ANIO_FISCAL, CONSULTAR);
-    
-    use haydee\modelo\AnioFiscal;
+<?php
+use haydee\ayuda\Sesiones;
+use haydee\modelo\AnioFiscal;
+use haydee\modelo\Bitacora;
 
-    if (isset($_POST["operacion"])){        
-        $operacion = $_POST["operacion"];
+// Verificaciones de seguridad
+Sesiones::verificarSesion();
+Sesiones::verificarPermiso(GESTIONAR_ANIO_FISCAL, CONSULTAR);
 
-        if ($operacion == "consultar_anios_fiscales"){
-            $anio_fiscal_obj = new AnioFiscal();
-            $anio_fiscal_obj->registrar_bitacora(CONSULTAR, GESTIONAR_ANIO_FISCAL, "TODOS LOS AÑOS FISCALES");
+// Instancia del modelo
+$anioFiscal = new AnioFiscal();
 
-            echo  json_encode($anio_fiscal_obj->realizar_consulta("consultar"));
-        }
+if (isset($_POST["operacion"])) {
+    header('Content-Type: application/json');
 
-        elseif ($operacion == "registrar") {
-            $anio_fiscal_obj = new AnioFiscal();
+    // Asignación masiva de campos que pueden llegar
+    $anioFiscal->set_id_anio_fiscal($_POST['id_anio_fiscal'] ?? null);
+    $anioFiscal->set_fecha_inicio($_POST['fecha_inicio'] ?? null);
+    $anioFiscal->set_fecha_cierre($_POST['fecha_cierre'] ?? null);
+    $anioFiscal->set_estado($_POST['estado'] ?? null);
+    $anioFiscal->set_descripcion($_POST['descripcion'] ?? null);
 
-            $fecha_inicio = $_POST["fecha_inicio"];
-            $fecha_cierre = $_POST["fecha_cierre"];
-            $estado = $_POST["estado"];
-            $descripcion = $_POST["descripcion"];
+    $operacion = $_POST["operacion"];
+    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
-            $anio_fiscal_obj->set_fecha_inicio($fecha_inicio);
-            $anio_fiscal_obj->set_fecha_cierre($fecha_cierre);
-            $anio_fiscal_obj->set_estado($estado);
-            $anio_fiscal_obj->set_descripcion($descripcion);
-
-            $resultado = $anio_fiscal_obj->realizar_consulta("registrar");
-
-            if ($resultado["estatus"]) {
-                $anio_fiscal_obj->registrar_bitacora(REGISTRAR, GESTIONAR_ANIO_FISCAL, $fecha_inicio . " - " . $estado);
-            }
-            
-            echo  json_encode($resultado);
-        }
-        elseif ($operacion == "consulta_especifica"){
-            $anio_fiscal_obj = new AnioFiscal();
-
-            $id_anio_fiscal = $_POST["id_anio_fiscal"];
-
-            $anio_fiscal_obj->set_id_anio_fiscal($id_anio_fiscal);
-
-            echo  json_encode($anio_fiscal_obj->realizar_consulta("consultar_anio_fiscal"));
-        }
-
-        elseif ($operacion == "modificar") {
-            $anio_fiscal_obj = new AnioFiscal();
-
-            $id_anio_fiscal = $_POST["id_anio_fiscal"];
-            $fecha_inicio = $_POST["fecha_inicio"];
-            $fecha_cierre = $_POST["fecha_cierre"];
-            $estado = $_POST["estado"];
-            $descripcion = $_POST["descripcion"];
-            
-            $anio_fiscal_obj->set_id_anio_fiscal($id_anio_fiscal);
-            $anio_fiscal_obj->set_fecha_inicio($fecha_inicio);
-            $anio_fiscal_obj->set_fecha_cierre($fecha_cierre);
-            $anio_fiscal_obj->set_estado($estado);
-            $anio_fiscal_obj->set_descripcion($descripcion);
-
-            $resultado = $anio_fiscal_obj->realizar_consulta("editar");
-            
-            if ($resultado["estatus"]) {
-                $anio_fiscal_obj->registrar_bitacora(MODIFICAR, GESTIONAR_ANIO_FISCAL, $fecha_inicio . " - " . $estado);
-            }
-            
-            echo  json_encode($resultado);
-        }
-
-        elseif ($operacion == "eliminar") {
-            $anio_fiscal_obj = new AnioFiscal();
-            
-            $id_anio_fiscal = $_POST["id_anio_fiscal"];
-            
-            $anio_fiscal_obj->set_id_anio_fiscal($id_anio_fiscal);
-
-            $anio_alterado = $anio_fiscal_obj->realizar_consulta('consultar_anio_fiscal');
-
-            $resultado = $anio_fiscal_obj->realizar_consulta("eliminar");
-
-            if ($resultado["estatus"]){
-                if ($anio_alterado) {
-                    $anio_fiscal_obj->registrar_bitacora(ELIMINAR, GESTIONAR_ANIO_FISCAL, $anio_alterado["fecha_inicio"] . " - " . $anio_alterado["estado"]);
+    try{
+        switch ($operacion) {
+            case 'consultar_anios_fiscales':
+                $respuesta = $anioFiscal->realizar_consulta('consultar');
+                if ($respuesta['estatus']) {
+                    Bitacora::registrar(CONSULTAR, GESTIONAR_ANIO_FISCAL, 'Consulta general de años fiscales');
                 }
-                else {
-                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta para la bitácora"];
+                break;
+
+            case 'registrar':
+                $respuesta = $anioFiscal->realizar_consulta('registrar');
+                if ($respuesta['estatus']) {
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_ANIO_FISCAL,
+                        $anioFiscal->get_fecha_inicio() . ' - ' . $anioFiscal->get_estado()
+                    );
                 }
-            }            
+                break;
 
-            echo  json_encode($resultado);
+            case 'consulta_especifica':
+                $respuesta = $anioFiscal->realizar_consulta('consultar_anio_fiscal');
+                // Bitácora opcional (se puede omitir)
+                break;
+
+            case 'modificar':
+                $respuesta = $anioFiscal->realizar_consulta('editar');
+                if ($respuesta['estatus']) {
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_ANIO_FISCAL,
+                        $anioFiscal->get_fecha_inicio() . ' - ' . $anioFiscal->get_estado()
+                    );
+                }
+                break;
+
+            case 'eliminar':
+                // Obtener datos para la bitácora antes de eliminar
+                $copia = clone $anioFiscal;
+                $datosAnio = $copia->realizar_consulta('consultar_anio_fiscal');
+                $infoAnio = '';
+                if ($datosAnio['estatus']) {
+                    $datos = $datosAnio['datos'];
+                    $infoAnio = ($datos['fecha_inicio'] ?? '') . ' - ' . ($datos['estado'] ?? '');
+                }
+
+                $respuesta = $anioFiscal->realizar_consulta('eliminar');
+                if ($respuesta['estatus']) {
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_ANIO_FISCAL, $infoAnio);
+                }
+                break;
+
+            default:
+                $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
-
-        exit;
+    } catch (Exception $e) {
+        error_log("Error en controlador: " . $e->getMessage());
+        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     }
-    require_once "vista/anio_fiscal/anio_fiscal_vista.php";
 
-?>
+    echo json_encode($respuesta);
+    exit;
+}
+
+// Cargar la vista
+require_once "vista/anio_fiscal/anio_fiscal_vista.php";

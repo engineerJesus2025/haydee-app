@@ -1,221 +1,171 @@
 <?php
-    use haydee\ayuda\Sesiones;
-    Sesiones::verificarSesion();
-    Sesiones::verificarPermiso(GESTIONAR_USUARIOS, CONSULTAR);
+//Nota: quitar seccion de perfil, ya tiene su controlador aparte
+use haydee\ayuda\Sesiones;
+use haydee\modelo\Rol;
+use haydee\modelo\Usuario;
+use haydee\modelo\Notificaciones;
+use haydee\modelo\Bitacora;
 
-    use haydee\modelo\Rol;
-    use haydee\modelo\Usuario;
-    use haydee\modelo\Notificaciones;
+// Verificaciones de seguridad
+Sesiones::verificarSesion();
+Sesiones::verificarPermiso(GESTIONAR_USUARIOS, CONSULTAR);
 
-    $rol_obj = new Rol();
-    $roles = $rol_obj->realizar_consulta('consultar_roles'); 
+// Obtener lista de roles para la vista (solo si es necesario)
+$rol_obj = new Rol();
+$roles = $rol_obj->realizar_consulta('consultar');
 
-    if (isset($_POST["operacion"])){
-        $operacion = $_POST["operacion"];
+// Instancia del modelo principal (usuario)
+$usuario = new Usuario();
 
-        if ($operacion == "consulta"){
-            $usuario_obj = new Usuario();
+if (isset($_POST["operacion"])) {
+    header('Content-Type: application/json');
 
-            $usuario_obj->registrar_bitacora(CONSULTAR, GESTIONAR_USUARIOS, "TODOS LOS USUARIOS");
+    // Asignación masiva de campos que pueden llegar (usuario)
+    $usuario->set_id_usuario($_POST['id_usuario'] ?? null);
+    $usuario->set_apellido($_POST['apellido'] ?? null);
+    $usuario->set_nombre($_POST['nombre'] ?? null);
+    $usuario->set_correo($_POST['correo'] ?? null);
+    $usuario->set_contra($_POST['contra'] ?? null);
+    $usuario->set_rol_id($_POST['rol'] ?? null);
+    // También podría llegar 'rol_nombre' para actualizar sesión, pero no se asigna al modelo
 
-            echo  json_encode($usuario_obj->realizar_consulta('consultar'));            
-        }        
-        elseif ($operacion == "registrar") {
-            $usuario_obj = new Usuario();
-
-            $apellido = $_POST["apellido"];
-            $nombre = $_POST["nombre"];  
-            $correo = $_POST["correo"];  
-            $contra = $_POST["contra"];
-            $rol = $_POST["rol"];              
-
-            $usuario_obj->set_apellido($apellido);
-            $usuario_obj->set_nombre($nombre);
-            $usuario_obj->set_correo($correo);
-            $usuario_obj->set_contra($contra);
-            $usuario_obj->set_rol_id($rol);
-
-            $resultado = $usuario_obj->realizar_consulta("registrar");
-
-            if ($resultado["estatus"]) {
-                $usuario_obj->registrar_bitacora(REGISTRAR, GESTIONAR_USUARIOS, $nombre . " " . $apellido);
-            }
-            
-            echo  json_encode($resultado);
-        }
-        elseif ($operacion == "consulta_especifica"){
-            $usuario_obj = new Usuario();
-
-            $id_usuario = $_POST["id_usuario"];
-
-            $usuario_obj->set_id_usuario($id_usuario);
-
-            echo  json_encode($usuario_obj->realizar_consulta('consultar_usuario'));
-        }
-        elseif ($operacion == "editar_usuario") {
-            $usuario_obj = new Usuario();
-
-            $id_usuario = $_POST["id_usuario"];
-            $apellido = $_POST["apellido"];
-            $nombre = $_POST["nombre"];  
-            $correo = $_POST["correo"];  
-            $contra = $_POST["contra"];
-            $rol = $_POST["rol"];
-
-            $usuario_obj->set_id_usuario($id_usuario);
-            $usuario_obj->set_apellido($apellido);
-            $usuario_obj->set_nombre($nombre);
-            $usuario_obj->set_correo($correo);
-            $usuario_obj->set_contra($contra);
-            $usuario_obj->set_rol_id($rol);        
-
-            $resultado = $usuario_obj->realizar_consulta("editar_usuario");
-
-            if ($resultado["estatus"]) {
-                $usuario_obj->registrar_bitacora(MODIFICAR, GESTIONAR_USUARIOS, $nombre . " " . $apellido);
-
-                if ($id_usuario == $_SESSION["id_usuario"]){
-                    $_SESSION["usuario"] = $correo;
-                    $_SESSION["nombre_completo"] = $nombre;
-                    $_SESSION["rol"] = $_POST["rol_nombre"];
-
-                    $resultado["actual"] = true;
+    $operacion = $_POST["operacion"];
+    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
+    try {
+        switch ($operacion) {
+            case 'consulta':
+                $respuesta = $usuario->realizar_consulta('consultar');
+                if ($respuesta['estatus']) {
+                    Bitacora::registrar(CONSULTAR, GESTIONAR_USUARIOS, 'Consulta general de usuarios');
                 }
-            }
-            
-            echo  json_encode($resultado);
-        }
-        elseif ($operacion == "eliminar") {
-            $usuario_obj = new Usuario();
+                break;
 
-            $id_usuario = $_POST["id_usuario"];
-
-            $usuario_obj->set_id_usuario($id_usuario);
-
-            $usuario_alterado = $usuario_obj->realizar_consulta('consultar_usuario');
-
-            $resultado = $usuario_obj->realizar_consulta("eliminar_usuario");
-
-            if ($resultado["estatus"]){
-                if ($usuario_alterado) {
-                    $usuario_obj->registrar_bitacora(ELIMINAR, GESTIONAR_USUARIOS, $usuario_alterado["nombre_usuario"] . " " . $usuario_alterado["apellido"]);
+            case 'registrar':
+                $respuesta = $usuario->realizar_consulta('registrar');
+                if ($respuesta['estatus']) {
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_USUARIOS,
+                        $usuario->get_nombre() . ' ' . $usuario->get_apellido()
+                    );
                 }
-                else {
-                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta para la bitácora"];
+                break;
+
+            case 'consulta_especifica':
+                $respuesta = $usuario->realizar_consulta('consultar_usuario');
+                break;
+
+            case 'editar_usuario':
+                $respuesta = $usuario->realizar_consulta('editar_usuario');
+                if ($respuesta['estatus']) {
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_USUARIOS,
+                        $usuario->get_nombre() . ' ' . $usuario->get_apellido()
+                    );
+
+                    // Si el usuario editado es el mismo que está en sesión, actualizar datos de sesión
+                    if ($usuario->get_id_usuario() == $_SESSION["id_usuario"]) {
+                        $_SESSION["usuario"] = $usuario->get_correo();
+                        $_SESSION["nombre_completo"] = $usuario->get_nombre();
+                        // El nombre del rol se pasa por POST en 'rol_nombre' (no se asigna al modelo)
+                        if (isset($_POST['rol_nombre'])) {
+                            $_SESSION["rol"] = $_POST['rol_nombre'];
+                        }
+                        $respuesta['actual'] = true; // Para indicar que se actualizó la sesión
+                    }
                 }
-            }            
+                break;
 
-            echo  json_encode($resultado);
+            case 'eliminar':
+                // Obtener datos para bitácora antes de eliminar
+                $copia = clone $usuario;
+                $datosUsuario = $copia->realizar_consulta('consultar_usuario');
+                $nombreCompleto = '';
+                if ($datosUsuario['estatus']) {
+                    $datos = $datosUsuario['datos'];
+                    $nombreCompleto = ($datos['nombre_usuario'] ?? '') . ' ' . ($datos['apellido'] ?? '');
+                }
+
+                $respuesta = $usuario->realizar_consulta('eliminar_usuario');
+                if ($respuesta['estatus']) {
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_USUARIOS, $nombreCompleto);
+                }
+                break;
+
+            case 'ultimo_id':
+                $respuesta = $usuario->realizar_consulta('lastId');
+                break;
+
+            default:
+                $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
-        elseif ($operacion == "ultimo_id"){
-            $usuario_obj = new Usuario();
-            echo json_encode($usuario_obj->realizar_consulta('lastId'));
-        }
-        elseif ($operacion == "consultar_perfil_usuario") {
-            $usuario_obj = new Usuario();
+    } catch (Exception $e) {
+        error_log("Error en controlador: " . $e->getMessage());
+        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
+    }
+    echo json_encode($respuesta);
+    exit;
+}
 
-            $id_usuario = $_SESSION["id_usuario"];
-            
-            $usuario_obj->set_id_usuario($id_usuario);            
-            echo  json_encode($usuario_obj->realizar_consulta('consultar_perfil_usuario'));
-        }
-        elseif ($operacion == "consultar_notificaciones_usuario") {
-            $notificaciones_obj = new Notificaciones();
+// Validaciones AJAX
+if (isset($_POST["validar"])) {
+    header('Content-Type: application/json');
 
-            $id_usuario = $_SESSION["id_usuario"];
-            
-            $notificaciones_obj->set_usuario_id($id_usuario);
-            echo  json_encode($notificaciones_obj->realizar_consulta('consultar_notificaciones_usuario'));
-        }
-        elseif ($operacion == "editar_perfil") {
-            $usuario_obj = new Usuario();
+    $validar = $_POST["validar"];
 
-            $id_usuario = $_SESSION["id_usuario"];
-            $apellido = $_POST["apellido"];
-            $nombre = $_POST["nombre"];  
-            $correo = $_POST["correo"];  
-
-            $usuario_obj->set_id_usuario($id_usuario);
-            $usuario_obj->set_apellido($apellido);
-            $usuario_obj->set_nombre($nombre);
-            $usuario_obj->set_correo($correo);
-
-            $resultado = $usuario_obj->realizar_consulta("editar_perfil");
-
-            if ($resultado["estatus"]) {
-                $_SESSION["nombre_completo"] = $nombre;
+    switch ($validar) {
+        case 'correo':
+            $usuario->set_correo($_POST['correo'] ?? null);
+            $resultado = $usuario->realizar_consulta('verificar_correo');
+            // Adaptar al formato esperado por el frontend original
+            if ($resultado['estatus']) {
+                echo json_encode([
+                    'estatus' => true,
+                    'busqueda' => $resultado['existe'] ? 'correo' : null
+                ]);
+            } else {
+                echo json_encode($resultado);
             }
+            break;
 
-            echo  json_encode($usuario_obj->realizar_consulta('editar_perfil'));
-        }
-        elseif ($operacion == "cambiar_contrasenia") {
-            $usuario_obj = new Usuario();
+        case 'contra':
+        case 'contra_perfil':
+            // Validar contraseña actual
+            $id = ($validar == 'contra_perfil') ? $_SESSION["id_usuario"] : ($_POST['id_usuario'] ?? null);
+            if (!$id) {
+                echo json_encode(['estatus' => false, 'mensaje' => 'ID de usuario no proporcionado']);
+                break;
+            }
+            $usuario->set_id_usuario($id);
+            $datosUsuario = $usuario->realizar_consulta('consultar_usuario');
+            $contraIngresada = $_POST['contra'] ?? '';
+            $coincide = false;
+            if ($datosUsuario['estatus'] && isset($datosUsuario['datos']['contrasenia'])) {
+                $coincide = password_verify($contraIngresada, $datosUsuario['datos']['contrasenia']);
+            }
+            echo json_encode($coincide);
+            break;
 
-            $contrasenia = $_POST["contra"];
-            $correo = $_POST["correo"];
+        case 'validar_clave_foranea':
+            if (isset($_POST['tabla'], $_POST['nombre_clave'], $_POST['valor'])) {
+                        
+                $existe = $usuario->validarExistenciaExterna($_POST['tabla'], $_POST['nombre_clave'], $_POST['valor']);
+                
+                if ($existe) {
+                     echo json_encode(['estatus' => true, 'mensaje' => 'El valor existe']);
+                } else {
+                     echo json_encode(['estatus' => false, 'mensaje' => 'El valor seleccionado no existe en la base de datos']);
+                }
 
-            $usuario_obj->set_correo($correo);
-            $usuario_obj->set_contra($contrasenia);
+            } else {
+                echo json_encode(['estatus' => false, 'mensaje' => 'Faltan parámetros de validación']);
+            }
+            break;
 
-            echo  json_encode($usuario_obj->realizar_consulta('cambiar_contrasenia'));        
-        }
-        exit;
+        default:
+            echo json_encode(['estatus' => false, 'mensaje' => 'Validación no reconocida']);
     }
-    if (isset($_POST["validar"])) {
-        $validar = $_POST["validar"];
+    exit;
+}
 
-        if ($validar == "correo"){
-            $usuario_obj = new Usuario();
-
-            $usuario_obj->set_correo($_POST["correo"]);
-            echo  json_encode($usuario_obj->realizar_consulta('verificar_correo'));
-        }
-        elseif ($validar == "contra"){
-            $usuario_obj = new Usuario();
-
-            $contra = $_POST["contra"];
-
-            $usuario_obj->set_id_usuario($_POST["id_usuario"]);
-
-            $usuario_validar = $usuario_obj->realizar_consulta('consultar_usuario');
-
-            echo json_encode(password_verify($contra, $usuario_validar["contrasenia"]));
-        }
-        elseif ($validar == "contra_perfil"){
-            $usuario_obj = new Usuario();
-
-            $contra = $_POST["contra"];
-
-            $usuario_obj->set_id_usuario($_SESSION["id_usuario"]);
-
-            $usuario_validar = $usuario_obj->realizar_consulta('consultar_usuario');
-
-            echo json_encode(password_verify($contra, $usuario_validar["contrasenia"]));
-        }
-        elseif ($validar == "validar_clave_foranea") {
-            $usuario_obj = new Usuario();
-
-            $tabla = $_POST["tabla"];
-            $nombre_clave = $_POST["nombre_clave"];
-            $valor = $_POST["valor"];
-            
-            $resultado = $usuario_obj->realizar_consulta('validar_clave_foranea',["tabla"=>$tabla,"nombre_clave"=>$nombre_clave,"valor"=>$valor]);
-            
-            echo json_encode($resultado);
-        }
-        exit;
-    }
-    if ($accion == "perfil") {
-        $usuario_obj = new Usuario();
-
-        $id_usuario = $_SESSION["id_usuario"];
-
-        $usuario_obj->set_id_usuario($id_usuario);
-
-        $usuario = $usuario_obj->realizar_consulta('consultar_usuario');        
-        require_once "vista/usuarios/usuario_perfil.php";
-    }
-    if ($accion == "inicio") {
-        require_once "vista/usuarios/usuario_vista.php";
-    }
-?>
+// Carga de vistas según acción
+if ($accion == "inicio") {
+    require_once "vista/usuarios/usuario_vista.php";
+}

@@ -1,338 +1,367 @@
 <?php
-    namespace haydee\modelo;
-    use haydee\modelo\Conexion;
-    use PDO;
-    
-    class Banco extends Conexion{
-        // Atributos
-        private $id_banco;
-        private $nombre_banco;
-        private $codigo;
-        private $numero_cuenta;
-        private $telefono_afiliado;
-        private $cedula_afiliada;
+namespace haydee\modelo;
 
-        public function __construct(){
-            parent::__construct();
+use PDO;
+use PDOException;
+
+class Banco extends Conexion
+{
+    private $id_banco;
+    private $nombre_banco;
+    private $codigo;
+    private $numero_cuenta;
+    private $telefono_afiliado;
+    private $rif;
+    private $activo;
+
+    // Reglas de validación centralizadas
+    private $reglas = [
+        'id_banco' => [
+            'regex' => '/^\d+$/',
+            'exists' => ['tabla' => 'bancos', 'campo' => 'id_banco']
+        ],
+        'nombre_banco' => [
+            'regex' => '/^[A-Za-z ]{3,30}$/'
+        ],
+        'codigo' => [
+            'regex' => '/^\d{4}$/'
+        ],
+        'numero_cuenta' => [
+            'regex' => '/^\d{18,30}$/',
+            'unique' => ['tabla' => 'bancos', 'campo' => 'numero_cuenta', 'exclude_field' => 'id_banco']
+        ],
+        'telefono_afiliado' => [
+            'regex' => '/^\d{11}$/'
+        ],
+        'rif' => [
+            'regex' => '/^[VEJG]{1}[0-9]{7,10}$/'
+        ]
+    ];
+
+    // Getters y Setters
+    public function set_id_banco($id) { $this->id_banco = $id; }
+    public function get_id_banco() { return $this->id_banco; }
+    public function set_nombre_banco($nombre) { $this->nombre_banco = $nombre; }
+    public function get_nombre_banco() { return $this->nombre_banco; }
+    public function set_codigo($codigo) { $this->codigo = $codigo; }
+    public function get_codigo() { return $this->codigo; }
+    public function set_numero_cuenta($num) { $this->numero_cuenta = $num; }
+    public function get_numero_cuenta() { return $this->numero_cuenta; }
+    public function set_telefono_afiliado($tel) { $this->telefono_afiliado = $tel; }
+    public function get_telefono_afiliado() { return $this->telefono_afiliado; }
+    public function set_rif($rif) { $this->rif = $rif; }
+    public function get_rif() { return $this->rif; }
+    public function set_activo($activo) { $this->activo = $activo; }
+    public function get_activo() { return $this->activo; }
+
+    /**
+     * Enruta la acción al método privado correspondiente.
+     */
+    public function realizar_consulta($accion)
+    {
+        $metodo = '_' . $accion;
+        if (!method_exists($this, $metodo)) {
+            return ['estatus' => false, 'mensaje' => "La acción '$accion' no está implementada."];
         }
-        
-        // Metodos setter y getter
-        public function set_id_banco($id_banco){
-            $this->id_banco = $id_banco;
+
+        try {
+            return $this->$metodo();
+        } catch (\Exception $e) {
+            error_log("Error en realizar_consulta ($accion): " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Ocurrió un error interno en el servidor.'];
         }
+    }
 
-        public function get_id_banco(){
-            return $this->id_banco;
-        }
+    // -----------------------------------------------------------------
+    // Método de validación centralizado
+    // -----------------------------------------------------------------
 
-        public function set_nombre_banco($nombre_banco){
-            $this->nombre_banco = $nombre_banco;
-        }
-
-        public function get_nombre_banco(){
-            return $this->nombre_banco;
-        }
-
-        public function set_codigo($codigo){
-            $this->codigo = $codigo;
-        }
-
-        public function get_codigo(){
-            return $this->codigo;
-        }
-
-        public function set_numero_cuenta($numero_cuenta){
-            $this->numero_cuenta = $numero_cuenta;
-        }
-
-        public function get_numero_cuenta(){
-            return $this->numero_cuenta;
-        }
-
-        public function set_telefono_afiliado($telefono_afiliado){
-            $this->telefono_afiliado = $telefono_afiliado;
-        }
-
-        public function get_telefono_afiliado(){
-            return $this->telefono_afiliado;
-        }
-
-        public function set_cedula_afiliada($cedula_afiliada){
-            $this->cedula_afiliada = $cedula_afiliada;
-        }
-        
-        public function get_cedula_afiliada(){
-            return $this->cedula_afiliada;
-        }
-
-        // Metodos CRUD entre otros
-        public function realizar_consulta($accion){
-            switch ($accion) {
-                case 'validar':
-                    $respuesta = $this->verificar_banco();
-
-                    if ($respuesta["resultado"]) {
-                        if (isset($respuesta["datos"]["numero_cuenta"])) {
-                            return ["estatus"=>true,"busqueda"=>"numero_cuenta"];
-                        } else {
-                            return ["estatus"=>false,"busqueda"=>"numero_cuenta"];
-                        }
-                    } else {
-                        return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la validación del banco"];
-                    }
-
-                case 'consultar':
-                    $respuesta = $this->consultar();
-
-                    if ($respuesta["resultado"]) {
-                        $this->registrar_bitacora(CONSULTAR, GESTIONAR_BANCOS, "TODOS LOS BANCOS");
-                        return $respuesta["datos"];
-                    } else {
-                        return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
-                    }
-
-                case 'consulta_especifica':
-                    $respuesta = $this->consultar_banco();
-
-                    if ($respuesta["resultado"]) {
-                        return $respuesta["datos"];
-                    } else {
-                        return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta de este banco"];
-                    }
-
-                case 'registrar':
-                    // Validaciones
-                    $validaciones = $this->validarDatos();
-                    if(!($validaciones["estatus"])){return $validaciones;}
-
-                    $respuesta = $this->registrar_banco();
-
-                    if ($respuesta) {
-                        $id_ultimo = $this->lastId();
-                        $this->set_id_banco($id_ultimo["datos"]["last_id"]);
-                        $banco_alterado = $this->consultar_banco();
-                        $this->registrar_bitacora(REGISTRAR, GESTIONAR_BANCOS, $banco_alterado["datos"]["nombre_banco"] . " (" . $banco_alterado["datos"]["codigo"] . ")");
-                        return ["estatus"=>true,"mensaje"=>"OK"];
-                    } else {
-                        return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar registrar este banco"];
-                    }
-
-                case 'modificar':
-                    // Validaciones
-                    $validaciones = $this->validarDatos("editar");
-                    if(!($validaciones["estatus"])){return $validaciones;} 
-
-                    $respuesta = $this->editar_banco();
-
-                    if ($respuesta["resultado"]) {
-                        if ($respuesta["fila_afectada"] < 1) {
-                            return ["estatus"=>false,"mensaje"=>"No se realizaron cambios en la edición de este banco"];
-                        }
-
-                        $banco_alterado = $this->consultar_banco();
-                        $this->registrar_bitacora(MODIFICAR, GESTIONAR_BANCOS, $banco_alterado["datos"]["nombre_banco"] . " (" . $banco_alterado["datos"]["codigo"] . ")");
-                        return ["estatus"=>true,"mensaje"=>"OK"];
-                    } else {
-                        return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar editar este banco"];
-                    }
-
-                case 'eliminar':
-                    // Validaciones
-                    $validaciones = $this->validarDatos("eliminar");
-                    if(!($validaciones["estatus"])){return $validaciones;}
-
-                    $banco_alterado = $this->consultar_banco();
-
-                    $respuesta = $this->eliminar_banco();
-
-                    if ($respuesta["resultado"]) {
-                        if ($respuesta["fila_afectada"] < 1) {
-                            return ["estatus"=>false,"mensaje"=>"No se elimino este banco"];
-                        }
-
-                        $this->registrar_bitacora(ELIMINAR, GESTIONAR_BANCOS, $banco_alterado["datos"]["nombre_banco"] . " (" . $banco_alterado["datos"]["codigo"] . ")");
-                        return ["estatus"=>true,"mensaje"=>"OK"];
-                    } else {
-                        return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error al intentar eliminar este banco"];
-                    }
-
-                case 'lastId':
-                    $respuesta = $this->lastId();
-                    
-                    if ($respuesta["resultado"]) {
-                        return $respuesta["datos"];
-                    } 
-                    else {
-                        return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta"];
-                    }
-
-                default:
-                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error en el proceso"];
-                    break;
+    private function validar($campos, $contexto = [])
+    {
+        foreach ($campos as $campo) {
+            if (!isset($this->reglas[$campo])) {
+                return [
+                    'estatus' => false,
+                    'mensaje' => "No hay reglas de validación definidas para el campo '$campo'."
+                ];
             }
-        }
+            $regla = $this->reglas[$campo];
 
-        private function verificar_banco(){  // Verifica si existe el banco para así ver si se registra o no.
+            $getter = 'get_' . $campo;
+            if (!method_exists($this, $getter)) {
+                return [
+                    'estatus' => false,
+                    'mensaje' => "El campo '$campo' no tiene un getter definido."
+                ];
+            }
+            $valor = $this->$getter();
 
-            //$this->cambiar_db_seguridad(); // va documentada
-            $sql = "SELECT * FROM bancos WHERE numero_cuenta = :numero_cuenta"; 
-            $conexion = $this->get_conex()->prepare($sql);
-            $conexion->bindParam(":numero_cuenta", $this->numero_cuenta);
-            $result =$conexion->execute();
-            $datos = $conexion->fetch(PDO::FETCH_ASSOC);
-
-            //$this->cambiar_db_negocio(); // va documentada
-            return ["resultado"=>$result,"datos"=>$datos];
-        }
-
-        private function consultar(){
-
-            $sql = "SELECT * FROM `bancos` ORDER BY id_banco";
-            $conexion = $this->get_conex()->prepare($sql);
-            $result = $conexion->execute();
-            $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
-
-            return ["resultado"=>$result,"datos"=>$datos];
-        }
-
-        private function consultar_banco(){
-
-            $sql = "SELECT * FROM bancos WHERE id_banco = :id_banco";
-            $conexion = $this->get_conex()->prepare($sql);
-            $conexion->bindParam(":id_banco", $this->id_banco);
-            $result = $conexion->execute();        
-            $filas = $conexion->fetch(PDO::FETCH_ASSOC);
-
-            if (!$filas || count($filas) === 0) {
-                return ["estatus"=>false,"mensaje"=>"No se encontró el banco"];
+            // Requerido (todos lo son en este modelo)
+            if ($valor === null) {
+                return [
+                    'estatus' => false,
+                    'mensaje' => "El campo '$campo' es requerido y no se ha establecido."
+                ];
+            }
+            if (is_string($valor) && trim($valor) === '') {
+                return [
+                    'estatus' => false,
+                    'mensaje' => "El campo '$campo' no puede estar vacío."
+                ];
             }
 
-            return ["resultado"=>$result,"datos"=>$filas];
-        }
-
-        private function registrar_banco(){
-            //Validamos los datos obtenidos del controlador (validaciones back-end)
-            
-            //$this->cambiar_db_seguridad();
-
-            $sql = "INSERT INTO bancos(nombre_banco,codigo,numero_cuenta,telefono_afiliado,cedula_afiliada) VALUES (:nombre_banco,:codigo,:numero_cuenta,:telefono_afiliado,:cedula_afiliada)";
-        
-            $conexion = $this->get_conex()->prepare($sql);
-            $conexion->bindParam(":nombre_banco", $this->nombre_banco);
-            $conexion->bindParam(":codigo", $this->codigo);
-            $conexion->bindParam(":numero_cuenta", $this->numero_cuenta);
-            $conexion->bindParam(":telefono_afiliado", $this->telefono_afiliado);
-            $conexion->bindParam(":cedula_afiliada", $this->cedula_afiliada);
-            $result = $conexion->execute();
-
-            //$this->cambiar_db_negocio();
-
-            return $result;
-        }
-
-        private function editar_banco(){
-            //Validamos los datos obtenidos del controlador       
-
-            //$this->cambiar_db_seguridad();
-
-            $sql = "UPDATE bancos SET nombre_banco=:nombre_banco,codigo=:codigo,numero_cuenta=:numero_cuenta,telefono_afiliado=:telefono_afiliado,cedula_afiliada=:cedula_afiliada WHERE id_banco=:id_banco";
-
-            $conexion = $this->get_conex()->prepare($sql);    
-            $conexion->bindParam(":id_banco", $this->id_banco);
-            $conexion->bindParam(":nombre_banco", $this->nombre_banco);
-            $conexion->bindParam(":codigo", $this->codigo);
-            $conexion->bindParam(":numero_cuenta", $this->numero_cuenta);
-            $conexion->bindParam(":telefono_afiliado", $this->telefono_afiliado);
-            $conexion->bindParam(":cedula_afiliada", $this->cedula_afiliada);
-
-            $result = $conexion->execute();
-            $filas_afectadas = $conexion->rowCount();
-
-            return ["resultado"=>$result,"fila_afectada"=>$filas_afectadas];
-        }
-
-        private function eliminar_banco(){
-            //Validamos los datos obtenidos del controlador
-            
-            //$this->cambiar_db_seguridad();
-
-            $sql = "DELETE FROM bancos WHERE id_banco = :id_banco";
-
-            $conexion = $this->get_conex()->prepare($sql);
-            $conexion->bindParam(":id_banco", $this->id_banco);
-            $result = $conexion->execute();
-
-            //$this->cambiar_db_negocio();
-            
-            return ["resultado"=>$result,"fila_afectada"=>$conexion->rowCount()];
-        }
-
-        private function lastId(){
-            //$this->cambiar_db_seguridad();
-            $sql = "SELECT MAX(id_banco) as last_id FROM bancos";
-            $conexion = $this->get_conex()->prepare($sql);
-            $result = $conexion->execute();
-            $datos = $conexion->fetch(PDO::FETCH_ASSOC);
-            $this->cambiar_db_negocio();
-
-            return ["resultado"=>$result,"datos"=>$datos];
-        }
-
-        private function validarDatos($consulta = "registrar"){   
-            // Validamos el id usuario en caso de editar o eliminar porque en registrar no existe todavia
-            if ($consulta == "editar" || $consulta == "eliminar") {
-                if (!(isset($this->id_banco))) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos no se recibieron correctamente"];}
-
-                if (empty($this->id_banco)) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos estan vacios"];}
-                
-                if ($consulta == "eliminar") {
-                    return ["estatus"=>true,"mensaje"=>"OK"];
+            // Validar con expresión regular
+            if (isset($regla['regex'])) {
+                if (!preg_match($regla['regex'], (string)$valor)) {
+                    return [
+                        'estatus' => false,
+                        'mensaje' => "El campo '$campo' no tiene un formato válido."
+                    ];
                 }
-            } 
-            // Validamos que los campos enviados si existan
+            }
 
-            if (!(isset($this->nombre_banco) && isset($this->codigo) && isset($this->numero_cuenta) && isset($this->telefono_afiliado) && isset($this->cedula_afiliada))) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos no se recibieron correctamente"];}
+            // Validar existencia en otra tabla (foránea)
+            if (isset($regla['exists'])) {
+                $tabla = $regla['exists']['tabla'];
+                $campoFor = $regla['exists']['campo'] ?? $campo;
+                if (!$this->existeEnTabla($tabla, $campoFor, $valor)) {
+                    return [
+                        'estatus' => false,
+                        'mensaje' => "El valor del campo '$campo' no existe en la tabla $tabla."
+                    ];
+                }
+            }
 
-            // Validamos que los campos enviados no esten vacios
+            // Validar unicidad
+            if (isset($regla['unique'])) {
+                $tabla = $regla['unique']['tabla'];
+                $campoUnico = $regla['unique']['campo'] ?? $campo;
+                $excludeField = $regla['unique']['exclude_field'] ?? null;
+                $excludeValue = $contexto['exclude_id'] ?? null;
+                if (!$this->esUnico($tabla, $campoUnico, $valor, $excludeField, $excludeValue)) {
+                    return [
+                        'estatus' => false,
+                        'mensaje' => "El valor del campo '$campo' ya está registrado."
+                    ];
+                }
+            }
+        }
+        return ['estatus' => true];
+    }
 
-            if (empty($this->nombre_banco) || empty($this->codigo) ||empty($this->numero_cuenta) || empty($this->telefono_afiliado) || empty($this->cedula_afiliada)) {return ["estatus"=>false,"mensaje"=>"Uno o varios de los campos requeridos estan vacios"];}
+    /**
+     * Verifica si un valor existe en una tabla específica.
+     */
+    private function existeEnTabla($tabla, $campo, $valor)
+    {
+        $sql = "SELECT COUNT(*) as total FROM $tabla WHERE $campo = :valor";
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->bindParam(':valor', $valor);
+            $stmt->execute();
+            $fila = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $fila['total'] > 0;
+        } catch (PDOException $e) {
+            error_log("Error en existeEnTabla: " . $e->getMessage());
+            return false;
+        }
+    }
 
-            // Verificamos si los valores tienen los datos que deberian
-            
-            if(!(is_string($this->nombre_banco)) || !(preg_match("/^[A-Za-z \b]{3,30}$/",$this->nombre_banco))){
-                return ["estatus"=>false,"mensaje"=>"El campo 'Nombre del Banco' no posee un valor valido"];
+    /**
+     * Verifica si un valor es único (exceptuando un ID dado).
+     */
+    private function esUnico($tabla, $campo, $valor, $excludeField = null, $excludeValue = null)
+    {
+        $sql = "SELECT COUNT(*) as total FROM $tabla WHERE $campo = :valor";
+        if ($excludeField && $excludeValue !== null) {
+            $sql .= " AND $excludeField != :exclude_val";
+        }
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->bindParam(':valor', $valor);
+            if ($excludeField && $excludeValue !== null) {
+                $stmt->bindParam(':exclude_val', $excludeValue);
             }
-            if(!(is_numeric($this->codigo)) || !(preg_match("/^[0-9\b]{4}$/",$this->codigo))){
-                return ["estatus"=>false,"mensaje"=>"El campo 'Codigo' no posee un valor valido"];
-            }
-            if(!(is_numeric($this->numero_cuenta)) || !(preg_match("/^[0-9\b]{18,30}$/",$this->numero_cuenta))){
-                return ["estatus"=>false,"mensaje"=>"El campo 'Numero de Cuenta' no posee un valor valido"];
-            }
-            if(!(is_numeric($this->telefono_afiliado)) || !(preg_match("/^[0-9\b]{11}$/",$this->telefono_afiliado))){
-                return ["estatus"=>false,"mensaje"=>"El campo 'Telefono Afiliado' no posee un valor valido"];
-            }
-            if(!(is_string($this->cedula_afiliada)) || !(preg_match("/^[VEJG\b]{1}[0-9\b]{7,10}$/",$this->cedula_afiliada))){
-                return ["estatus"=>false,"mensaje"=>"El campo 'Documento Afiliado' no posee un valor valido"];
-            }
-            
-            return ["estatus"=>true,"mensaje"=>"OK"];
+            $stmt->execute();
+            $fila = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $fila['total'] == 0;
+        } catch (PDOException $e) {
+            error_log("Error en esUnico: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    // -----------------------------------------------------------------
+    // Métodos privados (acciones)
+    // -----------------------------------------------------------------
+
+    /**
+     * Verifica si ya existe un banco con el mismo número de cuenta (para validación rápida).
+     */
+    private function _validar()
+    {
+        $validacion = $this->validar(['numero_cuenta']);
+        if (!$validacion['estatus']) {
+            return $validacion;
         }
 
-        private function validarClaveForanea($tabla,$nombreClave,$valor,$seguridad = false){
-            if ($seguridad) {
-                $this->cambiar_db_seguridad();
-            }
-            $sql="SELECT * FROM $tabla WHERE $nombreClave =:valor";
-
-            $conexion = $this->get_conex()->prepare($sql);
-            $conexion->bindParam(":valor", $valor);
-            $conexion->execute();
-            $result = $conexion->fetch(PDO::FETCH_ASSOC);
-
-            if ($seguridad) {
-                $this->cambiar_db_negocio();
-            }
-            return ($result)?true:false;
+        $sql = "SELECT id_banco FROM bancos WHERE numero_cuenta = :numero_cuenta AND activo = 1";
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->bindParam(':numero_cuenta', $this->numero_cuenta);
+            $stmt->execute();
+            $existe = $stmt->fetch(PDO::FETCH_ASSOC) ? true : false;
+            return ['estatus' => true, 'existe' => $existe];
+        } catch (PDOException $e) {
+            error_log("Error en _validar: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al verificar banco'];
         }
-    }   
+    }
+
+    /**
+     * Lista todos los bancos activos.
+     */
+    private function _consultar()
+    {
+        $sql = "SELECT * FROM bancos WHERE activo = 1 ORDER BY id_banco";
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->execute();
+            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return ['estatus' => true, 'datos' => $datos];
+        } catch (PDOException $e) {
+            error_log("Error en _consultar: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al consultar bancos'];
+        }
+    }
+
+    /**
+     * Consulta un banco específico por ID.
+     */
+    private function _consultar_banco()
+    {
+        $validacion = $this->validar(['id_banco']);
+        if (!$validacion['estatus']) {
+            return $validacion;
+        }
+
+        $sql = "SELECT * FROM bancos WHERE id_banco = :id_banco AND activo = 1";
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->bindParam(':id_banco', $this->id_banco);
+            $stmt->execute();
+            $datos = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$datos) {
+                return ['estatus' => false, 'mensaje' => 'Banco no encontrado'];
+            }
+            return ['estatus' => true, 'datos' => $datos];
+        } catch (PDOException $e) {
+            error_log("Error en _consultar_banco: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al consultar el banco'];
+        }
+    }
+
+    /**
+     * Registra un nuevo banco.
+     */
+    private function _registrar()
+    {
+        $campos = ['nombre_banco', 'codigo', 'numero_cuenta', 'telefono_afiliado', 'rif'];
+        $validacion = $this->validar($campos);
+        if (!$validacion['estatus']) {
+            return $validacion;
+        }
+
+        $sql = "INSERT INTO bancos (nombre_banco, codigo, numero_cuenta, telefono_afiliado, rif)
+                VALUES (:nombre_banco, :codigo, :numero_cuenta, :telefono_afiliado, :rif)";
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->bindParam(':nombre_banco', $this->nombre_banco);
+            $stmt->bindParam(':codigo', $this->codigo);
+            $stmt->bindParam(':numero_cuenta', $this->numero_cuenta);
+            $stmt->bindParam(':telefono_afiliado', $this->telefono_afiliado);
+            $stmt->bindParam(':rif', $this->rif);
+            $stmt->execute();
+            $lastId = $this->get_conex('negocio')->lastInsertId();
+            return ['estatus' => true, 'mensaje' => 'Banco registrado correctamente', 'lastId' => $lastId];
+        } catch (PDOException $e) {
+            error_log("Error en _registrar: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al registrar el banco'];
+        }
+    }
+
+    /**
+     * Actualiza un banco existente.
+     */
+    private function _editar()
+    {
+        $campos = ['id_banco', 'nombre_banco', 'codigo', 'numero_cuenta', 'telefono_afiliado', 'rif'];
+        $contexto = ['exclude_id' => $this->id_banco];
+        $validacion = $this->validar($campos, $contexto);
+        if (!$validacion['estatus']) {
+            return $validacion;
+        }
+
+        $sql = "UPDATE bancos SET 
+                    nombre_banco = :nombre_banco,
+                    codigo = :codigo,
+                    numero_cuenta = :numero_cuenta,
+                    telefono_afiliado = :telefono_afiliado,
+                    rif = :rif
+                WHERE id_banco = :id_banco";
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->bindParam(':id_banco', $this->id_banco);
+            $stmt->bindParam(':nombre_banco', $this->nombre_banco);
+            $stmt->bindParam(':codigo', $this->codigo);
+            $stmt->bindParam(':numero_cuenta', $this->numero_cuenta);
+            $stmt->bindParam(':telefono_afiliado', $this->telefono_afiliado);
+            $stmt->bindParam(':rif', $this->rif);
+            $stmt->execute();
+            return ['estatus' => true, 'mensaje' => 'Banco actualizado correctamente'];
+        } catch (PDOException $e) {
+            error_log("Error en _editar: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al actualizar el banco'];
+        }
+    }
+
+    /**
+     * Elimina un banco (soft delete).
+     */
+    private function _eliminar()
+    {
+        $validacion = $this->validar(['id_banco']);
+        if (!$validacion['estatus']) {
+            return $validacion;
+        }
+
+        $sql = "UPDATE bancos SET activo = 0 WHERE id_banco = :id_banco";
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->bindParam(':id_banco', $this->id_banco);
+            $stmt->execute();
+            return ['estatus' => true, 'mensaje' => 'Banco eliminado correctamente'];
+        } catch (PDOException $e) {
+            error_log("Error en _eliminar: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al eliminar el banco'];
+        }
+    }
+
+    /**
+     * Último ID insertado en bancos.
+     */
+    private function _lastId()
+    {
+        $sql = "SELECT MAX(id_banco) as last_id FROM bancos";
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->execute();
+            $dato = $stmt->fetch(PDO::FETCH_ASSOC);
+            return ['estatus' => true, 'datos' => $dato];
+        } catch (PDOException $e) {
+            error_log("Error en _lastId: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al obtener último ID'];
+        }
+    }
+}
 ?>

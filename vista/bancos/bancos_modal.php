@@ -37,7 +37,7 @@
     </div>
     <div class="row m-3">
         <div class="col-lg-6">
-            <label for="documento_afiliado">Documento Afiliado</label>
+            <label for="rif">Documento Afiliado</label>
             <div class="input-group mb-3">
                 <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-person-vcard-fill"></i></span>
                 <select class="form-select border border-dark" id="tipo_documento" aria-label="Default select example" for="tipo_documento" name="tipo_documento">
@@ -47,7 +47,7 @@
                     <option value="J">J</option>
                     <option value="G">G</option>
                 </select>
-                <input type="text" class="border border-dark form-control documento_afiliado" name="documento_afiliado" id="documento_afiliado" placeholder="Ejem: 12345678" aria-label="documento_afiliado" aria-describedby="basic-addon1" minlength="7" maxlength="9" disabled style="flex-grow: 7">
+                <input type="text" class="border border-dark form-control rif" name="rif" id="rif" placeholder="Ejem: 12345678" aria-label="rif" aria-describedby="basic-addon1" minlength="7" maxlength="9" disabled style="flex-grow: 7">
                 <span class="w-100 invalid-feedback"></span>
             </div>
         </div>

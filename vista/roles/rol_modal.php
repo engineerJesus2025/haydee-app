@@ -18,8 +18,7 @@
             <tbody>
                 <?php $contador = 1; ?>
                 <?php foreach ($registros_modulos as $registro_modulo) : ?>
-                    <tr>
-                        
+                    <tr data-modulo="<?php echo $registro_modulo['id_modulo'] ?>">
                         <td>
                             <span> <?php echo str_replace("_", " ", $registro_modulo["nombre"]); ?></span>
                             <div class="form-check mt-3 text-muted">
@@ -39,18 +38,14 @@
                                         <div class="accordion-body">
                                             <div class="row">
                                                 <?php 
-                                                foreach ($registros_permisos_usuarios as $registro_permiso) {
-                                                    if ($registro_permiso["modulo_id"] == $registro_modulo["id_modulo"]) { ?>
+                                                foreach ($registros_permisos_usuarios as $registro_permiso) { ?>
                                                         <div class="col">
                                                             <label>
-                                                                <input class="form-check-input" type="checkbox" name="permisos[]" value="<?php echo $registro_permiso["id_permiso_usuario"]; ?>" error='0'/>
-                                                                <span> <?php echo $registro_permiso["nombre_accion"] ?></span>
+                                                                <input class="form-check-input" type="checkbox" name="permisos[]" value="<?php echo $registro_permiso["id_permiso"]; ?>" error='0'/>
+                                                                <span> <?php echo $registro_permiso["accion"] ?></span>
                                                             </label>
                                                         </div>
-                                                        <?php 
-                                                    }
-                                                }
-                                                ?>
+                                                    <?php } ?>
                                                 <span style="width: 100%; margin-top: .25rem;font-size: .875em; color: var(--bs-form-invalid-color);"></span>
                                             </div>
                                         </div>

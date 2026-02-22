@@ -1,4 +1,4 @@
-<?php use haydee\modelo\Conexion; ?>
+<?php use haydee\ayuda\Sesiones; ?>
 <div class="header body-pd" id="header">
     <div class="l-navbar show" id="nav-bar">
         <nav class="nav ps-3">
@@ -11,7 +11,7 @@
                     <span class="nav_logo-name">Inicio</span>
                 </a>
                 <div class="nav_list">
-                    <?php if (Conexion::tiene_permiso(GESTIONAR_PAGOS, CONSULTAR)): ?>
+                    <?php if (Sesiones::tienePermiso(GESTIONAR_PAGOS, CONSULTAR)): ?>
                         <a href="?pagina=pagos_controlador.php&accion=inicio"
                             class="nav_link <?php echo ($_GET["pagina"] == "pagos_controlador.php") ? "active" : ''; ?>"
                             title="Pagos">
@@ -19,7 +19,7 @@
                             <span class="nav_name">Pagos</span>
                         </a>
                     <?php endif; ?>
-                    <?php if (Conexion::tiene_permiso(GESTIONAR_GASTOS, CONSULTAR)): ?>
+                    <?php if (Sesiones::tienePermiso(GESTIONAR_GASTOS, CONSULTAR)): ?>
                         <a href="?pagina=gastos_controlador.php&accion=inicio"
                             class="nav_link <?php echo ($_GET["pagina"] == "gastos_controlador.php") ? "active" : ''; ?>"
                             title="Gastos">
@@ -27,7 +27,7 @@
                             <span class="nav_name">Gastos</span>
                         </a>
                     <?php endif; ?>
-                    <?php if (Conexion::tiene_permiso(GESTIONAR_CAJA_CHICA, CONSULTAR)): ?>
+                    <?php if (Sesiones::tienePermiso(GESTIONAR_CAJA_CHICA, CONSULTAR)): ?>
                         <a href="?pagina=caja_chica_controlador.php&accion=inicio"
                             class="nav_link <?php echo ($_GET["pagina"] == "caja_chica_controlador.php") ? "active" : ''; ?>"
                             title="Caja Chica">
@@ -35,13 +35,13 @@
                             <span class="nav_name">Caja Chica</span>
                         </a>
                     <?php endif; ?>
-                    <?php if (Conexion::tiene_permiso(GESTIONAR_MENSUALIDAD, CONSULTAR)) : ?> 
+                    <?php if (Sesiones::tienePermiso(GESTIONAR_MENSUALIDAD, CONSULTAR)) : ?> 
                     <a href="?pagina=mensualidad_controlador.php&accion=inicio" class="nav_link <?php echo ($_GET["pagina"] == "mensualidad_controlador.php")?"active":''; ?>" title="Mensualidad"> 
                         <i class="bi bi-piggy-bank-fill nav_logo-icon"></i>
                         <span class="nav_name">Mensualidad</span> 
                     </a>
                     <?php endif; ?>
-                    <?php if (Conexion::tiene_permiso(GESTIONAR_CARTELERA_VIRTUAL, CONSULTAR)): ?>
+                    <?php if (Sesiones::tienePermiso(GESTIONAR_CARTELERA_VIRTUAL, CONSULTAR)): ?>
                         <a href="?pagina=cartelera_virtual_controlador.php&accion=inicio"
                             class="nav_link <?php echo ($_GET["pagina"] == "cartelera_virtual_controlador.php") ? "active" : ''; ?>"
                             title="Cartelera Virtual">
@@ -49,7 +49,7 @@
                             <span class="nav_name">Cartelera Virtual</span>
                         </a>
                     <?php endif; ?>
-                    <?php if (Conexion::tiene_permiso(GESTIONAR_APARTAMENTOS, CONSULTAR)): ?>
+                    <?php if (Sesiones::tienePermiso(GESTIONAR_APARTAMENTOS, CONSULTAR)): ?>
                         <a href="?pagina=apartamentos_controlador.php&accion=inicio"
                             class="nav_link <?php echo ($_GET["pagina"] == "apartamentos_controlador.php") ? "active" : ''; ?>"
                             title="Apartamentos">
@@ -57,26 +57,26 @@
                             <span class="nav_name">Apartamentos</span>
                         </a>
                     <?php endif; ?>                    
-                    <?php if (Conexion::tiene_permiso(GESTIONAR_SOLICITUD_GASTO, CONSULTAR)) : ?>
+                    <?php if (Sesiones::tienePermiso(GESTIONAR_SOLICITUD_GASTO, CONSULTAR)) : ?>
                     <a href="?pagina=solicitud_gasto_controlador.php&accion=inicio" class="nav_link <?php echo ($_GET["pagina"] == "solicitud_gasto_controlador.php")?"active":''; ?>" title="Solicitud Gasto"> 
                         <i class="bi-clipboard-check nav_logo-icon"></i>
                         <span class="nav_name">Solicitud Gasto</span> 
                     </a>
                     <?php endif; ?>
-                    <?php if (Conexion::tiene_permiso(GESTIONAR_PRESUPUESTO, CONSULTAR)) : ?>
+                    <?php if (Sesiones::tienePermiso(GESTIONAR_PRESUPUESTO, CONSULTAR)) : ?>
                     <a href="?pagina=presupuesto_controlador.php&accion=inicio" class="nav_link <?php echo ($_GET["pagina"] == "presupuesto_controlador.php")?"active":''; ?>" title="Presupuesto Mensual"> 
                         <i class="bi bi-calculator nav_logo-icon"></i>
                         <span class="nav_name">Presupuesto<br> Mensual</span> 
                     </a>
                     <?php endif; ?>
-                    <?php if (Conexion::tiene_permiso(GESTIONAR_ANIO_FISCAL, CONSULTAR)) : ?>
+                    <?php if (Sesiones::tienePermiso(GESTIONAR_ANIO_FISCAL, CONSULTAR)) : ?>
                     <a href="?pagina=anio_fiscal_controlador.php&accion=inicio" class="nav_link <?php echo ($_GET["pagina"] == "anio_fiscal_controlador.php")?"active":''; ?>" title="Año Fiscal"> 
                         <i class="bi-calendar-range nav_logo-icon"></i>
                         <span class="nav_name">Año Fiscal</span> 
                     </a>
                     <?php endif; ?>
 
-                    <?php if (Conexion::tiene_permiso(GESTIONAR_REPORTES, CONSULTAR)) : 
+                    <?php if (Sesiones::tienePermiso(GESTIONAR_REPORTES, CONSULTAR)) : 
                         $reporte = ($_GET["accion"] === "reportes_pdf")?1:0;
                         $reporte_estadistico = (in_array($_GET["accion"], ['reportes_estadisticos','habitantes','ingreso_egreso'],true))?1:0;
                         ?>
@@ -98,7 +98,7 @@
 
 
 
-                    <?php if (Conexion::tiene_permiso(GESTIONAR_CONFIGURACION, CONSULTAR)): 
+                    <?php if (Sesiones::tienePermiso(GESTIONAR_CONFIGURACION, CONSULTAR)): 
                         $configuracion = ($_GET["pagina"] == "proveedores_controlador.php" || $_GET["pagina"] == "bancos_controlador.php" || $_GET["pagina"] == "tipo_gasto_controlador.php")?true:false;
                         ?>
                         <a class="nav_link" title="Configuración" data-bs-toggle="collapse" href="#collapse_configuracion" role="button" aria-expanded="false" aria-controls="collapse_configuracion">
@@ -106,19 +106,19 @@
                             <span class="nav_name">Configuración</span>
                         </a>
                         <div class="collapse my-2 ms-4 py-2 bg-light rounded <?php echo ($configuracion)?'show':'';?>" id="collapse_configuracion" style="width: auto;">
-                            <?php if (Conexion::tiene_permiso(GESTIONAR_PROVEEDORES, CONSULTAR)): ?>
+                            <?php if (Sesiones::tienePermiso(GESTIONAR_PROVEEDORES, CONSULTAR)): ?>
                             <a href="?pagina=proveedores_controlador.php&accion=inicio" class="nav_link <?php echo ($_GET["pagina"] == "proveedores_controlador.php")?"active":''; ?>" title="Gestionar Proveedores"> 
                                 <i class="bi bi-truck nav_logo-icon text-dark"></i>
                                 <span class="nav_name">Proveedores</span> 
                             </a>
                             <?php endif; ?>
-                            <?php if (Conexion::tiene_permiso(GESTIONAR_BANCOS, CONSULTAR)): ?>
+                            <?php if (Sesiones::tienePermiso(GESTIONAR_BANCOS, CONSULTAR)): ?>
                             <a href="?pagina=bancos_controlador.php&accion=inicio" class="nav_link <?php echo ($_GET["pagina"] == "bancos_controlador.php")?"active":''; ?>" title="Gestionar Bancos"> 
                                 <i class="bi bi-piggy-bank nav_logo-icon text-dark"></i>
                                 <span class="nav_name">Bancos</span> 
                             </a>
                             <?php endif; ?>
-                            <?php if (Conexion::tiene_permiso(GESTIONAR_TIPO_GASTO, CONSULTAR)): ?>
+                            <?php if (Sesiones::tienePermiso(GESTIONAR_TIPO_GASTO, CONSULTAR)): ?>
                             <a href="?pagina=tipo_gasto_controlador.php&accion=inicio" class="nav_link <?php echo ($_GET["pagina"] == "tipo_gasto_controlador.php")?"active":''; ?>" title="Gestionar Tipo de Gasto"> 
                                 <i class="bi bi-columns-gap nav_logo-icon text-dark"></i>
                                 <span class="nav_name">Tipo de Gasto</span> 
@@ -129,7 +129,7 @@
 
 
 
-                    <?php if (Conexion::tiene_permiso(GESTIONAR_USUARIOS, CONSULTAR)): ?>
+                    <?php if (Sesiones::tienePermiso(GESTIONAR_USUARIOS, CONSULTAR)): ?>
                         <a href="?pagina=usuario_controlador.php&accion=inicio"
                             class="nav_link <?php echo ($_GET['pagina'] == 'usuario_controlador.php' || $_GET['accion'] == 'perfil') ? 'active' : ''; ?>"
                             title="Usuarios">
@@ -137,7 +137,7 @@
                             <span class="nav_name">Usuarios</span>
                         </a>
                     <?php endif; ?>
-                    <?php if (Conexion::tiene_permiso(GESTIONAR_SEGURIDAD, CONSULTAR)): 
+                    <?php if (Sesiones::tienePermiso(GESTIONAR_SEGURIDAD, CONSULTAR)): 
                         $seguridad = ($_GET["pagina"] == "rol_controlador.php" || $_GET["pagina"] == "bitacora_controlador.php")?true:false;
                         ?>
                         <a class="nav_link" title="Seguridad" data-bs-toggle="collapse" href="#collapse_seguridad" role="button" aria-expanded="false" aria-controls="collapse_seguridad">
@@ -145,13 +145,13 @@
                             <span class="nav_name">Seguridad</span>
                         </a>
                         <div class="collapse my-2 ms-4 py-2 bg-light rounded <?php echo ($seguridad)?'show':'';?>" id="collapse_seguridad" style="width: auto;">
-                            <?php if (Conexion::tiene_permiso(GESTIONAR_ROLES, CONSULTAR)): ?>
+                            <?php if (Sesiones::tienePermiso(GESTIONAR_ROLES, CONSULTAR)): ?>
                             <a href="?pagina=rol_controlador.php&accion=inicio" class="nav_link <?php echo ($_GET["pagina"] == "rol_controlador.php")?"active":''; ?>" title="Gestionar Roles"> 
                                 <i class="bi bi-person-gear nav_logo-icon text-dark"></i>
                                 <span class="nav_name">Roles</span> 
                             </a>
                             <?php endif; ?>
-                            <?php if (Conexion::tiene_permiso(GESTIONAR_BITACORA, CONSULTAR)): ?>
+                            <?php if (Sesiones::tienePermiso(GESTIONAR_BITACORA, CONSULTAR)): ?>
                             <a href="?pagina=bitacora_controlador.php&accion=inicio" class="nav_link <?php echo ($_GET["pagina"] == "bitacora_controlador.php")?"active":''; ?>" title="Gestionar Bitacora"> 
                                 <i class="bi bi-arrows-move nav_logo-icon text-dark"></i>
                                 <span class="nav_name">Bitácora</span> 
@@ -165,7 +165,7 @@
                             <i class="bi bi-bell-fill nav_logo-icon"></i>
                             <span class="nav_name">Notificaciones</span>
                         </a>
-                    <?php if (Conexion::tiene_permiso(GESTIONAR_MANTENIMIENTO, CONSULTAR)): ?>
+                    <?php if (Sesiones::tienePermiso(GESTIONAR_MANTENIMIENTO, CONSULTAR)): ?>
                         <a href="?pagina=mantenimiento_controlador.php&accion=inicio"
                             class="nav_link <?php echo ($_GET["pagina"] == "mantenimiento_controlador.php") ? "active" : ''; ?>"
                             title="Mantenimiento">

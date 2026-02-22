@@ -1,296 +1,155 @@
-$(document).ready(function(){
-	$("#nombre").on("keypress",function(e){
-		validarKeyPress(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, e);
-	});
+/**
+ * Script de validaciones para Perfil de Usuario
+ * Dependencias: validaciones.js (Objeto Validaciones), utilidades.js (Objeto Utilidades)
+ */
 
-	$("#nombre").on("keyup",function(){
-		validarKeyUp(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,20}$/,
-		this,this.nextElementSibling,"Solo texto, no mas de 20 caracteres");
-	});
+$(document).ready(function() {
+    // ============================================
+    // VALIDACIONES EN TIEMPO REAL
+    // ============================================
+    $('#nombre, #apellido').on('keypress', function(e) {
+        Validaciones.keyPress(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, e);
+    });
 
-	$("#apellido").on("keypress",function(e){
-		validarKeyPress(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, e);
-	});
+    $('#nombre, #apellido').on('keyup', function() {
+        Validaciones.keyUp(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,20}$/, this, this.nextElementSibling, 'Solo texto, no más de 20 caracteres');
+    });
 
-	$("#apellido").on("keyup",function(){
-		validarKeyUp(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,20}$/,
-		this,this.nextElementSibling,"Solo texto, no mas de 20 caracteres");
-	});
+    $('#correo').on('keypress', function(e) {
+        Validaciones.keyPress(/^[A-Za-z0-9_+.@\b]*$/, e);
+    });
 
-	$("#correo").on("keypress",function(e){	
-		validarKeyPress(/^[A-Za-z0-9_+.@\b]*$/, e);
-	});
+    $('#correo').on('keyup', function() {
+        Validaciones.keyUp(/^[a-zA-Z0-9._+-]{3,35}@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/, this, this.nextElementSibling, 'El formato debe ser: ejemplo@gmail.com');
+    });
 
-	$("#correo").on("keyup",function(e){
-		validarKeyUp(/^[a-zA-Z0-9._+-]{3,35}@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/,this,
-		this.nextElementSibling,"El formato debe ser asi: ejemplo@gmail.com");
-	});
+    // Validación de duplicidad de correo en tiempo real
+    $('#correo').on('blur', async function() {
+        if ($(this).val() === correo_an) return; // No ha cambiado
 
-	$("#contra").on("keyup",function(e){
-		validarKeyUp(
-        /^[A-Za-z0-9_.+*$#%&@]{5,50}$/,
-        this,this.nextElementSibling.nextElementSibling,'La contraseña debe tener mínimo 5 caracteres'
-        )
-	});
+        if (Validaciones.keyUp(/^[a-zA-Z0-9._+-]{3,35}@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/, this, this.nextElementSibling, '')) {
+            const datos = new FormData();
+            datos.append('validar', 'correo');
+            datos.append('correo', $(this).val());
+            await Validaciones.verificarDuplicado(datos,'Este correo ya está en uso, ingrese uno diferente.');
+            // await verificarDuplicados(datos);
+        }
+    });
 
-	$("#confir_contra").on("keyup",function(e){
-		validarKeyUp(
-        /^[A-Za-z0-9_.+*$#%&@]{5,50}$/,
-        this,this.nextElementSibling.nextElementSibling,'La contraseña debe tener mínimo 5 caracteres'
-        )
-	});
-	$("#contra_actual").on("keyup",function(e){
-		validarKeyUp(
-        /^[A-Za-z0-9_.+*$#%&@]{5,50}$/,
-        this,this.nextElementSibling.nextElementSibling,'La contraseña debe tener mínimo 5 caracteres'
-        )
-	});
-	
-	$("#boton_guardar").on("click",async function(e){		
-		e.preventDefault();
-		if(await validarEnvio()==true){
-			Swal.fire({
-			title: "¿Estás seguro?",
-			text: `¿Está seguro que desea editar estos datos?`,
-			showCancelButton: true,
-			confirmButtonText: "Si, Editar",
-			confirmButtonColor: "#1b8a40",
-			cancelButtonText: "Cancelar",
-			icon: "warning"
-			}).then((result) => {
-				if (result.isConfirmed) {
-					modificar();						
-					correo_an = null;//resetea el valor del correo original (esto es de usuario_ajax.js)
-				}
-			});
-		}	
-	});
+    // Validaciones de contraseña
+    $('#contra, #confir_contra, #contra_actual').on('keyup', function() {
+        Validaciones.keyUp(/^[A-Za-z0-9_.+*$#%&@-]{5,100}$/, this, this.nextElementSibling.nextElementSibling, 'Mínimo 5 caracteres');
+    });
 
-	$("#boton_guardar_contra").on("click",async function(e){		
-		e.preventDefault();
-		if(await validarEnvioContra()==true){
-			Swal.fire({
-			title: "¿Estás seguro?",
-			text: `¿Está seguro que desea cambiar su contraseña?`,
-			showCancelButton: true,
-			confirmButtonText: "Si, Cambiar",
-			confirmButtonColor: "#1b8a40",
-			cancelButtonText: "Cancelar",
-			icon: "warning"
-			}).then((result) => {
-				if (result.isConfirmed) {
-					modificarContra();
-				}
-			});
-		}	
-	});
-
-	$("#correo").on("keyup",function(e){
-		if (validarKeyUp(
-        /^[a-zA-Z0-9._+-]{3,35}@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/,
-        document.querySelector("#correo"),document.querySelector("#correo").nextElementSibling,'El formato debe ser ejemplo@gmail.com'
-        )) {
-        	if (this.value == correo_an) {return;}
-			let datos = new FormData();
-			datos.append('validar','correo');
-			datos.append('correo',$(this).val());			
-			verificar_duplicados(datos);
-        }		
-	})
-});	//Fin de AJAX
-
-function mensajes(icono,tiempo,titulo,mensaje){
-	Swal.fire({
-	icon:icono,
-    timer:tiempo,	
-    title:titulo,
-	text:mensaje,
-	showConfirmButton:true,
-	confirmButtonText:'Aceptar',
-	confirmButtonColor: "#e01d22",
-	});
-}
-
-async function validarEnvio(accion = "Registrar"){	
-	if(validarKeyUp(
-        /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,20}$/,
-        document.querySelector("#nombre"),document.querySelector("#nombre").nextElementSibling,'Debe ingresar el nombre del usuario'
-        )==0)
-	{
-		mensajes('error',4000,'Debe ingresar el nombre del usuario',
-		'El formato debe ser sólo en letras, no mas de 20 caracteres');
-		
-		return false;
-	}
-	else if(validarKeyUp(
-        /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,20}$/,
-        document.querySelector("#apellido"),document.querySelector("#apellido").nextElementSibling,'Debe ingresar el apellido del usuario'
-        )==0)
-	{
-		mensajes('error',4000,'Debe ingresar el apellido del usuario',
-		'El formato debe ser sólo en letras, no mas de 20 caracteres');
-		
-		return false;
-	}
-	
-	else if(validarKeyUp(
-        /^[a-zA-Z0-9._+-]{3,35}@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/,
-        document.querySelector("#correo"),document.querySelector("#correo").nextElementSibling,'Ejemplo: alguien@servidor.com'
-        )==0)
-	{
-		mensajes('error',4000,'Debe ingresar un correo electrónico',
-		'El correo electornico ingresado no tiene un formato adecuado. Intente por Ejemplo: alguien@servidor.com');
-		
-		return false;
-	}
-	
-	// si el valor de correo no es el mismo de antes:
-	if(correo_an != $("#correo").val()){
-		let datos = new FormData(); 
-		datos.append('validar','correo');
-		datos.append('correo',$("#correo").val());
-		res = await verificar_duplicados(datos);
-		// revisamos si esta duplicado con otro usuario
-		if(res){
-			mensajes('error',4000,'Correo ya registrado','Este correo esta registrado, debe ingresar otro.');
-			return false;
-		}
-	}
-	
-	return true;
-}
-async function validarEnvioContra(){
-	if(validarKeyUp(
-        /^[A-Za-z0-9_.+*$#%&@]{5,50}$/,
-        document.querySelector("#contra_actual"),document.querySelector("#contra_actual").nextElementSibling.nextElementSibling,'Debe ingresar una contraseña'
-        )==0)
-	{
-		mensajes('error',4000,'Debe ingresar su contraseña actual',
-		'El formato debe tener mínimo 5 caracteres, utilizar letras, numeros y caracteres especiales como: _.+*$#%&/ ');
-		
-		return false;
-	}
-	else if(validarKeyUp(
-        /^[A-Za-z0-9_.+*$#%&@]{5,50}$/,
-        document.querySelector("#contra"),document.querySelector("#contra").nextElementSibling.nextElementSibling,'Debe ingresar una contraseña'
-        )==0)
-	{
-		mensajes('error',4000,'Debe ingresar una nueva contraseña',
-		'El formato debe tener mínimo 5 caracteres, utilizar letras, numeros y caracteres especiales como: _.+*$#%&/ ');
-		
-		return false;
-	}
-	else if(document.querySelector("#contra").value !== document.querySelector("#confir_contra").value){
-		document.querySelector("#contra").classList.add('is-invalid')
-		document.querySelector("#contra").classList.remove('is-valid');			
-		document.querySelector("#contra").nextElementSibling.nextElementSibling.textContent = `Las contraseñas ingresadas aquí deben coincidir`;
-
-		document.querySelector("#contra").nextElementSibling.classList.remove('border-success');
-		document.querySelector("#contra").nextElementSibling.classList.remove('text-success');
-
-		document.querySelector("#contra").nextElementSibling.classList.add('border-danger');
-		document.querySelector("#contra").nextElementSibling.classList.add('text-danger');
-
-		document.querySelector("#confir_contra").classList.add('is-invalid')
-		document.querySelector("#confir_contra").classList.remove('is-valid');			
-		document.querySelector("#confir_contra").nextElementSibling.nextElementSibling.textContent = `Las contraseñas ingresadas aquí deben coincidir`;
-
-		document.querySelector("#confir_contra").nextElementSibling.classList.remove('border-success');
-		document.querySelector("#confir_contra").nextElementSibling.classList.remove('text-success');
-
-		document.querySelector("#confir_contra").nextElementSibling.classList.add('border-danger');
-		document.querySelector("#confir_contra").nextElementSibling.classList.add('text-danger');
-
-		mensajes('error',4000,'Atención','La contraseña nueva y confirmar contraseña deben coincidir');
-		return false;
-	}
-	
-	datos = new FormData();
-	datos.append("validar",'contra_perfil');
-	datos.append("contra",document.querySelector("#contra_actual").value);
-	res = await verificar_contra(datos);
-	// revisamos si la contraseña que puso es la correcta
-	if(!res){
-		document.querySelector("#contra_actual").classList.add('is-invalid')
-		document.querySelector("#contra_actual").classList.remove('is-valid');
-		document.querySelector("#contra_actual").nextElementSibling.classList.remove('border-success');
-		document.querySelector("#contra_actual").nextElementSibling.classList.remove('text-success');
-
-		document.querySelector("#contra_actual").nextElementSibling.classList.add('border-danger');
-		document.querySelector("#contra_actual").nextElementSibling.classList.add('text-danger');
-		
-		document.querySelector("#contra_actual").nextElementSibling.nextElementSibling.textContent = `La contraseña ingresada no es correcta`;
-
-		mensajes('error',4000,'Contraseña Icorrecta','La contraseña ingresada no es correcta, para poder realizar cambios debe ingresar la contraseña correcta');
-		return false;
-	}	
-	
-	return true;
-}
-
-function validarKeyPress(er, e) {
-    key = e.keyCode;
-    tecla = String.fromCharCode(key);
-    a = er.test(tecla);
-    if (!a) {
+    // ============================================
+    // ENVÍO DE FORMULARIO DE PERFIL
+    // ============================================
+    $('#boton_guardar').on('click', async function(e) {
         e.preventDefault();
+        if (await validarEnvioPerfil() === true) {
+            Swal.fire({
+                title: '¿Estás seguro?',
+                text: '¿Desea guardar los cambios en su perfil?',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, Guardar',
+                confirmButtonColor: '#1b8a40',
+                cancelButtonText: 'Cancelar',
+                icon: 'warning'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    modificar();
+                    correo_an = null;
+                }
+            });
+        }
+    });
+
+    // ============================================
+    // ENVÍO DE FORMULARIO DE CAMBIO DE CONTRASEÑA
+    // ============================================
+    $('#boton_guardar_contra').on('click', async function(e) {
+        e.preventDefault();
+        if (await validarEnvioContra() === true) {
+            Swal.fire({
+                title: '¿Estás seguro?',
+                text: '¿Desea cambiar su contraseña?',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, Cambiar',
+                confirmButtonColor: '#1b8a40',
+                cancelButtonText: 'Cancelar',
+                icon: 'warning'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    modificarContra();
+                }
+            });
+        }
+    });
+});
+
+// ============================================
+// FUNCIONES DE VALIDACIÓN
+// ============================================
+
+async function validarEnvioPerfil() {
+    // Validar campos individuales
+    if (!Validaciones.keyUp(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,20}$/, $('#nombre')[0], $('#nombre')[0].nextElementSibling, '')) {
+        Utilidades.mensaje('error', 'Error', 'El nombre no es válido.');
+        return false;
     }
+    if (!Validaciones.keyUp(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,20}$/, $('#apellido')[0], $('#apellido')[0].nextElementSibling, '')) {
+        Utilidades.mensaje('error', 'Error', 'El apellido no es válido.');
+        return false;
+    }
+    if (!Validaciones.keyUp(/^[a-zA-Z0-9._+-]{3,35}@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/, $('#correo')[0], $('#correo')[0].nextElementSibling, '')) {
+        Utilidades.mensaje('error', 'Error', 'El correo no es válido.');
+        return false;
+    }
+
+    // Verificar duplicado de correo si cambió
+    if (correo_an !== $('#correo').val()) {
+        const datos = new FormData();
+        datos.append('validar', 'correo');
+        datos.append('correo', $('#correo').val());
+        // const duplicado = await verificarDuplicados(datos);
+        const duplicado = await Validaciones.verificarDuplicado(datos,'Este correo ya está en uso, ingrese uno diferente.');
+        if (duplicado) return false;
+    }
+
+    return true;
 }
 
-function validarKeyUp(er,etiqueta,etiquetamensaje,
-mensaje){
-	a = er.test(etiqueta.value);
-	
-	if(a){
-		etiqueta.classList.add('is-valid');
-		etiqueta.classList.remove('is-invalid');
+async function validarEnvioContra() {
+    // Validar contraseña actual
+    if (!Validaciones.keyUp(/^[A-Za-z0-9_.+*$#%&@-]{5,100}$/, $('#contra_actual')[0], $('#contra_actual')[0].nextElementSibling.nextElementSibling, '')) {
+        Utilidades.mensaje('error', 'Error', 'La contraseña actual no es válida.');
+        return false;
+    }
 
-		if (etiqueta.id == "contra" || etiqueta.id == "confir_contra" || etiqueta.id == "contra_actual") {
-			etiqueta.nextElementSibling.classList.remove('border-danger');
-			etiqueta.nextElementSibling.classList.remove('text-danger');
+    // Validar nueva contraseña
+    if (!Validaciones.keyUp(/^[A-Za-z0-9_.+*$#%&@-]{5,100}$/, $('#contra')[0], $('#contra')[0].nextElementSibling.nextElementSibling, '')) {
+        Utilidades.mensaje('error', 'Error', 'La nueva contraseña no es válida.');
+        return false;
+    }
 
-			etiqueta.nextElementSibling.classList.add('border-success');
-			etiqueta.nextElementSibling.classList.add('text-success');
-		}
-		etiquetamensaje.textContent = "";
-		return 1;
-	}
-	else{
-		etiqueta.classList.add('is-invalid');
-		etiqueta.classList.remove('is-valid');
+    // Confirmar que coinciden
+    if ($('#contra').val() !== $('#confir_contra').val()) {
+        $('#contra, #confir_contra').addClass('is-invalid').removeClass('is-valid');
+        Utilidades.mensaje('error', 'Error', 'Las contraseñas no coinciden.');
+        return false;
+    }
 
-		if (etiqueta.id == "contra" || etiqueta.id == "confir_contra" || etiqueta.id == "contra_actual") {
-			etiqueta.nextElementSibling.classList.remove('border-success');
-			etiqueta.nextElementSibling.classList.remove('text-success');
+    // Verificar que la contraseña actual sea correcta contra el servidor
+    const datos = new FormData();
+    datos.append('validar', 'contra_perfil');
+    datos.append('contra', $('#contra_actual').val());
 
-			etiqueta.nextElementSibling.classList.add('border-danger');
-			etiqueta.nextElementSibling.classList.add('text-danger');
-		}
-		etiquetamensaje.textContent = mensaje;
-		return 0;
-	}
-}
+    const respuesta = await Utilidades.query(datos);
+    if (!respuesta) {
+        $('#contra_actual').addClass('is-invalid').removeClass('is-valid');
+        Utilidades.mensaje('error', 'Error', 'La contraseña actual es incorrecta.');
+        return false;
+    }
 
-async function verificar_duplicados(datos){
-	let data = await fetch("",{method:"POST", body:datos}).then(res=>{		
-		let result = res.json()
-		return result;
-	})
-	
-	if(data.estatus){
-		document.querySelector(`#${data.busqueda}`).nextElementSibling.textContent = `${data.busqueda} ya registrado/a`;
-		document.querySelector(`#${data.busqueda}`).classList.add('is-invalid');
-		document.querySelector(`#${data.busqueda}`).classList.remove('is-valid');
-		return true;
-	}
-	return false;
-}
-
-
-async function verificar_contra(datos){
-	let data = await fetch("",{method:"POST", body:datos}).then(res=>{
-		let result = res.json()
-		return result;
-	});
-	return data;
+    return true;
 }

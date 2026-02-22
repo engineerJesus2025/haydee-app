@@ -1,511 +1,239 @@
-consultar(); // para llenar la tabla al cargar
-let data_table, id_eliminado, id_registrado,id_modificar, numero_cuenta_an;
-// VAriables que usaremos mas tarde
-//guardamos los permisosdel usuario
-let permiso_eliminar = document.querySelector("#permiso_eliminar").value;
-let permiso_editar = document.querySelector("#permiso_editar").value;
-const idioma = "recursos/bootstrap/js/datatable-plugin-es.js";
-let tabla = document.querySelector("#tabla_banco"); //La tabla
-let boton_formulario = document.querySelector("#boton_formulario"); // el boton
-let modal = new bootstrap.Modal("#modal_banco"); // el modal
-let formulario_usar = document.querySelector(`#form_banco`); // el form
+/**
+ * bancos_ajax.js
+ * Gestión de Bancos - Peticiones AJAX
+ * Dependencias: utilidades.js
+ */
 
-//En caso de que se envie un formulario
+let id_modificar, numero_cuenta_an;
+let permiso_eliminar = document.querySelector("#permiso_eliminar")?.value;
+let permiso_editar = document.querySelector("#permiso_editar")?.value;
+
+let boton_formulario = document.querySelector("#boton_formulario");
+let modal = new bootstrap.Modal("#modal_banco");
+let formulario_usar = document.querySelector("#form_banco");
+let tabla_bancos;
+
+// Inicializar la tabla al cargar
+consultar();
+
+// Resetear modal al cerrarlo
+document.querySelector("#modal_banco").addEventListener("hide.bs.modal", () => {
+    formulario_usar.reset();
+    boton_formulario.removeAttribute("modificar");
+    boton_formulario.removeAttribute("id_modificar");
+    boton_formulario.textContent = "Guardar";
+    document.getElementById('titulo_modal').textContent = "Registrar Banco";
+    
+    // Limpiar clases de validación
+    document.querySelectorAll('.is-valid').forEach(input => input.classList.remove('is-valid'));
+    document.querySelectorAll('.is-invalid').forEach(input => input.classList.remove('is-invalid'));
+    document.querySelectorAll('.w-100').forEach(el => el.textContent = "");
+    
+    // Deshabilitar RIF hasta que se seleccione tipo de documento
+    document.querySelector("#rif").setAttribute("disabled", true);
+    
+    numero_cuenta_an = null;
+});
+
+// Ajustar columnas de DataTable al colapsar menú lateral
+document.getElementById('header-toggle')?.addEventListener("click", () => {
+    setTimeout(() => tabla_bancos?.columns.adjust().draw(), 450);
+});
+
 function envio(operacion) {	
-	if (operacion == "Editar") {
-		id_modificar = boton_formulario.getAttribute("id_modificar");//obtenemos el id del registro
-		modificar(id_modificar);
-	}
-	else if(operacion == "Registrar"){
-		//sino a registrar
-		registrar();
-	}else{
-		// esto es imposible que pase pero aja
-		mensajes('error',4000,'Atencion',
-		'Ha ocurrido un error durante la operacion, intentelo nuevamente')
-	}
+    if (operacion === "Editar") {
+        editar(boton_formulario.getAttribute("id_modificar"));
+    } else if (operacion === "Registrar") {
+        registrar();
+    } else {
+        Utilidades.mensaje('error', 'Atención', 'Ha ocurrido un error durante la operación, inténtelo nuevamente');
+    }
 }
 
-// Esto es en caso de que uno quite el formulario, le devuelve los valores que tenia
-document.querySelector(`#modal_banco`).addEventListener("hide.bs.modal",()=>{
-	formulario_usar.reset();
-	boton_formulario.removeAttribute("modificar");
-	boton_formulario.removeAttribute("id_modificar");	
-	boton_formulario.textContent = "Guardar";
-	document.getElementById('titulo_modal').textContent = "Registrar Banco";
-
-	formulario_usar.querySelectorAll("[class='w-100']").forEach(el=>el.textContent="");
-	formulario_usar.querySelector("#documento_afiliado").setAttribute("disabled",'');
-	document.querySelectorAll('.is-valid').forEach(input=>input.classList.remove('is-valid'));
-	document.querySelectorAll('.is-invalid').forEach(input=>input.classList.remove('is-invalid'));
-
-	numero_cuenta_an = null;
-});
-
-document.getElementById('header-toggle').addEventListener("click",e=>{
-	setTimeout(function(){
-		data_table.columns.adjust().draw();
-	},450);
-});
-
-//Si queremos registrar:
-async function registrar() {
-	// el async vuelve la funcion asincrona	
-	//Creamos el formData
-	datos_consulta = new FormData();
-	//Creamos las variables con los datos de los inputs
-	let nombre_banco = formulario_usar.querySelector("#nombre_banco").value,
-	codigo = formulario_usar.querySelector("#codigo").value,	
-	numero_cuenta = formulario_usar.querySelector("#numero_cuenta").value, 
-	telefono_afiliado = formulario_usar.querySelector("#telefono_afiliado").value,
-	tipo_documento = formulario_usar.querySelector("#tipo_documento").value,
-    documento_afiliado = formulario_usar.querySelector("#documento_afiliado").value;
-
-    documento_afiliado = tipo_documento + documento_afiliado;
-	// le pasamos los datos por el formData
-	datos_consulta.append("nombre_banco",nombre_banco);
-	datos_consulta.append("codigo",codigo);	
-	datos_consulta.append("numero_cuenta",numero_cuenta);
-	datos_consulta.append("telefono_afiliado",telefono_afiliado);
-	datos_consulta.append("documento_afiliado",documento_afiliado);
-
-	//Aqui decimos que vamos a hacer
-	datos_consulta.append('operacion','registrar');
-	
-	//Llamamos a la funcion para hacer la consulta
-	let respuesta = await query(datos_consulta,true); // El await es para que espere el resultado, al ser asincrono, normalmente no lo esperaria
-	// wait = esperar (english)
-	modal.hide(); //Esconde el modal
-	formulario_usar.reset();//Limpia el formulario
-
-	// Resvisamos el resultado
-	if (!respuesta.estatus) {
-		mensajes('error',4000,'Atencion',respuesta.mensaje);
-		return;// en caso de error mandamos un mensaje con el error y nos vamos
-	}
-
-	id_registrado = await last_id(); //Guarda el nuevo id registrado, para darselo al evento de modificar
-	
-	let acciones = crearBotones(id_registrado.last_id); //Crea botones
-	
-	// esta variable no hace nada, pero me dio error cuando la quite XD
-	let res_data_table = await data_table.row.add([`${nombre_banco}`,`${codigo}`,`${numero_cuenta}`,`${telefono_afiliado}`,`${documento_afiliado}`,`${acciones.outerHTML}`]).draw();
-	// Tiene el await para que lo espere, sino no la pone en la tabla
-
-	mensajes('success',4000,'Atencion','El registro se ha realizado exitosamente');//Mensaje de que se completo la operacion
-}
-
-//Si queremos consultar
-async function consultar() {
-	//Creamos el formData
-	datos_consulta = new FormData();
-
-	//Aqui decimos que vamos a hacer
-	datos_consulta.append('operacion','consulta');
-
-	//Llamamos a la funcion para hacer la consulta
-	data = await query(datos_consulta)
-	vaciar_tabla(); //Vaciamos la tabla de lo que tenia antes
-	
-	// Resvisamos el resultado
-	if(!(data.estatus == undefined)){
-		mensajes('error',4000,'Atencion', respuesta.mensaje);
-		return;// en caso de error mandamos un mensaje con el error y nos vamos
-	}
-
-	//recorremos los datos y en cada vuelta llamamos una funcion para llenar la tabla
-	await data.map(fila=>{
-		llenarTabla(fila);
-	})
-	
-	data_table = init_data_table(); //iniciamos el dataTable de jquery
-}
-
-// Esta funcion hace lo que dice
-function vaciar_tabla() {
-	let cuerpo_tabla = document.querySelector(`#tabla_banco tbody`);
-	cuerpo_tabla.textContent = null;
-}
-
-// esta tambien, se ve larga, pero no es tan complicada  **********
-// esta funcion crea filas para la tabla al momento de consultar
-function llenarTabla(fila) {
-	// seleccionamos el cuerpo de la tabla que vamos a llenar
-	let cuerpo_tabla = document.querySelector(`#tabla_banco tbody`);
-
-	// Creamos etiquetas
-	let fila_tabla = document.createElement("tr");//creamos la fila <tr></tr>
-
-	let id_campo = fila["id_banco"]; // guardamos el id que nos interese
-	
-	// creamos un td por cada columna que vamos a llenar de la tabla <td></td>
-	let nombre_td = document.createElement("td"),
-	codigo_td = document.createElement("td"),	
-	numero_cuenta_td = document.createElement("td"), 
-	telefono_afiliado_td = document.createElement("td");
-    documento_afiliado_td = document.createElement("td");
-
-	// le damos el contenido de la consulta
-	nombre_td.textContent = fila["nombre_banco"];
-	codigo_td.textContent = fila["codigo"];
-	numero_cuenta_td.textContent = fila["numero_cuenta"];
-	telefono_afiliado_td.textContent = fila["telefono_afiliado"];
-    documento_afiliado_td.textContent = fila["cedula_afiliada"];
-
-	let acciones = crearBotones(id_campo); 
-	// creamos los botones de eliminar y modificar
-
-	// le ponemos los td a la fila (tr)
-	fila_tabla.appendChild(nombre_td);
-	fila_tabla.appendChild(codigo_td);
-	fila_tabla.appendChild(numero_cuenta_td);
-	fila_tabla.appendChild(telefono_afiliado_td);
-	fila_tabla.appendChild(documento_afiliado_td);
-    fila_tabla.appendChild(acciones);
-
-	fila_tabla.setAttribute("id",`fila-${id_campo}`);
-	// le ponemos un id a las fila para cuando las eliminemos
-	
-	// y por ultimo, llenamos la tabla con la fila
-	cuerpo_tabla.appendChild(fila_tabla);	
-}
-
+/**
+ * Crea el HTML de los botones de acción (editar/eliminar) para cada fila
+ */
 function crearBotones(id) {
-	// Creamos los botones de las acciones
-	let td = document.createElement("td");
-	let acciones = document.createElement("div");
-	acciones.setAttribute("class","row justify-content-evenly");
-	// le damos la clases de boostrap para que se vea tu sabe'
-
-	// Lo mismo que arriba, pero con modificar
-	let boton_editar = document.createElement("button");
-
-	let icono_editar = document.createElement("i");
-	icono_editar.setAttribute("class", "bi bi-pencil-square")
-	boton_editar.appendChild(icono_editar);
-
-	boton_editar.setAttribute("type", "button");
-	boton_editar.setAttribute("class", "btn btn-success col-4");
-	boton_editar.setAttribute("tabindex", "-1");
-	boton_editar.setAttribute("role", "button");
-	boton_editar.setAttribute("aria-disabled", "true");
-	boton_editar.setAttribute("data-bs-toggle", "modal");
-	boton_editar.setAttribute("data-bs-target", "#modal_banco");
-
-	boton_editar.setAttribute("title","Editar");
-	boton_editar.setAttribute("value",id);
-	boton_editar.addEventListener("click",modificar_formulario)//Esa funcion esta mas abajo
-
-	//Le ponemos los botones al <td><td> de las acciones
-	acciones.appendChild(boton_editar);
-
-	if (permiso_eliminar) {
-		//creamos el boton de eliminar, le damos valor, y le asignamos la funcion para eliminar
-		let boton_eliminar = document.createElement("button");
-
-		let icono_eliminar = document.createElement("i");// le ponemos un icono
-		icono_eliminar.setAttribute("class", "bi bi-trash");// y estilos
-		boton_eliminar.appendChild(icono_eliminar);
-		
-		// le ponemos todos los atributos que lleva este boton
-		boton_eliminar.setAttribute("type", "button");
-		boton_eliminar.setAttribute("class", "btn btn-danger col-4 eliminar");
-		boton_eliminar.setAttribute("tabindex", "-1"); 
-		boton_eliminar.setAttribute("role", "button");
-		boton_eliminar.setAttribute("aria-disabled", "true");
-		// no se para que sirven la mayoria, pero bueno... boostrap
-
-		boton_eliminar.setAttribute("title","Eliminar");
-		boton_eliminar.setAttribute("value",id);// el valor del id para eliminar	
-
-		acciones.appendChild(boton_eliminar);
-	}
-
-	td.appendChild(acciones);
-
-	return td;
+    let div = document.createElement("div");
+    let html = `<div class="row justify-content-evenly">
+                    <button type="button" class="btn btn-success btn-sm col-lg-3 col-4 editar" data-bs-toggle="modal" data-bs-target="#modal_banco" title="Editar" value="${id}">
+                        <i class="bi bi-pencil-square"></i>
+                    </button>`;
+    if (permiso_eliminar == 1) {
+        html += `<button type="button" class="btn btn-danger btn-sm col-lg-3 col-4 eliminar" title="Eliminar" value="${id}">
+                    <i class="bi bi-trash"></i>
+                </button>`;
+    }
+    html += `</div>`;
+    div.innerHTML = html;
+    return div;
 }
 
-// si queremos eliminar
+/**
+ * Inicializa DataTable con los datos de bancos
+ */
+async function consultar() {
+    const columnas = [
+        { data: "nombre_banco" },
+        { data: "codigo" },
+        { data: "numero_cuenta" },
+        { data: "telefono_afiliado" },
+        { data: "rif" },
+        { 
+            data: null,
+            render: (row) => crearBotones(row.id_banco).innerHTML
+        }
+    ];
+
+    const parametrosConsulta = (data) => {
+        data.operacion = 'consulta';
+    };
+
+    const configuracionFila = (row, data) => {
+        row.id = `fila-${data.id_banco}`;
+        // Asignar evento editar
+        row.querySelector(".editar")?.addEventListener('click', preparar_formulario);
+        // Asignar evento eliminar
+        row.querySelector(".eliminar")?.addEventListener('click', eventoEliminar);
+    };
+
+    tabla_bancos = Utilidades.crearDataTable('tabla_banco', columnas, parametrosConsulta, configuracionFila);
+}
+
+/**
+ * Prepara el formulario con los datos del banco a editar
+ */
+async function preparar_formulario(e) {
+    let datos = new FormData();
+    let id = e.target.value || e.target.parentElement.value; 
+    
+    datos.append("id_banco", id);
+    datos.append('operacion', 'consulta_especifica');
+
+    let respuesta = await Utilidades.query(datos);	
+    
+    if (!respuesta.estatus) {
+        Utilidades.mensaje('error', 'Error', respuesta.mensaje);
+        return;
+    }
+
+    let data = respuesta.datos; // { id_banco, nombre_banco, codigo, numero_cuenta, telefono_afiliado, rif }
+
+    // Llenar formulario
+    formulario_usar.querySelector("#nombre_banco").value = data.nombre_banco;
+    formulario_usar.querySelector("#codigo").value = data.codigo;
+    formulario_usar.querySelector("#numero_cuenta").value = data.numero_cuenta;
+    formulario_usar.querySelector("#telefono_afiliado").value = data.telefono_afiliado;
+    // Separar tipo de documento y número
+    let tipoDoc = data.rif.charAt(0);
+    let numeroRif = data.rif.slice(1);
+    formulario_usar.querySelector("#tipo_documento").value = tipoDoc;
+    formulario_usar.querySelector("#rif").value = numeroRif;
+    formulario_usar.querySelector("#rif").removeAttribute("disabled");
+
+    if (permiso_editar != 1) {
+        boton_formulario.setAttribute("hidden", true);
+        boton_formulario.setAttribute("disabled", true);
+    }
+
+    boton_formulario.setAttribute("modificar", true);
+    boton_formulario.setAttribute("id_modificar", data.id_banco);
+    boton_formulario.textContent = "Guardar Cambios";
+    document.getElementById('titulo_modal').textContent = "Modificar Banco";
+
+    id_modificar = id;
+    numero_cuenta_an = data.numero_cuenta;
+}
+
+/**
+ * Registra un nuevo banco
+ */
+async function registrar() {
+    let datos = new FormData(formulario_usar);
+    // Construir RIF completo
+    let tipo = datos.get('tipo_documento');
+    let rifNum = datos.get('rif');
+    datos.set('rif', tipo + rifNum);
+    datos.append('operacion', 'registrar');
+    
+    let respuesta = await Utilidades.query(datos);
+
+    modal.hide();
+    formulario_usar.reset();
+
+    if (!respuesta.estatus) {
+        Utilidades.mensaje('error', 'Atención', respuesta.mensaje);
+        return;
+    }
+
+    tabla_bancos.ajax.reload(null, false);
+    Utilidades.mensaje('success', 'Éxito', 'El registro se ha realizado exitosamente');
+}
+
+/**
+ * Actualiza un banco existente
+ */
+async function editar(id) {	
+    let datos = new FormData(formulario_usar);
+    let tipo = datos.get('tipo_documento');
+    let rifNum = datos.get('rif');
+    datos.set('rif', tipo + rifNum);
+    datos.append("id_banco", id);
+    datos.append('operacion', 'editar');
+
+    let respuesta = await Utilidades.query(datos);
+
+    formulario_usar.reset();
+    modal.hide();
+
+    if (!respuesta.estatus) {
+        Utilidades.mensaje('error', 'Atención', respuesta.mensaje);
+        return;
+    }
+
+    boton_formulario.removeAttribute("modificar");
+    boton_formulario.removeAttribute("id_modificar");	
+    boton_formulario.textContent = "Guardar";
+    document.getElementById('titulo_modal').textContent = "Registrar Banco";
+
+    tabla_bancos.ajax.reload(null, false);
+    Utilidades.mensaje('success', 'Éxito', 'El registro se ha modificado exitosamente');
+}
+
+/**
+ * Manejador del clic en botón eliminar (con confirmación)
+ */
+function eventoEliminar(e) {
+    let id = e.target.value || e.target.parentElement.value;
+
+    Swal.fire({
+        title: "¿Estás seguro?",
+        text: "¿Está seguro que desea eliminar este banco?",
+        showCancelButton: true,
+        confirmButtonText: "Sí, Eliminar",
+        confirmButtonColor: "#e01d22",
+        cancelButtonText: "Cancelar",
+        icon: "warning"
+    }).then((resultado) => {
+        if (resultado.isConfirmed) eliminar(id);				
+    });
+}
+
+/**
+ * Elimina un banco
+ */
 async function eliminar(id) {
-	//Creamos el formData
-	datos_consulta = new FormData()
+    let datos = new FormData();
+    datos.append("id_banco", id);
+    datos.append('operacion', 'eliminar');
 
-	// Le ponemos el id al FormData
-	datos_consulta.append("id_banco",id);
-
-	//Aqui decimos que vamos a hacer
-	datos_consulta.append('operacion','eliminar');
-
-	//Llamamos a la funcion para hacer la consulta
-	let respuesta = await query(datos_consulta);
-	
-	// Resvisamos el resultado
-	if (!respuesta.estatus) {
-		mensajes('error',4000,'Atencion',respuesta.mensaje);
-		return;// en caso de error mandamos un mensaje con el error y nos vamos
-	}
-
-	id_eliminado = id; 
-	// con esto indicamos que se elimino un registro
-	// en caso de que lo de abajo no lo elimine
-
-	data_table.row(`#fila-${id}`).remove().draw(); // esto es para eliminar la fila del data table
-
-	mensajes('success',4000,'Atencion','El registro ha sido eliminado correctamente');//Mensaje de que se completo la operacion
-}
-
-// Esta funcion prepara el formulario para editar el registro
-async function modificar_formulario(e) {
-	// primero buscamos el registro a modificar
-	//Creamos el formData
-	datos_consulta = new FormData();
-		
-	let id = e.target.value; // tomamos el id
-	if (id === undefined) {
-		id = e.target.parentElement.value; 
-		//esto es por si seleciona el icono en vez del boton al dar click
-	}
-	// le damos el id
-	datos_consulta.append("id_banco",id);
-
-	//Aqui decimos que vamos a hacer
-	datos_consulta.append('operacion','consulta_especifica');
-
-	//Llamamos a la funcion para hacer la consulta y guardamos los datos
-	data = await query(datos_consulta,true);	
-	
-	// ahora seleccionamos los inputs
-	let nombre = formulario_usar.querySelector("#nombre_banco"),
-	codigo = formulario_usar.querySelector("#codigo"),	
-	numero_cuenta = formulario_usar.querySelector("#numero_cuenta"),	
-	telefono_afiliado = formulario_usar.querySelector("#telefono_afiliado"),
-	tipo_documento = formulario_usar.querySelector("#tipo_documento"),
-    documento_afiliado = formulario_usar.querySelector("#documento_afiliado");
-
-	// le damos valor
-	nombre.value = data.nombre_banco;
-	codigo.value = data.codigo;	
-	numero_cuenta.value = data.numero_cuenta;
-	telefono_afiliado.value = data.telefono_afiliado;
-    documento_afiliado.value = data.cedula_afiliada.slice(1);
-    tipo_documento.value = data.cedula_afiliada.slice(0,1);
-
-	// este if revisa si tiene permiso para editar, en caso de que no, quitamos el boton
-	if(!permiso_editar){
-		boton_formulario.setAttribute("hidden",true);
-		boton_formulario.setAttribute("disabled",true);
-		//si no los tiene apaga el boton.
-	}
-
-	// aqui cambiamos los datos del boton para registrar, para saber que ahora se va es a modificar un registro
-	boton_formulario.setAttribute("modificar",true);
-	boton_formulario.setAttribute("id_modificar",data.id_banco);
-	boton_formulario.textContent = "Guardar Cambios";
-	document.getElementById('titulo_modal').textContent = "Modificar Banco";
-	formulario_usar.querySelector("#documento_afiliado").removeAttribute("disabled");
-	//formulario_usar.querySelector("#confir_contra").parentElement.previousElementSibling.textContent = "Nueva Contraseña" 
-	//formulario_usar.querySelector("#confir_contra").placeholder = "Nueva Contraseña" 
-
-	id_modificar = id;
-	numero_cuenta_an = numero_cuenta.value;
-	//guardamos el orginal del correo, para que no choquen con las validaciones
-}
-
-//si queremos modificar
-async function modificar(id) {	
-	//Creamos el formData
-	let datos_consulta = new FormData();
-
-	//Guardamos los datos del formulario
-	let nombre_banco = formulario_usar.querySelector("#nombre_banco").value,
-	codigo = formulario_usar.querySelector("#codigo").value,
-	numero_cuenta = formulario_usar.querySelector("#numero_cuenta").value, 	
-	telefono_afiliado = formulario_usar.querySelector("#telefono_afiliado").value,
-	tipo_documento = formulario_usar.querySelector("#tipo_documento").value,
-	documento_afiliado = formulario_usar.querySelector("#documento_afiliado").value;
-
-	documento_afiliado = tipo_documento + documento_afiliado;
-	// Le ponemos los datos del formulario
-	datos_consulta.append("id_banco",id);
-
-	datos_consulta.append("nombre_banco",nombre_banco);
-	datos_consulta.append("codigo",codigo);	
-	datos_consulta.append("numero_cuenta",numero_cuenta);
-	datos_consulta.append("telefono_afiliado",telefono_afiliado);
-	datos_consulta.append("documento_afiliado",documento_afiliado);
-	// ...
-
-	//Aqui decimos que vamos a hacer
-	datos_consulta.append('operacion','modificar');
-
-	//Llamamos a la funcion para hacer la consulta
-	let respuesta = await query(datos_consulta,true);
-
-	formulario_usar.reset(); //Limpiamos el formulario
- 	modal.hide(); // escondemos el modal
-
- 	// Resvisamos el resultado
-	if (!respuesta.estatus) {
-		mensajes('error',4000,'Atencion',respuesta.mensaje);
-		return;// en caso de error mandamos un mensaje con el error y nos vamos
-	}
-
-	// al terminar le damos al boton su valores originales
-
-	boton_formulario.removeAttribute("modificar");
-	boton_formulario.removeAttribute("id_modificar");	
-	boton_formulario.textContent = "Guardar";
-
-	document.getElementById('titulo_modal').textContent = "Registrar Banco";
-
-	mensajes('success',4000,'Atencion','El registro se ha modificado exitosamente');//Mensaje de que se completo la operacion
-
-	// esto de abajo es para editar la fila que se modifico en el data table
-	let acciones = crearBotones(id); // creamos otro botones (no se que tan necesario sea esto)
-
-	data_table.row(`#fila-${id}`).data([`${nombre_banco}`,`${codigo}`,`${numero_cuenta}`,`${telefono_afiliado}`,`${documento_afiliado}`,`${acciones.outerHTML}`])
-	data_table.draw(); // esta funcion refresca la tabla, por si le da sed
-
-	// se le vuelve a poner el evento al boton
-	let fila = document.querySelector(`#fila-${id}`);
-	if (fila) {
-		fila.querySelector(`[value='${id}']`).addEventListener("click",modificar_formulario);
-	}	
-}
-
-// esta funcion obtiene el ultimo id registrado en la base de datos
-async function last_id() {
-	datos_consulta = new FormData()
-	datos_consulta.append('operacion','ultimo_id');
-	let res = await query(datos_consulta);
-	return res;
-}
-
-// Aqui se hace la peticion AJAX
-async function query(datos,oscuro = false) {
-    if (oscuro) {document.getElementById('icono_carga').setAttribute("class",`loader_dark`);}
-    else{document.getElementById('icono_carga').setAttribute("class",`loader`);}
+    let respuesta = await Utilidades.query(datos);
     
-    let modal_carga = new bootstrap.Modal("#modal_carga");
-    let mostrarModal = false;
-    let tiempoCarga;
-
-    tiempoCarga = setTimeout(()=>{
-        mostrarModal = true;
-        modal_carga.show();
-    }, 300);
-    
-    try{
-        const tiempoInicio = performance.now();
-
-        const res = await fetch("", { method: "POST", body: datos });
-        const data = await res.json();
-
-        const tiempoTranscurido = performance.now() - tiempoInicio;
-        const tiempoEsperaMin = 700;
-        
-        if (mostrarModal && tiempoTranscurido < tiempoEsperaMin) {
-            
-            const restante = tiempoEsperaMin - tiempoTranscurido;
-            await new Promise(resolve => setTimeout(resolve,restante));
-        }
-
-        return data;
+    if (!respuesta.estatus) {
+        Utilidades.mensaje('error', 'Atención', respuesta.mensaje);
+        return;
     }
-    catch(error){
-        return {estatus:false,mensaje:"A ocurrido un error durante la consulta",error}
-    }
-    finally{
-        clearTimeout(tiempoCarga);
-        if (mostrarModal) {
-            modal_carga.hide();
-        }
-    }
-}
 
-// esto solo es para decir que se completo o fallo una operacion
-function mensajes(icono,tiempo,titulo,mensaje){
-	Swal.fire({
-	icon:icono,
-    timer:tiempo,	
-    title:titulo,
-	text:mensaje,
-	confirmButtonText:'Aceptar',
-	confirmButtonColor: "#e01d22",
-	});
-}
-
-// esta funcion es para incializar el data table
-function init_data_table() {
-	return new DataTable("#tabla_banco",{
-            destroy: true,
-            responsive: true,
-            "scrollX": true,
-            "pageLength": 10,
-            "aaSorting": [],
-            language: {
-                url: idioma
-            }
-    })
-    // si lees esto tienes que saber que ahora odio estos data table, muerte a jquery...
-}
- 
-// un observador que detecte cuando cambie la tabla, si detecta cambio ejecuta la esa funcion
-// yo la puse porque jquery cuando hace la paginacion en la tabla, borra los elementos, 
-// entonces se pierden los eventos asignados, y cuando vuelven a aparecer, no los tienen.
-// Esto es para reasinarle estos eventos (para eliminar, modificar, etc)
-const observer = new MutationObserver(() => {
-	reasignarEventos();
-});
-
-observer.observe(tabla, {childList:true});
-
-document.querySelectorAll("button[title='Editar']").forEach(btn => {
-    btn.removeEventListener("click", modificar_formulario);
-    btn.addEventListener("click", modificar_formulario);
-});
-
-// esta funcion pone los eventos de eliminar y modificar
-function reasignarEventos() {
-	if (id_eliminado){ //Si hay un eliminado que no se ha quitado de la tabla
-		let existe_fila = tabla.querySelector(`#fila-${id_eliminado}`)
-		if (existe_fila) {
-			data_table.row(`#fila-${id_eliminado}`).remove().draw();
-			id_eliminado = null;	
-		}
-	//Esto es porque si la tabla esta paginada, como que no encuentra cual borrar hasta que esta en la pagina que la contiene
-	}
-
-	// Se asigna el evento eliminar para los botones, esta aqui porque pasa algo parecido a lo de arriba
-	$(".eliminar").on("click",function(e){
-		id = e.target.value;
-		if (id == undefined) {	
-			id = e.target.parentElement.value;
-		}
-		Swal.fire({
-			title: "¿Estás seguro?",
-			text: "¿Está seguro que desea eliminar este banco?",
-			showCancelButton: true,
-			confirmButtonText: "Eliminar",
-			confirmButtonColor: "#e01d22",
-			cancelButtonText: "Cancelar",
-			icon: "warning"
-			}).then((resultado) => {
-				if (resultado.isConfirmed) {
-					eliminar(id);				
-				}
-			});
-	});
-
-	if (id_registrado) { // en caso de que se haya registrado y no se haya añadido a la tabla
-		let boton_modificar = tabla.querySelector(`[value='${id_registrado.last_id}']`); 
-		// captura el boton de editar, sino lo encuentra es que no esta en su pagina, y no tiene caso ponerle evento
-		if (boton_modificar) {
-			// si lo encuentra le pone el evento de modificar
-			boton_modificar.addEventListener("click",modificar_formulario);
-			boton_modificar.parentElement.parentElement.parentElement.setAttribute("id",`fila-${id_registrado.last_id}`);
-			id_registrado = null;
-		}
-	}
+    tabla_bancos.ajax.reload(null, false);
+    Utilidades.mensaje('success', 'Éxito', 'El registro ha sido eliminado correctamente');
 }

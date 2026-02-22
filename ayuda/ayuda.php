@@ -1,4 +1,5 @@
 <?php
+// Inutilizada. Considerar borrarla
 
 use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 

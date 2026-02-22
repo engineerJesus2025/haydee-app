@@ -1,4 +1,4 @@
-<?php use haydee\modelo\Rol; ?>
+<?php use haydee\ayuda\Sesiones; ?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -9,8 +9,8 @@
     ?>
 </head>
 <body id="body-pd" class="body-pd">
-    <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Rol::tiene_permiso(GESTIONAR_ROLES, ELIMINAR) ?>">
-    <input type="text" hidden="" id="permiso_editar" value="<?php echo Rol::tiene_permiso(GESTIONAR_ROLES, MODIFICAR) ?>">
+    <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_ROLES, ELIMINAR) ?>">
+    <input type="text" hidden="" id="permiso_editar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_ROLES, MODIFICAR) ?>">
     <div class="container-fluid">
         <div class="row flex-nowrap ">
             <?php
@@ -33,16 +33,16 @@
                     <div class="row mb-3 justify-content-center">
                         <div class="col-9">
                             <div class="card p-4">
-                                <?php if (Rol::tiene_permiso(GESTIONAR_ROLES, REGISTRAR)) : ?>
+                                <?php if (Sesiones::tienePermiso(GESTIONAR_ROLES, REGISTRAR)) : ?>
                                     <div class="button">
-                                        <button type="button" class="btn btn-primary mb-2" data-bs-toggle="modal" data-bs-target="#modal_roles">Nuevo Rol</a>
+                                        <button type="button" class="btn btn-primary mb-2" data-bs-toggle="modal" data-bs-target="#modal_roles">Nuevo rol</a>
                                     </div><br>
                                 <?php endif; ?>
                                 <div class="table-responsive">
                                     <table id="tabla_roles" class="table table-striped table-hover" style="width:97%">
                                         <thead>
                                             <tr>        
-                                                <th>ROL</th>
+                                                <th>rol</th>
                                                 <th class="text-center">ACCIONES</th>
                                             </tr>
                                         </thead>

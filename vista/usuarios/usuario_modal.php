@@ -32,7 +32,7 @@
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-person-gear"></i></span>
                 <select class="form-select rol" aria-label="Default select example" name="rol" id="rol" form="form_usuario">
                     <option selected hidden value="">Seleccione un Rol</option>
-                    <?php foreach ($roles as $rol) : ?>
+                    <?php foreach ($roles['datos'] as $rol) : ?>
                         <option value="<?php echo $rol["id_rol"] ?>"><?php echo $rol["nombre"] ?></option>
                     <?php endforeach; ?>
                 </select>

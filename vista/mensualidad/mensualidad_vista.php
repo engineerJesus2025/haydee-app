@@ -1,4 +1,4 @@
-<?php use haydee\modelo\Mensualidad; ?>
+<?php use haydee\ayuda\Sesiones; ?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -9,8 +9,8 @@
     ?>
 </head>
 <body id="body-pd" class="body-pd">
-    <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Mensualidad::tiene_permiso(GESTIONAR_MENSUALIDAD, ELIMINAR) ?>">
-    <input type="text" hidden="" id="permiso_editar" value="<?php echo Mensualidad::tiene_permiso(GESTIONAR_MENSUALIDAD, MODIFICAR) ?>">
+    <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_MENSUALIDAD, ELIMINAR) ?>">
+    <input type="text" hidden="" id="permiso_editar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_MENSUALIDAD, MODIFICAR) ?>">
     <div class="container-fluid">
         <div class="row flex-nowrap">
 
@@ -37,13 +37,13 @@
                             <div class="card p-4 row">
                                 <div class="col-12 row">
                                     <div class="col" hidden="">                       
-                                        <button class="btn btn-primary my-2" id="boton_registrar" title="Presione para Registrar Nueva Mensualidad" type="button" data-bs-toggle="modal" data-bs-target="#modal_mensualidad">Nueva Mensualidad</button>
+                                        <button class="btn btn-primary my-2" id="boton_registrar" title="Presione para Registrar Nueva mensualidad" type="button" data-bs-toggle="modal" data-bs-target="#modal_mensualidad">Nueva mensualidad</button>
                                         <p class="text-danger"></p>
                                     </div>
                                 </div>
                                 <div class="table-responsive">
                                     <table id="tabla_mensualidad" class="table caption-top table-striped table-hover" style="width: 99%">
-                                        <caption>Listado de Mensualidades</caption>
+                                        <caption>Listado de mensualidades</caption>
                                         <thead>
                                             <tr>
                                                 <th scope="col">MES/AÑO</th>
@@ -61,7 +61,7 @@
                                     <div class="modal-dialog modal-xl">
                                         <div class="modal-content">
                                             <div class="modal-header bg-primary text-white">
-                                                <h1 class="modal-title fs-5" id="titulo_modal">Registrar Mensualidad</h1>
+                                                <h1 class="modal-title fs-5" id="titulo_modal">Registrar mensualidad</h1>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                             </div>
                                             <div class="modal-body p-4">
@@ -78,7 +78,7 @@
                                     <div class="modal-dialog modal-lg">
                                         <div class="modal-content">
                                             <div class="modal-header bg-primary text-white">
-                                                <h1 class="modal-title fs-5" id="titulo_modal">Mensualidades de los Apartamentos</h1>
+                                                <h1 class="modal-title fs-5" id="titulo_modal">mensualidades de los Apartamentos</h1>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                             </div>
                                             <div class="modal-body">

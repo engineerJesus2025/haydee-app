@@ -1,108 +1,120 @@
 <?php
-    use haydee\ayuda\Sesiones;
-    Sesiones::verificarSesion();
-    Sesiones::verificarPermiso(GESTIONAR_BANCOS, CONSULTAR);
+use haydee\ayuda\Sesiones;
+use haydee\modelo\Banco;
+use haydee\modelo\Bitacora;
 
-    use haydee\modelo\Banco;
- 
-    if(isset($_POST["operacion"])){
-        $operacion = $_POST["operacion"];
+// Verificaciones de seguridad
+Sesiones::verificarSesion();
+Sesiones::verificarPermiso(GESTIONAR_BANCOS, CONSULTAR);
 
-        if ($operacion == "consulta"){
-            $obj_banco = new Banco(); // Objeto banco 
-            // llamamos a la funcion, lo convertimos a json y la mandamos al js con echo
-            echo  json_encode($obj_banco->realizar_consulta('consultar'));
-            // la hice para que retorne un arreglo, si sale vacio solo mandara un array con false
-        }
-        //Despues de cada echo se regresa al javascript como respuesta en json
+// Instancia del modelo
+$banco = new Banco();
 
-        elseif ($operacion == "registrar") {
-            $obj_banco = new Banco(); // Objeto banco 
-            //se guardan las variables a registrar
-            $nombre_banco = $_POST["nombre_banco"];  
-            $codigo = $_POST["codigo"];  
-            $numero_cuenta = $_POST["numero_cuenta"]; 
-            $telefono_afiliado = $_POST["telefono_afiliado"];
-            $cedula_afiliada = $_POST["documento_afiliado"];              
+if (isset($_POST["operacion"])) {
+    header('Content-Type: application/json');
 
-            //se usan los setters correspondientes
-            $obj_banco->set_nombre_banco($nombre_banco);
-            $obj_banco->set_codigo($codigo);
-            $obj_banco->set_numero_cuenta($numero_cuenta);
-            $obj_banco->set_telefono_afiliado($telefono_afiliado);
-            $obj_banco->set_cedula_afiliada($cedula_afiliada);
+    // Asignación masiva de campos que pueden llegar
+    $banco->set_id_banco($_POST['id_banco'] ?? null);
+    $banco->set_nombre_banco($_POST['nombre_banco'] ?? null);
+    $banco->set_codigo($_POST['codigo'] ?? null);
+    $banco->set_numero_cuenta($_POST['numero_cuenta'] ?? null);
+    $banco->set_telefono_afiliado($_POST['telefono_afiliado'] ?? null);
+    $banco->set_rif($_POST['rif'] ?? null);
 
-            //se ejecuta la funcion:
-            echo  json_encode($obj_banco->realizar_consulta('registrar'));
-            //igual puse para que siempre retorne un arreglo que dara true o false de acuerdo al resultado
-        }
-        elseif ($operacion == "consulta_especifica"){
-            $obj_banco = new Banco(); // Objeto banco 
-            //se guardan el id para buscar
-            $id_banco = $_POST["id_banco"];
+    $operacion = $_POST["operacion"];
+    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
-            //se usan el setter correspondientes
-            $obj_banco->set_id_banco($id_banco);
+    try{
+        switch ($operacion) {
+            case 'consulta':
+                $respuesta = $banco->realizar_consulta('consultar');
+                if ($respuesta['estatus']) {
+                    Bitacora::registrar(CONSULTAR, GESTIONAR_BANCOS, 'Consulta general de bancos');
+                    echo json_encode(['datos' => $respuesta['datos']]);
+                } else {
+                    echo json_encode(['datos' => [], 'error' => $respuesta['mensaje']]);
+                }
+                exit; // Salir para no ejecutar el echo final
 
-            // llamamos a la funcion, lo convertimos a json y la mandamos al js con echo
-            echo  json_encode($obj_banco->realizar_consulta('consulta_especifica'));
-            // igual hice para que retorne un arreglo, si sale vacio solo mandara un array con false
-        }
+            case 'registrar':
+                $respuesta = $banco->realizar_consulta('registrar');
+                if ($respuesta['estatus']) {
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_BANCOS,
+                        $banco->get_nombre_banco() . ' (' . $banco->get_numero_cuenta() . ')'
+                    );
+                }
+                break;
 
-        elseif ($operacion == "modificar") {
-            $obj_banco = new Banco(); // Objeto banco 
-            //se guardan las variables a modificar
-            $id_banco = $_POST["id_banco"];
-            $nombre_banco = $_POST["nombre_banco"];  
-            $codigo = $_POST["codigo"];  
-            $numero_cuenta = $_POST["numero_cuenta"]; 
-            $telefono_afiliado = $_POST["telefono_afiliado"];
-            $cedula_afiliada = $_POST["documento_afiliado"];
-            // ...
+            case 'consulta_especifica':
+                $respuesta = $banco->realizar_consulta('consultar_banco');
+                break;
 
-            //se usan los setters correspondientes
-            $obj_banco->set_id_banco($id_banco);
-            $obj_banco->set_nombre_banco($nombre_banco);
-            $obj_banco->set_codigo($codigo);
-            $obj_banco->set_numero_cuenta($numero_cuenta);
-            $obj_banco->set_telefono_afiliado($telefono_afiliado);
-            $obj_banco->set_cedula_afiliada($cedula_afiliada);
-            // ....
-            
-            //se ejecuta la funcion:
-            echo  json_encode($obj_banco->realizar_consulta('modificar'));
-            //igual puse para que siempre retorne un arreglo que dara true o false de acuerdo al resultado
-        }
+            case 'editar':
+                $respuesta = $banco->realizar_consulta('editar');
+                if ($respuesta['estatus']) {
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_BANCOS,
+                        $banco->get_nombre_banco() . ' (' . $banco->get_numero_cuenta() . ')'
+                    );
+                }
+                break;
 
-        elseif ($operacion == "eliminar") {
-            $obj_banco = new Banco(); // Objeto banco 
-            //se guardan el id de la variable a eliminar
-            $id_banco = $_POST["id_banco"];
+            case 'eliminar':
+                // Obtener datos para la bitácora antes de eliminar
+                $copia = clone $banco;
+                $datosBanco = $copia->realizar_consulta('consultar_banco');
+                $infoBanco = '';
+                if ($datosBanco['estatus']) {
+                    $datos = $datosBanco['datos'];
+                    $infoBanco = ($datos['nombre_banco'] ?? '') . ' (' . ($datos['numero_cuenta'] ?? '') . ')';
+                }
 
-            //se usan el setter correspondientes
-            $obj_banco->set_id_banco($id_banco);
+                $respuesta = $banco->realizar_consulta('eliminar');
+                if ($respuesta['estatus']) {
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_BANCOS, $infoBanco);
+                }
+                break;
 
-            //se ejecuta la funcion:
-            echo  json_encode($obj_banco->realizar_consulta('eliminar'));
-            //igual puse para que siempre retorne un arreglo que dara true o false de acuerdo al resultado
-        }elseif ($operacion == "ultimo_id"){
-            $obj_banco = new Banco(); // Objeto banco 
-            echo json_encode($obj_banco->realizar_consulta('lastId'));
+            case 'ultimo_id':
+                $respuesta = $banco->realizar_consulta('lastId');
+                break;
+
+            default:
+                $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
 
-        exit;//es salida en ingles... No puede faltar
+        // Para las acciones que no son 'consulta', enviamos JSON aquí
+        echo json_encode($respuesta);
+
+    } catch (Exception $e) {
+        error_log("Error en controlador: " . $e->getMessage());
+        echo json_encode(['estatus' => false, 'mensaje' => 'Error interno del servidor']);
     }
+    exit;
+}
 
-    if (isset($_POST["validar"])) {
-        $obj_banco = new Banco(); // Objeto banco 
-        $validar = $_POST["validar"]; //Esto es igual pero para las validaciones
-        if ($validar == "numero_cuenta"){
-            $obj_banco->set_numero_cuenta($_POST["numero_cuenta"]);
-            echo  json_encode($obj_banco->realizar_consulta('validar'));
+// Validaciones AJAX (para verificar número de cuenta)
+if (isset($_POST["validar"])) {
+    header('Content-Type: application/json');
+
+    $validar = $_POST["validar"];
+    if ($validar == "numero_cuenta") {
+        $banco->set_numero_cuenta($_POST["numero_cuenta"] ?? null);
+        $resultado = $banco->realizar_consulta('validar');
+
+        if ($resultado['estatus']) {
+            $existe = $resultado['existe'] ?? false;
+            echo json_encode([
+                'estatus' => true,
+                'busqueda' => $existe ? 'numero_cuenta' : null
+            ]);
+        } else {
+            echo json_encode($resultado); // En caso de error interno
         }
-        
-        exit;
+    } else {
+        echo json_encode(['estatus' => false, 'mensaje' => 'Validación no reconocida']);
     }
-    //FIN de AJAX
-    require_once "vista/bancos/bancos_vista.php";
-?>
+    exit;
+}
+
+// Cargar la vista
+require_once "vista/bancos/bancos_vista.php";

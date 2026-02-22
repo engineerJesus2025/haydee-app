@@ -1,8 +1,8 @@
-<?php use haydee\modelo\Habitantes; ?>
+<?php use haydee\ayuda\Sesiones; ?>
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Habitantes | Inicio</title>
+    <title>Hhabitantes | Inicio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php
     require_once "vista/componentes/estilos.php";
@@ -10,8 +10,8 @@
 </head>
 
 <body id="body-pd" class="body-pd">
-    <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Habitantes::tiene_permiso(GESTIONAR_HABITANTES, ELIMINAR) ?>">
-    <input type="text" hidden="" id="permiso_editar" value="<?php echo Habitantes::tiene_permiso(GESTIONAR_HABITANTES, MODIFICAR) ?>">
+    <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_HABITANTES, ELIMINAR) ?>">
+    <input type="text" hidden="" id="permiso_editar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_HABITANTES, MODIFICAR) ?>">
     <div class="container-fluid">
         <div class="row flex-nowrap ">
 
@@ -35,7 +35,7 @@
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="card p-4">
-                                <?php if (Habitantes::tiene_permiso(GESTIONAR_HABITANTES, REGISTRAR)) : ?>
+                                <?php if (Sesiones::tienePermiso(GESTIONAR_HABITANTES, REGISTRAR)) : ?>
                                     <div class="button mb-4">
                                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_habitantes">Registrar</a>
                                     </div><br>

@@ -1,388 +1,369 @@
 <?php
 use haydee\ayuda\Sesiones;
-Sesiones::verificarSesion();
-Sesiones::verificarPermiso(GESTIONAR_REPORTES, CONSULTAR);
-
 use haydee\modelo\Habitantes;
 use haydee\modelo\Gastos;
 use haydee\modelo\Mensualidad;
 use haydee\modelo\Pagos;
+use haydee\modelo\Bitacora;
 
 use Dompdf\Dompdf;
-// use PhpOffice\PhpSpreadsheet\Spreadsheet;
-// use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-// use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 
-$gastos_obj = new Gastos();
+// ====================================================================
+// Seguridad y sesión
+// ====================================================================
+Sesiones::verificarSesion();
+Sesiones::verificarPermiso(GESTIONAR_REPORTES, CONSULTAR);
 
-$habitantes_obj = new Habitantes(); 
+// ====================================================================
+// Instancias de modelos (se crean una vez para reutilizar)
+// ====================================================================
+$gastos = new Gastos();
+$habitantes = new Habitantes();
+$mensualidad = new Mensualidad();
+$pagos = new Pagos();
 
-if (isset($_POST["operacion"])){
+// ====================================================================
+// Manejo de peticiones AJAX (POST)
+// ====================================================================
+if (isset($_POST["operacion"])) {
+    header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
-    if ($operacion == "consultar_ingresos_egresos"){
-        $balance = $_POST["balance"];
-        $metodo_pago = $_POST["metodo_pago"];
-        $tipo_gasto = $_POST["tipo_gasto"];
-        $filtro = $_POST["filtro"];
-        $fecha_inicio = $_POST["fecha_inicio"];
-        $fecha_fin = $_POST["fecha_fin"];
-        
-        echo  json_encode($gastos_obj->obtenerIngresosYEgresos($balance,$metodo_pago,$tipo_gasto,$filtro,$fecha_inicio,$fecha_fin));
-    } 
-    if ($operacion == "consultar_estadisticas_ingresos_egresos"){
-        $balance = $_POST["balance"];
-        $metodo_pago = $_POST["metodo_pago"];
-        $tipo_gasto = $_POST["tipo_gasto"];
-        $filtro = $_POST["filtro"];
-        $fecha_inicio = $_POST["fecha_inicio"];
-        $fecha_fin = $_POST["fecha_fin"];
-        
-        echo  json_encode($gastos_obj->estadisticasIngresosYEgresos($balance,$metodo_pago,$tipo_gasto,$filtro,$fecha_inicio,$fecha_fin));
-    }
-    else if ($operacion == "consultar_personas_solvencia"){
-        echo json_encode($habitantes_obj->consultar_personas_solvencia());
-    }
-    else if ($operacion == "consultar_personas_residencia"){
-        echo  json_encode($habitantes_obj->consultar_propietarios());
-    }
-    else if ($operacion == "consultar_meses_mensualidad"){
-        $mensualidad_obj = new Mensualidad();
-        echo  json_encode($mensualidad_obj->realizar_consulta('consultar_meses_mensualidad'));
-    }
-    elseif ($operacion == "consultar_meses_con_gastos") {
-        echo json_encode($gastos_obj->listar_meses_con_gastos());
-        exit;
-    }
-    else if ($operacion == "consultar_habitantes") {
-        // Recolectar datos del POST
-        $rango_edades = $_POST['rango_edades'] ?? 'todos';
-        $edad_minima = $_POST['edad_minima'] ?? null;
-        $edad_maxima = $_POST['edad_maxima'] ?? null;
-        $tipo_residente = $_POST['tipo_residente'] ?? 'todos';
-        $servicios = $_POST['servicios'] ?? [];
+    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
-        $resultado = $habitantes_obj->obtenerDatosHabitantes($rango_edades, $edad_minima, $edad_maxima, $tipo_residente, $servicios);
+    try {
+        switch ($operacion) {
+            case 'consultar_ingresos_egresos':
+                $gastos->set_filtros_reporte([
+                    'balance' => $_POST['balance'] ?? 'todos',
+                    'metodo_pago' => $_POST['metodo_pago'] ?? 'todos',
+                    'tipo_gasto' => $_POST['tipo_gasto'] ?? 'todos',
+                    'filtro' => $_POST['filtro'] ?? '',
+                    'fecha_inicio' => $_POST['fecha_inicio'] ?? '',
+                    'fecha_fin' => $_POST['fecha_fin'] ?? ''
+                ]);
+                $respuesta = $gastos->realizar_consulta('consultar_ingresos_egresos');
+                break;
 
-        // Devolver los datos como JSON
-        header('Content-Type: application/json');
-        echo json_encode($resultado['mensaje']);
+            case 'consultar_estadisticas_ingresos_egresos':
+                // mismo array
+                $gastos->set_filtros_reporte([
+                    'balance' => $_POST['balance'] ?? 'todos',
+                    'metodo_pago' => $_POST['metodo_pago'] ?? 'todos',
+                    'tipo_gasto' => $_POST['tipo_gasto'] ?? 'todos',
+                    'filtro' => $_POST['filtro'] ?? '',
+                    'fecha_inicio' => $_POST['fecha_inicio'] ?? '',
+                    'fecha_fin' => $_POST['fecha_fin'] ?? ''
+                ]);
+                $respuesta = $gastos->realizar_consulta('estadisticas_ingresos_egresos');
+                break;
+
+            case 'listar_meses_con_gastos':
+                $respuesta = $gastos->realizar_consulta('listar_meses_con_gastos');
+                break;
+
+            case 'obtener_datos_reporte_mensual':
+                $gastos->set_filtros_reporte([
+                    'mes' => $_POST['mes'] ?? 0,
+                    'anio' => $_POST['anio'] ?? 0
+                ]);
+                $respuesta = $gastos->realizar_consulta('obtener_datos_reporte_mensual');
+                break;
+
+            case 'consultar_personas_solvencia':
+                $respuesta = $habitantes->realizar_consulta('consultar_personas_solvencia');
+                break;
+
+            case 'consultar_personas_residencia':
+                $respuesta = $habitantes->realizar_consulta('consultar_propietarios');
+                break;
+
+            case 'consultar_meses_mensualidad':
+                $respuesta = $mensualidad->realizar_consulta('consultar_meses_mensualidad');
+                break;
+
+            case 'consultar_habitantes':
+                $habitantes->set_filtros_reporte([
+                    'rango_edades' => $_POST['rango_edades'] ?? 'todos',
+                    'edad_minima' => $_POST['edad_minima'] ?? null,
+                    'edad_maxima' => $_POST['edad_maxima'] ?? null,
+                    'tipo_residente' => $_POST['tipo_residente'] ?? 'todos',
+                    'servicios' => $_POST['servicios'] ?? []
+                ]);
+                $respuesta = $habitantes->realizar_consulta('obtener_datos_habitantes');
+                // $respuesta ya tiene la estructura estándar {estatus, datos, mensaje}
+                break;
+
+            default:
+                $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
+        }
+    } catch (Exception $e) {
+        error_log("Error en controlador reportes (POST): " . $e->getMessage());
+        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     }
-    exit();
+
+    echo json_encode($respuesta);
+    exit;
 }
 
+// ====================================================================
+// Validaciones AJAX
+// ====================================================================
 if (isset($_POST["validar"])) {
+    header('Content-Type: application/json');
     $validar = $_POST["validar"];
 
-    if ($validar == "validar_clave_foranea") {
-        $gastos_obj = new Gastos();
+    switch ($validar) {
+        case 'validar_clave_foranea':
+            $tabla = $_POST["tabla"] ?? '';
+            $campo = $_POST["nombre_clave"] ?? '';
+            $valor = $_POST["valor"] ?? '';
 
-        $tabla = $_POST["tabla"];
-        $nombre_clave = $_POST["nombre_clave"];
-        $valor = $_POST["valor"];
-        
-        $resultado = $gastos_obj->realizar_consulta('validar_clave_foranea',["tabla"=>$tabla,"nombre_clave"=>$nombre_clave,"valor"=>$valor]);
-        
-        echo json_encode($resultado);
+            // Solo soportamos validación de habitantes por ahora
+            if ($tabla === 'habitantes' && $campo === 'id_habitante' && !empty($valor)) {
+                $habitantes->set_id_habitante($valor);
+                $respuesta = $habitantes->realizar_consulta('existe_habitante');
+                if ($respuesta['estatus']) {
+                    echo json_encode(['estatus' => $respuesta['existe']]);
+                } else {
+                    echo json_encode(['estatus' => false, 'mensaje' => $respuesta['mensaje']]);
+                }
+            } else {
+                echo json_encode(['estatus' => false, 'mensaje' => 'Validación no soportada']);
+            }
+            break;
+
+        default:
+            echo json_encode(['estatus' => false, 'mensaje' => 'Validación no reconocida']);
     }
     exit;
 }
 
-if ($accion == "reportes_pdf") {
-    $mensualidad_obj = new Mensualidad();
-    $mensualidad_obj->registrar_bitacora(CONSULTAR, GESTIONAR_REPORTES, "TODOS LOS REPORTES PDF");
-    require_once "vista/reportes/reportes_pdf/reportes_pdf_vista.php";
-}
-if ($accion == "solvencia") {
-    $meses = array("Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre");
-    $id_habitante = $_POST["select_reporte"];
+// ====================================================================
+// Manejo de acciones GET (vistas y generación de PDF)
+// ====================================================================
+$accion = $_GET['accion'] ?? 'reportes_pdf'; // Por defecto, la vista principal de reportes PDF
 
-    $habitantes_obj->set_id_habitante($id_habitante);
+switch ($accion) {
+    case 'reportes_pdf':
+        Bitacora::registrar(CONSULTAR, GESTIONAR_REPORTES, 'Acceso a reportes PDF');
+        require_once "vista/reportes/reportes_pdf/reportes_pdf_vista.php";
+        break;
 
-    $registro_porpietario = $habitantes_obj->realizar_consulta('consulta_especifica');
-    $fecha = new DateTime();
-    $fecha->modify("+1 month");
-    $mes_fin = $fecha->format("n");
-    $anio_fin = $fecha->format("Y");
-
-    ob_start();
-    require_once "vista/reportes/reportes_pdf/pdf/reporte_solvencia_pdf.php";
-
-    $html = ob_get_clean();
-
-    $dompdf = new Dompdf(array('enable_remote' => true));
-
-    $dompdf->loadHtml($html);
-    $dompdf->render();
-    $dompdf->stream("solvencia_" . $registro_porpietario["nombre"] . "_" . $registro_porpietario["apellido"]);
-}
-if ($accion == "residencia") {
-    $meses = array("Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre");
-    $id_habitante = $_POST["select_reporte"];
-
-    $habitantes_obj->set_id_habitante($id_habitante);
-    $registro_porpietario = $habitantes_obj->realizar_consulta('consulta_especifica');
-    
-    ob_start();
-    require_once "vista/reportes/reportes_pdf/pdf/reporte_residencia_pdf.php";
-
-    $html = ob_get_clean();
-
-    $dompdf = new Dompdf(array('enable_remote' => true));
-
-    $dompdf->loadHtml($html);
-    $dompdf->render();
-    $dompdf->stream("constancia_residencia_" . $registro_porpietario["nombre"] . "_" . $registro_porpietario["apellido"]);
-}
-
-if ($accion == "cuadro_pagos"){
-    $mensualidad_obj = new Mensualidad();
-    $meses_nombres = array("Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre");
-
-    $mes_limite = explode("-", $_POST["select_reporte"])[0];
-    $anio_limite = explode("-", $_POST["select_reporte"])[1];    
-
-    $deudas_filtradas =[];
-    $meses_seleccionados = [];    
-
-    $deudas_globales = $mensualidad_obj->realizar_consulta('consultar_mensualidades_pendientes');
-
-    foreach ($deudas_globales as $deuda) {
-        if (intval($deuda["anio"]) <= intval($anio_limite)){
-            if (intval($deuda["anio"]) == intval($anio_limite)) {
-                if (intval($deuda["mes"]) <= intval($mes_limite)){
-                    if (array_search($meses_nombres[$deuda["mes"]-1], $meses_seleccionados) === false) {
-                        array_push($meses_seleccionados, $meses_nombres[$deuda["mes"]-1]);
-                    }
-                }
-            }
+    case 'solvencia':
+        $id_habitante = $_POST['select_reporte'] ?? 0;
+        $habitantes->set_id_habitante($id_habitante);
+        $registro_propietario = $habitantes->realizar_consulta('consultar_habitante');
+        if (!$registro_propietario['estatus']) {
+            die('Habitante no encontrado');
         }
-    }
+        $registro_propietario = $registro_propietario['datos'];
 
-    $meses_apartamento = [];
-    $incluido = false;
-    $apartamentos = [];
-    foreach ($deudas_globales as $indice_deudas_globales => $deuda){
-        if (!(array_key_exists($deuda["nro_apartamento"],$apartamentos))) {
-            $apartamentos[$deuda["nro_apartamento"]] = [];
+        $fecha = new DateTime();
+        $fecha->modify("+1 month");
+        $mes_fin = $fecha->format("n");
+        $anio_fin = $fecha->format("Y");
+        $meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+        ob_start();
+        require_once "vista/reportes/reportes_pdf/pdf/reporte_solvencia_pdf.php";
+        $html = ob_get_clean();
+
+        $dompdf = new Dompdf(['enable_remote' => true]);
+        $dompdf->loadHtml($html);
+        $dompdf->render();
+        $dompdf->stream("solvencia_" . $registro_propietario["nombre"] . "_" . $registro_propietario["apellido"]);
+        break;
+
+    case 'residencia':
+        $id_habitante = $_POST['select_reporte'] ?? 0;
+        $habitantes->set_id_habitante($id_habitante);
+        $registro_propietario = $habitantes->realizar_consulta('consultar_habitante');
+        if (!$registro_propietario['estatus']) {
+            die('Habitante no encontrado');
         }
-        array_push($apartamentos[$deuda["nro_apartamento"]], [$meses_nombres[$deuda["mes"]-1],$indice_deudas_globales,$deuda["anio"]]);
-    }
-    $cantidad_incluida = 0;
-    foreach ($meses_seleccionados as $mes) {
-        foreach ($apartamentos as $nro_apartamento => $apartamento) {
-            $meses_apartamento = array_column($apartamento, 0);
-            $indice_apartamento = array_search($mes, $meses_apartamento);
+        $registro_propietario = $registro_propietario['datos'];
+        $meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 
-            if ($indice_apartamento === false) {
-                $array_nuevo = [
-                    "nro_apartamento" => $nro_apartamento,
-                    "anio"=>$apartamento[0][2],
-                    "mes"=> strval(array_search($mes, $meses_nombres) + 1),
-                    "cambio_neto_mes"=>0,
-                    "deuda_acumulada"=>0,                    
-                ];
-                $apartamento[0][1] = $apartamento[0][1] + $cantidad_incluida;
-                $cantidad_incluida++;
+        ob_start();
+        require_once "vista/reportes/reportes_pdf/pdf/reporte_residencia_pdf.php";
+        $html = ob_get_clean();
 
-                array_splice($deudas_globales, $apartamento[0][1],0,[$array_nuevo]);
-            }
-        }
-    }
-    
-    foreach ($deudas_globales as $deuda) {
-        if (intval($deuda["anio"]) <= intval($anio_limite)){
-            if (intval($deuda["anio"]) == intval($anio_limite)) {
-                if (intval($deuda["mes"]) <= intval($mes_limite)){
+        $dompdf = new Dompdf(['enable_remote' => true]);
+        $dompdf->loadHtml($html);
+        $dompdf->render();
+        $dompdf->stream("constancia_residencia_" . $registro_propietario["nombre"] . "_" . $registro_propietario["apellido"]);
+        break;
 
-                    if (!(array_key_exists($deuda["nro_apartamento"],$deudas_filtradas))) {
-                        $deudas_filtradas[$deuda["nro_apartamento"]] = [];
-                    }
-                    
-                    array_push($deudas_filtradas[$deuda["nro_apartamento"]], $deuda["deuda_acumulada"]);                    
-                }
-            }
-            else{
-                if (!(array_key_exists($deuda["nro_apartamento"],$deudas_filtradas))) {
-                    $deudas_filtradas[$deuda["nro_apartamento"]] = [];
-                }
-                    
-                array_push($deudas_filtradas[$deuda["nro_apartamento"]], $deuda["deuda_acumulada"]);
-            }
-        }        
-    }
-
-    $mensualidad_obj->set_mes($mes_limite);
-    $mensualidad_obj->set_anio($anio_limite);
-    
-    $tasa_dolar = $mensualidad_obj->realizar_consulta('consultar_tasa_dolar_mensualidades');
-
-    $total_mensual = [];
-
-    $cantidadParaAgrupar = 5;
-
-    $cebecera_tabla = [];
-    $cuerpo_tabla = [];
-
-    if (count($meses_seleccionados) > $cantidadParaAgrupar){        
-        $mesesAGrupar = array_slice($meses_seleccionados, 0, $cantidadParaAgrupar);
-
-        if (!empty($mesesAGrupar)) {
-            // 2. **Crear la Agrupación Única**
-            $mesInicio = reset($mesesAGrupar); // Obtiene el primer elemento
-            $mesFin = end($mesesAGrupar);       // Obtiene el último elemento
-
-            if ($mesInicio === $mesFin) {
-                // Caso de agrupar solo 1 elemento
-                $arregloResultante[] = $mesInicio;
-            } else {
-                // Agrupación normal de N > 1 elementos
-                $agrupacion = "{$mesInicio} / {$mesFin}";
-                $arregloResultante[] = $agrupacion;
-            }
-        }
-
-        $mesesRestantes = array_slice($meses_seleccionados, $cantidadParaAgrupar);
-
-        $cebecera_tabla = array_merge($arregloResultante, $mesesRestantes);
-
-        $meses_sin_agrupar = count($cebecera_tabla) - 1;
+    case 'cuadro_pagos':
+        $limite = explode("-", $_POST["select_reporte"] ?? '');
+        $mes_limite = $limite[0] ?? '';
+        $anio_limite = $limite[1] ?? '';
         
-        foreach ($deudas_filtradas as $nro_apartamento => $apartamento) {            
-            if (!(array_key_exists($nro_apartamento,$cuerpo_tabla))) {
-                $cuerpo_tabla[$nro_apartamento] = [];
-            }
-            if (!(array_key_exists("grupo",$cuerpo_tabla[$nro_apartamento]))) {
-                $cuerpo_tabla[$nro_apartamento]["grupo"] = 0;
-            }
-            // var_dump($deudas_filtradas);
-            // for ($i=0; $i < count($apartamento)-($meses_sin_agrupar); $i++) {
-            //     // echo $apartamento[$i] . "<br><br>";
-            //     $cuerpo_tabla[$nro_apartamento]["grupo"] += $apartamento[$i];
-            // }
-            $cuerpo_tabla[$nro_apartamento]["grupo"] += $apartamento[count($apartamento)-($meses_sin_agrupar)-1];
-            for ($i= count($apartamento)-($meses_sin_agrupar); $i < count($apartamento); $i++) { 
-                // echo $apartamento[$i] . "<br><br>";
-                array_push($cuerpo_tabla[$nro_apartamento], $apartamento[$i]);
+        if (!$mes_limite || !$anio_limite) {
+            die('Parámetros inválidos');
+        }
+
+        // 1. Delegar todo el procesamiento pesado al modelo
+        $resultadoCuadro = $mensualidad->generarEstructuraCuadroPagos($mes_limite, $anio_limite);
+        if (!$resultadoCuadro['estatus']) {
+            die('Error al obtener datos para el cuadro de pagos.');
+        }
+
+        $cabecera_tabla = $resultadoCuadro['datos']['cabecera'];
+        $cuerpo_tabla = $resultadoCuadro['datos']['cuerpo'];
+        $total_mensual = $resultadoCuadro['datos']['totales'];
+
+        // 2. Obtener la tasa de cambio
+        $mensualidad->set_mes($mes_limite);
+        $mensualidad->set_anio($anio_limite);
+        $tasa_resp = $mensualidad->realizar_consulta('consultar_tasa_dolar_mensualidades');
+        $tasa_dolar = $tasa_resp['estatus'] ? $tasa_resp['datos'] : ['tasa_dolar' => 1, 'mes' => $mes_limite, 'anio' => $anio_limite];
+
+        // 3. Renderizar PDF
+        ob_start();
+        require_once "vista/reportes/reportes_pdf/pdf/cuadro_pagos_pdf.php";
+        $html = ob_get_clean();
+
+        $dompdf = new Dompdf(['enable_remote' => true]);
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'landscape'); // Sugerencia: Los cuadros de pago suelen requerir hoja horizontal
+        $dompdf->render();
+        $dompdf->stream("Cuadro_Pagos_" . str_pad($mes_limite, 2, '0', STR_PAD_LEFT) . "-" . $anio_limite . ".pdf");
+        break;
+
+    case 'gastos_mensual':
+        require_once "vista/reportes/reportes_pdf/reporte_gastos_mensual_vista.php";
+        break;
+
+    case 'generar_reporte_gastos_mensual':
+        $mes = $_POST['mes'] ?? '';
+        $anio = $_POST['anio'] ?? '';
+        $tasa_dolar = (float)($_POST['tasa_dolar'] ?? 0);
+
+        if (!$mes || !$anio || $tasa_dolar == 0) {
+            die("Parámetros incompletos o tasa no válida.");
+        }
+
+        // Obtener datos de gastos
+        $gastos->set_filtros_reporte(['mes' => $mes, 'anio' => $anio]);
+        $respuesta = $gastos->realizar_consulta('obtener_datos_reporte_mensual');
+
+        if (!$respuesta['estatus']) {
+            die("Error al obtener datos: " . $respuesta['mensaje']);
+        }
+
+        $detalles = $respuesta['datos'];
+
+        // Procesar detalles
+        $gastos_fijos = [];
+        $gastos_variables = [];
+        $total_gas_bs = 0;
+
+        foreach ($detalles as $row) {
+            $clasificacion = $row['clasificacion'] ?? '';
+            $concepto = $row['concepto'] ?? '';
+            $monto = (float)($row['monto'] ?? 0);
+
+            // Identificar gas por nombre (ajusta según tu nomenclatura)
+            if (stripos($concepto, 'GAS LARA') !== false) {
+                $total_gas_bs += $monto;
+            } else {
+                if ($clasificacion === 'Fijo') {
+                    $gastos_fijos[] = ['descripcion_gasto' => $concepto, 'monto' => $monto];
+                } else {
+                    $gastos_variables[] = ['descripcion_gasto' => $concepto, 'monto' => $monto];
+                }
             }
         }
-    }
 
-    // var_dump($cuerpo_tabla);echo "<br><br>";
-    // var_dump($cebecera_tabla);
+        // Obtener total de apartamentos activos
+        $apartamentoModel = new \haydee\modelo\Apartamento();
+        $resp_aptos = $apartamentoModel->realizar_consulta('contar_activos');
+        $total_aptos = $resp_aptos['estatus'] ? $resp_aptos['datos'] : 0;
 
-    ob_start();
-    require_once "vista/reportes/reportes_pdf/pdf/cuadro_pagos_pdf.php";
+        // Construir array para la vista
+        $datos_reporte = [
+            'gastos_fijos' => $gastos_fijos,
+            'gastos_variables' => $gastos_variables,
+            'gasto_gas' => ['monto' => $total_gas_bs],
+            'total_aptos' => $total_aptos
+        ];
 
-    $html = ob_get_clean();
+        // Pasar a la vista (además de $tasa_dolar, $anio, $mes)
+        ob_start();
+        require_once "vista/reportes/reportes_pdf/pdf/reporte_gastos_mensual_pdf.php";
+        $html = ob_get_clean();
 
-    $dompdf = new Dompdf(array('enable_remote' => true));
-    
-    $dompdf->loadHtml($html);
-    $dompdf->render();
-    $dompdf->stream("Cuadro de Pagos_" . $tasa_dolar["mes"] . "-" . $tasa_dolar["anio"]);
+        $dompdf = new Dompdf(['enable_remote' => true]);
+        $dompdf->loadHtml($html);
+        $dompdf->render();
+        $dompdf->stream("relacion_gastos_".$mes."_".$anio.".pdf");
+        break;
 
-    echo json_encode(["status"=>true,"mensaje"=>"OK"]);
-    exit();
+    case 'recibo_pago':
+        $id_pago = $_POST['select_reporte'] ?? 0;
+        $pagos->set_id_pago($id_pago);
+        $detalles_recibo = $pagos->realizar_consulta('consultarReciboPago');
+        if (!$detalles_recibo['estatus']) {
+            die("No se encontraron datos para generar el reporte.");
+        }
+        $detalles_recibo = $detalles_recibo['datos'];
+
+        date_default_timezone_set('America/Caracas');
+        $meses_nombres = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+        $fecha_pago = new DateTime($detalles_recibo['fecha_pago']);
+
+        ob_start();
+        require_once "vista/reportes/reportes_pdf/pdf/recibo_pago_pdf.php";
+        $html = ob_get_clean();
+
+        $dompdf = new Dompdf(['enable_remote' => true]);
+        $dompdf->loadHtml($html);
+        $dompdf->render();
+        $dompdf->stream("recibo_pago_". $detalles_recibo['nombre'] ."_" . $detalles_recibo['apellido'] . "_" . $fecha_pago->format('Y-m-d') . ".pdf");
+        break;
+
+    case 'reportes_estadisticos':
+        Bitacora::registrar(CONSULTAR, GESTIONAR_REPORTES, 'Acceso a reportes estadísticos');
+        require_once "vista/reportes/reportes_estadisticos/reportes_estadisticos_vista.php";
+        break;
+
+    case 'ingreso_egreso':
+        require_once "vista/reportes/reportes_estadisticos/reporte_ingresos_egresos/reporte_ingreso_egreso_vista.php";
+        break;
+
+    case 'generar_reporte_ingresos_egresos':
+        // Recoger datos del POST (vienen del formulario)
+        $selecion = $_POST["mostrar_datos_input"] ?? '';
+        $barra = $_POST["barra"] ?? '';
+        $fecha = $_POST["fecha_grafico_input"] ?? '';
+        $total_pagos = $_POST["total_pagos_input"] ?? 0;
+        $total_gastos = $_POST["total_gastos_input"] ?? 0;
+        $gastos_efectivo = $_POST["gastos_efectivo_input"] ?? 0;
+        $gastos_transferencia = $_POST["gastos_transferencia_input"] ?? 0;
+        $gastos_pago_movil = $_POST["gastos_pago_movil_input"] ?? 0;
+        $pagos_efectivo = $_POST["pagos_efectivo_input"] ?? 0;
+        $pagos_transferencia = $_POST["pagos_transferencia_input"] ?? 0;
+        $pagos_pago_movil = $_POST["pagos_pago_movil_input"] ?? 0;
+        $fecha_pagos = $_POST["fecha_pagos_input"] ?? '';
+        $fecha_gastos = $_POST["fecha_gastos_input"] ?? '';
+
+        ob_start();
+        require_once "vista/reportes/reportes_estadisticos/reporte_ingresos_egresos/reporte_ingresos_egreso_pdf.php";
+        $html = ob_get_clean();
+
+        $dompdf = new Dompdf(['enable_remote' => true]);
+        $dompdf->loadHtml($html);
+        $dompdf->render();
+        $dompdf->stream("reporte_ingreso_egreso");
+        break;
+
+    case 'habitantes':
+        require_once "vista/reportes/reportes_estadisticos/reporte_habitantes/reporte_habitantes_vista.php";
+        break;
+
+    default:
+        // Si no hay acción válida, redirigir a reportes_pdf por defecto
+        header("Location: ?pagina=reportes_controlador.php&accion=reportes_pdf");
+        break;
 }
-
-
-if ($accion == "gastos_mensual") {
-    require_once "vista/reportes/reportes_pdf/reporte_gastos_mensual_vista.php";
-}
-if ($accion == "generar_reporte_gastos_mensual") {
-    $mes = $_POST['mes'];
-    $anio = $_POST['anio'];
-    $tasa_dolar = isset($_POST['tasa_dolar']) ? (float)$_POST['tasa_dolar'] : 0;
-
-
-    $datos_reporte = $gastos_obj->obtenerDatosReporteMensual($mes, $anio);
-
-    if ($datos_reporte === null || $tasa_dolar == 0) {
-
-        echo "No se encontraron datos para generar el reporte.";
-        exit;
-    }
-
-    ob_start();
-    require_once "vista/reportes/reportes_pdf/pdf/reporte_gastos_mensual_pdf.php";
-    $html = ob_get_clean();
-
-    $dompdf = new Dompdf(['enable_remote' => true]);
-    $dompdf->loadHtml($html);
-    $dompdf->render();
-    $dompdf->stream("relacion_gastos_".$mes."_".$anio.".pdf",);
-}
-
-if ($accion == "recibo_pago") {
-    $obj_pago = new Pagos();
-
-    $id_pago = $_POST['select_reporte'];
-    $obj_pago->set_id_pago($id_pago);
-    $detalles_recibo = $obj_pago->realizar_consulta('consultarReciboPago');
-
-    if ($detalles_recibo == false) {
-        echo "No se encontraron datos para generar el reporte.";
-        exit;
-    }
-    date_default_timezone_set('America/Caracas');
-    $meses_nombres = array("Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre");
-
-    $fecha_pago = new DateTime($detalles_recibo['fecha_pago']);
-    
-    ob_start();
-    require_once "vista/reportes/reportes_pdf/pdf/recibo_pago_pdf.php";
-    $html = ob_get_clean();
-
-    $dompdf = new Dompdf(['enable_remote' => true]);
-    $dompdf->loadHtml($html);
-    $dompdf->render();
-    $dompdf->stream("recibo_pago_". $detalles_recibo['nombre'] ."_" . $detalles_recibo['apellido'] . "_" . $fecha_pago->format('Y-m-d') . ".pdf");
-}
-
-// Estadisticos
-if ($accion == "reportes_estadisticos") {
-    $mensualidad_obj = new Mensualidad();
-    $mensualidad_obj->registrar_bitacora(CONSULTAR, GESTIONAR_REPORTES, "TODOS LOS REPORTES ESTADISTICOS");
-    require_once "vista/reportes/reportes_estadisticos/reportes_estadisticos_vista.php";
-}
-
-if ($accion == "ingreso_egreso") {
-    require_once "vista/reportes/reportes_estadisticos/reporte_ingresos_egresos/reporte_ingreso_egreso_vista.php";
-}
-if ($accion == "generar_reporte_ingresos_egresos") {
-    $selecion = $_POST["mostrar_datos_input"];    
-
-    $barra = $_POST["barra"];
-    $fecha = $_POST["fecha_grafico_input"];
-
-    $total_pagos = $_POST["total_pagos_input"];
-    $total_gastos = $_POST["total_gastos_input"];
-    $gastos_efectivo = $_POST["gastos_efectivo_input"];
-    $gastos_transferencia = $_POST["gastos_transferencia_input"];
-    $gastos_pago_movil = $_POST["gastos_pago_movil_input"];
-    $pagos_efectivo = $_POST["pagos_efectivo_input"];
-    $pagos_transferencia = $_POST["pagos_transferencia_input"];
-    $pagos_pago_movil = $_POST["pagos_pago_movil_input"];
-    $fecha_pagos = $_POST["fecha_pagos_input"];
-    $fecha_gastos = $_POST["fecha_gastos_input"];
-
-    ob_start();
-    require_once "vista/reportes/reportes_estadisticos/reporte_ingresos_egresos/reporte_ingresos_egreso_pdf.php";
-
-
-    $html = ob_get_clean();
-
-    $dompdf = new Dompdf(array('enable_remote' => true));
-
-    $dompdf->loadHtml($html);
-    $dompdf->render();
-    $dompdf->stream("reporte_ingreso_egreso");
-}
-
-if ($accion == "habitantes") {
-    require_once "vista/reportes/reportes_estadisticos/reporte_habitantes/reporte_habitantes_vista.php";
-}
-
-
-
-?>

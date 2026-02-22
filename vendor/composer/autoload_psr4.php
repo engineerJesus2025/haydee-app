@@ -7,6 +7,7 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'haydee\\vista\\' => array($baseDir . '/vista'),
+    'haydee\\servicios\\' => array($baseDir . '/servicios'),
     'haydee\\modelo\\' => array($baseDir . '/modelo'),
     'haydee\\controlador\\' => array($baseDir . '/controlador'),
     'haydee\\ayuda\\' => array($baseDir . '/ayuda'),

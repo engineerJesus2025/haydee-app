@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Antes: datos_consulta.append('id', notificacion.dataset.id);
             // Ahora: Obtenemos el ID desde el 'button'
             datos_consulta.append('id', button.dataset.id);
-            datos_consulta.append('operacion', "quitar_notificacion");
+            datos_consulta.append('operacion', "marcar_como_leido");
 
             const resultado = await query(datos_consulta);
 

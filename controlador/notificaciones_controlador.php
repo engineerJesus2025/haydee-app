@@ -1,59 +1,77 @@
-<?php 
+<?php
 use haydee\ayuda\Sesiones;
+use haydee\modelo\Notificaciones;
+use haydee\modelo\Bitacora;
+
 Sesiones::verificarSesion();
 
-use haydee\modelo\Notificaciones;
+// Instancia del modelo
+$notificaciones = new Notificaciones();
 
-if (isset($_POST["operacion"])){
+if (isset($_POST["operacion"])) {
+    header('Content-Type: application/json');
+
+    // Asignación masiva de campos que pueden llegar
+    $notificaciones->set_id_notificacion($_POST['id'] ?? null);      // El frontend envía 'id' para marcar una
+    $notificaciones->set_usuario_id($_SESSION['id_usuario'] ?? null); // Siempre usamos el de sesión
+
     $operacion = $_POST["operacion"];
+    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
-    if ($operacion == "consultar"){
-        $notificaciones_obj = new Notificaciones();
-        echo  json_encode($notificaciones_obj->realizar_consulta('consultar'));
-    }
-    else if ($operacion == "quitar_notificacion"){
-        $notificaciones_obj = new Notificaciones();
+    try {
+        switch ($operacion) {
+            case 'consultar':
+                // Consultar notificaciones del usuario actual
+                $respuesta = $notificaciones->realizar_consulta('consultar_mis_notificaciones');
+                // No se registra bitácora para consultas de notificaciones (puede ser muy frecuente)
+                break;
 
-        $id_notificacion = $_POST["id"];
+            case 'marcar_como_leido':
+                $id = $notificaciones->get_id_notificacion();
+                if (!$id) {
+                    throw new Exception('ID de notificación no proporcionado');
+                }
+                $respuesta = $notificaciones->realizar_consulta('marcar_leida');
+                if ($respuesta['estatus']) {
+                    // Eliminar la notificación de la sesión
+                    if (isset($_SESSION['notificaciones']) && is_array($_SESSION['notificaciones'])) {
+                        foreach ($_SESSION['notificaciones'] as $index => $n) {
+                            if (isset($n['id_notificacion']) && $n['id_notificacion'] == $id) {
+                                unset($_SESSION['notificaciones'][$index]);
+                                break;
+                            }
+                        }
+                        // Reindexar array (opcional)
+                        $_SESSION['notificaciones'] = array_values($_SESSION['notificaciones']);
+                    }
+                    // Bitácora opcional
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_NOTIFICACIONES, "Notificación marcada como leída ID: $id");
+                }
+                break;
 
-        $notificaciones_obj->set_id_notificacion($id_notificacion);
+            case 'marcar_todas_leidas':
+                $respuesta = $notificaciones->realizar_consulta('marcar_todas_leidas');
+                if ($respuesta['estatus']) {
+                    // Vaciar las notificaciones de la sesión
+                    $_SESSION['notificaciones'] = [];
+                    // Bitácora opcional
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_NOTIFICACIONES, "Todas las notificaciones marcadas como leídas");
+                }
+                break;
 
-        $resultado = $notificaciones_obj->realizar_consulta('marcar_como_activo');
-        $indices_notificaciones = array_keys($_SESSION["notificaciones"]);
-                
-        foreach ($indices_notificaciones as $indice) {        
-            if ($_SESSION["notificaciones"][$indice]["id_notificacion"] == $id_notificacion) {
-                unset($_SESSION["notificaciones"][$indice]);
-            }
+            default:
+                $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
-        echo json_encode($resultado);
+    } catch (Exception $e) {
+        error_log("Error en controlador notificaciones: " . $e->getMessage());
+        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     }
-    if ($operacion == "marcar_todas_leidas") {
-        $notificaciones_obj = new Notificaciones();
 
-        // Obtenemos el ID del usuario de la sesión
-        $id_usuario = $_SESSION["id_usuario"];
-        $notificaciones_obj->set_usuario_id($id_usuario);
-
-        // Llamamos a la nueva acción en el modelo
-        $resultado = $notificaciones_obj->realizar_consulta('marcar_todas_leidas');
-
-        if ($resultado["estatus"]) {
-            // Si la BD se actualizó, vaciamos las notificaciones de la sesión
-            $_SESSION["notificaciones"] = [];
-        }
-
-        header('Content-Type: application/json');
-
-        echo json_encode($resultado);
-
-        exit;
-    }
+    echo json_encode($respuesta);
     exit;
 }
 
-if($accion == "inicio"){    
+// Carga de vistas
+if ($accion == "inicio") {
     require_once "vista/notificaciones/notificaciones_vista.php";
 }
-
-?>

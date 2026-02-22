@@ -1,4 +1,4 @@
-<?php use haydee\modelo\Proveedores; ?>
+<?php use haydee\ayuda\Sesiones; ?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -11,9 +11,9 @@
 
 <body id="body-pd" class="body-pd">
 <input type="text" hidden="" id="permiso_eliminar"
-       value="<?php echo Proveedores::tiene_permiso(GESTIONAR_PROVEEDORES, ELIMINAR) ?>">
+       value="<?php echo Sesiones::tienePermiso(GESTIONAR_PROVEEDORES, ELIMINAR) ?>">
 <input type="text" hidden="" id="permiso_editar"
-       value="<?php echo Proveedores::tiene_permiso(GESTIONAR_PROVEEDORES, MODIFICAR) ?>">
+       value="<?php echo Sesiones::tienePermiso(GESTIONAR_PROVEEDORES, MODIFICAR) ?>">
 <div class="container-fluid">
     <div class="row flex-nowrap ">
 
@@ -38,7 +38,7 @@
                 <div class="row mb-3">
                     <div class="col-12">
                         <div class="card p-4">
-                            <?php if (Proveedores::tiene_permiso(GESTIONAR_PROVEEDORES, REGISTRAR)): ?>
+                            <?php if (Sesiones::tienePermiso(GESTIONAR_PROVEEDORES, REGISTRAR)): ?>
                                 <div class="button mb-4">
                                     <button type="button" class="btn btn-primary" data-bs-toggle="modal"
                                             data-bs-target="#modal_proveedores">Nuevo Proveedor</button>

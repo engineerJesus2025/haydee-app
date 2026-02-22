@@ -1,137 +1,148 @@
 <?php
 use haydee\ayuda\Sesiones;
+use haydee\modelo\SolicitudGasto;
+use haydee\modelo\Presupuesto;
+use haydee\modelo\Bitacora;
+
+// Verificaciones de seguridad
 Sesiones::verificarSesion();
 Sesiones::verificarPermiso(GESTIONAR_SOLICITUD_GASTO, CONSULTAR);
 
+// Instancia del modelo principal
+$solicitud = new SolicitudGasto();
 
-use haydee\modelo\Presupuesto;
-use haydee\modelo\SolicitudGasto;
-
-$solicitud_gasto_obj = new SolicitudGasto();
+// Variables para la vista (solo si no hay operación POST)
 $fecha_actual = date("Y-m");
-$presupuestos = $solicitud_gasto_obj->consultar_presupuesto($fecha_actual);
+$presupuestos = [];
 
 if (isset($_POST["operacion"])) {
+    header('Content-Type: application/json');
+
+    // Asignación masiva de campos que pueden llegar
+    $solicitud->set_id_solicitud($_POST['id_solicitud'] ?? null);
+    $solicitud->set_fecha_reporte($_POST['fecha'] ?? null);      // El name en el form es "fecha"
+    $solicitud->set_descripcion_necesidad($_POST['descripcion'] ?? null);
+    $solicitud->set_nombre_solicitante($_POST['nombre'] ?? null);
+    $solicitud->set_monto_estimado($_POST['monto'] ?? null);
+    $solicitud->set_estado($_POST['estado'] ?? null);
+    $solicitud->set_presupuesto_id($_POST['presupuesto_id'] ?? null);
+    $solicitud->set_prioridad($_POST['prioridad'] ?? null);
+
     $operacion = $_POST["operacion"];
+    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
-    if ($operacion == "consulta") {
-        $solicitud_gasto_obj->registrar_bitacora(CONSULTAR, GESTIONAR_SOLICITUD_GASTO, "TODAS LAS SOLICITUDES DE GASTO");
-        echo json_encode($solicitud_gasto_obj->realizar_consulta('consultar'));
-        
-        exit;
-    } 
+    try {
+        switch ($operacion) {
+            case 'consulta':
+                $respuesta = $solicitud->realizar_consulta('consultar');
+                if ($respuesta['estatus']) {
+                    Bitacora::registrar(CONSULTAR, GESTIONAR_SOLICITUD_GASTO, 'Consulta general de solicitudes');
+                }
+                break;
 
-    elseif ($operacion == "consulta_especifica") {
-        $solicitud_gasto_obj->set_id_solicitud($_POST["id_solicitud"]);
-        echo json_encode($solicitud_gasto_obj->realizar_consulta('consultar_solicitud_id'));
-        exit;
-    }
+            case 'consulta_especifica':
+                $respuesta = $solicitud->realizar_consulta('consultar_solicitud_id');
+                break;
 
-    elseif ($operacion == "consultar_presupuesto") {
-        // <-- CAMBIO: Se usan las variables correctas
-        $presupuesto_id = $_POST["presupuesto_id"];
-        $solicitud_gasto_obj->set_presupuesto_id($presupuesto_id);
-        $respuesta = $solicitud_gasto_obj->consultar_presupuesto_disponible();
-        echo json_encode($respuesta);
-        exit;
-    }
+            case 'consultar_presupuesto':
+                // Este método es público y no usa realizar_consulta, pero igual podemos manejarlo
+                $respuesta = $solicitud->consultar_presupuesto_disponible();
+                break;
 
-    elseif ($operacion == "meses_anios_con_presupuesto") {
-        $respuesta = $solicitud_gasto_obj->listar_meses_anios_con_presupuesto();
-        echo json_encode([
-            "estatus" => true,
-            "data" => $respuesta
-        ]);
-        exit;
-    }
+            case 'meses_anios_con_presupuesto':
+                $respuesta = $solicitud->listar_meses_anios_con_presupuesto();
+                // Adaptamos la respuesta al formato esperado por el frontend
+                if ($respuesta['estatus']) {
+                    $respuesta = ['estatus' => true, 'data' => $respuesta['datos']];
+                }
+                break;
 
-    elseif ($operacion == "buscar_presupuesto_por_mes_anio") {
-        // <-- CAMBIO: Se construye la fecha y se llama a la función correcta
-        $mes = $_POST["mes"];
-        $anio = $_POST["anio"];
-        $fecha = "$anio-$mes";
-        $respuesta = $solicitud_gasto_obj->consultar_presupuesto($fecha);
-        echo json_encode($respuesta);
-        exit;
-    } 
-    
-    elseif ($operacion == "registrar") {
-        $presupuesto_id = $_POST["presupuesto_id"];
-        $solicitud_gasto_obj->set_fecha_reporte($_POST["fecha"]);
-        $solicitud_gasto_obj->set_descripcion_necesidad($_POST["descripcion"]);
-        $solicitud_gasto_obj->set_nombre_solicitante($_POST["nombre"]);
-        $solicitud_gasto_obj->set_monto_estimado($_POST["monto_estimado"]);
-        $solicitud_gasto_obj->set_estado($_POST["estado"]);
-        $solicitud_gasto_obj->set_presupuesto_id($presupuesto_id);
-        $solicitud_gasto_obj->set_prioridad($_POST["prioridad"]);
+            case 'buscar_presupuesto_por_mes_anio':
+                $mes = $_POST["mes"] ?? '';
+                $anio = $_POST["anio"] ?? '';
+                $fecha = "$anio-$mes";
+                $respuesta = $solicitud->consultar_presupuesto($fecha);
+                break;
 
-        $respuesta = $solicitud_gasto_obj->realizar_consulta('registrar');
+            case 'registrar':
+                $respuesta = $solicitud->realizar_consulta('registrar');
+                if ($respuesta['estatus']) {
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_SOLICITUD_GASTO,
+                        $solicitud->get_descripcion_necesidad() . ' de ' . $solicitud->get_nombre_solicitante()
+                    );
+                }
+                break;
 
-        if ($respuesta["estatus"]) {
-            $solicitud_gasto_obj->registrar_bitacora(REGISTRAR, GESTIONAR_SOLICITUD_GASTO, "Solicitud "  . $_POST["descripcion"] . " de " . $_POST["nombre"]);
+            case 'modificar':
+                $respuesta = $solicitud->realizar_consulta('modificar');
+                if ($respuesta['estatus']) {
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_SOLICITUD_GASTO,
+                        $solicitud->get_descripcion_necesidad() . ' de ' . $solicitud->get_nombre_solicitante()
+                    );
+                }
+                break;
+
+            case 'eliminar':
+                // Obtener datos para bitácora antes de eliminar
+                $copia = clone $solicitud;
+                $datosSolicitud = $copia->realizar_consulta('consultar_solicitud_id');
+                $info = '';
+                if ($datosSolicitud['estatus']) {
+                    $datos = $datosSolicitud['datos'];
+                    $info = ($datos['descripcion_necesidad'] ?? '') . ' de ' . ($datos['nombre_solicitante'] ?? '');
+                }
+
+                $respuesta = $solicitud->realizar_consulta('eliminar');
+                if ($respuesta['estatus']) {
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_SOLICITUD_GASTO, $info);
+                }
+                break;
+
+            case 'ultimo_id':
+                $respuesta = $solicitud->realizar_consulta('lastId');
+                break;
+
+            default:
+                $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
-        echo json_encode($respuesta);
-        exit;
-    } 
-    
-    elseif ($operacion == "modificar") {
-        $id_solicitud = $_POST["id_solicitud"];
-        $presupuesto_id = $_POST["presupuesto_id"];
-        $monto_estimado = $_POST["monto_estimado"];
-
-        $solicitud_gasto_obj->set_id_solicitud($id_solicitud);
-        $solicitud_gasto_obj->set_fecha_reporte($_POST["fecha"]);
-        $solicitud_gasto_obj->set_descripcion_necesidad($_POST["descripcion"]);
-        $solicitud_gasto_obj->set_nombre_solicitante($_POST["nombre"]);
-        $solicitud_gasto_obj->set_monto_estimado($monto_estimado);
-        $solicitud_gasto_obj->set_estado($_POST["estado"]);
-        $solicitud_gasto_obj->set_presupuesto_id($presupuesto_id);
-        $solicitud_gasto_obj->set_prioridad($_POST["prioridad"]);
-
-        $resultado = $solicitud_gasto_obj->realizar_consulta('modificar');
-        if ($resultado["estatus"]) {
-            $solicitud_gasto_obj->registrar_bitacora(MODIFICAR, GESTIONAR_SOLICITUD_GASTO, "Solicitud "  . $_POST["descripcion"] . " de " . $_POST["nombre"]);
-        }
-        echo json_encode($resultado);
-        exit;
-
-
-    } elseif ($operacion == "eliminar") {
-        $id_solicitud = $_POST["id_solicitud"];
-        $solicitud_gasto_obj->set_id_solicitud($id_solicitud);
-        $solicitud_alterada = $solicitud_gasto_obj->realizar_consulta('consultar_solicitud_id');
-        $resultado = $solicitud_gasto_obj->realizar_consulta('eliminar');
-
-        if ($resultado["estatus"]) {
-            $solicitud_gasto_obj->registrar_bitacora(ELIMINAR, GESTIONAR_SOLICITUD_GASTO, "Solicitud " . $solicitud_alterada["descripcion_necesidad"] . " de " . $solicitud_alterada["nombre_solicitante"]);
-        }
-        echo json_encode($resultado);
+    } catch (Exception $e) {
+        error_log("Error en controlador solicitud_gasto: " . $e->getMessage());
+        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     }
 
-    elseif ($operacion == "ultimo_id") {
-        echo json_encode($solicitud_gasto_obj->realizar_consulta('lastId'));
-    }
-
+    echo json_encode($respuesta);
     exit;
 }
+
+// Validaciones AJAX
 if (isset($_POST["validar"])) {
+    header('Content-Type: application/json');
+
     $validar = $_POST["validar"];
+    $presupuesto = new Presupuesto();
+    $respuesta = ['estatus' => false, 'mensaje' => 'Validación no válida'];
 
-    if ($validar == "validar_mes"){
-        $presupuesto_obj = new Presupuesto();
+    try {
+        switch ($validar) {
+            case 'validar_mes':
+                $presupuesto->set_fecha($_POST["fecha"] ?? null);
+                $respuesta = $presupuesto->realizar_consulta('consultar_mes_presupuesto');
+                break;
 
-        $presupuesto_obj->set_fecha($_POST["fecha"]);
-        
-        echo  json_encode($presupuesto_obj->realizar_consulta('consultar_mes_presupuesto'));
+            case 'validar_anio':
+                $presupuesto->set_fecha($_POST["fecha"] ?? null);
+                $respuesta = $presupuesto->realizar_consulta('consultar_anio_presupuesto');
+                break;
+        }
+    } catch (Exception $e) {
+        error_log("Error en validación AJAX: " . $e->getMessage());
+        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
     }
-    elseif ($validar == "validar_anio"){
-        $presupuesto_obj = new Presupuesto();
 
-        $presupuesto_obj->set_fecha($_POST["fecha"]);
-
-        echo  json_encode($presupuesto_obj->realizar_consulta('consultar_anio_presupuesto'));
-    }
-
+    echo json_encode($respuesta);
     exit;
 }
+
+// Si no hay POST, cargar los presupuestos para la vista
+$presupuestos = $solicitud->consultar_presupuesto($fecha_actual);
 require_once "vista/solicitud_gasto/solicitud_gasto_vista.php";

@@ -1,41 +1,33 @@
-let data_table, id_eliminado, id_registrado, id_modificar;
+/**
+ * cartelera_virtual_ajax.js
+ * Gestión de Cartelera Virtual - Peticiones AJAX
+ * Dependencias: utilidades.js, formatoFechas.js
+ */
 
-let permiso_eliminar = document.querySelector("#permiso_eliminar").value;
-let permiso_editar = document.querySelector("#permiso_editar").value;
-
-let tabla = document.querySelector("#tabla_cartelera_virtual");
+let id_modificar;
+let permiso_eliminar = document.querySelector("#permiso_eliminar")?.value;
+let permiso_editar = document.querySelector("#permiso_editar")?.value;
 let nombre_usuario = document.querySelector("#nombre_usuario")?.value || "Desconocido";
-let boton_formulario = document.querySelector("#boton_formulario");
-let modal = new bootstrap.Modal(document.querySelector("#modal_cartelera"));
-let modal_carga = new bootstrap.Modal("#modal_carga");
-let modalVistaPrevia = new bootstrap.Modal(document.querySelector("#modal_vista_previa"));
-let formulario_usar = document.querySelector("#form_cartelera");
 
+let boton_formulario = document.querySelector("#boton_formulario");
+let modal = new bootstrap.Modal("#modal_cartelera");
+let modalVistaPrevia = new bootstrap.Modal("#modal_vista_previa");
+let formulario_usar = document.querySelector("#form_cartelera");
+let tabla_cartelera;
+
+// Inicializar la tabla al cargar
 consultar();
 
-// En caso de que se envie un formulario
-function envio(operacion) {
-    if (operacion == "Editar") {
-        id_modificar = boton_formulario.getAttribute("id_modificar");
-        modificar(id_modificar);
-
-    }
-    else if (operacion == "Registrar") {
-        registrar();
-    } else {
-        // esto es imposible que pase pero aja
-        mensajes('error', 4000, 'Atencion',
-            'Ha ocurrido un error durante la operacion, intentelo nuevamente')
-    }
-}
-
-document.querySelector('#modal_cartelera').addEventListener('hidden.bs.modal', () => {
+// Resetear modal al cerrarlo
+document.querySelector("#modal_cartelera").addEventListener("hide.bs.modal", () => {
     formulario_usar.reset();
     boton_formulario.removeAttribute("modificar");
     boton_formulario.removeAttribute("id_modificar");
-    boton_formulario.textContent = "Registrar";
+    boton_formulario.textContent = "Guardar";
     document.getElementById("titulo_modal").textContent = "Registrar Publicación";
-    formulario_usar.querySelectorAll("[class='w-100").forEach(el => el.textContent = "");
+    
+    // Limpiar mensajes de error
+    document.querySelectorAll(".w-100").forEach(el => el.textContent = "");
     document.querySelector("#nombre_imagen_cargada").textContent = "";
     document.querySelector("#boton_eliminar_imagen").classList.add("d-none");
     document.querySelector("#boton_eliminar_imagen").removeAttribute("data-nombre");
@@ -47,261 +39,143 @@ document.querySelector('#modal_cartelera').addEventListener('hidden.bs.modal', (
     document.querySelectorAll('.is-invalid').forEach(input => input.classList.remove('is-invalid'));
 });
 
-document.getElementById('header-toggle').addEventListener("click",e=>{
-    setTimeout(function(){
-        data_table.columns.adjust().draw();
-    },450);
+// Ajustar columnas de DataTable al colapsar menú lateral
+document.getElementById('header-toggle')?.addEventListener("click", () => {
+    setTimeout(() => tabla_cartelera?.columns.adjust().draw(), 450);
 });
 
-// Si queremos registrar:
-
-async function registrar() {
-    // FormData captura todo el formulario, incluyendo la imagen, de forma más simple.
-    let datos_consulta = new FormData(formulario_usar);
-    datos_consulta.append("operacion", "registrar");
-
-    let respuesta = await query(datos_consulta,true);
-
-    if (respuesta && respuesta.estatus) {
-        modal.hide();
-        
-        // Pedimos el último ID
-        let respuesta_id = await last_id();
-        
-        // CORRECCIÓN: Leemos el ID desde la nueva estructura simple que devuelve el PHP
-        if (respuesta_id && respuesta_id.estatus) {
-            const nuevo_id = respuesta_id.last_id;
-            
-            // Creamos los botones con el ID correcto
-            const acciones = crearBotones(nuevo_id);
-
-            // Añadimos la fila a DataTables de forma eficiente y obtenemos su nodo
-            const nuevaFilaNodo = data_table.row.add([
-                formatearFecha(datos_consulta.get("fecha")),
-                datos_consulta.get("titulo"),
-                nombre_usuario, // Esta variable ya la tienes definida globalmente
-                obtenerPrioridadTexto(datos_consulta.get("prioridad")),
-                acciones.outerHTML
-            ]).draw(false).node();
-            
-            // Le asignamos el ID al <tr> para que "Editar" y "Preview" puedan encontrarlo
-            nuevaFilaNodo.id = `fila-${nuevo_id}`;
-
-            consulta_completada();
-        } else {
-             Swal.fire("Error", "No se pudo obtener el ID de la nueva publicación.", "error");
-        }
+function envio(operacion) {
+    if (operacion === "Editar") {
+        editar(boton_formulario.getAttribute("id_modificar"));
+    } else if (operacion === "Registrar") {
+        registrar();
     } else {
-         Swal.fire("Error", respuesta.mensaje || "No se pudo registrar la publicación.", "error");
+        Utilidades.mensaje('error', 'Atención', 'Ha ocurrido un error durante la operación, inténtelo nuevamente');
     }
 }
 
-// Si queremos consultar:
-async function consultar() {
-
-    datos_consulta = new FormData();
-    datos_consulta.append("operacion", "consulta");
-    data = await query(datos_consulta);
-    vaciar_tabla();
-
-
-    if (!(data.estatus == undefined)) {
-        mensajes('error', 4000, 'Atencion', data.mensaje);
-        return;// en caso de error mandamos un mensaje con el error y nos vamos
-    }
-
-
-    await data.map(fila => {
-        llenarTabla(fila);
-    })
-
-    data_table = init_data_table();
-}
-
-function vaciar_tabla() {
-    let cuerpo_tabla = document.querySelector('#tabla_cartelera_virtual tbody');
-    cuerpo_tabla.textContent = null;
-}
-
-// PARA EL COLOR DE LA PRIORIDAD, COMO SOLO SON 3 OPCIONES HICE MEJOR UN SWITCH CASE
+/**
+ * Devuelve el HTML del badge según la prioridad
+ */
 function obtenerPrioridadTexto(prioridad) {
-    let texto = "";
-    let color = "";
-
-    switch (prioridad) {
-        case "1":
-        case 1:
-            texto = "Alta";
-            color = "success";
-            break;
-        case "2":
-        case 2:
-            texto = "Media";
-            color = "warning";
-            break;
-        case "3":
-        case 3:
-            texto = "Baja";
-            color = "danger";
-            break;
-        default:
-            texto = "Desconocida";
-            color = "secondary";
-    }
-
-    return `<span class="badge bg-${color}">${texto}</span>`;
+    const mapa = {
+        "1": { texto: "Alta", color: "success" },
+        "2": { texto: "Media", color: "warning" },
+        "3": { texto: "Baja", color: "danger" }
+    };
+    const p = mapa[prioridad] || { texto: "Desconocida", color: "secondary" };
+    return `<span class="badge bg-${p.color}">${p.texto}</span>`;
 }
 
-
+/**
+ * Formatea fecha YYYY-MM-DD a DD/MM/YYYY
+ */
 function formatearFecha(fechaStr) {
-    // Si la fecha es nula, indefinida o vacía, devuelve un texto por defecto.
-    if (!fechaStr) {
-        return "N/A"; // O puedes devolver una cadena vacía: ""
-    }
-
+    if (!fechaStr) return "N/A";
     const partes = fechaStr.split("-");
-    if (partes.length === 3) {
-        return `${partes[2]}/${partes[1]}/${partes[0]}`; // DD-MM-AAAA
-    }
-    return fechaStr; // En caso de formato inesperado, retorna original
+    return partes.length === 3 ? `${partes[2]}/${partes[1]}/${partes[0]}` : fechaStr;
 }
 
-function llenarTabla(fila) {
-    let cuerpo_tabla = document.querySelector('#tabla_cartelera_virtual tbody');
-    let fila_tabla = document.createElement("tr");
-    let id_campo = fila["id_cartelera"];
-
-    let fecha = document.createElement("td"),
-        titulo = document.createElement("td"),
-        autor = document.createElement("td");
-
-    prioridad = document.createElement("td");
-
-    fecha.textContent = formatearFecha(fila["fecha"]);
-    titulo.textContent = fila["titulo"];
-    autor.textContent = fila["nombre_usuario"];
-
-    prioridad.innerHTML = obtenerPrioridadTexto(fila["prioridad"]);
-
-    let acciones = crearBotones(id_campo);
-
-    fila_tabla.appendChild(fecha);
-    fila_tabla.appendChild(titulo);
-    fila_tabla.appendChild(autor);
-    fila_tabla.appendChild(prioridad);
-    fila_tabla.appendChild(acciones);
-
-    fila_tabla.setAttribute("id", `fila-${id_campo}`);
-    fila_tabla.setAttribute("id_cartelera", id_campo);
-    cuerpo_tabla.appendChild(fila_tabla);
-}
-
+/**
+ * Crea el HTML de los botones de acción (vista previa, editar, eliminar)
+ */
 function crearBotones(id) {
-    let td = document.createElement("td");
-    let acciones = document.createElement("div");
-    acciones.setAttribute("class", "row justify-content-evenly");
-
-    // BOTON DE VISTA PREVIA CON EL OJITO
-    let boton_vista_previa = document.createElement("button");
-    let icono_ver = document.createElement("i");
-    icono_ver.setAttribute("class", "bi bi-eye-fill");
-    boton_vista_previa.appendChild(icono_ver);
-    boton_vista_previa.setAttribute("type", "button");
-    boton_vista_previa.setAttribute("class", "btn btn-primary col-3 btn-sm vista-previa");
-    boton_vista_previa.setAttribute("title", "Vista previa");
-    boton_vista_previa.setAttribute("value", id);
-    acciones.appendChild(boton_vista_previa);
-
-    let boton_editar = document.createElement("button");
-    let icono_editar = document.createElement("i");
-    icono_editar.setAttribute("class", "bi bi-pencil-square");
-    boton_editar.appendChild(icono_editar);
-    boton_editar.setAttribute("type", "button");
-    boton_editar.setAttribute("class", "btn btn-success col-3 btn-sm editar");
-    boton_editar.setAttribute("tabindex", "-1");
-    boton_editar.setAttribute("role", "button");
-    boton_editar.setAttribute("aria-disabled", "true");
-    boton_editar.setAttribute("data-bs-toggle", "modal");
-    boton_editar.setAttribute("data-bs-target", "#modal_cartelera");
-    boton_editar.setAttribute("title", "Editar");
-    boton_editar.setAttribute("value", id);
-    acciones.appendChild(boton_editar);
-
-    if (permiso_eliminar) {
-        let boton_eliminar = document.createElement("button");
-        let icono_eliminar = document.createElement("i");
-        icono_eliminar.setAttribute("class", "bi bi-trash3-fill");
-        boton_eliminar.appendChild(icono_eliminar);
-
-        boton_eliminar.setAttribute("type", "button");
-        boton_eliminar.setAttribute("class", "btn btn-danger eliminar col-3 btn-sm");
-        boton_eliminar.setAttribute("tabindex", "-1");
-        boton_eliminar.setAttribute("role", "button");
-        boton_eliminar.setAttribute("aria-disabled", "true");
-
-        boton_eliminar.setAttribute("title", "Eliminar");
-        boton_eliminar.setAttribute("value", id);
-
-        acciones.appendChild(boton_eliminar);
+    let html = `<div class="row justify-content-evenly">
+                    <button type="button" class="btn btn-primary btn-sm col-3 vista-previa" data-id="${id}" title="Vista previa">
+                        <i class="bi bi-eye-fill"></i>
+                    </button>
+                    <button type="button" class="btn btn-success btn-sm col-3 editar" data-id="${id}" data-bs-toggle="modal" data-bs-target="#modal_cartelera" title="Editar">
+                        <i class="bi bi-pencil-square"></i>
+                    </button>`;
+    if (permiso_eliminar == 1) {
+        html += `<button type="button" class="btn btn-danger btn-sm col-3 eliminar" data-id="${id}" title="Eliminar">
+                    <i class="bi bi-trash3-fill"></i>
+                </button>`;
     }
-    td.appendChild(acciones);
-    return td;
+    html += `</div>`;
+    return html;
 }
 
-async function eliminar(id) {
-    datos_consulta = new FormData();
-    datos_consulta.append("id_cartelera", id);
-    datos_consulta.append("operacion", "eliminar");
-    let result = await query(datos_consulta);
-    id_eliminado = id;
+/**
+ * Inicializa DataTable con los datos de cartelera
+ */
+function consultar() {
+    const columnas = [
+        { 
+            data: "fecha",
+            render: (data) => formatearFecha(data)
+        },
+        { data: "titulo" },
+        { data: "nombre_usuario" },
+        { 
+            data: "prioridad",
+            render: (data) => obtenerPrioridadTexto(data)
+        },
+        {
+            data: null,
+            render: (row) => crearBotones(row.id_cartelera)
+        }
+    ];
 
-    data_table.row(`#fila-${id}`).remove().draw();
+    const parametrosConsulta = (data) => {
+        data.operacion = 'consulta';
+    };
 
-    consulta_completada();
+    const configuracionFila = (row, data) => {
+        row.id = `fila-${data.id_cartelera}`;
+        // Los eventos se asignarán mediante delegación en el tbody (más abajo)
+    };
+
+    tabla_cartelera = Utilidades.crearDataTable(
+        'tabla_cartelera_virtual',
+        columnas,
+        parametrosConsulta,
+        configuracionFila
+    );
 }
 
-// Esta funcion prepara el formulario para editar el registro
+/**
+ * Prepara el formulario con los datos de la publicación a editar
+ */
 async function modificar_formulario(e) {
     const boton = e.target.closest("button");
-    const id = boton.getAttribute("value");
+    const id = boton.getAttribute("data-id");
 
-    const datos_consulta = new FormData();
-    datos_consulta.append("id_cartelera", id);
-    datos_consulta.append("operacion", "consulta_especifica");
+    const datos = new FormData();
+    datos.append("id_cartelera", id);
+    datos.append("operacion", "consulta_especifica");
 
-    const data = await query(datos_consulta,true);
+    const respuesta = await Utilidades.query(datos);
 
-    if (!data) {
-        Swal.fire("Error", "No se pudieron cargar los datos de la publicación.", "error");
+    if (!respuesta.estatus) {
+        Utilidades.mensaje('error', 'Error', respuesta.mensaje || 'No se pudieron cargar los datos');
         return;
     }
 
-    let titulo = formulario_usar.querySelector("#titulo");
-    let descripcion = formulario_usar.querySelector("#descripcion");
-    let fecha = formulario_usar.querySelector("#fecha");
-    let prioridad = formulario_usar.querySelector("#prioridad");
+    const data = respuesta.datos;
 
-    titulo.value = data.titulo;
-    descripcion.value = data.descripcion;
-    fecha.value = data.fecha;
-    prioridad.value = data.prioridad;
+    // Llenar formulario
+    formulario_usar.querySelector("#titulo").value = data.titulo;
+    formulario_usar.querySelector("#descripcion").value = data.descripcion;
+    formulario_usar.querySelector("#fecha").value = data.fecha;
+    formulario_usar.querySelector("#prioridad").value = data.prioridad;
 
-    // Mostrar nombre de imagen, esos id estan en el formulario
-    const nombreImagen = document.querySelector("#nombre_imagen_cargada");
+    // Mostrar información de la imagen
+    const nombreImagenSpan = document.querySelector("#nombre_imagen_cargada");
     const botonEliminarImagen = document.querySelector("#boton_eliminar_imagen");
 
     if (data.imagen && data.imagen !== "") {
         let nombre_archivo = data.imagen.split("/").pop();
-        nombreImagen.textContent = `Imagen cargada: ${nombre_archivo}`;
+        nombreImagenSpan.textContent = `Imagen cargada: ${nombre_archivo}`;
         botonEliminarImagen.classList.remove("d-none");
         botonEliminarImagen.setAttribute("data-nombre", nombre_archivo);
     } else {
-        nombreImagen.textContent = "No hay imagen cargada.";
+        nombreImagenSpan.textContent = "No hay imagen cargada.";
         botonEliminarImagen.classList.add("d-none");
         botonEliminarImagen.removeAttribute("data-nombre");
     }
 
-    if (!permiso_editar) {
+    if (permiso_editar != 1) {
         boton_formulario.setAttribute("hidden", true);
         boton_formulario.setAttribute("disabled", true);
     }
@@ -313,21 +187,25 @@ async function modificar_formulario(e) {
     id_modificar = id;
 }
 
-//FUNCIONALIDAD DE LA VISTA PREVIA
+/**
+ * Muestra la vista previa de una publicación
+ */
 async function mostrarVistaPrevia(e) {
     const boton = e.target.closest("button");
-    const id = boton.getAttribute("value");
+    const id = boton.getAttribute("data-id");
 
-    const datos_consulta = new FormData();
-    datos_consulta.append("id_cartelera", id);
-    datos_consulta.append("operacion", "consulta_especifica");
+    const datos = new FormData();
+    datos.append("id_cartelera", id);
+    datos.append("operacion", "consulta_especifica");
 
-    const data = await query(datos_consulta);
+    const respuesta = await Utilidades.query(datos);
 
-    if (!data) {
-        Swal.fire("Error", "No se pudieron cargar los datos de la publicación.", "error");
+    if (!respuesta.estatus) {
+        Utilidades.mensaje('error', 'Error', respuesta.mensaje || 'No se pudieron cargar los datos');
         return;
     }
+
+    const data = respuesta.datos;
 
     document.getElementById("vista_titulo").textContent = data.titulo;
     document.getElementById("vista_descripcion").textContent = data.descripcion;
@@ -335,92 +213,116 @@ async function mostrarVistaPrevia(e) {
     document.getElementById("vista_prioridad").innerHTML = obtenerPrioridadTexto(data.prioridad);
     document.getElementById("vista_autor").textContent = data.nombre_usuario;
 
-    // Resetear mensaje de error por si estaba visible
+    // Resetear mensaje de error
     document.getElementById("vista_imagen").style.display = "block";
     document.getElementById("mensaje_error_imagen").classList.add("d-none");
 
     const imagen = (data.imagen && data.imagen !== "")
         ? `recursos/img/cartelera/${data.imagen}`
         : "";
-
     document.getElementById("vista_imagen").setAttribute("src", imagen);
 
-    // Mostrar el modal como los otros
     modalVistaPrevia.show();
 }
 
+/**
+ * Registra una nueva publicación
+ */
+async function registrar() {
+    let datos = new FormData(formulario_usar);
+    datos.append("operacion", "registrar");
 
-async function modificar(id) {
-    let datos_consulta = new FormData();
-    let titulo = document.querySelector("#titulo").value,
-        descripcion = document.querySelector("#descripcion").value,
-        fecha = document.querySelector("#fecha").value,
-        imagen = document.querySelector("#imagen").files[0],
-        prioridad = document.querySelector("#prioridad").value;
+    let respuesta = await Utilidades.query(datos);
 
-    datos_consulta.append("id_cartelera", id);
-    datos_consulta.append("titulo", titulo);
-    datos_consulta.append("descripcion", descripcion);
-    datos_consulta.append("fecha", fecha);
-    datos_consulta.append("prioridad", prioridad);
-    datos_consulta.append("operacion", "modificar");
-
-    // Solo si hay una nueva imagen seleccionada
-    if (imagen !== undefined) {
-        datos_consulta.append("imagen", imagen);
+    if (!respuesta.estatus) {
+        Utilidades.mensaje('error', 'Atención', respuesta.mensaje || 'Error al registrar');
+        return;
     }
 
-    // Enviamos la petición
-    let respuesta = await query(datos_consulta, true);
+    modal.hide();
+    formulario_usar.reset();
 
-    // --- AQUI ESTABA EL ERROR ---
-    // Debemos verificar si estatus es TRUE antes de cerrar todo
-    if (respuesta && respuesta.estatus) {
-        
-        formulario_usar.reset();
-        modal.hide();
-
-        boton_formulario.removeAttribute("modificar");
-        boton_formulario.removeAttribute("id_modificar");
-        boton_formulario.textContent = "Registrar";
-        document.getElementById("titulo_modal").textContent = "Registrar Publicación";
-        
-        consulta_completada(); // Muestra el Swal de éxito
-
-        // Actualizamos la tabla visualmente solo si hubo éxito
-        const prioridadHTML = obtenerPrioridadTexto(prioridad);
-        
-        // Obtenemos los botones actualizados
-        const acciones = crearBotones(id);
-
-        data_table.row(`#fila-${id}`).data([
-            formatearFecha(fecha),
-            titulo,
-            nombre_usuario,
-            prioridadHTML,
-            acciones.outerHTML
-        ]).draw();
-
-        const fila = document.querySelector(`#fila-${id}`);
-        if (fila) {
-            fila.querySelector(`[value="${id}"]`).addEventListener("click", modificar_formulario);
-        }
-
-    } else {
-        // Si PHP devuelve error (por ejemplo, imagen inválida), mostramos el error
-        // y NO cerramos el modal para que el usuario pueda corregir.
-        Swal.fire({
-            title: "Error",
-            text: respuesta.mensaje || "Ocurrió un error al modificar.",
-            icon: "error",
-            confirmButtonColor: "#e01d22"
-        });
-        document.querySelector("#imagen").value = "";
-    }
+    tabla_cartelera.ajax.reload(null, false);
+    Utilidades.mensaje('success', 'Éxito', 'La publicación se ha registrado correctamente');
 }
 
+/**
+ * Actualiza una publicación existente
+ */
+async function editar(id) {
+    let datos = new FormData(formulario_usar);
+    datos.append("id_cartelera", id);
+    datos.append("operacion", "editar");
 
-// BOTON PARA ELIMINAR LA IMAGEN EN EL FORMULARIO DE EDITAR
+    let respuesta = await Utilidades.query(datos);
+
+    if (!respuesta.estatus) {
+        Utilidades.mensaje('error', 'Atención', respuesta.mensaje || 'Error al modificar');
+        // No cerrar el modal para que el usuario pueda corregir
+        return;
+    }
+
+    formulario_usar.reset();
+    modal.hide();
+
+    boton_formulario.removeAttribute("modificar");
+    boton_formulario.removeAttribute("id_modificar");
+    boton_formulario.textContent = "Guardar";
+    document.getElementById("titulo_modal").textContent = "Registrar Publicación";
+
+    tabla_cartelera.ajax.reload(null, false);
+    Utilidades.mensaje('success', 'Éxito', 'La publicación se ha modificado correctamente');
+}
+
+/**
+ * Elimina una publicación
+ */
+async function eliminar(id) {
+    let datos = new FormData();
+    datos.append("id_cartelera", id);
+    datos.append("operacion", "eliminar");
+
+    let respuesta = await Utilidades.query(datos);
+
+    if (!respuesta.estatus) {
+        Utilidades.mensaje('error', 'Atención', respuesta.mensaje || 'Error al eliminar');
+        return;
+    }
+
+    tabla_cartelera.ajax.reload(null, false);
+    Utilidades.mensaje('success', 'Éxito', 'La publicación ha sido eliminada correctamente');
+}
+
+// ============================================
+// DELEGACIÓN DE EVENTOS EN LA TABLA
+// ============================================
+document.querySelector("#tabla_cartelera_virtual tbody").addEventListener('click', function(e) {
+    const boton = e.target.closest('button');
+    if (!boton) return;
+
+    if (boton.classList.contains('editar')) {
+        modificar_formulario(e);
+    } else if (boton.classList.contains('vista-previa')) {
+        mostrarVistaPrevia(e);
+    } else if (boton.classList.contains('eliminar')) {
+        const id = boton.getAttribute('data-id');
+        Swal.fire({
+            title: "¿Estás seguro?",
+            text: "¿Desea eliminar esta publicación?",
+            showCancelButton: true,
+            confirmButtonText: "Eliminar",
+            cancelButtonText: "Cancelar",
+            confirmButtonColor: "#e01d22",
+            icon: "warning"
+        }).then((resultado) => {
+            if (resultado.isConfirmed) eliminar(id);
+        });
+    }
+});
+
+// ============================================
+// BOTÓN ELIMINAR IMAGEN EN EL FORMULARIO DE EDICIÓN
+// ============================================
 document.querySelector("#boton_eliminar_imagen").addEventListener("click", function () {
     Swal.fire({
         title: "¿Eliminar imagen?",
@@ -432,143 +334,15 @@ document.querySelector("#boton_eliminar_imagen").addEventListener("click", funct
         confirmButtonText: "Sí, eliminar"
     }).then((result) => {
         if (result.isConfirmed) {
+            // Agregar un campo hidden al formulario para indicar que se debe eliminar la imagen
             const hiddenEliminar = document.createElement("input");
             hiddenEliminar.type = "hidden";
             hiddenEliminar.name = "eliminar_imagen";
             hiddenEliminar.value = "1";
             formulario_usar.appendChild(hiddenEliminar);
 
-            // llAMA A LOS INPUTS QUE ESTAN EN EL MODAL
             document.querySelector("#nombre_imagen_cargada").textContent = "Imagen eliminada.";
             document.querySelector("#boton_eliminar_imagen").classList.add("d-none");
         }
     });
-});
-
-async function last_id() {
-    datos_consulta = new FormData();
-    datos_consulta.append("operacion", "ultimo_id");
-    let res = await query(datos_consulta);
-    return res;
-}
-
-async function query(datos,oscuro = false) {
-    if (oscuro) {document.getElementById('icono_carga').setAttribute("class",`loader_dark`);}
-    else{document.getElementById('icono_carga').setAttribute("class",`loader`);}
-    
-    let mostrarModal = false;
-    let tiempoCarga;
-
-    tiempoCarga = setTimeout(() => {
-        mostrarModal = true;
-        modal_carga.show();
-    }, 300);
-
-    try {
-        const tiempoInicio = performance.now();
-
-        const res = await fetch("", { method: "POST", body: datos });
-        const data = await res.json();
-
-        const tiempoTranscurido = performance.now() - tiempoInicio;
-        const tiempoEsperaMin = 700;
-
-        if (mostrarModal && tiempoTranscurido < tiempoEsperaMin) {
-
-            const restante = tiempoEsperaMin - tiempoTranscurido;
-            await new Promise(resolve => setTimeout(resolve, restante));
-        }
-
-        return data;
-    }
-    catch (error) {
-        return { estatus: false, mensaje: "A ocurrido un error durante la consulta", error }
-    }
-    finally {
-        clearTimeout(tiempoCarga);
-        if (mostrarModal) {
-            modal_carga.hide();
-        }
-    }
-}
-
-function consulta_completada() {
-    Swal.fire({
-        title: "Atencion",
-        text: "La operacion se ha realizado correctamente",
-        confirmButtonText: "Aceptar",
-        confirmButtonColor: "#e01d22",
-        icon: "success",
-    })
-}
-
-
-function init_data_table() {
-    return new DataTable("#tabla_cartelera_virtual", {
-        destroy: true,
-        responsive: true,
-        "scrollX": true,
-        "pageLength": 10,
-        "aaSorting": [],
-        language: {
-            "processing": "Procesando...",
-            "lengthMenu": "Mostrar _MENU_ registros",
-            "zeroRecords": "No se encontraron resultados",
-            "emptyTable": "Ningún dato disponible en esta tabla",
-            "info": "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
-            "infoEmpty": "Mostrando registros del 0 al 0 de un total de 0 registros",
-            "infoFiltered": "(filtrado de un total de _MAX_ registros)",
-            "infoPostFix": "",
-            "search": "Buscar:",
-            "url": "",
-            "infoThousands": ",",
-            "loadingRecords": "Cargando...",
-            "paginate": {
-                "first": "Primero",
-                "last": "Último",
-                "next": "<i class='bi bi-caret-right'></i>",
-                "previous": "<i class='bi bi-caret-left'></i>"
-            },
-            "aria": {
-                "sortAscending": ": Activar para ordenar la columna de manera ascendente",
-                "sortDescending": ": Activar para ordenar la columna de manera descendente"
-            },
-            "buttons": {
-                "copy": "Copiar",
-                "colvis": "Visibilidad"
-            }
-        }
-    })
-    // si lees esto tienes que saber que ahora odio estos data table, muerte a jquery...
-}
-
-document.querySelector("#tabla_cartelera_virtual tbody").addEventListener('click', function(e) {
-    const botonEditar = e.target.closest('button.editar');
-    const botonEliminar = e.target.closest('button.eliminar');
-    const botonVistaPrevia = e.target.closest('button.vista-previa');
-
-    if (botonEditar) {
-        modificar_formulario(e);
-    }
-
-    if (botonVistaPrevia) {
-        mostrarVistaPrevia(e);
-    }
-
-    if (botonEliminar) {
-        const id = botonEliminar.value;
-        Swal.fire({
-            title: "¿Estás seguro?",
-            text: "¿Desea eliminar esta publicación?",
-            showCancelButton: true,
-            confirmButtonText: "Eliminar",
-            cancelButtonText: "Cancelar",
-            confirmButtonColor: "#e01d22",
-            icon: "warning"
-        }).then((resultado) => {
-            if (resultado.isConfirmed) {
-                eliminar(id);
-            }
-        });
-    }
 });

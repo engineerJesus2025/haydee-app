@@ -1,197 +1,141 @@
 <?php
-    use haydee\ayuda\Sesiones;
-    Sesiones::verificarSesion();
-    Sesiones::verificarPermiso(GESTIONAR_PRESUPUESTO, CONSULTAR);
-    
-    use haydee\modelo\Apartamento;
-    use haydee\modelo\TipoGasto;
-    use haydee\modelo\Mensualidad;
-    use haydee\modelo\Presupuesto;
-    use haydee\modelo\DetallesPresupuesto;
-    use haydee\modelo\PresupuestoMensualidad;
+use haydee\ayuda\Sesiones;
+use haydee\modelo\Presupuesto;
+use haydee\modelo\TipoGasto;
+use haydee\modelo\Bitacora;
 
-    if (isset($_POST["operacion"])){
-        $operacion = $_POST["operacion"];
+Sesiones::verificarSesion();
+Sesiones::verificarPermiso(GESTIONAR_PRESUPUESTO, CONSULTAR);
 
-        if ($operacion == "consulta"){
-            $presupuesto_obj = new Presupuesto();
+$presupuesto = new Presupuesto();
 
-            $presupuesto_obj->registrar_bitacora(CONSULTAR, GESTIONAR_PRESUPUESTO, "TODOS LOS PRESUPUESTOS");
+if (isset($_POST["operacion"])) {
+    header('Content-Type: application/json');
 
-            echo  json_encode($presupuesto_obj->realizar_consulta('consultar'));
-        }
-        else if($operacion == "consultar_meses_faltantes"){
-            $presupuesto_obj = new Presupuesto();
-            echo  json_encode($presupuesto_obj->realizar_consulta('consultar_meses_faltantes'));
-        }
-        else if($operacion == "consultar_tipo_gastos"){
-            $tipo_gasto_obj = new TipoGasto();
-            echo  json_encode($tipo_gasto_obj->realizar_consulta('consultar'));
-        }
-        else if ($operacion == "consultar_apartamentos"){
-            $obj_apartamento = new Apartamento();
-            echo  json_encode($obj_apartamento->realizar_consulta('consultar'));
-        }
-        elseif ($operacion == "registrar") {
-            $presupuesto_obj = new Presupuesto();
-            
-            $fecha = $_POST["fecha"];
-            $cuota_reserva = $_POST["cuota_reserva"];
-            $observacion = $_POST["observacion"];
+    // Asignación masiva de propiedades comunes
+    $presupuesto->set_id_presupuesto($_POST['id_presupuesto'] ?? null);
+    $presupuesto->set_fecha($_POST['fecha'] ?? null);
+    $presupuesto->set_cuota_reserva($_POST['cuota_reserva'] ?? null);
+    $presupuesto->set_observacion($_POST['observacion'] ?? null);
+    $presupuesto->set_tasa_dolar($_POST['tasa_dolar'] ?? 1); // Tasa recibida del frontend
 
-            $presupuesto_obj->set_fecha($fecha);
-            $presupuesto_obj->set_cuota_reserva($cuota_reserva);
-            $presupuesto_obj->set_observacion($observacion);
+    $operacion = $_POST["operacion"];
+    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
-            $resultado = $presupuesto_obj->realizar_consulta("registrar");
+    try {
+        switch ($operacion) {
+            case 'consulta':
+                $respuesta = $presupuesto->realizar_consulta('consultar_general');
+                if ($respuesta['estatus']) {
+                    Bitacora::registrar(CONSULTAR, GESTIONAR_PRESUPUESTO, 'Consulta general de presupuestos');
+                    echo json_encode(['datos' => $respuesta['datos']]);
+                } else {
+                    echo json_encode(['datos' => [], 'error' => $respuesta['mensaje']]);
+                }
+                exit;
 
-            if ($resultado["estatus"]) {
-                $presupuesto_obj->registrar_bitacora(REGISTRAR, GESTIONAR_PRESUPUESTO, "Presupuesto del " . $fecha);
-            }
-            
-            echo  json_encode($resultado);
-        }
-        elseif ($operacion == "registrar_detalles_presupuestos"){
-            $detalles_presupuesto_obj = new DetallesPresupuesto();
-
-            $nombres_detalles_presupuestos = explode(",", $_POST["nombres_detalles_presupuestos"]);
-            $montos_detalles_presupuestos = explode(",", $_POST["montos_detalles_presupuestos"]);
-            $presupuesto_id = $_POST["presupuesto_id"];
-            $tipo_gasto_id = $_POST["tipo_gasto_id"];
-            
-            $detalles_presupuesto_obj->set_presupuesto_id($presupuesto_id);
-            $detalles_presupuesto_obj->set_tipo_gasto_id($tipo_gasto_id);            
-
-            foreach ($nombres_detalles_presupuestos as $indice => $nombre) {
-                $detalles_presupuesto_obj->set_nombre_detalle($nombre);
-                $detalles_presupuesto_obj->set_monto_detalle($montos_detalles_presupuestos[$indice]);
-
-                $resultado = $detalles_presupuesto_obj->realizar_consulta('registrar');
+            case 'consultar_meses_faltantes':
+                $respuesta = $presupuesto->realizar_consulta('consultar_meses_faltantes');
+               
+                echo json_encode($respuesta);
                 
-                if (!$resultado["estatus"]) {
-                    echo json_encode($resultado);
-                    exit;
+                exit;
+
+            case 'consultar_tipo_gastos':
+                $tipoGasto = new TipoGasto();
+                $respuesta = $tipoGasto->realizar_consulta('consultar');
+                
+                echo json_encode($respuesta);
+                
+                exit;
+
+            case 'consulta_especifica':
+                $respuesta = $presupuesto->realizar_consulta('consultar_unico');
+                // Se devuelve con estatus/datos (para el formulario de edición)
+                break;
+
+            case 'consultar_detalles_presupuestos':
+                // En realidad, consultar_unico ya trae los detalles, pero si se necesita solo detalles, se puede usar otro método.
+                // Por simplicidad, reutilizamos consultar_unico.
+                $respuesta = $presupuesto->realizar_consulta('consultar_unico');
+                break;
+
+            case 'registrar_masivo':
+                // Decodificar el JSON de detalles
+                $datos = json_decode($_POST['datos_presupuesto'], true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    throw new Exception('Error en el formato de datos JSON');
                 }
-            }
-            echo json_encode($resultado);
-        }
-        elseif ($operacion == "registrar_mensualidad"){
-            $mensualidad_obj = new Mensualidad();
+                // Asignar propiedades desde el JSON
+                $presupuesto->set_fecha($datos['fecha']);
+                $presupuesto->set_cuota_reserva($datos['cuota_reserva']);
+                $presupuesto->set_observacion($datos['observacion'] ?? '');
+                $presupuesto->setDetallesTemp($datos['detalles']); // Array de detalles
+                $presupuesto->set_tasa_dolar($_POST['tasa_dolar'] ?? 1);
 
-            $monto = $_POST["monto"];
-            $tasa_dolar = $_POST["tasa_dolar"];
-            $mes = $_POST["mes"];
-            $anio = $_POST["anio"];
-            $apartamento_id = $_POST["apartamento_id"];
-
-            $mensualidad_obj->set_monto($monto);
-            $mensualidad_obj->set_tasa_dolar($tasa_dolar);
-            $mensualidad_obj->set_mes($mes);
-            $mensualidad_obj->set_anio($anio);
-            $mensualidad_obj->set_apartamento_id($apartamento_id);
-            $mensualidad_obj->set_porcentaje_interes(10);
-            $mensualidad_obj->set_limite_mensualidad(15);
-
-            echo  json_encode($mensualidad_obj->realizar_consulta('registrar'));
-        }
-        elseif ($operacion == "registrar_presupuesto_mensualidad"){
-            $presupuesto_mensualidad_obj = new PresupuestoMensualidad();
-
-            $mensualidad_id = $_POST["mensualidad_id"];
-            $presupuesto_id = $_POST["presupuesto_id"];
-
-            $presupuesto_mensualidad_obj->set_mensualidad_id($mensualidad_id);
-            $presupuesto_mensualidad_obj->set_presupuesto_id($presupuesto_id);
-
-            echo  json_encode($presupuesto_mensualidad_obj->realizar_consulta('registrar'));
-        }
-        elseif ($operacion == "registrar_presupuesto_mensualidad"){
-            $presupuesto_mensualidad_obj = new PresupuestoMensualidad();
-
-            $mensualidad_id = $_POST["mensualidad_id"];
-            $presupuesto_id = $_POST["presupuesto_id"];
-
-            $presupuesto_mensualidad_obj->set_mensualidad_id($mensualidad_id);
-            $presupuesto_mensualidad_obj->set_presupuesto_id($presupuesto_id);
-
-            echo  json_encode($presupuesto_mensualidad_obj->realizar_consulta('registrar'));
-        }
-
-        elseif ($operacion == "consulta_especifica"){
-            $presupuesto_obj = new Presupuesto();
-            $id_presupuesto = $_POST["id_presupuesto"];
-            $presupuesto_obj->set_id_presupuesto($id_presupuesto);
-            echo  json_encode($presupuesto_obj->realizar_consulta('consultar_presupuesto'));
-        }
-        elseif ($operacion == "consultar_detalles_presupuestos"){
-            $detalles_presupuesto_obj = new DetallesPresupuesto();
-
-            $id_presupuesto = $_POST["id_presupuesto"];
-
-            $detalles_presupuesto_obj->set_presupuesto_id($id_presupuesto);
-            echo  json_encode($detalles_presupuesto_obj->realizar_consulta('consultar_detalles_presupuestos'));
-        }
-        elseif ($operacion == "editar_presupuesto") {
-            $presupuesto_obj = new Presupuesto();
-            $id_presupuesto = $_POST["id_presupuesto"];
-            $fecha = $_POST["fecha"];
-            $cuota_reserva = $_POST["cuota_reserva"];
-            $observacion = $_POST["observacion"];
-
-            $presupuesto_obj->set_fecha($fecha);
-            $presupuesto_obj->set_cuota_reserva($cuota_reserva);
-            $presupuesto_obj->set_observacion($observacion);
-            $presupuesto_obj->set_id_presupuesto($id_presupuesto);
-
-            $resultado = $presupuesto_obj->realizar_consulta("editar");
-
-            if ($resultado["estatus"]) {
-                $presupuesto_obj->registrar_bitacora(MODIFICAR, GESTIONAR_PRESUPUESTO, "Presupuesto del " . $fecha);
-            }
-            
-            echo  json_encode($resultado);
-        }
-        else if ($operacion == "eliminar_detalles_presupuestos") {
-            $detalles_presupuesto_obj = new DetallesPresupuesto();
-
-            $presupuesto_id = $_POST["presupuesto_id"];
-
-            $detalles_presupuesto_obj->set_presupuesto_id($presupuesto_id);
-            
-            $resultado = $detalles_presupuesto_obj->realizar_consulta('eliminar');
-
-            if (!$resultado["estatus"]) {
-                echo json_encode($resultado);
-                exit();
-            }
-            echo json_encode($resultado);
-        }
-        elseif ($operacion == "eliminar") {
-            $presupuesto_obj = new Presupuesto();
-
-            $id_presupuesto = $_POST["id_presupuesto"];
-            $presupuesto_obj->set_id_presupuesto($id_presupuesto);
-            
-            $presupuesto_eliminado = $presupuesto_obj->realizar_consulta('consultar_presupuesto');
-
-            $resultado = $presupuesto_obj->realizar_consulta("eliminar");
-
-            if ($resultado["estatus"]){
-                if ($presupuesto_eliminado) {
-                    $presupuesto_obj->registrar_bitacora(ELIMINAR, GESTIONAR_PRESUPUESTO, "Presupuesto del " . $presupuesto_eliminado["fecha"]);
+                $respuesta = $presupuesto->realizar_consulta('registrar');
+                if ($respuesta['estatus']) {
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_PRESUPUESTO, 'Presupuesto del ' . $presupuesto->get_fecha());
                 }
-                else {
-                    return ["estatus"=>false,"mensaje"=>"Ha ocurrido un error con la consulta para la bitácora"];
-                }
-            }            
+                break;
 
-            echo  json_encode($resultado);
+            case 'editar_masivo':
+                $datos = json_decode($_POST['datos_presupuesto'], true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    throw new Exception('Error en el formato de datos JSON');
+                }
+                $presupuesto->set_id_presupuesto($datos['id_presupuesto']);
+                $presupuesto->set_fecha($datos['fecha']);
+                $presupuesto->set_cuota_reserva($datos['cuota_reserva']);
+                $presupuesto->set_observacion($datos['observacion'] ?? '');
+                $presupuesto->setDetallesTemp($datos['detalles']);
+
+                $respuesta = $presupuesto->realizar_consulta('editar');
+                if ($respuesta['estatus']) {
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_PRESUPUESTO, 'Edición de Presupuesto ID: ' . $datos['id_presupuesto']);
+                }
+                break;
+
+            case 'eliminar':
+                // Obtener datos para bitácora
+                $copia = clone $presupuesto;
+                $datosPresupuesto = $copia->realizar_consulta('consultar_unico');
+                $info = $datosPresupuesto['estatus'] ? ('Presupuesto del ' . ($datosPresupuesto['datos']['fecha'] ?? '')) : '';
+
+                $respuesta = $presupuesto->realizar_consulta('eliminar_presupuesto');
+                if ($respuesta['estatus']) {
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_PRESUPUESTO, $info);
+                }
+                break;
+
+            case 'ultimo_id':
+                $respuesta = $presupuesto->realizar_consulta('lastId');
+                break;
+
+            default:
+                $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
-        elseif ($operacion == "ultimo_id"){
-            $presupuesto_obj = new Presupuesto();
-            echo json_encode($presupuesto_obj->realizar_consulta('lastId'));
-        }
+    } catch (Exception $e) {
+        error_log("Error en controlador presupuesto: " . $e->getMessage());
+        $respuesta = ['estatus' => false, 'mensaje' => $e->getMessage()];
+    }
+
+    echo json_encode($respuesta);
+    exit;
+}
+
+if (isset($_POST["validar"])) {
+    header('Content-Type: application/json');
+    $validar = $_POST["validar"];
+    if ($validar === 'validar_fecha_presupuesto') {
+        $fecha = $_POST['fecha'] ?? '';
+        $presupuesto->set_fecha($fecha);
+        $resp = $presupuesto->realizar_consulta('consultar_presupuestos_mensualidades');
+        $existe = $resp['estatus'] && !empty($resp['datos']);
+        echo json_encode(['estatus' => $existe]);
         exit;
-    }      
-    require_once "vista/presupuesto_mensual/presupuesto_vista.php";    
-?>
+    }
+}
+
+// Cargar vista
+require_once "vista/presupuesto_mensual/presupuesto_vista.php";

@@ -24,7 +24,7 @@
                         <?php if (!empty($_SESSION["notificaciones"])): ?>
                             <?php foreach ($_SESSION["notificaciones"] as $notificacion): ?>                                
                                 <li class="notif-item <?php echo (!empty($notificacion['leida']) && $notificacion['leida']) ? '' : 'notif-unread'; ?>">                            
-                                    <a href="?pagina=<?php echo $notificacion['nombre_modulo']; ?>_controlador.php&accion=inicio&referencia=<?php echo $notificacion['referencia'] ?>"
+                                    <a href="?pagina=<?php echo $notificacion['tabla_origen']; ?>_controlador.php&accion=inicio&buscar=<?php echo $notificacion['id_registro_origen'] ?>"
                                         class="notif-link"
                                         title="Ir a la notificación">
                                         <div class="notif-icon-circle">
