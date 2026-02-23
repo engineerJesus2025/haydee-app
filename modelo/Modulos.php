@@ -127,16 +127,16 @@ class Modulos extends Conexion
         }
     }
 
-    // -----------------------------------------------------------------
-    // Métodos privados (acciones)
-    // -----------------------------------------------------------------
-
+    // ====================================================================
+    // MÉTODOS PRIVADOS (CRUD)
+    // ====================================================================
+    
     /**
      * Consulta todos los módulos.
      */
     private function _consultar()
     {
-        $sql = "SELECT * FROM modulos";
+        $sql = "SELECT * FROM modulos WHERE activo = 1";
         try {
             $stmt = $this->get_conex('seguridad')->prepare($sql);
             $stmt->execute();
@@ -145,6 +145,98 @@ class Modulos extends Conexion
         } catch (PDOException $e) {
             error_log("Error en _consultar: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al consultar módulos'];
+        }
+    }
+    /**
+     * Registrar un nuevo módulo.
+     */
+    private function _registrar()
+    {
+        $validacion = $this->validar(['nombre']);
+        if (!$validacion['estatus']) {
+            return $validacion;
+        }
+
+        $sql = "INSERT INTO modulos (nombre, activo) VALUES (:nombre, 1)";
+        try {
+            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt->execute([':nombre' => $this->nombre]);
+            $lastId = $this->get_conex('seguridad')->lastInsertId();
+            return ['estatus' => true, 'mensaje' => 'Módulo registrado correctamente', 'id' => $lastId];
+        } catch (PDOException $e) {
+            error_log("Error en _registrar (Modulos): " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al registrar el módulo'];
+        }
+    }
+
+    /**
+     * Editar un módulo existente.
+     */
+    private function _editar()
+    {
+        $campos = ['id_modulo', 'nombre'];
+        $validacion = $this->validar($campos);
+        if (!$validacion['estatus']) {
+            return $validacion;
+        }
+
+        $sql = "UPDATE modulos SET nombre = :nombre WHERE id_modulo = :id";
+        try {
+            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt->execute([
+                ':nombre' => $this->nombre,
+                ':id'     => $this->id_modulo
+            ]);
+            return ['estatus' => true, 'mensaje' => 'Módulo actualizado correctamente'];
+        } catch (PDOException $e) {
+            error_log("Error en _editar (Modulos): " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al actualizar el módulo'];
+        }
+    }
+
+    /**
+     * Eliminar (soft delete) un módulo.
+     */
+    private function _eliminar()
+    {
+        $validacion = $this->validar(['id_modulo']);
+        if (!$validacion['estatus']) {
+            return $validacion;
+        }
+
+        $sql = "UPDATE modulos SET activo = 0 WHERE id_modulo = :id";
+        try {
+            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt->execute([':id' => $this->id_modulo]);
+            return ['estatus' => true, 'mensaje' => 'Módulo eliminado correctamente'];
+        } catch (PDOException $e) {
+            error_log("Error en _eliminar (Modulos): " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al eliminar el módulo'];
+        }
+    }
+
+    /**
+     * Consultar un módulo específico por ID.
+     */
+    private function _consultar_unico()
+    {
+        $validacion = $this->validar(['id_modulo']);
+        if (!$validacion['estatus']) {
+            return $validacion;
+        }
+
+        $sql = "SELECT * FROM modulos WHERE id_modulo = :id AND activo = 1";
+        try {
+            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt->execute([':id' => $this->id_modulo]);
+            $dato = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$dato) {
+                return ['estatus' => false, 'mensaje' => 'Módulo no encontrado'];
+            }
+            return ['estatus' => true, 'datos' => $dato];
+        } catch (PDOException $e) {
+            error_log("Error en _consultar_unico (Modulos): " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al consultar el módulo'];
         }
     }
 }

@@ -68,11 +68,8 @@ if (isset($_POST["operacion"])) {
             // REGISTRO Y EDICIÓN UNIFICADOS
             // =========================================================
             case 'registrar':
-                // Construir array de detalles desde los datos POST
                 $detalles = ConstructorDetalles::ConstruirDetallesGastos($_POST, $_FILES);
                 $gastos->set_detalles($detalles);
-
-                // Asignar datos de cabecera
                 $gastos->set_clasificacion($_POST['clasificacion'] ?? null);
                 $gastos->set_descripcion_gasto($_POST['descripcion_gasto'] ?? null);
                 $gastos->set_solicitud_id($_POST['solicitud'] ?? null);
@@ -81,23 +78,40 @@ if (isset($_POST["operacion"])) {
 
                 $respuesta = $gastos->realizar_consulta('registrar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_GASTOS, $gastos->get_descripcion_gasto());
+                    $nuevos = [
+                        'clasificacion'      => $gastos->get_clasificacion(),
+                        'descripcion_gasto'  => $gastos->get_descripcion_gasto(),
+                        'tipo_gasto_id'      => $gastos->get_tipo_gasto_id(),
+                        'proveedor_id'       => $gastos->get_proveedor_id(),
+                        'cantidad_detalles'  => count($detalles),
+                        'monto_total'        => array_sum(array_column($detalles, 'monto'))
+                    ];
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_GASTOS, '', null, null, $nuevos);
                 }
                 break;
 
             case 'editar':
                 $id_gasto = $_POST['id_gasto'] ?? null;
-                if (!$id_gasto) {
-                    throw new Exception('ID de gasto no proporcionado');
-                }
+                if (!$id_gasto) throw new Exception('ID de gasto no proporcionado');
                 $gastos->set_id_gasto($id_gasto);
 
-                // Construir detalles (incluyendo imágenes existentes)
+                // Obtener datos anteriores
+                $tempGastos = new Gastos();
+                $tempGastos->set_id_gasto($id_gasto);
+                $datosAnteriores = $tempGastos->realizar_consulta('consultar_gasto_unico');
+                $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
+                // Resumir anteriores
+                $anteriorResumen = [
+                    'clasificacion'      => $anterior['gasto']['clasificacion'] ?? '',
+                    'descripcion_gasto'  => $anterior['gasto']['descripcion_gasto'] ?? '',
+                    'tipo_gasto_id'      => $anterior['gasto']['tipo_gasto_id'] ?? '',
+                    'proveedor_id'       => $anterior['gasto']['proveedor_id'] ?? '',
+                    'cantidad_detalles'  => count($anterior['detalles'] ?? []),
+                    'monto_total'        => array_sum(array_column($anterior['detalles'] ?? [], 'monto'))
+                ];
+
                 $detalles = ConstructorDetalles::ConstruirDetallesGastos($_POST, $_FILES, true);
-
                 $gastos->set_detalles($detalles);
-
-                // Asignar datos de cabecera
                 $gastos->set_clasificacion($_POST['clasificacion'] ?? null);
                 $gastos->set_descripcion_gasto($_POST['descripcion_gasto'] ?? null);
                 $gastos->set_solicitud_id($_POST['solicitud'] ?? null);
@@ -105,9 +119,16 @@ if (isset($_POST["operacion"])) {
                 $gastos->set_proveedor_id($_POST['proveedor'] ?? null);
 
                 $respuesta = $gastos->realizar_consulta('editar');
-                array_push($respuesta, $_POST);
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_GASTOS, $gastos->get_descripcion_gasto());
+                    $nuevo = [
+                        'clasificacion'      => $gastos->get_clasificacion(),
+                        'descripcion_gasto'  => $gastos->get_descripcion_gasto(),
+                        'tipo_gasto_id'      => $gastos->get_tipo_gasto_id(),
+                        'proveedor_id'       => $gastos->get_proveedor_id(),
+                        'cantidad_detalles'  => count($detalles),
+                        'monto_total'        => array_sum(array_column($detalles, 'monto'))
+                    ];
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_GASTOS, '', null, $anteriorResumen, $nuevo);
                 }
                 break;
 
@@ -116,14 +137,21 @@ if (isset($_POST["operacion"])) {
             // =========================================================
             case 'eliminar':
                 $gastos->set_id_gasto($_POST['id_gasto'] ?? null);
-                // Obtener datos para bitácora antes de eliminar
-                $copia = clone $gastos;
-                $datosGasto = $copia->realizar_consulta('consultar_gasto_unico');
-                $info = $datosGasto['estatus'] ? ($datosGasto['datos']['descripcion_gasto'] ?? '') : '';
+                $tempGastos = new Gastos();
+                $tempGastos->set_id_gasto($gastos->get_id_gasto());
+                $datosGasto = $tempGastos->realizar_consulta('consultar_gasto_unico');
+                $anterior = $datosGasto['estatus'] ? $datosGasto['datos'] : [];
+                $anteriorResumen = [
+                    'clasificacion'      => $anterior['gasto']['clasificacion'] ?? '',
+                    'descripcion_gasto'  => $anterior['gasto']['descripcion_gasto'] ?? '',
+                    'tipo_gasto_id'      => $anterior['gasto']['tipo_gasto_id'] ?? '',
+                    'proveedor_id'       => $anterior['gasto']['proveedor_id'] ?? '',
+                    'cantidad_detalles'  => count($anterior['detalles'] ?? [])
+                ];
 
                 $respuesta = $gastos->realizar_consulta('eliminar_gasto');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_GASTOS, $info);
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_GASTOS, '', null, $anteriorResumen, null);
                 }
                 break;
 

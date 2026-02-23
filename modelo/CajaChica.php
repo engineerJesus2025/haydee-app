@@ -4,6 +4,7 @@ namespace haydee\modelo;
 use PDO;
 use PDOException;
 use DateTime;
+use haydee\modelo\Notificaciones;
 
 class CajaChica extends Conexion
 {
@@ -231,6 +232,28 @@ class CajaChica extends Conexion
         }
     }
 
+    private function consultar_caja_unica()
+    {
+        $v = $this->validar(['id_caja_chica']);
+        if (!$v['estatus']) return $v;
+
+        try {
+            $sql = "SELECT * 
+                    FROM movimientos_caja 
+                    WHERE id_movimiento_caja = :id AND activo = 1";
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->execute([':id' => $this->id_movimiento_caja]);
+            $dato = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$dato) {
+                return ['estatus' => false, 'mensaje' => 'Movimiento no encontrado'];
+            }
+            return ['estatus' => true, 'datos' => $dato];
+        } catch (PDOException $e) {
+            error_log("Error en _consultar_caja_unica: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al consultar movimiento'];
+        }
+    }
+
     /**
      * Registra un nuevo movimiento (gasto) en caja chica
      */
@@ -292,6 +315,9 @@ class CajaChica extends Conexion
             $lastId = $pdo->lastInsertId();
 
             $pdo->commit();
+
+            $this->_verificarSaldoYNotificar();
+
             return ['estatus' => true, 'mensaje' => 'Gasto registrado correctamente.', 'lastId' => $lastId];
 
         } catch (PDOException $e) {
@@ -320,6 +346,9 @@ class CajaChica extends Conexion
             $stmt->execute([':id' => $this->id_movimiento_caja]);
 
             $pdo->commit();
+
+            $this->_verificarSaldoYNotificar();
+
             return ['estatus' => true, 'mensaje' => 'Movimiento eliminado (anulado) correctamente.'];
         } catch (PDOException $e) {
             if ($pdo->inTransaction()) $pdo->rollBack();
@@ -393,6 +422,9 @@ class CajaChica extends Conexion
                 ':fecha' => $this->fecha_movimiento,
                 ':id' => $this->id_movimiento_caja
             ]);
+
+            $this->_verificarSaldoYNotificar();
+            
             return ['estatus' => true, 'mensaje' => 'Movimiento actualizado (solo concepto y fecha).'];
         } catch (PDOException $e) {
             error_log("Error en _editar_movimiento: " . $e->getMessage());
@@ -431,6 +463,59 @@ class CajaChica extends Conexion
         } catch (PDOException $e) {
             error_log("Error en _consultar_movimientos: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al consultar movimientos: ' . $e->getMessage()];
+        }
+    }
+
+    /**
+     * Verifica el saldo de la caja chica actual y, si es bajo, envía notificaciones a los administradores.
+     * @return bool True si se notificó o no hubo necesidad, false si hubo error.
+     */
+    private function _verificarSaldoYNotificar()
+    {
+        $v = $this->validar(['id_movimiento_caja']);
+        // Verificar que tengamos un ID de caja
+        if (empty($this->id_caja_chica)) {
+            return false;
+        }
+
+        // Consultar saldo actual desde la vista
+        $sqlSaldo = "SELECT saldo_disponible FROM vw_saldo_caja_chica WHERE id_caja_chica = :id";
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sqlSaldo);
+            $stmt->execute([':id' => $this->id_caja_chica]);
+            $saldo = $stmt->fetchColumn();
+
+            if ($saldo === false) {
+                return false; // No se pudo obtener saldo
+            }
+
+            $umbral = 200; // Puedes hacerlo configurable (ej. en constantes)
+            $titulo = '';
+            $desc = '';
+
+            if ($saldo <= 0) {
+                $titulo = "Caja chica sin saldo";
+                $desc = "La caja chica ID {$this->id_caja_chica} ha quedado sin saldo.";
+            } elseif ($saldo < $umbral) {
+                $titulo = "Saldo bajo en caja chica";
+                $desc = "La caja chica ID {$this->id_caja_chica} tiene saldo de " . number_format($saldo, 2, ',', '.') . " Bs.";
+            }
+
+            if (!empty($titulo)) {
+                $notificacion = new Notificaciones();
+                $notificacion->set_titulo($titulo);
+                $notificacion->set_descripcion($desc);
+                $notificacion->set_tabla_origen('caja_chica');
+                $notificacion->set_id_registro_origen($this->id_caja_chica);
+                $notificacion->set_tipo_evento('SALDO_BAJO');
+                $result = $notificacion->realizar_consulta('notificar_evento_admins');
+                return $result['estatus'] ?? false;
+            }
+
+            return true;
+        } catch (\Exception $e) {
+            error_log("Error en _verificarSaldoYNotificar: " . $e->getMessage());
+            return false;
         }
     }
 }

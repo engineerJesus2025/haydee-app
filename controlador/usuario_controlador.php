@@ -40,58 +40,68 @@ if (isset($_POST["operacion"])) {
                 }
                 break;
 
-            case 'registrar':
-                $respuesta = $usuario->realizar_consulta('registrar');
-                if ($respuesta['estatus']) {
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_USUARIOS,
-                        $usuario->get_nombre() . ' ' . $usuario->get_apellido()
-                    );
-                }
-                break;
-
             case 'consulta_especifica':
                 $respuesta = $usuario->realizar_consulta('consultar_usuario');
                 break;
 
+            case 'registrar':
+                $respuesta = $usuario->realizar_consulta('registrar');
+                if ($respuesta['estatus']) {
+                    $nuevos = [
+                        'nombre' => $usuario->get_nombre(),
+                        'apellido' => $usuario->get_apellido(),
+                        'correo' => $usuario->get_correo(),
+                        'rol_id' => $usuario->get_rol_id()
+                    ];
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_USUARIOS, '', null, null, $nuevos);
+                }
+                break;
+
             case 'editar_usuario':
+                // Obtener datos anteriores
+                $tempUsuario = new Usuario();
+                $tempUsuario->set_id_usuario($usuario->get_id_usuario());
+                $datosAnteriores = $tempUsuario->realizar_consulta('consultar_usuario');
+                $anterior = $datosAnteriores['estatus'] ? [
+                    'nombre' => $datosAnteriores['datos']['nombre_usuario'] ?? '',
+                    'apellido' => $datosAnteriores['datos']['apellido'] ?? '',
+                    'correo' => $datosAnteriores['datos']['correo'] ?? '',
+                    'rol_id' => $datosAnteriores['datos']['rol_id'] ?? ''
+                ] : [];
+
                 $respuesta = $usuario->realizar_consulta('editar_usuario');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_USUARIOS,
-                        $usuario->get_nombre() . ' ' . $usuario->get_apellido()
-                    );
-
-                    // Si el usuario editado es el mismo que está en sesión, actualizar datos de sesión
-                    if ($usuario->get_id_usuario() == $_SESSION["id_usuario"]) {
-                        $_SESSION["usuario"] = $usuario->get_correo();
-                        $_SESSION["nombre_completo"] = $usuario->get_nombre();
-                        // El nombre del rol se pasa por POST en 'rol_nombre' (no se asigna al modelo)
-                        if (isset($_POST['rol_nombre'])) {
-                            $_SESSION["rol"] = $_POST['rol_nombre'];
-                        }
-                        $respuesta['actual'] = true; // Para indicar que se actualizó la sesión
-                    }
+                    $nuevo = [
+                        'nombre' => $usuario->get_nombre(),
+                        'apellido' => $usuario->get_apellido(),
+                        'correo' => $usuario->get_correo(),
+                        'rol_id' => $usuario->get_rol_id()
+                    ];
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_USUARIOS, '', null, $anterior, $nuevo);
                 }
                 break;
 
             case 'eliminar':
-                // Obtener datos para bitácora antes de eliminar
-                $copia = clone $usuario;
-                $datosUsuario = $copia->realizar_consulta('consultar_usuario');
-                $nombreCompleto = '';
-                if ($datosUsuario['estatus']) {
-                    $datos = $datosUsuario['datos'];
-                    $nombreCompleto = ($datos['nombre_usuario'] ?? '') . ' ' . ($datos['apellido'] ?? '');
-                }
+                // Obtener datos anteriores
+                $tempUsuario = new Usuario();
+                $tempUsuario->set_id_usuario($usuario->get_id_usuario());
+                $datosUsuario = $tempUsuario->realizar_consulta('consultar_usuario');
+                $anterior = $datosUsuario['estatus'] ? [
+                    'nombre' => $datosUsuario['datos']['nombre_usuario'] ?? '',
+                    'apellido' => $datosUsuario['datos']['apellido'] ?? '',
+                    'correo' => $datosUsuario['datos']['correo'] ?? '',
+                    'rol_id' => $datosUsuario['datos']['rol_id'] ?? ''
+                ] : [];
 
                 $respuesta = $usuario->realizar_consulta('eliminar_usuario');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_USUARIOS, $nombreCompleto);
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_USUARIOS, '', null, $anterior, null);
                 }
                 break;
 
             case 'ultimo_id':
                 $respuesta = $usuario->realizar_consulta('lastId');
-                break;
+                            break;
 
             default:
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];

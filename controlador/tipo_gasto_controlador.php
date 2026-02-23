@@ -31,7 +31,8 @@ if (isset($_POST["operacion"])) {
             case 'registrar':
                 $respuesta = $tipoGasto->realizar_consulta('registrar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_TIPO_GASTO, $tipoGasto->get_nombre_tipo_gasto());
+                    $nuevos = ['nombre_tipo_gasto' => $tipoGasto->get_nombre_tipo_gasto()];
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_TIPO_GASTO, '', null, null, $nuevos);
                 }
                 break;
 
@@ -40,21 +41,29 @@ if (isset($_POST["operacion"])) {
                 break;
 
             case 'modificar':
+                // Obtener datos anteriores
+                $tempTipo = new TipoGasto();
+                $tempTipo->set_id_tipo_gasto($tipoGasto->get_id_tipo_gasto());
+                $datosAnteriores = $tempTipo->realizar_consulta('consultar_tipo_gasto');
+                $anterior = $datosAnteriores['estatus'] ? ['nombre_tipo_gasto' => $datosAnteriores['datos']['nombre_tipo_gasto'] ?? ''] : [];
+
                 $respuesta = $tipoGasto->realizar_consulta('modificar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_TIPO_GASTO, $tipoGasto->get_nombre_tipo_gasto());
+                    $nuevo = ['nombre_tipo_gasto' => $tipoGasto->get_nombre_tipo_gasto()];
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_TIPO_GASTO, '', null, $anterior, $nuevo);
                 }
                 break;
 
             case 'eliminar':
-                // Primero obtenemos el nombre del tipo a eliminar para la bitácora
-                $tipoEliminar = clone $tipoGasto; // Clon para no perder el ID después de la consulta
-                $datosTipo = $tipoEliminar->realizar_consulta('consultar_tipo_gasto');
-                $nombreTipo = $datosTipo['estatus'] ? ($datosTipo['datos']['nombre_tipo_gasto'] ?? '') : '';
+                // Obtener datos anteriores
+                $tempTipo = new TipoGasto();
+                $tempTipo->set_id_tipo_gasto($tipoGasto->get_id_tipo_gasto());
+                $datosTipo = $tempTipo->realizar_consulta('consultar_tipo_gasto');
+                $anterior = $datosTipo['estatus'] ? ['nombre_tipo_gasto' => $datosTipo['datos']['nombre_tipo_gasto'] ?? ''] : [];
 
                 $respuesta = $tipoGasto->realizar_consulta('eliminar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_TIPO_GASTO, $nombreTipo);
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_TIPO_GASTO, '', null, $anterior, null);
                 }
                 break;
 

@@ -44,15 +44,20 @@ if (isset($_POST["operacion"])) {
                 if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
                     $nombreImagen = GestorImagenes::subir($_FILES['imagen'], 'cartelera');
                     if ($nombreImagen === false) {
-                        throw new Exception('Error al procesar la imagen. Verifique formato y tamaño (máx 5MB).');
+                        throw new Exception('Error al procesar la imagen.');
                     }
                 }
                 $cartelera->set_imagen($nombreImagen);
                 $respuesta = $cartelera->realizar_consulta('registrar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_CARTELERA_VIRTUAL,
-                        $cartelera->get_titulo() . ' - ' . $cartelera->get_fecha()
-                    );
+                    $nuevos = [
+                        'titulo'      => $cartelera->get_titulo(),
+                        'descripcion' => $cartelera->get_descripcion(),
+                        'fecha'       => $cartelera->get_fecha(),
+                        'prioridad'   => $cartelera->get_prioridad(),
+                        'imagen'      => $nombreImagen
+                    ];
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_CARTELERA_VIRTUAL, '', null, null, $nuevos);
                 }
                 break;
 
@@ -61,10 +66,17 @@ if (isset($_POST["operacion"])) {
                 break;
 
             case 'editar':
+                // Obtener datos anteriores
+                $tempCart = new CarteleraVirtual();
+                $tempCart->set_id_cartelera($cartelera->get_id_cartelera());
+                $datosAnteriores = $tempCart->realizar_consulta('consultar_cartelera_id');
+                $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
+
                 $imagenActual = $cartelera->obtenerImagenActual();
                 $eliminarImagen = isset($_POST["eliminar_imagen"]) && $_POST["eliminar_imagen"] == 1;
                 $nuevaImagen = '';
 
+                // (lógica de imagen igual)
                 if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
                     $nuevaImagen = GestorImagenes::subir($_FILES['imagen'], 'cartelera');
                     if ($nuevaImagen === false) {
@@ -85,26 +97,32 @@ if (isset($_POST["operacion"])) {
                 $cartelera->set_imagen($nuevaImagen);
                 $respuesta = $cartelera->realizar_consulta('editar_publicacion');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_CARTELERA_VIRTUAL,
-                        $cartelera->get_titulo() . ' - ' . $cartelera->get_fecha()
-                    );
+                    $nuevo = [
+                        'titulo'      => $cartelera->get_titulo(),
+                        'descripcion' => $cartelera->get_descripcion(),
+                        'fecha'       => $cartelera->get_fecha(),
+                        'prioridad'   => $cartelera->get_prioridad(),
+                        'imagen'      => $nuevaImagen
+                    ];
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_CARTELERA_VIRTUAL, '', null, $anterior, $nuevo);
                 }
                 break;
 
             case 'eliminar':
-                $copia = clone $cartelera;
-                $datosPublicacion = $copia->realizar_consulta('consultar_cartelera_id');
-                $info = $datosPublicacion['estatus'] ? ($datosPublicacion['datos']['titulo'] . ' - ' . $datosPublicacion['datos']['fecha']) : '';
+                $tempCartelera = new CarteleraVirtual();
+                $tempCartelera->set_id_cartelera($cartelera->get_id_cartelera());
+                $datosPublicacion = $tempCartelera->realizar_consulta('consultar_cartelera_id');
+                $anterior = $datosPublicacion['estatus'] ? $datosPublicacion['datos'] : [];
 
                 $respuesta = $cartelera->realizar_consulta('eliminar_publicacion');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_CARTELERA_VIRTUAL, $info);
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_CARTELERA_VIRTUAL, '', null, $anterior, null);
                 }
                 break;
 
-            case 'ultimo_id':
-                $respuesta = $cartelera->realizar_consulta('lastId');
-                break;
+                        case 'ultimo_id':
+                            $respuesta = $cartelera->realizar_consulta('lastId');
+                            break;
 
             default:
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];

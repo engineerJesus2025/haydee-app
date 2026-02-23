@@ -23,6 +23,9 @@ class Notificaciones extends Conexion
     private $tabla_origen;
     private $id_registro_origen;
 
+    private $rol_nombre;
+    private $usuario_excluir;
+
     // ====================================================================
     // VALIDACIONES CENTRALIZADAS
     // ====================================================================
@@ -86,6 +89,11 @@ class Notificaciones extends Conexion
     public function get_tabla_origen() { return $this->tabla_origen; }
     public function set_id_registro_origen($id) { $this->id_registro_origen = $id; }
     public function get_id_registro_origen() { return $this->id_registro_origen; }
+
+    public function set_rol_nombre($r) { $this->rol_nombre = $r; }
+    public function get_rol_nombre() { return $this->rol_nombre; }
+    public function set_usuario_excluir($u) { $this->usuario_excluir = $u; }
+    public function get_usuario_excluir() { return $this->usuario_excluir; }
 
     // ====================================================================
     // ENRUTADOR CON MANEJO DE EXCEPCIONES
@@ -278,6 +286,96 @@ class Notificaciones extends Conexion
         } catch (PDOException $e) {
             error_log("Error en _notificar_evento_admins: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error en evento: ' . $e->getMessage()];
+        }
+    }
+
+    /**
+     * Notifica a todos los usuarios de un rol específico.
+     * Requiere: titulo, descripcion, tabla_origen, id_registro_origen, tipo_evento, rol_nombre.
+     * Opcional: usuario_excluir (no notificar a ese usuario).
+     * @return array ['estatus' => bool, 'mensaje' => string]
+     */
+    private function _notificar_por_rol()
+    {
+        // Validar campos requeridos
+        $campos = ['titulo', 'descripcion', 'tabla_origen', 'id_registro_origen', 'tipo_evento', 'rol_nombre'];
+        $validacion = $this->validar($campos);
+        if (!$validacion['estatus']) {
+            return $validacion;
+        }
+
+        // Si se proporciona usuario_excluir, validar que exista
+        if (!empty($this->usuario_excluir)) {
+            $valExcluir = $this->validar(['usuario_excluir']);
+            if (!$valExcluir['estatus']) {
+                return $valExcluir;
+            }
+        }
+
+        $con = $this->get_conex('seguridad');
+        try {
+            $con->beginTransaction();
+
+            // 1. Insertar evento
+            $sqlEvento = "INSERT INTO eventos_sistema (tipo_evento, tabla_origen, id_registro_origen, fecha_evento) 
+                          VALUES (:tipo, :tabla, :id_reg, NOW())";
+            $stmtEvento = $con->prepare($sqlEvento);
+            $stmtEvento->execute([
+                ':tipo'  => $this->tipo_evento,
+                ':tabla' => $this->tabla_origen,
+                ':id_reg'=> $this->id_registro_origen
+            ]);
+            $idEvento = $con->lastInsertId();
+
+            // 2. Obtener usuarios del rol
+            $sqlUsuarios = "SELECT id_usuario FROM usuarios 
+                            WHERE rol_id IN (SELECT id_rol FROM roles WHERE nombre = :rol) 
+                            AND activo = 1";
+            if (!empty($this->usuario_excluir)) {
+                $sqlUsuarios .= " AND id_usuario != :excluir";
+            }
+            $stmtUsu = $con->prepare($sqlUsuarios);
+            $params = [':rol' => $this->rol_nombre];
+            if (!empty($this->usuario_excluir)) {
+                $params[':excluir'] = $this->usuario_excluir;
+            }
+            $stmtUsu->execute($params);
+            $usuarios = $stmtUsu->fetchAll(PDO::FETCH_COLUMN);
+
+            if (empty($usuarios)) {
+                $con->commit();
+                return ['estatus' => true, 'mensaje' => 'No hay usuarios de ese rol para notificar'];
+            }
+
+            // 3. Insertar notificaciones
+            $sqlNotif = "INSERT INTO notificaciones (titulo, descripcion, fecha, usuario_id, leido) 
+                         VALUES (:tit, :desc, CURDATE(), :uid, 0)";
+            $stmtNotif = $con->prepare($sqlNotif);
+
+            $sqlRel = "INSERT INTO notificacion_evento (notificacion_id, evento_id) VALUES (:nid, :eid)";
+            $stmtRel = $con->prepare($sqlRel);
+
+            foreach ($usuarios as $uid) {
+                $stmtNotif->execute([
+                    ':tit'  => $this->titulo,
+                    ':desc' => $this->descripcion,
+                    ':uid'  => $uid
+                ]);
+                $idNotif = $con->lastInsertId();
+
+                $stmtRel->execute([
+                    ':nid' => $idNotif,
+                    ':eid' => $idEvento
+                ]);
+            }
+
+            $con->commit();
+            return ['estatus' => true, 'mensaje' => 'Notificaciones enviadas correctamente'];
+
+        } catch (PDOException $e) {
+            $con->rollBack();
+            error_log("Error en _notificar_por_rol: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al enviar notificaciones: ' . $e->getMessage()];
         }
     }
 

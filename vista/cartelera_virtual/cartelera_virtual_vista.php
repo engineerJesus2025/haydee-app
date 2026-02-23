@@ -138,9 +138,9 @@
             </div>
         </div>
     </div>
+    <?php require_once "vista/componentes/footer.php"; ?>
+    <script type="text/javascript" src="recursos/js/validaciones/cartelera_virtual_validar.js"></script>
+    <script type="text/javascript" src="recursos/js/consultas_ajax/cartelera_virtual_ajax.js"></script>
 </body>
-<?php require_once "vista/componentes/footer.php"; ?>
-<script type="text/javascript" src="recursos/js/validaciones/cartelera_virtual_validar.js"></script>
-<script type="text/javascript" src="recursos/js/consultas_ajax/cartelera_virtual_ajax.js"></script>
 
 </html>

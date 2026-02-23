@@ -124,16 +124,16 @@ class Permisos extends Conexion
         }
     }
 
-    // -----------------------------------------------------------------
-    // Métodos privados (acciones)
-    // -----------------------------------------------------------------
+    // ====================================================================
+    // MÉTODOS PRIVADOS (CRUD)
+    // ====================================================================
 
     /**
      * Consulta todos los permisos.
      */
     private function _consultar()
     {
-        $sql = "SELECT * FROM permisos";
+        $sql = "SELECT * FROM permisos WHERE activo = 1";
         try {
             $stmt = $this->get_conex('seguridad')->prepare($sql);
             $stmt->execute();
@@ -190,6 +190,100 @@ class Permisos extends Conexion
                 'estatus' => false,
                 'mensaje' => 'Error interno al validar permisos.'
             ];
+        }
+    }
+
+
+    /**
+     * Registrar un nuevo permiso.
+     */
+    private function _registrar()
+    {
+        $validacion = $this->validar(['accion']);
+        if (!$validacion['estatus']) {
+            return $validacion;
+        }
+
+        $sql = "INSERT INTO permisos (accion, activo) VALUES (:accion, 1)";
+        try {
+            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt->execute([':accion' => $this->accion]);
+            $lastId = $this->get_conex('seguridad')->lastInsertId();
+            return ['estatus' => true, 'mensaje' => 'Permiso registrado correctamente', 'id' => $lastId];
+        } catch (PDOException $e) {
+            error_log("Error en _registrar (Permisos): " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al registrar el permiso'];
+        }
+    }
+
+    /**
+     * Editar un permiso existente.
+     */
+    private function _editar()
+    {
+        $campos = ['id_permiso', 'accion'];
+        $validacion = $this->validar($campos);
+        if (!$validacion['estatus']) {
+            return $validacion;
+        }
+
+        $sql = "UPDATE permisos SET accion = :accion WHERE id_permiso = :id";
+        try {
+            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt->execute([
+                ':accion' => $this->accion,
+                ':id'     => $this->id_permiso
+            ]);
+            return ['estatus' => true, 'mensaje' => 'Permiso actualizado correctamente'];
+        } catch (PDOException $e) {
+            error_log("Error en _editar (Permisos): " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al actualizar el permiso'];
+        }
+    }
+
+    /**
+     * Eliminar (soft delete) un permiso.
+     */
+    private function _eliminar()
+    {
+        $validacion = $this->validar(['id_permiso']);
+        if (!$validacion['estatus']) {
+            return $validacion;
+        }
+
+        $sql = "UPDATE permisos SET activo = 0 WHERE id_permiso = :id";
+        try {
+            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt->execute([':id' => $this->id_permiso]);
+            return ['estatus' => true, 'mensaje' => 'Permiso eliminado correctamente'];
+        } catch (PDOException $e) {
+            error_log("Error en _eliminar (Permisos): " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al eliminar el permiso'];
+        }
+    }
+
+    /**
+     * Consultar un permiso específico por ID.
+     */
+    private function _consultar_unico()
+    {
+        $validacion = $this->validar(['id_permiso']);
+        if (!$validacion['estatus']) {
+            return $validacion;
+        }
+
+        $sql = "SELECT * FROM permisos WHERE id_permiso = :id AND activo = 1";
+        try {
+            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt->execute([':id' => $this->id_permiso]);
+            $dato = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$dato) {
+                return ['estatus' => false, 'mensaje' => 'Permiso no encontrado'];
+            }
+            return ['estatus' => true, 'datos' => $dato];
+        } catch (PDOException $e) {
+            error_log("Error en _consultar_unico (Permisos): " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al consultar el permiso'];
         }
     }
 }

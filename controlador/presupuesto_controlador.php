@@ -61,29 +61,42 @@ if (isset($_POST["operacion"])) {
                 break;
 
             case 'registrar_masivo':
-                // Decodificar el JSON de detalles
                 $datos = json_decode($_POST['datos_presupuesto'], true);
-                if (json_last_error() !== JSON_ERROR_NONE) {
-                    throw new Exception('Error en el formato de datos JSON');
-                }
-                // Asignar propiedades desde el JSON
+                if (json_last_error() !== JSON_ERROR_NONE) throw new Exception('Error JSON');
                 $presupuesto->set_fecha($datos['fecha']);
                 $presupuesto->set_cuota_reserva($datos['cuota_reserva']);
                 $presupuesto->set_observacion($datos['observacion'] ?? '');
-                $presupuesto->setDetallesTemp($datos['detalles']); // Array de detalles
+                $presupuesto->setDetallesTemp($datos['detalles']);
                 $presupuesto->set_tasa_dolar($_POST['tasa_dolar'] ?? 1);
 
                 $respuesta = $presupuesto->realizar_consulta('registrar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_PRESUPUESTO, 'Presupuesto del ' . $presupuesto->get_fecha());
+                    $nuevos = [
+                        'fecha'          => $presupuesto->get_fecha(),
+                        'cuota_reserva'  => $presupuesto->get_cuota_reserva(),
+                        'observacion'    => $presupuesto->get_observacion(),
+                        'cant_detalles'  => count($datos['detalles'])
+                    ];
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_PRESUPUESTO, '', null, null, $nuevos);
                 }
                 break;
 
             case 'editar_masivo':
                 $datos = json_decode($_POST['datos_presupuesto'], true);
-                if (json_last_error() !== JSON_ERROR_NONE) {
-                    throw new Exception('Error en el formato de datos JSON');
-                }
+                if (json_last_error() !== JSON_ERROR_NONE) throw new Exception('Error JSON');
+
+                // Obtener anteriores
+                $tempPresupuesto = new Presupuesto();
+                $tempPresupuesto->set_id_presupuesto($datos['id_presupuesto']);
+                $datosAnteriores = $tempPresupuesto->realizar_consulta('consultar_unico');
+                $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
+                $anteriorResumen = [
+                    'fecha'         => $anterior['fecha'] ?? '',
+                    'cuota_reserva' => $anterior['cuota_reserva'] ?? 0,
+                    'observacion'   => $anterior['observacion'] ?? '',
+                    'cant_detalles' => count($anterior['detalles'] ?? [])
+                ];
+
                 $presupuesto->set_id_presupuesto($datos['id_presupuesto']);
                 $presupuesto->set_fecha($datos['fecha']);
                 $presupuesto->set_cuota_reserva($datos['cuota_reserva']);
@@ -92,19 +105,26 @@ if (isset($_POST["operacion"])) {
 
                 $respuesta = $presupuesto->realizar_consulta('editar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_PRESUPUESTO, 'Edición de Presupuesto ID: ' . $datos['id_presupuesto']);
+                    $nuevo = [
+                        'fecha'         => $presupuesto->get_fecha(),
+                        'cuota_reserva' => $presupuesto->get_cuota_reserva(),
+                        'observacion'   => $presupuesto->get_observacion(),
+                        'cant_detalles' => count($datos['detalles'])
+                    ];
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_PRESUPUESTO, '', null, $anteriorResumen, $nuevo);
                 }
                 break;
 
             case 'eliminar':
-                // Obtener datos para bitácora
-                $copia = clone $presupuesto;
-                $datosPresupuesto = $copia->realizar_consulta('consultar_unico');
-                $info = $datosPresupuesto['estatus'] ? ('Presupuesto del ' . ($datosPresupuesto['datos']['fecha'] ?? '')) : '';
+                // Obtener datos anteriores
+                $tempPresupuesto = new Presupuesto();
+                $tempPresupuesto->set_id_presupuesto($presupuesto->get_id_presupuesto());
+                $datosAnteriores = $tempPresupuesto->realizar_consulta('consultar_unico');
+                $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
 
                 $respuesta = $presupuesto->realizar_consulta('eliminar_presupuesto');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_PRESUPUESTO, $info);
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_PRESUPUESTO, '', null, $anterior, null);
                 }
                 break;
 

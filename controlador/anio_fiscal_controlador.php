@@ -35,9 +35,14 @@ if (isset($_POST["operacion"])) {
             case 'registrar':
                 $respuesta = $anioFiscal->realizar_consulta('registrar');
                 if ($respuesta['estatus']) {
+                    $nuevos = [
+                        'fecha_inicio' => $anioFiscal->get_fecha_inicio(),
+                        'estado'       => $anioFiscal->get_estado(),
+                        'descripcion'  => $anioFiscal->get_descripcion()
+                    ];
                     Bitacora::registrar(REGISTRAR, GESTIONAR_ANIO_FISCAL,
-                        $anioFiscal->get_fecha_inicio() . ' - ' . $anioFiscal->get_estado()
-                    );
+                        $anioFiscal->get_fecha_inicio() . ' - ' . $anioFiscal->get_estado(),
+                        null, null, $nuevos);
                 }
                 break;
 
@@ -47,27 +52,37 @@ if (isset($_POST["operacion"])) {
                 break;
 
             case 'modificar':
+                // Obtener datos anteriores
+                $tempAnio = new AnioFiscal();
+                $tempAnio->set_id_anio_fiscal($anioFiscal->get_id_anio_fiscal());
+                $datosAnteriores = $tempAnio->realizar_consulta('consultar_anio_fiscal');
+                $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
+
                 $respuesta = $anioFiscal->realizar_consulta('editar');
                 if ($respuesta['estatus']) {
+                    $nuevo = [
+                        'fecha_inicio' => $anioFiscal->get_fecha_inicio(),
+                        'estado'       => $anioFiscal->get_estado(),
+                        'descripcion'  => $anioFiscal->get_descripcion()
+                    ];
                     Bitacora::registrar(MODIFICAR, GESTIONAR_ANIO_FISCAL,
-                        $anioFiscal->get_fecha_inicio() . ' - ' . $anioFiscal->get_estado()
-                    );
+                        $anioFiscal->get_fecha_inicio() . ' - ' . $anioFiscal->get_estado(),
+                        null, $anterior, $nuevo);
                 }
                 break;
 
             case 'eliminar':
-                // Obtener datos para la bitácora antes de eliminar
-                $copia = clone $anioFiscal;
-                $datosAnio = $copia->realizar_consulta('consultar_anio_fiscal');
-                $infoAnio = '';
-                if ($datosAnio['estatus']) {
-                    $datos = $datosAnio['datos'];
-                    $infoAnio = ($datos['fecha_inicio'] ?? '') . ' - ' . ($datos['estado'] ?? '');
-                }
+                // Obtener datos anteriores
+                $tempAnio = new AnioFiscal();
+                $tempAnio->set_id_anio_fiscal($anioFiscal->get_id_anio_fiscal());
+                $datosAnteriores = $tempAnio->realizar_consulta('consultar_anio_fiscal');
+                $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
 
                 $respuesta = $anioFiscal->realizar_consulta('eliminar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_ANIO_FISCAL, $infoAnio);
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_ANIO_FISCAL,
+                        ($anterior['fecha_inicio'] ?? '') . ' - ' . ($anterior['estado'] ?? ''),
+                        null, $anterior, null);
                 }
                 break;
 

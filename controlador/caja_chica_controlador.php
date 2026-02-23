@@ -37,9 +37,18 @@ if (isset($_POST["operacion"])) {
                 exit;
 
             case 'editar_descripcion':
+                // Obtener datos anteriores de la caja (necesitamos un método que devuelva la caja por ID)
+                $tempCaja = new CajaChica();
+                $tempCaja->set_id_caja_chica($caja->get_id_caja_chica());
+                $datosCaja = $tempCaja->realizar_consulta('consultar_caja_unica'); // Asumo que existe
+                $anterior = $datosCaja['estatus'] ? ['descripcion' => $datosCaja['datos']['descripcion']] : [];
+
                 $respuesta = $caja->realizar_consulta('editar_descripcion');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_CAJA_CHICA, "Actualizó descripción caja ID: " . $caja->get_id_caja_chica());
+                    $nuevo = ['descripcion' => $caja->get_descripcion()];
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_CAJA_CHICA,
+                        "Actualizó descripción caja ID: " . $caja->get_id_caja_chica(),
+                        null, $anterior, $nuevo);
                 }
                 break;
 
@@ -53,7 +62,13 @@ if (isset($_POST["operacion"])) {
             case 'reponer_caja':
                 $respuesta = $caja->realizar_consulta('reponer_caja');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_CAJA_CHICA, "Reposición de caja ID: " . $caja->get_id_caja_chica() . " por " . $caja->get_monto_movimiento());
+                    $nuevos = [
+                        'id_caja' => $caja->get_id_caja_chica(),
+                        'monto'   => $caja->get_monto_movimiento()
+                    ];
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_CAJA_CHICA,
+                        "Reposición de caja ID: " . $caja->get_id_caja_chica() . " por " . $caja->get_monto_movimiento(),
+                        null, null, $nuevos);
                 }
                 break;
 
@@ -74,21 +89,50 @@ if (isset($_POST["operacion"])) {
             case 'registrar_movimiento':
                 $respuesta = $caja->realizar_consulta('registrar_movimiento');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_CAJA_CHICA, "Nuevo Gasto: " . $caja->get_concepto() . " (" . $caja->get_monto_movimiento() . ")");
+                    $nuevos = [
+                        'concepto' => $caja->get_concepto(),
+                        'monto'    => $caja->get_monto_movimiento(),
+                        'fecha'    => $caja->get_fecha_movimiento()
+                    ];
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_CAJA_CHICA, 
+                        "Nuevo Gasto: " . $caja->get_concepto() . " (" . $caja->get_monto_movimiento() . ")",
+                        null, null, $nuevos);
                 }
                 break;
 
             case 'editar_movimiento':
+                // Obtener datos anteriores
+                $tempCaja = new CajaChica();
+                $tempCaja->set_id_movimiento_caja($caja->get_id_movimiento_caja());
+                $datosAnteriores = $tempCaja->realizar_consulta('consultar_movimiento_unico');
+                $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
+
                 $respuesta = $caja->realizar_consulta('editar_movimiento');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_CAJA_CHICA, "Editó movimiento ID: " . $caja->get_id_movimiento_caja());
+                    // Datos nuevos (lo que se asignó)
+                    $nuevo = [
+                        'concepto' => $caja->get_concepto(),
+                        'fecha'    => $caja->get_fecha_movimiento()
+                        // Nota: el método _editar_movimiento no modifica monto, por eso no se incluye
+                    ];
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_CAJA_CHICA,
+                        "Editó movimiento ID: " . $caja->get_id_movimiento_caja(),
+                        null, $anterior, $nuevo);
                 }
                 break;
 
             case 'eliminar_movimiento':
+                // Obtener datos anteriores
+                $tempCaja = new CajaChica();
+                $tempCaja->set_id_movimiento_caja($caja->get_id_movimiento_caja());
+                $datosAnteriores = $tempCaja->realizar_consulta('consultar_movimiento_unico');
+                $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
+
                 $respuesta = $caja->realizar_consulta('eliminar_movimiento');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_CAJA_CHICA, "Anulación Gasto ID: " . $caja->get_id_movimiento_caja());
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_CAJA_CHICA,
+                        "Anulación Gasto ID: " . $caja->get_id_movimiento_caja(),
+                        null, $anterior, null);
                 }
                 break;
 

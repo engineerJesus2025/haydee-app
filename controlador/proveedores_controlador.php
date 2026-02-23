@@ -32,42 +32,63 @@ if (isset($_POST["operacion"])) {
                 }
                 break;
 
-            case 'registrar':
-                $respuesta = $proveedor->realizar_consulta('registrar');
-                if ($respuesta['estatus']) {
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_PROVEEDORES,
-                        $proveedor->get_nombre_proveedor() . ' - ' . $proveedor->get_rif()
-                    );
-                }
-                break;
-
             case 'consultar_proveedor':
                 $respuesta = $proveedor->realizar_consulta('consultar_proveedor');
                 // Bitácora opcional, se podría omitir o agregar
                 break;
 
+            case 'registrar':
+                $respuesta = $proveedor->realizar_consulta('registrar');
+                if ($respuesta['estatus']) {
+                    $nuevos = [
+                        'nombre_proveedor' => $proveedor->get_nombre_proveedor(),
+                        'servicio' => $proveedor->get_servicio(),
+                        'rif' => $proveedor->get_rif(),
+                        'direccion' => $proveedor->get_direccion()
+                    ];
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_PROVEEDORES, '', null, null, $nuevos);
+                }
+                break;
+
             case 'modificar':
+                // Obtener datos anteriores
+                $tempProveedor = new Proveedores();
+                $tempProveedor->set_id_proveedor($proveedor->get_id_proveedor());
+                $datosAnteriores = $tempProveedor->realizar_consulta('consultar_proveedor');
+                $anterior = $datosAnteriores['estatus'] ? [
+                    'nombre_proveedor' => $datosAnteriores['datos']['nombre_proveedor'] ?? '',
+                    'servicio' => $datosAnteriores['datos']['servicio'] ?? '',
+                    'rif' => $datosAnteriores['datos']['rif'] ?? '',
+                    'direccion' => $datosAnteriores['datos']['direccion'] ?? ''
+                ] : [];
+
                 $respuesta = $proveedor->realizar_consulta('modificar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_PROVEEDORES,
-                        $proveedor->get_nombre_proveedor() . ' - ' . $proveedor->get_rif()
-                    );
+                    $nuevo = [
+                        'nombre_proveedor' => $proveedor->get_nombre_proveedor(),
+                        'servicio' => $proveedor->get_servicio(),
+                        'rif' => $proveedor->get_rif(),
+                        'direccion' => $proveedor->get_direccion()
+                    ];
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_PROVEEDORES, '', null, $anterior, $nuevo);
                 }
                 break;
 
             case 'eliminar':
-                // Obtener datos para la bitácora antes de eliminar
-                $copia = clone $proveedor;
-                $datosProveedor = $copia->realizar_consulta('consultar_proveedor');
-                $nombreRif = '';
-                if ($datosProveedor['estatus']) {
-                    $datos = $datosProveedor['datos'];
-                    $nombreRif = ($datos['nombre_proveedor'] ?? '') . ' - ' . ($datos['rif'] ?? '');
-                }
+                // Obtener datos anteriores
+                $tempProveedor = new Proveedores();
+                $tempProveedor->set_id_proveedor($proveedor->get_id_proveedor());
+                $datosProveedor = $tempProveedor->realizar_consulta('consultar_proveedor');
+                $anterior = $datosProveedor['estatus'] ? [
+                    'nombre_proveedor' => $datosProveedor['datos']['nombre_proveedor'] ?? '',
+                    'servicio' => $datosProveedor['datos']['servicio'] ?? '',
+                    'rif' => $datosProveedor['datos']['rif'] ?? '',
+                    'direccion' => $datosProveedor['datos']['direccion'] ?? ''
+                ] : [];
 
                 $respuesta = $proveedor->realizar_consulta('eliminar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_PROVEEDORES, $nombreRif);
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_PROVEEDORES, '', null, $anterior, null);
                 }
                 break;
 

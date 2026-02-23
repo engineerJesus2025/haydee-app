@@ -92,13 +92,6 @@ if (isset($_POST["operacion"])) {
             // OPERACIONES MASIVAS (REGISTRAR/EDITAR)
             // =========================================================
             case 'registrar_masivo':
-                // Datos comunes
-                $mensualidad->set_mes($_POST['mes']);
-                $mensualidad->set_anio($_POST['anio']);
-                $mensualidad->set_tasa_dolar($_POST['tasa_dolar']);
-                $mensualidad->set_porcentaje_interes($_POST['porcentaje_interes']);
-                $mensualidad->set_limite_mensualidad($_POST['limite_mensualidad']);
-
                 // Decodificar array de apartamentos
                 $datos_apartamentos = json_decode($_POST['datos_apartamentos'], true);
                 if (json_last_error() !== JSON_ERROR_NONE) {
@@ -114,12 +107,6 @@ if (isset($_POST["operacion"])) {
                 break;
 
             case 'editar_masivo':
-                $mensualidad->set_mes($_POST['mes']);
-                $mensualidad->set_anio($_POST['anio']);
-                $mensualidad->set_tasa_dolar($_POST['tasa_dolar']);
-                $mensualidad->set_porcentaje_interes($_POST['porcentaje_interes']);
-                $mensualidad->set_limite_mensualidad($_POST['limite_mensualidad']);
-
                 $datos_apartamentos = json_decode($_POST['datos_apartamentos'], true);
                 if (json_last_error() !== JSON_ERROR_NONE) {
                     throw new Exception('Error en el formato de datos JSON');
@@ -141,7 +128,6 @@ if (isset($_POST["operacion"])) {
                 list($anio, $mes, $dia) = explode('-', $fecha);
                 $mensualidad->set_mes($mes);
                 $mensualidad->set_anio($anio);
-                
                 $respuesta = $mensualidad->realizar_consulta('eliminar');
                 if ($respuesta['estatus']) {
                     Bitacora::registrar(ELIMINAR, GESTIONAR_MENSUALIDAD,

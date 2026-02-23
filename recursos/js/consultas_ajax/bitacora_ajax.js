@@ -6,6 +6,7 @@
 
 let tabla_bitacora;
 let modal_carga = new bootstrap.Modal("#modal_carga");
+let modalDetalle = new bootstrap.Modal(document.getElementById('modalDetalleBitacora'));
 
 window.addEventListener('DOMContentLoaded', () => {
     eventosCargaDataTable('tabla_bitacora', modal_carga);
@@ -17,6 +18,46 @@ document.getElementById('header-toggle')?.addEventListener("click", () => {
         tabla_bitacora?.columns.adjust().draw();
     }, 450);
 });
+
+// Función para formatear JSON de manera legible
+function formatearJSON(jsonString) {
+    if (!jsonString || jsonString === '{}') return 'No hay datos';
+    try {
+        let obj = JSON.parse(jsonString);
+        return JSON.stringify(obj, null, 2);
+    } catch (e) {
+        return jsonString; // Si no es JSON válido, mostrarlo como texto
+    }
+}
+
+// Función para mostrar el detalle en el modal
+function mostrarDetalle(rowData) {
+    // Información general
+    document.getElementById('detalle_usuario').textContent = rowData.nombre_usuario;
+    document.getElementById('detalle_rol').textContent = rowData.nombre_rol;
+    document.getElementById('detalle_fecha').textContent = FormatoFechas.formatear(rowData.fecha_hora, 'DD-MM-YYYY hh:mm:ss A');
+    document.getElementById('detalle_modulo').textContent = rowData.nombre_modulo.split('_').join(' ');
+    document.getElementById('detalle_accion').textContent = rowData.accion;
+
+    // Determinar si es consulta
+    if (rowData.accion.toLowerCase() === 'consultar') {
+        document.getElementById('detalle_consulta').classList.remove('d-none');
+        document.getElementById('detalle_cambios').classList.add('d-none');
+        document.getElementById('mensaje_consulta').textContent = `Se consultaron todos los registros del módulo ${rowData.nombre_modulo.split('_').join(' ')}.`;
+    } else {
+        document.getElementById('detalle_consulta').classList.add('d-none');
+        document.getElementById('detalle_cambios').classList.remove('d-none');
+
+        // Mostrar valores anteriores y nuevos (si existen)
+        let anteriores = rowData.valores_anteriores || '{}';
+        let nuevos = rowData.valores_nuevos || '{}';
+
+        document.getElementById('valores_anteriores').textContent = formatearJSON(anteriores);
+        document.getElementById('valores_nuevos').textContent = formatearJSON(nuevos);
+    }
+
+    modalDetalle.show();
+}
 
 /**
  * Configura eventos para mostrar el modal de carga durante las peticiones de DataTable
@@ -58,12 +99,12 @@ function eventosCargaDataTable(id_tabla, modal) {
  */
 function definirColorAccion(nombre_accion) {
     const colores = {
-        'consultar': "badge bg-info text-dark",
-        'eliminar': "badge bg-danger",
-        'registrar': "badge bg-primary",
-        'modificar': "badge bg-success",
-        'iniciar sesion': "badge bg-warning text-dark",
-        'cerrar sesion': "badge bg-secondary"
+        'consultar': "badge-consultar",
+        'eliminar': "badge-eliminar",
+        'registrar': "badge-registrar",
+        'modificar': "badge-modificar",
+        'iniciar sesion': "badge-iniciar-sesion",
+        'cerrar sesion': "badge-cerrar-sesion"
     };
     return colores[nombre_accion] || "badge bg-secondary";
 }
@@ -74,10 +115,9 @@ function definirColorAccion(nombre_accion) {
 function consultar() {
     const columnas = [
         { data: "nombre_usuario" },
-        { data: "nombre_rol" },
         {
             data: "fecha_hora",
-            render: (data) => FormatoFechas.formatear(data, 'hh:mm:ss A DD-MM-YYYY')
+            render: (data) => FormatoFechas.formatear(data, 'DD-MM-YYYY')
         },
         {
             data: "nombre_modulo",
@@ -85,17 +125,25 @@ function consultar() {
         },
         {
             data: "accion",
-            render: (data) => `<span class="${definirColorAccion(data)}">${data}</span>`
+            render: (data) => `<span class="badge ${definirColorAccion(data)}">${data}</span>`
         },
-        { data: "registro_alterado" }
+        {
+            data: null,
+            render: (row) => `
+                <button class="btn btn-sm btn-outline-primary ver-detalle" data-id="${row.id_bitacora}">
+                    <i class="bi bi-eye"></i> Ver detalles
+                </button>
+            `,
+            orderable: false
+        }
     ];
 
     const parametrosConsulta = (data) => {
         data.operacion = 'consulta';
     };
 
-    const configuracionFila = (row) => {
-        Array.from(row.children).forEach(td => td.classList.add('align-middle'));
+    const configuracionFila = (row, data) => {
+        row.querySelector('.ver-detalle')?.addEventListener('click', () => mostrarDetalle(data));
     };
 
     tabla_bitacora = Utilidades.crearDataTable(

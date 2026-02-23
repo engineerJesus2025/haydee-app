@@ -3,6 +3,7 @@ namespace haydee\modelo;
 
 use PDO;
 use PDOException;
+use haydee\modelo\Notificaciones;
 
 class Mensualidad extends Conexion
 {
@@ -383,6 +384,8 @@ class Mensualidad extends Conexion
             }
         }
 
+        $id_mensualidad;
+
         $con = $this->get_conex('negocio');
         try {
             $con->beginTransaction();
@@ -417,6 +420,17 @@ class Mensualidad extends Conexion
             }
 
             $con->commit();
+
+            // Notificar a propietarios
+            $notif = new Notificaciones();
+            $notif->set_titulo("Nueva mensualidad disponible");
+            $notif->set_descripcion("Se han generado las mensualidades para el mes {$this->mes} del año {$this->anio}.");
+            $notif->set_tabla_origen('mensualidad');
+            $notif->set_id_registro_origen($id_mensualidad); // o el ID de la primera mensualidad si se desea
+            $notif->set_tipo_evento('NUEVA_MENSUALIDAD');
+            $notif->set_rol_nombre('Propietario');
+            $notif->realizar_consulta('notificar_por_rol');
+
             return ['estatus' => true, 'mensaje' => 'Todas las mensualidades se registraron correctamente.'];
         } catch (Exception $e) {
             $con->rollBack();

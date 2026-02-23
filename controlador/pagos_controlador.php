@@ -24,53 +24,23 @@ $pagos = new Pagos();
 $banco = new Banco();
 $apartamento = new Apartamento();
 
-// Datos para la vista (se cargan al final)
-$registro_banco = [];
-$registro_apartamento = [];
-
 if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');
 
-    // Asignación masiva de propiedades de Pagos (todas las que puedan llegar)
+    // Asignación masiva de propiedades esenciales
     $pagos->set_id_pago($_POST['id_pago'] ?? null);
     $pagos->set_id_detalle_pago($_POST['id_detalle_pago'] ?? null);
     $pagos->set_estado($_POST['estado'] ?? null);
     $pagos->set_observacion($_POST['observacion'] ?? null);
-    $pagos->set_fecha($_POST['fecha'] ?? null); // puede ser array
-    $pagos->set_monto($_POST['monto'] ?? null); // puede ser array
-    $pagos->set_monto_dolar($_POST['monto_dolar'] ?? null); // puede ser array
-    $pagos->set_tipo_pago($_POST['tipo_pago'] ?? null); // puede ser array
-    $pagos->set_referencia($_POST['referencia'] ?? null); // puede ser array
-    $pagos->set_banco_id($_POST['banco_id'] ?? null); // puede ser array
-    $pagos->set_mensualidad_id($_POST['mensualidad_id'] ?? null); // puede ser array o escalar
-
-    // Procesar imágenes si se subieron
-    $imagenes = [];
-    if (isset($_FILES['imagen'])) {
-        $archivos = $_FILES['imagen'];
-        // Si es un solo archivo, convertirlo a array para uniformidad
-        if (!is_array($archivos['name'])) {
-            $archivos = [
-                'name' => [$archivos['name']],
-                'type' => [$archivos['type']],
-                'tmp_name' => [$archivos['tmp_name']],
-                'error' => [$archivos['error']],
-                'size' => [$archivos['size']]
-            ];
-        }
-        foreach ($archivos['name'] as $i => $nombre) {
-            $nombreImagen = GestorImagenes::subir($archivoIndividual, 'pagos');
-            $imagenes[] = $nombreImagen ?: null;
-        }
-    }
-    $pagos->set_imagen($imagenes);
+    $pagos->set_apartamento_id($_POST['apartamento_id'] ?? null);
+    $pagos->set_mensualidad_id($_POST['mensualidad_id'] ?? null);
 
     $operacion = $_POST["operacion"];
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
     try {
         switch ($operacion) {
-            // ==================== CONSULTAS GENERALES ====================
+            // ==================== CONSULTAS ====================
             case 'consulta':
                 if ($esPropietario) {
                     $respuesta = $pagos->realizar_consulta('consultar_por_correo');
@@ -78,7 +48,7 @@ if (isset($_POST["operacion"])) {
                     $respuesta = $pagos->realizar_consulta('consultar_pagos');
                 }
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(CONSULTAR, GESTIONAR_PAGOS, 'Consulta de pagos');
+                    Bitacora::registrar(CONSULTAR, GESTIONAR_PAGOS, '', null, null, null);
                 }
                 break;
 
@@ -100,13 +70,7 @@ if (isset($_POST["operacion"])) {
             case 'consultar_detalles':
                 $pagos->set_id_pago($_POST['id_pago'] ?? null);
                 $result = $pagos->realizar_consulta('consultar_pago_unico');
-                if ($result['estatus']) {
-                    // En el modelo, consultar_pago_unico devuelve un solo registro; los detalles están en 'datos'.
-                    // Si hay múltiples detalles, habría que agrupar, pero por ahora asumimos uno.
-                    $respuesta = ['estatus' => true, 'datos' => $result['datos'] ?? []];
-                } else {
-                    $respuesta = $result;
-                }
+                $respuesta = $result['estatus'] ? ['estatus' => true, 'datos' => $result['datos'] ?? []] : $result;
                 break;
 
             case 'consulta_especifica':
@@ -119,119 +83,14 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $pagos->realizar_consulta('consultar_detalle_unico');
                 break;
 
-            // ==================== OPERACIONES DE PAGO (ADMIN) ====================
-            case 'registrar_old':
-                if ($esPropietario) {
-                    $respuesta = ['estatus' => false, 'mensaje' => 'No autorizado'];
-                    break;
-                }
-                $respuesta = $pagos->realizar_consulta('registrar_pago_con_detalles');
-                if ($respuesta['estatus']) {
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_PAGOS, 'Pago registrado ID: ' . ($respuesta['id'] ?? ''));
-                }
-                break;
-
-            case 'modificar_old':
-                if ($esPropietario) {
-                    $respuesta = ['estatus' => false, 'mensaje' => 'No autorizado'];
-                    break;
-                }
-                $respuesta = $pagos->realizar_consulta('editar_pago_con_detalles');
-                if ($respuesta['estatus']) {
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_PAGOS, 'Pago modificado ID: ' . $pagos->get_id_pago());
-                }
-                break;
-
-            case 'eliminar':
-                if ($esPropietario) {
-                    $respuesta = ['estatus' => false, 'mensaje' => 'No autorizado'];
-                    break;
-                }
-                // Obtener datos para bitácora
-                $copia = clone $pagos;
-                $datosPago = $copia->realizar_consulta('consultar_pago_unico');
-                $info = $datosPago['estatus'] ? ('Pago ID: ' . $pagos->get_id_pago()) : '';
-
-                $respuesta = $pagos->realizar_consulta('eliminar_pago');
-                if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_PAGOS, $info);
-                }
-                break;
-
-            // ==================== OPERACIONES DE DETALLES (ADMIN) ====================
-            case 'registrar_detalles':
-                if ($esPropietario) {
-                    $respuesta = ['estatus' => false, 'mensaje' => 'No autorizado'];
-                    break;
-                }
-                $respuesta = $pagos->realizar_consulta('registrar_detalle');
-                if ($respuesta['estatus']) {
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_PAGOS, 'Detalle agregado a pago ID: ' . $pagos->get_id_pago());
-                }
-                break;
-
-            case 'modificar_detalles':
-                if ($esPropietario) {
-                    $respuesta = ['estatus' => false, 'mensaje' => 'No autorizado'];
-                    break;
-                }
-                $respuesta = $pagos->realizar_consulta('editar_detalle');
-                if ($respuesta['estatus']) {
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_PAGOS, 'Detalle modificado ID: ' . $pagos->get_id_detalle_pago());
-                }
-                break;
-
-            case 'eliminar_detalles':
-                if ($esPropietario) {
-                    $respuesta = ['estatus' => false, 'mensaje' => 'No autorizado'];
-                    break;
-                }
-                $respuesta = $pagos->realizar_consulta('eliminar_detalle');
-                if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_PAGOS, 'Detalle eliminado ID: ' . $pagos->get_id_detalle_pago());
-                }
-                break;
-
-            // ==================== ÚLTIMO ID ====================
-            case 'ultimo_id':
-                $respuesta = $pagos->realizar_consulta('lastId');
-                break;
-
-            case 'ultimo_id_detalle':
-                $respuesta = $pagos->realizar_consulta('lastIdDetalle');
-                break;
-
-            // NUEVOS:
+            // ==================== REGISTRO ====================
             case 'registrar':
-            case 'modificar':
-                // Los propietarios SI pueden registrar (reportar), pero NO pueden modificar pagos ya hechos
-                if ($esPropietario && $operacion === 'modificar') {
-                    $respuesta = ['estatus' => false, 'mensaje' => 'No autorizado para modificar'];
-                    break;
-                }
-
-                // Asignar propiedades de cabecera
-                $pagos->set_apartamento_id($_POST['apartamento_id'] ?? null);
-                $pagos->set_mensualidad_id($_POST['mensualidad_id'] ?? null);
-                
-                // Si es propietario, forzamos el estado para que un Admin lo apruebe luego
+                // Los propietarios pueden registrar
                 if ($esPropietario) {
                     $pagos->set_estado('No verificado');
-                } else {
-                    $pagos->set_estado($_POST['estado'] ?? 'PENDIENTE');
-                }
-                
-                $pagos->set_observacion($_POST['observacion'] ?? '');
-                $pagos->set_monto_mensualidad($_POST['monto_mensualidad'] ?? 0);
-
-                // Determinar si es edición (para el Helper de imágenes)
-                $esEdicion = ($operacion === 'modificar');
-                if ($esEdicion) {
-                    $pagos->set_id_pago($_POST['id_pago']);
                 }
 
-                // Usamoshelper (Revisar que ConstructorDetalles::ConstruirDetallesPagos exista y esté configurado para Pagos)
-                // Si no tienes ese método específico en el Helper, puedes usar el constructor base así:
+                // Construir detalles con el helper
                 $configPagos = [
                     'campos' => ['fecha', 'monto', 'tipo_pago', 'monto_dolar'],
                     'bancarios' => ['banco_id', 'referencia'],
@@ -240,22 +99,95 @@ if (isset($_POST["operacion"])) {
                     'metodos_con_archivo' => ['Transferencia', 'Pago Movil'],
                     'carpeta_imagenes' => 'pagos',
                     'campo_existente' => 'imagen_existente',
-                    'indice_archivo_formato' => '/^imagen_(\d+)$/' // Requerirá que el JS envíe 'imagen_0', 'imagen_1'...
+                    'indice_archivo_formato' => '/^imagen_(\d+)$/'
                 ];
-                $detalles = ConstructorDetalles::construirDetalles($_POST, $_FILES, $configPagos, $esEdicion);
-                
+                $detalles = ConstructorDetalles::construirDetalles($_POST, $_FILES, $configPagos, false);
                 $pagos->setDetallesTemp($detalles);
 
-                if ($operacion === 'registrar') {
-                    $respuesta = $pagos->realizar_consulta('registrar');
-                    $accionBitacora = REGISTRAR;
-                } else {
-                    $respuesta = $pagos->realizar_consulta('editar');
-                    $accionBitacora = MODIFICAR;
+                $respuesta = $pagos->realizar_consulta('registrar');
+                if ($respuesta['estatus']) {
+                    // Datos nuevos para bitácora (resumen)
+                    $nuevos = [
+                        'apartamento_id' => $pagos->get_apartamento_id(),
+                        'mensualidad_id' => $pagos->get_mensualidad_id(),
+                        'estado' => $pagos->get_estado(),
+                        'cantidad_detalles' => count($detalles),
+                        'monto_total' => array_sum(array_column($detalles, 'monto'))
+                    ];
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_PAGOS, '', null, null, $nuevos);
+                }
+                break;
+
+            // ==================== MODIFICAR ====================
+            case 'modificar':
+                // Los propietarios NO pueden modificar
+                if ($esPropietario) {
+                    $respuesta = ['estatus' => false, 'mensaje' => 'No autorizado para modificar'];
+                    break;
                 }
 
+                $id_pago = $_POST['id_pago'] ?? null;
+                if (!$id_pago) throw new Exception('ID de pago no proporcionado');
+                $pagos->set_id_pago($id_pago);
+
+                // Obtener datos anteriores
+                $tempPagos = new Pagos();
+                $tempPagos->set_id_pago($id_pago);
+                $datosAnteriores = $tempPagos->realizar_consulta('consultar_pago_unico');
+                $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
+                $anteriorResumen = [
+                    'apartamento_id' => $anterior['apartamento_id'] ?? null,
+                    'mensualidad_id' => $anterior['mensualidad_id'] ?? null,
+                    'estado' => $anterior['estado'] ?? null,
+                    'cantidad_detalles' => count($anterior['detalles'] ?? []),
+                    'monto_total' => array_sum(array_column($anterior['detalles'] ?? [], 'monto'))
+                ];
+
+                // Construir nuevos detalles (con imágenes existentes)
+                $detalles = ConstructorDetalles::construirDetalles($_POST, $_FILES, $configPagos, true);
+                $pagos->setDetallesTemp($detalles);
+                $pagos->set_estado($_POST['estado'] ?? 'PENDIENTE');
+                $pagos->set_observacion($_POST['observacion'] ?? '');
+
+                $respuesta = $pagos->realizar_consulta('editar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar($accionBitacora, GESTIONAR_PAGOS, "Procesamiento atómico de Pago ID: " . ($respuesta['id'] ?? $pagos->get_id_pago()));
+                    $nuevoResumen = [
+                        'apartamento_id' => $pagos->get_apartamento_id(),
+                        'mensualidad_id' => $pagos->get_mensualidad_id(),
+                        'estado' => $pagos->get_estado(),
+                        'cantidad_detalles' => count($detalles),
+                        'monto_total' => array_sum(array_column($detalles, 'monto'))
+                    ];
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_PAGOS, '', null, $anteriorResumen, $nuevoResumen);
+                }
+                break;
+
+            // ==================== ELIMINAR ====================
+            case 'eliminar':
+                if ($esPropietario) {
+                    $respuesta = ['estatus' => false, 'mensaje' => 'No autorizado'];
+                    break;
+                }
+                $id_pago = $_POST['id_pago'] ?? null;
+                if (!$id_pago) throw new Exception('ID de pago no proporcionado');
+                $pagos->set_id_pago($id_pago);
+
+                // Obtener datos anteriores
+                $tempPagos = new Pagos();
+                $tempPagos->set_id_pago($id_pago);
+                $datosPago = $tempPagos->realizar_consulta('consultar_pago_unico');
+                $anterior = $datosPago['estatus'] ? $datosPago['datos'] : [];
+                $anteriorResumen = [
+                    'apartamento_id' => $anterior['apartamento_id'] ?? null,
+                    'mensualidad_id' => $anterior['mensualidad_id'] ?? null,
+                    'estado' => $anterior['estado'] ?? null,
+                    'cantidad_detalles' => count($anterior['detalles'] ?? []),
+                    'monto_total' => array_sum(array_column($anterior['detalles'] ?? [], 'monto'))
+                ];
+
+                $respuesta = $pagos->realizar_consulta('eliminar_pago');
+                if ($respuesta['estatus']) {
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_PAGOS, '', null, $anteriorResumen, null);
                 }
                 break;
 
@@ -283,17 +215,13 @@ if (isset($_POST["validar"])) {
                 $pagos->set_referencia($_POST["referencia"] ?? null);
                 $respuesta = $pagos->realizar_consulta('validar_referencia');
                 break;
-            case 'validar_clave_foranea':
-                $respuesta = ['estatus' => false, 'mensaje' => 'Validación no implementada'];
-                break;
             default:
-                $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
+                $respuesta = ['estatus' => false, 'mensaje' => 'Validación no implementada'];
         }
     } catch (Exception $e) {
         error_log("Error en validación AJAX: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
     }
-
     echo json_encode($respuesta);
     exit;
 }

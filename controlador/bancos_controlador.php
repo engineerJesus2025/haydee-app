@@ -39,9 +39,15 @@ if (isset($_POST["operacion"])) {
             case 'registrar':
                 $respuesta = $banco->realizar_consulta('registrar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_BANCOS,
-                        $banco->get_nombre_banco() . ' (' . $banco->get_numero_cuenta() . ')'
-                    );
+                    $nuevos = [
+                        'nombre_banco' => $banco->get_nombre_banco(),
+                        'numero_cuenta' => $banco->get_numero_cuenta(),
+                        'codigo' => $banco->get_codigo(),
+                        'telefono_afiliado' => $banco->get_telefono_afiliado(),
+                        'rif' => $banco->get_rif()
+                    ];
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_BANCOS,'',
+                        null, null, $nuevos);
                 }
                 break;
 
@@ -50,27 +56,37 @@ if (isset($_POST["operacion"])) {
                 break;
 
             case 'editar':
+                // Obtener datos anteriores
+                $tempBanco = new Banco();
+                $tempBanco->set_id_banco($banco->get_id_banco());
+                $datosAnteriores = $tempBanco->realizar_consulta('consultar_banco');
+                $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
+
                 $respuesta = $banco->realizar_consulta('editar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_BANCOS,
-                        $banco->get_nombre_banco() . ' (' . $banco->get_numero_cuenta() . ')'
-                    );
+                    $nuevo = [
+                        'nombre_banco' => $banco->get_nombre_banco(),
+                        'numero_cuenta' => $banco->get_numero_cuenta(),
+                        'codigo' => $banco->get_codigo(),
+                        'telefono_afiliado' => $banco->get_telefono_afiliado(),
+                        'rif' => $banco->get_rif()
+                    ];
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_BANCOS,'',
+                        null, $anterior, $nuevo);
                 }
                 break;
 
             case 'eliminar':
-                // Obtener datos para la bitácora antes de eliminar
-                $copia = clone $banco;
-                $datosBanco = $copia->realizar_consulta('consultar_banco');
-                $infoBanco = '';
-                if ($datosBanco['estatus']) {
-                    $datos = $datosBanco['datos'];
-                    $infoBanco = ($datos['nombre_banco'] ?? '') . ' (' . ($datos['numero_cuenta'] ?? '') . ')';
-                }
+                // Obtener datos anteriores
+                $tempBanco = new Banco();
+                $tempBanco->set_id_banco($banco->get_id_banco());
+                $datosAnteriores = $tempBanco->realizar_consulta('consultar_banco');
+                $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
 
                 $respuesta = $banco->realizar_consulta('eliminar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_BANCOS, $infoBanco);
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_BANCOS, '',
+                        null, $anterior, null);
                 }
                 break;
 

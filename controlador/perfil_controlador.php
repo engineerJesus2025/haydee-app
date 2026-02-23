@@ -42,17 +42,34 @@ if (isset($_POST["operacion"])) {
                 break;
 
             case 'editar_perfil':
+                // Obtener datos anteriores
+                $tempUsuario = new Usuario();
+                $tempUsuario->set_id_usuario($_SESSION["id_usuario"]);
+                $datosAnteriores = $tempUsuario->realizar_consulta('consultar_usuario');
+                $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
+                $anteriorResumen = [
+                    'nombre'   => $anterior['nombre'] ?? '',
+                    'apellido' => $anterior['apellido'] ?? '',
+                    'correo'   => $anterior['correo'] ?? ''
+                ];
+
                 $respuesta = $usuario->realizar_consulta('editar_perfil');
                 if ($respuesta['estatus']) {
                     $_SESSION["nombre_completo"] = $usuario->get_nombre();
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_USUARIOS, 'Perfil propio actualizado');
+                    $nuevo = [
+                        'nombre'   => $usuario->get_nombre(),
+                        'apellido' => $usuario->get_apellido(),
+                        'correo'   => $usuario->get_correo()
+                    ];
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_USUARIOS, '', null, $anteriorResumen, $nuevo);
                 }
                 break;
 
             case 'cambiar_contrasenia':
                 $respuesta = $usuario->realizar_consulta('cambiar_contrasenia');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_USUARIOS, 'Cambio de contraseña');
+                    // Solo registramos la acción, sin datos sensibles
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_USUARIOS, 'Cambio de contraseña', null, null, null);
                 }
                 break;
 

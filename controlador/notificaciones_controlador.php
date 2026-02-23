@@ -44,8 +44,6 @@ if (isset($_POST["operacion"])) {
                         // Reindexar array (opcional)
                         $_SESSION['notificaciones'] = array_values($_SESSION['notificaciones']);
                     }
-                    // Bitácora opcional
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_NOTIFICACIONES, "Notificación marcada como leída ID: $id");
                 }
                 break;
 
@@ -54,8 +52,6 @@ if (isset($_POST["operacion"])) {
                 if ($respuesta['estatus']) {
                     // Vaciar las notificaciones de la sesión
                     $_SESSION['notificaciones'] = [];
-                    // Bitácora opcional
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_NOTIFICACIONES, "Todas las notificaciones marcadas como leídas");
                 }
                 break;
 

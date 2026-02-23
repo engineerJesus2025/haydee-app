@@ -38,26 +38,6 @@ if (isset($_POST["operacion"])) {
                 }
                 break;
 
-            case 'registrar_rol':
-                // Registrar el rol
-                $respuesta = $rol->realizar_consulta('registrar');
-                if ($respuesta['estatus']) {
-                    $idRol = $respuesta['lastId'];
-                    // Asignar permisos si hay
-                    if (!empty($rol->get_permisos_asignados())) {
-                        $rol->set_id_rol($idRol);
-                        $resPermisos = $rol->realizar_consulta('sincronizar_permisos');
-                        if (!$resPermisos['estatus']) {
-                            // Si falla la asignación de permisos, podríamos considerar eliminar el rol (rollback manual)
-                            // Pero el modelo ya maneja transacción interna, así que si falla no se insertó nada.
-                            $respuesta = $resPermisos;
-                            break;
-                        }
-                    }
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_ROLES, 'Rol: ' . $rol->get_nombre());
-                }
-                break;
-
             case 'consulta_especifica':
                 $respuesta = $rol->realizar_consulta('consultar_rol');
                 break;
@@ -66,29 +46,56 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $rol->realizar_consulta('consultar_permisos_asignados');
                 break;
 
+            case 'registrar_rol':
+                $respuesta = $rol->realizar_consulta('registrar');
+                if ($respuesta['estatus']) {
+                    $idRol = $respuesta['lastId'];
+                    $permisosAsignados = $rol->get_permisos_asignados();
+                    $nuevos = [
+                        'nombre' => $rol->get_nombre(),
+                        'cantidad_permisos' => count($permisosAsignados)
+                    ];
+                    if (!empty($permisosAsignados)) {
+                        $rol->set_id_rol($idRol);
+                        $resPermisos = $rol->realizar_consulta('sincronizar_permisos');
+                        if (!$resPermisos['estatus']) {
+                            $respuesta = $resPermisos;
+                            break;
+                        }
+                    }
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_ROLES, '', null, null, $nuevos);
+                }
+                break;
+
             case 'modificar':
-                // Editar rol
+                // Obtener datos anteriores del rol
+                $tempRol = new Rol();
+                $tempRol->set_id_rol($rol->get_id_rol());
+                $datosRol = $tempRol->realizar_consulta('consultar_rol');
+                $anterior = $datosRol['estatus'] ? ['nombre' => $datosRol['datos']['nombre'] ?? ''] : [];
+
                 $respuesta = $rol->realizar_consulta('editar');
                 if ($respuesta['estatus']) {
-                    // Sincronizar permisos (el modelo se encarga de reemplazar)
                     $resPermisos = $rol->realizar_consulta('sincronizar_permisos');
                     if (!$resPermisos['estatus']) {
                         $respuesta = $resPermisos;
                         break;
                     }
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_ROLES, 'Rol: ' . $rol->get_nombre());
+                    $nuevo = ['nombre' => $rol->get_nombre()];
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_ROLES, '', null, $anterior, $nuevo);
                 }
                 break;
 
             case 'eliminar':
-                // Obtener datos para bitácora
-                $copia = clone $rol;
-                $datosRol = $copia->realizar_consulta('consultar_rol');
-                $nombreRol = $datosRol['estatus'] ? ($datosRol['datos']['nombre'] ?? '') : '';
+                // Obtener datos anteriores
+                $tempRol = new Rol();
+                $tempRol->set_id_rol($rol->get_id_rol());
+                $datosRol = $tempRol->realizar_consulta('consultar_rol');
+                $anterior = $datosRol['estatus'] ? ['nombre' => $datosRol['datos']['nombre'] ?? ''] : [];
 
                 $respuesta = $rol->realizar_consulta('eliminar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_ROLES, 'Rol: ' . $nombreRol);
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_ROLES, '', null, $anterior, null);
                 }
                 break;
 

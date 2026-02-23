@@ -1,19 +1,198 @@
-.notification-item:hover {
-	background-color: #f8f9fa;
+:root {
+    --header-height: 60px;
+    --nav-width: 68px;
+    --nav-width-expanded: 250px; 
+    --sidebar-bg: #0e121b;       
+    --sidebar-text: #9ca3af;     
+    --active-bg: #2563eb;        
+    --active-text: #ffffff;
 }
 
-.dropdown-menu {
-	min-width: 280px;
+/* --- SIDEBAR --- */
+.l-navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: var(--nav-width-expanded); 
+    height: 100vh;
+    background-color: var(--sidebar-bg) !important;
+    z-index: 1050; 
+    transition: .5s;
+    overflow: hidden; /* Evita scroll doble */
 }
 
-@media (max-width: 576px) {
-	.dropdown-menu {
-		width: 100vw;
-		min-width: 100vw;
-	    margin-right: -1rem;
-	}
+.l-navbar:not(.show) {
+    width: var(--nav-width);
 }
 
-.dropdown button .badge{
-	transform: translate(-30%,-40%) !important;
+/* Contenedor del Logo Fijo */
+.nav_logo_container {
+    position: sticky;
+    top: 0;
+    background-color: var(--sidebar-bg);
+    padding: 1.5rem 0 1rem 0;
+    z-index: 1060;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.nav_logo {
+    display: flex;
+    align-items: center;
+    transition: .5s;
+}
+
+/* CENTRADO ESTRICTO DEL LOGO */
+.l-navbar:not(.show) .nav_logo {
+    justify-content: center;
+    padding-left: 0 !important;
+}
+
+.l-navbar:not(.show) .logo_text {
+    display: none !important;
+}
+
+.logo_box {
+    transition: .3s;
+    margin: 0 auto;
+}
+
+.l-navbar:not(.show) .logo_box {
+    width: 45px !important;
+    height: 45px !important;
+}
+
+/* Área de contenido scrollable - SOLUCIÓN SCROLL INVISIBLE */
+/* Esto permite que puedas bajar en el menú sin que aparezca la barra gris que tapa los iconos */
+.nav_scrollable_content {
+    height: calc(100vh - 120px); 
+    overflow-y: scroll; /* Forzamos el scroll siempre para que no salte */
+    overflow-x: hidden;
+    scrollbar-width: none; /* Oculta scroll en Firefox */
+    -ms-overflow-style: none;  /* Oculta scroll en IE/Edge */
+}
+
+/* Oculta scroll en Chrome, Safari y Opera */
+.nav_scrollable_content::-webkit-scrollbar {
+    display: none;
+}
+
+/* --- ENLACES PRINCIPALES --- */
+.nav_link {
+    display: flex;
+    align-items: center;
+    column-gap: 1rem;
+    padding: 0.8rem 1rem; 
+    color: var(--sidebar-text);
+    text-decoration: none;
+    transition: .3s;
+    margin: 0 10px 0.5rem 10px;
+    border-radius: 12px;
+}
+
+/* AJUSTE AL CERRAR: Cuadrado igual al logo sin interferencia de scroll */
+.l-navbar:not(.show) .nav_link {
+    padding: 0; 
+    justify-content: center; 
+    margin: 0 auto 1rem auto; 
+    width: 45px;
+    height: 45px;
+}
+
+.nav_link i {
+    min-width: 25px;
+    text-align: center;
+    font-size: 1.3rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.nav_link:hover {
+    background-color: rgba(37, 99, 235, 0.2);
+    color: var(--active-text);
+}
+
+.nav_link.active {
+    background-color: var(--active-bg) !important;
+    color: var(--active-text) !important;
+}
+
+/* --- SUBMENÚS --- */
+.collapse.show, .collapsing {
+    background-color: #ffffff !important;
+    border-radius: 12px;
+    margin: 0 10px 0.5rem 10px;
+    transition: .3s;
+    padding: 5px 0;
+}
+
+.l-navbar:not(.show) .collapse.show, 
+.l-navbar:not(.show) .collapsing {
+    width: 45px;
+    margin: 0 auto 0.5rem auto;
+}
+
+.collapse .nav_link {
+    color: #1f2937 !important;
+    margin: 0 5px;
+    padding-left: 1rem;
+    justify-content: flex-start !important;
+}
+
+.l-navbar:not(.show) .collapse .nav_link {
+    width: 35px;
+    height: 35px;
+    margin: 2px auto;
+    padding: 0;
+    justify-content: center !important;
+}
+
+/* Flechas */
+.arrow-icon {
+    margin-left: auto;
+    font-size: 0.8rem;
+    transition: transform 0.3s;
+}
+
+.l-navbar:not(.show) .arrow-icon { display: none !important; }
+
+.nav_link:not(.collapsed) .arrow-icon {
+    transform: rotate(90deg);
+}
+
+/* --- HEADER BLANCO --- */
+#header {
+    position: fixed;
+    top: 0;
+    left: var(--nav-width-expanded) !important; 
+    width: calc(100% - var(--nav-width-expanded)) !important; 
+    height: var(--header-height);
+    background-color: #ffffff;
+    z-index: 1040;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e5e7eb;
+    transition: .5s;
+    padding-left: 1rem !important; 
+    padding-right: 1.5rem;
+}
+
+#header.body-pd {
+    left: var(--nav-width) !important;
+    width: calc(100% - var(--nav-width)) !important;
+}
+
+@media screen and (max-width: 768px) {
+    #header, #header.body-pd {
+        left: 0 !important;
+        width: 100% !important;
+        padding-left: 1rem !important;
+    }
+}
+
+.l-navbar:not(.show) .nav_name, 
+.l-navbar:not(.show) .nav_logo-name,
+.l-navbar:not(.show) .text-secondary {
+    display: none;
 }

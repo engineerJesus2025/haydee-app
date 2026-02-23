@@ -67,34 +67,56 @@ if (isset($_POST["operacion"])) {
             case 'registrar':
                 $respuesta = $solicitud->realizar_consulta('registrar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_SOLICITUD_GASTO,
-                        $solicitud->get_descripcion_necesidad() . ' de ' . $solicitud->get_nombre_solicitante()
-                    );
+                    $nuevos = [
+                        'descripcion' => $solicitud->get_descripcion_necesidad(),
+                        'nombre_solicitante' => $solicitud->get_nombre_solicitante(),
+                        'monto_estimado' => $solicitud->get_monto_estimado(),
+                        'prioridad' => $solicitud->get_prioridad(),
+                        'presupuesto_id' => $solicitud->get_presupuesto_id()
+                    ];
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_SOLICITUD_GASTO, '', null, null, $nuevos);
                 }
                 break;
 
             case 'modificar':
+                // Obtener datos anteriores
+                $tempSolicitud = new SolicitudGasto();
+                $tempSolicitud->set_id_solicitud($solicitud->get_id_solicitud());
+                $datosAnteriores = $tempSolicitud->realizar_consulta('consultar_solicitud_id');
+                $anterior = $datosAnteriores['estatus'] ? [
+                    'descripcion' => $datosAnteriores['datos']['descripcion_necesidad'] ?? '',
+                    'nombre_solicitante' => $datosAnteriores['datos']['nombre_solicitante'] ?? '',
+                    'monto_estimado' => $datosAnteriores['datos']['monto_estimado'] ?? '',
+                    'prioridad' => $datosAnteriores['datos']['prioridad'] ?? '',
+                    'presupuesto_id' => $datosAnteriores['datos']['presupuesto_id'] ?? ''
+                ] : [];
+
                 $respuesta = $solicitud->realizar_consulta('modificar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_SOLICITUD_GASTO,
-                        $solicitud->get_descripcion_necesidad() . ' de ' . $solicitud->get_nombre_solicitante()
-                    );
+                    $nuevo = [
+                        'descripcion' => $solicitud->get_descripcion_necesidad(),
+                        'nombre_solicitante' => $solicitud->get_nombre_solicitante(),
+                        'monto_estimado' => $solicitud->get_monto_estimado(),
+                        'prioridad' => $solicitud->get_prioridad(),
+                        'presupuesto_id' => $solicitud->get_presupuesto_id()
+                    ];
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_SOLICITUD_GASTO, '', null, $anterior, $nuevo);
                 }
                 break;
 
             case 'eliminar':
-                // Obtener datos para bitácora antes de eliminar
-                $copia = clone $solicitud;
-                $datosSolicitud = $copia->realizar_consulta('consultar_solicitud_id');
-                $info = '';
-                if ($datosSolicitud['estatus']) {
-                    $datos = $datosSolicitud['datos'];
-                    $info = ($datos['descripcion_necesidad'] ?? '') . ' de ' . ($datos['nombre_solicitante'] ?? '');
-                }
+                // Obtener datos anteriores
+                $tempSolicitud = new SolicitudGasto();
+                $tempSolicitud->set_id_solicitud($solicitud->get_id_solicitud());
+                $datosSolicitud = $tempSolicitud->realizar_consulta('consultar_solicitud_id');
+                $anterior = $datosSolicitud['estatus'] ? [
+                    'descripcion' => $datosSolicitud['datos']['descripcion_necesidad'] ?? '',
+                    'nombre_solicitante' => $datosSolicitud['datos']['nombre_solicitante'] ?? ''
+                ] : [];
 
                 $respuesta = $solicitud->realizar_consulta('eliminar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_SOLICITUD_GASTO, $info);
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_SOLICITUD_GASTO, '', null, $anterior, null);
                 }
                 break;
 

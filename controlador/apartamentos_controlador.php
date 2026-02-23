@@ -62,9 +62,16 @@ if (isset($_POST["operacion"])) {
             case 'registrar':
                 $respuesta = $apartamento->realizar_consulta('registrar_apartamento');
                 if ($respuesta['estatus']) {
+                    $nuevos = [
+                        'nro_apartamento' => $apartamento->get_nro_apartamento(),
+                        'porcentaje_participacion' => $apartamento->get_porcentaje_participacion(),
+                        'gas' => $apartamento->get_gas(),
+                        'agua' => $apartamento->get_agua(),
+                        'alquilado' => $apartamento->get_alquilado()
+                    ];
                     Bitacora::registrar(REGISTRAR, GESTIONAR_APARTAMENTOS,
-                        'Apartamento N° ' . $apartamento->get_nro_apartamento()
-                    );
+                        '',
+                        null, null, $nuevos);
                 }
                 break;
 
@@ -82,23 +89,39 @@ if (isset($_POST["operacion"])) {
                 break;
 
             case 'modificar':
+                // Obtener datos anteriores del apartamento
+                $tempApart = new Apartamento();
+                $tempApart->set_id_apartamento($apartamento->get_id_apartamento());
+                $datosAnteriores = $tempApart->realizar_consulta('consultar_detalle_completo');
+                $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
+
                 $respuesta = $apartamento->realizar_consulta('editar_apartamento');
                 if ($respuesta['estatus']) {
+                    $nuevo = [
+                        'nro_apartamento' => $apartamento->get_nro_apartamento(),
+                        'porcentaje_participacion' => $apartamento->get_porcentaje_participacion(),
+                        'gas' => $apartamento->get_gas(),
+                        'agua' => $apartamento->get_agua(),
+                        'alquilado' => $apartamento->get_alquilado()
+                    ];
                     Bitacora::registrar(MODIFICAR, GESTIONAR_APARTAMENTOS,
-                        'Apartamento ID: ' . $apartamento->get_id_apartamento()
-                    );
+                        '',
+                        null, $anterior, $nuevo);
                 }
                 break;
 
             case 'eliminar':
-                // Obtener datos para bitácora
-                $copia = clone $apartamento;
-                $datosApto = $copia->realizar_consulta('consultar_detalle_completo');
-                $info = $datosApto['estatus'] ? ('Apartamento N° ' . ($datosApto['datos']['nro_apartamento'] ?? '')) : '';
+                // Obtener datos anteriores
+                $tempApart = new Apartamento();
+                $tempApart->set_id_apartamento($apartamento->get_id_apartamento());
+                $datosAnteriores = $tempApart->realizar_consulta('consultar_detalle_completo');
+                $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
 
                 $respuesta = $apartamento->realizar_consulta('eliminar_apartamento');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_APARTAMENTOS, $info);
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_APARTAMENTOS,
+                       '',
+                        null, $anterior, null);
                 }
                 break;
 

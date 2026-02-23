@@ -1,192 +1,75 @@
 @import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap");
 
-*,::before,::after{box-sizing: border-box}
+*, ::before, ::after { box-sizing: border-box; }
 
-body{	
-	font-family: 'Nunito', sans-serif;
-	transition: padding-left .5s
+body {  
+    font-family: 'Nunito', sans-serif;
+    margin: 0;
+    background-color: #f3f4f6;
+    padding-top: var(--header-height);
+    /* ESTADO INICIAL: Menú contraído (68px + espacio) */
+    padding-left: calc(var(--nav-width) + 1.5rem); 
+    padding-right: 1.5rem;
+    transition: .5s;
 }
 
-header{
-	z-index: 400
+/* ESTADO EXPANDIDO: Cuando el JS activa 'body-pd' (250px + espacio) */
+body.body-pd {
+    padding-left: calc(var(--nav-width-expanded) + 1.5rem);
 }
 
-#header a{text-decoration: none}
-
-.header{
-	position: absolute;
-	height: 3rem;
-	position: fixed;
-	top: 0; left: 0;
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	padding: 0 1rem;	
-	z-index: 100;
-	transition:  .5s
+/* Contenedor del botón toggle */
+.header_toggle {
+    z-index: 1100 !important; 
+    display: flex;
+    align-items: center;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
-.header_toggle{
-	color: #4723D9;
-	font-size: 1.5rem;
-}
-.header_toggle * {
-	cursor: pointer
-}
-
-.l-navbar{
-	position: fixed;
-	top: 0;
-	left: -30%;
-	width: 68px;
-	height: calc(100vh - 1.8rem);
-	background-color: #3939a9;
-	padding: .5rem 1rem 0 0;
-	transition: width .5s, left .5s;
-	z-index: 100
+/* Icono de las tres rayitas */
+#header-toggle {
+    color: #1f2937 !important; 
+    font-size: 1.5rem;
+    cursor: pointer;
 }
 
-#header .nav{
-	padding-bottom: 10vw;
-	height: 100%;
-	padding-bottom: 5vh;
-	display: flex;
-	flex-direction: column;
-	justify-content: space-between;	
-	overflow-x: auto;
-	scrollbar-width: none;
-}
-#header .nav_logo, .nav_link{
-	display: grid;
-	grid-template-columns: max-content max-content;
-	/*justify-content: center;*/
-	align-items: center;column-gap: 1rem;
-	padding: 0.5rem 0.5rem;
+@media screen and (max-width: 768px) {
+    body, body.body-pd { 
+        padding-left: 1rem; 
+        padding-right: 1rem;
+    }
 }
 
-#header .nav_name{
-	font-weight: 800;
+/* === AJUSTE DINÁMICO PARA EL FOOTER === */
+.footer-ajustado {
+    /* El fondo oscuro se estira al 100% ignorando el padding del body */
+    margin-right: -1.5rem !important;
+    margin-left: calc((var(--nav-width) + 1.5rem) * -1) !important;
+    
+    /* ESTA ES LA CLAVE: El contenido interno recupera el espacio del menú 
+       para que el texto se centre respecto a la zona blanca */
+    padding-left: calc(var(--nav-width) + 1.5rem) !important;
+    padding-right: 1.5rem !important;
+    
+    transition: .5s;
 }
 
-#header .collapse .nav_name{
-	color: rgb(33,37,41);
+/* Cuando el menú se expande (body-pd) */
+body.body-pd .footer-ajustado {
+    /* Ajustamos el fondo negro */
+    margin-left: calc((var(--nav-width-expanded) + 1.5rem) * -1) !important;
+    
+    /* Ajustamos el padding del texto para que siga centrado en la zona blanca */
+    padding-left: calc(var(--nav-width-expanded) + 1.5rem) !important;
 }
 
-#header .nav_logo{margin-bottom: 1rem}
-#header .nav_logo-icon{font-size: 1.25rem;color: #c7c6cB}
-#header .nav_logo-name{color: #F7F6FB;font-weight: 700}
-
-#header .nav_link{
-	position: relative;
-	color: #AFA5D9;
-	transition: .3s;
-	margin-bottom: .3rem;
-	border-radius: 2%;
-}
-
-#header .nav_link:hover{
-	color: #D3CEE8;
-	background-color: #34349c;
-}
-
-#header .nav_link:hover > .nav_logo-icon{
-	color: #D3CEE8;	
-}
-
-#header .collapse .nav_link:hover{	
-	background-color: #E6F0FF;
-}
-
-#header .collapse .nav_link:hover .nav_name{
-	color: #444;
-}
-
-#header .collapse .nav_link:focus{	
-	background-color: #ADCCFB;
-}
-
-#header .collapse .active{	
-	background-color: #B7D3FD;
-	border-bottom: 4px #007AFF solid;
-}
-
-#header .collapse .nav_link:focus .nav_name{
-	color: #000;
-}
-
-#header .nav_link:focus{
-	color: #FFF;
-	background-color: #2e2e8f;
-}
-
-#header .nav_link:focus > .nav_logo-icon{
-	color: #FFF;	
-}
-
-#header .nav_icon{font-size: 1.25rem}
-
-#header .show{left: 0}
-
-#header .nav_logo-icon:hover{color: #e9e9e9}
-
-#header .active{
-	color: #D3CEE8 ;
-	background-color: #2e2e8f;
-	border-bottom: 3px groove #4fc3f7;
-	padding-bottom: .2rem;
-	margin-bottom: .5rem;
-	border-radius: 2%;
-}
-
-#header .active .nav_logo-icon{color: #FFF}
-
-#header .active::before{
-	content: '';
-	position: absolute;
-	left: 0;
-	color: #fff;
-	height: 32px;
-	background-color: #F7F6FB;
-}
-
-#header .barra_inferior{
-	height: 100%;
-  	background-color: #3939a9;
-  	width: 68px;
-  	transition: width .5s;
-}
-
-#header .height-100{height:100vh}
-
-#header .ajustar{
-	width: 68px !important;
-}
-
-@media screen and (min-width: 768px)
-{
-	body{		
-		padding-left: calc(35px + 2rem)
-	}
-
-	.header{
-		position: absolute;
-		height: calc(3rem + 1rem);
-		padding: 2rem calc(60px + 2rem)}
-
-	.header_img{width: 40px;height: 40px}
-
-	.header_img img{width: 45px}
-
-	#header .l-navbar{
-		left: 0;
-		padding: 1rem 1rem 0 0;
-	}
-
-	.header .show{width: calc(60px + 156px)}
-
-	.body-pd{padding-left: calc(28px + 188px)}
-
-	#header .barra_inferior{
-	  	width: calc(60px + 156px);
-	}
+/* Ajuste para móviles */
+@media screen and (max-width: 768px) {
+    .footer-ajustado {
+        margin-left: -1rem !important;
+        margin-right: -1rem !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
 }

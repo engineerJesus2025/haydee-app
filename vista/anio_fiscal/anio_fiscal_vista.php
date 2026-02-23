@@ -19,13 +19,13 @@
             require_once "vista/componentes/navbar.php";
             ?>
 
-            <div class="col d-flex flex-column gris">
+            <div class="col d-flex flex-column gris min-vh-100">
 
                 <?php
                 require_once "vista/componentes/header.php";
                 ?>
 
-                <main class="col ps-md-2 pt-2 mb-5">
+                <main class="col ps-md-2 pt-2 mb-5 ">
                     <div class="page-header pt-3">
                         <h2>GESTIONAR AÑOS FISCALES</h2>
                     </div>
@@ -87,8 +87,9 @@
     </div>    
     <script type="text/javascript" src="recursos/js/validaciones/anio_fiscal_validar.js"></script>
     <script type="text/javascript" src="recursos/js/consultas_ajax/anio_fiscal_ajax.js"></script>
-
     <?php require_once "vista/componentes/footer.php"; ?>
+
+    
 </body>
 
 </html>

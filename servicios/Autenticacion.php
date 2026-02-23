@@ -77,7 +77,7 @@ class Autenticacion
 
         // Obtener notificaciones no leídas
         $this->notificacionesModel->set_usuario_id($usuario['id_usuario']);
-        $notificaciones = $this->notificacionesModel->realizar_consulta('consultar_notificaciones_usuario');
+        $notificaciones = $this->notificacionesModel->realizar_consulta('consultar_mis_notificaciones');
         $usuario['notificaciones'] = $notificaciones['datos'] ?? [];
 
         // Ejecutar procesos automáticos
@@ -121,7 +121,7 @@ class Autenticacion
 
         $notificacionesModel = new Notificaciones();
         $notificacionesModel->set_usuario_id($usuario['datos']['id_usuario']);
-        $notificaciones = $notificacionesModel->realizar_consulta('consultar_notificaciones_usuario');
+        $notificaciones = $notificacionesModel->realizar_consulta('consultar_mis_notificaciones');
         $usuario['datos']['notificaciones'] = $notificaciones['datos'] ?? [];
 
         // Normalizar datos
