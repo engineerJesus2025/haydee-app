@@ -59,6 +59,7 @@ class Autenticacion
             $this->usuarioModel->set_token_tipo('RECORDAR_CONTRASENIA');
 
             $resToken = $this->usuarioModel->realizar_consulta('registrar_token');
+            
             if ($resToken['estatus']) {
                 // Devolvemos el token para que el controlador lo guarde en cookie
                 $usuario['token_recordar'] = $token;

@@ -128,7 +128,7 @@ switch ($accion) {
             header("Location: ?pagina=inicio_controlador.php&accion=inicio");
             exit;
         }
-        $recaptchaDeshabilitado = defined('ENTORNO') && ENTORNO === 'local';
+
         echo "<script>const RECAPTCHA_DESACTIVADO = " . ($recaptchaDeshabilitado ? 'true' : 'false') . ";</script>";
         
         require_once "vista/login/login_vista.php";
