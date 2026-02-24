@@ -143,6 +143,17 @@ if (isset($_POST["operacion"])) {
                     'monto_total' => array_sum(array_column($anterior['detalles'] ?? [], 'monto'))
                 ];
 
+                 $configPagos = [
+                    'campos' => ['fecha', 'monto', 'tipo_pago', 'monto_dolar'],
+                    'bancarios' => ['banco_id', 'referencia'],
+                    'imagenes' => 'imagen',
+                    'metodo_pago_campo' => 'tipo_pago',
+                    'metodos_con_archivo' => ['Transferencia', 'Pago Movil'],
+                    'carpeta_imagenes' => 'pagos',
+                    'campo_existente' => 'imagen_existente',
+                    'indice_archivo_formato' => '/^imagen_(\d+)$/'
+                ];
+
                 // Construir nuevos detalles (con imágenes existentes)
                 $detalles = ConstructorDetalles::construirDetalles($_POST, $_FILES, $configPagos, true);
                 $pagos->setDetallesTemp($detalles);

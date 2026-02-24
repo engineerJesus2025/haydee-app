@@ -32,6 +32,8 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("monto_mensualidad").value = seleccion.getAttribute("data-monto") || 0;
     });
 
+    document.querySelectorAll(".tasa_dolar").forEach(input => input.value = tasa_dolar);
+
     // Delegación de eventos para calcular Dólares dinámicamente
     formulario_usar.addEventListener("input", calcularDolares);
 
@@ -122,19 +124,22 @@ function calcularDolares(e) {
 
 function mostrarCamposMetodoPago(e) {
     if (e.target.matches(".tipo_pago_admin")) {
-        const metodo = e.target.value;
-        const tarjeta = e.target.closest(".detalle-pago");
+        actualizarVisibilidadMetodo(e.target);
+    }
+}
 
-        const camposBancarios = tarjeta.querySelectorAll(".campos-bancarios");
-        const campoMonto = tarjeta.querySelector(".campo-monto");
+function actualizarVisibilidadMetodo(selectElement) {
+    const metodo = selectElement.value;
+    const tarjeta = selectElement.closest(".detalle-pago");
+    const camposBancarios = tarjeta.querySelectorAll(".campos-bancarios");
+    const campoMonto = tarjeta.querySelector(".campo-monto");
 
-        campoMonto.classList.remove("d-none");
+    campoMonto.classList.remove("d-none");
 
-        if (metodo === "Efectivo" || metodo === "Divisa") {
-            camposBancarios.forEach(c => c.classList.add("d-none"));
-        } else {
-            camposBancarios.forEach(c => c.classList.remove("d-none"));
-        }
+    if (metodo === "Efectivo" || metodo === "Divisa") {
+        camposBancarios.forEach(c => c.classList.add("d-none"));
+    } else {
+        camposBancarios.forEach(c => c.classList.remove("d-none"));
     }
 }
 
@@ -390,8 +395,7 @@ async function prepararEdicion(id) {
         selectTipo.value = det.tipo_pago;
 
         // Disparar lógica de mostrar/ocultar
-        let eventoChange = new Event('change', { bubbles: true });
-        selectTipo.dispatchEvent(eventoChange);
+        actualizarVisibilidadMetodo(selectTipo);
 
         if (det.tipo_pago === "Transferencia" || det.tipo_pago === "Pago Movil") {
             nuevoBloque.querySelector(".referencia").value = det.referencia;

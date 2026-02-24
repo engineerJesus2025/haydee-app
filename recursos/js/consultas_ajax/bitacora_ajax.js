@@ -38,13 +38,25 @@ function mostrarDetalle(rowData) {
     document.getElementById('detalle_fecha').textContent = FormatoFechas.formatear(rowData.fecha_hora, 'DD-MM-YYYY hh:mm:ss A');
     document.getElementById('detalle_modulo').textContent = rowData.nombre_modulo.split('_').join(' ');
     document.getElementById('detalle_accion').textContent = rowData.accion;
+    document.getElementById('detalle_accion').setAttribute('class',`badge ${definirColorAccion(rowData.accion)}`);
 
     // Determinar si es consulta
     if (rowData.accion.toLowerCase() === 'consultar') {
         document.getElementById('detalle_consulta').classList.remove('d-none');
         document.getElementById('detalle_cambios').classList.add('d-none');
         document.getElementById('mensaje_consulta').textContent = `Se consultaron todos los registros del módulo ${rowData.nombre_modulo.split('_').join(' ')}.`;
-    } else {
+    } 
+    else if(rowData.accion.toLowerCase() === 'iniciar sesion'){
+        document.getElementById('detalle_consulta').classList.remove('d-none');
+        document.getElementById('detalle_cambios').classList.add('d-none');
+        document.getElementById('mensaje_consulta').textContent = `Incio de sesión exitoso.`;
+    }
+    else if(rowData.accion.toLowerCase() === 'cerrar sesion'){
+        document.getElementById('detalle_consulta').classList.remove('d-none');
+        document.getElementById('detalle_cambios').classList.add('d-none');
+        document.getElementById('mensaje_consulta').textContent = `Cierre de sesión exitoso.`;
+    }
+    else {
         document.getElementById('detalle_consulta').classList.add('d-none');
         document.getElementById('detalle_cambios').classList.remove('d-none');
 

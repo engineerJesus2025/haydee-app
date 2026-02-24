@@ -25,12 +25,12 @@ document.querySelector("#modal_banco").addEventListener("hide.bs.modal", () => {
     document.getElementById('titulo_modal').textContent = "Registrar Banco";
     
     // Limpiar clases de validación
-    document.querySelectorAll('.is-valid').forEach(input => input.classList.remove('is-valid'));
-    document.querySelectorAll('.is-invalid').forEach(input => input.classList.remove('is-invalid'));
-    document.querySelectorAll('.w-100').forEach(el => el.textContent = "");
+    formulario_usar.querySelectorAll('.is-valid').forEach(input => input.classList.remove('is-valid'));
+    formulario_usar.querySelectorAll('.is-invalid').forEach(input => input.classList.remove('is-invalid'));
+    formulario_usar.querySelectorAll('.w-100').forEach(el => el.textContent = "");
     
     // Deshabilitar RIF hasta que se seleccione tipo de documento
-    document.querySelector("#rif").setAttribute("disabled", true);
+    formulario_usar.querySelector("#rif").setAttribute("disabled", true);
     
     numero_cuenta_an = null;
 });

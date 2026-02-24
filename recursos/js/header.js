@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 				
 				headerpd.classList.toggle('body-pd');
 
-				barra_inferior.classList.toggle('ajustar');
+				// barra_inferior.classList.toggle('ajustar');
 
 				if (anchoVentana < 769) return;
 				
