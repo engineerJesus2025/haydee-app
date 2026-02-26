@@ -89,25 +89,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="modal fade" id="modal_reporte_persona" tabindex="-1"
-                        aria-labelledby="titulo_modal_persona" aria-hidden="true">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header bg-primary text-white">
-                                    <h1 class="modal-title fs-5" id="titulo_modal_persona">Generar Cuadro de pagos</h1>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                        aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-
-                                    <?php
-                                    require_once "vista/reportes/reportes_pdf/reporte_persona_modal.php";
-                                    ?>
-
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    
                     <?php require_once "vista/reportes/reportes_pdf/reporte_gastos_mensual_modal.php"; ?>
 
                 </main>
@@ -119,146 +101,26 @@
         </div>
     </div>
     <?php require_once "vista/componentes/footer.php"; ?>
+
+    <div class="modal fade" id="modal_reporte_persona" tabindex="-1" aria-labelledby="titulo_modal_persona" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h1 class="modal-title fs-5" id="titulo_modal_persona">Generar Cuadro de pagos</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+
+                    <?php
+                    require_once "vista/reportes/reportes_pdf/reporte_persona_modal.php";
+                    ?>
+
+                </div>
+            </div>
+        </div>
+    </div>
     
-<!--     <script type="text/javascript">
-        let boton_generar = document.getElementById('boton_generar');
-        let form = document.getElementById('form_reporte');
-        let regex;
-        let mensajes_err = {invalido:'',inexistente:''}
-        let verificar = {tabla:'', id:'', basico:false}
-
-        boton_generar.addEventListener("click",async e=>{
-            e.preventDefault();
-
-            let select_reporte = document.getElementById('select_reporte');
-
-            if (select_reporte.value == "") {
-                mensajes('error', 4000, 'Atencion', 'Debe seleccionar una opción');
-                return;
-            }
-            let valido = validarKeyUp(regex,select_reporte,select_reporte.nextElementSibling,mensajes_err.invalido);
-            
-            if (!valido) {
-                mensajes('error', 4000, 'Atencion', mensajes_err.invalido);
-                return;
-            }
-
-            if (!verificar.basico) {
-                let datos = new FormData();
-                datos.append('validar','validar_clave_foranea');
-                datos.append('tabla',verificar.tabla);
-                datos.append('nombre_clave',verificar.id);
-                datos.append('valor',select_reporte.value);
-
-                valido = await verificar_clave_foranea(datos);
-                
-                if (valido) {
-                    select_reporte.classList.add('is-valid');
-                    select_reporte.classList.remove('is-invalid');
-                    select_reporte.nextElementSibling.textContent = "";
-                }
-                else{
-                    select_reporte.classList.remove('is-valid');
-                    select_reporte.classList.add('is-invalid');
-                    select_reporte.nextElementSibling.textContent = mensajes_err.inexistente;
-
-                    mensajes('error', 4000, 'Atencion', mensajes_err.inexistente);
-                    return;
-                }
-            }
-
-            let reporte = boton_generar.getAttribute("reporte");
-            form.setAttribute("action", `?pagina=reportes_controlador.php&accion=${reporte}`);
-            form.submit();
-        });
-
-        document.getElementById("modal_reporte_persona").addEventListener("hidden.bs.modal", e => {
-            let select_reporte = document.getElementById('select_reporte');
-            select_reporte.innerHTML = `<option selected hidden value="">Propietario</option>`;
-        });
-
-        document.getElementById('select_reporte').addEventListener("change",async e=>{
-            let valido = validarKeyUp(regex,e.target,e.target.nextElementSibling,mensajes_err.invalido);
-
-            if (!valido) return;
-            if (verificar.basico) return;
-
-            let datos = new FormData();
-            datos.append('validar','validar_clave_foranea');
-            datos.append('tabla',verificar.tabla);
-            datos.append('nombre_clave',verificar.id);
-            datos.append('valor',e.target.value);
-
-            valido = await verificar_clave_foranea(datos);
-            
-            if (valido) {
-                e.target.classList.add('is-valid');
-                e.target.classList.remove('is-invalid');
-                e.target.nextElementSibling.textContent = "";
-            }
-            else{
-                e.target.classList.remove('is-valid');
-                e.target.classList.add('is-invalid');
-                e.target.nextElementSibling.textContent = mensajes_err.inexistente;
-            }
-        });
-
-        function mensajes(icono, tiempo, titulo, mensaje) {
-            Swal.fire({
-                icon: icono,
-                timer: tiempo,
-                title: titulo,
-                text: mensaje,
-                confirmButtonText: 'Aceptar',
-                confirmButtonColor: "#e01d22",
-            });
-        }
-
-        async function verificar_clave_foranea(datos){  
-            let data = await fetch("",{method:"POST", body:datos}).then(res=>{      
-                let result = res.json()
-                return result;
-            });
-
-            return data     
-        }
-
-        function validarKeyUp(er,etiqueta,etiquetamensaje,mensaje){
-            a = er.test(etiqueta.value);
-            
-            if(a){
-                etiqueta.classList.add('is-valid');
-                etiqueta.classList.remove('is-invalid');
-
-                if (etiqueta.id == "contra" || etiqueta.id == "confir_contra") {
-                    etiqueta.nextElementSibling.classList.remove('border-danger');
-                    etiqueta.nextElementSibling.classList.remove('text-danger');
-
-                    etiqueta.nextElementSibling.classList.add('border-success');
-                    etiqueta.nextElementSibling.classList.add('text-success');
-                }
-                etiquetamensaje.textContent = "";
-                return 1;
-            }
-            else{
-                etiqueta.classList.add('is-invalid');
-                etiqueta.classList.remove('is-valid');
-
-                if (etiqueta.id == "contra" || etiqueta.id == "confir_contra") {
-                    etiqueta.nextElementSibling.classList.remove('border-success');
-                    etiqueta.nextElementSibling.classList.remove('text-success');
-
-                    etiqueta.nextElementSibling.classList.add('border-danger');
-                    etiqueta.nextElementSibling.classList.add('text-danger');
-                }
-                etiquetamensaje.textContent = mensaje;
-                return 0;
-            }
-        }        
-    </script> -->
-
-    <!-- <script type="text/javascript" src="recursos/js/reportes/solvencia.js"></script> -->
-    <!-- <script type="text/javascript" src="recursos/js/reportes/residencia.js"></script> -->
     <script type="text/javascript" src="recursos/js/reportes/reporte_constancias.js"></script>
     <script type="text/javascript" src="recursos/js/reportes/cuadro_pagos.js"></script>
     <script type="text/javascript" src="recursos/js/reportes/reporte_gastos.js"></script>    

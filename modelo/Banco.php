@@ -293,7 +293,7 @@ class Banco extends Conexion
     /**
      * Actualiza un banco existente.
      */
-    private function _editar()
+    private function _modificar()
     {
         $campos = ['id_banco', 'nombre_banco', 'codigo', 'numero_cuenta', 'telefono_afiliado', 'rif'];
         $contexto = ['exclude_id' => $this->id_banco];
@@ -320,7 +320,7 @@ class Banco extends Conexion
             $stmt->execute();
             return ['estatus' => true, 'mensaje' => 'Banco actualizado correctamente'];
         } catch (PDOException $e) {
-            error_log("Error en _editar: " . $e->getMessage());
+            error_log("Error en _modificar: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al actualizar el banco'];
         }
     }

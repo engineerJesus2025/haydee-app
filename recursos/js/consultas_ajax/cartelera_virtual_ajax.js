@@ -6,7 +6,7 @@
 
 let id_modificar;
 let permiso_eliminar = document.querySelector("#permiso_eliminar")?.value;
-let permiso_editar = document.querySelector("#permiso_editar")?.value;
+let permiso_modificar = document.querySelector("#permiso_modificar")?.value;
 let nombre_usuario = document.querySelector("#nombre_usuario")?.value || "Desconocido";
 
 let boton_formulario = document.querySelector("#boton_formulario");
@@ -27,7 +27,7 @@ document.querySelector("#modal_cartelera").addEventListener("hide.bs.modal", () 
     document.getElementById("titulo_modal").textContent = "Registrar Publicación";
     
     // Limpiar mensajes de error
-    document.querySelectorAll(".w-100").forEach(el => el.textContent = "");
+    formulario_usar.querySelectorAll(".w-100").forEach(el => el.textContent = "");
     document.querySelector("#nombre_imagen_cargada").textContent = "";
     document.querySelector("#boton_eliminar_imagen").classList.add("d-none");
     document.querySelector("#boton_eliminar_imagen").removeAttribute("data-nombre");
@@ -45,8 +45,8 @@ document.getElementById('header-toggle')?.addEventListener("click", () => {
 });
 
 function envio(operacion) {
-    if (operacion === "Editar") {
-        editar(boton_formulario.getAttribute("id_modificar"));
+    if (operacion === "modificar") {
+        modificar(boton_formulario.getAttribute("id_modificar"));
     } else if (operacion === "Registrar") {
         registrar();
     } else {
@@ -77,14 +77,14 @@ function formatearFecha(fechaStr) {
 }
 
 /**
- * Crea el HTML de los botones de acción (vista previa, editar, eliminar)
+ * Crea el HTML de los botones de acción (vista previa, modificar, eliminar)
  */
 function crearBotones(id) {
     let html = `<div class="row justify-content-evenly">
                     <button type="button" class="btn btn-primary btn-sm col-3 vista-previa" data-id="${id}" title="Vista previa">
                         <i class="bi bi-eye-fill"></i>
                     </button>
-                    <button type="button" class="btn btn-success btn-sm col-3 editar" data-id="${id}" data-bs-toggle="modal" data-bs-target="#modal_cartelera" title="Editar">
+                    <button type="button" class="btn btn-success btn-sm col-3 modificar" data-id="${id}" data-bs-toggle="modal" data-bs-target="#modal_cartelera" title="modificar">
                         <i class="bi bi-pencil-square"></i>
                     </button>`;
     if (permiso_eliminar == 1) {
@@ -135,7 +135,7 @@ function consultar() {
 }
 
 /**
- * Prepara el formulario con los datos de la publicación a editar
+ * Prepara el formulario con los datos de la publicación a modificar
  */
 async function modificar_formulario(e) {
     const boton = e.target.closest("button");
@@ -175,7 +175,7 @@ async function modificar_formulario(e) {
         botonEliminarImagen.removeAttribute("data-nombre");
     }
 
-    if (permiso_editar != 1) {
+    if (permiso_modificar != 1) {
         boton_formulario.setAttribute("hidden", true);
         boton_formulario.setAttribute("disabled", true);
     }
@@ -249,10 +249,10 @@ async function registrar() {
 /**
  * Actualiza una publicación existente
  */
-async function editar(id) {
+async function modificar(id) {
     let datos = new FormData(formulario_usar);
     datos.append("id_cartelera", id);
-    datos.append("operacion", "editar");
+    datos.append("operacion", "modificar");
 
     let respuesta = await Utilidades.query(datos);
 
@@ -300,7 +300,7 @@ document.querySelector("#tabla_cartelera_virtual tbody").addEventListener('click
     const boton = e.target.closest('button');
     if (!boton) return;
 
-    if (boton.classList.contains('editar')) {
+    if (boton.classList.contains('modificar')) {
         modificar_formulario(e);
     } else if (boton.classList.contains('vista-previa')) {
         mostrarVistaPrevia(e);

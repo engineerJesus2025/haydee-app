@@ -42,7 +42,7 @@ $(document).ready(function(){
 	
 	// Boton del formulario
 	$("#boton_formulario").on("click",async function(e){
-		let accion = (e.target.getAttribute("modificar"))?"Editar":"Registrar";		
+		let accion = (e.target.getAttribute("modificar"))?"modificar":"Registrar";		
 		e.preventDefault();
 		if(await validarEnvio(accion)==true){
 				Swal.fire({
@@ -187,7 +187,7 @@ async function validarEnvio(accion = "Registrar"){
 			
 			return false;
 		}*/
-	}else if (accion == "Editar"){
+	}else if (accion == "modificar"){
 		datos = new FormData();
 		//datos.append("validar",'contra');
 		datos.append("id_pago",id_modificar);

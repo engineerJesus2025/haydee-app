@@ -170,9 +170,9 @@ class Modulos extends Conexion
     }
 
     /**
-     * Editar un módulo existente.
+     * modificar un módulo existente.
      */
-    private function _editar()
+    private function _modificar()
     {
         $campos = ['id_modulo', 'nombre'];
         $validacion = $this->validar($campos);
@@ -189,7 +189,7 @@ class Modulos extends Conexion
             ]);
             return ['estatus' => true, 'mensaje' => 'Módulo actualizado correctamente'];
         } catch (PDOException $e) {
-            error_log("Error en _editar (Modulos): " . $e->getMessage());
+            error_log("Error en _modificar (Modulos): " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al actualizar el módulo'];
         }
     }

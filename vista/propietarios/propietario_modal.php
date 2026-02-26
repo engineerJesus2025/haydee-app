@@ -1,4 +1,4 @@
-<form action="?pagina=propietario_controlador.php&accion=guardar" method="POST" id="form_propietario"
+<form id="form_propietario"
     name="form_propietario">
     <div class="row m-3">
         <div class="col-md-6">

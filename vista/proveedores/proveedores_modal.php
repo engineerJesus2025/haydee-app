@@ -1,4 +1,4 @@
-<form action="?pagina=proveedores_controlador.php&accion=guardar" method="POST" id="form_proveedores"
+<form id="form_proveedores"
       name="form_proveedores">
     <div class="row m-3">
         <div class="col-md-6">

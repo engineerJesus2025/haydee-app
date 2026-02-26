@@ -8,7 +8,7 @@
 // VARIABLES GLOBALES
 // ============================================================
 let permiso_eliminar = document.querySelector("#permiso_eliminar")?.value;
-let permiso_editar = document.querySelector("#permiso_editar")?.value;
+let permiso_modificar = document.querySelector("#permiso_modificar")?.value;
 let boton_formulario = document.querySelector("#boton_formulario");
 let modal = new bootstrap.Modal("#modal_presupuesto");
 let formulario_usar = document.querySelector("#form_presupuesto");
@@ -609,7 +609,7 @@ async function consultar() {
     const parametros = (data) => { data.operacion = 'consulta'; };
     const postCreacion = (row, data) => {
         row.id = `fila-${data.id_presupuesto}`;
-        row.querySelector(".editar")?.addEventListener('click', modificar_formulario);
+        row.querySelector(".modificar")?.addEventListener('click', modificar_formulario);
         row.querySelector(".eliminar")?.addEventListener('click', eventoEliminar);
 
         row.lastElementChild.setAttribute('class','row');
@@ -732,7 +732,7 @@ function crearBotones(id) {
     div.className = "row justify-content-evenly";
     let html = `
         <div class="col-lg-3 col-6 mt-2 mt-lg-0">
-            <button type="button" class="btn btn-success btn-sm editar" data-bs-toggle="modal" data-bs-target="#modal_presupuesto" title="Editar" value="${id}">
+            <button type="button" class="btn btn-success btn-sm modificar" data-bs-toggle="modal" data-bs-target="#modal_presupuesto" title="modificar" value="${id}">
                 <i class="bi bi-pencil-square"></i>
             </button>
         </div>`;
@@ -749,7 +749,7 @@ function crearBotones(id) {
 }
 
 // ============================================================
-// ACCIONES: REGISTRAR, EDITAR, ELIMINAR
+// ACCIONES: REGISTRAR, modificar, ELIMINAR
 // ============================================================
 
 /**
@@ -912,7 +912,7 @@ async function modificar_formulario(e) {
         });
     }
 
-    if (permiso_editar != 1) {
+    if (permiso_modificar != 1) {
         boton_formulario.setAttribute("hidden", true);
     }
 
@@ -923,7 +923,7 @@ async function modificar_formulario(e) {
 }
 
 /**
- * Editar presupuesto existente
+ * modificar presupuesto existente
  */
 async function modificar(id) {
     let datos = recolectarDatosPresupuesto(id);
@@ -933,7 +933,7 @@ async function modificar(id) {
     }
 
     let formData = new FormData();
-    formData.append('operacion', 'editar_masivo');
+    formData.append('operacion', 'modificar_masivo');
     formData.append('datos_presupuesto', JSON.stringify(datos));
 
     let respuesta = await Utilidades.query(formData, true);

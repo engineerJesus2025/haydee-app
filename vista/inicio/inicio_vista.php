@@ -54,7 +54,7 @@
 		}
 	</style>
 </head>
-<body id="body-pd" class="body-pd">
+<body id="body-pd" class="body-pd d-flex flex-column">
 	<div class="container-fluid">
 		<div class="row flex-nowrap">
 			<?php				

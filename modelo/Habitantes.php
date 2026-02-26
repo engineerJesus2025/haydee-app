@@ -18,6 +18,9 @@ class Habitantes extends Conexion
 
     private $filtros_reporte = [];
 
+    private $nuevo_apartamento_id;
+    private $nuevo_tipo_vinculo;
+
     // Reglas de validación centralizadas
     private $reglas = [
         'id_habitante' => [
@@ -73,6 +76,9 @@ class Habitantes extends Conexion
     public function set_filtros_reporte($filtros) {
         $this->filtros_reporte = $filtros;
     }
+
+    public function set_nuevo_apartamento_id($id) { $this->nuevo_apartamento_id = $id; }
+    public function set_nuevo_tipo_vinculo($tipo) { $this->nuevo_tipo_vinculo = $tipo; }
 
     /**
      * Enruta la acción al método privado correspondiente.
@@ -346,21 +352,25 @@ class Habitantes extends Conexion
         }
 
         $sql = "SELECT 
-                    h.id_habitante,
-                    h.nombre,
-                    h.apellido,
-                    h.cedula,
-                    h.telefono,
-                    h.correo,
-                    h.fecha_nacimiento,
-                    h.sexo,
-                    a.nro_apartamento AS apartamento,
-                    ha.tipo_vinculo,
-                    ha.apartamento_id
-                FROM habitantes h
-                LEFT JOIN habitantes_apartamentos ha ON h.id_habitante = ha.habitante_id
-                LEFT JOIN apartamentos a ON ha.apartamento_id = a.id_apartamento
-                WHERE h.id_habitante = :id_habitante AND h.activo = 1";
+                h.id_habitante,
+                h.nombre,
+                h.apellido,
+                h.cedula,
+                h.telefono,
+                h.correo,
+                h.fecha_nacimiento,
+                h.sexo,
+                a.nro_apartamento AS apartamento,
+                a.gas,
+                a.agua,
+                a.alquilado,
+                a.porcentaje_participacion,
+                ha.tipo_vinculo,
+                ha.apartamento_id
+            FROM habitantes h
+            LEFT JOIN habitantes_apartamentos ha ON h.id_habitante = ha.habitante_id
+            LEFT JOIN apartamentos a ON ha.apartamento_id = a.id_apartamento
+            WHERE h.id_habitante = :id_habitante AND h.activo = 1";
         try {
             $stmt = $this->get_conex('negocio')->prepare($sql);
             $stmt->bindParam(':id_habitante', $this->id_habitante);
@@ -409,8 +419,8 @@ class Habitantes extends Conexion
 
     /**
      * Actualiza un habitante existente.
-     */
-    private function _editar()
+    */
+    private function _modificar()
     {
         $campos = ['id_habitante', 'cedula', 'nombre', 'apellido', 'telefono', 'correo', 'fecha_nacimiento', 'sexo'];
         $contexto = ['exclude_id' => $this->id_habitante];
@@ -441,8 +451,86 @@ class Habitantes extends Conexion
             $stmt->execute();
             return ['estatus' => true, 'mensaje' => 'Habitante actualizado correctamente'];
         } catch (PDOException $e) {
-            error_log("Error en _editar: " . $e->getMessage());
+            error_log("Error en _modificar: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al actualizar el habitante'];
+        }
+    }
+
+
+    /**
+     * Edita un habitante y opcionalmente reasigna su apartamento/vínculo en una transacción.
+     * @param array $datos Datos del habitante (nombre, apellido, etc.)
+     * @param int|null $nuevoApartamento ID del nuevo apartamento (null si no cambia)
+     * @param string|null $nuevoTipo Nuevo tipo de vínculo (null si no cambia)
+     * @param int $usuarioId (opcional) ID del usuario que realiza la acción (para bitácora)
+     * @return array
+     */
+    private function _modificar_con_relacion()
+    {
+        // Se espera que las propiedades del habitante ya estén seteadas (id, nombre, etc.)
+        // y además se espera que estén seteadas las propiedades adicionales:
+        // $this->nuevo_apartamento_id y $this->nuevo_tipo_vinculo
+        // Para simplificar, recibimos los datos por POST y los asignamos en el controlador.
+        // Pero aquí asumimos que ya se asignaron.
+
+        $pdo = $this->get_conex('negocio');
+        try {
+            $pdo->beginTransaction();
+
+            // 1. Actualizar datos del habitante
+            $resEdit = $this->_modificar();
+            if (!$resEdit['estatus']) {
+                throw new Exception($resEdit['mensaje']);
+            }
+
+            // 2. Si hay cambio de apartamento o tipo de vínculo
+            $apartamentoModel = new Apartamento();
+            $apartamentoModel->set_habitante_id($this->id_habitante);
+
+            // Obtener la relación actual (si existe)
+            $sqlRel = "SELECT apartamento_id, tipo_vinculo FROM habitantes_apartamentos WHERE habitante_id = :hid";
+            $stmtRel = $pdo->prepare($sqlRel);
+            $stmtRel->execute([':hid' => $this->id_habitante]);
+            $relacionActual = $stmtRel->fetch(PDO::FETCH_ASSOC);
+
+            $nuevoApartamento = $this->nuevo_apartamento_id ?? null;
+            $nuevoTipo = $this->nuevo_tipo_vinculo ?? null;
+
+            if ($relacionActual) {
+                // Ya existe relación, verificar si cambió
+                if ($relacionActual['apartamento_id'] != $nuevoApartamento || $relacionActual['tipo_vinculo'] != $nuevoTipo) {
+                    // Eliminar relación anterior
+                    $apartamentoModel->set_id_apartamento($relacionActual['apartamento_id']);
+                    $apartamentoModel->set_tipo_vinculo($relacionActual['tipo_vinculo']);
+                    $apartamentoModel->realizar_consulta('desvincular_habitante');
+                    // Crear nueva si se proporciona
+                    if ($nuevoApartamento) {
+                        $apartamentoModel->set_id_apartamento($nuevoApartamento);
+                        $apartamentoModel->set_tipo_vinculo($nuevoTipo);
+                        $resAsignar = $apartamentoModel->realizar_consulta('asignar_habitante');
+                        if (!$resAsignar['estatus']) {
+                            throw new Exception($resAsignar['mensaje']);
+                        }
+                    }
+                }
+            } else {
+                // No existe relación, crear nueva si se proporciona
+                if ($nuevoApartamento) {
+                    $apartamentoModel->set_id_apartamento($nuevoApartamento);
+                    $apartamentoModel->set_tipo_vinculo($nuevoTipo);
+                    $resAsignar = $apartamentoModel->realizar_consulta('asignar_habitante');
+                    if (!$resAsignar['estatus']) {
+                        throw new Exception($resAsignar['mensaje']);
+                    }
+                }
+            }
+
+            $pdo->commit();
+            return ['estatus' => true, 'mensaje' => 'Habitante actualizado correctamente'];
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            error_log("Error en _modificar_con_relacion: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => $e->getMessage()];
         }
     }
 
@@ -611,6 +699,26 @@ class Habitantes extends Conexion
         } catch (PDOException $e) {
             error_log("Error en _obtener_datos_habitantes: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al obtener datos de habitantes'];
+        }
+    }
+
+    /**
+     * Valida la existencia de un valor en una tabla externa (para validaciones AJAX)
+     */
+    public function validarExistenciaExterna($tabla, $campo, $valor)
+    {
+        $tablasPermitidas = ['habitantes', 'apartamentos'];
+        if (!in_array($tabla, $tablasPermitidas)) {
+            return false;
+        }
+        $sql = "SELECT COUNT(*) FROM $tabla WHERE $campo = :valor";
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->execute([':valor' => $valor]);
+            return $stmt->fetchColumn() > 0;
+        } catch (PDOException $e) {
+            error_log("Error en validarExistenciaExterna (Habitantes): " . $e->getMessage());
+            return false;
         }
     }
 }

@@ -10,104 +10,106 @@
 </head>
 
 <body id="body-pd" class="body-pd">
-<input type="text" hidden="" id="permiso_eliminar"
-       value="<?php echo Sesiones::tienePermiso(GESTIONAR_PROVEEDORES, ELIMINAR) ?>">
-<input type="text" hidden="" id="permiso_editar"
-       value="<?php echo Sesiones::tienePermiso(GESTIONAR_PROVEEDORES, MODIFICAR) ?>">
-<div class="container-fluid">
-    <div class="row flex-nowrap ">
-
-        <?php
-        require_once "vista/componentes/navbar.php";
-        ?>
-
-        <div class="col d-flex flex-column  min-vh-100 gris">
+    <input type="text" hidden="" id="permiso_eliminar"
+           value="<?php echo Sesiones::tienePermiso(GESTIONAR_PROVEEDORES, ELIMINAR) ?>">
+    <input type="text" hidden="" id="permiso_modificar"
+           value="<?php echo Sesiones::tienePermiso(GESTIONAR_PROVEEDORES, MODIFICAR) ?>">
+    <div class="container-fluid">
+        <div class="row flex-nowrap ">
 
             <?php
-            require_once "vista/componentes/header.php";
+            require_once "vista/componentes/navbar.php";
             ?>
 
-            <main class="col ps-md-2 pt-2 mb-5">
+            <div class="col d-flex flex-column  min-vh-100 gris">
 
-                <div class="page-header pt-3">
-                    <h2>GESTIONAR PROVEEDORES</h2>
-                </div>
-                <p class="lead"></p>
-                <hr>
+                <?php
+                require_once "vista/componentes/header.php";
+                ?>
 
-                <div class="row mb-3">
-                    <div class="col-12">
-                        <div class="card p-4">
-                            <?php if (Sesiones::tienePermiso(GESTIONAR_PROVEEDORES, REGISTRAR)): ?>
-                                <div class="button mb-4">
-                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                                            data-bs-target="#modal_proveedores">Nuevo Proveedor</button>
-                                </div><br>
-                            <?php endif; ?>
+                <main class="col ps-md-2 pt-2 mb-5">
 
-                            <?php if (isset($_SESSION["mensaje"])): ?>
-                                <div class="row ">
-                                    <div class="col-md-12">
-                                        <div class="alert alert-danger d-flex align-items-center" role="alert">
-                                            <span class="bi bi-exclamation-triangle"></span>
-                                            <div class="mx-3">
-                                                <?php echo $_SESSION["mensaje"]; ?>
+                    <div class="page-header pt-3">
+                        <h2>GESTIONAR PROVEEDORES</h2>
+                    </div>
+                    <p class="lead"></p>
+                    <hr>
+
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="card p-4">
+                                <?php if (Sesiones::tienePermiso(GESTIONAR_PROVEEDORES, REGISTRAR)): ?>
+                                    <div class="button mb-4">
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                                                data-bs-target="#modal_proveedores">Nuevo Proveedor</button>
+                                    </div><br>
+                                <?php endif; ?>
+
+                                <?php if (isset($_SESSION["mensaje"])): ?>
+                                    <div class="row ">
+                                        <div class="col-md-12">
+                                            <div class="alert alert-danger d-flex align-items-center" role="alert">
+                                                <span class="bi bi-exclamation-triangle"></span>
+                                                <div class="mx-3">
+                                                    <?php echo $_SESSION["mensaje"]; ?>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            <?php endif; ?>
-                            <div class="table-responsive">
-                                <table id="tabla_proveedores" class="table table-striped table-hover" style="width:97%">
-                                    <thead>
-                                    <tr>
-                                        <th>NOMBRE</th>
-                                        <th>SERVICIO</th>
-                                        <th>RIF</th>
-                                        <th>DIRECCION</th>
-                                        <th class="text-center">ACCIONES</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    <tr>
-                                        <td colspan="7">
-                                            <h4>Cargando...</h4>
-                                        </td>
-                                    </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="modal fade" id="modal_proveedores" tabindex="-1"
-                                 aria-labelledby="titulo_modal" aria_hidden="true">
-                                <div class="modal-dialog modal-lg">
-                                    <div class="modal-content">
-                                        <div class="modal-header bg-primary text-white">
-                                            <h1 class="modal-title fs-5" id="titulo_modal">Registrar Proveedor
-                                            </h1>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                    aria-label="Close"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            <?php
-                                            require_once "vista/proveedores/proveedores_modal.php";
-                                            ?>
-                                        </div>
-                                    </div>
+                                <?php endif; ?>
+                                <div class="table-responsive">
+                                    <table id="tabla_proveedores" class="table table-striped table-hover" style="width:97%">
+                                        <thead>
+                                        <tr>
+                                            <th>NOMBRE</th>
+                                            <th>SERVICIO</th>
+                                            <th>RIF</th>
+                                            <th>DIRECCION</th>
+                                            <th class="text-center">ACCIONES</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr>
+                                            <td colspan="7">
+                                                <h4>Cargando...</h4>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </main>
-            <?php
-            require_once 'vista/componentes/modal_carga.php';
-            require_once "vista/componentes/script.php";
-            ?>
+                </main>
+                <?php
+                require_once 'vista/componentes/modal_carga.php';
+                require_once "vista/componentes/script.php";
+                ?>
+            </div>
         </div>
     </div>
-</div>
-<?php require_once "vista/componentes/footer.php"; ?>
-<script type="text/javascript" src="recursos/js/validaciones/proveedores_validar.js"></script>
-<script type="text/javascript" src="recursos/js/consultas_ajax/proveedores_ajax.js"></script>
+
+    <?php require_once "vista/componentes/footer.php"; ?>
+
+    <div class="modal fade" id="modal_proveedores" tabindex="-1" aria-labelledby="titulo_modal" aria_hidden="true">
+         <div class="modal-dialog modal-lg">
+             <div class="modal-content">
+                 <div class="modal-header bg-primary text-white">
+                     <h1 class="modal-title fs-5" id="titulo_modal">Registrar Proveedor
+                     </h1>
+                     <button type="button" class="btn-close" data-bs-dismiss="modal"
+                             aria-label="Close"></button>
+                 </div>
+                 <div class="modal-body">
+                     <?php
+                     require_once "vista/proveedores/proveedores_modal.php";
+                     ?>
+                 </div>
+             </div>
+         </div>
+    </div>
+
+    <script type="text/javascript" src="recursos/js/validaciones/proveedores_validar.js"></script>
+    <script type="text/javascript" src="recursos/js/consultas_ajax/proveedores_ajax.js"></script>
 </body>
 </html>

@@ -27,7 +27,7 @@
                     <div class="card mt-5 shadow-lg rounded">
                         <div class="card-body">
                             <?php if ($resultado['estatus']) { ?>
-                            <form action="?pagina=login_controlador.php&accion=guardar_contrasenia" method="POST" id="form-login">
+                            <form id="form-login">
                                 <h5 class="card-title text-center p-3">Procesando petición</h5>
                                 <div class="row m-3 justify-content-center">
                                     <div class="col-md-12 mb-3">

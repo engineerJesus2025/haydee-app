@@ -6,7 +6,7 @@
 let tablaModulos;
 let id_modificar = null;
 let permiso_eliminar = document.querySelector("#permiso_eliminar")?.value;
-let permiso_editar = document.querySelector("#permiso_editar")?.value;
+let permiso_modificar = document.querySelector("#permiso_modificar")?.value;
 
 const modalModulo = new bootstrap.Modal(document.getElementById("modal_modulo"));
 const formulario = document.getElementById("form_modulo");
@@ -43,7 +43,7 @@ function crearBotones(id) {
     let div = document.createElement('div');
     div.className = 'row justify-content-evenly';
     let html = `
-        <button type="button" class="btn btn-success btn-sm col-3 editar" title="Editar" value="${id}" data-bs-toggle="modal" data-bs-target="#modal_modulo">
+        <button type="button" class="btn btn-success btn-sm col-3 modificar" title="modificar" value="${id}" data-bs-toggle="modal" data-bs-target="#modal_modulo">
             <i class="bi bi-pencil-square"></i>
         </button>`;
     if (permiso_eliminar == 1) {
@@ -61,7 +61,7 @@ function manejarClickEnTabla(e) {
     if (!boton) return;
     const id = boton.value;
 
-    if (boton.classList.contains('editar')) {
+    if (boton.classList.contains('modificar')) {
         prepararEdicion(id);
     } else if (boton.classList.contains('eliminar')) {
         confirmarEliminar(id);
@@ -83,7 +83,7 @@ async function prepararEdicion(id) {
     document.getElementById('id_modulo').value = modulo.id_modulo;
     document.getElementById('nombre').value = modulo.nombre;
 
-    if (permiso_editar != 1) {
+    if (permiso_modificar != 1) {
         botonFormulario.setAttribute('hidden', true);
     }
 
@@ -112,7 +112,7 @@ async function registrar() {
 async function modificar(id) {
     const formData = new FormData(formulario);
     formData.append('id_modulo', id);
-    formData.append('operacion', 'editar');
+    formData.append('operacion', 'modificar');
 
     const respuesta = await Utilidades.query(formData, true);
     if (!respuesta.estatus) {
@@ -128,7 +128,7 @@ async function modificar(id) {
 botonFormulario?.addEventListener('click', async (e) => {
     e.preventDefault();
     const esEdicion = botonFormulario.hasAttribute('modificar');
-    const accion = esEdicion ? 'Editar' : 'Registrar';
+    const accion = esEdicion ? 'modificar' : 'Registrar';
 
     if (await validarFormulario()) {
         Swal.fire({

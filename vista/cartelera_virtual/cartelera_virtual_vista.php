@@ -13,7 +13,7 @@
 <body id="body-pd" class="body-pd">
     <input type="text" hidden="" id="permiso_eliminar"
         value="<?php echo Sesiones::tienePermiso(GESTIONAR_CARTELERA_VIRTUAL, ELIMINAR) ?>">
-    <input type="text" hidden="" id="permiso_editar"
+    <input type="text" hidden="" id="permiso_modificar"
         value="<?php echo Sesiones::tienePermiso(GESTIONAR_CARTELERA_VIRTUAL, MODIFICAR) ?>">
     <div class="container-fluid">
         <div class="row flex-nowrap">
@@ -104,41 +104,44 @@
                 require_once 'vista/componentes/modal_carga.php';
                 require_once "vista/componentes/script.php";
                 ?>
-                <div class="modal fade" id="modal_vista_previa" tabindex="-1" aria-labelledby="modal_vista_previa_label"
-                    aria-hidden="true">
-                    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Vista Previa de la Publicación</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                    aria-label="Cerrar"></button>
-                            </div>
-                            <div class="modal-body">
-                                <p><strong>Título:</strong> <span id="vista_titulo"></span></p>
-                                <p><strong>Descripción:</strong></p>
-                                <p id="vista_descripcion"></p>
-                                <p><strong>Fecha:</strong> <span id="vista_fecha"></span></p>
-                                <p><strong>Prioridad:</strong> <span id="vista_prioridad"></span></p>
-                                <p><strong>Autor:</strong> <span id="vista_autor"></span></p>
-                                <div class="text-center mt-3">
-                                    <img id="vista_imagen" src="" class="img-fluid border rounded"
-                                        style="max-height: 300px;" alt="Vista previa de la imagen"
-                                        onerror="this.style.display='none'; document.getElementById('mensaje_error_imagen').classList.remove('d-none');">
-                                    <p id="mensaje_error_imagen" class="text-danger d-none mt-2">⚠ No se pudo cargar la
-                                        imagen.</p>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                
 
             </div>
         </div>
     </div>
     <?php require_once "vista/componentes/footer.php"; ?>
+
+    <div class="modal fade" id="modal_vista_previa" tabindex="-1" aria-labelledby="modal_vista_previa_label"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Vista Previa de la Publicación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                        aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Título:</strong> <span id="vista_titulo"></span></p>
+                    <p><strong>Descripción:</strong></p>
+                    <p id="vista_descripcion"></p>
+                    <p><strong>Fecha:</strong> <span id="vista_fecha"></span></p>
+                    <p><strong>Prioridad:</strong> <span id="vista_prioridad"></span></p>
+                    <p><strong>Autor:</strong> <span id="vista_autor"></span></p>
+                    <div class="text-center mt-3">
+                        <img id="vista_imagen" src="" class="img-fluid border rounded"
+                            style="max-height: 300px;" alt="Vista previa de la imagen"
+                            onerror="this.style.display='none'; document.getElementById('mensaje_error_imagen').classList.remove('d-none');">
+                        <p id="mensaje_error_imagen" class="text-danger d-none mt-2">⚠ No se pudo cargar la
+                            imagen.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script type="text/javascript" src="recursos/js/validaciones/cartelera_virtual_validar.js"></script>
     <script type="text/javascript" src="recursos/js/consultas_ajax/cartelera_virtual_ajax.js"></script>
 </body>

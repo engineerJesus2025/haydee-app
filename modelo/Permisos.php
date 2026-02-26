@@ -217,9 +217,9 @@ class Permisos extends Conexion
     }
 
     /**
-     * Editar un permiso existente.
+     * modificar un permiso existente.
      */
-    private function _editar()
+    private function _modificar()
     {
         $campos = ['id_permiso', 'accion'];
         $validacion = $this->validar($campos);
@@ -236,7 +236,7 @@ class Permisos extends Conexion
             ]);
             return ['estatus' => true, 'mensaje' => 'Permiso actualizado correctamente'];
         } catch (PDOException $e) {
-            error_log("Error en _editar (Permisos): " . $e->getMessage());
+            error_log("Error en _modificar (Permisos): " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al actualizar el permiso'];
         }
     }

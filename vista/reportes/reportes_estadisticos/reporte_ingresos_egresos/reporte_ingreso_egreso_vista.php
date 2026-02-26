@@ -111,29 +111,9 @@
                                 <div class="col-8 mx-auto mb-3 d-flex justify-content-center">
                                     <button id="boton_vista_previa" class="btn btn-primary" type="button">Vista Previa</button>
                                 </div>
-                            </form>                            
-
-                        </div>
-                        <div class="modal fade" id="modal_reporte" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
-                            <div class="modal-dialog modal-lg">
-                                <div class="modal-content">
-                                    <div class="modal-header bg-primary text-white">
-                                        <h1 class="modal-title fs-5" id="titulo_modal">Reporte de Ingresos y Egresos</h1>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                    <div class="modal-body">
-
-                                        <?php
-                                        require_once "vista/reportes/reportes_estadisticos/reporte_ingresos_egresos/reporte_ingresos_egresos_modal.php";
-                                        ?>
-
-                                    </div>
-                                </div>
-                            </div>
+                            </form>
                         </div>
                     </div>
-
-                    
                 </main>
                 <?php                
                 require_once "vista/componentes/script.php";
@@ -141,7 +121,27 @@
             </div>
         </div>
     </div>
+
     <?php require_once "vista/componentes/footer.php"; ?>
+
+    <div class="modal fade" id="modal_reporte" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h1 class="modal-title fs-5" id="titulo_modal">Reporte de Ingresos y Egresos</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+
+                    <?php
+                    require_once "vista/reportes/reportes_estadisticos/reporte_ingresos_egresos/reporte_ingresos_egresos_modal.php";
+                    ?>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script type="text/javascript" src="recursos/estadisticas/chart.js"></script>
     <script type="text/javascript" src="recursos/js/reportes/reporte_ingreso_egreso.js"></script>
 </body>

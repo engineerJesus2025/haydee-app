@@ -38,14 +38,14 @@ if (isset($_POST["operacion"])) {
                 }
                 break;
 
-            case 'editar':
+            case 'modificar':
                 // Obtener anteriores
                 $tempModulo = new Modulos();
                 $tempModulo->set_id_modulo($modulo->get_id_modulo());
                 $datosAnteriores = $tempModulo->realizar_consulta('consultar_unico');
                 $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
 
-                $respuesta = $modulo->realizar_consulta('editar');
+                $respuesta = $modulo->realizar_consulta('modificar');
                 if ($respuesta['estatus']) {
                     $nuevo = ['nombre' => $modulo->get_nombre()];
                     Bitacora::registrar(MODIFICAR, GESTIONAR_MODULOS, '', null, $anterior, $nuevo);

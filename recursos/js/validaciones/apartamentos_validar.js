@@ -108,7 +108,7 @@ $(document).ready(function() {
         datos.append('nombre_clave', 'id_apartamento');
         datos.append('valor', this.value);
         const respuesta = await Utilidades.query(datos);
-        if (!respuesta) {
+        if (!respuesta.estatus) {
             Validaciones.mostrarError(this, 'El apartamento seleccionado no existe.');
         } else {
             Validaciones.limpiar(this);
@@ -120,7 +120,7 @@ $(document).ready(function() {
     // ============================================
     $('#boton_formulario').on('click', async function(e) {
         e.preventDefault();
-        const accion = this.dataset.id ? 'Editar' : 'Registrar';
+        const accion = this.dataset.id ? 'modificar' : 'Registrar';
         if (await validarEnvioApartamento(accion)) {
             Swal.fire({
                 title: '¿Estás seguro?',
@@ -131,7 +131,7 @@ $(document).ready(function() {
                 confirmButtonText: 'Sí, ' + accion
             }).then(result => {
                 if (result.isConfirmed) {
-                    accion === 'Editar' ? modificarApartamento() : registrarApartamento();
+                    accion === 'modificar' ? modificarApartamento() : registrarApartamento();
                 }
             });
         }
@@ -142,7 +142,7 @@ $(document).ready(function() {
     // ============================================
     $('#boton_formulario_habitantes').on('click', async function(e) {
         e.preventDefault();
-        const accion = this.dataset.id ? 'Editar' : 'Registrar';
+        const accion = this.dataset.id ? 'modificar' : 'Registrar';
         if (await validarEnvioHabitante(accion)) {
             Swal.fire({
                 title: '¿Estás seguro?',
@@ -153,7 +153,7 @@ $(document).ready(function() {
                 confirmButtonText: 'Sí, ' + accion
             }).then(result => {
                 if (result.isConfirmed) {
-                    accion === 'Editar' ? modificarHabitante() : registrarHabitante();
+                    accion === 'modificar' ? modificarHabitante() : registrarHabitante();
                 }
             });
         }
@@ -273,7 +273,7 @@ async function validarEnvioHabitante(accion) {
     datosApartamento.append('nombre_clave', 'id_apartamento');
     datosApartamento.append('valor', $('#apartamento_id').val());
     const respApartamento = await Utilidades.query(datosApartamento);
-    if (!respApartamento) {
+    if (!respApartamento.estatus) {
         Validaciones.mostrarError($('#apartamento_id')[0], 'Apartamento no existe');
         Utilidades.mensaje('error', 'Error', 'El apartamento seleccionado no existe.');
         return false;

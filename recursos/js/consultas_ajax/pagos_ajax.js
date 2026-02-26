@@ -9,7 +9,7 @@ let boton_formulario = document.getElementById("boton_formulario");
 
 let tasa_dolar = parseFloat(localStorage.getItem("tasa_dolar") || 1).toFixed(2);
 let permiso_eliminar = document.querySelector("#permiso_eliminar")?.value;
-let permiso_editar = document.querySelector("#permiso_editar")?.value;
+let permiso_modificar = document.querySelector("#permiso_modificar")?.value;
 
 // ============================================================
 // INICIALIZACIÓN
@@ -248,7 +248,7 @@ function crearBotones(id) {
             </button>
         </form>
         <div class="col-lg-3 col-6 mt-2 mt-lg-0">
-            <button type="button" class="btn btn-success btn-sm editar" title="Editar" value="${id}">
+            <button type="button" class="btn btn-success btn-sm modificar" title="modificar" value="${id}">
                 <i class="bi bi-pencil-square"></i>
             </button>
         </div>`;
@@ -272,7 +272,7 @@ function manejarBotonesTabla(e) {
 
     if (btn.classList.contains('vista-previa')) {
         mostrarVistaPrevia(id);
-    } else if (btn.classList.contains('editar')) {
+    } else if (btn.classList.contains('modificar')) {
         prepararEdicion(id);
     } else if (btn.classList.contains('eliminar')) {
         confirmarEliminar(id);
@@ -291,7 +291,7 @@ function recolectarDatosFormData(operacion, id_pago = null) {
     formData.append("apartamento_id", document.getElementById("apartamento_id").value);
     formData.append("mensualidad_id", document.getElementById("mensualidad_id").value);
     formData.append("monto_mensualidad", document.getElementById("monto_mensualidad").value);
-    formData.append("estado", document.getElementById("estado").value);
+    formData.append("estado", document.getElementById("estado")?.value);
     formData.append("observacion", document.getElementById("observacion").value);
 
     // Detalles (ConstructorDetalles PHP espera arrays paralelos para escalar, y archivos mapeados por índice)
@@ -330,7 +330,7 @@ function recolectarDatosFormData(operacion, id_pago = null) {
 }
 
 // ============================================================
-// ACCIONES (REGISTRAR, EDITAR, ELIMINAR)
+// ACCIONES (REGISTRAR, modificar, ELIMINAR)
 // ============================================================
 async function registrar() {
     let formData = recolectarDatosFormData("registrar");
@@ -360,7 +360,7 @@ async function prepararEdicion(id) {
     let cabecera = respuesta.datos;
     
     // Llenar Cabecera
-    document.getElementById("estado").value = cabecera.estado;
+    if (document.getElementById("estado")?.value) document.getElementById("estado").value = cabecera.estado;
     document.getElementById("observacion").value = cabecera.observacion;
     document.getElementById("apartamento_id").value = cabecera.apartamento_id;
     

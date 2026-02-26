@@ -1,4 +1,4 @@
-<form action="?pagina=pagos_controlador.php&accion=guardar" method="POST" id="form_pagos" name="form_pagos">
+<form id="form_pagos" name="form_pagos">
     <div class="row m-3">
         <div class="col-lg-4 mb-3">
             <label class="form-label fw-bold" for="apartamento_id">Apartamento</label>

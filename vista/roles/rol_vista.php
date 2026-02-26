@@ -10,7 +10,7 @@
 </head>
 <body id="body-pd" class="body-pd">
     <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_ROLES, ELIMINAR) ?>">
-    <input type="text" hidden="" id="permiso_editar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_ROLES, MODIFICAR) ?>">
+    <input type="text" hidden="" id="permiso_modificar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_ROLES, MODIFICAR) ?>">
     <div class="container-fluid">
         <div class="row flex-nowrap ">
             <?php
@@ -53,23 +53,7 @@
                                         </tbody>
                                     </table>
                                 </div>
-                                <div class="modal fade modal-lg" id="modal_roles" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                                    <div class="modal-dialog modal-dialog-centered">
-                                        <div class="modal-content"> 
-                                            <div class="modal-header bg-primary text-white">
-                                                <h1 class="modal-title fs-5" id="titulo_modal">Registrar rol</h1>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-
-                                                <?php
-                                                require_once "vista/roles/rol_modal.php";
-                                                ?>
-
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                
 
                             </div>
                         </div>
@@ -82,7 +66,23 @@
             </div>
         </div>
     </div>
+
     <?php require_once "vista/componentes/footer.php"; ?>
+
+    <div class="modal fade modal-lg" id="modal_roles" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content"> 
+                <div class="modal-header bg-primary text-white">
+                    <h1 class="modal-title fs-5" id="titulo_modal">Registrar rol</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                 </div>
+                 <div class="modal-body">
+                     <?php require_once "vista/roles/rol_modal.php";?>
+                 </div>
+             </div>
+         </div>
+    </div>
+
     <script type="text/javascript" src="recursos/js/validaciones/roles_validar.js"></script>
     <script type="text/javascript" src="recursos/js/consultas_ajax/roles_ajax.js"></script>
 </body>

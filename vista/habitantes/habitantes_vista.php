@@ -11,7 +11,7 @@
 
 <body id="body-pd" class="body-pd">
     <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_HABITANTES, ELIMINAR) ?>">
-    <input type="text" hidden="" id="permiso_editar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_HABITANTES, MODIFICAR) ?>">
+    <input type="text" hidden="" id="permiso_modificar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_HABITANTES, MODIFICAR) ?>">
     <div class="container-fluid">
         <div class="row flex-nowrap ">
 
@@ -96,39 +96,39 @@
                 <?php
                 require_once "vista/componentes/script.php";
                 ?>
-                <div class="modal fade" id="modal_vista_previa" tabindex="-1" aria-labelledby="modal_vista_previa_label"
-                    aria-hidden="true">
-                    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-                        <div class="modal-content">
-                            <div class="modal-header bg-primary text-white">
-                                <h5 class="modal-title">Mas detalles del Habitante</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                    aria-label="Cerrar"></button>
-                            </div>
-                            <div class="modal-body">
-                                <p><strong>Nombre:</strong> <span id="vista_nombre"></span></p>
-                                <p><strong>Apellido:</strong> <span id="vista_apellido"></span></p>
-                                <p><strong>Cedula:</strong> <span id="vista_cedula"></span></p>
-                                <p><strong>Telefono:</strong> <span id="vista_telefono"></span></p>
-                                <p><strong>Correo:</strong> <span id="vista_correo"></span></p>
-                                <p><strong>Fecha de Nacimiento:</strong> <span id="vista_fecha_nacimiento"></span></p>
-                                <p><strong>Sexo:</strong> <span id="vista_sexo"></span></p>
-                                <p><strong>Apartamento:</strong> <span id="vista_apartamento"></span></p>
-                                <p><strong>Tipo Vinculo:</strong> <span id="vista_vinculo"></span></p>
-                            </div>
-                            <div class="modal-footer">
-                                <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                            </div>
-                        </div>
-                    </div>
+            </div>
+        </div>
+    </div>
+
+    <?php require_once "vista/componentes/footer.php"; ?>
+
+    <div class="modal fade" id="modal_vista_previa" tabindex="-1" aria-labelledby="modal_vista_previa_label" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Mas detalles del Habitante</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                        aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Nombre:</strong> <span id="vista_nombre"></span></p>
+                    <p><strong>Apellido:</strong> <span id="vista_apellido"></span></p>
+                    <p><strong>Cedula:</strong> <span id="vista_cedula"></span></p>
+                    <p><strong>Telefono:</strong> <span id="vista_telefono"></span></p>
+                    <p><strong>Correo:</strong> <span id="vista_correo"></span></p>
+                    <p><strong>Fecha de Nacimiento:</strong> <span id="vista_fecha_nacimiento"></span></p>
+                    <p><strong>Sexo:</strong> <span id="vista_sexo"></span></p>
+                    <p><strong>Apartamento:</strong> <span id="vista_apartamento"></span></p>
+                    <p><strong>Tipo Vinculo:</strong> <span id="vista_vinculo"></span></p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>
     </div>
-<?php require_once "vista/componentes/footer.php"; ?>
-<script type="text/javascript" src="recursos/js/validaciones/habitantes_validar.js"></script>
-<script type="text/javascript" src="recursos/js/consultas_ajax/habitantes_ajax.js"></script>
 
+    <script type="text/javascript" src="recursos/js/validaciones/habitantes_validar.js"></script>
+    <script type="text/javascript" src="recursos/js/consultas_ajax/habitantes_ajax.js"></script>
 </body>
-
 </html>

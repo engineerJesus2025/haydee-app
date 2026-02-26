@@ -58,7 +58,7 @@ if (isset($_POST["operacion"])) {
                 $datosAnteriores = $tempAnio->realizar_consulta('consultar_anio_fiscal');
                 $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
 
-                $respuesta = $anioFiscal->realizar_consulta('editar');
+                $respuesta = $anioFiscal->realizar_consulta('modificar');
                 if ($respuesta['estatus']) {
                     $nuevo = [
                         'fecha_inicio' => $anioFiscal->get_fecha_inicio(),

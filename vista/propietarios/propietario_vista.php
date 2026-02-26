@@ -74,24 +74,7 @@
                                         </tr>
                                     </tbody>
                                 </table>
-                                <div class="modal fade" id="modal_propietario" tabindex="-1"
-                                    aria-labelledby="titulo_modal" aria_hidden="true">
-                                    <div class="modal-dialog modal-lg">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h1 class="modal-title fs-5" id="titulo_modal">Registrar Propietario
-                                                </h1>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                    aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <?php
-                                                require_once "vista/propietarios/propietario_modal.php";
-                                                ?>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                
                             </div>
                         </div>
                     </div>
@@ -102,7 +85,27 @@
             </div>
         </div>
     </div>
+
     <?php require_once "vista/componentes/footer.php"; ?>
+
+    <div class="modal fade" id="modal_propietario" tabindex="-1" aria-labelledby="titulo_modal" aria_hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="titulo_modal">Registrar Propietario
+                    </h1>
+                     <button type="button" class="btn-close" data-bs-dismiss="modal"
+                         aria-label="Close"></button>
+                 </div>
+                 <div class="modal-body">
+                     <?php
+                     require_once "vista/propietarios/propietario_modal.php";
+                     ?>
+                 </div>
+             </div>
+         </div>
+     </div>
+
     <script type="text/javascript" src="recursos/js/validaciones/propietario_validar.js"></script>
     <script type="text/javascript" src="recursos/js/consultas_ajax/propietario_ajax.js"></script>
 </body>

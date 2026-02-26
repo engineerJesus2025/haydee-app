@@ -154,77 +154,6 @@
                                 </div>
                             </form>
                         </div>
-
-                        <!-- Modal para mostrar los resultados -->
-                        <div class="modal fade" id="modal_reporte_habitantes" tabindex="-1"
-                            aria-labelledby="titulo_modal_habitantes" aria-hidden="true">
-                            <div class="modal-dialog modal-xl">
-                                <div class="modal-content">
-                                    <div class="modal-header bg-primary text-white">
-                                        <h1 class="modal-title fs-5" id="titulo_modal_habitantes">Reporte Estadístico de
-                                            Habitantes</h1>
-                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                                            aria-label="Close"></button>
-                                    </div>
-                                    <div class="modal-body" id="cuerpo_modal">
-                                        <!-- Aquí se cargará dinámicamente el contenido del reporte -->
-                                        <div id="contenido_reporte_habitantes">
-                                            <div class="text-center py-5">
-                                                <div class="spinner-border text-primary" role="status">
-                                                    <span class="visually-hidden">Cargando...</span>
-                                                </div>
-                                                <p class="mt-2">Generando reporte...</p>
-                                            </div>
-                                        </div>
-                                        <div class="container my-5" id="contenedor_estadistica">
-                                            <h3 class="text-center">Datos de Estadísticas:</h3>
-                                            <div class="row justify-content-center mt-4">
-                                                <div class="col-sm-10 col-lg-8 card text-center">
-                                                  <div class="card-header">
-                                                    Resumen de Estadísticas:
-                                                  </div>
-                                                  <div class="card-body">
-                                                    <p id="total_personas">Total de Personas Registradas: </p>
-                                                    <p id="total_habitantes">Total de Personas Habitantes: </p>
-                                                    <p id="total_propietarios">Total de Personas Propietarios: </p>
-                                                  </div>
-                                                </div>
-                                            </div>
-                                            <hr>
-                                            <div class="row justify-content-around mt-4">
-                                                <div class="col-lg-4 col-sm-8 mb-3 mb-lg-0 card text-center">
-                                                  <div class="card-header">
-                                                    Distribución por sexo:
-                                                  </div>
-                                                  <div class="card-body">
-                                                    <p id="total_hombres">Total Hombres: </p>
-                                                    <p id="total_mujeres">Total Mujeres: </p>
-                                                  </div>
-                                                </div>
-                                                <div class="col-lg-6 col-sm-8 mb-3 mb-lg-0 card text-center">
-                                                  <div class="card-header">
-                                                    Distribución por rango de edad:
-                                                  </div>
-                                                  <div class="card-body">
-                                                    <p id="menores_edad">Menores de Edad (0-17) años:</p>
-                                                    <p id="adultos_jovenes">Adultos Jovenes (18-35) años:</p>
-                                                    <p id="adultos">Adultos (36-59) años: </p>
-                                                    <p id="adultos_mayores">Adultos Mayores (+60): </p>
-                                                  </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary"
-                                            data-bs-dismiss="modal">Cerrar</button>
-                                        <button type="button" class="btn btn-success" id="boton_exportar_pdf">
-                                            <i class="bi bi-file-earmark-pdf"></i> Exportar a PDF
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </main>
 
@@ -235,11 +164,83 @@
         </div>
     </div>
     
+    <?php require_once "vista/componentes/footer.php"; ?>
+
+    <!-- Modal para mostrar los resultados -->
+    <div class="modal fade" id="modal_reporte_habitantes" tabindex="-1"
+        aria-labelledby="titulo_modal_habitantes" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h1 class="modal-title fs-5" id="titulo_modal_habitantes">Reporte Estadístico de
+                        Habitantes</h1>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="cuerpo_modal">
+                    <!-- Aquí se cargará dinámicamente el contenido del reporte -->
+                    <div id="contenido_reporte_habitantes">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                            <p class="mt-2">Generando reporte...</p>
+                        </div>
+                    </div>
+                    <div class="container my-5" id="contenedor_estadistica">
+                        <h3 class="text-center">Datos de Estadísticas:</h3>
+                        <div class="row justify-content-center mt-4">
+                            <div class="col-sm-10 col-lg-8 card text-center">
+                              <div class="card-header">
+                                Resumen de Estadísticas:
+                              </div>
+                              <div class="card-body">
+                                <p id="total_personas">Total de Personas Registradas: </p>
+                                <p id="total_habitantes">Total de Personas Habitantes: </p>
+                                <p id="total_propietarios">Total de Personas Propietarios: </p>
+                              </div>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row justify-content-around mt-4">
+                            <div class="col-lg-4 col-sm-8 mb-3 mb-lg-0 card text-center">
+                              <div class="card-header">
+                                Distribución por sexo:
+                              </div>
+                              <div class="card-body">
+                                <p id="total_hombres">Total Hombres: </p>
+                                <p id="total_mujeres">Total Mujeres: </p>
+                              </div>
+                            </div>
+                            <div class="col-lg-6 col-sm-8 mb-3 mb-lg-0 card text-center">
+                              <div class="card-header">
+                                Distribución por rango de edad:
+                              </div>
+                              <div class="card-body">
+                                <p id="menores_edad">Menores de Edad (0-17) años:</p>
+                                <p id="adultos_jovenes">Adultos Jovenes (18-35) años:</p>
+                                <p id="adultos">Adultos (36-59) años: </p>
+                                <p id="adultos_mayores">Adultos Mayores (+60): </p>
+                              </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary"
+                        data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-success" id="boton_exportar_pdf">
+                        <i class="bi bi-file-earmark-pdf"></i> Exportar a PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script type="text/javascript" src="recursos/estadisticas/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script type="text/javascript" src="recursos/js/reportes/reporte_habitantes.js"></script>
-    <?php require_once "vista/componentes/footer.php"; ?>
 </body>
 
 </html>

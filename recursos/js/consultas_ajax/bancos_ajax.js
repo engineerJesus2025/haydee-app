@@ -6,7 +6,7 @@
 
 let id_modificar, numero_cuenta_an;
 let permiso_eliminar = document.querySelector("#permiso_eliminar")?.value;
-let permiso_editar = document.querySelector("#permiso_editar")?.value;
+let permiso_modificar = document.querySelector("#permiso_modificar")?.value;
 
 let boton_formulario = document.querySelector("#boton_formulario");
 let modal = new bootstrap.Modal("#modal_banco");
@@ -41,8 +41,8 @@ document.getElementById('header-toggle')?.addEventListener("click", () => {
 });
 
 function envio(operacion) {	
-    if (operacion === "Editar") {
-        editar(boton_formulario.getAttribute("id_modificar"));
+    if (operacion === "modificar") {
+        modificar(boton_formulario.getAttribute("id_modificar"));
     } else if (operacion === "Registrar") {
         registrar();
     } else {
@@ -51,12 +51,12 @@ function envio(operacion) {
 }
 
 /**
- * Crea el HTML de los botones de acción (editar/eliminar) para cada fila
+ * Crea el HTML de los botones de acción (modificar/eliminar) para cada fila
  */
 function crearBotones(id) {
     let div = document.createElement("div");
     let html = `<div class="row justify-content-evenly">
-                    <button type="button" class="btn btn-success btn-sm col-lg-3 col-4 editar" data-bs-toggle="modal" data-bs-target="#modal_banco" title="Editar" value="${id}">
+                    <button type="button" class="btn btn-success btn-sm col-lg-3 col-4 modificar" data-bs-toggle="modal" data-bs-target="#modal_banco" title="modificar" value="${id}">
                         <i class="bi bi-pencil-square"></i>
                     </button>`;
     if (permiso_eliminar == 1) {
@@ -91,8 +91,8 @@ async function consultar() {
 
     const configuracionFila = (row, data) => {
         row.id = `fila-${data.id_banco}`;
-        // Asignar evento editar
-        row.querySelector(".editar")?.addEventListener('click', preparar_formulario);
+        // Asignar evento modificar
+        row.querySelector(".modificar")?.addEventListener('click', preparar_formulario);
         // Asignar evento eliminar
         row.querySelector(".eliminar")?.addEventListener('click', eventoEliminar);
     };
@@ -101,7 +101,7 @@ async function consultar() {
 }
 
 /**
- * Prepara el formulario con los datos del banco a editar
+ * Prepara el formulario con los datos del banco a modificar
  */
 async function preparar_formulario(e) {
     let datos = new FormData();
@@ -131,7 +131,7 @@ async function preparar_formulario(e) {
     formulario_usar.querySelector("#rif").value = numeroRif;
     formulario_usar.querySelector("#rif").removeAttribute("disabled");
 
-    if (permiso_editar != 1) {
+    if (permiso_modificar != 1) {
         boton_formulario.setAttribute("hidden", true);
         boton_formulario.setAttribute("disabled", true);
     }
@@ -173,13 +173,13 @@ async function registrar() {
 /**
  * Actualiza un banco existente
  */
-async function editar(id) {	
+async function modificar(id) {	
     let datos = new FormData(formulario_usar);
     let tipo = datos.get('tipo_documento');
     let rifNum = datos.get('rif');
     datos.set('rif', tipo + rifNum);
     datos.append("id_banco", id);
-    datos.append('operacion', 'editar');
+    datos.append('operacion', 'modificar');
 
     let respuesta = await Utilidades.query(datos);
 

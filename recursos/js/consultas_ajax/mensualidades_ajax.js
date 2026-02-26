@@ -277,7 +277,7 @@ function crearBotones(idsMensualidades, idsApartamentos) {
             </button>
         </form>
         <div class="col-lg-3 col-6 mt-2 mt-lg-0">
-            <button type="button" class="btn btn-success editar" title="Editar" data-bs-toggle="modal" data-bs-target="#modal_mensualidad"
+            <button type="button" class="btn btn-success modificar" title="modificar" data-bs-toggle="modal" data-bs-target="#modal_mensualidad"
                 data-ids="${idsMensualidades}" data-apartamentos="${idsApartamentos}">
                 <i class="bi bi-pencil-square"></i>
             </button>
@@ -313,7 +313,7 @@ function manejarClickEnTabla(e) {
 
     if (btn.classList.contains('vista-previa')) {
         mostrarVistaPrevia(fila, fecha);
-    } else if (btn.classList.contains('editar')) {
+    } else if (btn.classList.contains('modificar')) {
         prepararEdicion(fila, fecha, btn.dataset.ids, btn.dataset.apartamentos);
     } else if (btn.classList.contains('eliminar')) {
         confirmarEliminar(fecha);
@@ -428,7 +428,7 @@ async function prepararEdicion(fila, fecha, ids, idsApartamentos) {
 
     // ===== Configurar botón =====
     botonFormulario.textContent = "Guardar Cambios";
-    botonFormulario.dataset.op = "Editar";
+    botonFormulario.dataset.op = "modificar";
     document.getElementById('titulo_modal').textContent = "Modificar Mensualidad";
     botonFormulario.dataset.fecha = fecha;
 }
@@ -496,10 +496,10 @@ async function registrarMensualidad() {
     }
 }
 
-async function editarMensualidad() {
+async function modificarMensualidad() {
     const datos = recolectarDatosTabla();
     if (datos.length === 0) {
-        Utilidades.mensaje('warning', 'Atención', 'No hay mensualidades con montos para editar');
+        Utilidades.mensaje('warning', 'Atención', 'No hay mensualidades con montos para modificar');
         return;
     }
 
@@ -509,7 +509,7 @@ async function editarMensualidad() {
     const anio = parseInt(partes[0]);
 
     const formData = new FormData();
-    formData.append("operacion", "editar_masivo");
+    formData.append("operacion", "modificar_masivo");
     formData.append("mes", mes);
     formData.append("anio", anio);
     formData.append("tasa_dolar", tasaDolar);
@@ -659,7 +659,7 @@ function seleccionarMensualidadPorNotificacion() {
             clearInterval(interval);
             tablaMensualidades.rows().every(function() {
                 const row = this.node();
-                const ids = row.querySelector('.editar')?.dataset.ids;
+                const ids = row.querySelector('.modificar')?.dataset.ids;
                 if (ids && ids.includes(idMensualidad)) {
                     $(row).addClass('table-primary highlight-row');
                     $('html, body').animate({ scrollTop: $(row).offset().top - 100 }, 1000);

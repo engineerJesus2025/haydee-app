@@ -9,33 +9,42 @@ Sesiones::verificarPermiso(GESTIONAR_SEGURIDAD, CONSULTAR);
 // Instancia del modelo
 $bitacora = new Bitacora();
 
-if (isset($_POST["operacion"])){
+// Validamos si es una petición AJAX (POST)
+if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');
-
     $operacion = $_POST["operacion"];
-    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
+    
+    // Respuesta por defecto
+    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida', 'datos' => []];
 
-    try{
+    try {
         switch ($operacion) {
             case 'consulta':
-                $respuesta = $bitacora->realizar_consulta('consultar');
-                if ($respuesta['estatus']) {
-                    echo json_encode(['datos' => $respuesta['datos']]);
+                $resultado = $bitacora->realizar_consulta('consultar');
+                if ($resultado['estatus']) {
+                    $respuesta = [
+                        'estatus' => true, 
+                        'mensaje' => 'Consulta exitosa',
+                        'datos' => $resultado['datos']
+                    ];
                 } else {
-                    echo json_encode(['datos' => [], 'error' => $respuesta['mensaje']]);
+                    $respuesta['mensaje'] = $resultado['mensaje'];
                 }
-                exit;
+                break;
 
             default:
-                $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
-                echo json_encode($respuesta);
-                exit;
+                $respuesta['mensaje'] = 'Operación no implementada';
+                break;
         }
     } catch (Exception $e) {
-        error_log("Error en controlador: " . $e->getMessage());
-        echo json_encode(['estatus' => false, 'mensaje' => 'Error interno del servidor']);
-        exit;
+        error_log("Error en controlador Bitacora: " . $e->getMessage());
+        $respuesta['mensaje'] = 'Error interno del servidor';
     }
+
+    // ÚNICO PUNTO DE SALIDA PARA AJAX
+    echo json_encode($respuesta);
+    exit;
 }
+
+// Si no es una petición POST, cargamos la vista
 require_once "vista/bitacora/bitacora_vista.php";
-?>

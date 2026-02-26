@@ -6,7 +6,7 @@
 let id_modificar, correo_an;
 
 let permiso_eliminar = document.querySelector("#permiso_eliminar").value;
-let permiso_editar = document.querySelector("#permiso_editar").value;
+let permiso_modificar = document.querySelector("#permiso_modificar").value;
 
 let boton_formulario = document.querySelector("#boton_formulario"); 
 let modal = new bootstrap.Modal("#modal_usuario");
@@ -61,7 +61,7 @@ document.getElementById('header-toggle').addEventListener("click", e => {
 });
 
 function envio(operacion) {	
-	if (operacion === "Editar") {
+	if (operacion === "modificar") {
 		modificar(boton_formulario.getAttribute("id_modificar"));
 	} else if(operacion === "Registrar"){
 		registrar();
@@ -73,7 +73,7 @@ function envio(operacion) {
 function crearBotones(id) {
 	let div = document.createElement("div");
 	let html = `<div class="row justify-content-evenly">
-					<button type="button" class="btn btn-success btn-sm col-lg-3 col-4 editar" data-bs-toggle="modal" data-bs-target="#modal_usuario" title="Editar" value="${id}">
+					<button type="button" class="btn btn-success btn-sm col-lg-3 col-4 modificar" data-bs-toggle="modal" data-bs-target="#modal_usuario" title="modificar" value="${id}">
 						<i class="bi bi-pencil-square"></i>
 					</button>`;
 	if (permiso_eliminar) {
@@ -116,7 +116,7 @@ async function consultar() {
  	const configuraciones_tabla_usuarios = (row, data) => {
  		Array.from(row.children).forEach(td => td.classList.add('align-middle'));
 		row.id = `fila-${data.id_usuario}`; 		
- 		row.querySelector(".editar")?.addEventListener('click', preparar_formulario);
+ 		row.querySelector(".modificar")?.addEventListener('click', preparar_formulario);
  		row.querySelector(".eliminar")?.addEventListener('click', eventoEliminar);
  	}
 
@@ -163,7 +163,7 @@ async function preparar_formulario(e) {
 	formulario_usar.querySelector("#correo").value = data.correo;
 	formulario_usar.querySelector("#rol").value = data.rol_id;	
 
-	if(!permiso_editar){
+	if(!permiso_modificar){
 		boton_formulario.setAttribute("hidden", true);
 		boton_formulario.setAttribute("disabled", true);
 	}
@@ -192,7 +192,7 @@ async function modificar(id) {
 	datos.append("id_usuario", id);
 	datos.append("contra", nueva_contra);
 	datos.append("rol_nombre", rol_nombre);
-	datos.append('operacion', 'editar_usuario');
+	datos.append('operacion', 'modificar_usuario');
 
 	let respuesta = await Utilidades.query(datos);
 

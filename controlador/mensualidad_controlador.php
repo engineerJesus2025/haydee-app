@@ -89,7 +89,7 @@ if (isset($_POST["operacion"])) {
                 exit;
 
             // =========================================================
-            // OPERACIONES MASIVAS (REGISTRAR/EDITAR)
+            // OPERACIONES MASIVAS (REGISTRAR/modificar)
             // =========================================================
             case 'registrar_masivo':
                 // Decodificar array de apartamentos
@@ -106,14 +106,14 @@ if (isset($_POST["operacion"])) {
                 }
                 break;
 
-            case 'editar_masivo':
+            case 'modificar_masivo':
                 $datos_apartamentos = json_decode($_POST['datos_apartamentos'], true);
                 if (json_last_error() !== JSON_ERROR_NONE) {
                     throw new Exception('Error en el formato de datos JSON');
                 }
                 $mensualidad->set_datos_apartamentos($datos_apartamentos);
 
-                $respuesta = $mensualidad->realizar_consulta('editar');
+                $respuesta = $mensualidad->realizar_consulta('modificar');
                 if ($respuesta['estatus']) {
                     Bitacora::registrar(MODIFICAR, GESTIONAR_MENSUALIDAD,
                         "Edición masiva de mensualidades para periodo {$_POST['mes']}/{$_POST['anio']}");
@@ -163,5 +163,5 @@ if (isset($_POST["validar"])) {
 
 // Cargar vista con datos de apartamentos
 $apartamento = new Apartamento();
-$registros_apartamentos = $apartamento->consultar_apartamentos_mensualidad();
+$registros_apartamentos = $apartamento->realizar_consulta('consultar_apartamentos_mensualidad');
 require_once 'vista/mensualidad/mensualidad_vista.php';

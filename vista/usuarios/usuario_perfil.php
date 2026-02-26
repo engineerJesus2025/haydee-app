@@ -98,13 +98,13 @@
                                     </h2>
                                 <p class="text-muted mb-0">Información personal del usuario</p>
                               </div>              
-                                <button class="btn btn-outline-primary" title="Editar Información" id="boton_editar" disabled="">
+                                <button class="btn btn-outline-primary" title="modificar Información" id="boton_modificar" disabled="">
                                     <div class="spinner-border text-primary" role="status" style="width: 1rem; height: 1rem; z-index: 1000">
                                         <span class="visually-hidden">Cargando...</span>
                                     </div>
                                     Cargando...
                                     <!-- <i class="bi bi-pencil me-1"></i>
-                                    Editar -->
+                                    modificar -->
                                 </button>              
                             </div>
                             <div class="card shadow-sm">
@@ -288,37 +288,7 @@
                     </div>                    
                 </main>
 
-                <div class="modal fade" id="modal_contra" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
-                    <div class="modal-dialog modal-lg">
-                        <div class="modal-content">
-                            <div class="modal-header bg-primary text-white">
-                                <h1 class="modal-title fs-5" id="titulo_modal">Cambiar Contraseña</h1>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <?php
-                                require_once 'vista/usuarios/usuario_modal_contra.php';
-                                ?>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="modal fade" id="modal_notificaciones" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
-                    <div class="modal-dialog modal-lg">
-                        <div class="modal-content">
-                            <div class="modal-header bg-primary text-white">
-                                <h1 class="modal-title fs-5" id="titulo_modal">Notificaciones</h1>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <?php
-                                require_once 'vista/usuarios/usuario_modal_notificaciones.php';
-                                ?>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                
 
                 <?php
                 require_once 'vista/componentes/modal_carga.php';
@@ -327,7 +297,40 @@
             </div>
         </div>
     </div>
+
     <?php require_once "vista/componentes/footer.php"; ?>
+
+    <div class="modal fade" id="modal_contra" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h1 class="modal-title fs-5" id="titulo_modal">Cambiar Contraseña</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <?php
+                    require_once 'vista/usuarios/usuario_modal_contra.php';
+                    ?>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modal_notificaciones" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h1 class="modal-title fs-5" id="titulo_modal">Notificaciones</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <?php
+                    require_once 'vista/usuarios/usuario_modal_notificaciones.php';
+                    ?>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script type="text/javascript" src="recursos/js/validaciones/usuario_perfil_validar.js"></script>
     <script type="text/javascript" src="recursos/js/consultas_ajax/usuario_perfiles.js"></script>
 

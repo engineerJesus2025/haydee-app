@@ -38,14 +38,14 @@ if (isset($_POST["operacion"])) {
                 }
                 break;
 
-            case 'editar':
+            case 'modificar':
                 // Obtener anteriores
                 $tempPermiso = new Permisos();
                 $tempPermiso->set_id_permiso($permiso->get_id_permiso());
                 $datosAnteriores = $tempPermiso->realizar_consulta('consultar_unico');
                 $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
 
-                $respuesta = $permiso->realizar_consulta('editar');
+                $respuesta = $permiso->realizar_consulta('modificar');
                 if ($respuesta['estatus']) {
                     $nuevo = ['accion' => $permiso->get_accion()];
                     Bitacora::registrar(MODIFICAR, GESTIONAR_PERMISOS, '', null, $anterior, $nuevo);

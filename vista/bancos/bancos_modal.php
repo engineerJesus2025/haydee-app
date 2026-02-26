@@ -1,4 +1,4 @@
-<form action="?pagina=bancos_controlador.php&accion=guardar" method="POST" id="form_banco" name="form_banco">
+<form id="form_banco" name="form_banco">
     <div class="row m-3">
         <div class="col-lg-6">
             <label for="nombre_banco">Nombre del Banco</label>

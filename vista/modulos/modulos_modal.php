@@ -1,4 +1,4 @@
-<form action="?pagina=modulos_controlador.php&accion=guardar" method="POST" id="form_modulo" name="form_modulo">
+<form id="form_modulo" name="form_modulo">
     <input type="hidden" name="id_modulo" id="id_modulo">
     <div class="row m-3">
         <div class="col-12">

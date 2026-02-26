@@ -15,9 +15,9 @@ const btnFormulario = document.querySelector("#boton_formulario");
 const btnFormularioHabitante = document.querySelector("#boton_formulario_habitantes");
 
 // Permisos (vienen desde PHP)
-window.permiso_editar = document.querySelector("#permiso_editar")?.value === "1";
+window.permiso_modificar = document.querySelector("#permiso_modificar")?.value === "1";
 window.permiso_eliminar = document.querySelector("#permiso_eliminar")?.value === "1";
-window.permiso_editar_habitantes = window.permiso_editar; // o podrían venir separados
+window.permiso_modificar_habitantes = window.permiso_modificar; // o podrían venir separados
 window.permiso_eliminar_habitantes = window.permiso_eliminar;
 
 // ============================================
@@ -40,7 +40,7 @@ async function consultarApartamentos() {
             render: id => `
                 <div class="d-flex justify-content-center gap-2">
                     <button class="btn btn-primary btn-sm vista-previa" value="${id}"><i class="bi bi-people-fill"></i></button>
-                    ${window.permiso_editar ? `<button class="btn btn-success btn-sm editar" value="${id}"><i class="bi bi-pencil"></i></button>` : ''}
+                    ${window.permiso_modificar ? `<button class="btn btn-success btn-sm modificar" value="${id}"><i class="bi bi-pencil"></i></button>` : ''}
                     ${window.permiso_eliminar ? `<button class="btn btn-danger btn-sm eliminar" value="${id}"><i class="bi bi-trash"></i></button>` : ''}
                 </div>
             `
@@ -52,7 +52,7 @@ async function consultarApartamentos() {
         document.getElementById("apartamento_id").add(option);
 
         row.querySelector('.vista-previa')?.addEventListener('click', mostrarVistaPrevia);
-        row.querySelector('.editar')?.addEventListener('click', prepararEdicion);
+        row.querySelector('.modificar')?.addEventListener('click', prepararEdicion);
         row.querySelector('.eliminar')?.addEventListener('click', (e) => {
             const id = e.currentTarget.value;
             Swal.fire({
@@ -156,7 +156,28 @@ async function mostrarVistaPrevia(e) {
     const id = e.currentTarget.value;
     id_apartamento_seleccionado = id;
 
-    // Inicializar tabla de habitantes si no existe
+    // Cargar datos del apartamento actual
+    const datosApto = new FormData();
+    datosApto.append('id_apartamento', id);
+    datosApto.append('operacion', 'consulta_especifica');
+    const respApto = await Utilidades.query(datosApto);
+    if (respApto?.estatus) {
+        const apto = respApto.apartamento;
+        document.getElementById('apt_nro').textContent = apto.nro_apartamento || 'N/A';
+        document.getElementById('apt_porcentaje').textContent = apto.porcentaje_participacion || '0';
+        document.getElementById('apt_gas').textContent = apto.gas == 1 ? 'Sí' : 'No';
+        document.getElementById('apt_agua').textContent = apto.agua == 1 ? 'Sí' : 'No';
+        document.getElementById('apt_alquilado').textContent = apto.alquilado == 1 ? 'Sí' : 'No';
+    } else {
+        // Si no se puede cargar, mostrar valores por defecto
+        document.getElementById('apt_nro').textContent = 'Error';
+        document.getElementById('apt_porcentaje').textContent = '-';
+        document.getElementById('apt_gas').textContent = '?';
+        document.getElementById('apt_agua').textContent = '?';
+        document.getElementById('apt_alquilado').textContent = '?';
+    }
+
+    // Inicializar o recargar tabla de habitantes
     if (!data_table_habitantes) {
         initTablaHabitantes();
     } else {
@@ -164,15 +185,6 @@ async function mostrarVistaPrevia(e) {
     }
 
     document.getElementById("apartamento_id").value = id_apartamento_seleccionado;
-
-    // cargar datos del apartamento para mostrar en el modal (pensalo rafa)
-
-    // const datos = new FormData();
-    // datos.append('id_apartamento', id);
-    // datos.append('operacion', 'consulta_especifica');
-    // const resp = await Utilidades.query(datos);
-    // if (resp?.estatus) {}
-
     modalVistaPrevia.show();
 }
 
@@ -188,7 +200,7 @@ function initTablaHabitantes() {
             render: id => `
                 <div class="d-flex justify-content-center gap-2">
                     <button class="btn btn-primary btn-sm vista-previa-habitante" value="${id}" title="Detalles"><i class="bi bi-eye-fill"></i></button>
-                    ${window.permiso_editar_habitantes ? `<button class="btn btn-success btn-sm editar-habitante" value="${id}" title="Editar" data-bs-toggle="modal" data-bs-target="#modal_habitantes"><i class="bi bi-pencil"></i></button>` : ''}
+                    ${window.permiso_modificar_habitantes ? `<button class="btn btn-success btn-sm modificar-habitante" value="${id}" title="modificar" data-bs-toggle="modal" data-bs-target="#modal_habitantes"><i class="bi bi-pencil"></i></button>` : ''}
                     ${window.permiso_eliminar_habitantes ? `<button class="btn btn-danger btn-sm eliminar-habitante" value="${id}" title="Eliminar"><i class="bi bi-trash"></i></button>` : ''}
                 </div>
             `
@@ -202,7 +214,7 @@ function initTablaHabitantes() {
 
     const configPost = (row, data) => {
         row.querySelector('.vista-previa-habitante')?.addEventListener('click', mostrarVistaPreviaHabitante);
-        row.querySelector('.editar-habitante')?.addEventListener('click', prepararEdicionHabitante);
+        row.querySelector('.modificar-habitante')?.addEventListener('click', prepararEdicionHabitante);
         row.querySelector('.eliminar-habitante')?.addEventListener('click', (e) => {
             const id = e.currentTarget.value;
             Swal.fire({
@@ -316,6 +328,7 @@ async function mostrarVistaPreviaHabitante(e) {
     }
 
     const data = respuesta.datos;
+    // Datos personales
     document.getElementById('vista_nombre').textContent = data.nombre || '';
     document.getElementById('vista_apellido').textContent = data.apellido || '';
     document.getElementById('vista_cedula').textContent = data.cedula || '';
@@ -323,8 +336,12 @@ async function mostrarVistaPreviaHabitante(e) {
     document.getElementById('vista_correo').textContent = data.correo || '';
     document.getElementById('vista_fecha_nacimiento').textContent = FormatoFechas.formatoDMA(data.fecha_nacimiento);
     document.getElementById('vista_sexo').textContent = data.sexo || '';
-    document.getElementById('vista_apartamento').textContent = data.apartamento ? `Nro ${data.apartamento}` : 'Apartamento NO Registrado';
-    document.getElementById('vista_vinculo').textContent = data.tipo_vinculo || '';
+    // Datos del apartamento
+    document.getElementById('vista_apartamento_nro').textContent = data.nro_apartamento ? `Nro ${data.nro_apartamento}` : 'No asignado';
+    document.getElementById('vista_apartamento_porcentaje').textContent = data.porcentaje_participacion || '0';
+    document.getElementById('vista_apartamento_gas').textContent = data.gas == 1 ? 'Sí' : 'No';
+    document.getElementById('vista_apartamento_agua').textContent = data.agua == 1 ? 'Sí' : 'No';
+    document.getElementById('vista_apartamento_alquilado').textContent = data.alquilado == 1 ? 'Sí' : 'No';
 
     modalVistaPreviaHabitantes.show();
 }

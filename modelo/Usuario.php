@@ -386,7 +386,7 @@ class Usuario extends Conexion
         }
     }
 
-    private function _editar_usuario()
+    private function _modificar_usuario()
     {
         // La contraseña es opcional. Validamos los campos obligatorios.
         $v = $this->validar(['id_usuario', 'apellido', 'nombre', 'correo', 'rol_id'], ['exclude_id' => $this->id_usuario]);
@@ -415,12 +415,12 @@ class Usuario extends Conexion
             $this->get_conex('seguridad')->prepare($sql)->execute($params);
             return ['estatus' => true, 'mensaje' => 'Usuario actualizado'];
         } catch (PDOException $e) {
-            error_log("Error en _editar_usuario: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al editar: ' . $e->getMessage()];
+            error_log("Error en _modificar_usuario: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al modificar: ' . $e->getMessage()];
         }
     }
 
-    private function _editar_perfil()
+    private function _modificar_perfil()
     {
         // Validamos campos obligatorios y la unicidad del correo
         // (excluyendo al usuario actual de la comprobación de duplicados)
@@ -448,7 +448,7 @@ class Usuario extends Conexion
                 'mensaje' => $resultado ? 'Perfil actualizado correctamente' : 'No se realizaron cambios'
             ];
         } catch (PDOException $e) {
-            error_log("Error en _editar_perfil: " . $e->getMessage());
+            error_log("Error en _modificar_perfil: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al actualizar el perfil'];
         }
     }

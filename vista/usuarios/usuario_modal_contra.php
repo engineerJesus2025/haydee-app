@@ -1,4 +1,4 @@
-<form action="?pagina=usuario_controlador.php&accion=guardar" method="POST" id="form_usuario" name="form_usuario">
+<form id="form_usuario" name="form_usuario">
     <div class="row m-3">
         <div class="col-md-6">
             <label for="contra_actual">Contraseña Actual</label>

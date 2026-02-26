@@ -55,14 +55,14 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $banco->realizar_consulta('consultar_banco');
                 break;
 
-            case 'editar':
+            case 'modificar':
                 // Obtener datos anteriores
                 $tempBanco = new Banco();
                 $tempBanco->set_id_banco($banco->get_id_banco());
                 $datosAnteriores = $tempBanco->realizar_consulta('consultar_banco');
                 $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
 
-                $respuesta = $banco->realizar_consulta('editar');
+                $respuesta = $banco->realizar_consulta('modificar');
                 if ($respuesta['estatus']) {
                     $nuevo = [
                         'nombre_banco' => $banco->get_nombre_banco(),

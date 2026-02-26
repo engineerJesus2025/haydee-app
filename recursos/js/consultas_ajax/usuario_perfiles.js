@@ -46,21 +46,21 @@ document.querySelectorAll('.contra').forEach(boton => {
 });
 
 // Botones de edición/cancelación
-document.getElementById('boton_editar')?.addEventListener('click', () => {
+document.getElementById('boton_modificar')?.addEventListener('click', () => {
     document.getElementById('nombre').value = document.getElementById('p_nombre').textContent;
     document.getElementById('apellido').value = document.getElementById('p_apellido').textContent;
     document.getElementById('correo').value = document.getElementById('p_correo').textContent;
 
     document.getElementById('body_perfil').setAttribute('hidden', '');
     document.getElementById('form_perfil').removeAttribute('hidden');
-    document.getElementById('boton_editar').setAttribute('disabled', '');
+    document.getElementById('boton_modificar').setAttribute('disabled', '');
 });
 
 document.getElementById('boton_cancelar')?.addEventListener('click', () => {
     document.querySelectorAll('.is-valid, .is-invalid').forEach(input => input.classList.remove('is-valid', 'is-invalid'));
     document.getElementById('form_perfil').setAttribute('hidden', '');
     document.getElementById('body_perfil').removeAttribute('hidden');
-    document.getElementById('boton_editar').removeAttribute('disabled');
+    document.getElementById('boton_modificar').removeAttribute('disabled');
 });
 
 // Ajustar DataTable cuando se abre el modal de notificaciones
@@ -109,8 +109,8 @@ async function llenarCardUsuario() {
     const spamRol = document.getElementById('spam_rol');
     spamRol.className = claseBadge;
 
-    document.getElementById('boton_editar').removeAttribute('disabled');
-    document.getElementById('boton_editar').innerHTML = '<i class="bi bi-pencil me-1"></i>Editar';
+    document.getElementById('boton_modificar').removeAttribute('disabled');
+    document.getElementById('boton_modificar').innerHTML = '<i class="bi bi-pencil me-1"></i>modificar';
 }
 
 function llenarTablaNotificaciones() {
@@ -222,7 +222,7 @@ async function modificar() {
     formData.append('nombre', document.getElementById('nombre').value);
     formData.append('apellido', document.getElementById('apellido').value);
     formData.append('correo', document.getElementById('correo').value);
-    formData.append('operacion', 'editar_perfil');
+    formData.append('operacion', 'modificar_perfil');
 
     const respuesta = await Utilidades.query(formData);
     if (!respuesta.estatus) {
@@ -243,7 +243,7 @@ async function modificar() {
 
     document.getElementById('form_perfil').setAttribute('hidden', '');
     document.getElementById('body_perfil').removeAttribute('hidden');
-    document.getElementById('boton_editar').removeAttribute('disabled');
+    document.getElementById('boton_modificar').removeAttribute('disabled');
 }
 
 async function modificarContra() {

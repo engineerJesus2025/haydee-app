@@ -65,7 +65,7 @@ $(document).ready(function() {
     // Validación de envío
     $('#boton_formulario').on('click', async function(e) {
         e.preventDefault();
-        const accion = this.dataset.id ? 'Editar' : 'Registrar';
+        const accion = this.dataset.id ? 'modificar' : 'Registrar';
         if (await validarEnvio(accion)) {
             Swal.fire({
                 title: '¿Estás seguro?',
@@ -76,7 +76,7 @@ $(document).ready(function() {
                 confirmButtonText: 'Sí, ' + accion
             }).then(result => {
                 if (result.isConfirmed) {
-                    accion === 'Editar' ? modificar() : registrar();
+                    accion === 'modificar' ? modificar() : registrar();
                 }
             });
         }
@@ -126,7 +126,7 @@ async function validarEnvio(accion) {
     const monto = parseFloat($('#monto_estimado').val().replace(',', '.'));
     const disponible = parseFloat($('#presupuesto_disponible').text().replace('Bs. ', '').replace(',', ''));
     const montoOriginal = parseFloat($('#monto_estimado').data('original') || 0);
-    const disponibleReal = accion === 'Editar' ? disponible + montoOriginal : disponible;
+    const disponibleReal = accion === 'modificar' ? disponible + montoOriginal : disponible;
 
     if (isNaN(disponibleReal) || isNaN(monto)) {
         Utilidades.mensaje('error', 'Error', 'No se pudo verificar el presupuesto.');

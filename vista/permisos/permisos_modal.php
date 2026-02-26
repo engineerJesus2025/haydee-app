@@ -1,4 +1,4 @@
-<form action="?pagina=permisos_controlador.php&accion=guardar" method="POST" id="form_permiso" name="form_permiso">
+<form id="form_permiso" name="form_permiso">
     <input type="hidden" name="id_permiso" id="id_permiso">
     <div class="row m-3">
         <div class="col-12">

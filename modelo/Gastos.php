@@ -413,7 +413,7 @@ class Gastos extends Conexion
         }
     }
 
-    private function _editar()
+    private function _modificar()
     {
         // Validar ID del gasto
         $validacion = $this->validar(['id_gasto']);
@@ -531,7 +531,7 @@ class Gastos extends Conexion
 
         } catch (PDOException $e) {
             $pdo->rollBack();
-            error_log("Error en _editar: " . $e->getMessage());
+            error_log("Error en _modificar: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error en la base de datos: ' . $e->getMessage()];
         }
     }

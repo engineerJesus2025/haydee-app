@@ -275,7 +275,7 @@ class CarteleraVirtual extends Conexion
     /**
      * Actualiza una publicación existente.
      */
-    private function _editar_publicacion()
+    private function _modificar_publicacion()
     {
         $campos = ['id_cartelera', 'titulo', 'descripcion', 'fecha', 'prioridad', 'usuario_id'];
         $validacion = $this->validar($campos);
@@ -303,7 +303,7 @@ class CarteleraVirtual extends Conexion
             $stmt->execute();
             return ['estatus' => true, 'mensaje' => 'Publicación actualizada correctamente'];
         } catch (PDOException $e) {
-            error_log("Error en _editar_publicacion: " . $e->getMessage());
+            error_log("Error en _modificar_publicacion: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al actualizar la publicación'];
         }
     }

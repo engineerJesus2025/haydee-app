@@ -1,4 +1,4 @@
-<form action="?pagina=habitantes_controlador.php&accion=guardar" method="POST" id="form_habitantes" name="form_habitantes">
+<form id="form_habitantes" name="form_habitantes">
     <div class="row m-3">
         <div class="col-md-6">
             <label for="cedula">Cedula</label>

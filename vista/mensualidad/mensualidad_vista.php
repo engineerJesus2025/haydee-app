@@ -10,7 +10,7 @@
 </head>
 <body id="body-pd" class="body-pd">
     <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_MENSUALIDAD, ELIMINAR) ?>">
-    <input type="text" hidden="" id="permiso_editar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_MENSUALIDAD, MODIFICAR) ?>">
+    <input type="text" hidden="" id="permiso_modificar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_MENSUALIDAD, MODIFICAR) ?>">
     <div class="container-fluid">
         <div class="row flex-nowrap">
 
@@ -57,55 +57,57 @@
                                     </table>
                                 </div>
                                 
-                                <div class="modal fade" id="modal_mensualidad" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
-                                    <div class="modal-dialog modal-xl">
-                                        <div class="modal-content">
-                                            <div class="modal-header bg-primary text-white">
-                                                <h1 class="modal-title fs-5" id="titulo_modal">Registrar mensualidad</h1>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body p-4">
-
-                                                <?php
-                                                require_once "vista/mensualidad/mensualidad_modal.php";
-                                                ?>
-
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="modal fade" id="modal_mensualidades_apartamentos" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
-                                    <div class="modal-dialog modal-lg">
-                                        <div class="modal-content">
-                                            <div class="modal-header bg-primary text-white">
-                                                <h1 class="modal-title fs-5" id="titulo_modal">mensualidades de los Apartamentos</h1>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-
-                                                <?php
-                                                require_once "vista/mensualidad/mensualidad_apartamentos_modal.php";
-                                                ?>
-
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                
                             </div>
                         </div>
                     </div>                        
                 </main>
                 <?php
-                    require_once 'vista/componentes/modal_carga.php';                    
+                    require_once 'vista/componentes/modal_carga.php';
                     require_once "vista/componentes/script.php";
                 ?>
             </div>
         </div>
     </div>
-<?php require_once "vista/componentes/footer.php"; ?>
-<script type="text/javascript" src="recursos/js/consultas_ajax/mensualidades_ajax.js"></script>
-<script type="text/javascript" src="recursos/js/validaciones/mensualidad_validar.js"></script>
 
+    <?php require_once "vista/componentes/footer.php"; ?>
+
+    <div class="modal fade" id="modal_mensualidad" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h1 class="modal-title fs-5" id="titulo_modal">Registrar mensualidad</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+
+                    <?php
+                    require_once "vista/mensualidad/mensualidad_modal.php";
+                    ?>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modal_mensualidades_apartamentos" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h1 class="modal-title fs-5" id="titulo_modal">mensualidades de los Apartamentos</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+
+                    <?php
+                    require_once "vista/mensualidad/mensualidad_apartamentos_modal.php";
+                    ?>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript" src="recursos/js/consultas_ajax/mensualidades_ajax.js"></script>
+    <script type="text/javascript" src="recursos/js/validaciones/mensualidad_validar.js"></script>
 </body>
-
 </html>

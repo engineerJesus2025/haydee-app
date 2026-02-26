@@ -1,4 +1,4 @@
-<form action="?pagina=presupuesto_controlador.php&accion=guardar" method="POST" id="form_presupuesto" name="form_presupuesto">
+<form id="form_presupuesto" name="form_presupuesto">
     <div class="row m-3">
         <div class="col-lg-5">
             <label for="fecha">Fecha del presupuesto</label>

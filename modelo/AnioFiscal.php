@@ -287,7 +287,7 @@ class AnioFiscal extends Conexion
     /**
      * Actualiza un año fiscal existente.
      */
-    private function _editar()
+    private function _modificar()
     {
         $campos = ['id_anio_fiscal', 'fecha_inicio', 'fecha_cierre', 'estado'];
         $validacion = $this->validar($campos);
@@ -318,7 +318,7 @@ class AnioFiscal extends Conexion
             $stmt->execute();
             return ['estatus' => true, 'mensaje' => 'Año fiscal actualizado correctamente'];
         } catch (PDOException $e) {
-            error_log("Error en _editar: " . $e->getMessage());
+            error_log("Error en _modificar: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al actualizar el año fiscal'];
         }
     }

@@ -66,7 +66,7 @@ $(document).ready(function(){
 	// ============================================
 	$("#boton_formulario").on("click", async function(e) {
 		e.preventDefault();
-		let accion = (this.getAttribute("modificar")) ? "Editar" : "Registrar";		
+		let accion = (this.getAttribute("modificar")) ? "modificar" : "Registrar";		
 		
 		if(await validarEnvio(accion) === true){
 			Swal.fire({
@@ -111,7 +111,7 @@ async function validarEnvio(accion = "Registrar"){
 			Utilidades.mensaje('error', 'Error', 'Las contraseñas no coinciden.');
 			return false;
 		}
-	} else if (accion === "Editar") {
+	} else if (accion === "modificar") {
 		// Validar contraseña actual si se está editando
 		let datos = new FormData();
 		datos.append("validar", 'contra');

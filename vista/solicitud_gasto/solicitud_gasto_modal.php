@@ -1,4 +1,4 @@
-<form action="?pagina=solicitud_gasto_controlador.php&accion=guardar" method="POST" id="form_solicitud_gasto" enctype="multipart/form-data">
+<form id="form_solicitud_gasto" enctype="multipart/form-data">
     <div class="container mt-4">
 
         <!-- Fila 0: Selector de Mes y Año -->

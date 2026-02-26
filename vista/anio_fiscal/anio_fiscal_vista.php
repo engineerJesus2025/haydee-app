@@ -11,7 +11,7 @@
 
 <body id="body-pd" class="body-pd">
     <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_ANIO_FISCAL, ELIMINAR) ?>">
-    <input type="text" hidden="" id="permiso_editar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_ANIO_FISCAL, MODIFICAR) ?>">
+    <input type="text" hidden="" id="permiso_modificar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_ANIO_FISCAL, MODIFICAR) ?>">
     <div class="container-fluid">
         <div class="row flex-nowrap ">
 
@@ -57,39 +57,41 @@
                                         </tr>
                                     </tbody>
                                 </table>
-                                <div class="modal fade" id="modal_anio_fiscal" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
-                                    <div class="modal-dialog modal-lg">
-                                        <div class="modal-content">
-                                            <div class="modal-header bg-primary text-white">
-                                                <h1 class="modal-title fs-5" id="titulo_modal">Registrar Año Fiscal</h1>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-
-                                                <?php
-                                                require_once "vista/anio_fiscal/anio_fiscal_modal.php";
-                                                ?>
-
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                
                             </div>
                         </div>
                     </div>
                 </main>
-                <?php
-                require_once 'vista/componentes/modal_carga.php';
-                require_once "vista/componentes/script.php";
-                ?>
             </div>
         </div>        
-    </div>    
+    </div>
+    
+    <?php
+        require_once 'vista/componentes/modal_carga.php';
+        require_once "vista/componentes/script.php";
+        require_once "vista/componentes/footer.php";
+    ?>
+
+    <div class="modal fade" id="modal_anio_fiscal" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h1 class="modal-title fs-5" id="titulo_modal">Registrar Año Fiscal</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+
+                    <?php
+                    require_once "vista/anio_fiscal/anio_fiscal_modal.php";
+                    ?>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script type="text/javascript" src="recursos/js/validaciones/anio_fiscal_validar.js"></script>
     <script type="text/javascript" src="recursos/js/consultas_ajax/anio_fiscal_ajax.js"></script>
-    <?php require_once "vista/componentes/footer.php"; ?>
-
-    
 </body>
 
 </html>

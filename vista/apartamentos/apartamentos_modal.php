@@ -1,4 +1,4 @@
-<form action="?pagina=apartamentos_controlador.php&accion=guardar" method="POST" id="form_apartamentos" name="form_apartamentos">
+<form id="form_apartamentos" name="form_apartamentos">
     <div class="row m-3">
         <div class="col-md-6">
             <label for="nro_apartamento">Número del Apartamento</label>

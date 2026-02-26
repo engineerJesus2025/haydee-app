@@ -1,4 +1,4 @@
-<form action="?pagina=anio_fiscal_controlador.php&accion=guardar" method="POST" id="form_anio_fiscal" name="form_anio_fiscal">
+<form id="form_anio_fiscal" name="form_anio_fiscal">
 
     <div class="row m-3">
         <div class="col-md-6">

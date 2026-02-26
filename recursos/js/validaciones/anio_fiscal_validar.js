@@ -26,7 +26,7 @@ $(document).ready(function() {
     // Validación de envío
     $('#boton_formulario').on('click', async function(e) {
         e.preventDefault();
-        const accion = this.dataset.id ? 'Editar' : 'Registrar';
+        const accion = this.dataset.id ? 'modificar' : 'Registrar';
         if (await validarEnvio(accion)) {
             Swal.fire({
                 title: '¿Estás seguro?',
@@ -37,7 +37,7 @@ $(document).ready(function() {
                 confirmButtonText: 'Sí, ' + accion
             }).then(result => {
                 if (result.isConfirmed) {
-                    accion === 'Editar' ? modificar() : registrar();
+                    accion === 'modificar' ? modificar() : registrar();
                 }
             });
         }

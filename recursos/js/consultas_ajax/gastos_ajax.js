@@ -10,7 +10,7 @@
 let tabla_gastos;
 let id_modificar = null;
 let permiso_eliminar = document.querySelector("#permiso_eliminar")?.value;
-let permiso_editar = document.querySelector("#permiso_editar")?.value;
+let permiso_modificar = document.querySelector("#permiso_modificar")?.value;
 
 // Elementos del DOM
 const modalGasto = new bootstrap.Modal(document.getElementById("modal_gastos"));
@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('mensaje_error_imagen_detalles').classList.add('d-none')
     });
 
-    // Delegación de eventos para botones de la tabla (editar/eliminar/vista previa)
+    // Delegación de eventos para botones de la tabla (modificar/eliminar/vista previa)
     document.querySelector("#tabla_gastos tbody")?.addEventListener("click", manejarClickEnTabla);
 });
 
@@ -102,7 +102,7 @@ function crearBotones(id) {
         <button type="button" class="btn btn-primary btn-sm col-3 vista-previa" title="Vista previa" value="${id}">
             <i class="bi bi-eye-fill"></i>
         </button>
-        <button type="button" class="btn btn-success btn-sm col-3 editar" title="Editar" value="${id}" data-bs-toggle="modal" data-bs-target="#modal_gastos">
+        <button type="button" class="btn btn-success btn-sm col-3 modificar" title="modificar" value="${id}" data-bs-toggle="modal" data-bs-target="#modal_gastos">
             <i class="bi bi-pencil-square"></i>
         </button>`;
     
@@ -128,7 +128,7 @@ function manejarClickEnTabla(e) {
 
     if (boton.classList.contains('vista-previa')) {
         mostrarVistaPrevia(id);
-    } else if (boton.classList.contains('editar')) {
+    } else if (boton.classList.contains('modificar')) {
         prepararFormularioEdicion(id);
     } else if (boton.classList.contains('eliminar')) {
         confirmarEliminar(id);
@@ -187,7 +187,7 @@ function recolectarDatosFormulario() {
     }
 
     // Operación
-    formData.append('operacion', idGasto ? 'editar' : 'registrar');
+    formData.append('operacion', idGasto ? 'modificar' : 'registrar');
 
     return formData;
 }
@@ -298,7 +298,7 @@ async function prepararFormularioEdicion(id) {
 async function modificar(id) {
     const formData = recolectarDatosFormulario();
     formData.append('id_gasto', id);
-    formData.append('operacion', 'editar');
+    formData.append('operacion', 'modificar');
 
     const respuesta = await Utilidades.query(formData, true);
 

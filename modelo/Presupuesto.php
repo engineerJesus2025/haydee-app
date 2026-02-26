@@ -305,7 +305,7 @@ class Presupuesto extends Conexion
      * Edición de presupuesto: actualiza cabecera y reemplaza detalles.
      * No regenera mensualidades.
      */
-    private function _editar()
+    private function _modificar()
     {
         $val = $this->validar(['id_presupuesto', 'fecha']);
         if (!$val['estatus']) return $val;
@@ -348,8 +348,8 @@ class Presupuesto extends Conexion
             return ['estatus' => true, 'mensaje' => 'Presupuesto actualizado correctamente'];
         } catch (\Exception $e) {
             $con->rollBack();
-            error_log("Error en _editar: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al editar: ' . $e->getMessage()];
+            error_log("Error en _modificar: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al modificar: ' . $e->getMessage()];
         }
     }
 

@@ -197,7 +197,7 @@ class Rol extends Conexion
         }
     }
 
-    private function _editar()
+    private function _modificar()
     {
         $v = $this->validar(['id_rol', 'nombre'], ['exclude_id' => $this->id_rol]);
         if (!$v['estatus']) return $v;
@@ -208,7 +208,7 @@ class Rol extends Conexion
             $stmt->execute([':nombre' => $this->nombre, ':id' => $this->id_rol]);
             return ['estatus' => true, 'mensaje' => 'Rol actualizado'];
         } catch (PDOException $e) {
-            error_log("Error en _editar: " . $e->getMessage());
+            error_log("Error en _modificar: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al actualizar: ' . $e->getMessage()];
         }
     }

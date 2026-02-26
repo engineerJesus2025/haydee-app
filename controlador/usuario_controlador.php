@@ -57,7 +57,7 @@ if (isset($_POST["operacion"])) {
                 }
                 break;
 
-            case 'editar_usuario':
+            case 'modificar_usuario':
                 // Obtener datos anteriores
                 $tempUsuario = new Usuario();
                 $tempUsuario->set_id_usuario($usuario->get_id_usuario());
@@ -69,7 +69,7 @@ if (isset($_POST["operacion"])) {
                     'rol_id' => $datosAnteriores['datos']['rol_id'] ?? ''
                 ] : [];
 
-                $respuesta = $usuario->realizar_consulta('editar_usuario');
+                $respuesta = $usuario->realizar_consulta('modificar_usuario');
                 if ($respuesta['estatus']) {
                     $nuevo = [
                         'nombre' => $usuario->get_nombre(),

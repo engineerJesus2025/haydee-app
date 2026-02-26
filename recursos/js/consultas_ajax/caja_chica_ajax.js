@@ -16,7 +16,7 @@ let modal_reposicion_caja = new bootstrap.Modal("#modal_reponer_caja");
 let tabla_movimientos;
 let boton_formulario = document.getElementById("boton_gasto_caja");
 let permiso_eliminar = document.querySelector("#permiso_eliminar")?.value;
-let permiso_editar = document.querySelector("#permiso_editar")?.value;
+let permiso_modificar = document.querySelector("#permiso_modificar")?.value;
 
 // Almacén de descripciones de cajas
 let descripciones = {};
@@ -74,8 +74,8 @@ document.getElementById("boton_intercambio_monto_reponer")?.addEventListener('cl
     intercambiarMoneda('monto_reponer', 'monto_cambio_reponer');
 });
 
-// Botón Para editar observacion
-document.getElementById("boton_editar_observacion")?.addEventListener('click', (e) => {
+// Botón Para modificar observacion
+document.getElementById("boton_modificar_observacion")?.addEventListener('click', (e) => {
     document.getElementById("descripcion_input").value = document.getElementById("descripciones").textContent;
 });
 
@@ -135,7 +135,7 @@ function obtenerColorEstado(estado) {
 function crearBotones(id) {
     let div = document.createElement("div");
     let html = `<div class="row justify-content-evenly">
-                    <button type="button" class="btn btn-success btn-sm col-lg-3 col-4 editar" data-bs-toggle="modal" data-bs-target="#modal_registro_gastos" title="Editar" value="${id}">
+                    <button type="button" class="btn btn-success btn-sm col-lg-3 col-4 modificar" data-bs-toggle="modal" data-bs-target="#modal_registro_gastos" title="modificar" value="${id}">
                         <i class="bi bi-pencil-square"></i>
                     </button>`;
     if (permiso_eliminar == 1) {
@@ -211,7 +211,7 @@ function inicializarTablaMovimientos() {
 
     let postCreacion = (row, data) => {
         row.id = `fila-${data.id_movimiento_caja}`;
-        row.querySelector(".editar")?.addEventListener('click', prepararFormulario);
+        row.querySelector(".modificar")?.addEventListener('click', prepararFormulario);
         row.querySelector(".eliminar")?.addEventListener('click', eventoEliminar);
     };
 
@@ -264,7 +264,7 @@ async function prepararFormulario(e) {
     document.getElementById("monto").value = mov.monto;
     document.getElementById("monto_cambio").value = (mov.monto / tasa_dolar).toFixed(2);
 
-    if (permiso_editar != 1) {
+    if (permiso_modificar != 1) {
         boton_formulario.setAttribute("hidden", true);
         boton_formulario.setAttribute("disabled", true);
     }
@@ -288,15 +288,15 @@ async function modificar(id) {
     // En edición solo se permite cambiar concepto y fecha, no el monto (por seguridad)
     // Si se permite cambiar monto, habría que ajustar la lógica. Según el modelo actual, no se modifica monto.
     // Por ahora, no enviamos monto.
-    datos.append("operacion", "editar_movimiento"); // Nota: en el controlador no hay case 'editar_movimiento'? Revisar.
+    datos.append("operacion", "modificar_movimiento"); // Nota: en el controlador no hay case 'modificar_movimiento'? Revisar.
 
-    // En el controlador no existe 'editar_movimiento', solo 'registrar_movimiento' y 'eliminar_movimiento'.
-    // El modelo tiene _editar_movimiento que solo actualiza concepto y fecha. Pero el controlador no lo llama.
-    // Debemos agregar un case en el controlador para 'editar_movimiento'.
+    // En el controlador no existe 'modificar_movimiento', solo 'registrar_movimiento' y 'eliminar_movimiento'.
+    // El modelo tiene _modificar_movimiento que solo actualiza concepto y fecha. Pero el controlador no lo llama.
+    // Debemos agregar un case en el controlador para 'modificar_movimiento'.
     // Por ahora, asumimos que se agregará. Si no, esta función no funcionará.
     // Mientras tanto, lo dejamos como placeholder.
 
-    // *** IMPORTANTE: El controlador debe tener un case 'editar_movimiento' que llame a _editar_movimiento.
+    // *** IMPORTANTE: El controlador debe tener un case 'modificar_movimiento' que llame a _modificar_movimiento.
     // Por ahora, lo simulamos. En la versión final, asegurar que existe.
 
     let respuesta = await Utilidades.query(datos);
@@ -370,15 +370,15 @@ async function reponerCaja() {
     Utilidades.mensaje('success', 'Éxito', 'Reposición realizada correctamente');
 }
 
-// ========== EDITAR DESCRIPCIÓN DE CAJA ==========
-async function editarObservacion() {
+// ========== modificar DESCRIPCIÓN DE CAJA ==========
+async function modificarObservacion() {
     let id_caja = document.getElementById("mes_select").value;
     let descripcion = document.getElementById("descripcion_input").value;
 
     let datos = new FormData();
     datos.append("caja_chica_id", id_caja);
     datos.append("descripcion", descripcion);
-    datos.append("operacion", "editar_descripcion");
+    datos.append("operacion", "modificar_descripcion");
 
     let respuesta = await Utilidades.query(datos);
     if (!respuesta.estatus) {
@@ -406,7 +406,7 @@ function actualizarSaldos() {
 
 // ========== ENVÍO DE FORMULARIOS ==========
 function envio(operacion) {
-    if (operacion === "Editar") {
+    if (operacion === "modificar") {
         modificar(boton_formulario.getAttribute("id_modificar"));
     } else if (operacion === "Registrar") {
         registrar();
@@ -420,7 +420,7 @@ function envio(operacion) {
 // Botón guardar en modal de gasto
 document.getElementById("boton_gasto_caja")?.addEventListener("click", async (e) => {
     e.preventDefault();
-    let accion = e.target.hasAttribute("modificar") ? "Editar" : "Registrar";
+    let accion = e.target.hasAttribute("modificar") ? "modificar" : "Registrar";
 
     if (await validarEnvio(accion)) {
         Swal.fire({
@@ -479,14 +479,14 @@ document.getElementById("boton_formulario_observacion")?.addEventListener("click
 
         Swal.fire({
             title: "¿Estás seguro?",
-            text: "¿Está seguro que desea editar esta descripción?",
+            text: "¿Está seguro que desea modificar esta descripción?",
             showCancelButton: true,
             confirmButtonText: "Sí, cambiar",
             confirmButtonColor: "#1b8a40",
             cancelButtonText: "Cancelar",
             icon: "warning"
         }).then(result => {
-            if (result.isConfirmed) editarObservacion();
+            if (result.isConfirmed) modificarObservacion();
         });
     }
 });

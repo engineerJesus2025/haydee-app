@@ -1,4 +1,4 @@
-<form method="POST" class="row m-3" id="form_registro_gasto">
+<form class="row m-3" id="form_registro_gasto">
     <div class="col-lg-5">
         <label for="monto_reponer">Monto del gasto:</label>
         <div class="input-group mb-3">

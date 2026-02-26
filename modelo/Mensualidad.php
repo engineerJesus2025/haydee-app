@@ -440,12 +440,12 @@ class Mensualidad extends Conexion
     }
 
     /**
-     * Editar masivo (unificado)
+     * modificar masivo (unificado)
      */
-    private function _editar()
+    private function _modificar()
     {
         if (empty($this->datos_apartamentos)) {
-            return ['estatus' => false, 'mensaje' => 'No hay datos de apartamentos para editar.'];
+            return ['estatus' => false, 'mensaje' => 'No hay datos de apartamentos para modificar.'];
         }
 
         // Validar cada elemento
@@ -528,8 +528,8 @@ class Mensualidad extends Conexion
             return ['estatus' => true, 'mensaje' => 'Mensualidades actualizadas correctamente.'];
         } catch (Exception $e) {
             $con->rollBack();
-            error_log("Error en _editar: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al editar: ' . $e->getMessage()];
+            error_log("Error en _modificar: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al modificar: ' . $e->getMessage()];
         }
     }
 

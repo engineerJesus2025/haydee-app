@@ -40,7 +40,7 @@ async function consultar() {
             data: 'id_solicitud',
             render: id => `
                 <div class="d-flex justify-content-center gap-2">
-                    ${window.permiso_editar ? `<button class="btn btn-success btn-sm editar" value="${id}"><i class="bi bi-pencil"></i></button>` : ''}
+                    ${window.permiso_modificar ? `<button class="btn btn-success btn-sm modificar" value="${id}"><i class="bi bi-pencil"></i></button>` : ''}
                     ${window.permiso_eliminar ? `<button class="btn btn-danger btn-sm eliminar" value="${id}"><i class="bi bi-trash"></i></button>` : ''}
                 </div>
             `
@@ -48,7 +48,7 @@ async function consultar() {
     ];
 
     const configPost = (row, data) => {
-        row.querySelector('.editar')?.addEventListener('click', prepararFormulario);
+        row.querySelector('.modificar')?.addEventListener('click', prepararFormulario);
         row.querySelector('.eliminar')?.addEventListener('click', (e) => {
             const id = e.currentTarget.value;
             Swal.fire({

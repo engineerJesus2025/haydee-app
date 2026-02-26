@@ -14,7 +14,7 @@
 <body id="body-pd" class="body-pd">
     <input type="text" hidden="" id="permiso_eliminar"
         value="<?php echo Sesiones::tienePermiso(GESTIONAR_SOLICITUD_GASTO, ELIMINAR) ?>">
-    <input type="text" hidden="" id="permiso_editar"
+    <input type="text" hidden="" id="permiso_modificar"
         value="<?php echo Sesiones::tienePermiso(GESTIONAR_SOLICITUD_GASTO, MODIFICAR) ?>">
     <div class="container-fluid">
         <div class="row flex-nowrap">
@@ -81,26 +81,7 @@
                                         </tbody>
                                     </table>
                                 </div>
-                                <div class="modal fade" id="modal_solicitud_gasto" tabindex="-1"
-                                    aria-labelledby="titulo_modal" aria-hidden="true">
-                                    <div class="modal-dialog modal-lg">
-                                        <div class="modal-content">
-                                            <div class="modal-header bg-primary text-white">
-                                                <h5 class="modal-title" id="titulo_modal">Registrar
-                                                    Solicitud de
-                                                    Gasto</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                    aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <?php
-                                                require_once "vista/solicitud_gasto/solicitud_gasto_modal.php";
-                                                ?>
-                                            </div>
-                                        </div>
-
-                                    </div>
-                                </div>
+                                
                             </div>
                         </div>
                     </div>
@@ -112,7 +93,29 @@
             </div>
         </div>
     </div>
+
     <?php require_once "vista/componentes/footer.php"; ?>
+
+    <div class="modal fade" id="modal_solicitud_gasto" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="titulo_modal">Registrar
+                        Solicitud de
+                        Gasto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <?php
+                    require_once "vista/solicitud_gasto/solicitud_gasto_modal.php";
+                    ?>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
     <script type="text/javascript" src="recursos/js/validaciones/solicitud_gasto_validar.js"></script>
     <script type="text/javascript" src="recursos/js/consultas_ajax/solicitud_gasto_ajax.js"></script>
 </body>

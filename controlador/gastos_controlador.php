@@ -90,7 +90,7 @@ if (isset($_POST["operacion"])) {
                 }
                 break;
 
-            case 'editar':
+            case 'modificar':
                 $id_gasto = $_POST['id_gasto'] ?? null;
                 if (!$id_gasto) throw new Exception('ID de gasto no proporcionado');
                 $gastos->set_id_gasto($id_gasto);
@@ -118,7 +118,7 @@ if (isset($_POST["operacion"])) {
                 $gastos->set_tipo_gasto_id($_POST['tipo_gasto'] ?? null);
                 $gastos->set_proveedor_id($_POST['proveedor'] ?? null);
 
-                $respuesta = $gastos->realizar_consulta('editar');
+                $respuesta = $gastos->realizar_consulta('modificar');
                 if ($respuesta['estatus']) {
                     $nuevo = [
                         'clasificacion'      => $gastos->get_clasificacion(),

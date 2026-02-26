@@ -1,4 +1,4 @@
-<form action="?pagina=tipo_gasto_controlador.php&accion=guardar" method="POST" id="form_tipo_gasto" name="form_tipo_gasto">
+<form id="form_tipo_gasto" name="form_tipo_gasto">
     <div class="row m-3">
         <div class="col-12">
             <label for="nombre_tipo_gasto">Nombre del Tipo de Gasto</label>

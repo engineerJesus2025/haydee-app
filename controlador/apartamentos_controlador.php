@@ -95,7 +95,7 @@ if (isset($_POST["operacion"])) {
                 $datosAnteriores = $tempApart->realizar_consulta('consultar_detalle_completo');
                 $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
 
-                $respuesta = $apartamento->realizar_consulta('editar_apartamento');
+                $respuesta = $apartamento->realizar_consulta('modificar_apartamento');
                 if ($respuesta['estatus']) {
                     $nuevo = [
                         'nro_apartamento' => $apartamento->get_nro_apartamento(),
@@ -167,45 +167,29 @@ if (isset($_POST["operacion"])) {
                 break;
 
             case 'modificar_habitantes':
-                // Obtener datos actuales del habitante
+                // Asignar datos del habitante
                 $habitante->set_id_habitante($_POST['id_habitante'] ?? null);
-                $datosActuales = $habitante->realizar_consulta('consultar_habitante');
-                if (!$datosActuales['estatus']) {
-                    throw new Exception('Habitante no encontrado');
+                $habitante->set_nombre($_POST['nombre'] ?? null);
+                $habitante->set_apellido($_POST['apellido'] ?? null);
+                $habitante->set_telefono($_POST['telefono'] ?? null);
+                $habitante->set_correo($_POST['correo'] ?? null);
+                $habitante->set_fecha_nacimiento($_POST['fecha_nacimiento'] ?? null);
+                $habitante->set_sexo($_POST['sexo'] ?? null);
+                $tipo = $_POST['tipo_cedula'] ?? '';
+                $numero = $_POST['cedula'] ?? '';
+                if ($tipo !== '' && $numero !== '') {
+                    $habitante->set_cedula($tipo . $numero);
                 }
-                $datosActuales = $datosActuales['datos'];
 
-                // Actualizar habitante
-                $respuesta = $habitante->realizar_consulta('editar');
+                // Datos de la nueva relación (si cambia)
+                $habitante->set_nuevo_apartamento_id($_POST['apartamento_id'] ?? null);
+                $habitante->set_nuevo_tipo_vinculo($_POST['tipo_vinculo'] ?? null);
+
+                $respuesta = $habitante->realizar_consulta('modificar_con_relacion');
                 if ($respuesta['estatus']) {
                     Bitacora::registrar(MODIFICAR, GESTIONAR_HABITANTES,
                         $habitante->get_nombre() . ' ' . $habitante->get_apellido()
                     );
-
-                    // Verificar si cambió la relación (apartamento o tipo de vínculo)
-                    $nuevoApartamento = $_POST['apartamento_id'] ?? null;
-                    $nuevoTipo = $_POST['tipo_vinculo'] ?? null;
-                    $apartamentoAnterior = $datosActuales['apartamento_id'] ?? null;
-                    $tipoAnterior = $datosActuales['tipo_vinculo'] ?? null;
-
-                    if ($apartamentoAnterior != $nuevoApartamento || $tipoAnterior != $nuevoTipo) {
-                        // Desvincular del anterior
-                        if ($apartamentoAnterior) {
-                            $apartamento->set_id_apartamento($apartamentoAnterior);
-                            $apartamento->set_habitante_id($habitante->get_id_habitante());
-                            $apartamento->realizar_consulta('desvincular_habitante');
-                        }
-                        // Vincular al nuevo
-                        if ($nuevoApartamento) {
-                            $apartamento->set_id_apartamento($nuevoApartamento);
-                            $apartamento->set_habitante_id($habitante->get_id_habitante());
-                            $apartamento->set_tipo_vinculo($nuevoTipo);
-                            $resVincular = $apartamento->realizar_consulta('asignar_habitante');
-                            if (!$resVincular['estatus']) {
-                                $respuesta = ['estatus' => false, 'mensaje' => 'Habitante actualizado, pero error al asignar al nuevo apartamento: ' . $resVincular['mensaje']];
-                            }
-                        }
-                    }
                 }
                 break;
 
@@ -267,8 +251,25 @@ if (isset($_POST["validar"])) {
                 break;
 
             case 'validar_clave_foranea':
-                // No implementado en el nuevo esquema
-                $respuesta = ['estatus' => false, 'mensaje' => 'Validación no implementada'];
+                $tabla = $_POST["tabla"] ?? '';
+                $campo = $_POST["nombre_clave"] ?? '';
+                $valor = $_POST["valor"] ?? '';
+
+                if (empty($tabla) || empty($campo) || empty($valor)) {
+                    echo json_encode(['estatus' => false, 'mensaje' => 'Faltan parámetros']);
+                    break;
+                }
+
+                $existe = false;
+                if ($tabla === 'apartamentos') {
+                    $existe = $apartamento->validarExistenciaExterna($tabla, $campo, $valor);
+                } elseif ($tabla === 'habitantes') {
+                    $existe = $habitante->validarExistenciaExterna($tabla, $campo, $valor);
+                } else {
+                    $respuesta = ['estatus' => false, 'mensaje' => 'Tabla no soportada'];
+                    break;
+                }
+                $respuesta = ['estatus' => $existe, 'mensaje' => 'OK'];
                 break;
 
             default:

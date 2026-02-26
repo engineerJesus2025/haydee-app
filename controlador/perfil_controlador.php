@@ -41,7 +41,7 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $notificaciones->realizar_consulta('consultar_mis_notificaciones');
                 break;
 
-            case 'editar_perfil':
+            case 'modificar_perfil':
                 // Obtener datos anteriores
                 $tempUsuario = new Usuario();
                 $tempUsuario->set_id_usuario($_SESSION["id_usuario"]);
@@ -53,7 +53,7 @@ if (isset($_POST["operacion"])) {
                     'correo'   => $anterior['correo'] ?? ''
                 ];
 
-                $respuesta = $usuario->realizar_consulta('editar_perfil');
+                $respuesta = $usuario->realizar_consulta('modificar_perfil');
                 if ($respuesta['estatus']) {
                     $_SESSION["nombre_completo"] = $usuario->get_nombre();
                     $nuevo = [

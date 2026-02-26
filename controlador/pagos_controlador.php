@@ -160,7 +160,7 @@ if (isset($_POST["operacion"])) {
                 $pagos->set_estado($_POST['estado'] ?? 'PENDIENTE');
                 $pagos->set_observacion($_POST['observacion'] ?? '');
 
-                $respuesta = $pagos->realizar_consulta('editar');
+                $respuesta = $pagos->realizar_consulta('modificar');
                 if ($respuesta['estatus']) {
                     $nuevoResumen = [
                         'apartamento_id' => $pagos->get_apartamento_id(),
@@ -241,13 +241,10 @@ if (isset($_POST["validar"])) {
 $registro_banco = $banco->realizar_consulta('consultar')['datos'] ?? [];
 if (!$esPropietario) {
     $registro_apartamento = $apartamento->realizar_consulta('consultar_listado')['datos'] ?? [];
+    
 } else {
-    $registro_apartamento = $apartamento->consultar_propietario($_SESSION["usuario"])['datos'] ?? [];
+    $apartamento->set_correo($_SESSION["usuario"]);
+    $registro_apartamento = $apartamento->realizar_consulta('obtener_apartamentos_por_correo')['datos'] ?? [];
 }
 
-// Incluir la vista correspondiente
-if (!$esPropietario) {
-    require_once "vista/pagos/pagos_vista.php";
-} else {
-    require_once "vista/pagos/pagos_propietarios_vista.php";
-}
+require_once "vista/pagos/pagos_vista.php";

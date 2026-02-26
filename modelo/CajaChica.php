@@ -360,7 +360,7 @@ class CajaChica extends Conexion
     /**
      * Edita la descripción de una caja chica
      */
-    private function _editar_descripcion()
+    private function _modificar_descripcion()
     {
         $v = $this->validar(['id_caja_chica', 'descripcion']);
         if (!$v['estatus']) return $v;
@@ -374,7 +374,7 @@ class CajaChica extends Conexion
             ]);
             return ['estatus' => true, 'mensaje' => 'Descripción actualizada.'];
         } catch (PDOException $e) {
-            error_log("Error en _editar_descripcion: " . $e->getMessage());
+            error_log("Error en _modificar_descripcion: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al actualizar descripción: ' . $e->getMessage()];
         }
     }
@@ -408,7 +408,7 @@ class CajaChica extends Conexion
     /**
      * Edita concepto y fecha de un movimiento (no el monto por seguridad)
      */
-    private function _editar_movimiento()
+    private function _modificar_movimiento()
     {
         $v = $this->validar(['id_movimiento_caja', 'concepto', 'fecha_movimiento']);
         if (!$v['estatus']) return $v;
@@ -427,8 +427,8 @@ class CajaChica extends Conexion
             
             return ['estatus' => true, 'mensaje' => 'Movimiento actualizado (solo concepto y fecha).'];
         } catch (PDOException $e) {
-            error_log("Error en _editar_movimiento: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al editar movimiento: ' . $e->getMessage()];
+            error_log("Error en _modificar_movimiento: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al modificar movimiento: ' . $e->getMessage()];
         }
     }
 

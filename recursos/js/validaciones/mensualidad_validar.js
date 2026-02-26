@@ -65,7 +65,7 @@ $(document).ready(function() {
             }).then(result => {
                 if (result.isConfirmed) {
                     if (accion === "Registrar") registrarMensualidad();
-                    else editarMensualidad();
+                    else modificarMensualidad();
                 }
             }); 
 

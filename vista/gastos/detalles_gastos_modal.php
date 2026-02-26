@@ -1,4 +1,4 @@
-<form action="?pagina=gastos_controlador.php&accion=guardar" method="POST" id="form_detalles_gastos" name="form_detalles_gastos"
+<form id="form_detalles_gastos" name="form_detalles_gastos"
     enctype="multipart/form-data">
     <div class="container mt-4">
 

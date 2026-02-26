@@ -1,4 +1,4 @@
-<form action="?pagina=rol_controlador.php&accion=guardar" method="POST" id="form_rol">
+<form id="form_rol">
     <div class="col-md-12">
         <label for="nombre">Nombre del rol</label>
         <div class="input-group mb-3">

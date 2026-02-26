@@ -74,7 +74,7 @@ if (isset($_POST["operacion"])) {
                 $datosRol = $tempRol->realizar_consulta('consultar_rol');
                 $anterior = $datosRol['estatus'] ? ['nombre' => $datosRol['datos']['nombre'] ?? ''] : [];
 
-                $respuesta = $rol->realizar_consulta('editar');
+                $respuesta = $rol->realizar_consulta('modificar');
                 if ($respuesta['estatus']) {
                     $resPermisos = $rol->realizar_consulta('sincronizar_permisos');
                     if (!$resPermisos['estatus']) {

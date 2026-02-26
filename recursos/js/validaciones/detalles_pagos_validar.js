@@ -29,7 +29,7 @@ $(document).ready(function(){
 	
 	// Boton del formulario
 	$("#boton_formulario_detalles").on("click",async function(e){
-		let accion = (e.target.getAttribute("modificar"))?"Editar":"Registrar";		
+		let accion = (e.target.getAttribute("modificar"))?"modificar":"Registrar";		
 		e.preventDefault();
 		if(await validarEnvio_detalles(accion)==true){
 				Swal.fire({

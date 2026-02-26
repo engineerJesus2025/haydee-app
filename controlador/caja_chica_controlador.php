@@ -36,14 +36,14 @@ if (isset($_POST["operacion"])) {
                 }
                 exit;
 
-            case 'editar_descripcion':
+            case 'modificar_descripcion':
                 // Obtener datos anteriores de la caja (necesitamos un método que devuelva la caja por ID)
                 $tempCaja = new CajaChica();
                 $tempCaja->set_id_caja_chica($caja->get_id_caja_chica());
                 $datosCaja = $tempCaja->realizar_consulta('consultar_caja_unica'); // Asumo que existe
                 $anterior = $datosCaja['estatus'] ? ['descripcion' => $datosCaja['datos']['descripcion']] : [];
 
-                $respuesta = $caja->realizar_consulta('editar_descripcion');
+                $respuesta = $caja->realizar_consulta('modificar_descripcion');
                 if ($respuesta['estatus']) {
                     $nuevo = ['descripcion' => $caja->get_descripcion()];
                     Bitacora::registrar(MODIFICAR, GESTIONAR_CAJA_CHICA,
@@ -100,20 +100,20 @@ if (isset($_POST["operacion"])) {
                 }
                 break;
 
-            case 'editar_movimiento':
+            case 'modificar_movimiento':
                 // Obtener datos anteriores
                 $tempCaja = new CajaChica();
                 $tempCaja->set_id_movimiento_caja($caja->get_id_movimiento_caja());
                 $datosAnteriores = $tempCaja->realizar_consulta('consultar_movimiento_unico');
                 $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
 
-                $respuesta = $caja->realizar_consulta('editar_movimiento');
+                $respuesta = $caja->realizar_consulta('modificar_movimiento');
                 if ($respuesta['estatus']) {
                     // Datos nuevos (lo que se asignó)
                     $nuevo = [
                         'concepto' => $caja->get_concepto(),
                         'fecha'    => $caja->get_fecha_movimiento()
-                        // Nota: el método _editar_movimiento no modifica monto, por eso no se incluye
+                        // Nota: el método _modificar_movimiento no modifica monto, por eso no se incluye
                     ];
                     Bitacora::registrar(MODIFICAR, GESTIONAR_CAJA_CHICA,
                         "Editó movimiento ID: " . $caja->get_id_movimiento_caja(),

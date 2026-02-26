@@ -21,6 +21,8 @@ class Apartamento extends Conexion
     private $habitante_id;
     private $tipo_vinculo;
 
+    private $correo;
+
     // ====================================================================
     // REGLAS DE VALIDACIÓN (con opcionales, min, max)
     // ====================================================================
@@ -56,6 +58,10 @@ class Apartamento extends Conexion
         ],
         'tipo_vinculo' => [
             'regex' => '/^(Propietario|Inquilino|Habitante|Otro)$/'
+        ],
+        'correo' => [
+            'regex' => '/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/',
+            'exists' => ['tabla' => 'habitantes', 'campo' => 'correo']
         ]
     ];
 
@@ -81,6 +87,9 @@ class Apartamento extends Conexion
     public function get_habitante_id() { return $this->habitante_id; }
     public function set_tipo_vinculo($v) { $this->tipo_vinculo = $v; }
     public function get_tipo_vinculo() { return $this->tipo_vinculo; }
+
+    public function set_correo($correo) { $this->correo = $correo; }
+    public function get_correo() { return $this->correo; }
 
     // ====================================================================
     // ENRUTADOR CON MANEJO DE EXCEPCIONES
@@ -291,7 +300,7 @@ class Apartamento extends Conexion
         }
     }
 
-    private function _editar_apartamento()
+    private function _modificar_apartamento()
     {
         $campos = ['id_apartamento', 'nro_apartamento', 'porcentaje_participacion'];
         $contexto = ['exclude_id' => $this->id_apartamento];
@@ -323,7 +332,7 @@ class Apartamento extends Conexion
             ]);
             return ['estatus' => true, 'mensaje' => 'Apartamento actualizado correctamente'];
         } catch (PDOException $e) {
-            error_log("Error en _editar_apartamento: " . $e->getMessage());
+            error_log("Error en _modificar_apartamento: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error en la base de datos: ' . $e->getMessage()];
         }
     }
@@ -490,7 +499,7 @@ class Apartamento extends Conexion
      * Consulta los apartamentos activos con los campos necesarios para la tabla de asignación de mensualidades.
      * @return array
      */
-    public function consultar_apartamentos_mensualidad() {
+    public function _consultar_apartamentos_mensualidad() {
         $sql = "SELECT id_apartamento, nro_apartamento, porcentaje_participacion, gas 
                 FROM apartamentos 
                 WHERE activo = 1 
@@ -515,5 +524,76 @@ class Apartamento extends Conexion
             return ['estatus' => false, 'mensaje' => 'Error al contar apartamentos'];
         }
     }
+
+    /**
+     * Obtiene el id y número de apartamento de un habitante a partir de su correo.
+     * @return array ['estatus' => bool, 'datos' => array|string, 'mensaje' => string]
+     */
+    private function _obtener_apartamentos_por_correo()
+    {
+        $validacion = $this->validar(['correo']);
+        if (!$validacion['estatus']) {
+            return $validacion; // Retorna el error de validación
+        }
+
+        try {
+            $sql = "SELECT a.id_apartamento, a.nro_apartamento
+                    FROM habitantes h
+                    INNER JOIN habitantes_apartamentos ha ON h.id_habitante = ha.habitante_id
+                    INNER JOIN apartamentos a ON ha.apartamento_id = a.id_apartamento
+                    WHERE h.correo = :correo
+                      AND h.activo = 1
+                      AND a.activo = 1";
+
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->execute([':correo' => $this->correo]);
+            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            if (empty($resultados)) {
+                return [
+                    'estatus' => true,
+                    'datos'   => [],
+                    'mensaje' => 'El habitante no está vinculado a ningún apartamento activo.'
+                ];
+            }
+
+            return [
+                'estatus' => true,
+                'datos'   => $resultados,
+                'mensaje' => 'Apartamentos obtenidos correctamente.'
+            ];
+        } catch (PDOException $e) {
+            error_log("Error en _obtener_apartamentos_por_correo: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al consultar los apartamentos del habitante.'];
+        }
+    }
+
+    // Dentro de la clase Apartamento, después de los métodos existentes
+
+    /**
+     * Valida la existencia de un valor en una tabla externa (para validaciones AJAX)
+     * @param string $tabla Nombre de la tabla
+     * @param string $campo Nombre del campo
+     * @param mixed $valor Valor a buscar
+     * @return bool
+     */
+    public function validarExistenciaExterna($tabla, $campo, $valor)
+    {
+        $tablasPermitidas = ['apartamentos', 'habitantes'];
+        if (!in_array($tabla, $tablasPermitidas)) {
+            return false;
+        }
+        // Determinar qué conexión usar (ambas están en negocio)
+        $sql = "SELECT COUNT(*) FROM $tabla WHERE $campo = :valor";
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->execute([':valor' => $valor]);
+            return $stmt->fetchColumn() > 0;
+        } catch (PDOException $e) {
+            error_log("Error en validarExistenciaExterna (Apartamento): " . $e->getMessage());
+            return false;
+        }
+    }
+
 }
 ?>

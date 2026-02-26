@@ -11,7 +11,7 @@
 
 <body id="body-pd" class="body-pd">
     <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_MODULOS, ELIMINAR) ?>">
-    <input type="text" hidden="" id="permiso_editar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_MODULOS, MODIFICAR) ?>">
+    <input type="text" hidden="" id="permiso_modificar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_MODULOS, MODIFICAR) ?>">
     <div class="container-fluid">
         <div class="row flex-nowrap ">
             <?php require_once "vista/componentes/navbar.php"; ?>
@@ -62,21 +62,6 @@
                                     </table>
                                 </div>
 
-                                <!-- Modal para módulos -->
-                                <div class="modal fade" id="modal_modulo" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <div class="modal-header bg-primary text-white">
-                                                <h1 class="modal-title fs-5" id="titulo_modal">Registrar Módulo</h1>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <?php require_once "vista/modulos/modulos_modal.php"; ?>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
                             </div>
                         </div>
                     </div>
@@ -88,7 +73,24 @@
             </div>
         </div>
     </div>
+
     <?php require_once "vista/componentes/footer.php"; ?>
+
+    <!-- Modal para módulos -->
+    <div class="modal fade" id="modal_modulo" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h1 class="modal-title fs-5" id="titulo_modal">Registrar Módulo</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <?php require_once "vista/modulos/modulos_modal.php"; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script type="text/javascript" src="recursos/js/validaciones/modulos_validar.js"></script>
     <script type="text/javascript" src="recursos/js/consultas_ajax/modulos_ajax.js"></script>
 </body>

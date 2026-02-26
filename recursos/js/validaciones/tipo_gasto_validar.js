@@ -10,7 +10,7 @@ $(document).ready(function(){
 	
 	$("#boton_formulario").on("click", async function(e){
 		e.preventDefault();
-		let accion = (this.getAttribute("modificar")) ? "Editar" : "Registrar";		
+		let accion = (this.getAttribute("modificar")) ? "modificar" : "Registrar";		
 		
 		if(await validarEnvio(accion) === true){
             Swal.fire({

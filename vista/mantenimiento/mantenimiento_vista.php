@@ -98,7 +98,9 @@
             </div>
         </div>
     </div>
+
     <?php require_once "vista/componentes/footer.php"; ?>
+    
     <script type="text/javascript" src="recursos/js/consultas_ajax/mantenimiento_ajax.js"></script>
 </body>
 

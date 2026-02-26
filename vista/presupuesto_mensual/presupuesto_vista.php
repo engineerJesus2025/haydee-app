@@ -11,7 +11,7 @@
 
 <body id="body-pd" class="body-pd">
     <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_PRESUPUESTO, ELIMINAR) ?>">
-    <input type="text" hidden="" id="permiso_editar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_PRESUPUESTO, MODIFICAR) ?>">
+    <input type="text" hidden="" id="permiso_modificar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_PRESUPUESTO, MODIFICAR) ?>">
     <div class="container-fluid">
         <div class="row flex-nowrap ">
 
@@ -55,24 +55,6 @@
                                     <tbody>
                                     </tbody>
                                 </table>
-                                <div class="modal fade" id="modal_presupuesto" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
-                                    <div class="modal-dialog modal-xl">
-                                        <div class="modal-content">
-                                            <div class="modal-header bg-primary text-white">
-                                                <h1 class="modal-title fs-5" id="titulo_modal">Registrar presupuesto mensual</h1>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-
-                                                <?php
-                                                require_once "vista/presupuesto_mensual/presupuesto_modal.php";
-                                                ?>
-
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
                             </div>
                         </div>
                     </div>                    
@@ -84,7 +66,27 @@
             </div>
         </div>
     </div>
+
     <?php require_once "vista/componentes/footer.php"; ?>
+
+    <div class="modal fade" id="modal_presupuesto" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h1 class="modal-title fs-5" id="titulo_modal">Registrar presupuesto mensual</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+
+                    <?php
+                    require_once "vista/presupuesto_mensual/presupuesto_modal.php";
+                    ?>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script type="text/javascript" src="recursos/js/validaciones/presupuesto_validar.js"></script>
     <script type="text/javascript" src="recursos/js/consultas_ajax/presupuesto_ajax.js"></script>
 </body>

@@ -49,7 +49,7 @@
                                             <li><strong>Asociación con mensualidades:</strong> Cada pago puede vincularse directamente a una mensualidad específica del apartamento, asegurando que el historial financiero esté correctamente conectado.</li>
                                             <li><strong>Detalle del pago:</strong> Se registra un detalle interno por cada pago realizado, lo cual permite almacenar información más granular como la caja asociada, el método de pago, y la conversión en bolívares o dólares.</li>
                                             <li><strong>Transacciones bancarias:</strong> Si el pago es mediante una transacción (como transferencia o pago móvil), se puede registrar el banco, la referencia y cargar una imagen del comprobante.</li>
-                                            <li><strong>Modificación y edición:</strong> Siempre que el usuario tenga los permisos necesarios, puede editar un pago ya registrado. Esto incluye modificar datos del pago principal, su detalle o la transacción bancaria.</li>
+                                            <li><strong>Modificación y edición:</strong> Siempre que el usuario tenga los permisos necesarios, puede modificar un pago ya registrado. Esto incluye modificar datos del pago principal, su detalle o la transacción bancaria.</li>
                                             <li><strong>Eliminación:</strong> También se permite eliminar un pago. Esta acción borra todos los datos relacionados: el pago principal, su detalle, la transacción bancaria (si aplica) y su vínculo con la mensualidad.</li>
                                             <li><strong>Vista previa:</strong> Se puede consultar un pago específico en detalle mediante la opción de vista previa, que muestra toda la información asociada, incluyendo montos, fecha, estado, mensualidad y comprobante.</li>
                                             <!-- <li><strong>Generación de PDF:</strong> Tras registrar un pago, el sistema puede generar automáticamente un comprobante en formato PDF, listo para ser guardado o impreso.</li> -->
@@ -133,7 +133,7 @@
                                             <li><strong>Registro de ingresos y egresos:</strong> Permite ingresar movimientos de dinero, detallando concepto, monto, fecha y responsable, manteniendo siempre un saldo actualizado y confiable.</li>
                                             <li><strong>Control de saldo:</strong> Visualiza en tiempo real el saldo disponible, evitando sobregiros y garantizando que la caja tenga fondos suficientes para cubrir gastos menores.</li>
                                             <li><strong>Justificación de gastos:</strong> Cada egreso debe ir acompañado de una descripción y, opcionalmente, comprobantes o facturas digitales que respalden la operación.</li>
-                                            <li><strong>Modificación y auditoría:</strong> Solo usuarios autorizados pueden editar o eliminar movimientos, con registro histórico para auditorías futuras y control interno estricto.</li>
+                                            <li><strong>Modificación y auditoría:</strong> Solo usuarios autorizados pueden modificar o eliminar movimientos, con registro histórico para auditorías futuras y control interno estricto.</li>
                                         </ul>
 
                                         <h5 class="mt-3">🧠 Consejos y recomendaciones:</h5>
@@ -171,7 +171,7 @@
                                             <li><strong>Registro de mensualidades:</strong> Permite crear una mensualidad indicando el mes, año, monto a pagar, tasa del dólar (si aplica), y a qué apartamento está asociada.</li>
                                             <li><strong>Asignación por apartamento:</strong> Cada mensualidad queda directamente vinculada a un apartamento, permitiendo calcular la deuda por vivienda de forma clara.</li>
                                             <li><strong>Control de estado:</strong> El sistema diferencia mensualidades pagadas de pendientes, facilitando el seguimiento y la gestión de deudas.</li>
-                                            <li><strong>Modificación flexible:</strong> Las mensualidades pueden editarse siempre que el usuario tenga los permisos adecuados. Esto incluye ajustes en el monto, tasa o asociación.</li>
+                                            <li><strong>Modificación flexible:</strong> Las mensualidades pueden modificarse siempre que el usuario tenga los permisos adecuados. Esto incluye ajustes en el monto, tasa o asociación.</li>
                                             <li><strong>Eliminación segura:</strong> Se puede eliminar una mensualidad siempre que no esté vinculada a un pago. El sistema te alertará si hay dependencias activas.</li>
                                             <li><strong>Consulta avanzada:</strong> Puedes buscar mensualidades filtrando por apartamento, mes, año o estado (pagada/pendiente).</li>
                                             <li><strong>Vista previa:</strong> Cada mensualidad puede visualizarse con todo detalle, incluyendo el historial de pagos asociados.</li>

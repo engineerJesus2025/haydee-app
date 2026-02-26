@@ -81,7 +81,7 @@ if (isset($_POST["operacion"])) {
                 }
                 break;
 
-            case 'editar_masivo':
+            case 'modificar_masivo':
                 $datos = json_decode($_POST['datos_presupuesto'], true);
                 if (json_last_error() !== JSON_ERROR_NONE) throw new Exception('Error JSON');
 
@@ -103,7 +103,7 @@ if (isset($_POST["operacion"])) {
                 $presupuesto->set_observacion($datos['observacion'] ?? '');
                 $presupuesto->setDetallesTemp($datos['detalles']);
 
-                $respuesta = $presupuesto->realizar_consulta('editar');
+                $respuesta = $presupuesto->realizar_consulta('modificar');
                 if ($respuesta['estatus']) {
                     $nuevo = [
                         'fecha'         => $presupuesto->get_fecha(),

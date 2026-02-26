@@ -1,4 +1,4 @@
-<form action="?pagina=cartelera_virtual_controlador.php&accion=guardar" method="POST" id="form_cartelera"
+<form id="form_cartelera"
     name="form_cartelera" enctype="multipart/form-data">
     <div class="container mt-4">
         <div class="row mb-3">

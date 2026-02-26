@@ -47,7 +47,7 @@ $(document).ready(function() {
     // ============================================================
     $("#boton_formulario").on("click", async function(e) {
         e.preventDefault();
-        const accion = $(this).attr("modificar") ? "Editar" : "Registrar";
+        const accion = $(this).attr("modificar") ? "modificar" : "Registrar";
 
         if (await validarFormularioCompleto()) {
             Swal.fire({

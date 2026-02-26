@@ -65,7 +65,7 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $cartelera->realizar_consulta('consultar_cartelera_id');
                 break;
 
-            case 'editar':
+            case 'modificar':
                 // Obtener datos anteriores
                 $tempCart = new CarteleraVirtual();
                 $tempCart->set_id_cartelera($cartelera->get_id_cartelera());
@@ -95,7 +95,7 @@ if (isset($_POST["operacion"])) {
                 }
 
                 $cartelera->set_imagen($nuevaImagen);
-                $respuesta = $cartelera->realizar_consulta('editar_publicacion');
+                $respuesta = $cartelera->realizar_consulta('modificar_publicacion');
                 if ($respuesta['estatus']) {
                     $nuevo = [
                         'titulo'      => $cartelera->get_titulo(),

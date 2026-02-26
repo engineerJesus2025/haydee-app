@@ -55,7 +55,7 @@ $(document).ready(function() {
     // ============================================
     $("#boton_formulario").on("click", async function(e) {
         e.preventDefault();
-        const accion = this.hasAttribute("modificar") ? "Editar" : "Registrar";
+        const accion = this.hasAttribute("modificar") ? "modificar" : "Registrar";
 
         if (await validarEnvio(accion)) {
             Swal.fire({
