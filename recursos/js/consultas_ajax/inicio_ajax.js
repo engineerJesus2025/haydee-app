@@ -11,18 +11,22 @@ document.addEventListener('DOMContentLoaded', () => {
     cargaInicio();
 });
 
+let scrollTimeout;
 window.addEventListener("scroll", () => {
-    if (consultando || bloqueado || fin) return;
+    clearTimeout(scrollTimeout);
+    scrollTimeout = setTimeout(() => {
+        if (consultando || bloqueado || fin) return;
 
-    const alturaPagina = document.documentElement.scrollHeight;
-    const alturaVentana = window.innerHeight;
-    const desplazamientoActual = window.scrollY;
+        const alturaPagina = document.documentElement.scrollHeight;
+        const alturaVentana = window.innerHeight;
+        const desplazamientoActual = window.scrollY;
 
-    if (desplazamientoActual + alturaVentana >= alturaPagina - 100) {
-        consultando = true;
-        bloqueado = true;
-        consultarPublicaciones();
-    }
+        if (desplazamientoActual + alturaVentana >= alturaPagina - 100) {
+            consultando = true;
+            bloqueado = true;
+            consultarPublicaciones();
+        }
+    }, 150);
 });
 
 async function cargaInicio() {
@@ -152,60 +156,28 @@ async function consultarPublicaciones() {
 }
 
 function construirHTMLPublicacion(publicacion) {
-    let div_card = document.createElement("div");
-    div_card.className = "col-11 card post-card mx-auto shadow-lg my-4 px-0";
-    let div_row = document.createElement("div");
-    div_row.className = "row g-0 h-100";
-
-    let tieneImagen = (publicacion.imagen && publicacion.imagen !== '');
-    let div_col_contenido = document.createElement("div");
-    div_col_contenido.className = tieneImagen ? "col-md-7 order-md-1" : "col-12";
-
-    let div_content_area = document.createElement("div");
-    div_content_area.className = "content-area";
-
-    let h2 = document.createElement("h2");
-    h2.className = "post-title h3";
-    h2.textContent = publicacion.titulo;
-
-    let div_autor_fecha = document.createElement("div");
-    div_autor_fecha.className = tieneImagen ? "post-meta my-2 mb-5" : "post-meta my-2";
-
-    let small_fecha = document.createElement("small");
-    small_fecha.className = "text-uppercase fw-bold";
-    // USAMOS EL HELPER AQUI
-    small_fecha.textContent = `Publicado el ${Utilidades.formatearFecha(publicacion.fecha)}`;
-
-    let spam_usuario = document.createElement("span");
-    spam_usuario.className = "author-badge ms-2";
-    spam_usuario.textContent = `Por ${publicacion.nombre_usuario}`;
-
-    div_autor_fecha.append(small_fecha, spam_usuario);
-
-    let p_contenido = document.createElement("p");
-    p_contenido.className = "post-description flex-grow-1";
-    p_contenido.textContent = publicacion.descripcion;
-
-    div_content_area.append(h2, div_autor_fecha, p_contenido);
-    div_col_contenido.appendChild(div_content_area);
-    div_row.appendChild(div_col_contenido);
-
-    if (tieneImagen) {
-        let div_col_imagen = document.createElement("div");
-        div_col_imagen.className = "col-md-5 order-md-2 d-flex align-items-center";
-        let div_imagen = document.createElement("div");
-        div_imagen.className = "image-container w-100";
-        let img = document.createElement("img");
-        img.className = "post-image";
-        img.alt = "Imagen de la publicación";
-        img.src = `recursos/img/cartelera/${publicacion.imagen}`;
-        div_imagen.appendChild(img);
-        div_col_imagen.appendChild(div_imagen);
-        div_row.appendChild(div_col_imagen);
+    const template = document.getElementById('template-publicacion');
+    const clone = template.content.cloneNode(true);
+    const card = clone.querySelector('.card');
+    const contentCol = card.querySelector('.col-md-7');
+    const imageCol = card.querySelector('.col-md-5');
+    
+    // Llenar datos de forma segura
+    card.querySelector('.post-title').textContent = publicacion.titulo;
+    card.querySelector('small').textContent = `Publicado el ${Utilidades.formatearFecha(publicacion.fecha)}`;
+    card.querySelector('.author-badge').textContent = `Por ${publicacion.nombre_usuario}`;
+    card.querySelector('.post-description').textContent = publicacion.descripcion;
+    
+    if (publicacion.imagen && publicacion.imagen !== '') {
+        card.querySelector('.post-image').src = `recursos/img/cartelera/${publicacion.imagen}`;
+    } else {
+        imageCol.remove(); // Eliminar la columna de imagen
+        contentCol.className = 'col-12'; // Ajustar ancho
+        const meta = card.querySelector('.post-meta');
+        meta.classList.remove('mb-5'); // Quitar margen extra
     }
-
-    div_card.appendChild(div_row);
-    return div_card;
+    
+    return card;
 }
 
 // funciones específicas de esta vista

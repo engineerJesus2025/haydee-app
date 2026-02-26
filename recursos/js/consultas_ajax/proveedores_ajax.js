@@ -91,6 +91,7 @@ async function prepararFormulario(e) {
     const rifNum = data.rif.slice(1);
     form.querySelector('#tipo_documento').value = tipoDoc;
     form.querySelector('#rif').value = rifNum;
+    form.querySelector('#rif').removeAttribute('disabled');
     form.querySelector('#direccion').value = data.direccion;
 
     document.getElementById('titulo_modal').textContent = 'Modificar Proveedor';
@@ -141,5 +142,6 @@ document.getElementById('modal_proveedores').addEventListener('hide.bs.modal', (
     document.querySelectorAll('.is-valid, .is-invalid').forEach(el => el.classList.remove('is-valid', 'is-invalid'));
     document.getElementById('titulo_modal').textContent = 'Registrar Proveedor';
     form.querySelector('#boton_formulario').textContent = 'Registrar';
+    form.querySelector('#rif').setAttribute('disabled','');
     delete form.querySelector('#boton_formulario').dataset.id;
 });

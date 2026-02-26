@@ -79,23 +79,7 @@
                                     </tbody>
                                 </table>
                             </div>
-                                <div class="modal fade" id="modal_cartelera" tabindex="-1"
-                                    aria-labelledby="titulo-modal" aria-hidden="true">
-                                    <div class="modal-dialog modal-lg">
-                                        <div class="modal-content">
-                                            <div class="modal-header bg-primary text-white">
-                                                <h5 class="modal-title" id="titulo_modal">Registrar Publicación</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                    aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <?php
-                                                require_once "vista/cartelera_virtual/cartelera_virtual_modal.php";
-                                                ?>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                
                             </div>
                         </div>
                     </div>
@@ -104,13 +88,27 @@
                 require_once 'vista/componentes/modal_carga.php';
                 require_once "vista/componentes/script.php";
                 ?>
-                
-
             </div>
         </div>
     </div>
     <?php require_once "vista/componentes/footer.php"; ?>
 
+    <div class="modal fade" id="modal_cartelera" tabindex="-1"aria-labelledby="titulo-modal" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="titulo_modal">Registrar Publicación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <?php
+                    require_once "vista/cartelera_virtual/cartelera_virtual_modal.php";
+                    ?>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="modal fade" id="modal_vista_previa" tabindex="-1" aria-labelledby="modal_vista_previa_label"
         aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">

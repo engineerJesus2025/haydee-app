@@ -38,9 +38,9 @@ document.getElementById("mes_select").addEventListener("change", (e) => {
     document.getElementById("descripciones").closest(".col-7")?.removeAttribute("hidden");
 
     // Actualizar fondo fijo mostrado
-    let saldoInicial = option.getAttribute("saldo_inicial") || 0;
+    let saldoActual = option.getAttribute("saldo_actual") || 0;
     document.getElementById("span_fondo_fijo").textContent = 
-        `Fondo fijo de caja: ${saldoInicial} Bs. / ${(saldoInicial / tasa_dolar).toFixed(2)} $`;
+        `Fondo actual de caja: ${saldoActual} Bs. / ${(saldoActual / tasa_dolar).toFixed(2)} $`;
 
     actualizarSaldos();
     // Estado de la caja

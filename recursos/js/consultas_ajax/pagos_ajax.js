@@ -225,8 +225,8 @@ async function consultar() {
 
 function obtenerBadgeEstado(estado) {
     let color = "secondary";
-    if (estado === "Procesado") color = "success";
-    if (estado === "PENDIENTE" || estado === "No verificado") color = "warning";
+    if (estado === "PROCESADO") color = "success";
+    if (estado === "PENDIENTE" || estado === "No verificado") color = "warning text-dark";
     if (estado === "ANULADO" || estado === "RECHAZADO") color = "danger";
     return `<span class="badge bg-${color}">${estado}</span>`;
 }

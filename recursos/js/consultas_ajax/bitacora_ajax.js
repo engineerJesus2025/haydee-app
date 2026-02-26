@@ -41,31 +41,38 @@ function mostrarDetalle(rowData) {
     document.getElementById('detalle_accion').setAttribute('class',`badge ${definirColorAccion(rowData.accion)}`);
 
     // Determinar si es consulta
-    if (rowData.accion.toLowerCase() === 'consultar') {
+    if (rowData.accion.toLowerCase() === 'consultar' || rowData.accion.toLowerCase() === 'iniciar sesion' || rowData.accion.toLowerCase() === 'cerrar sesion') {
         document.getElementById('detalle_consulta').classList.remove('d-none');
         document.getElementById('detalle_cambios').classList.add('d-none');
-        document.getElementById('mensaje_consulta').textContent = `Se consultaron todos los registros del módulo ${rowData.nombre_modulo.split('_').join(' ')}.`;
+
+        if (rowData.accion.toLowerCase() === 'consultar') document.getElementById('mensaje_consulta').textContent = `Se consultaron todos los registros del módulo ${rowData.nombre_modulo.split('_').join(' ')}.`;
+        else if(rowData.accion.toLowerCase() === 'iniciar sesion') document.getElementById('mensaje_consulta').textContent = `Incio de sesión exitoso.`;
+        else if(rowData.accion.toLowerCase() === 'cerrar sesion') document.getElementById('mensaje_consulta').textContent = `Cierre de sesión exitoso.`;
     } 
-    else if(rowData.accion.toLowerCase() === 'iniciar sesion'){
-        document.getElementById('detalle_consulta').classList.remove('d-none');
-        document.getElementById('detalle_cambios').classList.add('d-none');
-        document.getElementById('mensaje_consulta').textContent = `Incio de sesión exitoso.`;
-    }
-    else if(rowData.accion.toLowerCase() === 'cerrar sesion'){
-        document.getElementById('detalle_consulta').classList.remove('d-none');
-        document.getElementById('detalle_cambios').classList.add('d-none');
-        document.getElementById('mensaje_consulta').textContent = `Cierre de sesión exitoso.`;
-    }
     else {
         document.getElementById('detalle_consulta').classList.add('d-none');
         document.getElementById('detalle_cambios').classList.remove('d-none');
 
         // Mostrar valores anteriores y nuevos (si existen)
-        let anteriores = rowData.valores_anteriores || '{}';
-        let nuevos = rowData.valores_nuevos || '{}';
+        let anteriores = rowData.valores_anteriores ? JSON.parse(rowData.valores_anteriores) : {};
+        let nuevos = rowData.valores_nuevos ? JSON.parse(rowData.valores_nuevos) : {};
 
-        document.getElementById('valores_anteriores').textContent = formatearJSON(anteriores);
-        document.getElementById('valores_nuevos').textContent = formatearJSON(nuevos);
+        if (rowData.accion.toLowerCase() === 'registrar') {
+            document.getElementById('anteriores-tab').style.display = 'none';
+            document.getElementById('nuevos-tab').style.display = 'block';
+            document.getElementById('nuevos-tab').click(); // activar pestaña nuevos
+        } else if (rowData.accion.toLowerCase() === 'eliminar') {
+            document.getElementById('anteriores-tab').style.display = 'block';
+            document.getElementById('nuevos-tab').style.display = 'none';
+            document.getElementById('anteriores-tab').click(); // activar anteriores
+        } else {
+            // editar, ambas visibles
+            document.getElementById('anteriores-tab').style.display = 'block';
+            document.getElementById('nuevos-tab').style.display = 'block';
+        }
+
+        document.getElementById('valores_anteriores').innerHTML = objetoALista(anteriores);
+        document.getElementById('valores_nuevos').innerHTML = objetoALista(nuevos);
     }
 
     modalDetalle.show();
@@ -164,4 +171,21 @@ function consultar() {
         parametrosConsulta,
         configuracionFila
     );
+}
+
+function objetoALista(obj) {
+    if (!obj || Object.keys(obj).length === 0) {
+        return '<p class="text-muted">No hay datos</p>';
+    }
+    let html = '<ul class="list-group">';
+    for (let [key, value] of Object.entries(obj)) {
+        // Formatear el valor si es objeto o array
+        let valorMostrar = value;
+        if (typeof value === 'object' && value !== null) {
+            valorMostrar = JSON.stringify(value);
+        }
+        html += `<li class="list-group-item"><strong>${key}:</strong> ${valorMostrar}</li>`;
+    }
+    html += '</ul>';
+    return html;
 }

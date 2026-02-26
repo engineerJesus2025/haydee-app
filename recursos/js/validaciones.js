@@ -52,9 +52,9 @@ const Validaciones = {
             if (errorElement) errorElement.textContent = "";
 
             // Caso específico para las contraseñas en tu sistema (íconos de ojo)
-            if (input.id === "contra" || input.id === "confir_contra") {
-                input.nextElementSibling.classList.replace('border-danger', 'border-success');
-                input.nextElementSibling.classList.replace('text-danger', 'text-success');
+            if (input.id === "contra" || input.id === "confir_contra" || input.id === "contra_actual") {
+                input.nextElementSibling.classList.remove('border-danger', 'text-danger');
+                input.nextElementSibling.classList.add('border-success', 'text-success');
             }
             return true;
         } else {
@@ -63,9 +63,9 @@ const Validaciones = {
             if (errorElement) errorElement.textContent = mensajeError;
 
             // Caso específico contraseñas
-            if (input.id === "contra" || input.id === "confir_contra") {
-                input.nextElementSibling.classList.replace('border-success', 'border-danger');
-                input.nextElementSibling.classList.replace('text-success', 'text-danger');
+            if (input.id === "contra" || input.id === "confir_contra" || input.id === "contra_actual") {
+                input.nextElementSibling.classList.remove('border-success', 'text-success');
+                input.nextElementSibling.classList.add('border-danger', 'text-danger');
             }
             return false;
         }

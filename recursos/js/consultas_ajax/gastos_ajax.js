@@ -69,10 +69,6 @@ async function consultarGastos() {
             data: "tipo",
             render: data => data ? mayuscula(data) : ''
         },
-        { 
-            data: "proveedor",
-            render: data => data || "N/A"
-        },
         { data: "descripcion_gasto" },
         {
             data: null,
@@ -99,16 +95,16 @@ function crearBotones(id) {
     div.className = 'row justify-content-evenly';
     
     let html = `
-        <button type="button" class="btn btn-primary btn-sm col-3 vista-previa" title="Vista previa" value="${id}">
+        <button type="button" class="btn btn-primary btn-sm vista-previa" title="Vista previa" value="${id}">
             <i class="bi bi-eye-fill"></i>
         </button>
-        <button type="button" class="btn btn-success btn-sm col-3 modificar" title="modificar" value="${id}" data-bs-toggle="modal" data-bs-target="#modal_gastos">
+        <button type="button" class="btn btn-success btn-sm modificar" title="modificar" value="${id}" data-bs-toggle="modal" data-bs-target="#modal_gastos">
             <i class="bi bi-pencil-square"></i>
         </button>`;
     
     if (permiso_eliminar == 1) {
         html += `
-        <button type="button" class="btn btn-danger btn-sm col-3 eliminar" title="Eliminar" value="${id}">
+        <button type="button" class="btn btn-danger btn-sm eliminar" title="Eliminar" value="${id}">
             <i class="bi bi-trash"></i>
         </button>`;
     }

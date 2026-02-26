@@ -9,7 +9,6 @@
     ?>
     <!-- Una personalizacion que me invente para las contraseñas -->
     <style type="text/css">
-
         .contra{
             border: var(--bs-border-width) solid var(--bs-border-color);
             border-left: none;

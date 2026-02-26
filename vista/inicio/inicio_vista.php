@@ -82,12 +82,6 @@
 										<span class="placeholder w-100 rounded" style="height: 9rem"></span>
                                     </div>
                                     <canvas id="canva_1" hidden=""></canvas>
-									<div class="card-text placeholder-glow mb-2" id="esqueleto_dato_1_1">
-										<span class="placeholder w-100 rounded"></span>
-									</div>
-									<div class="card-text placeholder-glow" id="esqueleto_dato_2_1">
-										<span class="placeholder w-100 rounded"></span>
-									</div>
 									<div class="alert alert-warning text-center mx-auto" role="alert" id="div_alert_1" hidden="" style="width:fit-content;">
 									  No hay Datos para el gráfico
 									</div>
@@ -100,14 +94,24 @@
 										<span class="placeholder w-100 rounded" style="height: 9rem"></span>
                                     </div>
                                     <canvas id="canva_2" hidden=""></canvas>
+									<div class="alert alert-warning text-center mx-auto" role="alert" id="div_alert_2" hidden="" style="width:fit-content;">
+									  No hay Datos para el gráfico
+									</div>
+								</div>
+								<div class="col-lg-4 col-md-9 mt-2">
+									<div class="card-text placeholder-glow mb-2" id="esqueleto_dato_1_1">
+										<span class="placeholder w-100 rounded"></span>
+									</div>
+									<div class="card-text placeholder-glow" id="esqueleto_dato_2_1">
+										<span class="placeholder w-100 rounded"></span>
+									</div>
+								</div>
+								<div class="col-lg-7 col-md-9 text-center mt-2">
 									<div class="card-text placeholder-glow mb-2" id="esqueleto_dato_1_2">
 										<span class="placeholder w-100 rounded"></span>
 									</div>
 									<div class="card-text placeholder-glow" id="esqueleto_dato_2_2">
 										<span class="placeholder w-100 rounded"></span>
-									</div>
-									<div class="alert alert-warning text-center mx-auto" role="alert" id="div_alert_2" hidden="" style="width:fit-content;">
-									  No hay Datos para el gráfico
 									</div>
 								</div>
 							</div>
@@ -124,6 +128,28 @@
 			</div>
 		</div>
 	</div>
+	<template id="template-publicacion">
+	    <div class="col-11 card post-card mx-auto shadow-lg my-4 px-0">
+	        <div class="row g-0 h-100">
+	            <div class="col-md-7 order-md-1">
+	                <div class="content-area">
+	                    <h2 class="post-title h3"></h2>
+	                    <div class="post-meta my-2 mb-5">
+	                        <small class="text-uppercase fw-bold"></small>
+	                        <span class="author-badge ms-2"></span>
+	                    </div>
+	                    <p class="post-description flex-grow-1"></p>
+	                </div>
+	            </div>
+	            <div class="col-md-5 order-md-2 d-flex align-items-center">
+	                <div class="image-container w-100">
+	                    <img class="post-image" alt="Imagen de la publicación">
+	                </div>
+	            </div>
+	        </div>
+	    </div>
+	</template>
+
 	<?php require_once "vista/componentes/footer.php"; ?>
 	<script type="text/javascript" src="recursos/estadisticas/chart.js"></script>
 	<script src="recursos/js/consultas_ajax/inicio_ajax.js"></script>

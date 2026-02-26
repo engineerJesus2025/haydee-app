@@ -60,14 +60,13 @@
                                     </div>
                                 <?php endif; ?>
                                 <div class="table-responsive">
-                                    <table id="tabla_gastos" class="table table-striped table-hover" style="width:97%;">
+                                    <table id="tabla_gastos" class="table table-striped table-hover">
                                         <thead>
                                             <tr>
                                                 <th>FECHA</th>
                                                 <th>MONTO</th>
                                                 <th>TIPO</th>
                                                 <th>TIPO GASTO</th>
-                                                <th>PROVEEDOR</th>
                                                 <th>DESCRIPCION</th>
                                                 <th class="text-center">ACCIONES</th>
                                         </thead>

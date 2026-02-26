@@ -12,6 +12,7 @@
                         <option value="" disabled selected>Seleccione un tipo</option>
                         <option value="fijo">Fijo</option>
                         <option value="variable">Variable</option>
+                        <option hidden value="Reposición">Reposición</option>
                     </select>
                     <span class="w-100 invalid-feedback"></span>
                 </div>

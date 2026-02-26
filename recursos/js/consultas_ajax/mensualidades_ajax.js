@@ -314,7 +314,7 @@ function manejarClickEnTabla(e) {
     if (btn.classList.contains('vista-previa')) {
         mostrarVistaPrevia(fila, fecha);
     } else if (btn.classList.contains('modificar')) {
-        prepararEdicion(fila, fecha, btn.dataset.ids, btn.dataset.apartamentos);
+        prepararModificarcion(fila, fecha, btn.dataset.ids, btn.dataset.apartamentos);
     } else if (btn.classList.contains('eliminar')) {
         confirmarEliminar(fecha);
     } else if (btn.classList.contains('cuadro-pagos')) {
@@ -368,7 +368,7 @@ async function mostrarVistaPrevia(fila, fecha) {
     modalApartamentos.show();
 }
 
-async function prepararEdicion(fila, fecha, ids, idsApartamentos) {
+async function prepararModificarcion(fila, fecha, ids, idsApartamentos) {
     // ===== Manejo del select de fecha =====
     const select = selectMesAsignar;
     // Buscar si ya existe una opción con esa fecha
@@ -434,7 +434,7 @@ async function prepararEdicion(fila, fecha, ids, idsApartamentos) {
 }
 
 // ============================================================
-// REGISTRO Y EDICIÓN MASIVA
+// REGISTRO Y modificarCIÓN MASIVA
 // ============================================================
 
 function recolectarDatosTabla() {
