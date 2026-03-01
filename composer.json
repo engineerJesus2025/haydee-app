@@ -10,7 +10,8 @@
         "files": [
             "config/acciones.php",
             "config/modulos.php",
-            "config/config.php"
+            "config/config.php",
+            "config/rutas.php"
         ]
     },
     "require": {

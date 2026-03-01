@@ -3,7 +3,6 @@
 use haydee\ayuda\Sesiones;
 use haydee\modelo\Rol;
 use haydee\modelo\Usuario;
-use haydee\modelo\Notificaciones;
 use haydee\modelo\Bitacora;
 
 // Verificaciones de seguridad
@@ -18,8 +17,6 @@ $roles = $rol_obj->realizar_consulta('consultar');
 $usuario = new Usuario();
 
 if (isset($_POST["operacion"])) {
-    header('Content-Type: application/json');
-
     // Asignación masiva de campos que pueden llegar (usuario)
     $usuario->set_id_usuario($_POST['id_usuario'] ?? null);
     $usuario->set_apellido($_POST['apellido'] ?? null);
@@ -109,9 +106,25 @@ if (isset($_POST["operacion"])) {
     } catch (Exception $e) {
         error_log("Error en controlador: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
+    } finally {
+        if ($respuesta !== null) {
+            // Cerrar conexiones explícitamente
+            if (isset($usuario)) {
+                $usuario->cerrar();
+            }
+            if (isset($rol_obj)) {
+                $rol_obj->cerrar();
+            }
+            if (isset($usuario)) {
+                $usuario->cerrar();
+            }
+            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexión de seguridad
+
+            header('Content-Type: application/json');
+            echo json_encode($respuesta);
+            exit;
+        }
     }
-    echo json_encode($respuesta);
-    exit;
 }
 
 // Validaciones AJAX

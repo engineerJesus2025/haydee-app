@@ -14,8 +14,6 @@ $usuario = new Usuario();
 $usuarios = $usuario->realizar_consulta('consultar')['datos'] ?? [];
 
 if (isset($_POST["operacion"])) {
-    header('Content-Type: application/json');
-
     // Asignación masiva
     $cartelera->set_id_cartelera($_POST['id_cartelera'] ?? null);
     $cartelera->set_titulo($_POST['titulo'] ?? null);
@@ -33,11 +31,8 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $cartelera->realizar_consulta('consultar');
                 if ($respuesta['estatus']) {
                     Bitacora::registrar(CONSULTAR, GESTIONAR_CARTELERA_VIRTUAL, 'Consulta general de cartelera');
-                    echo json_encode(['datos' => $respuesta['datos']]);
-                } else {
-                    echo json_encode(['datos' => [], 'error' => $respuesta['mensaje']]);
                 }
-                exit;
+                break;
 
             case 'registrar':
                 $nombreImagen = '';
@@ -129,13 +124,20 @@ if (isset($_POST["operacion"])) {
         }
     } catch (Exception $e) {
         error_log("Error en controlador cartelera virtual: " . $e->getMessage());
-        $respuesta = ['estatus' => false, 'mensaje' => $e->getMessage()];
-    }
+        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
+    } finally {
+        if ($respuesta !== null) {
+            // Cerrar conexiones explícitamente
+            if (isset($cartelera)) {
+                $cartelera->cerrar();
+            }
+            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexión de seguridad
 
-    if ($operacion !== 'consulta') {
-        echo json_encode($respuesta);
+            header('Content-Type: application/json');
+            echo json_encode($respuesta);
+            exit;
+        }
     }
-    exit;
 }
 require_once "vista/cartelera_virtual/cartelera_virtual_vista.php";
 ?>

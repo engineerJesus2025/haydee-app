@@ -11,8 +11,6 @@ Sesiones::verificarPermiso(GESTIONAR_ANIO_FISCAL, CONSULTAR);
 $anioFiscal = new AnioFiscal();
 
 if (isset($_POST["operacion"])) {
-    header('Content-Type: application/json');
-
     // Asignación masiva de campos que pueden llegar
     $anioFiscal->set_id_anio_fiscal($_POST['id_anio_fiscal'] ?? null);
     $anioFiscal->set_fecha_inicio($_POST['fecha_inicio'] ?? null);
@@ -92,10 +90,18 @@ if (isset($_POST["operacion"])) {
     } catch (Exception $e) {
         error_log("Error en controlador: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
+    } finally {
+        if ($respuesta !== null) {
+            // Cerrar conexiones explícitamente
+            if (isset($anioFiscal)) {
+                $anioFiscal->cerrar();
+            }
+            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexión de seguridad
+            header('Content-Type: application/json');
+            echo json_encode($respuesta);
+            exit;
+        }
     }
-
-    echo json_encode($respuesta);
-    exit;
 }
 
 // Cargar la vista

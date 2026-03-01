@@ -25,8 +25,6 @@ $banco = new Banco();
 $apartamento = new Apartamento();
 
 if (isset($_POST["operacion"])) {
-    header('Content-Type: application/json');
-
     // Asignación masiva de propiedades esenciales
     $pagos->set_id_pago($_POST['id_pago'] ?? null);
     $pagos->set_id_detalle_pago($_POST['id_detalle_pago'] ?? null);
@@ -53,12 +51,7 @@ if (isset($_POST["operacion"])) {
                 break;
 
             case 'consultar_mensualidades':
-                $apartamento_id = $_POST['apartamento_id'] ?? null;
-                if ($apartamento_id) {
-                    $respuesta = $pagos->realizar_consulta('consultar_mensualidades_pendientes_por_apartamento', $apartamento_id);
-                } else {
-                    $respuesta = ['estatus' => false, 'mensaje' => 'ID de apartamento no proporcionado'];
-                }
+                $respuesta = $pagos->realizar_consulta('consultarMensualidadPendiente');
                 break;
 
             case 'consultar_mensualidad_especifica':
@@ -66,8 +59,7 @@ if (isset($_POST["operacion"])) {
                 break;
 
             case 'consultar_detalles':
-                $result = $pagos->realizar_consulta('consultar_pago_unico');
-                $respuesta = $result['estatus'] ? ['estatus' => true, 'datos' => $result['datos'] ?? []] : $result;
+                $respuesta = $pagos->realizar_consulta('consultar_pago_unico');
                 break;
 
             case 'consulta_especifica':
@@ -194,10 +186,25 @@ if (isset($_POST["operacion"])) {
     } catch (Exception $e) {
         error_log("Error en controlador pagos: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
-    }
+    } finally {
+        if ($respuesta !== null) {
+            // Cerrar conexiones explícitamente
+            if (isset($pagos)) {
+                $pagos->cerrar();
+            }
+            if (isset($banco)) {
+                $banco->cerrar();
+            }
+            if (isset($apartamento)) {
+                $apartamento->cerrar();
+            }
+            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexión de seguridad
 
-    echo json_encode($respuesta);
-    exit;
+            header('Content-Type: application/json');
+            echo json_encode($respuesta);
+            exit;
+        }
+    }
 }
 
 // Validaciones AJAX

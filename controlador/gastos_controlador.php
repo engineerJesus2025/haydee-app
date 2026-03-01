@@ -23,8 +23,6 @@ $solicitudGasto = new SolicitudGasto();
 $tipoGasto = new TipoGasto();
 
 if (isset($_POST["operacion"])) {
-    header('Content-Type: application/json');
-
     // =========================================================
     // ASIGNACIÓN MASIVA DE CAMPOS ESCALARES
     // =========================================================
@@ -34,6 +32,8 @@ if (isset($_POST["operacion"])) {
     $gastos->set_solicitud_id($_POST['solicitud'] ?? null);
     $gastos->set_tipo_gasto_id($_POST['tipo_gasto'] ?? null);
     $gastos->set_proveedor_id($_POST['proveedor'] ?? null);
+    $gastos->set_id_detalle_gasto($_POST['id_detalle_gasto'] ?? null);
+    $gastos->set_fecha($_POST['fecha'] ?? null);
 
     $operacion = $_POST["operacion"];
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
@@ -47,30 +47,19 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $gastos->realizar_consulta('consultar_gastos');
                 if ($respuesta['estatus']) {
                     Bitacora::registrar(CONSULTAR, GESTIONAR_GASTOS, 'Consulta general de gastos');
-                    echo json_encode(['datos' => $respuesta['datos']]);
-                } else {
-                    echo json_encode(['datos' => [], 'error' => $respuesta['mensaje']]);
                 }
-                exit;
+                break;
 
             case 'consulta_especifica':
-                $gastos->set_id_gasto($_POST['id_gasto'] ?? null);
                 $respuesta = $gastos->realizar_consulta('consultar_gasto_unico');
                 // Se devuelve con estatus/datos (para el formulario de edición)
                 break;
 
             case 'consultar_detalles':
-                $gastos->set_id_gasto($_POST['id_gasto'] ?? null);
                 $respuesta = $gastos->realizar_consulta('consultar_detalles_por_gasto');
-                if ($respuesta['estatus']) {
-                    echo json_encode($respuesta);
-                } else {
-                    echo json_encode(['datos' => [], 'error' => $respuesta['mensaje']]);
-                }
-                exit;
+                break;
 
             case 'consulta_especifica_detalles':
-                $gastos->set_id_detalle_gasto($_POST['id_detalle_gasto'] ?? null);
                 $respuesta = $gastos->realizar_consulta('consultar_detalle_unico');
                 break;
 
@@ -164,29 +153,15 @@ if (isset($_POST["operacion"])) {
             // =========================================================
             case 'listar_gastos_mes':
                 $respuesta = $gastos->realizar_consulta('listar_gastos_mes');
-                if ($respuesta['estatus']) {
-                    echo json_encode(['datos' => $respuesta['datos']]);
-                } else {
-                    echo json_encode(['datos' => [], 'error' => $respuesta['mensaje']]);
-                }
-                exit;
+                break;
 
             case 'filtrar_gastos_mes':
-                $gastos->set_fecha($_POST['fecha'] ?? null);
                 $respuesta = $gastos->realizar_consulta('filtrar_por_mes');
-                if ($respuesta['estatus']) {
-                    echo json_encode(['datos' => $respuesta['datos']]);
-                } else {
-                    echo json_encode(['datos' => [], 'error' => $respuesta['mensaje']]);
-                }
-                exit;
+                break;
 
             case 'totales_metodo_pago':
-                $gastos->set_fecha($_POST['fecha'] ?? null);
                 $respuesta = $gastos->realizar_consulta('total_por_metodo_pago');
-                // Se espera que sea un array con totales
-                echo json_encode($respuesta);
-                exit;
+                break;
 
             case 'ultimo_id':
                 $respuesta = $gastos->realizar_consulta('lastId');
@@ -197,12 +172,20 @@ if (isset($_POST["operacion"])) {
         }
     } catch (Exception $e) {
         error_log("Error en controlador gastos: " . $e->getMessage());
-        $respuesta = ['estatus' => false, 'mensaje' => $e->getMessage()];
-    }
+        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
+    } finally {
+        if ($respuesta !== null) {
+            // Cerrar conexiones explícitamente
+            if (isset($gastos)) {
+                $gastos->cerrar();
+            }
+            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexión de seguridad
 
-    // Para las acciones que no hicieron echo directo, enviamos JSON
-    echo json_encode($respuesta);
-    exit;
+            header('Content-Type: application/json');
+            echo json_encode($respuesta);
+            exit;
+        }
+    }
 }
 
 // =========================================================

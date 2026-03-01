@@ -11,7 +11,6 @@ $bitacora = new Bitacora();
 
 // Validamos si es una petición AJAX (POST)
 if (isset($_POST["operacion"])) {
-    header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
     
     // Respuesta por defecto
@@ -38,12 +37,19 @@ if (isset($_POST["operacion"])) {
         }
     } catch (Exception $e) {
         error_log("Error en controlador Bitacora: " . $e->getMessage());
-        $respuesta['mensaje'] = 'Error interno del servidor';
-    }
+        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
+    } finally {
+        if ($respuesta !== null) {
+            // Cerrar conexiones explícitamente
+            if (isset($bitacora)) {
+                $bitacora->cerrar();
+            }
 
-    // ÚNICO PUNTO DE SALIDA PARA AJAX
-    echo json_encode($respuesta);
-    exit;
+            header('Content-Type: application/json');
+            echo json_encode($respuesta);
+            exit;
+        }
+    }
 }
 
 // Si no es una petición POST, cargamos la vista

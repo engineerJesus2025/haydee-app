@@ -11,8 +11,6 @@ Sesiones::verificarPermiso(GESTIONAR_BANCOS, CONSULTAR);
 $banco = new Banco();
 
 if (isset($_POST["operacion"])) {
-    header('Content-Type: application/json');
-
     // Asignación masiva de campos que pueden llegar
     $banco->set_id_banco($_POST['id_banco'] ?? null);
     $banco->set_nombre_banco($_POST['nombre_banco'] ?? null);
@@ -30,11 +28,8 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $banco->realizar_consulta('consultar');
                 if ($respuesta['estatus']) {
                     Bitacora::registrar(CONSULTAR, GESTIONAR_BANCOS, 'Consulta general de bancos');
-                    echo json_encode(['datos' => $respuesta['datos']]);
-                } else {
-                    echo json_encode(['datos' => [], 'error' => $respuesta['mensaje']]);
                 }
-                exit; // Salir para no ejecutar el echo final
+                break;
 
             case 'registrar':
                 $respuesta = $banco->realizar_consulta('registrar');
@@ -97,15 +92,22 @@ if (isset($_POST["operacion"])) {
             default:
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
-
-        // Para las acciones que no son 'consulta', enviamos JSON aquí
-        echo json_encode($respuesta);
-
     } catch (Exception $e) {
         error_log("Error en controlador: " . $e->getMessage());
-        echo json_encode(['estatus' => false, 'mensaje' => 'Error interno del servidor']);
+        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
+    } finally {
+        if ($respuesta !== null) {
+            // Cerrar conexiones explícitamente
+            if (isset($banco)) {
+                $banco->cerrar();
+            }
+            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexión de seguridad
+
+            header('Content-Type: application/json');
+            echo json_encode($respuesta);
+            exit;
+        }
     }
-    exit;
 }
 
 // Validaciones AJAX (para verificar número de cuenta)

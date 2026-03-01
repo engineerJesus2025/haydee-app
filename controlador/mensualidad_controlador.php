@@ -11,8 +11,6 @@ Sesiones::verificarPermiso(GESTIONAR_MENSUALIDAD, CONSULTAR);
 $mensualidad = new Mensualidad();
 
 if (isset($_POST["operacion"])) {
-    header('Content-Type: application/json');
-
     // Asignación masiva de campos comunes
     $mensualidad->set_id_mensualidad($_POST['id_mensualidad'] ?? null);
     $mensualidad->set_monto($_POST['monto'] ?? null);
@@ -40,11 +38,8 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $mensualidad->realizar_consulta('consultarPorMeses');
                 if ($respuesta['estatus']) {
                     Bitacora::registrar(CONSULTAR, GESTIONAR_MENSUALIDAD, 'Consulta de mensualidades por mes');
-                    echo json_encode(['datos' => $respuesta['datos']]);
-                } else {
-                    echo json_encode(['datos' => [], 'error' => $respuesta['mensaje']]);
                 }
-                exit;
+                break;
 
             case 'consultar_mensualidades_apartamentos':
                 $fecha = $_POST["fecha"] ?? '';
@@ -55,38 +50,28 @@ if (isset($_POST["operacion"])) {
                 
                 $respuesta = $mensualidad->realizar_consulta('consultar_mensualidad_apartamentos');
 
-                echo json_encode($respuesta);
-
-                exit;
+                break;
 
             case 'consultar_presupuestos_asociados':
                 $mensualidad->set_ids_mensualidades($_POST['ids_mensualidades'] ?? '');
                 $respuesta = $mensualidad->realizar_consulta('consultar_presupuestos_asociados');
-                    echo json_encode($respuesta);
-                exit;
+                    break;
 
             case 'consultar_presupuestos_mensualidades':
                 $presupuesto = new Presupuesto();
                 $fecha = $_POST["fecha"] ?? '';
                 $presupuesto->set_fecha($fecha);
                 $respuesta = $presupuesto->realizar_consulta('consultar_presupuestos_mensualidades');
-                echo json_encode($respuesta);
-                exit;
+                break;
 
             case 'consultar_meses_mensualidad':
                 $respuesta = $mensualidad->realizar_consulta('consultar_meses_mensualidad');
-                if ($respuesta['estatus']) {
-                    echo json_encode(['datos' => $respuesta['datos']]);
-                } else {
-                    echo json_encode(['datos' => [], 'error' => $respuesta['mensaje']]);
-                }
-                exit;
+                break;
 
             case 'consultar_tasa_dolar':
                 $respuesta = $mensualidad->realizar_consulta('consultar_tasa_dolar_mensualidades');
                 // Se espera un objeto con datos
-                echo json_encode($respuesta);
-                exit;
+                break;
 
             // =========================================================
             // OPERACIONES MASIVAS (REGISTRAR/modificar)
@@ -140,11 +125,26 @@ if (isset($_POST["operacion"])) {
         }
     } catch (Exception $e) {
         error_log("Error en controlador mensualidad: " . $e->getMessage());
-        $respuesta = ['estatus' => false, 'mensaje' => $e->getMessage()];
-    }
+        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
+    } finally {
+        if ($respuesta !== null) {
+            // Cerrar conexiones explícitamente
+            if (isset($mensualidad)) {
+                $mensualidad->cerrar();
+            }
+            if (isset($presupuesto)) {
+                $presupuesto->cerrar();
+            }
+            if (isset($apartamento)) {
+                $apartamento->cerrar();
+            }
+            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexión de seguridad
 
-    echo json_encode($respuesta);
-    exit;
+            header('Content-Type: application/json');
+            echo json_encode($respuesta);
+            exit;
+        }
+    }
 }
 
 if (isset($_POST["validar"])) {

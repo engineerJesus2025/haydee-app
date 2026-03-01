@@ -11,8 +11,6 @@ Sesiones::verificarPermiso(GESTIONAR_PROVEEDORES, CONSULTAR);
 $proveedor = new Proveedores();
 
 if (isset($_POST["operacion"])) {
-    header('Content-Type: application/json');
-
     // Asignación masiva de campos que pueden llegar
     $proveedor->set_id_proveedor($_POST['id_proveedor'] ?? null);
     $proveedor->set_nombre_proveedor($_POST['nombre_proveedor'] ?? null);
@@ -102,10 +100,19 @@ if (isset($_POST["operacion"])) {
     } catch (Exception $e) {
         error_log("Error en controlador: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
-    }
+    } finally {
+        if ($respuesta !== null) {
+            // Cerrar conexiones explícitamente
+            if (isset($proveedor)) {
+                $proveedor->cerrar();
+            }
+            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexión de seguridad
 
-    echo json_encode($respuesta);
-    exit;
+            header('Content-Type: application/json');
+            echo json_encode($respuesta);
+            exit;
+        }
+    }
 }
 
 // Cargar la vista

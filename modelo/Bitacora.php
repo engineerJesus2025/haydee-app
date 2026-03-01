@@ -101,42 +101,46 @@ class Bitacora extends Conexion
         return self::$instancia;
     }
 
-    // En la clase Bitacora, modificar el método registrar:
+    // En la clase Bitacora registrar para usarlo en cualquier modulo
+    public static function registrar($accion, $moduloId, $registroAlt = null, $usuarioId = null, $valores_anteriores = null, $valores_nuevos = null)
+    {
+        $instancia = self::getInstancia();
+        $pdo = $instancia->get_conex('seguridad');
 
-public static function registrar($accion, $moduloId, $registroAlt = null, $usuarioId = null, $valores_anteriores = null, $valores_nuevos = null)
-{
-    $instancia = self::getInstancia();
-    $pdo = $instancia->get_conex('seguridad');
+        if ($usuarioId === null && isset($_SESSION['id_usuario'])) {
+            $usuarioId = $_SESSION['id_usuario'];
+        }
 
-    if ($usuarioId === null && isset($_SESSION['id_usuario'])) {
-        $usuarioId = $_SESSION['id_usuario'];
+        if (!$usuarioId) {
+            error_log("Bitácora: No se pudo registrar porque falta el usuario.");
+            return false;
+        }
+
+        // Convertir arrays a JSON, si no se proporcionan, usar '{}'
+        $anteriores_json = is_array($valores_anteriores) ? json_encode($valores_anteriores, JSON_UNESCAPED_UNICODE) : '{}';
+        $nuevos_json = is_array($valores_nuevos) ? json_encode($valores_nuevos, JSON_UNESCAPED_UNICODE) : '{}';
+
+        $sql = "INSERT INTO bitacora (fecha_hora, accion, registro_alterado, usuario_id, modulo_id, valores_anteriores, valores_nuevos)
+                VALUES (NOW(), :accion, :registro_alterado, :usuario_id, :modulo_id, :anteriores, :nuevos)";
+
+        try {
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindParam(':accion', $accion);
+            $stmt->bindParam(':registro_alterado', $registroAlt);
+            $stmt->bindParam(':usuario_id', $usuarioId);
+            $stmt->bindParam(':modulo_id', $moduloId);
+            $stmt->bindParam(':anteriores', $anteriores_json);
+            $stmt->bindParam(':nuevos', $nuevos_json);
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            error_log("Error al registrar en bitácora: " . $e->getMessage());
+            return false;
+        }
     }
 
-    if (!$usuarioId) {
-        error_log("Bitácora: No se pudo registrar porque falta el usuario.");
-        return false;
+    // para cerrar la conexion estatica de bitacora
+    public static function cerrarConexionBitacora() {
+        $instancia = self::getInstancia();
+        $instancia->cerrar('seguridad');
     }
-
-    // Convertir arrays a JSON, si no se proporcionan, usar '{}'
-    $anteriores_json = is_array($valores_anteriores) ? json_encode($valores_anteriores, JSON_UNESCAPED_UNICODE) : '{}';
-    $nuevos_json = is_array($valores_nuevos) ? json_encode($valores_nuevos, JSON_UNESCAPED_UNICODE) : '{}';
-
-    $sql = "INSERT INTO bitacora (fecha_hora, accion, registro_alterado, usuario_id, modulo_id, valores_anteriores, valores_nuevos)
-            VALUES (NOW(), :accion, :registro_alterado, :usuario_id, :modulo_id, :anteriores, :nuevos)";
-
-    try {
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(':accion', $accion);
-        $stmt->bindParam(':registro_alterado', $registroAlt);
-        $stmt->bindParam(':usuario_id', $usuarioId);
-        $stmt->bindParam(':modulo_id', $moduloId);
-        $stmt->bindParam(':anteriores', $anteriores_json);
-        $stmt->bindParam(':nuevos', $nuevos_json);
-        return $stmt->execute();
-    } catch (PDOException $e) {
-        error_log("Error al registrar en bitácora: " . $e->getMessage());
-        return false;
-    }
-}
-    
 }

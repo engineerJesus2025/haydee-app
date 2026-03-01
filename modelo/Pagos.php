@@ -222,7 +222,7 @@ class Pagos extends Conexion
     /**
      * Consulta mensualidades pendientes de un apartamento (original)
      */
-    public function consultarMensualidadPendiente($id_apartamento)
+    public function _consultarMensualidadPendiente()
     {
         $sql = "SELECT 
                     m.id_mensualidad,
@@ -243,7 +243,7 @@ class Pagos extends Conexion
                 ORDER BY m.anio, m.mes";
         try {
             $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->bindParam(':id_apartamento', $id_apartamento, PDO::PARAM_INT);
+            $stmt->bindParam(':id_apartamento', $this->apartamento_id, PDO::PARAM_INT);
             $stmt->execute();
             $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
             return ['estatus' => true, 'datos' => $datos];
@@ -469,11 +469,6 @@ class Pagos extends Conexion
             error_log("Error en _consultar_detalle_unico: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al consultar detalle'];
         }
-    }
-
-    private function _consultar_mensualidades_pendientes_por_apartamento($apartamento_id)
-    {
-        return $this->consultarMensualidadPendiente($apartamento_id);
     }
 
     private function _consultar_mensualidad_especifica()

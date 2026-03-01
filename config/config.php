@@ -10,7 +10,7 @@ use Dotenv\Dotenv;
 
 // Cargar variables del .env (que está en la raíz del proyecto)
 $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
-$dotenv->load();
+$dotenv->safeLoad();
 
 // Definir constantes a partir de las variables de entorno
 define("DB_NAME", $_ENV['DB_NAME'] ?? 'haydee_db');

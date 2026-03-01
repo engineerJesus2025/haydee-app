@@ -9,7 +9,6 @@ Sesiones::verificarPermiso(GESTIONAR_PERMISOS, CONSULTAR); // Ajusta según tus 
 $permiso = new Permisos();
 
 if (isset($_POST["operacion"])) {
-    header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
     $permiso->set_id_permiso($_POST['id_permiso'] ?? null);
     $permiso->set_accion($_POST['accion'] ?? null);
@@ -20,11 +19,8 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $permiso->realizar_consulta('consultar');
                 if ($respuesta['estatus']) {
                     Bitacora::registrar(CONSULTAR, GESTIONAR_PERMISOS, 'Consulta general de módulos');
-                    echo json_encode(['datos' => $respuesta['datos']]);
-                } else {
-                    echo json_encode(['datos' => [], 'error' => $respuesta['mensaje']]);
                 }
-                exit;
+                break;
 
             case 'consultar_unico':
                 $respuesta = $permiso->realizar_consulta('consultar_unico');
@@ -70,11 +66,20 @@ if (isset($_POST["operacion"])) {
         }
     } catch (Exception $e) {
         error_log("Error en controlador: " . $e->getMessage());
-        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
-    }
+        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
+    } finally {
+        if ($respuesta !== null) {
+            // Cerrar conexiones explícitamente
+            if (isset($permiso)) {
+                $permiso->cerrar();
+            }
+            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexión de seguridad
 
-    echo json_encode($respuesta);
-    exit;
+            header('Content-Type: application/json');
+            echo json_encode($respuesta);
+            exit;
+        }
+    }
 }
 
 // Cargar vista (si existe)

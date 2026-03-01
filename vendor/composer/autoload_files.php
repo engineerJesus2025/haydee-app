@@ -24,4 +24,5 @@ return array(
     '45444b0beefb92a98f8cd71d64878146' => $baseDir . '/config/acciones.php',
     '5f6ea70646faeb1e98e0fc6d80552182' => $baseDir . '/config/modulos.php',
     '42e3dc2cf7383276e8c418f14b63f194' => $baseDir . '/config/config.php',
+    '9bbd65f5b9ae3163acdb7bc7779b0c0a' => $baseDir . '/config/rutas.php',
 );

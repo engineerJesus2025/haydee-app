@@ -10,8 +10,6 @@ Sesiones::verificarPermiso(GESTIONAR_PRESUPUESTO, CONSULTAR);
 $presupuesto = new Presupuesto();
 
 if (isset($_POST["operacion"])) {
-    header('Content-Type: application/json');
-
     // Asignación masiva de propiedades comunes
     $presupuesto->set_id_presupuesto($_POST['id_presupuesto'] ?? null);
     $presupuesto->set_fecha($_POST['fecha'] ?? null);
@@ -28,26 +26,21 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $presupuesto->realizar_consulta('consultar_general');
                 if ($respuesta['estatus']) {
                     Bitacora::registrar(CONSULTAR, GESTIONAR_PRESUPUESTO, 'Consulta general de presupuestos');
-                    echo json_encode(['datos' => $respuesta['datos']]);
-                } else {
-                    echo json_encode(['datos' => [], 'error' => $respuesta['mensaje']]);
                 }
-                exit;
+                break;
 
             case 'consultar_meses_faltantes':
                 $respuesta = $presupuesto->realizar_consulta('consultar_meses_faltantes');
                
-                echo json_encode($respuesta);
-                
-                exit;
+                break;
 
             case 'consultar_tipo_gastos':
                 $tipoGasto = new TipoGasto();
                 $respuesta = $tipoGasto->realizar_consulta('consultar');
                 
-                echo json_encode($respuesta);
+                $tipoGasto->cerrar(); // Cierre explícito de la conexión de TipoGasto
                 
-                exit;
+                break;
 
             case 'consulta_especifica':
                 $respuesta = $presupuesto->realizar_consulta('consultar_unico');
@@ -55,8 +48,7 @@ if (isset($_POST["operacion"])) {
                 break;
 
             case 'consultar_detalles_presupuestos':
-                // En realidad, consultar_unico ya trae los detalles, pero si se necesita solo detalles, se puede usar otro método.
-                // Por simplicidad, reutilizamos consultar_unico.
+                // En realidad, consultar_unico ya trae los detalles, pero si se necesita solo detalles, se puede usar otro método. :P
                 $respuesta = $presupuesto->realizar_consulta('consultar_unico');
                 break;
 
@@ -137,11 +129,20 @@ if (isset($_POST["operacion"])) {
         }
     } catch (Exception $e) {
         error_log("Error en controlador presupuesto: " . $e->getMessage());
-        $respuesta = ['estatus' => false, 'mensaje' => $e->getMessage()];
-    }
+        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
+    } finally {
+        if ($respuesta !== null) {
+            // Cerrar conexiones explícitamente
+            if (isset($presupuesto)) {
+                $presupuesto->cerrar();
+            }
+            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexión de seguridad
 
-    echo json_encode($respuesta);
-    exit;
+            header('Content-Type: application/json');
+            echo json_encode($respuesta);
+            exit;
+        }
+    }
 }
 
 if (isset($_POST["validar"])) {

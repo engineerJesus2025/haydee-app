@@ -11,8 +11,6 @@ Sesiones::verificarPermiso(GESTIONAR_MANTENIMIENTO, CONSULTAR);
 $mantenimiento = new Mantenimiento();
 
 if (isset($_POST["operacion"])) {
-    header('Content-Type: application/json');
-
     $operacion = $_POST["operacion"];
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
@@ -103,10 +101,19 @@ if (isset($_POST["operacion"])) {
     } catch (Exception $e) {
         error_log("Error en controlador: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
-    }
+    } finally {
+        if ($respuesta !== null) {
+            // Cerrar conexiones explícitamente
+            if (isset($mantenimiento)) {
+                $mantenimiento->cerrar();
+            }
+            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexión de seguridad
 
-    echo json_encode($respuesta);
-    exit;
+            header('Content-Type: application/json');
+            echo json_encode($respuesta);
+            exit;
+        }
+    }
 }
 
 // Bitácora de acceso al módulo (solo al cargar la vista)

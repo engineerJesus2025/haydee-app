@@ -27,7 +27,11 @@ class Sesiones
 
         // Verificar año fiscal (proceso automático)
         $anioFiscalModel = new AnioFiscal();
-        $anioFiscalModel->realizar_consulta('verificar_anio_fiscal');
+        try {
+            $anioFiscalModel->realizar_consulta('verificar_anio_fiscal');
+        } finally {
+            $anioFiscalModel->cerrar();
+        }
     }
 
     /**
@@ -53,20 +57,27 @@ class Sesiones
      */
     private static function procesarTokenRecuerdame()
     {
-        $token = $_COOKIE['token'];
-        $correo = $_COOKIE['correo_usuario'];
+        $autenticacion = null;
+        try {
+            $token = $_COOKIE['token'];
+            $correo = $_COOKIE['correo_usuario'];
 
-        $autenticacion = new Autenticacion();
-        $resultado = $autenticacion->validarTokenRecuerdame($correo, $token);
-        if ($resultado['estatus']) {
-            self::iniciar($resultado['datos']);
-            return true;
-        } else {
-            // Token inválido, eliminar cookies
-            setcookie('token', '', time() - 3600, '/');
-            setcookie('correo_usuario', '', time() - 3600, '/');
-            self::redirigirALogin();
-            return false;
+            $autenticacion = new Autenticacion();
+            $resultado = $autenticacion->validarTokenRecuerdame($correo, $token);
+            if ($resultado['estatus']) {
+                self::iniciar($resultado['datos']);
+                return true;
+            } else {
+                // Token inválido, eliminar cookies
+                setcookie('token', '', time() - 3600, '/');
+                setcookie('correo_usuario', '', time() - 3600, '/');
+                self::redirigirALogin();
+                return false;
+            }
+        } finally {
+            if ($autenticacion) {
+                $autenticacion->cerrar();
+            }
         }
     }
 

@@ -16,8 +16,6 @@ $roles = $rol_obj->realizar_consulta('consultar_roles');
 $usuario = new Usuario();
 
 if (isset($_POST["operacion"])) {
-    header('Content-Type: application/json');
-
     // Asignación masiva de campos que pueden llegar (usuario)
     $usuario->set_id_usuario($_SESSION["id_usuario"] ?? null); // El ID siempre es el de sesión para perfil
     $usuario->set_apellido($_POST['apellido'] ?? null);
@@ -79,10 +77,25 @@ if (isset($_POST["operacion"])) {
     } catch (Exception $e) {
         error_log("Error en controlador: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
-    }
+    } finally {
+        if ($respuesta !== null) {
+            // Cerrar conexiones explícitamente
+            if (isset($usuario)) {
+                $usuario->cerrar('seguridad');
+            }
+            if (isset($rol_obj)) {
+                $rol_obj->cerrar('seguridad');
+            }
+            if (isset($notificaciones)) {
+                $notificaciones->cerrar('seguridad');
+            }
+            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexión de seguridad
 
-    echo json_encode($respuesta);
-    exit;
+            header('Content-Type: application/json');
+            echo json_encode($respuesta);
+            exit;
+        }
+    }
 }
 
 // Validaciones AJAX

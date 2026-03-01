@@ -9,8 +9,6 @@ Sesiones::verificarSesion();
 $notificaciones = new Notificaciones();
 
 if (isset($_POST["operacion"])) {
-    header('Content-Type: application/json');
-
     // Asignación masiva de campos que pueden llegar
     $notificaciones->set_id_notificacion($_POST['id'] ?? null);      // El frontend envía 'id' para marcar una
     $notificaciones->set_usuario_id($_SESSION['id_usuario'] ?? null); // Siempre usamos el de sesión
@@ -21,9 +19,7 @@ if (isset($_POST["operacion"])) {
     try {
         switch ($operacion) {
             case 'consultar':
-                // Consultar notificaciones del usuario actual
                 $respuesta = $notificaciones->realizar_consulta('consultar_mis_notificaciones');
-                // No se registra bitácora para consultas de notificaciones (puede ser muy frecuente)
                 break;
 
             case 'marcar_como_leido':
@@ -41,7 +37,7 @@ if (isset($_POST["operacion"])) {
                                 break;
                             }
                         }
-                        // Reindexar array (opcional)
+                        // Reindexar array. no era necesario pero me ahorraba codigo en js
                         $_SESSION['notificaciones'] = array_values($_SESSION['notificaciones']);
                     }
                 }
@@ -61,10 +57,19 @@ if (isset($_POST["operacion"])) {
     } catch (Exception $e) {
         error_log("Error en controlador notificaciones: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
-    }
+    } finally {
+        if ($respuesta !== null) {
+            // Cerrar conexiones explícitamente
+            if (isset($notificaciones)) {
+                $notificaciones->cerrar();
+            }
+            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexión de seguridad
 
-    echo json_encode($respuesta);
-    exit;
+            header('Content-Type: application/json');
+            echo json_encode($respuesta);
+            exit;
+        }
+    }
 }
 
 // Carga de vistas

@@ -13,8 +13,6 @@ $apartamento = new Apartamento();
 $habitante = new Habitantes();
 
 if (isset($_POST["operacion"])) {
-    header('Content-Type: application/json');
-
     // Asignación masiva para Apartamento
     $apartamento->set_id_apartamento($_POST['id_apartamento'] ?? null);
     $apartamento->set_nro_apartamento($_POST['nro_apartamento'] ?? null);
@@ -57,10 +55,6 @@ if (isset($_POST["operacion"])) {
                     Bitacora::registrar(CONSULTAR, GESTIONAR_APARTAMENTOS, 'Consulta general de apartamentos');
                 }
                 break;
-
-            // case 'consulta_select':
-            //     $respuesta = $apartamento->realizar_consulta('consultar_listado');
-            //     break;
 
             case 'registrar':
                 $respuesta = $apartamento->realizar_consulta('registrar_apartamento');
@@ -199,10 +193,22 @@ if (isset($_POST["operacion"])) {
     } catch (Exception $e) {
         error_log("Error en controlador apartamentos: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
+    } finally {
+        if ($respuesta !== null) {
+            // Cerrar conexiones explícitamente
+            if (isset($apartamento)) {
+                $apartamento->cerrar();
+            }
+            if (isset($habitante)) {
+                $habitante->cerrar();
+            }
+            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexión de seguridad
+            
+            header('Content-Type: application/json');
+            echo json_encode($respuesta);
+            exit;
+        }
     }
-
-    echo json_encode($respuesta);
-    exit;
 }
 
 // Validaciones AJAX

@@ -135,4 +135,11 @@ class Recuperacion
             return false;
         }
     }
+
+    public function cerrar()
+    {
+        if ($this->usuarioModel) {
+            $this->usuarioModel->cerrar();
+        }
+    }
 }

@@ -9,8 +9,6 @@ Sesiones::verificarPermiso(GESTIONAR_CAJA_CHICA, CONSULTAR);
 $caja = new CajaChica();
 
 if (isset($_POST["operacion"])) {
-    header('Content-Type: application/json');
-
     $operacion = $_POST["operacion"];
 
     // Asignación masiva
@@ -30,11 +28,9 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $caja->realizar_consulta('consultar');
                 if ($respuesta['estatus']) {
                     Bitacora::registrar(CONSULTAR, GESTIONAR_CAJA_CHICA, 'Consulta general de cajas');
-                    echo json_encode(['datos' => $respuesta['datos']]);
-                } else {
-                    echo json_encode(['datos' => [], 'error' => $respuesta['mensaje']]);
+                    
                 }
-                exit;
+                break;
 
             case 'modificar_descripcion':
                 // Obtener datos anteriores de la caja (necesitamos un método que devuelva la caja por ID)
@@ -74,12 +70,7 @@ if (isset($_POST["operacion"])) {
 
             case 'consultar_movimientos_caja':
                 $respuesta = $caja->realizar_consulta('consultar_movimientos');
-                if ($respuesta['estatus']) {
-                    echo json_encode(['datos' => $respuesta['datos']]);
-                } else {
-                    echo json_encode(['datos' => [], 'error' => $respuesta['mensaje']]);
-                }
-                exit;
+                break;
 
             case 'consultar_movimiento':
                 $respuesta = $caja->realizar_consulta('consultar_movimiento_unico');
@@ -142,10 +133,19 @@ if (isset($_POST["operacion"])) {
     } catch (Exception $e) {
         error_log("Error en controlador: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
-    }
+    } finally {
+        if ($respuesta !== null) {
+            // Cerrar conexiones explícitamente
+            if (isset($caja)) {
+                $caja->cerrar();
+            }
+            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexión de seguridad
 
-    echo json_encode($respuesta);
-    exit;
+            header('Content-Type: application/json');
+            echo json_encode($respuesta);
+            exit;
+        }
+    }
 }
 
 if (isset($_POST["validar"])) {

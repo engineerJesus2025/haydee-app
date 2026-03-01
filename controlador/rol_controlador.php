@@ -17,8 +17,6 @@ $registros_modulos = $matriz['estatus'] ? $matriz['datos']['modulos'] : [];
 $registros_permisos_usuarios = $matriz['estatus'] ? $matriz['datos']['permisos'] : [];
 
 if (isset($_POST["operacion"])) {
-    header('Content-Type: application/json');
-
     // Asignación masiva de campos que pueden llegar
     $rol->set_id_rol($_POST['id_rol'] ?? null);
     $rol->set_nombre($_POST['nombre'] ?? null);
@@ -109,10 +107,22 @@ if (isset($_POST["operacion"])) {
     } catch (Exception $e) {
         error_log("Error en controlador roles: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
-    }
+    } finally {
+        if ($respuesta !== null) {
+            // Cerrar conexiones explícitamente
+            if (isset($rol)) {
+                $rol->cerrar();
+            }
+            if (isset($permisos)) {
+                $permisos->cerrar();
+            }
+            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexión de seguridad
 
-    echo json_encode($respuesta);
-    exit;
+            header('Content-Type: application/json');
+            echo json_encode($respuesta);
+            exit;
+        }
+    }
 }
 
 // Validaciones AJAX (separadas)
@@ -130,10 +140,10 @@ if (isset($_POST["validar"])) {
                 break;
 
             case 'validar_permisos_usuarios':
-                $permisosModel = new Permisos();
+                $permisos = new Permisos();
                 $arreglo_id_permisos = $_POST["valor"] ?? [];
-                $permisosModel->set_id_permiso($arreglo_id_permisos);
-                $respuesta = $permisosModel->realizar_consulta('validar_permisos_usuarios');
+                $permisos->set_id_permiso($arreglo_id_permisos);
+                $respuesta = $permisos->realizar_consulta('validar_permisos_usuarios');
                 break;
         }
     } catch (Exception $e) {

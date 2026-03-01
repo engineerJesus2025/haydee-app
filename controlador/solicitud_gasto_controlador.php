@@ -16,8 +16,6 @@ $fecha_actual = date("Y-m");
 $presupuestos = [];
 
 if (isset($_POST["operacion"])) {
-    header('Content-Type: application/json');
-
     // Asignación masiva de campos que pueden llegar
     $solicitud->set_id_solicitud($_POST['id_solicitud'] ?? null);
     $solicitud->set_fecha_reporte($_POST['fecha'] ?? null);      // El name en el form es "fecha"
@@ -130,10 +128,22 @@ if (isset($_POST["operacion"])) {
     } catch (Exception $e) {
         error_log("Error en controlador solicitud_gasto: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
-    }
+    } finally {
+        if ($respuesta !== null) {
+            // Cerrar conexiones explícitamente
+            if (isset($notificaciones)) {
+                $notificaciones->cerrar();
+            }
+            if (isset($presupuesto)) {
+                $presupuesto->cerrar();
+            }
+            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexión de seguridad
 
-    echo json_encode($respuesta);
-    exit;
+            header('Content-Type: application/json');
+            echo json_encode($respuesta);
+            exit;
+        }
+    }
 }
 
 // Validaciones AJAX

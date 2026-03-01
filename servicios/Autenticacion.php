@@ -172,4 +172,23 @@ class Autenticacion
             'notificaciones' => $notificaciones
         ];
     }
+
+    /**
+     * Cierra explícitamente las conexiones de todos los modelos internos.
+     */
+    public function cerrar()
+    {
+        $modelos = [
+            $this->usuarioModel,
+            $this->rolModel,
+            $this->notificacionesModel,
+            $this->cajaModel,
+            $this->anioFiscalModel
+        ];
+        foreach ($modelos as $modelo) {
+            if ($modelo !== null) {
+                $modelo->cerrar();
+            }
+        }
+    }
 }

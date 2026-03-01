@@ -11,8 +11,6 @@ Sesiones::verificarPermiso(GESTIONAR_TIPO_GASTO, CONSULTAR);
 $tipoGasto = new TipoGasto();
 
 if (isset($_POST["operacion"])) {
-    header('Content-Type: application/json');
-
     // Asignación masiva de campos que pueden llegar
     $tipoGasto->set_id_tipo_gasto($_POST['id_tipo_gasto'] ?? null);
     $tipoGasto->set_nombre_tipo_gasto($_POST['nombre_tipo_gasto'] ?? null);
@@ -77,10 +75,19 @@ if (isset($_POST["operacion"])) {
     } catch (Exception $e) {
         error_log("Error en controlador: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
-    }
+    } finally {
+        if ($respuesta !== null) {
+            // Cerrar conexiones explícitamente
+            if (isset($tipoGasto)) {
+                $tipoGasto->cerrar();
+            }
+            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexión de seguridad
 
-    echo json_encode($respuesta);
-    exit;
+            header('Content-Type: application/json');
+            echo json_encode($respuesta);
+            exit;
+        }
+    }
 }
 
 // Cargar la vista

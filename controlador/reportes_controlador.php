@@ -26,7 +26,6 @@ $pagos = new Pagos();
 // Manejo de peticiones AJAX (POST)
 // ====================================================================
 if (isset($_POST["operacion"])) {
-    header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
@@ -99,10 +98,27 @@ if (isset($_POST["operacion"])) {
     } catch (Exception $e) {
         error_log("Error en controlador reportes (POST): " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
-    }
+    } finally {
+        if ($respuesta !== null) {
+            // Cerrar conexiones explícitamente
+            if (isset($gastos)) {
+                $gastos->cerrar();
+            }
+            if (isset($habitantes)) {
+                $habitantes->cerrar();
+            }
+            if (isset($mensualidad)) {
+                $mensualidad->cerrar();
+            }
+            if (isset($pagos)) {
+                $pagos->cerrar();
+            }
 
-    echo json_encode($respuesta);
-    exit;
+            header('Content-Type: application/json');
+            echo json_encode($respuesta);
+            exit;
+        }
+    }
 }
 
 // ====================================================================

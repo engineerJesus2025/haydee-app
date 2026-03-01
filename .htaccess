@@ -4,16 +4,13 @@ ErrorDocument 403 /haydee-app/vista/error/403_vista.php
 RewriteEngine On
 Options All -Indexes
 
-# Permitir acceso a:
-# - La ruta base
-# - index.php
-# - Carpeta recursos, vendor y vista
-RewriteCond %{REQUEST_URI} !^/haydee/?$
-RewriteCond %{REQUEST_URI} !^/haydee/index\.php$
-RewriteCond %{REQUEST_URI} !^/haydee/recursos/ [OR]
-RewriteCond %{REQUEST_URI} !^/haydee/vendor/ [OR] 
-RewriteCond %{REQUEST_URI} !^/haydee/vista/
-RewriteRule .* - [S=4]  
+# Permitir acceso a la raíz, index.php, y carpetas públicas
+RewriteCond %{REQUEST_URI} ^/haydee-app/?$ [OR]
+RewriteCond %{REQUEST_URI} ^/haydee-app/index\.php$ [OR]
+RewriteCond %{REQUEST_URI} ^/haydee-app/recursos/ [OR]
+RewriteCond %{REQUEST_URI} ^/haydee-app/vendor/ [OR]
+RewriteCond %{REQUEST_URI} ^/haydee-app/vista/
+RewriteRule .* - [L]
 
-# Bloquear todo lo demás (Error 403)
+# Bloquear todo lo demás
 RewriteRule ^ - [F]

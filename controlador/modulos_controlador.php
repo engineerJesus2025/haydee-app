@@ -9,7 +9,6 @@ Sesiones::verificarSesion();
 $modulo = new Modulos();
 
 if (isset($_POST["operacion"])) {
-    header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
     $modulo->set_id_modulo($_POST['id_modulo'] ?? null);
     $modulo->set_nombre($_POST['nombre'] ?? null);
@@ -20,11 +19,8 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $modulo->realizar_consulta('consultar');
                 if ($respuesta['estatus']) {
                     Bitacora::registrar(CONSULTAR, GESTIONAR_MODULOS, 'Consulta general de módulos');
-                    echo json_encode(['datos' => $respuesta['datos']]);
-                } else {
-                    echo json_encode(['datos' => [], 'error' => $respuesta['mensaje']]);
                 }
-                exit;
+                break;
 
             case 'consultar_unico':
                 $respuesta = $modulo->realizar_consulta('consultar_unico');
@@ -70,11 +66,20 @@ if (isset($_POST["operacion"])) {
         }
     } catch (Exception $e) {
         error_log("Error en controlador: " . $e->getMessage());
-        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
-    }
+        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
+    } finally {
+        if ($respuesta !== null) {
+            // Cerrar conexiones explícitamente
+            if (isset($modulo)) {
+                $modulo->cerrar();
+            }
+            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexión de seguridad
 
-    echo json_encode($respuesta);
-    exit;
+            header('Content-Type: application/json');
+            echo json_encode($respuesta);
+            exit;
+        }
+    }
 }
 
 // Cargar vista (si existe)

@@ -16,7 +16,6 @@ $recaptchaDeshabilitado = defined('ENTORNO') && ENTORNO === 'local';
 // 1. Manejo de Peticiones AJAX (API) - Retornan JSON
 // ====================================================================
 if (isset($_POST["operacion"])) {
-    header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación desconocida'];
 
@@ -32,13 +31,16 @@ if (isset($_POST["operacion"])) {
                     throw new Exception($validacion['error']);
                 }
 
-                // Intentar login
                 $auth = new Autenticacion();
-                $resultado = $auth->login(
-                    $_POST['usuario'] ?? '',
-                    $_POST['contra'] ?? '',
-                    ($_POST['mantener_sesion'] ?? 'false') === 'true'
-                );
+                try {
+                    $resultado = $auth->login(
+                        $_POST['usuario'] ?? '',
+                        $_POST['contra'] ?? '',
+                        ($_POST['mantener_sesion'] ?? 'false') === 'true'
+                    );
+                } finally {
+                    $auth->cerrar();  // ← Cierre explícito
+                }
                 
                 if ($resultado['estatus']) {
                     if (isset($resultado['token'])) {
@@ -61,11 +63,14 @@ if (isset($_POST["operacion"])) {
         }
     } catch (Exception $e) {
         error_log("Error en controlador: " . $e->getMessage());
-        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor', 'err'=>$e->getMessage()];
+        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
+    } finally {
+        if ($respuesta !== null) {
+            header('Content-Type: application/json');
+            echo json_encode($respuesta);
+            exit;
+        }
     }
-
-    echo json_encode($respuesta);
-    exit;
 }
 
 // ====================================================================
@@ -85,7 +90,12 @@ switch ($accion) {
     case 'recuperar_contrasenia':
         $token = $_GET['t'] ?? '';
         $recuperacion = new Recuperacion();
-        $resultado = $recuperacion->validarTokenRecuperacion($token);
+
+        try {
+            $resultado = $recuperacion->validarTokenRecuperacion($token);
+        } finally {
+            $recuperacion->cerrar();
+        }
 
         if ($resultado['estatus']) {
             // Guardar datos temporalmente en sesión (solo para este flujo)

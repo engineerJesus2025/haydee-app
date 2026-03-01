@@ -52,8 +52,12 @@ class Conexion extends PDO {
         }
     }
 
-    public function cerrar() {
+    public function cerrar($base = null) {
+    if ($base === 'negocio' || $base === null) {
         $this->conexNegocio = null;
+    }
+    if ($base === 'seguridad' || $base === null) {
         $this->conexSeguridad = null;
     }
+}
 }
