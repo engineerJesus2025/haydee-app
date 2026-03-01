@@ -42,7 +42,6 @@
                     <textarea name="descripcion_gasto" id="descripcion_gasto" class="form-control" rows="3"
                         placeholder="Describa el detalle del gasto realizado..." minlength="10" required></textarea>
                     <span class="w-100 invalid-feedback"></span>
-                    <small class="form-text text-danger mensaje-validacion" data-for="descripcion_gasto"></small>
                 </div>
             </div>
         </div>
@@ -96,8 +95,6 @@
                                 <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
                                 <input type="date" class="form-control fecha_detalle" name="fecha_detalle[]" required>
                                 <span class="w-100 invalid-feedback"></span>
-                                <small class="form-text text-danger mensaje-validacion"
-                                    data-for="fecha_detalle"></small>
                             </div>
                         </div>
                         <div class="col-lg-6 col-12 mb-3">
@@ -119,9 +116,7 @@
                                 <span class="input-group-text"><i class="bi bi-currency-dollar"></i></span>
                                 <input type="text" inputmode="decimal" pattern="^[0-9]+([.,][0-9]{1,2})?$"
                                     class="form-control monto" name="monto[]" required>
-                                <small class="w-100 form-text text-danger mensaje-validacion" data-for="monto"></small>
-
-                                <span class="w-100"></span>
+                                <span class="w-100 invalid-feedback"></span>
                             </div>
                             <div class="invalid-feedback" id="mensaje_monto"></div>
                         </div>
@@ -130,8 +125,7 @@
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-receipt"></i></span>
                                 <input type="text" class="form-control referencia" minlength="4" maxlength="20" name="referencia[]">
-                                <small class="w-100 form-text text-danger mensaje-validacion" data-for="referencia"></small>
-                                <span class="w-100"></span>
+                                <span class="w-100 invalid-feedback"></span>
                             </div>
                         </div>
                         <div class="col-lg-6 col-12 mb-3 grupo_banco">
@@ -156,8 +150,7 @@
                                 <span class="input-group-text"><i class="bi bi-card-text"></i></span>
                                 <textarea name="descripcion_detalle[]" class="form-control descripcion_detalle" rows="3"
                                     placeholder="Describa el detalle específico del pago..." minlength="10" required></textarea>
-                                <span class="w-100"></span>
-                                <small class="form-text text-danger mensaje-validacion" data-for="descripcion_detalle"></small>
+                                <span class="w-100 invalid-feedback"></span>
                             </div>
                         </div>
                         <div class="col-12 grupo_imagen">
@@ -208,7 +201,6 @@
                         <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
                         <input type="date" class="form-control fecha_detalle" name="fecha_detalle[]" required>
                         <span class="w-100 invalid-feedback"></span>
-                        <small class="form-text text-danger mensaje-validacion" data-for="fecha_detalle"></small>
                     </div>
                 </div>
 
@@ -233,7 +225,6 @@
                         <input type="text" inputmode="decimal" pattern="^[0-9]+([.,][0-9]{1,2})?$"
                             class="form-control monto" name="monto[]" required>
                         <span class="w-100 invalid-feedback"></span>
-                        <small class="w-100 form-text text-danger mensaje-validacion" data-for="monto"></small>
                     </div>
                     <div class="invalid-feedback" id="mensaje_monto"></div>
                 </div>
@@ -244,7 +235,6 @@
                         <span class="input-group-text"><i class="bi bi-receipt"></i></span>
                         <input type="text" class="form-control referencia" name="referencia[]">
                         <span class="w-100 invalid-feedback"></span>
-                        <small class="w-100 form-text text-danger mensaje-validacion" data-for="referencia"></small>
                     </div>
                 </div>
 
@@ -269,8 +259,6 @@
                         <textarea name="descripcion_detalle[]" class="form-control descripcion_detalle" rows="3"
                             placeholder="Describa el detalle específico del pago..." required></textarea>
                         <span class="w-100 invalid-feedback"></span>
-                        <small class="form-text text-danger mensaje-validacion" data-for="descripcion_detalle"></small>
-
                     </div>
                 </div>
 

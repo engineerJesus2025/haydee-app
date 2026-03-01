@@ -115,15 +115,18 @@
                         </div>
                     </div>
                 </main>
-                <?php                
-                require_once "vista/componentes/script.php";
-                ?>
             </div>
         </div>
     </div>
 
-    <?php require_once "vista/componentes/footer.php"; ?>
-
+    <!-- Componentes -->
+    <?php
+        require_once "vista/componentes/footer.php";
+        require_once "vista/componentes/script.php";
+        require_once 'vista/componentes/modal_carga.php';
+    ?>
+    
+    <!-- Modales -->
     <div class="modal fade" id="modal_reporte" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -141,7 +144,8 @@
             </div>
         </div>
     </div>
-
+    
+    <!-- Scripts personalizado -->
     <script type="text/javascript" src="recursos/estadisticas/chart.js"></script>
     <script type="text/javascript" src="recursos/js/reportes/reporte_ingreso_egreso.js"></script>
 </body>

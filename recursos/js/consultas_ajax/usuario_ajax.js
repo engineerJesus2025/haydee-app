@@ -41,7 +41,7 @@ document.querySelector(`#modal_usuario`).addEventListener("hide.bs.modal", () =>
 });
 
 // Mostrar/Ocultar contraseñas
-document.querySelectorAll('.contra').forEach(boton => {
+document.querySelectorAll('.contra-btn').forEach(boton => {
 	boton.addEventListener('click', e => {
 		e.preventDefault();
 		let i = (e.target.firstElementChild == null) ? e.target : e.target.firstElementChild;

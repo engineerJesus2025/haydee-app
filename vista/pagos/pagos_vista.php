@@ -40,7 +40,6 @@
                                         <div class="mx-3"><?php echo $_SESSION["mensaje"]; ?></div>
                                     </div>
                                 <?php endif; ?>
-
                                 <table id="tabla_pagos" class="table table-striped table-hover" style="width:100%">
                                     <thead>
                                         <tr>
@@ -56,39 +55,37 @@
                                         <tr><td colspan="6" class="text-center">Cargando...</td></tr>
                                     </tbody>
                                 </table>
-
-                                <div class="modal fade" id="modal_pagos" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
-                                    <div class="modal-dialog modal-dialog-scrollable modal-xl">
-                                        <div class="modal-content card shadow-sm border-primary mt-4 mb-4">
-                                            <div class="modal-header card-header bg-primary text-white fw-bold">
-                                                <h1 class="modal-title fs-5" id="titulo_modal">
-                                                    <?php echo $esPropietario ? 'Reportar Pago' : 'Registrar Pago'; ?>
-                                                </h1>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body bg-light">
-                                                <?php require_once "vista/pagos/pagos_modal.php"; ?>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
                 </main>
-
-                
-
             </div>
         </div>
     </div>
 
-    <?php 
-    require_once "vista/componentes/footer.php";
-    require_once "vista/componentes/script.php";
-    require_once 'vista/componentes/modal_carga.php';
+    <!-- Componentes -->
+    <?php
+        require_once "vista/componentes/footer.php";
+        require_once "vista/componentes/script.php";
+        require_once 'vista/componentes/modal_carga.php';
     ?>
 
+    <!-- Modales -->
+    <div class="modal fade" id="modal_pagos" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-xl">
+            <div class="modal-content card shadow-sm border-primary mt-4 mb-4">
+                <div class="modal-header card-header bg-primary text-white fw-bold">
+                    <h1 class="modal-title fs-5" id="titulo_modal">
+                        <?php echo $esPropietario ? 'Reportar Pago' : 'Registrar Pago'; ?>
+                    </h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body bg-light">
+                    <?php require_once "vista/pagos/pagos_modal.php"; ?>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="modal fade" id="modal_vista_previa" tabindex="-1" aria-labelledby="modal_vista_previa_label" aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable modal-xl">
             <div class="modal-content">
@@ -131,6 +128,7 @@
         </div>
     </div>
 
+    <!-- Scripts personalizado -->
     <script type="text/javascript" src="recursos/js/validaciones/pagos_validar.js"></script>
     <script type="text/javascript" src="recursos/js/consultas_ajax/pagos_ajax.js"></script>
 </body>

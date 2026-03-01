@@ -157,7 +157,7 @@ async function eliminar(id) {
 // ============================================
 // EVENTOS DEL MODAL
 // ============================================
-document.getElementById('modal_anio_fiscal').addEventListener('hidden.bs.modal', () => {
+document.getElementById('modal_anio_fiscal').addEventListener('hide.bs.modal', () => {
     form.reset();
     document.querySelectorAll('.is-valid, .is-invalid').forEach(el => el.classList.remove('is-valid', 'is-invalid'));
     document.getElementById('titulo_modal').textContent = 'Registrar Año Fiscal';

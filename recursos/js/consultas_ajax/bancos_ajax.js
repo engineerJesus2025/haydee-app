@@ -132,7 +132,7 @@ async function preparar_formulario(e) {
     formulario_usar.querySelector("#rif").removeAttribute("disabled");
 
     if (permiso_modificar != 1) {
-        boton_formulario.setAttribute("hidden", true);
+        boton_formulario.setAttribute("hide", true);
         boton_formulario.setAttribute("disabled", true);
     }
 

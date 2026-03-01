@@ -24,7 +24,7 @@ class Recuperacion
         $this->usuarioModel->set_correo($correo);
         $resultado = $this->usuarioModel->realizar_consulta('existe_correo');
         if (!$resultado['estatus']) {
-            return ['estatus' => false, 'mensaje' => 'El correo no está registrado.'];
+            return ['estatus' => false, 'mensaje' => 'Operacion completada'];
         }
         $usuario = $resultado['datos'];
 
@@ -46,10 +46,10 @@ class Recuperacion
         $url = $this->generarUrlRecuperacion($token);
         $enviado = $this->enviarCorreo($usuario, $url);
         if (!$enviado) {
-            return ['estatus' => false, 'mensaje' => 'Error al enviar el correo.'];
+            return ['estatus' => false, 'mensaje' => 'Operacion completada'];
         }
 
-        return ['estatus' => true, 'mensaje' => 'Correo enviado correctamente.'];
+        return ['estatus' => true, 'mensaje' => 'Operacion completada'];
     }
 
     /**
@@ -79,13 +79,13 @@ class Recuperacion
     {
         $this->usuarioModel->set_correo($correo);
         $this->usuarioModel->set_contra($nuevaContra);
+        $this->usuarioModel->set_id_usuario($usuarioId);
         $res = $this->usuarioModel->realizar_consulta('cambiar_contrasenia');
         if (!$res['estatus']) {
             return $res;
         }
 
         // Eliminar token usado
-        $this->usuarioModel->set_id_usuario($usuarioId);
         $this->usuarioModel->set_token_tipo('RECUPERAR_CONTRASENIA');
         $this->usuarioModel->realizar_consulta('eliminar_token');
 
@@ -117,7 +117,7 @@ class Recuperacion
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port = 587;
 
-            $mail->setFrom('condominiohaydee@alwaysdata.net', 'Condominios Haydee');
+            $mail->setFrom(PROVEEDOR_CORREO, 'Condominios Haydee');
             $mail->addAddress($usuario['correo'], $usuario['nombre'] . ' ' . ($usuario['apellido'] ?? ''));
 
             $mail->Subject = 'Recuperar contraseña';

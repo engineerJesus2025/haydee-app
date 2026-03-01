@@ -53,35 +53,35 @@
                                         </div>
                                     </div>
                                 <?php endif; ?>
-                                <div class="table-responsive">
-                                    <table id="tabla_tipo_gasto" class="table table-striped table-hover" style="width:97%">
-                                        <thead>
-                                            <tr>
-                                                <th>NOMBRE</th>
-                                                <th class="text-center">ACCIONES</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td colspan="2"><h4>Cargando...</h4></td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
+                                <table id="tabla_tipo_gasto" class="table table-striped table-hover" style="width:97%">
+                                    <thead>
+                                        <tr>
+                                            <th>NOMBRE</th>
+                                            <th class="text-center">ACCIONES</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="2"><h4>Cargando...</h4></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
                 </main>
-                <?php
-                require_once 'vista/componentes/modal_carga.php';
-                require_once "vista/componentes/script.php";
-                ?>
             </div>
         </div>
     </div>
 
-    <?php require_once "vista/componentes/footer.php"; ?>
-
+    <!-- Componentes -->
+    <?php
+        require_once "vista/componentes/footer.php";
+        require_once "vista/componentes/script.php";
+        require_once 'vista/componentes/modal_carga.php';
+    ?>
+    
+    <!-- Modales -->
     <div class="modal fade" id="modal_tipo_gasto" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -99,7 +99,8 @@
             </div>
         </div>
     </div>
-
+    
+    <!-- Scripts personalizado -->
     <script type="text/javascript" src="recursos/js/validaciones/tipo_gasto_validar.js"></script>
     <script type="text/javascript" src="recursos/js/consultas_ajax/tipo_gasto_ajax.js"></script>
 </body>

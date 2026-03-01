@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Cuadro de pagos</title>
+    <title>Cuadro de Pagos</title>
     <style type="text/css">
     	body {
 	    font-family: Arial, sans-serif;

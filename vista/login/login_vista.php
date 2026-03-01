@@ -86,7 +86,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form method="POST" action="?pagina=login_controlador.php&accion=recuperar_contrasenia" class="row">
+                    <form method="POST" action="?pagina=login_controlador.php&accion=recuperar_contrasenia" class="row" id="form_recuperar_contra">
                         <div class="col mb-4">
                             <h6>Ingrese aquí su correo para recuperar contraseña.</h6>
                             <p>Se usará este correo para crear una nueva contraseña.</p>

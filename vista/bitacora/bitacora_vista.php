@@ -4,15 +4,8 @@
     <title>Bitácora | Inicio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php require_once "vista/componentes/estilos.php"; ?>
-        <!-- Estilos personalizados para las acciones -->
-    <style type="text/css">
-        .badge-consultar { background-color: #2d3436; color: white; }
-        .badge-eliminar { background-color: #b22222; color: white; }
-        .badge-registrar { background-color: #0d6efd; color: white; }
-        .badge-modificar { background-color: #198754; color: white; }
-        .badge-iniciar-sesion { background-color: #6559BA; color: white; }
-        .badge-cerrar-sesion { background-color: #9bb7d4; color: #372323; }
-    </style>
+    <!-- Estilos personalizados para las acciones -->
+    <link rel="stylesheet" type="text/css" href="recursos/css/bitacora.css">
 </head>
 <body id="body-pd" class="body-pd">
     <div class="container-fluid">
@@ -29,33 +22,34 @@
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="card p-4">
-                                <div class="table-responsive">
-                                    <table id="tabla_bitacora" class="table table-striped table-hover" style="width:100%">
-                                        <thead>
-                                            <tr>
-                                                <th>USUARIO</th>
-                                                <th>FECHA</th>
-                                                <th>MÓDULO</th>
-                                                <th>ACCIÓN</th>
-                                                <th>DETALLES</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                        </tbody>
-                                    </table>
-                                </div>
+                                <table id="tabla_bitacora" class="table table-striped table-hover" style="width:100%">
+                                    <thead>
+                                        <tr>
+                                            <th>USUARIO</th>
+                                            <th>FECHA</th>
+                                            <th>MÓDULO</th>
+                                            <th>ACCIÓN</th>
+                                            <th>DETALLES</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
                 </main>
-                <?php require_once 'vista/componentes/modal_carga.php'; ?>
-                <?php require_once "vista/componentes/script.php"; ?>
             </div>
         </div>
     </div>
-    <?php require_once "vista/componentes/footer.php"; ?>
+    <!-- Componentes -->
+    <?php
+        require_once "vista/componentes/footer.php";
+        require_once "vista/componentes/script.php";
+        require_once 'vista/componentes/modal_carga.php';
+    ?>
 
-    <!-- Modal para ver detalles -->
+    <!-- Modales -->
     <div class="modal fade" id="modalDetalleBitacora" tabindex="-1" aria-labelledby="modalDetalleBitacoraLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
@@ -74,7 +68,8 @@
             </div>
         </div>
     </div>
-
+    
+    <!-- Scripts personalizado -->
     <script type="text/javascript" src="recursos/js/consultas_ajax/bitacora_ajax.js"></script>
 </body>
 </html>

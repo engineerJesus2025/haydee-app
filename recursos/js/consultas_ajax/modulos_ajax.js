@@ -15,7 +15,7 @@ const botonFormulario = document.getElementById("boton_formulario");
 document.addEventListener('DOMContentLoaded', () => {
     consultarModulos();
 
-    document.getElementById("modal_modulo")?.addEventListener("hidden.bs.modal", resetModal);
+    document.getElementById("modal_modulo")?.addEventListener("hide.bs.modal", resetModal);
 
     document.querySelector("#tabla_modulos tbody")?.addEventListener("click", manejarClickEnTabla);
 });

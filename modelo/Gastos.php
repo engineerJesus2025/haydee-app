@@ -514,20 +514,8 @@ class Gastos extends Conexion
                 }
             }
 
-            // Actualizar reposición si existe (asumimos que solo puede haber una por gasto)
-            if (!empty($this->movimiento_caja_id)) {
-                // Eliminar la anterior si existe
-                $pdo->prepare("DELETE FROM reposiciones WHERE gasto_id = ?")->execute([$this->id_gasto]);
-                $sqlRep = "INSERT INTO reposiciones (gasto_id, movimiento_caja_id) VALUES (:g_id, :mc_id)";
-                $stmtRep = $pdo->prepare($sqlRep);
-                $stmtRep->execute([
-                    ':g_id' => $this->id_gasto,
-                    ':mc_id' => $this->movimiento_caja_id
-                ]);
-            }
-
             $pdo->commit();
-            return ['estatus' => true, 'mensaje' => 'Gasto actualizado con éxito', 'e'=>$this->detalles];
+            return ['estatus' => true, 'mensaje' => 'Gasto actualizado con éxito'];
 
         } catch (PDOException $e) {
             $pdo->rollBack();

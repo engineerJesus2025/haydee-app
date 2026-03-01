@@ -31,6 +31,8 @@ document.getElementById('header-toggle')?.addEventListener("click", () => {
 
 // Evento cambio de caja en el select
 document.getElementById("mes_select").addEventListener("change", (e) => {
+    e.target.classList.remove('caja-highlight');
+
     let id_caja = e.target.value;
     let option = e.target.options[e.target.selectedIndex];
 
@@ -80,7 +82,7 @@ document.getElementById("boton_modificar_observacion")?.addEventListener('click'
 });
 
 // Limpiar modal al cerrar
-document.getElementById("modal_registro_gastos")?.addEventListener("hidden.bs.modal", () => {
+document.getElementById("modal_registro_gastos")?.addEventListener("hide.bs.modal", () => {
     document.getElementById('titulo_modal_registro_gasto').textContent = "Registrar Gasto de Caja";
     boton_formulario.removeAttribute("modificar");
     boton_formulario.removeAttribute("id_modificar");
@@ -180,6 +182,35 @@ async function consultarCajasChicas() {
     if (select.value) {
         select.dispatchEvent(new Event('change'));
     }
+
+    // Verificar si hay parámetro 'buscar' en la URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const idBuscar = urlParams.get('buscar');
+    if (idBuscar) {
+        const checkSelect = setInterval(() => {
+            if (select.options.length > 0) {
+                clearInterval(checkSelect);
+                const option = Array.from(select.options).find(opt => opt.value === idBuscar);
+                if (option) {
+                    // Seleccionar la opción
+                    select.value = idBuscar;
+                    // Disparar evento change para cargar movimientos
+                    select.dispatchEvent(new Event('change'));
+                    
+                    // Resaltar el select con animación
+                    select.classList.add('caja-highlight');
+                    
+                    // Mostrar mensaje informativo
+                    // Utilidades.mensaje('warning', 'Saldo Bajo', 'Esta caja requiere atención pronto.');
+                    
+                    // Opcional: hacer scroll hacia el select
+                    select.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } else {
+                    Utilidades.mensaje('error', 'Error', 'La caja notificada no existe.');
+                }
+            }
+        }, 100);
+    }
 }
 
 // ========== INICIALIZAR TABLA DE MOVIMIENTOS ==========
@@ -265,7 +296,7 @@ async function prepararFormulario(e) {
     document.getElementById("monto_cambio").value = (mov.monto / tasa_dolar).toFixed(2);
 
     if (permiso_modificar != 1) {
-        boton_formulario.setAttribute("hidden", true);
+        boton_formulario.setAttribute("hide", true);
         boton_formulario.setAttribute("disabled", true);
     }
 

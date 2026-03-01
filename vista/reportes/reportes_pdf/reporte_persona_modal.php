@@ -12,4 +12,4 @@
     <div class="col-6 mx-auto mb-3 d-flex justify-content-center">
         <button class="btn btn-primary" id="boton_generar">Generar reporte</button>
     </div>
-</form method="POST">
+</form>

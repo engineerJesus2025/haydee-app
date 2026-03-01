@@ -33,9 +33,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById("agregar_detalle")?.addEventListener("click", agregarDetalle);
 
     // Reset del modal al cerrarse
-    document.getElementById("modal_gastos")?.addEventListener("hidden.bs.modal", resetModalGasto);
+    document.getElementById("modal_gastos")?.addEventListener("hide.bs.modal", resetModalGasto);
 
-    document.getElementById("modal_vista_previa_detalles")?.addEventListener("hidden.bs.modal", e=>{
+    document.getElementById("modal_vista_previa_detalles")?.addEventListener("hide.bs.modal", e=>{
         document.getElementById('vista_imagen_detalles').style = "max-height: 300px;";
         document.getElementById('mensaje_error_imagen_detalles').classList.add('d-none')
     });
@@ -530,15 +530,23 @@ function resetModalGasto() {
         if (index > 0) bloque.remove();
     });
 
+    formulario.querySelectorAll('.is-valid').forEach(input => input.classList.remove('is-valid'));
+    formulario.querySelectorAll('.is-invalid').forEach(input => input.classList.remove('is-invalid'));
+
     // Limpiar el primer bloque
     const primerBloque = contenedorDetalles.querySelector('.detalle-gasto');
     if (primerBloque) {
         primerBloque.querySelectorAll('input, select, textarea').forEach(el => {
             if (el.type !== 'hidden') el.value = '';
         });
-        primerBloque.querySelector('.nombre_imagen_cargada').textContent = '';
+        nombreImagen = primerBloque.querySelector('.nombre_imagen_cargada');
+        if (nombreImagen) nombreImagen.textContent = '';
+
         const btnEliminar = primerBloque.querySelector('.btn-outline-danger');
         if (btnEliminar) btnEliminar.remove();
+
+        formulario.querySelectorAll('.is-valid').forEach(input => input.classList.remove('is-valid'));
+        formulario.querySelectorAll('.is-invalid').forEach(input => input.classList.remove('is-invalid'));
 
         // Restablecer visibilidad según método por defecto
         const selectMetodo = primerBloque.querySelector('.metodo_pago');

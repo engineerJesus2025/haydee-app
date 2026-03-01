@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Constancia de Residencia</title>
+    <title>Cuadro de Gastos</title>
     <style type="text/css">
     	body {
 	    font-family: Arial, sans-serif;

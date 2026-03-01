@@ -316,7 +316,7 @@ class CajaChica extends Conexion
 
             $pdo->commit();
 
-            $this->_verificarSaldoYNotificar();
+            $this->verificarSaldoYNotificar();
 
             return ['estatus' => true, 'mensaje' => 'Gasto registrado correctamente.', 'lastId' => $lastId];
 
@@ -347,7 +347,7 @@ class CajaChica extends Conexion
 
             $pdo->commit();
 
-            $this->_verificarSaldoYNotificar();
+            $this->verificarSaldoYNotificar();
 
             return ['estatus' => true, 'mensaje' => 'Movimiento eliminado (anulado) correctamente.'];
         } catch (PDOException $e) {
@@ -423,7 +423,7 @@ class CajaChica extends Conexion
                 ':id' => $this->id_movimiento_caja
             ]);
 
-            $this->_verificarSaldoYNotificar();
+            $this->verificarSaldoYNotificar();
             
             return ['estatus' => true, 'mensaje' => 'Movimiento actualizado (solo concepto y fecha).'];
         } catch (PDOException $e) {
@@ -470,7 +470,7 @@ class CajaChica extends Conexion
      * Verifica el saldo de la caja chica actual y, si es bajo, envía notificaciones a los administradores.
      * @return bool True si se notificó o no hubo necesidad, false si hubo error.
      */
-    private function _verificarSaldoYNotificar()
+    private function verificarSaldoYNotificar()
     {
         $v = $this->validar(['id_movimiento_caja']);
         // Verificar que tengamos un ID de caja
@@ -514,7 +514,7 @@ class CajaChica extends Conexion
 
             return true;
         } catch (\Exception $e) {
-            error_log("Error en _verificarSaldoYNotificar: " . $e->getMessage());
+            error_log("Error en verificarSaldoYNotificar: " . $e->getMessage());
             return false;
         }
     }

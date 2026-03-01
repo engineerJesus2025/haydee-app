@@ -156,17 +156,19 @@
                         </div>
                     </div>
                 </main>
-
-                <?php
-                require_once "vista/componentes/script.php";
-                ?>
             </div>
         </div>
     </div>
     
-    <?php require_once "vista/componentes/footer.php"; ?>
+    <!-- Componentes -->
+    <?php
+        require_once "vista/componentes/footer.php";
+        require_once "vista/componentes/script.php";
+        require_once 'vista/componentes/modal_carga.php';
+    ?>
 
-    <!-- Modal para mostrar los resultados -->
+    
+    <!-- Modales -->
     <div class="modal fade" id="modal_reporte_habitantes" tabindex="-1"
         aria-labelledby="titulo_modal_habitantes" aria-hidden="true">
         <div class="modal-dialog modal-xl">
@@ -236,7 +238,8 @@
             </div>
         </div>
     </div>
-
+    
+    <!-- Scripts personalizado -->
     <script type="text/javascript" src="recursos/estadisticas/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>

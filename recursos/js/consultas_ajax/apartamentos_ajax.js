@@ -361,6 +361,13 @@ document.getElementById('modal_habitantes').addEventListener('hide.bs.modal', ()
     tipo_vinculo_an = null;
 });
 
+// Ajustar DataTable cuando se abre el modal de habitantes
+document.getElementById('modal_vista_previa')?.addEventListener('shown.bs.modal', () => {
+    if (data_table_habitantes) {
+        data_table_habitantes.columns.adjust().draw();
+    }
+});
+
 // Exponer funciones para el validador (si existe, ya no me acuerdo)
 window.registrarApartamento = registrarApartamento;
 window.modificarApartamento = modificarApartamento;

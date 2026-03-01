@@ -38,37 +38,35 @@
                                         <button type="button" class="btn btn-primary mb-2" data-bs-toggle="modal" data-bs-target="#modal_roles">Nuevo rol</a>
                                     </div><br>
                                 <?php endif; ?>
-                                <div class="table-responsive">
-                                    <table id="tabla_roles" class="table table-striped table-hover" style="width:97%">
-                                        <thead>
-                                            <tr>        
-                                                <th>rol</th>
-                                                <th class="text-center">ACCIONES</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td colspan="7"><h4>Cargando...</h4></td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                                
-
+                                <table id="tabla_roles" class="table table-striped table-hover" style="width:97%">
+                                    <thead>
+                                        <tr>        
+                                            <th>rol</th>
+                                            <th class="text-center">ACCIONES</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="7"><h4>Cargando...</h4></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>                    
                 </main>
-                <?php
-                require_once 'vista/componentes/modal_carga.php';
-                require_once "vista/componentes/script.php";
-                ?>
             </div>
         </div>
     </div>
 
-    <?php require_once "vista/componentes/footer.php"; ?>
-
+    <!-- Componentes -->
+    <?php
+        require_once "vista/componentes/footer.php";
+        require_once "vista/componentes/script.php";
+        require_once 'vista/componentes/modal_carga.php';
+    ?>
+    
+    <!-- Modales -->
     <div class="modal fade modal-lg" id="modal_roles" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content"> 
@@ -82,7 +80,8 @@
              </div>
          </div>
     </div>
-
+    
+    <!-- Scripts personalizado -->
     <script type="text/javascript" src="recursos/js/validaciones/roles_validar.js"></script>
     <script type="text/javascript" src="recursos/js/consultas_ajax/roles_ajax.js"></script>
 </body>

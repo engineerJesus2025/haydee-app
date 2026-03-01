@@ -48,11 +48,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('err') === '1') {
         Utilidades.mensaje('success', 'Atención', 'La contraseña se ha cambiado exitosamente');
-    } else if (urlParams.get('err') === '2') {
+    } else if (urlParams.get('err') === '2' || urlParams.get('err') === '4') {
         Utilidades.mensaje('error', 'Error', 'El Token Recibido no es válido');
     } else if (urlParams.get('err') === '3') {
         Utilidades.mensaje('error', 'Error', 'No se pudo cambiar la contraseña');
     }
+
 
     // Si reCAPTCHA está desactivado, habilitar el botón directamente
     if (recaptchaDesactivado) {
@@ -112,6 +113,16 @@ document.addEventListener('DOMContentLoaded', () => {
         btnRecuperar.addEventListener('click', async e => {
             e.preventDefault();
             await realizarRecuperacion();
+        });
+    }
+
+    // Evento de limpieza de formulario
+    const modalCambiarContra = document.getElementById('modal_recuperar_contrasenia');
+    if (modalCambiarContra) {
+        modalCambiarContra.addEventListener('hide.bs.modal', e => {
+            document.getElementById('form_recuperar_contra').reset()
+            document.querySelectorAll('.is-valid').forEach(input => input.classList.remove('is-valid'));
+            document.querySelectorAll('.is-invalid').forEach(input => input.classList.remove('is-invalid'));
         });
     }
 
@@ -192,7 +203,7 @@ async function realizarRecuperacion() {
         return;
     }
 
-    // Evitar envíos repetidos en corto tiempo (opcional)
+    // Evitar envíos repetidos en corto tiempo (mejorar)
     if (recuperacionContrasenia.enviada && (new Date() - recuperacionContrasenia.tiempo) < 60000) {
         Utilidades.mensaje('warning', 'Espere', 'Ya se envió un correo recientemente, espere un minuto');
         return;

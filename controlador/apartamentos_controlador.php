@@ -42,6 +42,9 @@ if (isset($_POST["operacion"])) {
         $habitante->set_cedula($tipo . $numero);
     }
 
+    // Datos de la nueva relación (si cambia)
+    $habitante->set_nuevo_apartamento_id($_POST['apartamento_id'] ?? null);
+
     $operacion = $_POST["operacion"];
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
@@ -131,7 +134,6 @@ if (isset($_POST["operacion"])) {
 
             // ================= HABITANTES =================
             case 'consultar_habitantes':
-                $apartamento->set_id_apartamento($_POST['id_apartamento'] ?? null);
                 $result = $apartamento->realizar_consulta('consultar_detalle_completo');
                 if ($result['estatus']) {
                     $respuesta = ['estatus' => true, 'datos' => $result['datos']['habitantes'] ?? []];
@@ -167,24 +169,6 @@ if (isset($_POST["operacion"])) {
                 break;
 
             case 'modificar_habitantes':
-                // Asignar datos del habitante
-                $habitante->set_id_habitante($_POST['id_habitante'] ?? null);
-                $habitante->set_nombre($_POST['nombre'] ?? null);
-                $habitante->set_apellido($_POST['apellido'] ?? null);
-                $habitante->set_telefono($_POST['telefono'] ?? null);
-                $habitante->set_correo($_POST['correo'] ?? null);
-                $habitante->set_fecha_nacimiento($_POST['fecha_nacimiento'] ?? null);
-                $habitante->set_sexo($_POST['sexo'] ?? null);
-                $tipo = $_POST['tipo_cedula'] ?? '';
-                $numero = $_POST['cedula'] ?? '';
-                if ($tipo !== '' && $numero !== '') {
-                    $habitante->set_cedula($tipo . $numero);
-                }
-
-                // Datos de la nueva relación (si cambia)
-                $habitante->set_nuevo_apartamento_id($_POST['apartamento_id'] ?? null);
-                $habitante->set_nuevo_tipo_vinculo($_POST['tipo_vinculo'] ?? null);
-
                 $respuesta = $habitante->realizar_consulta('modificar_con_relacion');
                 if ($respuesta['estatus']) {
                     Bitacora::registrar(MODIFICAR, GESTIONAR_HABITANTES,

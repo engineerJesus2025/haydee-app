@@ -25,6 +25,16 @@ $tipoGasto = new TipoGasto();
 if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');
 
+    // =========================================================
+    // ASIGNACIÓN MASIVA DE CAMPOS ESCALARES
+    // =========================================================
+    $gastos->set_id_gasto($_POST['id_gasto'] ?? null);
+    $gastos->set_clasificacion($_POST['clasificacion'] ?? null);
+    $gastos->set_descripcion_gasto($_POST['descripcion_gasto'] ?? null);
+    $gastos->set_solicitud_id($_POST['solicitud'] ?? null);
+    $gastos->set_tipo_gasto_id($_POST['tipo_gasto'] ?? null);
+    $gastos->set_proveedor_id($_POST['proveedor'] ?? null);
+
     $operacion = $_POST["operacion"];
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
@@ -70,11 +80,8 @@ if (isset($_POST["operacion"])) {
             case 'registrar':
                 $detalles = ConstructorDetalles::ConstruirDetallesGastos($_POST, $_FILES);
                 $gastos->set_detalles($detalles);
-                $gastos->set_clasificacion($_POST['clasificacion'] ?? null);
-                $gastos->set_descripcion_gasto($_POST['descripcion_gasto'] ?? null);
-                $gastos->set_solicitud_id($_POST['solicitud'] ?? null);
-                $gastos->set_tipo_gasto_id($_POST['tipo_gasto'] ?? null);
-                $gastos->set_proveedor_id($_POST['proveedor'] ?? null);
+
+                // Los campos de cabecera ya fueron asignados masivamente
 
                 $respuesta = $gastos->realizar_consulta('registrar');
                 if ($respuesta['estatus']) {
@@ -112,11 +119,8 @@ if (isset($_POST["operacion"])) {
 
                 $detalles = ConstructorDetalles::ConstruirDetallesGastos($_POST, $_FILES, true);
                 $gastos->set_detalles($detalles);
-                $gastos->set_clasificacion($_POST['clasificacion'] ?? null);
-                $gastos->set_descripcion_gasto($_POST['descripcion_gasto'] ?? null);
-                $gastos->set_solicitud_id($_POST['solicitud'] ?? null);
-                $gastos->set_tipo_gasto_id($_POST['tipo_gasto'] ?? null);
-                $gastos->set_proveedor_id($_POST['proveedor'] ?? null);
+
+                // Los campos de cabecera ya fueron asignados masivamente
 
                 $respuesta = $gastos->realizar_consulta('modificar');
                 if ($respuesta['estatus']) {
@@ -201,9 +205,6 @@ if (isset($_POST["operacion"])) {
     exit;
 }
 
-// =========================================================
-// VALIDACIONES AJAX (opcional, se pueden implementar luego)
-// =========================================================
 // =========================================================
 // VALIDACIONES AJAX
 // =========================================================

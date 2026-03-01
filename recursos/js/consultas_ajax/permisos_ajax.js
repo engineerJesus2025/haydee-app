@@ -15,7 +15,7 @@ const botonFormulario = document.getElementById("boton_formulario");
 document.addEventListener('DOMContentLoaded', () => {
     consultarPermisos();
 
-    document.getElementById("modal_permiso")?.addEventListener("hidden.bs.modal", resetModal);
+    document.getElementById("modal_permiso")?.addEventListener("hide.bs.modal", resetModal);
 
     document.querySelector("#tabla_permisos tbody")?.addEventListener("click", manejarClickEnTabla);
 });

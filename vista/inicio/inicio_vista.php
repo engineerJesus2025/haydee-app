@@ -8,51 +8,6 @@
 		require_once "vista/componentes/estilos.php";
 	?>
 	<link rel="stylesheet" type="text/css" href="recursos/css/publicaciones_inicio.css">
-<!-- icono carga customizada -->
-	<style type="text/css">
-		.loader_publicaciones {
-		  width: 48px;
-		  height: 48px;
-		  display: block;
-		  margin:15px auto;
-		  position: relative;
-		  color: #FFF;
-		  box-sizing: border-box;
-		  animation: rotation 1s linear infinite;
-		}
-		.loader_publicaciones::after,
-		.loader_publicaciones::before {
-		  content: '';  
-		  box-sizing: border-box;
-		  position: absolute;
-		  width: 24px;
-		  height: 24px;
-		  top: 50%;
-		  left: 50%;
-		  transform: scale(0.5) translate(0, 0);
-		  background-color: #222;
-		  border-radius: 50%;
-		  animation: animloader 1s infinite backwards;
-		}
-		.loader_publicaciones::before {
-		  background-color: #2A1CD1;
-		  transform: scale(0.5) translate(-48px, -48px);
-		}
-
-		@keyframes rotation {
-		  0% {
-		    transform: rotate(0deg);
-		  }
-		  100% {
-		    transform: rotate(360deg);
-		  }
-		} 
-		@keyframes animloader {
-		    50% {
-		      transform: scale(1) translate(-50%, -50%);
-			}
-		}
-	</style>
 </head>
 <body id="body-pd" class="body-pd d-flex flex-column">
 	<div class="container-fluid">
@@ -120,14 +75,10 @@
 					</div>
 					<div class="d-flex justify-content-center mb-5"><span id="carga_publicaciones" hidden="" class="loader_publicaciones"></span></div>
 				</main>
-
-				<?php
-					require_once 'vista/componentes/modal_carga.php';
-					require_once "vista/componentes/script.php";
-				?>
 			</div>
 		</div>
 	</div>
+	<!-- Para las card de las publicaciones -->
 	<template id="template-publicacion">
 	    <div class="col-11 card post-card mx-auto shadow-lg my-4 px-0">
 	        <div class="row g-0 h-100">
@@ -150,7 +101,14 @@
 	    </div>
 	</template>
 
-	<?php require_once "vista/componentes/footer.php"; ?>
+	<!-- Componentes -->
+    <?php
+        require_once "vista/componentes/footer.php";
+        require_once "vista/componentes/script.php";
+        require_once 'vista/componentes/modal_carga.php';
+    ?>
+
+	<!-- Scripts personalizado -->
 	<script type="text/javascript" src="recursos/estadisticas/chart.js"></script>
 	<script src="recursos/js/consultas_ajax/inicio_ajax.js"></script>
 </body>

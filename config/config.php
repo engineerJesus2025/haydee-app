@@ -22,6 +22,7 @@ define("DB_SECURITY", $_ENV['DB_SECURITY'] ?? 'seguridad_haydee_db');
 define('CLAVE_SITIO_RECAPTCHA', $_ENV['CLAVE_SITIO_RECAPTCHA'] ?? '');
 define('CLAVE_SECRETA_RECAPTCHA', $_ENV['CLAVE_SECRETA_RECAPTCHA'] ?? '');
 
+define('PROVEEDOR_CORREO', $_ENV['PROVEEDOR_CORREO'] ?? '');
 define('API_CORREO', $_ENV['API_CORREO'] ?? '');
 define('SMTP_HOST', $_ENV['SMTP_HOST'] ?? '');
 define('SMTP_USER', $_ENV['SMTP_USER'] ?? '');

@@ -87,7 +87,7 @@ class Autenticacion
 
 
         // Devolver datos para la sesión (sin el token si no se usó)
-        $datosSesion = $this->_normalizarDatosUsuario($usuario, $usuario['permisos'], $usuario['notificaciones']);
+        $datosSesion = $this->normalizarDatosUsuario($usuario, $usuario['permisos'], $usuario['notificaciones']);
 
         return ['estatus' => true, 'mensaje' => 'Login exitoso', 'datos' => $datosSesion, 'token' => $usuario['token_recordar'] ?? null];
     }
@@ -126,7 +126,7 @@ class Autenticacion
         $usuario['datos']['notificaciones'] = $notificaciones['datos'] ?? [];
 
         // Normalizar datos
-        $datosSesion = $this->_normalizarDatosUsuario(
+        $datosSesion = $this->normalizarDatosUsuario(
             $usuario['datos'],
             $usuario['datos']['permisos'],
             $usuario['datos']['notificaciones']
@@ -155,7 +155,7 @@ class Autenticacion
      * @param array $notificaciones (opcional) Lista de notificaciones
      * @return array
      */
-    private function _normalizarDatosUsuario($usuario, $permisos = [], $notificaciones = [])
+    private function normalizarDatosUsuario($usuario, $permisos = [], $notificaciones = [])
     {
         // Obtener nombre del rol
         $rolModel = new Rol();

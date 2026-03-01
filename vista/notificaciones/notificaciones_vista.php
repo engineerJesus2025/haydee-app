@@ -45,15 +45,17 @@
                         </div>
                     </div>
                 </main>
-                <?php
-                require_once 'vista/componentes/modal_carga.php';
-                require_once "vista/componentes/script.php";
-                ?>
             </div>
         </div>
     </div>
-    <?php require_once "vista/componentes/footer.php"; ?>
+    <!-- Componentes -->
+    <?php
+        require_once "vista/componentes/footer.php";
+        require_once "vista/componentes/script.php";
+        require_once 'vista/componentes/modal_carga.php';
+    ?>
+
+    <!-- Scripts personalizado -->
     <script type="text/javascript" src="recursos/js/consultas_ajax/notificaciones_ajax.js"></script>
 </body>
-
 </html>

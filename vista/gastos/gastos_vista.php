@@ -59,26 +59,24 @@
                                         </div>
                                     </div>
                                 <?php endif; ?>
-                                <div class="table-responsive">
-                                    <table id="tabla_gastos" class="table table-striped table-hover">
-                                        <thead>
-                                            <tr>
-                                                <th>FECHA</th>
-                                                <th>MONTO</th>
-                                                <th>TIPO</th>
-                                                <th>TIPO GASTO</th>
-                                                <th>DESCRIPCION</th>
-                                                <th class="text-center">ACCIONES</th>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td colspan="8">
-                                                    <h4>Cargando...</h4>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
+                                <table id="tabla_gastos" class="table table-striped table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>FECHA</th>
+                                            <th>MONTO</th>
+                                            <th>TIPO</th>
+                                            <th>TIPO GASTO</th>
+                                            <th>DESCRIPCION</th>
+                                            <th class="text-center">ACCIONES</th>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="8">
+                                                <h4>Cargando...</h4>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
 
                             <div class="modal fade" id="modal_gastos" tabindex="-1" aria-labelledby="titulo-modal"
@@ -101,17 +99,18 @@
                         </div>
                     </div>
                 </main>
-                <?php
-                require_once 'vista/componentes/modal_carga.php';
-                require_once "vista/componentes/script.php";
-                ?>
-                
             </div>
         </div>
     </div>
 
-    <?php require_once "vista/componentes/footer.php"; ?>
-
+    <!-- Componentes -->
+    <?php
+        require_once "vista/componentes/footer.php";
+        require_once "vista/componentes/script.php";
+        require_once 'vista/componentes/modal_carga.php';
+    ?>
+    
+    <!-- Modales -->
     <div class="modal fade" id="modal_vista_previa" tabindex="-1" aria-labelledby="modal_vista_previa_label" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
@@ -199,7 +198,8 @@
             </div>
         </div>
     </div>
-
+    
+    <!-- Scripts personalizado -->
     <script type="text/javascript" src="recursos/js/validaciones/gastos_validar.js"></script>
     <script type="text/javascript" src="recursos/js/consultas_ajax/gastos_ajax.js"></script>
 </body>

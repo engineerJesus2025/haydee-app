@@ -27,17 +27,16 @@ $(document).ready(function() {
     $('#correo').on('blur', async function() {
         if ($(this).val() === correo_an) return; // No ha cambiado
 
-        if (Validaciones.keyUp(/^[a-zA-Z0-9._+-]{3,35}@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/, this, this.nextElementSibling, '')) {
+        if (Validaciones.keyUp(/^[a-zA-Z0-9._+-]{3,35}@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/, this, this.nextElementSibling, 'El formato debe ser: ejemplo@gmail.com')) {
             const datos = new FormData();
             datos.append('validar', 'correo');
             datos.append('correo', $(this).val());
             await Validaciones.verificarDuplicado(datos,'Este correo ya está en uso, ingrese uno diferente.');
-            // await verificarDuplicados(datos);
         }
     });
 
     // Validaciones de contraseña
-    $('#contra, #confir_contra, #contra_actual').on('keyup', function() {
+    $('#contra, #confir_contra').on('keyup', function() {
         Validaciones.keyUp(/^[A-Za-z0-9_.+*$#%&@-]{5,100}$/, this, this.nextElementSibling.nextElementSibling, 'Mínimo 5 caracteres');
     });
 
@@ -93,15 +92,15 @@ $(document).ready(function() {
 
 async function validarEnvioPerfil() {
     // Validar campos individuales
-    if (!Validaciones.keyUp(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,20}$/, $('#nombre')[0], $('#nombre')[0].nextElementSibling, '')) {
+    if (!Validaciones.keyUp(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,20}$/, $('#nombre')[0], $('#nombre')[0].nextElementSibling, 'Solo texto, no más de 20 caracteres')) {
         Utilidades.mensaje('error', 'Error', 'El nombre no es válido.');
         return false;
     }
-    if (!Validaciones.keyUp(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,20}$/, $('#apellido')[0], $('#apellido')[0].nextElementSibling, '')) {
+    if (!Validaciones.keyUp(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,20}$/, $('#apellido')[0], $('#apellido')[0].nextElementSibling, 'Solo texto, no más de 20 caracteres')) {
         Utilidades.mensaje('error', 'Error', 'El apellido no es válido.');
         return false;
     }
-    if (!Validaciones.keyUp(/^[a-zA-Z0-9._+-]{3,35}@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/, $('#correo')[0], $('#correo')[0].nextElementSibling, '')) {
+    if (!Validaciones.keyUp(/^[a-zA-Z0-9._+-]{3,35}@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/, $('#correo')[0], $('#correo')[0].nextElementSibling, 'El formato debe ser: ejemplo@gmail.com')) {
         Utilidades.mensaje('error', 'Error', 'El correo no es válido.');
         return false;
     }
@@ -120,14 +119,8 @@ async function validarEnvioPerfil() {
 }
 
 async function validarEnvioContra() {
-    // Validar contraseña actual
-    if (!Validaciones.keyUp(/^[A-Za-z0-9_.+*$#%&@-]{5,100}$/, $('#contra_actual')[0], $('#contra_actual')[0].nextElementSibling.nextElementSibling, '')) {
-        Utilidades.mensaje('error', 'Error', 'La contraseña actual no es válida.');
-        return false;
-    }
-
     // Validar nueva contraseña
-    if (!Validaciones.keyUp(/^[A-Za-z0-9_.+*$#%&@-]{5,100}$/, $('#contra')[0], $('#contra')[0].nextElementSibling.nextElementSibling, '')) {
+    if (!Validaciones.keyUp(/^[A-Za-z0-9_.+*$#%&@-]{5,100}$/, $('#contra')[0], $('#contra')[0].nextElementSibling.nextElementSibling, 'La nueva contraseña no es válida.')) {
         Utilidades.mensaje('error', 'Error', 'La nueva contraseña no es válida.');
         return false;
     }
@@ -136,18 +129,6 @@ async function validarEnvioContra() {
     if ($('#contra').val() !== $('#confir_contra').val()) {
         $('#contra, #confir_contra').addClass('is-invalid').removeClass('is-valid');
         Utilidades.mensaje('error', 'Error', 'Las contraseñas no coinciden.');
-        return false;
-    }
-
-    // Verificar que la contraseña actual sea correcta contra el servidor
-    const datos = new FormData();
-    datos.append('validar', 'contra_perfil');
-    datos.append('contra', $('#contra_actual').val());
-
-    const respuesta = await Utilidades.query(datos);
-    if (!respuesta) {
-        $('#contra_actual').addClass('is-invalid').removeClass('is-valid');
-        Utilidades.mensaje('error', 'Error', 'La contraseña actual es incorrecta.');
         return false;
     }
 

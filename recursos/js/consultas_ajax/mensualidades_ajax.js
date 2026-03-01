@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => tablaMensualidades?.columns.adjust().draw(), 450);
     });
 
-    document.getElementById("modal_mensualidad")?.addEventListener("hidden.bs.modal", resetModalMensualidad);
+    document.getElementById("modal_mensualidad")?.addEventListener("hide.bs.modal", resetModalMensualidad);
     document.getElementById("modal_mensualidades_apartamentos")?.addEventListener("shown.bs.modal", () => {
         if ($.fn.DataTable.isDataTable("#mensualidades_apartamentos")) {
             $('#mensualidades_apartamentos').DataTable().columns.adjust().draw();

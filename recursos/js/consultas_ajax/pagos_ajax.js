@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
     consultar();
 
     // Resetear modal al cerrar
-    document.getElementById("modal_pagos").addEventListener("hidden.bs.modal", resetModalPagos);
+    document.getElementById("modal_pagos").addEventListener("hide.bs.modal", resetModalPagos);
 
     // Evento para agregar nuevos bloques de detalles
     document.getElementById("agregar_detalle")?.addEventListener("click", agregarDetallePago);

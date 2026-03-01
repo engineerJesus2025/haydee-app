@@ -14,12 +14,6 @@ const input_file = document.getElementById('input_file_importar');
 // Inicialización
 document.addEventListener('DOMContentLoaded', () => {
     obtenerCopiasGuardadas();
-    
-    // Estado inicial de botones
-    alternarVisibilidad(boton_exportar.parentElement, false);
-    alternarVisibilidad(boton_descargar.parentElement, false);
-    
-    // Verificar si venimos de un error de descarga (parametro 'e' en url)
     verificarErroresURL();
 });
 
@@ -30,40 +24,86 @@ document.addEventListener('DOMContentLoaded', () => {
 // Seleccionar Base de Datos
 select_db.addEventListener("change", (e) => {
     const valor = e.target.value;
-    if (!valor) return;
+    const divAcciones = document.getElementById('acciones_exportar');
+    
+    if (!valor) {
+        divAcciones.style.display = 'none';
+        return;
+    }
 
     const valido = /^negocio|seguridad/.test(valor);
-    validarInput(e.target, valido, "La base de datos seleccionada no existe");
+    validarInput(e.target, valido, "Selección no válida");
 
-    // Mostrar botones si es válido
-    alternarVisibilidad(boton_exportar.parentElement, valido);
-    alternarVisibilidad(boton_descargar.parentElement, valido);
-    alternarVisibilidad(document.getElementById('o'), valido);
+    if (valido) {
+        divAcciones.style.display = 'flex'; // Usamos flex para mantener la alineación
+        document.getElementById('db_input').value = valor;
+        // Quitar cualquier "hidden" residual que pudiera haber quedado de versiones anteriores
+        boton_exportar.removeAttribute('hidden');
+        boton_descargar.removeAttribute('hidden');
+    }
 });
 
 // Seleccionar Copia de Seguridad de la lista
 select_copias.addEventListener("change", (e) => {
     const valor = e.target.value;
-    if (!valor) return;
-
-    // Regex para validar el nombre del archivo generado por el sistema
-    const valido = /^backup(_seguridad)?_haydee_db_\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}\.sql$/.test(valor);
+    const infoDiv = document.getElementById('info_seleccion');
+    const btn = document.getElementById('boton_importar');
     
-    validarInput(e.target, valido, "La copia de seguridad seleccionada no existe");
-    alternarVisibilidad(boton_importar, valido);
-    
-    if (valido) {
-        input_file.value = ''; // Limpiar input file para evitar ambigüedad
+    if (!valor) {
+        infoDiv.innerHTML = '';
+        btn.style.display = 'none';
+        return;
     }
+
+    const esSeguridad = valor.includes("seguridad");
+    const textoDB = esSeguridad ? 'Seguridad' : 'Negocio';
+    const icono = esSeguridad ? 'bi-shield-check' : 'bi-building';
+    
+    // Mostramos la alerta con el diseño de "info"
+    infoDiv.innerHTML = `
+        <div class="alert alert-info border-0 shadow-sm py-2 mb-0 d-flex align-items-center">
+            <i class="bi ${icono} fs-4 me-3"></i>
+            <div>
+                <strong>Archivo listo:</strong> Se restaurará en la base de datos de <u>${textoDB}</u>.
+            </div>
+        </div>`;
+    
+    document.getElementById('texto_boton_importar').textContent = `Restaurar datos de ${textoDB}`;
+    boton_importar.style.display = 'inline-block';
+    // Limpiar el otro input
+    input_file.value = '';
 });
 
 // Subir archivo manual
 input_file.addEventListener("change", (e) => {
-    if (e.target.value !== '') {
-        select_copias.value = ''; // Limpiar select
-        select_copias.classList.remove('is-valid', 'is-invalid'); // Resetear estilos
-        boton_importar.removeAttribute("hidden");
+    const infoDiv = document.getElementById('info_seleccion');
+    const archivo = e.target.files[0];
+
+    if (!archivo) {
+        boton_importar.style.display = 'none';
+        infoDiv.innerHTML = '';
+        return;
     }
+
+    // Detección inteligente por nombre de archivo
+    const nombre = archivo.name.toLowerCase();
+    const esSeguridad = nombre.includes("seguridad");
+    const textoDestino = esSeguridad ? "Seguridad" : "Negocio";
+    const icono = esSeguridad ? "bi-shield-check" : "bi-building";
+
+    select_copias.value = ''; // Limpiar el select de copias guardadas
+
+    infoDiv.innerHTML = `
+        <div class="alert alert-secondary border-0 shadow-sm py-2 mb-0 d-flex align-items-center">
+            <i class="bi bi-file-earmark-arrow-up fs-4 me-3"></i>
+            <div>
+                <strong>Archivo local:</strong> ${archivo.name}<br>
+                <small><i class="bi ${icono} me-1"></i> Destino detectado: Base de Datos de <b>${textoDestino}</b></small>
+            </div>
+        </div>`;
+
+    document.getElementById('texto_boton_importar').textContent = `Importar datos de ${textoDestino}`;
+    boton_importar.style.display = 'inline-block';
 });
 
 // Botón Exportar (Generar Backup)
@@ -137,6 +177,18 @@ boton_importar.addEventListener("click", async () => {
     }
 });
 
+const iconoBoton = document.getElementById('icono_boton_importar');
+
+boton_importar.addEventListener('mouseenter', () => {
+    iconoBoton.classList.remove('bi-arrow-repeat');
+    iconoBoton.classList.add('bi-exclamation-triangle', 'text-warning');
+});
+
+boton_importar.addEventListener('mouseleave', () => {
+    iconoBoton.classList.remove('bi-exclamation-triangle', 'text-warning');
+    iconoBoton.classList.add('bi-arrow-repeat');
+});
+
 // -------------------------------------------------------------------------
 // Funciones de Lógica de Negocio (AJAX)
 // -------------------------------------------------------------------------
@@ -145,7 +197,6 @@ async function obtenerCopiasGuardadas() {
     let datos = new FormData();
     datos.append('operacion', 'obtener_copias');
 
-    // Usamos Utilidades.query
     const respuesta = await Utilidades.query(datos);
 
     if (!respuesta.estatus) {
@@ -153,7 +204,7 @@ async function obtenerCopiasGuardadas() {
         return;
     }
 
-    const listaArchivos = respuesta.datos || []; 
+    const listaArchivos = respuesta.datos || [];
 
     select_copias.innerHTML = ''; // Limpiar select
 
@@ -172,15 +223,45 @@ async function obtenerCopiasGuardadas() {
 
     select_copias.disabled = false;
     let fragment = document.createDocumentFragment();
-    
+
+    // Ordenar archivos por fecha descendente (más reciente primero)
+    listaArchivos.sort().reverse();
+
     listaArchivos.forEach(fichero => {
         let option = document.createElement("option");
-        option.textContent = fichero;
+        
+        // Texto formateado con el nuevo icono
+        option.textContent = formatearNombreArchivo(fichero);
         option.value = fichero;
+        
         fragment.appendChild(option);
     });
 
     select_copias.appendChild(fragment);
+}
+
+/**
+ * Transforma el nombre técnico del archivo en un formato legible
+ * Ejemplo: backup_haydee_db_2026-02-21-07-23-31.sql 
+ * Resultado: 📦 Negocio | 📅 21/02/2026 | 🕒 07:23:31
+ */
+/**
+ * Transforma el nombre técnico en un formato legible con iconos diferenciados
+ */
+function formatearNombreArchivo(fichero) {
+    const esSeguridad = fichero.includes("seguridad");
+    
+    // Símbolos de color + Iconos de oficina/escudo
+    const prefijo = esSeguridad ? "🔹 🛡️" : "🔹 🏢";
+    const tipo = esSeguridad ? "SEGURIDAD" : "NEGOCIO";
+    
+    const match = fichero.match(/(\d{4})-(\d{2})-(\d{2})-(\d{2})-(\d{2})-(\d{2})/);
+    
+    if (match) {
+        const [_, anio, mes, dia, hora, min, seg] = match;
+        return `${prefijo} ${tipo} | 📅 ${dia}/${mes}/${anio} | 🕒 ${hora}:${min}:${seg}`;
+    }
+    return fichero;
 }
 
 async function generarCopiaSeguridad() {

@@ -471,7 +471,7 @@ class Usuario extends Conexion
     private function _cambiar_contrasenia()
     {
         // Se usa para recuperación ("Olvidé contraseña")
-        $v = $this->validar(['correo', 'contra']);
+        $v = $this->validar(['correo', 'contra'],['exclude_id' => $this->id_usuario]);
         if (!$v['estatus']) return $v;
 
         $hash = password_hash($this->contra, PASSWORD_DEFAULT);

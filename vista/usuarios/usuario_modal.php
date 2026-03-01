@@ -45,8 +45,8 @@
             <label for="contra">Contraseña</label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-key"></i></span>
-                <input type="password" class="form-control" name="contra" id="contra" placeholder="Contraseña" aria-label="contra" aria-describedby="basic-addon1" minlength="5" maxlength="50">
-                <button class="btn contra" type="button" title="Mostrar Contraseña" tabindex="-1">
+                <input type="password" class="form-control contra-input" name="contra" id="contra" placeholder="Contraseña" aria-label="contra" aria-describedby="basic-addon1" minlength="5" maxlength="50">
+                <button class="btn contra-btn" type="button" title="Mostrar Contraseña" tabindex="-1">
                     <i class="bi bi-eye"></i>
                 </button>
                 <span class="w-100 invalid-feedback"></span>
@@ -56,8 +56,8 @@
             <label for="confir_contra">Confirmar contraseña</label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-key"></i></span>
-                <input type="password" class="form-control confir_contra" name="confir_contra" id="confir_contra" placeholder="Confirmar contraseña" aria-label="confir_contra" aria-describedby="basic-addon1" minlength="5" maxlength="50">
-                <button class="btn contra" type="button" title="Mostrar Contraseña" tabindex="-1">
+                <input type="password" class="form-control contra-input" name="confir_contra" id="confir_contra" placeholder="Confirmar contraseña" aria-label="confir_contra" aria-describedby="basic-addon1" minlength="5" maxlength="50">
+                <button class="btn contra-btn" type="button" title="Mostrar Contraseña" tabindex="-1">
                     <i class="bi bi-eye"></i>
                 </button>
                 <span class="w-100 invalid-feedback"></span>

@@ -28,7 +28,6 @@
                 <main class="col ps-md-2 pt-2 mb-5 ">
                     <div class="page-header pt-3">
                         <h2>GESTIONAR AÑOS FISCALES</h2>
-                        <?php echo CONSULTAR . Sesiones::tienePermiso(GESTIONAR_PERMISOS, CONSULTAR) ?>
                     </div>
                     <p class="lead"></p>
                     <hr>
@@ -66,13 +65,14 @@
             </div>
         </div>        
     </div>
-    
+    <!-- Componentes -->
     <?php
-        require_once 'vista/componentes/modal_carga.php';
-        require_once "vista/componentes/script.php";
         require_once "vista/componentes/footer.php";
+        require_once "vista/componentes/script.php";
+        require_once 'vista/componentes/modal_carga.php';
     ?>
 
+    <!-- Modales -->
     <div class="modal fade" id="modal_anio_fiscal" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -91,6 +91,7 @@
         </div>
     </div>
 
+    <!-- Scripts personalizado -->
     <script type="text/javascript" src="recursos/js/validaciones/anio_fiscal_validar.js"></script>
     <script type="text/javascript" src="recursos/js/consultas_ajax/anio_fiscal_ajax.js"></script>
 </body>

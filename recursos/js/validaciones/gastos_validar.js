@@ -68,6 +68,7 @@ $(document).ready(function () {
         Validaciones.keyPress(/^[\d.,]$/, e);
     });
     contenedor.on("keyup", ".monto", function () {
+        console.log(this.nextElementSibling)
         Validaciones.keyUp(/^\d{1,10}([.,]\d{1,2})?$/, this, this.nextElementSibling,
             "Monto inválido (ej: 150,50)");
     });

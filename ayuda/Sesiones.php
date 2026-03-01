@@ -23,7 +23,7 @@ class Sesiones
         $_SESSION["nombre_completo"] = $datosUsuario['nombre_completo'];
         $_SESSION["rol"] = $datosUsuario['rol'];
         $_SESSION["permisos"] = $datosUsuario['permisos'];
-        $_SESSION["notificaciones"] = array_filter($datosUsuario["notificaciones"],function($n){return $n['leido'];});
+        $_SESSION["notificaciones"] = array_filter($datosUsuario["notificaciones"],function($n){return $n['leido'] == 0;});
 
         // Verificar año fiscal (proceso automático)
         $anioFiscalModel = new AnioFiscal();

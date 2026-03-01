@@ -62,24 +62,19 @@ if (isset($_POST["operacion"])) {
                 break;
 
             case 'consultar_mensualidad_especifica':
-                $mensualidad_id = $_POST['mensualidad_id'] ?? null;
-                $pagos->set_mensualidad_id($mensualidad_id);
                 $respuesta = $pagos->realizar_consulta('consultar_mensualidad_especifica');
                 break;
 
             case 'consultar_detalles':
-                $pagos->set_id_pago($_POST['id_pago'] ?? null);
                 $result = $pagos->realizar_consulta('consultar_pago_unico');
                 $respuesta = $result['estatus'] ? ['estatus' => true, 'datos' => $result['datos'] ?? []] : $result;
                 break;
 
             case 'consulta_especifica':
-                $pagos->set_id_pago($_POST['id_pago'] ?? null);
                 $respuesta = $pagos->realizar_consulta('consultar_pago_unico');
                 break;
 
             case 'consulta_especifica_detalles':
-                $pagos->set_id_detalle_pago($_POST['id_detalle_pago'] ?? null);
                 $respuesta = $pagos->realizar_consulta('consultar_detalle_unico');
                 break;
 
@@ -126,13 +121,9 @@ if (isset($_POST["operacion"])) {
                     break;
                 }
 
-                $id_pago = $_POST['id_pago'] ?? null;
-                if (!$id_pago) throw new Exception('ID de pago no proporcionado');
-                $pagos->set_id_pago($id_pago);
-
                 // Obtener datos anteriores
                 $tempPagos = new Pagos();
-                $tempPagos->set_id_pago($id_pago);
+                $tempPagos->set_id_pago($_POST['id_pago']);
                 $datosAnteriores = $tempPagos->realizar_consulta('consultar_pago_unico');
                 $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
                 $anteriorResumen = [
@@ -157,8 +148,6 @@ if (isset($_POST["operacion"])) {
                 // Construir nuevos detalles (con imágenes existentes)
                 $detalles = ConstructorDetalles::construirDetalles($_POST, $_FILES, $configPagos, true);
                 $pagos->setDetallesTemp($detalles);
-                $pagos->set_estado($_POST['estado'] ?? 'PENDIENTE');
-                $pagos->set_observacion($_POST['observacion'] ?? '');
 
                 $respuesta = $pagos->realizar_consulta('modificar');
                 if ($respuesta['estatus']) {
@@ -179,13 +168,10 @@ if (isset($_POST["operacion"])) {
                     $respuesta = ['estatus' => false, 'mensaje' => 'No autorizado'];
                     break;
                 }
-                $id_pago = $_POST['id_pago'] ?? null;
-                if (!$id_pago) throw new Exception('ID de pago no proporcionado');
-                $pagos->set_id_pago($id_pago);
 
                 // Obtener datos anteriores
                 $tempPagos = new Pagos();
-                $tempPagos->set_id_pago($id_pago);
+                $tempPagos->set_id_pago($_POST['id_pago']);
                 $datosPago = $tempPagos->realizar_consulta('consultar_pago_unico');
                 $anterior = $datosPago['estatus'] ? $datosPago['datos'] : [];
                 $anteriorResumen = [

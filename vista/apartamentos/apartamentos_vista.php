@@ -60,39 +60,38 @@
                                         </div>
                                     </div>
                                 <?php endif; ?>
-                                <div class="table-responsive">
-                                    <table id="tabla_apartamentos" class="table table-striped table-hover"
-                                        style="width:97%">
-                                        <thead>
-                                            <tr>
-                                                <th>NRO APARTAMENTO</th>
-                                                <th>PARTICIPACION</th>
-                                                <th>GAS</th>
-                                                <th>AGUA</th>
-                                                <th>ALQUILADO</th>
-                                                <th class="text-center">ACCIONES</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>                                     
-                                        </tbody>
-                                    </table>
-                                </div>
+                                <table id="tabla_apartamentos" class="table table-striped table-hover"
+                                    style="width:97%">
+                                    <thead>
+                                        <tr>
+                                            <th>NRO APARTAMENTO</th>
+                                            <th>PARTICIPACION</th>
+                                            <th>GAS</th>
+                                            <th>AGUA</th>
+                                            <th>ALQUILADO</th>
+                                            <th class="text-center">ACCIONES</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>                                     
+                                    </tbody>
+                                </table>
                                 
                             </div>
                         </div>
                     </div>
                 </main>
-                <?php
-                require_once 'vista/componentes/modal_carga.php';                
-                require_once "vista/componentes/script.php";
-                ?>
-                
             </div>
         </div>
     </div>
 
-    <?php require_once "vista/componentes/footer.php"; ?>
-
+    <!-- Componentes -->
+    <?php
+        require_once "vista/componentes/footer.php";
+        require_once "vista/componentes/script.php";
+        require_once 'vista/componentes/modal_carga.php';
+    ?>
+    
+    <!-- Modales -->
     <div class="modal fade" id="modal_apartamentos" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable modal-lg">
             <div class="modal-content">
@@ -112,7 +111,6 @@
             </div>
         </div>
     </div>
-
     <div class="modal fade" id="modal_vista_previa" tabindex="-1" aria-labelledby="modal_vista_previa_label" aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable modal-xl">
             <div class="modal-content">
@@ -147,28 +145,26 @@
                                 data-bs-toggle="modal" data-bs-target="#modal_habitantes">Nuevo Habitante</a>
                         </div><br>
                     <?php endif; ?>
-                    <div class="table-responsive">
-                        <table id="tabla_habitantes" class="table table-striped table-hove"
-                            style="width:97%">
-                            <thead>
-                                <tr>
-                                    <th>NOMBRE</th>
-                                    <th>APELLIDO</th>
-                                    <th>CEDULA</th>
-                                    <th>APARTAMENTO</th>
-                                    <th>TIPO VINCULO</th>
-                                    <th class="text-center">ACCIONES</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td colspan="7">
-                                        <h4>Cargando...</h4>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    <table id="tabla_habitantes" class="table table-striped table-hove"
+                        style="width:97%">
+                        <thead>
+                            <tr>
+                                <th>NOMBRE</th>
+                                <th>APELLIDO</th>
+                                <th>CEDULA</th>
+                                <th>APARTAMENTO</th>
+                                <th>TIPO VINCULO</th>
+                                <th class="text-center">ACCIONES</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="7">
+                                    <h4>Cargando...</h4>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
@@ -238,7 +234,8 @@
             </div>
         </div>
     </div>
-
+    
+    <!-- Scripts personalizado -->
     <script type="text/javascript" src="recursos/js/validaciones/apartamentos_validar.js"></script>
     <script type="text/javascript" src="recursos/js/consultas_ajax/apartamentos_ajax.js"></script>
 </body>

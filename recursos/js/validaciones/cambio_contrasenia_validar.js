@@ -1,100 +1,83 @@
-document.getElementById('contra').addEventListener("keypress",e=>{
-	validarKeyPress(/^[A-Za-z0-9_.+*$#%&/]*$/, e);
+/**
+ * cambio_contrasenia_validar.js
+ * Validaciones para el formulario de cambio de contraseña
+ * Dependencias: validaciones.js, utilidades.js
+ */
+
+$(document).ready(function() {
+    const contra = $('#contra');
+    const confir = $('#confir_contra');
+    const btn = $('#btn-cambiar');
+    const form = $('#form-cambiar-contrasenia');
+
+    // Validación en tiempo real para contraseña
+    contra.on('keypress', e => Validaciones.keyPress(/^[A-Za-z0-9_.+*$#%&@-]$/, e));
+    contra.on('keyup', function() {
+        Validaciones.keyUp(/^[A-Za-z0-9_.+*$#%&@-]{5,100}$/, this, this.nextElementSibling.nextElementSibling, 
+            'Mínimo 5 caracteres, se permiten: letras, números y ._+*$#%&@-');
+    });
+
+    // Confirmar contraseña
+    confir.on('keypress', e => Validaciones.keyPress(/^[A-Za-z0-9_.+*$#%&@-]$/, e));
+    confir.on('keyup', function() {
+        Validaciones.keyUp(/^[A-Za-z0-9_.+*$#%&@-]{5,100}$/, this, this.nextElementSibling.nextElementSibling, 
+            'Mínimo 5 caracteres');
+    });
+    
+	// Mostrar/ocultar contraseñas
+    document.querySelectorAll('.contra-btn').forEach(boton => {
+        boton.addEventListener('click', e => {
+            e.preventDefault();
+            let input = boton.previousElementSibling; // el input está antes del botón
+            let icono = boton.querySelector('i');
+            if (icono.classList.contains('bi-eye')) {
+                input.setAttribute('type', 'text');
+                icono.classList.replace('bi-eye', 'bi-eye-slash');
+            } else {
+                input.setAttribute('type', 'password');
+                icono.classList.replace('bi-eye-slash', 'bi-eye');
+            }
+        });
+    });
+
+    // Al enviar el formulario
+    btn.on('click', async function(e) {
+        e.preventDefault();
+        if (await validarEnvio()) {
+            Swal.fire({
+                title: '¿Estás seguro?',
+                text: '¿Desea cambiar su contraseña?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#1b8a40',
+                confirmButtonText: 'Sí, cambiar',
+                cancelButtonText: 'Cancelar'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        }
+    });
 });
 
-document.getElementById('confir_contra').addEventListener("keypress",e=>{
-	validarKeyPress(/^[A-Za-z0-9_.+*$#%&/]*$/, e);
-});
+async function validarEnvio() {
+    const contra = document.getElementById('contra');
+    const confir = document.getElementById('confir_contra');
 
-document.getElementById('cambiar_contrasenia').addEventListener('click',e=>{	
-	e.preventDefault();
-	if(validarEnvio()==true){
-		Swal.fire({
-		title: "¿Estás seguro?",
-		text: `¿Está seguro que desea cambiar esta contraseña?`,
-		showCancelButton: true,
-		confirmButtonText: "Cambiar",
-		confirmButtonColor: "#1b8a40",
-		cancelButtonText: "Cancelar",
-		icon: "warning"
-		}).then((result) => {
-			if (result.isConfirmed) {
-				e.target.closest("form").submit();
-			}
-		});
-	}
-});
-
-
-
-function validarEnvio(){
-	if(validarKeyUp(
-        /^[A-Za-z0-9_.+*$#%&/]{5,50}$/,
-        document.getElementById('contra')
-        )==0)
-	{
-		mensajes('error',4000,'Verifique la contraseña',
-		'El formato debe tener mínimo 5 caracteres, utilizar letras, numeros y caracteres especiales como: _.+*$#%&/ ');
-		
-		return false;
-	}
-	else if(validarKeyUp(
-        /^[A-Za-z0-9_.+*$#%&/]{5,50}$/,
-        document.getElementById('confir_contra')
-        )==0)
-	{
-		mensajes('error',4000,'Verifique la casilla "confirmar contraseña"',
-		'El formato debe tener mínimo 5 caracteres, utilizar letras, numeros y caracteres especiales como: _.+*$#%&/ ');
-		
-		return false;
-	}
-	else if(document.getElementById('confir_contra').value != document.getElementById('contra').value)
-	{
-		mensajes('error',4000,'Atención',
-		'al campo "Contraseña" y "Confirmar contraseña no coinciden". Deben coincidir.');
-		
-		return false;
-	}
-
-	return true;
-}
-
-function validarKeyPress(er, e) {
-    key = e.keyCode;
-    tecla = String.fromCharCode(key);
-    a = er.test(tecla);
-    if (!a) {
-    e.preventDefault();
+    // Validar formato de la contraseña
+    if (!Validaciones.keyUp(/^[A-Za-z0-9_.+*$#%&@-]{5,100}$/, contra, contra.nextElementSibling.nextElementSibling, '')) {
+        Utilidades.mensaje('error', 'Error', 'La contraseña debe tener al menos 5 caracteres y solo caracteres permitidos.');
+        return false;
     }
-}
 
-function validarKeyUp(er, etiqueta) {
-    a = er.test(etiqueta.value);
-    if (a) {
-        return 1;
-    } else {
-        return 0;
+    // Validar que coincidan
+    if (contra.value !== confir.value) {
+        Validaciones.mostrarError(confir, 'Las contraseñas no coinciden');
+        Utilidades.mensaje('error', 'Error', 'Las contraseñas no coinciden.');
+        return false;
     }
+
+    return true;
 }
 
-function mensajes(icono,tiempo,titulo,mensaje){
-	Swal.fire({
-	icon:icono,
-    timer:tiempo,	
-    title:titulo,
-	text:mensaje,
-	showConfirmButton:true,
-	confirmButtonText:'Aceptar',
-	confirmButtonColor: "#e01d22",
-	});
-}
-
-async function query(datos) {
-	// Solo es un fetching de datos, en body mandamos los datos
-	// Estos datos se mandan al controdalor	
-	let data = await fetch("",{method:"POST", body:datos}).then(res=>{		
-		let result = res.json()
-		return result;//Convertimos el resultado de json a js y lo mandamos
-	})
-	return data;
-}

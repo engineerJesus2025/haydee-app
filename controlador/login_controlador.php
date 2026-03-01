@@ -103,7 +103,7 @@ switch ($accion) {
     case 'guardar_contrasenia':
         // Verificar que venimos del paso anterior
         if (empty($_SESSION['reset_temp'])) {
-            header("Location: ?pagina=login_controlador.php");
+            header("Location: ?pagina=login_controlador.php&accion=inicio&err=4");
             exit;
         }
 

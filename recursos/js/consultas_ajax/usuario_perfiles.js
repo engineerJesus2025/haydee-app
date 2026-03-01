@@ -29,7 +29,7 @@ document.getElementById('modal_contra')?.addEventListener('hide.bs.modal', () =>
 });
 
 // Mostrar/ocultar contraseñas
-document.querySelectorAll('.contra').forEach(boton => {
+document.querySelectorAll('.contra-btn').forEach(boton => {
     boton.addEventListener('click', e => {
         e.preventDefault();
         const icon = e.target.tagName === 'I' ? e.target : e.target.querySelector('i');
