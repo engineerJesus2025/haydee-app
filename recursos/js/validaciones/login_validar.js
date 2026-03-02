@@ -182,7 +182,7 @@ async function realizarLogin() {
 
     if (resultado.estatus) {
         await obtenerTasaDolar();
-        window.location = "?pagina=inicio_controlador.php&accion=inicio";
+        window.location = "?pagina=inicio&accion=inicio";
     } else {
         // Si falla, reiniciar reCAPTCHA (si está presente)
         if (!recaptchaDesactivado && typeof grecaptcha !== 'undefined' && recaptchaWidgetId !== null) {

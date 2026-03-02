@@ -56,7 +56,7 @@ class tipoGastoConsultarTest extends TestCase
         // -----------------------------------------------------------------
         // PASO 2: Confirmar que estamos en el Dashboard
         // -----------------------------------------------------------------
-        $this->driver->get('http://localhost/haydee-app/?pagina=inicio_controlador.php&accion=inicio');
+        $this->driver->get('http://localhost/haydee-app/?pagina=inicio&accion=inicio');
 
         // --- Corrección 1 (Línea 62) ---
         $this->driver->wait(10, 500)->until(
@@ -66,7 +66,7 @@ class tipoGastoConsultarTest extends TestCase
         );
 
 
-        $this->driver->get('http://localhost/haydee-app/?pagina=tipo_gasto_controlador.php&accion=inicio');
+        $this->driver->get('http://localhost/haydee-app/?pagina=tipo_gasto&accion=inicio');
 
         // 3.2. Esperamos a que aparezca el título H2
         $this->driver->wait(10, 500)->until(

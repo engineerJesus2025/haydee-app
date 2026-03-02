@@ -49,7 +49,7 @@ class proveedoresModificarTest extends TestCase
         $this->driver->findElement(WebDriverBy::id('form-login'))->submit();
         sleep(1); 
 
-        $this->driver->get('http://localhost/haydee-app/?pagina=inicio_controlador.php&accion=inicio');
+        $this->driver->get('http://localhost/haydee-app/?pagina=inicio&accion=inicio');
         $this->driver->wait(10, 500)->until(
             function () {
                 return $this->driver->findElement(WebDriverBy::id('contenido'));
@@ -59,7 +59,7 @@ class proveedoresModificarTest extends TestCase
         // -----------------------------------------------------------------
         // PASO 2: Navegar a Proveedores y esperar a que la tabla cargue
         // -----------------------------------------------------------------
-        $this->driver->get('http://localhost/haydee-app/?pagina=proveedores_controlador.php&accion=inicio');
+        $this->driver->get('http://localhost/haydee-app/?pagina=proveedores&accion=inicio');
         
         $this->driver->wait(10, 500)->until(
             function () {

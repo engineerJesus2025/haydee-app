@@ -270,7 +270,7 @@ function crearBotones(idsMensualidades, idsApartamentos) {
                 <i class="bi bi-eye-fill"></i>
             </button>
         </div>
-        <form class="col-lg-3 col-6 mt-2 mt-lg-0" action="?pagina=reportes_controlador.php&accion=cuadro_pagos" method="POST">
+        <form class="col-lg-3 col-6 mt-2 mt-lg-0" action="?pagina=reportes&accion=cuadro_pagos" method="POST">
             <input type="hidden" name="select_reporte" value="">
             <button type="submit" class="btn btn-outline-light cuadro-pagos" style="background-color:#3939a9;">
                 <i class="bi bi-card-checklist"></i>

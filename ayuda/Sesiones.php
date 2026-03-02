@@ -25,7 +25,7 @@ class Sesiones
         $_SESSION["permisos"] = $datosUsuario['permisos'];
         $_SESSION["notificaciones"] = array_filter($datosUsuario["notificaciones"],function($n){return $n['leido'] == 0;});
 
-        // Verificar año fiscal (proceso automático)
+        // Verificar año fiscal (proximamente proceso automático -_-)
         $anioFiscalModel = new AnioFiscal();
         try {
             $anioFiscalModel->realizar_consulta('verificar_anio_fiscal');
@@ -116,7 +116,7 @@ class Sesiones
      */
     private static function redirigirALogin()
     {
-        header("Location: ?pagina=login_controlador.php&accion=inicio");
+        header("Location: ?pagina=login&accion=inicio");
         exit;
     }
 

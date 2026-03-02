@@ -9,8 +9,8 @@
     ?>
 </head>
 <body id="body-pd" class="body-pd">
-    <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_MENSUALIDAD, ELIMINAR) ?>">
-    <input type="text" hidden="" id="permiso_modificar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_MENSUALIDAD, MODIFICAR) ?>">
+    <input type="text" hidden id="permiso_eliminar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_MENSUALIDAD, ELIMINAR) ?>">
+    <input type="text" hidden id="permiso_modificar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_MENSUALIDAD, MODIFICAR) ?>">
     <div class="container-fluid">
         <div class="row flex-nowrap">
 
@@ -36,7 +36,7 @@
                         <div class="col-11">
                             <div class="card p-4 row">
                                 <div class="col-12 row">
-                                    <div class="col" hidden="">                       
+                                    <div class="col" hidden>                       
                                         <button class="btn btn-primary my-2" id="boton_registrar" title="Presione para Registrar Nueva mensualidad" type="button" data-bs-toggle="modal" data-bs-target="#modal_mensualidad">Nueva mensualidad</button>
                                         <p class="text-danger"></p>
                                     </div>

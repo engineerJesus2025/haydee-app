@@ -42,7 +42,7 @@
                                     </h2>
                                 <p class="text-muted mb-0">Información personal del usuario</p>
                               </div>              
-                                <button class="btn btn-outline-primary" title="modificar Información" id="boton_modificar" disabled="">
+                                <button class="btn btn-outline-primary" title="modificar Información" id="boton_modificar" disabled>
                                     <div class="spinner-border text-primary" role="status" style="width: 1rem; height: 1rem; z-index: 1000">
                                         <span class="visually-hidden">Cargando...</span>
                                     </div>
@@ -131,7 +131,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <form hidden="" id="form_perfil">
+                                    <form hidden id="form_perfil">
                                         <div class="row g-3">
                                             <div class="col-md-6">
                                                 <label htmlFor="nombre" class="form-label">
@@ -221,7 +221,7 @@
                                             <i class="bi bi-key me-1"></i>
                                             Cambiar Contraseña
                                         </button>
-                                        <a href="?pagina=login_controlador.php&accion=cerrar" class="btn btn-outline-danger">
+                                        <a href="?pagina=login&accion=cerrar" class="btn btn-outline-danger">
                                             <i class="bi bi-box-arrow-right me-1"></i>
                                             Cerrar Sesión
                                         </a>

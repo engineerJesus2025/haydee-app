@@ -50,6 +50,9 @@ class Habitantes extends Conexion
         ],
         'sexo' => [
             'regex' => '/^(Masculino|Femenino)$/'  // Asumiendo que sexo es M o F, ajustar si hay más opciones
+        ],
+        'nuevo_tipo_vinculo' => [
+            'regex' => '/^(Propietario|Inquilino|Habitante|Otro)$/'
         ]
     ];
 
@@ -78,7 +81,9 @@ class Habitantes extends Conexion
     }
 
     public function set_nuevo_apartamento_id($id) { $this->nuevo_apartamento_id = $id; }
+    public function get_nuevo_apartamento_id() { return $this->nuevo_apartamento_id; }
     public function set_nuevo_tipo_vinculo($tipo) { $this->nuevo_tipo_vinculo = $tipo; }
+    public function get_nuevo_tipo_vinculo() { return $this->nuevo_tipo_vinculo; }
 
     /**
      * Enruta la acción al método privado correspondiente.
@@ -417,6 +422,91 @@ class Habitantes extends Conexion
         }
     }
 
+    private function _registrar_con_relacion()
+    {
+        // Validar datos del habitante
+        $campos = ['cedula', 'nombre', 'apellido', 'telefono', 'correo', 'fecha_nacimiento', 'sexo'];
+        $validacion = $this->validar($campos);
+        if (!$validacion['estatus']) {
+            return $validacion;
+        }
+
+        $apartamentoId = $this->nuevo_apartamento_id;
+        $tipoVinculo = $this->nuevo_tipo_vinculo;
+
+        // Validar datos de la relación si se proporcionan
+        if ($apartamentoId) {
+            // Verificar que el apartamento exista
+            $apto = new Apartamento();
+            $apto->set_id_apartamento($apartamentoId);
+            $existe = $apto->realizar_consulta('existe_apartamento');
+
+            if (!$existe['estatus'] || !$existe['existe']) {
+                return ['estatus' => false, 'mensaje' => 'El apartamento seleccionado no es válido.'];
+            }
+            // Validar tipo de vínculo
+            $valTipo = $this->validar(['nuevo_tipo_vinculo']);
+            if (!$valTipo['estatus']) {
+                return $valTipo;
+            }
+            // Si es propietario, verificar que no haya otro
+            if ($tipoVinculo === 'Propietario') {
+                $sql = "SELECT COUNT(*) FROM habitantes_apartamentos WHERE apartamento_id = :id AND tipo_vinculo = 'Propietario'";
+                try {
+                    $stmt = $this->get_conex('negocio')->prepare($sql);
+                    $stmt->execute([':id' => $apartamentoId]);
+                    if ($stmt->fetchColumn() > 0) {
+                        return ['estatus' => false, 'mensaje' => 'Este apartamento ya tiene un propietario.'];
+                    }
+                } catch (PDOException $e) {
+                    error_log("Error verificando propietario: " . $e->getMessage());
+                    return ['estatus' => false, 'mensaje' => 'Error al verificar disponibilidad.'];
+                }
+            }
+        }
+
+        $pdo = $this->get_conex('negocio');
+        try {
+            $pdo->beginTransaction();
+
+            // Insertar habitante
+            $sql = "INSERT INTO habitantes (nombre, apellido, cedula, telefono, correo, fecha_nacimiento, sexo)
+                    VALUES (:nombre, :apellido, :cedula, :telefono, :correo, :fecha_nacimiento, :sexo)";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                ':nombre' => $this->nombre,
+                ':apellido' => $this->apellido,
+                ':cedula' => $this->cedula,
+                ':telefono' => $this->telefono,
+                ':correo' => $this->correo,
+                ':fecha_nacimiento' => $this->fecha_nacimiento,
+                ':sexo' => $this->sexo
+            ]);
+            $idHabitante = $pdo->lastInsertId();
+
+            // Si hay relación, insertarla
+            if ($apartamentoId) {
+                $sqlRel = "INSERT INTO habitantes_apartamentos (apartamento_id, habitante_id, tipo_vinculo)
+                           VALUES (:aid, :hid, :tipo)";
+                $stmtRel = $pdo->prepare($sqlRel);
+                $stmtRel->execute([
+                    ':aid' => $apartamentoId,
+                    ':hid' => $idHabitante,
+                    ':tipo' => $tipoVinculo
+                ]);
+            }
+
+            $pdo->commit();
+            return ['estatus' => true, 'mensaje' => 'Habitante registrado correctamente', 'lastId' => $idHabitante];
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            error_log("Error en _registrar_con_relacion: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al registrar el habitante: ' . $e->getMessage()];
+        } finally{
+            $apto->cerrar();
+        }
+    }
+
     /**
      * Actualiza un habitante existente.
     */
@@ -531,6 +621,8 @@ class Habitantes extends Conexion
             $pdo->rollBack();
             error_log("Error en _modificar_con_relacion: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => $e->getMessage()];
+        } finally{
+            $apartamentoModel->cerrar();
         }
     }
 

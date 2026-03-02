@@ -25,7 +25,7 @@
                 <div class="col-md-6 col-sm-12">
                     <div class="card mt-5 shadow-lg rounded">
                         <div class="card-body">
-                            <form id="form-cambiar-contrasenia" method="POST" action="?pagina=login_controlador.php&accion=guardar_contrasenia">
+                            <form id="form-cambiar-contrasenia" method="POST" action="?pagina=login&accion=guardar_contrasenia">
                                 <h5 class="card-title text-center p-3">Establecer nueva contraseña</h5>
                                 <div class="row m-3 justify-content-center">
                                     <div class="col-md-12 mb-3">

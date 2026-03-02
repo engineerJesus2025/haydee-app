@@ -31,6 +31,8 @@ if (isset($_POST["operacion"])) {
     $habitante->set_correo($_POST['correo'] ?? null);
     $habitante->set_fecha_nacimiento($_POST['fecha_nacimiento'] ?? null);
     $habitante->set_sexo($_POST['sexo'] ?? null);
+    $habitante->set_nuevo_apartamento_id($_POST['apartamento_id'] ?? null);
+    $habitante->set_nuevo_tipo_vinculo($_POST['tipo_vinculo'] ?? null);
 
     $tipo = $_POST['tipo_cedula'] ?? '';
     $numero = $_POST['cedula'] ?? '';
@@ -40,8 +42,6 @@ if (isset($_POST["operacion"])) {
         $habitante->set_cedula($tipo . $numero);
     }
 
-    // Datos de la nueva relación (si cambia)
-    $habitante->set_nuevo_apartamento_id($_POST['apartamento_id'] ?? null);
 
     $operacion = $_POST["operacion"];
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
@@ -137,24 +137,11 @@ if (isset($_POST["operacion"])) {
                 break;
 
             case 'registrar_habitantes':
-                // Registrar habitante
-                $respuesta = $habitante->realizar_consulta('registrar');
+                $respuesta = $habitante->realizar_consulta('registrar_con_relacion');
                 if ($respuesta['estatus']) {
-                    $idHabitante = $respuesta['lastId'];
-                    // Asignar al apartamento
-                    $apartamento->set_habitante_id($idHabitante);
-                    $apartamento->set_id_apartamento($_POST['apartamento_id'] ?? null);
-                    $apartamento->set_tipo_vinculo($_POST['tipo_vinculo'] ?? null);
-                    $resAsignar = $apartamento->realizar_consulta('asignar_habitante');
-                    if ($resAsignar['estatus']) {
-                        $respuesta = ['estatus' => true, 'mensaje' => 'Habitante y relación registrados correctamente'];
-                        Bitacora::registrar(REGISTRAR, GESTIONAR_HABITANTES,
-                            $habitante->get_nombre() . ' ' . $habitante->get_apellido()
-                        );
-                    } else {
-                        // Si falla la asignación, podríamos eliminar el habitante, pero por simplicidad avisamos
-                        $respuesta = ['estatus' => false, 'mensaje' => 'Habitante registrado, pero error al asignar al apartamento: ' . $resAsignar['mensaje']];
-                    }
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_HABITANTES,
+                        $habitante->get_nombre() . ' ' . $habitante->get_apellido()
+                    );
                 }
                 break;
 
@@ -173,8 +160,9 @@ if (isset($_POST["operacion"])) {
 
             case 'eliminar_habitantes':
                 // Obtener datos para bitácora
-                $copia = clone $habitante;
-                $datosHab = $copia->realizar_consulta('consultar_habitante');
+                $tempHab = new Habitantes();
+                $tempHab->set_id_habitante($habitante->get_id_habitante());
+                $datosHab = $tempHab->realizar_consulta('consultar_habitante');
                 $info = $datosHab['estatus'] ? ($datosHab['datos']['nombre'] . ' ' . $datosHab['datos']['apellido']) : '';
 
                 $respuesta = $habitante->realizar_consulta('eliminar');

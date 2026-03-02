@@ -19,7 +19,7 @@
                 <div class="col-md-6 col-lg-4 col-sm-12">
                     <div class="card mt-5 shadow-lg rounded p-2 px-3">
                         <div class="card-body">
-                            <form action="?pagina=login_controlador.php&accion=entrar" method="POST" id="form-login">
+                            <form action="?pagina=login&accion=entrar" method="POST" id="form-login">
                                 <h5 class="card-title text-center p-3">Iniciar sesión</h5>
                                 <div class="row">
                                     <div class="col-12">
@@ -86,7 +86,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form method="POST" action="?pagina=login_controlador.php&accion=recuperar_contrasenia" class="row" id="form_recuperar_contra">
+                    <form method="POST" action="?pagina=login&accion=recuperar_contrasenia" class="row" id="form_recuperar_contra">
                         <div class="col mb-4">
                             <h6>Ingrese aquí su correo para recuperar contraseña.</h6>
                             <p>Se usará este correo para crear una nueva contraseña.</p>

@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error("La 'operacion' no fue especificada en los datos.");
             }
             
-            const url = `?pagina=notificaciones_controlador.php&accion=${operacion}`;
+            const url = `?pagina=notificaciones&accion=${operacion}`;
 
             const res = await fetch(url, { method: "POST", body: datos });
             const data = await res.json();

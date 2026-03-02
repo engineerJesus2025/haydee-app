@@ -47,15 +47,15 @@
                                     </div>
                                 </div>
 
-                                <label class="text-center mb-2" id="label_fechas" hidden="">Seleccione la medida de tiempo:</label>
-                                <div class="col-lg-5 mb-5" id="div_fecha_inicio" hidden="">
+                                <label class="text-center mb-2" id="label_fechas" hidden>Seleccione la medida de tiempo:</label>
+                                <div class="col-lg-5 mb-5" id="div_fecha_inicio" hidden>
                                     <label for="fecha_inicio">Fecha de Inicio</label>
                                     <div class="input-group">
                                         <span class="input-group-text" id="basic-addon1"><i class="bi bi-calendar2-check"></i></span>
                                         <input type="date" name="fecha_inicio" id="fecha_inicio" class="form-control">
                                     </div>
                                 </div>
-                                <div class="col-lg-5 mb-5" id="div_fecha_cierre" hidden="">
+                                <div class="col-lg-5 mb-5" id="div_fecha_cierre" hidden>
                                     <label for="fecha_fin">Fecha de Cierre</label>
                                     <div class="input-group">
                                         <span class="input-group-text" id="basic-addon1"><i class="bi bi-calendar2-check"></i></span>

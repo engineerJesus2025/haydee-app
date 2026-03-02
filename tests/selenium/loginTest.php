@@ -61,7 +61,7 @@ class loginTest extends TestCase
         sleep(1); 
 
         // 6. Navegamos manualmente al dashboard (¡ya tienes la URL correcta!)
-        $this->driver->get('http://localhost/haydee-app/?pagina=inicio_controlador.php&accion=inicio');
+        $this->driver->get('http://localhost/haydee-app/?pagina=inicio&accion=inicio');
 
         // 7. Esperamos por 'b_gastos'
         $this->driver->wait(10, 500)->until(

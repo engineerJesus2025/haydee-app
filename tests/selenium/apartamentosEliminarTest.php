@@ -46,7 +46,7 @@ class apartamentosEliminarTest extends TestCase
         $this->driver->findElement(WebDriverBy::id('form-login'))->submit();
         sleep(1); 
 
-        $this->driver->get('http://localhost/haydee-app/?pagina=inicio_controlador.php&accion=inicio');
+        $this->driver->get('http://localhost/haydee-app/?pagina=inicio&accion=inicio');
         
         // <-- CORREGIDO: $this.driver
         $this->driver->wait(10, 500)->until(
@@ -58,7 +58,7 @@ class apartamentosEliminarTest extends TestCase
         // -----------------------------------------------------------------
         // PASO 2: Navegar a Apartamentos y esperar la carga
         // -----------------------------------------------------------------
-        $this->driver->get('http://localhost/haydee-app/?pagina=apartamentos_controlador.php&accion=inicio');
+        $this->driver->get('http://localhost/haydee-app/?pagina=apartamentos&accion=inicio');
         $this->driver->wait(10, 500)->until(
             WebDriverExpectedCondition::visibilityOfElementLocated(
                 WebDriverBy::xpath("//h2[contains(text(), 'GESTIONAR APARTAMENTOS')]")

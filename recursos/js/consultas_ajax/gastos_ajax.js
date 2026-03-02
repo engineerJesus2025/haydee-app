@@ -15,7 +15,6 @@ let permiso_modificar = document.querySelector("#permiso_modificar")?.value;
 // Elementos del DOM
 const modalGasto = new bootstrap.Modal(document.getElementById("modal_gastos"));
 const modalVistaPrevia = new bootstrap.Modal(document.getElementById("modal_vista_previa"));
-const modalDetalles = new bootstrap.Modal(document.getElementById("modal_detalles_gastos"));
 const modalVistaPreviaDetalles = new bootstrap.Modal(document.getElementById("modal_vista_previa_detalles"));
 
 const formulario = document.getElementById("form_gastos");
@@ -225,8 +224,40 @@ async function prepararFormularioEdicion(id) {
     const gasto = respuesta.datos.gasto;
     const detalles = respuesta.datos.detalles;
 
+    // --- NUEVA LÓGICA PARA CLASIFICACIÓN ---
+    const selectClasificacion = formulario.querySelector('#clasificacion');
+    
+    // 1. Limpiamos por si quedó una opción de "Reposición" de una edición anterior
+    const opcionExistente = selectClasificacion.querySelector('option[value="Reposicion"]');
+    if (opcionExistente) opcionExistente.remove();
+
+    // 2. Verificamos si el registro actual es de tipo Reposición
+    // Nota: Asegúrate de que el string coincida exactamente con lo que devuelve tu base de datos
+    if (gasto.clasificacion === 'Reposicion' || gasto.clasificacion === 'Reposición') {
+        // Creamos la opción dinámicamente
+        const opcionRepo = document.createElement('option');
+        opcionRepo.value = gasto.clasificacion; // Usamos el valor exacto de la BD
+        opcionRepo.textContent = 'Reposición';
+        selectClasificacion.appendChild(opcionRepo);
+        
+        // Opcional pero recomendado: Bloquear el campo para evitar que lo cambien a Fijo/Variable
+        selectClasificacion.disabled = true; 
+        
+        // También podrías bloquear el "tipo de gasto", "proveedor" y "solicitud" de la misma manera
+        formulario.querySelector('#tipo_gasto').disabled = true;
+        formulario.querySelector('#proveedor').disabled = true;
+        formulario.querySelector('#solicitud').disabled = true;
+    } else {
+        // Si es un gasto normal, nos aseguramos de que los campos estén habilitados
+        selectClasificacion.disabled = false;
+        formulario.querySelector('#tipo_gasto').disabled = false;
+        formulario.querySelector('#proveedor').disabled = false;
+        formulario.querySelector('#solicitud').disabled = false;
+    }
+    // ---------------------------------------
+
     // Llenar cabecera
-    formulario.querySelector('#clasificacion').value = gasto.clasificacion || '';
+    selectClasificacion.value = gasto.clasificacion || '';
     formulario.querySelector('#tipo_gasto').value = gasto.tipo_gasto_id || '';
     formulario.querySelector('#solicitud').value = gasto.solicitud_id || '';
     formulario.querySelector('#descripcion_gasto').value = gasto.descripcion_gasto || '';
@@ -519,6 +550,18 @@ function actualizarVisibilidadCampos(selectMetodo) {
  */
 function resetModalGasto() {
     formulario.reset();
+    
+    // --- NUEVO: Rehabilitar campos y limpiar opción dinámica ---
+    const selectClasificacion = formulario.querySelector('#clasificacion');
+    selectClasificacion.disabled = false;
+    formulario.querySelector('#tipo_gasto').disabled = false;
+    formulario.querySelector('#proveedor').disabled = false;
+    formulario.querySelector('#solicitud').disabled = false;
+
+    const opcionExistente = selectClasificacion.querySelector('option[value="Reposicion"], option[value="Reposición"]');
+    if (opcionExistente) opcionExistente.remove();
+    // -----------------------------------------------------------
+
     botonFormulario.removeAttribute('modificar');
     botonFormulario.removeAttribute('id_modificar');
     botonFormulario.textContent = 'Registrar';
@@ -572,13 +615,4 @@ function formatearMontoConMoneda(monto, metodoPago) {
 function mayuscula(texto) {
     if (!texto) return '';
     return texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase();
-}
-
-// ============================================================
-// VALIDACIÓN DEL FORMULARIO (se implementará en gastos_validar.js)
-// ============================================================
-async function validarEnvio(accion) {
-    // Esta función será definida en gastos_validar.js usando Validaciones
-    // Por ahora retornamos true
-    return true;
 }

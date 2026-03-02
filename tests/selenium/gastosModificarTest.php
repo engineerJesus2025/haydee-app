@@ -40,13 +40,13 @@ class gastosModificarTest extends TestCase
         $this->driver->findElement(WebDriverBy::id('form-login'))->submit();
         sleep(1); 
 
-        $this->driver->get('http://localhost/haydee-app/?pagina=inicio_controlador.php&accion=inicio');
+        $this->driver->get('http://localhost/haydee-app/?pagina=inicio&accion=inicio');
         $this->driver->wait(10, 500)->until(fn() => $this->driver->findElement(WebDriverBy::id('contenido')));
 
         // -----------------------------------------------------------------
         // PASO 2: Navegar a Gastos
         // -----------------------------------------------------------------
-        $this->driver->get('http://localhost/haydee-app/?pagina=gastos_controlador.php&accion=inicio');
+        $this->driver->get('http://localhost/haydee-app/?pagina=gastos&accion=inicio');
         
         $this->driver->wait(10, 500)->until(
             fn() => $this->driver->findElement(WebDriverBy::xpath("//h2[contains(text(), 'GESTIONAR GASTOS')]"))

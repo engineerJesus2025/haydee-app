@@ -15,15 +15,15 @@ class Recaptcha
     /**
      * Verifica la respuesta de reCAPTCHA.
      * @param string $respuesta
-     * @return array ['success' => bool, 'error' => string|null]
+     * @return array ['estatus' => bool, 'error' => string|null]
      */
     public function verificar($respuesta)
     {
         if ($this->deshabilitado) {
-            return ['success' => true, 'error' => null];
+            return ['estatus' => true, 'error' => null];
         }
         if (empty($respuesta)) {
-            return ['success' => false, 'error' => 'El reCAPTCHA es obligatorio.'];
+            return ['estatus' => false, 'error' => 'El reCAPTCHA es obligatorio.'];
         }
 
         $url = 'https://www.google.com/recaptcha/api/siteverify';
@@ -43,24 +43,25 @@ class Recaptcha
         ];
 
         $contexto = stream_context_create($opciones);
-        $resultado = @file_get_contents($url, false, $contexto);
+        $resultado = file_get_contents($url, false, $contexto);
         if ($resultado === false) {
-            return ['success' => false, 'error' => 'No se pudo conectar con el servicio de reCAPTCHA.'];
+            error_log("Error en Recaptcha::verificar - No se pudo conectar a Google reCAPTCHA. URL: $url");
+            return ['estatus' => false, 'error' => 'No se pudo conectar con el servicio de reCAPTCHA.'];
         }
 
         $json = json_decode($resultado, true);
-        if (!$json || !isset($json['success'])) {
-            return ['success' => false, 'error' => 'Respuesta inválida del servicio.'];
+        if (!$json || !isset($json['estatus'])) {
+            return ['estatus' => false, 'error' => 'Respuesta inválida del servicio.'];
         }
 
-        if (!$json['success']) {
+        if (!$json['estatus']) {
             $errores = $json['error-codes'] ?? [];
             $mensaje = in_array('timeout-or-duplicate', $errores)
                 ? 'El reCAPTCHA ha expirado. Intente nuevamente.'
                 : 'Error de validación del reCAPTCHA.';
-            return ['success' => false, 'error' => $mensaje, 'detalles' => $errores];
+            return ['estatus' => false, 'error' => $mensaje, 'detalles' => $errores];
         }
 
-        return ['success' => true, 'error' => null];
+        return ['estatus' => true, 'error' => null];
     }
 }

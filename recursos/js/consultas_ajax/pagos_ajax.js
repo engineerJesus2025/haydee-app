@@ -241,7 +241,7 @@ function crearBotones(id) {
                 <i class="bi bi-eye-fill"></i>
             </button>
         </div>
-        <form class="col-lg-3 col-6 mt-2 mt-lg-0" action="?pagina=reportes_controlador.php&accion=recibo_pago" method="POST">
+        <form class="col-lg-3 col-6 mt-2 mt-lg-0" action="?pagina=reportes&accion=recibo_pago" method="POST">
             <input type="hidden" name="select_reporte" value="${id}">
             <button type="submit" class="btn btn-outline-light btn-sm" style="background-color:#3939a9;" title="Recibo">
                 <i class="bi bi-card-checklist"></i>

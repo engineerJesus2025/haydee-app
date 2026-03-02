@@ -9,8 +9,8 @@
     ?>
 </head>
 <body id="body-pd" class="body-pd">
-    <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_ROLES, ELIMINAR) ?>">
-    <input type="text" hidden="" id="permiso_modificar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_ROLES, MODIFICAR) ?>">
+    <input type="text" hidden id="permiso_eliminar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_ROLES, ELIMINAR) ?>">
+    <input type="text" hidden id="permiso_modificar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_ROLES, MODIFICAR) ?>">
     <div class="container-fluid">
         <div class="row flex-nowrap ">
             <?php

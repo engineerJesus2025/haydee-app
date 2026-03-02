@@ -32,7 +32,7 @@
                         <div class="col-lg-3 col-md-6">
                             <div class="card mb-3 shadow" title="Click para ver opciones para constacias de residencias">
                                 <button data-bs-toggle="modal" data-bs-target="#modal_reporte_persona" type="button"
-                                    class="btn text-decoration-none text-black" id="boton_residencia" disabled="">
+                                    class="btn text-decoration-none text-black" id="boton_residencia" disabled>
                                     <div class="card-header text-center bg-white border-bottom-0 ">
                                         <div class="spinner-grow text-dark" role="status" style="width: 5rem; height: 5rem; z-index: 1000">
                                             <span class="visually-hidden">Loading...</span>
@@ -47,7 +47,7 @@
                         <div class="col-lg-3 col-md-6">
                             <div class="card mb-3 shadow" title="Click para ver opciones para solicitudes de solvencia">
                                 <button data-bs-toggle="modal" data-bs-target="#modal_reporte_persona" type="button"
-                                    class="btn text-decoration-none text-black" id="boton_solvencia" disabled="">
+                                    class="btn text-decoration-none text-black" id="boton_solvencia" disabled>
                                     <div class="card-header text-center bg-white border-bottom-0">
                                         <div class="spinner-grow text-dark" role="status" style="width: 5rem; height: 5rem; z-index: 1000">
                                             <span class="visually-hidden">Loading...</span>
@@ -61,7 +61,7 @@
                         </div>
                         <div class="col-lg-3 col-md-6">
                             <div class="card mb-3 shadow" title="Click para ver opciones para el cuadro de pagos">
-                                <button data-bs-toggle="modal" data-bs-target="#modal_reporte_persona" type="button" class="btn text-decoration-none text-black" id="boton_cuadro_pagos" disabled="">
+                                <button data-bs-toggle="modal" data-bs-target="#modal_reporte_persona" type="button" class="btn text-decoration-none text-black" id="boton_cuadro_pagos" disabled>
                                     <div class="card-header text-center bg-white border-bottom-0">
                                         <div class="spinner-grow text-dark" role="status" style="width: 5rem; height: 5rem; z-index: 1000">
                                             <span class="visually-hidden">Loading...</span>

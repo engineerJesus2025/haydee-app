@@ -47,7 +47,7 @@ class bancosRegistrarTest extends TestCase
         $this->driver->findElement(WebDriverBy::id('form-login'))->submit();
         sleep(1); 
 
-        $this->driver->get('http://localhost/haydee-app/?pagina=inicio_controlador.php&accion=inicio');
+        $this->driver->get('http://localhost/haydee-app/?pagina=inicio&accion=inicio');
         $this->driver->wait(10, 500)->until(
             function () {
                 return $this->driver->findElement(WebDriverBy::id('b_gastos'));
@@ -58,7 +58,7 @@ class bancosRegistrarTest extends TestCase
         // PASO 2: Navegar a Bancos y esperar a que la tabla cargue
         // (Importante: no podemos interactuar hasta que la consulta inicial termine)
         // -----------------------------------------------------------------
-        $this->driver->get('http://localhost/haydee-app/?pagina=bancos_controlador.php&accion=inicio');
+        $this->driver->get('http://localhost/haydee-app/?pagina=bancos&accion=inicio');
         
         // Esperar por el título
         $this->driver->wait(10, 500)->until(

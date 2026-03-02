@@ -1,26 +1,4 @@
 <?php
-    require_once 'vendor/autoload.php';
-    
-    session_start();
-    $pagina = "login_controlador.php";
-
-    $accion = "inicio";
-
-    if(isset($_GET["pagina"]) && isset($_GET["accion"])){
-        $pagina = $_GET["pagina"];
-        $accion = $_GET["accion"];
-    }
-
-    if(is_file("controlador/" . $pagina)){
-        require_once "controlador/" . $pagina;
-        
-    }
-    else{
-        require_once "vista/error/404_vista.php";
-    }
-?>
-
-<?php
     // 1. Inicialización Global
     require_once 'vendor/autoload.php';
     
@@ -32,7 +10,8 @@
 
     // 3. Capturar la petición del usuario
     // Si no envían módulo, por defecto será 'login'
-    $modulo = $_GET['modulo'] ?? 'login'; 
+    $modulo = $_GET['pagina'] ?? 'login'; 
+    $accion = $_GET['accion'] ?? 'inicio';
 
     // 4. Despachar (El Front Controller en acción)
     // Verificamos si el módulo que piden existe en nuestro mapa de rutas
@@ -41,7 +20,7 @@
         $archivo_controlador = "controlador/" . $rutas[$modulo];
         
         // Medida de seguridad extra: verificar que el archivo físico realmente exista
-        echo "$archivo_controlador";
+
         if(is_file($archivo_controlador)) {
             require_once $archivo_controlador;
         } else {

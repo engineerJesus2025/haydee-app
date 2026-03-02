@@ -10,8 +10,8 @@
     <link rel="stylesheet" type="text/css" href="/haydee-app/recursos/css/contrasenias.css">
 </head>
 <body id="body-pd" class="body-pd">
-    <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_USUARIOS, ELIMINAR) ?>">
-    <input type="text" hidden="" id="permiso_modificar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_USUARIOS, MODIFICAR) ?>">
+    <input type="text" hidden id="permiso_eliminar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_USUARIOS, ELIMINAR) ?>">
+    <input type="text" hidden id="permiso_modificar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_USUARIOS, MODIFICAR) ?>">
     <div class="container-fluid">
         <div class="row flex-nowrap ">
 

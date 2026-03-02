@@ -46,7 +46,7 @@ class Mantenimiento extends Conexion
         $resultado = $this->generarCopiaSeguridad($db);
         if (!$resultado['estatus']) {
             // Si falla, redirigir con error
-            header('Location: ?pagina=mantenimiento_controlador.php&accion=inicio&e=1');
+            header('Location: ?pagina=mantenimiento&accion=inicio&e=1');
             exit;
         }
 
@@ -69,7 +69,7 @@ class Mantenimiento extends Conexion
             unlink($archivo);
             exit;
         } else {
-            header('Location: ?pagina=mantenimiento_controlador.php&accion=inicio&e=1');
+            header('Location: ?pagina=mantenimiento&accion=inicio&e=1');
             exit;
         }
     }

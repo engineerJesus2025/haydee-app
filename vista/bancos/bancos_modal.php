@@ -41,7 +41,7 @@
             <div class="input-group mb-3">
                 <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-person-vcard-fill"></i></span>
                 <select class="form-select border border-dark" id="tipo_documento" aria-label="Default select example" for="tipo_documento" name="tipo_documento">
-                    <option selected="" hidden="" value="">N/A</option>
+                    <option selected="" hidden value="">N/A</option>
                     <option value="V">V</option>
                     <option value="E">E</option>
                     <option value="J">J</option>

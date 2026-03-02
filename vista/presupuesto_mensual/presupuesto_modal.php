@@ -26,7 +26,7 @@
         <div class="col-lg-3 col-10 text-center">
             <label for="cuota_reserva_cambio"></label>
             <div class="input-group mb-3">
-                <input type="text" name="cuota_reserva_cambio" id="cuota_reserva_cambio" minlength="0" value="0" class="form-control" maxlength="15" disabled="" title="Monto de la cuota de reserva en dolares" convertido>                
+                <input type="text" name="cuota_reserva_cambio" id="cuota_reserva_cambio" minlength="0" value="0" class="form-control" maxlength="15" disabled title="Monto de la cuota de reserva en dolares" convertido>                
                 <span class="input-group-text icono_moneda" id="spam_icono_moneda_cuota_cambio">$</span>
             </div>
         </div>

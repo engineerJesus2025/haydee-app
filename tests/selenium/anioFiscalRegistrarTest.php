@@ -46,7 +46,7 @@ class anioFiscalRegistrarTest extends TestCase
         
         $this->driver->findElement(WebDriverBy::id('form-login'))->submit();
         sleep(1); 
-        $this->driver->get('http://localhost/haydee-app/?pagina=inicio_controlador.php&accion=inicio');
+        $this->driver->get('http://localhost/haydee-app/?pagina=inicio&accion=inicio');
         
         $this->driver->wait(10, 500)->until(
             function () {
@@ -58,7 +58,7 @@ class anioFiscalRegistrarTest extends TestCase
         // -----------------------------------------------------------------
         // PASO 2: Navegar a Años fiscales
         // -----------------------------------------------------------------
-        $this->driver->get('http://localhost/haydee-app/?pagina=anio_fiscal_controlador.php&accion=inicio');
+        $this->driver->get('http://localhost/haydee-app/?pagina=anio_fiscal&accion=inicio');
         
         $this->driver->wait(10, 500)->until(
             WebDriverExpectedCondition::visibilityOfElementLocated(

@@ -10,9 +10,9 @@
 </head>
 
 <body id="body-pd" class="body-pd">  
-  <input type="text" hidden="" id="permiso_registrar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_CAJA_CHICA, REGISTRAR) ?>">
-  <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_CAJA_CHICA, ELIMINAR) ?>">
-  <input type="text" hidden="" id="permiso_modificar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_CAJA_CHICA, MODIFICAR) ?>">
+  <input type="text" hidden id="permiso_registrar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_CAJA_CHICA, REGISTRAR) ?>">
+  <input type="text" hidden id="permiso_eliminar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_CAJA_CHICA, ELIMINAR) ?>">
+  <input type="text" hidden id="permiso_modificar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_CAJA_CHICA, MODIFICAR) ?>">
 	<div class="container-fluid">
 		<div class="row flex-nowrap mb-2">
 			<?php
@@ -51,7 +51,7 @@
                     <span class="placeholder placeholder-lg w-100 rounded m-0"></span>
                   </div>
                 </span>
-                <div id="botones_movimientos" class="mt-3" hidden="">
+                <div id="botones_movimientos" class="mt-3" hidden>
                   <button class="btn btn-primary m-1" id="boton_registrar_gasto" data-bs-toggle="modal" data-bs-target="#modal_registro_gastos">Nuevo Gasto</button>
                   <button class="btn btn-secondary m-1" id="boton_reponer_caja" data-bs-toggle="modal" data-bs-target="#modal_reponer_caja">Reponer Caja</button>
                 </div>
@@ -78,7 +78,7 @@
               </div>
             </div>
             
-            <div class="col-7 row p-3 card my-3" hidden="">
+            <div class="col-7 row p-3 card my-3" hidden>
               <h4 class="h4 col">Descripción de caja:</h4>              
               <div class="col-12">
                 <p id="descripciones"></p>

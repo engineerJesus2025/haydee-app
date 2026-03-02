@@ -40,13 +40,13 @@ class solicitudGastoRegistrarTest extends TestCase
         $this->driver->findElement(WebDriverBy::id('form-login'))->submit();
         sleep(1);
 
-        $this->driver->get('http://localhost/haydee-app/?pagina=inicio_controlador.php&accion=inicio');
+        $this->driver->get('http://localhost/haydee-app/?pagina=inicio&accion=inicio');
         $this->driver->wait(10, 500)->until(fn() => $this->driver->findElement(WebDriverBy::id('contenido')));
 
         // -----------------------------------------------------------------
         // PASO 2: Navegar a Solicitudes
         // -----------------------------------------------------------------
-        $this->driver->get('http://localhost/haydee-app/?pagina=solicitud_gasto_controlador.php&accion=inicio');
+        $this->driver->get('http://localhost/haydee-app/?pagina=solicitud_gasto&accion=inicio');
 
         // Esperar título
         $this->driver->wait(10, 500)->until(

@@ -16,18 +16,26 @@ class GestorImagenes
     {
         // Validar que se haya subido correctamente
         if (!isset($archivo['tmp_name']) || $archivo['error'] !== UPLOAD_ERR_OK) {
+            $codigoError = $archivo['error'] ?? 'desconocido';
+            error_log("GestorImagenes: Error de subida (código $codigoError)");
             return false;
         }
 
         // Validar tamaño
         if ($archivo['size'] > $maxSize) {
+            error_log("GestorImagenes: Archivo demasiado grande ({$archivo['size']} bytes, máximo $maxSize)");
             return false;
         }
 
         // Validar tipo MIME
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        if ($finfo === false) {
+            error_log("GestorImagenes: No se pudo abrir fileinfo");
+            return false;
+        }
         $mime = finfo_file($finfo, $archivo['tmp_name']);
         finfo_close($finfo);
+
         if (!in_array($mime, $allowedTypes)) {
             // Fallback a extensión
             $ext = strtolower(pathinfo($archivo['name'], PATHINFO_EXTENSION));
@@ -39,6 +47,7 @@ class GestorImagenes
                 'webp' => 'image/webp'
             ];
             if (!isset($extMap[$ext]) || !in_array($extMap[$ext], $allowedTypes)) {
+                error_log("GestorImagenes: Tipo de archivo no permitido (MIME: $mime, extensión: $ext)");
                 return false;
             }
         }
@@ -54,14 +63,18 @@ class GestorImagenes
         // Crear directorio si no existe
         $directorio = dirname($rutaDestino);
         if (!is_dir($directorio)) {
-            mkdir($directorio, 0777, true);
+            if (!mkdir($directorio, 0777, true)) {
+                error_log("GestorImagenes: No se pudo crear el directorio $directorio");
+                return false;
+            }
         }
 
         if (move_uploaded_file($archivo['tmp_name'], $rutaDestino)) {
             return $nombreUnico;
+        } else {
+            error_log("GestorImagenes: Error al mover el archivo a $rutaDestino");
+            return false;
         }
-
-        return false;
     }
 
     /**

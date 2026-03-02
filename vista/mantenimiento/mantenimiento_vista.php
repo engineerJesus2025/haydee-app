@@ -48,7 +48,7 @@
                                         <div class="col-md-6 col-lg-4 text-center">
                                             <label class="form-label fw-bold" for="select_db">1. Seleccione la Base de Datos</label>
                                             <select class="form-select form-select-lg mb-2" id="select_db">
-                                                <option selected="" hidden="" value="">-- Elegir --</option>
+                                                <option selected="" hidden value="">-- Elegir --</option>
                                                 <option value="negocio">Edificio Haydee (Negocio)</option>
                                                 <option value="seguridad">Módulo de Seguridad</option>
                                             </select>
@@ -64,7 +64,7 @@
                                         </div>
                                         <div class="col-sm-auto d-flex align-items-center justify-content-center py-2 px-3 text-muted fw-bold">O</div>
                                         <div class="col-sm-auto">
-                                            <form action="?pagina=mantenimiento_controlador.php&accion=inicio" method="POST">
+                                            <form action="?pagina=mantenimiento&accion=inicio" method="POST">
                                                 <input type="hidden" name="db" id="db_input">
                                                 <input type="hidden" name="operacion" value="descargar_copia_seguridad">
                                                 <button class="btn btn-primary w-100 py-2" id="boton_descargar">

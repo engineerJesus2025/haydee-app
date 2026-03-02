@@ -15,7 +15,7 @@
     <div class="col-lg-5 col-10 text-center">
         <label for="monto_cambio_reponer"></label>
         <div class="input-group mb-3">
-            <input type="text" name="monto_cambio_reponer" id="monto_cambio_reponer" minlength="0" value="0" class="form-control" maxlength="15" disabled="" title="Monto del gasto en dolares">
+            <input type="text" name="monto_cambio_reponer" id="monto_cambio_reponer" minlength="0" value="0" class="form-control" maxlength="15" disabled title="Monto del gasto en dolares">
             <span class="input-group-text icono_moneda" id="spam_icono_moneda_cuota_cambio">$</span>
         </div>
     </div>

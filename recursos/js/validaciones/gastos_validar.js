@@ -18,13 +18,13 @@ $(document).ready(function () {
     // Tipo de Gasto (FK)
     $("#tipo_gasto").on("change", async function () {
         if (!Validaciones.select(this.id)) return;
-        await validarClaveForanea(this, 'tipo_gasto', 'id_tipo_gasto');
+        await Validaciones.validarClaveForanea(this, 'tipo_gasto', 'id_tipo_gasto');
     });
 
     // Proveedor (FK)
     $("#proveedor").on("change", async function () {
         if (!Validaciones.select(this.id)) return;
-        await validarClaveForanea(this, 'proveedores', 'id_proveedor');
+        await Validaciones.validarClaveForanea(this, 'proveedores', 'id_proveedor');
     });
 
     // Solicitud (FK opcional)
@@ -37,7 +37,7 @@ $(document).ready(function () {
             Validaciones.mostrarError(this, "ID inválido");
             return;
         }
-        await validarClaveForanea(this, 'solicitudes_gasto', 'id_solicitud');
+        await Validaciones.validarClaveForanea(this, 'solicitudes_gasto', 'id_solicitud');
     });
 
     // Descripción general
@@ -176,13 +176,17 @@ async function validarFormularioCompleto() {
         Utilidades.mensaje("error", "Error", "Debe seleccionar un tipo de gasto");
         return false;
     }
-    if (!await verificarExistencia("tipo_gasto", "tipo_gasto", "id_tipo_gasto")) return false;
+    
+    const inputTipo = document.getElementById("tipo_gasto");
+    if (!await Validaciones.validarClaveForanea(inputTipo, "tipo_gasto", "id_tipo_gasto")) return false;
 
     if (!Validaciones.select("proveedor")) {
         Utilidades.mensaje("error", "Error", "Debe seleccionar un proveedor");
         return false;
     }
-    if (!await verificarExistencia("proveedor", "proveedores", "id_proveedor")) return false;
+    
+    const inputProveedor = document.getElementById("proveedor");
+    if (!await Validaciones.validarClaveForanea(inputProveedor, "proveedores", "id_proveedor")) return false;
 
     const solicitud = $("#solicitud").val();
     if (solicitud && solicitud !== "") {
@@ -191,7 +195,10 @@ async function validarFormularioCompleto() {
             Utilidades.mensaje("error", "Error", "La solicitud tiene formato inválido");
             return false;
         }
-        if (!await verificarExistencia("solicitud", "solicitudes_gasto", "id_solicitud")) return false;
+        
+        const inputSolicitud = document.getElementById("solicitud");
+        if (!await Validaciones.validarClaveForanea(inputSolicitud, "solicitudes_gasto", "id_solicitud")) return false;
+
     }
 
     if (!Validaciones.keyUp(/^.{10,}$/, $("#descripcion_gasto")[0], null, "")) {
@@ -255,7 +262,7 @@ async function validarFormularioCompleto() {
                 Utilidades.mensaje("error", `Detalle #${num}`, "Debe seleccionar un banco");
                 return false;
             }
-            if (!await verificarExistenciaElemento(bancoSelect, 'bancos', 'id_banco')) {
+            if (!await Validaciones.validarClaveForanea(bancoSelect, 'bancos', 'id_banco')) {
                 Utilidades.mensaje("error", `Detalle #${num}`, "El banco seleccionado no existe");
                 return false;
             }

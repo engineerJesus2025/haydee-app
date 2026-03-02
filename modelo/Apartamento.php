@@ -499,7 +499,7 @@ class Apartamento extends Conexion
      * Consulta los apartamentos activos con los campos necesarios para la tabla de asignación de mensualidades.
      * @return array
      */
-    public function _consultar_apartamentos_mensualidad() {
+    private function _consultar_apartamentos_mensualidad() {
         $sql = "SELECT id_apartamento, nro_apartamento, porcentaje_participacion, gas 
                 FROM apartamentos 
                 WHERE activo = 1 
@@ -592,6 +592,24 @@ class Apartamento extends Conexion
         } catch (PDOException $e) {
             error_log("Error en validarExistenciaExterna (Apartamento): " . $e->getMessage());
             return false;
+        }
+    }
+
+    private function _existe_apartamento()
+    {
+        $validacion = $this->validar(['id_apartamento']);
+        if (!$validacion['estatus']) {
+            return ['estatus' => false, 'existe' => false, 'mensaje' => $validacion['mensaje']];
+        }
+        $sql = "SELECT 1 FROM apartamentos WHERE id_apartamento = :id AND activo = 1";
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->execute([':id' => $this->id_apartamento]);
+            $existe = $stmt->fetchColumn() ? true : false;
+            return ['estatus' => true, 'existe' => $existe];
+        } catch (PDOException $e) {
+            error_log("Error en _existe_apartamento: " . $e->getMessage());
+            return ['estatus' => false, 'existe' => false, 'mensaje' => 'Error al verificar apartamento'];
         }
     }
 

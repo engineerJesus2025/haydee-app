@@ -32,7 +32,7 @@
                     <div class="row">
                         <div class="col-lg-3 col-md-6">
                             <div class="card mb-3 shadow" title="Reportes Estadisticos">
-                                <a href="?pagina=reportes_controlador.php&accion=ingreso_egreso" class="text-decoration-none text-black">
+                                <a href="?pagina=reportes&accion=ingreso_egreso" class="text-decoration-none text-black">
                                     <div class="card-header text-center bg-white border-bottom-0 p-0">
                                         <i class="bi-graph-up" style="font-size: 5rem !important;"></i>
                                     </div>
@@ -44,7 +44,7 @@
                         </div>
                         <div class="col-lg-3 col-md-6">
                             <div class="card mb-3 shadow" title="Reportes Estadisticos">
-                                <a href="?pagina=reportes_controlador.php&accion=habitantes" class="text-decoration-none text-black">
+                                <a href="?pagina=reportes&accion=habitantes" class="text-decoration-none text-black">
                                     <div class="card-header text-center bg-white border-bottom-0 p-0">
                                         <i class="bi-people-fill" style="font-size: 5rem !important;"></i>
                                     </div>

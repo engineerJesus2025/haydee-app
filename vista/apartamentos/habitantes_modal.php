@@ -5,11 +5,11 @@
             <div class="input-group mb-3">
                 <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-person-vcard-fill"></i></span>
                 <select class="form-select border border-dark" id="tipo_cedula" aria-label="Default select example" for="tipo_cedula" name="tipo_cedula">
-                    <option selected="" hidden="" value="">N/A</option>
+                    <option selected="" hidden value="">N/A</option>
                     <option value="V">V</option>
                     <option value="E">E</option>
                 </select>
-                <input type="text" class="border border-dark form-control cedula" name="cedula" id="cedula" placeholder="Ejem: 30475465" aria-label="cedula" aria-describedby="basic-addon1" minlength="7" maxlength="8" style="flex-grow: 7" value="Selección de documento" disabled="">
+                <input type="text" class="border border-dark form-control cedula" name="cedula" id="cedula" placeholder="Ejem: 30475465" aria-label="cedula" aria-describedby="basic-addon1" minlength="7" maxlength="8" style="flex-grow: 7" value="Selección de documento" disabled>
                 <span class="w-100 invalid-feedback"></span>
             </div>
         </div>

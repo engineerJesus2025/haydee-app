@@ -22,7 +22,7 @@
                         <?php if (!empty($_SESSION["notificaciones"])): ?>
                             <?php foreach ($_SESSION["notificaciones"] as $notificacion): ?>                                
                                 <li class="notif-item <?php echo (!empty($notificacion['leida']) && $notificacion['leida']) ? '' : 'notif-unread'; ?>">                            
-                                    <a href="?pagina=<?php echo $notificacion['tabla_origen']; ?>_controlador.php&accion=inicio&buscar=<?php echo $notificacion['id_registro_origen'] ?>"
+                                    <a href="?pagina=<?php echo $notificacion['tabla_origen']; ?>&accion=inicio&buscar=<?php echo $notificacion['id_registro_origen'] ?>"
                                         class="notif-link"
                                         title="Ir a la notificación">
                                         <div class="notif-icon-circle">
@@ -58,7 +58,7 @@
                         <?php endif; ?>
                     </div>
                     <li class="dropdown-footer text-center border-top">
-                        <a href="?pagina=notificaciones_controlador.php&accion=inicio" class="text-primary small text-decoration-none d-block py-2">Ver todas las notificaciones</a>
+                        <a href="?pagina=notificaciones&accion=inicio" class="text-primary small text-decoration-none d-block py-2">Ver todas las notificaciones</a>
                     </li>
                 </ul>
         </div>
@@ -74,10 +74,10 @@
                 </div>
             </button>
             <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                <li><a class="dropdown-item" href="?pagina=perfil_controlador.php&accion=perfil"><i class="bi bi-person me-2"></i> Mi perfil</a></li>
-                <li><a class="dropdown-item" href="?pagina=ayuda_controlador.php&accion=inicio"><i class="bi bi-question-circle me-2"></i> Ayuda</a></li>
+                <li><a class="dropdown-item" href="?pagina=perfil&accion=perfil"><i class="bi bi-person me-2"></i> Mi perfil</a></li>
+                <li><a class="dropdown-item" href="?pagina=ayuda&accion=inicio"><i class="bi bi-question-circle me-2"></i> Ayuda</a></li>
                 <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item text-danger" href="?pagina=login_controlador.php&accion=cerrar"><i class="bi bi-box-arrow-right me-2"></i> Salir</a></li>
+                <li><a class="dropdown-item text-danger" href="?pagina=login&accion=cerrar"><i class="bi bi-box-arrow-right me-2"></i> Salir</a></li>
             </ul>
         </div>
     </div>

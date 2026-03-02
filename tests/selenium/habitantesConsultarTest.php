@@ -45,7 +45,7 @@ class habitantesConsultarTest extends TestCase
         
         sleep(1); 
         
-        $this->driver->get('http://localhost/haydee-app/?pagina=inicio_controlador.php&accion=inicio');
+        $this->driver->get('http://localhost/haydee-app/?pagina=inicio&accion=inicio');
         
         $this->driver->wait(10, 500)->until(
             function () {
@@ -58,7 +58,7 @@ class habitantesConsultarTest extends TestCase
         // PASO 2: Navegar a Apartamentos (la página principal)
         // -----------------------------------------------------------------
         
-        $this->driver->get('http://localhost/haydee-app/?pagina=apartamentos_controlador.php&accion=inicio');
+        $this->driver->get('http://localhost/haydee-app/?pagina=apartamentos&accion=inicio');
         
         $this->driver->wait(10, 500)->until(
             WebDriverExpectedCondition::visibilityOfElementLocated(

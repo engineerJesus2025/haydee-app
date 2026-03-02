@@ -157,7 +157,7 @@ function llenarTablaNotificaciones() {
         const boton = ultimaCelda.firstElementChild;
         if (boton) {
             boton.addEventListener('click', () => {
-                const url = `?pagina=${boton.dataset.tabla_origen}_controlador.php&accion=inicio&buscar=${boton.dataset.id_registro_origen}`;
+                const url = `?pagina=${boton.dataset.tabla_origen}&accion=inicio&buscar=${boton.dataset.id_registro_origen}`;
                 window.location.href = url;
             });
         }

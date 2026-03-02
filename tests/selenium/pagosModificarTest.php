@@ -47,7 +47,7 @@ class pagosModificarTest extends TestCase
         
         $this->driver->findElement(WebDriverBy::id('form-login'))->submit();
         sleep(1); 
-        $this->driver->get('http://localhost/haydee-app/?pagina=inicio_controlador.php&accion=inicio');
+        $this->driver->get('http://localhost/haydee-app/?pagina=inicio&accion=inicio');
         
         $this->driver->wait(10, 500)->until(
             function () {
@@ -59,7 +59,7 @@ class pagosModificarTest extends TestCase
         // -----------------------------------------------------------------
         // PASO 2: Navegar a Pagos
         // -----------------------------------------------------------------
-        $this->driver->get('http://localhost/haydee-app/?pagina=pagos_controlador.php&accion=inicio');
+        $this->driver->get('http://localhost/haydee-app/?pagina=pagos&accion=inicio');
         $this->driver->wait(10, 500)->until(
             WebDriverExpectedCondition::visibilityOfElementLocated(
                 WebDriverBy::xpath("//h2[contains(text(), 'GESTIONAR PAGOS')]")

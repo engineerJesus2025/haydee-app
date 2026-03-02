@@ -10,8 +10,8 @@
 </head>
 
 <body id="body-pd" class="body-pd">
-    <input type="text" hidden="" id="permiso_eliminar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_PRESUPUESTO, ELIMINAR) ?>">
-    <input type="text" hidden="" id="permiso_modificar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_PRESUPUESTO, MODIFICAR) ?>">
+    <input type="text" hidden id="permiso_eliminar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_PRESUPUESTO, ELIMINAR) ?>">
+    <input type="text" hidden id="permiso_modificar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_PRESUPUESTO, MODIFICAR) ?>">
     <div class="container-fluid">
         <div class="row flex-nowrap ">
 

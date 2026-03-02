@@ -50,10 +50,10 @@ class Gastos extends Conexion
             'exists' => ['tabla' => 'detalles_gastos', 'campo' => 'id_detalle_gasto']
         ],
         'clasificacion' => [
-            'regex' => '/^(Fijo|Variable)$/i'
+            'regex' => '/^(Fijo|Variable|Reposicion)$/i'
         ],
         'descripcion_gasto' => [
-            'regex' => '/^[a-zA-Z0-9áéíóúñÁÉÍÓÚÑ\s.,-]{3,255}$/'
+            'regex' => '/^[a-zA-Z0-9áéíóúñÁÉÍÓÚÑ\s.,:\/-]{3,255}$/'
         ],
         'solicitud_id' => [
             'regex' => '/^\d+$/',
@@ -84,7 +84,7 @@ class Gastos extends Conexion
             'regex' => '/^(Efectivo|Pago Movil|Transferencia|Divisa)$/'
         ],
         'descripcion_detalle' => [
-            'regex' => '/^[a-zA-Z0-9áéíóúñÁÉÍÓÚÑ\s.,-]{0,255}$/',
+            'regex' => '/^[a-zA-Z0-9áéíóúñÁÉÍÓÚÑ\s.,:\/-]{0,255}$/',
             'opcional' => true
         ],
         'referencia' => [

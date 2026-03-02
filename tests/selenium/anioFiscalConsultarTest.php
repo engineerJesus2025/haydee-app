@@ -57,7 +57,7 @@ class anioFiscalConsultarTest extends TestCase
         // -----------------------------------------------------------------
         // PASO 2: Confirmar que estamos en el Dashboard
         // -----------------------------------------------------------------
-        $this->driver->get('http://localhost/haydee-app/?pagina=inicio_controlador.php&accion=inicio');
+        $this->driver->get('http://localhost/haydee-app/?pagina=inicio&accion=inicio');
 
         // --- Corrección 1 (Línea 62) ---
         $this->driver->wait(10, 500)->until(
@@ -67,7 +67,7 @@ class anioFiscalConsultarTest extends TestCase
         );
 
 
-        $this->driver->get('http://localhost/haydee-app/?pagina=anio_fiscal_controlador.php&accion=inicio');
+        $this->driver->get('http://localhost/haydee-app/?pagina=anio_fiscal&accion=inicio');
 
         // 3.2. Esperamos a que aparezca el título H2
         $this->driver->wait(10, 500)->until(

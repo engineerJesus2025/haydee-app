@@ -42,7 +42,7 @@ class apartamentosConsultarTest extends TestCase
         $this->driver->findElement(WebDriverBy::id('form-login'))->submit();
         sleep(1); 
 
-        $this->driver->get('http://localhost/haydee-app/?pagina=inicio_controlador.php&accion=inicio');
+        $this->driver->get('http://localhost/haydee-app/?pagina=inicio&accion=inicio');
         // --- ¡CORRECCIÓN AQUÍ! (Línea 46) ---
         $this->driver->wait(10, 500)->until(
             function () {
@@ -54,7 +54,7 @@ class apartamentosConsultarTest extends TestCase
         // PASO 2: Navegar a Apartamentos y esperar la carga del DataTable
         // -----------------------------------------------------------------
         
-        $this->driver->get('http://localhost/haydee-app/?pagina=apartamentos_controlador.php&accion=inicio');
+        $this->driver->get('http://localhost/haydee-app/?pagina=apartamentos&accion=inicio');
         
         $this->driver->wait(10, 500)->until(
             WebDriverExpectedCondition::visibilityOfElementLocated(

@@ -110,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const reporte = this.getAttribute("reporte");
         const form = document.getElementById('form_reporte');
-        form.setAttribute('action', `?pagina=reportes_controlador.php&accion=${reporte}`);
+        form.setAttribute('action', `?pagina=reportes&accion=${reporte}`);
         form.submit();
         
         // Cerrar modal tras enviar

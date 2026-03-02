@@ -10,13 +10,13 @@
 </head>
 
 <body id="body-pd" class="body-pd">
-    <input type="text" hidden="" id="permiso_eliminar"
+    <input type="text" hidden id="permiso_eliminar"
         value="<?php echo Sesiones::tienePermiso(GESTIONAR_APARTAMENTOS, ELIMINAR) ?>">
-    <input type="text" hidden="" id="permiso_modificar"
+    <input type="text" hidden id="permiso_modificar"
         value="<?php echo Sesiones::tienePermiso(GESTIONAR_APARTAMENTOS, MODIFICAR) ?>">
-    <input type="text" hidden="" id="permiso_eliminar_habitantes"
+    <input type="text" hidden id="permiso_eliminar_habitantes"
         value="<?php echo Sesiones::tienePermiso(GESTIONAR_HABITANTES, ELIMINAR) ?>">
-    <input type="text" hidden="" id="permiso_modificar_habitantes"
+    <input type="text" hidden id="permiso_modificar_habitantes"
         value="<?php echo Sesiones::tienePermiso(GESTIONAR_HABITANTES, MODIFICAR) ?>">
     <div class="container-fluid">
         <div class="row flex-nowrap ">

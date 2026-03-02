@@ -26,7 +26,7 @@
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-person-badge"></i></span>
                 <select class="form-select" id="tipo_documento" aria-label="Default select example" for="tipo_documento" name="tipo_documento">
-                    <option selected="" hidden="" value="">N/A</option>
+                    <option selected="" hidden value="">N/A</option>
                     <option value="V">V</option>
                     <option value="E">E</option>
                     <option value="J">J</option>

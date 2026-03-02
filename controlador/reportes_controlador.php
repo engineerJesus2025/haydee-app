@@ -380,6 +380,6 @@ switch ($accion) {
 
     default:
         // Si no hay acción válida, redirigir a reportes_pdf por defecto
-        header("Location: ?pagina=reportes_controlador.php&accion=reportes_pdf");
+        header("Location: ?pagina=reportes&accion=reportes_pdf");
         break;
 }

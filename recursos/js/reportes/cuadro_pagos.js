@@ -50,7 +50,7 @@ botonCuadroPagos.addEventListener("click", () => {
             return;
         }
         let reporte = this.getAttribute("reporte");
-        document.getElementById('form_reporte').setAttribute('action', `?pagina=reportes_controlador.php&accion=${reporte}`);
+        document.getElementById('form_reporte').setAttribute('action', `?pagina=reportes&accion=${reporte}`);
         document.getElementById('form_reporte').submit();
     });
 });

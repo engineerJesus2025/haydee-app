@@ -562,52 +562,59 @@ class Mensualidad extends Conexion
      */
     private function _consultar_estadisticas_inicio()
     {
-        $sql = "
-            WITH TotalFacturado AS (
-                SELECT apartamento_id, SUM(monto) AS monto_total_facturado
-                FROM mensualidad
-                GROUP BY apartamento_id
-            ),
-            TotalPagado AS (
-                SELECT m.apartamento_id, SUM(dp.monto) AS monto_total_pagado
-                FROM detalles_pagos dp
-                JOIN pagos_mensualidad pm ON dp.id_detalle_pago = pm.detalle_pago_id
-                JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
-                GROUP BY m.apartamento_id
-            ),
-            SaldosFinales AS (
-                SELECT f.apartamento_id,
-                       (COALESCE(f.monto_total_facturado, 0) - COALESCE(p.monto_total_pagado, 0)) AS saldo,
-                       COALESCE(p.monto_total_pagado, 0) AS pagado_individual
-                FROM TotalFacturado f
-                LEFT JOIN TotalPagado p ON f.apartamento_id = p.apartamento_id
+        $sql = "WITH TotalFacturado AS (
+                    SELECT apartamento_id, SUM(monto) AS monto_total_facturado
+                    FROM mensualidad
+                    GROUP BY apartamento_id
+                ),
+                TotalPagado AS (
+                    SELECT m.apartamento_id, SUM(dp.monto) AS monto_total_pagado
+                    FROM detalles_pagos dp
+                    JOIN pagos_mensualidad pm ON dp.id_detalle_pago = pm.detalle_pago_id
+                    JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
+                    GROUP BY m.apartamento_id
+                ),
+                SaldosFinales AS (
+                    SELECT f.apartamento_id,
+                           (COALESCE(f.monto_total_facturado, 0) - COALESCE(p.monto_total_pagado, 0)) AS saldo,
+                           COALESCE(p.monto_total_pagado, 0) AS pagado_individual
+                    FROM TotalFacturado f
+                    LEFT JOIN TotalPagado p ON f.apartamento_id = p.apartamento_id
+                    UNION
+                    SELECT p.apartamento_id,
+                           (COALESCE(f.monto_total_facturado, 0) - COALESCE(p.monto_total_pagado, 0)) AS saldo,
+                           COALESCE(p.monto_total_pagado, 0) AS pagado_individual
+                    FROM TotalFacturado f
+                    RIGHT JOIN TotalPagado p ON f.apartamento_id = p.apartamento_id
+                    WHERE f.apartamento_id IS NULL
+                )
+                SELECT
+                    CAST(COUNT(CASE WHEN saldo > 0.01 THEN 1 END) AS CHAR) AS accion,
+                    COALESCE(SUM(CASE WHEN saldo > 0.01 THEN saldo ELSE 0 END), 0) AS valor,
+                    'morosos' as elemento
+                FROM SaldosFinales
                 UNION
-                SELECT p.apartamento_id,
-                       (COALESCE(f.monto_total_facturado, 0) - COALESCE(p.monto_total_pagado, 0)) AS saldo,
-                       COALESCE(p.monto_total_pagado, 0) AS pagado_individual
-                FROM TotalFacturado f
-                RIGHT JOIN TotalPagado p ON f.apartamento_id = p.apartamento_id
-                WHERE f.apartamento_id IS NULL
-            )
-            SELECT
-                COUNT(CASE WHEN saldo > 0.01 THEN 1 END) AS accion,
-                SUM(CASE WHEN saldo > 0.01 THEN saldo ELSE 0 END) AS valor,
-                'morosos' as elemento
-            FROM SaldosFinales
-            UNION
-            SELECT
-                COUNT(CASE WHEN saldo <= 0.01 THEN 1 END) AS accion,
-                SUM(CASE WHEN saldo <= 0.01 THEN pagado_individual ELSE 0 END) AS valor,
-                'sin deuda' as elemento
-            FROM SaldosFinales
-            UNION
-            SELECT 'total_egresos' as accion, SUM(dg.monto) as valor, 'total egresos' as elemento
-            FROM detalles_gastos dg
-            WHERE dg.fecha BETWEEN DATE_FORMAT(CURDATE(), '%Y-%m-01') AND CURDATE()
-            UNION
-            SELECT 'total_ingresos' as accion, SUM(dp.monto) as valor, 'total ingresos' as elemento
-            FROM detalles_pagos dp
-            WHERE dp.fecha BETWEEN DATE_FORMAT(CURDATE(), '%Y-%m-01') AND CURDATE()";
+                SELECT
+                    CAST(COUNT(CASE WHEN saldo <= 0.01 THEN 1 END) AS CHAR) AS accion,
+                    COALESCE(SUM(CASE WHEN saldo <= 0.01 THEN pagado_individual ELSE 0 END), 0) AS valor,
+                    'sin deuda' as elemento
+                FROM SaldosFinales
+                UNION
+                -- Aplicamos COALESCE aquí para egresos
+                SELECT 
+                    'total_egresos' as accion, 
+                    COALESCE(SUM(dg.monto), 0) as valor, 
+                    'total egresos' as elemento
+                FROM detalles_gastos dg
+                WHERE dg.fecha BETWEEN DATE_FORMAT(CURDATE(), '%Y-%m-01') AND CURDATE()
+                UNION
+                -- Aplicamos COALESCE aquí para ingresos
+                SELECT 
+                    'total_ingresos' as accion, 
+                    COALESCE(SUM(dp.monto), 0) as valor, 
+                    'total ingresos' as elemento
+                FROM detalles_pagos dp
+                WHERE dp.fecha BETWEEN DATE_FORMAT(CURDATE(), '%Y-%m-01') AND CURDATE();";
         try {
             $stmt = $this->get_conex('negocio')->prepare($sql);
             $stmt->execute();

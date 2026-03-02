@@ -46,7 +46,7 @@ class rolRegistrarTest extends TestCase
         
         $this->driver->findElement(WebDriverBy::id('form-login'))->submit();
         sleep(1); 
-        $this->driver->get('http://localhost/haydee-app/?pagina=inicio_controlador.php&accion=inicio');
+        $this->driver->get('http://localhost/haydee-app/?pagina=inicio&accion=inicio');
         
         $this->driver->wait(10, 500)->until(
             function () {
@@ -58,7 +58,7 @@ class rolRegistrarTest extends TestCase
         // -----------------------------------------------------------------
         // PASO 2: Confirmar que estamos en el Dashboard
         // -----------------------------------------------------------------
-        $this->driver->get('http://localhost/haydee-app/?pagina=inicio_controlador.php&accion=inicio');
+        $this->driver->get('http://localhost/haydee-app/?pagina=inicio&accion=inicio');
 
         // --- Corrección 1 (Línea 62) ---
         $this->driver->wait(10, 500)->until(
@@ -68,7 +68,7 @@ class rolRegistrarTest extends TestCase
         );
 
 
-        $this->driver->get('http://localhost/haydee-app/?pagina=rol_controlador.php&accion=inicio');
+        $this->driver->get('http://localhost/haydee-app/?pagina=rol&accion=inicio');
 
         // 3.2. Esperamos a que aparezca el título H2
         $this->driver->wait(10, 500)->until(

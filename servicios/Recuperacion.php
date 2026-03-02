@@ -99,7 +99,7 @@ class Recuperacion
         if ($pos !== false) {
             $url = substr($url, 0, $pos);
         }
-        return $url . '?pagina=login_controlador.php&accion=recuperar_contrasenia&t=' . $token;
+        return $url . '?pagina=login&accion=recuperar_contrasenia&t=' . $token;
     }
 
     private function enviarCorreo($usuario, $url)

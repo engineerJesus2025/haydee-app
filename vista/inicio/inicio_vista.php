@@ -36,8 +36,8 @@
 									<div class="card-text placeholder-glow my-3" id="esqueleto_canva_1">
 										<span class="placeholder w-100 rounded" style="height: 9rem"></span>
                                     </div>
-                                    <canvas id="canva_1" hidden=""></canvas>
-									<div class="alert alert-warning text-center mx-auto" role="alert" id="div_alert_1" hidden="" style="width:fit-content;">
+                                    <canvas id="canva_1" hidden></canvas>
+									<div class="alert alert-warning text-center mx-auto" role="alert" id="div_alert_1" hidden style="width:fit-content;">
 									  No hay Datos para el gráfico
 									</div>
 								</div>
@@ -48,8 +48,8 @@
 									<div class="card-text placeholder-glow my-3" id="esqueleto_canva_2">
 										<span class="placeholder w-100 rounded" style="height: 9rem"></span>
                                     </div>
-                                    <canvas id="canva_2" hidden=""></canvas>
-									<div class="alert alert-warning text-center mx-auto" role="alert" id="div_alert_2" hidden="" style="width:fit-content;">
+                                    <canvas id="canva_2" hidden></canvas>
+									<div class="alert alert-warning text-center mx-auto" role="alert" id="div_alert_2" hidden style="width:fit-content;">
 									  No hay Datos para el gráfico
 									</div>
 								</div>
@@ -73,7 +73,7 @@
 						</div>
 					<?php } ?>
 					</div>
-					<div class="d-flex justify-content-center mb-5"><span id="carga_publicaciones" hidden="" class="loader_publicaciones"></span></div>
+					<div class="d-flex justify-content-center mb-5"><span id="carga_publicaciones" hidden class="loader_publicaciones"></span></div>
 				</main>
 			</div>
 		</div>

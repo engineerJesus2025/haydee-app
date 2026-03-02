@@ -1,7 +1,7 @@
 <div class="row">
 	<div class="col-sm-5">
 		<select class="form-select" id="mes_select_asignar">
-			<option hidden="" selected="" value="">Seleccione el mes para asignar</option>
+			<option hidden selected="" value="">Seleccione el mes para asignar</option>
 		</select>
 		<span class="w-100 invalid-feedback"></span>
 	</div>

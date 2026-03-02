@@ -200,5 +200,44 @@ const Validaciones = {
         input.classList.add('is-valid');
         input.classList.remove('is-invalid');
         return true;
+    },
+
+    // En validaciones.js, dentro del objeto Validaciones
+
+    /**
+     * Valida que un valor de clave foránea exista en la base de datos.
+     * @param {HTMLElement} input - El elemento input/select a validar.
+     * @param {string} tabla - Nombre de la tabla.
+     * @param {string} campo - Nombre del campo clave.
+     * @param {string} mensajeError - Mensaje personalizado (opcional).
+     * @returns {Promise<boolean>} - true si existe, false en caso contrario.
+    */
+    async validarClaveForanea(input, tabla, campo, mensajeError = null) {
+        if (!input || input.value === null || input.value === '') {
+            this.mostrarError(input, mensajeError || 'Debe seleccionar un valor');
+            return false;
+        }
+        const respuesta = await Utilidades.validar('validar_clave_foranea', {
+            tabla: tabla,
+            nombre_clave: campo,
+            valor: input.value
+        });
+        if (respuesta.estatus) {
+            input.classList.add('is-valid');
+            input.classList.remove('is-invalid');
+            const feedback = input.nextElementSibling;
+            if (feedback && (feedback.classList.contains('invalid-feedback') || feedback.classList.contains('valid-feedback'))) {
+                feedback.textContent = '';
+            }
+            return true;
+        } else {
+            input.classList.remove('is-valid');
+            input.classList.add('is-invalid');
+            const feedback = input.nextElementSibling;
+            if (feedback && feedback.classList.contains('invalid-feedback')) {
+                feedback.textContent = mensajeError || `El valor seleccionado no existe en ${tabla}`;
+            }
+            return false;
+        }
     }
 };

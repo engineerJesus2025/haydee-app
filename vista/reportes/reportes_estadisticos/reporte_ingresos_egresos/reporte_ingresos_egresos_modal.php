@@ -58,7 +58,7 @@
     </div>
 </div>
 <div class="mx-auto text-center">
-	<form method="POST" action="?pagina=reportes_controlador.php&accion=generar_reporte_ingresos_egresos">
+	<form method="POST" action="?pagina=reportes&accion=generar_reporte_ingresos_egresos">
 		<input type="hidden" name="fecha_grafico_input" id="fecha_grafico_input">
 		<input type="hidden" name="barra" id="barra" value="">
 
