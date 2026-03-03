@@ -2,7 +2,7 @@
     <div class="row m-3">
         <div class="col-lg-4 mb-3">
             <label class="form-label fw-bold" for="apartamento_id">Apartamento</label>
-            <div class="input-group">
+            <div class="input-group has-validation">
                 <span class="border border-primary input-group-text"><i class="bi bi-building"></i></span>
                 <select class="border border-dark form-select" id="apartamento_id" name="apartamento_id">
                     <option selected hidden value="">Seleccione un Apartamento</option>
@@ -17,7 +17,7 @@
         </div>
         <div class="col-lg-5 mb-3">
             <label class="form-label fw-bold" for="mensualidad_id">Mensualidad a Pagar</label>
-            <div class="input-group">
+            <div class="input-group has-validation">
                 <span class="border border-primary input-group-text"><i class="bi bi-bank2"></i></span>
                 <select class="border border-dark form-select" id="mensualidad_id" name="mensualidad_id" disabled>
                     <option selected hidden value="">Escoja primero un Apartamento</option>
@@ -43,7 +43,7 @@
                 <div class="row">
                     <div class="col-lg-3 col-md-6 mb-3">
                         <label class="form-label">Fecha de Transacción</label>
-                        <div class="input-group">
+                        <div class="input-group has-validation">
                             <span class="border border-primary input-group-text"><i class="bi bi-calendar-date"></i></span>
                             <input type="date" class="border border-dark form-control fecha_admin">
                             <span class="w-100 invalid-feedback"></span>
@@ -51,7 +51,7 @@
                     </div>
                     <div class="col-lg-3 col-md-6 mb-3">
                         <label class="form-label">Método de Pago</label>
-                        <div class="input-group">
+                        <div class="input-group has-validation">
                             <span class="border border-primary input-group-text"><i class="bi bi-credit-card-fill"></i></span>
                             <select class="border border-dark form-select tipo_pago_admin">
                                 <option selected hidden value="">Seleccione método</option>
@@ -64,7 +64,7 @@
                     </div>
                     <div class="col-lg-2 col-md-4 mb-3 campo-monto d-none">
                         <label class="form-label">Monto (Bs)</label>
-                        <div class="input-group">
+                        <div class="input-group has-validation">
                             <span class="border border-primary input-group-text">Bs</span>
                             <input type="text" class="border border-dark form-control monto" placeholder="0.00">
                             <span class="w-100 invalid-feedback"></span>
@@ -72,7 +72,7 @@
                     </div>
                     <div class="col-lg-2 col-md-4 mb-3">
                         <label class="form-label">Tasa BCV</label>
-                        <div class="input-group">
+                        <div class="input-group has-validation">
                             <span class="border border-primary input-group-text">Bs/$</span>
                             <input type="text" class="border border-dark form-control tasa_dolar" placeholder="0.00">
                             <span class="w-100 invalid-feedback"></span>
@@ -80,7 +80,7 @@
                     </div>
                     <div class="col-lg-2 col-md-4 mb-3">
                         <label class="form-label">Equivalente ($)</label>
-                        <div class="input-group">
+                        <div class="input-group has-validation">
                             <span class="border border-primary input-group-text">$</span>
                             <input type="text" class="border border-dark form-control monto_dolar bg-light" placeholder="0.00" readonly>
                             <span class="w-100 invalid-feedback"></span>
@@ -90,7 +90,7 @@
                 <div class="row campos-bancarios d-none">
                     <div class="col-lg-3 col-md-6 mb-3">
                         <label class="form-label">Nro. Referencia</label>
-                        <div class="input-group">
+                        <div class="input-group has-validation">
                             <span class="border border-primary input-group-text"><i class="bi bi-123"></i></span>
                             <input type="text" class="border border-dark form-control referencia" placeholder="Últimos 4-6 dígitos">
                             <span class="w-100 invalid-feedback"></span>
@@ -98,7 +98,7 @@
                     </div>
                     <div class="col-lg-4 col-md-6 mb-3">
                         <label class="form-label">Banco Emisor</label>
-                        <div class="input-group">
+                        <div class="input-group has-validation">
                             <span class="border border-primary input-group-text"><i class="bi bi-bank"></i></span>
                             <select class="border border-dark form-select banco_admin">
                                 <option selected hidden value="">Escoja el Banco</option>
@@ -111,7 +111,7 @@
                     </div>
                     <div class="col-lg-5 mb-3">
                         <label class="form-label">Comprobante (Capture)</label>
-                        <div class="input-group">
+                        <div class="input-group has-validation">
                             <span class="border border-primary input-group-text"><i class="bi bi-image-fill"></i></span>
                             <input type="file" class="border border-dark form-control imagen" accept=".jpg, .jpeg, .png">
                         </div>
@@ -134,7 +134,7 @@
         <?php if (!$esPropietario): ?>
             <div class="col-lg-4 mb-3">
                 <label class="form-label fw-bold" for="estado">Estado de Verificación</label>
-                <div class="input-group">
+                <div class="input-group has-validation">
                     <span class="border border-primary input-group-text"><i class="bi bi-check-circle-fill"></i></span>
                     <select class="border border-dark form-select" id="estado" name="estado">
                         <option value="No verificado">NO VERIFICADO</option>
@@ -148,7 +148,7 @@
         
         <div class="<?php echo $esPropietario ? 'col-lg-12' : 'col-lg-8'; ?> mb-3">
             <label class="form-label fw-bold" for="observacion">Nota / Observación (Opcional)</label>
-            <div class="input-group">
+            <div class="input-group has-validation">
                 <span class="border border-primary input-group-text"><i class="bi bi-info-circle-fill"></i></span>
                 <input type="text" class="border border-dark form-control" id="observacion" placeholder="Ej: Pago de la mitad de la deuda...">
                 <span class="w-100 invalid-feedback"></span>
@@ -172,7 +172,7 @@
             <div class="row">
                 <div class="col-lg-3 col-md-6 mb-3">
                     <label class="form-label">Fecha</label>
-                    <div class="input-group">
+                    <div class="input-group has-validation">
                         <span class="border border-primary input-group-text"><i class="bi bi-calendar-date"></i></span>
                         <input type="date" class="border border-dark form-control fecha_admin">
                         <span class="w-100 invalid-feedback"></span>
@@ -180,7 +180,7 @@
                 </div>
                 <div class="col-lg-3 col-md-6 mb-3">
                     <label class="form-label">Método</label>
-                    <div class="input-group">
+                    <div class="input-group has-validation">
                         <span class="border border-primary input-group-text"><i class="bi bi-credit-card-fill"></i></span>
                         <select class="border border-dark form-select tipo_pago_admin">
                             <option selected hidden value="">Seleccione método</option>
@@ -193,7 +193,7 @@
                 </div>
                 <div class="col-lg-2 col-md-4 mb-3 campo-monto d-none">
                     <label class="form-label">Monto (Bs)</label>
-                    <div class="input-group">
+                    <div class="input-group has-validation">
                         <span class="border border-primary input-group-text">Bs</span>
                         <input type="text" class="border border-dark form-control monto" placeholder="0.00">
                         <span class="w-100 invalid-feedback"></span>
@@ -201,7 +201,7 @@
                 </div>
                 <div class="col-lg-2 col-md-4 mb-3">
                     <label class="form-label">Tasa</label>
-                    <div class="input-group">
+                    <div class="input-group has-validation">
                         <span class="border border-primary input-group-text">Bs/$</span>
                         <input type="text" class="border border-dark form-control tasa_dolar" placeholder="0.00">
                         <span class="w-100 invalid-feedback"></span>
@@ -209,7 +209,7 @@
                 </div>
                 <div class="col-lg-2 col-md-4 mb-3">
                     <label class="form-label">Dólares</label>
-                    <div class="input-group">
+                    <div class="input-group has-validation">
                         <span class="border border-primary input-group-text">$</span>
                         <input type="text" class="border border-dark form-control monto_dolar bg-light" placeholder="0.00" readonly>
                         <span class="w-100 invalid-feedback"></span>
@@ -219,7 +219,7 @@
             <div class="row campos-bancarios d-none">
                 <div class="col-lg-3 col-md-6 mb-3">
                     <label class="form-label">Referencia</label>
-                    <div class="input-group">
+                    <div class="input-group has-validation">
                         <span class="border border-primary input-group-text"><i class="bi bi-123"></i></span>
                         <input type="text" class="border border-dark form-control referencia" placeholder="Nro de recibo">
                         <span class="w-100 invalid-feedback"></span>
@@ -227,7 +227,7 @@
                 </div>
                 <div class="col-lg-4 col-md-6 mb-3">
                     <label class="form-label">Banco</label>
-                    <div class="input-group">
+                    <div class="input-group has-validation">
                         <span class="border border-primary input-group-text"><i class="bi bi-bank"></i></span>
                         <select class="border border-dark form-select banco_admin">
                             <option selected hidden value="">Escoja el Banco</option>
@@ -240,7 +240,7 @@
                 </div>
                 <div class="col-lg-5 mb-3">
                     <label class="form-label">Capture (Opcional si edita)</label>
-                    <div class="input-group">
+                    <div class="input-group has-validation">
                         <span class="border border-primary input-group-text"><i class="bi bi-image-fill"></i></span>
                         <input type="file" class="border border-dark form-control imagen" accept=".jpg, .jpeg, .png">
                     </div>

@@ -1,7 +1,108 @@
+<?php
+// Lógica para definir el título dinámico del Header
+$pagina_actual = isset($_GET['pagina']) ? $_GET['pagina'] : 'inicio';
+$titulo_header = "Inicio";
+$subtitulo_header = "Panel Administrativo";
+
+switch ($pagina_actual) {
+    case 'pagos':
+        $titulo_header = "Pagos";
+        $subtitulo_header = "Gestión de pagos y transacciones";
+        break;
+    case 'gastos':
+        $titulo_header = "Gastos";
+        $subtitulo_header = "Registro y seguimiento de gastos";
+        break;
+    case 'mensualidad':
+        $titulo_header = "Mensualidad";
+        $subtitulo_header = "Gestión de mensualidades y cuotas";
+        break;
+    case 'cartelera_virtual':
+        $titulo_header = "Cartelera Virtual";
+        $subtitulo_header = "Anuncios y comunicados para los habitantes";
+        break;
+    case 'anio_fiscal':
+        $titulo_header = "Año Fiscal";
+        $subtitulo_header = "Configuración del año fiscal y periodos contables";
+        break;
+    case 'reportes':
+        $titulo_header = "Reportes";
+        $subtitulo_header = "Generación de reportes financieros y administrativos";
+        break;
+    case 'perfil':
+        $titulo_header = "Mi Perfil";
+        $subtitulo_header = "Información y configuración de mi cuenta";
+        break;
+    case 'bancos':
+        $titulo_header = "Bancos";
+        $subtitulo_header = "Control de cuentas bancarias";
+        break;
+    case 'apartamentos':
+        $titulo_header = "Apartamentos y Habitantes";
+        $subtitulo_header = "Gestión de apartamentos, habitantes y propietarios";
+        break;
+    case 'caja_chica':
+        $titulo_header = "Caja Chica";
+        $subtitulo_header = "Control de caja chica y gastos menores";
+        break;
+    case 'solicitud_gasto':
+        $titulo_header = "Solicitudes de Gasto";
+        $subtitulo_header = "Gestión de solicitudes de gasto y aprobaciones";
+        break;
+    case 'presupuesto':
+        $titulo_header = "Presupuesto Mensuales";
+        $subtitulo_header = "Planificación y seguimiento del presupuesto mensual";
+        break;
+    case 'proveedores':
+        $titulo_header = "Proveedores";
+        $subtitulo_header = "Gestión de proveedores y servicios";
+        break;
+    case 'tipo_gasto':
+        $titulo_header = "Tipos de Gasto";
+        $subtitulo_header = "Categorías y tipos de gastos para clasificación";
+        break;
+    case 'usuario':
+        $titulo_header = "Usuarios";
+        $subtitulo_header = "Gestión de usuarios y cuentas del sistema";
+        break;
+    case 'rol':
+        $titulo_header = "Roles";
+        $subtitulo_header = "Definición y asignación de roles y permisos";
+        break;
+    case 'bitacora':
+        $titulo_header = "Bitácora de Actividad";
+        $subtitulo_header = "Registro de acciones y eventos del sistema";
+        break;
+    case 'permisos':
+        $titulo_header = "Permisos";
+        $subtitulo_header = "Gestión de permisos y accesos para usuarios";
+        break;
+    case 'modulos':
+        $titulo_header = "Módulos";
+        $subtitulo_header = "Gestión de módulos y funcionalidades del sistema";
+        break;
+    case 'notificaciones':
+        $titulo_header = "Notificaciones";
+        $subtitulo_header = "Gestión de notificaciones y alertas para los usuarios";
+        break;
+    case 'mantenimiento':
+        $titulo_header = "Mantenimiento";
+        $subtitulo_header = "Tareas de mantenimiento y optimización del sistema";
+        break;
+}
+?>
+
 <header class="header d-flex justify-content-between align-items-center px-3 bg-white shadow-sm" id="header" style="height: 60px; transition: .5s;">
     
-    <div class="header_toggle">
-        <i class='bi bi-list fs-3 text-dark' id="header-toggle" style="cursor: pointer;"></i>
+    <div class="d-flex align-items-center">
+        <div class="header_toggle me-3">
+            <i class='bi bi-list fs-3 text-dark' id="header-toggle" style="cursor: pointer;"></i>
+        </div>
+        
+        <div class="header_title">
+            <h5 class="fw-bold mb-0 text-dark" style="font-size: 1.1rem; line-height: 1;"><?php echo $titulo_header; ?></h5>
+            <small class="text-muted" style="font-size: 0.7rem;"><?php echo $subtitulo_header; ?></small>
+        </div>
     </div>
 
     <div class="d-flex align-items-center gap-3">
@@ -22,7 +123,9 @@
                         <?php if (!empty($_SESSION["notificaciones"])): ?>
                             <?php foreach ($_SESSION["notificaciones"] as $notificacion): ?>                                
                                 <li class="notif-item <?php echo (!empty($notificacion['leida']) && $notificacion['leida']) ? '' : 'notif-unread'; ?>">                            
-                                    <a href="?pagina=<?php echo $notificacion['tabla_origen']; ?>&accion=inicio&buscar=<?php echo $notificacion['id_registro_origen'] ?>" class="notif-link" title="Ir a la notificación">
+                                    <a href="?pagina=<?php echo $notificacion['tabla_origen']; ?>&accion=inicio&buscar=<?php echo $notificacion['id_registro_origen'] ?>"
+                                        class="notif-link"
+                                        title="Ir a la notificación">
                                         <div class="notif-icon-circle">
                                             <i class="bi bi-info-circle"></i>
                                         </div>                                     

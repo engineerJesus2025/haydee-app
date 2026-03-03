@@ -73,3 +73,12 @@ body.body-pd .footer-ajustado {
         padding-right: 1rem !important;
     }
 }
+
+.header_title h5 {
+    letter-spacing: -0.5px;
+}
+
+.header_title small {
+    display: block;
+    margin-top: -2px;
+}

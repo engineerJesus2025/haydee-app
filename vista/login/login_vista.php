@@ -74,7 +74,7 @@
     require_once 'vista/componentes/modal_carga.php';
      ?>
 
-    <footer class="py-2 fixed-bottom" style="background-color: #3939a9;">
+    <footer class="py-2 fixed-bottom" style="background-color: #0e121b;">
         <div class="text-center text-white"><h5>Junta de Condominios Edificio Haydee C.A.</h5></div>
     </footer>
 
