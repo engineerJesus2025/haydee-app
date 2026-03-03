@@ -164,7 +164,7 @@ function construirHTMLPublicacion(publicacion) {
     
     // Llenar datos de forma segura
     card.querySelector('.post-title').textContent = publicacion.titulo;
-    card.querySelector('small').textContent = `Publicado el ${Utilidades.formatearFecha(publicacion.fecha)}`;
+    card.querySelector('small').textContent = `Publicado el ${FormatoFechas.formatoUsuario(publicacion.fecha)}`;
     card.querySelector('.author-badge').textContent = `Por ${publicacion.nombre_usuario}`;
     card.querySelector('.post-description').textContent = publicacion.descripcion;
     

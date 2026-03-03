@@ -54,7 +54,7 @@ class Pagos extends Conexion
             'regex' => '/^(Transferencia|Pago Movil|Efectivo|Divisa)$/'
         ],
         'referencia' => [
-            'regex' => '/^[a-zA-Z0-9]{4,20}$/',
+            'regex' => '/^[a-zA-Z0-9-]{4,20}$/',
             'opcional' => true,
             'requerido_si' => ['tipo_pago' => ['Transferencia', 'Pago Movil']]
         ],

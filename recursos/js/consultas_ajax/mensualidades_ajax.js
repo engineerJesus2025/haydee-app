@@ -11,8 +11,8 @@ let tablaMensualidades;
 let tablaApartamentos;
 let tablaAsignar;
 
-let modalMensualidad = new bootstrap.Modal(document.getElementById("modal_mensualidad"));
-let modalApartamentos = new bootstrap.Modal(document.getElementById("modal_mensualidades_apartamentos"));
+let modalMensualidad = new bootstrap.Modal(document.getElementById("modal_mensualidad"), { focus: false });
+let modalApartamentos = new bootstrap.Modal(document.getElementById("modal_mensualidades_apartamentos"), { focus: false });
 let modalCarga = new bootstrap.Modal("#modal_carga");
 
 let selectMesAsignar = document.getElementById('mes_select_asignar');
@@ -132,7 +132,7 @@ async function verificarMeses() {
         let fecha = new Date(`${m.mes_presupuesto}/01/${m.anio_presupuesto}`);
         let option = document.createElement("option");
         // option.id = fecha.toLocaleDateString('es-ES');
-        option.id = FormatoFechas.cambiarFormatoFecha(fecha.toLocaleDateString('es-ES'));
+        option.id = FormatoFechas.formatoFechaDB(fecha.toLocaleDateString('es-ES'));
         option.textContent = fecha.toLocaleString("es-ES", { month: 'long', year: 'numeric' }).toUpperCase();
         fragment.appendChild(option);
     });
@@ -669,3 +669,95 @@ function seleccionarMensualidadPorNotificacion() {
         }
     }, 100);
 }
+
+// ============================================================
+// MÓDULO DE AYUDA (DRIVER.JS) - MENSUALIDADES
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+    const driver = window.driver.js.driver;
+    let tourActivo = null;
+
+    const alinearBurbuja = () => {
+        setTimeout(() => {
+            window.dispatchEvent(new Event('resize'));
+        }, 10);
+    };
+
+    // 1. CONFIGURACIÓN DE LA VISTA PRINCIPAL
+    const configPrincipal = {
+        showProgress: true,
+        animate: true,
+        smoothScroll: false, 
+        allowKeyboardControl: false,
+        nextBtnText: 'Siguiente ➔',
+        prevBtnText: '⬅ Anterior',
+        doneBtnText: 'Entendido',
+        progressText: 'Paso {{current}} de {{total}}',
+        
+        onHighlightStarted: (element) => {
+            if (element) {
+                element.scrollIntoView({ behavior: 'instant', block: 'center' });
+                alinearBurbuja();
+            }
+        },
+
+        steps: [
+            { element: '.page-header', popover: { title: 'Módulo de Mensualidades', description: 'Bienvenido. Aquí podrás generar los cobros mensuales del condominio basados en los presupuestos vigentes.', side: "bottom", align: 'center' } },
+            // Seleccionamos el contenedor del botón por si está oculto temporalmente
+            { element: document.querySelector('#boton_registrar')?.parentElement || '#boton_registrar', popover: { title: 'Generar Mensualidad', description: 'Si hay meses con presupuestos listos, este botón te permitirá generar la mensualidad y distribuirla a los apartamentos.', side: "bottom", align: 'start' } },
+            { element: '#tabla_mensualidad_wrapper', popover: { title: 'Historial de Cobros', description: 'Aquí verás las mensualidades ya generadas, lo que se ha recaudado y lo que falta por pagar. Puedes ver detalles o editar.', side: "top", align: 'center' } }
+        ]
+    };
+
+    // 2. CONFIGURACIÓN DEL MODAL DE MENSUALIDAD
+    const configModalMensualidad = {
+        showProgress: true,
+        animate: true, 
+        smoothScroll: false, 
+        allowKeyboardControl: false, 
+        nextBtnText: 'Siguiente ➔',
+        prevBtnText: '⬅ Anterior',
+        doneBtnText: 'Entendido',
+        progressText: 'Paso {{current}} de {{total}}',
+        
+        onHighlightStarted: (element) => {
+            if (element) {
+                element.scrollIntoView({ behavior: 'instant', block: 'center' });
+                alinearBurbuja();
+            }
+        },
+
+        steps: [
+            { element: '#mes_select_asignar', popover: { title: 'Selección de Mes', description: 'Primero, elige de la lista el mes que deseas procesar para cobrar.', side: 'bottom', align: 'start' } },
+            { element: '#tabla_mensualidad_asignar', popover: { title: 'Distribución de Presupuestos', description: 'Aquí se listan los apartamentos. Selecciona mediante las casillas qué presupuestos o gastos se le cobrarán a cada uno.', side: 'top', align: 'center' } },
+            { element: '#porcentaje_demora', popover: { title: 'Recargos', description: 'Establece de cuánto será el porcentaje de multa si un propietario se atrasa en el pago.', side: 'top', align: 'start' } },
+            { element: '#dia_limite', popover: { title: 'Fecha de Corte', description: 'Indica hasta qué día del mes tienen los propietarios para pagar sin recibir el recargo por mora.', side: 'top', align: 'start' } },
+            { element: '#boton_formulario', popover: { title: 'Guardar', description: 'Verifica la asignación y haz clic aquí para registrar formalmente la mensualidad.', side: 'top', align: 'center' } }
+        ]
+    };
+
+    // 3. LÓGICA DEL BOTÓN FLOTANTE
+    const btnAyuda = document.getElementById('btn-ayuda-tour');
+    const modalMensualidadHTML = document.getElementById('modal_mensualidad');
+
+    if(btnAyuda) {
+        btnAyuda.addEventListener('click', () => {
+            if (modalMensualidadHTML && modalMensualidadHTML.classList.contains('show')) {
+                tourActivo = driver(configModalMensualidad);
+                tourActivo.drive();
+            } else {
+                window.scrollTo({ top: 0, behavior: 'instant' });
+                tourActivo = driver(configPrincipal);
+                tourActivo.drive();
+            }
+        });
+    }
+
+    if (modalMensualidadHTML) {
+        modalMensualidadHTML.addEventListener('hide.bs.modal', () => {
+            if (tourActivo) {
+                try { tourActivo.destroy(); } catch (e) {}
+            }
+        });
+    }
+});

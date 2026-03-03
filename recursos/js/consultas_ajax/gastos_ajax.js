@@ -13,7 +13,7 @@ let permiso_eliminar = document.querySelector("#permiso_eliminar")?.value;
 let permiso_modificar = document.querySelector("#permiso_modificar")?.value;
 
 // Elementos del DOM
-const modalGasto = new bootstrap.Modal(document.getElementById("modal_gastos"));
+const modalGasto = new bootstrap.Modal(document.getElementById("modal_gastos"), { focus: false });
 const modalVistaPrevia = new bootstrap.Modal(document.getElementById("modal_vista_previa"));
 const modalVistaPreviaDetalles = new bootstrap.Modal(document.getElementById("modal_vista_previa_detalles"));
 
@@ -54,7 +54,7 @@ async function consultarGastos() {
     const columnas = [
         { 
             data: null,
-            render: row => FormatoFechas.formatear(row.ultima_fecha, 'DD-MM-YYYY')
+            render: row => FormatoFechas.formatoUsuario(row.ultima_fecha)
         },
         {
             data: null,
@@ -360,7 +360,7 @@ async function mostrarVistaPrevia(id) {
 
     const gasto = respuesta.datos.gasto;
 
-    document.getElementById('vista_fecha').textContent = FormatoFechas.formatear(gasto.ultima_fecha, 'DD-MM-YYYY');
+    document.getElementById('vista_fecha').textContent = FormatoFechas.formatoUsuario(gasto.ultima_fecha);
     // Cargar detalles en la tabla secundaria
     await cargarDetallesEnTabla(gasto.id_gasto);
 
@@ -391,7 +391,7 @@ async function cargarDetallesEnTabla(idGasto) {
     const tablaDetalles = new DataTable('#tabla_detalles_gastos', {
         data: detalles,
         columns: [
-            { data: 'fecha', render: data => FormatoFechas.formatear(data, 'DD-MM-YYYY') },
+            { data: 'fecha', render: data => FormatoFechas.formatoUsuario(data) },
             { 
                 data: null,
                 render: row => formatearMontoConMoneda(row.monto, row.metodo_pago)
@@ -436,7 +436,7 @@ async function mostrarVistaPreviaDetalle(idDetalle) {
 
     const det = respuesta.datos;
 
-    document.getElementById('vista_fecha_detalles').textContent = FormatoFechas.formatear(det.fecha, 'DD-MM-YYYY');
+    document.getElementById('vista_fecha_detalles').textContent = FormatoFechas.formatoUsuario(det.fecha, 'DD-MM-YYYY');
     document.getElementById('vista_monto_detalles').textContent = formatearMontoConMoneda(det.monto, det.metodo_pago);
     document.getElementById('vista_metodo_pago_detalles').textContent = det.metodo_pago || '';
     document.getElementById('vista_nombre_banco_detalles').textContent = det.nombre_banco || 'No hay banco registrado';
@@ -616,3 +616,86 @@ function mayuscula(texto) {
     if (!texto) return '';
     return texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase();
 }
+
+// ============================================================
+// MÓDULO DE AYUDA (DRIVER.JS)
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+    const driver = window.driver.js.driver;
+    let tourActivo = null;
+
+    const forzarRecalculo = () => {
+        window.dispatchEvent(new Event('resize'));
+    };
+
+    // 1. CONFIGURACIÓN DE LA VISTA PRINCIPAL
+    const configPrincipal = {
+        showProgress: true,
+        animate: true,
+        nextBtnText: 'Siguiente ➔',
+        prevBtnText: '⬅ Anterior',
+        doneBtnText: 'Entendido',
+        progressText: 'Paso {{current}} de {{total}}',
+        steps: [
+            { element: '.page-header', popover: { title: 'Módulo de Gastos', description: 'Bienvenido. Desde aquí puedes gestionar y controlar todas las salidas de dinero.', side: "bottom", align: 'start' } },
+            { element: '[data-bs-target="#modal_gastos"]', popover: { title: 'Nuevo Gasto', description: 'Haz clic en este botón para abrir el formulario y registrar un nuevo gasto.', side: "right", align: 'start' } },
+            { element: '#tabla_gastos_wrapper', popover: { title: 'Tabla de Registros', description: 'Aquí se listan tus gastos. Usa el buscador interno y los botones de acción para Ver, Editar o Eliminar.', side: "top", align: 'center' } }
+        ]
+    };
+
+    // 2. CONFIGURACIÓN DEL MODAL
+    const configModal = {
+        showProgress: true,
+        animate: true,
+        smoothScroll: false, // Apagamos el scroll de Driver para usar el nuestro
+        nextBtnText: 'Siguiente ➔',
+        prevBtnText: '⬅ Anterior',
+        doneBtnText: 'Entendido',
+        progressText: 'Paso {{current}} de {{total}}',
+        
+        // Simplemente bajamos el modal al elemento, sin pelear con Bootstrap
+        onHighlightStarted: (element) => {
+            if (element) {
+                // block: 'center' deja el elemento cómodamente en el medio de la vista
+                element.scrollIntoView({ behavior: 'auto', block: 'center' });
+            }
+        },
+
+        steps: [
+            { element: '#clasificacion', popover: { title: 'Clasificación', description: 'Indica si este gasto es Fijo (mensual/recurrente) o Variable (esporádico).', side: 'bottom', align: 'start' } },
+            { element: '#tipo_gasto', popover: { title: 'Tipo de Gasto', description: 'Selecciona la categoría exacta a la que pertenece este gasto.', side: 'bottom', align: 'start' } },
+            { element: '#descripcion_gasto', popover: { title: 'Descripción', description: 'Redacta el motivo general del gasto con claridad. (Debe tener al menos 10 caracteres).', side: 'top', align: 'start' } },
+            { element: '#proveedor', popover: { title: 'Datos del Proveedor', description: 'Selecciona la empresa o persona a la que se le pagó, y vincula una Solicitud si el gasto proviene de una.', side: 'top', align: 'start' } },
+            { element: '.detalle-gasto', popover: { title: 'Detalles del Pago', description: 'En este bloque registrarás cómo y cuándo pagaste este gasto.', side: 'top', align: 'center' } },
+            { element: '.metodo_pago', popover: { title: 'Método Dinámico', description: '¡Importante! Si eliges "Transferencia" o "Pago Móvil", aparecerán automáticamente los campos para que ingreses la Referencia, el Banco y la imagen del Comprobante.', side: 'top', align: 'start' } },
+            { element: '#agregar_detalle', popover: { title: 'Pagos Fraccionados', description: '¿Pagaste una parte en efectivo y otra por transferencia? Usa este botón para añadir tantos métodos de pago como necesites.', side: 'top', align: 'start' } },
+            { element: '#boton_formulario', popover: { title: 'Guardar', description: 'Una vez valides que todo está correcto, haz clic aquí para registrar el gasto en el sistema.', side: 'top', align: 'center' } }
+        ]
+    };
+
+    // 3. Lógica del Botón
+    const btnAyuda = document.getElementById('btn-ayuda-tour');
+    const modalGastos = document.getElementById('modal_gastos');
+
+    if(btnAyuda) {
+        btnAyuda.addEventListener('click', () => {
+            if (modalGastos && window.getComputedStyle(modalGastos).display === 'block') {
+                modalGastos.scrollTo(0, 0); // Iniciamos el tour desde arriba
+                tourActivo = driver(configModal);
+                tourActivo.drive();
+            } else {
+                tourActivo = driver(configPrincipal);
+                tourActivo.drive();
+            }
+        });
+    }
+
+    // Limpieza de memoria si cierran el modal
+    if (modalGastos) {
+        modalGastos.addEventListener('hide.bs.modal', () => {
+            if (tourActivo) {
+                try { tourActivo.destroy(); } catch (e) {}
+            }
+        });
+    }
+});

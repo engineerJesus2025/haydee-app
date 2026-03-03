@@ -7,7 +7,7 @@
             </div>
             <div class="modal-body">
                 <p>Seleccione el período para el reporte.</p>
-                <form method="POST" action="?pagina=reportes_controlador.php&accion=generar_reporte_gastos_mensual" target="_blank" id="form_gastos_mensual">
+                <form method="POST" action="?pagina=reportes&accion=generar_reporte_gastos_mensual" target="_blank" id="form_gastos_mensual">
                     <div class="mb-3">
                         <label for="anio_reporte" class="form-label">Año:</label>
                         <select class="form-select" id="anio_reporte" name="anio" required>

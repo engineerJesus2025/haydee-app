@@ -280,11 +280,7 @@ async function validarEnvioHabitante(accion) {
     }
 
     // Validar edad (mayor de 18)
-    const fechaNac = new Date($('#fecha_nacimiento').val());
-    const hoy = new Date();
-    let edad = hoy.getFullYear() - fechaNac.getFullYear();
-    const mes = hoy.getMonth() - fechaNac.getMonth();
-    if (mes < 0 || (mes === 0 && hoy.getDate() < fechaNac.getDate())) edad--;
+    const edad = FormatoFechas.calcularEdad($('#fecha_nacimiento').val());
     if (edad < 18) {
         Utilidades.mensaje('error', 'Error', 'Debe ser mayor de 18 años.');
         return false;

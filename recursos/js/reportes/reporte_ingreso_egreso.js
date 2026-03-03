@@ -14,15 +14,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Mostrar/ocultar campos de fecha personalizada
     document.getElementById("filtro").addEventListener("change", e => {
         if (e.target.value === "Otro") {
-            document.getElementById("label_fechas").removeAttribute("hidden");
-            document.getElementById("div_fecha_inicio").removeAttribute("hidden");
-            document.getElementById("div_fecha_cierre").removeAttribute("hidden");
+            document.getElementById("contenedor_fechas_personalizadas").removeAttribute("hidden");
         } else {
             document.getElementById('fecha_inicio').value = '';
             document.getElementById('fecha_fin').value = '';
-            document.getElementById("label_fechas").setAttribute("hidden", "");
-            document.getElementById("div_fecha_inicio").setAttribute("hidden", "");
-            document.getElementById("div_fecha_cierre").setAttribute("hidden", "");
+            document.getElementById("contenedor_fechas_personalizadas").setAttribute("hidden", "");
         }
     });
 
@@ -42,23 +38,30 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        const hoy = new Date();
+        const anio = hoy.getFullYear();
+        const mes = hoy.getMonth() + 1;
+        const dia = hoy.getDate();
+
         // Calcular fechas según el filtro
         if (filtro === "mes") {
-            fecha_inicio = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
-            fecha_fin = new Date().toISOString().split('T')[0];
-        } else if (filtro === "trimestre") {
+            fecha_inicio = `${anio}-${String(mes).padStart(2, '0')}-01`;
+            fecha_fin = `${anio}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+        } else if (filtro === "trimestre" || filtro === "semestre") {
+            let tiempo_buscar = (filtro === "trimestre")?3:6;
+
             let fecha = new Date();
-            fecha.setMonth(fecha.getMonth() - 3);
-            fecha_inicio = fecha.toISOString().split('T')[0];
-            fecha_fin = new Date().toISOString().split('T')[0];
-        } else if (filtro === "semestre") {
-            let fecha = new Date();
-            fecha.setMonth(fecha.getMonth() - 6);
-            fecha_inicio = fecha.toISOString().split('T')[0];
-            fecha_fin = new Date().toISOString().split('T')[0];
-        } else if (filtro === "año") {
-            fecha_inicio = new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0];
-            fecha_fin = new Date().toISOString().split('T')[0];
+            // Calcular fecha hace 3 o 6 meses
+            fecha.setMonth(fecha.getMonth() - tiempo_buscar);
+
+            let anioInicio = fecha.getFullYear();
+            let mesInicio = fecha.getMonth() + 1;
+            let diaInicio = fecha.getDate();
+            fecha_inicio = `${anioInicio}-${String(mesInicio).padStart(2, '0')}-${String(diaInicio).padStart(2, '0')}`;
+            fecha_fin = `${anio}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+        }  else if (filtro === "año") {
+            fecha_inicio = `${anio}-01-01`;
+            fecha_fin = `${anio}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
         }
 
         // Mostrar descripción del período
@@ -77,39 +80,22 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append("filtro", filtro);
         formData.append("fecha_inicio", fecha_inicio);
         formData.append("fecha_fin", fecha_fin);
-        formData.append("operacion", "consultar_ingresos_egresos");
+        formData.append("operacion", "reporte_ingresos_egresos_completo");
 
         let resultado = await Utilidades.query(formData);
         if (!resultado.estatus) {
             Utilidades.mensaje('error', 'Atención', resultado.mensaje);
             return;
         }
-        if (resultado.datos.length === 0) {
+        if (resultado.datos.grafico.length === 0) {
             Utilidades.mensaje('warning', 'Atención', "No hay resultados para esos filtros de búsqueda");
             return;
         }
 
-        // Consultar estadísticas
-        formData = new FormData();
-        formData.append("balance", balance);
-        formData.append("metodo_pago", metodo_pago);
-        formData.append("tipo_gasto", tipo_gasto);
-        formData.append("filtro", filtro);
-        formData.append("fecha_inicio", fecha_inicio);
-        formData.append("fecha_fin", fecha_fin);
-        formData.append("operacion", "consultar_estadisticas_ingresos_egresos");
-
-        let resultado_estadisticas = await Utilidades.query(formData);
-        if (!resultado_estadisticas.estatus) {
-            Utilidades.mensaje('error', 'Atención', resultado_estadisticas.mensaje);
-            return;
-        }
-
         modal.show();
+        procesarDatosGrafico(resultado.datos.grafico, filtro);
+        actualizarEstadisticas(resultado.datos.estadisticas);
 
-        // Procesar datos para el gráfico
-        procesarDatosGrafico(resultado.datos, filtro);
-        actualizarEstadisticas(resultado_estadisticas.datos);
 
         let modo = document.getElementById('select_mostrar_datos').value;
         if (modo === "solo_texto") {
@@ -128,6 +114,9 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('canva').removeAttribute("hidden");
             document.getElementById('titulo_grafico').removeAttribute("hidden");
         }
+
+        //Desbloquear el boton
+        document.getElementById("boton_generar").removeAttribute("disabled");
     });
 
     // Eventos para los checkboxes que habilitan/deshabilitan selects
@@ -200,6 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('fecha_gastos_input').value = document.getElementById('fecha_gastos').innerHTML;
         
         document.getElementById('mostrar_datos_input').value = document.getElementById('select_mostrar_datos').value;
+        document.getElementById('tasa_dolar_input').value = tasa_dolar;
 
         modal.hide();
         e.target.closest("form").submit();
@@ -230,7 +220,6 @@ function procesarDatosGrafico(datos, filtro) {
     datos.forEach(registro => {
         let fecha_seleccionada;
         let [anio, mes, dia] = registro.fecha.split("-");
-        let fechaObj = new Date(anio, mes - 1, dia);
         let mesNombre = meses[mes - 1];
 
         if (registro.balance === "Ingreso") {
@@ -340,22 +329,42 @@ function ordenarFechas(fechas, filtro) {
     return fechas;
 }
 
+function limpiarContainerEstadistica() {
+    // Totales
+    document.getElementById('total_pagos').textContent = "0.00";
+    document.getElementById('total_gastos').textContent = "0.00";
+
+    // Métodos de pago (gastos)
+    document.getElementById('gastos_efectivo').textContent = "0.00";
+    document.getElementById('gastos_transferencia').textContent = "0.00";
+    document.getElementById('gastos_pago_movil').textContent = "0.00";
+
+    // Métodos de pago (pagos)
+    document.getElementById('pagos_efectivo').textContent = "0.00";
+    document.getElementById('pagos_transferencia').textContent = "0.00";
+    document.getElementById('pagos_pago_movil').textContent = "0.00";
+
+    // Limpiar contenedores de fechas
+    document.getElementById('fecha_pagos').innerHTML = '';
+    document.getElementById('fecha_gastos').innerHTML = '';
+}
+
 function actualizarEstadisticas(estadisticas) {
-    limpiarContainerEstadistica();
+    limpiarContainerEstadistica()
     estadisticas.forEach(item => {
         let elemento = document.getElementById(item.indicador);
         if (elemento) {
             let valor = parseFloat(item.valor) || 0;
-            elemento.textContent += valor.toFixed(2) + " Bs. / " + (valor / tasa_dolar).toFixed(2) + "$";
-            elemento.removeAttribute("no-asignado");
+            // Asignar directamente el número formateado
+            elemento.textContent = valor.toFixed(2);
         }
     });
 
-    // Mostrar desglose por fechas
+    // Mostrar desglose por fechas (igual que antes)
     let fragmentPagos = document.createDocumentFragment();
     for (let tiempo in fechas_asignadas_ingresos) {
         let p = document.createElement("p");
-        p.textContent = tiempo + ": " + fechas_asignadas_ingresos[tiempo] + " Bs. / " + (fechas_asignadas_ingresos[tiempo] / tasa_dolar).toFixed(2) + "$";
+        p.textContent = tiempo + ": " + fechas_asignadas_ingresos[tiempo].toFixed(2) + " Bs. / " + (fechas_asignadas_ingresos[tiempo] / tasa_dolar).toFixed(2) + "$";
         fragmentPagos.appendChild(p);
     }
     if (fragmentPagos.children.length === 0) {
@@ -366,45 +375,11 @@ function actualizarEstadisticas(estadisticas) {
     let fragmentGastos = document.createDocumentFragment();
     for (let tiempo in fechas_asignadas_egresos) {
         let p = document.createElement("p");
-        p.textContent = tiempo + ": " + fechas_asignadas_egresos[tiempo] + " Bs. / " + (fechas_asignadas_egresos[tiempo] / tasa_dolar).toFixed(2) + "$";
+        p.textContent = tiempo + ": " + fechas_asignadas_egresos[tiempo].toFixed(2) + " Bs. / " + (fechas_asignadas_egresos[tiempo] / tasa_dolar).toFixed(2) + "$";
         fragmentGastos.appendChild(p);
     }
     if (fragmentGastos.children.length === 0) {
         fragmentGastos.appendChild(document.createElement("p")).textContent = "No hay marcas de tiempo";
     }
     document.getElementById('fecha_gastos').appendChild(fragmentGastos);
-
-    // Completar elementos que no se actualizaron
-    document.querySelectorAll("[no-asignado]").forEach(el => {
-        el.textContent += "0 Bs.";
-    });
-}
-
-function limpiarContainerEstadistica() {
-    document.getElementById('total_pagos').textContent = "Total de Pagos realizados: ";
-    document.getElementById('total_pagos').setAttribute("no-asignado", "");
-
-    document.getElementById('total_gastos').textContent = "Total de Gastos Realizados: ";
-    document.getElementById('total_gastos').setAttribute("no-asignado", "");
-
-    document.getElementById('gastos_efectivo').textContent = "Gastos por Efectivo: ";
-    document.getElementById('gastos_efectivo').setAttribute("no-asignado", "");
-
-    document.getElementById('gastos_transferencia').textContent = "Gastos por Transferencia: ";
-    document.getElementById('gastos_transferencia').setAttribute("no-asignado", "");
-
-    document.getElementById('gastos_pago_movil').textContent = "Gastos por Pago Movil: ";
-    document.getElementById('gastos_pago_movil').setAttribute("no-asignado", "");
-
-    document.getElementById('pagos_efectivo').textContent = "Pagos por Efectivo: ";
-    document.getElementById('pagos_efectivo').setAttribute("no-asignado", "");
-
-    document.getElementById('pagos_transferencia').textContent = "Pagos por Transferencia: ";
-    document.getElementById('pagos_transferencia').setAttribute("no-asignado", "");
-
-    document.getElementById('pagos_pago_movil').textContent = "Pagos por Pago Movil: ";
-    document.getElementById('pagos_pago_movil').setAttribute("no-asignado", "");
-
-    document.getElementById('fecha_pagos').textContent = null;
-    document.getElementById('fecha_gastos').textContent = null;
 }

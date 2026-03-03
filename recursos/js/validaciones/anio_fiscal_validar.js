@@ -16,9 +16,9 @@ $(document).ready(function() {
     // Auto-calcular fecha de cierre al cambiar fecha de inicio
     $('#fecha_inicio').on('change', function() {
         if (Validaciones.campo(this, /^\d{4}-\d{2}-\d{2}$/, '')) {
-            const fecha = new Date(this.value);
-            fecha.setFullYear(fecha.getFullYear() + 1);
-            $('#fecha_cierre').val(fecha.toISOString().split('T')[0]);
+            const [anio, mes, dia] = this.value.split('-');
+            const nuevoAnio = parseInt(anio) + 1;
+            $('#fecha_cierre').val(`${nuevoAnio}-${mes}-${dia}`);
             Validaciones.limpiar($('#fecha_cierre')[0]);
         }
     });
@@ -89,8 +89,8 @@ async function validarRangoFechas() {
         Utilidades.mensaje('error', 'Error', 'La fecha de inicio debe ser anterior a la de cierre.');
         return false;
     }
-
-    const diferencia = Math.round((fechaCierre - fechaInicio) / (1000 * 60 * 60 * 24));
+    
+    const diferencia = FormatoFechas.diferenciaEnDias(inicio.value, cierre.value);
     if (diferencia < 364 || diferencia > 366) {
         Validaciones.mostrarError(inicio, `El período debe ser de aproximadamente un año (364-366 días). Días actuales: ${diferencia}`);
         Validaciones.mostrarError(cierre, `El período debe ser de aproximadamente un año (364-366 días). Días actuales: ${diferencia}`);

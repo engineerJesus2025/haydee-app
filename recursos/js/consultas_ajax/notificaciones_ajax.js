@@ -15,7 +15,7 @@ async function consultar() {
         { data: 'descripcion' },
         {
             data: 'fecha',
-            render: fecha => FormatoFechas.formatoFechaHora(fecha)
+            render: fecha => FormatoFechas.formatoUsuario(fecha)
         },
         {
             data: 'leido',

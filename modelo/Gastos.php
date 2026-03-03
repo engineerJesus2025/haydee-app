@@ -88,7 +88,7 @@ class Gastos extends Conexion
             'opcional' => true
         ],
         'referencia' => [
-            'regex' => '/^[a-zA-Z0-9]{4,20}$/',
+            'regex' => '/^[a-zA-Z0-9-]{4,20}$/',
             'opcional' => true,
             'requerido_si' => ['metodo_pago' => ['Transferencia', 'Pago Movil']]
         ],
@@ -742,289 +742,193 @@ class Gastos extends Conexion
     // METODOS PARA REPORTES
     // ====================================================================    
 
-    /**
-     * Consulta ingresos y egresos con filtros.
-     * @param array $filtros Asociativo con claves: balance, metodo_pago, tipo_gasto, filtro, fecha_inicio, fecha_fin
-     * @return array ['estatus' => bool, 'datos' => array, 'mensaje' => string]
-     */
-   private function _consultar_ingresos_egresos()
+    private function _reporte_ingresos_egresos_completo()
 {
     $f = $this->filtros_reporte;
     $balance = $f['balance'] ?? 'todos';
-    $metodo_pago = $f['metodo_pago'] ?? 'todos';
-    $tipo_gasto = $f['tipo_gasto'] ?? 'todos';
-    $filtro = $f['filtro'] ?? '';
+    $metodo_pago = strtolower($f['metodo_pago'] ?? 'todos');
+    $tipo_gasto = strtolower($f['tipo_gasto'] ?? 'todos');
     $fecha_inicio = $f['fecha_inicio'] ?? '';
     $fecha_fin = $f['fecha_fin'] ?? '';
 
-    // Parámetros para egresos e ingresos (los separamos para evitar conflictos)
+    // ============================================================
+    // 1. Construir condiciones y parámetros BASE
+    // ============================================================
+    $condicionesEgresos = ["g.activo = 1"];
+    $condicionesIngresos = ["p.activo = 1"];
     $paramsEgresos = [];
     $paramsIngresos = [];
 
-    // Condiciones comunes (fecha y método de pago)
-    $whereEgresos = [];
-    $whereIngresos = [];
-
     // Filtro por fecha
-    if ($filtro === 'Otro' && $fecha_inicio && $fecha_fin) {
-        $whereEgresos[] = "dg.fecha BETWEEN :fecha_ini AND :fecha_fin";
-        $whereIngresos[] = "dp.fecha BETWEEN :fecha_ini AND :fecha_fin";
-        $paramsEgresos[':fecha_ini'] = $fecha_inicio;
-        $paramsEgresos[':fecha_fin'] = $fecha_fin;
-        $paramsIngresos[':fecha_ini'] = $fecha_inicio;
-        $paramsIngresos[':fecha_fin'] = $fecha_fin;
-    } elseif ($filtro === 'mes') {
-        $whereEgresos[] = "dg.fecha >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)";
-        $whereIngresos[] = "dp.fecha >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)";
-    } elseif ($filtro === 'trimestre') {
-        $whereEgresos[] = "dg.fecha >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)";
-        $whereIngresos[] = "dp.fecha >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)";
-    } elseif ($filtro === 'semestre') {
-        $whereEgresos[] = "dg.fecha >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)";
-        $whereIngresos[] = "dp.fecha >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)";
-    } elseif ($filtro === 'año') {
-        $whereEgresos[] = "dg.fecha >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)";
-        $whereIngresos[] = "dp.fecha >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)";
+    if (!empty($fecha_inicio) && !empty($fecha_fin)) {
+        $condicionesEgresos[] = "dg.fecha BETWEEN :fecha_ini_egreso AND :fecha_fin_egreso";
+        $condicionesIngresos[] = "dp.fecha BETWEEN :fecha_ini_ingreso AND :fecha_fin_ingreso";
+        $paramsEgresos[':fecha_ini_egreso'] = $fecha_inicio;
+        $paramsEgresos[':fecha_fin_egreso'] = $fecha_fin;
+        $paramsIngresos[':fecha_ini_ingreso'] = $fecha_inicio;
+        $paramsIngresos[':fecha_fin_ingreso'] = $fecha_fin;
     }
 
-    // Filtro por método de pago
-    if ($metodo_pago !== 'Todos') {
-        $whereEgresos[] = "dg.metodo_pago = :metodo_pago_egreso";
-        $whereIngresos[] = "dp.tipo_pago = :metodo_pago_ingreso";
+    // Filtro por método de pago (case-insensitive)
+    if ($metodo_pago !== 'todos') {
+        $condicionesEgresos[] = "LOWER(dg.metodo_pago) = LOWER(:metodo_pago_egreso)";
+        $condicionesIngresos[] = "LOWER(dp.tipo_pago) = LOWER(:metodo_pago_ingreso)";
         $paramsEgresos[':metodo_pago_egreso'] = $metodo_pago;
         $paramsIngresos[':metodo_pago_ingreso'] = $metodo_pago;
     }
 
-    // Filtro por tipo de gasto (solo para egresos)
-    if ($tipo_gasto !== 'Todos' && $balance !== 'Ingresos') {
-        $whereEgresos[] = "tg.id_tipo_gasto = :tipo_gasto";
+    // Filtro por tipo de gasto (basado en g.clasificacion, solo para egresos)
+    if ($tipo_gasto !== 'todos' && $balance !== 'Ingresos') {
+        // Los valores esperados son 'fijo' o 'variable'
+        $condicionesEgresos[] = "LOWER(g.clasificacion) = LOWER(:tipo_gasto)";
         $paramsEgresos[':tipo_gasto'] = $tipo_gasto;
     }
 
-    // Construir consultas base
-    $sqlEgresos = "SELECT 
-                    'Egreso' as balance,
-                    dg.fecha,
-                    dg.monto,
-                    dg.metodo_pago as metodo_pago,
-                    g.descripcion_gasto as concepto,
-                    tg.nombre_tipo_gasto as tipo
-                   FROM detalles_gastos dg
-                   INNER JOIN gastos g ON dg.gasto_id = g.id_gasto
-                   LEFT JOIN tipo_gasto tg ON g.tipo_gasto_id = tg.id_tipo_gasto
-                   WHERE g.activo = 1";
+    // Convertir arrays de condiciones a strings
+    $whereEgresos = !empty($condicionesEgresos) ? " WHERE " . implode(" AND ", $condicionesEgresos) : "";
+    $whereIngresos = !empty($condicionesIngresos) ? " WHERE " . implode(" AND ", $condicionesIngresos) : "";
 
-    $sqlIngresos = "SELECT 
-                    'Ingreso' as balance,
-                    dp.fecha,
-                    dp.monto,
-                    dp.tipo_pago as metodo_pago,
-                    CONCAT('Pago de mensualidad - Apto ', a.nro_apartamento) as concepto,
-                    NULL as tipo
-                   FROM detalles_pagos dp
-                   INNER JOIN pagos_mensualidad pm ON dp.id_detalle_pago = pm.detalle_pago_id
-                   INNER JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
-                   INNER JOIN apartamentos a ON m.apartamento_id = a.id_apartamento
-                   INNER JOIN pagos p ON dp.pago_id = p.id_pago
-                   WHERE p.activo = 1";
+    // ============================================================
+    // 2. Consulta para el GRÁFICO (detalle)
+    // ============================================================
+    $sqlEgresosDetalle = "SELECT 
+                            'Egreso' as balance,
+                            dg.fecha,
+                            dg.monto,
+                            dg.metodo_pago,
+                            g.descripcion_gasto as concepto,
+                            tg.nombre_tipo_gasto as tipo
+                          FROM detalles_gastos dg
+                          INNER JOIN gastos g ON dg.gasto_id = g.id_gasto
+                          LEFT JOIN tipo_gasto tg ON g.tipo_gasto_id = tg.id_tipo_gasto
+                          $whereEgresos";
 
-    // Aplicar condiciones WHERE a cada consulta
-    if (!empty($whereEgresos)) {
-        $sqlEgresos .= " AND " . implode(' AND ', $whereEgresos);
-    }
-    if (!empty($whereIngresos)) {
-        $sqlIngresos .= " AND " . implode(' AND ', $whereIngresos);
-    }
+    $sqlIngresosDetalle = "SELECT 
+                            'Ingreso' as balance,
+                            dp.fecha,
+                            dp.monto,
+                            dp.tipo_pago as metodo_pago,
+                            CONCAT('Pago de mensualidad - Apto ', a.nro_apartamento) as concepto,
+                            NULL as tipo
+                           FROM detalles_pagos dp
+                           INNER JOIN pagos_mensualidad pm ON dp.id_detalle_pago = pm.detalle_pago_id
+                           INNER JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
+                           INNER JOIN apartamentos a ON m.apartamento_id = a.id_apartamento
+                           INNER JOIN pagos p ON dp.pago_id = p.id_pago
+                           $whereIngresos";
 
-    // Determinar la consulta final y los parámetros
+    // Elegir consulta según balance
     if ($balance === 'Ingresos') {
-        $sql = $sqlIngresos;
-        $params = $paramsIngresos;
+        $sqlGrafico = $sqlIngresosDetalle;
+        $paramsGrafico = $paramsIngresos;
     } elseif ($balance === 'Egresos') {
-        $sql = $sqlEgresos;
-        $params = $paramsEgresos;
+        $sqlGrafico = $sqlEgresosDetalle;
+        $paramsGrafico = $paramsEgresos;
     } else {
-        $sql = "($sqlEgresos) UNION ALL ($sqlIngresos) ORDER BY fecha DESC";
-        $params = array_merge($paramsEgresos, $paramsIngresos);
+        $sqlGrafico = "($sqlEgresosDetalle) UNION ALL ($sqlIngresosDetalle) ORDER BY fecha DESC";
+        $paramsGrafico = array_merge($paramsEgresos, $paramsIngresos);
     }
 
     try {
-        $stmt = $this->get_conex('negocio')->prepare($sql);
-        $stmt->execute($params);
-        $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        return ['estatus' => true, 'datos' => $datos, 'sql'=>$sql, 'p'=>$params];
+        $con = $this->get_conex('negocio');
+        $stmt = $con->prepare($sqlGrafico);
+        $stmt->execute($paramsGrafico);
+        $datosGrafico = $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
-        error_log("Error en _consultar_ingresos_egresos: " . $e->getMessage() . " SQL: " . $sql);
-        return ['estatus' => false, 'mensaje' => 'Error al consultar ingresos/egresos: ' . $e->getMessage()];
+        error_log("Error en gráfico: " . $e->getMessage());
+        return ['estatus' => false, 'mensaje' => 'Error al obtener datos del gráfico'];
     }
-}
 
-    /**
-     * Estadísticas de ingresos y egresos según filtros.
-     * @param array $filtros Mismos parámetros que _consultar_ingresos_egresos
-     * @return array ['estatus' => bool, 'datos' => array, 'mensaje' => string]
-     */
-    private function _estadisticas_ingresos_egresos()
-{
-    $f = $this->filtros_reporte;
-    $balance = $f['balance'] ?? 'todos';
-    $metodo_pago = $f['metodo_pago'] ?? 'todos';
-    $tipo_gasto = $f['tipo_gasto'] ?? 'todos';
-    $filtro = $f['filtro'] ?? '';
-    $fecha_inicio = $f['fecha_inicio'] ?? '';
-    $fecha_fin = $f['fecha_fin'] ?? '';
+    // ============================================================
+    // 3. Consultas para ESTADÍSTICAS (agregadas)
+    // ============================================================
+    $resultadosEstadisticas = [];
 
-    $resultados = [];
-
-    // --- EG RESOS (gastos) ---
+    // --- Egresos ---
     if ($balance !== 'Ingresos') {
-        // Construir condiciones para egresos
-        $whereEgresos = ["g.activo = 1"];
-        $paramsEgresos = [];
-
-        // Filtro por método de pago (en detalles_gastos)
-        if ($metodo_pago !== 'todos') {
-            $whereEgresos[] = "dg.metodo_pago = :metodo_pago_egreso";
-            $paramsEgresos[':metodo_pago_egreso'] = $metodo_pago;
-        }
-
-        // Filtro por tipo de gasto (requiere JOIN con tipo_gasto)
-        if ($tipo_gasto !== 'todos') {
-            $whereEgresos[] = "tg.id_tipo_gasto = :tipo_gasto";
-            $paramsEgresos[':tipo_gasto'] = $tipo_gasto;
-            // Asegurar JOIN con tipo_gasto en las consultas
-            $joinTipo = "LEFT JOIN tipo_gasto tg ON g.tipo_gasto_id = tg.id_tipo_gasto";
-        } else {
-            $joinTipo = ""; // No necesario
-        }
-
-        // Filtro por fecha
-        if ($filtro === 'Otro' && $fecha_inicio && $fecha_fin) {
-            $whereEgresos[] = "dg.fecha BETWEEN :fecha_ini_egreso AND :fecha_fin_egreso";
-            $paramsEgresos[':fecha_ini_egreso'] = $fecha_inicio;
-            $paramsEgresos[':fecha_fin_egreso'] = $fecha_fin;
-        } elseif ($filtro === 'mes') {
-            $whereEgresos[] = "dg.fecha >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)";
-        } elseif ($filtro === 'trimestre') {
-            $whereEgresos[] = "dg.fecha >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)";
-        } elseif ($filtro === 'semestre') {
-            $whereEgresos[] = "dg.fecha >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)";
-        } elseif ($filtro === 'año') {
-            $whereEgresos[] = "dg.fecha >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)";
-        }
-
-        $whereClauseEgresos = " WHERE " . implode(" AND ", $whereEgresos);
-
-        // Consulta total de egresos
+        // Total de egresos
         $sqlEgresosTotal = "SELECT 
                                 'total_gastos' as indicador,
                                 SUM(dg.monto) as valor
                              FROM detalles_gastos dg
                              INNER JOIN gastos g ON dg.gasto_id = g.id_gasto
-                             $joinTipo
-                             $whereClauseEgresos";
+                             LEFT JOIN tipo_gasto tg ON g.tipo_gasto_id = tg.id_tipo_gasto
+                             $whereEgresos";
 
-        // Consulta egresos por método de pago
+        // Egresos por método de pago
         $sqlEgresosPorMetodo = "SELECT 
                                     CONCAT('gastos_', LOWER(REPLACE(dg.metodo_pago, ' ', '_'))) as indicador,
                                     SUM(dg.monto) as valor
                                  FROM detalles_gastos dg
                                  INNER JOIN gastos g ON dg.gasto_id = g.id_gasto
-                                 $joinTipo
-                                 $whereClauseEgresos
+                                 LEFT JOIN tipo_gasto tg ON g.tipo_gasto_id = tg.id_tipo_gasto
+                                 $whereEgresos
                                  GROUP BY dg.metodo_pago";
 
         try {
-            $con = $this->get_conex('negocio');
-
-            // Total
             $stmt = $con->prepare($sqlEgresosTotal);
             $stmt->execute($paramsEgresos);
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($row && $row['valor'] !== null) {
-                $resultados[] = $row;
+                $resultadosEstadisticas[] = $row;
             }
 
-            // Por método
             $stmt = $con->prepare($sqlEgresosPorMetodo);
             $stmt->execute($paramsEgresos);
             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                $resultados[] = $row;
+                $resultadosEstadisticas[] = $row;
             }
         } catch (PDOException $e) {
             error_log("Error en estadísticas egresos: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al obtener estadísticas de egresos: ' . $e->getMessage()];
+            return ['estatus' => false, 'mensaje' => 'Error al obtener estadísticas de egresos'];
         }
     }
 
-    // --- INGRESOS (pagos) ---
+    // --- Ingresos ---
     if ($balance !== 'Egresos') {
-        // Construir condiciones para ingresos
-        $whereIngresos = ["p.activo = 1"];
-        $paramsIngresos = [];
-
-        // Filtro por método de pago (en detalles_pagos se llama tipo_pago)
-        if ($metodo_pago !== 'todos') {
-            $whereIngresos[] = "dp.tipo_pago = :metodo_pago_ingreso";
-            $paramsIngresos[':metodo_pago_ingreso'] = $metodo_pago;
-        }
-
-        // Filtro por fecha
-        if ($filtro === 'Otro' && $fecha_inicio && $fecha_fin) {
-            $whereIngresos[] = "dp.fecha BETWEEN :fecha_ini_ingreso AND :fecha_fin_ingreso";
-            $paramsIngresos[':fecha_ini_ingreso'] = $fecha_inicio;
-            $paramsIngresos[':fecha_fin_ingreso'] = $fecha_fin;
-        } elseif ($filtro === 'mes') {
-            $whereIngresos[] = "dp.fecha >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)";
-        } elseif ($filtro === 'trimestre') {
-            $whereIngresos[] = "dp.fecha >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)";
-        } elseif ($filtro === 'semestre') {
-            $whereIngresos[] = "dp.fecha >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)";
-        } elseif ($filtro === 'año') {
-            $whereIngresos[] = "dp.fecha >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)";
-        }
-
-        $whereClauseIngresos = " WHERE " . implode(" AND ", $whereIngresos);
-
-        // Consulta total de ingresos
+        // Total de ingresos
         $sqlIngresosTotal = "SELECT 
                                 'total_pagos' as indicador,
                                 SUM(dp.monto) as valor
                              FROM detalles_pagos dp
                              INNER JOIN pagos p ON dp.pago_id = p.id_pago
-                             $whereClauseIngresos";
+                             $whereIngresos";
 
-        // Consulta ingresos por método de pago
+        // Ingresos por método de pago
         $sqlIngresosPorMetodo = "SELECT 
                                     CONCAT('pagos_', LOWER(REPLACE(dp.tipo_pago, ' ', '_'))) as indicador,
                                     SUM(dp.monto) as valor
                                  FROM detalles_pagos dp
                                  INNER JOIN pagos p ON dp.pago_id = p.id_pago
-                                 $whereClauseIngresos
+                                 $whereIngresos
                                  GROUP BY dp.tipo_pago";
 
         try {
-            $con = $this->get_conex('negocio');
-
             $stmt = $con->prepare($sqlIngresosTotal);
             $stmt->execute($paramsIngresos);
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($row && $row['valor'] !== null) {
-                $resultados[] = $row;
+                $resultadosEstadisticas[] = $row;
             }
 
             $stmt = $con->prepare($sqlIngresosPorMetodo);
             $stmt->execute($paramsIngresos);
             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                $resultados[] = $row;
+                $resultadosEstadisticas[] = $row;
             }
         } catch (PDOException $e) {
             error_log("Error en estadísticas ingresos: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al obtener estadísticas de ingresos: ' . $e->getMessage()];
+            return ['estatus' => false, 'mensaje' => 'Error al obtener estadísticas de ingresos'];
         }
     }
 
-    return ['estatus' => true, 'datos' => $resultados];
+    return [
+        'estatus' => true,
+        'datos' => [
+            'grafico' => $datosGrafico,
+            'estadisticas' => $resultadosEstadisticas
+        ]
+    ];
 }
 
     /**

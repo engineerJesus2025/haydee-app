@@ -88,6 +88,7 @@
         require_once "vista/componentes/footer.php";
         require_once "vista/componentes/script.php";
         require_once 'vista/componentes/modal_carga.php';
+        require_once 'vista/componentes/boton_ayuda.php';
     ?>
     
     <!-- Modales -->

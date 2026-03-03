@@ -137,17 +137,6 @@ const Utilidades = {
     },
 
     /**
-     * Formatea una fecha YYYY-MM-DD a DD-MM-YYYY.
-     * @param {string} fecha 
-     * @returns {string}
-     */
-    formatearFecha(fecha) {
-        if (!fecha) return "N/A";
-        const partes = fecha.split("-");
-        return (partes.length === 3) ? `${partes[2]}-${partes[1]}-${partes[0]}` : fecha;
-    },
-
-    /**
      * Reemplaza un elemento del DOM por otro.
      * @param {string} id - ID del elemento a reemplazar.
      * @param {HTMLElement} nuevoElemento - Nuevo nodo DOM.

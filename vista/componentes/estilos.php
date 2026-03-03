@@ -11,3 +11,4 @@
 <link rel="stylesheet" type="text/css" href="/haydee-app/recursos/css/estilos_generales.css">
 <link rel="stylesheet" type="text/css" href="/haydee-app/recursos/css/notificaciones.css">
 <link rel="stylesheet" type="text/css" href="/haydee-app/recursos/css/estilos_modal_carga.css">
+<link rel="stylesheet" href="recursos/css/driver.css"/>

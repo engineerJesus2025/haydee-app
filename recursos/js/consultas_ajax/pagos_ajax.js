@@ -2,7 +2,7 @@
 // VARIABLES GLOBALES
 // ============================================================
 let tabla_pagos;
-let modal = new bootstrap.Modal(document.getElementById("modal_pagos"));
+let modal = new bootstrap.Modal(document.getElementById("modal_pagos"), { focus: false });
 let modalVistaPrevia = new bootstrap.Modal(document.getElementById("modal_vista_previa"));
 let formulario_usar = document.getElementById("form_pagos");
 let boton_formulario = document.getElementById("boton_formulario");
@@ -197,7 +197,7 @@ async function cargarMensualidades() {
 // ============================================================
 async function consultar() {
     const columnas = [
-        { data: 'ultima_fecha', render: data => FormatoFechas.formatear(data, 'DD-MM-YYYY') },
+        { data: 'ultima_fecha', render: data => FormatoFechas.formatoUsuario(data) },
         { 
             data: null,
             render: row => `${row.monto_total} Bs.` // o según método de pago
@@ -205,9 +205,10 @@ async function consultar() {
         { 
             data: null,
             render: data => {
-                let fecha_part = data.periodos.split('/');
-                return FormatoFechas.nombreMes(new Date(`${fecha_part[0]}/01/${fecha_part[1]}`).getMonth() + 1) + ' del ' + new Date(`${fecha_part[0]}/01/${fecha_part[1]}`).getFullYear()
-            } 
+                if (!data.periodos) return "N/A";
+                let [mes, anio] = data.periodos.split('/');
+                return `${FormatoFechas.nombreMes(parseInt(mes))} del ${anio}`;
+            }
         },        
         { data: "estado", render: data => obtenerBadgeEstado(data) },
         { data: "apartamento", render: data => `Nro: ${data || 'N/A'}` },
@@ -481,8 +482,8 @@ async function mostrarVistaPrevia(id) {
     if (!respuesta.estatus) return;
 
     let data = respuesta.datos;
-
-    document.getElementById("vista_fecha").textContent = FormatoFechas.formatear(data.detalles[0]?.fecha || '', 'DD-MM-YYYY');
+    console.log(data)
+    document.getElementById("vista_fecha").textContent = FormatoFechas.formatoUsuario(data.detalles[0]?.fecha || '');
     document.getElementById("vista_monto_mensualidad").textContent = `${data.monto_mensualidad} Bs`;
     document.getElementById("vista_estado").innerHTML = obtenerBadgeEstado(data.estado);
     document.getElementById("vista_apartamento").textContent = data.nro_apartamento || 'N/A';
@@ -500,7 +501,7 @@ async function mostrarVistaPrevia(id) {
     data.detalles.forEach(det => {
         let tr = document.createElement("tr");
         tr.innerHTML = `
-            <td>${FormatoFechas.formatear(det.fecha, 'DD-MM-YYYY')}</td>
+            <td>${FormatoFechas.formatoUsuario(det.fecha)}</td>
             <td>${det.monto} Bs</td>
             <td>${det.monto_dolar} $</td>
             <td>${det.tipo_pago}</td>
@@ -528,8 +529,98 @@ async function mostrarVistaPrevia(id) {
     modalVistaPrevia.show();
 }
 
-// Vinculación del validador (Se ejecutará desde pagos_validar.js)
-async function validarEnvio(accion) {
-    // La validación real se centralizará
-    return true; 
-}
+// ============================================================
+// MÓDULO DE AYUDA (DRIVER.JS) - PAGOS
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+    const driver = window.driver.js.driver;
+    let tourActivo = null;
+
+    // Función clave para recalcular coordenadas cuando el modal hace scroll
+    const forzarRecalculo = () => {
+        window.dispatchEvent(new Event('resize'));
+    };
+
+    // 1. CONFIGURACIÓN DE LA VISTA PRINCIPAL
+    const configPrincipal = {
+        showProgress: true,
+        animate: true,
+        nextBtnText: 'Siguiente ➔',
+        prevBtnText: '⬅ Anterior',
+        doneBtnText: 'Entendido',
+        progressText: 'Paso {{current}} de {{total}}',
+        steps: [
+            { element: '.page-header', popover: { title: 'Módulo de Pagos', description: 'Bienvenido. Desde aquí puedes registrar, verificar y gestionar los pagos de las mensualidades del condominio.', side: "bottom", align: 'start' } },
+            { element: '[data-bs-target="#modal_pagos"]', popover: { title: 'Nuevo Pago', description: 'Haz clic aquí para abrir el formulario y reportar un nuevo pago de un apartamento.', side: "right", align: 'start' } },
+            { element: '#tabla_pagos_wrapper', popover: { title: 'Tabla de Registros', description: 'Aquí verás el historial de pagos. Usa los botones de acción para Ver detalles, Generar Recibo (PDF), Editar o Anular un pago.', side: "top", align: 'center' } }
+        ]
+    };
+
+    // 2. CONFIGURACIÓN DEL MODAL DE PAGOS
+    const configModal = {
+        showProgress: true,
+        animate: true,
+        smoothScroll: false, // Apagado para usar nuestro scroll matemático
+        allowKeyboardControl: false, // Para que Bootstrap no pelee por el enfoque
+        nextBtnText: 'Siguiente ➔',
+        prevBtnText: '⬅ Anterior',
+        doneBtnText: 'Entendido',
+        progressText: 'Paso {{current}} de {{total}}',
+        
+        onHighlightStarted: (element) => {
+            if (element) {
+                // Scroll instantáneo y recálculo de coordenadas
+                element.scrollIntoView({ behavior: 'auto', block: 'center' });
+                setTimeout(forzarRecalculo, 50);
+            }
+        },
+        onPopoverRender: () => {
+            const modal = document.getElementById('modal_pagos');
+            if (modal) modal.addEventListener('scroll', forzarRecalculo);
+        },
+        onDestroyed: () => {
+            const modal = document.getElementById('modal_pagos');
+            if (modal) modal.removeEventListener('scroll', forzarRecalculo);
+        },
+
+        // Recorrido adaptado a los elementos de pagos_modal.php
+        steps: [
+            { element: '#apartamento_id', popover: { title: 'Apartamento', description: 'Primero, selecciona el apartamento que está realizando el pago.', side: 'bottom', align: 'start' } },
+            { element: '#mensualidad_id', popover: { title: 'Mensualidad a Pagar', description: 'Al elegir el apartamento, el sistema buscará sus meses pendientes. Selecciona cuál se está pagando.', side: 'bottom', align: 'start' } },
+            { element: '#monto_mensualidad', popover: { title: 'Deuda Total', description: 'Aquí aparecerá reflejada automáticamente la deuda total (con recargos si aplica) de esa mensualidad.', side: 'bottom', align: 'start' } },
+            { element: '.detalle-pago', popover: { title: 'Detalles de la Transacción', description: 'En este bloque cargarás la información exacta de cómo y cuándo se hizo el pago.', side: 'top', align: 'start' } },
+            { element: '.tipo_pago_admin', popover: { title: 'Método Dinámico', description: 'Si escoges "Transferencia" o "Pago Móvil", se desplegarán abajo los campos para registrar el Banco, Referencia y Capture.', side: 'top', align: 'start' } },
+            { element: '.tasa_dolar', popover: { title: 'Tasa BCV y Conversión', description: 'El sistema usa la Tasa BCV guardada. Al colocar el Monto en Bs, se calcularán los dólares automáticamente.', side: 'top', align: 'start' } },
+            { element: '#agregar_detalle', popover: { title: 'Pagos Mixtos', description: '¿Pagó una parte en divisas y otra en pago móvil? Usa este botón para añadir varios métodos de pago a una misma mensualidad.', side: 'top', align: 'center' } },
+            { element: '#observacion', popover: { title: 'Observación', description: 'Puedes añadir una nota aclaratoria sobre este pago si lo consideras necesario.', side: 'top', align: 'start' } },
+            { element: '#boton_formulario', popover: { title: 'Procesar Pago', description: 'Verifica que todo esté correcto y haz clic aquí para registrar el pago en el sistema.', side: 'top', align: 'center' } }
+        ]
+    };
+
+    // 3. LÓGICA DEL BOTÓN FLOTANTE INTELIGENTE
+    const btnAyuda = document.getElementById('btn-ayuda-tour');
+    const modalPagos = document.getElementById('modal_pagos');
+
+    if(btnAyuda) {
+        btnAyuda.addEventListener('click', () => {
+            // Verificamos si el modal de pagos está abierto en pantalla
+            if (modalPagos && window.getComputedStyle(modalPagos).display === 'block') {
+                modalPagos.scrollTo(0, 0); // Iniciamos el tour desde arriba
+                tourActivo = driver(configModal);
+                tourActivo.drive();
+            } else {
+                tourActivo = driver(configPrincipal);
+                tourActivo.drive();
+            }
+        });
+    }
+
+    // Cancelar el tour si el usuario cierra la ventana de golpe
+    if (modalPagos) {
+        modalPagos.addEventListener('hide.bs.modal', () => {
+            if (tourActivo) {
+                try { tourActivo.destroy(); } catch (e) {}
+            }
+        });
+    }
+});

@@ -35,7 +35,7 @@ function mostrarDetalle(rowData) {
     // Información general
     document.getElementById('detalle_usuario').textContent = rowData.nombre_usuario;
     document.getElementById('detalle_rol').textContent = rowData.nombre_rol;
-    document.getElementById('detalle_fecha').textContent = FormatoFechas.formatear(rowData.fecha_hora, 'DD-MM-YYYY hh:mm:ss A');
+    document.getElementById('detalle_fecha').textContent = FormatoFechas.formatear(rowData.fecha_hora, 'DD/MM/YYYY hh:mm:ss A');
     document.getElementById('detalle_modulo').textContent = rowData.nombre_modulo.split('_').join(' ');
     document.getElementById('detalle_accion').textContent = rowData.accion;
     document.getElementById('detalle_accion').setAttribute('class',`badge ${definirColorAccion(rowData.accion)}`);
@@ -136,7 +136,7 @@ function consultar() {
         { data: "nombre_usuario" },
         {
             data: "fecha_hora",
-            render: (data) => FormatoFechas.formatear(data, 'DD-MM-YYYY')
+            render: (data) => FormatoFechas.formatoUsuario(data)
         },
         {
             data: "nombre_modulo",

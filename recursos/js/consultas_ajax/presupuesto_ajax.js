@@ -10,7 +10,7 @@
 let permiso_eliminar = document.querySelector("#permiso_eliminar")?.value;
 let permiso_modificar = document.querySelector("#permiso_modificar")?.value;
 let boton_formulario = document.querySelector("#boton_formulario");
-let modal = new bootstrap.Modal("#modal_presupuesto");
+let modal = new bootstrap.Modal(document.getElementById("modal_presupuesto"), { focus: false });
 let formulario_usar = document.querySelector("#form_presupuesto");
 let select_mes = document.querySelector("#fecha");
 let detalles_presupuestos_base;
@@ -586,9 +586,8 @@ async function consultar() {
         {
             data: null,
             render: row => {
-            	let fecha_arreglo = row.fecha.split('-');
-                let fecha = new Date(`${fecha_arreglo[1]}-${fecha_arreglo[2]}-${fecha_arreglo[1]}`);
-                return fecha.toLocaleString("es-ES", { month: 'long', year: 'numeric' }).toUpperCase();
+                let [anio, mes] = row.fecha.split('-');
+                return `${FormatoFechas.nombreMes(parseInt(mes))} del ${anio}`.toUpperCase();
             }
         },
         {
@@ -640,8 +639,9 @@ async function consultarInformacionFormulario() {
     meses.forEach(m => {
         let option = document.createElement("option");
         option.value = `${m.anio_faltante}-${m.mes_faltante}-01`;
-        let fecha = new Date(m.anio_faltante, m.mes_faltante - 1, 1);
-        option.textContent = fecha.toLocaleString("es-ES", { month: 'long', year: 'numeric' }).toUpperCase();
+
+        option.textContent = `${FormatoFechas.nombreMes(m.mes_faltante)} del ${m.anio_faltante}`.toUpperCase();
+
         fragment.appendChild(option);
     });
     select_mes.appendChild(fragment);
@@ -854,9 +854,8 @@ async function modificar_formulario(e) {
     let presupuesto = respuesta.datos;
 
     // Mostrar la fecha en el select (puede que no esté en la lista, así que la creamos)
-    let fechaObj = new Date(presupuesto.fecha + 'T00:00:00');
-    let anio = fechaObj.getFullYear();
-    let mes = fechaObj.getMonth() + 1;
+    let [anio, mes] = presupuesto.fecha.split('-');
+    mes = parseInt(mes);
     let fechaStr = `${anio}-${mes.toString().padStart(2, '0')}-01`;
 
     let option = document.createElement("option");
@@ -978,3 +977,82 @@ async function eliminar(id) {
     await consultarInformacionFormulario();
     Utilidades.mensaje('success', 'Éxito', respuesta.mensaje);
 }
+
+// ============================================================
+// MÓDULO DE AYUDA (DRIVER.JS) - PRESUPUESTO MENSUAL
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+    const driver = window.driver.js.driver;
+    let tourActivo = null;
+
+    // Micro-retraso para asegurar que la burbuja se ancle bien
+    const alinearBurbuja = () => {
+        setTimeout(() => {
+            window.dispatchEvent(new Event('resize'));
+        }, 10);
+    };
+
+    // Configuración base para todos los tours
+    const configBase = {
+        showProgress: true,
+        animate: true,
+        smoothScroll: false, 
+        allowKeyboardControl: false,
+        nextBtnText: 'Siguiente ➔',
+        prevBtnText: '⬅ Anterior',
+        doneBtnText: 'Entendido',
+        progressText: 'Paso {{current}} de {{total}}',
+        onHighlightStarted: (element) => {
+            if (element) {
+                element.scrollIntoView({ behavior: 'instant', block: 'center' });
+                alinearBurbuja();
+            }
+        }
+    };
+
+    // 1. TOUR VISTA PRINCIPAL
+    const stepsPrincipal = [
+        { element: '.page-header', popover: { title: 'Gestión de Presupuestos', description: 'Aquí planificas los gastos del mes siguiente para calcular cuánto deberá pagar cada apartamento.', side: "bottom", align: 'center' } },
+        // Usamos una lógica segura para encontrar el botón, incluso si está oculto por validaciones PHP
+        { element: document.querySelector('#boton_registrar') || '.card', popover: { title: 'Nuevo Presupuesto', description: 'Si hay meses pendientes por planificar, usa este botón para iniciar la carga de gastos estimados.', side: "bottom", align: 'start' } },
+        { element: '#tabla_presupuesto', popover: { title: 'Historial', description: 'Lista de presupuestos registrados. Puedes ver el monto total esperado y la cuota de reserva asignada.', side: 'top', align: 'center' } }
+    ];
+
+    // 2. TOUR MODAL DE REGISTRO
+    const stepsModal = [
+        { element: '#fecha', popover: { title: 'Periodo', description: 'Selecciona a qué mes corresponde este presupuesto. Solo aparecerán los meses futuros disponibles.', side: 'bottom', align: 'start' } },
+        { element: '#cuota_reserva', popover: { title: 'Fondo de Reserva', description: 'Ingresa el monto destinado al fondo de reserva del condominio.', side: 'top', align: 'start' } },
+        { element: '.boton_intercambio_cuota', popover: { title: 'Moneda', description: 'Usa este botón si necesitas ingresar el monto de la reserva en Dólares; el sistema hará la conversión.', side: 'top', align: 'start' } },
+        { element: '#contenedor_presupuestos', popover: { title: 'Categorías de Gastos', description: 'Aquí aparecerán listados los tipos de gastos (Gas, Luz, Mantenimiento). Despliega cada acordeón para ingresar los montos estimados.', side: 'top', align: 'center' } },
+        { element: '#observacion', popover: { title: 'Observaciones', description: 'Añade cualquier nota importante sobre este presupuesto.', side: 'top', align: 'start' } },
+        { element: '#boton_formulario', popover: { title: 'Guardar', description: 'Registra el presupuesto para que luego puedas generar las mensualidades de cobro.', side: 'top', align: 'center' } }
+    ];
+
+    // LÓGICA DEL BOTÓN FLOTANTE
+    const btnAyuda = document.getElementById('btn-ayuda-tour');
+    const modalPresupuesto = document.getElementById('modal_presupuesto');
+
+    if(btnAyuda) {
+        btnAyuda.addEventListener('click', () => {
+            if (modalPresupuesto && modalPresupuesto.classList.contains('show')) {
+                // Si el modal está abierto, iniciamos el tour del formulario
+                tourActivo = driver({ ...configBase, steps: stepsModal });
+                tourActivo.drive();
+            } else {
+                // Si estamos en la tabla principal
+                window.scrollTo({ top: 0, behavior: 'instant' });
+                tourActivo = driver({ ...configBase, steps: stepsPrincipal });
+                tourActivo.drive();
+            }
+        });
+    }
+
+    // Limpieza al cerrar el modal
+    if (modalPresupuesto) {
+        modalPresupuesto.addEventListener('hide.bs.modal', () => {
+            if (tourActivo) {
+                try { tourActivo.destroy(); } catch (e) {}
+            }
+        });
+    }
+});

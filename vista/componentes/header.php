@@ -22,9 +22,7 @@
                         <?php if (!empty($_SESSION["notificaciones"])): ?>
                             <?php foreach ($_SESSION["notificaciones"] as $notificacion): ?>                                
                                 <li class="notif-item <?php echo (!empty($notificacion['leida']) && $notificacion['leida']) ? '' : 'notif-unread'; ?>">                            
-                                    <a href="?pagina=<?php echo $notificacion['tabla_origen']; ?>&accion=inicio&buscar=<?php echo $notificacion['id_registro_origen'] ?>"
-                                        class="notif-link"
-                                        title="Ir a la notificación">
+                                    <a href="?pagina=<?php echo $notificacion['tabla_origen']; ?>&accion=inicio&buscar=<?php echo $notificacion['id_registro_origen'] ?>" class="notif-link" title="Ir a la notificación">
                                         <div class="notif-icon-circle">
                                             <i class="bi bi-info-circle"></i>
                                         </div>                                     

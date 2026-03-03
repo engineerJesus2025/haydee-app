@@ -9,7 +9,7 @@ let permiso_eliminar = document.querySelector("#permiso_eliminar").value;
 let permiso_modificar = document.querySelector("#permiso_modificar").value;
 
 let boton_formulario = document.querySelector("#boton_formulario"); 
-let modal = new bootstrap.Modal("#modal_usuario");
+let modal = new bootstrap.Modal(document.getElementById("modal_usuario"), { focus: false });
 let formulario_usar = document.querySelector(`#form_usuario`); 
 let tabla_usuarios;
 
@@ -249,3 +249,77 @@ async function eliminar(id) {
 	tabla_usuarios.ajax.reload(null, false);
 	Utilidades.mensaje('success', 'Éxito', 'El registro ha sido eliminado correctamente');
 }
+
+// ============================================================
+// MÓDULO DE AYUDA (DRIVER.JS) - USUARIOS
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+    const driver = window.driver.js.driver;
+    let tourActivo = null;
+
+    // Micro-retraso para asegurar que la burbuja se ancle bien
+    const alinearBurbuja = () => {
+        setTimeout(() => {
+            window.dispatchEvent(new Event('resize'));
+        }, 10);
+    };
+
+    // Configuración base
+    const configBase = {
+        showProgress: true,
+        animate: true,
+        smoothScroll: false,
+        allowKeyboardControl: false,
+        nextBtnText: 'Siguiente ➔',
+        prevBtnText: '⬅ Anterior',
+        doneBtnText: 'Entendido',
+        progressText: 'Paso {{current}} de {{total}}',
+        onHighlightStarted: (element) => {
+            if (element) {
+                element.scrollIntoView({ behavior: 'instant', block: 'center' });
+                alinearBurbuja();
+            }
+        }
+    };
+
+    // 1. TOUR VISTA PRINCIPAL
+    const stepsPrincipal = [
+        { element: '.page-header', popover: { title: 'Gestión de Usuarios', description: 'Aquí administras quién tiene acceso al sistema y qué nivel de permisos posee.', side: "bottom", align: 'center' } },
+        { element: 'button[data-bs-target="#modal_usuario"]', popover: { title: 'Nuevo Usuario', description: 'Registra un nuevo operador, administrador o propietario para que pueda iniciar sesión.', side: "bottom", align: 'start' } },
+        { element: '#tabla_usuarios_wrapper', popover: { title: 'Directorio', description: 'Lista de usuarios registrados. Puedes editar sus datos (como resetear contraseñas) o eliminarlos.', side: 'top', align: 'center' } }
+    ];
+
+    // 2. TOUR MODAL DE REGISTRO
+    const stepsModal = [
+        { element: '#nombre', popover: { title: 'Datos Personales', description: 'Ingresa el Nombre y Apellido del usuario.', side: 'bottom', align: 'start' } },
+        { element: '#correo', popover: { title: 'Correo Electrónico', description: 'Email que servirá como usuario para el inicio de sesión.', side: 'top', align: 'start' } },
+        { element: '#rol', popover: { title: 'Rol y Permisos', description: 'Define qué puede hacer este usuario en el sistema (Administrador, Super Usuario, etc.).', side: 'top', align: 'start' } },
+        { element: '#contra', popover: { title: 'Seguridad', description: 'Establece una contraseña. Puedes usar el botón del "ojo" a la derecha para verificar lo que escribes.', side: 'top', align: 'start' } },
+        { element: '#boton_formulario', popover: { title: 'Guardar', description: 'Crea el usuario y otorga el acceso inmediato.', side: 'top', align: 'center' } }
+    ];
+
+    // LÓGICA DEL BOTÓN FLOTANTE
+    const btnAyuda = document.getElementById('btn-ayuda-tour');
+    const modalHTML = document.getElementById('modal_usuario');
+
+    if(btnAyuda) {
+        btnAyuda.addEventListener('click', () => {
+            if (modalHTML && modalHTML.classList.contains('show')) {
+                tourActivo = driver({ ...configBase, steps: stepsModal });
+                tourActivo.drive();
+            } else {
+                window.scrollTo({ top: 0, behavior: 'instant' });
+                tourActivo = driver({ ...configBase, steps: stepsPrincipal });
+                tourActivo.drive();
+            }
+        });
+    }
+
+    if (modalHTML) {
+        modalHTML.addEventListener('hide.bs.modal', () => {
+            if (tourActivo) {
+                try { tourActivo.destroy(); } catch (e) {}
+            }
+        });
+    }
+});

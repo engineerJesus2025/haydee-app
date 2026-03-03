@@ -124,7 +124,7 @@ function llenarTablaNotificaciones() {
         {
             data: 'fecha',
             // render: (fecha) => formatearFechaHora(fecha)
-            render: (fecha) => FormatoFechas.formatoFechaHora(fecha)
+            render: (fecha) => FormatoFechas.formatoUsuario(fecha)
         },
         {
             data: null,
@@ -182,35 +182,6 @@ function definirColorBadge(nombreRol) {
         'Presidente': ['badge bg-info text-dark', 'bi bi-award-fill me-3']
     };
     return map[nombreRol] || ['badge bg-secondary', 'bi bi-person-circle me-3'];
-}
-
-function formatearUltimoAcceso(fecha) {
-    const ahora = new Date();
-    if (!fecha) return ahora.toLocaleDateString('es-ES');
-    const fechaAcceso = new Date(fecha.replace(' ', 'T'));
-    const diffMs = ahora - fechaAcceso;
-    const diffDias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    let hora = fechaAcceso.getHours();
-    const minutos = fechaAcceso.getMinutes().toString().padStart(2, '0');
-    const amPm = hora >= 12 ? 'p.m.' : 'a.m.';
-    hora = hora % 12 || 12;
-    const horaFormateada = `${hora}:${minutos} ${amPm}`;
-
-    if (diffDias === 0) return `Hoy a las ${horaFormateada}`;
-    if (diffDias === 1) return `Ayer a las ${horaFormateada}`;
-    if (diffDias <= 7) {
-        const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-        return `El ${diasSemana[fechaAcceso.getDay()]} a las ${horaFormateada}`;
-    }
-    return fechaAcceso.toLocaleDateString('es-ES') + ` a las ${horaFormateada}`;
-}
-
-function formatearFechaHora(fechaHoraStr) {
-    const fecha = new Date(fechaHoraStr);
-    const dia = String(fecha.getUTCDate()).padStart(2, '0');
-    const mes = String(fecha.getUTCMonth() + 1).padStart(2, '0');
-    const anio = fecha.getUTCFullYear();
-    return `${dia}-${mes}-${anio}`;
 }
 
 // ============================================

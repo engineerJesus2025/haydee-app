@@ -47,19 +47,15 @@
                                     </div>
                                 </div>
 
-                                <label class="text-center mb-2" id="label_fechas" hidden>Seleccione la medida de tiempo:</label>
-                                <div class="col-lg-5 mb-5" id="div_fecha_inicio" hidden>
-                                    <label for="fecha_inicio">Fecha de Inicio</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text" id="basic-addon1"><i class="bi bi-calendar2-check"></i></span>
-                                        <input type="date" name="fecha_inicio" id="fecha_inicio" class="form-control">
+                                <div id="contenedor_fechas_personalizadas" class="row mt-3 bg-light p-3 border rounded" hidden>
+                                    <label class="form-label fw-bold mb-2">Seleccione el rango de fechas para el reporte:</label>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="fecha_inicio" class="form-label">Desde:</label>
+                                        <input type="date" class="form-control" name="fecha_inicio" id="fecha_inicio">
                                     </div>
-                                </div>
-                                <div class="col-lg-5 mb-5" id="div_fecha_cierre" hidden>
-                                    <label for="fecha_fin">Fecha de Cierre</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text" id="basic-addon1"><i class="bi bi-calendar2-check"></i></span>
-                                        <input type="date" name="fecha_fin" id="fecha_fin" class="form-control">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="fecha_fin" class="form-label">Hasta:</label>
+                                        <input type="date" class="form-control" name="fecha_fin" id="fecha_fin">
                                     </div>
                                 </div>
                                 <label class="text-center mb-2">Filtros:</label>
@@ -69,7 +65,7 @@
                                 </div>
                                 <div class="col-lg-5 col-sm-7">
                                     <select class="form-select" id="select_balance" form="form_reporte" disabled >
-                                        <option value="Todos">Todos</option>
+                                        <option value="todos">Todos</option>
                                         <option value="Ingresos">Pagos de Mensualidad</option>
                                         <option value="Egresos">Gastos efectuados</option>                                    
                                     </select>
@@ -80,7 +76,7 @@
                                 </div>
                                 <div class="col-lg-5 col-sm-7">
                                     <select class="form-select" id="select_metodo_pago" form="form_reporte" disabled>
-                                        <option value="Todos">Todos</option>
+                                        <option value="todos">Todos</option>
                                         <option value="Transferencia">Transferencia</option>
                                         <option value="Efectivo">Efectivo</option>
                                         <option value="Pago Movil">Pago Móvil</option>
@@ -92,7 +88,7 @@
                                 </div>
                                 <div class="col-lg-5 col-sm-7">
                                     <select class="form-select" id="select_tipo_gasto" form="form_reporte" disabled>
-                                        <option value="Todos">Todos</option>
+                                        <option value="todos">Todos</option>
                                         <option value="Variable">Variable</option>
                                         <option value="Fijo">Fijo</option>
                                     </select>

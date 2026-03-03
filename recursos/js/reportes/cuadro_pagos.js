@@ -19,8 +19,7 @@ botonCuadroPagos.addEventListener("click", () => {
 
     let fragment = document.createDocumentFragment();
     arrayMeses.forEach(mes => {
-        let fecha = new Date(mes.anio, mes.mes - 1, 1);
-        let nombreMes = fecha.toLocaleString("es-ES", { month: 'long' });
+        let nombreMes = FormatoFechas.nombreMes(mes.mes);
         let option = document.createElement("option");
         option.textContent = `${nombreMes} del ${mes.anio}`;
         option.value = `${mes.mes}-${mes.anio}`;

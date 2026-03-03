@@ -1,112 +1,146 @@
+// notificaciones.js
 document.addEventListener('DOMContentLoaded', () => {
+    // Verificar que Utilidades esté disponible
+    if (typeof Utilidades === 'undefined') {
+        console.error('Utilidades no está cargado');
+        return;
+    }
 
-    async function query(datos) {
-        try {            
-            const operacion = datos.get('operacion');
-            if (!operacion) {                
-                throw new Error("La 'operacion' no fue especificada en los datos.");
+    // ------------------------------------------------------------
+    // Funciones auxiliares
+    // ------------------------------------------------------------
+    /**
+     * Marca una notificación como leída en el servidor.
+     * @param {string} id - ID de la notificación
+     * @returns {Promise<Object>} - Respuesta del servidor
+     */
+    async function marcarComoLeida(id) {
+        const datos = new FormData();
+        datos.append('operacion', 'marcar_como_leido');
+        datos.append('id', id);
+        const url = '?pagina=notificaciones&accion=marcar_como_leido';
+        return await Utilidades.query(datos, false, url);
+    }
+
+    /**
+     * Elimina visualmente un elemento de notificación y actualiza el contador.
+     * @param {HTMLElement} itemContainer - El elemento <li> que contiene la notificación
+     */
+    function eliminarItemYActualizarContador(itemContainer) {
+        if (!itemContainer) return;
+
+        // Eliminar el divisor siguiente (si existe)
+        const division = itemContainer.nextElementSibling;
+        if (division?.classList.contains('dropdown-divider')) {
+            division.remove();
+        }
+
+        // Eliminar el contenedor de la notificación
+        itemContainer.remove();
+
+        // Actualizar contador general
+        const countLabel = document.getElementById('count-label');
+        if (!countLabel) return;
+
+        const botonesRestantes = document.querySelectorAll('#lista-notificaciones-items .notif-remove-btn');
+        const total = botonesRestantes.length;
+
+        if (total > 0) {
+            countLabel.textContent = total > 99 ? '+99' : total;
+            countLabel.classList.remove('d-none');
+        } else {
+            countLabel.textContent = '0';
+            countLabel.classList.add('d-none');
+            // Mostrar mensaje de "no hay notificaciones"
+            const listaItems = document.getElementById('lista-notificaciones-items');
+            if (listaItems) {
+                listaItems.innerHTML = `
+                    <li class="px-3 py-4 text-center text-muted" id="no-hay-notificaciones">
+                        <i class="bi bi-bell-slash fs-2 d-block mb-2"></i>
+                        No hay notificaciones nuevas
+                    </li>
+                `;
             }
-            
-            const url = `?pagina=notificaciones&accion=${operacion}`;
-
-            const res = await fetch(url, { method: "POST", body: datos });
-            const data = await res.json();
-            return data;
-        } catch (error) {
-            console.error("Error en la petición:", error);
-            return { estatus: false, mensaje: "Ha ocurrido un error durante la consulta", error };
         }
     }
-    
-    // --- INICIO DE CAMBIOS ---
-    // Antes: const notificacionesItems = document.querySelectorAll("#notificaciones-list .notification-item");
-    // Ahora: Buscamos los *nuevos botones* de eliminar
-    const removeButtons = document.querySelectorAll("#notificaciones-list .notif-remove-btn");
 
-    removeButtons.forEach(button => {
-        // Antes: notificacion.addEventListener("click", ...)
-        // Ahora: button.addEventListener("click", ...)
-        button.addEventListener("click", async e => {
-            e.preventDefault(); // Prevenir la acción por defecto del botón
-            e.stopPropagation(); // MUY IMPORTANTE: Evita que el clic se propague al enlace <a> padre
+    // ------------------------------------------------------------
+    // Evento para botones de eliminar (X)
+    // ------------------------------------------------------------
+    document.querySelectorAll('#lista-notificaciones-items .notif-remove-btn').forEach(button => {
+        button.addEventListener('click', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
 
-            const datos_consulta = new FormData();
-            // Antes: datos_consulta.append('id', notificacion.dataset.id);
-            // Ahora: Obtenemos el ID desde el 'button'
-            datos_consulta.append('id', button.dataset.id);
-            datos_consulta.append('operacion', "marcar_como_leido");
+            const id = button.dataset.id;
+            if (!id) return;
 
-            const resultado = await query(datos_consulta);
-
+            const resultado = await marcarComoLeida(id);
             if (!resultado.estatus) {
-                Swal.fire('Atencion', resultado.mensaje || 'Error al procesar la notificación.', 'error');
+                Utilidades.mensaje('error', 'Atención', resultado.mensaje || 'Error al procesar la notificación.');
                 return;
             }
 
-            // --- Lógica para eliminar el elemento (un poco diferente) ---
-            
-            // 1. Encontrar el <li> contenedor padre para eliminarlo
-            // Antes: notificacion.remove();
-            // Ahora:
-            const itemContainer = button.parentElement;
-
-            if (itemContainer) {
-                // 2. Encontrar y eliminar el divisor (que es el *siguiente* <li>)
-                const division = itemContainer.nextElementSibling;
-                if (division && division.classList.contains("dropdown-divider")) {
-                    division.remove();
-                }
-                
-                // 3. Eliminar el <li> de la notificación
-                itemContainer.remove();
-            }
-
-            // --- El resto de la lógica para actualizar el contador es igual ---
-            const countLabelGeneral = document.getElementById('count-label');
-            
-            // Actualizamos la forma de contar: contamos los botones que quedan
-            let count = document.querySelectorAll("#notificaciones-list .notif-remove-btn").length;
-            
-            if (count > 0) {
-                countLabelGeneral.textContent = count > 99 ? '+99' : count;
-            } else {
-                countLabelGeneral.textContent = '0';
-                countLabelGeneral.classList.add('d-none');
-                const listaItems = document.getElementById('lista-notificaciones-items');
-                if(listaItems){
-                    listaItems.innerHTML = `
-                        <li class="px-3 py-4 text-center text-muted" id="no-hay-notificaciones">
-                            <i class="bi bi-bell-slash fs-2 d-block mb-2"></i>
-                            No hay notificaciones nuevas
-                        </li>
-                    `;
-                }
-            }
+            const itemContainer = button.closest('li');
+            eliminarItemYActualizarContador(itemContainer);
         });
     });
-    // --- FIN DE CAMBIOS ---
 
-    
-    const botonMarcarTodas = document.getElementById('marcar-todas-leidas');
+    // ------------------------------------------------------------
+    // Evento para enlaces de notificación (ir al módulo)
+    // ------------------------------------------------------------
+    document.querySelectorAll('#lista-notificaciones-items .notif-link').forEach(enlace => {
+        enlace.addEventListener('click', async (e) => {
+            e.preventDefault(); // Detenemos la navegación inmediata
+            e.stopPropagation();
 
-    if (botonMarcarTodas) {
-        // (Esta función de "Marcar todas" no necesita cambios y seguirá funcionando)
-        botonMarcarTodas.addEventListener('click', async function(e) {
-            e.preventDefault();
-            const contador = document.getElementById('count-label');
-            if (!contador || contador.classList.contains('d-none') || contador.textContent === '0') {
+            const itemContainer = enlace.closest('li');
+            const botonEliminar = itemContainer?.querySelector('.notif-remove-btn');
+            const id = botonEliminar?.dataset.id;
+
+            if (!id) {
+                // Si no hay ID (caso raro), navegamos directamente
+                window.location.href = enlace.href;
                 return;
             }
-            
+
+            // Marcar como leída en el servidor
+            const resultado = await marcarComoLeida(id);
+            if (!resultado.estatus) {
+                Utilidades.mensaje('error', 'Atención', resultado.mensaje || 'Error al procesar la notificación.');
+                // Aún así navegamos
+            }
+
+            // Eliminar visualmente la notificación
+            eliminarItemYActualizarContador(itemContainer);
+
+            // Finalmente, navegar a la URL destino
+            window.location.href = enlace.href;
+        });
+    });
+
+    // ------------------------------------------------------------
+    // Evento para "Marcar todas como leídas"
+    // ------------------------------------------------------------
+    const botonMarcarTodas = document.getElementById('marcar-todas-leidas');
+    if (botonMarcarTodas) {
+        botonMarcarTodas.addEventListener('click', async (e) => {
+            e.preventDefault();
+
+            const countLabel = document.getElementById('count-label');
+            if (!countLabel || countLabel.classList.contains('d-none') || countLabel.textContent === '0') {
+                return; // No hay notificaciones
+            }
+
             const datos = new FormData();
             datos.append('operacion', 'marcar_todas_leidas');
+            const url = '?pagina=notificaciones&accion=marcar_todas_leidas';
 
-            const resultado = await query(datos);
+            const resultado = await Utilidades.query(datos, false, url);
 
-            if (resultado && resultado.estatus) {
+            if (resultado?.estatus) {
+                // Vaciar la lista
                 const listaItems = document.getElementById('lista-notificaciones-items');
-                contador.textContent = '0';
-                contador.classList.add('d-none');
                 if (listaItems) {
                     listaItems.innerHTML = `
                         <li class="px-3 py-4 text-center text-muted" id="no-hay-notificaciones">
@@ -115,8 +149,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         </li>
                     `;
                 }
+                countLabel.textContent = '0';
+                countLabel.classList.add('d-none');
             } else {
-                alert('Hubo un error al marcar las notificaciones.');
+                Utilidades.mensaje('error', 'Atención', resultado?.mensaje || 'Hubo un error al marcar las notificaciones.');
             }
         });
     }

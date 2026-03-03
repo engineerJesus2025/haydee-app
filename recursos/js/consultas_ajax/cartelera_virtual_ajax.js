@@ -10,7 +10,7 @@ let permiso_modificar = document.querySelector("#permiso_modificar")?.value;
 let nombre_usuario = document.querySelector("#nombre_usuario")?.value || "Desconocido";
 
 let boton_formulario = document.querySelector("#boton_formulario");
-let modal = new bootstrap.Modal("#modal_cartelera");
+let modal = new bootstrap.Modal("#modal_cartelera", { focus: false });
 let modalVistaPrevia = new bootstrap.Modal("#modal_vista_previa");
 let formulario_usar = document.querySelector("#form_cartelera");
 let tabla_cartelera;
@@ -68,15 +68,6 @@ function obtenerPrioridadTexto(prioridad) {
 }
 
 /**
- * Formatea fecha YYYY-MM-DD a DD/MM/YYYY
- */
-function formatearFecha(fechaStr) {
-    if (!fechaStr) return "N/A";
-    const partes = fechaStr.split("-");
-    return partes.length === 3 ? `${partes[2]}/${partes[1]}/${partes[0]}` : fechaStr;
-}
-
-/**
  * Crea el HTML de los botones de acción (vista previa, modificar, eliminar)
  */
 function crearBotones(id) {
@@ -103,7 +94,7 @@ function consultar() {
     const columnas = [
         { 
             data: "fecha",
-            render: (data) => formatearFecha(data)
+            render: (data) => FormatoFechas.formatoUsuario(data)
         },
         { data: "titulo" },
         { data: "nombre_usuario" },
@@ -209,7 +200,7 @@ async function mostrarVistaPrevia(e) {
 
     document.getElementById("vista_titulo").textContent = data.titulo;
     document.getElementById("vista_descripcion").textContent = data.descripcion;
-    document.getElementById("vista_fecha").textContent = formatearFecha(data.fecha);
+    document.getElementById("vista_fecha").textContent = FormatoFechas.formatoUsuario(data.fecha);
     document.getElementById("vista_prioridad").innerHTML = obtenerPrioridadTexto(data.prioridad);
     document.getElementById("vista_autor").textContent = data.nombre_usuario;
 
@@ -345,4 +336,98 @@ document.querySelector("#boton_eliminar_imagen").addEventListener("click", funct
             document.querySelector("#boton_eliminar_imagen").classList.add("d-none");
         }
     });
+});
+
+// ============================================================
+// MÓDULO DE AYUDA (DRIVER.JS) - CARTELERA VIRTUAL
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+    const driver = window.driver.js.driver;
+    let tourActivo = null;
+
+    // El micro-retraso infalible para anclar la burbuja con precisión
+    const alinearBurbuja = () => {
+        setTimeout(() => {
+            window.dispatchEvent(new Event('resize'));
+        }, 10);
+    };
+
+    // 1. CONFIGURACIÓN DE LA VISTA PRINCIPAL
+    const configPrincipal = {
+        showProgress: true,
+        animate: true,
+        smoothScroll: false, 
+        allowKeyboardControl: false,
+        nextBtnText: 'Siguiente ➔',
+        prevBtnText: '⬅ Anterior',
+        doneBtnText: 'Entendido',
+        progressText: 'Paso {{current}} de {{total}}',
+        
+        onHighlightStarted: (element) => {
+            if (element) {
+                element.scrollIntoView({ behavior: 'instant', block: 'center' });
+                alinearBurbuja();
+            }
+        },
+
+        steps: [
+            { element: '.page-header', popover: { title: 'Cartelera Virtual', description: 'Bienvenido. Aquí puedes publicar avisos, noticias y comunicados importantes para todos los residentes del condominio.', side: "bottom", align: 'center' } },
+            { element: 'button[data-bs-target="#modal_cartelera"]', popover: { title: 'Nueva Publicación', description: 'Haz clic aquí para crear un nuevo aviso o subir un afiche informativo a la cartelera.', side: "bottom", align: 'start' } },
+            { element: '#tabla_cartelera_virtual_wrapper', popover: { title: 'Lista de Publicaciones', description: 'Aquí verás todos los comunicados. Puedes ver cómo lucen (Vista previa), editarlos o eliminarlos.', side: "top", align: 'center' } }
+        ]
+    };
+
+    // 2. CONFIGURACIÓN DEL MODAL DE CARTELERA
+    const configModalCartelera = {
+        showProgress: true,
+        animate: true, 
+        smoothScroll: false, 
+        allowKeyboardControl: false, 
+        nextBtnText: 'Siguiente ➔',
+        prevBtnText: '⬅ Anterior',
+        doneBtnText: 'Entendido',
+        progressText: 'Paso {{current}} de {{total}}',
+        
+        onHighlightStarted: (element) => {
+            if (element) {
+                element.scrollIntoView({ behavior: 'instant', block: 'center' });
+                alinearBurbuja();
+            }
+        },
+
+        steps: [
+            { element: '#titulo', popover: { title: 'Título', description: 'Escribe un título llamativo y claro para tu comunicado.', side: 'bottom', align: 'start' } },
+            { element: '#descripcion', popover: { title: 'Descripción', description: 'Redacta el contenido detallado de tu publicación aquí.', side: 'bottom', align: 'start' } },
+            { element: '#fecha', popover: { title: 'Fecha', description: 'Indica la fecha correspondiente al comunicado.', side: 'top', align: 'start' } },
+            { element: '#imagen', popover: { title: 'Imagen (Opcional)', description: 'Puedes adjuntar una foto o imagen para que la publicación sea mucho más visual.', side: 'top', align: 'start' } },
+            { element: '#prioridad', popover: { title: 'Prioridad', description: 'Clasifica la urgencia del aviso (Alta, Media o Baja) para llamar la atención rápidamente.', side: 'top', align: 'start' } },
+            { element: '#boton_formulario', popover: { title: 'Guardar', description: 'Haz clic aquí para publicar tu aviso en la cartelera virtual.', side: 'top', align: 'center' } }
+        ]
+    };
+
+    // 3. LÓGICA DEL BOTÓN FLOTANTE
+    const btnAyuda = document.getElementById('btn-ayuda-tour');
+    const modalCarteleraHTML = document.getElementById('modal_cartelera');
+
+    if(btnAyuda) {
+        btnAyuda.addEventListener('click', () => {
+            if (modalCarteleraHTML && modalCarteleraHTML.classList.contains('show')) {
+                tourActivo = driver(configModalCartelera);
+                tourActivo.drive();
+            } else {
+                window.scrollTo({ top: 0, behavior: 'instant' });
+                tourActivo = driver(configPrincipal);
+                tourActivo.drive();
+            }
+        });
+    }
+
+    // Limpiar al cerrar el modal
+    if (modalCarteleraHTML) {
+        modalCarteleraHTML.addEventListener('hide.bs.modal', () => {
+            if (tourActivo) {
+                try { tourActivo.destroy(); } catch (e) {}
+            }
+        });
+    }
 });

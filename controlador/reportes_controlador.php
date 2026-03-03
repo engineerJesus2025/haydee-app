@@ -31,7 +31,7 @@ if (isset($_POST["operacion"])) {
 
     try {
         switch ($operacion) {
-            case 'consultar_ingresos_egresos':
+            case 'reporte_ingresos_egresos_completo':
                 $gastos->set_filtros_reporte([
                     'balance' => $_POST['balance'] ?? 'todos',
                     'metodo_pago' => $_POST['metodo_pago'] ?? 'todos',
@@ -40,20 +40,7 @@ if (isset($_POST["operacion"])) {
                     'fecha_inicio' => $_POST['fecha_inicio'] ?? '',
                     'fecha_fin' => $_POST['fecha_fin'] ?? ''
                 ]);
-                $respuesta = $gastos->realizar_consulta('consultar_ingresos_egresos');
-                break;
-
-            case 'consultar_estadisticas_ingresos_egresos':
-                // mismo array
-                $gastos->set_filtros_reporte([
-                    'balance' => $_POST['balance'] ?? 'todos',
-                    'metodo_pago' => $_POST['metodo_pago'] ?? 'todos',
-                    'tipo_gasto' => $_POST['tipo_gasto'] ?? 'todos',
-                    'filtro' => $_POST['filtro'] ?? '',
-                    'fecha_inicio' => $_POST['fecha_inicio'] ?? '',
-                    'fecha_fin' => $_POST['fecha_fin'] ?? ''
-                ]);
-                $respuesta = $gastos->realizar_consulta('estadisticas_ingresos_egresos');
+                $respuesta = $gastos->realizar_consulta('reporte_ingresos_egresos_completo');
                 break;
 
             case 'listar_meses_con_gastos':
