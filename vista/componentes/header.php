@@ -1,8 +1,8 @@
 <?php
 // Lógica para definir el título dinámico del Header
 $pagina_actual = isset($_GET['pagina']) ? $_GET['pagina'] : 'inicio';
-$titulo_header = "Inicio";
-$subtitulo_header = "Panel Administrativo";
+$titulo_header = "Dashboard";
+$subtitulo_header = "Resumen general del condominio";
 
 switch ($pagina_actual) {
     case 'pagos':

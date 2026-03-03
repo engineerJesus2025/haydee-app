@@ -9,46 +9,39 @@
 .post-card {
     font-family: 'Inter', sans-serif;
     border: none;
-    border-radius: 1.5rem; /* Esquinas más redondeadas */
+    border-radius: 1.5rem; 
     overflow: hidden;
     transition: transform 0.3s ease, box-shadow 0.3s ease;    
-    /* Sombra más profunda y colorida */
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05);
-    /* Degradado sutil en el fondo de la tarjeta */
     background: linear-gradient(135deg, #ffffff 90%, #e0f7fa 100%);
 }
 
 .post-card:hover {
-    transform: translateY(-5px); /* Efecto de elevación al pasar el mouse */
+    transform: translateY(-5px); 
     box-shadow: 0 15px 45px rgba(0, 71, 133, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
 }
 
-/* Contenedor de la imagen (Estilo por defecto para desktop) */
 .image-container {
-    /* En desktop, la altura es 100% de la columna */
     height: 100%; 
     overflow: hidden;
-    /* Bordes de la derecha redondeados en desktop */
     border-radius: 0 1.2rem 1.2rem 0; 
     position: relative;
 }
 
 .post-card:hover .post-image {
-    transform: scale(1.05); /* Zoom sutil al pasar el mouse */
+    transform: scale(1.05); 
 }
 
-/* Área de contenido */
 .content-area {
     padding: 1.5rem;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    height: 100%; /* Asegura que el área de contenido use toda su altura */
+    height: 100%; 
 }
 
-/* Título del evento */
 .post-title {
-    color: #0d47a1; /* Azul corporativo, fuerte y confiable */
+    color: #0d47a1; 
     font-weight: 700;
     margin-bottom: 0.5rem;
     line-height: 1.2;
@@ -61,22 +54,20 @@
     transition: transform 0.5s ease;
 }
 
-/* Metadatos (fecha y autor) */
 .post-meta {
     font-size: 0.85rem;
-    color: #78909c; /* Gris suave para metadatos */
+    color: #78909c; 
     margin-bottom: 1rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-/* Estilo del Badge de Publicado */
 .author-badge {
-    background-color: #42a5f5; /* Un azul más claro para el Badge */
+    background-color: #42a5f5; 
     color: white;
     padding: 0.4rem 0.8rem;
-    border-radius: 50rem; /* Píldora */
+    border-radius: 50rem; 
     font-weight: 600;
     font-size: 0.8rem;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
@@ -87,80 +78,102 @@
     background-color: #1e88e5;
 }
 
-/* Estilo para la descripción */
 .post-description {
-    color: #455a64; /* Gris oscuro para fácil lectura */
+    color: #455a64; 
 }
 
-/* Adaptación para pantallas pequeñas (móviles) */
 @media (max-width: 767px) {
-    .post-card {
-        margin: 10px 0;
-    }
-    .image-container {
-        /* Altura fija en móvil para la apariencia de tarjeta apilada */
-        height: 180px; 
-        /* Redondeado en la parte inferior en móvil */
-        border-radius: 0 0 1.5rem 1.5rem !important; 
-    }
-    .content-area {
-        padding: 1rem;
-    }
-    .post-meta {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.5rem;
-    }
-
-    .post-image {
-        width: 100%;        
-        height: 100%;
-        max-height: 100%;
-        object-fit: cover; 
-        transition: transform 0.5s ease;
-    }    
+    .post-card { margin: 10px 0; }
+    .image-container { height: 180px; border-radius: 0 0 1.5rem 1.5rem !important; }
+    .content-area { padding: 1rem; }
+    .post-meta { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+    .post-image { width: 100%; height: 100%; max-height: 100%; object-fit: cover; transition: transform 0.5s ease; }    
 }
 
-/* Estilos del spinner de carga */
-.loader_publicaciones {
-  width: 48px;
-  height: 48px;
-  display: block;
-  margin:15px auto;
-  position: relative;
-  color: #FFF;
-  box-sizing: border-box;
-  animation: rotation 1s linear infinite;
+.loader_publicaciones { width: 48px; height: 48px; display: block; margin:15px auto; position: relative; color: #FFF; box-sizing: border-box; animation: rotation 1s linear infinite; }
+.loader_publicaciones::after, .loader_publicaciones::before { content: ''; box-sizing: border-box; position: absolute; width: 24px; height: 24px; top: 50%; left: 50%; transform: scale(0.5) translate(0, 0); background-color: #222; border-radius: 50%; animation: animloader 1s infinite backwards; }
+.loader_publicaciones::before { background-color: #2A1CD1; transform: scale(0.5) translate(-48px, -48px); }
+@keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } 
+@keyframes animloader { 50% { transform: scale(1) translate(-50%, -50%); } }
+
+/* ========================================================================== */
+/* ================== NUEVOS ESTILOS DEL DASHBOARD ========================== */
+/* ========================================================================== */
+
+.dashboard-card { 
+    border: none; 
+    border-radius: 1.2rem; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03); 
+    background-color: #ffffff; 
 }
-.loader_publicaciones::after,
-.loader_publicaciones::before {
-  content: '';  
-  box-sizing: border-box;
-  position: absolute;
-  width: 24px;
-  height: 24px;
-  top: 50%;
-  left: 50%;
-  transform: scale(0.5) translate(0, 0);
-  background-color: #222;
-  border-radius: 50%;
-  animation: animloader 1s infinite backwards;
+.icon-box { 
+    width: 48px; 
+    height: 48px; 
+    border-radius: 12px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
 }
-.loader_publicaciones::before {
-  background-color: #2A1CD1;
-  transform: scale(0.5) translate(-48px, -48px);
+.icon-box-blue { background-color: #e6f0ff; color: #3b82f6; }
+.icon-box-green { background-color: #dcfce7; color: #22c55e; }
+.icon-box-yellow { background-color: #fef3c7; color: #f59e0b; }
+.icon-box-red { background-color: #fee2e2; color: #ef4444; }
+
+.badge-up { background-color: #dcfce7; color: #166534; border-radius: 20px; padding: 0.25rem 0.6rem; font-size: 0.85rem; font-weight: 600; }
+.badge-down { background-color: #fee2e2; color: #991b1b; border-radius: 20px; padding: 0.25rem 0.6rem; font-size: 0.85rem; font-weight: 600; }
+
+.text-muted-custom { color: #64748b; font-size: 0.85rem; }
+
+/* Contenedor fijo para igualar gráficos */
+.chart-container {
+    position: relative;
+    height: 250px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-@keyframes rotation {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-} 
-@keyframes animloader {
-    50% {
-      transform: scale(1) translate(-50%, -50%);
-    }
+/* Cuadricula de Apartamentos */
+.apartamentos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
+    gap: 12px;
+    width: 100%;
+}
+.apt-badge { 
+    height: 60px; 
+    border-radius: 10px; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: center; 
+    font-size: 0.9rem; 
+    font-weight: bold; 
+    margin: 0; 
+    border: 1px solid transparent; 
+}
+.apt-ocupado { background-color: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+.apt-libre { background-color: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
+.apt-mantenimiento { background-color: #fefce8; color: #a16207; border-color: #fef08a; }
+.apt-text-small { font-size: 0.55rem; font-weight: 600; margin-top: 2px; }
+
+/* Iconos de Listas */
+.activity-icon { 
+    width: 36px; 
+    height: 36px; 
+    border-radius: 50%; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    margin-right: 15px; 
+    flex-shrink: 0;
+}
+.publi-item {
+    transition: transform 0.2s;
+    border: 1px solid #f1f5f9;
+}
+.publi-item:hover {
+    transform: translateX(5px);
+    border-color: #e2e8f0;
 }
