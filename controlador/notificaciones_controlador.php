@@ -1,7 +1,6 @@
 <?php
 use haydee\ayuda\Sesiones;
 use haydee\modelo\Notificaciones;
-use haydee\modelo\Bitacora;
 
 Sesiones::verificarSesion();
 
@@ -63,7 +62,6 @@ if (isset($_POST["operacion"])) {
             if (isset($notificaciones)) {
                 $notificaciones->cerrar();
             }
-            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexión de seguridad
 
             header('Content-Type: application/json');
             echo json_encode($respuesta);

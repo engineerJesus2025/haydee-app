@@ -52,7 +52,7 @@ if (isset($_POST["operacion"])) {
             case 'consulta':
                 $respuesta = $apartamento->realizar_consulta('consultar_listado');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(CONSULTAR, GESTIONAR_APARTAMENTOS, 'Consulta general de apartamentos');
+                    Bitacora::registrar(CONSULTAR, GESTIONAR_APARTAMENTOS);
                 }
                 break;
 
@@ -66,9 +66,7 @@ if (isset($_POST["operacion"])) {
                         'agua' => $apartamento->get_agua(),
                         'alquilado' => $apartamento->get_alquilado()
                     ];
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_APARTAMENTOS,
-                        '',
-                        null, null, $nuevos);
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_APARTAMENTOS, null, null, $nuevos);
                 }
                 break;
 
@@ -101,9 +99,7 @@ if (isset($_POST["operacion"])) {
                         'agua' => $apartamento->get_agua(),
                         'alquilado' => $apartamento->get_alquilado()
                     ];
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_APARTAMENTOS,
-                        '',
-                        null, $anterior, $nuevo);
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_APARTAMENTOS, null, $anterior, $nuevo);
                 }
                 break;
 
@@ -116,9 +112,7 @@ if (isset($_POST["operacion"])) {
 
                 $respuesta = $apartamento->realizar_consulta('eliminar_apartamento');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_APARTAMENTOS,
-                       '',
-                        null, $anterior, null);
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_APARTAMENTOS, null, $anterior, null);
                 }
                 break;
 
@@ -139,9 +133,7 @@ if (isset($_POST["operacion"])) {
             case 'registrar_habitantes':
                 $respuesta = $habitante->realizar_consulta('registrar_con_relacion');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_HABITANTES,
-                        $habitante->get_nombre() . ' ' . $habitante->get_apellido()
-                    );
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_HABITANTES);
                 }
                 break;
 
@@ -152,9 +144,7 @@ if (isset($_POST["operacion"])) {
             case 'modificar_habitantes':
                 $respuesta = $habitante->realizar_consulta('modificar_con_relacion');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_HABITANTES,
-                        $habitante->get_nombre() . ' ' . $habitante->get_apellido()
-                    );
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_HABITANTES);
                 }
                 break;
 
@@ -163,11 +153,10 @@ if (isset($_POST["operacion"])) {
                 $tempHab = new Habitantes();
                 $tempHab->set_id_habitante($habitante->get_id_habitante());
                 $datosHab = $tempHab->realizar_consulta('consultar_habitante');
-                $info = $datosHab['estatus'] ? ($datosHab['datos']['nombre'] . ' ' . $datosHab['datos']['apellido']) : '';
 
                 $respuesta = $habitante->realizar_consulta('eliminar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_HABITANTES, $info);
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_HABITANTES);
                 }
                 break;
 

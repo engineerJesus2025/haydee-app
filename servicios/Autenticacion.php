@@ -45,7 +45,7 @@ class Autenticacion
         $usuario = $resultado['datos']; // Sin hash
 
         // Registrar bitácora de inicio de sesión
-        Bitacora::registrar(INICIAR_SESION, GESTIONAR_USUARIOS, 'NINGUNO', $usuario['id_usuario']);
+        Bitacora::registrar(INICIAR_SESION, GESTIONAR_USUARIOS, $usuario['id_usuario']);
 
         // Si recordar, generar token de larga duración
         if ($recordar) {
@@ -145,7 +145,7 @@ class Autenticacion
         $this->usuarioModel->set_token_tipo('RECORDAR_CONTRASENIA');
         $this->usuarioModel->realizar_consulta('eliminar_token');
 
-        Bitacora::registrar(CERRAR_SESION, GESTIONAR_USUARIOS, 'NINGUNO', $usuarioId);
+        Bitacora::registrar(CERRAR_SESION, GESTIONAR_USUARIOS, $usuarioId);
     }
 
     /**

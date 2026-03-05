@@ -30,7 +30,7 @@ if (isset($_POST["operacion"])) {
             case 'consulta':
                 $respuesta = $cartelera->realizar_consulta('consultar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(CONSULTAR, GESTIONAR_CARTELERA_VIRTUAL, 'Consulta general de cartelera');
+                    Bitacora::registrar(CONSULTAR, GESTIONAR_CARTELERA_VIRTUAL);
                 }
                 break;
 
@@ -52,7 +52,7 @@ if (isset($_POST["operacion"])) {
                         'prioridad'   => $cartelera->get_prioridad(),
                         'imagen'      => $nombreImagen
                     ];
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_CARTELERA_VIRTUAL, '', null, null, $nuevos);
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_CARTELERA_VIRTUAL,null, null, $nuevos);
                 }
                 break;
 
@@ -99,7 +99,7 @@ if (isset($_POST["operacion"])) {
                         'prioridad'   => $cartelera->get_prioridad(),
                         'imagen'      => $nuevaImagen
                     ];
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_CARTELERA_VIRTUAL, '', null, $anterior, $nuevo);
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_CARTELERA_VIRTUAL, null, $anterior, $nuevo);
                 }
                 break;
 
@@ -111,7 +111,7 @@ if (isset($_POST["operacion"])) {
 
                 $respuesta = $cartelera->realizar_consulta('eliminar_publicacion');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_CARTELERA_VIRTUAL, '', null, $anterior, null);
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_CARTELERA_VIRTUAL, null, $anterior, null);
                 }
                 break;
 

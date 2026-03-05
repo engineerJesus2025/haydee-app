@@ -42,18 +42,19 @@ const Utilidades = {
     /**
      * Envía peticiones AJAX al servidor usando Fetch.
      * @param {FormData|Object} datos - Datos a enviar.
+     * @param {boolean} spinner - Define si se muestra el modal de carga global (por defecto true).
      * @param {string} url - URL destino (por defecto la misma página).
      * @returns {Promise<Object>} - Respuesta JSON del servidor.
      */
-    async query(datos, spinner = false,url = "") {
+    async query(datos, spinner = true, url = "") {
         // Manejo del Modal de Carga (si existe en el DOM)
         let modalCargaElement = document.getElementById("modal_carga");
         let modal_carga = modalCargaElement ? new bootstrap.Modal(modalCargaElement) : null;
         let mostrarModal = false;
         let tiempoCarga;
 
-        // Solo mostramos el modal si la petición tarda más de 600ms
-        if (modal_carga) {
+        // Solo preparamos el modal si existe y si 'spinner' es true
+        if (modal_carga && spinner) {
             tiempoCarga = setTimeout(() => {
                 mostrarModal = true;
                 modal_carga.show();
@@ -72,20 +73,21 @@ const Utilidades = {
 
             const data = await res.json();
 
-            // Lógica para evitar parpadeos rápidos del modal
-            const tiempoTranscurrido = performance.now() - tiempoInicio;
-            const tiempoEsperaMin = 700;
+            // Lógica para evitar parpadeos rápidos del modal (Solo si se activó el spinner)
+            if (spinner) {
+                const tiempoTranscurrido = performance.now() - tiempoInicio;
+                const tiempoEsperaMin = 700;
 
-            if (mostrarModal && tiempoTranscurrido < tiempoEsperaMin) {
-                const restante = tiempoEsperaMin - tiempoTranscurrido;
-                await new Promise(resolve => setTimeout(resolve, restante));
+                if (mostrarModal && tiempoTranscurrido < tiempoEsperaMin) {
+                    const restante = tiempoEsperaMin - tiempoTranscurrido;
+                    await new Promise(resolve => setTimeout(resolve, restante));
+                }
             }
 
             return data;
 
         } catch (error) {
             console.error("Error en Utilidades.query:", error);
-            // Retornamos un objeto de error estandarizado
             return {
                 estatus: false,
                 mensaje: "Error de conexión o servidor.",
@@ -98,14 +100,6 @@ const Utilidades = {
             }
         }
     },
-
-    /**
-     * Muestra alertas usando SweetAlert2.
-     * @param {string} icono - 'success', 'error', 'warning', 'info'.
-     * @param {string} titulo - Título de la alerta.
-     * @param {string} mensaje - Texto descriptivo.
-     * @param {number} tiempo - Tiempo en ms (opcional, defecto 4000).
-     */
 
     /**
      * Realiza una validación AJAX genérica.

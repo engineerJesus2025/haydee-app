@@ -18,7 +18,7 @@ if (isset($_POST["operacion"])) {
             case 'consultar':
                 $respuesta = $modulo->realizar_consulta('consultar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(CONSULTAR, GESTIONAR_MODULOS, 'Consulta general de módulos');
+                    Bitacora::registrar(CONSULTAR, GESTIONAR_MODULOS);
                 }
                 break;
 
@@ -30,7 +30,7 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $modulo->realizar_consulta('registrar');
                 if ($respuesta['estatus']) {
                     $nuevos = ['nombre' => $modulo->get_nombre()];
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_MODULOS, '', null, null, $nuevos);
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_MODULOS, null, null, $nuevos);
                 }
                 break;
 
@@ -44,7 +44,7 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $modulo->realizar_consulta('modificar');
                 if ($respuesta['estatus']) {
                     $nuevo = ['nombre' => $modulo->get_nombre()];
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_MODULOS, '', null, $anterior, $nuevo);
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_MODULOS, null, $anterior, $nuevo);
                 }
                 break;
 
@@ -57,7 +57,7 @@ if (isset($_POST["operacion"])) {
 
                 $respuesta = $modulo->realizar_consulta('eliminar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_MODULOS, '', null, $anterior, null);
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_MODULOS, null, $anterior, null);
                 }
                 break;
 

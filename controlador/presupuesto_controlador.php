@@ -25,7 +25,7 @@ if (isset($_POST["operacion"])) {
             case 'consulta':
                 $respuesta = $presupuesto->realizar_consulta('consultar_general');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(CONSULTAR, GESTIONAR_PRESUPUESTO, 'Consulta general de presupuestos');
+                    Bitacora::registrar(CONSULTAR, GESTIONAR_PRESUPUESTO);
                 }
                 break;
 
@@ -69,7 +69,7 @@ if (isset($_POST["operacion"])) {
                         'observacion'    => $presupuesto->get_observacion(),
                         'cant_detalles'  => count($datos['detalles'])
                     ];
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_PRESUPUESTO, '', null, null, $nuevos);
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_PRESUPUESTO, null, null, $nuevos);
                 }
                 break;
 
@@ -103,7 +103,7 @@ if (isset($_POST["operacion"])) {
                         'observacion'   => $presupuesto->get_observacion(),
                         'cant_detalles' => count($datos['detalles'])
                     ];
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_PRESUPUESTO, '', null, $anteriorResumen, $nuevo);
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_PRESUPUESTO, null, $anteriorResumen, $nuevo);
                 }
                 break;
 
@@ -116,7 +116,7 @@ if (isset($_POST["operacion"])) {
 
                 $respuesta = $presupuesto->realizar_consulta('eliminar_presupuesto');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_PRESUPUESTO, '', null, $anterior, null);
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_PRESUPUESTO, null, $anterior, null);
                 }
                 break;
 

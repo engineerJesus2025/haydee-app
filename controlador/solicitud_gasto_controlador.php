@@ -34,7 +34,7 @@ if (isset($_POST["operacion"])) {
             case 'consulta':
                 $respuesta = $solicitud->realizar_consulta('consultar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(CONSULTAR, GESTIONAR_SOLICITUD_GASTO, 'Consulta general de solicitudes');
+                    Bitacora::registrar(CONSULTAR, GESTIONAR_SOLICITUD_GASTO);
                 }
                 break;
 
@@ -72,7 +72,7 @@ if (isset($_POST["operacion"])) {
                         'prioridad' => $solicitud->get_prioridad(),
                         'presupuesto_id' => $solicitud->get_presupuesto_id()
                     ];
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_SOLICITUD_GASTO, '', null, null, $nuevos);
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_SOLICITUD_GASTO, null, null, $nuevos);
                 }
                 break;
 
@@ -98,7 +98,7 @@ if (isset($_POST["operacion"])) {
                         'prioridad' => $solicitud->get_prioridad(),
                         'presupuesto_id' => $solicitud->get_presupuesto_id()
                     ];
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_SOLICITUD_GASTO, '', null, $anterior, $nuevo);
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_SOLICITUD_GASTO, null, $anterior, $nuevo);
                 }
                 break;
 
@@ -114,7 +114,7 @@ if (isset($_POST["operacion"])) {
 
                 $respuesta = $solicitud->realizar_consulta('eliminar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_SOLICITUD_GASTO, '', null, $anterior, null);
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_SOLICITUD_GASTO, null, $anterior, null);
                 }
                 break;
 

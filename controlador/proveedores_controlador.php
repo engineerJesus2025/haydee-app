@@ -26,7 +26,7 @@ if (isset($_POST["operacion"])) {
             case 'consulta':
                 $respuesta = $proveedor->realizar_consulta('consultar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(CONSULTAR, GESTIONAR_PROVEEDORES, 'Consulta general de proveedores');
+                    Bitacora::registrar(CONSULTAR, GESTIONAR_PROVEEDORES);
                 }
                 break;
 
@@ -44,7 +44,7 @@ if (isset($_POST["operacion"])) {
                         'rif' => $proveedor->get_rif(),
                         'direccion' => $proveedor->get_direccion()
                     ];
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_PROVEEDORES, '', null, null, $nuevos);
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_PROVEEDORES, null, null, $nuevos);
                 }
                 break;
 
@@ -68,7 +68,7 @@ if (isset($_POST["operacion"])) {
                         'rif' => $proveedor->get_rif(),
                         'direccion' => $proveedor->get_direccion()
                     ];
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_PROVEEDORES, '', null, $anterior, $nuevo);
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_PROVEEDORES, null, $anterior, $nuevo);
                 }
                 break;
 
@@ -86,7 +86,7 @@ if (isset($_POST["operacion"])) {
 
                 $respuesta = $proveedor->realizar_consulta('eliminar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_PROVEEDORES, '', null, $anterior, null);
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_PROVEEDORES, null, $anterior, null);
                 }
                 break;
 

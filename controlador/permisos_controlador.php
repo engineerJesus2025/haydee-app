@@ -30,7 +30,7 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $permiso->realizar_consulta('registrar');
                 if ($respuesta['estatus']) {
                     $nuevos = ['accion' => $permiso->get_accion()];
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_PERMISOS, '', null, null, $nuevos);
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_PERMISOS, null, null, $nuevos);
                 }
                 break;
 
@@ -44,7 +44,7 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $permiso->realizar_consulta('modificar');
                 if ($respuesta['estatus']) {
                     $nuevo = ['accion' => $permiso->get_accion()];
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_PERMISOS, '', null, $anterior, $nuevo);
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_PERMISOS, null, $anterior, $nuevo);
                 }
                 break;
 
@@ -57,7 +57,7 @@ if (isset($_POST["operacion"])) {
 
                 $respuesta = $permiso->realizar_consulta('eliminar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_PERMISOS, '', null, $anterior, null);
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_PERMISOS, null, $anterior, null);
                 }
                 break;
 

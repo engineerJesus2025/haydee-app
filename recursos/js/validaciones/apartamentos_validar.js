@@ -34,7 +34,7 @@ $(document).ready(function() {
 
     // Selects (gas, agua, alquilado)
     $('#gas, #agua, #alquilado').on('change', function() {
-        Validaciones.campo(this, /^[01]$/, 'Seleccione una opción válida.');
+        Validaciones.campo(this, /^[12]$/, 'Seleccione una opción válida.');
     });
 
     // ============================================
@@ -167,9 +167,9 @@ async function validarEnvioApartamento(accion) {
     const campos = [
         { input: '#nro_apartamento', regex: /^[0-9-]{1,3}$/, msg: 'Número inválido' },
         { input: '#porcentaje_participacion', regex: /^\d{1,2}(\.\d{1,2})?$/, msg: 'Porcentaje inválido' },
-        { input: '#gas', regex: /^[01]$/, msg: 'Seleccione una opción' },
-        { input: '#agua', regex: /^[01]$/, msg: 'Seleccione una opción' },
-        { input: '#alquilado', regex: /^[01]$/, msg: 'Seleccione una opción' }
+        { input: '#gas', regex: /^[12]$/, msg: 'Seleccione una opción' },
+        { input: '#agua', regex: /^[12]$/, msg: 'Seleccione una opción' },
+        { input: '#alquilado', regex: /^[12]$/, msg: 'Seleccione una opción' }
     ];
 
     for (const c of campos) {

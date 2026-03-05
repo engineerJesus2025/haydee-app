@@ -27,7 +27,7 @@ if (isset($_POST["operacion"])) {
             case 'consulta':
                 $respuesta = $banco->realizar_consulta('consultar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(CONSULTAR, GESTIONAR_BANCOS, 'Consulta general de bancos');
+                    Bitacora::registrar(CONSULTAR, GESTIONAR_BANCOS);
                 }
                 break;
 
@@ -41,7 +41,7 @@ if (isset($_POST["operacion"])) {
                         'telefono_afiliado' => $banco->get_telefono_afiliado(),
                         'rif' => $banco->get_rif()
                     ];
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_BANCOS,'',
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_BANCOS,
                         null, null, $nuevos);
                 }
                 break;
@@ -66,8 +66,7 @@ if (isset($_POST["operacion"])) {
                         'telefono_afiliado' => $banco->get_telefono_afiliado(),
                         'rif' => $banco->get_rif()
                     ];
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_BANCOS,'',
-                        null, $anterior, $nuevo);
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_BANCOS, null, $anterior, $nuevo);
                 }
                 break;
 
@@ -80,8 +79,7 @@ if (isset($_POST["operacion"])) {
 
                 $respuesta = $banco->realizar_consulta('eliminar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_BANCOS, '',
-                        null, $anterior, null);
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_BANCOS, null, $anterior, null);
                 }
                 break;
 

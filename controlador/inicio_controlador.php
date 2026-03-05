@@ -2,14 +2,16 @@
 use haydee\ayuda\Sesiones;
 use haydee\modelo\Mensualidad;
 use haydee\modelo\CarteleraVirtual;
+use haydee\modelo\Apartamento;
 use haydee\servicios\Autenticacion;
-// Verificación de sesión (sin permiso porque es la página de inicio)
+use haydee\modelo\Bitacora;
+
 Sesiones::verificarSesion();
 
 if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
-    
+
     try{
         switch ($operacion) {
             case 'consulta_inicio':
@@ -22,7 +24,26 @@ if (isset($_POST["operacion"])) {
             case 'consulta_inicio_grafico':
                 $mensualidad = new Mensualidad();
                 $respuesta = $mensualidad->realizar_consulta('consultar_estadisticas_inicio');
+                break;
 
+            case 'consultar_tarjetas_resumen':
+                $mensualidad = new Mensualidad();
+                $respuesta = $mensualidad->realizar_consulta('consultar_tarjetas_resumen');
+                break;
+
+            case 'consulta_apartamentos':
+                $apartamento = new Apartamento();
+                $respuesta = $apartamento->realizar_consulta('consultar_estado_inicio');
+                break;
+
+            case 'consulta_actividad':
+                $bitacora = new Bitacora();
+                $respuesta = $bitacora->realizar_consulta('consultar_actividad_dashboard');
+                break;
+
+            case 'consulta_widget_publicaciones':
+                $cartelera = new CarteleraVirtual();
+                $respuesta = $cartelera->consultar_widget_dashboard();
                 break;
 
             default:

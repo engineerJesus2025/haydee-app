@@ -59,7 +59,7 @@ if (isset($_POST["operacion"])) {
                         'apellido' => $usuario->get_apellido(),
                         'correo'   => $usuario->get_correo()
                     ];
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_USUARIOS, '', null, $anteriorResumen, $nuevo);
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_USUARIOS, null, $anteriorResumen, $nuevo);
                 }
                 break;
 

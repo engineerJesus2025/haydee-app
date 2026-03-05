@@ -21,7 +21,7 @@ if (isset($_POST["operacion"])) {
                 if (in_array($db, ['negocio', 'seguridad'])) {
                     $respuesta = $mantenimiento->generarCopiaSeguridad($db);
                     if ($respuesta['estatus']) {
-                        Bitacora::registrar(REGISTRAR, GESTIONAR_MANTENIMIENTO, "Copia de seguridad generada: $db");
+                        Bitacora::registrar(REGISTRAR, GESTIONAR_MANTENIMIENTO);
                     }
                 } else {
                     $respuesta = ['estatus' => false, 'mensaje' => 'Base de datos no válida'];
@@ -49,7 +49,7 @@ if (isset($_POST["operacion"])) {
                 if (in_array($db, ['negocio', 'seguridad']) && !empty($fichero)) {
                     $respuesta = $mantenimiento->importarCopiaSeguridad($db, $fichero);
                     if ($respuesta['estatus']) {
-                        Bitacora::registrar(REGISTRAR, GESTIONAR_MANTENIMIENTO, "Copia importada: $fichero en $db");
+                        Bitacora::registrar(REGISTRAR, GESTIONAR_MANTENIMIENTO);
                     }
                 } else {
                     $respuesta = ['estatus' => false, 'mensaje' => 'Parámetros inválidos'];
@@ -117,7 +117,7 @@ if (isset($_POST["operacion"])) {
 }
 
 // Bitácora de acceso al módulo (solo al cargar la vista)
-Bitacora::registrar(CONSULTAR, GESTIONAR_MANTENIMIENTO, "Acceso a módulo de mantenimiento");
+Bitacora::registrar(CONSULTAR, GESTIONAR_MANTENIMIENTO);
 
 // Cargar la vista
 require_once 'vista/mantenimiento/mantenimiento_vista.php';

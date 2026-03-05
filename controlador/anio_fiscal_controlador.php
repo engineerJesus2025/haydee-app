@@ -26,7 +26,7 @@ if (isset($_POST["operacion"])) {
             case 'consultar_anios_fiscales':
                 $respuesta = $anioFiscal->realizar_consulta('consultar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(CONSULTAR, GESTIONAR_ANIO_FISCAL, 'Consulta general de años fiscales');
+                    Bitacora::registrar(CONSULTAR, GESTIONAR_ANIO_FISCAL);
                 }
                 break;
 
@@ -39,7 +39,6 @@ if (isset($_POST["operacion"])) {
                         'descripcion'  => $anioFiscal->get_descripcion()
                     ];
                     Bitacora::registrar(REGISTRAR, GESTIONAR_ANIO_FISCAL,
-                        $anioFiscal->get_fecha_inicio() . ' - ' . $anioFiscal->get_estado(),
                         null, null, $nuevos);
                 }
                 break;
@@ -64,7 +63,6 @@ if (isset($_POST["operacion"])) {
                         'descripcion'  => $anioFiscal->get_descripcion()
                     ];
                     Bitacora::registrar(MODIFICAR, GESTIONAR_ANIO_FISCAL,
-                        $anioFiscal->get_fecha_inicio() . ' - ' . $anioFiscal->get_estado(),
                         null, $anterior, $nuevo);
                 }
                 break;
@@ -79,7 +77,6 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $anioFiscal->realizar_consulta('eliminar');
                 if ($respuesta['estatus']) {
                     Bitacora::registrar(ELIMINAR, GESTIONAR_ANIO_FISCAL,
-                        ($anterior['fecha_inicio'] ?? '') . ' - ' . ($anterior['estado'] ?? ''),
                         null, $anterior, null);
                 }
                 break;

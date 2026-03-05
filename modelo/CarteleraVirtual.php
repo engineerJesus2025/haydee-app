@@ -407,6 +407,26 @@ class CarteleraVirtual extends Conexion
         }
     }
 
+    /**
+     * Consulta rápida de las últimas 3 publicaciones para el widget del Dashboard
+     */
+    public function consultar_widget_dashboard()
+    {
+        $sql = "SELECT titulo, fecha, usuarios.nombre as nombre_usuario 
+                FROM cartelera_virtual
+                INNER JOIN usuarios ON usuarios.id_usuario = cartelera_virtual.usuario_id
+                ORDER BY prioridad ASC, fecha DESC LIMIT 3";
+        try {
+            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt->execute();
+            $datos = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            return ['estatus' => true, 'datos' => $datos];
+        } catch (\PDOException $e) {
+            error_log("Error en consultar_widget_dashboard: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al consultar publicaciones'];
+        }
+    }
+
 
 }
 ?>

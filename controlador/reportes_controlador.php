@@ -148,7 +148,7 @@ $accion = $_GET['accion'] ?? 'reportes_pdf'; // Por defecto, la vista principal 
 
 switch ($accion) {
     case 'reportes_pdf':
-        Bitacora::registrar(CONSULTAR, GESTIONAR_REPORTES, 'Acceso a reportes PDF');
+        Bitacora::registrar(CONSULTAR, GESTIONAR_REPORTES);
         require_once "vista/reportes/reportes_pdf/reportes_pdf_vista.php";
         break;
 
@@ -327,7 +327,7 @@ switch ($accion) {
         break;
 
     case 'reportes_estadisticos':
-        Bitacora::registrar(CONSULTAR, GESTIONAR_REPORTES, 'Acceso a reportes estadísticos');
+        Bitacora::registrar(CONSULTAR, GESTIONAR_REPORTES);
         require_once "vista/reportes/reportes_estadisticos/reportes_estadisticos_vista.php";
         break;
 

@@ -57,7 +57,6 @@ class Bitacora extends Conexion
                     bitacora.id_bitacora,
                     bitacora.fecha_hora,
                     bitacora.accion,
-                    bitacora.registro_alterado,
                     bitacora.valores_anteriores,
                     bitacora.valores_nuevos,
                     usuarios.nombre AS nombre_usuario,
@@ -102,7 +101,7 @@ class Bitacora extends Conexion
     }
 
     // En la clase Bitacora registrar para usarlo en cualquier modulo
-    public static function registrar($accion, $moduloId, $registroAlt = null, $usuarioId = null, $valores_anteriores = null, $valores_nuevos = null)
+    public static function registrar($accion, $moduloId, $usuarioId = null, $valores_anteriores = null, $valores_nuevos = null)
     {
         $instancia = self::getInstancia();
         $pdo = $instancia->get_conex('seguridad');
@@ -120,13 +119,12 @@ class Bitacora extends Conexion
         $anteriores_json = is_array($valores_anteriores) ? json_encode($valores_anteriores, JSON_UNESCAPED_UNICODE) : '{}';
         $nuevos_json = is_array($valores_nuevos) ? json_encode($valores_nuevos, JSON_UNESCAPED_UNICODE) : '{}';
 
-        $sql = "INSERT INTO bitacora (fecha_hora, accion, registro_alterado, usuario_id, modulo_id, valores_anteriores, valores_nuevos)
-                VALUES (NOW(), :accion, :registro_alterado, :usuario_id, :modulo_id, :anteriores, :nuevos)";
+        $sql = "INSERT INTO bitacora (fecha_hora, accion, usuario_id, modulo_id, valores_anteriores, valores_nuevos)
+                VALUES (NOW(), :accion, :usuario_id, :modulo_id, :anteriores, :nuevos)";
 
         try {
             $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':accion', $accion);
-            $stmt->bindParam(':registro_alterado', $registroAlt);
             $stmt->bindParam(':usuario_id', $usuarioId);
             $stmt->bindParam(':modulo_id', $moduloId);
             $stmt->bindParam(':anteriores', $anteriores_json);
@@ -142,5 +140,77 @@ class Bitacora extends Conexion
     public static function cerrarConexionBitacora() {
         $instancia = self::getInstancia();
         $instancia->cerrar('seguridad');
+    }
+
+    /**
+     * Consulta los últimos registros de la bitácora para el Dashboard
+     */
+    /**
+     * Consulta los últimos registros de la bitácora para el Dashboard
+     */
+    private function _consultar_actividad_dashboard()
+    {
+        $sql = "SELECT 
+                    bitacora.fecha_hora AS fecha_evento,
+                    bitacora.accion,
+                    usuarios.nombre AS nombre_usuario,
+                    modulos.nombre AS nombre_modulo
+                FROM bitacora
+                INNER JOIN usuarios ON usuarios.id_usuario = bitacora.usuario_id
+                INNER JOIN modulos ON modulos.id_modulo = bitacora.modulo_id
+                ORDER BY bitacora.fecha_hora DESC
+                LIMIT 6";
+
+        try {
+            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt->execute();
+            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Procesamos los datos para crear una descripción amigable
+            foreach ($datos as &$fila) {
+                $accion_original = strtoupper($fila['accion']);
+                $modulo_original = strtoupper($fila['nombre_modulo']);
+
+                $modulo_limpio = str_replace('GESTIONAR_', '', $modulo_original);
+                $modulo_limpio = ucwords(strtolower(str_replace('_', ' ', $modulo_limpio)));
+                
+                $fila['nombre_modulo'] = $modulo_limpio;
+
+                if (strpos($accion_original, 'REGISTRAR') !== false || strpos($accion_original, 'CREAR') !== false) {
+                    $fila['accion'] = 'Registró';
+                    $fila['descripcion'] = "Agregó un nuevo registro.";
+                } elseif (strpos($accion_original, 'MODIFICAR') !== false || strpos($accion_original, 'ACTUALIZAR') !== false) {
+                    $fila['accion'] = 'Modificó';
+                    $fila['descripcion'] = "Actualizó un registro existente.";
+                } elseif (strpos($accion_original, 'ELIMINAR') !== false || strpos($accion_original, 'ANULAR') !== false) {
+                    $fila['accion'] = 'Eliminó';
+                    $fila['descripcion'] = "Borró un registro del sistema.";
+                } elseif (strpos($accion_original, 'CONSULTAR') !== false) {
+                    $fila['accion'] = 'Consultó';
+                    $fila['descripcion'] = "Visualizó información en el módulo.";
+                } elseif (strpos($accion_original, 'INICIAR') !== false || strpos($accion_original, 'INICIO') !== false || strpos($accion_original, 'LOGIN') !== false) {
+                    $fila['accion'] = 'Inició sesión';
+                    $fila['descripcion'] = "Accedió al sistema.";
+                    $fila['nombre_modulo'] = "Sistema"; 
+                } elseif (strpos($accion_original, 'CERRAR') !== false || strpos($accion_original, 'SALIR') !== false || strpos($accion_original, 'LOGOUT') !== false) {
+                    $fila['accion'] = 'Cerró sesión';
+                    $fila['descripcion'] = "Salió del sistema de forma segura.";
+                    $fila['nombre_modulo'] = "Sistema"; 
+                } else {
+                    $fila['accion'] = ucfirst(strtolower(rtrim($accion_original, 'R')));
+                    $fila['descripcion'] = "Realizó una acción.";
+                }
+
+                // Eliminamos las columnas JSON pesadas de la respuesta
+                unset($fila['valores_anteriores']);
+                unset($fila['valores_nuevos']);
+            }
+
+            return ['estatus' => true, 'datos' => $datos];
+
+        } catch (\PDOException $e) {
+            error_log("Error en _consultar_actividad_dashboard: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al consultar la bitácora'];
+        }
     }
 }

@@ -32,9 +32,11 @@
                                             <div class="icon-box icon-box-blue">
                                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><path d="M9 22v-4h6v4"></path></svg>
                                             </div>
-                                            <div class="badge-up">↑ 80%</div>
+                                            <div class="badge-up">80%</div>
                                         </div>
-                                        <h3 class="fw-bold mb-1">8/10</h3>
+                                        <h3 class="fw-bold mb-1" id="kpi-aptos">
+                                            <div class="skeleton skeleton-text short mb-0" style="height: 28px; width: 60px;"></div>
+                                        </h3>
                                         <span class="text-muted-custom">Apartamentos Ocupados</span>
                                     </div>
                                 </div>
@@ -45,7 +47,9 @@
                                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path></svg>
                                             </div>
                                         </div>
-                                        <h3 class="fw-bold mb-1">12</h3>
+                                        <h3 class="fw-bold mb-1" id="kpi-residentes">
+                                            <div class="skeleton skeleton-text short mb-0" style="height: 28px; width: 40px;"></div>
+                                        </h3>
                                         <span class="text-muted-custom">Residentes Activos</span>
                                     </div>
                                 </div>
@@ -56,7 +60,9 @@
                                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"></rect><circle cx="12" cy="12" r="2"></circle><path d="M6 12h.01M18 12h.01"></path></svg>
                                             </div>
                                         </div>
-                                        <h3 class="fw-bold mb-1">$820</h3>
+                                        <h3 class="fw-bold mb-1" id="kpi-recaudado">
+                                            <div class="skeleton skeleton-text short mb-0" style="height: 28px; width: 80px;"></div>
+                                        </h3>
                                         <span class="text-muted-custom">Recaudado Este Periodo</span>
                                     </div>
                                 </div>
@@ -68,7 +74,9 @@
                                             </div>
                                             <div class="badge-down">↓ 7</div>
                                         </div>
-                                        <h3 class="fw-bold mb-1">7</h3>
+                                        <h3 class="fw-bold mb-1" id="kpi-pendientes">
+                                            <div class="skeleton skeleton-text short mb-0" style="height: 28px; width: 40px;"></div>
+                                        </h3>
                                         <span class="text-muted-custom">Pagos Pendientes / Vencidos</span>
                                     </div>
                                 </div>
@@ -89,10 +97,10 @@
                                         
                                         <div class="card-text placeholder-glow d-none" id="esqueleto_titulo_2"><span class="placeholder w-100 rounded"></span></div>
                                         
-                                        <div class="card-text placeholder-glow my-3" id="esqueleto_canva_2">
-                                            <span class="placeholder w-100 rounded" style="height: 250px; display:block;"></span>
+                                        <div class="card-text skeleton my-3" id="esqueleto_canva_2">
+                                            <span class="skeleton w-100 rounded" style="height: 250px; display:block;"></span>
                                         </div>
-                                        <div class="chart-container mx-auto">
+                                        <div class="chart-container mx-auto" style="height: 0">
                                             <canvas id="canva_2" hidden></canvas>
                                         </div>
                                         <div class="alert alert-warning text-center mx-auto mt-3" role="alert" id="div_alert_2" hidden style="width:fit-content;">No hay Datos para el gráfico</div>
@@ -123,10 +131,10 @@
                                         
                                         <div class="card-text placeholder-glow d-none" id="esqueleto_titulo_1"><span class="placeholder w-100 rounded"></span></div>
                                         
-                                        <div class="card-text placeholder-glow my-2" id="esqueleto_canva_1">
-                                            <span class="placeholder w-100 rounded" style="height: 250px; display:block;"></span>
+                                        <div class="card-text placeholder-glow my-3" id="esqueleto_canva_1">
+                                            <span class="skeleton w-100 rounded" style="height: 250px; display:block;"></span>
                                         </div>
-                                        <div class="chart-container mx-auto">
+                                        <div class="chart-container mx-auto" style="height: 0">
                                             <canvas id="canva_1" hidden></canvas>
                                         </div>
                                         <div class="alert alert-warning text-center mx-auto mt-3" role="alert" id="div_alert_1" hidden style="width:fit-content;">No hay Datos para el gráfico</div>
@@ -164,16 +172,14 @@
                                 </div>
 
                                 <div class="apartamentos-grid mt-2">
-                                    <div class="apt-badge apt-ocupado"><span>1-A</span><span class="apt-text-small">OCUPADO</span></div>
-                                    <div class="apt-badge apt-ocupado"><span>1-B</span><span class="apt-text-small">OCUPADO</span></div>
-                                    <div class="apt-badge apt-ocupado"><span>2-A</span><span class="apt-text-small">OCUPADO</span></div>
-                                    <div class="apt-badge apt-ocupado"><span>2-B</span><span class="apt-text-small">OCUPADO</span></div>
-                                    <div class="apt-badge apt-ocupado"><span>3-A</span><span class="apt-text-small">OCUPADO</span></div>
-                                    <div class="apt-badge apt-ocupado"><span>3-B</span><span class="apt-text-small">OCUPADO</span></div>
-                                    <div class="apt-badge apt-ocupado"><span>4-A</span><span class="apt-text-small">OCUPADO</span></div>
-                                    <div class="apt-badge apt-ocupado"><span>4-B</span><span class="apt-text-small">OCUPADO</span></div>
-                                    <div class="apt-badge apt-libre"><span>5-A</span><span class="apt-text-small">LIBRE</span></div>
-                                    <div class="apt-badge apt-mantenimiento"><span>5-B</span><span class="apt-text-small">MANT.</span></div>
+                                    <div class="skeleton skeleton-badge"></div>
+                                    <div class="skeleton skeleton-badge"></div>
+                                    <div class="skeleton skeleton-badge"></div>
+                                    <div class="skeleton skeleton-badge"></div>
+                                    <div class="skeleton skeleton-badge"></div>
+                                    <div class="skeleton skeleton-badge"></div>
+                                    <div class="skeleton skeleton-badge"></div>
+                                    <div class="skeleton skeleton-badge"></div>
                                 </div>
                             </div>
                         </div>
@@ -187,36 +193,31 @@
                                                 <svg class="text-primary me-2" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#3b82f6;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                                                 <h5 class="fw-bold mb-0">Actividad Reciente</h5>
                                             </div>
-                                            <button class="btn btn-outline-secondary btn-sm rounded-pill px-3">Ver todo</button>
+                                            <a href="?pagina=bitacora&accion=inicio">
+                                                <button class="btn btn-outline-secondary btn-sm rounded-pill px-3" >Ver todo</button>
+                                            </a>
                                         </div>
 
-                                        <div>
+                                        <div id="contenedor-actividad">
                                             <div class="d-flex align-items-start mb-3 pb-3 border-bottom">
-                                                <div class="activity-icon icon-box-green"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-                                                <div>
-                                                    <div class="mb-1"><span class="fw-bold text-dark">Carlos Martinez</span> <span class="text-muted">pago la mensualidad de Enero - Apto 1-A</span></div>
-                                                    <div class="text-muted-custom">Hace 2 días</div>
+                                                <div class="skeleton skeleton-avatar me-3"></div>
+                                                <div class="w-100 mt-1">
+                                                    <div class="skeleton skeleton-text"></div>
+                                                    <div class="skeleton skeleton-text short"></div>
                                                 </div>
                                             </div>
                                             <div class="d-flex align-items-start mb-3 pb-3 border-bottom">
-                                                <div class="activity-icon icon-box-red"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg></div>
-                                                <div>
-                                                    <div class="mb-1"><span class="text-muted">Gasto registrado:</span> <span class="fw-bold text-dark">Servicio de limpieza</span> <span class="text-muted">- $250</span></div>
-                                                    <div class="text-muted-custom">Hace 3 días</div>
+                                                <div class="skeleton skeleton-avatar me-3"></div>
+                                                <div class="w-100 mt-1">
+                                                    <div class="skeleton skeleton-text"></div>
+                                                    <div class="skeleton skeleton-text short"></div>
                                                 </div>
                                             </div>
                                             <div class="d-flex align-items-start mb-3 pb-3 border-bottom">
-                                                <div class="activity-icon icon-box-blue"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></div>
-                                                <div>
-                                                    <div class="mb-1"><span class="text-muted">Nueva publicacion:</span> <span class="fw-bold text-dark">Reunion de Copropietarios</span></div>
-                                                    <div class="text-muted-custom">Hace 4 días</div>
-                                                </div>
-                                            </div>
-                                            <div class="d-flex align-items-start">
-                                                <div class="activity-icon icon-box-green"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-                                                <div>
-                                                    <div class="mb-1"><span class="fw-bold text-dark">Sofia Torres</span> <span class="text-muted">pago la mensualidad de Enero - Apto 3-B</span></div>
-                                                    <div class="text-muted-custom">Hace 5 días</div>
+                                                <div class="skeleton skeleton-avatar me-3"></div>
+                                                <div class="w-100 mt-1">
+                                                    <div class="skeleton skeleton-text"></div>
+                                                    <div class="skeleton skeleton-text short"></div>
                                                 </div>
                                             </div>
                                         </div>
@@ -232,34 +233,18 @@
                                             </div>
                                         </div>
 
-                                        <div class="d-flex flex-column gap-3">
+                                        <div class="d-flex flex-column gap-3" id="contenedor-widget-publicaciones">
+                                            <?php for($i=0; $i<3; $i++) { ?>
                                             <div class="card publi-item bg-light border-0 p-3 rounded-4">
                                                 <div class="d-flex align-items-start">
-                                                    <div class="activity-icon icon-box-blue me-3" style="width: 32px; height: 32px; font-size: 0.8rem;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></div>
-                                                    <div>
-                                                        <h6 class="fw-bold mb-1 text-dark">Reunion de Copropietarios - Marzo 2026</h6>
-                                                        <div class="text-muted-custom">Admin Condominio - 13 feb</div>
+                                                    <div class="skeleton skeleton-avatar me-3" style="width: 32px; height: 32px;"></div>
+                                                    <div class="w-100 mt-1">
+                                                        <div class="skeleton skeleton-text"></div>
+                                                        <div class="skeleton skeleton-text short"></div>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="card publi-item bg-light border-0 p-3 rounded-4">
-                                                <div class="d-flex align-items-start">
-                                                    <div class="activity-icon icon-box-blue me-3" style="width: 32px; height: 32px; font-size: 0.8rem;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></div>
-                                                    <div>
-                                                        <h6 class="fw-bold mb-1 text-dark">Mantenimiento del Ascensor Programado</h6>
-                                                        <div class="text-muted-custom">Admin Condominio - 11 feb</div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="card publi-item bg-light border-0 p-3 rounded-4">
-                                                <div class="d-flex align-items-start">
-                                                    <div class="activity-icon icon-box-blue me-3" style="width: 32px; height: 32px; font-size: 0.8rem;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></div>
-                                                    <div>
-                                                        <h6 class="fw-bold mb-1 text-dark">Torneo de Domino este Sabado</h6>
-                                                        <div class="text-muted-custom">Carlos Martinez - 9 feb</div>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            <?php } ?>
                                         </div>
                                     </div>
                                 </div>

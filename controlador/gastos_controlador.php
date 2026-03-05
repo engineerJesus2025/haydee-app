@@ -46,7 +46,7 @@ if (isset($_POST["operacion"])) {
             case 'consulta':
                 $respuesta = $gastos->realizar_consulta('consultar_gastos');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(CONSULTAR, GESTIONAR_GASTOS, 'Consulta general de gastos');
+                    Bitacora::registrar(CONSULTAR, GESTIONAR_GASTOS);
                 }
                 break;
 
@@ -82,7 +82,7 @@ if (isset($_POST["operacion"])) {
                         'cantidad_detalles'  => count($detalles),
                         'monto_total'        => array_sum(array_column($detalles, 'monto'))
                     ];
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_GASTOS, '', null, null, $nuevos);
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_GASTOS, null, null, $nuevos);
                 }
                 break;
 
@@ -121,7 +121,7 @@ if (isset($_POST["operacion"])) {
                         'cantidad_detalles'  => count($detalles),
                         'monto_total'        => array_sum(array_column($detalles, 'monto'))
                     ];
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_GASTOS, '', null, $anteriorResumen, $nuevo);
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_GASTOS, null, $anteriorResumen, $nuevo);
                 }
                 break;
 
@@ -144,7 +144,7 @@ if (isset($_POST["operacion"])) {
 
                 $respuesta = $gastos->realizar_consulta('eliminar_gasto');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_GASTOS, '', null, $anteriorResumen, null);
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_GASTOS, null, $anteriorResumen, null);
                 }
                 break;
 

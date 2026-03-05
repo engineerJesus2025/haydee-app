@@ -27,7 +27,7 @@ if (isset($_POST["operacion"])) {
             case 'consultar_cajas_chicas':
                 $respuesta = $caja->realizar_consulta('consultar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(CONSULTAR, GESTIONAR_CAJA_CHICA, 'Consulta general de cajas');
+                    Bitacora::registrar(CONSULTAR, GESTIONAR_CAJA_CHICA);
                     
                 }
                 break;
@@ -42,16 +42,14 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $caja->realizar_consulta('modificar_descripcion');
                 if ($respuesta['estatus']) {
                     $nuevo = ['descripcion' => $caja->get_descripcion()];
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_CAJA_CHICA,
-                        "Actualizó descripción caja ID: " . $caja->get_id_caja_chica(),
-                        null, $anterior, $nuevo);
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_CAJA_CHICA, null, $anterior, $nuevo);
                 }
                 break;
 
             case 'verificar_caja_mes':
                 $respuesta = $caja->realizar_consulta('verificar_caja_mes');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_CAJA_CHICA, 'Cierre/Apertura mensual automático');
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_CAJA_CHICA);
                 }
                 break;
 
@@ -62,9 +60,7 @@ if (isset($_POST["operacion"])) {
                         'id_caja' => $caja->get_id_caja_chica(),
                         'monto'   => $caja->get_monto_movimiento()
                     ];
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_CAJA_CHICA,
-                        "Reposición de caja ID: " . $caja->get_id_caja_chica() . " por " . $caja->get_monto_movimiento(),
-                        null, null, $nuevos);
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_CAJA_CHICA, null, null, $nuevos);
                 }
                 break;
 
@@ -85,9 +81,7 @@ if (isset($_POST["operacion"])) {
                         'monto'    => $caja->get_monto_movimiento(),
                         'fecha'    => $caja->get_fecha_movimiento()
                     ];
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_CAJA_CHICA, 
-                        "Nuevo Gasto: " . $caja->get_concepto() . " (" . $caja->get_monto_movimiento() . ")",
-                        null, null, $nuevos);
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_CAJA_CHICA, null, null, $nuevos);
                 }
                 break;
 
@@ -106,9 +100,7 @@ if (isset($_POST["operacion"])) {
                         'fecha'    => $caja->get_fecha_movimiento()
                         // Nota: el método _modificar_movimiento no modifica monto, por eso no se incluye
                     ];
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_CAJA_CHICA,
-                        "Editó movimiento ID: " . $caja->get_id_movimiento_caja(),
-                        null, $anterior, $nuevo);
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_CAJA_CHICA, null, $anterior, $nuevo);
                 }
                 break;
 
@@ -121,9 +113,7 @@ if (isset($_POST["operacion"])) {
 
                 $respuesta = $caja->realizar_consulta('eliminar_movimiento');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_CAJA_CHICA,
-                        "Anulación Gasto ID: " . $caja->get_id_movimiento_caja(),
-                        null, $anterior, null);
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_CAJA_CHICA, null, $anterior, null);
                 }
                 break;
 

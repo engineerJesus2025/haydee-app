@@ -805,5 +805,43 @@ class Mensualidad extends Conexion
             ]
         ];
     }
+
+    /**
+     * Consulta los 4 KPIs principales para las tarjetas del Dashboard.
+     */
+    private function _consultar_tarjetas_resumen()
+    {
+        $sql = "SELECT 
+                    (SELECT COUNT(*) FROM apartamentos WHERE activo = 1) AS total_apartamentos,
+                    
+                    (SELECT COUNT(DISTINCT ha.apartamento_id) 
+                     FROM habitantes_apartamentos ha 
+                     JOIN habitantes h ON ha.habitante_id = h.id_habitante 
+                     WHERE h.activo = 1) AS apartamentos_ocupados,
+                     
+                    (SELECT COUNT(*) FROM habitantes WHERE activo = 1) AS residentes_activos,
+                    
+                    (SELECT COALESCE(SUM(dp.monto), 0) 
+                     FROM detalles_pagos dp 
+                     JOIN pagos p ON dp.pago_id = p.id_pago 
+                     WHERE p.activo = 1 
+                       AND MONTH(dp.fecha) = MONTH(CURDATE()) 
+                       AND YEAR(dp.fecha) = YEAR(CURDATE())) AS recaudado_mes,
+                       
+                    (SELECT COUNT(*) 
+                     FROM vw_estado_cuentas_mensualidad 
+                     WHERE estado_pago = 'Pendiente') AS recibos_pendientes";
+                     
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->execute();
+            $datos = $stmt->fetch(PDO::FETCH_ASSOC);
+            return ['estatus' => true, 'datos' => $datos];
+        } catch (PDOException $e) {
+            error_log("Error en _consultar_kpis_inicio: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al consultar los KPIs del inicio'];
+        }
+    }
+
 }
 ?>

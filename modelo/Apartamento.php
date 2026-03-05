@@ -613,5 +613,35 @@ class Apartamento extends Conexion
         }
     }
 
+    /**
+     * Consulta el estado actual de los apartamentos para el Dashboard (Ocupado o Libre).
+     */
+    private function _consultar_estado_inicio()
+    {
+        // Usamos una subconsulta rápida para saber si hay habitantes activos vinculados a este apartamento
+        $sql = "SELECT 
+                    a.nro_apartamento,
+                    CASE 
+                        WHEN (SELECT COUNT(*) 
+                              FROM habitantes_apartamentos ha 
+                              JOIN habitantes h ON ha.habitante_id = h.id_habitante 
+                              WHERE ha.apartamento_id = a.id_apartamento AND h.activo = 1) > 0 
+                        THEN 'Ocupado'
+                        ELSE 'Libre'
+                    END as estado
+                FROM apartamentos a
+                WHERE a.activo = 1
+                ORDER BY a.nro_apartamento ASC";
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->execute();
+            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return ['estatus' => true, 'datos' => $datos];
+        } catch (PDOException $e) {
+            error_log("Error en _consultar_estado_inicio: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al consultar el estado de los apartamentos'];
+        }
+    }
+
 }
 ?>

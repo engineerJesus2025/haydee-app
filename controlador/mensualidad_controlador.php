@@ -37,7 +37,7 @@ if (isset($_POST["operacion"])) {
             case 'consultar_mensualidades_mes':
                 $respuesta = $mensualidad->realizar_consulta('consultarPorMeses');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(CONSULTAR, GESTIONAR_MENSUALIDAD, 'Consulta de mensualidades por mes');
+                    Bitacora::registrar(CONSULTAR, GESTIONAR_MENSUALIDAD);
                 }
                 break;
 
@@ -86,8 +86,7 @@ if (isset($_POST["operacion"])) {
 
                 $respuesta = $mensualidad->realizar_consulta('registrar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_MENSUALIDAD,
-                        "Registro masivo de mensualidades para periodo {$_POST['mes']}/{$_POST['anio']}");
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_MENSUALIDAD);
                 }
                 break;
 
@@ -100,8 +99,7 @@ if (isset($_POST["operacion"])) {
 
                 $respuesta = $mensualidad->realizar_consulta('modificar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_MENSUALIDAD,
-                        "Edición masiva de mensualidades para periodo {$_POST['mes']}/{$_POST['anio']}");
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_MENSUALIDAD);
                 }
                 break;
 
@@ -115,8 +113,7 @@ if (isset($_POST["operacion"])) {
                 $mensualidad->set_anio($anio);
                 $respuesta = $mensualidad->realizar_consulta('eliminar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_MENSUALIDAD,
-                        "Mensualidades del mes $mes del $anio eliminadas");
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_MENSUALIDAD);
                 }
                 break;
 

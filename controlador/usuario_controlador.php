@@ -33,7 +33,7 @@ if (isset($_POST["operacion"])) {
             case 'consulta':
                 $respuesta = $usuario->realizar_consulta('consultar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(CONSULTAR, GESTIONAR_USUARIOS, 'Consulta general de usuarios');
+                    Bitacora::registrar(CONSULTAR, GESTIONAR_USUARIOS);
                 }
                 break;
 
@@ -50,7 +50,7 @@ if (isset($_POST["operacion"])) {
                         'correo' => $usuario->get_correo(),
                         'rol_id' => $usuario->get_rol_id()
                     ];
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_USUARIOS, '', null, null, $nuevos);
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_USUARIOS, null, null, $nuevos);
                 }
                 break;
 
@@ -74,7 +74,7 @@ if (isset($_POST["operacion"])) {
                         'correo' => $usuario->get_correo(),
                         'rol_id' => $usuario->get_rol_id()
                     ];
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_USUARIOS, '', null, $anterior, $nuevo);
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_USUARIOS, null, $anterior, $nuevo);
                 }
                 break;
 
@@ -92,7 +92,7 @@ if (isset($_POST["operacion"])) {
 
                 $respuesta = $usuario->realizar_consulta('eliminar_usuario');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_USUARIOS, '', null, $anterior, null);
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_USUARIOS, null, $anterior, null);
                 }
                 break;
 

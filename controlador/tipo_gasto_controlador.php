@@ -22,7 +22,7 @@ if (isset($_POST["operacion"])) {
             case 'consulta':
                 $respuesta = $tipoGasto->realizar_consulta('consultar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(CONSULTAR, GESTIONAR_TIPO_GASTO, 'Consulta general de tipos de gasto');
+                    Bitacora::registrar(CONSULTAR, GESTIONAR_TIPO_GASTO);
                 }
                 break;
 
@@ -30,7 +30,7 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $tipoGasto->realizar_consulta('registrar');
                 if ($respuesta['estatus']) {
                     $nuevos = ['nombre_tipo_gasto' => $tipoGasto->get_nombre_tipo_gasto()];
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_TIPO_GASTO, '', null, null, $nuevos);
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_TIPO_GASTO, null, null, $nuevos);
                 }
                 break;
 
@@ -48,7 +48,7 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $tipoGasto->realizar_consulta('modificar');
                 if ($respuesta['estatus']) {
                     $nuevo = ['nombre_tipo_gasto' => $tipoGasto->get_nombre_tipo_gasto()];
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_TIPO_GASTO, '', null, $anterior, $nuevo);
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_TIPO_GASTO, null, $anterior, $nuevo);
                 }
                 break;
 
@@ -61,7 +61,7 @@ if (isset($_POST["operacion"])) {
 
                 $respuesta = $tipoGasto->realizar_consulta('eliminar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_TIPO_GASTO, '', null, $anterior, null);
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_TIPO_GASTO, null, $anterior, null);
                 }
                 break;
 
