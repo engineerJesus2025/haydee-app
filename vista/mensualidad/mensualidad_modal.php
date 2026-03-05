@@ -1,5 +1,6 @@
 <div class="row">
 	<div class="col-sm-5">
+		<label for="mes_select_asignar">Mes seleccionado: <spam class="text-danger">*</spam></label>
 		<select class="form-select" id="mes_select_asignar">
 			<option hidden selected="" value="">Seleccione el mes para asignar</option>
 		</select>
@@ -30,7 +31,7 @@
 </div>
 <div class="row">
 	<div class="col-md-6">
-        <label for="porcentaje_demora">Porcentaje por demora de pago:</label>
+        <label for="porcentaje_demora">Porcentaje por demora de pago: <spam class="text-danger">*</spam></label>
         <div class="input-group mb-3">
             <span class="input-group-text" id="basic-addon1"><i class="bi bi-123"></i></span>
             <input type="number" class="form-control porcentaje_demora" name="porcentaje_demora" id="porcentaje_demora" placeholder="Porcentaje" aria-label="porcentaje_demora" aria-describedby="basic-addon1"  maxlength="3" value="10">
@@ -38,7 +39,7 @@
         </div>
 	</div>
 	<div class="col-md-6">
-        <label for="dia_limite">Día limite de pago de mensualidad:</label>
+        <label for="dia_limite">Día limite de pago de mensualidad: <spam class="text-danger">*</spam></label>
         <div class="input-group mb-3">
             <span class="input-group-text" id="basic-addon1"><i class="bi bi-123"></i></span>
             <input type="number" class="form-control dia_limite" name="dia_limite" id="dia_limite" placeholder="Porcentaje" aria-label="dia_limite" aria-describedby="basic-addon1"  maxlength="3" value="15">

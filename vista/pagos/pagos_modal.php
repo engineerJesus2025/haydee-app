@@ -1,7 +1,7 @@
 <form id="form_pagos" name="form_pagos">
     <div class="row m-3">
         <div class="col-lg-4 mb-3">
-            <label class="form-label fw-bold" for="apartamento_id">Apartamento</label>
+            <label class="form-label fw-bold" for="apartamento_id">Apartamento <spam class="text-danger">*</spam></label>
             <div class="input-group has-validation">
                 <span class="border border-primary input-group-text"><i class="bi bi-building"></i></span>
                 <select class="border border-dark form-select" id="apartamento_id" name="apartamento_id">
@@ -16,7 +16,7 @@
             </div>
         </div>
         <div class="col-lg-5 mb-3">
-            <label class="form-label fw-bold" for="mensualidad_id">Mensualidad a Pagar</label>
+            <label class="form-label fw-bold" for="mensualidad_id">Mensualidad a Pagar <spam class="text-danger">*</spam></label>
             <div class="input-group has-validation">
                 <span class="border border-primary input-group-text"><i class="bi bi-bank2"></i></span>
                 <select class="border border-dark form-select" id="mensualidad_id" name="mensualidad_id" disabled>
@@ -26,7 +26,7 @@
             </div>
         </div>
         <div class="col-lg-3 mb-3">
-            <label class="form-label fw-bold" for="monto_mensualidad">Deuda Total</label>
+            <label class="form-label fw-bold" for="monto_mensualidad">Deuda Total <spam class="text-danger">*</spam></label>
             <div class="input-group">
                 <span class="border border-primary input-group-text"><i class="bi bi-cash-coin"></i></span>
                 <input type="text" class="border border-dark form-control bg-white" id="monto_mensualidad" placeholder="0.00" readonly>
@@ -42,7 +42,7 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col-lg-3 col-md-6 mb-3">
-                        <label class="form-label">Fecha de Transacción</label>
+                        <label class="form-label">Fecha de Transacción <spam class="text-danger">*</spam></label>
                         <div class="input-group has-validation">
                             <span class="border border-primary input-group-text"><i class="bi bi-calendar-date"></i></span>
                             <input type="date" class="border border-dark form-control fecha_admin">
@@ -50,7 +50,7 @@
                         </div>
                     </div>
                     <div class="col-lg-3 col-md-6 mb-3">
-                        <label class="form-label">Método de Pago</label>
+                        <label class="form-label">Método de Pago <spam class="text-danger">*</spam></label>
                         <div class="input-group has-validation">
                             <span class="border border-primary input-group-text"><i class="bi bi-credit-card-fill"></i></span>
                             <select class="border border-dark form-select tipo_pago_admin">
@@ -63,7 +63,7 @@
                         </div>
                     </div>
                     <div class="col-lg-2 col-md-4 mb-3 campo-monto d-none">
-                        <label class="form-label">Monto (Bs)</label>
+                        <label class="form-label">Monto (Bs) <spam class="text-danger">*</spam></label>
                         <div class="input-group has-validation">
                             <span class="border border-primary input-group-text">Bs</span>
                             <input type="text" class="border border-dark form-control monto" placeholder="0.00">
@@ -71,7 +71,7 @@
                         </div>
                     </div>
                     <div class="col-lg-2 col-md-4 mb-3">
-                        <label class="form-label">Tasa BCV</label>
+                        <label class="form-label">Tasa BCV <spam class="text-danger">*</spam></label>
                         <div class="input-group has-validation">
                             <span class="border border-primary input-group-text">Bs/$</span>
                             <input type="text" class="border border-dark form-control tasa_dolar" placeholder="0.00">
@@ -79,7 +79,7 @@
                         </div>
                     </div>
                     <div class="col-lg-2 col-md-4 mb-3">
-                        <label class="form-label">Equivalente ($)</label>
+                        <label class="form-label">Equivalente ($) <spam class="text-danger">*</spam></label>
                         <div class="input-group has-validation">
                             <span class="border border-primary input-group-text">$</span>
                             <input type="text" class="border border-dark form-control monto_dolar bg-light" placeholder="0.00" readonly>
@@ -89,7 +89,7 @@
                 </div>
                 <div class="row campos-bancarios d-none">
                     <div class="col-lg-3 col-md-6 mb-3">
-                        <label class="form-label">Nro. Referencia</label>
+                        <label class="form-label">Nro. Referencia <spam class="text-danger">*</spam></label>
                         <div class="input-group has-validation">
                             <span class="border border-primary input-group-text"><i class="bi bi-123"></i></span>
                             <input type="text" class="border border-dark form-control referencia" placeholder="Últimos 4-6 dígitos">
@@ -97,7 +97,7 @@
                         </div>
                     </div>
                     <div class="col-lg-4 col-md-6 mb-3">
-                        <label class="form-label">Banco Emisor</label>
+                        <label class="form-label">Banco Emisor <spam class="text-danger">*</spam></label>
                         <div class="input-group has-validation">
                             <span class="border border-primary input-group-text"><i class="bi bi-bank"></i></span>
                             <select class="border border-dark form-select banco_admin">
@@ -110,7 +110,7 @@
                         </div>
                     </div>
                     <div class="col-lg-5 mb-3">
-                        <label class="form-label">Comprobante (Capture)</label>
+                        <label class="form-label">Comprobante (Capture) <spam class="text-danger">*</spam></label>
                         <div class="input-group has-validation">
                             <span class="border border-primary input-group-text"><i class="bi bi-image-fill"></i></span>
                             <input type="file" class="border border-dark form-control imagen" accept=".jpg, .jpeg, .png">
@@ -133,7 +133,7 @@
     <div class="row m-3">
         <?php if (!$esPropietario): ?>
             <div class="col-lg-4 mb-3">
-                <label class="form-label fw-bold" for="estado">Estado de Verificación</label>
+                <label class="form-label fw-bold" for="estado">Estado de Verificación <spam class="text-danger">*</spam></label>
                 <div class="input-group has-validation">
                     <span class="border border-primary input-group-text"><i class="bi bi-check-circle-fill"></i></span>
                     <select class="border border-dark form-select" id="estado" name="estado">
@@ -147,7 +147,7 @@
         <?php endif; ?>
         
         <div class="<?php echo $esPropietario ? 'col-lg-12' : 'col-lg-8'; ?> mb-3">
-            <label class="form-label fw-bold" for="observacion">Nota / Observación (Opcional)</label>
+            <label class="form-label fw-bold" for="observacion">Nota / Observación <spam class="text-danger">*</spam></label>
             <div class="input-group has-validation">
                 <span class="border border-primary input-group-text"><i class="bi bi-info-circle-fill"></i></span>
                 <input type="text" class="border border-dark form-control" id="observacion" placeholder="Ej: Pago de la mitad de la deuda...">
@@ -171,7 +171,7 @@
         <div class="card-body">
             <div class="row">
                 <div class="col-lg-3 col-md-6 mb-3">
-                    <label class="form-label">Fecha</label>
+                    <label class="form-label">Fecha de Transacción <spam class="text-danger">*</spam></label>
                     <div class="input-group has-validation">
                         <span class="border border-primary input-group-text"><i class="bi bi-calendar-date"></i></span>
                         <input type="date" class="border border-dark form-control fecha_admin">
@@ -179,7 +179,7 @@
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-6 mb-3">
-                    <label class="form-label">Método</label>
+                    <label class="form-label">Método de Pago <spam class="text-danger">*</spam></label>
                     <div class="input-group has-validation">
                         <span class="border border-primary input-group-text"><i class="bi bi-credit-card-fill"></i></span>
                         <select class="border border-dark form-select tipo_pago_admin">
@@ -192,7 +192,7 @@
                     </div>
                 </div>
                 <div class="col-lg-2 col-md-4 mb-3 campo-monto d-none">
-                    <label class="form-label">Monto (Bs)</label>
+                    <label class="form-label">Monto (Bs) <spam class="text-danger">*</spam></label>
                     <div class="input-group has-validation">
                         <span class="border border-primary input-group-text">Bs</span>
                         <input type="text" class="border border-dark form-control monto" placeholder="0.00">
@@ -200,7 +200,7 @@
                     </div>
                 </div>
                 <div class="col-lg-2 col-md-4 mb-3">
-                    <label class="form-label">Tasa</label>
+                    <label class="form-label">Tasa BCV <spam class="text-danger">*</spam></label>
                     <div class="input-group has-validation">
                         <span class="border border-primary input-group-text">Bs/$</span>
                         <input type="text" class="border border-dark form-control tasa_dolar" placeholder="0.00">
@@ -208,7 +208,7 @@
                     </div>
                 </div>
                 <div class="col-lg-2 col-md-4 mb-3">
-                    <label class="form-label">Dólares</label>
+                    <label class="form-label">Equivalente ($) <spam class="text-danger">*</spam></label>
                     <div class="input-group has-validation">
                         <span class="border border-primary input-group-text">$</span>
                         <input type="text" class="border border-dark form-control monto_dolar bg-light" placeholder="0.00" readonly>
@@ -218,7 +218,7 @@
             </div>
             <div class="row campos-bancarios d-none">
                 <div class="col-lg-3 col-md-6 mb-3">
-                    <label class="form-label">Referencia</label>
+                    <label class="form-label">Nro. Referencia <spam class="text-danger">*</spam></label>
                     <div class="input-group has-validation">
                         <span class="border border-primary input-group-text"><i class="bi bi-123"></i></span>
                         <input type="text" class="border border-dark form-control referencia" placeholder="Nro de recibo">
@@ -226,7 +226,7 @@
                     </div>
                 </div>
                 <div class="col-lg-4 col-md-6 mb-3">
-                    <label class="form-label">Banco</label>
+                    <label class="form-label">Banco <spam class="text-danger">*</spam></label>
                     <div class="input-group has-validation">
                         <span class="border border-primary input-group-text"><i class="bi bi-bank"></i></span>
                         <select class="border border-dark form-select banco_admin">
@@ -239,7 +239,7 @@
                     </div>
                 </div>
                 <div class="col-lg-5 mb-3">
-                    <label class="form-label">Capture (Opcional si edita)</label>
+                    <label class="form-label">Comprobante (Capture) <spam class="text-danger">*</spam></label>
                     <div class="input-group has-validation">
                         <span class="border border-primary input-group-text"><i class="bi bi-image-fill"></i></span>
                         <input type="file" class="border border-dark form-control imagen" accept=".jpg, .jpeg, .png">

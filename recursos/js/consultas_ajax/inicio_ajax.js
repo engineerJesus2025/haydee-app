@@ -49,77 +49,131 @@ async function cargarGraficos() {
     let datos_consulta = new FormData();
     datos_consulta.append("operacion", "consulta_inicio_grafico");
 
-    // USAMOS EL HELPER AQUI
-    let respuesta = await Utilidades.query(datos_consulta,false);
+    try {
+        // Pedimos los datos (sin spinner)
+        let respuesta = await Utilidades.query(datos_consulta, false);
 
-    if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 4000, 'Atención', respuesta.mensaje || 'Error al cargar gráficos');
-        return;
-    }
+        if (!respuesta.estatus) {
+            console.error("Error al cargar gráficos:", respuesta.mensaje);
+            return;
+        }
 
-    const datos = respuesta.datos;
-    const ctx_1 = document.getElementById('canva_1').getContext('2d');
-    const ctx_2 = document.getElementById('canva_2').getContext('2d');
+        const data = respuesta.datos;
 
-    // Preparar títulos
-    const titulo_1 = document.createElement("h5");
-    titulo_1.classList.add("text-center");
-    titulo_1.textContent = "Deudas de apartamentos";
-    Utilidades.reemplazarElemento("esqueleto_titulo_1", titulo_1);
+        // ==================================================
+        // PREPARAR GRÁFICO 1: ESTADO DE DEUDAS
+        // ==================================================
+        let deudasData = [
+            data.grafico_deudas.aptos_solventes || 0,
+            data.grafico_deudas.aptos_morosos || 0
+        ];
 
-    const titulo_2 = document.createElement("h5");
-    titulo_2.classList.add("text-center");
-    titulo_2.textContent = "Resumen de balance del mes";
-    Utilidades.reemplazarElemento("esqueleto_titulo_2", titulo_2);
+        // Ocultar esqueletos
+        document.getElementById('esqueleto_titulo_1').classList.add('d-none');
+        document.getElementById('esqueleto_canva_1').classList.add('d-none');
+        document.getElementById('canva_1').removeAttribute('hidden');
+        document.getElementById('canva_1').parentElement.style.height = '250px';
 
-    // --- GRÁFICO 1 ---
-    if (datos && datos[0] && datos[1] && (datos[0].valor != 0 || datos[1].valor != 0)) {
-        actualizarInfoGrafico('esqueleto_dato_1_1', 'Total de deuda:', datos[0].valor, 'text-danger');
-        actualizarInfoGrafico('esqueleto_dato_2_1', 'Total de ingresos (Apt):', datos[1].valor, 'text-success');
+        // Actualizar datos inferiores
+        document.getElementById('esqueleto_dato_1_1').textContent = `${deudasData[0]} Aptos.`;
+        document.getElementById('esqueleto_dato_2_1').textContent = `${deudasData[1]} Aptos.`;
 
-        graficaChart_1 = new Chart(ctx_1, {
-            type: 'pie',
-            data: {
-                labels: [`Apartamentos Morosos: ${datos[0].accion}`, `Apartamentos sin deudas: ${datos[1].accion}`],
-                datasets: [{
-                    label: "Valor en Bs",
-                    data: [parseFloat(datos[0].valor || 0).toFixed(2), parseFloat(datos[1].valor || 0).toFixed(2)],
-                    backgroundColor: ['#e01d22', '#0079C2']
-                }]
-            },
-            options: { scales: { y: { beginAtZero: true } } }
-        });
+        if (deudasData[0] === 0 && deudasData[1] === 0) {
+            document.getElementById('div_alert_1').removeAttribute('hidden');
+            document.getElementById('canva_1').parentElement.style.display = 'none';
+        } else {
+            const ctx1 = document.getElementById('canva_1').getContext('2d');
+            if (graficaChart_1) graficaChart_1.destroy();
+            
+            graficaChart_1 = new Chart(ctx1, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Solventes', 'Con Deuda'],
+                    datasets: [{
+                        data: deudasData,
+                        backgroundColor: ['#10b981', '#ef4444'],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    },
+                    cutout: '70%' // Hace que sea una dona más delgada y elegante
+                }
+            });
+        }
+
+        // ==================================================
+        // PREPARAR GRÁFICO 2: INGRESOS VS GASTOS
+        // ==================================================
+        let labelsMeses = [];
+        let datosIngresos = [];
+        let datosGastos = [];
         
-        Utilidades.eliminarElemento('esqueleto_canva_1');
-        document.getElementById("canva_1").parentElement.removeAttribute("style");
-        document.getElementById("canva_1").removeAttribute("hidden");
-    } else {
-        mostrarAlertaSinDatos('div_alert_1', ['canva_1', 'esqueleto_canva_1', 'esqueleto_dato_1_1', 'esqueleto_dato_2_1']);
-    }
+        // Sumatorias para la parte inferior
+        let ingresoMesActual = 0;
+        let gastoMesActual = 0;
 
-    // --- GRÁFICO 2 ---
-    if (datos && datos[2] && datos[3]) {
-        actualizarInfoGrafico('esqueleto_dato_1_2', 'Total de Gastos:', datos[2].valor, 'text-danger');
-        actualizarInfoGrafico('esqueleto_dato_2_2', 'Total de Ingresos:', datos[3].valor, 'text-success');
+        data.grafico_ingresos_gastos.forEach((mes, index) => {
+            labelsMeses.push(mes.etiqueta);
+            datosIngresos.push(mes.ingresos);
+            datosGastos.push(mes.gastos);
+            
+            if (index === data.grafico_ingresos_gastos.length - 1) {
+                ingresoMesActual = mes.ingresos;
+                gastoMesActual = mes.gastos;
+            }
+        });
 
-        graficaChart_2 = new Chart(ctx_2, {
+        // Ocultar esqueletos
+        document.getElementById('esqueleto_titulo_2').classList.add('d-none');
+        document.getElementById('esqueleto_canva_2').classList.add('d-none');
+        document.getElementById('canva_2').removeAttribute('hidden');
+        document.getElementById('canva_2').parentElement.style.height = '250px';
+
+        // Actualizar datos inferiores
+        document.getElementById('esqueleto_dato_1_2').textContent = `${parseFloat(ingresoMesActual).toFixed(2)} Bs.`;
+        document.getElementById('esqueleto_dato_2_2').textContent = `${parseFloat(gastoMesActual).toFixed(2)} Bs.`;
+
+        const ctx2 = document.getElementById('canva_2').getContext('2d');
+        if (graficaChart_2) graficaChart_2.destroy();
+        
+        graficaChart_2 = new Chart(ctx2, {
             type: 'bar',
             data: {
-                labels: ["Total de Gastos", "Total de Ingresos"],
-                datasets: [{
-                    label: "Cantidad Bs.",
-                    data: [datos[2].valor, datos[3].valor],
-                    backgroundColor: ['#e01d22', '#0079C2']
-                }]
+                labels: labelsMeses,
+                datasets: [
+                    {
+                        label: 'Ingresos',
+                        data: datosIngresos,
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Egresos',
+                        data: datosGastos,
+                        backgroundColor: '#f43f5e',
+                        borderRadius: 4
+                    }
+                ]
             },
-            options: { scales: { y: { beginAtZero: true } } }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } },
+                scales: {
+                    y: { beginAtZero: true, grid: { borderDash: [2, 4] } },
+                    x: { grid: { display: false } }
+                }
+            }
         });
 
-        Utilidades.eliminarElemento('esqueleto_canva_2');
-        document.getElementById("canva_2").parentElement.removeAttribute("style");
-        document.getElementById("canva_2").removeAttribute("hidden");
-    } else {
-        mostrarAlertaSinDatos('div_alert_2', ['canva_2', 'esqueleto_canva_2', 'esqueleto_dato_1_2', 'esqueleto_dato_2_2']);
+    } catch (error) {
+        console.error("Error en consulta de gráficos:", error);
     }
 }
 
@@ -197,14 +251,28 @@ async function cargarTarjetasInicio() {
     datos.append("operacion", "consultar_tarjetas_resumen");
 
     try {
-        let respuesta = await Utilidades.query(datos, false); // false = sin spinner
+        let respuesta = await Utilidades.query(datos, false);
         if (respuesta.estatus && respuesta.datos) {
             const kpis = respuesta.datos;
             
+            // Textos principales
             document.getElementById('kpi-aptos').textContent = `${kpis.apartamentos_ocupados}/${kpis.total_apartamentos}`;
             document.getElementById('kpi-residentes').textContent = kpis.residentes_activos;
             document.getElementById('kpi-recaudado').textContent = `${parseFloat(kpis.recaudado_mes).toFixed(2)} Bs.`;
             document.getElementById('kpi-pendientes').textContent = kpis.recibos_pendientes;
+            
+            // Badge 1: Porcentaje de ocupación
+            let porcentajeOcupacion = 0;
+            if (kpis.total_apartamentos > 0) {
+                porcentajeOcupacion = Math.round((kpis.apartamentos_ocupados / kpis.total_apartamentos) * 100);
+            }
+            document.getElementById('badge-aptos').textContent = `${porcentajeOcupacion}% Ocupado`;
+
+            // Badge 4: Monto total de deuda
+            let badgePendientes = document.getElementById('badge-pendientes');
+            if(badgePendientes) {
+                badgePendientes.textContent = `${parseFloat(kpis.deuda_total).toFixed(2)} Bs.`;
+            }
         }
     } catch (error) {
         console.error("Error al cargar KPIs:", error);
@@ -231,19 +299,36 @@ async function cargarWidgetPublicaciones() {
         let fragment = document.createDocumentFragment();
 
         respuesta.datos.forEach(pub => {
-            // Usamos tu helper de fechas
             let fechaFormateada = FormatoFechas.formatoUsuario(pub.fecha) || pub.fecha;
 
+            // Configuramos los colores según la prioridad
+            let colorIcono, colorBorde;
+            
+            if (pub.prioridad == 1) { // Alta
+                colorIcono = 'icon-box-red';
+                colorBorde = 'border-danger';
+            } else if (pub.prioridad == 2) { // Media
+                colorIcono = 'icon-box-yellow';
+                colorBorde = 'border-warning';
+            } else { // Baja (3)
+                colorIcono = 'icon-box-blue';
+                colorBorde = 'border-primary';
+            }
+
             let divItem = document.createElement('div');
-            divItem.className = 'card publi-item bg-light border-0 p-3 rounded-4';
+            // Le agregamos 'border-start border-4' y la clase dinámica del color
+            divItem.className = `card publi-item bg-light border-0 p-3 rounded-4 border-start border-4 ${colorBorde}`;
+            
             divItem.innerHTML = `
                 <div class="d-flex align-items-start">
-                    <div class="activity-icon icon-box-blue me-3" style="width: 32px; height: 32px; font-size: 0.8rem;">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    <div class="activity-icon ${colorIcono} me-3" style="width: 32px; height: 32px; font-size: 0.8rem;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
                     </div>
                     <div>
                         <h6 class="fw-bold mb-1 text-dark">${pub.titulo}</h6>
-                        <div class="text-muted-custom">${pub.nombre_usuario} - ${fechaFormateada}</div>
+                        <div class="text-muted-custom" style="font-size: 0.75rem;">
+                            ${pub.nombre_usuario} <br> ${fechaFormateada}
+                        </div>
                     </div>
                 </div>
             `;
@@ -338,7 +423,6 @@ async function cargarActividadReciente() {
         let fragment = document.createDocumentFragment();
 
         actividades.forEach((item, index) => {
-            console.log(item.accion)
             let config = obtenerConfiguracionIcono(item.accion);
 
             // Quitar el borde inferior al último elemento para estética
@@ -418,7 +502,7 @@ function obtenerConfiguracionIcono(accion) {
     } else { // Consultó y otros
         return {
             color: 'icon-box-blue',
-            icono: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>'
+            icono: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>'
         };
     }
 }

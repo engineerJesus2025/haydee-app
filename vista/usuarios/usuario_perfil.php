@@ -135,26 +135,21 @@
                                         <div class="row g-3">
                                             <div class="col-md-6">
                                                 <label htmlFor="nombre" class="form-label">
-                                                <i class="bi bi-person me-1"></i>
-                                                Nombre
-                                                </label>
+                                                    <i class="bi bi-person me-1"></i>Nombre <spam class="text-danger">*</spam></label>
                                                 <input type="text" class="form-control" id="nombre" name="nombre" required/>
                                                 <span class="w-100 invalid-feedback"></span>
                                             </div>
 
                                             <div class="col-md-6">
                                                 <label htmlFor="apellido" class="form-label">
-                                                    <i class="bi bi-person me-1"></i>
-                                                    Apellido
-                                                </label>
+                                                    <i class="bi bi-person me-1"></i>Apellido <spam class="text-danger">*</spam></label>
                                             <input type="text" class="form-control" id="apellido" name="apellido" required/>
                                             <span class="w-100 invalid-feedback"></span>
                                             </div>
 
                                             <div class="col-12">
                                                 <label htmlFor="correo" class="form-label">
-                                                    <i class="bi bi-envelope me-1"></i>
-                                                    Correo Electrónico
+                                                    <i class="bi bi-envelope me-1"></i>Correo Electrónico <spam class="text-danger">*</spam>
                                                 </label>
                                                 <input type="email" class="form-control" id="correo" name="correo" required/>
                                                 <span class="w-100 invalid-feedback"></span>

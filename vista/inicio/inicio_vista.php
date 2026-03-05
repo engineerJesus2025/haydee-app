@@ -32,7 +32,7 @@
                                             <div class="icon-box icon-box-blue">
                                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><path d="M9 22v-4h6v4"></path></svg>
                                             </div>
-                                            <div class="badge-up">80%</div>
+                                            <div class="badge-up" id="badge-aptos">80%</div>
                                         </div>
                                         <h3 class="fw-bold mb-1" id="kpi-aptos">
                                             <div class="skeleton skeleton-text short mb-0" style="height: 28px; width: 60px;"></div>
@@ -72,7 +72,7 @@
                                             <div class="icon-box icon-box-red">
                                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
                                             </div>
-                                            <div class="badge-down">↓ 7</div>
+                                            <div class="badge-down" id="badge-pendientes">↓ 7</div>
                                         </div>
                                         <h3 class="fw-bold mb-1" id="kpi-pendientes">
                                             <div class="skeleton skeleton-text short mb-0" style="height: 28px; width: 40px;"></div>

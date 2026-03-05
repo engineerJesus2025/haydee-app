@@ -35,7 +35,7 @@
                             <form class="p-3 row justify-content-center" id="form_reporte_habitantes">
                                 <!-- Filtro por Fecha -->
                                 <div class="col-sm-8 mb-3">
-                                    <label for="filtro_tiempo">Buscar resultados a partir de:</label>
+                                    <label for="filtro_tiempo">Buscar resultados a partir de: <spam class="text-danger">*</spam></label>
                                     <div class="input-group mb-3">
                                         <span class="input-group-text" id="basic-addon1"><i
                                                 class="bi bi-calendar-week"></i></span>
@@ -52,10 +52,9 @@
                                 </div>
 
                                 <!-- Fechas personalizadas (se muestra solo cuando se selecciona "personalizado") -->
-                                <label class="text-center mb-2" id="label_fechas_habitantes" hidden>Seleccione el rango
-                                    de fechas:</label>
+                                <label class="text-center mb-2" id="label_fechas_habitantes" hidden>Seleccione el rango  de fechas:</label>
                                 <div class="col-sm-6 col-lg-5 mb-3" id="div_fecha_inicio_habitantes" hidden>
-                                    <label for="fecha_inicio_habitantes">Fecha de inicio</label>
+                                    <label for="fecha_inicio_habitantes">Fecha de inicio <spam class="text-danger">*</spam></label>
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="bi bi-calendar2-check"></i></span>
                                         <input type="date" name="fecha_inicio_habitantes" id="fecha_inicio_habitantes"
@@ -63,7 +62,7 @@
                                     </div>
                                 </div>
                                 <div class="col-sm-6 col-lg-5 mb-3" id="div_fecha_cierre_habitantes" hidden>
-                                    <label for="fecha_fin_habitantes">Fecha de fin</label>
+                                    <label for="fecha_fin_habitantes">Fecha de fin <spam class="text-danger">*</spam></label>
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="bi bi-calendar2-check"></i></span>
                                         <input type="date" name="fecha_fin_habitantes" id="fecha_fin_habitantes"
@@ -73,7 +72,7 @@
 
                                 <!-- Filtro por Rango de Edades -->
                                 <div class="col-sm-8 mb-3">
-                                    <label for="rango_edades">Rango de edades:</label>
+                                    <label for="rango_edades">Rango de edades: <spam class="text-danger">*</spam></label>
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="bi bi-people-fill"></i></span>
                                         <select class="form-select" id="rango_edades" name="rango_edades">
@@ -100,7 +99,7 @@
 
                                 <!-- Filtro por Tipo de Residentes -->
                                 <div class="col-sm-5 my-3">
-                                    <label>Tipo de habitantes:</label>
+                                    <label>Tipo de habitantes: <spam class="text-danger">*</spam></label>
                                     <div class="form-check">
                                         <input class="form-check-input" type="radio" name="tipo_residente"
                                             id="todos_residentes" value="todos" checked>
@@ -121,7 +120,7 @@
 
                                 <!-- Filtro por Servicios -->
                                 <div class="col-sm-5 my-3">
-                                    <label>Servicios básicos:</label>
+                                    <label>Servicios básicos: <spam class="text-danger">*</spam></label>
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" id="con_agua" name="servicios[]"
                                             value="agua">
@@ -136,7 +135,7 @@
 
                                 <!-- Filtro de grafico o texto -->
                                 <div class="col-sm-9 mb-3">
-                                    <label for="select_mostrar_datos">¿Como deseas mostrar los datos?:</label>
+                                    <label for="select_mostrar_datos">¿Como deseas mostrar los datos?: <spam class="text-danger">*</spam></label>
                                     <div class="input-group">
                                         <select class="form-select" id="select_mostrar_datos" name="select_mostrar_datos">
                                             <option value="grafico_texto">Gráfico y texto</option>

@@ -1,5 +1,5 @@
 /**
- * cuadro_pagos.js
+ * cuadro_pagos.js 
  * Generación de cuadro de pagos
  * Dependencias: utilidades.js, validaciones.js, formatoFechas.js
  */
@@ -9,7 +9,13 @@ let arrayMeses = [];
 
 botonCuadroPagos.addEventListener("click", () => {
     document.getElementById("titulo_modal_persona").textContent = 'Generar Cuadro de Pagos';
-    document.getElementById('label_reporte').textContent = "Seleccione el mes para generar el cuadro";
+    document.getElementById('label_reporte').textContent = "Seleccione el mes para generar el cuadro ";
+
+    // * rojo:
+    let asterisco = document.createElement("spam");
+    asterisco.classList.add("text-danger");
+    asterisco.textContent = "*";
+    document.getElementById('label_reporte').appendChild(asterisco);
 
     let botonGenerar = document.getElementById('boton_generar');
     botonGenerar.setAttribute("reporte", "cuadro_pagos");

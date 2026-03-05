@@ -1,9 +1,3 @@
-/**
- * reporte_constancias.js
- * Generador unificado para Constancias de Residencia y Solvencias
- * Dependencias: utilidades.js, validaciones.js
- */
-
 document.addEventListener('DOMContentLoaded', () => {
     // Configuración para cada tipo de reporte
     const configBotones = {
@@ -28,9 +22,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const botonGenerar = document.getElementById('boton_generar');
         
         document.getElementById("titulo_modal_persona").textContent = config.titulo;
-        document.getElementById('label_reporte').textContent = "Seleccione el Residente:";
+        document.getElementById('label_reporte').textContent = "Seleccione el Residente: ";
         botonGenerar.setAttribute("reporte", config.accionControlador);
 
+        // * rojo:
+        let asterisco = document.createElement("spam");
+        asterisco.classList.add("text-danger");
+        asterisco.textContent = "*";
+        document.getElementById('label_reporte').appendChild(asterisco);
+ 
         // Deshabilitar temporalmente mientras carga
         select.innerHTML = '<option selected hidden value="">Cargando residentes...</option>';
         select.disabled = true;

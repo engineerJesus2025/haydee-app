@@ -558,71 +558,100 @@ class Mensualidad extends Conexion
     }
 
     /**
-     * Estadísticas para la página de inicio (morosos, totales).
+     * Consulta las estadísticas para los gráficos del inicio
      */
     private function _consultar_estadisticas_inicio()
     {
-        $sql = "WITH TotalFacturado AS (
-                    SELECT apartamento_id, SUM(monto) AS monto_total_facturado
-                    FROM mensualidad
-                    GROUP BY apartamento_id
-                ),
-                TotalPagado AS (
-                    SELECT m.apartamento_id, SUM(dp.monto) AS monto_total_pagado
-                    FROM detalles_pagos dp
-                    JOIN pagos_mensualidad pm ON dp.id_detalle_pago = pm.detalle_pago_id
-                    JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
-                    GROUP BY m.apartamento_id
-                ),
-                SaldosFinales AS (
-                    SELECT f.apartamento_id,
-                           (COALESCE(f.monto_total_facturado, 0) - COALESCE(p.monto_total_pagado, 0)) AS saldo,
-                           COALESCE(p.monto_total_pagado, 0) AS pagado_individual
-                    FROM TotalFacturado f
-                    LEFT JOIN TotalPagado p ON f.apartamento_id = p.apartamento_id
-                    UNION
-                    SELECT p.apartamento_id,
-                           (COALESCE(f.monto_total_facturado, 0) - COALESCE(p.monto_total_pagado, 0)) AS saldo,
-                           COALESCE(p.monto_total_pagado, 0) AS pagado_individual
-                    FROM TotalFacturado f
-                    RIGHT JOIN TotalPagado p ON f.apartamento_id = p.apartamento_id
-                    WHERE f.apartamento_id IS NULL
-                )
-                SELECT
-                    CAST(COUNT(CASE WHEN saldo > 0.01 THEN 1 END) AS CHAR) AS accion,
-                    COALESCE(SUM(CASE WHEN saldo > 0.01 THEN saldo ELSE 0 END), 0) AS valor,
-                    'morosos' as elemento
-                FROM SaldosFinales
-                UNION
-                SELECT
-                    CAST(COUNT(CASE WHEN saldo <= 0.01 THEN 1 END) AS CHAR) AS accion,
-                    COALESCE(SUM(CASE WHEN saldo <= 0.01 THEN pagado_individual ELSE 0 END), 0) AS valor,
-                    'sin deuda' as elemento
-                FROM SaldosFinales
-                UNION
-                -- Aplicamos COALESCE aquí para egresos
-                SELECT 
-                    'total_egresos' as accion, 
-                    COALESCE(SUM(dg.monto), 0) as valor, 
-                    'total egresos' as elemento
-                FROM detalles_gastos dg
-                WHERE dg.fecha BETWEEN DATE_FORMAT(CURDATE(), '%Y-%m-01') AND CURDATE()
-                UNION
-                -- Aplicamos COALESCE aquí para ingresos
-                SELECT 
-                    'total_ingresos' as accion, 
-                    COALESCE(SUM(dp.monto), 0) as valor, 
-                    'total ingresos' as elemento
-                FROM detalles_pagos dp
-                WHERE dp.fecha BETWEEN DATE_FORMAT(CURDATE(), '%Y-%m-01') AND CURDATE();";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->execute();
-            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $datos];
+            $pdo = $this->get_conex('negocio');
+
+            // ==========================================================
+            // GRÁFICO 1: APARTAMENTOS SOLVENTES VS MOROSOS
+            // ==========================================================
+            $sql = "
+                SELECT 
+                    SUM(CASE WHEN deuda_pendiente > 0 THEN 1 ELSE 0 END) as aptos_morosos,
+                    SUM(CASE WHEN deuda_pendiente = 0 OR deuda_pendiente IS NULL THEN 1 ELSE 0 END) as aptos_solventes
+                FROM (
+                    SELECT a.id_apartamento, COALESCE(SUM(v.deuda_pendiente), 0) as deuda_pendiente
+                    FROM apartamentos a
+                    LEFT JOIN vw_estado_cuentas_mensualidad v 
+                        ON a.nro_apartamento = v.nro_apartamento 
+                        AND CAST(v.estado_pago AS CHAR) = 'Pendiente'
+                    WHERE a.activo = 1
+                    GROUP BY a.id_apartamento
+                ) as estado_aptos
+            ";
+            $stmt1 = $pdo->prepare($sql);
+            $stmt1->execute();
+            $datos_grafico_1 = $stmt1->fetch(PDO::FETCH_ASSOC);
+
+            // ==========================================================
+            // GRÁFICO 2: INGRESOS VS GASTOS (Últimos 6 meses)
+            // ==========================================================
+            
+            // 1. Crear el esqueleto de los últimos 6 meses en PHP (Garantiza que no falten meses)
+            $meses_nombres = ['01'=>'Ene', '02'=>'Feb', '03'=>'Mar', '04'=>'Abr', '05'=>'May', '06'=>'Jun', '07'=>'Jul', '08'=>'Ago', '09'=>'Sep', '10'=>'Oct', '11'=>'Nov', '12'=>'Dic'];
+            $grafico_2 = [];
+            
+            for ($i = 5; $i >= 0; $i--) {
+                $fecha_calculo = strtotime("-$i months");
+                $llave_mes = date('Y-m', $fecha_calculo); // Ej: "2023-10"
+                $nombre_mes = $meses_nombres[date('m', $fecha_calculo)] . ' ' . date('y', $fecha_calculo); // Ej: "Oct 23"
+                
+                $grafico_2[$llave_mes] = [
+                    'etiqueta' => $nombre_mes,
+                    'ingresos' => 0,
+                    'gastos' => 0
+                ];
+            }
+            
+            $fecha_inicio_filtro = date('Y-m-01', strtotime("-5 months"));
+
+            // 2. Consulta de INGRESOS (Pagos reales procesados)
+            $sql_ingresos = "SELECT DATE_FORMAT(dp.fecha, '%Y-%m') as mes_anio, SUM(dp.monto) as total
+                             FROM detalles_pagos dp
+                             JOIN pagos p ON dp.pago_id = p.id_pago
+                             WHERE p.activo = 1 AND LOWER(p.estado) = 'procesado' AND dp.fecha >= :fecha_inicio
+                             GROUP BY mes_anio";
+            $stmt_in = $pdo->prepare($sql_ingresos);
+            $stmt_in->execute([':fecha_inicio' => $fecha_inicio_filtro]);
+            
+            while ($row = $stmt_in->fetch(PDO::FETCH_ASSOC)) {
+                if (isset($grafico_2[$row['mes_anio']])) {
+                    $grafico_2[$row['mes_anio']]['ingresos'] = (float)$row['total'];
+                }
+            }
+
+            // 3. Consulta de GASTOS
+            $sql_gastos = "SELECT DATE_FORMAT(dg.fecha, '%Y-%m') as mes_anio, SUM(dg.monto) as total
+                           FROM detalles_gastos dg
+                           JOIN gastos g ON dg.gasto_id = g.id_gasto
+                           WHERE g.activo = 1 AND dg.fecha >= :fecha_inicio
+                           GROUP BY mes_anio";
+            $stmt_out = $pdo->prepare($sql_gastos);
+            $stmt_out->execute([':fecha_inicio' => $fecha_inicio_filtro]);
+            
+            while ($row = $stmt_out->fetch(PDO::FETCH_ASSOC)) {
+                if (isset($grafico_2[$row['mes_anio']])) {
+                    $grafico_2[$row['mes_anio']]['gastos'] = (float)$row['total'];
+                }
+            }
+
+            // ==========================================================
+            // EMPAQUETAR RESPUESTA
+            // ==========================================================
+            return [
+                'estatus' => true, 
+                'datos' => [
+                    'grafico_deudas' => $datos_grafico_1,
+                    'grafico_ingresos_gastos' => array_values($grafico_2) // Reindexamos para el JS
+                ]
+            ];
+
         } catch (PDOException $e) {
             error_log("Error en _consultar_estadisticas_inicio: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar estadísticas'];
+            return ['estatus' => false, 'mensaje' => 'Error al consultar las estadísticas'];
         }
     }
 
@@ -830,7 +859,11 @@ class Mensualidad extends Conexion
                        
                     (SELECT COUNT(*) 
                      FROM vw_estado_cuentas_mensualidad 
-                     WHERE estado_pago = 'Pendiente') AS recibos_pendientes";
+                     WHERE estado_pago = 'Pendiente') AS recibos_pendientes,
+
+                    (SELECT COALESCE(SUM(deuda_pendiente), 0) 
+                     FROM vw_estado_cuentas_mensualidad 
+                     WHERE CAST(estado_pago AS CHAR) = 'Pendiente') AS deuda_total";
                      
         try {
             $stmt = $this->get_conex('negocio')->prepare($sql);

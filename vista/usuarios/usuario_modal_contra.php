@@ -1,7 +1,7 @@
 <form id="form_usuario" name="form_usuario">
     <div class="row m-3">
         <div class="col-md-6">
-            <label for="contra">Nueva Contraseña</label>
+            <label for="contra">Nueva Contraseña <spam class="text-danger">*</spam></label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-key"></i></span>
                 <input type="password" class="form-control contra-input" name="contra" id="contra" placeholder="Contraseña" aria-label="contra" aria-describedby="basic-addon1" minlength="5" maxlength="50">
@@ -12,7 +12,7 @@
             </div>
         </div>
         <div class="col-md-6">
-            <label for="confir_contra">Confirmar Nueva Contraseña</label>
+            <label for="confir_contra">Confirmar Nueva Contraseña <spam class="text-danger">*</spam></label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-key"></i></span>
                 <input type="password" class="form-control contra-input" name="confir_contra" id="confir_contra" placeholder="Confirmar contraseña" aria-label="confir_contra" aria-describedby="basic-addon1" minlength="5" maxlength="50">

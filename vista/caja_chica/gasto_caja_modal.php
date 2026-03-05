@@ -1,6 +1,6 @@
 <form class="row m-3" id="form_registro_gasto">
     <div class="col-lg-8">
-       <label for="fecha">Fecha del gasto:</label>
+       <label for="fecha">Fecha del gasto: <spam class="text-danger">*</spam></label>
         <div class="input-group mb-3">
             <span class="input-group-text" id="basic-addon1"><i class="bi bi-calendar"></i></span>
             <input type="date" class="form-control" name="fecha" id="fecha"  aria-label="fecha" aria-describedby="basic-addon1">
@@ -8,7 +8,7 @@
         </div>
     </div>    
     <div class="col-lg-5">
-        <label for="monto">Monto del gasto:</label>
+        <label for="monto">Monto del gasto: <spam class="text-danger">*</spam></label>
         <div class="input-group mb-3">
             <input type="number" name="monto" id="monto" class="form-control" maxlength="15" minlength="0" title="Monto del gasto en bolivares" monto="bs" placeholder="Monto">
             <span class="input-group-text icono_moneda" id="spam_icono_moneda_cuota">Bs.</span>
@@ -34,7 +34,7 @@
        <p class="text-muted">Fondos restantes: <b id="fondos_restante"></b></p>    
     </div>
     <div class="col-12">        
-        <label for="concepto">Concepto:</label>
+        <label for="concepto">Concepto: <spam class="text-danger">*</spam></label>
         <div class="input-group mb-3">
             <span class="input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
             <input type="text" class="form-control" name="concepto" id="concepto" placeholder="Ingrese una descripción del gasto" aria-label="concepto" aria-describedby="basic-addon1" minlength="3">

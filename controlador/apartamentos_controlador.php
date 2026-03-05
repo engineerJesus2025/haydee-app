@@ -42,7 +42,6 @@ if (isset($_POST["operacion"])) {
         $habitante->set_cedula($tipo . $numero);
     }
 
-
     $operacion = $_POST["operacion"];
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
@@ -131,9 +130,22 @@ if (isset($_POST["operacion"])) {
                 break;
 
             case 'registrar_habitantes':
+                // Preparar datos para bitácora (nuevos)
+                $nuevosDatos = [
+                    'nombre' => $habitante->get_nombre(),
+                    'apellido' => $habitante->get_apellido(),
+                    'cedula' => $habitante->get_cedula(),
+                    'telefono' => $habitante->get_telefono(),
+                    'correo' => $habitante->get_correo(),
+                    'fecha_nacimiento' => $habitante->get_fecha_nacimiento(),
+                    'sexo' => $habitante->get_sexo(),
+                    'apartamento_id' => $habitante->get_nuevo_apartamento_id(),
+                    'tipo_vinculo' => $habitante->get_nuevo_tipo_vinculo()
+                ];
+
                 $respuesta = $habitante->realizar_consulta('registrar_con_relacion');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_HABITANTES);
+                    Bitacora::registrar(REGISTRAR, GESTIONAR_HABITANTES, null, null, $nuevosDatos);
                 }
                 break;
 
@@ -142,21 +154,41 @@ if (isset($_POST["operacion"])) {
                 break;
 
             case 'modificar_habitantes':
+                // Obtener datos anteriores del habitante
+                $tempHab = new Habitantes();
+                $tempHab->set_id_habitante($habitante->get_id_habitante());
+                $datosAnteriores = $tempHab->realizar_consulta('consultar_habitante');
+                $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
+
+                // Ejecutar modificación
                 $respuesta = $habitante->realizar_consulta('modificar_con_relacion');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_HABITANTES);
+                    // Construir array con los nuevos datos
+                    $nuevo = [
+                        'nombre' => $habitante->get_nombre(),
+                        'apellido' => $habitante->get_apellido(),
+                        'cedula' => $habitante->get_cedula(),
+                        'telefono' => $habitante->get_telefono(),
+                        'correo' => $habitante->get_correo(),
+                        'fecha_nacimiento' => $habitante->get_fecha_nacimiento(),
+                        'sexo' => $habitante->get_sexo(),
+                        'apartamento_id' => $habitante->get_nuevo_apartamento_id(),
+                        'tipo_vinculo' => $habitante->get_nuevo_tipo_vinculo()
+                    ];
+                    Bitacora::registrar(MODIFICAR, GESTIONAR_HABITANTES, null, $anterior, $nuevo);
                 }
                 break;
 
             case 'eliminar_habitantes':
-                // Obtener datos para bitácora
+                // Obtener datos anteriores
                 $tempHab = new Habitantes();
                 $tempHab->set_id_habitante($habitante->get_id_habitante());
-                $datosHab = $tempHab->realizar_consulta('consultar_habitante');
+                $datosAnteriores = $tempHab->realizar_consulta('consultar_habitante');
+                $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
 
                 $respuesta = $habitante->realizar_consulta('eliminar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_HABITANTES);
+                    Bitacora::registrar(ELIMINAR, GESTIONAR_HABITANTES, null, $anterior, null);
                 }
                 break;
 

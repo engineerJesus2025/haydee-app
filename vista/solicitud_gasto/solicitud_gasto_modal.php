@@ -4,14 +4,14 @@
         <!-- Fila 0: Selector de Mes y Año -->
         <div class="row mb-3">
             <div class="col-md-6 mb-3">
-                <label for="selector_mes">Mes del presupuesto</label>
+                <label for="selector_mes">Mes del presupuesto <spam class="text-danger">*</spam></label>
                 <select class="form-select" id="selector_mes" required>
                     <option selected="" hidden value="">Seleccione mes</option>
                 </select>
                 <span class="w-100 invalid-feedback"></span>
             </div>
             <div class="col-md-6 mb-3">
-                <label for="selector_anio">Año del presupuesto</label>
+                <label for="selector_anio">Año del presupuesto <spam class="text-danger">*</spam></label>
                 <select class="form-select" id="selector_anio" required>
                     <option selected="" hidden value="">Seleccione año</option>
                 </select>
@@ -39,7 +39,7 @@
             <!-- Fecha + Nombre -->
             <div class="row mb-3">
                 <div class="col-md-6 mb-3">
-                    <label for="fecha">Fecha de la solicitud</label>
+                    <label for="fecha">Fecha de la solicitud <spam class="text-danger">*</spam></label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
                         <input type="date" class="form-control" name="fecha" id="fecha" required>
@@ -47,7 +47,7 @@
                     </div>
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label for="nombre">Nombre del Solicitante</label>
+                    <label for="nombre">Nombre del Solicitante <spam class="text-danger">*</spam></label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-person"></i></span>
                         <input type="text" class="form-control" name="nombre" id="nombre" placeholder="Ejem: Raul" minlength="3" maxlength="40" required>
@@ -59,7 +59,7 @@
             <!-- Monto + Prioridad -->
             <div class="row mb-3">
                 <div class="col-md-6 mb-3">
-                    <label for="monto_estimado">Monto Estimado</label>
+                    <label for="monto_estimado">Monto Estimado <spam class="text-danger">*</spam></label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-currency-dollar"></i></span>
                         <input type="number" step="0.01" min="0" class="form-control" name="monto" id="monto_estimado" maxlength="12" placeholder="0" required>
@@ -67,7 +67,7 @@
                     </div>
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label for="prioridad">Prioridad</label>
+                    <label for="prioridad">Prioridad <spam class="text-danger">*</spam></label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-exclamation-triangle"></i></span>
                         <select class="form-select" name="prioridad" id="prioridad" required>
@@ -84,7 +84,7 @@
             <!-- Descripción -->
             <div class="row mb-3">
                 <div class="col-md-12 mb-3">
-                    <label for="descripcion">Descripción</label>
+                    <label for="descripcion">Descripción <spam class="text-danger">*</spam></label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-card-text"></i></span>
                         <textarea name="descripcion" id="descripcion" class="form-control" rows="3" placeholder="Describa la solicitud..." minlength="3" maxlength="60" required></textarea>

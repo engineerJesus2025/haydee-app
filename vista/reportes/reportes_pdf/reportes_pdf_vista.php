@@ -89,7 +89,7 @@
                             </div>
                         </div>
                     </div>
-                    <?php require_once "vista/reportes/reportes_pdf/reporte_gastos_mensual_modal.php"; ?>
+                    
                 </main>
             </div>
         </div>
@@ -99,7 +99,7 @@
         require_once "vista/componentes/footer.php";
         require_once "vista/componentes/script.php";
         require_once 'vista/componentes/modal_carga.php';
-        require_once 'vista/componentes/boton_ayuda.php';
+        //require_once 'vista/componentes/boton_ayuda.php';
     ?>
     
     <!-- Modales -->
@@ -121,7 +121,7 @@
             </div>
         </div>
     </div>
-    
+    <?php require_once "vista/reportes/reportes_pdf/reporte_gastos_mensual_modal.php"; ?>
     <!-- Scripts personalizado -->
     <script type="text/javascript" src="recursos/js/reportes/reporte_constancias.js"></script>
     <script type="text/javascript" src="recursos/js/reportes/cuadro_pagos.js"></script>

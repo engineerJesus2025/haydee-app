@@ -29,7 +29,7 @@
                                 <h5 class="card-title text-center p-3">Establecer nueva contraseña</h5>
                                 <div class="row m-3 justify-content-center">
                                     <div class="col-md-12 mb-3">
-                                        <label class="mb-2" for="contra">Nueva Contraseña</label>
+                                        <label class="mb-2" for="contra">Nueva Contraseña <spam class="text-danger">*</spam></label>
                                         <div class="input-group">
                                             <span class="input-group-text"><i class="bi bi-key"></i></span>
                                             <input type="password" class="form-control contra-input" name="contra" id="contra" placeholder="Ingrese su nueva contraseña" minlength="5" maxlength="50">
@@ -40,7 +40,7 @@
                                         </div>
                                     </div>
                                     <div class="col-md-12 mb-3">
-                                        <label class="mb-2" for="confir_contra">Confirmar nueva contraseña</label>
+                                        <label class="mb-2" for="confir_contra">Confirmar nueva contraseña <spam class="text-danger">*</spam></label>
                                         <div class="input-group">
                                             <span class="input-group-text"><i class="bi bi-key"></i></span>
                                             <input type="password" class="form-control contra-input" name="confir_contra" id="confir_contra" placeholder="Vuelva a escribir la contraseña" minlength="5" maxlength="50">

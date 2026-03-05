@@ -1,7 +1,7 @@
 <form id="form_presupuesto" name="form_presupuesto">
     <div class="row m-3">
         <div class="col-lg-5">
-            <label for="fecha">Fecha del presupuesto</label>
+            <label for="fecha">Fecha del presupuesto <spam class="text-danger">*</spam></label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-calendar"></i></span>
                 <select class="form-select" aria-label="Default select example" name="fecha" id="fecha" form="form_presupuesto">
@@ -11,7 +11,7 @@
             </div>
         </div>
         <div class="col-lg-3">
-            <label for="cuota_reserva">Cuota de Reserva:</label>
+            <label for="cuota_reserva">Cuota de Reserva: <spam class="text-danger">*</spam></label>
             <div class="input-group mb-3">
                 <input type="number" name="cuota_reserva" id="cuota_reserva" class="form-control" maxlength="15" minlength="0" value="0" title="Monto de la cuota de reserva en bolivares" monto="bs" placeholder="Ingrese un monto">
                 <span class="w-100 invalid-feedback"></span>

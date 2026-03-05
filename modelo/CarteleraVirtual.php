@@ -412,7 +412,7 @@ class CarteleraVirtual extends Conexion
      */
     public function consultar_widget_dashboard()
     {
-        $sql = "SELECT titulo, fecha, usuarios.nombre as nombre_usuario 
+        $sql = "SELECT titulo, fecha, usuarios.nombre as nombre_usuario, prioridad 
                 FROM cartelera_virtual
                 INNER JOIN usuarios ON usuarios.id_usuario = cartelera_virtual.usuario_id
                 ORDER BY prioridad ASC, fecha DESC LIMIT 3";

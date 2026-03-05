@@ -1,7 +1,7 @@
 <form id="form_apartamentos" name="form_apartamentos">
     <div class="row m-3">
         <div class="col-md-6">
-            <label for="nro_apartamento">Número del Apartamento</label>
+            <label for="nro_apartamento">Número del Apartamento <spam class="text-danger">*</spam></label>
             <div class="input-group has-validation mb-3">
                 <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-3-square-fill"></i></span>
                 <input type="text" class="border border-dark form-control nro_apartamento" name="nro_apartamento" id="nro_apartamento" placeholder="Ejem: 2-6" aria-label="nro_apartamento" aria-describedby="basic-addon1" minlength="1" maxlength="3">
@@ -9,7 +9,7 @@
             </div>
         </div>
         <div class="col-md-6">
-            <label for="porcentaje_participacion">Porcentaje de Participación</label>
+            <label for="porcentaje_participacion">Porcentaje de Participación <spam class="text-danger">*</spam></label>
             <div class="input-group has-validation mb-3">
                 <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-percent"></i></span>
                 <input type="text" class="border border-dark form-control porcentaje_participacion" name="porcentaje_participacion" id="porcentaje_participacion" placeholder="Ejem: 5.25" aria-label="porcentaje_participacion" aria-describedby="basic-addon1" minlength="1" maxlength="4">
@@ -19,7 +19,7 @@
     </div>
     <div class="row m-3">
         <div class="col-md-6">
-            <label for="gas">¿Tiene Gas?</label>
+            <label for="gas">¿Tiene Gas? <spam class="text-danger">*</spam></label>
             <div class="input-group has-validation mb-3">
                 <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-fuel-pump-fill"></i></span>
                     <select class="border border-dark form-select gas" aria-label="Default select example" id="gas" for="gas" name="gas">
@@ -31,7 +31,7 @@
             </div>
         </div>
         <div class="col-md-6">
-            <label for="agua">¿Tiene Agua?</label>
+            <label for="agua">¿Tiene Agua? <spam class="text-danger">*</spam></label>
             <div class="input-group has-validation mb-3">
                 <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-droplet-half"></i></span>
                     <select class="border border-dark form-select agua" aria-label="Default select example" id="agua" for="agua" name="agua">
@@ -45,7 +45,7 @@
     </div>
     <div class="row m-3">
         <div class="col-md-6">
-            <label for="alquilado">¿Es Alquilado?</label>
+            <label for="alquilado">¿Es Alquilado? <spam class="text-danger">*</spam></label>
             <div class="input-group has-validation mb-3">
                 <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-buildings"></i></span>
                     <select class="border border-dark form-select alquilado" aria-label="Default select example" id="alquilado" for="alquilado" name="alquilado">

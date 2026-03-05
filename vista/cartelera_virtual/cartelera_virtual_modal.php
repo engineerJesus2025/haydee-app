@@ -2,7 +2,7 @@
     <div class="container mt-4">
         <div class="row mb-3">
             <div class="col-md-12">
-                <label for="titulo">Título de la publicación</label>
+                <label for="titulo">Título de la publicación <spam class="text-danger">*</spam></label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-type"></i></span>
                     <input type="text" class="form-control" name="titulo" id="titulo" placeholder="Ingrese un título..."
@@ -14,7 +14,7 @@
 
         <div class="row mb-3">
             <div class="col-md-12">
-                <label for="descripcion">Descripción de la publicación</label>
+                <label for="descripcion">Descripción de la publicación <spam class="text-danger">*</spam></label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-card-text"></i></span>
                     <textarea name="descripcion" id="descripcion" class="form-control" rows="4"
@@ -26,7 +26,7 @@
 
         <div class="row mb-3">
             <div class="col-lg-6 mb-4">
-                <label for="fecha">Fecha de la publicación</label>
+                <label for="fecha">Fecha de la publicación <spam class="text-danger">*</spam></label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
                     <input type="date" class="form-control" name="fecha" id="fecha" required>
@@ -47,7 +47,7 @@
                 </button>
             </div>
             <div class="col-lg-6 mb-4">
-                <label for="prioridad">Prioridad de la publicación</label>
+                <label for="prioridad">Prioridad de la publicación <spam class="text-danger">*</spam></label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-exclamation-triangle"></i></span>
                     <select class="form-select" name="prioridad" id="prioridad" required>

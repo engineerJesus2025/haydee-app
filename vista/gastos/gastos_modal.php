@@ -1,11 +1,9 @@
 <form id="form_gastos" name="form_cartelera"
     enctype="multipart/form-data">
     <div class="container mt-4">
-
-        <!-- Fila 2: Tipo + Tipo de Gasto -->
         <div class="row mb-3">
             <div class="col-lg-6 col-12 mb-3">
-                <label for="clasificacion" class="form-label fw-semibold">Tipo</label>
+                <label for="clasificacion" class="form-label fw-semibold">Tipo <spam class="text-danger">*</spam></label>
                 <div class="input-group has-validation">
                     <span class="border border-primary input-group-text"><i class="bi bi-tags"></i></span>
                     <select class="form-select border border-dark" name="clasificacion" id="clasificacion" required>
@@ -17,7 +15,7 @@
                 </div>
             </div>
             <div class="col-lg-6 col-12 mb-3">
-                <label for="tipo_gasto" class="form-label fw-semibold">Tipo de Gasto</label>
+                <label for="tipo_gasto" class="form-label fw-semibold">Tipo de Gasto <spam class="text-danger">*</spam></label>
                 <div class="input-group has-validation">
                     <span class="border border-primary input-group-text"><i class="bi bi-building"></i></span>
                     <select class="form-select border border-dark" name="tipo_gasto" id="tipo_gasto" required>
@@ -35,7 +33,7 @@
         <!-- Fila 3: Descripción general del gasto -->
         <div class="row mb-3">
             <div class="col-12">
-                <label for="descripcion_gasto" class="form-label fw-semibold">Descripción del Gasto</label>
+                <label for="descripcion_gasto" class="form-label fw-semibold">Descripción del Gasto <spam class="text-danger">*</spam></label>
                 <div class="input-group has-validation">
                     <span class="border border-primary input-group-text"><i class="bi bi-card-text"></i></span>
                     <textarea name="descripcion_gasto" id="descripcion_gasto" class="form-control border border-dark" rows="3"
@@ -48,7 +46,7 @@
         <!-- Fila 4: Proveedor + Solicitud -->
         <div class="row mb-3">
             <div class="col-lg-6 col-12 mb-3">
-                <label for="proveedor" class="form-label fw-semibold">Proveedor</label>
+                <label for="proveedor" class="form-label fw-semibold">Proveedor <spam class="text-danger">*</spam></label>
                 <div class="input-group has-validation">
                     <span class="border border-primary input-group-text"><i class="bi bi-building"></i></span>
                     <select class="form-select border border-dark" name="proveedor" id="proveedor" required>
@@ -63,7 +61,7 @@
                 </div>
             </div>
             <div class="col-lg-6 col-12 mb-3">
-                <label for="solicitud" class="form-label fw-semibold">Solicitud</label>
+                <label for="solicitud" class="form-label fw-semibold">Solicitud <spam class="text-danger">*</spam></label>
                 <div class="input-group has-validation">
                     <span class="border border-primary input-group-text"><i class="bi bi-building"></i></span>
                     <select class="form-select border border-dark" name="solicitud" id="solicitud" required>
@@ -89,7 +87,7 @@
                     <div class="row g-3">
                         <div class="col-lg-6 col-12 mb-3">
                             <label for="fecha_detalle" class="form-label fw-semibold">Fecha del detalle del
-                                Gasto</label>
+                                Gasto <spam class="text-danger">*</spam></label>
                             <div class="input-group has-validation">
                                 <span class="border border-primary input-group-text"><i class="bi bi-calendar-event"></i></span>
                                 <input type="date" class="form-control fecha_detalle border border-dark" name="fecha_detalle[]" required>
@@ -97,7 +95,7 @@
                             </div>
                         </div>
                         <div class="col-lg-6 col-12 mb-3">
-                            <label for="metodo_pago" class="form-label fw-semibold">Método de Pago</label>
+                            <label for="metodo_pago" class="form-label fw-semibold">Método de Pago <spam class="text-danger">*</spam></label>
                             <div class="input-group has-validation">
                                 <span class="border border-primary input-group-text"><i class="bi bi-credit-card"></i></span>
                                 <select class="form-select border border-dark metodo_pago" name="metodo_pago[]" required>
@@ -110,25 +108,25 @@
                             </div>
                         </div>
                         <div class="col-lg-6 col-12 mb-3">
-                            <label for="monto" class="form-label fw-semibold">Monto</label>
+                            <label for="monto" class="form-label fw-semibold">Monto <spam class="text-danger">*</spam></label>
                             <div class="input-group has-validation">
                                 <span class="border border-primary input-group-text"><i class="bi bi-currency-dollar"></i></span>
                                 <input type="text" inputmode="decimal" pattern="^[0-9]+([.,][0-9]{1,2})?$"
-                                    class="form-control border border-dark monto" name="monto[]" required>
+                                    class="form-control border border-dark monto" name="monto[]" placeholder="Ej: 250.00" required>
                                 <span class="w-100 invalid-feedback"></span>
                             </div>
                             <div class="invalid-feedback" id="mensaje_monto"></div>
                         </div>
                         <div class="col-lg-6 col-12 mb-3 grupo_referencia">
-                            <label for="referencia" class="form-label fw-semibold">Referencia/N° Comprobante</label>
+                            <label for="referencia" class="form-label fw-semibold">Referencia/N° Comprobante <spam class="text-danger">*</spam></label>
                             <div class="input-group has-validation">
                                 <span class="border border-primary input-group-text"><i class="bi bi-receipt"></i></span>
-                                <input type="text" class="form-control border border-dark referencia" minlength="4" maxlength="20" name="referencia[]">
+                                <input type="text" class="form-control border border-dark referencia" minlength="4" maxlength="20" name="referencia[]" placeholder="Ingrese la referencia">
                                 <span class="w-100 invalid-feedback"></span>
                             </div>
                         </div>
                         <div class="col-lg-6 col-12 mb-3 grupo_banco">
-                            <label for="banco" class="form-label fw-semibold">Banco</label>
+                            <label for="banco" class="form-label fw-semibold">Banco <spam class="text-danger">*</spam></label>
                             <div class="input-group has-validation">
                                 <span class="border border-primary input-group-text"><i class="bi bi-bank"></i></span>
                                 <select class="form-select border border-dark banco" name="banco_id[]">
@@ -144,7 +142,7 @@
                         </div>
                         <div class="col-12">
                             <label for="descripcion_detalle" class="form-label fw-semibold">Descripción del
-                                Detalle</label>
+                                Detalle <spam class="text-danger">*</spam></label>
                             <div class="input-group has-validation">
                                 <span class="border border-primary input-group-text"><i class="bi bi-card-text"></i></span>
                                 <textarea name="descripcion_detalle[]" class="form-control border border-dark descripcion_detalle" rows="3"
@@ -153,7 +151,7 @@
                             </div>
                         </div>
                         <div class="col-12 grupo_imagen">
-                            <label for="imagen" class="form-label fw-semibold">Comprobante (Imagen)</label>
+                            <label for="imagen" class="form-label fw-semibold">Comprobante (Imagen) <spam class="text-danger">*</spam></label>
                             <div class="input-group has-validation">
                                 <span class="border border-primary input-group-text"><i class="bi bi-file-earmark-image"></i></span>
                                 <input type="file" class="form-control border border-dark imagen" name="imagen[]" accept="image/*">
@@ -195,7 +193,7 @@
         <div class="card-body">
             <div class="row g-3">
                 <div class="col-lg-6 col-12 mb-3">
-                    <label class="form-label fw-semibold">Fecha del detalle del Gasto</label>
+                    <label class="form-label fw-semibold">Fecha del detalle del Gasto <spam class="text-danger">*</spam></label>
                     <div class="input-group has-validation">
                         <span class="border border-primary input-group-text"><i class="bi bi-calendar-event"></i></span>
                         <input type="date" class="form-control border border-dark fecha_detalle" name="fecha_detalle[]" required>
@@ -204,7 +202,7 @@
                 </div>
 
                 <div class="col-lg-6 col-12 mb-3">
-                    <label class="form-label fw-semibold">Método de Pago</label>
+                    <label class="form-label fw-semibold">Método de Pago <spam class="text-danger">*</spam></label>
                     <div class="input-group has-validation">
                         <span class="border border-primary input-group-text"><i class="bi bi-credit-card"></i></span>
                         <select class="form-select border border-dark metodo_pago" name="metodo_pago[]" required>
@@ -218,27 +216,27 @@
                 </div>
 
                 <div class="col-lg-6 col-12 mb-3">
-                    <label class="form-label fw-semibold">Monto</label>
+                    <label class="form-label fw-semibold">Monto <spam class="text-danger">*</spam></label>
                     <div class="input-group has-validation">
                         <span class="border border-primary input-group-text"><i class="bi bi-currency-dollar"></i></span>
                         <input type="text" inputmode="decimal" pattern="^[0-9]+([.,][0-9]{1,2})?$"
-                            class="form-control border border-dark monto" name="monto[]" required>
+                            class="form-control border border-dark monto" name="monto[]" required placeholder="Ej: 250.00">
                         <span class="w-100 invalid-feedback"></span>
                     </div>
                     <div class="invalid-feedback" id="mensaje_monto"></div>
                 </div>
 
                 <div class="col-lg-6 col-12 mb-3 grupo_referencia d-none">
-                    <label class="form-label fw-semibold">Referencia/N° Comprobante</label>
+                    <label class="form-label fw-semibold">Referencia/N° Comprobante <spam class="text-danger">*</spam></label>
                     <div class="input-group has-validation">
                         <span class="border border-primary input-group-text"><i class="bi bi-receipt"></i></span>
-                        <input type="text" class="form-control border border-dark referencia" name="referencia[]">
+                        <input type="text" class="form-control border border-dark referencia" name="referencia[]" placeholder="Ingrese la referencia">
                         <span class="w-100 invalid-feedback"></span>
                     </div>
                 </div>
 
                 <div class="col-lg-6 col-12 mb-3 grupo_banco d-none">
-                    <label class="form-label fw-semibold">Banco</label>
+                    <label class="form-label fw-semibold">Banco <spam class="text-danger">*</spam></label>
                     <div class="input-group has-validation">
                         <span class="border border-primary input-group-text"><i class="bi bi-bank"></i></span>
                         <select class="form-select border border-dark banco" name="banco_id[]">
@@ -252,7 +250,7 @@
                 </div>
 
                 <div class="col-12">
-                    <label class="form-label fw-semibold">Descripción del Detalle</label>
+                    <label class="form-label fw-semibold">Descripción del Detalle <spam class="text-danger">*</spam></label>
                     <div class="input-group has-validation">
                         <span class="border border-primary input-group-text"><i class="bi bi-card-text"></i></span>
                         <textarea name="descripcion_detalle[]" class="form-control border border-dark descripcion_detalle" rows="3"
@@ -262,7 +260,7 @@
                 </div>
 
                 <div class="col-12 grupo_imagen d-none">
-                    <label class="form-label fw-semibold">Comprobante (Imagen)</label>
+                    <label class="form-label fw-semibold">Comprobante (Imagen) <spam class="text-danger">*</spam></label>
                     <div class="input-group has-validation">
                         <span class="border border-primary input-group-text"><i class="bi bi-file-earmark-image"></i></span>
                         <input type="file" class="form-control border border-dark imagen" name="imagen[]" accept="image/*">

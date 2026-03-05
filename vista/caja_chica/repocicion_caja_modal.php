@@ -1,6 +1,6 @@
 <form class="row m-3" id="form_registro_gasto">
     <div class="col-lg-5">
-        <label for="monto_reponer">Monto del gasto:</label>
+        <label for="monto_reponer">Monto del gasto: <spam class="text-danger">*</spam></label>
         <div class="input-group mb-3">
             <input type="number" name="monto_reponer" id="monto_reponer" class="form-control" maxlength="15" minlength="0" title="Monto del gasto en bolivares" monto="bs" placeholder="Monto">
             <span class="input-group-text icono_moneda" id="spam_icono_moneda_cuota">Bs.</span>

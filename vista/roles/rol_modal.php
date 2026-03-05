@@ -1,6 +1,6 @@
 <form id="form_rol">
     <div class="col-md-12">
-        <label for="nombre">Nombre del rol</label>
+        <label for="nombre">Nombre del rol <spam class="text-danger">*</spam></label>
         <div class="input-group mb-3">
             <span class="input-group-text" id="basic-addon1"><i class="bi bi-person-gear"></i></span>
             <input type="text" class="form-control nombre_rol" name="nombre" id="nombre" placeholder="Ejem: Contador" aria-label="nombre" aria-describedby="basic-addon1" minlength="3" maxlength="30">

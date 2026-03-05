@@ -132,7 +132,7 @@ async function verificarMeses() {
         let fecha = new Date(`${m.mes_presupuesto}/01/${m.anio_presupuesto}`);
         let option = document.createElement("option");
         // option.id = fecha.toLocaleDateString('es-ES');
-        option.id = FormatoFechas.formatoFechaDB(fecha.toLocaleDateString('es-ES'));
+        option.id = FormatoFechas.formatoFechaBD(fecha.toLocaleDateString('es-ES'));
         option.textContent = fecha.toLocaleString("es-ES", { month: 'long', year: 'numeric' }).toUpperCase();
         fragment.appendChild(option);
     });

@@ -159,14 +159,13 @@ class Bitacora extends Conexion
                 INNER JOIN usuarios ON usuarios.id_usuario = bitacora.usuario_id
                 INNER JOIN modulos ON modulos.id_modulo = bitacora.modulo_id
                 ORDER BY bitacora.fecha_hora DESC
-                LIMIT 6";
+                LIMIT 6 OFFSET 1";
 
         try {
             $stmt = $this->get_conex('seguridad')->prepare($sql);
             $stmt->execute();
             $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // Procesamos los datos para crear una descripción amigable
             foreach ($datos as &$fila) {
                 $accion_original = strtoupper($fila['accion']);
                 $modulo_original = strtoupper($fila['nombre_modulo']);

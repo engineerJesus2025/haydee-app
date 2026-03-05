@@ -1,8 +1,7 @@
 <form id="form_anio_fiscal" name="form_anio_fiscal">
-
     <div class="row m-3">
         <div class="col-md-6">
-            <label for="fecha_inicio">Fecha Inicio</label>
+            <label for="fecha_inicio">Fecha Inicio <spam class="text-danger">*</spam></label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
                 <input type="date" class="form-control" name="fecha_inicio" id="fecha_inicio"  aria-label="fecha_inicio" aria-describedby="basic-addon1" minlength="3" maxlength="30">
@@ -10,7 +9,7 @@
             </div>
         </div>
         <div class="col-md-6">
-            <label for="fecha_cierre">Fecha Cierre</label>
+            <label for="fecha_cierre">Fecha Cierre <spam class="text-danger">*</spam></label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
                 <input type="date" class="form-control" name="fecha_cierre" id="fecha_cierre"  aria-label="fecha_cierre" aria-describedby="basic-addon1" readonly>
@@ -21,7 +20,7 @@
     </div>
     <div class="row m-3">
         <div class="col-md-4">
-            <label for="estado">Estado</label>
+            <label for="estado">Estado <spam class="text-danger">*</spam></label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
                 <select class="form-select" aria-label="Default select example" name="estado" id="estado" form="form_anio_fiscal" style="pointer-events: none; background-color: #eee;">

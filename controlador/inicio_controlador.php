@@ -55,12 +55,10 @@ if (isset($_POST["operacion"])) {
     } finally {
         if ($respuesta !== null) {
             // Cerrar conexiones explícitamente
-            if (isset($cartelera)) {
-                $cartelera->cerrar();
-            }
-            if (isset($mensualidad)) {
-                $mensualidad->cerrar();
-            }
+            if (isset($cartelera)) { $cartelera->cerrar(); }
+            if (isset($mensualidad)) { $mensualidad->cerrar(); }
+            if (isset($apartamento)) { $apartamento->cerrar(); }
+            if (isset($bitacora)) { $bitacora->cerrar(); }
 
             header('Content-Type: application/json');
             echo json_encode($respuesta);
