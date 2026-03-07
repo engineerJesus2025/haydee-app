@@ -1,101 +1,81 @@
-document.addEventListener("DOMContentLoaded", function(event) {
-   
-	const showNavbar = (toggleId, navId, bodyId, headerId) =>{
-		const anchoVentana = window.innerWidth;
-		let toggle = document.getElementById(toggleId),
-		nav = document.getElementById(navId),
-		bodypd = document.getElementById(bodyId),
-		headerpd = document.getElementById(headerId);
+document.addEventListener("DOMContentLoaded", function () {
+    // 1. CAPTURAMOS LOS ELEMENTOS DEL DOM
+    const toggle = document.getElementById('header-toggle');
+    const nav = document.getElementById('nav-bar');
+    const bodypd = document.getElementById('body-pd') || document.body;
+    const headerpd = document.getElementById('header');
+    const enlaces = document.querySelectorAll(".collapse a");
 
-		let enlaces = document.querySelectorAll(".collapse a");
-		let barra_inferior = document.querySelector(".barra_inferior");
+    // 2. INICIALIZACIÓN MÓVIL (Asegura que el menú inicie cerrado en teléfonos)
+    if (window.innerWidth < 769 && nav) {
+        nav.classList.remove('show');
+        if (toggle) toggle.classList.remove('bi-x-lg');
+        bodypd.classList.remove('body-pd');
+        if (headerpd) headerpd.classList.remove('body-pd');
 
-		if (bodypd === null) {
-			bodypd = document.querySelector("body")
-		}
-		if(toggle && nav && bodypd && headerpd){
-			if (anchoVentana < 769) {
-				enlaces.forEach(a=>{
-					a.classList.add('ps-2');
-					a.parentElement.classList.remove('rounded');
-					a.parentElement.classList.remove('ms-4');
-				});
-			}
+        // Ajuste de márgenes para submenús en móvil
+        enlaces.forEach(a => {
+            a.classList.add('ps-2');
+            a.parentElement.classList.remove('rounded', 'ms-4');
+        });
+    }
 
-			toggle.addEventListener('click', ()=>{
-				
-				nav.classList.toggle('show');
-				
-				toggle.classList.toggle('bi-x-lg');
-				
-				bodypd.classList.toggle('body-pd');
-				
-				headerpd.classList.toggle('body-pd');
+    // 3. LÓGICA DE APERTURA Y CIERRE (TOGGLE)
+    if (toggle && nav) {
+        toggle.addEventListener('click', () => {
+            nav.classList.toggle('show');
+            toggle.classList.toggle('bi-x-lg');
+            bodypd.classList.toggle('body-pd');
+            if (headerpd) headerpd.classList.toggle('body-pd');
 
-				// barra_inferior.classList.toggle('ajustar');
+            // Solo aplica clases de Bootstrap a submenús en escritorio
+            if (window.innerWidth >= 769) {
+                let id_submenu = '';
+                enlaces.forEach(a => {
+                    a.classList.toggle('ps-2');
+                    if (id_submenu !== a.parentElement.id) {
+                        a.parentElement.classList.toggle('rounded');
+                        a.parentElement.classList.toggle('ms-4');
+                        id_submenu = a.parentElement.id;
+                    }
+                });
+            }
+        });
 
-				if (anchoVentana < 769) return;
-				
-				let id_submenu = '';
-				enlaces.forEach(a=>{
-					a.classList.toggle('ps-2');
+        // 4. CERRAR AL HACER CLIC AFUERA (Solo móviles)
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth < 769 && nav.classList.contains('show')) {
+                if (!nav.contains(e.target) && !toggle.contains(e.target)) {
+                    nav.classList.remove('show');
+                    toggle.classList.remove('bi-x-lg');
+                    bodypd.classList.remove('body-pd');
+                    if (headerpd) headerpd.classList.remove('body-pd');
+                }
+            }
+        });
+    }
 
-					if (!(id_submenu == a.parentElement.id)) {
-						a.parentElement.classList.toggle('rounded');
-						a.parentElement.classList.toggle('ms-4');
+    // 5. INICIALIZAR TOOLTIPS DE BOOTSTRAP
+    if (typeof bootstrap !== 'undefined') {
+        const navLinks = document.querySelectorAll('.nav_link');
+        const linkInicio = document.querySelector(".nav_logo");
 
-						id_submenu = a.parentElement.id;
-					}
-				});
-			});
-		}
-	}
+        const tooltipConfig = { placement: 'right', animation: true, trigger: 'hover' };
 
-	showNavbar('header-toggle','nav-bar','body-pd','header')
+        navLinks.forEach(link => {
+            if (link.hasAttribute('title')) new bootstrap.Tooltip(link, tooltipConfig);
+        });
 
-	const linkColor = document.querySelectorAll('.nav_link')
+        if (linkInicio && linkInicio.hasAttribute('title')) {
+            new bootstrap.Tooltip(linkInicio, tooltipConfig);
+        }
+    }
 
-	function colorLink(){
-		if(linkColor){
-			linkColor.forEach(l=> l.classList.remove('active'))
-			this.classList.add('active')
-		}
-	}
-	linkColor.forEach(l=> l.addEventListener('click', colorLink));
-
-	cambiarClasesMovil('header-toggle','nav-bar','body-pd','header');
+    // 6. AUTO-SCROLL AL MÓDULO ACTIVO
+    const activeLink = document.querySelector('.nav_link.active');
+    if (activeLink) {
+        setTimeout(() => {
+            activeLink.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+    }
 });
-
-function cambiarClasesMovil(toggleId, navId, bodyId, headerId) {
-	const anchoVentana = window.innerWidth;
-	let toggle = document.getElementById(toggleId),
-	nav = document.getElementById(navId),
-	bodypd = document.getElementById(bodyId),
-	headerpd = document.getElementById(headerId);
-
-	let enlaces = document.querySelectorAll(".collapse a");
-
-	if (anchoVentana < 769) {
-		if(toggle && nav && bodypd && headerpd){	
-			nav.classList.remove('show');
-			
-			toggle.classList.remove('bi-x-lg');
-			
-			bodypd.classList.remove('body-pd');
-			
-			headerpd.classList.remove('body-pd');
-
-			// let id_submenu = '';
-			// enlaces.forEach(a=>{
-			// 	a.classList.remove('ps-2');
-			// 	console.log(a.parentElement)
-			// 	a.parentElement.classList.remove('rounded');
-			// 	a.parentElement.classList.remove('ms-4');
-			// 	a.parentElement.classList.remove('ms-3');
-
-			// 	id_submenu = a.parentElement.id;
-				
-			// });
-		}
-	}
-}

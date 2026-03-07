@@ -187,7 +187,6 @@ async function consultarPublicaciones() {
     datos_consulta.append("limite", limite);
 
     try {
-        // USAMOS EL HELPER AQUI
         let respuesta = await Utilidades.query(datos_consulta,false);
         document.getElementById('carga_publicaciones').setAttribute('hidden', '');
 
@@ -223,23 +222,38 @@ async function consultarPublicaciones() {
 function construirHTMLPublicacion(publicacion) {
     const template = document.getElementById('template-publicacion');
     const clone = template.content.cloneNode(true);
-    const card = clone.querySelector('.card');
-    const contentCol = card.querySelector('.col-md-7');
-    const imageCol = card.querySelector('.col-md-5');
+    const card = clone.querySelector('.item-publicacion');
     
-    // Llenar datos de forma segura
+    // 1. Llenar los textos usando tus helpers
     card.querySelector('.post-title').textContent = publicacion.titulo;
-    card.querySelector('small').textContent = `Publicado el ${FormatoFechas.formatoUsuario(publicacion.fecha)}`;
-    card.querySelector('.author-badge').textContent = `Por ${publicacion.nombre_usuario}`;
+    card.querySelector('.post-date').textContent = FormatoFechas.formatoUsuario(publicacion.fecha) || publicacion.fecha;
     card.querySelector('.post-description').textContent = publicacion.descripcion;
+    card.querySelector('.author-name').textContent = publicacion.nombre_usuario;
     
-    if (publicacion.imagen && publicacion.imagen !== '') {
-        card.querySelector('.post-image').src = `recursos/img/cartelera/${publicacion.imagen}`;
+    // 2. Lógica de la Imagen y su Fallback
+    const imgElement = card.querySelector('.post-image');
+    // SVG convertido en Base64 para inyectarlo sin hacer peticiones extra
+    const svgPorDefecto = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22400%22%20height%3D%22200%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20200%22%20preserveAspectRatio%3D%22none%22%3E%3Crect%20width%3D%22400%22%20height%3D%22200%22%20fill%3D%22%23e9ecef%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20fill%3D%22%236c757d%22%20font-size%3D%2216%22%20font-family%3D%22Arial%2C%20sans-serif%22%20text-anchor%3D%22middle%22%20dy%3D%22.3em%22%3ESin%20Imagen%3C%2Ftext%3E%3C%2Fsvg%3E';
+    
+    if (publicacion.imagen && publicacion.imagen.trim() !== '') {
+        imgElement.src = `recursos/img/cartelera/${publicacion.imagen}`;
     } else {
-        imageCol.remove(); // Eliminar la columna de imagen
-        contentCol.className = 'col-12'; // Ajustar ancho
-        const meta = card.querySelector('.post-meta');
-        meta.classList.remove('mb-5'); // Quitar margen extra
+        imgElement.src = svgPorDefecto;
+    }
+
+    // 3. Lógica Semántica para la Etiqueta de Prioridad
+    const badge = card.querySelector('.priority-badge');
+    const prioridadStr = String(publicacion.prioridad); 
+    
+    if (prioridadStr === "1") {
+        badge.textContent = "Urgente";
+        badge.classList.add('bg-danger');
+    } else if (prioridadStr === "2") {
+        badge.textContent = "Importante";
+        badge.classList.add('bg-warning', 'text-dark');
+    } else {
+        badge.textContent = "Informativo";
+        badge.classList.add('bg-success');
     }
     
     return card;

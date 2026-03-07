@@ -16,7 +16,6 @@
             <?php
             require_once ROOT_PATH . "/vista/componentes/navbar.php";
             ?>
-
             <div class="col d-flex flex-column  min-vh-100 gris">
                 <?php
                 require_once ROOT_PATH . "/vista/componentes/header.php";

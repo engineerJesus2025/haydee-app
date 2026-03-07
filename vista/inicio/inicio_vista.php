@@ -260,26 +260,30 @@
 	</div>
 
 	<template id="template-publicacion">
-	    <div class="col-11 card post-card mx-auto shadow-lg my-4 px-0">
-	        <div class="row g-0 h-100">
-	            <div class="col-md-7 order-md-1">
-	                <div class="content-area">
-	                    <h2 class="post-title h3"></h2>
-	                    <div class="post-meta my-2 mb-5">
-	                        <small class="text-uppercase fw-bold"></small>
-	                        <span class="author-badge ms-2"></span>
-	                    </div>
-	                    <p class="post-description flex-grow-1"></p>
-	                </div>
-	            </div>
-	            <div class="col-md-5 order-md-2 d-flex align-items-center">
-	                <div class="image-container w-100">
-	                    <img class="post-image" alt="Imagen de la publicación">
-	                </div>
-	            </div>
-	        </div>
-	    </div>
-	</template>
+        <div class="col-12 col-md-6 col-xl-4 d-flex align-items-stretch mb-4 item-publicacion">
+            <div class="card w-100 shadow-sm tarjeta-publicacion">
+                <div class="position-relative">
+                    <img class="card-img-top imagen-tarjeta post-image" alt="Imagen de la publicación" 
+                         onerror="this.src='data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22400%22%20height%3D%22200%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20200%22%20preserveAspectRatio%3D%22none%22%3E%3Crect%20width%3D%22400%22%20height%3D%22200%22%20fill%3D%22%23e9ecef%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20fill%3D%22%236c757d%22%20font-size%3D%2216%22%20font-family%3D%22Arial%2C%20sans-serif%22%20text-anchor%3D%22middle%22%20dy%3D%22.3em%22%3ESin%20Imagen%3C%2Ftext%3E%3C%2Fsvg%3E';">
+                    <span class="badge etiqueta-prioridad shadow-sm priority-badge"></span>
+                </div>
+                
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title fw-bold text-primary post-title"></h5>
+                    <p class="card-text text-muted mb-4 flex-grow-1 texto-limitado post-description"></p>
+                    
+                    <div class="mt-auto border-top pt-3 d-flex justify-content-between align-items-center">
+                        <small class="text-secondary d-flex align-items-center">
+                            <i class="fas fa-user-circle me-1"></i> <strong class="author-name"></strong>
+                        </small>
+                        <small class="text-secondary d-flex align-items-center">
+                            <i class="fas fa-calendar-alt me-1"></i> <span class="post-date"></span>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
 
 	<?php
         require_once ROOT_PATH . "/vista/componentes/footer.php";

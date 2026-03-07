@@ -217,3 +217,41 @@
     height: 60px;
     border-radius: 10px;
 }
+
+/* --- ESTILOS PARA TARJETAS DE PUBLICACIONES --- */
+.tarjeta-publicacion {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.tarjeta-publicacion:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+}
+
+.imagen-tarjeta {
+    height: 200px;
+    object-fit: cover; /* Recorta sin deformar */
+    background-color: #e9ecef;
+    width: 100%;
+}
+
+.etiqueta-prioridad {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 0.85rem;
+    padding: 0.5em 0.8em;
+    border-radius: 8px;
+    z-index: 2;
+}
+
+/* Evita que descripciones muy largas rompan el tamaño de la tarjeta */
+.texto-limitado {
+    display: -webkit-box;
+    -webkit-line-clamp: 3; /* Máximo 3 líneas, luego muestra "..." */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}

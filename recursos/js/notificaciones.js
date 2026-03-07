@@ -1,11 +1,4 @@
-// notificaciones.js
 document.addEventListener('DOMContentLoaded', () => {
-    // Verificar que Utilidades esté disponible
-    if (typeof Utilidades === 'undefined') {
-        console.error('Utilidades no está cargado');
-        return;
-    }
-
     // ------------------------------------------------------------
     // Funciones auxiliares
     // ------------------------------------------------------------
@@ -156,4 +149,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    
 });
