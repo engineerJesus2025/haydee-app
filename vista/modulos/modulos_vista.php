@@ -5,7 +5,7 @@
     <title>Módulos | Inicio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php
-    require_once "vista/componentes/estilos.php";
+    require_once ROOT_PATH . "/vista/componentes/estilos.php";
     ?>
 </head>
 
@@ -14,9 +14,9 @@
     <input type="text" hidden id="permiso_modificar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_MODULOS, MODIFICAR) ?>">
     <div class="container-fluid">
         <div class="row flex-nowrap ">
-            <?php require_once "vista/componentes/navbar.php"; ?>
+            <?php require_once ROOT_PATH . "/vista/componentes/navbar.php"; ?>
             <div class="col d-flex flex-column min-vh-100 gris">
-                <?php require_once "vista/componentes/header.php"; ?>
+                <?php require_once ROOT_PATH . "/vista/componentes/header.php"; ?>
                 <main class="col ps-md-2 pt-2 mb-5">
                     <div class="page-header pt-3">
                         <h2>GESTIONAR MÓDULOS</h2>
@@ -45,20 +45,7 @@
                                         </div>
                                     </div>
                                 <?php endif; ?>
-                                <table id="tabla_modulos" class="table table-striped table-hover" style="width:97%">
-                                    <thead>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>NOMBRE</th>
-                                            <th class="text-center">ACCIONES</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td colspan="3"><h4>Cargando...</h4></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                <div id="tabla_modulos" class="tabla-sistema-haydee"></div>
                             </div>
                         </div>
                     </div>
@@ -69,10 +56,10 @@
 
     <!-- Componentes -->
     <?php
-        require_once "vista/componentes/footer.php";
-        require_once "vista/componentes/script.php";
-        require_once 'vista/componentes/modal_carga.php';
-        require_once 'vista/componentes/boton_ayuda.php';
+        require_once ROOT_PATH . "/vista/componentes/footer.php";
+        require_once ROOT_PATH . "/vista/componentes/script.php";
+        require_once ROOT_PATH . "/vista/componentes/modal_carga.php";
+        require_once ROOT_PATH . "/vista/componentes/boton_ayuda.php";
     ?>
 
     
@@ -85,14 +72,14 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <?php require_once "vista/modulos/modulos_modal.php"; ?>
+                    <?php require_once ROOT_PATH . "/vista/modulos/modulos_modal.php"; ?>
                 </div>
             </div>
         </div>
     </div>
     
     <!-- Scripts personalizado -->
-    <script type="text/javascript" src="recursos/js/validaciones/modulos_validar.js"></script>
-    <script type="text/javascript" src="recursos/js/consultas_ajax/modulos_ajax.js"></script>
+    <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/validaciones/modulos_validar.js"></script>
+    <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/consultas_ajax/modulos_ajax.js"></script>
 </body>
 </html>

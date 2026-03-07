@@ -24,9 +24,6 @@ let tasa_dolar = parseFloat(localStorage.getItem("tasa_dolar") || 1).toFixed(2);
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
     consultar();
-    document.getElementById('header-toggle')?.addEventListener("click", () => {
-        setTimeout(() => tabla_presupuesto?.columns.adjust().draw(), 450);
-    });
 
     document.querySelector("#modal_presupuesto")?.addEventListener("hide.bs.modal", resetModal);
 });
@@ -581,7 +578,7 @@ function asignarEventosCambioMoneda(){
 // ============================================================
 // CONSULTAS
 // ============================================================
-async function consultar() {
+async function consultar2() {
     const columnas = [
         {
             data: null,
@@ -616,6 +613,57 @@ async function consultar() {
 
     tabla_presupuesto = Utilidades.crearDataTable('tabla_presupuesto', columnas, parametros, postCreacion);
     await consultarInformacionFormulario();
+}
+
+async function consultar() {
+    const formatoPeriodo = (cell) => {
+        let [anio, mes] = cell.getValue().split('-');
+        return `${FormatoFechas.nombreMes(parseInt(mes))} del ${anio}`.toUpperCase();
+    };
+    const formatoMonto = (cell) => `${parseFloat(cell.getValue()).toFixed(2)} Bs. / ${(cell.getValue() / tasa_dolar).toFixed(2)} $`;
+
+    const formatoBotones = (cell) => {
+        const id = cell.getData().id_presupuesto;
+        let html = `<div class="d-flex justify-content-center gap-2">
+            <button type="button" class="btn btn-success btn-sm modificar" data-bs-toggle="modal" data-bs-target="#modal_presupuesto" title="Modificar" value="${id}"><i class="bi bi-pencil-square"></i></button>`;
+        if (permiso_eliminar == 1) {
+            html += `<button type="button" class="btn btn-danger btn-sm eliminar" title="Eliminar" value="${id}"><i class="bi bi-trash"></i></button>`;
+        }
+        html += `</div>`;
+        return html;
+    };
+
+    const columnas = [
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
+        { title: "PERÍODO", field: "fecha", formatter: formatoPeriodo, minWidth: 150, responsive: 0 },
+        { title: "TOTAL ESTIMADO", field: "total_estimado", formatter: formatoMonto, minWidth: 180 },
+        { title: "CUOTA RESERVA", field: "cuota_reserva", formatter: formatoMonto, minWidth: 180 },
+        { title: "OBSERVACIÓN", field: "observacion", minWidth: 200 },
+        {
+            title: "ACCIONES", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 100, responsive: 0, download: false,
+            cellClick: function(e, cell) {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                const mockEvent = { target: btn };
+                if (btn.classList.contains('modificar')) modificar_formulario(mockEvent);
+                if (btn.classList.contains('eliminar')) eventoEliminar(mockEvent);
+            }
+        }
+    ];
+
+    tabla_presupuesto = Utilidades.cargarTabulador("tabla_presupuesto", "", columnas);
+    
+    // Llamada vital del módulo
+    await consultarInformacionFormulario();
+
+    const inputBusqueda = document.getElementById("busqueda_global");
+    if (inputBusqueda) {
+        inputBusqueda.addEventListener("input", function(e) {
+            let valor = e.target.value.trim();
+            let filtros = columnas.filter(col => col.field).map(col => ({ field: col.field, type: "like", value: valor }));
+            tabla_presupuesto.setFilter([filtros]);
+        });
+    }
 }
 
 async function consultarInformacionFormulario() {
@@ -725,30 +773,6 @@ async function llenarDetallesPresupuestos() {
 }
 
 // ============================================================
-// CREACIÓN DE BOTONES EN TABLA
-// ============================================================
-function crearBotones(id) {
-    let div = document.createElement("div");
-    div.className = "row justify-content-evenly";
-    let html = `
-        <div class="col-lg-3 col-6 mt-2 mt-lg-0">
-            <button type="button" class="btn btn-success btn-sm modificar" data-bs-toggle="modal" data-bs-target="#modal_presupuesto" title="modificar" value="${id}">
-                <i class="bi bi-pencil-square"></i>
-            </button>
-        </div>`;
-    if (permiso_eliminar == 1) {
-        html += `
-        <div class="col-lg-3 col-6 mt-2 mt-lg-0">
-            <button type="button" class="btn btn-danger btn-sm eliminar" title="Eliminar" value="${id}">
-                <i class="bi bi-trash"></i>
-            </button>
-        </div>`;
-    }
-    div.innerHTML = html;
-    return div;
-}
-
-// ============================================================
 // ACCIONES: REGISTRAR, modificar, ELIMINAR
 // ============================================================
 
@@ -827,7 +851,7 @@ async function registrar() {
 
     modal.hide();
     await consultarInformacionFormulario();
-    tabla_presupuesto.ajax.reload();
+    tabla_presupuesto.replaceData();
     Utilidades.mensaje('success', 'Éxito', respuesta.mensaje);
 }
 
@@ -860,11 +884,12 @@ async function modificar_formulario(e) {
 
     let option = document.createElement("option");
     option.value = fechaStr;
-    option.textContent = fechaObj.toLocaleString("es-ES", { month: 'long', year: 'numeric' }).toUpperCase();
+    option.textContent = `${FormatoFechas.nombreMes(mes)} del ${anio}`.toUpperCase();
     option.id = 'fecha_editada';
     option.selected = true;
     select_mes.appendChild(option);
     select_mes.value = fechaStr;
+
 
     document.getElementById("observacion").value = presupuesto.observacion || '';
     document.getElementById("cuota_reserva").value = presupuesto.cuota_reserva;
@@ -941,7 +966,7 @@ async function modificar(id) {
         return;
     }
 
-    tabla_presupuesto.ajax.reload();
+    tabla_presupuesto.replaceData();
     modal.hide();
     Utilidades.mensaje('success', 'Éxito', respuesta.mensaje);
 }
@@ -973,7 +998,7 @@ async function eliminar(id) {
         Utilidades.mensaje('error', 'Error', respuesta.mensaje);
         return;
     }
-    tabla_presupuesto.ajax.reload();
+    tabla_presupuesto.replaceData();
     await consultarInformacionFormulario();
     Utilidades.mensaje('success', 'Éxito', respuesta.mensaje);
 }

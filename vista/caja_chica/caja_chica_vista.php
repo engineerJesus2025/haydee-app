@@ -5,7 +5,7 @@
 	<title>Caja chica</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<?php
-		require_once "vista/componentes/estilos.php";
+		require_once ROOT_PATH . "/vista/componentes/estilos.php";
 	?>
 </head>
 
@@ -16,11 +16,11 @@
 	<div class="container-fluid">
 		<div class="row flex-nowrap mb-2">
 			<?php
-				require_once "vista/componentes/navbar.php";
+				require_once ROOT_PATH . "/vista/componentes/navbar.php";
 			?>
 			<div class="col d-flex flex-column  min-vh-100 gris">
 			<?php
-				require_once "vista/componentes/header.php";
+				require_once ROOT_PATH . "/vista/componentes/header.php";
 			?>
 				<main class="col ps-md-2 pt-2 mb-5">
 					<div class="page-header pt-3">
@@ -61,20 +61,7 @@
 					<div class="row mb-3 justify-content-center">
             <div class="col-12">
               <div class="card p-4 pt-3">
-                <table id="tabla_registros_sistema" class="table caption-top table-striped table-hover" style="width: 98%">
-                	<caption>Movimientos Registrados</caption>
-                  <thead>
-                    <tr>
-                      <th>Fecha</th>
-                      <th>Monto</th>
-                      <th>Concepto</th>
-                      <th>Estado</th>
-                      <th>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>                    
-                  </tbody>
-                </table>
+                <div id="tabla_registros_sistema" class="tabla-sistema-haydee"></div>
               </div>
             </div>
             
@@ -96,10 +83,10 @@
 	</div>
   <!-- Componentes -->
   <?php
-      require_once "vista/componentes/footer.php";
-      require_once "vista/componentes/script.php";
-      require_once 'vista/componentes/modal_carga.php';
-      require_once 'vista/componentes/boton_ayuda.php';
+      require_once ROOT_PATH . "/vista/componentes/footer.php";
+      require_once ROOT_PATH . "/vista/componentes/script.php";
+      require_once ROOT_PATH . "/vista/componentes/modal_carga.php";
+      require_once ROOT_PATH . "/vista/componentes/boton_ayuda.php";
   ?>
   
   <!-- Modales -->
@@ -112,7 +99,7 @@
         </div>
         <div class="modal-body">
           <?php
-          require_once "vista/caja_chica/descripciones_modal.php";
+          require_once ROOT_PATH . "/vista/caja_chica/descripciones_modal.php";
           ?>
         </div>
       </div>
@@ -127,7 +114,7 @@
         </div>
         <div class="modal-body">
           <?php
-          require_once "vista/caja_chica/gasto_caja_modal.php";
+          require_once ROOT_PATH . "/vista/caja_chica/gasto_caja_modal.php";
           ?>
         </div>
       </div>
@@ -142,7 +129,7 @@
         </div>
         <div class="modal-body">
           <?php
-            require_once "vista/caja_chica/repocicion_caja_modal.php";
+            require_once ROOT_PATH . "/vista/caja_chica/repocicion_caja_modal.php";
           ?>
         </div>
       </div>
@@ -150,7 +137,7 @@
   </div>
   
   <!-- Scripts personalizado -->
-	<script type="text/javascript" src="recursos/js/consultas_ajax/caja_chica_ajax.js"></script>
-  <script type="text/javascript" src="recursos/js/validaciones/caja_chica_validar.js"></script>
+	<script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/consultas_ajax/caja_chica_ajax.js"></script>
+  <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/validaciones/caja_chica_validar.js"></script>
 </body>
 </html>

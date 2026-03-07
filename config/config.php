@@ -1,7 +1,4 @@
 <?php
-// config/config.php
-
-// Solo cargamos el autoload si no está ya disponible (para scripts independientes)
 if (!class_exists('Dotenv\Dotenv')) {
     require_once __DIR__ . '/../vendor/autoload.php';
 }
@@ -12,28 +9,26 @@ use Dotenv\Dotenv;
 $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->safeLoad();
 
-// Definir constantes a partir de las variables de entorno
-define("DB_NAME", $_ENV['DB_NAME'] ?? 'haydee_db');
-define("DB_HOST", $_ENV['DB_HOST'] ?? 'localhost');
-define("DB_USER", $_ENV['DB_USER'] ?? 'app_condominio');
-define("DB_PASS", $_ENV['DB_PASS'] ?? 'haydee.2025');
-define("DB_SECURITY", $_ENV['DB_SECURITY'] ?? 'seguridad_haydee_db');
+// 🛡️ Definir constantes SOLO si no han sido definidas previamente
+if (!defined('DB_NAME')) define("DB_NAME", $_ENV['DB_NAME'] ?? 'haydee_db');
+if (!defined('DB_HOST')) define("DB_HOST", $_ENV['DB_HOST'] ?? 'localhost');
+if (!defined('DB_USER')) define("DB_USER", $_ENV['DB_USER'] ?? 'app_condominio');
+if (!defined('DB_PASS')) define("DB_PASS", $_ENV['DB_PASS'] ?? 'haydee.2025');
+if (!defined('DB_SECURITY')) define("DB_SECURITY", $_ENV['DB_SECURITY'] ?? 'seguridad_haydee_db');
 
-define('CLAVE_SITIO_RECAPTCHA', $_ENV['CLAVE_SITIO_RECAPTCHA'] ?? '');
-define('CLAVE_SECRETA_RECAPTCHA', $_ENV['CLAVE_SECRETA_RECAPTCHA'] ?? '');
+if (!defined('CLAVE_SITIO_RECAPTCHA')) define('CLAVE_SITIO_RECAPTCHA', $_ENV['CLAVE_SITIO_RECAPTCHA'] ?? '');
+if (!defined('CLAVE_SECRETA_RECAPTCHA')) define('CLAVE_SECRETA_RECAPTCHA', $_ENV['CLAVE_SECRETA_RECAPTCHA'] ?? '');
 
-define('PROVEEDOR_CORREO', $_ENV['PROVEEDOR_CORREO'] ?? '');
-define('API_CORREO', $_ENV['API_CORREO'] ?? '');
-define('SMTP_HOST', $_ENV['SMTP_HOST'] ?? '');
-define('SMTP_USER', $_ENV['SMTP_USER'] ?? '');
-define('SMTP_PASS', $_ENV['SMTP_PASS'] ?? '');
+if (!defined('PROVEEDOR_CORREO')) define('PROVEEDOR_CORREO', $_ENV['PROVEEDOR_CORREO'] ?? '');
+if (!defined('API_CORREO')) define('API_CORREO', $_ENV['API_CORREO'] ?? '');
+if (!defined('SMTP_HOST')) define('SMTP_HOST', $_ENV['SMTP_HOST'] ?? '');
+if (!defined('SMTP_USER')) define('SMTP_USER', $_ENV['SMTP_USER'] ?? '');
+if (!defined('SMTP_PASS')) define('SMTP_PASS', $_ENV['SMTP_PASS'] ?? '');
 
-define('URL_BASE', $_ENV['URL_BASE'] ?? 'http://localhost/tu_proyecto/');
-define('ENTORNO', $_ENV['ENTORNO'] ?? 'local');
+if (!defined('URL_BASE')) define('URL_BASE', $_ENV['URL_BASE'] ?? '/haydee-app/');
+if (!defined('ENTORNO')) define('ENTORNO', $_ENV['ENTORNO'] ?? 'local');
 
-// Ruta raíz del proyecto (puede quedarse así, no depende del .env)
-define('ROOT_PATH', dirname(__DIR__));
-
+if (!defined('ROOT_PATH')) define('ROOT_PATH', dirname(__DIR__));
 
     //Local
     // define("DB_NAME", "haydee_db");

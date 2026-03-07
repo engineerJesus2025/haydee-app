@@ -18,43 +18,58 @@ document.addEventListener('DOMContentLoaded', consultar);
 // CONSULTA Y DATATABLE
 // ============================================
 async function consultar() {
-    const parametros = (data) => { data.operacion = 'consulta'; };
-    const estructura = [
-        { data: 'nombre' },
+    const contenedor = document.querySelector(".tabla-sistema-haydee");
+    if (!contenedor) return;
+
+    const formatoBotones = (cell) => {
+        const id = cell.getData().id_rol;
+        // Protección especial para el Rol 1
+        if (id == 1) {
+            return `<div class="d-flex justify-content-center gap-2">
+                <button type="button" class="btn btn-secondary btn-sm disabled" title="Modificar"><i class="bi bi-pencil"></i></button>
+                <button type="button" class="btn btn-secondary btn-sm disabled" title="Eliminar"><i class="bi bi-trash"></i></button>
+            </div>`;
+        }
+
+        let html = `<div class="d-flex justify-content-center gap-2">`;
+        if (window.permiso_modificar) html += `<button type="button" class="btn btn-success btn-sm modificar" value="${id}"><i class="bi bi-pencil"></i></button>`;
+        if (window.permiso_eliminar) html += `<button type="button" class="btn btn-danger btn-sm eliminar" value="${id}"><i class="bi bi-trash"></i></button>`;
+        html += `</div>`;
+        return html;
+    };
+
+    const columnas = [
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
+        { title: "NOMBRE", field: "nombre", minWidth: 150, responsive: 0 },
         {
-            data: 'id_rol',
-            render: id => `
-                <div class="d-flex justify-content-center gap-2">
-                    ${window.permiso_modificar ? `<button class="btn btn-success btn-sm modificar" value="${id}"><i class="bi bi-pencil"></i></button>` : ''}
-                    ${window.permiso_eliminar ? `<button class="btn btn-danger btn-sm eliminar" value="${id}"><i class="bi bi-trash"></i></button>` : ''}
-                </div>
-            `
+            title: "ACCIONES", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 100, responsive: 0, download: false,
+            cellClick: function(e, cell) {
+                const btn = e.target.closest('button');
+                if (!btn || btn.classList.contains('disabled')) return;
+                const mockEvent = { currentTarget: btn };
+                
+                if (btn.classList.contains('modificar')) prepararFormulario(mockEvent);
+                if (btn.classList.contains('eliminar')) {
+                    Swal.fire({ title: '¿Estás seguro?', text: 'Esta acción no se puede deshacer.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e01d22', confirmButtonText: 'Eliminar' })
+                    .then(r => r.isConfirmed && eliminar(btn.value));
+                }
+            }
         }
     ];
 
-    const configPost = (row, data) => {
-        if (data.id_rol == 1) {
-            row.querySelectorAll('.modificar, .eliminar').forEach(btn => {
-                btn.disabled = true;
-                btn.classList.add('disabled');
-            });
-        } else {
-            row.querySelector('.modificar')?.addEventListener('click', prepararFormulario);
-            row.querySelector('.eliminar')?.addEventListener('click', (e) => {
-                const id = e.currentTarget.value;
-                Swal.fire({
-                    title: '¿Estás seguro?',
-                    text: 'Esta acción no se puede deshacer.',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#e01d22',
-                    confirmButtonText: 'Eliminar'
-                }).then(result => result.isConfirmed && eliminar(id));
-            });
-        }
-    };
+    data_table = Utilidades.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consulta' } });
 
-    data_table = Utilidades.crearDataTable('tabla_roles', estructura, parametros, configPost);
+    const inputBusqueda = document.getElementById("busqueda_global");
+    if (inputBusqueda) {
+        inputBusqueda.addEventListener("input", function(e) {
+            let valor = e.target.value.trim();
+            let filtros = columnas
+                .filter(col => col.field) 
+                .map(col => ({ field: col.field, type: "like", value: valor }));
+
+            tabla_anio_fiscal.setFilter([filtros]);
+        });
+    }
 }
 
 // ============================================
@@ -80,7 +95,7 @@ async function registrar() {
     const respuesta = await Utilidades.query(datos, true);
     if (respuesta?.estatus) {
         modal.hide();
-        data_table.ajax.reload(null, false);
+        data_table.replaceData();
         Utilidades.mensaje('success', 'Éxito', 'Rol registrado correctamente.');
     } else {
         Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo registrar el rol.');
@@ -184,7 +199,7 @@ async function modificar() {
     const respuesta = await Utilidades.query(datos, true);
     if (respuesta?.estatus) {
         modal.hide();
-        data_table.ajax.reload(null, false);
+        data_table.replaceData();
         Utilidades.mensaje('success', 'Éxito', 'Rol actualizado correctamente.');
     } else {
         Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo actualizar el rol.');
@@ -198,7 +213,7 @@ async function eliminar(id) {
 
     const respuesta = await Utilidades.query(datos);
     if (respuesta?.estatus) {
-        data_table.ajax.reload(null, false);
+        data_table.replaceData();
         Utilidades.mensaje('success', 'Éxito', 'Rol eliminado correctamente.');
     } else {
         Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo eliminar el rol.');

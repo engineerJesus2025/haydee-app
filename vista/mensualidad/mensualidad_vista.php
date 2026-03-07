@@ -5,7 +5,7 @@
     <title>Mensualidad | Inicio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php
-    require_once "vista/componentes/estilos.php";
+    require_once ROOT_PATH . "/vista/componentes/estilos.php";
     ?>
 </head>
 <body id="body-pd" class="body-pd">
@@ -15,13 +15,13 @@
         <div class="row flex-nowrap">
 
             <?php            
-            require_once "vista/componentes/navbar.php";
+            require_once ROOT_PATH . "/vista/componentes/navbar.php";
             ?>
 
             <div class="col d-flex flex-column  min-vh-100 gris">
 
                 <?php
-                require_once "vista/componentes/header.php";
+                require_once ROOT_PATH . "/vista/componentes/header.php";
                 
                 ?>
 
@@ -41,19 +41,7 @@
                                         <p class="text-danger"></p>
                                     </div>
                                 </div>
-                                <table id="tabla_mensualidad" class="table caption-top table-striped table-hover" style="width: 99%">
-                                    <caption>Listado de mensualidades</caption>
-                                    <thead>
-                                        <tr>
-                                            <th scope="col">MES/AÑO</th>
-                                            <th scope="col">MONTO TOTAL</th>
-                                            <th scope="col">MONTO RESTANTE</th>
-                                            <th scope="col">ACCIONES</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                    </tbody>
-                                </table>
+                                <div id="tabla_mensualidad" class="tabla-sistema-haydee"></div>
                             </div>
                         </div>
                     </div>                        
@@ -64,10 +52,10 @@
 
     <!-- Componentes -->
     <?php
-        require_once "vista/componentes/footer.php";
-        require_once "vista/componentes/script.php";
-        require_once 'vista/componentes/modal_carga.php';
-        require_once 'vista/componentes/boton_ayuda.php';
+        require_once ROOT_PATH . "/vista/componentes/footer.php";
+        require_once ROOT_PATH . "/vista/componentes/script.php";
+        require_once ROOT_PATH . "/vista/componentes/modal_carga.php";
+        require_once ROOT_PATH . "/vista/componentes/boton_ayuda.php";
     ?>
     
     <!-- Modales -->
@@ -81,7 +69,7 @@
                 <div class="modal-body p-4">
 
                     <?php
-                    require_once "vista/mensualidad/mensualidad_modal.php";
+                    require_once ROOT_PATH . "/vista/mensualidad/mensualidad_modal.php";
                     ?>
 
                 </div>
@@ -89,25 +77,21 @@
         </div>
     </div>
     <div class="modal fade" id="modal_mensualidades_apartamentos" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
                     <h1 class="modal-title fs-5" id="titulo_modal">mensualidades de los Apartamentos</h1>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-
-                    <?php
-                    require_once "vista/mensualidad/mensualidad_apartamentos_modal.php";
-                    ?>
-
+                    <div id="mensualidades_apartamentos" class="tabla-sistema-haydee"></div>
                 </div>
             </div>
         </div>
     </div>
     
     <!-- Scripts personalizado -->
-    <script type="text/javascript" src="recursos/js/consultas_ajax/mensualidades_ajax.js"></script>
-    <script type="text/javascript" src="recursos/js/validaciones/mensualidad_validar.js"></script>
+    <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/consultas_ajax/mensualidades_ajax.js"></script>
+    <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/validaciones/mensualidad_validar.js"></script>
 </body>
 </html>

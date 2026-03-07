@@ -24,10 +24,6 @@ document.querySelector(`#modal_tipo_gasto`).addEventListener("hide.bs.modal", ()
 	document.querySelectorAll('.is-invalid').forEach(input => input.classList.remove('is-invalid'));
 });	
 
-document.getElementById('header-toggle').addEventListener("click", () => {
-	setTimeout(() => tabla_tipo_gasto.columns.adjust().draw(), 450);
-});
-
 function envio(operacion) {	
 	if (operacion === "modificar") {
 		modificar(boton_formulario.getAttribute("id_modificar"));
@@ -38,43 +34,71 @@ function envio(operacion) {
 	}
 }
 
-function crearBotones(id) {
-	let html = `<div class="row justify-content-center gap-4">
-					<button type="button" class="btn btn-success col-lg-2 col-sm-3 col-4 modificar" data-bs-toggle="modal" data-bs-target="#modal_tipo_gasto" title="modificar" value="${id}">
-						<i class="bi bi-pencil-square"></i>
-					</button>`;
-	if (permiso_eliminar) {
-		html += `<button type="button" class="btn btn-danger col-lg-2 col-sm-3 col-4 eliminar" title="Eliminar" value="${id}">
-					<i class="bi bi-trash"></i>
-				</button>`;
-	}
-	html += `</div>`;
-	return html;
-}
 
 // ============================================
 // CRUD
 // ============================================
 
 async function consultar() {
-    const parametros = (data) => { data.operacion = 'consulta'; };
-    
-    const estructura_columnas = [
-        { data: "nombre_tipo_gasto" },
-        { 
-            data: null, 
-            render: (row) => crearBotones(row.id_tipo_gasto)
+    const contenedor = document.querySelector(".tabla-sistema-haydee");
+    if (!contenedor) return;
+
+    const formatoBotones = (cell) => {
+        // CAMBIAR AQUÍ EL ID SEGÚN EL MÓDULO (id_proveedor, id_modulo, id_permiso, id_tipo_gasto)
+        const id = cell.getData().id_tipo_gasto; 
+        
+        let html = `<div class="d-flex justify-content-center gap-2">`;
+        if (window.permiso_modificar) html += `<button type="button" class="btn btn-success btn-sm modificar" value="${id}"><i class="bi bi-pencil"></i></button>`;
+        if (window.permiso_eliminar) html += `<button type="button" class="btn btn-danger btn-sm eliminar" value="${id}"><i class="bi bi-trash"></i></button>`;
+        html += `</div>`;
+        return html;
+    };
+
+    const columnas = [
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
+        
+        // --- CAMBIAR ESTOS FIELDS SEGÚN EL MÓDULO ---
+        { title: "Tipo de Gasto", field: "nombre_tipo_gasto", minWidth: 150, responsive: 0 },
+        // ---------------------------------------------
+
+        {
+            title: "ACCIONES", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 100, responsive: 0, download: false,
+            cellClick: function(e, cell) {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                
+                // NOTA: En modulo_ajax y permiso_ajax usabas prepararEdicion(id)
+                // En tipo_gasto_ajax usabas modificar_formulario(e)
+                // En proveedores usabas prepararFormulario(e)
+                // Asegúrate de llamar a la función que le corresponde a cada archivo.
+                
+                if (btn.classList.contains('modificar')) {
+                    prepararFormulario({ currentTarget: btn }); // Para proveedores
+                }
+                
+                if (btn.classList.contains('eliminar')) {
+                    const id = btn.value;
+                    Swal.fire({ title: '¿Estás seguro?', text: 'Esta acción no se puede deshacer.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e01d22', confirmButtonText: 'Eliminar' })
+                    .then(result => result.isConfirmed && eliminar(id));
+                }
+            }
         }
     ];
 
-    const configuracion_tabla = (row, data) => {
-        row.id = `fila-${data.id_tipo_gasto}`;
-        row.querySelector(".modificar")?.addEventListener('click', modificar_formulario);
-        row.querySelector(".eliminar")?.addEventListener('click', eventoEliminar);
-    };
+    // Cambiar 'tabla_proveedores' por la variable que maneje la tabla de ese archivo
+    tablaPermisos = Utilidades.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consulta' } }); // NOTA: modulos y permisos usan 'consultar', revisa el tuyo.
 
-    // Usamos el Helper
-    tabla_tipo_gasto = Utilidades.crearDataTable('tabla_tipo_gasto', estructura_columnas, parametros, configuracion_tabla);
+    const inputBusqueda = document.getElementById("busqueda_global");
+    if (inputBusqueda) {
+        inputBusqueda.addEventListener("input", function(e) {
+            let valor = e.target.value.trim();
+            let filtros = columnas
+                .filter(col => col.field) 
+                .map(col => ({ field: col.field, type: "like", value: valor }));
+
+            tabla_anio_fiscal.setFilter([filtros]);
+        });
+    }
 }
 
 async function registrar() {
@@ -89,12 +113,12 @@ async function registrar() {
 	}
 
     modal.hide();
-    tabla_tipo_gasto.ajax.reload(null, false); // Recarga la tabla de forma limpia
+    tabla_tipo_gasto.replaceData(); // Recarga la tabla de forma limpia
 	Utilidades.mensaje('success', 'Éxito', 'El registro se ha realizado exitosamente');
 }
 
-async function modificar_formulario(e) {
-	let id = e.target.value || e.target.parentElement.value; 
+async function prepararFormulario(e) {
+    const id = e.currentTarget.value;
 	
 	let datos = new FormData();
 	datos.append("id_tipo_gasto", id);
@@ -120,6 +144,8 @@ async function modificar_formulario(e) {
 	boton_formulario.textContent = "Guardar Cambios";
 	document.getElementById('titulo_modal').textContent = "Modificar Tipo de Gasto";
 	id_modificar = id;
+
+    modal.show();
 }
 
 async function modificar(id) {	
@@ -135,7 +161,7 @@ async function modificar(id) {
 	}
 
     modal.hide();
-    tabla_tipo_gasto.ajax.reload(null, false);
+    tabla_tipo_gasto.replaceData();
 	Utilidades.mensaje('success', 'Éxito', 'El registro se ha modificado exitosamente');
 }
 
@@ -166,7 +192,7 @@ async function eliminar(id) {
 		return;
 	}
 
-    tabla_tipo_gasto.ajax.reload(null, false);
+    tabla_tipo_gasto.replaceData();
 	Utilidades.mensaje('success', 'Éxito', 'El registro ha sido eliminado correctamente');
 }
 

@@ -6,8 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gastos | Inicio</title>
     <?php
-    require_once "vista/componentes/estilos.php";
+    require_once ROOT_PATH . "/vista/componentes/estilos.php";
     ?>
+    <link href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator_bootstrap5.min.css" rel="stylesheet">
 </head>
 
 <body id="body-pd" class="body-pd">
@@ -19,13 +20,13 @@
         <div class="row flex-nowrap">
 
             <?php
-            require_once "vista/componentes/navbar.php";
+            require_once ROOT_PATH . "/vista/componentes/navbar.php";
             ?>
 
             <div class="col d-flex flex-column  min-vh-100 gris">
 
                 <?php
-                require_once "vista/componentes/header.php";
+                require_once ROOT_PATH . "/vista/componentes/header.php";
                 ?>
 
                 <main class="col ps-md-2 pt-2 mb-5">
@@ -39,12 +40,18 @@
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="card p-4">
-                                <?php if (Sesiones::tienePermiso(GESTIONAR_GASTOS, REGISTRAR)): ?>
-                                    <div class="button mb-4">
-                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                                            data-bs-target="#modal_gastos">Nuevo Gasto</a>
-                                    </div><br>
-                                <?php endif; ?>
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <?php if (Sesiones::tienePermiso(GESTIONAR_GASTOS, REGISTRAR)): ?>
+                                            <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                                                data-bs-target="#modal_gastos">Nuevo Gasto</button>
+                                    <?php else: ?>
+                                    <div></div> <?php endif; ?>
+                                    
+                                    <div class="input-group" style="max-width: 300px;">
+                                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                        <input type="text" id="busqueda_global" class="form-control" placeholder="Buscar usuario...">
+                                    </div>
+                                </div>
 
 
                                 <?php if (isset($_SESSION["mensaje"])): ?>
@@ -59,24 +66,7 @@
                                         </div>
                                     </div>
                                 <?php endif; ?>
-                                <table id="tabla_gastos" class="table table-striped table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>FECHA</th>
-                                            <th>MONTO</th>
-                                            <th>TIPO</th>
-                                            <th>TIPO GASTO</th>
-                                            <th>DESCRIPCION</th>
-                                            <th class="text-center">ACCIONES</th>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td colspan="8">
-                                                <h4>Cargando...</h4>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                <div id="tabla_gastos"></div>
                             </div>
 
                             
@@ -89,10 +79,10 @@
 
     <!-- Componentes -->
     <?php
-        require_once "vista/componentes/footer.php";
-        require_once "vista/componentes/script.php";
-        require_once 'vista/componentes/modal_carga.php';
-        require_once 'vista/componentes/boton_ayuda.php';
+        require_once ROOT_PATH . "/vista/componentes/footer.php";
+        require_once ROOT_PATH . "/vista/componentes/script.php";
+        require_once ROOT_PATH . "/vista/componentes/modal_carga.php";
+        require_once ROOT_PATH . "/vista/componentes/boton_ayuda.php";
     ?>
     
     <!-- Modales -->
@@ -106,14 +96,14 @@
                 </div>
                 <div class="modal-body">
                     <?php
-                    require_once "vista/gastos/gastos_modal.php";
+                    require_once ROOT_PATH . "/vista/gastos/gastos_modal.php";
                     ?>
                 </div>
             </div>
         </div>
     </div>
     <div class="modal fade" id="modal_vista_previa" tabindex="-1" aria-labelledby="modal_vista_previa_label" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title">Detalles del Gasto</h5>
@@ -122,26 +112,7 @@
                 </div>
                 <div class="modal-body">
                     <p><strong>Fecha Gasto:</strong> <span id="vista_fecha"></span></p>
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover" id="tabla_detalles_gastos" style="width:97%">
-                            <thead>
-                                <tr>
-                                    <th>FECHA</th>
-                                    <th>MONTO</th>
-                                    <th>METODO DE PAGO</th>
-                                    <th>DESCRIPCION DETALLE</th>
-                                    <th class="text-center">ACCIONES</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td colspan="4">
-                                        <h4>No hay detalles de pagos registrados</h4>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    <div id="tabla_detalles_gastos" class="tabla-sistema-haydee"></div>
                 </div>
 
                 <div class="modal-footer">
@@ -180,9 +151,9 @@
             </div>
         </div>
     </div>
-    
+    <script type="text/javascript" src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
     <!-- Scripts personalizado -->
-    <script type="text/javascript" src="recursos/js/validaciones/gastos_validar.js"></script>
-    <script type="text/javascript" src="recursos/js/consultas_ajax/gastos_ajax.js"></script>
+    <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/validaciones/gastos_validar.js"></script>
+    <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/consultas_ajax/gastos_ajax.js"></script>
 </body>
 </html>

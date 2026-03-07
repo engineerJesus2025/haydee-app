@@ -5,20 +5,19 @@
 	<title>Inicio</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">	
 	<?php
-		require_once "vista/componentes/estilos.php";
+		require_once ROOT_PATH . "/vista/componentes/estilos.php";
 	?>
-	<link rel="stylesheet" type="text/css" href="recursos/css/publicaciones_inicio.css">
+	<link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/publicaciones_inicio.css">
 </head>
 <body id="body-pd" class="body-pd d-flex flex-column">
 	<div class="container-fluid">
 		<div class="row flex-nowrap">
 			<?php				
-				require_once "vista/componentes/navbar.php";
+				require_once ROOT_PATH . "/vista/componentes/navbar.php";
 			?>
 			<div class="col d-flex flex-column gris">
 
-				<?php require_once "vista/componentes/header.php"; ?>
-
+				<?php require_once ROOT_PATH . "/vista/componentes/header.php"; ?>
 				<main class="col ps-md-2 pt-2" style="background-color: #f4f7f9;">
 
 					<div class="row justify-content-center px-2" id="contenido">
@@ -283,12 +282,12 @@
 	</template>
 
 	<?php
-        require_once "vista/componentes/footer.php";
-        require_once "vista/componentes/script.php";
-        require_once 'vista/componentes/modal_carga.php';
+        require_once ROOT_PATH . "/vista/componentes/footer.php";
+        require_once ROOT_PATH . "/vista/componentes/script.php";
+        require_once ROOT_PATH . "/vista/componentes/modal_carga.php";
     ?>
 
-	<script type="text/javascript" src="recursos/estadisticas/chart.js"></script>
-	<script src="recursos/js/consultas_ajax/inicio_ajax.js"></script>
+	<script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/estadisticas/chart.js"></script>
+	<script src="<?php echo URL_BASE; ?>recursos/js/consultas_ajax/inicio_ajax.js"></script>
 </body>
 </html>

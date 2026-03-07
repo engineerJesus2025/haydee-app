@@ -4,7 +4,7 @@
             <label for="nombre">Nombre del usuario <spam class="text-danger">*</spam></label>
             <div class="input-group has-validation mb-3">
                 <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
-                <input type="text" class="border border-dark form-control" name="nombre" id="nombre" placeholder="Ejem: Robert" aria-label="nombre" aria-describedby="basic-addon1" minlength="3" maxlength="30">
+                <input type="text" class="border border-dark form-control" name="nombre" id="nombre" placeholder="Ejem: Robert" aria-label="nombre" aria-describedby="basic-addon1" minlength="3" maxlength="30" autocomplete="new-password">
                 <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
@@ -22,7 +22,7 @@
             <label for="correo">Correo electrónico <spam class="text-danger">*</spam></label>
             <div class="input-group has-validation mb-3">
                 <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-envelope-at"></i></span>
-                <input type="text" class="border border-dark form-control" name="correo" id="correo" placeholder="Ejem: usuario@gmail.com" aria-label="correo" aria-describedby="basic-addon1" minlength="3" maxlength="60">
+                <input type="text" class="border border-dark form-control" name="correo" id="correo" placeholder="Ejem: usuario@gmail.com" aria-label="correo" aria-describedby="basic-addon1" minlength="3" maxlength="60" autocomplete="new-password">
                 <span class="w-100 invalid-feedback"></span>
             </div>
         </div>
@@ -45,7 +45,7 @@
             <label for="contra">Contraseña <spam class="text-danger">*</spam></label>
             <div class="input-group has-validation mb-3">
                 <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-key"></i></span>
-                <input type="password" class="border border-dark form-control contra-input" name="contra" id="contra" placeholder="Contraseña" aria-label="contra" aria-describedby="basic-addon1" minlength="5" maxlength="50">
+                <input type="password" class="border border-dark form-control contra-input" name="contra" id="contra" placeholder="Contraseña" aria-label="contra" aria-describedby="basic-addon1" minlength="5" maxlength="50" autocomplete="new-password">
                 <button class="border border-dark btn contra-btn" type="button" title="Mostrar Contraseña" tabindex="-1">
                     <i class="bi bi-eye"></i>
                 </button>

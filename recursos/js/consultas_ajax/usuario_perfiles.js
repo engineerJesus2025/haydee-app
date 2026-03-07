@@ -63,13 +63,6 @@ document.getElementById('boton_cancelar')?.addEventListener('click', () => {
     document.getElementById('boton_modificar').removeAttribute('disabled');
 });
 
-// Ajustar DataTable cuando se abre el modal de notificaciones
-document.getElementById('modal_notificaciones')?.addEventListener('shown.bs.modal', () => {
-    if (tabla_notificaciones) {
-        tabla_notificaciones.columns.adjust().draw();
-    }
-});
-
 // ============================================
 // FUNCIONES PRINCIPALES
 // ============================================
@@ -114,63 +107,66 @@ async function llenarCardUsuario() {
 }
 
 function llenarTablaNotificaciones() {
-    const parametrosConsulta = (data) => {
-        data.operacion = 'consultar_mis_notificaciones';
+    // 1. Encontrar el contenedor de la tabla
+    const contenedor = document.querySelector(".tabla-sistema-haydee");
+    if (!contenedor) return;
+
+    // 2. Formateadores Visuales
+    const formatoLeido = (cell) => {
+        const leido = cell.getValue();
+        return `<span class="${leido == 1 ? 'badge bg-primary' : 'badge bg-warning text-dark'}">${leido == 1 ? 'Sí' : 'No'}</span>`;
     };
 
-    const estructura = [
-        { data: 'titulo' },
-        { data: 'descripcion' },
+    const formatoBotones = (cell) => {
+        // Un botón HTML súper limpio, sin necesidad de inyectarle data-atributos
+        return `<button class="btn btn-sm btn-primary ver-notificacion" title="Ver Notificación" type="button">
+                    <i class="bi bi-eye"></i>
+                </button>`;
+    };
+
+    // 3. Definición de Columnas
+    const columnas = [
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
+        { title: "TÍTULO", field: "titulo", minWidth: 150, responsive: 0 },
+        { title: "DESCRIPCIÓN", field: "descripcion", minWidth: 250 },
+        { title: "FECHA", field: "fecha", formatter: (cell) => FormatoFechas.formatoUsuario(cell.getValue()), minWidth: 120 },
+        { title: "LEÍDO", field: "leido", formatter: formatoLeido, minWidth: 100 },
         {
-            data: 'fecha',
-            // render: (fecha) => formatearFechaHora(fecha)
-            render: (fecha) => FormatoFechas.formatoUsuario(fecha)
-        },
-        {
-            data: null,
-            render: (row) => {
-                const span = document.createElement('span');
-                span.className = (row.leido == 1) ? 'badge bg-primary' : 'badge bg-warning text-dark';
-                span.textContent = (row.leido == 1) ? 'Sí' : 'No';
-                return span.outerHTML;
-            }
-        },
-        {
-            data: null,
-            render: (row) => {
-                const boton = document.createElement('button');
-                boton.className = 'btn btn-sm btn-primary';
-                boton.title = 'Ver Notificación';
-                boton.type = 'button';
-                boton.dataset.tabla_origen = row.tabla_origen;
-                boton.dataset.id_registro_origen = row.id_registro_origen;
-                boton.innerHTML = '<i class="bi bi-eye"></i>';
-                return boton.outerHTML;
+            title: "ACCIONES", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 100, responsive: 0, download: false,
+            cellClick: function(e, cell) {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+
+                if (btn.classList.contains('ver-notificacion')) {
+                    // Extraemos los datos necesarios directamente de la fila en memoria
+                    const data = cell.getData();
+                    const url = `?pagina=${data.tabla_origen}&accion=inicio&buscar=${data.id_registro_origen}`;
+                    window.location.href = url;
+                }
             }
         }
     ];
 
-    const configuracionPost = (row, data) => {
-        Array.from(row.children).forEach(td => td.classList.add('align-middle'));
-        const ultimaCelda = row.children[row.children.length - 1];
-        ultimaCelda.classList.add('text-center');
-        const boton = ultimaCelda.firstElementChild;
-        if (boton) {
-            boton.addEventListener('click', () => {
-                const url = `?pagina=${boton.dataset.tabla_origen}&accion=inicio&buscar=${boton.dataset.id_registro_origen}`;
-                window.location.href = url;
-            });
-        }
+    // 4. Parámetros a enviar a PHP
+    const opcionesExtra = {
+        parametrosExtra: { operacion: 'consultar_mis_notificaciones' }
     };
 
-    tabla_notificaciones = Utilidades.crearDataTable(
-        'tabla_notificaciones',
-        estructura,
-        parametrosConsulta,
-        configuracionPost
-    );
+    // 5. Inicialización de Tabulator
+    tabla_notificaciones = Utilidades.cargarTabulador(contenedor.id, "", columnas, opcionesExtra);
 
+    // Activamos el elemento visual si existe (esto lo tenías en tu código original)
     document.getElementById('notificaciones')?.removeAttribute('disabled');
+
+    // 6. Buscador global dinámico
+    const inputBusqueda = document.getElementById("busqueda_global");
+    if (inputBusqueda) {
+        inputBusqueda.addEventListener("input", function(e) {
+            let valor = e.target.value.trim();
+            let filtros = columnas.filter(col => col.field).map(col => ({ field: col.field, type: "like", value: valor }));
+            tabla_notificaciones.setFilter([filtros]);
+        });
+    }
 }
 
 function definirColorBadge(nombreRol) {

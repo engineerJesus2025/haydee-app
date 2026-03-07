@@ -11,69 +11,100 @@ window.prepararFormulario = prepararFormulario;
 
 document.addEventListener('DOMContentLoaded', consultar);
 
-document.getElementById('header-toggle')?.addEventListener('click', () => {
-    setTimeout(() => {
-        tabla_anio_fiscal?.columns.adjust().draw();
-    }, 450);
-});
-
 // ============================================
-// CONSULTA Y DATATABLE
+// CONSULTA Y TABULATOR
 // ============================================
 async function consultar() {
-    const parametros = (data) => { data.operacion = 'consultar_anios_fiscales'; };
-    const estructura = [
+    // 1. Encontrar el contenedor dinámicamente
+    const contenedor = document.querySelector(".tabla-sistema-haydee");
+    if (!contenedor) return;
+
+    // 2. Formateadores Específicos del Módulo
+    const formatoEstado = (cell) => {
+        const estado = cell.getValue();
+        const clase = estado === 'Cerrada' ? 'badge bg-secondary' : 'badge bg-primary';
+        return `<span class="${clase}">${estado}</span>`;
+    };
+
+    const formatoFecha = (cell) => FormatoFechas.formatoUsuario(cell.getValue());
+
+    const formatoFechaCierre = (cell) => {
+        const row = cell.getData();
+        return row.estado === 'Cerrada' ? FormatoFechas.formatoUsuario(row.fecha_cierre) : '<span class="text-muted fst-italic">Aún sin cerrar</span>';
+    };
+
+    const formatoBotones = (cell) => {
+        const id = cell.getData().id_anio_fiscal;
+        let html = `<div class="d-flex justify-content-center gap-2">`;
+        if (window.permiso_modificar) {
+            html += `<button class="btn btn-success btn-sm modificar" value="${id}" title="Modificar"><i class="bi bi-pencil"></i></button>`;
+        }
+        if (window.permiso_eliminar) {
+            html += `<button class="btn btn-danger btn-sm eliminar" value="${id}" title="Eliminar"><i class="bi bi-trash"></i></button>`;
+        }
+        html += `</div>`;
+        return html;
+    };
+
+    // 3. Estructura de Columnas
+    const columnas = [
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
+        { title: "Estado", field: "estado", formatter: formatoEstado, minWidth: 100, responsive: 0 },
+        { title: "Fecha de Inicio", field: "fecha_inicio", formatter: formatoFecha, minWidth: 150 },
+        { title: "Fecha de Cierre", field: "fecha_cierre", formatter: formatoFechaCierre, minWidth: 150 },
+        { title: "Descripción", field: "descripcion", minWidth: 150 },
         {
-            data: 'estado',
-            render: estado => {
-                const span = document.createElement('span');
-                span.className = estado === 'Cerrada' ? 'badge bg-secondary' : 'badge bg-primary';
-                span.textContent = estado;
-                return span.outerHTML;
+            title: "Acciones",
+            formatter: formatoBotones,
+            headerSort: false,
+            hozAlign: "center",
+            vertAlign: "middle",
+            minWidth: 100,
+            responsive: 0,
+            download: false,
+            cellClick: function(e, cell) {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+
+                // Emulamos el evento para que tus funciones prepararFormulario funcionen sin cambios
+                const mockEvent = { currentTarget: btn }; 
+
+                if (btn.classList.contains('modificar')) {
+                    prepararFormulario(mockEvent);
+                } else if (btn.classList.contains('eliminar')) {
+                    const id = btn.value;
+                    Swal.fire({
+                        title: '¿Estás seguro?',
+                        text: 'Esta acción no se puede deshacer.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#e01d22',
+                        confirmButtonText: 'Eliminar'
+                    }).then(result => result.isConfirmed && eliminar(id));
+                }
             }
-        },
-        {
-            data: 'fecha_inicio',
-            render: fecha => FormatoFechas.formatoUsuario(fecha)
-        },
-        {
-            data: null,
-            render: row => row.estado === 'Cerrada' ? FormatoFechas.formatoUsuario(row.fecha_cierre) : 'Aún sin cerrar'
-        },
-        { data: 'descripcion' },
-        {
-            data: 'id_anio_fiscal',
-            render: id => `
-                <div class="d-flex justify-content-center gap-2">
-                    ${window.permiso_modificar ? `<button class="btn btn-success btn-sm modificar" value="${id}"><i class="bi bi-pencil"></i></button>` : ''}
-                    ${window.permiso_eliminar ? `<button class="btn btn-danger btn-sm eliminar" value="${id}"><i class="bi bi-trash"></i></button>` : ''}
-                </div>
-            `
         }
     ];
 
-    const configPost = (row, data) => {
-        row.setAttribute('id', `fila-${data.id_anio_fiscal}`);
-        row.querySelector('.modificar')?.addEventListener('click', prepararFormulario);
-        row.querySelector('.eliminar')?.addEventListener('click', (e) => {
-            const id = e.currentTarget.value;
-            Swal.fire({
-                title: '¿Estás seguro?',
-                text: 'Esta acción no se puede deshacer.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#e01d22',
-                confirmButtonText: 'Eliminar'
-            }).then(result => result.isConfirmed && eliminar(id));
-        });
+    // 4. Inicializar Tabulator enviando la operación a PHP
+    const opcionesExtra = {
+        parametrosExtra: { operacion: 'consultar_anios_fiscales' }
     };
+    
+    tabla_anio_fiscal = Utilidades.cargarTabulador(contenedor.id, "", columnas, opcionesExtra);
 
-    tabla_anio_fiscal = Utilidades.crearDataTable(
-        'tabla_anio_fiscal',
-        estructura,
-        parametros,
-        configPost
-    );
+    // 5. Buscador Global Dinámico
+    const inputBusqueda = document.getElementById("busqueda_global");
+    if (inputBusqueda) {
+        inputBusqueda.addEventListener("input", function(e) {
+            let valor = e.target.value.trim();
+            let filtros = columnas
+                .filter(col => col.field) 
+                .map(col => ({ field: col.field, type: "like", value: valor }));
+
+            tabla_anio_fiscal.setFilter([filtros]);
+        });
+    }
 }
 
 // ============================================
@@ -86,7 +117,7 @@ async function registrar() {
     const respuesta = await Utilidades.query(datos, true);
     if (respuesta?.estatus) {
         modal.hide();
-        tabla_anio_fiscal.ajax.reload(null, false);
+        tabla_anio_fiscal.replaceData();
         Utilidades.mensaje('success', 'Éxito', 'Año fiscal registrado correctamente.');
     } else {
         Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo registrar.');
@@ -133,7 +164,7 @@ async function modificar() {
     const respuesta = await Utilidades.query(datos, true);
     if (respuesta?.estatus) {
         modal.hide();
-        tabla_anio_fiscal.ajax.reload(null, false);
+        tabla_anio_fiscal.replaceData();
         Utilidades.mensaje('success', 'Éxito', 'Año fiscal actualizado correctamente.');
     } else {
         Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo actualizar.');
@@ -147,7 +178,7 @@ async function eliminar(id) {
 
     const respuesta = await Utilidades.query(datos);
     if (respuesta?.estatus) {
-        tabla_anio_fiscal.ajax.reload(null, false);
+        tabla_anio_fiscal.replaceData();
         Utilidades.mensaje('success', 'Éxito', 'Año fiscal eliminado correctamente.');
     } else {
         Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo eliminar.');

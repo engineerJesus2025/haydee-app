@@ -1,0 +1,94 @@
+/* =========================================================
+   ESTILOS PERSONALIZADOS PARA TABULATOR
+   ========================================================= */
+
+/* --- 1. CABECERAS --- */
+/* Principal (Oscura): Agrupamos el fondo del header y las columnas */
+.tabulator .tabulator-header,
+.tabulator .tabulator-header .tabulator-col {
+    background-color: #0b1320 !important; 
+}
+.tabulator .tabulator-header {
+    color: #ffffff !important;
+    border-bottom: none !important;
+}
+
+/* Secundaria - Vistas Previas (Blanca) */
+.tabulator.tabla-vista-previa .tabulator-header,
+.tabulator.tabla-vista-previa .tabulator-header .tabulator-col {
+    background-color: #ffffff !important;
+}
+.tabulator.tabla-vista-previa .tabulator-header {
+    color: #4b5563 !important; 
+    border-bottom: 2px solid #e2e8f0 !important;
+}
+
+/* --- 2. FILAS Y HOVER --- */
+.tabulator-row {
+    border-bottom: 1px solid #e2e8f0 !important;
+    cursor: default !important; /* Quitamos la manito de la fila */
+}
+.tabulator-row:hover {
+    background-color: #f1f5f9 !important; 
+    transition: background-color 0.2s ease;
+}
+/* Agrupamos todo lo que sí debe tener cursor de manito */
+.tabulator-row button,
+.tabulator-responsive-collapse-toggle {
+    cursor: pointer !important; 
+}
+.tabulator-responsive-collapse-toggle {
+    color: #0b1320; 
+}
+
+/* --- 3. DISEÑO RESPONSIVO (COLAPSO) --- */
+/* Contenedor padre invisible por defecto */
+.tabulator-row .tabulator-responsive-collapse {
+    padding: 0 !important; 
+    background-color: transparent !important;
+    border: none !important;
+}
+/* Agrupamos el ocultamiento de la tabla fea nativa y el contenedor vacío */
+.tabulator-row .tabulator-responsive-collapse:empty,
+.tabulator-row .tabulator-responsive-collapse table {
+    display: none !important;
+}
+/* Estilos solo para nuestra lista de Bootstrap */
+.tabulator-row .tabulator-responsive-collapse ul {
+    background-color: #f8fafc; 
+    padding: 10px 15px;
+    border-bottom: 1px solid #e2e8f0;
+    margin: 0 !important;
+}
+
+/* --- 4. PIE DE PÁGINA Y PAGINACIÓN --- */
+.tabulator .tabulator-footer .tabulator-footer-contents {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 10px;
+    padding: 10px;
+}
+/* Tu corrección aplicada aquí */
+.tabulator .tabulator-footer .tabulator-paginator {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center; 
+}
+
+/* --- 5. ALINEACIÓN DEL SELECTOR "MOSTRAR" --- */
+.tabulator .tabulator-footer .tabulator-page-size-label {
+    display: inline-flex !important;
+    align-items: center !important;
+    margin: 0 5px 0 0 !important;
+    vertical-align: middle !important;
+    transform: translateY(2px); 
+}
+.tabulator .tabulator-footer .tabulator-page-size {
+    display: inline-block !important;
+    vertical-align: middle !important;
+    margin-bottom: 0 !important;
+    padding: 4px;
+}

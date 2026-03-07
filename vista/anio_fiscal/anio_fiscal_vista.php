@@ -5,7 +5,7 @@
     <title>Año Fiscal | Inicio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php
-    require_once "vista/componentes/estilos.php";
+    require_once ROOT_PATH . "/vista/componentes/estilos.php";
     ?>
 </head>
 
@@ -16,13 +16,13 @@
         <div class="row flex-nowrap ">
 
             <?php
-            require_once "vista/componentes/navbar.php";
+            require_once ROOT_PATH . "/vista/componentes/navbar.php";
             ?>
 
             <div class="col d-flex flex-column gris min-vh-100">
 
                 <?php
-                require_once "vista/componentes/header.php";
+                require_once ROOT_PATH . "/vista/componentes/header.php";
                 ?>
 
                 <main class="col ps-md-2 pt-2 mb-5 ">
@@ -40,24 +40,7 @@
                                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_anio_fiscal">Nuevo Año Fiscal</a>
                                     </div><br>
                                 <?php endif; ?>
-
-                                <table id="tabla_anio_fiscal" class="table table-striped table-hover table-responsive" style="width:97%">
-                                    <thead>
-                                        <tr>
-                                            <th>ESTADO</th>
-                                            <th>FECHA INICIO</th>
-                                            <th>FECHA CIERRE</th>
-                                            <th>DESCRIPCION</th>
-                                            <th class="text-center">ACCIONES</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td colspan="7"><h4>Cargando...</h4></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                                
+                                <div id="tabla_anio_fiscal" class="tabla-sistema-haydee"></div>
                             </div>
                         </div>
                     </div>
@@ -67,10 +50,10 @@
     </div>
     <!-- Componentes -->
     <?php
-        require_once "vista/componentes/footer.php";
-        require_once "vista/componentes/script.php";
-        require_once 'vista/componentes/modal_carga.php';
-        require_once 'vista/componentes/boton_ayuda.php';
+        require_once ROOT_PATH . "/vista/componentes/footer.php";
+        require_once ROOT_PATH . "/vista/componentes/script.php";
+        require_once ROOT_PATH . "/vista/componentes/modal_carga.php";
+        require_once ROOT_PATH . "/vista/componentes/boton_ayuda.php";
     ?>
 
     <!-- Modales -->
@@ -84,7 +67,7 @@
                 <div class="modal-body">
 
                     <?php
-                    require_once "vista/anio_fiscal/anio_fiscal_modal.php";
+                    require_once ROOT_PATH . "/vista/anio_fiscal/anio_fiscal_modal.php";
                     ?>
 
                 </div>
@@ -93,8 +76,8 @@
     </div>
 
     <!-- Scripts personalizado -->
-    <script type="text/javascript" src="recursos/js/validaciones/anio_fiscal_validar.js"></script>
-    <script type="text/javascript" src="recursos/js/consultas_ajax/anio_fiscal_ajax.js"></script>
+    <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/validaciones/anio_fiscal_validar.js"></script>
+    <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/consultas_ajax/anio_fiscal_ajax.js"></script>
 </body>
 
 </html>

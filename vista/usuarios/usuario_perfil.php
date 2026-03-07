@@ -4,10 +4,10 @@
     <title>Usuarios | Perfil</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php
-    require_once "vista/componentes/estilos.php";
+    require_once ROOT_PATH . "/vista/componentes/estilos.php";
     ?>
 
-    <link rel="stylesheet" type="text/css" href="/haydee-app/recursos/css/contrasenias.css">
+    <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/contrasenias.css">
 </head>
 
 <body id="body-pd" class="body-pd">
@@ -16,13 +16,13 @@
         <div class="row flex-nowrap ">
 
             <?php
-            require_once "vista/componentes/navbar.php";
+            require_once ROOT_PATH . "/vista/componentes/navbar.php";
             ?>
 
             <div class="col d-flex flex-column min-vh-100 gris">
 
                 <?php
-                require_once "vista/componentes/header.php";
+                require_once ROOT_PATH . "/vista/componentes/header.php";
                 ?>
 
                 <main class="col ps-md-2 pt-2 mb-5">
@@ -232,8 +232,8 @@
 
     <!-- Componentes -->
     <?php
-        require_once "vista/componentes/footer.php";
-        require_once "vista/componentes/script.php";
+        require_once ROOT_PATH . "/vista/componentes/footer.php";
+        require_once ROOT_PATH . "/vista/componentes/script.php";
         require_once 'vista/componentes/modal_carga.php';
     ?>
     
@@ -247,7 +247,7 @@
                 </div>
                 <div class="modal-body">
                     <?php
-                    require_once 'vista/usuarios/usuario_modal_contra.php';
+                    require_once ROOT_PATH . "/vista/usuarios/usuario_modal_contra.php";
                     ?>
                 </div>
             </div>
@@ -261,17 +261,15 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <?php
-                    require_once 'vista/usuarios/usuario_modal_notificaciones.php';
-                    ?>
+                    <div id="tabla_notificaciones" class="tabla-sistema-haydee"></div>
                 </div>
             </div>
         </div>
     </div>
     
     <!-- Scripts personalizado -->
-    <script type="text/javascript" src="recursos/js/validaciones/usuario_perfil_validar.js"></script>
-    <script type="text/javascript" src="recursos/js/consultas_ajax/usuario_perfiles.js"></script>
+    <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/validaciones/usuario_perfil_validar.js"></script>
+    <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/consultas_ajax/usuario_perfiles.js"></script>
 
 </body>
 

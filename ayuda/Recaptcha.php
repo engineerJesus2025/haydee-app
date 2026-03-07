@@ -50,11 +50,11 @@ class Recaptcha
         }
 
         $json = json_decode($resultado, true);
-        if (!$json || !isset($json['estatus'])) {
+        if (!$json || !isset($json['success'])) {
             return ['estatus' => false, 'error' => 'Respuesta inválida del servicio.'];
         }
 
-        if (!$json['estatus']) {
+        if (!$json['success']) {
             $errores = $json['error-codes'] ?? [];
             $mensaje = in_array('timeout-or-duplicate', $errores)
                 ? 'El reCAPTCHA ha expirado. Intente nuevamente.'

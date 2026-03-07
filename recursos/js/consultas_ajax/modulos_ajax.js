@@ -13,11 +13,9 @@ const formulario = document.getElementById("form_modulo");
 const botonFormulario = document.getElementById("boton_formulario");
 
 document.addEventListener('DOMContentLoaded', () => {
-    consultarModulos();
+    consultar();
 
     document.getElementById("modal_modulo")?.addEventListener("hide.bs.modal", resetModal);
-
-    document.querySelector("#tabla_modulos tbody")?.addEventListener("click", manejarClickEnTabla);
 });
 
 async function consultarModulos() {
@@ -39,36 +37,71 @@ async function consultarModulos() {
     tablaModulos = Utilidades.crearDataTable('tabla_modulos', columnas, parametros, postCreacion);
 }
 
-function crearBotones(id) {
-    let div = document.createElement('div');
-    div.className = 'row justify-content-evenly';
-    let html = `
-        <button type="button" class="btn btn-success btn-sm col-3 modificar" title="modificar" value="${id}" data-bs-toggle="modal" data-bs-target="#modal_modulo">
-            <i class="bi bi-pencil-square"></i>
-        </button>`;
-    if (permiso_eliminar == 1) {
-        html += `
-        <button type="button" class="btn btn-danger btn-sm col-3 eliminar" title="Eliminar" value="${id}">
-            <i class="bi bi-trash"></i>
-        </button>`;
+async function consultar() {
+    const contenedor = document.querySelector(".tabla-sistema-haydee");
+    if (!contenedor) return;
+
+    const formatoBotones = (cell) => {
+        // CAMBIAR AQUÍ EL ID SEGÚN EL MÓDULO (id_proveedor, id_modulo, id_permiso, id_tipo_gasto)
+        const id = cell.getData().id_modulo; 
+        
+        let html = `<div class="d-flex justify-content-center gap-2">`;
+        if (window.permiso_modificar) html += `<button type="button" class="btn btn-success btn-sm modificar" value="${id}"><i class="bi bi-pencil"></i></button>`;
+        if (window.permiso_eliminar) html += `<button type="button" class="btn btn-danger btn-sm eliminar" value="${id}"><i class="bi bi-trash"></i></button>`;
+        html += `</div>`;
+        return html;
+    };
+
+    const columnas = [
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
+        
+        // --- CAMBIAR ESTOS FIELDS SEGÚN EL MÓDULO ---
+        { title: "Modulo", field: "nombre", minWidth: 150, responsive: 0 },
+        // ---------------------------------------------
+
+        {
+            title: "ACCIONES", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 100, responsive: 0, download: false,
+            cellClick: function(e, cell) {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                
+                // NOTA: En modulo_ajax y permiso_ajax usabas prepararEdicion(id)
+                // En tipo_gasto_ajax usabas modificar_formulario(e)
+                // En proveedores usabas prepararFormulario(e)
+                // Asegúrate de llamar a la función que le corresponde a cada archivo.
+                
+                if (btn.classList.contains('modificar')) {
+                    prepararFormulario({ currentTarget: btn }); // Para proveedores
+                }
+                
+                if (btn.classList.contains('eliminar')) {
+                    const id = btn.value;
+                    Swal.fire({ title: '¿Estás seguro?', text: 'Esta acción no se puede deshacer.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e01d22', confirmButtonText: 'Eliminar' })
+                    .then(result => result.isConfirmed && eliminar(id));
+                }
+            }
+        }
+    ];
+
+    // Cambiar 'tabla_proveedores' por la variable que maneje la tabla de ese archivo
+    tablaPermisos = Utilidades.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consulta' } }); // NOTA: modulos y permisos usan 'consultar', revisa el tuyo.
+
+    const inputBusqueda = document.getElementById("busqueda_global");
+    if (inputBusqueda) {
+        inputBusqueda.addEventListener("input", function(e) {
+            let valor = e.target.value.trim();
+            let filtros = columnas
+                .filter(col => col.field) 
+                .map(col => ({ field: col.field, type: "like", value: valor }));
+
+            tabla_anio_fiscal.setFilter([filtros]);
+        });
     }
-    div.innerHTML = html;
-    return div;
 }
 
-function manejarClickEnTabla(e) {
-    const boton = e.target.closest('button');
-    if (!boton) return;
-    const id = boton.value;
 
-    if (boton.classList.contains('modificar')) {
-        prepararEdicion(id);
-    } else if (boton.classList.contains('eliminar')) {
-        confirmarEliminar(id);
-    }
-}
-
-async function prepararEdicion(id) {
+async function prepararFormulario(e) {
+    const id = e.currentTarget.value;
     const datos = new FormData();
     datos.append('id_modulo', id);
     datos.append('operacion', 'consultar_unico');
@@ -92,6 +125,8 @@ async function prepararEdicion(id) {
     botonFormulario.textContent = 'Guardar Cambios';
     document.getElementById('titulo_modal').textContent = 'Modificar Módulo';
     id_modificar = modulo.id_modulo;
+
+    modalModulo.show();
 }
 
 async function registrar() {
@@ -105,7 +140,7 @@ async function registrar() {
     }
 
     modalModulo.hide();
-    tablaModulos.ajax.reload(null, false);
+    tablaModulos.replaceData();
     Utilidades.mensaje('success', 'Éxito', 'Módulo registrado correctamente');
 }
 
@@ -121,7 +156,7 @@ async function modificar(id) {
     }
 
     modalModulo.hide();
-    tablaModulos.ajax.reload(null, false);
+    tablaModulos.replaceData();
     Utilidades.mensaje('success', 'Éxito', 'Módulo modificado correctamente');
 }
 
@@ -176,7 +211,7 @@ async function eliminar(id) {
         return;
     }
 
-    tablaModulos.ajax.reload(null, false);
+    tablaModulos.replaceData();
     Utilidades.mensaje('success', 'Éxito', 'Módulo eliminado correctamente');
 }
 

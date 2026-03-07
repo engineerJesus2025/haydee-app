@@ -1,4 +1,3 @@
-// apartamentos_ajax.js
 let data_table_apartamentos;
 let data_table_habitantes;
 let id_apartamento_seleccionado;
@@ -28,45 +27,89 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function consultarApartamentos() {
-    const parametros = (data) => { data.operacion = 'consulta'; };
-    const estructura = [
-        { data: 'nro_apartamento', render: data => `Nro: ${data}` },
-        { data: 'porcentaje_participacion', render: data => data + '%' },
-        { data: 'gas', render: data => data == 1 ? 'TIENE' : 'NO TIENE' },
-        { data: 'agua', render: data => data == 1 ? 'TIENE' : 'NO TIENE' },
-        { data: 'alquilado', render: data => data == 1 ? 'SI' : 'NO' },
-        {
-            data: 'id_apartamento',
-            render: id => `
-                <div class="d-flex justify-content-center gap-2">
-                    <button class="btn btn-primary btn-sm vista-previa" value="${id}"><i class="bi bi-people-fill"></i></button>
-                    ${window.permiso_modificar ? `<button class="btn btn-success btn-sm modificar" value="${id}"><i class="bi bi-pencil"></i></button>` : ''}
-                    ${window.permiso_eliminar ? `<button class="btn btn-danger btn-sm eliminar" value="${id}"><i class="bi bi-trash"></i></button>` : ''}
-                </div>
-            `
+    // 1. FORMATOS VISUALES
+    const formatoNro = (cell) => `Nro: ${cell.getValue()}`;
+    const formatoPorcentaje = (cell) => `${cell.getValue()}%`;
+    const formatoTiene = (cell) => cell.getValue() == 1 ? 'TIENE' : 'NO TIENE';
+    const formatoSiNo = (cell) => cell.getValue() == 1 ? 'SI' : 'NO';
+
+    const formatoBotones = (cell) => {
+        const id = cell.getData().id_apartamento;
+        let html = `<div class="d-flex justify-content-center gap-2">
+            <button type="button" class="btn btn-primary btn-sm vista-previa" title="Ver Habitantes" value="${id}"><i class="bi bi-people-fill"></i></button>`;
+        if (window.permiso_modificar) {
+            html += `<button type="button" class="btn btn-success btn-sm modificar" title="Modificar" value="${id}"><i class="bi bi-pencil"></i></button>`;
+        }
+        if (window.permiso_eliminar) {
+            html += `<button type="button" class="btn btn-danger btn-sm eliminar" title="Eliminar" value="${id}"><i class="bi bi-trash"></i></button>`;
+        }
+        html += `</div>`;
+        return html;
+    };
+
+    // 2. COLUMNAS
+    const columnas = [
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
+        { title: "NRO", field: "nro_apartamento", formatter: formatoNro, minWidth: 100, responsive: 0 },
+        { title: "PARTICIPACIÓN", field: "porcentaje_participacion", formatter: formatoPorcentaje, minWidth: 140 },
+        { title: "GAS", field: "gas", formatter: formatoTiene, minWidth: 100 },
+        { title: "AGUA", field: "agua", formatter: formatoTiene, minWidth: 100 },
+        { title: "ALQUILADO", field: "alquilado", formatter: formatoSiNo, minWidth: 120 },
+        { 
+            title: "ACCIONES", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 150, responsive: 0, download: false, 
+            cellClick: function(e, cell) {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                
+                // Emulamos el currentTarget para que tus funciones sigan leyendo btn.value
+                const mockEvent = { currentTarget: btn }; 
+                
+                if (btn.classList.contains('vista-previa')) mostrarVistaPrevia(mockEvent);
+                if (btn.classList.contains('modificar')) prepararEdicion(mockEvent);
+                if (btn.classList.contains('eliminar')) {
+                    const id = btn.value;
+                    Swal.fire({
+                        title: '¿Estás seguro?',
+                        text: 'Esta acción no se puede deshacer.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#e01d22',
+                        confirmButtonText: 'Eliminar'
+                    }).then(result => result.isConfirmed && eliminarApartamento(id));
+                }
+            }
         }
     ];
 
-    const configPost = (row, data) => {
-        const option = new Option(data.nro_apartamento, data.id_apartamento);
-        document.getElementById("apartamento_id").add(option);
-
-        row.querySelector('.vista-previa')?.addEventListener('click', mostrarVistaPrevia);
-        row.querySelector('.modificar')?.addEventListener('click', prepararEdicion);
-        row.querySelector('.eliminar')?.addEventListener('click', (e) => {
-            const id = e.currentTarget.value;
-            Swal.fire({
-                title: '¿Estás seguro?',
-                text: 'Esta acción no se puede deshacer.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#e01d22',
-                confirmButtonText: 'Eliminar'
-            }).then(result => result.isConfirmed && eliminarApartamento(id));
-        });
+    // 3. OPCIONES EXTRA Y LLENADO DEL SELECT
+    const opcionesExtra = {
+        parametrosExtra: { operacion: 'consulta' },
+        
+        // LA MAGIA: Tabulator ejecuta esto al recibir la data. Ideal para llenar tu select.
+        dataLoaded: function(data) {
+            const selectApto = document.getElementById("apartamento_id");
+            if (selectApto) {
+                // Limpiamos primero para evitar duplicados al recargar la tabla
+                selectApto.innerHTML = '<option value="" selected hidden>Seleccione un apartamento</option>';
+                data.forEach(item => {
+                    const option = new Option(item.nro_apartamento, item.id_apartamento);
+                    selectApto.add(option);
+                });
+            }
+        }
     };
 
-    data_table_apartamentos = Utilidades.crearDataTable('tabla_apartamentos', estructura, parametros, configPost);
+    data_table_apartamentos = Utilidades.cargarTabulador("tabla_apartamentos", "", columnas, opcionesExtra);
+
+    // 4. BUSCADOR GLOBAL
+    const inputBusqueda = document.getElementById("busqueda_global");
+    if (inputBusqueda) {
+        inputBusqueda.addEventListener("input", function(e) {
+            let valor = e.target.value.trim();
+            let filtros = columnas.filter(col => col.field).map(col => ({ field: col.field, type: "like", value: valor }));
+            data_table_apartamentos.setFilter([filtros]);
+        });
+    }
 }
 
 async function registrarApartamento() {
@@ -76,7 +119,7 @@ async function registrarApartamento() {
     const respuesta = await Utilidades.query(datos, true);
     if (respuesta?.estatus) {
         modalApartamento.hide();
-        data_table_apartamentos.ajax.reload(null, false);
+        data_table_apartamentos.replaceData();
         Utilidades.mensaje('success', 'Éxito', 'Apartamento registrado correctamente.');
     } else {
         Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo registrar.');
@@ -120,7 +163,7 @@ async function modificarApartamento() {
     const respuesta = await Utilidades.query(datos, true);
     if (respuesta?.estatus) {
         modalApartamento.hide();
-        data_table_apartamentos.ajax.reload(null, false);
+        data_table_apartamentos.replaceData();
         Utilidades.mensaje('success', 'Éxito', 'Apartamento actualizado correctamente.');
     } else {
         Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo actualizar.');
@@ -134,7 +177,7 @@ async function eliminarApartamento(id) {
 
     const respuesta = await Utilidades.query(datos);
     if (respuesta?.estatus) {
-        data_table_apartamentos.ajax.reload(null, false);
+        data_table_apartamentos.replaceData();
         Utilidades.mensaje('success', 'Éxito', 'Apartamento eliminado correctamente.');
     } else {
         Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo eliminar.');
@@ -181,7 +224,7 @@ async function mostrarVistaPrevia(e) {
     if (!data_table_habitantes) {
         initTablaHabitantes();
     } else {
-        data_table_habitantes.ajax.reload();
+        data_table_habitantes.replaceData();
     }
 
     document.getElementById("apartamento_id").value = id_apartamento_seleccionado;
@@ -189,46 +232,67 @@ async function mostrarVistaPrevia(e) {
 }
 
 function initTablaHabitantes() {
-    const estructura = [
-        { data: 'nombre' },
-        { data: 'apellido' },
-        { data: 'cedula' },
-        { data: 'nro_apartamento', render: data => `Nro: ${data}` },
-        { data: 'tipo_vinculo' },
-        {
-            data: 'id_habitante',
-            render: id => `
-                <div class="d-flex justify-content-center gap-2">
-                    <button class="btn btn-primary btn-sm vista-previa-habitante" value="${id}" title="Detalles"><i class="bi bi-eye-fill"></i></button>
-                    ${window.permiso_modificar_habitantes ? `<button class="btn btn-success btn-sm modificar-habitante" value="${id}" title="modificar" data-bs-toggle="modal" data-bs-target="#modal_habitantes"><i class="bi bi-pencil"></i></button>` : ''}
-                    ${window.permiso_eliminar_habitantes ? `<button class="btn btn-danger btn-sm eliminar-habitante" value="${id}" title="Eliminar"><i class="bi bi-trash"></i></button>` : ''}
-                </div>
-            `
+    // 1. FORMATOS VISUALES
+    const formatoNro = (cell) => `Nro: ${cell.getValue()}`;
+
+    const formatoBotones = (cell) => {
+        const id = cell.getData().id_habitante;
+        let html = `<div class="d-flex justify-content-center gap-2">
+            <button type="button" class="btn btn-primary btn-sm vista-previa-habitante" title="Detalles" value="${id}"><i class="bi bi-eye-fill"></i></button>`;
+        if (window.permiso_modificar_habitantes) {
+            html += `<button type="button" class="btn btn-success btn-sm modificar-habitante" title="Modificar" value="${id}" data-bs-toggle="modal" data-bs-target="#modal_habitantes"><i class="bi bi-pencil"></i></button>`;
+        }
+        if (window.permiso_eliminar_habitantes) {
+            html += `<button type="button" class="btn btn-danger btn-sm eliminar-habitante" title="Eliminar" value="${id}"><i class="bi bi-trash"></i></button>`;
+        }
+        html += `</div>`;
+        return html;
+    };
+
+    // 2. COLUMNAS
+    const columnas = [
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
+        { title: "NOMBRE", field: "nombre", minWidth: 100, responsive: 0 },
+        { title: "APELLIDO", field: "apellido", minWidth: 100 },
+        { title: "CÉDULA", field: "cedula", minWidth: 100 },
+        { title: "APARTAMENTO", field: "nro_apartamento", formatter: formatoNro, minWidth: 120 },
+        { title: "VÍNCULO", field: "tipo_vinculo", minWidth: 120 },
+        { 
+            title: "ACCIONES", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 140, responsive: 0, download: false, 
+            cellClick: function(e, cell) {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                
+                const mockEvent = { currentTarget: btn }; 
+                
+                if (btn.classList.contains('vista-previa-habitante')) mostrarVistaPreviaHabitante(mockEvent);
+                if (btn.classList.contains('modificar-habitante')) prepararEdicionHabitante(mockEvent);
+                if (btn.classList.contains('eliminar-habitante')) {
+                    const id = btn.value;
+                    Swal.fire({
+                        title: '¿Estás seguro?',
+                        text: 'Esta acción no se puede deshacer.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#e01d22',
+                        confirmButtonText: 'Eliminar'
+                    }).then(result => result.isConfirmed && eliminarHabitante(id));
+                }
+            }
         }
     ];
 
-    const parametros = (data) => {
-        data.operacion = 'consultar_habitantes';
-        data.id_apartamento = id_apartamento_seleccionado;
+    // 3. ENVIAR VARIABLES DINÁMICAS A PHP
+    const opcionesExtra = {
+        parametrosExtra: { 
+            operacion: 'consultar_habitantes',
+            id_apartamento: id_apartamento_seleccionado
+        },
+        cssClass: "tabla-vista-previa", // <-- AGREGA ESTA LÍNEA PARA LA CABECERA BLANCA
+        paginaSize: 5
     };
 
-    const configPost = (row, data) => {
-        row.querySelector('.vista-previa-habitante')?.addEventListener('click', mostrarVistaPreviaHabitante);
-        row.querySelector('.modificar-habitante')?.addEventListener('click', prepararEdicionHabitante);
-        row.querySelector('.eliminar-habitante')?.addEventListener('click', (e) => {
-            const id = e.currentTarget.value;
-            Swal.fire({
-                title: '¿Estás seguro?',
-                text: 'Esta acción no se puede deshacer.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#e01d22',
-                confirmButtonText: 'Eliminar'
-            }).then(result => result.isConfirmed && eliminarHabitante(id));
-        });
-    };
-
-    data_table_habitantes = Utilidades.crearDataTable('tabla_habitantes', estructura, parametros, configPost);
+    data_table_habitantes = Utilidades.cargarTabulador("tabla_habitantes", "", columnas, opcionesExtra);
 }
 
 // ============================================
@@ -242,7 +306,7 @@ async function registrarHabitante() {
     const respuesta = await Utilidades.query(datos, true);
     if (respuesta?.estatus) {
         modalHabitante.hide();
-        data_table_habitantes.ajax.reload();
+        data_table_habitantes.replaceData();
         Utilidades.mensaje('success', 'Éxito', 'Habitante registrado correctamente.');
     } else {
         Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo registrar.');
@@ -294,7 +358,7 @@ async function modificarHabitante() {
     const respuesta = await Utilidades.query(datos, true);
     if (respuesta?.estatus) {
         modalHabitante.hide();
-        data_table_habitantes.ajax.reload();
+        data_table_habitantes.replaceData();
         Utilidades.mensaje('success', 'Éxito', 'Habitante actualizado correctamente.');
     } else {
         Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo actualizar.');
@@ -308,7 +372,7 @@ async function eliminarHabitante(id) {
 
     const respuesta = await Utilidades.query(datos);
     if (respuesta?.estatus) {
-        data_table_habitantes.ajax.reload();
+        data_table_habitantes.replaceData();
         Utilidades.mensaje('success', 'Éxito', 'Habitante eliminado correctamente.');
     } else {
         Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo eliminar.');
@@ -359,13 +423,6 @@ document.getElementById('modal_habitantes').addEventListener('hide.bs.modal', ()
     cedula_an = null;
     correo_an = null;
     tipo_vinculo_an = null;
-});
-
-// Ajustar DataTable cuando se abre el modal de habitantes
-document.getElementById('modal_vista_previa')?.addEventListener('shown.bs.modal', () => {
-    if (data_table_habitantes) {
-        data_table_habitantes.columns.adjust().draw();
-    }
 });
 
 // Exponer funciones para el validador (si existe, ya no me acuerdo)

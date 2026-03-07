@@ -19,50 +19,61 @@ document.addEventListener('DOMContentLoaded', () => {
 // CONSULTA Y DATATABLE
 // ============================================
 async function consultar() {
-    const parametros = (data) => { data.operacion = 'consulta'; };
-    const estructura = [
-        { data: 'fecha_reporte', render: data => FormatoFechas.formatoUsuario(data) },
-        { data: 'descripcion_necesidad' },
-        { data: 'nombre_solicitante' },
-        { 
-            data: 'monto_estimado',
-            render: data => `Bs. ${parseFloat(data).toFixed(2)}` 
-        },
-        { data: 'estado' },
-        { 
-            data: 'prioridad',
-            render: prioridad => {
-                const map = { '1': 'success', '2': 'warning', '3': 'danger' };
-                return `<span class="badge bg-${map[prioridad] || 'secondary'}">${prioridad}</span>`;
-            }
-        },
+    const contenedor = document.querySelector(".tabla-sistema-haydee");
+    if (!contenedor) return;
+
+    const formatoFecha = (cell) => FormatoFechas.formatoUsuario(cell.getValue());
+    const formatoMonto = (cell) => `Bs. ${parseFloat(cell.getValue()).toFixed(2)}`;
+    const formatoPrioridad = (cell) => {
+        const map = { '1': 'success', '2': 'warning', '3': 'danger' };
+        return `<span class="badge bg-${map[cell.getValue()] || 'secondary'}">${cell.getValue()}</span>`;
+    };
+
+    const formatoBotones = (cell) => {
+        const id = cell.getData().id_solicitud;
+        let html = `<div class="d-flex justify-content-center gap-2">`;
+        if (window.permiso_modificar) html += `<button class="btn btn-success btn-sm modificar" value="${id}"><i class="bi bi-pencil"></i></button>`;
+        if (window.permiso_eliminar) html += `<button class="btn btn-danger btn-sm eliminar" value="${id}"><i class="bi bi-trash"></i></button>`;
+        html += `</div>`;
+        return html;
+    };
+
+    const columnas = [
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
+        { title: "FECHA", field: "fecha_reporte", formatter: formatoFecha, minWidth: 100, responsive: 0 },
+        { title: "DESCRIPCIÓN", field: "descripcion_necesidad", minWidth: 200 },
+        { title: "SOLICITANTE", field: "nombre_solicitante", minWidth: 150 },
+        { title: "MONTO", field: "monto_estimado", formatter: formatoMonto, minWidth: 120 },
+        { title: "ESTADO", field: "estado", minWidth: 120 },
+        { title: "PRIORIDAD", field: "prioridad", formatter: formatoPrioridad, minWidth: 100 },
         {
-            data: 'id_solicitud',
-            render: id => `
-                <div class="d-flex justify-content-center gap-2">
-                    ${window.permiso_modificar ? `<button class="btn btn-success btn-sm modificar" value="${id}"><i class="bi bi-pencil"></i></button>` : ''}
-                    ${window.permiso_eliminar ? `<button class="btn btn-danger btn-sm eliminar" value="${id}"><i class="bi bi-trash"></i></button>` : ''}
-                </div>
-            `
+            title: "ACCIONES", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 100, responsive: 0, download: false,
+            cellClick: function(e, cell) {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                const mockEvent = { currentTarget: btn };
+                if (btn.classList.contains('modificar')) prepararFormulario(mockEvent);
+                if (btn.classList.contains('eliminar')) {
+                    Swal.fire({ title: '¿Estás seguro?', text: 'Esta acción no se puede deshacer.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e01d22', confirmButtonText: 'Eliminar' })
+                    .then(r => r.isConfirmed && eliminar(btn.value));
+                }
+            }
         }
     ];
 
-    const configPost = (row, data) => {
-        row.querySelector('.modificar')?.addEventListener('click', prepararFormulario);
-        row.querySelector('.eliminar')?.addEventListener('click', (e) => {
-            const id = e.currentTarget.value;
-            Swal.fire({
-                title: '¿Estás seguro?',
-                text: 'Esta acción no se puede deshacer.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#e01d22',
-                confirmButtonText: 'Eliminar'
-            }).then(result => result.isConfirmed && eliminar(id));
-        });
-    };
+    data_table = Utilidades.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consulta' } });
 
-    data_table = Utilidades.crearDataTable('tabla_solicitud_gasto', estructura, parametros, configPost);
+    const inputBusqueda = document.getElementById("busqueda_global");
+    if (inputBusqueda) {
+        inputBusqueda.addEventListener("input", function(e) {
+            let valor = e.target.value.trim();
+            let filtros = columnas
+                .filter(col => col.field) 
+                .map(col => ({ field: col.field, type: "like", value: valor }));
+
+            tabla_anio_fiscal.setFilter([filtros]);
+        });
+    }
 }
 
 // ============================================
@@ -83,7 +94,7 @@ async function registrar() {
     const respuesta = await Utilidades.query(datos, true);
     if (respuesta?.estatus) {
         modal.hide();
-        data_table.ajax.reload(null, false);
+        data_table.replaceData();
         Utilidades.mensaje('success', 'Éxito', 'Solicitud registrada.');
     } else {
         Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo registrar.');
@@ -152,7 +163,7 @@ async function modificar() {
     const respuesta = await Utilidades.query(datos, true);
     if (respuesta?.estatus) {
         modal.hide();
-        data_table.ajax.reload(null, false);
+        data_table.replaceData();
         Utilidades.mensaje('success', 'Éxito', 'Solicitud actualizada.');
     } else {
         Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo actualizar.');
@@ -166,7 +177,7 @@ async function eliminar(id) {
 
     const respuesta = await Utilidades.query(datos);
     if (respuesta?.estatus) {
-        data_table.ajax.reload(null, false);
+        data_table.replaceData();
         Utilidades.mensaje('success', 'Éxito', 'Solicitud eliminada.');
     } else {
         Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo eliminar.');

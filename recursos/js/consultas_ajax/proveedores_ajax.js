@@ -1,4 +1,4 @@
-let data_table;
+let tabla_proveedores;
 let id_modificar;
 
 const modal = new bootstrap.Modal(document.getElementById("modal_proveedores"), { focus: false });
@@ -15,39 +15,68 @@ document.addEventListener('DOMContentLoaded', consultar);
 // CONSULTA Y DATATABLE
 // ============================================
 async function consultar() {
-    const parametros = (data) => { data.operacion = 'consulta'; };
-    const estructura = [
-        { data: 'nombre_proveedor' },
-        { data: 'servicio' },
-        { data: 'rif' },
-        { data: 'direccion' },
+    const contenedor = document.querySelector(".tabla-sistema-haydee");
+    if (!contenedor) return;
+
+    const formatoBotones = (cell) => {
+        // CAMBIAR AQUÍ EL ID SEGÚN EL MÓDULO (id_proveedor, id_modulo, id_permiso, id_tipo_gasto)
+        const id = cell.getData().id_proveedor; 
+        
+        let html = `<div class="d-flex justify-content-center gap-2">`;
+        if (window.permiso_modificar) html += `<button type="button" class="btn btn-success btn-sm modificar" value="${id}"><i class="bi bi-pencil"></i></button>`;
+        if (window.permiso_eliminar) html += `<button type="button" class="btn btn-danger btn-sm eliminar" value="${id}"><i class="bi bi-trash"></i></button>`;
+        html += `</div>`;
+        return html;
+    };
+
+    const columnas = [
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
+        
+        // --- CAMBIAR ESTOS FIELDS SEGÚN EL MÓDULO ---
+        { title: "PROVEEDOR", field: "nombre_proveedor", minWidth: 150, responsive: 0 },
+        { title: "SERVICIO", field: "servicio", minWidth: 150 },
+        { title: "RIF", field: "rif", minWidth: 120 },
+        { title: "DIRECCIÓN", field: "direccion", minWidth: 200 },
+        // ---------------------------------------------
+
         {
-            data: 'id_proveedor',
-            render: id => `
-                <div class="d-flex justify-content-center gap-2">
-                    ${window.permiso_modificar ? `<button class="btn btn-success btn-sm modificar" value="${id}"><i class="bi bi-pencil"></i></button>` : ''}
-                    ${window.permiso_eliminar ? `<button class="btn btn-danger btn-sm eliminar" value="${id}"><i class="bi bi-trash"></i></button>` : ''}
-                </div>
-            `
+            title: "ACCIONES", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 100, responsive: 0, download: false,
+            cellClick: function(e, cell) {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                
+                // NOTA: En modulo_ajax y permiso_ajax usabas prepararEdicion(id)
+                // En tipo_gasto_ajax usabas modificar_formulario(e)
+                // En proveedores usabas prepararFormulario(e)
+                // Asegúrate de llamar a la función que le corresponde a cada archivo.
+                
+                if (btn.classList.contains('modificar')) {
+                    prepararFormulario({ currentTarget: btn }); // Para proveedores
+                }
+                
+                if (btn.classList.contains('eliminar')) {
+                    const id = btn.value;
+                    Swal.fire({ title: '¿Estás seguro?', text: 'Esta acción no se puede deshacer.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e01d22', confirmButtonText: 'Eliminar' })
+                    .then(result => result.isConfirmed && eliminar(id));
+                }
+            }
         }
     ];
 
-    const configuracion = (row, data) => {
-        row.querySelector('.modificar')?.addEventListener('click', prepararFormulario);
-        row.querySelector('.eliminar')?.addEventListener('click', (e) => {
-            const id = e.currentTarget.value;
-            Swal.fire({
-                title: '¿Estás seguro?',
-                text: 'Esta acción no se puede deshacer.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#e01d22',
-                confirmButtonText: 'Eliminar'
-            }).then(result => result.isConfirmed && eliminar(id));
-        });
-    };
+    // Cambiar 'tabla_proveedores' por la variable que maneje la tabla de ese archivo
+    tabla_proveedores = Utilidades.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consulta' } }); // NOTA: modulos y permisos usan 'consultar', revisa el tuyo.
 
-    data_table = Utilidades.crearDataTable('tabla_proveedores', estructura, parametros, configuracion);
+    const inputBusqueda = document.getElementById("busqueda_global");
+    if (inputBusqueda) {
+        inputBusqueda.addEventListener("input", function(e) {
+            let valor = e.target.value.trim();
+            let filtros = columnas
+                .filter(col => col.field) 
+                .map(col => ({ field: col.field, type: "like", value: valor }));
+
+            tabla_anio_fiscal.setFilter([filtros]);
+        });
+    }
 }
 
 // ============================================
@@ -63,7 +92,7 @@ async function registrar() {
     const respuesta = await Utilidades.query(datos, true);
     if (respuesta?.estatus) {
         modal.hide();
-        data_table.ajax.reload(null, false);
+        tabla_proveedores.replaceData();
         Utilidades.mensaje('success', 'Éxito', 'Proveedor registrado correctamente.');
     } else {
         Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo registrar.');
@@ -113,7 +142,7 @@ async function modificar() {
     const respuesta = await Utilidades.query(datos, true);
     if (respuesta?.estatus) {
         modal.hide();
-        data_table.ajax.reload(null, false);
+        tabla_proveedores.replaceData();
         Utilidades.mensaje('success', 'Éxito', 'Proveedor actualizado correctamente.');
     } else {
         Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo actualizar.');
@@ -127,7 +156,7 @@ async function eliminar(id) {
 
     const respuesta = await Utilidades.query(datos);
     if (respuesta?.estatus) {
-        data_table.ajax.reload(null, false);
+        tabla_proveedores.replaceData();
         Utilidades.mensaje('success', 'Éxito', 'Proveedor eliminado correctamente.');
     } else {
         Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo eliminar.');

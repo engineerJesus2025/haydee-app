@@ -3,16 +3,16 @@
 <head>
     <title>Bitácora | Inicio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <?php require_once "vista/componentes/estilos.php"; ?>
+    <?php require_once ROOT_PATH . "/vista/componentes/estilos.php"; ?>
     <!-- Estilos personalizados para las acciones -->
-    <link rel="stylesheet" type="text/css" href="recursos/css/bitacora.css">
+    <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/bitacora.css">
 </head>
 <body id="body-pd" class="body-pd">
     <div class="container-fluid">
         <div class="row flex-nowrap">
-            <?php require_once "vista/componentes/navbar.php"; ?>
+            <?php require_once ROOT_PATH . "/vista/componentes/navbar.php"; ?>
             <div class="col d-flex flex-column min-vh-100 gris">
-                <?php require_once "vista/componentes/header.php"; ?>
+                <?php require_once ROOT_PATH . "/vista/componentes/header.php"; ?>
                 <main class="col ps-md-2 pt-2">
                     <div class="page-header pt-3">
                         <h2>BITÁCORA</h2>
@@ -22,7 +22,7 @@
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="card p-4">
-                                <table id="tabla_bitacora" class="table table-striped table-hover" style="width:100%">
+                                <!-- <table id="tabla_bitacora" class="table table-striped table-hover" style="width:100%">
                                     <thead>
                                         <tr>
                                             <th>USUARIO</th>
@@ -34,7 +34,8 @@
                                     </thead>
                                     <tbody>
                                     </tbody>
-                                </table>
+                                </table> -->
+                                <div id="tabla_bitacora" class="tabla-sistema-haydee"></div>
                             </div>
                         </div>
                     </div>
@@ -44,9 +45,9 @@
     </div>
     <!-- Componentes -->
     <?php
-        require_once "vista/componentes/footer.php";
-        require_once "vista/componentes/script.php";
-        require_once 'vista/componentes/modal_carga.php';
+        require_once ROOT_PATH . "/vista/componentes/footer.php";
+        require_once ROOT_PATH . "/vista/componentes/script.php";
+        require_once ROOT_PATH . "/vista/componentes/modal_carga.php";
     ?>
 
     <!-- Modales -->
@@ -60,7 +61,7 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <?php require_once "vista/bitacora/bitacora_modal.php"; ?>
+                    <?php require_once ROOT_PATH . "/vista/bitacora/bitacora_modal.php"; ?>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
@@ -70,6 +71,6 @@
     </div>
     
     <!-- Scripts personalizado -->
-    <script type="text/javascript" src="recursos/js/consultas_ajax/bitacora_ajax.js"></script>
+    <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/consultas_ajax/bitacora_ajax.js"></script>
 </body>
 </html>

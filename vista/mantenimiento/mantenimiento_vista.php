@@ -5,7 +5,7 @@
     <title>Mantenimiento | Inicio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php
-    require_once "vista/componentes/estilos.php";
+    require_once ROOT_PATH . "/vista/componentes/estilos.php";
     ?>
     <style type="text/css">
         [hidden] {
@@ -19,13 +19,13 @@
         <div class="row flex-nowrap ">
 
             <?php
-            require_once "vista/componentes/navbar.php";
+            require_once ROOT_PATH . "/vista/componentes/navbar.php";
             ?>
 
             <div class="col d-flex flex-column  min-vh-100 gris">
 
                 <?php
-                require_once "vista/componentes/header.php";
+                require_once ROOT_PATH . "/vista/componentes/header.php";
                 ?>
 
                 <main class="col ps-md-2 pt-2 mb-5">
@@ -123,13 +123,13 @@
 
     <!-- Componentes -->
     <?php
-        require_once "vista/componentes/footer.php";
-        require_once "vista/componentes/script.php";
-        require_once 'vista/componentes/modal_carga.php';
+        require_once ROOT_PATH . "/vista/componentes/footer.php";
+        require_once ROOT_PATH . "/vista/componentes/script.php";
+        require_once ROOT_PATH . "/vista/componentes/modal_carga.php";
     ?>
     
     <!-- Scripts personalizado -->
-    <script type="text/javascript" src="recursos/js/consultas_ajax/mantenimiento_ajax.js"></script>
+    <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/consultas_ajax/mantenimiento_ajax.js"></script>
 </body>
 
 </html>

@@ -1,12 +1,15 @@
+<?php 
+require_once __DIR__ . '/../../config/config.php'; 
+?>
 <!DOCTYPE html>
 <html>
 <head>
     <title>Página no encontrada | Error 404</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="shortcut icon" href="/haydee-app/recursos/img/utils/logo-haydee.ico" type="image/x-icon">
-    <link rel="stylesheet" href="/haydee-app/recursos/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/haydee-app/recursos/bootstrap-icons/bootstrap-icons.min.css">
-    <link rel="stylesheet" type="text/css" href="/haydee-app/recursos/css/estilos_generales.css">
+    <link rel="shortcut icon" href="<?php echo URL_BASE; ?>recursos/img/utils/logo-haydee.ico" type="image/x-icon">
+    <link rel="stylesheet" href="<?php echo URL_BASE; ?>recursos/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="<?php echo URL_BASE; ?>recursos/bootstrap-icons/bootstrap-icons.min.css">
+    <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/estilos_generales.css">
 </head>
 <body id="body-pd">
     <div class="container-fluid">
@@ -29,7 +32,7 @@
                                 <i class="bi bi-escape me-2"></i>
                                 Volver atrás
                             </a>
-                            <a href="/haydee-app/?pagina=inicio&accion=inicio" class="btn btn-primary btn-lg px-4">
+                            <a href="<?php echo URL_BASE; ?>?pagina=inicio&accion=inicio" class="btn btn-primary btn-lg px-4">
                                 <i class="bi bi-house-door-fill me-2"></i>
                                 Ir al Inicio
                             </a>
@@ -40,6 +43,6 @@
             </div>
         </div>
     </div>
-    <?php require_once "vista/componentes/footer.php"; ?>
+    <?php require_once ROOT_PATH . "/vista/componentes/footer.php"; ?>
 </body>
 </html>

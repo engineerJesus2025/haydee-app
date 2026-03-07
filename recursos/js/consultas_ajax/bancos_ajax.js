@@ -35,10 +35,6 @@ document.querySelector("#modal_banco").addEventListener("hide.bs.modal", () => {
     numero_cuenta_an = null;
 });
 
-// Ajustar columnas de DataTable al colapsar menú lateral
-document.getElementById('header-toggle')?.addEventListener("click", () => {
-    setTimeout(() => tabla_bancos?.columns.adjust().draw(), 450);
-});
 
 function envio(operacion) {	
     if (operacion === "modificar") {
@@ -100,12 +96,87 @@ async function consultar() {
     tabla_bancos = Utilidades.crearDataTable('tabla_banco', columnas, parametrosConsulta, configuracionFila);
 }
 
+async function consultar() {
+    // 1. Encontrar el contenedor dinámicamente
+    const contenedor = document.querySelector(".tabla-sistema-haydee");
+    if (!contenedor) return;
+
+    const formatoBotones = (cell) => {
+        const id = cell.getData().id_banco;
+        let html = `<div class="d-flex justify-content-center gap-2">`;
+        if (window.permiso_modificar) {
+            html += `<button class="btn btn-success btn-sm modificar" value="${id}" title="Modificar"><i class="bi bi-pencil"></i></button>`;
+        }
+        if (window.permiso_eliminar) {
+            html += `<button class="btn btn-danger btn-sm eliminar" value="${id}" title="Eliminar"><i class="bi bi-trash"></i></button>`;
+        }
+        html += `</div>`;
+        return html;
+    };
+
+    // 3. Estructura de Columnas
+    const columnas = [
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
+        { title: "Banco", field: "nombre_banco", minWidth: 100, responsive: 0 },
+        { title: "Código", field: "codigo", minWidth: 80 },
+        { title: "Nro. Cuenta", field: "numero_cuenta", minWidth: 150 },
+        { title: "Teléfono", field: "telefono_afiliado", minWidth: 100 },
+        { title: "RIF", field: "rif", minWidth: 100 },
+        {
+            title: "Acciones",
+            formatter: formatoBotones,
+            headerSort: false,
+            hozAlign: "center",
+            vertAlign: "middle",
+            minWidth: 100,
+            responsive: 0,
+            download: false,
+            cellClick: function(e, cell) {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+
+                // Emulamos el evento para que tus funciones prepararFormulario funcionen sin cambios
+                const mockEvent = { currentTarget: btn }; 
+
+                if (btn.classList.contains('modificar')) {
+                    prepararFormulario(mockEvent);
+                } else if (btn.classList.contains('eliminar')) {
+                    const id = btn.value;
+                    Swal.fire({
+                        title: '¿Estás seguro?',
+                        text: 'Esta acción no se puede deshacer.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#e01d22',
+                        confirmButtonText: 'Eliminar'
+                    }).then(result => result.isConfirmed && eliminar(id));
+                }
+            }
+        }
+    ];
+    
+    tabla_anio_fiscal = Utilidades.cargarTabulador(contenedor.id, "", columnas);
+
+    // 5. Buscador Global Dinámico
+    const inputBusqueda = document.getElementById("busqueda_global");
+    if (inputBusqueda) {
+        inputBusqueda.addEventListener("input", function(e) {
+            let valor = e.target.value.trim();
+            let filtros = columnas
+                .filter(col => col.field) 
+                .map(col => ({ field: col.field, type: "like", value: valor }));
+
+            tabla_anio_fiscal.setFilter([filtros]);
+        });
+    }
+}
+
 /**
  * Prepara el formulario con los datos del banco a modificar
  */
-async function preparar_formulario(e) {
+async function prepararFormulario(e) {
     let datos = new FormData();
-    let id = e.target.value || e.target.parentElement.value; 
+    const id = e.currentTarget.value;
     
     datos.append("id_banco", id);
     datos.append('operacion', 'consulta_especifica');
@@ -143,6 +214,8 @@ async function preparar_formulario(e) {
 
     id_modificar = id;
     numero_cuenta_an = data.numero_cuenta;
+
+    modal.show();
 }
 
 /**
@@ -166,7 +239,7 @@ async function registrar() {
         return;
     }
 
-    tabla_bancos.ajax.reload(null, false);
+    tabla_bancos.replaceData();
     Utilidades.mensaje('success', 'Éxito', 'El registro se ha realizado exitosamente');
 }
 
@@ -196,7 +269,7 @@ async function modificar(id) {
     boton_formulario.textContent = "Guardar";
     document.getElementById('titulo_modal').textContent = "Registrar Banco";
 
-    tabla_bancos.ajax.reload(null, false);
+    tabla_bancos.replaceData();
     Utilidades.mensaje('success', 'Éxito', 'El registro se ha modificado exitosamente');
 }
 
@@ -234,7 +307,7 @@ async function eliminar(id) {
         return;
     }
 
-    tabla_bancos.ajax.reload(null, false);
+    tabla_bancos.replaceData();
     Utilidades.mensaje('success', 'Éxito', 'El registro ha sido eliminado correctamente');
 }
 

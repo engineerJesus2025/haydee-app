@@ -40,9 +40,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // Delegación de eventos para mostrar/ocultar campos según Método de Pago
     formulario_usar.addEventListener("change", mostrarCamposMetodoPago);
 
-    // Delegación de botones de la tabla principal
-    document.querySelector("#tabla_pagos tbody").addEventListener("click", manejarBotonesTabla);
 });
+
 
 // ============================================================
 // FUNCIONES AUXILIARES DE UI
@@ -196,87 +195,84 @@ async function cargarMensualidades() {
 // CONSULTAS PRINCIPALES Y DATATABLE
 // ============================================================
 async function consultar() {
-    const columnas = [
-        { data: 'ultima_fecha', render: data => FormatoFechas.formatoUsuario(data) },
-        { 
-            data: null,
-            render: row => `${row.monto_total} Bs.` // o según método de pago
-        },
-        { 
-            data: null,
-            render: data => {
-                if (!data.periodos) return "N/A";
-                let [mes, anio] = data.periodos.split('/');
-                return `${FormatoFechas.nombreMes(parseInt(mes))} del ${anio}`;
-            }
-        },        
-        { data: "estado", render: data => obtenerBadgeEstado(data) },
-        { data: "apartamento", render: data => `Nro: ${data || 'N/A'}` },
-        { data: null, render: row => crearBotones(row.id_pago).innerHTML }
-    ];
-
-    const parametros = (data) => { data.operacion = 'consulta'; };
-    const postCreacion = (row, data) => { 
-        row.id = `fila-${data.id_pago}`; 
-        row.lastElementChild.setAttribute('class','row');
+    const formatoFecha = (cell) => FormatoFechas.formatoUsuario(cell.getValue());
+    const formatoMonto = (cell) => `${cell.getValue()} Bs.`;
+    const formatoPeriodo = (cell) => {
+        let data = cell.getValue();
+        if (!data) return "N/A";
+        let [mes, anio] = data.split('/');
+        return `${FormatoFechas.nombreMes(parseInt(mes))} del ${anio}`;
+    };
+    const formatoEstado = (cell) => {
+        let estado = cell.getValue();
+        let color = "secondary";
+        if (estado === "PROCESADO") color = "success";
+        if (estado === "PENDIENTE" || estado === "No verificado") color = "warning text-dark";
+        if (estado === "ANULADO" || estado === "RECHAZADO") color = "danger";
+        return `<span class="badge bg-${color}">${estado}</span>`;
     };
 
-    tabla_pagos = Utilidades.crearDataTable('tabla_pagos', columnas, parametros, postCreacion);
-}
+    const formatoBotones = (cell) => {
+        const id = cell.getData().id_pago;
+        let html = `<div class="d-flex justify-content-center gap-2">
+            <button type="button" class="btn btn-primary btn-sm vista-previa" title="Vista previa" value="${id}"><i class="bi bi-eye-fill"></i></button>
+            <button type="button" class="btn btn-info btn-sm text-white recibo-pago" style="background-color:#3939a9;" title="Recibo PDF" value="${id}"><i class="bi bi-card-checklist"></i></button>
+            <button type="button" class="btn btn-success btn-sm modificar" title="Modificar" value="${id}"><i class="bi bi-pencil-square"></i></button>`;
+        if (permiso_eliminar == 1) {
+            html += `<button type="button" class="btn btn-danger btn-sm eliminar" title="Anular" value="${id}"><i class="bi bi-trash"></i></button>`;
+        }
+        html += `</div>`;
+        return html;
+    };
 
-function obtenerBadgeEstado(estado) {
-    let color = "secondary";
-    if (estado === "PROCESADO") color = "success";
-    if (estado === "PENDIENTE" || estado === "No verificado") color = "warning text-dark";
-    if (estado === "ANULADO" || estado === "RECHAZADO") color = "danger";
-    return `<span class="badge bg-${color}">${estado}</span>`;
-}
+    const columnas = [
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
+        { title: "FECHA", field: "ultima_fecha", formatter: formatoFecha, minWidth: 100, responsive: 0 },
+        { title: "MONTO", field: "monto_total", formatter: formatoMonto, minWidth: 120 },
+        { title: "PERÍODO", field: "periodos", formatter: formatoPeriodo, minWidth: 150 },
+        { title: "ESTADO", field: "estado", formatter: formatoEstado, minWidth: 120 },
+        { title: "APARTAMENTO", field: "apartamento", formatter: (cell) => `Nro: ${cell.getValue() || 'N/A'}`, minWidth: 120 },
+        {
+            title: "ACCIONES", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 160, responsive: 0, download: false,
+            cellClick: function(e, cell) {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                const id = btn.value;
 
-function crearBotones(id) {
-    let div = document.createElement("div");
-    div.className = "row justify-content-evenly";
+                if (btn.classList.contains('vista-previa')) mostrarVistaPrevia(id);
+                if (btn.classList.contains('modificar')) prepararEdicion(id);
+                if (btn.classList.contains('eliminar')) confirmarEliminar(id);
+                
+                // Formulario dinámico para el PDF sin ensuciar la tabla
+                if (btn.classList.contains('recibo-pago')) {
+                    let form = document.createElement('form');
+                    form.action = "?pagina=reportes&accion=recibo_pago";
+                    form.method = "POST";
+                    form.target = "_blank"; // Opcional: abre en otra pestaña
+                    
+                    let input = document.createElement('input');
+                    input.type = "hidden";
+                    input.name = "select_reporte";
+                    input.value = id;
+                    
+                    form.appendChild(input);
+                    document.body.appendChild(form);
+                    form.submit();
+                    document.body.removeChild(form);
+                }
+            }
+        }
+    ];
 
-    let html = `
-        <div class="col-lg-3 col-6 mt-2 mt-lg-0">
-            <button type="button" class="btn btn-primary btn-sm vista-previa" title="Vista previa" value="${id}">
-                <i class="bi bi-eye-fill"></i>
-            </button>
-        </div>
-        <form class="col-lg-3 col-6 mt-2 mt-lg-0" action="?pagina=reportes&accion=recibo_pago" method="POST">
-            <input type="hidden" name="select_reporte" value="${id}">
-            <button type="submit" class="btn btn-outline-light btn-sm" style="background-color:#3939a9;" title="Recibo">
-                <i class="bi bi-card-checklist"></i>
-            </button>
-        </form>
-        <div class="col-lg-3 col-6 mt-2 mt-lg-0">
-            <button type="button" class="btn btn-success btn-sm modificar" title="modificar" value="${id}">
-                <i class="bi bi-pencil-square"></i>
-            </button>
-        </div>`;
+    tabla_pagos = Utilidades.cargarTabulador("tabla_pagos", "", columnas);
 
-    if (permiso_eliminar == 1) {
-        html += `
-        <div class="col-lg-3 col-6 mt-2 mt-lg-0">
-            <button type="button" class="btn btn-danger btn-sm eliminar" title="Anular" value="${id}">
-                <i class="bi bi-trash"></i>
-            </button>
-        </div>`;
-    }
-    div.innerHTML = html;
-    return div;
-}
-
-function manejarBotonesTabla(e) {
-    const btn = e.target.closest('button');
-    if (!btn) return;
-    const id = btn.value;
-
-    if (btn.classList.contains('vista-previa')) {
-        mostrarVistaPrevia(id);
-    } else if (btn.classList.contains('modificar')) {
-        prepararEdicion(id);
-    } else if (btn.classList.contains('eliminar')) {
-        confirmarEliminar(id);
+    const inputBusqueda = document.getElementById("busqueda_global");
+    if (inputBusqueda) {
+        inputBusqueda.addEventListener("input", function(e) {
+            let valor = e.target.value.trim();
+            let filtros = columnas.filter(col => col.field).map(col => ({ field: col.field, type: "like", value: valor }));
+            tabla_pagos.setFilter([filtros]);
+        });
     }
 }
 
@@ -343,7 +339,7 @@ async function registrar() {
     }
 
     modal.hide();
-    tabla_pagos.ajax.reload(null, false);
+    tabla_pagos.replaceData();
     Utilidades.mensaje('success', 'Éxito', respuesta.mensaje);
 }
 
@@ -435,7 +431,7 @@ async function modificar(id) {
     }
 
     modal.hide();
-    tabla_pagos.ajax.reload(null, false);
+    tabla_pagos.replaceData();
     Utilidades.mensaje('success', 'Éxito', respuesta.mensaje);
 }
 
@@ -466,7 +462,7 @@ async function eliminar(id) {
         return;
     }
 
-    tabla_pagos.ajax.reload(null, false);
+    tabla_pagos.replaceData();
     Utilidades.mensaje('success', 'Éxito', respuesta.mensaje);
 }
 
@@ -482,51 +478,55 @@ async function mostrarVistaPrevia(id) {
     if (!respuesta.estatus) return;
 
     let data = respuesta.datos;
-    console.log(data)
+    
+    // Llenar datos de cabecera
     document.getElementById("vista_fecha").textContent = FormatoFechas.formatoUsuario(data.detalles[0]?.fecha || '');
     document.getElementById("vista_monto_mensualidad").textContent = `${data.monto_mensualidad} Bs`;
-    document.getElementById("vista_estado").innerHTML = obtenerBadgeEstado(data.estado);
     document.getElementById("vista_apartamento").textContent = data.nro_apartamento || 'N/A';
     document.getElementById("vista_observacion").textContent = data.observacion;
 
-    // 1. Destruir el DataTable previo si existe para evitar errores
-    if ($.fn.DataTable.isDataTable('#tabla_detalles_pagos')) {
-        $('#tabla_detalles_pagos').DataTable().clear().destroy();
-    }
+    // Crear el badge de estado dinámicamente
+    let colorEstado = "secondary";
+    if (data.estado === "PROCESADO") colorEstado = "success";
+    if (data.estado === "PENDIENTE" || data.estado === "No verificado") colorEstado = "warning text-dark";
+    if (data.estado === "ANULADO" || data.estado === "RECHAZADO") colorEstado = "danger";
+    document.getElementById("vista_estado").innerHTML = `<span class="badge bg-${colorEstado}">${data.estado}</span>`;
 
-    const tbody = document.querySelector("#tabla_detalles_pagos tbody");
-    tbody.innerHTML = "";
-
-    // 2. Llenar el cuerpo de la tabla
-    data.detalles.forEach(det => {
-        let tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td>${FormatoFechas.formatoUsuario(det.fecha)}</td>
-            <td>${det.monto} Bs</td>
-            <td>${det.monto_dolar} $</td>
-            <td>${det.tipo_pago}</td>
-            <td>${det.nombre_banco || '<span class="text-muted">N/A</span>'}</td>
-            <td>${det.referencia || '<span class="text-muted">N/A</span>'}</td>
-            <td class="text-center">
-                ${(det.imagen && det.imagen !== 'default.png') ? 
-                `<a href="recursos/img/pagos/${det.imagen}" target="_blank" class="btn btn-sm btn-info" title="Ver comprobante"><i class="bi bi-image"></i></a>` : 
-                '<span class="text-muted">N/A</span>'}
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
-
-    // 3. Reinicializar DataTable
-    new DataTable('#tabla_detalles_pagos', {
-        destroy: true,
-        responsive: true,
-        language: { url: 'recursos/bootstrap/js/datatable-plugin-es.js' },
-        paging: false, // Como son detalles de un solo pago, la paginación suele sobrar
-        searching: false, // Ocultar el buscador interno
-        info: false // Ocultar el texto "Mostrando 1 a N"
-    });
+    // 1. Definir columnas de Tabulator
+    const columnas = [
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
+        { title: "FECHA", field: "fecha", formatter: (cell) => FormatoFechas.formatoUsuario(cell.getValue()), minWidth: 100, responsive: 0 },
+        { title: "MONTO BS", field: "monto", formatter: (cell) => `${cell.getValue()} Bs`, minWidth: 100 },
+        { title: "MONTO $", field: "monto_dolar", formatter: (cell) => `${cell.getValue()} $`, minWidth: 100 },
+        { title: "MÉTODO", field: "tipo_pago", minWidth: 120 },
+        { title: "BANCO", field: "nombre_banco", formatter: (cell) => cell.getValue() || '<span class="text-muted">N/A</span>', minWidth: 120 },
+        { title: "REFERENCIA", field: "referencia", formatter: (cell) => cell.getValue() || '<span class="text-muted">N/A</span>', minWidth: 120 },
+        { 
+            title: "COMPROBANTE", 
+            headerSort: false, 
+            hozAlign: "center",
+            formatter: (cell) => {
+                const img = cell.getData().imagen;
+                if (img && img !== 'default.png') {
+                    return `<a href="recursos/img/pagos/${img}" target="_blank" class="btn btn-sm btn-info" title="Ver comprobante"><i class="bi bi-image"></i></a>`;
+                }
+                return '<span class="text-muted">N/A</span>';
+            },
+            minWidth: 120,
+            responsive: 0 
+        }
+    ];
 
     modalVistaPrevia.show();
+
+    setTimeout(() => {
+        Utilidades.cargarTabuladorEstatico(
+            "tabla_detalles_pagos", 
+            data.detalles, 
+            columnas, 
+            { cssClass: "tabla-vista-previa", paginaSize: 5 }
+        );
+    }, 200);
 }
 
 // ============================================================

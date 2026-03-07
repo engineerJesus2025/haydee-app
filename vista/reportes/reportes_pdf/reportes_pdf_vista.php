@@ -4,7 +4,7 @@
     <title>Reportes PDF | Inicio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php
-    require_once "vista/componentes/estilos.php";
+    require_once ROOT_PATH . "/vista/componentes/estilos.php";
     ?>
 </head>
 
@@ -12,13 +12,13 @@
     <div class="container-fluid">
         <div class="row flex-nowrap ">
             <?php
-            require_once "vista/componentes/navbar.php";
+            require_once ROOT_PATH . "/vista/componentes/navbar.php";
             ?>
 
             <div class="col d-flex flex-column  min-vh-100 gris">
 
                 <?php
-                require_once "vista/componentes/header.php";
+                require_once ROOT_PATH . "/vista/componentes/header.php";
                 ?>
 
                 <main class="col ps-md-2 pt-2">
@@ -96,10 +96,9 @@
     </div>
     <!-- Componentes -->
     <?php
-        require_once "vista/componentes/footer.php";
-        require_once "vista/componentes/script.php";
-        require_once 'vista/componentes/modal_carga.php';
-        //require_once 'vista/componentes/boton_ayuda.php';
+        require_once ROOT_PATH . "/vista/componentes/footer.php";
+        require_once ROOT_PATH . "/vista/componentes/script.php";
+        require_once ROOT_PATH . "/vista/componentes/modal_carga.php";
     ?>
     
     <!-- Modales -->
@@ -114,18 +113,18 @@
                 <div class="modal-body">
 
                     <?php
-                    require_once "vista/reportes/reportes_pdf/reporte_persona_modal.php";
+                    require_once ROOT_PATH . "/vista/reportes/reportes_pdf/reporte_persona_modal.php";
                     ?>
 
                 </div>
             </div>
         </div>
     </div>
-    <?php require_once "vista/reportes/reportes_pdf/reporte_gastos_mensual_modal.php"; ?>
+    <?php require_once ROOT_PATH . "/vista/reportes/reportes_pdf/reporte_gastos_mensual_modal.php"; ?>
     <!-- Scripts personalizado -->
-    <script type="text/javascript" src="recursos/js/reportes/reporte_constancias.js"></script>
-    <script type="text/javascript" src="recursos/js/reportes/cuadro_pagos.js"></script>
-    <script type="text/javascript" src="recursos/js/reportes/reporte_gastos.js"></script>    
+    <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/reportes/reporte_constancias.js"></script>
+    <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/reportes/cuadro_pagos.js"></script>
+    <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/reportes/reporte_gastos.js"></script>    
 </body>
 
 </html>

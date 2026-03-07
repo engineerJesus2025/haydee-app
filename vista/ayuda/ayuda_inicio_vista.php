@@ -496,6 +496,6 @@
         </div>
     </div>
     <?php require_once "vista/componentes/footer.php"; ?>
-    <script type="text/javascript" src="recursos/js/ayuda.js"></script>
+    <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/ayuda.js"></script>
 </body>
 </html>

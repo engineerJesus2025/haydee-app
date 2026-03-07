@@ -26,7 +26,7 @@ const plantillaDetalle = document.getElementById("plantilla-detalle-gasto");
 // INICIALIZACIÓN
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
-    consultarGastos();
+    consultar();
 
     // Evento para agregar nuevo detalle
     document.getElementById("agregar_detalle")?.addEventListener("click", agregarDetalle);
@@ -38,97 +38,64 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('vista_imagen_detalles').style = "max-height: 300px;";
         document.getElementById('mensaje_error_imagen_detalles').classList.add('d-none')
     });
-
-    // Delegación de eventos para botones de la tabla (modificar/eliminar/vista previa)
-    document.querySelector("#tabla_gastos tbody")?.addEventListener("click", manejarClickEnTabla);
 });
 
 // ============================================================
 // FUNCIONES PRINCIPALES
 // ============================================================
 
-/**
- * Consulta la lista de gastos e inicializa DataTable
- */
-async function consultarGastos() {
-    const columnas = [
-        { 
-            data: null,
-            render: row => FormatoFechas.formatoUsuario(row.ultima_fecha)
-        },
-        {
-            data: null,
-            render: row => formatearMontoConMoneda(row.monto_total, row.metodo_pago)
-        },
-        { 
-            data: "clasificacion",
-            render: data => data ? mayuscula(data) : ''
-        },
-        { 
-            data: "tipo",
-            render: data => data ? mayuscula(data) : ''
-        },
-        { data: "descripcion_gasto" },
-        {
-            data: null,
-            render: row => crearBotones(row.id_gasto).innerHTML
+async function consultar() {
+    // 1. FORMATOS VISUALES
+    const formatoFecha = (cell) => FormatoFechas.formatoUsuario(cell.getValue());
+    const formatoMonto = (cell) => formatearMontoConMoneda(cell.getValue(), cell.getData().metodo_pago);
+    const formatoMayuscula = (cell) => cell.getValue() ? cell.getValue().charAt(0).toUpperCase() + cell.getValue().slice(1).toLowerCase() : '';
+
+    const formatoBotones = (cell) => {
+        const id = cell.getData().id_gasto;
+        let html = `<div class="d-flex justify-content-center gap-2">
+            <button type="button" class="btn btn-primary btn-sm vista-previa" title="Vista previa" value="${id}"><i class="bi bi-eye-fill"></i></button>
+            <button type="button" class="btn btn-success btn-sm modificar" title="Modificar" value="${id}" data-bs-toggle="modal" data-bs-target="#modal_gastos"><i class="bi bi-pencil-square"></i></button>`;
+        if (permiso_eliminar == 1) {
+            html += `<button type="button" class="btn btn-danger btn-sm eliminar" title="Eliminar" value="${id}"><i class="bi bi-trash"></i></button>`;
         }
+        html += `</div>`;
+        return html;
+    };
+
+    // 2. COLUMNAS
+    const columnas = [
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
+        { title: "FECHA", field: "ultima_fecha", formatter: formatoFecha, minWidth: 100, responsive: 0 },
+        { title: "MONTO", field: "monto_total", formatter: formatoMonto, minWidth: 120 },
+        { title: "TIPO", field: "clasificacion", formatter: formatoMayuscula, minWidth: 100 }, 
+        { title: "TIPO GASTO", field: "tipo", formatter: formatoMayuscula, minWidth: 150 }, 
+        { title: "DESCRIPCIÓN", field: "descripcion_gasto", minWidth: 200 }, 
+        { 
+            title: "ACCIONES", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 140, responsive: 0, download: false, 
+            cellClick: function(e, cell) {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                const mockEvent = { target: btn };
+                if (btn.classList.contains('vista-previa')) mostrarVistaPrevia(mockEvent);
+                if (btn.classList.contains('modificar')) prepararFormularioEdicion(mockEvent);
+                if (btn.classList.contains('eliminar')) confirmarEliminar(mockEvent);
+            }
+        }       
     ];
 
-    const parametros = (data) => {
-        data.operacion = 'consulta';
-    };
+    tabla_gastos = Utilidades.cargarTabulador("tabla_gastos", "", columnas);
 
-    const postCreacion = (row, data) => {
-        row.id = `fila-${data.id_gasto}`;
-    };
-
-    tabla_gastos = Utilidades.crearDataTable('tabla_gastos', columnas, parametros, postCreacion);
-}
-
-/**
- * Crea los botones de acción para una fila
- */
-function crearBotones(id) {
-    let div = document.createElement('div');
-    div.className = 'row justify-content-evenly';
-    
-    let html = `
-        <button type="button" class="btn btn-primary btn-sm vista-previa" title="Vista previa" value="${id}">
-            <i class="bi bi-eye-fill"></i>
-        </button>
-        <button type="button" class="btn btn-success btn-sm modificar" title="modificar" value="${id}" data-bs-toggle="modal" data-bs-target="#modal_gastos">
-            <i class="bi bi-pencil-square"></i>
-        </button>`;
-    
-    if (permiso_eliminar == 1) {
-        html += `
-        <button type="button" class="btn btn-danger btn-sm eliminar" title="Eliminar" value="${id}">
-            <i class="bi bi-trash"></i>
-        </button>`;
-    }
-    
-    div.innerHTML = html;
-    return div;
-}
-
-/**
- * Maneja clics en los botones de la tabla (delegación)
- */
-function manejarClickEnTabla(e) {
-    const boton = e.target.closest('button');
-    if (!boton) return;
-
-    const id = boton.value;
-
-    if (boton.classList.contains('vista-previa')) {
-        mostrarVistaPrevia(id);
-    } else if (boton.classList.contains('modificar')) {
-        prepararFormularioEdicion(id);
-    } else if (boton.classList.contains('eliminar')) {
-        confirmarEliminar(id);
+    // 3. BUSCADOR
+    const inputBusqueda = document.getElementById("busqueda_global");
+    if (inputBusqueda) {
+        inputBusqueda.addEventListener("input", function(e) {
+            let valor = e.target.value.trim();
+            let filtros = columnas.filter(col => col.field).map(col => ({ field: col.field, type: "like", value: valor }));
+            tabla_gastos.setFilter([filtros]);
+        });
     }
 }
+
 
 // ============================================================
 // REGISTRO Y EDICIÓN
@@ -202,14 +169,15 @@ async function registrar() {
     }
 
     modalGasto.hide();
-    tabla_gastos.ajax.reload(null, false);
+    tabla_gastos.replaceData();
     Utilidades.mensaje('success', 'Éxito', 'Gasto registrado correctamente');
 }
 
 /**
  * Prepara el formulario para edición cargando los datos del gasto
  */
-async function prepararFormularioEdicion(id) {
+async function prepararFormularioEdicion(e) {
+    let id = e.target.value || e.target.parentElement.value; 
     const datos = new FormData();
     datos.append('id_gasto', id);
     datos.append('operacion', 'consulta_especifica');
@@ -335,7 +303,7 @@ async function modificar(id) {
     }
 
     modalGasto.hide();
-    tabla_gastos.ajax.reload(null, false);
+    tabla_gastos.replaceData();
     Utilidades.mensaje('success', 'Éxito', 'Gasto modificado correctamente');
 }
 
@@ -346,7 +314,8 @@ async function modificar(id) {
 /**
  * Muestra la vista previa de un gasto
  */
-async function mostrarVistaPrevia(id) {
+async function mostrarVistaPrevia(e) {
+    let id = e.target.value || e.target.parentElement.value; 
     const datos = new FormData();
     datos.append('id_gasto', id);
     datos.append('operacion', 'consulta_especifica');
@@ -361,20 +330,18 @@ async function mostrarVistaPrevia(id) {
     const gasto = respuesta.datos.gasto;
 
     document.getElementById('vista_fecha').textContent = FormatoFechas.formatoUsuario(gasto.ultima_fecha);
-    // Cargar detalles en la tabla secundaria
-    await cargarDetallesEnTabla(gasto.id_gasto);
 
     modalVistaPrevia.show();
+
+    setTimeout(async () => {
+        await cargarDetallesEnTabla(gasto.id_gasto);
+    }, 200);
 }
 
 /**
  * Carga los detalles de un gasto en la tabla de detalles dentro del modal de vista previa
  */
 async function cargarDetallesEnTabla(idGasto) {
-    if ($.fn.DataTable.isDataTable('#tabla_detalles_gastos')) {
-        $('#tabla_detalles_gastos').DataTable().clear().destroy();
-    }
-
     const datos = new FormData();
     datos.append('id_gasto', idGasto);
     datos.append('operacion', 'consultar_detalles');
@@ -388,35 +355,35 @@ async function cargarDetallesEnTabla(idGasto) {
 
     const detalles = respuesta.datos || [];
 
-    const tablaDetalles = new DataTable('#tabla_detalles_gastos', {
-        data: detalles,
-        columns: [
-            { data: 'fecha', render: data => FormatoFechas.formatoUsuario(data) },
-            { 
-                data: null,
-                render: row => formatearMontoConMoneda(row.monto, row.metodo_pago)
+    const columnas = [
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
+        { title: "FECHA", field: "fecha", formatter: (cell) => FormatoFechas.formatoUsuario(cell.getValue()), minWidth: 100, responsive: 0 },
+        { title: "MONTO", field: "monto", formatter: (cell) => formatearMontoConMoneda(cell.getValue(), cell.getData().metodo_pago), minWidth: 120 },
+        { title: "MÉTODO", field: "metodo_pago", minWidth: 120 },
+        { title: "DESCRIPCIÓN", field: "descripcion_detalle_gasto", minWidth: 200 },
+        {
+            title: "ACCIÓN",
+            headerSort: false,
+            hozAlign: "center",
+            formatter: (cell) => `<button class="btn btn-sm btn-primary ver-detalle" value="${cell.getData().id_detalle_gasto}"><i class="bi bi-eye"></i></button>`,
+            cellClick: function(e, cell) {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                if (btn.classList.contains('ver-detalle')) {
+                    mostrarVistaPreviaDetalle(btn.value); // Llama a la otra ventana modal
+                }
             },
-            { data: 'metodo_pago' },
-            { data: 'descripcion_detalle_gasto' },
-            {
-                data: null,
-                render: row => `
-                    <button class="btn btn-sm btn-primary ver-detalle" value="${row.id_detalle_gasto}">
-                        <i class="bi bi-eye"></i>
-                    </button>
-                `
-            }
-        ],
-        destroy: true,
-        responsive: true,
-        language: { url: 'recursos/bootstrap/js/datatable-plugin-es.js' }
-    });
+            minWidth: 100,
+            responsive: 0
+        }
+    ];
 
-    // Evento para ver detalle individual
-    $('#tabla_detalles_gastos tbody').off('click', '.ver-detalle').on('click', '.ver-detalle', function() {
-        const idDetalle = this.value;
-        mostrarVistaPreviaDetalle(idDetalle);
-    });
+    Utilidades.cargarTabuladorEstatico(
+        "tabla_detalles_gastos", 
+        detalles, 
+        columnas, 
+        { cssClass: "tabla-vista-previa", paginaSize: 5 }
+    );
 }
 
 /**
@@ -453,7 +420,8 @@ async function mostrarVistaPreviaDetalle(idDetalle) {
 // ELIMINACIÓN
 // ============================================================
 
-function confirmarEliminar(id) {
+function confirmarEliminar(e) {
+    let id = e.target.value || e.target.parentElement.value; 
     Swal.fire({
         title: '¿Estás seguro?',
         text: 'Esta acción no se puede deshacer.',
@@ -479,7 +447,7 @@ async function eliminar(id) {
         return;
     }
 
-    tabla_gastos.ajax.reload(null, false);
+    tabla_gastos.replaceData();
     Utilidades.mensaje('success', 'Éxito', 'Gasto eliminado correctamente');
 }
 

@@ -39,10 +39,6 @@ document.querySelector("#modal_cartelera").addEventListener("hide.bs.modal", () 
     document.querySelectorAll('.is-invalid').forEach(input => input.classList.remove('is-invalid'));
 });
 
-// Ajustar columnas de DataTable al colapsar menú lateral
-document.getElementById('header-toggle')?.addEventListener("click", () => {
-    setTimeout(() => tabla_cartelera?.columns.adjust().draw(), 450);
-});
 
 function envio(operacion) {
     if (operacion === "modificar") {
@@ -55,74 +51,67 @@ function envio(operacion) {
 }
 
 /**
- * Devuelve el HTML del badge según la prioridad
- */
-function obtenerPrioridadTexto(prioridad) {
-    const mapa = {
-        "1": { texto: "Alta", color: "success" },
-        "2": { texto: "Media", color: "warning" },
-        "3": { texto: "Baja", color: "danger" }
-    };
-    const p = mapa[prioridad] || { texto: "Desconocida", color: "secondary" };
-    return `<span class="badge bg-${p.color}">${p.texto}</span>`;
-}
-
-/**
- * Crea el HTML de los botones de acción (vista previa, modificar, eliminar)
- */
-function crearBotones(id) {
-    let html = `<div class="row justify-content-evenly">
-                    <button type="button" class="btn btn-primary btn-sm col-3 vista-previa" data-id="${id}" title="Vista previa">
-                        <i class="bi bi-eye-fill"></i>
-                    </button>
-                    <button type="button" class="btn btn-success btn-sm col-3 modificar" data-id="${id}" data-bs-toggle="modal" data-bs-target="#modal_cartelera" title="modificar">
-                        <i class="bi bi-pencil-square"></i>
-                    </button>`;
-    if (permiso_eliminar == 1) {
-        html += `<button type="button" class="btn btn-danger btn-sm col-3 eliminar" data-id="${id}" title="Eliminar">
-                    <i class="bi bi-trash3-fill"></i>
-                </button>`;
-    }
-    html += `</div>`;
-    return html;
-}
-
-/**
  * Inicializa DataTable con los datos de cartelera
  */
 function consultar() {
+    const contenedor = document.querySelector(".tabla-sistema-haydee");
+    if (!contenedor) return;
+
+    const formatoFecha = (cell) => FormatoFechas.formatoUsuario(cell.getValue());
+    const formatoPrioridad = (cell) => {
+        const p = cell.getValue();
+        const mapa = { "1": { texto: "Alta", color: "success" }, "2": { texto: "Media", color: "warning" }, "3": { texto: "Baja", color: "danger" } };
+        const conf = mapa[p] || { texto: "Desconocida", color: "secondary" };
+        return `<span class="badge bg-${conf.color}">${conf.texto}</span>`;
+    };
+
+    const formatoBotones = (cell) => {
+        const id = cell.getData().id_cartelera;
+        let html = `<div class="d-flex justify-content-center gap-2">
+            <button type="button" class="btn btn-primary btn-sm vista-previa" data-id="${id}" title="Vista previa"><i class="bi bi-eye-fill"></i></button>
+            <button type="button" class="btn btn-success btn-sm modificar" data-id="${id}" data-bs-toggle="modal" data-bs-target="#modal_cartelera" title="Modificar"><i class="bi bi-pencil-square"></i></button>`;
+        if (permiso_eliminar == 1) {
+            html += `<button type="button" class="btn btn-danger btn-sm eliminar" data-id="${id}" title="Eliminar"><i class="bi bi-trash3-fill"></i></button>`;
+        }
+        html += `</div>`;
+        return html;
+    };
+
     const columnas = [
-        { 
-            data: "fecha",
-            render: (data) => FormatoFechas.formatoUsuario(data)
-        },
-        { data: "titulo" },
-        { data: "nombre_usuario" },
-        { 
-            data: "prioridad",
-            render: (data) => obtenerPrioridadTexto(data)
-        },
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
+        { title: "FECHA", field: "fecha", formatter: formatoFecha, minWidth: 100, responsive: 0 },
+        { title: "TÍTULO", field: "titulo", minWidth: 150 },
+        { title: "AUTOR", field: "nombre_usuario", minWidth: 120 },
+        { title: "PRIORIDAD", field: "prioridad", formatter: formatoPrioridad, minWidth: 100 },
         {
-            data: null,
-            render: (row) => crearBotones(row.id_cartelera)
+            title: "ACCIONES", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 140, responsive: 0, download: false,
+            cellClick: function(e, cell) {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                const mockEvent = { target: btn };
+                
+                if (btn.classList.contains('modificar')) modificar_formulario(mockEvent);
+                if (btn.classList.contains('vista-previa')) mostrarVistaPrevia(mockEvent);
+                if (btn.classList.contains('eliminar')) {
+                    const id = btn.getAttribute('data-id');
+                    Swal.fire({
+                        title: "¿Estás seguro?", text: "¿Desea eliminar esta publicación?", showCancelButton: true, confirmButtonText: "Eliminar", cancelButtonText: "Cancelar", confirmButtonColor: "#e01d22", icon: "warning"
+                    }).then((r) => { if (r.isConfirmed) eliminar(id); });
+                }
+            }
         }
     ];
 
-    const parametrosConsulta = (data) => {
-        data.operacion = 'consulta';
-    };
-
-    const configuracionFila = (row, data) => {
-        row.id = `fila-${data.id_cartelera}`;
-        // Los eventos se asignarán mediante delegación en el tbody (más abajo)
-    };
-
-    tabla_cartelera = Utilidades.crearDataTable(
-        'tabla_cartelera_virtual',
-        columnas,
-        parametrosConsulta,
-        configuracionFila
-    );
+    tabla_cartelera = Utilidades.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consulta' } });
+    
+    const inputBusqueda = document.getElementById("busqueda_global");
+    if (inputBusqueda) {
+        inputBusqueda.addEventListener("input", function(e) {
+            let valor = e.target.value.trim();
+            let filtros = columnas.filter(col => col.field).map(col => ({ field: col.field, type: "like", value: valor }));
+            tabla_movimientos.setFilter([filtros]);
+        });
+    }
 }
 
 /**
@@ -233,7 +222,7 @@ async function registrar() {
     modal.hide();
     formulario_usar.reset();
 
-    tabla_cartelera.ajax.reload(null, false);
+    tabla_cartelera.replaceData();
     Utilidades.mensaje('success', 'Éxito', 'La publicación se ha registrado correctamente');
 }
 
@@ -261,7 +250,7 @@ async function modificar(id) {
     boton_formulario.textContent = "Guardar";
     document.getElementById("titulo_modal").textContent = "Registrar Publicación";
 
-    tabla_cartelera.ajax.reload(null, false);
+    tabla_cartelera.replaceData();
     Utilidades.mensaje('success', 'Éxito', 'La publicación se ha modificado correctamente');
 }
 
@@ -280,36 +269,22 @@ async function eliminar(id) {
         return;
     }
 
-    tabla_cartelera.ajax.reload(null, false);
+    tabla_cartelera.replaceData();
     Utilidades.mensaje('success', 'Éxito', 'La publicación ha sido eliminada correctamente');
 }
 
 // ============================================
 // DELEGACIÓN DE EVENTOS EN LA TABLA
 // ============================================
-document.querySelector("#tabla_cartelera_virtual tbody").addEventListener('click', function(e) {
-    const boton = e.target.closest('button');
-    if (!boton) return;
-
-    if (boton.classList.contains('modificar')) {
-        modificar_formulario(e);
-    } else if (boton.classList.contains('vista-previa')) {
-        mostrarVistaPrevia(e);
-    } else if (boton.classList.contains('eliminar')) {
-        const id = boton.getAttribute('data-id');
-        Swal.fire({
-            title: "¿Estás seguro?",
-            text: "¿Desea eliminar esta publicación?",
-            showCancelButton: true,
-            confirmButtonText: "Eliminar",
-            cancelButtonText: "Cancelar",
-            confirmButtonColor: "#e01d22",
-            icon: "warning"
-        }).then((resultado) => {
-            if (resultado.isConfirmed) eliminar(id);
-        });
-    }
-});
+function obtenerPrioridadTexto(prioridad) {
+    const mapa = {
+        "1": { texto: "Alta", color: "success" },
+        "2": { texto: "Media", color: "warning" },
+        "3": { texto: "Baja", color: "danger" }
+    };
+    const p = mapa[prioridad] || { texto: "Desconocida", color: "secondary" };
+    return `<span class="badge bg-${p.color}">${p.texto}</span>`;
+}
 
 // ============================================
 // BOTÓN ELIMINAR IMAGEN EN EL FORMULARIO DE EDICIÓN

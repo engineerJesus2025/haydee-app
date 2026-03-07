@@ -13,12 +13,6 @@ window.addEventListener('DOMContentLoaded', () => {
     consultar();
 });
 
-document.getElementById('header-toggle')?.addEventListener("click", () => {
-    setTimeout(() => {
-        tabla_bitacora?.columns.adjust().draw();
-    }, 450);
-});
-
 // Función para formatear JSON de manera legible
 function formatearJSON(jsonString) {
     if (!jsonString || jsonString === '{}') return 'No hay datos';
@@ -113,64 +107,59 @@ function eventosCargaDataTable(id_tabla, modal) {
     });
 }
 
-/**
- * Define el estilo de la badge según la acción
- */
-function definirColorAccion(nombre_accion) {
-    const colores = {
-        'consultar': "badge-consultar",
-        'eliminar': "badge-eliminar",
-        'registrar': "badge-registrar",
-        'modificar': "badge-modificar",
-        'iniciar sesion': "badge-iniciar-sesion",
-        'cerrar sesion': "badge-cerrar-sesion"
-    };
-    return colores[nombre_accion] || "badge bg-secondary";
-}
 
 /**
  * Inicializa DataTable con los registros de bitácora
  */
 function consultar() {
+    const contenedor = document.querySelector(".tabla-sistema-haydee");
+    if (!contenedor) return;
+
+    const formatoFecha = (cell) => FormatoFechas.formatoUsuario(cell.getValue());
+    const formatoModulo = (cell) => cell.getValue().split("_").join(" ");
+    
+    const formatoAccion = (cell) => {
+        const accion = cell.getValue();
+        const colores = { 'consultar': "badge-consultar", 'eliminar': "badge-eliminar", 'registrar': "badge-registrar", 'modificar': "badge-modificar", 'iniciar sesion': "badge-iniciar-sesion", 'cerrar sesion': "badge-cerrar-sesion" };
+        const clase = colores[accion.toLowerCase()] || "badge bg-secondary";
+        return `<span class="badge ${clase}">${accion}</span>`;
+    };
+
+    const formatoBotones = (cell) => {
+        return `<button class="btn btn-sm btn-outline-primary ver-detalle"><i class="bi bi-eye"></i> Ver detalles</button>`;
+    };
+
     const columnas = [
-        { data: "nombre_usuario" },
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
+        { title: "USUARIO", field: "nombre_usuario", minWidth: 150, responsive: 0 },
+        { title: "FECHA", field: "fecha_hora", formatter: formatoFecha, minWidth: 150 },
+        { title: "MÓDULO", field: "nombre_modulo", formatter: formatoModulo, minWidth: 150 },
+        { title: "ACCIÓN", field: "accion", formatter: formatoAccion, minWidth: 120 },
         {
-            data: "fecha_hora",
-            render: (data) => FormatoFechas.formatoUsuario(data)
-        },
-        {
-            data: "nombre_modulo",
-            render: (data) => data.split("_").join(" ")
-        },
-        {
-            data: "accion",
-            render: (data) => `<span class="badge ${definirColorAccion(data)}">${data}</span>`
-        },
-        {
-            data: null,
-            render: (row) => `
-                <button class="btn btn-sm btn-outline-primary ver-detalle" data-id="${row.id_bitacora}">
-                    <i class="bi bi-eye"></i> Ver detalles
-                </button>
-            `,
-            orderable: false
+            title: "DETALLES", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 140, responsive: 0, download: false,
+            cellClick: function(e, cell) {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                if (btn.classList.contains('ver-detalle')) {
+                    mostrarDetalle(cell.getData()); // En Bitácora pasas la data completa
+                }
+            }
         }
     ];
 
-    const parametrosConsulta = (data) => {
-        data.operacion = 'consulta';
-    };
+    tabla_bitacora = Utilidades.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consulta' } });
 
-    const configuracionFila = (row, data) => {
-        row.querySelector('.ver-detalle')?.addEventListener('click', () => mostrarDetalle(data));
-    };
+    const inputBusqueda = document.getElementById("busqueda_global");
+    if (inputBusqueda) {
+        inputBusqueda.addEventListener("input", function(e) {
+            let valor = e.target.value.trim();
+            let filtros = columnas
+                .filter(col => col.field) 
+                .map(col => ({ field: col.field, type: "like", value: valor }));
 
-    tabla_bitacora = Utilidades.crearDataTable(
-        'tabla_bitacora',
-        columnas,
-        parametrosConsulta,
-        configuracionFila
-    );
+            tabla_anio_fiscal.setFilter([filtros]);
+        });
+    }
 }
 
 function objetoALista(obj) {

@@ -24,11 +24,6 @@ let descripciones = {};
 // Inicializar
 consultarCajasChicas();
 
-// Ajustar columnas de DataTable al colapsar menú
-document.getElementById('header-toggle')?.addEventListener("click", () => {
-    setTimeout(() => tabla_movimientos?.columns.adjust().draw(), 450);
-});
-
 // Evento cambio de caja en el select
 document.getElementById("mes_select").addEventListener("change", (e) => {
     e.target.classList.remove('caja-highlight');
@@ -58,7 +53,7 @@ document.getElementById("mes_select").addEventListener("change", (e) => {
 
     // Recargar tabla de movimientos
     if (tabla_movimientos) {
-        tabla_movimientos.ajax.reload();
+        tabla_movimientos.replaceData();
     } else {
         inicializarTablaMovimientos();
     }
@@ -219,38 +214,62 @@ async function consultarCajasChicas() {
 
 // ========== INICIALIZAR TABLA DE MOVIMIENTOS ==========
 function inicializarTablaMovimientos() {
-    let columnas = [
+    const contenedor = document.querySelector(".tabla-sistema-haydee");
+    if (!contenedor) return;
+
+    const formatoFecha = (cell) => FormatoFechas.formatear(cell.getValue(), 'DD-MM-YYYY');
+    const formatoMonto = (cell) => {
+        const row = cell.getData();
+        return `${parseFloat(row.monto).toFixed(2)} Bs. / ${(row.monto / tasa_dolar).toFixed(2)} $`;
+    };
+    const formatoEstado = (cell) => `<span class="${obtenerColorEstado(cell.getValue())}">${cell.getValue()}</span>`;
+    
+    const formatoBotones = (cell) => {
+        const id = cell.getData().id_movimiento_caja;
+        let html = `<div class="d-flex justify-content-center gap-2">
+            <button type="button" class="btn btn-success btn-sm modificar" data-bs-toggle="modal" data-bs-target="#modal_registro_gastos" title="Modificar" value="${id}"><i class="bi bi-pencil-square"></i></button>`;
+        if (permiso_eliminar == 1) {
+            html += `<button type="button" class="btn btn-danger btn-sm eliminar" title="Eliminar" value="${id}"><i class="bi bi-trash"></i></button>`;
+        }
+        html += `</div>`;
+        return html;
+    };
+
+    const columnas = [
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
+        { title: "FECHA", field: "fecha", formatter: formatoFecha, minWidth: 100, responsive: 0 },
+        { title: "MONTO", field: "monto", formatter: formatoMonto, minWidth: 150 },
+        { title: "CONCEPTO", field: "concepto", minWidth: 200 },
+        { title: "ESTADO", field: "estado", formatter: formatoEstado, minWidth: 120 },
         {
-            data: "fecha",
-            render: data => FormatoFechas.formatear(data, 'DD-MM-YYYY')
-        },
-        {
-            data: null,
-            render: row => `${parseFloat(row.monto).toFixed(2)} Bs. / ${(row.monto / tasa_dolar).toFixed(2)} $`
-        },
-        { data: "concepto" },
-        {
-            data: "estado",
-            render: data => `<span class="${obtenerColorEstado(data)}">${data}</span>`
-        },
-        {
-            data: null,
-            render: row => crearBotones(row.id_movimiento_caja).innerHTML
+            title: "ACCIONES", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 120, responsive: 0, download: false,
+            cellClick: function(e, cell) {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                const mockEvent = { target: btn };
+                if (btn.classList.contains('modificar')) prepararFormulario(mockEvent);
+                if (btn.classList.contains('eliminar')) eventoEliminar(mockEvent);
+            }
         }
     ];
 
-    let parametros = (data) => {
-        data.operacion = 'consultar_movimientos_caja';
-        data.caja_chica_id = document.getElementById("mes_select").value;
+    const opcionesExtra = {
+        parametrosExtra: { 
+            operacion: 'consultar_movimientos_caja',
+            caja_chica_id: document.getElementById("mes_select").value 
+        }
     };
 
-    let postCreacion = (row, data) => {
-        row.id = `fila-${data.id_movimiento_caja}`;
-        row.querySelector(".modificar")?.addEventListener('click', prepararFormulario);
-        row.querySelector(".eliminar")?.addEventListener('click', eventoEliminar);
-    };
+    tabla_movimientos = Utilidades.cargarTabulador(contenedor.id, "", columnas, opcionesExtra);
 
-    tabla_movimientos = Utilidades.crearDataTable('tabla_registros_sistema', columnas, parametros, postCreacion);
+    const inputBusqueda = document.getElementById("busqueda_global");
+    if (inputBusqueda) {
+        inputBusqueda.addEventListener("input", function(e) {
+            let valor = e.target.value.trim();
+            let filtros = columnas.filter(col => col.field).map(col => ({ field: col.field, type: "like", value: valor }));
+            tabla_movimientos.setFilter([filtros]);
+        });
+    }
 }
 
 // ========== REGISTRAR GASTO ==========
@@ -274,7 +293,7 @@ async function registrar() {
     // Actualizar saldo mostrado
     actualizarSaldos();
     modal_registro_gastos.hide();
-    tabla_movimientos.ajax.reload();
+    tabla_movimientos.replaceData();
     Utilidades.mensaje('success', 'Éxito', 'Gasto registrado correctamente');
 }
 
@@ -347,7 +366,7 @@ async function modificar(id) {
     boton_formulario.textContent = "Registrar";
     document.getElementById('titulo_modal_registro_gasto').textContent = "Registrar Gasto de Caja";
 
-    tabla_movimientos.ajax.reload();
+    tabla_movimientos.replaceData();
     Utilidades.mensaje('success', 'Éxito', 'Gasto modificado correctamente');
 }
 
@@ -380,7 +399,7 @@ async function eliminar(id) {
     }
 
     actualizarSaldos();
-    tabla_movimientos.ajax.reload();
+    tabla_movimientos.replaceData();
     Utilidades.mensaje('success', 'Éxito', 'Gasto eliminado correctamente');
 }
 

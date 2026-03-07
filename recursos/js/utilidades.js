@@ -25,7 +25,7 @@ const Utilidades = {
                 "infoFiltered": "(filtrado de un total de _MAX_ registros)",
                 "search": "Buscar:",
                 "loadingRecords": "Cargando...",
-                "paginate": { "first": "Primero", "last": "Último", "next": "<i class='bi bi-caret-right'></i>", "previous": "<i class='bi bi-caret-left'></i>" }
+                "paginate": { "page_size": "Mostrar","first": "Primero", "last": "Último", "next": "<i class='bi bi-caret-right'></i>", "previous": "<i class='bi bi-caret-left'></i>" }
             },
             ajax: {
                 url: "",
@@ -38,6 +38,216 @@ const Utilidades = {
             createdRow: configuraciones_post_creacion
         });
     },
+
+    cargarTabulador(idContenedor, url, columnas, opciones = {}) {
+        const config = {
+            movableColumns: true,
+            pagination: true,
+            paginationSize: opciones.paginaSize || 10,
+            paginationSizeSelector: [5, 10, 20, 50],
+            columns: columnas,
+            layout: "fitColumns",
+            responsiveLayout: "collapse", // Ayuda si la pantalla es muy pequeña
+            responsiveLayoutCollapseFormatter: function(data) {
+                if (!data || data.length === 0) {
+                    return ""; 
+                }
+
+                // 2. Si hay columnas ocultas, entonces sí creamos la lista de Bootstrap
+                let lista = document.createElement("ul");
+                lista.className = "list-group list-group-flush w-100 shadow-sm rounded border my-2";
+
+                data.forEach(function(col) {
+                    let item = document.createElement("li");
+                    item.className = "list-group-item d-flex justify-content-between align-items-center py-2 text-sm";
+
+                    let titulo = document.createElement("strong");
+                    titulo.className = "text-muted";
+                    titulo.innerHTML = col.title;
+
+                    let valorContenedor = document.createElement("div");
+                    valorContenedor.className = "text-end";
+
+                    if (col.value instanceof Node) {
+                        valorContenedor.appendChild(col.value);
+                    } else {
+                        valorContenedor.innerHTML = col.value || '<span class="text-muted fst-italic">Vacío</span>';
+                    }
+
+                    item.appendChild(titulo);
+                    item.appendChild(valorContenedor);
+                    lista.appendChild(item);
+                });
+
+                return lista;
+            },
+            rowFormatter: function(row){
+                // Si quieres forzar un padding vertical extra para que respire mejor
+                row.getElement().style.padding = "5px 0";
+            },
+            paginationCounter: function(pageSize, currentRow, currentPage, totalRows, totalPages) {
+                // Si la tabla está vacía (por ejemplo, por una búsqueda sin resultados)
+                if (totalRows === 0) {
+                    return "Mostrando registros del 0 al 0 de un total de 0 registros";
+                }
+                
+                let startRow = currentRow;
+                let endRow = currentRow + pageSize - 1;
+                
+                // Asegurarnos de que el final no sobrepase el total
+                if (endRow > totalRows) {
+                    endRow = totalRows;
+                }
+                
+                return `Mostrando registros del ${startRow} al ${endRow} de un total de ${totalRows} registros`;
+            },
+
+            // 1. Usar una URL base (necesario para que Tabulator dispare la petición inicial)
+            ajaxURL: url || window.location.href, 
+            
+            // 2. Parámetros que enviaremos a PHP
+            ajaxParams: {
+                operacion: "consulta",
+                ...opciones.parametrosExtra
+            },
+
+            // 3. LA MAGIA: Interceptar la petición y usar tu Utilidades.query()
+            ajaxRequestFunc: async function(url, config, params) {
+                // Convertir los parámetros de Tabulator a FormData para PHP
+                let datos = new FormData();
+                for (let key in params) {
+                    datos.append(key, params[key]);
+                }
+                
+                // Ejecutar tu propia función que ya tiene el spinner de carga
+                // Mandamos url = "" para que dispare a la misma página (igual que DataTables)
+                const respuesta = await Utilidades.query(datos, true, "");
+
+                // Tabulator espera que esta promesa retorne el arreglo de datos
+                if (respuesta && respuesta.estatus === true) {
+                    return respuesta.datos || respuesta.data || [];
+                } else {
+                    console.error("Error en la consulta Tabulator:", respuesta?.mensaje);
+                    Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'Error al cargar la tabla');
+                    return []; // Retorna vacío para no romper la tabla
+                }
+            },
+
+            // 4. Traducciones
+            locale: "es",
+            langs: {
+                "es": {
+                    "pagination": {
+                        "first": "Primero",
+                        "first_title": "Primera página",
+                        "last": "Último",
+                        "last_title": "Última página",
+                        "prev": "<i class='bi bi-caret-left-fill'></i>",
+                        "prev_title": "Página anterior",
+                        "next": "<i class='bi bi-caret-right-fill'></i>",
+                        "next_title": "Página siguiente",
+                        "all": "Todos",
+                        "page_size": "Mostrar"
+                    },
+                    "data": {
+                        "loading": "Cargando registros...",
+                        "error": "Error de carga",
+                    }
+                }
+            },
+            placeholder: "No se encontraron registros",
+            ...opciones
+        };
+
+        // Extraemos el contenedor HTML para inyectarle clases adicionales (igual que en la estática)
+        let contenedorHtml = typeof idContenedor === "string" ? document.getElementById(idContenedor) : idContenedor;
+        if (contenedorHtml && opciones.cssClass) {
+            contenedorHtml.classList.add(opciones.cssClass);
+        }
+
+        return new Tabulator(`#${idContenedor}`, config);
+    },
+
+    /**
+     * Inicializa un Tabulator para datos locales/estáticos (como vistas previas o detalles)
+     */
+    cargarTabuladorEstatico(idContenedor, data, columnas, opciones = {}) {
+        const config = {
+            data: data, // Inyecta los datos directamente, sin hacer petición AJAX
+            layout: "fitColumns",
+            pagination: true,
+            paginationSize: opciones.paginaSize || 5, // Por defecto 5 para vistas previas
+            paginationSizeSelector: [5, 10, 20],
+            columns: columnas,
+            
+            // Reutilizamos el idioma español
+            locale: "es",
+            langs: {
+                "es": {
+                    "pagination": {
+                        "page_size": "Mostrar",
+                        "first": "Primero", "first_title": "Primera página",
+                        "last": "Último", "last_title": "Última página",
+                        "prev": "Anterior", "prev_title": "Página anterior",
+                        "next": "Siguiente", "next_title": "Página siguiente",
+                        "all": "Todos",
+                    },
+                    "data": {
+                        "loading": "Cargando registros...",
+                        "error": "Error de carga",
+                    }
+                }
+            },
+            
+            // Reutilizamos el contador de registros
+            paginationCounter: function(pageSize, currentRow, currentPage, totalRows, totalPages) {
+                if (totalRows === 0) return "Mostrando registros del 0 al 0 de un total de 0 registros";
+                let startRow = currentRow;
+                let endRow = currentRow + pageSize - 1;
+                if (endRow > totalRows) endRow = totalRows;
+                return `Mostrando registros del ${startRow} al ${endRow} de un total de ${totalRows} registros`;
+            },
+            
+            placeholder: "No hay detalles para mostrar",
+            
+            // Reutilizamos el formateador responsivo de Bootstrap
+            responsiveLayout: "collapse",
+            responsiveLayoutCollapseFormatter: function(data) {
+                if (!data || data.length === 0) return ""; 
+                let lista = document.createElement("ul");
+                lista.className = "list-group list-group-flush w-100 shadow-sm rounded border my-2";
+                data.forEach(function(col) {
+                    let item = document.createElement("li");
+                    item.className = "list-group-item d-flex justify-content-between align-items-center py-2 text-sm";
+                    let titulo = document.createElement("strong");
+                    titulo.className = "text-muted";
+                    titulo.innerHTML = col.title;
+                    let valorContenedor = document.createElement("div");
+                    valorContenedor.className = "text-end";
+                    if (col.value instanceof Node) valorContenedor.appendChild(col.value);
+                    else valorContenedor.innerHTML = col.value || '<span class="text-muted fst-italic">Vacío</span>';
+                    item.appendChild(titulo);
+                    item.appendChild(valorContenedor);
+                    lista.appendChild(item);
+                });
+                return lista;
+            },
+            
+            rowFormatter: function(row){
+                row.getElement().style.padding = "5px 0";
+            },
+            ...opciones
+        };
+
+        // Extraemos el contenedor HTML para inyectarle clases adicionales si las hay
+        let contenedorHtml = typeof idContenedor === "string" ? document.getElementById(idContenedor) : idContenedor;
+        if (contenedorHtml && opciones.cssClass) {
+            contenedorHtml.classList.add(opciones.cssClass);
+        }
+
+        return new Tabulator(contenedorHtml, config);
+    },
+
 
     /**
      * Envía peticiones AJAX al servidor usando Fetch.

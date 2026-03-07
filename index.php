@@ -1,6 +1,6 @@
 <?php
     // 1. Inicialización Global
-    require_once 'vendor/autoload.php';
+    require_once "vendor/autoload.php";
     
     session_start();
 

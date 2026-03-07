@@ -5,7 +5,7 @@
     <title>Bancos | Inicio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php
-    require_once "vista/componentes/estilos.php";
+    require_once ROOT_PATH . "/vista/componentes/estilos.php";
     ?>
 </head>
 
@@ -18,13 +18,13 @@
         <div class="row flex-nowrap ">
 
             <?php
-            require_once "vista/componentes/navbar.php";
+            require_once ROOT_PATH . "/vista/componentes/navbar.php";
             ?>
 
             <div class="col d-flex flex-column  min-vh-100 gris">
 
                 <?php
-                require_once "vista/componentes/header.php";
+                require_once ROOT_PATH . "/vista/componentes/header.php";
                 ?>
 
                 <main class="col ps-md-2 pt-2 mb-5">
@@ -56,7 +56,7 @@
                                         </div>
                                     </div>
                                 <?php endif; ?>
-                                <table id="tabla_banco" class="table table-striped table-hover" style="width:97%">
+                                <!-- <table id="tabla_banco" class="table table-striped table-hover" style="width:97%">
                                     <thead>
                                         <tr>
                                             <th>NOMBRE</th>
@@ -74,8 +74,8 @@
                                             </td>
                                         </tr>
                                     </tbody>
-                                </table>
-
+                                </table> -->
+                                <div id="tabla_banco" class="tabla-sistema-haydee"></div>
                             </div>
                         </div>
                     </div>
@@ -86,10 +86,10 @@
 
     <!-- Componentes -->
     <?php
-        require_once "vista/componentes/footer.php";
-        require_once "vista/componentes/script.php";
-        require_once 'vista/componentes/modal_carga.php';
-        require_once 'vista/componentes/boton_ayuda.php';
+        require_once ROOT_PATH . "/vista/componentes/footer.php";
+        require_once ROOT_PATH . "/vista/componentes/script.php";
+        require_once ROOT_PATH . "/vista/componentes/modal_carga.php";
+        require_once ROOT_PATH . "/vista/componentes/boton_ayuda.php";
     ?>
     
     <!-- Modales -->
@@ -105,7 +105,7 @@
                 <div class="modal-body">
 
                     <?php
-                    require_once "vista/bancos/bancos_modal.php";
+                    require_once ROOT_PATH . "/vista/bancos/bancos_modal.php";
                     ?>
 
                 </div>
@@ -114,8 +114,8 @@
     </div>
     
     <!-- Scripts personalizado -->
-    <script type="text/javascript" src="recursos/js/validaciones/bancos_validar.js"></script>
-    <script type="text/javascript" src="recursos/js/consultas_ajax/bancos_ajax.js"></script>
+    <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/validaciones/bancos_validar.js"></script>
+    <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/consultas_ajax/bancos_ajax.js"></script>
 
 </body>
 

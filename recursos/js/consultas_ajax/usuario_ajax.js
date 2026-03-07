@@ -13,7 +13,6 @@ let modal = new bootstrap.Modal(document.getElementById("modal_usuario"), { focu
 let formulario_usar = document.querySelector(`#form_usuario`); 
 let tabla_usuarios;
 
-// Inicializamos la tabla
 consultar();
 
 // Resetear modal al cerrarlo
@@ -56,10 +55,6 @@ document.querySelectorAll('.contra-btn').forEach(boton => {
 	});
 });
 
-document.getElementById('header-toggle').addEventListener("click", e => {
-	setTimeout(() => tabla_usuarios.columns.adjust().draw(), 450);
-});
-
 function envio(operacion) {	
 	if (operacion === "modificar") {
 		modificar(boton_formulario.getAttribute("id_modificar"));
@@ -70,62 +65,91 @@ function envio(operacion) {
 	}
 }
 
-function crearBotones(id) {
-	let div = document.createElement("div");
-	let html = `<div class="row justify-content-evenly">
-					<button type="button" class="btn btn-success btn-sm col-lg-3 col-4 modificar" data-bs-toggle="modal" data-bs-target="#modal_usuario" title="modificar" value="${id}">
-						<i class="bi bi-pencil-square"></i>
-					</button>`;
-	if (permiso_eliminar) {
-		html += `<button type="button" class="btn btn-danger btn-sm col-lg-3 col-4 eliminar" title="Eliminar" value="${id}">
-					<i class="bi bi-trash"></i>
-				</button>`;
-	}
-	html += `</div>`;
-	div.innerHTML = html;
-	return div;
-}
-
-function definirColorBadge(nombre_rol){
-	const colores = {
-		'Administrador Global': "badge bg-warning text-dark",
-		'Administrador': "badge bg-primary",
-		'Propietario': "badge bg-success",
-		'Contador': "badge bg-danger",
-		'Presidente': "badge bg-info text-dark"
-	};
-	return colores[nombre_rol] || "badge bg-secondary";
-}
-
 async function consultar() {
-	const paramentros_consulta = (data) => { data.operacion = 'consulta'; };
-	const estructura_tabla_usuarios = [
- 		{ data: "nombre" },
-		{ data: "apellido" },
-        { data: "correo" },
-		{ 
-            data: null,
-            render: (row) => `<span class="${definirColorBadge(row.nombre_rol)}">${row.nombre_rol}</span>`
-        },      
+    const contenedorTabla = document.querySelector(".tabla-sistema-haydee");
+    if (!contenedorTabla) return;
+
+    // 1. FORMATEADORES VISUALES
+    const formatoRol = (cell) => {
+        const rol = cell.getValue();
+        const colores = {
+            'Administrador Global': "badge bg-warning text-dark",
+            'Administrador': "badge bg-primary",
+            'Propietario': "badge bg-success",
+            'Contador': "badge bg-danger",
+            'Presidente': "badge bg-info text-dark"
+        };
+        // Si no encuentra el rol en el diccionario, usa el gris por defecto
+        const claseBadge = colores[rol] || "badge bg-secondary";
+        
+        return `<span class="${claseBadge}">${rol}</span>`;
+    };
+    
+    // El formateador de botones AHORA ES CENTRALIZADO Y AUTOSUFICIENTE
+    const formatoBotones = (cell) => {
+        const id = cell.getData().id_usuario;
+        
+        let html = `<div class="d-flex justify-content-center gap-2">
+                        <button type="button" class="btn btn-success btn-sm modificar" data-bs-toggle="modal" data-bs-target="#modal_usuario" title="Modificar" value="${id}">
+                            <i class="bi bi-pencil-square"></i>
+                        </button>`;
+        // Usamos la variable global permiso_eliminar que ya tienes definida arriba
+        if (permiso_eliminar) {
+            html += `<button type="button" class="btn btn-danger btn-sm eliminar" title="Eliminar" value="${id}">
+                        <i class="bi bi-trash"></i>
+                    </button>`;
+        }
+        html += `</div>`;
+        
+        return html;
+    };
+
+    // 2. DEFINICIÓN DE COLUMNAS
+    const columnas = [
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
+        { title: "Nombre", field: "nombre", minWidth: 100, responsive: 0 },
+        { title: "Apellido", field: "apellido", minWidth: 100 },
+        { title: "Correo", field: "correo", minWidth: 180 }, 
+        { title: "Rol", field: "nombre_rol", formatter: formatoRol, vertAlign: "middle", minWidth: 150 },      
         { 
-            data: null, 
-            render: (row) => crearBotones(row.id_usuario).innerHTML
+            title: "Acciones", 
+            formatter: formatoBotones, // Usamos la nueva variable interna
+            headerSort: false, 
+            hozAlign: "center",
+            vertAlign: "middle",
+            minWidth: 100,
+            responsive: 0,
+            download: false, 
+            cellClick: function(e, cell) {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+
+                if (btn.classList.contains('modificar')) preparar_formulario({ target: btn });
+                if (btn.classList.contains('eliminar')) eventoEliminar({ target: btn });
+            }
         } 		
- 	];
+    ];
 
- 	const configuraciones_tabla_usuarios = (row, data) => {
- 		Array.from(row.children).forEach(td => td.classList.add('align-middle'));
-		row.id = `fila-${data.id_usuario}`; 		
- 		row.querySelector(".modificar")?.addEventListener('click', preparar_formulario);
- 		row.querySelector(".eliminar")?.addEventListener('click', eventoEliminar);
- 	}
+    // 3. INICIALIZACIÓN Y EVENTOS
+    tabla_usuarios = Utilidades.cargarTabulador(contenedorTabla.id, "", columnas);
 
- 	// tabla_usuarios = crearDataTable('tabla_usuario', estructura_tabla_usuarios, paramentros_consulta, configuraciones_tabla_usuarios);
- 	tabla_usuarios = Utilidades.crearDataTable('tabla_usuario', estructura_tabla_usuarios, paramentros_consulta, configuraciones_tabla_usuarios);
+    // Buscador Global Dinámico
+    const inputBusqueda = document.getElementById("busqueda_global");
+    if (inputBusqueda) {
+        inputBusqueda.addEventListener("input", function(e) {
+            let valor = e.target.value.trim();
+            
+            let filtros = columnas
+                .filter(col => col.field) 
+                .map(col => ({ field: col.field, type: "like", value: valor }));
+
+            tabla_usuarios.setFilter([filtros]);
+        });
+    }
 }
 
 async function registrar() {
-	let datos = new FormData(formulario_usar); // Recoge todos los inputs automáticamente
+	let datos = new FormData(formulario_usar);
 	datos.append('operacion', 'registrar');
 	
 	let respuesta = await Utilidades.query(datos);
@@ -138,7 +162,7 @@ async function registrar() {
 		return;
 	}
 
-	tabla_usuarios.ajax.reload(null, false);
+	tabla_usuarios.replaceData();
 	Utilidades.mensaje('success', 'Éxito', 'El registro se ha realizado exitosamente');
 }
 
@@ -214,7 +238,7 @@ async function modificar(id) {
 	boton_formulario.textContent = "Guardar";
 	document.getElementById('titulo_modal').textContent = "Registrar Usuario";
 
-	tabla_usuarios.ajax.reload(null, false);
+	tabla_usuarios.replaceData();
 	Utilidades.mensaje('success', 'Éxito', 'El registro se ha modificado exitosamente');
 }
 
@@ -246,7 +270,7 @@ async function eliminar(id) {
 		return;
 	}
 
-	tabla_usuarios.ajax.reload(null, false);
+	tabla_usuarios.replaceData();
 	Utilidades.mensaje('success', 'Éxito', 'El registro ha sido eliminado correctamente');
 }
 

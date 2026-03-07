@@ -5,7 +5,7 @@
     <title>Roles | Inicio</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php
-    require_once "vista/componentes/estilos.php";
+    require_once ROOT_PATH . "/vista/componentes/estilos.php";
     ?>
 </head>
 <body id="body-pd" class="body-pd">
@@ -14,12 +14,12 @@
     <div class="container-fluid">
         <div class="row flex-nowrap ">
             <?php
-            require_once "vista/componentes/navbar.php";
+            require_once ROOT_PATH . "/vista/componentes/navbar.php";
             ?>
 
             <div class="col d-flex flex-column  min-vh-100 gris">
                 <?php
-                require_once "vista/componentes/header.php";
+                require_once ROOT_PATH . "/vista/componentes/header.php";
                 ?>
 
                 <main class="col ps-md-2 pt-2">
@@ -38,7 +38,7 @@
                                         <button type="button" class="btn btn-primary mb-2" data-bs-toggle="modal" data-bs-target="#modal_roles">Nuevo rol</a>
                                     </div><br>
                                 <?php endif; ?>
-                                <table id="tabla_roles" class="table table-striped table-hover" style="width:97%">
+                                <!-- <table id="tabla_roles" class="table table-striped table-hover" style="width:97%">
                                     <thead>
                                         <tr>        
                                             <th>rol</th>
@@ -50,7 +50,8 @@
                                             <td colspan="7"><h4>Cargando...</h4></td>
                                         </tr>
                                     </tbody>
-                                </table>
+                                </table> -->
+                                <div id="tabla_roles" class="tabla-sistema-haydee"></div>
                             </div>
                         </div>
                     </div>                    
@@ -61,10 +62,10 @@
 
     <!-- Componentes -->
     <?php
-        require_once "vista/componentes/footer.php";
-        require_once "vista/componentes/script.php";
-        require_once 'vista/componentes/modal_carga.php';
-        require_once 'vista/componentes/boton_ayuda.php';
+        require_once ROOT_PATH . "/vista/componentes/footer.php";
+        require_once ROOT_PATH . "/vista/componentes/script.php";
+        require_once ROOT_PATH . "/vista/componentes/modal_carga.php";
+        require_once ROOT_PATH . "/vista/componentes/boton_ayuda.php";
     ?>
     
     <!-- Modales -->
@@ -76,15 +77,15 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                  </div>
                  <div class="modal-body">
-                     <?php require_once "vista/roles/rol_modal.php";?>
+                     <?php require_once ROOT_PATH . "/vista/roles/rol_modal.php";?>
                  </div>
              </div>
          </div>
     </div>
     
     <!-- Scripts personalizado -->
-    <script type="text/javascript" src="recursos/js/validaciones/roles_validar.js"></script>
-    <script type="text/javascript" src="recursos/js/consultas_ajax/roles_ajax.js"></script>
+    <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/validaciones/roles_validar.js"></script>
+    <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/consultas_ajax/roles_ajax.js"></script>
 </body>
 
 </html>
