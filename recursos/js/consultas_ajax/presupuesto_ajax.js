@@ -578,43 +578,6 @@ function asignarEventosCambioMoneda(){
 // ============================================================
 // CONSULTAS
 // ============================================================
-async function consultar2() {
-    const columnas = [
-        {
-            data: null,
-            render: row => {
-                let [anio, mes] = row.fecha.split('-');
-                return `${FormatoFechas.nombreMes(parseInt(mes))} del ${anio}`.toUpperCase();
-            }
-        },
-        {
-            data: null,
-            render: row => `${parseFloat(row.total_estimado).toFixed(2)} Bs. / ${(row.total_estimado / tasa_dolar).toFixed(2)} $`
-        },
-        {
-            data: null,
-            render: row => `${parseFloat(row.cuota_reserva).toFixed(2)} Bs. / ${(row.cuota_reserva / tasa_dolar).toFixed(2)} $`
-        },
-        { data: "observacion" },
-        {
-            data: null,
-            render: row => crearBotones(row.id_presupuesto).innerHTML
-        }
-    ];
-
-    const parametros = (data) => { data.operacion = 'consulta'; };
-    const postCreacion = (row, data) => {
-        row.id = `fila-${data.id_presupuesto}`;
-        row.querySelector(".modificar")?.addEventListener('click', modificar_formulario);
-        row.querySelector(".eliminar")?.addEventListener('click', eventoEliminar);
-
-        row.lastElementChild.setAttribute('class','row');
-    };
-
-    tabla_presupuesto = Utilidades.crearDataTable('tabla_presupuesto', columnas, parametros, postCreacion);
-    await consultarInformacionFormulario();
-}
-
 async function consultar() {
     const formatoPeriodo = (cell) => {
         let [anio, mes] = cell.getValue().split('-');

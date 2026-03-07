@@ -109,7 +109,7 @@ function consultar() {
         inputBusqueda.addEventListener("input", function(e) {
             let valor = e.target.value.trim();
             let filtros = columnas.filter(col => col.field).map(col => ({ field: col.field, type: "like", value: valor }));
-            tabla_movimientos.setFilter([filtros]);
+            tabla_cartelera.setFilter([filtros]);
         });
     }
 }

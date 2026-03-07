@@ -1,4 +1,4 @@
-let data_table;
+let tabla_solicitud_gasto;
 let id_modificar;
 let tasa_dolar = parseFloat(localStorage.getItem("tasa_dolar")) || 1;
 
@@ -61,7 +61,7 @@ async function consultar() {
         }
     ];
 
-    data_table = Utilidades.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consulta' } });
+    tabla_solicitud_gasto = Utilidades.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consulta' } });
 
     const inputBusqueda = document.getElementById("busqueda_global");
     if (inputBusqueda) {
@@ -71,7 +71,7 @@ async function consultar() {
                 .filter(col => col.field) 
                 .map(col => ({ field: col.field, type: "like", value: valor }));
 
-            tabla_anio_fiscal.setFilter([filtros]);
+            tabla_solicitud_gasto.setFilter([filtros]);
         });
     }
 }
@@ -94,7 +94,7 @@ async function registrar() {
     const respuesta = await Utilidades.query(datos, true);
     if (respuesta?.estatus) {
         modal.hide();
-        data_table.replaceData();
+        tabla_solicitud_gasto.replaceData();
         Utilidades.mensaje('success', 'Éxito', 'Solicitud registrada.');
     } else {
         Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo registrar.');
@@ -163,7 +163,7 @@ async function modificar() {
     const respuesta = await Utilidades.query(datos, true);
     if (respuesta?.estatus) {
         modal.hide();
-        data_table.replaceData();
+        tabla_solicitud_gasto.replaceData();
         Utilidades.mensaje('success', 'Éxito', 'Solicitud actualizada.');
     } else {
         Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo actualizar.');
@@ -177,7 +177,7 @@ async function eliminar(id) {
 
     const respuesta = await Utilidades.query(datos);
     if (respuesta?.estatus) {
-        data_table.replaceData();
+        tabla_solicitud_gasto.replaceData();
         Utilidades.mensaje('success', 'Éxito', 'Solicitud eliminada.');
     } else {
         Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo eliminar.');

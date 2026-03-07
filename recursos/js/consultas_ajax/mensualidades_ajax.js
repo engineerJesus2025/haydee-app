@@ -142,13 +142,31 @@ async function consultarMensualidades() {
     const inputBusqueda = document.getElementById("busqueda_global");
     if (inputBusqueda) {
         inputBusqueda.addEventListener("input", function(e) {
-            let valor = e.target.value.trim();
-            // Buscamos específicamente por Año o Monto, ya que los meses están combinados
-            let filtros = [
-                { field: "anio", type: "like", value: valor },
-                { field: "monto", type: "like", value: valor }
-            ];
-            tablaMensualidades.setFilter([filtros]);
+            let valor = e.target.value.trim().toLowerCase();
+            
+            // Si el input está vacío, limpiamos los filtros
+            if (valor === "") {
+                tablaMensualidades.clearFilter();
+                return;
+            }
+
+            // LA MAGIA: Función de filtrado personalizada
+            tablaMensualidades.setFilter(function(data) {
+                // 1. Reconstruir el texto del período tal como se ve en pantalla
+                let fechaObj = new Date(`${data.mes}/01/${data.anio}`);
+                let textoPeriodo = `${fechaObj.toLocaleString("es-ES", { month: 'long' })} del ${data.anio}`.toLowerCase();
+                
+                // 2. Reconstruir los textos de los montos y deudas
+                let montoTotal = parseFloat(data.monto).toFixed(2);
+                let deuda = data.monto - data.pagado;
+                let textoEstado = deuda <= 0 ? "deuda cancelada" : deuda.toFixed(2);
+                
+                // 3. Evaluar si lo que escribió el usuario coincide con alguna columna
+                return textoPeriodo.includes(valor) || 
+                       String(data.anio).includes(valor) || 
+                       montoTotal.includes(valor) || 
+                       textoEstado.includes(valor);
+            });
         });
     }
 }

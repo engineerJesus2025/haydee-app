@@ -35,26 +35,17 @@
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="card p-4">
-                                <?php if (Sesiones::tienePermiso(GESTIONAR_PRESUPUESTO, REGISTRAR)) : ?>
-                                    <div class="button mb-4">
-                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_presupuesto" id="boton_registrar">Nuevo presupuesto</button>
-                                        <span class="text-success"></span>
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <?php if (Sesiones::tienePermiso(GESTIONAR_PRESUPUESTO, REGISTRAR)) : ?>
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_usuario">Nuevo usuario</button>
+                                    <?php else: ?>
+                                        <div></div> <?php endif; ?>
+                                    
+                                    <div class="input-group" style="max-width: 300px;">
+                                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                        <input type="text" id="busqueda_global" class="form-control" placeholder="Buscar presupuesto...">
                                     </div>
-                                <?php endif; ?>
-
-                                <!-- <table id="tabla_presupuesto" class="table table-striped table-hover table-responsive" style="width:97%">
-                                    <thead>
-                                        <tr>
-                                            <th>FECHA</th>
-                                            <th>MONTO ESPERADO</th>
-                                            <th>CUOTA</th>
-                                            <th>OBSERVACIÓN</th>
-                                            <th class="text-center">ACCIONES</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                    </tbody>
-                                </table> -->
+                                </div>
                                 <div id="tabla_presupuesto" class="tabla-sistema-haydee"></div>
                             </div>
                         </div>

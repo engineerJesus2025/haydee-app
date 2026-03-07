@@ -35,10 +35,15 @@
                     <div class="row my-4 justify-content-center">
                         <div class="col-11">
                             <div class="card p-4 row">
-                                <div class="col-12 row">
-                                    <div class="col" hidden>                       
-                                        <button class="btn btn-primary my-2" id="boton_registrar" title="Presione para Registrar Nueva mensualidad" type="button" data-bs-toggle="modal" data-bs-target="#modal_mensualidad">Nueva mensualidad</button>
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div class="col" hidden>
+                                        <button class="btn btn-primary my-2" id="boton_registrar" title="Presione para Registrar Nueva mensualidad" type="button" data-bs-toggle="modal" data-bs-target="#modal_mensualidad">Nueva Mensualidad</button>
                                         <p class="text-danger"></p>
+                                    </div>
+                                    
+                                    <div class="input-group" style="max-width: 300px;">
+                                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                        <input type="text" id="busqueda_global" class="form-control" placeholder="Buscar mensualidad...">
                                     </div>
                                 </div>
                                 <div id="tabla_mensualidad" class="tabla-sistema-haydee"></div>

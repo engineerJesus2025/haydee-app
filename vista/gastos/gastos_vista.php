@@ -49,7 +49,7 @@
                                     
                                     <div class="input-group" style="max-width: 300px;">
                                         <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                        <input type="text" id="busqueda_global" class="form-control" placeholder="Buscar usuario...">
+                                        <input type="text" id="busqueda_global" class="form-control" placeholder="Buscar gasto...">
                                     </div>
                                 </div>
 

@@ -61,7 +61,16 @@
 					<div class="row mb-3 justify-content-center">
             <div class="col-12">
               <div class="card p-4 pt-3">
+                
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                  <h5 class="text-muted mb-0"><i class="bi bi-list-check me-2"></i>Historial de Movimientos</h5>
+                  <div class="input-group" style="max-width: 300px;">
+                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control border-start-0 ps-0" id="busqueda_global" placeholder="Buscar movimiento...">
+                  </div>
+                </div>
                 <div id="tabla_registros_sistema" class="tabla-sistema-haydee"></div>
+              
               </div>
             </div>
             

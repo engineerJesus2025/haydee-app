@@ -1,5 +1,5 @@
 // roles_ajax.js
-let data_table;
+let tabla_roles;
 let id_modificar;
 let nombre_anterior;
 
@@ -57,7 +57,7 @@ async function consultar() {
         }
     ];
 
-    data_table = Utilidades.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consulta' } });
+    tabla_roles = Utilidades.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consulta' } });
 
     const inputBusqueda = document.getElementById("busqueda_global");
     if (inputBusqueda) {
@@ -67,7 +67,7 @@ async function consultar() {
                 .filter(col => col.field) 
                 .map(col => ({ field: col.field, type: "like", value: valor }));
 
-            tabla_anio_fiscal.setFilter([filtros]);
+            tabla_roles.setFilter([filtros]);
         });
     }
 }
@@ -95,7 +95,7 @@ async function registrar() {
     const respuesta = await Utilidades.query(datos, true);
     if (respuesta?.estatus) {
         modal.hide();
-        data_table.replaceData();
+        tabla_roles.replaceData();
         Utilidades.mensaje('success', 'Éxito', 'Rol registrado correctamente.');
     } else {
         Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo registrar el rol.');
@@ -199,7 +199,7 @@ async function modificar() {
     const respuesta = await Utilidades.query(datos, true);
     if (respuesta?.estatus) {
         modal.hide();
-        data_table.replaceData();
+        tabla_roles.replaceData();
         Utilidades.mensaje('success', 'Éxito', 'Rol actualizado correctamente.');
     } else {
         Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo actualizar el rol.');
@@ -213,7 +213,7 @@ async function eliminar(id) {
 
     const respuesta = await Utilidades.query(datos);
     if (respuesta?.estatus) {
-        data_table.replaceData();
+        tabla_roles.replaceData();
         Utilidades.mensaje('success', 'Éxito', 'Rol eliminado correctamente.');
     } else {
         Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo eliminar el rol.');

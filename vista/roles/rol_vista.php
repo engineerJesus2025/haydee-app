@@ -33,24 +33,17 @@
                     <div class="row mb-3 justify-content-center">
                         <div class="col-9">
                             <div class="card p-4">
-                                <?php if (Sesiones::tienePermiso(GESTIONAR_ROLES, REGISTRAR)) : ?>
-                                    <div class="button">
-                                        <button type="button" class="btn btn-primary mb-2" data-bs-toggle="modal" data-bs-target="#modal_roles">Nuevo rol</a>
-                                    </div><br>
-                                <?php endif; ?>
-                                <!-- <table id="tabla_roles" class="table table-striped table-hover" style="width:97%">
-                                    <thead>
-                                        <tr>        
-                                            <th>rol</th>
-                                            <th class="text-center">ACCIONES</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td colspan="7"><h4>Cargando...</h4></td>
-                                        </tr>
-                                    </tbody>
-                                </table> -->
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <?php if (Sesiones::tienePermiso(GESTIONAR_ROLES, REGISTRAR)) : ?>
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_roles">Nuevo Rol</button>
+                                    <?php else: ?>
+                                        <div></div> <?php endif; ?>
+                                    
+                                    <div class="input-group" style="max-width: 300px;">
+                                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                        <input type="text" id="busqueda_global" class="form-control" placeholder="Buscar Rol...">
+                                    </div>
+                                </div>
                                 <div id="tabla_roles" class="tabla-sistema-haydee"></div>
                             </div>
                         </div>

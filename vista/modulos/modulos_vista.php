@@ -27,24 +27,17 @@
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="card p-4">
-                                <?php if (Sesiones::tienePermiso(GESTIONAR_MODULOS, REGISTRAR)) : ?>
-                                    <div class="button mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <?php if (Sesiones::tienePermiso(GESTIONAR_MODULOS, REGISTRAR)) : ?>
                                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_modulo">Nuevo Módulo</button>
-                                    </div><br>
-                                <?php endif; ?>
-
-                                <?php if (isset($_SESSION["mensaje"])) : ?>
-                                    <div class="row ">
-                                        <div class="col-md-12">
-                                            <div class="alert alert-danger d-flex align-items-center" role="alert">
-                                                <span class="bi bi-exclamation-triangle"></span>
-                                                <div class="mx-3">
-                                                    <?php echo $_SESSION["mensaje"]; ?>
-                                                </div>
-                                            </div>
-                                        </div>
+                                    <?php else: ?>
+                                        <div></div> <?php endif; ?>
+                                    
+                                    <div class="input-group" style="max-width: 300px;">
+                                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                        <input type="text" id="busqueda_global" class="form-control" placeholder="Buscar módulo...">
                                     </div>
-                                <?php endif; ?>
+                                </div>
                                 <div id="tabla_modulos" class="tabla-sistema-haydee"></div>
                             </div>
                         </div>

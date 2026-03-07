@@ -48,11 +48,6 @@ async function consultar() {
                 const btn = e.target.closest('button');
                 if (!btn) return;
                 
-                // NOTA: En modulo_ajax y permiso_ajax usabas prepararEdicion(id)
-                // En tipo_gasto_ajax usabas modificar_formulario(e)
-                // En proveedores usabas prepararFormulario(e)
-                // Asegúrate de llamar a la función que le corresponde a cada archivo.
-                
                 if (btn.classList.contains('modificar')) {
                     prepararFormulario({ currentTarget: btn }); // Para proveedores
                 }
@@ -77,7 +72,7 @@ async function consultar() {
                 .filter(col => col.field) 
                 .map(col => ({ field: col.field, type: "like", value: valor }));
 
-            tabla_anio_fiscal.setFilter([filtros]);
+            tablaPermisos.setFilter([filtros]);
         });
     }
 }

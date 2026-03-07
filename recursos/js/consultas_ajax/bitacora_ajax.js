@@ -157,7 +157,7 @@ function consultar() {
                 .filter(col => col.field) 
                 .map(col => ({ field: col.field, type: "like", value: valor }));
 
-            tabla_anio_fiscal.setFilter([filtros]);
+            tabla_bitacora.setFilter([filtros]);
         });
     }
 }

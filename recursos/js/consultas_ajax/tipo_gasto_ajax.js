@@ -86,7 +86,7 @@ async function consultar() {
     ];
 
     // Cambiar 'tabla_proveedores' por la variable que maneje la tabla de ese archivo
-    tablaPermisos = Utilidades.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consulta' } }); // NOTA: modulos y permisos usan 'consultar', revisa el tuyo.
+    tabla_tipo_gasto = Utilidades.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consulta' } }); // NOTA: modulos y permisos usan 'consultar', revisa el tuyo.
 
     const inputBusqueda = document.getElementById("busqueda_global");
     if (inputBusqueda) {
@@ -96,7 +96,7 @@ async function consultar() {
                 .filter(col => col.field) 
                 .map(col => ({ field: col.field, type: "like", value: valor }));
 
-            tabla_anio_fiscal.setFilter([filtros]);
+            tabla_tipo_gasto.setFilter([filtros]);
         });
     }
 }

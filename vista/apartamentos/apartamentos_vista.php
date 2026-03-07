@@ -41,40 +41,17 @@
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="card p-4">
-                                <?php if (Sesiones::tienePermiso(GESTIONAR_APARTAMENTOS, REGISTRAR)): ?>
-                                    <div class="button mb-4">
-                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                                            data-bs-target="#modal_apartamentos">Nuevo Apartamento</a>
-                                    </div><br>
-                                <?php endif; ?>
-
-                                <?php if (isset($_SESSION["mensaje"])): ?>
-                                    <div class="row ">
-                                        <div class="col-md-12">
-                                            <div class="alert alert-danger d-flex align-items-center" role="alert">
-                                                <span class="bi bi-exclamation-triangle"></span>
-                                                <div class="mx-3">
-                                                    <?php echo $_SESSION["mensaje"]; ?>
-                                                </div>
-                                            </div>
-                                        </div>
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <?php if (Sesiones::tienePermiso(GESTIONAR_APARTAMENTOS, REGISTRAR)) : ?>
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_apartamentos">Nuevo Apartamento</button>
+                                    <?php else: ?>
+                                        <div></div> <?php endif; ?>
+                                    
+                                    <div class="input-group" style="max-width: 300px;">
+                                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                        <input type="text" id="busqueda_global" class="form-control" placeholder="Buscar apartamento...">
                                     </div>
-                                <?php endif; ?>
-                                <!-- <table id="tabla_apartamentos" class="table table-striped table-hover"
-                                    style="width:97%">
-                                    <thead>
-                                        <tr>
-                                            <th>NRO APARTAMENTO</th>
-                                            <th>PARTICIPACION</th>
-                                            <th>GAS</th>
-                                            <th>AGUA</th>
-                                            <th>ALQUILADO</th>
-                                            <th class="text-center">ACCIONES</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>                                     
-                                    </tbody>
-                                </table> -->
+                                </div>
                                 <div id="tabla_apartamentos" class="tabla-sistema-haydee"></div>
                             </div>
                         </div>

@@ -155,7 +155,7 @@ async function consultar() {
         }
     ];
     
-    tabla_anio_fiscal = Utilidades.cargarTabulador(contenedor.id, "", columnas);
+    tabla_bancos = Utilidades.cargarTabulador(contenedor.id, "", columnas);
 
     // 5. Buscador Global Dinámico
     const inputBusqueda = document.getElementById("busqueda_global");
@@ -166,7 +166,7 @@ async function consultar() {
                 .filter(col => col.field) 
                 .map(col => ({ field: col.field, type: "like", value: valor }));
 
-            tabla_anio_fiscal.setFilter([filtros]);
+            tabla_bancos.setFilter([filtros]);
         });
     }
 }

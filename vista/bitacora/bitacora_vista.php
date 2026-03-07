@@ -22,19 +22,12 @@
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="card p-4">
-                                <!-- <table id="tabla_bitacora" class="table table-striped table-hover" style="width:100%">
-                                    <thead>
-                                        <tr>
-                                            <th>USUARIO</th>
-                                            <th>FECHA</th>
-                                            <th>MÓDULO</th>
-                                            <th>ACCIÓN</th>
-                                            <th>DETALLES</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                    </tbody>
-                                </table> -->
+                               <div class="d-flex justify-content-between align-items-center mb-4">                        
+                                    <div class="input-group" style="max-width: 300px;">
+                                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                        <input type="text" id="busqueda_global" class="form-control" placeholder="Buscar registro...">
+                                    </div>
+                                </div>
                                 <div id="tabla_bitacora" class="tabla-sistema-haydee"></div>
                             </div>
                         </div>
