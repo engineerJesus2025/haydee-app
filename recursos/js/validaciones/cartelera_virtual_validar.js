@@ -1,107 +1,85 @@
 /**
  * cartelera_virtual_validar.js
- * Validaciones en tiempo real para Cartelera Virtual
- * Dependencias: validaciones.js, utilidades.js
+ * Dependencias: Validador.js, Patrones.js, EstadoInputs.js, Alertas.js
  */
 
-$(document).ready(function() {
-    // ============================================
-    // VALIDACIONES EN TIEMPO REAL
-    // ============================================
+document.addEventListener("DOMContentLoaded", function() {
 
-    const regexChar = /^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()'"!?¡¿%°\-\s]*$/;
-    const regexTitulo = /^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()'"!?¡¿%°\-\s]{3,100}$/;
-    const regexDescripcion = /^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()'"!?¡¿%°\-\s]{3,200}$/;
+    const inputTitulo = document.getElementById("titulo");
+    const inputDesc = document.getElementById("descripcion");
+    const inputFecha = document.getElementById("fecha");
+    const selectPrioridad = document.getElementById("prioridad");
 
-    // Título
-    $("#titulo").on("keypress", function(e) {
-        Validaciones.keyPress(regexChar, e);
-    });
-    $("#titulo").on("keyup", function() {
-        Validaciones.keyUp(regexTitulo, this, this.nextElementSibling,
-            "Debe tener entre 3 y 100 caracteres (letras, números y signos básicos)");
-    });
+    // Validaciones en tiempo real
+    if (inputTitulo) {
+        inputTitulo.addEventListener("keypress", e => Validador.bloquearTeclasInvalidas(e, Patrones.teclasCartelera));
+        inputTitulo.addEventListener("keyup", function() {
+            Validador.evaluarInput(this, Patrones.tituloCartelera, "Entre 3 y 100 caracteres permitidos");
+        });
+    }
 
-    // Descripción
-    $("#descripcion").on("keypress", function(e) {
-        Validaciones.keyPress(regexChar, e);
-    });
-    $("#descripcion").on("keyup", function() {
-        Validaciones.keyUp(regexDescripcion, this, this.nextElementSibling,
-            "Debe tener entre 3 y 200 caracteres (letras, números y signos básicos)");
-    });
+    if (inputDesc) {
+        inputDesc.addEventListener("keypress", e => Validador.bloquearTeclasInvalidas(e, Patrones.teclasCartelera));
+        inputDesc.addEventListener("keyup", function() {
+            Validador.evaluarInput(this, Patrones.descripcionCartelera, "Entre 3 y 200 caracteres permitidos");
+        });
+    }
 
-    // Fecha
-    $("#fecha").on("keyup change", function() {
-        const valido = /^\d{4}-\d{2}-\d{2}$/.test(this.value);
-        if (valido) {
-            this.classList.add('is-valid');
-            this.classList.remove('is-invalid');
-            this.nextElementSibling.textContent = "";
-        } else {
-            this.classList.add('is-invalid');
-            this.classList.remove('is-valid');
-            this.nextElementSibling.textContent = "Formato YYYY-MM-DD";
-        }
-    });
+    if (inputFecha) {
+        inputFecha.addEventListener("change", function() { Validador.evaluarFecha(this); });
+        inputFecha.addEventListener("keyup", function() { Validador.evaluarFecha(this); });
+    }
 
-    // Prioridad
-    $("#prioridad").on("change", function() {
-        Validaciones.select('prioridad');
-    });
+    if (selectPrioridad) {
+        selectPrioridad.addEventListener("change", function() { Validador.evaluarSelect(this.id); });
+    }
 
-    // ============================================
-    // ENVÍO DEL FORMULARIO
-    // ============================================
-    $("#boton_formulario").on("click", async function(e) {
-        e.preventDefault();
-        const accion = this.hasAttribute("modificar") ? "modificar" : "Registrar";
+    // Envío del formulario
+    const btnFormulario = document.getElementById("boton_formulario");
+    if (btnFormulario) {
+        btnFormulario.addEventListener("click", async function(e) {
+            e.preventDefault();
+            const accion = this.hasAttribute("modificar") ? "modificar" : "Registrar";
 
-        if (await validarEnvio(accion)) {
-            Swal.fire({
-                title: "¿Estás seguro?",
-                text: `¿Está seguro que desea ${accion} esta publicación?`,
-                showCancelButton: true,
-                confirmButtonText: `Sí, ${accion}`,
-                confirmButtonColor: "#1b8a40",
-                cancelButtonText: "Cancelar",
-                icon: "warning"
-            }).then((result) => {
-                if (result.isConfirmed) envio(accion);
-            });
-        }
-    });
+            if (await validarEnvio(accion)) {
+                Swal.fire({
+                    title: "¿Estás seguro?",
+                    text: `¿Está seguro que desea ${accion} esta publicación?`,
+                    showCancelButton: true,
+                    confirmButtonText: `Sí, ${accion}`,
+                    confirmButtonColor: "#1b8a40",
+                    cancelButtonText: "Cancelar",
+                    icon: "warning"
+                }).then((result) => {
+                    if (result.isConfirmed) envio(accion);
+                });
+            }
+        });
+    }
 });
 
-/**
- * Validación completa del formulario antes del envío
- */
 async function validarEnvio(accion) {
     const titulo = document.getElementById("titulo");
     const descripcion = document.getElementById("descripcion");
     const fecha = document.getElementById("fecha");
-    const prioridad = document.getElementById("prioridad");
 
-    const regexTitulo = /^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()'"!?¡¿%°\-\s]{3,100}$/;
-    const regexDescripcion = /^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()'"!?¡¿%°\-\s]{3,200}$/;
-
-    if (!Validaciones.keyUp(regexTitulo, titulo, titulo.nextElementSibling, '')) {
-        Utilidades.mensaje('error', 'Error', 'El título debe tener entre 3 y 100 caracteres.');
+    if (!Validador.evaluarInput(titulo, Patrones.tituloCartelera, 'Entre 3 y 100 caracteres')) {
+        Alertas.mostrar('error', 'Error', 'El título debe tener entre 3 y 100 caracteres.');
         return false;
     }
 
-    if (!Validaciones.keyUp(regexDescripcion, descripcion, descripcion.nextElementSibling, '')) {
-        Utilidades.mensaje('error', 'Error', 'La descripción debe tener entre 3 y 200 caracteres.');
+    if (!Validador.evaluarInput(descripcion, Patrones.descripcionCartelera, 'Entre 3 y 200 caracteres')) {
+        Alertas.mostrar('error', 'Error', 'La descripción debe tener entre 3 y 200 caracteres.');
         return false;
     }
 
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha.value)) {
-        Utilidades.mensaje('error', 'Error', 'La fecha debe tener formato YYYY-MM-DD.');
+    if (!Validador.evaluarFecha(fecha)) {
+        Alertas.mostrar('error', 'Error', 'La fecha debe tener formato YYYY-MM-DD.');
         return false;
     }
 
-    if (!Validaciones.select('prioridad')) {
-        Utilidades.mensaje('error', 'Error', 'Debe seleccionar una prioridad.');
+    if (!Validador.evaluarSelect('prioridad')) {
+        Alertas.mostrar('error', 'Error', 'Debe seleccionar una prioridad.');
         return false;
     }
 

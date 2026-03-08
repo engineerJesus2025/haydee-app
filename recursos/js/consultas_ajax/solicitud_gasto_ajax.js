@@ -61,7 +61,7 @@ async function consultar() {
         }
     ];
 
-    tabla_solicitud_gasto = Utilidades.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consulta' } });
+    tabla_solicitud_gasto = Tablas.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consulta' } });
 
     const inputBusqueda = document.getElementById("busqueda_global");
     if (inputBusqueda) {
@@ -86,18 +86,18 @@ async function registrar() {
     const disponible = await consultarPresupuestoDisponible(datos.get('presupuesto_id'));
     if (disponible === null) return;
     if (parseFloat(datos.get('monto_estimado')) > disponible) {
-        Utilidades.mensaje('error', 'Presupuesto insuficiente', `Solo hay Bs. ${disponible.toFixed(2)} disponibles.`);
+        Alertas.mostrar('error', 'Presupuesto insuficiente', `Solo hay Bs. ${disponible.toFixed(2)} disponibles.`);
         return;
     }
     datos.set('estado', 'Pendiente');
 
-    const respuesta = await Utilidades.query(datos, true);
+    const respuesta = await Peticiones.enviar(datos, "", true);
     if (respuesta?.estatus) {
         modal.hide();
         tabla_solicitud_gasto.replaceData();
-        Utilidades.mensaje('success', 'Éxito', 'Solicitud registrada.');
+        Alertas.mostrar('success', 'Éxito', 'Solicitud registrada.');
     } else {
-        Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo registrar.');
+        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo registrar.');
     }
 }
 
@@ -107,14 +107,14 @@ async function prepararFormulario(e) {
     datos.append('id_solicitud', id);
     datos.append('operacion', 'consulta_especifica');
 
-    const respuesta = await Utilidades.query(datos);
+    const respuesta = await Peticiones.enviar(datos);
     if (!respuesta?.estatus) {
-        Utilidades.mensaje('error', 'Error', 'No se pudo cargar la solicitud.');
+        Alertas.mostrar('error', 'Error', 'No se pudo cargar la solicitud.');
         return;
     }
 
     const data = respuesta.datos;
-    console.log(data)
+    
     await cargarMesesYAniosConPresupuesto(); // asegurar selects
 
     form.querySelector('#selector_mes').value = data.mes;
@@ -151,7 +151,7 @@ async function modificar() {
     if (disponible === null) return;
     const disponibleReal = disponible + montoOriginal;
     if (montoNuevo > disponibleReal) {
-        Utilidades.mensaje('error', 'Presupuesto insuficiente', `Solo hay Bs. ${disponibleReal.toFixed(2)} disponibles.`);
+        Alertas.mostrar('error', 'Presupuesto insuficiente', `Solo hay Bs. ${disponibleReal.toFixed(2)} disponibles.`);
         return;
     }
 
@@ -160,13 +160,13 @@ async function modificar() {
     datos.set('operacion', 'modificar');
     datos.set('estado', 'Pendiente');
 
-    const respuesta = await Utilidades.query(datos, true);
+    const respuesta = await Peticiones.enviar(datos, "", true);
     if (respuesta?.estatus) {
         modal.hide();
         tabla_solicitud_gasto.replaceData();
-        Utilidades.mensaje('success', 'Éxito', 'Solicitud actualizada.');
+        Alertas.mostrar('success', 'Éxito', 'Solicitud actualizada.');
     } else {
-        Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo actualizar.');
+        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo actualizar.');
     }
 }
 
@@ -175,12 +175,12 @@ async function eliminar(id) {
     datos.append('id_solicitud', id);
     datos.append('operacion', 'eliminar');
 
-    const respuesta = await Utilidades.query(datos);
+    const respuesta = await Peticiones.enviar(datos);
     if (respuesta?.estatus) {
         tabla_solicitud_gasto.replaceData();
-        Utilidades.mensaje('success', 'Éxito', 'Solicitud eliminada.');
+        Alertas.mostrar('success', 'Éxito', 'Solicitud eliminada.');
     } else {
-        Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo eliminar.');
+        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo eliminar.');
     }
 }
 
@@ -190,9 +190,9 @@ async function eliminar(id) {
 async function cargarMesesYAniosConPresupuesto() {
     const datos = new FormData();
     datos.append('operacion', 'meses_anios_con_presupuesto');
-    const respuesta = await Utilidades.query(datos);
+    const respuesta = await Peticiones.enviar(datos);
     if (!respuesta?.estatus) {
-        Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudieron cargar los períodos.');
+        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudieron cargar los períodos.');
         return;
     }
 
@@ -228,7 +228,7 @@ async function buscarPresupuesto() {
     datos.append('operacion', 'buscar_presupuesto_por_mes_anio');
     datos.append('mes', mes);
     datos.append('anio', anio);
-    const respuesta = await Utilidades.query(datos);
+    const respuesta = await Peticiones.enviar(datos);
 
     if (respuesta?.estatus) {
         document.getElementById('presupuesto_total').textContent = 
@@ -239,7 +239,7 @@ async function buscarPresupuesto() {
         document.getElementById('info_presupuesto').style.display = 'block';
         document.getElementById('campos_formulario_completo').style.display = 'block';
     } else {
-        Utilidades.mensaje('error', 'Atención', respuesta?.mensaje || 'No hay presupuesto para ese período.');
+        Alertas.mostrar('error', 'Atención', respuesta?.mensaje || 'No hay presupuesto para ese período.');
         document.getElementById('info_presupuesto').style.display = 'none';
         document.getElementById('campos_formulario_completo').style.display = 'none';
         document.getElementById('presupuesto_id').value = '';
@@ -250,7 +250,7 @@ async function consultarPresupuestoDisponible(presupuestoId) {
     const datos = new FormData();
     datos.append('operacion', 'consultar_presupuesto');
     datos.append('presupuesto_id', presupuestoId);
-    const respuesta = await Utilidades.query(datos);
+    const respuesta = await Peticiones.enviar(datos);
     return respuesta?.estatus ? parseFloat(respuesta.disponible) : null;
 }
 

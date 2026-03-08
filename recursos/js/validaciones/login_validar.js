@@ -1,30 +1,13 @@
 /**
  * login_validar.js
- * Validaciones y peticiones para el login y recuperación de contraseña
- * Dependencias: utilidades.js, validaciones.js
+ * Dependencias: Validador.js, Patrones.js, EstadoInputs.js, Peticiones.js, Alertas.js
  */
 
-// ============================================================
-// VARIABLES GLOBALES
-// ============================================================
-let peticionesActivas = 0;
-let ultimaPeticion = 0;
-let tiempoCarga;
-const modalCarga = new bootstrap.Modal("#modal_carga");
-
-let recuperacionContrasenia = {
-    enviada: false,
-    tiempo: null
-};
-
-// Estado de reCAPTCHA
+let recuperacionContrasenia = { enviada: false, tiempo: null };
 let recaptchaToken = null;
 let recaptchaWidgetId = null;
-const recaptchaDesactivado = window.RECAPTCHA_DESACTIVADO === true; // true si está desactivado
+const recaptchaDesactivado = window.RECAPTCHA_DESACTIVADO === true; 
 
-// ============================================================
-// FUNCIONES DE CALLBACK PARA reCAPTCHA (deben ser globales)
-// ============================================================
 window.onRecaptchaSuccess = function(token) {
     recaptchaToken = token;
     document.getElementById('enviar').disabled = false;
@@ -40,74 +23,50 @@ window.onRecaptchaError = function() {
     document.getElementById('enviar').disabled = true;
 };
 
-// ============================================================
-// INICIALIZACIÓN
-// ============================================================
 document.addEventListener('DOMContentLoaded', () => {
-    // Mensaje de resultado de cambio de contraseña (si viene por URL)
+    // Alertas por URL
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('err') === '1') {
-        Utilidades.mensaje('success', 'Atención', 'La contraseña se ha cambiado exitosamente');
-    } else if (urlParams.get('err') === '2' || urlParams.get('err') === '4') {
-        Utilidades.mensaje('error', 'Error', 'El Token Recibido no es válido');
-    } else if (urlParams.get('err') === '3') {
-        Utilidades.mensaje('error', 'Error', 'No se pudo cambiar la contraseña');
-    }
+    if (urlParams.get('err') === '1') Alertas.mostrar('success', 'Atención', 'La contraseña se ha cambiado exitosamente');
+    else if (['2', '4'].includes(urlParams.get('err'))) Alertas.mostrar('error', 'Error', 'El Token Recibido no es válido');
+    else if (urlParams.get('err') === '3') Alertas.mostrar('error', 'Error', 'No se pudo cambiar la contraseña');
 
+    const btnEnviar = document.getElementById('enviar');
 
-    // Si reCAPTCHA está desactivado, habilitar el botón directamente
+    // reCAPTCHA inicialización
     if (recaptchaDesactivado) {
-        document.getElementById('enviar').disabled = false;
+        if (btnEnviar) btnEnviar.disabled = false;
     } else {
-        // Si hay reCAPTCHA en la página, deshabilitar el botón hasta que se complete
-        if (typeof grecaptcha !== 'undefined' && document.querySelector('.g-recaptcha')) {
-            document.getElementById('enviar').disabled = true;
+        if (typeof grecaptcha !== 'undefined' && document.querySelector('.g-recaptcha') && btnEnviar) {
+            btnEnviar.disabled = true;
         }
     }
 
     // Validaciones en tiempo real
     const correoLogin = document.getElementById('correo_login');
     if (correoLogin) {
-        correoLogin.addEventListener('keypress', e => Validaciones.keyPress(/^[A-Za-z0-9_ .@]$/, e));
-        correoLogin.addEventListener('keyup', () => 
-            Validaciones.keyUp(/^[A-Za-z0-9_.]{3,20}@[A-Za-z0-9]{3,10}\.[A-Za-z]{2,3}$/, 
-                correoLogin, correoLogin.nextElementSibling, 
-                'Ejemplo: alguien@servidor.com')
-        );
+        correoLogin.addEventListener('keypress', e => Validador.bloquearTeclasInvalidas(e, Patrones.teclasCorreo));
+        correoLogin.addEventListener('keyup', e => Validador.evaluarInput(e.target, Patrones.correo, 'Ejemplo: alguien@servidor.com'));
     }
 
     const correoRecuperar = document.getElementById('correo_recuperar');
     if (correoRecuperar) {
-        correoRecuperar.addEventListener('keypress', e => Validaciones.keyPress(/^[A-Za-z0-9_ .@]$/, e));
-        correoRecuperar.addEventListener('keyup', () =>
-            Validaciones.keyUp(/^[A-Za-z0-9_.]{3,20}@[A-Za-z0-9]{3,10}\.[A-Za-z]{2,3}$/, 
-                correoRecuperar, correoRecuperar.nextElementSibling, 
-                'Ejemplo: alguien@servidor.com')
-        );
+        correoRecuperar.addEventListener('keypress', e => Validador.bloquearTeclasInvalidas(e, Patrones.teclasCorreo));
+        correoRecuperar.addEventListener('keyup', e => Validador.evaluarInput(e.target, Patrones.correo, 'Ejemplo: alguien@servidor.com'));
     }
 
     const contra = document.getElementById('contra');
     if (contra) {
-        contra.addEventListener('keypress', e => Validaciones.keyPress(/^[A-Za-z0-9_.+*$#%&/]$/, e));
-        contra.addEventListener('keyup', () =>
-            Validaciones.keyUp(/^[A-Za-z0-9_.+*$#%&/]{5,50}$/, 
-                contra, contra.nextElementSibling, 
-                'Mínimo 5 caracteres, se permiten especiales')
-        );
+        contra.addEventListener('keyup', e => Validador.evaluarInput(e.target, Patrones.contrasena, 'Mínimo 5 caracteres'));
     }
 
-    // Evento del botón enviar (login)
-    const btnEnviar = document.getElementById('enviar');
+    // Eventos de botones
     if (btnEnviar) {
         btnEnviar.addEventListener('click', async e => {
             e.preventDefault();
-            if (await validarLogin()) {
-                await realizarLogin();
-            }
+            if (await validarLogin()) await realizarLogin();
         });
     }
 
-    // Evento del botón recuperar
     const btnRecuperar = document.getElementById('boton_recuperar');
     if (btnRecuperar) {
         btnRecuperar.addEventListener('click', async e => {
@@ -116,56 +75,35 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Evento de limpieza de formulario
+    // Limpieza de modal
     const modalCambiarContra = document.getElementById('modal_recuperar_contrasenia');
     if (modalCambiarContra) {
-        modalCambiarContra.addEventListener('hide.bs.modal', e => {
-            document.getElementById('form_recuperar_contra').reset()
-            document.querySelectorAll('.is-valid').forEach(input => input.classList.remove('is-valid'));
-            document.querySelectorAll('.is-invalid').forEach(input => input.classList.remove('is-invalid'));
+        modalCambiarContra.addEventListener('hide.bs.modal', () => {
+            const form = document.getElementById('form_recuperar_contra');
+            form.reset();
+            form.querySelectorAll('input').forEach(input => EstadoInputs.limpiar(input));
         });
-    }
-
-    // Verificar si reCAPTCHA está presente en la página
-    if (typeof grecaptcha !== 'undefined' && document.querySelector('.g-recaptcha')) {
-        // El botón de enviar comienza deshabilitado hasta que se complete el reCAPTCHA
-        btnEnviar.disabled = true;
     }
 });
 
-// ============================================================
-// FUNCIONES DE VALIDACIÓN
-// ============================================================
 async function validarLogin() {
-    const correo = document.getElementById('correo_login');
-    const contra = document.getElementById('contra');
+    const vCorreo = Validador.evaluarInput(document.getElementById('correo_login'), Patrones.correo, 'Correo inválido');
+    const vContra = Validador.evaluarInput(document.getElementById('contra'), Patrones.contrasena, 'Contraseña inválida');
 
-    if (!Validaciones.keyUp(/^[A-Za-z0-9_.]{3,20}@[A-Za-z0-9]{3,10}\.[A-Za-z]{2,3}$/, 
-        correo, correo.nextElementSibling, '')) {
-        Utilidades.mensaje('error', 'Verifique el correo', 'El correo ingresado no es válido');
+    if (!vCorreo || !vContra) {
+        Alertas.mostrar('error', 'Error', 'Verifique los campos ingresados');
         return false;
     }
 
-    if (!Validaciones.keyUp(/^[A-Za-z0-9_.+*$#%&/]{5,50}$/, 
-        contra, contra.nextElementSibling, '')) {
-        Utilidades.mensaje('error', 'Verifique la contraseña', 'La contraseña debe tener al menos 5 caracteres');
-        return false;
-    }
-
-    // Validar reCAPTCHA solo si no está desactivado
     if (!recaptchaDesactivado && typeof grecaptcha !== 'undefined' && document.querySelector('.g-recaptcha')) {
         if (!recaptchaToken) {
-            Utilidades.mensaje('error', 'Validación requerida', 'Debe completar el reCAPTCHA');
+            Alertas.mostrar('error', 'Validación requerida', 'Debe completar el reCAPTCHA');
             return false;
         }
     }
-
     return true;
 }
 
-// ============================================================
-// FUNCIONES DE PETICIONES AJAX
-// ============================================================
 async function realizarLogin() {
     const formData = new FormData();
     formData.append('usuario', document.getElementById('correo_login').value);
@@ -173,72 +111,58 @@ async function realizarLogin() {
     formData.append('mantener_sesion', document.getElementById('checkbox_mantener_sesion')?.checked || false);
     formData.append('operacion', 'entrar');
 
-    // Agregar token de reCAPTCHA solo si está activo
     if (!recaptchaDesactivado && recaptchaToken) {
         formData.append('g-recaptcha-response', recaptchaToken);
     }
 
-    const resultado = await Utilidades.query(formData, true);
+    const resultado = await Peticiones.enviar(formData, "", true);
 
     if (resultado.estatus) {
         await obtenerTasaDolar();
         window.location = "?pagina=inicio&accion=inicio";
     } else {
-        // Si falla, reiniciar reCAPTCHA (si está presente)
         if (!recaptchaDesactivado && typeof grecaptcha !== 'undefined' && recaptchaWidgetId !== null) {
             grecaptcha.reset(recaptchaWidgetId);
             recaptchaToken = null;
         }
-        Utilidades.mensaje('error', resultado.mensaje || 'Error', 'Intente nuevamente');
+        Alertas.mostrar('error', resultado.mensaje || 'Error', 'Intente nuevamente');
     }
 }
 
 async function realizarRecuperacion() {
     const correoInput = document.getElementById('correo_recuperar');
-    const correo = correoInput.value;
 
-    if (!Validaciones.keyUp(/^[A-Za-z0-9_.]{3,20}@[A-Za-z0-9]{3,10}\.[A-Za-z]{2,3}$/, 
-        correoInput, correoInput.nextElementSibling, '')) {
-        Utilidades.mensaje('error', 'Verifique el correo', 'El formato del correo no es válido');
+    if (!Validador.evaluarInput(correoInput, Patrones.correo, 'Correo inválido')) {
+        Alertas.mostrar('error', 'Verifique el correo', 'El formato del correo no es válido');
         return;
     }
 
-    // Evitar envíos repetidos en corto tiempo (mejorar)
     if (recuperacionContrasenia.enviada && (new Date() - recuperacionContrasenia.tiempo) < 60000) {
-        Utilidades.mensaje('warning', 'Espere', 'Ya se envió un correo recientemente, espere un minuto');
+        Alertas.mostrar('warning', 'Espere', 'Ya se envió un correo recientemente, espere un minuto');
         return;
     }
 
     const formData = new FormData();
-    formData.append('correo_recuperar', correo);
+    formData.append('correo_recuperar', correoInput.value);
     formData.append('operacion', 'enviar_notificacion');
 
-    const resultado = await Utilidades.query(formData, true);
+    await Peticiones.enviar(formData, "", true);
 
-    // Siempre mostramos el mismo mensaje por seguridad (no revelar si el correo existe)
-    Utilidades.mensaje('warning', 'Atención', 
-        'Revise su bandeja de entrada del correo. Si el correo ingresado está en el sistema, encontrará un enlace para recuperar su contraseña.');
+    Alertas.mostrar('warning', 'Atención', 'Revise su bandeja de entrada del correo. Si el correo ingresado está en el sistema, encontrará un enlace para recuperar su contraseña.');
 
     recuperacionContrasenia.enviada = true;
     recuperacionContrasenia.tiempo = new Date();
 }
 
-// ============================================================
-// FUNCIÓN PARA OBTENER TASA DE DÓLAR
-// ============================================================
 async function obtenerTasaDolar() {
     const fechaGuardada = localStorage.getItem('fecha_tasa_dolar');
     const tasaGuardada = localStorage.getItem('tasa_dolar');
 
     if (fechaGuardada && tasaGuardada) {
         const fechaTasa = new Date(fechaGuardada);
-        const hoy = new Date();
-        if (fechaTasa.toDateString() === hoy.toDateString()) {
-            return; // Tasa vigente, no hacemos nada
-        }
+        if (fechaTasa.toDateString() === new Date().toDateString()) return;
     }
 
-    // Intentar obtener nueva tasa
     try {
         const respuesta = await fetch("https://ve.dolarapi.com/v1/dolares/oficial");
         if (!respuesta.ok) throw new Error('Error al obtener tasa');
@@ -246,7 +170,6 @@ async function obtenerTasaDolar() {
         localStorage.setItem('fecha_tasa_dolar', data.fechaActualizacion);
         localStorage.setItem('tasa_dolar', data.promedio.toString());
     } catch (error) {
-        console.error('No se pudo actualizar la tasa de dólar:', error);
-        // No mostramos error al usuario, solo dejamos la tasa anterior o 1
+        console.error('No se pudo actualizar la tasa de dólar');
     }
 }

@@ -1,0 +1,57 @@
+/**
+ * EstadoInputs.js
+ * Propósito: Cambiar el estado visual de los inputs (verde/rojo) y mostrar mensajes.
+ */
+const EstadoInputs = {
+    marcarError(input, mensaje) {
+        if (!input) return;
+        input.classList.remove('is-valid');
+        input.classList.add('is-invalid');
+        
+        // Buscamos el span de feedback dentro del contenedor padre (input-group)
+        const feedback = input.parentElement.querySelector('.invalid-feedback');
+        if (feedback) {
+            feedback.textContent = mensaje;
+            
+            // Lógica para colorear el ícono del ojo si existe
+            const iconoOjo = input.parentElement.querySelector('.contra-btn i');
+            if (iconoOjo) {
+                iconoOjo.classList.remove('text-success');
+                iconoOjo.classList.add('text-danger');
+            }
+        }
+    },
+
+    marcarExito(input) {
+        if (!input) return;
+        input.classList.remove('is-invalid');
+        input.classList.add('is-valid');
+        
+        const feedback = input.parentElement.querySelector('.invalid-feedback');
+        if (feedback) {
+            feedback.textContent = "";
+            
+            // Lógica para colorear el ícono del ojo si existe
+            const iconoOjo = input.parentElement.querySelector('.contra-btn i');
+            if (iconoOjo) {
+                iconoOjo.classList.remove('text-danger');
+                iconoOjo.classList.add('text-success');
+            }
+        }
+    },
+
+    limpiar(input) {
+        if (!input) return;
+        input.classList.remove('is-invalid', 'is-valid');
+        
+        const feedback = input.parentElement.querySelector('.invalid-feedback');
+        if (feedback) {
+            feedback.textContent = '';
+            
+            const iconoOjo = input.parentElement.querySelector('.contra-btn i');
+            if (iconoOjo) {
+                iconoOjo.classList.remove('text-danger', 'text-success');
+            }
+        }
+    }
+};

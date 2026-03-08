@@ -34,6 +34,29 @@ document.getElementById('rango_edades')?.addEventListener('change', function() {
 // Generación del reporte
 document.getElementById('boton_generar_reporte').addEventListener('click', async function() {
     const contenidoModal = document.getElementById('contenido_reporte_habitantes');
+    
+    // --- 1. NUEVAS VALIDACIONES ANTES DE PROCESAR ---
+    const filtro = document.getElementById('filtro_tiempo').value;
+    if (filtro === 'personalizado') {
+        const fechaIn = document.getElementById('fecha_inicio_habitantes');
+        const fechaCierre = document.getElementById('fecha_cierre_habitantes');
+        if (!Validador.evaluarFecha(fechaIn) || !Validador.evaluarFecha(fechaCierre)) {
+            Alertas.mostrar('error', 'Error', 'Debe ingresar fechas válidas.');
+            return;
+        }
+    }
+
+    const filtroEdad = document.getElementById('rango_edades').value;
+    if (filtroEdad === 'personalizado') {
+        const min = document.getElementById('edad_minima');
+        const max = document.getElementById('edad_maxima');
+        if (!Validador.evaluarInput(min, Patrones.digitos, '') || !Validador.evaluarInput(max, Patrones.digitos, '')) {
+            Alertas.mostrar('error', 'Error', 'Debe ingresar edades válidas.');
+            return;
+        }
+    }
+    // -------------------------------------------------
+
     modal.show();
     contenidoModal.innerHTML = `
         <div class="text-center py-5">
@@ -46,7 +69,10 @@ document.getElementById('boton_generar_reporte').addEventListener('click', async
     formData.append('operacion', 'consultar_habitantes');
 
     try {
-        const respuesta = await Utilidades.query(formData);
+        // --- 2. CAMBIO A PETICIONES ---
+        const respuesta = await Peticiones.enviar(formData, "", false); 
+        // Usamos false porque este modal ya tiene su propio spinner interno
+        
         if (!respuesta.estatus) {
             throw new Error(respuesta.mensaje);
         }
@@ -164,7 +190,7 @@ function crearGraficoPorEdades(datos) {
 // Exportar a PDF
 document.getElementById('boton_exportar_pdf').addEventListener('click', function() {
     if (!graficoSexo || !graficoVivienda || !graficoEdades) {
-        Utilidades.mensaje('warning', 'Atención', 'Primero debe generar un reporte');
+        Alertas.mostrar('warning', 'Atención', 'Primero debe generar un reporte');
         return;
     }
 

@@ -117,7 +117,7 @@
                             </div>
                             <div class="invalid-feedback" id="mensaje_monto"></div>
                         </div>
-                        <div class="col-lg-6 col-12 mb-3 grupo_referencia">
+                        <div class="col-lg-6 col-12 mb-3 grupo_bancario d-none">
                             <label for="referencia" class="form-label fw-semibold">Referencia/N° Comprobante <spam class="text-danger">*</spam></label>
                             <div class="input-group has-validation">
                                 <span class="border border-primary input-group-text"><i class="bi bi-receipt"></i></span>
@@ -125,7 +125,7 @@
                                 <span class="w-100 invalid-feedback"></span>
                             </div>
                         </div>
-                        <div class="col-lg-6 col-12 mb-3 grupo_banco">
+                        <div class="col-lg-6 col-12 mb-3 grupo_bancario d-none">
                             <label for="banco" class="form-label fw-semibold">Banco <spam class="text-danger">*</spam></label>
                             <div class="input-group has-validation">
                                 <span class="border border-primary input-group-text"><i class="bi bi-bank"></i></span>
@@ -150,13 +150,14 @@
                                 <span class="w-100 invalid-feedback"></span>
                             </div>
                         </div>
-                        <div class="col-12 grupo_imagen">
+                        <div class="col-12 grupo_imagen d-none">
                             <label for="imagen" class="form-label fw-semibold">Comprobante (Imagen) <spam class="text-danger">*</spam></label>
                             <div class="input-group has-validation">
                                 <span class="border border-primary input-group-text"><i class="bi bi-file-earmark-image"></i></span>
                                 <input type="file" class="form-control border border-dark imagen" name="imagen[]" accept="image/*">
+                                <span class="w-100 invalid-feedback"></span>
                             </div>
-                            <small id="nombre_imagen_cargada" class="text-muted fst-italic d-block mt-1"></small>
+                            <small class="text-muted fst-italic d-block mt-1 nombre_imagen_cargada"></small>
                         </div>
                     </div>
                 </div>
@@ -226,7 +227,7 @@
                     <div class="invalid-feedback" id="mensaje_monto"></div>
                 </div>
 
-                <div class="col-lg-6 col-12 mb-3 grupo_referencia d-none">
+                <div class="col-lg-6 col-12 mb-3 grupo_bancario d-none">
                     <label class="form-label fw-semibold">Referencia/N° Comprobante <spam class="text-danger">*</spam></label>
                     <div class="input-group has-validation">
                         <span class="border border-primary input-group-text"><i class="bi bi-receipt"></i></span>
@@ -235,7 +236,7 @@
                     </div>
                 </div>
 
-                <div class="col-lg-6 col-12 mb-3 grupo_banco d-none">
+                <div class="col-lg-6 col-12 mb-3 grupo_bancario d-none">
                     <label class="form-label fw-semibold">Banco <spam class="text-danger">*</spam></label>
                     <div class="input-group has-validation">
                         <span class="border border-primary input-group-text"><i class="bi bi-bank"></i></span>

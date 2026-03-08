@@ -15,7 +15,7 @@ if (isset($_POST["operacion"])) {
 
     try {
         switch ($operacion) {
-            case 'consulta':
+            case 'consultar':
                 $respuesta = $modulo->realizar_consulta('consultar');
                 if ($respuesta['estatus']) {
                     Bitacora::registrar(CONSULTAR, GESTIONAR_MODULOS);

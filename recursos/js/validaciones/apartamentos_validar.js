@@ -1,289 +1,278 @@
-// Variables globales para comparar valores originales
+/**
+ * apartamentos_validar.js
+ * Dependencias: Validador.js, Patrones.js, EstadoInputs.js, Alertas.js, Peticiones.js, FormatoFechas.js
+ */
+
+// Variables globales para comparar valores originales (deben venir de tu vista/AJAX)
 let nro_apartamento_anterior = null;
 let cedula_an = null;
 let correo_an = null;
 let tipo_vinculo_an = null;
 
-$(document).ready(function() {
-    // ============================================
-    // VALIDACIONES DE APARTAMENTOS
-    // ============================================
-    
-    // Número de apartamento
-    $('#nro_apartamento').on('keypress', e => Validaciones.keyPress(/^[0-9-]$/, e));
-    $('#nro_apartamento').on('keyup', function() {
-        Validaciones.campo(this, /^[0-9-]{1,3}$/, 'Número de apartamento inválido (máx 3 dígitos).');
-    });
-    $('#nro_apartamento').on('blur', async function() {
-        if ($(this).val() === nro_apartamento_anterior) return;
-        if (!Validaciones.campo(this, /^[0-9-]{1,3}$/, '')) return;
-        const valido = await Validaciones.verificarExistencia(
-            'nro_apartamento',
-            { nro_apartamento: this.value },
-            this,
-            'Este número ya está registrado.'
-        );
-        if (valido) this.classList.add('is-valid');
-    });
-
-    // Porcentaje de participación
-    $('#porcentaje_participacion').on('keypress', e => Validaciones.keyPress(/^[0-9.]$/, e));
-    $('#porcentaje_participacion').on('keyup', function() {
-        Validaciones.campo(this, /^\d{1,2}(\.\d{1,2})?$/, 'Porcentaje inválido (ej. 12.5).');
-    });
-
-    // Selects (gas, agua, alquilado)
-    $('#gas, #agua, #alquilado').on('change', function() {
-        Validaciones.campo(this, /^[12]$/, 'Seleccione una opción válida.');
-    });
+document.addEventListener("DOMContentLoaded", function() {
 
     // ============================================
-    // VALIDACIONES DE HABITANTES
+    // VALIDACIONES DE APARTAMENTOS (Tiempo Real)
     // ============================================
+    const inputNroApto = document.getElementById('nro_apartamento');
+    if (inputNroApto) {
+        inputNroApto.addEventListener('keypress', e => Validador.bloquearTeclasInvalidas(e, Patrones.teclasApartamento));
+        inputNroApto.addEventListener('keyup', e => Validador.evaluarInput(e.target, Patrones.nroApartamento, 'Número inválido (máx 3 dígitos)'));
+        inputNroApto.addEventListener('blur', async function() {
+            if (this.value === nro_apartamento_anterior || this.value === '') return;
+            if (Patrones.nroApartamento.test(this.value)) {
+                await Validador.verificarDuplicadoEnServidor('nro_apartamento', { nro_apartamento: this.value }, this, 'Este número ya está registrado');
+            }
+        });
+    }
 
-    const campos = [
-        { selector: '#nombre', regex: /^[A-Za-záéíóúñÑ\s]{3,30}$/, mensaje: 'Solo letras, entre 3 y 30 caracteres.' },
-        { selector: '#apellido', regex: /^[A-Za-záéíóúñÑ\s]{3,30}$/, mensaje: 'Solo letras, entre 3 y 30 caracteres.' },
-        { selector: '#cedula', regex: /^[0-9]{7,8}$/, mensaje: 'Cédula inválida (7-8 dígitos).' },
-        { selector: '#telefono', regex: /^\d{11}$/, mensaje: 'Teléfono inválido (11 dígitos).' },
-        { selector: '#correo', regex: /^[-A-Za-z0-9_.]{3,35}@[A-Za-z0-9]{3,10}\.[A-Za-z]{2,3}$/, mensaje: 'Correo inválido.' },
-        { selector: '#fecha_nacimiento', regex: /^\d{4}-\d{2}-\d{2}$/, mensaje: 'Fecha inválida (YYYY-MM-DD).' }
+    const inputPorcentaje = document.getElementById('porcentaje_participacion');
+    if (inputPorcentaje) {
+        inputPorcentaje.addEventListener('keypress', e => Validador.bloquearTeclasInvalidas(e, Patrones.teclasPorcentaje));
+        inputPorcentaje.addEventListener('keyup', e => Validador.evaluarInput(e.target, Patrones.porcentaje, 'Porcentaje inválido (ej. 12.5)'));
+    }
+
+    // Selects básicos de apartamento
+    ['gas', 'agua', 'alquilado'].forEach(id => {
+        const select = document.getElementById(id);
+        if (select) {
+            select.addEventListener('change', function() {
+                Validador.evaluarInput(this, /^[12]$/, 'Seleccione una opción válida');
+            });
+        }
+    });
+
+    // ============================================
+    // VALIDACIONES DE HABITANTES (Tiempo Real)
+    // ============================================
+    const configHabitantes = [
+        { id: 'nombre', patron: Patrones.textoCorto, msj: 'Solo letras, entre 3 y 30 caracteres', teclas: Patrones.teclasLetras },
+        { id: 'apellido', patron: Patrones.textoCorto, msj: 'Solo letras, entre 3 y 30 caracteres', teclas: Patrones.teclasLetras },
+        { id: 'cedula', patron: Patrones.cedula, msj: 'Cédula inválida (7-8 dígitos)', teclas: Patrones.teclasNumeros },
+        { id: 'telefono', patron: Patrones.telefono, msj: 'Teléfono inválido (11 dígitos)', teclas: Patrones.teclasNumeros },
+        { id: 'correo', patron: Patrones.correo, msj: 'Correo inválido', teclas: Patrones.teclasCorreo }
     ];
 
-    campos.forEach(c => {
-        $(c.selector).on('keypress', e => Validaciones.keyPress(/^[A-Za-z0-9áéíóúñÑ@._-]$/i, e));
-        $(c.selector).on('keyup', function() {
-            Validaciones.campo(this, c.regex, c.mensaje);
+    configHabitantes.forEach(campo => {
+        const input = document.getElementById(campo.id);
+        if (input) {
+            input.addEventListener('keypress', e => Validador.bloquearTeclasInvalidas(e, campo.teclas));
+            input.addEventListener('keyup', e => Validador.evaluarInput(e.target, campo.patron, campo.msj));
+        }
+    });
+
+    const inputFechaNac = document.getElementById('fecha_nacimiento');
+    if (inputFechaNac) {
+        inputFechaNac.addEventListener('keyup', function() { Validador.evaluarFecha(this); });
+        inputFechaNac.addEventListener('change', function() { Validador.evaluarFecha(this); });
+    }
+
+    const selectTipoCedula = document.getElementById('tipo_cedula');
+    const inputCedula = document.getElementById('cedula');
+    if (selectTipoCedula && inputCedula) {
+        selectTipoCedula.addEventListener('change', function() {
+            if (!this.value) {
+                EstadoInputs.marcarError(this, 'Seleccione un tipo de cédula');
+                inputCedula.disabled = true;
+            } else {
+                EstadoInputs.marcarExito(this);
+                inputCedula.disabled = false;
+                inputCedula.value = '';
+                EstadoInputs.limpiar(inputCedula);
+            }
         });
-    });
 
-    // Tipo de cédula
-    $('#tipo_cedula').on('change', function() {
-        if (!this.value) {
-            Validaciones.mostrarError(this, 'Seleccione un tipo de cédula');
-            $('#cedula').prop('disabled', true);
-        } else {
-            Validaciones.limpiar(this);
-            $('#cedula').prop('disabled', false);
-            $('#cedula').val('');
-        }
-    });
-
-    // Sexo, apartamento, tipo de vínculo (solo limpiar)
-    $('#sexo, #apartamento_id, #tipo_vinculo').on('change', function() {
-        Validaciones.limpiar(this);
-    });
-
-    // Validación de duplicados en tiempo real
-    $('#cedula').on('blur', async function() {
-        if (!Validaciones.campo(this, /^[0-9]{7,8}$/, '')) return;
-        const cedulaCompleta = $('#tipo_cedula').val() + this.value;
-        await Validaciones.verificarExistencia('cedula', { cedula: cedulaCompleta }, this, 'Esta cédula ya está registrada.');
-    });
-
-    $('#correo').on('blur', async function() {
-        if (!Validaciones.campo(this, /^[-A-Za-z0-9_.]{3,35}@[A-Za-z0-9]{3,10}\.[A-Za-z]{2,3}$/, '')) return;
-        await Validaciones.verificarExistencia('correo', { correo: this.value }, this, 'Este correo ya está registrado.');
-    });
-
-    $('#tipo_vinculo').on('change', async function() {
-        if (!this.value) return Validaciones.mostrarError(this, 'Seleccione un tipo de vínculo');
-        const respuesta = await Utilidades.validar('tipo_vinculo', {
-            tipo_vinculo: this.value,
-            apartamento_id: $('#apartamento_id').val()
+        // Validar duplicado de Cédula al salir del input
+        inputCedula.addEventListener('blur', async function() {
+            if (!Patrones.cedula.test(this.value)) return;
+            const cedulaCompleta = selectTipoCedula.value + this.value;
+            if (cedulaCompleta === cedula_an) return;
+            await Validador.verificarDuplicadoEnServidor('cedula', { cedula: cedulaCompleta }, this, 'Esta cédula ya está registrada');
         });
-        if (respuesta.existe) {
-            Validaciones.mostrarError(this, 'Este apartamento ya tiene un propietario.');
-        } else {
-            Validaciones.limpiar(this);
-        }
+    }
+
+    const inputCorreo = document.getElementById('correo');
+    if (inputCorreo) {
+        inputCorreo.addEventListener('blur', async function() {
+            if (this.value === correo_an || !Patrones.correo.test(this.value)) return;
+            await Validador.verificarDuplicadoEnServidor('correo', { correo: this.value }, this, 'Este correo ya está registrado');
+        });
+    }
+
+    // Selects básicos de habitante
+    ['sexo', 'tipo_vinculo'].forEach(id => {
+        const select = document.getElementById(id);
+        if (select) select.addEventListener('change', function() { Validador.evaluarSelect(this.id); });
     });
 
-    // Validación de clave foránea (apartamento)
-    $('#apartamento_id').on('change', async function() {
-        if (!this.value) return Validaciones.mostrarError(this, 'Seleccione un apartamento');
-        const datos = new FormData();
-        datos.append('validar', 'validar_clave_foranea');
-        datos.append('tabla', 'apartamentos');
-        datos.append('nombre_clave', 'id_apartamento');
-        datos.append('valor', this.value);
-        const respuesta = await Utilidades.query(datos);
-        if (!respuesta.estatus) {
-            Validaciones.mostrarError(this, 'El apartamento seleccionado no existe.');
-        } else {
-            Validaciones.limpiar(this);
-        }
-    });
+    const selectVinculo = document.getElementById('tipo_vinculo');
+    const aptoId = document.getElementById('apartamento_id');
+    
+    if (selectVinculo && aptoId) {
+        selectVinculo.addEventListener('change', async function() {
+            if (!this.value || !aptoId.value) return;
+            
+            const formData = new FormData();
+            formData.append('validar', 'tipo_vinculo');
+            formData.append('tipo_vinculo', this.value);
+            formData.append('apartamento_id', aptoId.value);
+
+            const respuesta = await Peticiones.enviar(formData, "", false);
+            if (respuesta.existe) {
+                EstadoInputs.marcarError(this, 'Este apartamento ya tiene un propietario asignado.');
+            } else {
+                EstadoInputs.marcarExito(this);
+            }
+        });
+    }
+
+    if (aptoId) {
+        aptoId.addEventListener('change', async function() {
+            if (!this.value) return;
+            await Validador.verificarExistenciaEnServidor('validar_clave_foranea', { tabla: 'apartamentos', nombre_clave: 'id_apartamento', valor: this.value }, this, 'El apartamento no existe');
+        });
+    }
 
     // ============================================
-    // VALIDACIÓN DE ENVÍO DE APARTAMENTOS
+    // ENVÍO DE FORMULARIOS
     // ============================================
-    $('#boton_formulario').on('click', async function(e) {
-        e.preventDefault();
-        const accion = this.dataset.id ? 'modificar' : 'Registrar';
-        if (await validarEnvioApartamento(accion)) {
-            Swal.fire({
-                title: '¿Estás seguro?',
-                text: `¿Desea ${accion} este apartamento?`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#1b8a40',
-                confirmButtonText: 'Sí, ' + accion
-            }).then(result => {
-                if (result.isConfirmed) {
-                    accion === 'modificar' ? modificarApartamento() : registrarApartamento();
-                }
-            });
-        }
-    });
 
-    // ============================================
-    // VALIDACIÓN DE ENVÍO DE HABITANTES
-    // ============================================
-    $('#boton_formulario_habitantes').on('click', async function(e) {
-        e.preventDefault();
-        const accion = this.dataset.id ? 'modificar' : 'Registrar';
-        if (await validarEnvioHabitante(accion)) {
-            Swal.fire({
-                title: '¿Estás seguro?',
-                text: `¿Desea ${accion} este habitante?`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#1b8a40',
-                confirmButtonText: 'Sí, ' + accion
-            }).then(result => {
-                if (result.isConfirmed) {
-                    accion === 'modificar' ? modificarHabitante() : registrarHabitante();
-                }
-            });
-        }
-    });
+    // Formulario Apartamento
+    const btnFormApto = document.getElementById('boton_formulario');
+    if (btnFormApto) {
+        btnFormApto.addEventListener('click', async function(e) {
+            e.preventDefault();
+            const accion = this.dataset.id ? 'modificar' : 'Registrar';
+            
+            if (await validarEnvioApartamento(accion)) {
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: `¿Desea ${accion} este apartamento?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#1b8a40',
+                    confirmButtonText: 'Sí, ' + accion
+                }).then(result => {
+                    if (result.isConfirmed) accion === 'modificar' ? modificarApartamento() : registrarApartamento();
+                });
+            }
+        });
+    }
+
+    // Formulario Habitante
+    const btnFormHabitante = document.getElementById('boton_formulario_habitantes');
+    if (btnFormHabitante) {
+        btnFormHabitante.addEventListener('click', async function(e) {
+            e.preventDefault();
+            const accion = this.dataset.id ? 'modificar' : 'Registrar';
+            
+            if (await validarEnvioHabitante(accion)) {
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: `¿Desea ${accion} este habitante?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#1b8a40',
+                    confirmButtonText: 'Sí, ' + accion
+                }).then(result => {
+                    if (result.isConfirmed) accion === 'modificar' ? modificarHabitante() : registrarHabitante();
+                });
+            }
+        });
+    }
 });
 
 // ============================================
-// FUNCIÓN DE VALIDACIÓN DE ENVÍO DE APARTAMENTOS
+// FUNCIONES DE VALIDACIÓN FINALES
 // ============================================
-async function validarEnvioApartamento(accion) {
-    const campos = [
-        { input: '#nro_apartamento', regex: /^[0-9-]{1,3}$/, msg: 'Número inválido' },
-        { input: '#porcentaje_participacion', regex: /^\d{1,2}(\.\d{1,2})?$/, msg: 'Porcentaje inválido' },
-        { input: '#gas', regex: /^[12]$/, msg: 'Seleccione una opción' },
-        { input: '#agua', regex: /^[12]$/, msg: 'Seleccione una opción' },
-        { input: '#alquilado', regex: /^[12]$/, msg: 'Seleccione una opción' }
-    ];
 
-    for (const c of campos) {
-        const el = document.querySelector(c.input);
-        if (!Validaciones.campo(el, c.regex, c.msg)) {
-            Utilidades.mensaje('error', 'Error', c.msg);
-            return false;
-        }
+async function validarEnvioApartamento(accion) {
+    let esValido = true;
+    const inputNro = document.getElementById('nro_apartamento');
+
+    if (!Validador.evaluarInput(inputNro, Patrones.nroApartamento, 'Número inválido')) esValido = false;
+    if (!Validador.evaluarInput(document.getElementById('porcentaje_participacion'), Patrones.porcentaje, 'Porcentaje inválido')) esValido = false;
+    if (!Validador.evaluarInput(document.getElementById('gas'), /^[12]$/, 'Seleccione una opción')) esValido = false;
+    if (!Validador.evaluarInput(document.getElementById('agua'), /^[12]$/, 'Seleccione una opción')) esValido = false;
+    if (!Validador.evaluarInput(document.getElementById('alquilado'), /^[12]$/, 'Seleccione una opción')) esValido = false;
+
+    if (!esValido) {
+        Alertas.mostrar('error', 'Error', 'Verifique los campos marcados en rojo.');
+        return false;
     }
 
-    // Verificar duplicado de número si cambió
-    if (nro_apartamento_anterior !== $('#nro_apartamento').val()) {
-        const datos = new FormData();
-        datos.append('validar', 'nro_apartamento');
-        datos.append('nro_apartamento', $('#nro_apartamento').val());
-
-        const respuesta = await Utilidades.query(datos);
-        if (respuesta?.estatus && respuesta.existe) {
-            Validaciones.mostrarError($('#nro_apartamento')[0], 'Este número ya está registrado.');
-            Utilidades.mensaje('error', 'Error', 'Número de apartamento ya registrado.');
-            return false;
-        }
+    if (nro_apartamento_anterior !== inputNro.value) {
+        const duplicado = await Validador.verificarDuplicadoEnServidor('nro_apartamento', { nro_apartamento: inputNro.value }, inputNro, 'Este número ya está registrado.');
+        if (!duplicado) return false;
     }
 
     return true;
 }
 
-// ============================================
-// FUNCIÓN DE VALIDACIÓN DE ENVÍO DE HABITANTES
-// ============================================
 async function validarEnvioHabitante(accion) {
-    const campos = [
-        { input: '#tipo_cedula', msg: 'Seleccione tipo de cédula' },
-        { input: '#cedula', regex: /^[0-9]{7,8}$/, msg: 'Cédula inválida' },
-        { input: '#nombre', regex: /^[A-Za-záéíóúñÑ\s]{3,30}$/, msg: 'Nombre inválido' },
-        { input: '#apellido', regex: /^[A-Za-záéíóúñÑ\s]{3,30}$/, msg: 'Apellido inválido' },
-        { input: '#fecha_nacimiento', regex: /^\d{4}-\d{2}-\d{2}$/, msg: 'Fecha inválida' },
-        { input: '#telefono', regex: /^\d{11}$/, msg: 'Teléfono inválido' },
-        { input: '#correo', regex: /^[-A-Za-z0-9_.]{3,35}@[A-Za-z0-9]{3,10}\.[A-Za-z]{2,3}$/, msg: 'Correo inválido' },
-        { input: '#sexo', msg: 'Seleccione sexo' },
-        { input: '#apartamento_id', msg: 'Seleccione apartamento' },
-        { input: '#tipo_vinculo', msg: 'Seleccione tipo de vínculo' }
-    ];
+    let esValido = true;
 
-    for (const c of campos) {
-        const el = document.querySelector(c.input);
-        if (!el.value || (c.regex && !c.regex.test(el.value))) {
-            Validaciones.mostrarError(el, c.msg);
-            Utilidades.mensaje('error', 'Error', c.msg);
-            return false;
-        }
-        Validaciones.limpiar(el);
+    // Evaluamos TODOS los campos para pintarlos si están mal
+    if (!Validador.evaluarSelect('tipo_cedula')) esValido = false;
+    const inputCedula = document.getElementById('cedula');
+    if (!Validador.evaluarInput(inputCedula, Patrones.cedula, 'Cédula inválida')) esValido = false;
+    if (!Validador.evaluarInput(document.getElementById('nombre'), Patrones.textoCorto, 'Nombre inválido')) esValido = false;
+    if (!Validador.evaluarInput(document.getElementById('apellido'), Patrones.textoCorto, 'Apellido inválido')) esValido = false;
+    if (!Validador.evaluarFecha(document.getElementById('fecha_nacimiento'))) esValido = false;
+    if (!Validador.evaluarInput(document.getElementById('telefono'), Patrones.telefono, 'Teléfono inválido')) esValido = false;
+    
+    const inputCorreo = document.getElementById('correo');
+    if (!Validador.evaluarInput(inputCorreo, Patrones.correo, 'Correo inválido')) esValido = false;
+    
+    if (!Validador.evaluarSelect('sexo')) esValido = false;
+    
+    const selectVinculo = document.getElementById('tipo_vinculo');
+    if (!Validador.evaluarSelect('tipo_vinculo')) esValido = false;
+
+    if (!esValido) {
+        Alertas.mostrar('error', 'Error', 'Por favor, revise los campos marcados en rojo.');
+        return false;
     }
 
-    // Validar duplicados de cédula si cambió (usando cédula completa)
-    const cedulaCompletaActual = $('#tipo_cedula').val() + $('#cedula').val();
+    // Validaciones lógicas y de BD
+    const selectTipoCed = document.getElementById('tipo_cedula');
+    const cedulaCompletaActual = selectTipoCed.value + inputCedula.value;
+    const inputApto = document.getElementById('apartamento_id');
+
     if (accion === 'Registrar' || cedulaCompletaActual !== cedula_an) {
-        const valido = await Validaciones.verificarExistencia(
-            'cedula',
-            { cedula: cedulaCompletaActual },
-            $('#cedula')[0],
-            'Cédula duplicada'
-        );
-        if (!valido) {
-            Utilidades.mensaje('error', 'Error', "El valor del campo 'cedula' ya está registrado.");
+        const dupCedula = await Validador.verificarDuplicadoEnServidor('cedula', { cedula: cedulaCompletaActual }, inputCedula, 'Cédula duplicada');
+        if (!dupCedula) return false;
+    }
+
+    if (accion === 'Registrar' || inputCorreo.value !== correo_an) {
+        const dupCorreo = await Validador.verificarDuplicadoEnServidor('correo', { correo: inputCorreo.value }, inputCorreo, 'Correo duplicado');
+        if (!dupCorreo) return false;
+    }
+
+    if (accion === 'Registrar' || selectVinculo.value !== tipo_vinculo_an) {
+        const formData = new FormData();
+        formData.append('validar', 'tipo_vinculo');
+        formData.append('tipo_vinculo', selectVinculo.value);
+        formData.append('apartamento_id', inputApto.value);
+        
+        const respVinculo = await Peticiones.enviar(formData, "", false);
+        if (respVinculo.existe) {
+            EstadoInputs.marcarError(selectVinculo, 'Este apartamento ya tiene propietario');
+            Alertas.mostrar('error', 'Error', 'Este apartamento ya tiene un propietario asignado.');
             return false;
         }
     }
 
-    // Validar duplicados de correo si cambió
-    if (accion === 'Registrar' || $('#correo').val() !== correo_an) {
-        const valido = await Validaciones.verificarExistencia(
-            'correo',
-            { correo: $('#correo').val() },
-            $('#correo')[0],
-            'Correo duplicado'
-        );
-        if (!valido) {
-            Utilidades.mensaje('error', 'Error', "El valor del campo 'correo' ya está registrado.");
+    const aptoValido = await Validador.verificarExistenciaEnServidor('validar_clave_foranea', { tabla: 'apartamentos', nombre_clave: 'id_apartamento', valor: inputApto.value }, inputApto, 'Apartamento no existe');
+    if (!aptoValido) return false;
+
+    if (typeof FormatoFechas !== 'undefined') {
+        const edad = FormatoFechas.calcularEdad(document.getElementById('fecha_nacimiento').value);
+        if (edad < 18) {
+            EstadoInputs.marcarError(document.getElementById('fecha_nacimiento'), 'Debe ser mayor de edad');
+            Alertas.mostrar('error', 'Error', 'El habitante debe ser mayor de 18 años.');
             return false;
         }
-    }
-
-    // Validar tipo de vínculo (solo un propietario por apartamento)
-    if (accion === 'Registrar' || $('#tipo_vinculo').val() !== tipo_vinculo_an) {
-        const respuesta = await Utilidades.validar('tipo_vinculo', {
-            tipo_vinculo: $('#tipo_vinculo').val(),
-            apartamento_id: $('#apartamento_id').val()
-        });
-        if (respuesta.existe) {
-            Validaciones.mostrarError($('#tipo_vinculo')[0], 'Este apartamento ya tiene propietario');
-            Utilidades.mensaje('error', 'Error', 'Este apartamento ya tiene un propietario asignado.');
-            return false;
-        }
-    }
-
-    // Validar que el apartamento exista (clave foránea)
-    const datosApartamento = new FormData();
-    datosApartamento.append('validar', 'validar_clave_foranea');
-    datosApartamento.append('tabla', 'apartamentos');
-    datosApartamento.append('nombre_clave', 'id_apartamento');
-    datosApartamento.append('valor', $('#apartamento_id').val());
-    const respApartamento = await Utilidades.query(datosApartamento);
-    if (!respApartamento.estatus) {
-        Validaciones.mostrarError($('#apartamento_id')[0], 'Apartamento no existe');
-        Utilidades.mensaje('error', 'Error', 'El apartamento seleccionado no existe.');
-        return false;
-    }
-
-    // Validar edad (mayor de 18)
-    const edad = FormatoFechas.calcularEdad($('#fecha_nacimiento').val());
-    if (edad < 18) {
-        Utilidades.mensaje('error', 'Error', 'Debe ser mayor de 18 años.');
-        return false;
     }
 
     return true;

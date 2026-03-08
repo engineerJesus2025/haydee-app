@@ -153,9 +153,9 @@ async function cargarMensualidades() {
     formData.append("operacion", "consultar_mensualidades");
     formData.append("apartamento_id", id_apartamento);
 
-    let respuesta = await Utilidades.query(formData, true);
+    let respuesta = await Peticiones.enviar(formData, "", true);
     if (!respuesta.estatus && respuesta.mensaje) {
-        Utilidades.mensaje('error', 'Error', respuesta.mensaje);
+        Alertas.mostrar('error', 'Error', respuesta.mensaje);
         return;
     }
     console.log(respuesta)
@@ -264,7 +264,7 @@ async function consultar() {
         }
     ];
 
-    tabla_pagos = Utilidades.cargarTabulador("tabla_pagos", "", columnas);
+    tabla_pagos = Tablas.cargarTabulador("tabla_pagos", "", columnas);
 
     const inputBusqueda = document.getElementById("busqueda_global");
     if (inputBusqueda) {
@@ -331,16 +331,16 @@ function recolectarDatosFormData(operacion, id_pago = null) {
 // ============================================================
 async function registrar() {
     let formData = recolectarDatosFormData("registrar");
-    let respuesta = await Utilidades.query(formData, true);
+    let respuesta = await Peticiones.enviar(formData, "", true);
 
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Error', respuesta.mensaje);
+        Alertas.mostrar('error', 'Error', respuesta.mensaje);
         return;
     }
 
     modal.hide();
     tabla_pagos.replaceData();
-    Utilidades.mensaje('success', 'Éxito', respuesta.mensaje);
+    Alertas.mostrar('success', 'Éxito', respuesta.mensaje);
 }
 
 async function prepararEdicion(id) {
@@ -348,9 +348,9 @@ async function prepararEdicion(id) {
     datos.append('id_pago', id);
     datos.append('operacion', 'consulta_especifica');
 
-    let respuesta = await Utilidades.query(datos, true);
+    let respuesta = await Peticiones.enviar(datos, "", true);
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Error', respuesta.mensaje);
+        Alertas.mostrar('error', 'Error', respuesta.mensaje);
         return;
     }
 
@@ -423,16 +423,16 @@ async function prepararEdicion(id) {
 
 async function modificar(id) {
     let formData = recolectarDatosFormData("modificar", id);
-    let respuesta = await Utilidades.query(formData, true);
+    let respuesta = await Peticiones.enviar(formData, "", true);
 
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Error', respuesta.mensaje);
+        Alertas.mostrar('error', 'Error', respuesta.mensaje);
         return;
     }
 
     modal.hide();
     tabla_pagos.replaceData();
-    Utilidades.mensaje('success', 'Éxito', respuesta.mensaje);
+    Alertas.mostrar('success', 'Éxito', respuesta.mensaje);
 }
 
 function confirmarEliminar(id) {
@@ -456,14 +456,14 @@ async function eliminar(id) {
     formData.append("operacion", "eliminar");
     formData.append("id_pago", id);
 
-    let respuesta = await Utilidades.query(formData);
+    let respuesta = await Peticiones.enviar(formData);
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Error', respuesta.mensaje);
+        Alertas.mostrar('error', 'Error', respuesta.mensaje);
         return;
     }
 
     tabla_pagos.replaceData();
-    Utilidades.mensaje('success', 'Éxito', respuesta.mensaje);
+    Alertas.mostrar('success', 'Éxito', respuesta.mensaje);
 }
 
 // ============================================================
@@ -474,7 +474,7 @@ async function mostrarVistaPrevia(id) {
     formData.append("operacion", "consulta_especifica");
     formData.append("id_pago", id);
 
-    let respuesta = await Utilidades.query(formData, true);
+    let respuesta = await Peticiones.enviar(formData, "", true);
     if (!respuesta.estatus) return;
 
     let data = respuesta.datos;
@@ -520,7 +520,7 @@ async function mostrarVistaPrevia(id) {
     modalVistaPrevia.show();
 
     setTimeout(() => {
-        Utilidades.cargarTabuladorEstatico(
+        Tablas.cargarTabuladorEstatico(
             "tabla_detalles_pagos", 
             data.detalles, 
             columnas, 

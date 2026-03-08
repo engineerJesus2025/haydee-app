@@ -9,7 +9,6 @@ let modal_carga = new bootstrap.Modal("#modal_carga");
 let modalDetalle = new bootstrap.Modal(document.getElementById('modalDetalleBitacora'));
 
 window.addEventListener('DOMContentLoaded', () => {
-    eventosCargaDataTable('tabla_bitacora', modal_carga);
     consultar();
 });
 
@@ -73,42 +72,6 @@ function mostrarDetalle(rowData) {
 }
 
 /**
- * Configura eventos para mostrar el modal de carga durante las peticiones de DataTable
- */
-function eventosCargaDataTable(id_tabla, modal) {
-    const tiempoMinimoCarga = 700;
-    let inicioPeticion;
-    let temporizadorModal;
-    let modalVisible = false;
-
-    $('#' + id_tabla).on("preXhr.dt", function (e, settings, data) {
-        inicioPeticion = new Date().getTime();
-        temporizadorModal = setTimeout(() => {
-            modal.show();
-            modalVisible = true;
-        }, 200);
-    });
-
-    $('#' + id_tabla).on("xhr.dt", function (e, settings, json, xhr) {
-        clearTimeout(temporizadorModal);
-        const finPeticion = new Date().getTime();
-        const tiempoTranscurrido = finPeticion - inicioPeticion;
-
-        if (modalVisible && tiempoTranscurrido < tiempoMinimoCarga) {
-            const tiempoEspera = tiempoMinimoCarga - tiempoTranscurrido;
-            setTimeout(() => {
-                modal.hide();
-                modalVisible = false;
-            }, tiempoEspera);
-        } else if (modalVisible) {
-            modal.hide();
-            modalVisible = false;
-        }
-    });
-}
-
-
-/**
  * Inicializa DataTable con los registros de bitácora
  */
 function consultar() {
@@ -147,7 +110,7 @@ function consultar() {
         }
     ];
 
-    tabla_bitacora = Utilidades.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consulta' } });
+    tabla_bitacora = Tablas.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consulta' } });
 
     const inputBusqueda = document.getElementById("busqueda_global");
     if (inputBusqueda) {

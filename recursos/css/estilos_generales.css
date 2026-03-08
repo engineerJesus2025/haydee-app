@@ -16,3 +16,18 @@ body{
   	z-index: 1030;
   	background-color: #3939a9;
 }
+
+.form-select.is-invalid, .was-validated .form-select:invalid{
+  border-color: var(--bs-form-invalid-border-color) !important;
+}
+.form-select.is-valid, .was-validated .form-select:valid {
+  border-color: var(--bs-form-valid-border-color) !important;
+}
+
+.form-control.is-invalid, .was-validated .form-control:invalid{
+  border-color: var(--bs-form-invalid-border-color) !important;
+}
+
+.form-control.is-valid, .was-validated .form-control:valid {
+  border-color: var(--bs-form-valid-border-color) !important;
+}

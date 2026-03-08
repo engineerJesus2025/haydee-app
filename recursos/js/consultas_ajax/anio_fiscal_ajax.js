@@ -114,13 +114,13 @@ async function registrar() {
     const datos = new FormData(form);
     datos.set('operacion', 'registrar');
 
-    const respuesta = await Utilidades.query(datos, true);
+    const respuesta = await Peticiones.enviar(datos, "", true);
     if (respuesta?.estatus) {
         modal.hide();
         tabla_anio_fiscal.replaceData();
-        Utilidades.mensaje('success', 'Éxito', 'Año fiscal registrado correctamente.');
+        Tablas.cargarTabulador('success', 'Éxito', 'Año fiscal registrado correctamente.');
     } else {
-        Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo registrar.');
+        Tablas.cargarTabulador('error', 'Error', respuesta?.mensaje || 'No se pudo registrar.');
     }
 }
 
@@ -131,9 +131,9 @@ async function prepararFormulario(e) {
     datos.append('id_anio_fiscal', id);
     datos.append('operacion', 'consulta_especifica');
 
-    const respuesta = await Utilidades.query(datos, true);
+    const respuesta = await Peticiones.enviar(datos, "", true);
     if (!respuesta?.estatus) {
-        Utilidades.mensaje('error', 'Error', 'No se pudo cargar el año fiscal.');
+        Tablas.cargarTabulador('error', 'Error', 'No se pudo cargar el año fiscal.');
         return;
     }
 
@@ -161,13 +161,13 @@ async function modificar() {
     datos.set('id_anio_fiscal', id);
     datos.set('operacion', 'modificar');
 
-    const respuesta = await Utilidades.query(datos, true);
+    const respuesta = await Peticiones.enviar(datos, "", true);
     if (respuesta?.estatus) {
         modal.hide();
         tabla_anio_fiscal.replaceData();
-        Utilidades.mensaje('success', 'Éxito', 'Año fiscal actualizado correctamente.');
+        Tablas.cargarTabulador('success', 'Éxito', 'Año fiscal actualizado correctamente.');
     } else {
-        Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo actualizar.');
+        Tablas.cargarTabulador('error', 'Error', respuesta?.mensaje || 'No se pudo actualizar.');
     }
 }
 
@@ -176,12 +176,12 @@ async function eliminar(id) {
     datos.append('id_anio_fiscal', id);
     datos.append('operacion', 'eliminar');
 
-    const respuesta = await Utilidades.query(datos);
+    const respuesta = await Peticiones.enviar(datos);
     if (respuesta?.estatus) {
         tabla_anio_fiscal.replaceData();
-        Utilidades.mensaje('success', 'Éxito', 'Año fiscal eliminado correctamente.');
+        Tablas.cargarTabulador('success', 'Éxito', 'Año fiscal eliminado correctamente.');
     } else {
-        Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo eliminar.');
+        Tablas.cargarTabulador('error', 'Error', respuesta?.mensaje || 'No se pudo eliminar.');
     }
 }
 

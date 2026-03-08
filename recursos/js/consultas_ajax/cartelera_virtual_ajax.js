@@ -46,7 +46,7 @@ function envio(operacion) {
     } else if (operacion === "Registrar") {
         registrar();
     } else {
-        Utilidades.mensaje('error', 'Atención', 'Ha ocurrido un error durante la operación, inténtelo nuevamente');
+        Alertas.mostrar('error', 'Atención', 'Ha ocurrido un error durante la operación, inténtelo nuevamente');
     }
 }
 
@@ -102,7 +102,7 @@ function consultar() {
         }
     ];
 
-    tabla_cartelera = Utilidades.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consulta' } });
+    tabla_cartelera = Tablas.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consulta' } });
     
     const inputBusqueda = document.getElementById("busqueda_global");
     if (inputBusqueda) {
@@ -125,10 +125,10 @@ async function modificar_formulario(e) {
     datos.append("id_cartelera", id);
     datos.append("operacion", "consulta_especifica");
 
-    const respuesta = await Utilidades.query(datos);
+    const respuesta = await Peticiones.enviar(datos);
 
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Error', respuesta.mensaje || 'No se pudieron cargar los datos');
+        Alertas.mostrar('error', 'Error', respuesta.mensaje || 'No se pudieron cargar los datos');
         return;
     }
 
@@ -178,10 +178,10 @@ async function mostrarVistaPrevia(e) {
     datos.append("id_cartelera", id);
     datos.append("operacion", "consulta_especifica");
 
-    const respuesta = await Utilidades.query(datos);
+    const respuesta = await Peticiones.enviar(datos);
 
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Error', respuesta.mensaje || 'No se pudieron cargar los datos');
+        Alertas.mostrar('error', 'Error', respuesta.mensaje || 'No se pudieron cargar los datos');
         return;
     }
 
@@ -212,10 +212,10 @@ async function registrar() {
     let datos = new FormData(formulario_usar);
     datos.append("operacion", "registrar");
 
-    let respuesta = await Utilidades.query(datos);
+    let respuesta = await Peticiones.enviar(datos);
 
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Atención', respuesta.mensaje || 'Error al registrar');
+        Alertas.mostrar('error', 'Atención', respuesta.mensaje || 'Error al registrar');
         return;
     }
 
@@ -223,7 +223,7 @@ async function registrar() {
     formulario_usar.reset();
 
     tabla_cartelera.replaceData();
-    Utilidades.mensaje('success', 'Éxito', 'La publicación se ha registrado correctamente');
+    Alertas.mostrar('success', 'Éxito', 'La publicación se ha registrado correctamente');
 }
 
 /**
@@ -234,10 +234,10 @@ async function modificar(id) {
     datos.append("id_cartelera", id);
     datos.append("operacion", "modificar");
 
-    let respuesta = await Utilidades.query(datos);
+    let respuesta = await Peticiones.enviar(datos);
 
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Atención', respuesta.mensaje || 'Error al modificar');
+        Alertas.mostrar('error', 'Atención', respuesta.mensaje || 'Error al modificar');
         // No cerrar el modal para que el usuario pueda corregir
         return;
     }
@@ -251,7 +251,7 @@ async function modificar(id) {
     document.getElementById("titulo_modal").textContent = "Registrar Publicación";
 
     tabla_cartelera.replaceData();
-    Utilidades.mensaje('success', 'Éxito', 'La publicación se ha modificado correctamente');
+    Alertas.mostrar('success', 'Éxito', 'La publicación se ha modificado correctamente');
 }
 
 /**
@@ -262,15 +262,15 @@ async function eliminar(id) {
     datos.append("id_cartelera", id);
     datos.append("operacion", "eliminar");
 
-    let respuesta = await Utilidades.query(datos);
+    let respuesta = await Peticiones.enviar(datos);
 
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Atención', respuesta.mensaje || 'Error al eliminar');
+        Alertas.mostrar('error', 'Atención', respuesta.mensaje || 'Error al eliminar');
         return;
     }
 
     tabla_cartelera.replaceData();
-    Utilidades.mensaje('success', 'Éxito', 'La publicación ha sido eliminada correctamente');
+    Alertas.mostrar('success', 'Éxito', 'La publicación ha sido eliminada correctamente');
 }
 
 // ============================================

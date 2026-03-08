@@ -1,3 +1,7 @@
+/**
+ * reporte_constancias.js
+ * Dependencias: Validador.js, Patrones.js, Alertas.js, Peticiones.js
+ */
 document.addEventListener('DOMContentLoaded', () => {
     // Configuración para cada tipo de reporte
     const configBotones = {
@@ -15,8 +19,57 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Función para precargar datos según el botón presionado
-    async function prepararModalConstancia(idBoton) {
+    // Almacén en memoria de los datos (para no consultar cada vez que se haga click)
+    let datosCargados = {
+        'boton_residencia': [],
+        'boton_solvencia': []
+    };
+
+    // 1. Precargar datos al iniciar la vista
+    precargarBoton('boton_residencia');
+    precargarBoton('boton_solvencia');
+
+    async function precargarBoton(idBoton) {
+        const config = configBotones[idBoton];
+        let datos = new FormData();
+        datos.append('operacion', config.operacionConsulta);
+        
+        const respuesta = await Peticiones.enviar(datos, "", false);
+        const botonDom = document.getElementById(idBoton);
+        const contenedorTarjeta = botonDom.parentElement; // El div.card que tiene el title
+
+        // 1. Destruimos cualquier tooltip previo para evitar conflictos
+        const tooltipPrevio = bootstrap.Tooltip.getInstance(contenedorTarjeta);
+        if (tooltipPrevio) tooltipPrevio.dispose();
+
+        if (respuesta.estatus && respuesta.datos && respuesta.datos.length > 0) {
+            datosCargados[idBoton] = respuesta.datos;
+            botonDom.removeAttribute('disabled'); 
+            
+            // Asignamos el mensaje de éxito
+            contenedorTarjeta.setAttribute('title', 'Click para ver opciones de este reporte');
+            
+            let spinnerContainer = botonDom.querySelector(".spinner-grow")?.parentElement;
+            if (spinnerContainer) {
+                spinnerContainer.innerHTML = `<i class="bi ${config.icono_carga}" style="font-size: 5rem !important;"></i>`;
+            }
+        } else {
+            // Asignamos el mensaje de bandeja vacía
+            contenedorTarjeta.setAttribute('title', 'No hay residentes disponibles para este reporte');
+            let spinnerContainer = botonDom.querySelector(".spinner-grow")?.parentElement;
+            if (spinnerContainer) {
+                spinnerContainer.innerHTML = `<i class="bi bi-inbox text-secondary" style="font-size: 5rem !important;"></i>`;
+            }
+        }
+        // 2. Creamos el tooltip fresco de Bootstrap con el texto actualizado
+        new bootstrap.Tooltip(contenedorTarjeta, {
+            placement: 'top',
+            trigger: 'hover'
+        });
+    }
+
+    // 2. Función para preparar el modal de forma instantánea al hacer clic
+    function prepararModalConstancia(idBoton) {
         const config = configBotones[idBoton];
         const select = document.getElementById('select_reporte');
         const botonGenerar = document.getElementById('boton_generar');
@@ -25,77 +78,36 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('label_reporte').textContent = "Seleccione el Residente: ";
         botonGenerar.setAttribute("reporte", config.accionControlador);
 
-        // * rojo:
-        let asterisco = document.createElement("spam");
+        let asterisco = document.createElement("span");
         asterisco.classList.add("text-danger");
         asterisco.textContent = "*";
         document.getElementById('label_reporte').appendChild(asterisco);
- 
-        // Deshabilitar temporalmente mientras carga
-        select.innerHTML = '<option selected hidden value="">Cargando residentes...</option>';
-        select.disabled = true;
 
-        let datos = new FormData();
-        datos.append('operacion', config.operacionConsulta);
-
-        try {
-            let respuesta = await Utilidades.query(datos);
-            if (respuesta.estatus && respuesta.datos.length > 0) {
-                select.innerHTML = '<option selected hidden value="">Seleccione el Residente</option>';
-                let fragment = document.createDocumentFragment();
-                
-                respuesta.datos.forEach(prop => {
-                    let option = document.createElement("option");
-                    option.textContent = `Apto Nº ${prop.nro_apartamento} | ${prop.nombre} ${prop.apellido}`;
-                    option.value = prop.id_habitante;
-                    fragment.appendChild(option);
-                });
-                
-                select.appendChild(fragment);
-                select.disabled = false;
-            } else {
-                select.innerHTML = '<option selected hidden value="">No hay residentes disponibles</option>';
-            }
-        } catch (error) {
-            console.error(`Error al cargar datos para ${config.titulo}:`, error);
-            Utilidades.mensaje('error', 'Error', 'No se pudieron cargar los datos.');
-        }
+        select.innerHTML = '<option selected hidden value="">Seleccione el Habitante</option>';
+        
+        let fragment = document.createDocumentFragment();
+        datosCargados[idBoton].forEach(habitante => {
+            let option = document.createElement("option");
+            option.textContent = `${habitante.cedula} - ${habitante.nombre} ${habitante.apellido}`;
+            option.value = habitante.id_habitante;
+            fragment.appendChild(option);
+        });
+        select.appendChild(fragment);
     }
 
-    // Asignar eventos de apertura a los botones del menú principal
-    ['boton_residencia', 'boton_solvencia'].forEach(idBoton => {
-        const btn = document.getElementById(idBoton);
-        if (btn) {
-            // Quitar el estado de "Cargando" inicial
-            btn.removeAttribute('disabled');
-            let spinnerContainer = btn.querySelector(".spinner-grow")?.parentElement;
-            if (spinnerContainer) {
-                spinnerContainer.innerHTML = `<i class="bi ${configBotones[idBoton].icono_carga}" style="font-size: 5rem !important;"></i>`;
-            }
+    // Asignación de clics
+    document.getElementById('boton_residencia')?.addEventListener("click", () => prepararModalConstancia('boton_residencia'));
+    document.getElementById('boton_solvencia')?.addEventListener("click", () => prepararModalConstancia('boton_solvencia'));
 
-            btn.addEventListener('click', () => prepararModalConstancia(idBoton));
-        }
-    });
-
-    // Validación del Select
-    $('#select_reporte').on('change', async function() {
-        if (!Validaciones.select(this.id)) return;
-        
-        let respuesta = await Utilidades.validar('validar_clave_foranea', {
-            tabla: 'habitantes',
-            nombre_clave: 'id_habitante',
-            valor: this.value
-        });
-
-        if (respuesta.estatus) {
-            this.classList.add('is-valid');
-            this.classList.remove('is-invalid');
-            this.nextElementSibling.textContent = '';
-        } else {
-            this.classList.add('is-invalid');
-            this.classList.remove('is-valid');
-            this.nextElementSibling.textContent = 'El habitante no existe en la base de datos';
-        }
+    // Validación asíncrona (si llegase a manipular el select por HTML inspector)
+    document.getElementById('select_reporte')?.addEventListener('change', async function() {
+        if (!Validador.evaluarSelect(this.id)) return;
+        await Validador.verificarExistenciaEnServidor(
+            'validar_clave_foranea', 
+            { tabla: 'habitantes', nombre_clave: 'id_habitante', valor: this.value }, 
+            this, 
+            'El habitante no existe en la base de datos'
+        );
     });
 
     // Envío del formulario
@@ -103,8 +115,8 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const select = document.getElementById('select_reporte');
         
-        if (!Validaciones.select(select.id) || select.value === "") {
-            Utilidades.mensaje('error', 'Atención', 'Debe seleccionar un residente válido');
+        if (!Validador.evaluarSelect(select.id)) {
+            Alertas.mostrar('error', 'Atención', 'Debe seleccionar un residente válido');
             return;
         }
 
@@ -113,7 +125,6 @@ document.addEventListener('DOMContentLoaded', () => {
         form.setAttribute('action', `?pagina=reportes&accion=${reporte}`);
         form.submit();
         
-        // Cerrar modal tras enviar
-        bootstrap.Modal.getInstance(document.getElementById('modal_reporte_persona')).hide();
+        bootstrap.Modal.getInstance(document.getElementById('modal_reporte_persona'))?.hide();
     });
 });

@@ -71,9 +71,9 @@ async function llenarCardUsuario() {
     const formData = new FormData();
     formData.append('operacion', 'consultar_perfil_usuario');
 
-    const respuesta = await Utilidades.query(formData);
+    const respuesta = await Peticiones.enviar(formData);
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Atención', respuesta.mensaje || 'Error al cargar perfil');
+        Alertas.mostrar('error', 'Atención', respuesta.mensaje || 'Error al cargar perfil');
         return;
     }
 
@@ -153,7 +153,7 @@ function llenarTablaNotificaciones() {
     };
 
     // 5. Inicialización de Tabulator
-    tabla_notificaciones = Utilidades.cargarTabulador(contenedor.id, "", columnas, opcionesExtra);
+    tabla_notificaciones = Tablas.cargarTabulador(contenedor.id, "", columnas, opcionesExtra);
 
     // Activamos el elemento visual si existe (esto lo tenías en tu código original)
     document.getElementById('notificaciones')?.removeAttribute('disabled');
@@ -191,9 +191,9 @@ async function modificar() {
     formData.append('correo', document.getElementById('correo').value);
     formData.append('operacion', 'modificar_perfil');
 
-    const respuesta = await Utilidades.query(formData);
+    const respuesta = await Peticiones.enviar(formData);
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Atención', respuesta.mensaje);
+        Alertas.mostrar('error', 'Atención', respuesta.mensaje);
         return;
     }
 
@@ -206,7 +206,7 @@ async function modificar() {
     }
 
     await llenarCardUsuario(); // Recargar datos
-    Utilidades.mensaje('success', 'Éxito', 'Datos actualizados correctamente');
+    Alertas.mostrar('success', 'Éxito', 'Datos actualizados correctamente');
 
     document.getElementById('form_perfil').setAttribute('hidden', '');
     document.getElementById('body_perfil').removeAttribute('hidden');
@@ -219,15 +219,15 @@ async function modificarContra() {
     formData.append('correo', document.getElementById('p_correo').textContent);
     formData.append('operacion', 'cambiar_contrasenia');
 
-    const respuesta = await Utilidades.query(formData);
+    const respuesta = await Peticiones.enviar(formData);
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Atención', respuesta.mensaje);
+        Alertas.mostrar('error', 'Atención', respuesta.mensaje);
         return;
     }
 
     // Limpiar campos
     document.querySelectorAll('input').forEach(input => input.value = '');
-    Utilidades.mensaje('success', 'Éxito', 'Contraseña actualizada correctamente');
+    Alertas.mostrar('success', 'Éxito', 'Contraseña actualizada correctamente');
 
     const modal = bootstrap.Modal.getInstance(document.getElementById('modal_contra'));
     modal?.hide();

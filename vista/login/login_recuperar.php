@@ -6,9 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recuperar Contraseña</title>
     <link rel="shortcut icon" href="<?php echo URL_BASE; ?>recursos/img/utils/logo-haydee.ico" type="image/x-icon">
+    <link rel="stylesheet" href="<?php echo URL_BASE; ?>recursos/dependencias/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="<?php echo URL_BASE; ?>recursos/dependencias/bootstrap-icons/bootstrap-icons.min.css">
     <link rel="stylesheet" href="<?php echo URL_BASE; ?>recursos/css/estilos_login.css">
-    <link rel="stylesheet" href="<?php echo URL_BASE; ?>recursos/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" href="<?php echo URL_BASE; ?>recursos/bootstrap-icons/bootstrap-icons.min.css">
     <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/contrasenias.css">
 </head>
 <body>
@@ -66,11 +66,12 @@
     </footer>
 
     <!-- Scripts -->
-    <script src="<?php echo URL_BASE; ?>recursos/bootstrap/js/jquery.min.js"></script>
-    <script src="<?php echo URL_BASE; ?>recursos/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <script src="<?php echo URL_BASE; ?>recursos/bootstrap/js/sweetalert2.js"></script>
-    <script src="<?php echo URL_BASE; ?>recursos/js/utilidades.js"></script>
-    <script src="<?php echo URL_BASE; ?>recursos/js/validaciones.js"></script>
+    <script src="<?php echo URL_BASE; ?>recursos/dependencias/bootstrap/bootstrap.bundle.min.js"></script>
+    <script src="<?php echo URL_BASE; ?>recursos/dependencias/sweetalert2/sweetalert2.js"></script>
+    <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/Patrones.js"></script>
+    <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/Alertas.js"></script>
+    <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/EstadoInputs.js"></script>
+    <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/Validador.js"></script>
     <script src="<?php echo URL_BASE; ?>recursos/js/validaciones/cambio_contrasenia_validar.js"></script>
 </body>
 </html>

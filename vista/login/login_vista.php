@@ -5,12 +5,11 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="shortcut icon" href="<?php echo URL_BASE; ?>recursos/img/utils/logo-haydee.ico" type="image/x-icon">
+    <link rel="stylesheet" href="<?php echo URL_BASE; ?>recursos/dependencias/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="<?php echo URL_BASE; ?>recursos/dependencias/bootstrap-icons/bootstrap-icons.min.css">
     <title>Inicio de Sesión</title>
     <link rel="stylesheet" href="<?php echo URL_BASE; ?>recursos/css/estilos_login.css">
-    <link rel="stylesheet" href="<?php echo URL_BASE; ?>recursos/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" href="<?php echo URL_BASE; ?>recursos/bootstrap-icons/bootstrap-icons.min.css">
     <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/estilos_modal_carga.css">
-    
 </head>
 <body>
     <main>
@@ -108,10 +107,13 @@
         </div>
     </div>
 
-    <script src="<?php echo URL_BASE; ?>recursos/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <script src="<?php echo URL_BASE; ?>recursos/bootstrap/js/sweetalert2.js"></script>
-    <script src="<?php echo URL_BASE; ?>recursos/js/utilidades.js"></script>
-    <script src="<?php echo URL_BASE; ?>recursos/js/validaciones.js"></script>
+    <script src="<?php echo URL_BASE; ?>recursos/dependencias/bootstrap/bootstrap.bundle.min.js"></script>
+    <script src="<?php echo URL_BASE; ?>recursos/dependencias/sweetalert2/sweetalert2.js"></script>
+    <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/Patrones.js"></script>
+    <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/Alertas.js"></script>
+    <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/Peticiones.js"></script>
+    <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/EstadoInputs.js"></script>
+    <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/Validador.js"></script>
     <?php if (!$recaptchaDeshabilitado): ?>
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <?php endif; ?>

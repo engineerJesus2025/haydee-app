@@ -1,75 +1,82 @@
 /**
  * Script AJAX para la gestión de Usuarios
- * Dependencias: utilidades.js (Objeto Utilidades)
+ * Dependencias: Peticiones.js, Alertas.js, Tablas.js, EstadoInputs.js
  */
 
 let id_modificar, correo_an;
 
-let permiso_eliminar = document.querySelector("#permiso_eliminar").value;
-let permiso_modificar = document.querySelector("#permiso_modificar").value;
+const permiso_eliminar = document.querySelector("#permiso_eliminar").value;
+const permiso_modificar = document.querySelector("#permiso_modificar").value;
 
-let boton_formulario = document.querySelector("#boton_formulario"); 
-let modal = new bootstrap.Modal(document.getElementById("modal_usuario"), { focus: false });
-let formulario_usar = document.querySelector(`#form_usuario`); 
+const boton_formulario = document.querySelector("#boton_formulario"); 
+const modal = new bootstrap.Modal(document.getElementById("modal_usuario"), { focus: false });
+const formulario_usar = document.querySelector(`#form_usuario`); 
 let tabla_usuarios;
 
 consultar();
 
 // Resetear modal al cerrarlo
 document.querySelector(`#modal_usuario`).addEventListener("hide.bs.modal", () => {
-	formulario_usar.reset();
-	boton_formulario.removeAttribute("modificar");
-	boton_formulario.removeAttribute("id_modificar");
-	boton_formulario.textContent = "Guardar";
-	document.getElementById('titulo_modal').textContent = "Registrar Usuario";		
-	
-	formulario_usar.querySelector("#confir_contra").parentElement.previousElementSibling.textContent = "Confirmar Contraseña";
-	formulario_usar.querySelector("#confir_contra").placeholder = "Confirmar Contraseña";
-	formulario_usar.querySelector("#contra").placeholder = "Contraseña";
+    formulario_usar.reset();
+    boton_formulario.removeAttribute("modificar");
+    boton_formulario.removeAttribute("id_modificar");
+    boton_formulario.textContent = "Guardar";
+    document.getElementById('titulo_modal').textContent = "Registrar Usuario";      
+    
+    formulario_usar.querySelector("#confir_contra").parentElement.previousElementSibling.textContent = "Confirmar Contraseña";
+    formulario_usar.querySelector("#confir_contra").placeholder = "Confirmar Contraseña";
+    formulario_usar.querySelector("#contra").placeholder = "Contraseña";
 
-	correo_an = null;
+    correo_an = null;
 
-	document.querySelectorAll('.is-valid').forEach(input => input.classList.remove('is-valid'));
-	document.querySelectorAll('.is-invalid').forEach(input => input.classList.remove('is-invalid'));
-	document.querySelectorAll('input').forEach(input => {
-		if (input.id.includes('contra')) {
-			input.nextElementSibling.classList.remove('border-danger', 'text-danger', 'border-success', 'text-success');
-			input.nextElementSibling.firstElementChild.classList.replace('bi-eye-slash', 'bi-eye');
-		}
-	});
+    formulario_usar.querySelectorAll('input, select').forEach(input => {
+        EstadoInputs.limpiar(input);
+        
+        // Resetear el icono del ojo y el tipo de input si es contraseña
+        if (input.id.includes('contra')) {
+            input.setAttribute('type', 'password');
+            const icono = input.parentElement.querySelector('.contra-btn i');
+            if (icono && icono.classList.contains('bi-eye-slash')) {
+                icono.classList.replace('bi-eye-slash', 'bi-eye');
+            }
+        }
+    });
 });
 
 // Mostrar/Ocultar contraseñas
 document.querySelectorAll('.contra-btn').forEach(boton => {
-	boton.addEventListener('click', e => {
-		e.preventDefault();
-		let i = (e.target.firstElementChild == null) ? e.target : e.target.firstElementChild;
+    boton.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        // 'this' siempre será el botón <button>.
+        // Buscamos el ícono dentro de este botón y el input que está justo antes.
+        let icono = this.querySelector('i');
+        let inputTarget = this.previousElementSibling; 
 
-		if (i.classList.contains('bi-eye')){
-			i.parentElement.previousElementSibling.setAttribute('type','text');
-			i.classList.replace('bi-eye','bi-eye-slash');
-		} else {
-			i.parentElement.previousElementSibling.setAttribute('type','password');
-			i.classList.replace('bi-eye-slash','bi-eye');
-		}
-	});
+        if (icono.classList.contains('bi-eye')) {
+            inputTarget.setAttribute('type', 'text');
+            icono.classList.replace('bi-eye', 'bi-eye-slash');
+        } else {
+            inputTarget.setAttribute('type', 'password');
+            icono.classList.replace('bi-eye-slash', 'bi-eye');
+        }
+    });
 });
 
-function envio(operacion) {	
-	if (operacion === "modificar") {
-		modificar(boton_formulario.getAttribute("id_modificar"));
-	} else if(operacion === "Registrar"){
-		registrar();
-	} else {
-		Utilidades.mensaje('error', 'Atención', 'Ha ocurrido un error durante la operación, inténtelo nuevamente');
-	}
+function envio(operacion) { 
+    if (operacion === "modificar") {
+        modificar(boton_formulario.getAttribute("id_modificar"));
+    } else if(operacion === "Registrar"){
+        registrar();
+    } else {
+        Alertas.mostrar('error', 'Atención', 'Ha ocurrido un error durante la operación, inténtelo nuevamente');
+    }
 }
 
 async function consultar() {
     const contenedorTabla = document.querySelector(".tabla-sistema-haydee");
     if (!contenedorTabla) return;
 
-    // 1. FORMATEADORES VISUALES
     const formatoRol = (cell) => {
         const rol = cell.getValue();
         const colores = {
@@ -79,32 +86,25 @@ async function consultar() {
             'Contador': "badge bg-danger",
             'Presidente': "badge bg-info text-dark"
         };
-        // Si no encuentra el rol en el diccionario, usa el gris por defecto
         const claseBadge = colores[rol] || "badge bg-secondary";
-        
         return `<span class="${claseBadge}">${rol}</span>`;
     };
     
-    // El formateador de botones AHORA ES CENTRALIZADO Y AUTOSUFICIENTE
     const formatoBotones = (cell) => {
         const id = cell.getData().id_usuario;
-        
         let html = `<div class="d-flex justify-content-center gap-2">
                         <button type="button" class="btn btn-success btn-sm modificar" data-bs-toggle="modal" data-bs-target="#modal_usuario" title="Modificar" value="${id}">
                             <i class="bi bi-pencil-square"></i>
                         </button>`;
-        // Usamos la variable global permiso_eliminar que ya tienes definida arriba
         if (permiso_eliminar) {
             html += `<button type="button" class="btn btn-danger btn-sm eliminar" title="Eliminar" value="${id}">
                         <i class="bi bi-trash"></i>
                     </button>`;
         }
         html += `</div>`;
-        
         return html;
     };
 
-    // 2. DEFINICIÓN DE COLUMNAS
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
         { title: "Nombre", field: "nombre", minWidth: 100, responsive: 0 },
@@ -113,165 +113,156 @@ async function consultar() {
         { title: "Rol", field: "nombre_rol", formatter: formatoRol, vertAlign: "middle", minWidth: 150 },      
         { 
             title: "Acciones", 
-            formatter: formatoBotones, // Usamos la nueva variable interna
+            formatter: formatoBotones, 
             headerSort: false, 
             hozAlign: "center",
             vertAlign: "middle",
             minWidth: 100,
             responsive: 0,
-            download: false, 
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
-
                 if (btn.classList.contains('modificar')) preparar_formulario({ target: btn });
                 if (btn.classList.contains('eliminar')) eventoEliminar({ target: btn });
             }
-        } 		
+        }       
     ];
 
-    // 3. INICIALIZACIÓN Y EVENTOS
-    tabla_usuarios = Utilidades.cargarTabulador(contenedorTabla.id, "", columnas);
+    tabla_usuarios = Tablas.cargarTabulador(contenedorTabla.id, "", columnas);
 
-    // Buscador Global Dinámico
     const inputBusqueda = document.getElementById("busqueda_global");
     if (inputBusqueda) {
         inputBusqueda.addEventListener("input", function(e) {
             let valor = e.target.value.trim();
-            
             let filtros = columnas
                 .filter(col => col.field) 
                 .map(col => ({ field: col.field, type: "like", value: valor }));
-
             tabla_usuarios.setFilter([filtros]);
         });
     }
 }
 
 async function registrar() {
-	let datos = new FormData(formulario_usar);
-	datos.append('operacion', 'registrar');
-	
-	let respuesta = await Utilidades.query(datos);
+    let datos = new FormData(formulario_usar);
+    datos.append('operacion', 'registrar');
+    
+    let respuesta = await Peticiones.enviar(datos);
 
-	modal.hide();
-	formulario_usar.reset();
+    modal.hide();
+    formulario_usar.reset();
 
-	if (!respuesta.estatus) {
-		Utilidades.mensaje('error', 'Atención', respuesta.mensaje);
-		return;
-	}
+    if (!respuesta.estatus) {
+        Alertas.mostrar('error', 'Atención', respuesta.mensaje);
+        return;
+    }
 
-	tabla_usuarios.replaceData();
-	Utilidades.mensaje('success', 'Éxito', 'El registro se ha realizado exitosamente');
+    tabla_usuarios.replaceData();
+    Alertas.mostrar('success', 'Éxito', 'El registro se ha realizado exitosamente');
 }
 
 async function preparar_formulario(e) {
-	let datos = new FormData();
-	let id = e.target.value || e.target.parentElement.value; 
-	
-	datos.append("id_usuario", id);
-	datos.append('operacion', 'consulta_especifica');
+    let datos = new FormData();
+    let id = e.target.value || e.target.parentElement.value; 
+    
+    datos.append("id_usuario", id);
+    datos.append('operacion', 'consulta_especifica');
 
-	let respuesta = await Utilidades.query(datos);	
-	
-	if (!respuesta.estatus) {
-		Utilidades.mensaje('error', 'Error', respuesta.mensaje);
-		return;
-	}
+    let respuesta = await Peticiones.enviar(datos);    
+    
+    if (!respuesta.estatus) {
+        Alertas.mostrar('error', 'Error', respuesta.mensaje);
+        return;
+    }
 
-	let data = respuesta.datos; // <-- Extraemos la data del sobre
+    let data = respuesta.datos; 
 
-	formulario_usar.querySelector("#nombre").value = data.nombre;
-	formulario_usar.querySelector("#apellido").value = data.apellido;	
-	formulario_usar.querySelector("#correo").value = data.correo;
-	formulario_usar.querySelector("#rol").value = data.rol_id;	
+    formulario_usar.querySelector("#nombre").value = data.nombre;
+    formulario_usar.querySelector("#apellido").value = data.apellido;    
+    formulario_usar.querySelector("#correo").value = data.correo;
+    formulario_usar.querySelector("#rol").value = data.rol_id;  
 
-	if(!permiso_modificar){
-		boton_formulario.setAttribute("hidden", true);
-		boton_formulario.setAttribute("disabled", true);
-	}
-	
-	boton_formulario.setAttribute("modificar", true);
-	boton_formulario.setAttribute("id_modificar", data.id_usuario);
-	boton_formulario.textContent = "Guardar Cambios";
-	document.getElementById('titulo_modal').textContent = "Modificar Usuario";
-	
-	formulario_usar.querySelector("#confir_contra").parentElement.previousElementSibling.textContent = "Nueva Contraseña" ;
-	formulario_usar.querySelector("#confir_contra").placeholder = "Escriba su Nueva Contraseña" ;
-	formulario_usar.querySelector("#contra").placeholder = "Escriba su Contraseña";
+    if(!permiso_modificar){
+        boton_formulario.setAttribute("hidden", true);
+        boton_formulario.setAttribute("disabled", true);
+    }
+    
+    boton_formulario.setAttribute("modificar", true);
+    boton_formulario.setAttribute("id_modificar", data.id_usuario);
+    boton_formulario.textContent = "Guardar Cambios";
+    document.getElementById('titulo_modal').textContent = "Modificar Usuario";
+    
+    formulario_usar.querySelector("#confir_contra").parentElement.previousElementSibling.textContent = "Nueva Contraseña" ;
+    formulario_usar.querySelector("#confir_contra").placeholder = "Escriba su Nueva Contraseña" ;
+    formulario_usar.querySelector("#contra").placeholder = "Escriba su Contraseña";
 
-	id_modificar = id;
-	correo_an = data.correo;
+    id_modificar = id;
+    correo_an = data.correo;
 }
 
-async function modificar(id) {	
-	let datos = new FormData(formulario_usar);
-	
-	// Si confir_contra tiene algo, usamos ese, si no usamos contra. 
-	// Es mejor enviarlo explícitamente como lo tenías.
-	let nueva_contra = formulario_usar.querySelector("#confir_contra").value || formulario_usar.querySelector("#contra").value;
-	let rol_nombre = formulario_usar.querySelector("#rol").selectedOptions[0].textContent;
+async function modificar(id) {  
+    let datos = new FormData(formulario_usar);
+    let nueva_contra = formulario_usar.querySelector("#confir_contra").value || formulario_usar.querySelector("#contra").value;
+    let rol_nombre = formulario_usar.querySelector("#rol").selectedOptions[0].textContent;
 
-	datos.append("id_usuario", id);
-	datos.append("contra", nueva_contra);
-	datos.append("rol_nombre", rol_nombre);
-	datos.append('operacion', 'modificar_usuario');
+    datos.append("id_usuario", id);
+    datos.append("contra", nueva_contra);
+    datos.append("rol_nombre", rol_nombre);
+    datos.append('operacion', 'modificar_usuario');
 
-	let respuesta = await Utilidades.query(datos);
+    let respuesta = await Peticiones.enviar(datos);
 
-	formulario_usar.reset();
- 	modal.hide();
+    formulario_usar.reset();
+    modal.hide();
 
-	if (!respuesta.estatus) {
-		Utilidades.mensaje('error', 'Atención', respuesta.mensaje);
-		return;
-	}
+    if (!respuesta.estatus) {
+        Alertas.mostrar('error', 'Atención', respuesta.mensaje);
+        return;
+    }
 
-	if (respuesta.actual){
-		let nombre = formulario_usar.querySelector("#nombre").value;
-		document.getElementById('boton_accion_usuario').textContent = `Hola, ${nombre} (${rol_nombre})`;
-	}
+    if (respuesta.actual){
+        let nombre = formulario_usar.querySelector("#nombre").value;
+        document.getElementById('boton_accion_usuario').textContent = `Hola, ${nombre} (${rol_nombre})`;
+    }
 
-	boton_formulario.removeAttribute("modificar");
-	boton_formulario.removeAttribute("id_modificar");	
-	boton_formulario.textContent = "Guardar";
-	document.getElementById('titulo_modal').textContent = "Registrar Usuario";
+    boton_formulario.removeAttribute("modificar");
+    boton_formulario.removeAttribute("id_modificar");   
+    boton_formulario.textContent = "Guardar";
+    document.getElementById('titulo_modal').textContent = "Registrar Usuario";
 
-	tabla_usuarios.replaceData();
-	Utilidades.mensaje('success', 'Éxito', 'El registro se ha modificado exitosamente');
+    tabla_usuarios.replaceData();
+    Alertas.mostrar('success', 'Éxito', 'El registro se ha modificado exitosamente');
 }
 
 function eventoEliminar(e){
-	let id = e.target.value || e.target.parentElement.value;
+    let id = e.target.value || e.target.parentElement.value;
 
-	Swal.fire({
-		title: "¿Estás seguro?",
-		text: "¿Está seguro que desea eliminar este Usuario?",
-		showCancelButton: true,
-		confirmButtonText: "Sí, Eliminar",
-		confirmButtonColor: "#e01d22",
-		cancelButtonText: "Cancelar",
-		icon: "warning"
-	}).then((resultado) => {
-		if (resultado.isConfirmed) eliminar(id);				
-	});
+    Swal.fire({
+        title: "¿Estás seguro?",
+        text: "¿Está seguro que desea eliminar este Usuario?",
+        showCancelButton: true,
+        confirmButtonText: "Sí, Eliminar",
+        confirmButtonColor: "#e01d22",
+        cancelButtonText: "Cancelar",
+        icon: "warning"
+    }).then((resultado) => {
+        if (resultado.isConfirmed) eliminar(id);                
+    });
 }
 
 async function eliminar(id) {
-	let datos = new FormData();
-	datos.append("id_usuario", id);
-	datos.append('operacion', 'eliminar');
+    let datos = new FormData();
+    datos.append("id_usuario", id);
+    datos.append('operacion', 'eliminar');
 
-	let respuesta = await Utilidades.query(datos);
-	
-	if (!respuesta.estatus) {
-		Utilidades.mensaje('error', 'Atención', respuesta.mensaje);
-		return;
-	}
+    let respuesta = await Peticiones.enviar(datos);
+    
+    if (!respuesta.estatus) {
+        Alertas.mostrar('error', 'Atención', respuesta.mensaje);
+        return;
+    }
 
-	tabla_usuarios.replaceData();
-	Utilidades.mensaje('success', 'Éxito', 'El registro ha sido eliminado correctamente');
+    tabla_usuarios.replaceData();
+    Alertas.mostrar('success', 'Éxito', 'El registro ha sido eliminado correctamente');
 }
 
 // ============================================================

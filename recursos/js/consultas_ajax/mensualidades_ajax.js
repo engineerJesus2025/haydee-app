@@ -38,11 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.getElementById("modal_mensualidad")?.addEventListener("hide.bs.modal", resetModalMensualidad);
-    document.getElementById("modal_mensualidades_apartamentos")?.addEventListener("shown.bs.modal", () => {
-        if ($.fn.DataTable.isDataTable("#mensualidades_apartamentos")) {
-            $('#mensualidades_apartamentos').DataTable().columns.adjust().draw();
-        }
-    });
 });
 
 // ============================================================
@@ -136,7 +131,7 @@ async function consultarMensualidades() {
         parametrosExtra: { operacion: 'consultar_mensualidades_mes' }
     };
 
-    tablaMensualidades = Utilidades.cargarTabulador("tabla_mensualidad", "", columnas, opcionesExtra);
+    tablaMensualidades = Tablas.cargarTabulador("tabla_mensualidad", "", columnas, opcionesExtra);
     setTimeout(seleccionarMensualidadPorNotificacion, 500);
 
     const inputBusqueda = document.getElementById("busqueda_global");
@@ -177,9 +172,9 @@ async function consultarMensualidades() {
 async function verificarMeses() {
     const formData = new FormData();
 	formData.append('operacion', 'verificar_meses');
-	const respuesta = await Utilidades.query(formData);
+	const respuesta = await Peticiones.enviar(formData);
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Error', respuesta.mensaje);
+        Alertas.mostrar('error', 'Error', respuesta.mensaje);
         return;
     }
 
@@ -219,10 +214,10 @@ async function cargarTablaPresupuestos(fecha) {
     formData.append("operacion", "consultar_presupuestos_mensualidades");
     formData.append("fecha", fecha);
 
-    const respuesta = await Utilidades.query(formData);
+    const respuesta = await Peticiones.enviar(formData);
 
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Error', respuesta.mensaje);
+        Alertas.mostrar('error', 'Error', respuesta.mensaje);
         return;
     }
 
@@ -351,7 +346,7 @@ function mostrarVistaPrevia(fila, fecha) {
 
     // 2. Retrasar Tabulator ligeramente para que el DOM mida bien el ancho
     setTimeout(() => {
-        tablaApartamentos = Utilidades.cargarTabulador("mensualidades_apartamentos", "", columnas, {
+        tablaApartamentos = Tablas.cargarTabulador("mensualidades_apartamentos", "", columnas, {
             parametrosExtra: { operacion: "consultar_mensualidades_apartamentos", fecha: fecha },
             cssClass: "tabla-vista-previa", // Aplica la cabecera blanca
             paginaSize: 10
@@ -396,7 +391,7 @@ async function prepararModificarcion(fila, fecha, ids, idsApartamentos) {
     formData.append("ids_mensualidades", ids);
 
     // [MEJORA] Pasamos 'true' para bloquear la pantalla con el spinner mientras procesa
-    const respuesta = await Utilidades.query(formData, true); 
+    const respuesta = await Peticiones.enviar(formData, true); 
     
     if (respuesta.estatus && respuesta.datos) {
         const presupuestosPorMensualidad = respuesta.datos;
@@ -472,7 +467,7 @@ function recolectarDatosTabla() {
 async function registrarMensualidad() {
     const datos = recolectarDatosTabla();
     if (datos.length === 0) {
-        Utilidades.mensaje('warning', 'Atención', 'No hay mensualidades con montos para registrar');
+        Alertas.mostrar('warning', 'Atención', 'No hay mensualidades con montos para registrar');
         return;
     }
 
@@ -488,21 +483,21 @@ async function registrarMensualidad() {
     formData.append("limite_mensualidad", document.getElementById("dia_limite").value);
     formData.append("datos_apartamentos", JSON.stringify(datos));
 
-    const respuesta = await Utilidades.query(formData, true);
+    const respuesta = await Peticiones.enviar(formData, true);
     if (respuesta.estatus) {
         modalMensualidad.hide();
         tablaMensualidades.replaceData();
         verificarMeses();
-        Utilidades.mensaje('success', 'Éxito', respuesta.mensaje);
+        Alertas.mostrar('success', 'Éxito', respuesta.mensaje);
     } else {
-        Utilidades.mensaje('error', 'Error', respuesta.mensaje);
+        Alertas.mostrar('error', 'Error', respuesta.mensaje);
     }
 }
 
 async function modificarMensualidad() {
     const datos = recolectarDatosTabla();
     if (datos.length === 0) {
-        Utilidades.mensaje('warning', 'Atención', 'No hay mensualidades con montos para modificar');
+        Alertas.mostrar('warning', 'Atención', 'No hay mensualidades con montos para modificar');
         return;
     }
 
@@ -520,13 +515,13 @@ async function modificarMensualidad() {
     formData.append("limite_mensualidad", document.getElementById("dia_limite").value);
     formData.append("datos_apartamentos", JSON.stringify(datos));
 
-    const respuesta = await Utilidades.query(formData, true);
+    const respuesta = await Peticiones.enviar(formData, true);
     if (respuesta.estatus) {
         modalMensualidad.hide();
         tablaMensualidades.replaceData();
-        Utilidades.mensaje('success', 'Éxito', respuesta.mensaje);
+        Alertas.mostrar('success', 'Éxito', respuesta.mensaje);
     } else {
-        Utilidades.mensaje('error', 'Error', respuesta.mensaje);
+        Alertas.mostrar('error', 'Error', respuesta.mensaje);
     }
 }
 
@@ -552,13 +547,13 @@ async function eliminarMensualidad(fecha) {
     formData.append("operacion", "eliminar_mensualidad");
     formData.append("fecha", fecha);
 
-    const respuesta = await Utilidades.query(formData);
+    const respuesta = await Peticiones.enviar(formData);
     if (respuesta.estatus) {
         tablaMensualidades.replaceData();
         verificarMeses();
-        Utilidades.mensaje('success', 'Éxito', respuesta.mensaje);
+        Alertas.mostrar('success', 'Éxito', respuesta.mensaje);
     } else {
-        Utilidades.mensaje('error', 'Error', respuesta.mensaje);
+        Alertas.mostrar('error', 'Error', respuesta.mensaje);
     }
 }
 
@@ -664,8 +659,11 @@ function seleccionarMensualidadPorNotificacion() {
                 const row = this.node();
                 const ids = row.querySelector('.modificar')?.dataset.ids;
                 if (ids && ids.includes(idMensualidad)) {
-                    $(row).addClass('table-primary highlight-row');
-                    $('html, body').animate({ scrollTop: $(row).offset().top - 100 }, 1000);
+                    row.classList.add('table-primary', 'highlight-row');
+                    window.scrollTo({ 
+                        top: row.getBoundingClientRect().top + window.scrollY - 100, 
+                        behavior: 'smooth' 
+                    });
                     return false;
                 }
             });

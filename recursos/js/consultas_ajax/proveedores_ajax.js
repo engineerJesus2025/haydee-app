@@ -63,7 +63,7 @@ async function consultar() {
         }
     ];
 
-    tabla_proveedores = Utilidades.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consulta' } }); // NOTA: modulos y permisos usan 'consultar', revisa el tuyo.
+    tabla_proveedores = Tablas.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consulta' } }); // NOTA: modulos y permisos usan 'consultar', revisa el tuyo.
 
     const inputBusqueda = document.getElementById("busqueda_global");
     if (inputBusqueda) {
@@ -88,13 +88,13 @@ async function registrar() {
     datos.set('rif', tipoDoc + rifNum);
     datos.set('operacion', 'registrar');
 
-    const respuesta = await Utilidades.query(datos, true);
+    const respuesta = await Peticiones.enviar(datos, "", true);
     if (respuesta?.estatus) {
         modal.hide();
         tabla_proveedores.replaceData();
-        Utilidades.mensaje('success', 'Éxito', 'Proveedor registrado correctamente.');
+        Alertas.mostrar('success', 'Éxito', 'Proveedor registrado correctamente.');
     } else {
-        Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo registrar.');
+        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo registrar.');
     }
 }
 
@@ -105,9 +105,9 @@ async function prepararFormulario(e) {
     datos.append('id_proveedor', id);
     datos.append('operacion', 'consultar_proveedor');
 
-    const respuesta = await Utilidades.query(datos);
+    const respuesta = await Peticiones.enviar(datos);
     if (!respuesta?.estatus) {
-        Utilidades.mensaje('error', 'Error', 'No se pudo cargar el proveedor.');
+        Alertas.mostrar('error', 'Error', 'No se pudo cargar el proveedor.');
         return;
     }
 
@@ -138,13 +138,13 @@ async function modificar() {
     datos.set('id_proveedor', id);
     datos.set('operacion', 'modificar');
 
-    const respuesta = await Utilidades.query(datos, true);
+    const respuesta = await Peticiones.enviar(datos, "", true);
     if (respuesta?.estatus) {
         modal.hide();
         tabla_proveedores.replaceData();
-        Utilidades.mensaje('success', 'Éxito', 'Proveedor actualizado correctamente.');
+        Alertas.mostrar('success', 'Éxito', 'Proveedor actualizado correctamente.');
     } else {
-        Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo actualizar.');
+        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo actualizar.');
     }
 }
 
@@ -153,12 +153,12 @@ async function eliminar(id) {
     datos.append('id_proveedor', id);
     datos.append('operacion', 'eliminar');
 
-    const respuesta = await Utilidades.query(datos);
+    const respuesta = await Peticiones.enviar(datos);
     if (respuesta?.estatus) {
         tabla_proveedores.replaceData();
-        Utilidades.mensaje('success', 'Éxito', 'Proveedor eliminado correctamente.');
+        Alertas.mostrar('success', 'Éxito', 'Proveedor eliminado correctamente.');
     } else {
-        Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo eliminar.');
+        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo eliminar.');
     }
 }
 

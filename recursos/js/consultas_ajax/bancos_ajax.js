@@ -42,7 +42,7 @@ function envio(operacion) {
     } else if (operacion === "Registrar") {
         registrar();
     } else {
-        Utilidades.mensaje('error', 'Atención', 'Ha ocurrido un error durante la operación, inténtelo nuevamente');
+        Alertas.mostrar('error', 'Atención', 'Ha ocurrido un error durante la operación, inténtelo nuevamente');
     }
 }
 
@@ -63,37 +63,6 @@ function crearBotones(id) {
     html += `</div>`;
     div.innerHTML = html;
     return div;
-}
-
-/**
- * Inicializa DataTable con los datos de bancos
- */
-async function consultar() {
-    const columnas = [
-        { data: "nombre_banco" },
-        { data: "codigo" },
-        { data: "numero_cuenta" },
-        { data: "telefono_afiliado" },
-        { data: "rif" },
-        { 
-            data: null,
-            render: (row) => crearBotones(row.id_banco).innerHTML
-        }
-    ];
-
-    const parametrosConsulta = (data) => {
-        data.operacion = 'consulta';
-    };
-
-    const configuracionFila = (row, data) => {
-        row.id = `fila-${data.id_banco}`;
-        // Asignar evento modificar
-        row.querySelector(".modificar")?.addEventListener('click', preparar_formulario);
-        // Asignar evento eliminar
-        row.querySelector(".eliminar")?.addEventListener('click', eventoEliminar);
-    };
-
-    tabla_bancos = Utilidades.crearDataTable('tabla_banco', columnas, parametrosConsulta, configuracionFila);
 }
 
 async function consultar() {
@@ -155,7 +124,7 @@ async function consultar() {
         }
     ];
     
-    tabla_bancos = Utilidades.cargarTabulador(contenedor.id, "", columnas);
+    tabla_bancos = Tablas.cargarTabulador(contenedor.id, "", columnas);
 
     // 5. Buscador Global Dinámico
     const inputBusqueda = document.getElementById("busqueda_global");
@@ -181,10 +150,10 @@ async function prepararFormulario(e) {
     datos.append("id_banco", id);
     datos.append('operacion', 'consulta_especifica');
 
-    let respuesta = await Utilidades.query(datos);	
+    let respuesta = await Peticiones.enviar(datos);	
     
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Error', respuesta.mensaje);
+        Alertas.mostrar('error', 'Error', respuesta.mensaje);
         return;
     }
 
@@ -229,18 +198,18 @@ async function registrar() {
     datos.set('rif', tipo + rifNum);
     datos.append('operacion', 'registrar');
     
-    let respuesta = await Utilidades.query(datos);
+    let respuesta = await Peticiones.enviar(datos);
 
     modal.hide();
     formulario_usar.reset();
 
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Atención', respuesta.mensaje);
+        Alertas.mostrar('error', 'Atención', respuesta.mensaje);
         return;
     }
 
     tabla_bancos.replaceData();
-    Utilidades.mensaje('success', 'Éxito', 'El registro se ha realizado exitosamente');
+    Alertas.mostrar('success', 'Éxito', 'El registro se ha realizado exitosamente');
 }
 
 /**
@@ -254,13 +223,13 @@ async function modificar(id) {
     datos.append("id_banco", id);
     datos.append('operacion', 'modificar');
 
-    let respuesta = await Utilidades.query(datos);
+    let respuesta = await Peticiones.enviar(datos);
 
     formulario_usar.reset();
     modal.hide();
 
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Atención', respuesta.mensaje);
+        Alertas.mostrar('error', 'Atención', respuesta.mensaje);
         return;
     }
 
@@ -270,7 +239,7 @@ async function modificar(id) {
     document.getElementById('titulo_modal').textContent = "Registrar Banco";
 
     tabla_bancos.replaceData();
-    Utilidades.mensaje('success', 'Éxito', 'El registro se ha modificado exitosamente');
+    Alertas.mostrar('success', 'Éxito', 'El registro se ha modificado exitosamente');
 }
 
 /**
@@ -300,15 +269,15 @@ async function eliminar(id) {
     datos.append("id_banco", id);
     datos.append('operacion', 'eliminar');
 
-    let respuesta = await Utilidades.query(datos);
+    let respuesta = await Peticiones.enviar(datos);
     
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Atención', respuesta.mensaje);
+        Alertas.mostrar('error', 'Atención', respuesta.mensaje);
         return;
     }
 
     tabla_bancos.replaceData();
-    Utilidades.mensaje('success', 'Éxito', 'El registro ha sido eliminado correctamente');
+    Alertas.mostrar('success', 'Éxito', 'El registro ha sido eliminado correctamente');
 }
 
 // ============================================================

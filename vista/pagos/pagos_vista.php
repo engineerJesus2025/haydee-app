@@ -28,7 +28,7 @@
                             <div class="card p-4">
                                 <div class="d-flex justify-content-between align-items-center mb-4">
                                     <?php if (Sesiones::tienePermiso(GESTIONAR_PAGOS, REGISTRAR)) : ?>
-                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_usuario">Nuevo usuario</button>
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_pagos">Nuevo Pago</button>
                                     <?php else: ?>
                                         <div></div> <?php endif; ?>
                                     

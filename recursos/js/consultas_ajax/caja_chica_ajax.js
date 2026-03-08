@@ -150,7 +150,7 @@ async function consultarCajasChicas() {
     let datos = new FormData();
     datos.append("operacion", "consultar_cajas_chicas");
 
-    let respuesta = await Utilidades.query(datos);
+    let respuesta = await Peticiones.enviar(datos);
     if (!respuesta.datos || respuesta.datos.length === 0) {
         document.getElementById("span_caja_activa").textContent = "No hay cajas registradas";
         return;
@@ -200,12 +200,12 @@ async function consultarCajasChicas() {
                     select.classList.add('caja-highlight');
                     
                     // Mostrar mensaje informativo
-                    // Utilidades.mensaje('warning', 'Saldo Bajo', 'Esta caja requiere atención pronto.');
+                    // Alertas.mostrar('warning', 'Saldo Bajo', 'Esta caja requiere atención pronto.');
                     
                     // Opcional: hacer scroll hacia el select
                     select.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 } else {
-                    Utilidades.mensaje('error', 'Error', 'La caja notificada no existe.');
+                    Alertas.mostrar('error', 'Error', 'La caja notificada no existe.');
                 }
             }
         }, 100);
@@ -260,7 +260,7 @@ function inicializarTablaMovimientos() {
         }
     };
 
-    tabla_movimientos = Utilidades.cargarTabulador(contenedor.id, "", columnas, opcionesExtra);
+    tabla_movimientos = Tablas.cargarTabulador(contenedor.id, "", columnas, opcionesExtra);
 
     const inputBusqueda = document.getElementById("busqueda_global");
     if (inputBusqueda) {
@@ -284,9 +284,9 @@ async function registrar() {
     datos.append("monto", monto);
     datos.append("operacion", "registrar_movimiento");
 
-    let respuesta = await Utilidades.query(datos);
+    let respuesta = await Peticiones.enviar(datos);
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Atención', respuesta.mensaje);
+        Alertas.mostrar('error', 'Atención', respuesta.mensaje);
         return;
     }
 
@@ -294,7 +294,7 @@ async function registrar() {
     actualizarSaldos();
     modal_registro_gastos.hide();
     tabla_movimientos.replaceData();
-    Utilidades.mensaje('success', 'Éxito', 'Gasto registrado correctamente');
+    Alertas.mostrar('success', 'Éxito', 'Gasto registrado correctamente');
 }
 
 // ========== PREPARAR FORMULARIO PARA EDICIÓN ==========
@@ -305,9 +305,9 @@ async function prepararFormulario(e) {
     datos.append("id_movimiento_caja", id);
     datos.append("operacion", "consultar_movimiento");
 
-    let respuesta = await Utilidades.query(datos);
+    let respuesta = await Peticiones.enviar(datos);
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Error', respuesta.mensaje);
+        Alertas.mostrar('error', 'Error', respuesta.mensaje);
         return;
     }
 
@@ -353,9 +353,9 @@ async function modificar(id) {
     // *** IMPORTANTE: El controlador debe tener un case 'modificar_movimiento' que llame a _modificar_movimiento.
     // Por ahora, lo simulamos. En la versión final, asegurar que existe.
 
-    let respuesta = await Utilidades.query(datos);
+    let respuesta = await Peticiones.enviar(datos);
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Atención', respuesta.mensaje);
+        Alertas.mostrar('error', 'Atención', respuesta.mensaje);
         return;
     }
 
@@ -367,7 +367,7 @@ async function modificar(id) {
     document.getElementById('titulo_modal_registro_gasto').textContent = "Registrar Gasto de Caja";
 
     tabla_movimientos.replaceData();
-    Utilidades.mensaje('success', 'Éxito', 'Gasto modificado correctamente');
+    Alertas.mostrar('success', 'Éxito', 'Gasto modificado correctamente');
 }
 
 // ========== ELIMINAR GASTO ==========
@@ -392,15 +392,15 @@ async function eliminar(id) {
     datos.append("id_movimiento_caja", id);
     datos.append("operacion", "eliminar_movimiento");
 
-    let respuesta = await Utilidades.query(datos);
+    let respuesta = await Peticiones.enviar(datos);
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Atención', respuesta.mensaje);
+        Alertas.mostrar('error', 'Atención', respuesta.mensaje);
         return;
     }
 
     actualizarSaldos();
     tabla_movimientos.replaceData();
-    Utilidades.mensaje('success', 'Éxito', 'Gasto eliminado correctamente');
+    Alertas.mostrar('success', 'Éxito', 'Gasto eliminado correctamente');
 }
 
 // ========== REPONER CAJA ==========
@@ -413,15 +413,15 @@ async function reponerCaja() {
     datos.append("monto", monto);
     datos.append("operacion", "reponer_caja");
 
-    let respuesta = await Utilidades.query(datos);
+    let respuesta = await Peticiones.enviar(datos);
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Atención', respuesta.mensaje);
+        Alertas.mostrar('error', 'Atención', respuesta.mensaje);
         return;
     }
 
     modal_reposicion_caja.hide();
     consultarCajasChicas(); // Recargar cajas para actualizar saldos
-    Utilidades.mensaje('success', 'Éxito', 'Reposición realizada correctamente');
+    Alertas.mostrar('success', 'Éxito', 'Reposición realizada correctamente');
 }
 
 // ========== modificar DESCRIPCIÓN DE CAJA ==========
@@ -434,15 +434,15 @@ async function modificarObservacion() {
     datos.append("descripcion", descripcion);
     datos.append("operacion", "modificar_descripcion");
 
-    let respuesta = await Utilidades.query(datos);
+    let respuesta = await Peticiones.enviar(datos);
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Atención', respuesta.mensaje);
+        Alertas.mostrar('error', 'Atención', respuesta.mensaje);
         return;
     }
 
     modal_observacion.hide();
     consultarCajasChicas(); // Recargar para actualizar descripción en el objeto
-    Utilidades.mensaje('success', 'Éxito', 'Descripción actualizada');
+    Alertas.mostrar('success', 'Éxito', 'Descripción actualizada');
 }
 
 // ========== ACTUALIZAR SALDOS MOSTRADOS ==========
@@ -467,7 +467,7 @@ function envio(operacion) {
     } else if (operacion === "reponer_caja") {
         reponerCaja();
     } else {
-        Utilidades.mensaje('error', 'Atención', 'Operación no válida');
+        Alertas.mostrar('error', 'Atención', 'Operación no válida');
     }
 }
 

@@ -38,6 +38,14 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('vista_imagen_detalles').style = "max-height: 300px;";
         document.getElementById('mensaje_error_imagen_detalles').classList.add('d-none')
     });
+
+    // Delegación de eventos para el cambio de Método de Pago
+    contenedorDetalles.addEventListener('change', (e) => {
+        // Verificamos si el elemento que cambió fue un select de método de pago
+        if (e.target.classList.contains('metodo_pago')) {
+            manejarVisibilidadBancaria(e.target);
+        }
+    });
 });
 
 // ============================================================
@@ -83,7 +91,7 @@ async function consultar() {
         }       
     ];
 
-    tabla_gastos = Utilidades.cargarTabulador("tabla_gastos", "", columnas);
+    tabla_gastos = Tablas.cargarTabulador("tabla_gastos", "", columnas);
 
     // 3. BUSCADOR
     const inputBusqueda = document.getElementById("busqueda_global");
@@ -161,16 +169,16 @@ async function registrar() {
     const formData = recolectarDatosFormulario();
     formData.append('operacion', 'registrar');
 
-    const respuesta = await Utilidades.query(formData, true);
+    const respuesta = await Peticiones.enviar(formData,'', true);
 
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Atención', respuesta.mensaje);
+        Alertas.mostrar('error', 'Atención', respuesta.mensaje);
         return;
     }
 
     modalGasto.hide();
     tabla_gastos.replaceData();
-    Utilidades.mensaje('success', 'Éxito', 'Gasto registrado correctamente');
+    Alertas.mostrar('success', 'Éxito', 'Gasto registrado correctamente');
 }
 
 /**
@@ -182,10 +190,10 @@ async function prepararFormularioEdicion(e) {
     datos.append('id_gasto', id);
     datos.append('operacion', 'consulta_especifica');
 
-    const respuesta = await Utilidades.query(datos, true);
+    const respuesta = await Peticiones.enviar(datos, '',true);
 
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Error', respuesta.mensaje);
+        Alertas.mostrar('error', 'Error', respuesta.mensaje);
         return;
     }
 
@@ -295,16 +303,16 @@ async function modificar(id) {
     formData.append('id_gasto', id);
     formData.append('operacion', 'modificar');
 
-    const respuesta = await Utilidades.query(formData, true);
+    const respuesta = await Peticiones.enviar(formData, '',true);
 
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Atención', respuesta.mensaje);
+        Alertas.mostrar('error', 'Atención', respuesta.mensaje);
         return;
     }
 
     modalGasto.hide();
     tabla_gastos.replaceData();
-    Utilidades.mensaje('success', 'Éxito', 'Gasto modificado correctamente');
+    Alertas.mostrar('success', 'Éxito', 'Gasto modificado correctamente');
 }
 
 // ============================================================
@@ -320,10 +328,10 @@ async function mostrarVistaPrevia(e) {
     datos.append('id_gasto', id);
     datos.append('operacion', 'consulta_especifica');
 
-    const respuesta = await Utilidades.query(datos);
+    const respuesta = await Peticiones.enviar(datos);
 
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Error', respuesta.mensaje);
+        Alertas.mostrar('error', 'Error', respuesta.mensaje);
         return;
     }
 
@@ -346,10 +354,10 @@ async function cargarDetallesEnTabla(idGasto) {
     datos.append('id_gasto', idGasto);
     datos.append('operacion', 'consultar_detalles');
 
-    const respuesta = await Utilidades.query(datos);
+    const respuesta = await Peticiones.enviar(datos);
 
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Error', respuesta.mensaje);
+        Alertas.mostrar('error', 'Error', respuesta.mensaje);
         return;
     }
 
@@ -378,7 +386,7 @@ async function cargarDetallesEnTabla(idGasto) {
         }
     ];
 
-    Utilidades.cargarTabuladorEstatico(
+    Tablas.cargarTabuladorEstatico(
         "tabla_detalles_gastos", 
         detalles, 
         columnas, 
@@ -394,10 +402,10 @@ async function mostrarVistaPreviaDetalle(idDetalle) {
     datos.append('id_detalle_gasto', idDetalle);
     datos.append('operacion', 'consulta_especifica_detalles');
 
-    const respuesta = await Utilidades.query(datos);
+    const respuesta = await Peticiones.enviar(datos);
 
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Error', respuesta.mensaje);
+        Alertas.mostrar('error', 'Error', respuesta.mensaje);
         return;
     }
 
@@ -440,15 +448,15 @@ async function eliminar(id) {
     datos.append('id_gasto', id);
     datos.append('operacion', 'eliminar');
 
-    const respuesta = await Utilidades.query(datos);
+    const respuesta = await Peticiones.enviar(datos);
 
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Atención', respuesta.mensaje);
+        Alertas.mostrar('error', 'Atención', respuesta.mensaje);
         return;
     }
 
     tabla_gastos.replaceData();
-    Utilidades.mensaje('success', 'Éxito', 'Gasto eliminado correctamente');
+    Alertas.mostrar('success', 'Éxito', 'Gasto eliminado correctamente');
 }
 
 // ============================================================
@@ -485,20 +493,51 @@ function agregarDetalle() {
     contenedorDetalles.appendChild(nuevoDetalle);
 }
 
+// Nueva función para manejar la visibilidad
+function manejarVisibilidadBancaria(selectMetodo) {
+    // Buscar el contenedor padre de esta fila/bloque específico
+    const bloque = selectMetodo.closest('.row'); // Ajusta '.row' si tu contenedor de bloque usa otra clase
+    
+    // Obtener los contenedores a ocultar/mostrar
+    const camposBancarios = bloque.querySelectorAll('.grupo_bancario');
+    const campoImagen = bloque.querySelector('.grupo_imagen');
+    
+    // Si es transferencia o pago móvil, mostramos. Si no, ocultamos.
+    const requiereBanco = (selectMetodo.value === 'Transferencia' || selectMetodo.value === 'Pago Movil');
+
+    if (requiereBanco) {
+        camposBancarios.forEach(campo => campo.classList.remove('d-none'));
+        if(campoImagen) campoImagen.classList.remove('d-none');
+    } else {
+        camposBancarios.forEach(campo => campo.classList.add('d-none'));
+        if(campoImagen) campoImagen.classList.add('d-none');
+        
+        // Opcional pero recomendado: Limpiar los valores ocultos para evitar enviar basura al servidor
+        const inputRef = bloque.querySelector('.referencia');
+        const selectBanco = bloque.querySelector('.banco');
+        const inputImg = bloque.querySelector('.imagen');
+        
+        if(inputRef) inputRef.value = '';
+        if(selectBanco) selectBanco.value = '';
+        if(inputImg) inputImg.value = '';
+    }
+}
+
 /**
  * Actualiza la visibilidad de los campos bancarios según el método de pago
  */
 function actualizarVisibilidadCampos(selectMetodo) {
     const bloque = selectMetodo.closest('.detalle-gasto');
-    const grupoRef = bloque.querySelector('.grupo_referencia');
-    const grupoBanco = bloque.querySelector('.grupo_banco');
     const grupoImg = bloque.querySelector('.grupo_imagen');
+    const grupoBanco = bloque.querySelectorAll('.grupo_bancario');
     const valor = selectMetodo.value.toLowerCase();
 
     const mostrar = (valor === 'transferencia' || valor === 'pago movil');
 
-    grupoRef.classList.toggle('d-none', !mostrar);
-    grupoBanco.classList.toggle('d-none', !mostrar);
+    grupoBanco.forEach(input=>{
+        input.classList.toggle('d-none', !mostrar);
+    });
+
     grupoImg.classList.toggle('d-none', !mostrar);
 
     // Habilitar/deshabilitar campos para que no se envíen si están ocultos

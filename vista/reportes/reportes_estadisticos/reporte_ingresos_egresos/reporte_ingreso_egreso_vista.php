@@ -34,7 +34,7 @@
                             <h4 class="text-center">Seleccione los filtros para el reporte:</h4>
                             <form class="p-3 row justify-content-center" id="form_reporte">
                                 <div class="col-sm-8 mb-3">
-                                    <label for="filtro">Buscar resultados a partir de: <spam class="text-danger">*</spam></label>
+                                    <label for="filtro">Buscar resultados a partir de:</label>
                                     <div class="input-group mb-3">
                                         <span class="input-group-text" id="basic-addon1"><i class="bi bi-calendar-week"></i></span>
                                         <select class="form-select" aria-label="Default select example" name="filtro" id="filtro" form="form_reporte">                
@@ -58,7 +58,7 @@
                                         <input type="date" class="form-control" name="fecha_fin" id="fecha_fin">
                                     </div>
                                 </div>
-                                <label class="text-center mb-2">Filtros: <spam class="text-danger">*</spam></label>
+                                <label class="text-center mb-2">Filtros:</label>
                                 <div class="mb-sm-5 mt-3 mt-sm-0 form-check col-sm-5">
                                     <label class="form-check-label" for="balance">Elegir Balance:</label>
                                     <input type="checkbox" class="form-check-input" id="balance">
@@ -94,7 +94,7 @@
                                     </select>
                                 </div>
                                 <div class="mt-4 mt-sm-0 form-check col-12 text-center">
-                                    <label>¿Como deseas mostrar los datos? <spam class="text-danger">*</spam></label>
+                                    <label>¿Como deseas mostrar los datos?</label>
                                 </div>
                                 <div class="mb-sm-5 col-sm-8 col-lg-5 mb-4 mb-sm-0">
                                     <select class="form-select" id="select_mostrar_datos" form="form_reporte">

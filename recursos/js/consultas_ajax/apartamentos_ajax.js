@@ -99,7 +99,7 @@ async function consultarApartamentos() {
         }
     };
 
-    data_table_apartamentos = Utilidades.cargarTabulador("tabla_apartamentos", "", columnas, opcionesExtra);
+    data_table_apartamentos = Tablas.cargarTabulador("tabla_apartamentos", "", columnas, opcionesExtra);
 
     // 4. BUSCADOR GLOBAL
     const inputBusqueda = document.getElementById("busqueda_global");
@@ -116,13 +116,13 @@ async function registrarApartamento() {
     const datos = new FormData(formApartamento);
     datos.set('operacion', 'registrar');
 
-    const respuesta = await Utilidades.query(datos, true);
+    const respuesta = await Peticiones.enviar(datos, "", true);
     if (respuesta?.estatus) {
         modalApartamento.hide();
         data_table_apartamentos.replaceData();
-        Utilidades.mensaje('success', 'Éxito', 'Apartamento registrado correctamente.');
+        Alertas.mostrar('success', 'Éxito', 'Apartamento registrado correctamente.');
     } else {
-        Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo registrar.');
+        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo registrar.');
     }
 }
 
@@ -132,9 +132,9 @@ async function prepararEdicion(e) {
     datos.append('id_apartamento', id);
     datos.append('operacion', 'consulta_especifica');
 
-    const respuesta = await Utilidades.query(datos);
+    const respuesta = await Peticiones.enviar(datos);
     if (!respuesta?.estatus) {
-        Utilidades.mensaje('error', 'Error', 'No se pudo cargar el apartamento.');
+        Alertas.mostrar('error', 'Error', 'No se pudo cargar el apartamento.');
         return;
     }
 
@@ -160,13 +160,13 @@ async function modificarApartamento() {
     datos.set('id_apartamento', id);
     datos.set('operacion', 'modificar');
 
-    const respuesta = await Utilidades.query(datos, true);
+    const respuesta = await Peticiones.enviar(datos, "", true);
     if (respuesta?.estatus) {
         modalApartamento.hide();
         data_table_apartamentos.replaceData();
-        Utilidades.mensaje('success', 'Éxito', 'Apartamento actualizado correctamente.');
+        Alertas.mostrar('success', 'Éxito', 'Apartamento actualizado correctamente.');
     } else {
-        Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo actualizar.');
+        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo actualizar.');
     }
 }
 
@@ -175,12 +175,12 @@ async function eliminarApartamento(id) {
     datos.append('id_apartamento', id);
     datos.append('operacion', 'eliminar');
 
-    const respuesta = await Utilidades.query(datos);
+    const respuesta = await Peticiones.enviar(datos);
     if (respuesta?.estatus) {
         data_table_apartamentos.replaceData();
-        Utilidades.mensaje('success', 'Éxito', 'Apartamento eliminado correctamente.');
+        Alertas.mostrar('success', 'Éxito', 'Apartamento eliminado correctamente.');
     } else {
-        Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo eliminar.');
+        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo eliminar.');
     }
 }
 
@@ -203,10 +203,10 @@ async function mostrarVistaPrevia(e) {
     const datosApto = new FormData();
     datosApto.append('id_apartamento', id);
     datosApto.append('operacion', 'consulta_especifica');
-    const respApto = await Utilidades.query(datosApto);
+    const respApto = await Peticiones.enviar(datosApto);
     if (respApto?.estatus) {
         const apto = respApto.apartamento;
-        document.getElementById('apt_nro').textContent = apto.nro_apartamento || 'N/A';
+        document.getElementById('apartamento_nro_visual').value = apto.nro_apartamento || 'N/A';
         document.getElementById('apt_porcentaje').textContent = apto.porcentaje_participacion || '0';
         document.getElementById('apt_gas').textContent = apto.gas == 1 ? 'Sí' : 'No';
         document.getElementById('apt_agua').textContent = apto.agua == 1 ? 'Sí' : 'No';
@@ -292,7 +292,7 @@ function initTablaHabitantes() {
         paginaSize: 5
     };
 
-    data_table_habitantes = Utilidades.cargarTabulador("tabla_habitantes", "", columnas, opcionesExtra);
+    data_table_habitantes = Tablas.cargarTabulador("tabla_habitantes", "", columnas, opcionesExtra);
 }
 
 // ============================================
@@ -303,13 +303,13 @@ async function registrarHabitante() {
     datos.set('operacion', 'registrar_habitantes');
     datos.set('apartamento_id', id_apartamento_seleccionado);
 
-    const respuesta = await Utilidades.query(datos, true);
+    const respuesta = await Peticiones.enviar(datos, "", true);
     if (respuesta?.estatus) {
         modalHabitante.hide();
         data_table_habitantes.replaceData();
-        Utilidades.mensaje('success', 'Éxito', 'Habitante registrado correctamente.');
+        Alertas.mostrar('success', 'Éxito', 'Habitante registrado correctamente.');
     } else {
-        Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo registrar.');
+        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo registrar.');
     }
 }
 
@@ -319,9 +319,9 @@ async function prepararEdicionHabitante(e) {
     datos.append('id_habitante', id);
     datos.append('operacion', 'consulta_especifica_habitante');
 
-    const respuesta = await Utilidades.query(datos);
+    const respuesta = await Peticiones.enviar(datos);
     if (!respuesta?.estatus) {
-        Utilidades.mensaje('error', 'Error', 'No se pudo cargar el habitante.');
+        Alertas.mostrar('error', 'Error', 'No se pudo cargar el habitante.');
         return;
     }
 
@@ -335,6 +335,7 @@ async function prepararEdicionHabitante(e) {
     formHabitantes.querySelector('#fecha_nacimiento').value = data.fecha_nacimiento;
     formHabitantes.querySelector('#sexo').value = data.sexo;
     formHabitantes.querySelector('#apartamento_id').value = data.apartamento_id;
+    formHabitantes.querySelector('#apartamento_nro_visual').value = data.apartamento;
     formHabitantes.querySelector('#tipo_vinculo').value = data.tipo_vinculo;
 
     // Guardar valores originales para comparar en validaciones
@@ -355,13 +356,13 @@ async function modificarHabitante() {
     datos.set('operacion', 'modificar_habitantes');
     datos.set('apartamento_id', id_apartamento_seleccionado);
 
-    const respuesta = await Utilidades.query(datos, true);
+    const respuesta = await Peticiones.enviar(datos, "", true);
     if (respuesta?.estatus) {
         modalHabitante.hide();
         data_table_habitantes.replaceData();
-        Utilidades.mensaje('success', 'Éxito', 'Habitante actualizado correctamente.');
+        Alertas.mostrar('success', 'Éxito', 'Habitante actualizado correctamente.');
     } else {
-        Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo actualizar.');
+        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo actualizar.');
     }
 }
 
@@ -370,12 +371,12 @@ async function eliminarHabitante(id) {
     datos.append('id_habitante', id);
     datos.append('operacion', 'eliminar_habitantes');
 
-    const respuesta = await Utilidades.query(datos);
+    const respuesta = await Peticiones.enviar(datos);
     if (respuesta?.estatus) {
         data_table_habitantes.replaceData();
-        Utilidades.mensaje('success', 'Éxito', 'Habitante eliminado correctamente.');
+        Alertas.mostrar('success', 'Éxito', 'Habitante eliminado correctamente.');
     } else {
-        Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo eliminar.');
+        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo eliminar.');
     }
 }
 
@@ -385,9 +386,9 @@ async function mostrarVistaPreviaHabitante(e) {
     datos.append('id_habitante', id);
     datos.append('operacion', 'consulta_especifica_habitante');
 
-    const respuesta = await Utilidades.query(datos);
+    const respuesta = await Peticiones.enviar(datos);
     if (!respuesta?.estatus) {
-        Utilidades.mensaje('error', 'Error', 'No se pudo cargar el detalle del habitante.');
+        Alertas.mostrar('error', 'Error', 'No se pudo cargar el detalle del habitante.');
         return;
     }
 

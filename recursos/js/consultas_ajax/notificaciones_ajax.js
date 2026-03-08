@@ -19,7 +19,7 @@ async function consultar() {
         { title: "LEÍDO", field: "leido", formatter: formatoLeido, minWidth: 100 }
     ];
 
-    tabla_notificaciones = Utilidades.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consultar' } });
+    tabla_notificaciones = Tablas.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consultar' } });
 
     const inputBusqueda = document.getElementById("busqueda_global");
     if (inputBusqueda) {

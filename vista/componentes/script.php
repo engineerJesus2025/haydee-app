@@ -1,14 +1,16 @@
-<script src="<?php echo URL_BASE; ?>recursos/bootstrap/js/popper.min.js"></script>
-<script src="<?php echo URL_BASE; ?>recursos/bootstrap/js/bootstrap.bundle.min.js"></script>
-<script src="<?php echo URL_BASE; ?>recursos/bootstrap/js/jquery.min.js"></script>
-<script src="<?php echo URL_BASE; ?>recursos/bootstrap/js/jquery.dataTables.min.js"></script>
-<script src="<?php echo URL_BASE; ?>recursos/bootstrap/js/select2.full.min.js"></script>
-<script src="<?php echo URL_BASE; ?>recursos/bootstrap/js/dataTables.bootstrap5.min.js"></script>
-<script src="<?php echo URL_BASE; ?>recursos/bootstrap/js/sweetalert2.js"></script>
-<script src="<?php echo URL_BASE; ?>recursos/bootstrap/js/tabulator.min.js"></script>
-<script src="<?php echo URL_BASE; ?>recursos/js/utilidades.js"></script>
-<script src="<?php echo URL_BASE; ?>recursos/js/validaciones.js"></script>
-<script src="<?php echo URL_BASE; ?>recursos/js/formatoFechas.js"></script>
+<!-- Dependencias -->
+<script src="<?php echo URL_BASE; ?>recursos/dependencias/bootstrap/bootstrap.bundle.min.js"></script>
+<script src="<?php echo URL_BASE; ?>recursos/dependencias/sweetalert2/sweetalert2.js"></script>
+<script src="<?php echo URL_BASE; ?>recursos/dependencias/tabulator/tabulator.min.js"></script>
+<!-- Helpers -->
+<script src="<?php echo URL_BASE; ?>recursos/js/ayuda/Patrones.js"></script>
+<script src="<?php echo URL_BASE; ?>recursos/js/ayuda/Alertas.js"></script>
+<script src="<?php echo URL_BASE; ?>recursos/js/ayuda/Peticiones.js"></script>
+<script src="<?php echo URL_BASE; ?>recursos/js/ayuda/EstadoInputs.js"></script>
+<script src="<?php echo URL_BASE; ?>recursos/js/ayuda/Validador.js"></script>
+<script src="<?php echo URL_BASE; ?>recursos/js/ayuda/Tablas.js"></script>
+<script src="<?php echo URL_BASE; ?>recursos/js/ayuda/FormatoFechas.js"></script>
+<!-- Script personalizados globales -->
 <script src="<?php echo URL_BASE; ?>recursos/js/header.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/js/notificaciones.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/js/driver.js"></script>

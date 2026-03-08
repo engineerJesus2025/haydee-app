@@ -1,52 +1,45 @@
-$(document).ready(function() {
-    const campos = [
-        { 
-            selector: '#nombre_proveedor', 
-            regex: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ() ]{3,50}$/, 
-            mensaje: 'Solo letras, entre 3 y 50 caracteres.',
-            keyPressRegex: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ() ]$/i
-        },
-        { 
-            selector: '#servicio', 
-            regex: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]{3,30}$/, 
-            mensaje: 'Solo letras, entre 3 y 30 caracteres.',
-            keyPressRegex: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]$/i
-        },
-        { 
-            selector: '#direccion', 
-            regex: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9,.\-#° ]{3,100}$/, 
-            mensaje: 'Dirección inválida.',
-            keyPressRegex: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9,.\-#° ]$/i
-        }
-    ];
+/**
+ * proveedores_validar.js
+ * Dependencias: Validador.js, Patrones.js, EstadoInputs.js, Peticiones.js, Alertas.js
+ */
 
-    campos.forEach(c => {
-        $(c.selector).on('keypress', e => Validaciones.keyPress(c.keyPressRegex, e));
-        $(c.selector).on('keyup', function() {
-            Validaciones.campo(this, c.regex, c.mensaje);
-        });
-    });
+document.addEventListener("DOMContentLoaded", function() {
+    
+    const inputNombre = document.querySelector('#nombre_proveedor');
+    const inputServicio = document.querySelector('#servicio');
+    const inputDireccion = document.querySelector('#direccion');
+    const inputRif = document.querySelector('#rif');
+    const selectDocumento = document.querySelector('#tipo_documento');
 
-    $('#rif').on('keypress', e => {
-        if (!/[0-9]/.test(String.fromCharCode(e.which))) e.preventDefault();
-    });
+    // Validaciones en tiempo real (keypress y keyup)
+    inputNombre.addEventListener('keypress', e => Validador.bloquearTeclasInvalidas(e, Patrones.teclasLetras));
+    inputNombre.addEventListener('keyup', e => Validador.evaluarInput(e.target, Patrones.textoMedio, 'Solo letras, entre 3 y 50 caracteres.'));
 
-    $('#rif').on('keyup', function() {
-        Validaciones.campo(this, /^[0-9]{7,9}$/, 'Debe tener entre 7 y 9 dígitos.');
-    });
+    inputServicio.addEventListener('keypress', e => Validador.bloquearTeclasInvalidas(e, Patrones.teclasLetras));
+    inputServicio.addEventListener('keyup', e => Validador.evaluarInput(e.target, Patrones.textoCorto, 'Solo letras, entre 3 y 30 caracteres.'));
 
-    $('#tipo_documento').on('change', function() {
-        const valido = Validaciones.campo(this, /^[VEJG]$/, 'Tipo de documento inválido');
+    inputDireccion.addEventListener('keypress', e => Validador.bloquearTeclasInvalidas(e, Patrones.teclasDireccion));
+    inputDireccion.addEventListener('keyup', e => Validador.evaluarInput(e.target, Patrones.direccion, 'Dirección inválida.'));
+
+    inputRif.addEventListener('keypress', e => Validador.bloquearTeclasInvalidas(e, Patrones.teclasNumeros));
+    inputRif.addEventListener('keyup', e => Validador.evaluarInput(e.target, Patrones.rif, 'Debe tener entre 7 y 9 dígitos.'));
+
+    // Lógica del Tipo de Documento
+    selectDocumento.addEventListener('change', function() {
+        const valido = Validador.evaluarInput(this, Patrones.tipoDocumento, 'Tipo de documento inválido');
         if (valido) {
-            $('#rif').val('').focus();
-            document.getElementById('rif').removeAttribute('disabled')
-            $('#rif').removeClass('is-invalid is-valid');
+            inputRif.value = '';
+            inputRif.removeAttribute('disabled');
+            EstadoInputs.limpiar(inputRif);
+            inputRif.focus();
         }
     });
 
-    $('#boton_formulario').on('click', async function(e) {
+    // Envío de formulario
+    document.querySelector('#boton_formulario').addEventListener('click', async function(e) {
         e.preventDefault();
         const accion = this.dataset.id ? 'modificar' : 'Registrar';
+        
         if (await validarEnvio(accion)) {
             Swal.fire({
                 title: '¿Estás seguro?',
@@ -65,20 +58,16 @@ $(document).ready(function() {
 });
 
 async function validarEnvio(accion) {
-    const campos = [
-        { input: '#nombre_proveedor', regex: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ() ]{3,50}$/, msg: 'Nombre inválido' },
-        { input: '#servicio', regex: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]{3,30}$/, msg: 'Servicio inválido' },
-        { input: '#tipo_documento', regex: /^[VEJG]$/, msg: 'Seleccione tipo de documento' },
-        { input: '#rif', regex: /^[0-9]{7,9}$/, msg: 'RIF inválido (7-9 dígitos)' },
-        { input: '#direccion', regex: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9,.\-#° ]{3,100}$/, msg: 'Dirección inválida' }
-    ];
+    const vNombre = Validador.evaluarInput(document.querySelector('#nombre_proveedor'), Patrones.textoMedio, 'Nombre inválido');
+    const vServicio = Validador.evaluarInput(document.querySelector('#servicio'), Patrones.textoCorto, 'Servicio inválido');
+    const vDocumento = Validador.evaluarInput(document.querySelector('#tipo_documento'), Patrones.tipoDocumento, 'Seleccione tipo');
+    const vRif = Validador.evaluarInput(document.querySelector('#rif'), Patrones.rif, 'RIF inválido (7-9 dígitos)');
+    const vDireccion = Validador.evaluarInput(document.querySelector('#direccion'), Patrones.direccion, 'Dirección inválida');
 
-    for (const c of campos) {
-        const el = document.querySelector(c.input);
-        if (!Validaciones.campo(el, c.regex, c.msg)) {
-            Utilidades.mensaje('error', 'Error', c.msg);
-            return false;
-        }
+    if (!vNombre || !vServicio || !vDocumento || !vRif || !vDireccion) {
+        Alertas.mostrar('error', 'Error', 'Por favor, revise los campos marcados en rojo.');
+        return false;
     }
+
     return true;
 }

@@ -1,176 +1,112 @@
 /**
  * bancos_validar.js
- * Validaciones en tiempo real para Bancos
- * Dependencias: validaciones.js, utilidades.js
+ * Dependencias: Validador.js, Patrones.js, EstadoInputs.js, Alertas.js
  */
 
-$(document).ready(function() {
-    // ============================================
-    // VALIDACIONES EN TIEMPO REAL
-    // ============================================
+document.addEventListener("DOMContentLoaded", function() {
 
-    $("#nombre_banco").on("keypress", function(e) {
-        Validaciones.keyPress(/^[A-Za-záéíóúÁÉÍÓÚñÑ\s]*$/, e);
-    });
+    const inputNombre = document.getElementById("nombre_banco");
+    const inputCodigo = document.getElementById("codigo");
+    const inputCuenta = document.getElementById("numero_cuenta");
+    const inputTlf = document.getElementById("telefono_afiliado");
+    const inputRif = document.getElementById("rif");
+    const selectDoc = document.getElementById("tipo_documento");
 
-    $("#nombre_banco").on("keyup", function() {
-        Validaciones.keyUp(/^[A-Za-záéíóúÁÉÍÓÚñÑ\s]{3,30}$/,
-            this, this.nextElementSibling,
-            "Solo letras, mínimo 3 caracteres");
-    });
+    // Nombre
+    if (inputNombre) {
+        inputNombre.addEventListener("keypress", e => Validador.bloquearTeclasInvalidas(e, Patrones.teclasLetras));
+        inputNombre.addEventListener("keyup", function() { Validador.evaluarInput(this, Patrones.textoCorto, "Solo letras, mínimo 3 caracteres"); });
+    }
 
-    $("#codigo").on("keypress", function(e) {
-        Validaciones.keyPress(/^[0-9\b]*$/, e);
-    });
+    // Código
+    if (inputCodigo) {
+        inputCodigo.addEventListener("keypress", e => Validador.bloquearTeclasInvalidas(e, Patrones.teclasNumeros));
+        inputCodigo.addEventListener("keyup", function() { Validador.evaluarInput(this, Patrones.codigoBanco, "Debe ser de 4 dígitos"); });
+    }
 
-    $("#codigo").on("keyup", function() {
-        Validaciones.keyUp(/^\d{4}$/,
-            this, this.nextElementSibling,
-            "Debe ser un código de 4 dígitos");
-    });
+    // Cuenta
+    if (inputCuenta) {
+        inputCuenta.addEventListener("keypress", e => Validador.bloquearTeclasInvalidas(e, Patrones.teclasNumeros));
+        inputCuenta.addEventListener("keyup", function() {
+            if (Validador.evaluarInput(this, Patrones.numeroCuenta, "Entre 18 y 30 dígitos")) {
+                if (typeof numero_cuenta_an !== 'undefined' && this.value === numero_cuenta_an) return;
+                Validador.verificarDuplicadoEnServidor('numero_cuenta', { numero_cuenta: this.value }, this, 'Esta cuenta ya está registrada');
+            }
+        });
+    }
 
-    $("#numero_cuenta").on("keypress", function(e) {
-        Validaciones.keyPress(/^[0-9\b]*$/, e);
-    });
+    // Teléfono
+    if (inputTlf) {
+        inputTlf.addEventListener("keypress", e => Validador.bloquearTeclasInvalidas(e, Patrones.teclasNumeros));
+        inputTlf.addEventListener("keyup", function() { Validador.evaluarInput(this, Patrones.telefono, "Debe tener 11 dígitos"); });
+    }
 
-    $("#numero_cuenta").on("keyup", function() {
-        if (Validaciones.keyUp(/^\d{18,30}$/,
-            this, this.nextElementSibling,
-            "Debe tener entre 18 y 30 dígitos")) {
-            
-            if (this.value === numero_cuenta_an) return;
-            
-            let datos = new FormData();
-            datos.append('validar', 'numero_cuenta');
-            datos.append('numero_cuenta', this.value);
-            Validaciones.verificarDuplicado(datos, 'Este número de cuenta ya está registrado');
-        }
-    });
+    // RIF
+    if (inputRif) {
+        inputRif.addEventListener("keypress", e => Validador.bloquearTeclasInvalidas(e, Patrones.teclasNumeros));
+        inputRif.addEventListener("keyup", function() { Validador.evaluarInput(this, Patrones.rif, "Entre 7 y 9 dígitos"); });
+    }
 
-    $("#telefono_afiliado").on("keypress", function(e) {
-        Validaciones.keyPress(/^[0-9\b]*$/, e);
-    });
+    // Select Documento
+    if (selectDoc) {
+        selectDoc.addEventListener("change", function() {
+            if (this.value === "") {
+                EstadoInputs.marcarError(this, "Seleccione un tipo");
+                inputRif.disabled = true;
+            } else {
+                EstadoInputs.marcarExito(this);
+                inputRif.disabled = false;
+                // Disparamos la validación manual del RIF
+                Validador.evaluarInput(inputRif, Patrones.rif, "Entre 7 y 9 dígitos");
+            }
+        });
+    }
 
-    $("#telefono_afiliado").on("keyup", function() {
-        Validaciones.keyUp(/^\d{11}$/,
-            this, this.nextElementSibling,
-            "Debe tener 11 dígitos (ej: 04141234567)");
-    });
+    // Envío
+    const btnForm = document.getElementById("boton_formulario");
+    if (btnForm) {
+        btnForm.addEventListener("click", async function(e) {
+            e.preventDefault();
+            let accion = this.hasAttribute("modificar") ? "modificar" : "Registrar";
 
-    $("#rif").on("keypress", function(e) {
-        Validaciones.keyPress(/^[0-9\b]*$/, e);
-    });
-
-    $("#rif").on("keyup", function() {
-        Validaciones.keyUp(/^\d{7,9}$/,
-            this, this.nextElementSibling,
-            "Debe tener entre 7 y 9 dígitos");
-    });
-
-    // Validación del tipo de documento (select)
-    $("#tipo_documento").on("change", function() {
-        if (this.value === "") {
-            this.classList.add('is-invalid');
-            this.nextElementSibling.textContent = "Debe seleccionar un tipo de documento";
-            $("#rif").attr("disabled", true);
-        } else {
-            this.classList.remove('is-invalid');
-            this.classList.add('is-valid');
-            this.nextElementSibling.textContent = "";
-            $("#rif").removeAttr("disabled");
-            // Validar RIF después de habilitarlo
-            $("#rif").trigger('keyup');
-        }
-    });
-
-    // ============================================
-    // ENVÍO DEL FORMULARIO
-    // ============================================
-    $("#boton_formulario").on("click", async function(e) {
-        e.preventDefault();
-        let accion = (this.getAttribute("modificar")) ? "modificar" : "Registrar";
-
-        if (await validarEnvio(accion) === true) {
-            Swal.fire({
-                title: "¿Estás seguro?",
-                text: `¿Está seguro que desea ${accion} este banco?`,
-                showCancelButton: true,
-                confirmButtonText: `Sí, ${accion}`,
-                confirmButtonColor: "#1b8a40",
-                cancelButtonText: "Cancelar",
-                icon: "warning"
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    envio(accion);
-                    numero_cuenta_an = null;
-                }
-            });
-        }
-    });
+            if (await validarEnvio(accion)) {
+                Swal.fire({
+                    title: "¿Estás seguro?",
+                    text: `¿Está seguro que desea ${accion} este banco?`,
+                    showCancelButton: true,
+                    confirmButtonText: `Sí, ${accion}`,
+                    confirmButtonColor: "#1b8a40",
+                    cancelButtonText: "Cancelar",
+                    icon: "warning"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        envio(accion);
+                        if(typeof numero_cuenta_an !== 'undefined') numero_cuenta_an = null;
+                    }
+                });
+            }
+        });
+    }
 });
 
-/**
- * Validación completa del formulario antes del envío
- */
-async function validarEnvio(accion = "Registrar") {
-    // Validar nombre
-    if (!Validaciones.keyUp(/^[A-Za-záéíóúÁÉÍÓÚñÑ\s]{3,30}$/,
-        document.querySelector("#nombre_banco"),
-        document.querySelector("#nombre_banco").nextElementSibling,
-        'Solo letras, mínimo 3 caracteres')) {
-        Utilidades.mensaje('error', 'Error', 'El nombre del banco es inválido.');
+async function validarEnvio(accion) {
+    const inputNombre = document.getElementById("nombre_banco");
+    const inputCuenta = document.getElementById("numero_cuenta");
+    
+    if (!Validador.evaluarInput(inputNombre, Patrones.textoCorto, 'Solo letras, mínimo 3 caracteres') ||
+        !Validador.evaluarInput(document.getElementById("codigo"), Patrones.codigoBanco, 'Debe ser de 4 dígitos') ||
+        !Validador.evaluarInput(inputCuenta, Patrones.numeroCuenta, 'Entre 18 y 30 dígitos') || 
+        !Validador.evaluarInput(document.getElementById("telefono_afiliado"), Patrones.telefono, 'Debe tener 11 dígitos') ||
+        !Validador.evaluarSelect("tipo_documento") ||
+        !Validador.evaluarInput(document.getElementById("rif"), Patrones.rif, 'Entre 7 y 9 dígitos')) {
+        
+        Alertas.mostrar('error', 'Error', 'Por favor, revise los campos marcados en rojo.');
         return false;
     }
 
-    // Validar código
-    if (!Validaciones.keyUp(/^\d{4}$/,
-        document.querySelector("#codigo"),
-        document.querySelector("#codigo").nextElementSibling,
-        'Debe ser un código de 4 dígitos')) {
-        Utilidades.mensaje('error', 'Error', 'El código del banco debe tener 4 dígitos.');
-        return false;
-    }
-
-    // Validar número de cuenta
-    if (!Validaciones.keyUp(/^\d{18,30}$/,
-        document.querySelector("#numero_cuenta"),
-        document.querySelector("#numero_cuenta").nextElementSibling,
-        'Debe tener entre 18 y 30 dígitos')) {
-        Utilidades.mensaje('error', 'Error', 'El número de cuenta es inválido.');
-        return false;
-    }
-
-    // Validar teléfono
-    if (!Validaciones.keyUp(/^\d{11}$/,
-        document.querySelector("#telefono_afiliado"),
-        document.querySelector("#telefono_afiliado").nextElementSibling,
-        'Debe tener 11 dígitos')) {
-        Utilidades.mensaje('error', 'Error', 'El teléfono afiliado debe tener 11 dígitos.');
-        return false;
-    }
-
-    // Validar tipo de documento
-    if (!Validaciones.select('tipo_documento')) {
-        Utilidades.mensaje('error', 'Error', 'Debe seleccionar un tipo de documento.');
-        return false;
-    }
-
-    // Validar RIF
-    if (!Validaciones.keyUp(/^\d{7,9}$/,
-        document.querySelector("#rif"),
-        document.querySelector("#rif").nextElementSibling,
-        'Debe tener entre 7 y 9 dígitos')) {
-        Utilidades.mensaje('error', 'Error', 'El número de RIF es inválido.');
-        return false;
-    }
-
-    // Validar duplicidad del número de cuenta si cambió
-    if (numero_cuenta_an !== $("#numero_cuenta").val()) {
-        let datos = new FormData();
-        datos.append('validar', 'numero_cuenta');
-        datos.append('numero_cuenta', $("#numero_cuenta").val());
-        let duplicado = await Validaciones.verificarDuplicado(datos, 'Este número de cuenta ya está registrado');
-        if (duplicado) return false;
+    if (typeof numero_cuenta_an !== 'undefined' && numero_cuenta_an !== inputCuenta.value) {
+        const duplicado = await Validador.verificarDuplicadoEnServidor('numero_cuenta', { numero_cuenta: inputCuenta.value }, inputCuenta, 'Esta cuenta ya está registrada');
+        if (!duplicado) return false;
     }
 
     return true;

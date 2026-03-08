@@ -1,18 +1,21 @@
-$(document).ready(function(){
+/**
+ * tipo_gasto_validar.js
+ * Dependencias: Validador.js, Patrones.js, Alertas.js
+ */
+document.addEventListener("DOMContentLoaded", function() {
 
-	$("#nombre_tipo_gasto").on("keypress", function(e){
-		Validaciones.keyPress(/^[A-Za-z áéíúóñÑ\b]*$/, e);
-	});
+    const inputNombre = document.querySelector("#nombre_tipo_gasto");
 
-	$("#nombre_tipo_gasto").on("keyup", function(){
-		Validaciones.keyUp(/^[A-Za-z áéíúóñÑ\b]{3,50}$/, this, this.nextElementSibling, "Debe ingresar el nombre del tipo de gasto");
-	});
-	
-	$("#boton_formulario").on("click", async function(e){
-		e.preventDefault();
-		let accion = (this.getAttribute("modificar")) ? "modificar" : "Registrar";		
-		
-		if(await validarEnvio(accion) === true){
+    // Validaciones en tiempo real
+    inputNombre.addEventListener("keypress", (e) => Validador.bloquearTeclasInvalidas(e, Patrones.teclasLetras));
+    inputNombre.addEventListener("keyup", (e) => Validador.evaluarInput(e.target, Patrones.textoMedio, "Debe ingresar el nombre del tipo de gasto"));
+    
+    // Envío del formulario
+    document.querySelector("#boton_formulario").addEventListener("click", async function(e) {
+        e.preventDefault();
+        const accion = this.hasAttribute("modificar") ? "modificar" : "Registrar";		
+        
+        if (await validarEnvio()) {
             Swal.fire({
                 title: "¿Estás seguro?",
                 text: `¿Está seguro que desea ${accion} este Tipo de Gasto?`,
@@ -23,24 +26,22 @@ $(document).ready(function(){
                 icon: "warning"
             }).then((result) => {
                 if (result.isConfirmed) {
+                    // Se asume que la función envio() está en tu script ajax
                     envio(accion);						
                 }
             });
-		}	
-	});
-
+        }	
+    });
 });
 
-async function validarEnvio(accion = "Registrar"){	
-	let inputNombre = document.querySelector("#nombre_tipo_gasto");
-	let esValido = Validaciones.keyUp(/^[A-Za-z áéíúóñÑ]{3,50}$/, inputNombre, inputNombre.nextElementSibling, 'Debe ingresar el nombre del tipo de gasto');
-	
-	if(!esValido) {
-		Utilidades.mensaje('error', 'Atención', 'El nombre del tipo de gasto debe contener solo letras y formato correcto.');
-		return false;
-	}
-	
-	// Si tuvieras que validar duplicados al enviar, aquí llamarías a Validaciones.verificarDuplicado()
-	
-	return true;
+async function validarEnvio() {	
+    const inputNombre = document.querySelector("#nombre_tipo_gasto");
+    const esValido = Validador.evaluarInput(inputNombre, Patrones.textoMedio, 'Debe ingresar el nombre del tipo de gasto');
+    
+    if (!esValido) {
+        Alertas.mostrar('error', 'Atención', 'El nombre del tipo de gasto debe contener solo letras y formato correcto.');
+        return false;
+    }
+    
+    return true;
 }

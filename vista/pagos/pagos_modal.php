@@ -147,7 +147,7 @@
         <?php endif; ?>
         
         <div class="<?php echo $esPropietario ? 'col-lg-12' : 'col-lg-8'; ?> mb-3">
-            <label class="form-label fw-bold" for="observacion">Nota / Observación <spam class="text-danger">*</spam></label>
+            <label class="form-label fw-bold" for="observacion">Nota / Observación</label>
             <div class="input-group has-validation">
                 <span class="border border-primary input-group-text"><i class="bi bi-info-circle-fill"></i></span>
                 <input type="text" class="border border-dark form-control" id="observacion" placeholder="Ej: Pago de la mitad de la deuda...">

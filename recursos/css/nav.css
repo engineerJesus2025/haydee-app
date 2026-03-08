@@ -287,7 +287,3 @@
 .l-navbar.show .nav_link {
     pointer-events: auto;
 }
-
-body.body-pd .tooltip {
-    display: none !important;
-}

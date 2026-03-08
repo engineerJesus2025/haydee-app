@@ -24,26 +24,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Vista previa del gráfico
     document.getElementById("boton_vista_previa").addEventListener("click", async e => {
-        let fecha_inicio = document.getElementById('fecha_inicio').value;
-        let fecha_fin = document.getElementById('fecha_fin').value;
         let filtro = document.getElementById('filtro').value;
 
         if (filtro === "") {
-            Utilidades.mensaje('error', 'Atención', "Debe seleccionar una opción para buscar");
+            Alertas.mostrar('error', 'Atención', "Debe seleccionar una opción para buscar");
             return;
         }
 
-        if (filtro === "Otro" && (fecha_inicio === "" || fecha_fin === "")) {
-            Utilidades.mensaje('error', 'Atención', "Debe escoger la fecha inicio y final para la consulta");
-            return;
+        // --- NUEVA VALIDACIÓN CON HELPER ---
+        if (filtro === "Otro") {
+            let inputInicio = document.getElementById('fecha_inicio');
+            let inputFin = document.getElementById('fecha_fin');
+            if (!Validador.evaluarFecha(inputInicio) || !Validador.evaluarFecha(inputFin)) {
+                Alertas.mostrar('error', 'Atención', "Debe escoger fechas de inicio y final válidas para la consulta");
+                return;
+            }
         }
+
+        // Extraer valores string para la lógica de fechas
+        let fecha_inicio = document.getElementById('fecha_inicio').value;
+        let fecha_fin = document.getElementById('fecha_fin').value;
 
         const hoy = new Date();
         const anio = hoy.getFullYear();
         const mes = hoy.getMonth() + 1;
         const dia = hoy.getDate();
 
-        // Calcular fechas según el filtro
+        // Calcular fechas según el filtro (Lógica intacta)
         if (filtro === "mes") {
             fecha_inicio = `${anio}-${String(mes).padStart(2, '0')}-01`;
             fecha_fin = `${anio}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
@@ -51,7 +58,6 @@ document.addEventListener('DOMContentLoaded', () => {
             let tiempo_buscar = (filtro === "trimestre")?3:6;
 
             let fecha = new Date();
-            // Calcular fecha hace 3 o 6 meses
             fecha.setMonth(fecha.getMonth() - tiempo_buscar);
 
             let anioInicio = fecha.getFullYear();
@@ -82,20 +88,21 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append("fecha_fin", fecha_fin);
         formData.append("operacion", "reporte_ingresos_egresos_completo");
 
-        let resultado = await Utilidades.query(formData);
+        // --- CAMBIO A NUESTRO HELPER DE PETICIONES (con spinner activado) ---
+        let resultado = await Peticiones.enviar(formData, "", true);
+        
         if (!resultado.estatus) {
-            Utilidades.mensaje('error', 'Atención', resultado.mensaje);
+            Alertas.mostrar('error', 'Atención', resultado.mensaje);
             return;
         }
         if (resultado.datos.grafico.length === 0) {
-            Utilidades.mensaje('warning', 'Atención', "No hay resultados para esos filtros de búsqueda");
+            Alertas.mostrar('warning', 'Atención', "No hay resultados para esos filtros de búsqueda");
             return;
         }
 
         modal.show();
         procesarDatosGrafico(resultado.datos.grafico, filtro);
         actualizarEstadisticas(resultado.datos.estadisticas);
-
 
         let modo = document.getElementById('select_mostrar_datos').value;
         if (modo === "solo_texto") {

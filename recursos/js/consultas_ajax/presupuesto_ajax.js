@@ -75,7 +75,7 @@ function agregar_fila_presupuesto(e) {
 
     let input_nombre = document.createElement("input");
     input_nombre.setAttribute('class','form-control');
-    input_nombre.setAttribute('type','number');
+    input_nombre.setAttribute('type','text');
     input_nombre.setAttribute('placeholder','nombre del gasto');
 
     let spam_nombre = document.createElement("spam");
@@ -138,7 +138,7 @@ function agregar_fila_presupuesto(e) {
 
     let input_monto_2 = document.createElement("input");
     input_monto_2.setAttribute('class','form-control');
-    input_monto_2.setAttribute('type','text');
+    input_monto_2.setAttribute('type','number');
     input_monto_2.setAttribute("disabled","");
     input_monto_2.setAttribute('value',0);
     input_monto_2.setAttribute('title','Valor del monto en dolares');
@@ -614,7 +614,7 @@ async function consultar() {
         }
     ];
 
-    tabla_presupuesto = Utilidades.cargarTabulador("tabla_presupuesto", "", columnas);
+    tabla_presupuesto = Tablas.cargarTabulador("tabla_presupuesto", "", columnas);
     
     // Llamada vital del módulo
     await consultarInformacionFormulario();
@@ -632,9 +632,9 @@ async function consultar() {
 async function consultarInformacionFormulario() {
     const formData = new FormData();
     formData.append('operacion', 'consultar_meses_faltantes');
-    const respuesta = await Utilidades.query(formData);
+    const respuesta = await Peticiones.enviar(formData);
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Error', respuesta.mensaje);
+        Alertas.mostrar('error', 'Error', respuesta.mensaje);
         return;
     }
 
@@ -663,9 +663,9 @@ async function consultarInformacionFormulario() {
 async function llenarDetallesPresupuestos() {
     const formData = new FormData();
     formData.append('operacion', 'consultar_tipo_gastos');
-    const respuesta = await Utilidades.query(formData);
+    const respuesta = await Peticiones.enviar(formData);
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Error', respuesta.mensaje);
+        Alertas.mostrar('error', 'Error', respuesta.mensaje);
         return;
     }
 
@@ -797,7 +797,7 @@ function recolectarDatosPresupuesto(id_presupuesto = null) {
 async function registrar() {
     let datos = recolectarDatosPresupuesto();
     if (datos.detalles.length === 0) {
-        Utilidades.mensaje('warning', 'Atención', 'Debe agregar al menos un detalle con monto > 0');
+        Alertas.mostrar('warning', 'Atención', 'Debe agregar al menos un detalle con monto > 0');
         return;
     }
 
@@ -806,16 +806,16 @@ async function registrar() {
     formData.append('tasa_dolar', tasa_dolar);
     formData.append('datos_presupuesto', JSON.stringify(datos));
 
-    let respuesta = await Utilidades.query(formData, true);
+    let respuesta = await Peticiones.enviar(formData, "", true);
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Error', respuesta.mensaje);
+        Alertas.mostrar('error', 'Error', respuesta.mensaje);
         return;
     }
 
     modal.hide();
     await consultarInformacionFormulario();
     tabla_presupuesto.replaceData();
-    Utilidades.mensaje('success', 'Éxito', respuesta.mensaje);
+    Alertas.mostrar('success', 'Éxito', respuesta.mensaje);
 }
 
 /**
@@ -832,9 +832,9 @@ async function modificar_formulario(e) {
     formData.append("id_presupuesto", id);
     formData.append('operacion', 'consulta_especifica');
 
-    let respuesta = await Utilidades.query(formData, true);
+    let respuesta = await Peticiones.enviar(formData, "", true);
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Error', respuesta.mensaje);
+        Alertas.mostrar('error', 'Error', respuesta.mensaje);
         return;
     }
 
@@ -915,7 +915,7 @@ async function modificar_formulario(e) {
 async function modificar(id) {
     let datos = recolectarDatosPresupuesto(id);
     if (datos.detalles.length === 0) {
-        Utilidades.mensaje('warning', 'Atención', 'Debe agregar al menos un detalle con monto > 0');
+        Alertas.mostrar('warning', 'Atención', 'Debe agregar al menos un detalle con monto > 0');
         return;
     }
 
@@ -923,15 +923,15 @@ async function modificar(id) {
     formData.append('operacion', 'modificar_masivo');
     formData.append('datos_presupuesto', JSON.stringify(datos));
 
-    let respuesta = await Utilidades.query(formData, true);
+    let respuesta = await Peticiones.enviar(formData, "", true);
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Error', respuesta.mensaje);
+        Alertas.mostrar('error', 'Error', respuesta.mensaje);
         return;
     }
 
     tabla_presupuesto.replaceData();
     modal.hide();
-    Utilidades.mensaje('success', 'Éxito', respuesta.mensaje);
+    Alertas.mostrar('success', 'Éxito', respuesta.mensaje);
 }
 
 // ============================================================
@@ -956,14 +956,14 @@ async function eliminar(id) {
     let formData = new FormData();
     formData.append("id_presupuesto", id);
     formData.append('operacion', 'eliminar');
-    let respuesta = await Utilidades.query(formData);
+    let respuesta = await Peticiones.enviar(formData);
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Error', respuesta.mensaje);
+        Alertas.mostrar('error', 'Error', respuesta.mensaje);
         return;
     }
     tabla_presupuesto.replaceData();
     await consultarInformacionFormulario();
-    Utilidades.mensaje('success', 'Éxito', respuesta.mensaje);
+    Alertas.mostrar('success', 'Éxito', respuesta.mensaje);
 }
 
 // ============================================================

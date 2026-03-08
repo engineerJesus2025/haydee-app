@@ -18,37 +18,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById("modal_modulo")?.addEventListener("hide.bs.modal", resetModal);
 });
 
-async function consultarModulos() {
-    const columnas = [
-        { data: "id_modulo" },
-        { data: "nombre" },
-        {
-            data: null,
-            render: row => crearBotones(row.id_modulo).innerHTML
-        }
-    ];
-
-    const parametros = (data) => { data.operacion = 'consultar'; };
-    const postCreacion = (row, data) => {
-        row.id = `fila-${data.id_modulo}`;
-        row.lastElementChild.setAttribute('class','row justify-content-around');
-    };
-
-    tablaModulos = Utilidades.crearDataTable('tabla_modulos', columnas, parametros, postCreacion);
-
-    const inputBusqueda = document.getElementById("busqueda_global");
-    if (inputBusqueda) {
-        inputBusqueda.addEventListener("input", function(e) {
-            let valor = e.target.value.trim();
-            let filtros = columnas
-                .filter(col => col.field) 
-                .map(col => ({ field: col.field, type: "like", value: valor }));
-
-            tablaModulos.setFilter([filtros]);
-        });
-    }
-}
-
 async function consultar() {
     const contenedor = document.querySelector(".tabla-sistema-haydee");
     if (!contenedor) return;
@@ -96,7 +65,7 @@ async function consultar() {
     ];
 
     // Cambiar 'tabla_proveedores' por la variable que maneje la tabla de ese archivo
-    tablaModulos = Utilidades.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consulta' } }); // NOTA: modulos y permisos usan 'consultar', revisa el tuyo.
+    tablaModulos = Tablas.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consultar' } });
 
     const inputBusqueda = document.getElementById("busqueda_global");
     if (inputBusqueda) {
@@ -118,9 +87,9 @@ async function prepararFormulario(e) {
     datos.append('id_modulo', id);
     datos.append('operacion', 'consultar_unico');
 
-    const respuesta = await Utilidades.query(datos, true);
+    const respuesta = await Peticiones.enviar(datos, true);
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Error', respuesta.mensaje);
+        Alertas.mostrar('error', 'Error', respuesta.mensaje);
         return;
     }
 
@@ -145,15 +114,15 @@ async function registrar() {
     const formData = new FormData(formulario);
     formData.append('operacion', 'registrar');
 
-    const respuesta = await Utilidades.query(formData, true);
+    const respuesta = await Peticiones.enviar(formData, true);
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Atención', respuesta.mensaje);
+        Alertas.mostrar('error', 'Atención', respuesta.mensaje);
         return;
     }
 
     modalModulo.hide();
     tablaModulos.replaceData();
-    Utilidades.mensaje('success', 'Éxito', 'Módulo registrado correctamente');
+    Alertas.mostrar('success', 'Éxito', 'Módulo registrado correctamente');
 }
 
 async function modificar(id) {
@@ -161,15 +130,15 @@ async function modificar(id) {
     formData.append('id_modulo', id);
     formData.append('operacion', 'modificar');
 
-    const respuesta = await Utilidades.query(formData, true);
+    const respuesta = await Peticiones.enviar(formData, true);
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Atención', respuesta.mensaje);
+        Alertas.mostrar('error', 'Atención', respuesta.mensaje);
         return;
     }
 
     modalModulo.hide();
     tablaModulos.replaceData();
-    Utilidades.mensaje('success', 'Éxito', 'Módulo modificado correctamente');
+    Alertas.mostrar('success', 'Éxito', 'Módulo modificado correctamente');
 }
 
 botonFormulario?.addEventListener('click', async (e) => {
@@ -217,14 +186,14 @@ async function eliminar(id) {
     datos.append('id_modulo', id);
     datos.append('operacion', 'eliminar');
 
-    const respuesta = await Utilidades.query(datos);
+    const respuesta = await Peticiones.enviar(datos);
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Atención', respuesta.mensaje);
+        Alertas.mostrar('error', 'Atención', respuesta.mensaje);
         return;
     }
 
     tablaModulos.replaceData();
-    Utilidades.mensaje('success', 'Éxito', 'Módulo eliminado correctamente');
+    Alertas.mostrar('success', 'Éxito', 'Módulo eliminado correctamente');
 }
 
 function resetModal() {
@@ -240,7 +209,7 @@ function resetModal() {
 async function validarFormulario() {
     const nombre = document.getElementById('nombre');
     if (!Validaciones.keyUp(/^[A-Za-zÁÉÍÓÚáéíóúñÑ\s]{3,50}$/, nombre, nombre.nextElementSibling, 'Nombre inválido (mínimo 3 letras)')) {
-        Utilidades.mensaje('error', 'Error', 'El nombre del módulo no es válido');
+        Alertas.mostrar('error', 'Error', 'El nombre del módulo no es válido');
         return false;
     }
     return true;

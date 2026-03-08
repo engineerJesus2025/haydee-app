@@ -30,7 +30,7 @@ function envio(operacion) {
 	} else if(operacion === "Registrar"){
 		registrar();
 	} else {
-		Utilidades.mensaje('error', 'Atención', 'Ha ocurrido un error durante la operación');
+		Alertas.mostrar('error', 'Atención', 'Ha ocurrido un error durante la operación');
 	}
 }
 
@@ -86,7 +86,7 @@ async function consultar() {
     ];
 
     // Cambiar 'tabla_proveedores' por la variable que maneje la tabla de ese archivo
-    tabla_tipo_gasto = Utilidades.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consulta' } }); // NOTA: modulos y permisos usan 'consultar', revisa el tuyo.
+    tabla_tipo_gasto = Tablas.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consulta' } }); // NOTA: modulos y permisos usan 'consultar', revisa el tuyo.
 
     const inputBusqueda = document.getElementById("busqueda_global");
     if (inputBusqueda) {
@@ -105,16 +105,16 @@ async function registrar() {
 	let datos = new FormData(formulario_usar);
 	datos.append('operacion', 'registrar'); 
 	
-	let respuesta = await Utilidades.query(datos, true);
+	let respuesta = await Peticiones.enviar(datos, "", true);
 	
 	if (!respuesta.estatus) {
-		Utilidades.mensaje('error', 'Atención', respuesta.mensaje);
+		Alertas.mostrar('error', 'Atención', respuesta.mensaje);
 		return;
 	}
 
     modal.hide();
     tabla_tipo_gasto.replaceData(); // Recarga la tabla de forma limpia
-	Utilidades.mensaje('success', 'Éxito', 'El registro se ha realizado exitosamente');
+	Alertas.mostrar('success', 'Éxito', 'El registro se ha realizado exitosamente');
 }
 
 async function prepararFormulario(e) {
@@ -124,10 +124,10 @@ async function prepararFormulario(e) {
 	datos.append("id_tipo_gasto", id);
 	datos.append('operacion', 'consulta_especifica');
 
-	let respuesta = await Utilidades.query(datos, true);	
+	let respuesta = await Peticiones.enviar(datos, "", true);	
 	
     if (!respuesta.estatus) {
-		Utilidades.mensaje('error', 'Error', respuesta.mensaje);
+		Alertas.mostrar('error', 'Error', respuesta.mensaje);
 		return;
 	}
 
@@ -153,16 +153,16 @@ async function modificar(id) {
 	datos.append("id_tipo_gasto", id);
 	datos.append('operacion', 'modificar');
 
-	let respuesta = await Utilidades.query(datos, true);
+	let respuesta = await Peticiones.enviar(datos, "", true);
 
  	if (!respuesta.estatus) {
-		Utilidades.mensaje('error', 'Atención', respuesta.mensaje);
+		Alertas.mostrar('error', 'Atención', respuesta.mensaje);
 		return;
 	}
 
     modal.hide();
     tabla_tipo_gasto.replaceData();
-	Utilidades.mensaje('success', 'Éxito', 'El registro se ha modificado exitosamente');
+	Alertas.mostrar('success', 'Éxito', 'El registro se ha modificado exitosamente');
 }
 
 function eventoEliminar(e) {
@@ -185,15 +185,15 @@ async function eliminar(id) {
 	datos.append("id_tipo_gasto", id);
 	datos.append('operacion', 'eliminar');
 
-	let respuesta = await Utilidades.query(datos);
+	let respuesta = await Peticiones.enviar(datos);
 	
 	if (!respuesta.estatus) {
-		Utilidades.mensaje('error', 'Atención', respuesta.mensaje);
+		Alertas.mostrar('error', 'Atención', respuesta.mensaje);
 		return;
 	}
 
     tabla_tipo_gasto.replaceData();
-	Utilidades.mensaje('success', 'Éxito', 'El registro ha sido eliminado correctamente');
+	Alertas.mostrar('success', 'Éxito', 'El registro ha sido eliminado correctamente');
 }
 
 // ============================================================

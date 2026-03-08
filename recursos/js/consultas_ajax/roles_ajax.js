@@ -57,7 +57,7 @@ async function consultar() {
         }
     ];
 
-    tabla_roles = Utilidades.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consulta' } });
+    tabla_roles = Tablas.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consulta' } });
 
     const inputBusqueda = document.getElementById("busqueda_global");
     if (inputBusqueda) {
@@ -92,13 +92,13 @@ async function registrar() {
     });
     datos.set('permisos', JSON.stringify(permisosSeleccionados));
 
-    const respuesta = await Utilidades.query(datos, true);
+    const respuesta = await Peticiones.enviar(datos, "", true);
     if (respuesta?.estatus) {
         modal.hide();
         tabla_roles.replaceData();
-        Utilidades.mensaje('success', 'Éxito', 'Rol registrado correctamente.');
+        Alertas.mostrar('success', 'Éxito', 'Rol registrado correctamente.');
     } else {
-        Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo registrar el rol.');
+        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo registrar el rol.');
     }
 }
 
@@ -109,9 +109,9 @@ async function prepararFormulario(e) {
     const datosRol = new FormData();
     datosRol.append('id_rol', id);
     datosRol.append('operacion', 'consulta_especifica');
-    const respRol = await Utilidades.query(datosRol);
+    const respRol = await Peticiones.enviar(datosRol);
     if (!respRol?.estatus) {
-        Utilidades.mensaje('error', 'Error', 'No se pudo cargar el rol.');
+        Alertas.mostrar('error', 'Error', 'No se pudo cargar el rol.');
         return;
     }
 
@@ -119,9 +119,9 @@ async function prepararFormulario(e) {
     const datosPermisos = new FormData();
     datosPermisos.append('id_rol', id);
     datosPermisos.append('operacion', 'consulta_permisos');
-    const respPermisos = await Utilidades.query(datosPermisos);
+    const respPermisos = await Peticiones.enviar(datosPermisos);
     if (!respPermisos?.estatus) {
-        Utilidades.mensaje('error', 'Error', 'No se pudieron cargar los permisos.');
+        Alertas.mostrar('error', 'Error', 'No se pudieron cargar los permisos.');
         return;
     }
 
@@ -196,13 +196,13 @@ async function modificar() {
     });
     datos.set('permisos', JSON.stringify(permisosSeleccionados));
 
-    const respuesta = await Utilidades.query(datos, true);
+    const respuesta = await Peticiones.enviar(datos, "", true);
     if (respuesta?.estatus) {
         modal.hide();
         tabla_roles.replaceData();
-        Utilidades.mensaje('success', 'Éxito', 'Rol actualizado correctamente.');
+        Alertas.mostrar('success', 'Éxito', 'Rol actualizado correctamente.');
     } else {
-        Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo actualizar el rol.');
+        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo actualizar el rol.');
     }
 }
 
@@ -211,12 +211,12 @@ async function eliminar(id) {
     datos.append('id_rol', id);
     datos.append('operacion', 'eliminar');
 
-    const respuesta = await Utilidades.query(datos);
+    const respuesta = await Peticiones.enviar(datos);
     if (respuesta?.estatus) {
         tabla_roles.replaceData();
-        Utilidades.mensaje('success', 'Éxito', 'Rol eliminado correctamente.');
+        Alertas.mostrar('success', 'Éxito', 'Rol eliminado correctamente.');
     } else {
-        Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'No se pudo eliminar el rol.');
+        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo eliminar el rol.');
     }
 }
 

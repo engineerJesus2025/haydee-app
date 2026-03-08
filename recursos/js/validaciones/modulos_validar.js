@@ -1,13 +1,10 @@
 /**
  * modulos_validar.js
- * Validaciones en tiempo real para Módulos
  */
-
-$(document).ready(function() {
-    $('#nombre').on('keypress', function(e) {
-        Validaciones.keyPress(/^[A-Za-zÁÉÍÓÚáéíóúñÑ\s]$/, e);
-    });
-    $('#nombre').on('keyup', function() {
-        Validaciones.keyUp(/^[A-Za-zÁÉÍÓÚáéíóúñÑ\s]{3,50}$/, this, this.nextElementSibling, 'Mínimo 3 letras');
-    });
+document.addEventListener("DOMContentLoaded", function() {
+    const inputNombre = document.getElementById('nombre');
+    if (inputNombre) {
+        inputNombre.addEventListener('keypress', e => Validador.bloquearTeclasInvalidas(e, Patrones.teclasLetras));
+        inputNombre.addEventListener('keyup', e => Validador.evaluarInput(e.target, Patrones.textoCorto, 'Mínimo 3 letras'));
+    }
 });

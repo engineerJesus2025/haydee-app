@@ -1,134 +1,129 @@
 /**
- * Script de validaciones para Perfil de Usuario
- * Dependencias: validaciones.js (Objeto Validaciones), utilidades.js (Objeto Utilidades)
+ * usuario_perfil_validar.js
+ * Dependencias: Validador.js, Patrones.js, EstadoInputs.js, Alertas.js
  */
+document.addEventListener("DOMContentLoaded", function() {
+    
+    const inputNombre = document.querySelector('#nombre');
+    const inputApellido = document.querySelector('#apellido');
+    const inputCorreo = document.querySelector('#correo');
+    const inputContra = document.querySelector('#contra');
+    const inputConfirContra = document.querySelector('#confir_contra');
 
-$(document).ready(function() {
     // ============================================
     // VALIDACIONES EN TIEMPO REAL
     // ============================================
-    $('#nombre, #apellido').on('keypress', function(e) {
-        Validaciones.keyPress(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, e);
+    [inputNombre, inputApellido].forEach(input => {
+        if (!input) return;
+        input.addEventListener('keypress', (e) => Validador.bloquearTeclasInvalidas(e, Patrones.teclasLetras));
+        input.addEventListener('keyup', (e) => Validador.evaluarInput(e.target, Patrones.nombrePersona, 'Solo texto, no más de 20 caracteres'));
     });
 
-    $('#nombre, #apellido').on('keyup', function() {
-        Validaciones.keyUp(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,20}$/, this, this.nextElementSibling, 'Solo texto, no más de 20 caracteres');
-    });
+    if (inputCorreo) {
+        inputCorreo.addEventListener('keypress', (e) => Validador.bloquearTeclasInvalidas(e, Patrones.teclasCorreo));
+        inputCorreo.addEventListener('keyup', (e) => Validador.evaluarInput(e.target, Patrones.correo, 'El formato debe ser: ejemplo@gmail.com'));
+        
+        // Duplicidad de correo en blur
+        inputCorreo.addEventListener('blur', async function() {
+            if (this.value === correo_an) return; 
+            if (Patrones.correo.test(this.value)) {
+                await Validador.verificarDuplicadoEnServidor('correo', { correo: this.value }, this, 'Este correo ya está en uso, ingrese uno diferente.');
+            }
+        });
+    }
 
-    $('#correo').on('keypress', function(e) {
-        Validaciones.keyPress(/^[A-Za-z0-9_+.@\b]*$/, e);
-    });
-
-    $('#correo').on('keyup', function() {
-        Validaciones.keyUp(/^[a-zA-Z0-9._+-]{3,35}@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/, this, this.nextElementSibling, 'El formato debe ser: ejemplo@gmail.com');
-    });
-
-    // Validación de duplicidad de correo en tiempo real
-    $('#correo').on('blur', async function() {
-        if ($(this).val() === correo_an) return; // No ha cambiado
-
-        if (Validaciones.keyUp(/^[a-zA-Z0-9._+-]{3,35}@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/, this, this.nextElementSibling, 'El formato debe ser: ejemplo@gmail.com')) {
-            const datos = new FormData();
-            datos.append('validar', 'correo');
-            datos.append('correo', $(this).val());
-            await Validaciones.verificarDuplicado(datos,'Este correo ya está en uso, ingrese uno diferente.');
-        }
-    });
-
-    // Validaciones de contraseña
-    $('#contra, #confir_contra').on('keyup', function() {
-        Validaciones.keyUp(/^[A-Za-z0-9_.+*$#%&@-]{5,100}$/, this, this.nextElementSibling.nextElementSibling, 'Mínimo 5 caracteres');
+    // Contraseñas
+    [inputContra, inputConfirContra].forEach(input => {
+        if (!input) return;
+        input.addEventListener('keyup', (e) => Validador.evaluarInput(e.target, Patrones.contrasena, 'Mínimo 5 caracteres'));
     });
 
     // ============================================
-    // ENVÍO DE FORMULARIO DE PERFIL
+    // ENVÍO DE FORMULARIOS
     // ============================================
-    $('#boton_guardar').on('click', async function(e) {
-        e.preventDefault();
-        if (await validarEnvioPerfil() === true) {
-            Swal.fire({
-                title: '¿Estás seguro?',
-                text: '¿Desea guardar los cambios en su perfil?',
-                showCancelButton: true,
-                confirmButtonText: 'Sí, Guardar',
-                confirmButtonColor: '#1b8a40',
-                cancelButtonText: 'Cancelar',
-                icon: 'warning'
-            }).then(result => {
-                if (result.isConfirmed) {
-                    modificar();
-                    correo_an = null;
-                }
-            });
-        }
-    });
+    const btnGuardarPerfil = document.querySelector('#boton_guardar');
+    if (btnGuardarPerfil) {
+        btnGuardarPerfil.addEventListener('click', async function(e) {
+            e.preventDefault();
+            if (await validarEnvioPerfil()) {
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: '¿Desea guardar los cambios en su perfil?',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, Guardar',
+                    confirmButtonColor: '#1b8a40',
+                    cancelButtonText: 'Cancelar',
+                    icon: 'warning'
+                }).then(result => {
+                    if (result.isConfirmed) {
+                        modificar();
+                        correo_an = null;
+                    }
+                });
+            }
+        });
+    }
 
-    // ============================================
-    // ENVÍO DE FORMULARIO DE CAMBIO DE CONTRASEÑA
-    // ============================================
-    $('#boton_guardar_contra').on('click', async function(e) {
-        e.preventDefault();
-        if (await validarEnvioContra() === true) {
-            Swal.fire({
-                title: '¿Estás seguro?',
-                text: '¿Desea cambiar su contraseña?',
-                showCancelButton: true,
-                confirmButtonText: 'Sí, Cambiar',
-                confirmButtonColor: '#1b8a40',
-                cancelButtonText: 'Cancelar',
-                icon: 'warning'
-            }).then(result => {
-                if (result.isConfirmed) {
-                    modificarContra();
-                }
-            });
-        }
-    });
+    const btnGuardarContra = document.querySelector('#boton_guardar_contra');
+    if (btnGuardarContra) {
+        btnGuardarContra.addEventListener('click', async function(e) {
+            e.preventDefault();
+            if (await validarEnvioContra()) {
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: '¿Desea cambiar su contraseña?',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, Cambiar',
+                    confirmButtonColor: '#1b8a40',
+                    cancelButtonText: 'Cancelar',
+                    icon: 'warning'
+                }).then(result => {
+                    if (result.isConfirmed) {
+                        modificarContra();
+                    }
+                });
+            }
+        });
+    }
 });
 
-// ============================================
-// FUNCIONES DE VALIDACIÓN
-// ============================================
-
 async function validarEnvioPerfil() {
-    // Validar campos individuales
-    if (!Validaciones.keyUp(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,20}$/, $('#nombre')[0], $('#nombre')[0].nextElementSibling, 'Solo texto, no más de 20 caracteres')) {
-        Utilidades.mensaje('error', 'Error', 'El nombre no es válido.');
-        return false;
-    }
-    if (!Validaciones.keyUp(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,20}$/, $('#apellido')[0], $('#apellido')[0].nextElementSibling, 'Solo texto, no más de 20 caracteres')) {
-        Utilidades.mensaje('error', 'Error', 'El apellido no es válido.');
-        return false;
-    }
-    if (!Validaciones.keyUp(/^[a-zA-Z0-9._+-]{3,35}@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/, $('#correo')[0], $('#correo')[0].nextElementSibling, 'El formato debe ser: ejemplo@gmail.com')) {
-        Utilidades.mensaje('error', 'Error', 'El correo no es válido.');
+    const elNombre = document.querySelector('#nombre');
+    const elApellido = document.querySelector('#apellido');
+    const elCorreo = document.querySelector('#correo');
+
+    const vNombre = Validador.evaluarInput(elNombre, Patrones.nombrePersona, 'El nombre no es válido.');
+    const vApellido = Validador.evaluarInput(elApellido, Patrones.nombrePersona, 'El apellido no es válido.');
+    const vCorreo = Validador.evaluarInput(elCorreo, Patrones.correo, 'El correo no es válido.');
+
+    if (!vNombre || !vApellido || !vCorreo) {
+        Alertas.mostrar('error', 'Error', 'Por favor, revise los campos marcados en rojo.');
         return false;
     }
 
-    // Verificar duplicado de correo si cambió
-    if (correo_an !== $('#correo').val()) {
-        const datos = new FormData();
-        datos.append('validar', 'correo');
-        datos.append('correo', $('#correo').val());
-        // const duplicado = await verificarDuplicados(datos);
-        const duplicado = await Validaciones.verificarDuplicado(datos,'Este correo ya está en uso, ingrese uno diferente.');
-        if (duplicado) return false;
+    if (correo_an !== elCorreo.value) {
+        const duplicado = await Validador.verificarDuplicadoEnServidor('correo', { correo: elCorreo.value }, elCorreo, 'Este correo ya está en uso');
+        if (!duplicado) return false;
     }
 
     return true;
 }
 
 async function validarEnvioContra() {
-    // Validar nueva contraseña
-    if (!Validaciones.keyUp(/^[A-Za-z0-9_.+*$#%&@-]{5,100}$/, $('#contra')[0], $('#contra')[0].nextElementSibling.nextElementSibling, 'La nueva contraseña no es válida.')) {
-        Utilidades.mensaje('error', 'Error', 'La nueva contraseña no es válida.');
+    const elContra = document.querySelector('#contra');
+    const elConfirContra = document.querySelector('#confir_contra');
+
+    const vContra = Validador.evaluarInput(elContra, Patrones.contrasena, 'La nueva contraseña no es válida.');
+    
+    if (!vContra) {
+        Alertas.mostrar('error', 'Error', 'La nueva contraseña no es válida.');
         return false;
     }
 
-    // Confirmar que coinciden
-    if ($('#contra').val() !== $('#confir_contra').val()) {
-        $('#contra, #confir_contra').addClass('is-invalid').removeClass('is-valid');
-        Utilidades.mensaje('error', 'Error', 'Las contraseñas no coinciden.');
+    if (elContra.value !== elConfirContra.value) {
+        EstadoInputs.marcarError(elContra, "Las contraseñas no coinciden");
+        EstadoInputs.marcarError(elConfirContra, "Las contraseñas no coinciden");
+        Alertas.mostrar('error', 'Error', 'Las contraseñas no coinciden.');
         return false;
     }
 

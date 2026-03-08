@@ -153,7 +153,7 @@ boton_importar.addEventListener("click", async () => {
     const hayArchivoSubido = input_file.value !== '';
 
     if (!hayCopiaSeleccionada && !hayArchivoSubido) {
-        Utilidades.mensaje('error', 'Atención', 'Debe seleccionar una Copia de Seguridad o subir un archivo SQL.');
+        Alertas.mostrar('error', 'Atención', 'Debe seleccionar una Copia de Seguridad o subir un archivo SQL.');
         return;
     }
 
@@ -197,10 +197,10 @@ async function obtenerCopiasGuardadas() {
     let datos = new FormData();
     datos.append('operacion', 'obtener_copias');
 
-    const respuesta = await Utilidades.query(datos);
+    const respuesta = await Peticiones.enviar(datos);
 
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Error', respuesta.mensaje);
+        Alertas.mostrar('error', 'Error', respuesta.mensaje);
         return;
     }
 
@@ -269,13 +269,13 @@ async function generarCopiaSeguridad() {
     datos.append("db", select_db.value);
     datos.append('operacion', 'generar_copia_seguridad');
 
-    const respuesta = await Utilidades.query(datos);
+    const respuesta = await Peticiones.enviar(datos);
 
     if (respuesta.estatus) {
-        Utilidades.mensaje('success', 'Éxito', respuesta.mensaje);
+        Alertas.mostrar('success', 'Éxito', respuesta.mensaje);
         obtenerCopiasGuardadas(); // Actualizar lista
     } else {
-        Utilidades.mensaje('error', 'Error', respuesta.mensaje);
+        Alertas.mostrar('error', 'Error', respuesta.mensaje);
     }
 }
 
@@ -289,7 +289,7 @@ async function importarCopiaSeguridad() {
     datos.append("db", db);
     datos.append('operacion', 'importar_copia_seguridad');
 
-    const respuesta = await Utilidades.query(datos);
+    const respuesta = await Peticiones.enviar(datos);
     manejarRespuestaImportacion(respuesta);
 }
 
@@ -299,7 +299,7 @@ async function importarSQL() {
     datos.append("fichero", input_file.files[0]);
     datos.append('operacion', 'importar_archivo_sql');
 
-    const respuesta = await Utilidades.query(datos);
+    const respuesta = await Peticiones.enviar(datos);
     manejarRespuestaImportacion(respuesta);
 }
 
@@ -309,23 +309,23 @@ async function importarSQL() {
 
 function manejarRespuestaImportacion(respuesta) {
     if (respuesta.estatus) {
-        Utilidades.mensaje('success', 'Restauración Completada', respuesta.mensaje);
+        Alertas.mostrar('success', 'Restauración Completada', respuesta.mensaje);
         // Recargar la página para limpiar estado
         // setTimeout(() => window.location.reload(), 2000);
     } else {
-        Utilidades.mensaje('error', 'Fallo en Restauración', respuesta.mensaje);
+        Alertas.mostrar('error', 'Fallo en Restauración', respuesta.mensaje);
     }
 }
 
 function validarSeleccionDB() {
     if (select_db.value === "") {
-        Utilidades.mensaje('error', 'Atención', 'Debe seleccionar una Base de Datos.');
+        Alertas.mostrar('error', 'Atención', 'Debe seleccionar una Base de Datos.');
         return false;
     }
     const valido = /^negocio|seguridad/.test(select_db.value);
     if (!valido) {
         validarInput(select_db, false, "La base de datos no es válida");
-        Utilidades.mensaje('error', 'Error', 'La base de datos seleccionada no existe');
+        Alertas.mostrar('error', 'Error', 'La base de datos seleccionada no existe');
         return false;
     }
     validarInput(select_db, true);
@@ -359,7 +359,7 @@ function alternarVisibilidad(elemento, mostrar) {
 function verificarErroresURL() {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('e')) {
-        Utilidades.mensaje('error', 'Error', 'Ocurrió un error al intentar descargar el archivo.');
+        Alertas.mostrar('error', 'Error', 'Ocurrió un error al intentar descargar el archivo.');
         
         // Limpiar URL sin recargar
         const currentURL = new URL(window.location.href);

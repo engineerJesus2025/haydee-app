@@ -1,106 +1,112 @@
 /**
  * caja_chica_validar.js
- * Validaciones en tiempo real para Caja Chica
- * Dependencias: validaciones.js, utilidades.js
+ * Dependencias: Validador.js, Patrones.js, EstadoInputs.js, Alertas.js, Peticiones.js
  */
 
-$(document).ready(function() {
+document.addEventListener("DOMContentLoaded", function() {
+    
+    const inputFecha = document.getElementById("fecha");
+    const inputsMonto = document.querySelectorAll("#monto, #monto_reponer");
+    const inputConcepto = document.getElementById("concepto");
+    const selectCaja = document.getElementById("mes_select");
+    const inputDesc = document.getElementById("descripcion_input");
+
     // Fecha
-    $("#fecha").on("keyup change", function() {
-        Validaciones.fecha(this, this.nextElementSibling);
-    });
+    if (inputFecha) {
+        inputFecha.addEventListener("change", function() { Validador.evaluarFecha(this); });
+        inputFecha.addEventListener("keyup", function() { Validador.evaluarFecha(this); });
+    }
 
-    // Monto (permite números con hasta 2 decimales)
-    $("#monto, #monto_reponer").on("keypress", function(e) {
-        Validaciones.keyPress(/^[0-9,.]$/, e);
-    });
+    // Montos
+    inputsMonto.forEach(input => {
+        input.addEventListener("keypress", e => Validador.bloquearTeclasInvalidas(e, Patrones.teclasMonto));
+        input.addEventListener("keyup", function() {
+            if (Validador.evaluarInput(this, Patrones.monto, "Máximo 12 enteros y 2 decimales")) {
+                let esBs = this.getAttribute("monto") === "bs";
+                let inputConvertir = document.getElementById(this.id === "monto" ? "monto_cambio" : "monto_cambio_reponer");
 
-    $("#monto, #monto_reponer").on("keyup", function() {
-        let valido = Validaciones.keyUp(/^\d{0,12}([.,]\d{0,2})?$/,
-            this, this.nextElementSibling.nextElementSibling,
-            "Solo números, máximo 12 enteros y 2 decimales");
+                if (!this.value || parseFloat(this.value) === 0) {
+                    if(inputConvertir) inputConvertir.value = '';
+                    return;
+                }
 
-        if (valido) {
-            let id = this.id;
-            let esBs = this.getAttribute("monto") === "bs";
-            let inputConvertir = document.getElementById(id === "monto" ? "monto_cambio" : "monto_cambio_reponer");
+                if (inputConvertir && typeof tasa_dolar !== 'undefined') {
+                    let valorNum = parseFloat(this.value.replace(',', '.'));
+                    inputConvertir.value = esBs ? (valorNum / tasa_dolar).toFixed(2) : (valorNum * tasa_dolar).toFixed(2);
+                }
 
-            if (this.value === '' || parseFloat(this.value) === 0) {
-                inputConvertir.value = '';
-                return;
+                if (this.id === "monto" && typeof actualizarFondoRestante === 'function') {
+                    actualizarFondoRestante();
+                }
             }
-
-            if (esBs) {
-                inputConvertir.value = (parseFloat(this.value.replace(',', '.')) / tasa_dolar).toFixed(2);
-            } else {
-                inputConvertir.value = (parseFloat(this.value.replace(',', '.')) * tasa_dolar).toFixed(2);
-            }
-
-            // Actualizar fondo restante si es el monto del formulario de gasto
-            if (id === "monto") {
-                actualizarFondoRestante();
-            }
-        }
+        });
     });
 
     // Concepto
-    $("#concepto").on("keypress", function(e) {
-        Validaciones.keyPress(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s]$/, e);
-    });
-
-    $("#concepto").on("keyup", function() {
-        Validaciones.keyUp(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s]{3,100}$/,
-            this, this.nextElementSibling,
-            "Solo texto, mínimo 3 y máximo 100 caracteres");
-    });
-
-    // Select de caja chica
-    $("#mes_select").on("change", async function() {
-        if (!Validaciones.select(this.id)) return;
-
-        let datos = new FormData();
-        datos.append('validar', 'validar_clave_foranea');
-        datos.append('tabla', 'caja_chica');
-        datos.append('nombre_clave', 'id_caja_chica');
-        datos.append('valor', this.value);
-
-        let respuesta = await Utilidades.validar('validar_clave_foranea', {
-            tabla: 'caja_chica',
-            nombre_clave: 'id_caja_chica',
-            valor: this.value
+    if (inputConcepto) {
+        inputConcepto.addEventListener("keypress", e => Validador.bloquearTeclasInvalidas(e, Patrones.teclasAlfanumerico));
+        inputConcepto.addEventListener("keyup", function() {
+            Validador.evaluarInput(this, Patrones.conceptoCaja, "Mínimo 3 y máximo 100 caracteres");
         });
+    }
 
-        if (respuesta.estatus) {
-            this.classList.add('is-valid');
-            this.classList.remove('is-invalid');
-            this.nextElementSibling.textContent = '';
-        } else {
-            this.classList.remove('is-valid');
-            this.classList.add('is-invalid');
-            this.nextElementSibling.textContent = 'La caja seleccionada no existe';
-        }
-    });
+    // Descripción modal
+    if (inputDesc) {
+        inputDesc.addEventListener("keypress", e => Validador.bloquearTeclasInvalidas(e, Patrones.teclasAlfanumerico));
+        inputDesc.addEventListener("keyup", function() {
+            Validador.evaluarInput(this, Patrones.descripcionCaja, "Máximo 100 caracteres");
+        });
+    }
 
-    // Descripción en modal de observación
-    $("#descripcion_input").on("keypress", function(e) {
-        Validaciones.keyPress(/^[a-zA-Z0-9 áéíóúÁÉÍÓÚñÑ\s-]$/, e);
-    });
+    // Select Caja Chica
+    if (selectCaja) {
+        selectCaja.addEventListener("change", async function() {
+            if (!Validador.evaluarSelect(this.id)) return;
+            await Validador.verificarExistenciaEnServidor(
+                'validar_clave_foranea', 
+                { tabla: 'caja_chica', nombre_clave: 'id_caja_chica', valor: this.value }, 
+                this, 
+                'La caja seleccionada no existe'
+            );
+        });
+    }
 
-    $("#descripcion_input").on("keyup", function() {
-        Validaciones.keyUp(/^[a-zA-Z0-9 áéíóúÁÉÍÓÚñÑ\s-]{0,100}$/,
-            this, this.nextElementSibling,
-            "Máximo 100 caracteres, solo letras/números/espacios/guiones");
-    });
+    const btnGastoCaja = document.getElementById("boton_gasto_caja");
+    if (btnGastoCaja) {
+        btnGastoCaja.addEventListener("click", async function(e) {
+            e.preventDefault();
+            const accion = this.hasAttribute("modificar") ? "modificar" : "Registrar";
+
+            if (await validarEnvio(accion)) {
+                Swal.fire({
+                    title: "¿Estás seguro?",
+                    text: `¿Está seguro que desea ${accion} este gasto de caja?`,
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonText: `Sí, ${accion}`,
+                    confirmButtonColor: "#1b8a40",
+                    cancelButtonText: "Cancelar"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Llama a tu función AJAX
+                        if(typeof envio === 'function') envio(accion); 
+                    }
+                });
+            }
+        });
+    }
 });
 
-// ========== FUNCIONES DE VALIDACIÓN ADICIONALES ==========
 function actualizarFondoRestante() {
-    let fondo = parseFloat(document.getElementById("fondos_caja").textContent.split("Bs")[0]);
+    let elFondo = document.getElementById("fondos_caja");
+    if(!elFondo) return;
+
+    let fondo = parseFloat(elFondo.textContent.split("Bs")[0]);
     let montoInput = document.getElementById("monto");
     let etiqueta = document.getElementById("fondos_restante");
 
     if (!montoInput.value || parseFloat(montoInput.value) === 0) {
-        etiqueta.textContent = document.getElementById("fondos_caja").textContent;
+        etiqueta.textContent = elFondo.textContent;
         return;
     }
 
@@ -110,66 +116,76 @@ function actualizarFondoRestante() {
 
     if (isNaN(monto)) return;
 
-    let nuevoFondo = fondo - monto + diferencia;
+    let dif = typeof diferencia !== 'undefined' ? diferencia : 0;
+    let nuevoFondo = fondo - monto + dif;
+    
     if (nuevoFondo < 0) {
         etiqueta.textContent = "Excedido";
+        etiqueta.classList.add("text-danger");
     } else {
-        etiqueta.textContent = nuevoFondo.toFixed(2) + " Bs. / " + (nuevoFondo / tasa_dolar).toFixed(2) + " $";
+        etiqueta.textContent = `${nuevoFondo.toFixed(2)} Bs. / ${(nuevoFondo / tasa_dolar).toFixed(2)} $`;
+        etiqueta.classList.remove("text-danger");
     }
 }
 
 async function validarEnvio(accion) {
-    // Validar fecha
-    if (!Validaciones.fecha(document.getElementById("fecha"), null, true)) {
-        Utilidades.mensaje('error', 'Error', 'La fecha es inválida');
+    let formularioValido = true; // Acumulador para evaluar TODO antes de salir
+
+    const inputFecha = document.getElementById("fecha");
+    const inputMonto = document.getElementById("monto");
+    const inputConcepto = document.getElementById("concepto");
+    const selectCaja = document.getElementById("mes_select");
+
+    // 1. Validar Fecha
+    if (!Validador.evaluarFecha(inputFecha, 'La fecha es inválida')) {
+        formularioValido = false;
+    }
+
+    // 2. Validar Monto (Que no esté vacío, ni sea 0, y cumpla formato)
+    if (!inputMonto.value || parseFloat(inputMonto.value) === 0) {
+        EstadoInputs.marcarError(inputMonto, 'El monto es obligatorio y mayor a 0');
+        formularioValido = false;
+    } else if (!Validador.evaluarInput(inputMonto, Patrones.monto, 'Formato inválido')) {
+        formularioValido = false;
+    }
+
+    // 3. Validar Concepto
+    if (!Validador.evaluarInput(inputConcepto, Patrones.conceptoCaja, 'El concepto debe tener entre 3 y 100 caracteres')) {
+        formularioValido = false;
+    }
+
+    // 4. Validar Select de Caja
+    if (!Validador.evaluarSelect(selectCaja.id)) {
+        formularioValido = false;
+    } else {
+        // Validar en el backend que la caja existe realmente
+        const cajaValida = await Validador.verificarExistenciaEnServidor(
+            'validar_clave_foranea', 
+            { tabla: 'caja_chica', nombre_clave: 'id_caja_chica', valor: selectCaja.value }, 
+            selectCaja, 
+            'La caja seleccionada no existe'
+        );
+        if (!cajaValida) formularioValido = false;
+    }
+
+    // Si algún campo falló visualmente, detenemos aquí y mostramos el resumen
+    if (!formularioValido) {
+        Alertas.mostrar('error', 'Error', 'Por favor, revise los campos marcados en rojo.');
         return false;
     }
 
-    // Validar monto
-    let montoInput = document.getElementById("monto");
-    if (!montoInput.value || parseFloat(montoInput.value) === 0) {
-        Validaciones.mostrarError(montoInput, 'El monto es obligatorio');
-        Utilidades.mensaje('error', 'Error', 'Debe ingresar un monto');
-        return false;
-    }
-
-    if (!Validaciones.keyUp(/^\d{0,12}([.,]\d{0,2})?$/,
-        montoInput, montoInput.nextElementSibling.nextElementSibling,
-        'Formato inválido')) {
-        Utilidades.mensaje('error', 'Error', 'El monto tiene formato incorrecto');
-        return false;
-    }
-
-    // Validar concepto
-    if (!Validaciones.keyUp(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s]{3,100}$/,
-        document.getElementById("concepto"),
-        document.getElementById("concepto").nextElementSibling,
-        'Concepto inválido')) {
-        Utilidades.mensaje('error', 'Error', 'El concepto debe tener entre 3 y 100 caracteres');
-        return false;
-    }
-
-    // Validar que la caja exista
-    let select = document.getElementById("mes_select");
-    if (!Validaciones.select(select.id)) {
-        Utilidades.mensaje('error', 'Error', 'Debe seleccionar una caja');
-        return false;
-    }
-
-    let valido = await verificarClaveForanea(select.value);
-    if (!valido) {
-        Utilidades.mensaje('error', 'Error', 'La caja seleccionada no existe');
-        return false;
-    }
-
-    // Validar fondos suficientes
-    if (verificarMontoExcedido()) {
-        Utilidades.mensaje('error', 'Error', 'El monto supera el fondo disponible');
+    // 5. Validar fondos (Lógica de negocio)
+    // Solo llegamos aquí si el formato es perfecto
+    if (typeof verificarMontoExcedido === 'function' && verificarMontoExcedido()) {
+        EstadoInputs.marcarError(inputMonto, 'El monto supera el fondo disponible');
+        Alertas.mostrar('error', 'Fondos insuficientes', 'El monto supera el fondo disponible en la caja.');
         return false;
     }
 
     return true;
 }
+
+// ... Mantén las demás funciones (validarEnvioReponerCaja, verificarMontoExcedido, etc.) adaptando Utilidades.mensaje a Alertas.mostrar.
 
 async function validarEnvioReponerCaja() {
     let montoInput = document.getElementById("monto_reponer");
@@ -241,35 +257,3 @@ async function verificarClaveForanea(valor) {
     });
     return respuesta.estatus === true;
 }
-
-// Extensión de Validaciones para fecha (si no existe)
-// if (!Validaciones.fecha) {
-//     Validaciones.fecha = function(input, errorElement, mostrarMensaje = false) {
-//         let valor = input.value;
-//         let regex = /^\d{4}-\d{2}-\d{2}$/;
-//         if (!regex.test(valor)) {
-//             input.classList.add('is-invalid');
-//             input.classList.remove('is-valid');
-//             if (errorElement) errorElement.textContent = 'Formato debe ser YYYY-MM-DD';
-//             return false;
-//         }
-//         let [anio, mes, dia] = valor.split('-').map(Number);
-//         let fecha = new Date(anio, mes-1, dia);
-//         if (fecha.getFullYear() !== anio || fecha.getMonth() !== mes-1 || fecha.getDate() !== dia) {
-//             input.classList.add('is-invalid');
-//             input.classList.remove('is-valid');
-//             if (errorElement) errorElement.textContent = 'Fecha inválida';
-//             return false;
-//         }
-//         if (anio < 2000) {
-//             input.classList.add('is-invalid');
-//             input.classList.remove('is-valid');
-//             if (errorElement) errorElement.textContent = 'Año debe ser ≥ 2000';
-//             return false;
-//         }
-//         input.classList.add('is-valid');
-//         input.classList.remove('is-invalid');
-//         if (errorElement) errorElement.textContent = '';
-//         return true;
-//     };
-// }

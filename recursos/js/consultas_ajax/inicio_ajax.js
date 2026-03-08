@@ -51,7 +51,7 @@ async function cargarGraficos() {
 
     try {
         // Pedimos los datos (sin spinner)
-        let respuesta = await Utilidades.query(datos_consulta, false);
+        let respuesta = await Peticiones.enviar(datos_consulta, "", false);
 
         if (!respuesta.estatus) {
             console.error("Error al cargar gráficos:", respuesta.mensaje);
@@ -187,7 +187,7 @@ async function consultarPublicaciones() {
     datos_consulta.append("limite", limite);
 
     try {
-        let respuesta = await Utilidades.query(datos_consulta,false);
+        let respuesta = await Peticiones.enviar(datos_consulta, "", false);
         document.getElementById('carga_publicaciones').setAttribute('hidden', '');
 
         if (!respuesta.estatus) {
@@ -265,7 +265,7 @@ async function cargarTarjetasInicio() {
     datos.append("operacion", "consultar_tarjetas_resumen");
 
     try {
-        let respuesta = await Utilidades.query(datos, false);
+        let respuesta = await Peticiones.enviar(datos, "", false);
         if (respuesta.estatus && respuesta.datos) {
             const kpis = respuesta.datos;
             
@@ -299,7 +299,7 @@ async function cargarWidgetPublicaciones() {
     datos.append("operacion", "consulta_widget_publicaciones");
 
     try {
-        let respuesta = await Utilidades.query(datos, false); // false = sin spinner
+        let respuesta = await Peticiones.enviar(datos, "", false); // false = sin spinner
         const contenedor = document.getElementById('contenedor-widget-publicaciones');
         if (!contenedor) return;
 
@@ -361,7 +361,7 @@ async function cargarApartamentos() {
     datos_consulta.append("operacion", "consulta_apartamentos");
 
     try {
-        let respuesta = await Utilidades.query(datos_consulta,false);
+        let respuesta = await Peticiones.enviar(datos_consulta, "", false);
 
         if (!respuesta.estatus) {
             console.error("Error al cargar apartamentos:", respuesta.mensaje);
@@ -416,7 +416,7 @@ async function cargarActividadReciente() {
 
     try {
         // Usamos tu helper Utilidades
-        let respuesta = await Utilidades.query(datos_consulta,false);
+        let respuesta = await Peticiones.enviar(datos_consulta, "", false);
         const contenedor = document.getElementById('contenedor-actividad');
         
         if (!contenedor) return;
@@ -553,11 +553,19 @@ function actualizarInfoGrafico(idEsqueleto, textoLabel, valor, claseColor) {
     valorNegrita.className = claseColor;
     valorNegrita.textContent = (parseFloat(valor).toFixed(2) || 0) + " Bs.";
     contenedor.appendChild(valorNegrita);
-    Utilidades.reemplazarElemento(idEsqueleto, contenedor);
+    
+    // JS Puro en lugar de Utilidades
+    const esqueleto = document.getElementById(idEsqueleto);
+    if (esqueleto) esqueleto.replaceWith(contenedor);
 }
 
 function mostrarAlertaSinDatos(idAlerta, idsAEliminar) {
     const alerta = document.getElementById(idAlerta);
     if (alerta) alerta.removeAttribute("hidden");
-    idsAEliminar.forEach(id => Utilidades.eliminarElemento(id));
+    
+    // JS Puro en lugar de Utilidades
+    idsAEliminar.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.remove();
+    });
 }

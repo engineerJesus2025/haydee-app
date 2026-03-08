@@ -1,357 +1,282 @@
 /**
  * gastos_validar.js
- * Validaciones en tiempo real para Gastos
- * Dependencias: validaciones.js, utilidades.js
+ * Dependencias: Validador.js, Patrones.js, EstadoInputs.js, Alertas.js, Peticiones.js
  */
 
-$(document).ready(function () {
+document.addEventListener("DOMContentLoaded", function () {
 
     // ============================================================
     // VALIDACIONES EN TIEMPO REAL - CAMPOS PRINCIPALES
     // ============================================================
+    const selectClasificacion = document.getElementById("clasificacion");
+    if (selectClasificacion) {
+        selectClasificacion.addEventListener("change", function () { Validador.evaluarSelect(this.id); });
+    }
 
-    // Clasificación (select fijo)
-    $("#clasificacion").on("change", function () {
-        Validaciones.select(this.id);
-    });
+    const selectTipoGasto = document.getElementById("tipo_gasto");
+    if (selectTipoGasto) {
+        selectTipoGasto.addEventListener("change", async function () {
+            if (!Validador.evaluarSelect(this.id)) return;
+            await Validador.verificarExistenciaEnServidor('validar_clave_foranea', { tabla: 'tipo_gasto', nombre_clave: 'id_tipo_gasto', valor: this.value }, this, 'El tipo seleccionado no existe');
+        });
+    }
 
-    // Tipo de Gasto (FK)
-    $("#tipo_gasto").on("change", async function () {
-        if (!Validaciones.select(this.id)) return;
-        await Validaciones.validarClaveForanea(this, 'tipo_gasto', 'id_tipo_gasto');
-    });
+    const selectProveedor = document.getElementById("proveedor");
+    if (selectProveedor) {
+        selectProveedor.addEventListener("change", async function () {
+            if (!Validador.evaluarSelect(this.id)) return;
+            await Validador.verificarExistenciaEnServidor('validar_clave_foranea', { tabla: 'proveedores', nombre_clave: 'id_proveedor', valor: this.value }, this, 'El proveedor seleccionado no existe');
+        });
+    }
 
-    // Proveedor (FK)
-    $("#proveedor").on("change", async function () {
-        if (!Validaciones.select(this.id)) return;
-        await Validaciones.validarClaveForanea(this, 'proveedores', 'id_proveedor');
-    });
+    const inputSolicitud = document.getElementById("solicitud");
+    if (inputSolicitud) {
+        inputSolicitud.addEventListener("change", async function () {
+            if (this.value === "") {
+                EstadoInputs.limpiar(this);
+                return;
+            }
+            if (!Patrones.digitos.test(this.value)) {
+                EstadoInputs.marcarError(this, "ID inválido");
+                return;
+            }
+            await Validador.verificarExistenciaEnServidor('validar_clave_foranea', { tabla: 'solicitudes_gasto', nombre_clave: 'id_solicitud', valor: this.value }, this, 'La solicitud no existe');
+        });
+    }
 
-    // Solicitud (FK opcional)
-    $("#solicitud").on("change", async function () {
-        if (this.value === "") {
-            Validaciones.limpiar(this);
-            return;
-        }
-        if (!/^\d+$/.test(this.value)) {
-            Validaciones.mostrarError(this, "ID inválido");
-            return;
-        }
-        await Validaciones.validarClaveForanea(this, 'solicitudes_gasto', 'id_solicitud');
-    });
-
-    // Descripción general
-    $("#descripcion_gasto").on("keyup", function () {
-        Validaciones.keyUp(/^.{10,}$/, this, this.nextElementSibling,
-            "La descripción debe tener al menos 10 caracteres");
-    });
+    const inputDescGasto = document.getElementById("descripcion_gasto");
+    if (inputDescGasto) {
+        inputDescGasto.addEventListener("keyup", function () {
+            Validador.evaluarInput(this, Patrones.textoLargo, "La descripción debe tener al menos 10 caracteres");
+        });
+    }
 
     // ============================================================
-    // VALIDACIONES EN TIEMPO REAL - DETALLES (delegación)
+    // VALIDACIONES EN TIEMPO REAL - DETALLES (Delegación)
     // ============================================================
+    const contenedor = document.getElementById("detalles-container");
 
-    const contenedor = $("#detalles-container");
+    if (contenedor) {
+        // Evento CHANGE
+        contenedor.addEventListener("change", async function (e) {
+            const target = e.target;
 
-    // Fecha
-    contenedor.on("change", ".fecha_detalle", function () {
-        Validaciones.fecha(this, this.nextElementSibling);
-    });
+            if (target.classList.contains("fecha_detalle")) {
+                Validador.evaluarFecha(target, "Fecha inválida");
+            }
+            else if (target.classList.contains("metodo_pago")) {
+                Validador.evaluarInput(target, Patrones.textoCorto, "Método de pago inválido");
+            }
+            else if (target.classList.contains("banco")) {
+                if (target.value === "") {
+                    EstadoInputs.marcarError(target, "Seleccione un banco");
+                    return;
+                }
+                if (!Patrones.digitos.test(target.value)) {
+                    EstadoInputs.marcarError(target, "ID inválido");
+                    return;
+                }
+                await Validador.verificarExistenciaEnServidor('validar_clave_foranea', { tabla: 'bancos', nombre_clave: 'id_banco', valor: target.value }, target, 'El banco no existe');
+            }
+            // --- Mostrar nombre de la imagen ---
+            else if (target.classList.contains("imagen")) {
+                const bloque = target.closest(".detalle-gasto");
+                const textoNombre = bloque.querySelector(".nombre_imagen_cargada");
+                
+                if (target.files && target.files.length > 0) {
+                    // Si hay archivo, mostramos el nombre y quitamos el borde rojo (si lo tuviera)
+                    textoNombre.textContent = "Archivo seleccionado: " + target.files[0].name;
+                    target.classList.remove("is-invalid");
+                    target.classList.add("is-valid");
+                } else {
+                    // Si el usuario cancela la selección, limpiamos
+                    textoNombre.textContent = "";
+                    target.classList.remove("is-valid");
+                }
+            }
+        });
 
-    // Método de pago
-    contenedor.on("change", ".metodo_pago", function () {
-        if (!Validaciones.selectCustom(this, /^[a-zA-Z ]{3,20}$/, "Método de pago inválido")) return;
-        // La visibilidad de los campos condicionales se maneja en el JS de UI
-    });
+        // Evento KEYPRESS
+        contenedor.addEventListener("keypress", function (e) {
+            const target = e.target;
+            if (target.classList.contains("monto")) {
+                Validador.bloquearTeclasInvalidas(e, Patrones.teclasMonto);
+            }
+            else if (target.classList.contains("referencia")) {
+                Validador.bloquearTeclasInvalidas(e, /^[0-9]$/); // Solo números según el original
+            }
+        });
 
-    // Monto
-    contenedor.on("keypress", ".monto", function (e) {
-        Validaciones.keyPress(/^[\d.,]$/, e);
-    });
-    contenedor.on("keyup", ".monto", function () {
-        console.log(this.nextElementSibling)
-        Validaciones.keyUp(/^\d{1,10}([.,]\d{1,2})?$/, this, this.nextElementSibling,
-            "Monto inválido (ej: 150,50)");
-    });
-
-    // Descripción del detalle
-    contenedor.on("keyup", ".descripcion_detalle", function () {
-        Validaciones.keyUp(/^.{3,}$/, this, this.nextElementSibling,
-            "Mínimo 3 caracteres");
-    });
-
-    // Referencia (visible condicionalmente)
-    contenedor.on("keypress", ".referencia", function (e) {
-        Validaciones.keyPress(/^[0-9]$/, e);
-    });
-    contenedor.on("keyup", ".referencia", function () {
-        Validaciones.keyUp(/^\d{4,20}$/, this, this.nextElementSibling,
-            "Solo números, de 4 a 20 dígitos");
-    });
-
-    // Banco (FK)
-    contenedor.on("change", ".banco", async function () {
-        if (this.value === "") {
-            Validaciones.mostrarError(this, "Seleccione un banco");
-            return;
-        }
-        if (!/^\d+$/.test(this.value)) {
-            Validaciones.mostrarError(this, "ID inválido");
-            return;
-        }
-        await validarClaveForanea(this, 'bancos', 'id_banco');
-    });
+        // Evento KEYUP
+        contenedor.addEventListener("keyup", function (e) {
+            const target = e.target;
+            if (target.classList.contains("monto")) {
+                Validador.evaluarInput(target, Patrones.monto, "Monto inválido (ej: 150.50)");
+            }
+            else if (target.classList.contains("descripcion_detalle")) {
+                Validador.evaluarInput(target, Patrones.textoBreve, "Mínimo 3 caracteres");
+            }
+            else if (target.classList.contains("referencia")) {
+                // Según el original era \d{4,20}
+                Validador.evaluarInput(target, /^\d{4,20}$/, "Solo números, de 4 a 20 dígitos");
+            }
+        });
+    }
 
     // ============================================================
     // VALIDACIÓN AL ENVIAR EL FORMULARIO
     // ============================================================
+    const btnFormulario = document.getElementById("boton_formulario");
+    if (btnFormulario) {
+        btnFormulario.addEventListener("click", async function (e) {
+            e.preventDefault();
+            const accion = this.hasAttribute("modificar") ? "modificar" : "Registrar";
 
-    $("#boton_formulario").on("click", async function (e) {
-        e.preventDefault();
-        const accion = $(this).attr("modificar") ? "modificar" : "Registrar";
-
-        if (await validarFormularioCompleto()) {
-            Swal.fire({
-                title: "¿Estás seguro?",
-                text: `¿Desea ${accion.toLowerCase()} este gasto?`,
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonColor: "#1b8a40",
-                confirmButtonText: `Sí, ${accion}`,
-                cancelButtonText: "Cancelar"
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    if (accion === "Registrar") {
-                        registrar();
-                    } else {
-                        modificar(document.getElementById("boton_formulario").getAttribute("id_modificar"));
+            if (await validarFormularioCompleto()) {
+                Swal.fire({
+                    title: "¿Estás seguro?",
+                    text: `¿Desea ${accion.toLowerCase()} este gasto?`,
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#1b8a40",
+                    confirmButtonText: `Sí, ${accion}`,
+                    cancelButtonText: "Cancelar"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        if (accion === "Registrar") {
+                            registrar();
+                        } else {
+                            modificar(this.getAttribute("id_modificar"));
+                        }
                     }
-                }
-            });
-        }
-    });
+                });
+            }
+        });
+    }
 
-}); // Fin de $(document).ready()
+}); // Fin DOMContentLoaded
 
 // ============================================================
 // FUNCIONES AUXILIARES DE VALIDACIÓN
 // ============================================================
 
-/**
- * Valida que una clave foránea exista en la base de datos.
- * @param {HTMLElement} input - El elemento select/input a validar.
- * @param {string} tabla - Nombre de la tabla.
- * @param {string} campo - Nombre del campo clave.
- */
-async function validarClaveForanea(input, tabla, campo) {
-    const valor = input.value;
-    const respuesta = await Utilidades.validar('validar_clave_foranea', {
-        tabla: tabla,
-        nombre_clave: campo,
-        valor: valor
-    });
-    if (respuesta.estatus) {
-        input.classList.add('is-valid');
-        input.classList.remove('is-invalid');
-        if (input.nextElementSibling) input.nextElementSibling.textContent = "";
-    } else {
-        input.classList.remove('is-valid');
-        input.classList.add('is-invalid');
-        if (input.nextElementSibling) input.nextElementSibling.textContent = 
-            `El valor seleccionado no existe en ${tabla}`;
-    }
-}
-
-/**
- * Validación completa del formulario (cabecera + todos los detalles).
- * @returns {Promise<boolean>} - true si todo es válido.
- */
 async function validarFormularioCompleto() {
     // 1. Validar campos principales
-    if (!Validaciones.select("clasificacion")) {
-        Utilidades.mensaje("error", "Error", "Debe seleccionar una clasificación");
+    const selectClasificacion = document.getElementById("clasificacion");
+    const selectTipoGasto = document.getElementById("tipo_gasto");
+    const selectProveedor = document.getElementById("proveedor");
+    const inputSolicitud = document.getElementById("solicitud");
+    const inputDescGasto = document.getElementById("descripcion_gasto");
+
+    if (!Validador.evaluarSelect(selectClasificacion.id)) {
+        Alertas.mostrar("error", "Error", "Debe seleccionar una clasificación");
         return false;
     }
 
-    if (!Validaciones.select("tipo_gasto")) {
-        Utilidades.mensaje("error", "Error", "Debe seleccionar un tipo de gasto");
+    if (!Validador.evaluarSelect(selectTipoGasto.id)) {
+        Alertas.mostrar("error", "Error", "Debe seleccionar un tipo de gasto");
         return false;
     }
     
-    const inputTipo = document.getElementById("tipo_gasto");
-    if (!await Validaciones.validarClaveForanea(inputTipo, "tipo_gasto", "id_tipo_gasto")) return false;
+    const tipoValido = await Validador.verificarExistenciaEnServidor("validar_clave_foranea", { tabla: "tipo_gasto", nombre_clave: "id_tipo_gasto", valor: selectTipoGasto.value }, selectTipoGasto, "El tipo no existe");
+    if (!tipoValido) return false;
 
-    if (!Validaciones.select("proveedor")) {
-        Utilidades.mensaje("error", "Error", "Debe seleccionar un proveedor");
+    if (!Validador.evaluarSelect(selectProveedor.id)) {
+        Alertas.mostrar("error", "Error", "Debe seleccionar un proveedor");
         return false;
     }
     
-    const inputProveedor = document.getElementById("proveedor");
-    if (!await Validaciones.validarClaveForanea(inputProveedor, "proveedores", "id_proveedor")) return false;
+    const provValido = await Validador.verificarExistenciaEnServidor("validar_clave_foranea", { tabla: "proveedores", nombre_clave: "id_proveedor", valor: selectProveedor.value }, selectProveedor, "El proveedor no existe");
+    if (!provValido) return false;
 
-    const solicitud = $("#solicitud").val();
-    if (solicitud && solicitud !== "") {
-        if (!/^\d+$/.test(solicitud)) {
-            Validaciones.mostrarError(document.getElementById("solicitud"), "ID inválido");
-            Utilidades.mensaje("error", "Error", "La solicitud tiene formato inválido");
+    if (inputSolicitud && inputSolicitud.value.trim() !== "") {
+        if (!Patrones.digitos.test(inputSolicitud.value)) {
+            EstadoInputs.marcarError(inputSolicitud, "ID inválido");
+            Alertas.mostrar("error", "Error", "La solicitud tiene formato inválido");
             return false;
         }
-        
-        const inputSolicitud = document.getElementById("solicitud");
-        if (!await Validaciones.validarClaveForanea(inputSolicitud, "solicitudes_gasto", "id_solicitud")) return false;
-
+        const solValida = await Validador.verificarExistenciaEnServidor("validar_clave_foranea", { tabla: "solicitudes_gasto", nombre_clave: "id_solicitud", valor: inputSolicitud.value }, inputSolicitud, "La solicitud no existe");
+        if (!solValida) return false;
     }
 
-    if (!Validaciones.keyUp(/^.{10,}$/, $("#descripcion_gasto")[0], null, "")) {
-        Utilidades.mensaje("error", "Error", "La descripción general debe tener al menos 10 caracteres");
+    if (!Validador.evaluarInput(inputDescGasto, Patrones.textoLargo, "La descripción general debe tener al menos 10 caracteres")) {
+        Alertas.mostrar("error", "Error", "La descripción general debe tener al menos 10 caracteres");
         return false;
     }
 
-    // 2. Validar que haya al menos un detalle
+    // 2. Validar que haya al menos un detalle (El -1 que tenías en el bucle original asumo es por alguna fila "plantilla" oculta. Lo respetamos).
     const bloques = document.querySelectorAll(".detalle-gasto");
-    if (bloques.length === 0) {
-        Utilidades.mensaje("error", "Error", "Debe agregar al menos un detalle de gasto");
+    if (bloques.length === 0 || (bloques.length === 1 && bloques[0].classList.contains("d-none"))) {
+        Alertas.mostrar("error", "Error", "Debe agregar al menos un detalle de gasto");
         return false;
     }
 
-    // 3. Validar cada detalle (el -1 es por un detalle gasto inidividual)
-    for (let i = 0; i < (bloques.length - 1); i++) {
+    // 3. Validar cada detalle
+    for (let i = 0; i < bloques.length; i++) {
         const bloque = bloques[i];
         const num = i + 1;
 
-        // Fecha
-        const fechaInput = bloque.querySelector(".fecha_detalle");
-        if (!Validaciones.fecha(fechaInput, fechaInput.nextElementSibling, true)) {
-            Utilidades.mensaje("error", `Detalle #${num}`, "Fecha inválida");
+        if (!Validador.evaluarFecha(bloque.querySelector(".fecha_detalle"))) {
+            Alertas.mostrar("error", `Detalle #${num}`, "Fecha inválida");
             return false;
         }
 
-        // Método de pago
         const metodoSelect = bloque.querySelector(".metodo_pago");
-        if (!Validaciones.selectCustom(metodoSelect, /^[a-zA-Z ]{3,20}$/, "Método de pago inválido")) {
-            Utilidades.mensaje("error", `Detalle #${num}`, "Seleccione un método de pago válido");
+        if (!Validador.evaluarInput(metodoSelect, Patrones.textoCorto, "Método inválido")) {
+            Alertas.mostrar("error", `Detalle #${num}`, "Seleccione un método de pago válido");
             return false;
         }
 
-        // Monto
         const montoInput = bloque.querySelector(".monto");
-        if (!Validaciones.keyUp(/^\d{1,10}([.,]\d{1,2})?$/, montoInput, montoInput.nextElementSibling, "")) {
-            Utilidades.mensaje("error", `Detalle #${num}`, "Monto inválido (use números y hasta 2 decimales)");
+        if (!Validador.evaluarInput(montoInput, Patrones.monto, "Monto inválido")) {
+            Alertas.mostrar("error", `Detalle #${num}`, "Monto inválido (use números y hasta 2 decimales)");
             return false;
         }
 
-        // Descripción del detalle
         const descDet = bloque.querySelector(".descripcion_detalle");
-        if (!Validaciones.keyUp(/^.{3,}$/, descDet, descDet.nextElementSibling, "")) {
-            Utilidades.mensaje("error", `Detalle #${num}`, "La descripción debe tener al menos 3 caracteres");
+        if (!Validador.evaluarInput(descDet, Patrones.textoBreve, "Mínimo 3 caracteres")) {
+            Alertas.mostrar("error", `Detalle #${num}`, "La descripción debe tener al menos 3 caracteres");
             return false;
         }
 
-        // Campos condicionales (si el grupo está visible)
-        const grupoRef = bloque.querySelector(".grupo_referencia");
+        const grupoRef = bloque.querySelector(".grupo_bancario");
         if (grupoRef && !grupoRef.classList.contains("d-none")) {
-            // Referencia
             const refInput = bloque.querySelector(".referencia");
-            if (!Validaciones.keyUp(/^\d{4,20}$/, refInput, refInput.nextElementSibling, "")) {
-                Utilidades.mensaje("error", `Detalle #${num}`, "Referencia inválida (solo números, 4-20 dígitos)");
+            if (!Validador.evaluarInput(refInput, /^\d{4,20}$/, "Referencia inválida")) {
+                Alertas.mostrar("error", `Detalle #${num}`, "Referencia inválida (solo números, 4-20 dígitos)");
                 return false;
             }
 
-            // Banco
             const bancoSelect = bloque.querySelector(".banco");
-            if (!Validaciones.selectCustom(bancoSelect, /^\d+$/, "Seleccione un banco")) {
-                Utilidades.mensaje("error", `Detalle #${num}`, "Debe seleccionar un banco");
+            if (!Validador.evaluarInput(bancoSelect, Patrones.digitos, "Seleccione un banco")) {
+                Alertas.mostrar("error", `Detalle #${num}`, "Debe seleccionar un banco");
                 return false;
             }
-            if (!await Validaciones.validarClaveForanea(bancoSelect, 'bancos', 'id_banco')) {
-                Utilidades.mensaje("error", `Detalle #${num}`, "El banco seleccionado no existe");
+            
+            const banValido = await Validador.verificarExistenciaEnServidor("validar_clave_foranea", { tabla: "bancos", nombre_clave: "id_banco", valor: bancoSelect.value }, bancoSelect, "El banco no existe");
+            if (!banValido) {
+                Alertas.mostrar("error", `Detalle #${num}`, "El banco seleccionado no existe");
                 return false;
             }
 
-            // Imagen: debe haber archivo o imagen previa (en edición)
             const inputImagen = bloque.querySelector(".imagen");
             const nombreImagen = bloque.querySelector(".nombre_imagen_cargada")?.textContent.trim();
-            const hayArchivo = inputImagen.files.length > 0;
+            const hayArchivo = inputImagen && inputImagen.files.length > 0;
             const hayImagenPrevia = nombreImagen && nombreImagen !== "";
 
             if (!hayArchivo && !hayImagenPrevia) {
-                Utilidades.mensaje("error", `Detalle #${num}`, "Debe adjuntar un comprobante de pago");
+                if (inputImagen) {
+                    EstadoInputs.marcarError(inputImagen, "Debe adjuntar el comprobante");
+                }
+                Alertas.mostrar("error", `Detalle #${num}`, "Debe adjuntar un comprobante de pago");
                 return false;
+            } else {
+                if (inputImagen) {
+                    inputImagen.classList.remove("is-invalid");
+                }
             }
         }
     }
 
     return true;
-}
-
-/**
- * Versión simplificada de verificar existencia para un elemento por su ID.
- */
-async function verificarExistencia(idElemento, tabla, campo) {
-    const input = document.getElementById(idElemento);
-    const valor = input.value;
-    const respuesta = await Utilidades.validar('validar_clave_foranea', {
-        tabla: tabla,
-        nombre_clave: campo,
-        valor: valor
-    });
-    if (respuesta.estatus) {
-        input.classList.add('is-valid');
-        input.classList.remove('is-invalid');
-        if (input.nextElementSibling) input.nextElementSibling.textContent = "";
-        return true;
-    } else {
-        input.classList.remove('is-valid');
-        input.classList.add('is-invalid');
-        if (input.nextElementSibling) input.nextElementSibling.textContent = 
-            `El valor seleccionado no existe en ${tabla}`;
-        return false;
-    }
-}
-
-/**
- * Versión para elementos sin ID (dentro de detalles).
- */
-async function verificarExistenciaElemento(elemento, tabla, campo) {
-    const valor = elemento.value;
-    const respuesta = await Utilidades.validar('validar_clave_foranea', {
-        tabla: tabla,
-        nombre_clave: campo,
-        valor: valor
-    });
-    if (respuesta.estatus) {
-        elemento.classList.add('is-valid');
-        elemento.classList.remove('is-invalid');
-        if (elemento.nextElementSibling) elemento.nextElementSibling.textContent = "";
-        return true;
-    } else {
-        elemento.classList.remove('is-valid');
-        elemento.classList.add('is-invalid');
-        if (elemento.nextElementSibling) elemento.nextElementSibling.textContent = 
-            `El valor seleccionado no existe en ${tabla}`;
-        return false;
-    }
-}
-
-// Extensión de Validaciones para select con patrón personalizado (si no existe)
-if (!Validaciones.selectCustom) {
-    Validaciones.selectCustom = function (select, regex, mensajeError) {
-        if (!select) return false;
-        const valor = select.value;
-        if (valor === null || valor === "") {
-            select.classList.add('is-invalid');
-            select.classList.remove('is-valid');
-            if (select.nextElementSibling) select.nextElementSibling.textContent = mensajeError || "Seleccione una opción";
-            return false;
-        }
-        if (regex && !regex.test(valor)) {
-            select.classList.add('is-invalid');
-            select.classList.remove('is-valid');
-            if (select.nextElementSibling) select.nextElementSibling.textContent = mensajeError;
-            return false;
-        }
-        select.classList.add('is-valid');
-        select.classList.remove('is-invalid');
-        if (select.nextElementSibling) select.nextElementSibling.textContent = "";
-        return true;
-    };
 }

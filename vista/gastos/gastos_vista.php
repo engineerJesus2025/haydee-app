@@ -8,7 +8,6 @@
     <?php
     require_once ROOT_PATH . "/vista/componentes/estilos.php";
     ?>
-    <link href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator_bootstrap5.min.css" rel="stylesheet">
 </head>
 
 <body id="body-pd" class="body-pd">
@@ -151,7 +150,6 @@
             </div>
         </div>
     </div>
-    <script type="text/javascript" src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
     <!-- Scripts personalizado -->
     <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/validaciones/gastos_validar.js"></script>
     <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/consultas_ajax/gastos_ajax.js"></script>

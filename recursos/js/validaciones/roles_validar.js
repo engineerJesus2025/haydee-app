@@ -1,105 +1,121 @@
-// roles_validar.js
-$(document).ready(function() {
-    const nombreInput = $('#nombre');
-    nombreInput.on('keypress', e => Validaciones.keyPress(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]$/i, e));
-    nombreInput.on('keyup', function() {
-        Validaciones.campo(this, /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,30}$/, 'Solo letras, entre 3 y 30 caracteres.');
-    });
+/**
+ * roles_validar.js
+ * Dependencias: Validador.js, Patrones.js, EstadoInputs.js, Peticiones.js, Alertas.js
+ */
+document.addEventListener("DOMContentLoaded", function() {
+    
+    const inputNombre = document.querySelector('#nombre');
+    const checkboxesPermisos = document.querySelectorAll("[name='permisos[]']");
 
-    nombreInput.on('blur', async function() {
-        if ($(this).val() === nombre_anterior) return;
-        if (!Validaciones.campo(this, /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,30}$/, '')) return;
+    // Validación Nombre
+    if (inputNombre) {
+        inputNombre.addEventListener('keypress', e => Validador.bloquearTeclasInvalidas(e, Patrones.teclasLetras));
+        inputNombre.addEventListener('keyup', e => Validador.evaluarInput(e.target, Patrones.textoCorto, 'Solo letras, entre 3 y 30 caracteres.'));
 
-        const valido = await Validaciones.verificarExistencia(
-            'nombre',
-            { nombre: this.value },
-            this,
-            'Este nombre ya está registrado.'
-        );
-        if (valido) {
-            this.classList.add('is-valid');
-            this.classList.remove('is-invalid');
-        }
-    });
+        inputNombre.addEventListener('blur', async function() {
+            if (this.value === nombre_anterior) return;
+            if (!Patrones.textoCorto.test(this.value)) return;
 
-    $("[name='permisos[]']").on('change', async function() {
-        if (!this.checked) {
-            this.classList.remove('is-invalid');
+            await Validador.verificarDuplicadoEnServidor(
+                'nombre',
+                { nombre: this.value },
+                this,
+                'Este nombre ya está registrado.'
+            );
+        });
+    }
+
+    // Validación dinámica de permisos seleccionados
+    checkboxesPermisos.forEach(cb => {
+        cb.addEventListener('change', async function() {
             const row = this.closest('.row');
-            if (row && row.querySelector("[data-error='1']") == null) {
-                row.lastElementChild.textContent = '';
-            }
-            return;
-        }
-
-        const datos = new FormData();
-        datos.append('validar', 'validar_permisos_usuarios');
-        datos.append('valor[]', this.value);
-
-        const respuesta = await Utilidades.query(datos);
-        if (respuesta?.estatus) {
-            this.classList.remove('is-invalid');
-            this.setAttribute('data-error', '0');
-            const row = this.closest('.row');
-            if (row && row.querySelector("[data-error='1']") == null) {
-                row.lastElementChild.textContent = '';
-            }
-        } else {
-            this.classList.add('is-invalid');
-            this.setAttribute('data-error', '1');
-            this.closest('.row').lastElementChild.textContent = 'Permiso inválido';
-        }
-    });
-
-    $('#boton_formulario').on('click', async function(e) {
-        e.preventDefault();
-        const accion = this.dataset.id ? 'modificar' : 'Registrar';
-        if (await validarEnvio(accion)) {
-            Swal.fire({
-                title: '¿Estás seguro?',
-                text: `¿Desea ${accion} este rol?`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#1b8a40',
-                confirmButtonText: 'Sí, ' + accion
-            }).then(result => {
-                if (result.isConfirmed) {
-                    accion === 'modificar' ? modificar() : registrar();
+            
+            if (!this.checked) {
+                this.classList.remove('is-invalid');
+                this.removeAttribute('data-error');
+                // Si no hay más errores en la fila, limpiar el texto de error
+                if (row && !row.querySelector("[data-error='1']")) {
+                    row.lastElementChild.textContent = '';
                 }
-            });
-        }
+                return;
+            }
+
+            const datos = new FormData();
+            datos.append('validar', 'validar_permisos_usuarios');
+            datos.append('valor[]', this.value);
+
+            const respuesta = await Peticiones.enviar(datos, "", false);
+            
+            if (respuesta?.estatus) {
+                this.classList.remove('is-invalid');
+                this.setAttribute('data-error', '0');
+                if (row && !row.querySelector("[data-error='1']")) {
+                    row.lastElementChild.textContent = '';
+                }
+            } else {
+                this.classList.add('is-invalid');
+                this.setAttribute('data-error', '1');
+                if (row) row.lastElementChild.textContent = 'Permiso inválido';
+            }
+        });
     });
+
+    // Envío del formulario
+    const btnFormulario = document.querySelector('#boton_formulario');
+    if (btnFormulario) {
+        btnFormulario.addEventListener('click', async function(e) {
+            e.preventDefault();
+            const accion = this.dataset.id ? 'modificar' : 'Registrar';
+            
+            if (await validarEnvio(accion)) {
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: `¿Desea ${accion} este rol?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#1b8a40',
+                    confirmButtonText: 'Sí, ' + accion
+                }).then(result => {
+                    if (result.isConfirmed) {
+                        accion === 'modificar' ? modificar() : registrar();
+                    }
+                });
+            }
+        });
+    }
 });
 
 async function validarEnvio(accion) {
-    const nombreInput = document.getElementById('nombre');
-    if (!Validaciones.campo(nombreInput, /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,30}$/, 'Nombre inválido')) {
-        Utilidades.mensaje('error', 'Error', 'El nombre debe tener entre 3 y 30 letras.');
+    const inputNombre = document.querySelector('#nombre');
+    
+    if (!Validador.evaluarInput(inputNombre, Patrones.textoCorto, 'Nombre inválido')) {
+        Alertas.mostrar('error', 'Error', 'El nombre debe tener entre 3 y 30 letras.');
         return false;
     }
 
     const permisosSeleccionados = Array.from(document.querySelectorAll("[name='permisos[]']:checked"));
     if (permisosSeleccionados.length === 0) {
-        Utilidades.mensaje('error', 'Error', 'Debe seleccionar al menos un permiso.');
+        Alertas.mostrar('error', 'Error', 'Debe seleccionar al menos un permiso.');
         return false;
     }
 
-    if (nombreInput.value !== nombre_anterior) {
-        const valido = await Validaciones.verificarExistencia(
+    if (inputNombre.value !== nombre_anterior) {
+        const valido = await Validador.verificarDuplicadoEnServidor(
             'nombre',
-            { nombre: nombreInput.value },
-            nombreInput,
+            { nombre: inputNombre.value },
+            inputNombre,
             'Este nombre ya está registrado.'
         );
         if (!valido) return false;
     }
 
-    const idsPermisos = permisosSeleccionados.map(cb => cb.value);
+    // Validación final masiva de permisos en el backend
     const datos = new FormData();
     datos.append('validar', 'validar_permisos_usuarios');
-    idsPermisos.forEach(id => datos.append('valor[]', id));
+    permisosSeleccionados.forEach(cb => datos.append('valor[]', cb.value));
 
-    const respuesta = await Utilidades.query(datos);
+    const respuesta = await Peticiones.enviar(datos, "", false);
+    
     if (!respuesta?.estatus) {
         if (respuesta.ids_no_encontrados) {
             respuesta.ids_no_encontrados.forEach(id => {
@@ -110,7 +126,7 @@ async function validarEnvio(accion) {
                 }
             });
         }
-        Utilidades.mensaje('error', 'Error', respuesta?.mensaje || 'Uno o más permisos no existen.');
+        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'Uno o más permisos no existen.');
         return false;
     }
 

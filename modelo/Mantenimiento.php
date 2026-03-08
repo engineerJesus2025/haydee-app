@@ -173,7 +173,7 @@ class Mantenimiento extends Conexion
     {
         // Se asume que la estructura es: raíz del proyecto / recursos / Backups /
         $base = dirname(__DIR__); // Sube un nivel desde modelo/ a la raíz
-        return $base . DIRECTORY_SEPARATOR . 'recursos' . DIRECTORY_SEPARATOR . 'Backups' . DIRECTORY_SEPARATOR;
+        return $base . DIRECTORY_SEPARATOR . 'Backups' . DIRECTORY_SEPARATOR;
     }
 
     public function detectarBaseDesdeSQL($contenido_sql)

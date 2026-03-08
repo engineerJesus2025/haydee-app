@@ -61,8 +61,7 @@ async function consultar() {
         }
     ];
 
-    // Cambiar 'tabla_proveedores' por la variable que maneje la tabla de ese archivo
-    tablaPermisos = Utilidades.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consulta' } }); // NOTA: modulos y permisos usan 'consultar', revisa el tuyo.
+    tablaPermisos = Tablas.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consultar' } });
 
     const inputBusqueda = document.getElementById("busqueda_global");
     if (inputBusqueda) {
@@ -84,9 +83,9 @@ async function prepararFormulario(e) {
     datos.append('id_permiso', id);
     datos.append('operacion', 'consultar_unico');
 
-    const respuesta = await Utilidades.query(datos, true);
+    const respuesta = await Peticiones.enviar(datos, "", true);
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Error', respuesta.mensaje);
+        Alertas.mostrar('error', 'Error', respuesta.mensaje);
         return;
     }
 
@@ -111,15 +110,15 @@ async function registrar() {
     const formData = new FormData(formulario);
     formData.append('operacion', 'registrar');
 
-    const respuesta = await Utilidades.query(formData, true);
+    const respuesta = await Peticiones.enviar(formData, "", true);
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Atención', respuesta.mensaje);
+        Alertas.mostrar('error', 'Atención', respuesta.mensaje);
         return;
     }
 
     modalPermiso.hide();
     tablaPermisos.replaceData();
-    Utilidades.mensaje('success', 'Éxito', 'Permiso registrado correctamente');
+    Alertas.mostrar('success', 'Éxito', 'Permiso registrado correctamente');
 }
 
 async function modificar(id) {
@@ -127,15 +126,15 @@ async function modificar(id) {
     formData.append('id_permiso', id);
     formData.append('operacion', 'modificar');
 
-    const respuesta = await Utilidades.query(formData, true);
+    const respuesta = await Peticiones.enviar(formData, "", true);
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Atención', respuesta.mensaje);
+        Alertas.mostrar('error', 'Atención', respuesta.mensaje);
         return;
     }
 
     modalPermiso.hide();
     tablaPermisos.replaceData();
-    Utilidades.mensaje('success', 'Éxito', 'Permiso modificado correctamente');
+    Alertas.mostrar('success', 'Éxito', 'Permiso modificado correctamente');
 }
 
 botonFormulario?.addEventListener('click', async (e) => {
@@ -183,14 +182,14 @@ async function eliminar(id) {
     datos.append('id_permiso', id);
     datos.append('operacion', 'eliminar');
 
-    const respuesta = await Utilidades.query(datos);
+    const respuesta = await Peticiones.enviar(datos);
     if (!respuesta.estatus) {
-        Utilidades.mensaje('error', 'Atención', respuesta.mensaje);
+        Alertas.mostrar('error', 'Atención', respuesta.mensaje);
         return;
     }
 
     tablaPermisos.replaceData();
-    Utilidades.mensaje('success', 'Éxito', 'Permiso eliminado correctamente');
+    Alertas.mostrar('success', 'Éxito', 'Permiso eliminado correctamente');
 }
 
 function resetModal() {
@@ -206,7 +205,7 @@ function resetModal() {
 async function validarFormulario() {
     const accion = document.getElementById('accion');
     if (!Validaciones.keyUp(/^[A-Za-z_]{3,50}$/, accion, accion.nextElementSibling, 'Acción inválida (solo letras y guión bajo)')) {
-        Utilidades.mensaje('error', 'Error', 'El nombre de la acción no es válido');
+        Alertas.mostrar('error', 'Error', 'El nombre de la acción no es válido');
         return false;
     }
     return true;

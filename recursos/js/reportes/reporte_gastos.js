@@ -1,7 +1,7 @@
 /**
  * reporte_gastos.js
  * Generación de reporte mensual de gastos
- * Dependencias: utilidades.js, validaciones.js
+ * Dependencias: Validador.js, Patrones.js, Alertas.js, Peticiones.js
  */
 
 const anioSelect = document.getElementById('anio_reporte');
@@ -14,7 +14,7 @@ let periodosDisponibles = {};
 const nombresMeses = ["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 
 anioSelect.addEventListener('change', () => {
-    if (!Validaciones.keyUp(/^\d{4}$/, anioSelect, anioSelect.nextElementSibling, 'Año inválido')) {
+    if (!Validador.evaluarInput(anioSelect, Patrones.anio, 'Año inválido')) {
         btnGenerar.disabled = true;
         return;
     }
@@ -32,20 +32,27 @@ anioSelect.addEventListener('change', () => {
 });
 
 mesSelect.addEventListener('change', () => {
-    if (!Validaciones.keyUp(/^\d{1,2}$/, mesSelect, mesSelect.nextElementSibling, 'Mes inválido')) {
-        btnGenerar.disabled = true;
-        return;
-    }
     btnGenerar.disabled = !mesSelect.value;
 });
 
-function consultarPeriodosDeGastos() {
-    let datos = new FormData();
-    datos.append('operacion', 'listar_meses_con_gastos');
+// Obtener periodos al abrir el modal
+document.addEventListener("DOMContentLoaded", () => {
+    consultarPeriodos();
+});
 
-    Utilidades.query(datos).then(respuesta => {
+async function consultarPeriodos() {
+    let datos = new FormData();
+    datos.append('operacion', 'consultar_periodos_gastos');
+
+    try {
+        // Enviar con Fetch usando el nuevo helper (sin mostrar modal extra de carga)
+        const respuesta = await Peticiones.enviar(datos, "", false);
+        
+        const contenedorTarjeta = botonCuadroGastos.parentElement;
+        const tooltipPrevio = bootstrap.Tooltip.getInstance();
+        if (tooltipPrevio) tooltipPrevio.dispose();
+
         if (respuesta.estatus && respuesta.datos.length > 0) {
-            // Agrupar por año
             periodosDisponibles = respuesta.datos.reduce((acc, item) => {
                 const { anio, mes } = item;
                 if (!acc[anio]) acc[anio] = [];
@@ -58,6 +65,8 @@ function consultarPeriodosDeGastos() {
                 anioSelect.add(new Option(anio, anio));
             });
 
+            contenedorTarjeta.setAttribute('title', 'Click para ver los gastos registrados para el reportes');
+
             botonCuadroGastos.removeAttribute("disabled");
             let spinnerContainer = botonCuadroGastos.querySelector(".spinner-grow")?.parentElement;
             if (spinnerContainer) {
@@ -65,17 +74,23 @@ function consultarPeriodosDeGastos() {
             }
         } else {
             anioSelect.innerHTML = '<option value="">No hay datos</option>';
-            Utilidades.mensaje('info', 'Información', 'No hay gastos registrados para generar reportes');
+            contenedorTarjeta.setAttribute('title', 'No hay gastos registrados para generar reportes');
+            let spinnerContainer = botonCuadroGastos.querySelector(".spinner-grow")?.parentElement;
+            if (spinnerContainer) {
+                spinnerContainer.innerHTML = `<i class="bi bi-inbox text-secondary" style="font-size: 5rem !important;"></i>`;
+            }
         }
-    }).catch(error => {
+        new bootstrap.Tooltip(contenedorTarjeta, {
+            placement: 'top',
+            trigger: 'hover'
+        });
+    } catch (error) {
         console.error("Error al cargar períodos:", error);
         anioSelect.innerHTML = '<option value="">Error al cargar</option>';
-    });
+    }
 }
 
 formReporte.addEventListener('submit', function(event) {
     let tasaDolar = parseFloat(localStorage.getItem("tasa_dolar") || 1).toFixed(2);
     document.getElementById('tasa_dolar_reporte').value = tasaDolar;
 });
-
-consultarPeriodosDeGastos();

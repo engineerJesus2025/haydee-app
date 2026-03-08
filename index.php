@@ -17,7 +17,7 @@
     // Verificamos si el módulo que piden existe en nuestro mapa de rutas
     if (array_key_exists($modulo, $rutas)) {
         
-        $archivo_controlador = "controlador/" . $rutas[$modulo];
+        $archivo_controlador = ROOT_PATH . "/controlador/" . $rutas[$modulo];
         
         // Medida de seguridad extra: verificar que el archivo físico realmente exista
 
@@ -25,11 +25,11 @@
             require_once $archivo_controlador;
         } else {
             // El módulo está en rutas.php, pero olvidaste crear el archivo físico
-            require_once "vista/error/404_vista.php";
+            require_once ROOT_PATH . "/vista/error/404_vista.php";
         }
 
     } else {
         // Intentaron acceder a un módulo que no existe o intentaron alterar la URL
-        require_once "vista/error/404_vista.php";
+        require_once ROOT_PATH . "/vista/error/404_vista.php";
     }
 ?>

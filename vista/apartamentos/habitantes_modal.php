@@ -76,11 +76,14 @@
     </div>
     <div class="row m-3">
         <div class="col-md-6">
-            <label for="apartamento">Apartamento <spam class="text-danger">*</spam></label>
+            <label for="apartamento_nro_visual">Apartamento <span class="text-danger">*</span></label>
             <div class="input-group has-validation mb-3">
-                <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-building"></i></span>
-                <select class="border border-dark form-select apartamento_id" aria-label="Default select example" id="apartamento_id" name="apartamento_id" disabled>
-                </select>
+                <span class="border border-primary input-group-text"><i class="bi bi-building"></i></span>
+                
+                <input type="hidden" id="apartamento_id" name="apartamento_id">
+                
+                <input type="text" class="border border-dark form-control" id="apartamento_nro_visual" disabled placeholder="Cargando...">
+                
                 <span class="w-100 invalid-feedback"></span>
             </div>
         </div>

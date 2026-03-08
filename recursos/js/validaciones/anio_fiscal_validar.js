@@ -1,75 +1,87 @@
-$(document).ready(function() {
-    // Validaciones en tiempo real
-    $('#fecha_inicio, #fecha_cierre').on('keyup', function() {
-        Validaciones.campo(this, /^\d{4}-\d{2}-\d{2}$/, 'Debe ingresar una fecha válida (YYYY-MM-DD)');
+/**
+ * anio_fiscal_validar.js
+ * Dependencias: Validador.js, Patrones.js, EstadoInputs.js, Alertas.js, FormatoFechas.js
+ */
+
+document.addEventListener("DOMContentLoaded", function() {
+    
+    const inputInicio = document.getElementById('fecha_inicio');
+    const inputCierre = document.getElementById('fecha_cierre');
+    const inputDesc = document.getElementById('descripcion');
+    const selectEstado = document.getElementById('estado');
+
+    // Fechas
+    [inputInicio, inputCierre].forEach(input => {
+        if (!input) return;
+        input.addEventListener('keyup', function() { Validador.evaluarFecha(this); });
     });
 
-    $('#descripcion').on('keypress', e => Validaciones.keyPress(/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ,.\s]$/, e));
-    $('#descripcion').on('keyup', function() {
-        Validaciones.campo(this, /^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ,.\s]{0,50}$/, 'Máximo 50 caracteres, solo letras, números y puntuación básica');
-    });
+    // Auto-calcular cierre
+    if (inputInicio) {
+        inputInicio.addEventListener('change', function() {
+            if (Validador.evaluarFecha(this, '')) {
+                const [anio, mes, dia] = this.value.split('-');
+                const nuevoAnio = parseInt(anio) + 1;
+                inputCierre.value = `${nuevoAnio}-${mes}-${dia}`;
+                EstadoInputs.limpiar(inputCierre);
+            }
+        });
+    }
 
-    $('#estado').on('change', function() {
-        Validaciones.campo(this, /^[A-Za-z]{3,15}$/, 'El estado debe tener entre 3 y 15 letras');
-    });
+    // Descripción y Estado
+    if (inputDesc) {
+        inputDesc.addEventListener('keypress', e => Validador.bloquearTeclasInvalidas(e, Patrones.teclasObservacion));
+        inputDesc.addEventListener('keyup', function() {
+            Validador.evaluarInput(this, Patrones.observacion, 'Máximo 50 caracteres');
+        });
+    }
 
-    // Auto-calcular fecha de cierre al cambiar fecha de inicio
-    $('#fecha_inicio').on('change', function() {
-        if (Validaciones.campo(this, /^\d{4}-\d{2}-\d{2}$/, '')) {
-            const [anio, mes, dia] = this.value.split('-');
-            const nuevoAnio = parseInt(anio) + 1;
-            $('#fecha_cierre').val(`${nuevoAnio}-${mes}-${dia}`);
-            Validaciones.limpiar($('#fecha_cierre')[0]);
-        }
-    });
+    if (selectEstado) {
+        selectEstado.addEventListener('change', function() {
+            Validador.evaluarInput(this, Patrones.estadoAnio, 'El estado debe tener entre 3 y 15 letras');
+        });
+    }
 
-    // Validación de envío
-    $('#boton_formulario').on('click', async function(e) {
-        e.preventDefault();
-        const accion = this.dataset.id ? 'modificar' : 'Registrar';
-        if (await validarEnvio(accion)) {
-            Swal.fire({
-                title: '¿Estás seguro?',
-                text: `¿Desea ${accion} este año fiscal?`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#1b8a40',
-                confirmButtonText: 'Sí, ' + accion
-            }).then(result => {
-                if (result.isConfirmed) {
-                    accion === 'modificar' ? modificar() : registrar();
-                }
-            });
-        }
-    });
+    // Envío
+    const btnForm = document.getElementById('boton_formulario');
+    if (btnForm) {
+        btnForm.addEventListener('click', async function(e) {
+            e.preventDefault();
+            const accion = this.dataset.id ? 'modificar' : 'Registrar';
+            
+            if (await validarEnvio(accion)) {
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: `¿Desea ${accion} este año fiscal?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#1b8a40',
+                    confirmButtonText: 'Sí, ' + accion
+                }).then(result => {
+                    if (result.isConfirmed) {
+                        accion === 'modificar' ? modificar() : registrar();
+                    }
+                });
+            }
+        });
+    }
 });
 
 async function validarEnvio(accion) {
-    // Validar campos obligatorios
-    const campos = [
-        { input: '#fecha_inicio', regex: /^\d{4}-\d{2}-\d{2}$/, msg: 'Fecha de inicio inválida' },
-        { input: '#fecha_cierre', regex: /^\d{4}-\d{2}-\d{2}$/, msg: 'Fecha de cierre inválida' },
-        { input: '#estado', regex: /^[A-Za-z]{3,15}$/, msg: 'Estado inválido' }
-    ];
+    const inicio = document.getElementById('fecha_inicio');
+    const cierre = document.getElementById('fecha_cierre');
+    const estado = document.getElementById('estado');
+    const desc = document.getElementById('descripcion');
 
-    for (const c of campos) {
-        const el = document.querySelector(c.input);
-        if (!el.value || (c.regex && !c.regex.test(el.value))) {
-            Validaciones.mostrarError(el, c.msg);
-            Utilidades.mensaje('error', 'Error', c.msg);
-            return false;
-        }
-        Validaciones.limpiar(el);
+    if (!Validador.evaluarFecha(inicio) || !Validador.evaluarFecha(cierre) || !Validador.evaluarInput(estado, Patrones.estadoAnio, 'Estado inválido')) {
+        Alertas.mostrar('error', 'Error', 'Verifique los campos obligatorios');
+        return false;
     }
 
-    // Validar lógica de fechas (rango de un año)
     if (!await validarRangoFechas()) return false;
 
-    // Descripción es opcional, pero si tiene valor validar formato
-    const desc = document.querySelector('#descripcion');
-    if (desc.value && !/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ,.\s]{0,50}$/.test(desc.value)) {
-        Validaciones.mostrarError(desc, 'Descripción inválida');
-        Utilidades.mensaje('error', 'Error', 'La descripción contiene caracteres no permitidos.');
+    if (desc.value && !Validador.evaluarInput(desc, Patrones.observacion, 'Inválido')) {
+        Alertas.mostrar('error', 'Error', 'La descripción contiene caracteres no permitidos.');
         return false;
     }
 
@@ -77,28 +89,29 @@ async function validarEnvio(accion) {
 }
 
 async function validarRangoFechas() {
-    const inicio = document.querySelector('#fecha_inicio');
-    const cierre = document.querySelector('#fecha_cierre');
+    const inicio = document.getElementById('fecha_inicio');
+    const cierre = document.getElementById('fecha_cierre');
 
     const fechaInicio = new Date(inicio.value);
     const fechaCierre = new Date(cierre.value);
 
     if (fechaInicio >= fechaCierre) {
-        Validaciones.mostrarError(inicio, 'La fecha de inicio debe ser anterior a la de cierre');
-        Validaciones.mostrarError(cierre, 'La fecha de cierre debe ser posterior a la de inicio');
-        Utilidades.mensaje('error', 'Error', 'La fecha de inicio debe ser anterior a la de cierre.');
+        EstadoInputs.marcarError(inicio, 'Debe ser anterior a la de cierre');
+        EstadoInputs.marcarError(cierre, 'Debe ser posterior a la de inicio');
+        Alertas.mostrar('error', 'Error', 'La fecha de inicio debe ser anterior a la de cierre.');
         return false;
     }
     
+    // Usamos tu excelente helper FormatoFechas
     const diferencia = FormatoFechas.diferenciaEnDias(inicio.value, cierre.value);
     if (diferencia < 364 || diferencia > 366) {
-        Validaciones.mostrarError(inicio, `El período debe ser de aproximadamente un año (364-366 días). Días actuales: ${diferencia}`);
-        Validaciones.mostrarError(cierre, `El período debe ser de aproximadamente un año (364-366 días). Días actuales: ${diferencia}`);
-        Utilidades.mensaje('error', 'Error', `El período debe ser de un año (364-366 días). Días calculados: ${diferencia}.`);
+        EstadoInputs.marcarError(inicio, `Período inválido. Días: ${diferencia}`);
+        EstadoInputs.marcarError(cierre, `Período inválido. Días: ${diferencia}`);
+        Alertas.mostrar('error', 'Error', `El período debe ser de un año (364-366 días). Días calculados: ${diferencia}.`);
         return false;
     }
 
-    Validaciones.limpiar(inicio);
-    Validaciones.limpiar(cierre);
+    EstadoInputs.limpiar(inicio);
+    EstadoInputs.limpiar(cierre);
     return true;
 }
