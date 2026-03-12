@@ -41,13 +41,13 @@
                             <div class="card p-4">
                                 <div class="d-flex justify-content-between align-items-center mb-4">
                                     <?php if (Sesiones::tienePermiso(GESTIONAR_CARTELERA_VIRTUAL, REGISTRAR)) : ?>
-                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_cartelera">Nueva Publicación</button>
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-tooltip="true" title="Registrar Nueva Publicación" data-bs-target="#modal_cartelera">Nueva Publicación</button>
                                     <?php else: ?>
                                         <div></div> <?php endif; ?>
                                     
                                     <div class="input-group" style="max-width: 300px;">
                                         <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                        <input type="text" id="busqueda_global" class="form-control" placeholder="Buscar publicación...">
+                                        <input type="text" id="busqueda_global" data-tooltip="true" title="Buscar Registro" class="form-control" placeholder="Buscar publicación...">
                                     </div>
                                 </div>
                                 <div id="tabla_cartelera_virtual" class="tabla-sistema-haydee"></div>

@@ -133,7 +133,7 @@ function llenarTablaNotificaciones() {
 
     const formatoBotones = (cell) => {
         // Un botón HTML súper limpio, sin necesidad de inyectarle data-atributos
-        return `<button class="btn btn-sm btn-primary ver-notificacion" title="Ver Notificación" type="button">
+        return `<button data-tooltip="true" class="btn btn-sm btn-primary ver-notificacion" title="Ver Notificación" type="button">
                     <i class="bi bi-eye"></i>
                 </button>`;
     };

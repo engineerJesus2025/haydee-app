@@ -214,11 +214,11 @@ async function consultar() {
     const formatoBotones = (cell) => {
         const id = cell.getData().id_pago;
         let html = `<div class="d-flex justify-content-center gap-2">
-            <button type="button" class="btn btn-primary btn-sm vista-previa" title="Vista previa" value="${id}"><i class="bi bi-eye-fill"></i></button>
-            <button type="button" class="btn btn-info btn-sm text-white recibo-pago" style="background-color:#3939a9;" title="Recibo PDF" value="${id}"><i class="bi bi-card-checklist"></i></button>
-            <button type="button" class="btn btn-success btn-sm modificar" title="Modificar" value="${id}"><i class="bi bi-pencil-square"></i></button>`;
+            <button data-tooltip="true" type="button" class="btn btn-primary btn-sm vista-previa" title="Previsualizar contenido del registro" value="${id}"><i class="bi bi-eye-fill"></i></button>
+            <button data-tooltip="true" type="button" class="btn btn-info btn-sm text-white recibo-pago" style="background-color:#3939a9;" title="Descargar Recibo de Pago (PDF)" value="${id}"><i class="bi bi-card-checklist"></i></button>
+            <button data-tooltip="true" type="button" class="btn btn-success btn-sm modificar" title="Modificar los detalles de este registro" value="${id}"><i class="bi bi-pencil-square"></i></button>`;
         if (permiso_eliminar == 1) {
-            html += `<button type="button" class="btn btn-danger btn-sm eliminar" title="Anular" value="${id}"><i class="bi bi-trash"></i></button>`;
+            html += `<button data-tooltip="true" type="button" class="btn btn-danger btn-sm eliminar" title="Anular" value="${id}"><i class="bi bi-trash"></i></button>`;
         }
         html += `</div>`;
         return html;
@@ -507,7 +507,7 @@ async function mostrarVistaPrevia(id) {
             formatter: (cell) => {
                 const img = cell.getData().imagen;
                 if (img && img !== 'default.png') {
-                    return `<a href="recursos/img/pagos/${img}" target="_blank" class="btn btn-sm btn-info" title="Ver comprobante"><i class="bi bi-image"></i></a>`;
+                    return `<a data-tooltip="true" href="recursos/img/pagos/${img}" target="_blank" class="btn btn-sm btn-info" title="Ver comprobante"><i class="bi bi-image"></i></a>`;
                 }
                 return '<span class="text-muted">N/A</span>';
             },

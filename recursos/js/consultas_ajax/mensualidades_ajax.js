@@ -68,11 +68,11 @@ async function consultarMensualidades() {
 
     const formatoBotones = (cell) => {
         let html = `<div class="d-flex justify-content-center gap-2">
-            <button type="button" class="btn btn-primary btn-sm vista-previa" title="Ver detalles"><i class="bi bi-eye-fill"></i></button>
-            <button type="button" class="btn btn-info btn-sm text-white cuadro-pagos" style="background-color:#3939a9;" title="Cuadro de Pagos PDF"><i class="bi bi-card-checklist"></i></button>
-            <button type="button" class="btn btn-success btn-sm modificar" title="Modificar"><i class="bi bi-pencil-square"></i></button>`;
+            <button data-tooltip="true" type="button" class="btn btn-primary btn-sm vista-previa" title="Ver Detalles de Mensualidad"><i class="bi bi-eye-fill"></i></button>
+            <button data-tooltip="true" type="button" class="btn btn-info btn-sm text-white cuadro-pagos" style="background-color:#3939a9;" title="Descargar Cuadro de Pagos (PDF)"><i class="bi bi-card-checklist"></i></button>
+            <button data-tooltip="true" type="button" class="btn btn-success btn-sm modificar" title="Modificar los detalles de este registro"><i class="bi bi-pencil-square"></i></button>`;
         if (permisoEliminar == 1) {
-            html += `<button type="button" class="btn btn-danger btn-sm eliminar" title="Eliminar"><i class="bi bi-trash"></i></button>`;
+            html += `<button data-tooltip="true" type="button" class="btn btn-danger btn-sm eliminar" title="Quitar este elemento del sistema"><i class="bi bi-trash"></i></button>`;
         }
         html += `</div>`;
         return html;

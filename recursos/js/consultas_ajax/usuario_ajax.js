@@ -97,11 +97,11 @@ async function consultar() {
     const formatoBotones = (cell) => {
         const id = cell.getData().id_usuario;
         let html = `<div class="d-flex justify-content-center gap-2">
-                        <button type="button" class="btn btn-success btn-sm modificar" data-bs-toggle="modal" data-bs-target="#modal_usuario" title="Modificar" value="${id}">
+                        <button data-tooltip="true" type="button" class="btn btn-success btn-sm modificar" data-bs-toggle="modal" data-bs-target="#modal_usuario" title="Modificar los detalles de este registro" value="${id}">
                             <i class="bi bi-pencil-square"></i>
                         </button>`;
         if (permiso_eliminar) {
-            html += `<button type="button" class="btn btn-danger btn-sm eliminar" title="Eliminar" value="${id}">
+            html += `<button data-tooltip="true" type="button" class="btn btn-danger btn-sm eliminar" title="Quitar este elemento del sistema" value="${id}">
                         <i class="bi bi-trash"></i>
                     </button>`;
         }

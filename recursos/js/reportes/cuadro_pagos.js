@@ -63,26 +63,20 @@ function consultarMeses() {
         let spinnerContainer = botonCuadroPagos.querySelector(".spinner-grow")?.parentElement;
 
         const contenedorTarjeta = botonCuadroPagos.parentElement;
-        const tooltipPrevio = bootstrap.Tooltip.getInstance();
-        if (tooltipPrevio) tooltipPrevio.dispose();
-
+        
         if (respuesta.estatus && respuesta.datos.length > 0) {
-            contenedorTarjeta.setAttribute('title', 'Click para ver mensualidades para el cuadro');
+            Tooltips.actualizarDinamicamente(contenedorTarjeta, 'Generar cuadro comparativo de solvencia mensual');
             botonCuadroPagos.removeAttribute('disabled');
             arrayMeses = respuesta.datos;
             if (spinnerContainer) {
                 spinnerContainer.innerHTML = `<i class="bi bi-ui-checks" style="font-size: 5rem !important;"></i>`;
             }
         } else {
-            contenedorTarjeta.setAttribute('title', 'No hay mensualidades registradas para generar el cuadro');
+            Tooltips.actualizarDinamicamente(contenedorTarjeta, 'No existen mensualidades procesadas para este cuadro.');
             if (spinnerContainer) {
                 spinnerContainer.innerHTML = `<i class="bi bi-inbox text-secondary" style="font-size: 5rem !important;"></i>`;
             }
         }
-        new bootstrap.Tooltip(contenedorTarjeta, {
-            placement: 'top',
-            trigger: 'hover'
-        });
     }).catch(error => {
         console.error("Error al cargar meses:", error);
     });

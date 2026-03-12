@@ -61,10 +61,10 @@ async function consultar() {
     const formatoBotones = (cell) => {
         const id = cell.getData().id_gasto;
         let html = `<div class="d-flex justify-content-center gap-2">
-            <button type="button" class="btn btn-primary btn-sm vista-previa" title="Vista previa" value="${id}"><i class="bi bi-eye-fill"></i></button>
-            <button type="button" class="btn btn-success btn-sm modificar" title="Modificar" value="${id}" data-bs-toggle="modal" data-bs-target="#modal_gastos"><i class="bi bi-pencil-square"></i></button>`;
+            <button data-tooltip="true" type="button" class="btn btn-primary btn-sm vista-previa" title="Previsualizar contenido del registro" value="${id}"><i class="bi bi-eye-fill"></i></button>
+            <button data-tooltip="true" type="button" class="btn btn-success btn-sm modificar" title="Modificar los detalles de este registro" value="${id}" data-bs-toggle="modal" data-bs-target="#modal_gastos"><i class="bi bi-pencil-square"></i></button>`;
         if (permiso_eliminar == 1) {
-            html += `<button type="button" class="btn btn-danger btn-sm eliminar" title="Eliminar" value="${id}"><i class="bi bi-trash"></i></button>`;
+            html += `<button data-tooltip="true" type="button" class="btn btn-danger btn-sm eliminar" title="Quitar este elemento del sistema" value="${id}"><i class="bi bi-trash"></i></button>`;
         }
         html += `</div>`;
         return html;
@@ -373,7 +373,7 @@ async function cargarDetallesEnTabla(idGasto) {
             headerSort: false,
             hozAlign: "center",
             headerHozAlign: "center",
-            formatter: (cell) => `<button class="btn btn-sm btn-primary ver-detalle" value="${cell.getData().id_detalle_gasto}"><i class="bi bi-eye"></i></button>`,
+            formatter: (cell) => `<button data-tooltip="true" class="btn btn-sm btn-primary ver-detalle" value="${cell.getData().id_detalle_gasto}"><i class="bi bi-eye"></i></button>`,
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;

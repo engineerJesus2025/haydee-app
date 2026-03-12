@@ -48,8 +48,6 @@ async function consultarPeriodos() {
         // Enviar con Fetch usando el nuevo helper (sin mostrar modal extra de carga)
         const respuesta = await Peticiones.enviar(datos, "", false);
         
-        const contenedorTarjeta = botonCuadroGastos.parentElement;
-        const tooltipPrevio = bootstrap.Tooltip.getInstance();
         if (tooltipPrevio) tooltipPrevio.dispose();
 
         if (respuesta.estatus && respuesta.datos.length > 0) {
@@ -65,7 +63,7 @@ async function consultarPeriodos() {
                 anioSelect.add(new Option(anio, anio));
             });
 
-            contenedorTarjeta.setAttribute('title', 'Click para ver los gastos registrados para el reportes');
+            Tooltips.actualizarDinamicamente(contenedorTarjeta, 'Ver historial de gastos registrados para este módulo.');
 
             botonCuadroGastos.removeAttribute("disabled");
             let spinnerContainer = botonCuadroGastos.querySelector(".spinner-grow")?.parentElement;
@@ -73,17 +71,14 @@ async function consultarPeriodos() {
                 spinnerContainer.innerHTML = `<i class="bi bi-receipt-cutoff" style="font-size: 5rem !important;"></i>`;
             }
         } else {
+            Tooltips.actualizarDinamicamente(contenedorTarjeta, 'No se han detectado gastos registrados en el sistema.');
+
             anioSelect.innerHTML = '<option value="">No hay datos</option>';
-            contenedorTarjeta.setAttribute('title', 'No hay gastos registrados para generar reportes');
             let spinnerContainer = botonCuadroGastos.querySelector(".spinner-grow")?.parentElement;
             if (spinnerContainer) {
                 spinnerContainer.innerHTML = `<i class="bi bi-inbox text-secondary" style="font-size: 5rem !important;"></i>`;
             }
         }
-        new bootstrap.Tooltip(contenedorTarjeta, {
-            placement: 'top',
-            trigger: 'hover'
-        });
     } catch (error) {
         console.error("Error al cargar períodos:", error);
         anioSelect.innerHTML = '<option value="">Error al cargar</option>';

@@ -107,7 +107,7 @@ switch ($pagina_actual) {
 
     <div class="d-flex align-items-center gap-3">
         <div class="dropdown">
-            <button class="btn btn-link nav-link position-relative text-secondary" role="button" data-bs-toggle="dropdown" aria-expanded="false" id="notificaciones-toggle">
+            <button class="btn btn-link nav-link position-relative text-secondary" role="button" data-tooltip="true" title="Ver Notificaciones" data-bs-toggle="dropdown" aria-expanded="false" id="notificaciones-toggle">
                 <i class="bi bi-bell fs-5"></i>
                 <span id="count-label" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger <?php echo (count($_SESSION['notificaciones']) == 0) ? 'd-none' : ''; ?>">
                     <?php echo (count($_SESSION["notificaciones"]) > 99) ? '+99' : count($_SESSION["notificaciones"]); ?>
@@ -170,15 +170,15 @@ switch ($pagina_actual) {
                     <?php echo strtoupper(substr($_SESSION["nombre_completo"], 0, 2)); ?>
                 </div>
                 <div class="d-flex flex-column text-start" style="line-height: 1.2;">
-                        <span class="fs-6" id="nombre_usuario_sesion"><?php echo $_SESSION["nombre_completo"]; ?></span>
-                        <span class="text-muted" style="font-size: 0.75rem;"><?php echo $_SESSION["rol"]; ?></span>
+                        <span class="fs-6" data-tooltip="true" title="<?php echo $_SESSION["nombre_completo"]; ?>" id="nombre_usuario_sesion"><?php echo $_SESSION["nombre_completo"]; ?></span>
+                        <span class="text-muted" data-tooltip="true" title="<?php echo $_SESSION["rol"]; ?>" style="font-size: 0.75rem;"><?php echo $_SESSION["rol"]; ?></span>
                 </div>
             </button>
             <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                <li><a class="dropdown-item" href="?pagina=perfil&accion=perfil"><i class="bi bi-person me-2"></i> Mi perfil</a></li>
-                <li><a class="dropdown-item" href="?pagina=ayuda&accion=inicio"><i class="bi bi-question-circle me-2"></i> Ayuda</a></li>
+                <li><a class="dropdown-item" href="?pagina=perfil&accion=perfil"  data-tooltip="true" title="Ir a mi Perfil"><i class="bi bi-person me-2"></i> Mi perfil</a></li>
+                <li><a class="dropdown-item" href="?pagina=ayuda&accion=inicio" data-tooltip="true" title="Ir a Ayuda"><i class="bi bi-question-circle me-2"></i> Ayuda</a></li>
                 <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item text-danger" href="?pagina=login&accion=cerrar"><i class="bi bi-box-arrow-right me-2"></i> Salir</a></li>
+                <li><a class="dropdown-item text-danger" href="?pagina=login&accion=cerrar" data-tooltip="true" title="Cerrar Sesión"><i class="bi bi-box-arrow-right me-2"></i> Salir</a></li>
             </ul>
         </div>
     </div>

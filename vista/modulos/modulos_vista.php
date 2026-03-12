@@ -29,13 +29,13 @@
                             <div class="card p-4">
                                 <div class="d-flex justify-content-between align-items-center mb-4">
                                     <?php if (Sesiones::tienePermiso(GESTIONAR_MODULOS, REGISTRAR)) : ?>
-                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_modulo">Nuevo Módulo</button>
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-tooltip="true" title="Registrar Nuevo Módulo" data-bs-target="#modal_modulo">Nuevo Módulo</button>
                                     <?php else: ?>
                                         <div></div> <?php endif; ?>
                                     
                                     <div class="input-group" style="max-width: 300px;">
                                         <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                        <input type="text" id="busqueda_global" class="form-control" placeholder="Buscar módulo...">
+                                        <input type="text" id="busqueda_global" data-tooltip="true" title="Buscar Registro" class="form-control" placeholder="Buscar módulo...">
                                     </div>
                                 </div>
                                 <div id="tabla_modulos" class="tabla-sistema-haydee"></div>

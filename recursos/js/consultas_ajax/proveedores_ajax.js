@@ -19,12 +19,11 @@ async function consultar() {
     if (!contenedor) return;
 
     const formatoBotones = (cell) => {
-        // CAMBIAR AQUÍ EL ID SEGÚN EL MÓDULO (id_proveedor, id_modulo, id_permiso, id_tipo_gasto)
         const id = cell.getData().id_proveedor; 
         
         let html = `<div class="d-flex justify-content-center gap-2">`;
-        if (window.permiso_modificar) html += `<button type="button" class="btn btn-success btn-sm modificar" value="${id}"><i class="bi bi-pencil"></i></button>`;
-        if (window.permiso_eliminar) html += `<button type="button" class="btn btn-danger btn-sm eliminar" value="${id}"><i class="bi bi-trash"></i></button>`;
+        if (window.permiso_modificar) html += `<button data-tooltip="true" type="button" class="btn btn-success btn-sm modificar" title="Modificar los detalles de este registro" value="${id}"><i class="bi bi-pencil"></i></button>`;
+        if (window.permiso_eliminar) html += `<button data-tooltip="true" type="button" class="btn btn-danger btn-sm eliminar" title="Quitar este elemento del sistema" value="${id}"><i class="bi bi-trash"></i></button>`;
         html += `</div>`;
         return html;
     };
@@ -32,7 +31,6 @@ async function consultar() {
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center",},
         
-        // --- CAMBIAR ESTOS FIELDS SEGÚN EL MÓDULO ---
         { title: "Proveedor", field: "nombre_proveedor", minWidth: 150, responsive: 0 },
         { title: "Servicio", field: "servicio", minWidth: 150 },
         { title: "Rif", field: "rif", minWidth: 120 },
@@ -47,13 +45,8 @@ async function consultar() {
                 const btn = e.target.closest('button');
                 if (!btn) return;
                 
-                // NOTA: En modulo_ajax y permiso_ajax usabas prepararEdicion(id)
-                // En tipo_gasto_ajax usabas modificar_formulario(e)
-                // En proveedores usabas prepararFormulario(e)
-                // Asegúrate de llamar a la función que le corresponde a cada archivo.
-                
                 if (btn.classList.contains('modificar')) {
-                    prepararFormulario({ currentTarget: btn }); // Para proveedores
+                    prepararFormulario({ currentTarget: btn }); 
                 }
                 
                 if (btn.classList.contains('eliminar')) {

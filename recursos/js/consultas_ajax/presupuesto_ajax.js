@@ -588,9 +588,9 @@ async function consultar() {
     const formatoBotones = (cell) => {
         const id = cell.getData().id_presupuesto;
         let html = `<div class="d-flex justify-content-center gap-2">
-            <button type="button" class="btn btn-success btn-sm modificar" data-bs-toggle="modal" data-bs-target="#modal_presupuesto" title="Modificar" value="${id}"><i class="bi bi-pencil-square"></i></button>`;
+            <button data-tooltip="true" type="button" class="btn btn-success btn-sm modificar" data-bs-toggle="modal" data-bs-target="#modal_presupuesto" title="Modificar los detalles de este registro" value="${id}"><i class="bi bi-pencil-square"></i></button>`;
         if (permiso_eliminar == 1) {
-            html += `<button type="button" class="btn btn-danger btn-sm eliminar" title="Eliminar" value="${id}"><i class="bi bi-trash"></i></button>`;
+            html += `<button data-tooltip="true" type="button" class="btn btn-danger btn-sm eliminar" title="Quitar este elemento del sistema" value="${id}"><i class="bi bi-trash"></i></button>`;
         }
         html += `</div>`;
         return html;

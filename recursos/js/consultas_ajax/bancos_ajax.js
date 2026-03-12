@@ -52,11 +52,11 @@ function envio(operacion) {
 function crearBotones(id) {
     let div = document.createElement("div");
     let html = `<div class="row justify-content-evenly">
-                    <button type="button" class="btn btn-success btn-sm col-lg-3 col-4 modificar" data-bs-toggle="modal" data-bs-target="#modal_banco" title="modificar" value="${id}">
+                    <button data-tooltip="true" type="button" class="btn btn-success btn-sm col-lg-3 col-4 modificar" data-bs-toggle="modal" data-bs-target="#modal_banco" title="Modificar los detalles de este registro" value="${id}">
                         <i class="bi bi-pencil-square"></i>
                     </button>`;
     if (permiso_eliminar == 1) {
-        html += `<button type="button" class="btn btn-danger btn-sm col-lg-3 col-4 eliminar" title="Eliminar" value="${id}">
+        html += `<button data-tooltip="true" type="button" class="btn btn-danger btn-sm col-lg-3 col-4 eliminar" title="Quitar este elemento del sistema" value="${id}">
                     <i class="bi bi-trash"></i>
                 </button>`;
     }
@@ -74,10 +74,10 @@ async function consultar() {
         const id = cell.getData().id_banco;
         let html = `<div class="d-flex justify-content-center gap-2">`;
         if (window.permiso_modificar) {
-            html += `<button class="btn btn-success btn-sm modificar" value="${id}" title="Modificar"><i class="bi bi-pencil"></i></button>`;
+            html += `<button class="btn btn-success btn-sm modificar" value="${id}" title="Modificar los detalles de este registro"><i class="bi bi-pencil"></i></button>`;
         }
         if (window.permiso_eliminar) {
-            html += `<button class="btn btn-danger btn-sm eliminar" value="${id}" title="Eliminar"><i class="bi bi-trash"></i></button>`;
+            html += `<button class="btn btn-danger btn-sm eliminar" value="${id}" title="Quitar este elemento del sistema"><i class="bi bi-trash"></i></button>`;
         }
         html += `</div>`;
         return html;

@@ -38,34 +38,24 @@ document.addEventListener('DOMContentLoaded', () => {
         const botonDom = document.getElementById(idBoton);
         const contenedorTarjeta = botonDom.parentElement; // El div.card que tiene el title
 
-        // 1. Destruimos cualquier tooltip previo para evitar conflictos
-        const tooltipPrevio = bootstrap.Tooltip.getInstance(contenedorTarjeta);
-        if (tooltipPrevio) tooltipPrevio.dispose();
-
         if (respuesta.estatus && respuesta.datos && respuesta.datos.length > 0) {
             datosCargados[idBoton] = respuesta.datos;
             botonDom.removeAttribute('disabled'); 
             
-            // Asignamos el mensaje de éxito
-            contenedorTarjeta.setAttribute('title', 'Click para ver opciones de este reporte');
+            Tooltips.actualizarDinamicamente(contenedorTarjeta, 'Generar constancia para residentes registrados.');
             
             let spinnerContainer = botonDom.querySelector(".spinner-grow")?.parentElement;
             if (spinnerContainer) {
                 spinnerContainer.innerHTML = `<i class="bi ${config.icono_carga}" style="font-size: 5rem !important;"></i>`;
             }
         } else {
-            // Asignamos el mensaje de bandeja vacía
-            contenedorTarjeta.setAttribute('title', 'No hay residentes disponibles para este reporte');
+            Tooltips.actualizarDinamicamente(contenedorTarjeta, 'No hay residentes disponibles para este reporte');
+            
             let spinnerContainer = botonDom.querySelector(".spinner-grow")?.parentElement;
             if (spinnerContainer) {
                 spinnerContainer.innerHTML = `<i class="bi bi-inbox text-secondary" style="font-size: 5rem !important;"></i>`;
             }
         }
-        // 2. Creamos el tooltip de Bootstrap con el texto actualizado
-        new bootstrap.Tooltip(contenedorTarjeta, {
-            placement: 'top',
-            trigger: 'hover'
-        });
     }
 
     // 2. Función para preparar el modal de forma instantánea al hacer clic

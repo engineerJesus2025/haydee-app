@@ -35,12 +35,12 @@ async function consultarApartamentos() {
     const formatoBotones = (cell) => {
         const id = cell.getData().id_apartamento;
         let html = `<div class="d-flex justify-content-center gap-2">
-            <button type="button" class="btn btn-primary btn-sm vista-previa" title="Ver Habitantes" value="${id}"><i class="bi bi-people-fill"></i></button>`;
+            <button data-tooltip="true" type="button" class="btn btn-primary btn-sm vista-previa" title="Ver Habitantes del Apartamento" value="${id}"><i class="bi bi-people-fill"></i></button>`;
         if (window.permiso_modificar) {
-            html += `<button type="button" class="btn btn-success btn-sm modificar" title="Modificar" value="${id}"><i class="bi bi-pencil"></i></button>`;
+            html += `<button data-tooltip="true" type="button" class="btn btn-success btn-sm modificar" title="Modificar los detalles de este registro" value="${id}"><i class="bi bi-pencil"></i></button>`;
         }
         if (window.permiso_eliminar) {
-            html += `<button type="button" class="btn btn-danger btn-sm eliminar" title="Eliminar" value="${id}"><i class="bi bi-trash"></i></button>`;
+            html += `<button data-tooltip="true" type="button" class="btn btn-danger btn-sm eliminar" title="Quitar este elemento del sistema" value="${id}"><i class="bi bi-trash"></i></button>`;
         }
         html += `</div>`;
         return html;
@@ -241,12 +241,12 @@ function initTablaHabitantes() {
     const formatoBotones = (cell) => {
         const id = cell.getData().id_habitante;
         let html = `<div class="d-flex justify-content-center gap-2">
-            <button type="button" class="btn btn-primary btn-sm vista-previa-habitante" title="Detalles" value="${id}"><i class="bi bi-eye-fill"></i></button>`;
+            <button data-tooltip="true" type="button" class="btn btn-primary btn-sm vista-previa-habitante" title="Detalles" value="${id}"><i class="bi bi-eye-fill"></i></button>`;
         if (window.permiso_modificar_habitantes) {
-            html += `<button type="button" class="btn btn-success btn-sm modificar-habitante" title="Modificar" value="${id}" data-bs-toggle="modal" data-bs-target="#modal_habitantes"><i class="bi bi-pencil"></i></button>`;
+            html += `<button data-tooltip="true" type="button" class="btn btn-success btn-sm modificar-habitante" title="Modificar los detalles de este registro" value="${id}" data-bs-toggle="modal" data-bs-target="#modal_habitantes"><i class="bi bi-pencil"></i></button>`;
         }
         if (window.permiso_eliminar_habitantes) {
-            html += `<button type="button" class="btn btn-danger btn-sm eliminar-habitante" title="Eliminar" value="${id}"><i class="bi bi-trash"></i></button>`;
+            html += `<button data-tooltip="true" type="button" class="btn btn-danger btn-sm eliminar-habitante" title="Quitar este elemento del sistema" value="${id}"><i class="bi bi-trash"></i></button>`;
         }
         html += `</div>`;
         return html;

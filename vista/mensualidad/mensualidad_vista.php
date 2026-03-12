@@ -37,13 +37,13 @@
                             <div class="card p-4 row">
                                 <div class="d-flex justify-content-between align-items-center mb-4">
                                     <div class="col" hidden>
-                                        <button class="btn btn-primary my-2" id="boton_registrar" title="Presione para Registrar Nueva mensualidad" type="button" data-bs-toggle="modal" data-bs-target="#modal_mensualidad">Nueva Mensualidad</button>
+                                        <button class="btn btn-primary my-2" id="boton_registrar" type="button" data-bs-toggle="modal" data-bs-target="#modal_mensualidad" data-tooltip="true" title="Registrar Nueva mensualidad">Nueva Mensualidad</button>
                                         <p class="text-danger"></p>
                                     </div>
                                     
                                     <div class="input-group" style="max-width: 300px;">
                                         <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                        <input type="text" id="busqueda_global" class="form-control" placeholder="Buscar mensualidad...">
+                                        <input type="text" id="busqueda_global" data-tooltip="true" title="Buscar Registro" class="form-control" placeholder="Buscar mensualidad...">
                                     </div>
                                 </div>
                                 <div id="tabla_mensualidad" class="tabla-sistema-haydee"></div>

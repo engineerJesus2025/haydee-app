@@ -8,6 +8,7 @@
 <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/Peticiones.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/EstadoInputs.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/Validador.js"></script>
+<script src="<?php echo URL_BASE; ?>recursos/js/ayuda/Tooltips.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/Tablas.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/FormatoFechas.js"></script>
 <!-- Script personalizados globales -->

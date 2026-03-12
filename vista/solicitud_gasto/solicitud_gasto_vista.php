@@ -42,13 +42,13 @@
                             <div class="card p-4">
                                 <div class="d-flex justify-content-between align-items-center mb-4">
                                     <?php if (Sesiones::tienePermiso(GESTIONAR_SOLICITUD_GASTO, REGISTRAR)) : ?>
-                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_solicitud_gasto">Nueva Solicitud</button>
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-tooltip="true" title="Registrar Nueva Solicitud" data-bs-target="#modal_solicitud_gasto">Nueva Solicitud</button>
                                     <?php else: ?>
                                         <div></div> <?php endif; ?>
                                     
                                     <div class="input-group" style="max-width: 300px;">
                                         <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                        <input type="text" id="busqueda_global" class="form-control" placeholder="Buscar solicitud...">
+                                        <input type="text" id="busqueda_global" data-tooltip="true" title="Buscar Registro" class="form-control" placeholder="Buscar solicitud...">
                                     </div>
                                 </div>
                                 <div id="tabla_solicitud_gasto" class="tabla-sistema-haydee"></div>

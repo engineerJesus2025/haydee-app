@@ -178,7 +178,6 @@ async function consultarCajasChicas() {
                     // Mostrar mensaje informativo
                     // Alertas.mostrar('warning', 'Saldo Bajo', 'Esta caja requiere atención pronto.');
                     
-                    // Opcional: hacer scroll hacia el select
                     select.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 } else {
                     Alertas.mostrar('error', 'Error', 'La caja notificada no existe.');
@@ -209,9 +208,9 @@ function inicializarTablaMovimientos() {
     const formatoBotones = (cell) => {
         const id = cell.getData().id_movimiento_caja;
         let html = `<div class="d-flex justify-content-center gap-2">
-            <button type="button" class="btn btn-success btn-sm modificar" data-bs-toggle="modal" data-bs-target="#modal_registro_gastos" title="Modificar" value="${id}"><i class="bi bi-pencil-square"></i></button>`;
+            <button type="button" class="btn btn-success btn-sm modificar" data-bs-toggle="modal" data-bs-target="#modal_registro_gastos" title="Modificar los detalles de este registro" value="${id}"><i class="bi bi-pencil-square"></i></button>`;
         if (permiso_eliminar == 1) {
-            html += `<button type="button" class="btn btn-danger btn-sm eliminar" title="Eliminar" value="${id}"><i class="bi bi-trash"></i></button>`;
+            html += `<button type="button" class="btn btn-danger btn-sm eliminar" title="Quitar este elemento del sistema" value="${id}"><i class="bi bi-trash"></i></button>`;
         }
         html += `</div>`;
         return html;

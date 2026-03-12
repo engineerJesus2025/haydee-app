@@ -51,7 +51,7 @@
                                         </div>
                                     </div>
                                     <div class="col-12 text-center mt-4">
-                                        <button class="btn btn-primary" id="btn-cambiar" type="submit">Cambiar contraseña</button>
+                                        <button class="btn btn-primary" id="btn-cambiar" type="submit" data-tooltip="true" title="Cambiar Contraseña">Cambiar contraseña</button>
                                     </div>
                                 </div>
                             </form>

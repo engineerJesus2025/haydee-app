@@ -37,13 +37,13 @@
                             <div class="card p-4">
                                 <div class="d-flex justify-content-between align-items-center mb-4">
                                     <?php if (Sesiones::tienePermiso(GESTIONAR_ANIO_FISCAL, REGISTRAR)) : ?>
-                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_anio_fiscal">Nuevo Año Fiscal</button>
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-tooltip="true" title="Registrar Nuevo Año Fiscal" data-tooltip="true">Nuevo Año Fiscal</button>
                                     <?php else: ?>
                                         <div></div> <?php endif; ?>
                                     
                                     <div class="input-group" style="max-width: 300px;">
                                         <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                        <input type="text" id="busqueda_global" class="form-control" placeholder="Buscar año...">
+                                        <input type="text" id="busqueda_global" data-tooltip="true" title="Buscar Registro" class="form-control" placeholder="Buscar año...">
                                     </div>
                                 </div>
                                 <div id="tabla_anio_fiscal" class="tabla-sistema-haydee"></div>

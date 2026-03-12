@@ -68,10 +68,10 @@ function consultar() {
     const formatoBotones = (cell) => {
         const id = cell.getData().id_cartelera;
         let html = `<div class="d-flex justify-content-center gap-2">
-            <button type="button" class="btn btn-primary btn-sm vista-previa" data-id="${id}" title="Vista previa"><i class="bi bi-eye-fill"></i></button>
-            <button type="button" class="btn btn-success btn-sm modificar" data-id="${id}" data-bs-toggle="modal" data-bs-target="#modal_cartelera" title="Modificar"><i class="bi bi-pencil-square"></i></button>`;
+            <button data-tooltip="true" type="button" class="btn btn-primary btn-sm vista-previa" data-id="${id}" title="Previsualizar contenido de Publicación"><i class="bi bi-eye-fill"></i></button>
+            <button data-tooltip="true" type="button" class="btn btn-success btn-sm modificar" data-id="${id}" data-bs-toggle="modal" data-bs-target="#modal_cartelera" title="Modificar los detalles de este registro"><i class="bi bi-pencil-square"></i></button>`;
         if (permiso_eliminar == 1) {
-            html += `<button type="button" class="btn btn-danger btn-sm eliminar" data-id="${id}" title="Eliminar"><i class="bi bi-trash3-fill"></i></button>`;
+            html += `<button data-tooltip="true" type="button" class="btn btn-danger btn-sm eliminar" data-id="${id}" title="Quitar este elemento del sistema"><i class="bi bi-trash3-fill"></i></button>`;
         }
         html += `</div>`;
         return html;

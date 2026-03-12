@@ -56,7 +56,7 @@
                                     </div>
                                     <?php endif; ?>
                                     <div class="col-12 text-center p-3 pb-0">
-                                        <button type="submit" class="btn btn-primary rounded shadow" id="enviar">Ingresar <i class="bi bi-send-fill"></i></button>
+                                        <button type="submit" class="btn btn-primary rounded shadow" id="enviar" data-tooltip="true" title="Ingresar al sistema">Ingresar <i class="bi bi-send-fill"></i></button>
                                     </div>
                                 </div>
                             </form>

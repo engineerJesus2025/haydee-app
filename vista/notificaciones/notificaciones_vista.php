@@ -32,7 +32,7 @@
                                 <div class="d-flex justify-content-between align-items-center mb-4">
                                     <div class="input-group" style="max-width: 300px;">
                                         <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                        <input type="text" id="busqueda_global" class="form-control" placeholder="Buscar notificacion...">
+                                        <input type="text" id="busqueda_global" data-tooltip="true" title="Buscar Registro" class="form-control" placeholder="Buscar notificacion...">
                                     </div>
                                 </div>
                                 <div id="tabla_notificaciones" class="tabla-sistema-haydee"></div>

@@ -89,7 +89,16 @@ const Tablas = {
         let contenedorHtml = typeof idContenedor === "string" ? document.getElementById(idContenedor) : idContenedor;
         if (contenedorHtml && opciones.cssClass) contenedorHtml.classList.add(opciones.cssClass);
 
-        return new Tabulator(`#${idContenedor}`, config);
+        let tabla = new Tabulator(contenedorHtml, config);
+
+        tabla.on("renderComplete", function() {
+            if (typeof Tooltips !== 'undefined') {
+
+                Tooltips.inicializarTodos(contenedorHtml); 
+            }
+        });
+
+        return tabla;
     },
 
     /**
@@ -163,13 +172,20 @@ const Tablas = {
             ...opciones
         };
 
-        // Extraemos el contenedor HTML para inyectarle clases adicionales si las hay
         let contenedorHtml = typeof idContenedor === "string" ? document.getElementById(idContenedor) : idContenedor;
         if (contenedorHtml && opciones.cssClass) {
             contenedorHtml.classList.add(opciones.cssClass);
         }
 
-        return new Tabulator(contenedorHtml, config);
+        let tabla = new Tabulator(contenedorHtml, config);
+
+        tabla.on("renderComplete", function() {
+            if (typeof Tooltips !== 'undefined') {
+                Tooltips.inicializarTodos(contenedorHtml);
+            }
+        });
+
+        return tabla;
     },
 
 };

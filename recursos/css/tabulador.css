@@ -16,11 +16,11 @@
 /* Secundaria - Vistas Previas (Blanca) */
 .tabulator.tabla-vista-previa .tabulator-header,
 .tabulator.tabla-vista-previa .tabulator-header .tabulator-col {
-    background-color: #ffffff !important;
+    background-color: #fafaff  !important;
 }
 .tabulator.tabla-vista-previa .tabulator-header {
     color: #4b5563 !important; 
-    border-bottom: 2px solid #e2e8f0 !important;
+    border-bottom: 2px solid #dfe1e4  !important;
 }
 
 /* --- 2. FILAS Y HOVER --- */
@@ -153,7 +153,11 @@
     font-size: 0.75rem !important; /* Letra más pequeña */
     letter-spacing: 0.5px; /* Separación elegante entre letras */
     font-weight: 600; /* Un poco de negrita */
-    color: #cbd5e1 !important; /* Un gris muy claro/azulado en lugar de blanco puro para no cansar la vista */
+    color: #cbd5e1 !important; /* Color claro por defecto (para fondo oscuro) */
+}
+
+.tabulator.tabla-vista-previa .tabulator-header .tabulator-col-title {
+    color: #000 !important; /* Gris oscuro para que resalte en el fondo blanco */
 }
 
 /* =========================================================

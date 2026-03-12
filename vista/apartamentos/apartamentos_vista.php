@@ -43,13 +43,13 @@
                             <div class="card p-4">
                                 <div class="d-flex justify-content-between align-items-center mb-4">
                                     <?php if (Sesiones::tienePermiso(GESTIONAR_APARTAMENTOS, REGISTRAR)) : ?>
-                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_apartamentos">Nuevo Apartamento</button>
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-tooltip="true" title="Registrar Nuevo Apartamento" data-bs-target="#modal_apartamentos">Nuevo Apartamento</button>
                                     <?php else: ?>
                                         <div></div> <?php endif; ?>
                                     
                                     <div class="input-group" style="max-width: 300px;">
                                         <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                        <input type="text" id="busqueda_global" class="form-control" placeholder="Buscar apartamento...">
+                                        <input type="text" id="busqueda_global" data-tooltip="true" title="Buscar Registro" class="form-control" placeholder="Buscar apartamento...">
                                     </div>
                                 </div>
                                 <div id="tabla_apartamentos" class="tabla-sistema-haydee"></div>
@@ -120,29 +120,9 @@
                     <?php if (Sesiones::tienePermiso(GESTIONAR_HABITANTES, REGISTRAR)): ?>
                         <div class="button mb-4">
                             <button type="button" id="boton_registrar" class="btn btn-primary"
-                                data-bs-toggle="modal" data-bs-target="#modal_habitantes">Nuevo Habitante</a>
+                                data-bs-toggle="modal" data-bs-target="#modal_habitantes" data-tooltip="true" title="Registrar Nuevo Habitante">Nuevo Habitante</a>
                         </div><br>
                     <?php endif; ?>
-                    <!-- <table id="tabla_habitantes" class="table table-striped table-hove"
-                        style="width:97%">
-                        <thead>
-                            <tr>
-                                <th>NOMBRE</th>
-                                <th>APELLIDO</th>
-                                <th>CEDULA</th>
-                                <th>APARTAMENTO</th>
-                                <th>TIPO VINCULO</th>
-                                <th class="text-center">ACCIONES</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td colspan="7">
-                                    <h4>Cargando...</h4>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table> -->
                     <div id="tabla_habitantes" class="tabla-sistema-haydee"></div>
                 </div>
                 <div class="modal-footer">

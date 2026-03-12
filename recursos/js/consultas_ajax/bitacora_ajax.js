@@ -89,7 +89,7 @@ function consultar() {
     };
 
     const formatoBotones = (cell) => {
-        return `<button class="btn btn-sm btn-outline-primary ver-detalle"><i class="bi bi-eye"></i> Ver detalles</button>`;
+        return `<button data-tooltip="true" class="btn btn-sm btn-outline-primary ver-detalle"><i class="bi bi-eye"></i> Ver detalles</button>`;
     };
 
     const columnas = [

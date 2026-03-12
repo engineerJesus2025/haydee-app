@@ -37,10 +37,10 @@ async function consultar() {
         const id = cell.getData().id_anio_fiscal;
         let html = `<div class="d-flex justify-content-center gap-2">`;
         if (window.permiso_modificar) {
-            html += `<button class="btn btn-success btn-sm modificar" value="${id}" title="Modificar"><i class="bi bi-pencil"></i></button>`;
+            html += `<button data-tooltip="true" class="btn btn-success btn-sm modificar" value="${id}" title="Modificar los detalles de este registro"><i class="bi bi-pencil"></i></button>`;
         }
         if (window.permiso_eliminar) {
-            html += `<button class="btn btn-danger btn-sm eliminar" value="${id}" title="Eliminar"><i class="bi bi-trash"></i></button>`;
+            html += `<button data-tooltip="true" class="btn btn-danger btn-sm eliminar" value="${id}" title="Quitar este elemento del sistema"><i class="bi bi-trash"></i></button>`;
         }
         html += `</div>`;
         return html;
