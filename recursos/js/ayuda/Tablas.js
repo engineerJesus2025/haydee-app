@@ -98,6 +98,13 @@ const Tablas = {
             }
         });
 
+        // ==============================================
+        // Detección automática de búsqueda
+        // ==============================================
+        if (opciones.columnaBusqueda && typeof Notificaciones !== 'undefined') {
+            Notificaciones.resaltarEnTabulator(tabla, opciones.columnaBusqueda);
+        }
+
         return tabla;
     },
 

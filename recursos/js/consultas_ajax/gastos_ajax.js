@@ -646,7 +646,7 @@ document.addEventListener('DOMContentLoaded', () => {
         steps: [
             { element: '.page-header', popover: { title: 'Módulo de Gastos', description: 'Bienvenido. Desde aquí puedes gestionar y controlar todas las salidas de dinero.', side: "bottom", align: 'start' } },
             { element: '[data-bs-target="#modal_gastos"]', popover: { title: 'Nuevo Gasto', description: 'Haz clic en este botón para abrir el formulario y registrar un nuevo gasto.', side: "right", align: 'start' } },
-            { element: '#tabla_gastos_wrapper', popover: { title: 'Tabla de Registros', description: 'Aquí se listan tus gastos. Usa el buscador interno y los botones de acción para Ver, Editar o Eliminar.', side: "top", align: 'center' } }
+            { element: '#tabla_gastos', popover: { title: 'Tabla de Registros', description: 'Aquí se listan tus gastos. Usa el buscador interno y los botones de acción para Ver, Editar o Eliminar.', side: "top", align: 'center' } }
         ]
     };
 

@@ -205,7 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const stepsPrincipal = [
         { element: '.page-header', popover: { title: 'Gestión de Proveedores', description: 'Aquí administras el directorio de empresas y personas que prestan servicios al condominio.', side: "bottom", align: 'center' } },
         { element: 'button[data-bs-target="#modal_proveedores"]', popover: { title: 'Nuevo Proveedor', description: 'Registra un nuevo prestador de servicios (ej: Hidrolara, Corpoelec, Jardineros) para poder asignarle gastos.', side: "bottom", align: 'start' } },
-        { element: '#tabla_proveedores_wrapper', popover: { title: 'Directorio', description: 'Lista de todos los proveedores registrados. Puedes editar sus datos o eliminarlos si ya no prestan servicio.', side: 'top', align: 'center' } }
+        { element: '#tabla_proveedores', popover: { title: 'Directorio', description: 'Lista de todos los proveedores registrados. Puedes editar sus datos o eliminarlos si ya no prestan servicio.', side: 'top', align: 'center' } }
     ];
 
     // 2. TOUR MODAL DE REGISTRO

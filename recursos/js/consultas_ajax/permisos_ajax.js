@@ -134,32 +134,6 @@ async function modificar(id) {
     Alertas.mostrar('success', 'Éxito', 'Permiso modificado correctamente');
 }
 
-botonFormulario?.addEventListener('click', async (e) => {
-    e.preventDefault();
-    const esEdicion = botonFormulario.hasAttribute('modificar');
-    const accion = esEdicion ? 'modificar' : 'Registrar';
-
-    if (await validarFormulario()) {
-        Swal.fire({
-            title: '¿Estás seguro?',
-            text: `¿Desea ${accion.toLowerCase()} este permiso?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#1b8a40',
-            confirmButtonText: `Sí, ${accion}`,
-            cancelButtonText: 'Cancelar'
-        }).then(result => {
-            if (result.isConfirmed) {
-                if (esEdicion) {
-                    modificar(botonFormulario.getAttribute('id_modificar'));
-                } else {
-                    registrar();
-                }
-            }
-        });
-    }
-});
-
 function confirmarEliminar(id) {
     Swal.fire({
         title: '¿Estás seguro?',
@@ -199,14 +173,6 @@ function resetModal() {
     document.getElementById('id_permiso').value = '';
 }
 
-async function validarFormulario() {
-    const accion = document.getElementById('accion');
-    if (!Validaciones.keyUp(/^[A-Za-z_]{3,50}$/, accion, accion.nextElementSibling, 'Acción inválida (solo letras y guión bajo)')) {
-        Alertas.mostrar('error', 'Error', 'El nombre de la acción no es válido');
-        return false;
-    }
-    return true;
-}
 
 // ============================================================
 // MÓDULO DE AYUDA (DRIVER.JS) - PERMISOS
@@ -244,7 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const stepsPrincipal = [
         { element: '.page-header', popover: { title: 'Catálogo de Permisos', description: 'Aquí se registran las acciones atómicas del sistema (Ej: REGISTRAR, ELIMINAR, CONSULTAR) que luego se asignan a los Roles.', side: "bottom", align: 'center' } },
         { element: 'button[data-bs-target="#modal_permiso"]', popover: { title: 'Nueva Acción', description: 'Crea un nuevo permiso en la base de datos. (Solo para uso técnico/avanzado).', side: "bottom", align: 'start' } },
-        { element: '#tabla_permisos_wrapper', popover: { title: 'Lista de Acciones', description: 'Listado de todos los permisos disponibles en el sistema.', side: 'top', align: 'center' } }
+        { element: '#tabla_permisos', popover: { title: 'Lista de Acciones', description: 'Listado de todos los permisos disponibles en el sistema.', side: 'top', align: 'center' } }
     ];
 
     // 2. TOUR MODAL DE REGISTRO

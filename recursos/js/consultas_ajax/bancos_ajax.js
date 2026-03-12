@@ -54,6 +54,7 @@ function crearBotones(id) {
     let html = `<div class="row justify-content-evenly">
                     <button data-tooltip="true" type="button" class="btn btn-success btn-sm col-lg-3 col-4 modificar" data-bs-toggle="modal" data-bs-target="#modal_banco" title="Modificar los detalles de este registro" value="${id}">
                         <i class="bi bi-pencil-square"></i>
+                        <span class="d-none d-lg-inline ms-2">Editar</span>
                     </button>`;
     if (permiso_eliminar == 1) {
         html += `<button data-tooltip="true" type="button" class="btn btn-danger btn-sm col-lg-3 col-4 eliminar" title="Quitar este elemento del sistema" value="${id}">
@@ -74,10 +75,14 @@ async function consultar() {
         const id = cell.getData().id_banco;
         let html = `<div class="d-flex justify-content-center gap-2">`;
         if (window.permiso_modificar) {
-            html += `<button class="btn btn-success btn-sm modificar" value="${id}" title="Modificar los detalles de este registro"><i class="bi bi-pencil"></i></button>`;
+            html += `<button class="btn btn-success btn-sm modificar" value="${id}" title="Modificar los detalles de este registro">
+                    	<i class="bi bi-pencil"></i>
+                    </button>`;
         }
         if (window.permiso_eliminar) {
-            html += `<button class="btn btn-danger btn-sm eliminar" value="${id}" title="Quitar este elemento del sistema"><i class="bi bi-trash"></i></button>`;
+            html += `<button class="btn btn-danger btn-sm eliminar" value="${id}" title="Quitar este elemento del sistema">
+                        <i class="bi bi-trash"></i>
+                    </button>`;
         }
         html += `</div>`;
         return html;
@@ -88,7 +93,6 @@ async function consultar() {
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
         { title: "Banco", field: "nombre_banco", minWidth: 100, responsive: 0 },
         { title: "Código", field: "codigo", minWidth: 60 },
-        { title: "Nro. Cuenta", field: "numero_cuenta", minWidth: 180 },
         { title: "Teléfono", field: "telefono_afiliado", minWidth: 100 },
         { title: "RIF", field: "rif", minWidth: 100 },
         {
@@ -97,7 +101,7 @@ async function consultar() {
             headerSort: false,
             hozAlign: "center",
             vertAlign: "middle",
-            minWidth: 100,
+            minWidth: 150,
             responsive: 0,
             download: false,
             headerHozAlign: "center",
@@ -317,7 +321,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const stepsPrincipal = [
         { element: '.page-header', popover: { title: 'Cuentas Bancarias', description: 'Aquí gestionas los bancos receptores donde el condominio recibe los pagos de los propietarios.', side: "bottom", align: 'center' } },
         { element: 'button[data-bs-target="#modal_banco"]', popover: { title: 'Registrar Banco', description: 'Agrega una nueva cuenta bancaria (nacional o internacional) o billetera digital al sistema.', side: "bottom", align: 'start' } },
-        { element: '#tabla_banco_wrapper', popover: { title: 'Cuentas Activas', description: 'Listado de cuentas registradas. Estos datos aparecerán en los reportes y opciones de pago para los usuarios.', side: "top", align: 'center' } }
+        { element: '#tabla_banco', popover: { title: 'Cuentas Activas', description: 'Listado de cuentas registradas. Estos datos aparecerán en los reportes y opciones de pago para los usuarios.', side: "top", align: 'center' } }
     ];
 
     // 2. TOUR MODAL DE REGISTRO

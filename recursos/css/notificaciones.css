@@ -1,175 +1,149 @@
-/*Estilos para la fila resaltada*/
-table tbody tr.highlight-row {
-    background-color: #dbeafe !important;
-    border-left: 4px solid #3b82f6 !important;
-    animation: vibrant-blue-pulse 2s infinite;
-    position: relative;
-}
-
-table tbody tr.highlight-row td {
-    background-color: inherit !important;
-}
-
-@keyframes vibrant-blue-pulse {
-    0% { 
-        background-color: #dbeafe !important;
-        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.5);
-    }
-    50% { 
-        background-color: #93c5fd !important;
-        box-shadow: 0 0 0 6px rgba(59, 130, 246, 0);
-    }
-    100% { 
-        background-color: #dbeafe !important;
-        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
-    }
-}
-
-.table-primary.highlight-row {
-    background-color: #dbeafe !important;
-    border-color: #3b82f6 !important;
-}
-
-/*Estilos para la select reasaltado*/
-.caja-highlight {
-    animation: caja-pulse 1.5s infinite;
-    border: 2px solid #ffc107 !important; /* Color de advertencia */
-    border-radius: 0.375rem;
-    background-color: rgba(255, 193, 7, 0.1); /* Fondo sutil */
-    box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
-}
-
-@keyframes caja-pulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
-    }
-    70% {
-        box-shadow: 0 0 0 10px rgba(255, 193, 7, 0);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(255, 193, 7, 0);
-    }
-}
-
-/*Estilos de la barra*/
+/* =========================================
+   ESTILOS DEL MENÚ DE NOTIFICACIONES (CAMPANA)
+   ========================================= */
 .dropdown-menu-notifications {
-  width: 400px;
-  max-width: 90vw;
-  border-radius: 0.5rem !important;
-  border: 1px solid #dee2e6;
-  list-style: none;
-  padding: 0;
+    width: 400px;
+    max-width: 90vw;
+    border-radius: 0.5rem !important;
+    border: 1px solid #dee2e6;
+    list-style: none;
+    padding: 0;
 }
 
 #lista-notificaciones-items {
-  max-height: 60vh;
-  overflow-y: auto;
+    max-height: 60vh;
+    overflow-y: auto;
 }
 
 .notif-item {
-  display: flex;
-  align-items: flex-start;
-  padding: .3rem .8rem;
-  border-bottom: 1px solid #f0f0f0;
-  transition: background-color 0.2s ease;
-  position: relative;
+    display: flex;
+    align-items: flex-start;
+    padding: .3rem .8rem;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.2s ease;
+    position: relative;
 }
 
 .notif-item:last-child {
-  border-bottom: none;
+    border-bottom: none;
 }
 
 .notif-item:hover {
-  background-color: #eef6ff;
+    background-color: #eef6ff;
 }
 
 .notif-link {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  text-decoration: none;
-  color: inherit;
-  flex-grow: 1;
-  overflow: hidden;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    color: inherit;
+    flex-grow: 1;
+    overflow: hidden;
 }
 
 .notif-icon-circle {
-  flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;  
-  color: #0d6efd;
-  font-size: 2.2rem;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;  
+    color: #0d6efd;
+    font-size: 2.2rem;
 }
 
 .notif-title {
-  font-weight: 600;
-  color: #212529;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis; 
-  max-width: 100%;
-  font-size: 0.95rem;
-  margin-bottom: 0.1rem;
+    font-weight: 600;
+    color: #212529;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; 
+    max-width: 100%;
+    font-size: 0.95rem;
+    margin-bottom: 0.1rem;
 }
 
 .notif-description {
-  font-size: 0.85rem;
-  color: #6c757d;
-  white-space: nowrap;
-  overflow: visible;
-  white-space: wrap;
-  max-width: 100%;
+    font-size: 0.85rem;
+    color: #6c757d;
+    white-space: nowrap;
+    overflow: visible;
+    white-space: wrap;
+    max-width: 100%;
 }
 
 .notif-date {
-  font-size: 0.75rem;
-  color: #6c757d;
-  flex-shrink: 0;
-  white-space: nowrap;
+    font-size: 0.75rem;
+    color: #6c757d;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
 .notif-remove-btn {
-  background: transparent;
-  border: none;
-  color: #adb5bd;
-  padding: 0.25rem 0.5rem;
-  margin-left: 0.5rem;
-  align-self: center;
-  border-radius: 0.25rem;
-  transition: all 0.2s ease;
+    background: transparent;
+    border: none;
+    color: #adb5bd;
+    padding: 0.25rem 0.5rem;
+    margin-left: 0.5rem;
+    align-self: center;
+    border-radius: 0.25rem;
+    transition: all 0.2s ease;
 }
 
 .notif-remove-btn i {
-  font-size: 0.8rem;
+    font-size: 0.8rem;
 }
 
 .notif-remove-btn:hover {
-  color: #dc3545;
-  background-color: #f1f1f1;
+    color: #dc3545;
+    background-color: #f1f1f1;
 }
 
 .notif-empty {
-  padding: 2rem 1rem;
-  text-align: center;
-  color: #6c757d;
+    padding: 2rem 1rem;
+    text-align: center;
+    color: #6c757d;
 }
 
 .dropdown-footer {
-  background-color: #f8f9fa;
-  list-style: none;
-  border-bottom-right-radius: 0.5rem;
-  border-bottom-left-radius: 0.5rem;
+    background-color: #f8f9fa;
+    list-style: none;
+    border-bottom-right-radius: 0.5rem;
+    border-bottom-left-radius: 0.5rem;
 }
 
 .dropdown-footer a {
-  font-weight: 500;
-  transition: background-color 0.2s ease;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
 }
 
 .dropdown-footer a:hover {
-  background-color: #f0f0f0;
+    background-color: #f0f0f0;
+}
+
+/* =========================================
+   ANIMACIÓN CENTRALIZADA DE RESALTADO 
+   ========================================= */
+@keyframes pulso-notificacion-azul {
+    0% { box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.5); }
+    50% { box-shadow: 0 0 0 8px rgba(13, 110, 253, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(13, 110, 253, 0); }
+}
+
+.resaltar-pulso-azul {
+    animation: pulso-notificacion-azul 2s infinite !important;
+    background-color: #dbeafe !important; /* El color de fondo azul claro original que tenías */
+    transition: background-color 0.3s ease;
+}
+
+/* Adaptación para la fila de Tabulator */
+.tabulator-row.resaltar-pulso-azul {
+    border-left: 4px solid #3b82f6 !important;
+}
+
+/* Adaptación para Selects */
+select.resaltar-pulso-azul {
+    border: 2px solid #3b82f6 !important;
 }

@@ -1,154 +1,127 @@
+/**
+ * notificaciones.js
+ * Maneja la lógica del menú desplegable de notificaciones en el header.
+ */
 document.addEventListener('DOMContentLoaded', () => {
-    // ------------------------------------------------------------
-    // Funciones auxiliares
-    // ------------------------------------------------------------
-    /**
-     * Marca una notificación como leída en el servidor.
-     * @param {string} id - ID de la notificación
-     * @returns {Promise<Object>} - Respuesta del servidor
-     */
+    
+    // Función para comunicarse con el servidor
     async function marcarComoLeida(id) {
         const datos = new FormData();
         datos.append('operacion', 'marcar_como_leido');
         datos.append('id', id);
         const url = '?pagina=notificaciones&accion=marcar_como_leido';
-        return await Utilidades.query(datos, false, url);
+        return await Peticiones.enviar(datos, url, false);
     }
 
-    /**
-     * Elimina visualmente un elemento de notificación y actualiza el contador.
-     * @param {HTMLElement} itemContainer - El elemento <li> que contiene la notificación
-     */
+    // Función para quitar el elemento visualmente
     function eliminarItemYActualizarContador(itemContainer) {
         if (!itemContainer) return;
-
-        // Eliminar el divisor siguiente (si existe)
-        const division = itemContainer.nextElementSibling;
-        if (division?.classList.contains('dropdown-divider')) {
-            division.remove();
-        }
-
-        // Eliminar el contenedor de la notificación
         itemContainer.remove();
 
-        // Actualizar contador general
         const countLabel = document.getElementById('count-label');
         if (!countLabel) return;
 
-        const botonesRestantes = document.querySelectorAll('#lista-notificaciones-items .notif-remove-btn');
-        const total = botonesRestantes.length;
+        // Contamos cuántas notificaciones quedan visualmente
+        const notificacionesRestantes = document.querySelectorAll('.notif-item');
+        const count = notificacionesRestantes.length;
 
-        if (total > 0) {
-            countLabel.textContent = total > 99 ? '+99' : total;
-            countLabel.classList.remove('d-none');
+        if (count > 0) {
+            countLabel.textContent = count > 9 ? '9+' : count;
         } else {
             countLabel.textContent = '0';
             countLabel.classList.add('d-none');
-            // Mostrar mensaje de "no hay notificaciones"
+            
             const listaItems = document.getElementById('lista-notificaciones-items');
             if (listaItems) {
                 listaItems.innerHTML = `
-                    <li class="px-3 py-4 text-center text-muted" id="no-hay-notificaciones">
-                        <i class="bi bi-bell-slash fs-2 d-block mb-2"></i>
-                        No hay notificaciones nuevas
+                    <li class="notif-empty" id="no-hay-notificaciones">
+                        <i class="bi bi-bell-slash fs-1 d-block mb-3 opacity-50"></i>
+                        <span class="d-block">No hay notificaciones nuevas</span>
                     </li>
                 `;
             }
         }
     }
 
-    // ------------------------------------------------------------
-    // Evento para botones de eliminar (X)
-    // ------------------------------------------------------------
-    document.querySelectorAll('#lista-notificaciones-items .notif-remove-btn').forEach(button => {
-        button.addEventListener('click', async (e) => {
-            e.preventDefault();
-            e.stopPropagation();
+    // DELEGACIÓN DE EVENTOS EN LA LISTA
+    const listaNotificaciones = document.getElementById('lista-notificaciones-items');
+    if (listaNotificaciones) {
+        listaNotificaciones.addEventListener('click', async (e) => {
+            
+            // CASO 1: Clic en la "X" para eliminar la notificación
+            const botonMarcar = e.target.closest('.notif-remove-btn');
+            if (botonMarcar) {
+                e.preventDefault();
+                e.stopPropagation();
 
-            const id = button.dataset.id;
-            if (!id) return;
+                const idNotificacion = botonMarcar.getAttribute('data-id');
+                if (!idNotificacion) return;
 
-            const resultado = await marcarComoLeida(id);
-            if (!resultado.estatus) {
-                Utilidades.mensaje('error', 'Atención', resultado.mensaje || 'Error al procesar la notificación.');
-                return;
+                botonMarcar.disabled = true;
+                const resultado = await marcarComoLeida(idNotificacion);
+
+                if (resultado?.estatus) {
+                    eliminarItemYActualizarContador(botonMarcar.closest('.notif-item'));
+                } else {
+                    botonMarcar.disabled = false;
+                    Alertas.mostrar('error', 'Atención', resultado?.mensaje || 'Error al procesar la solicitud.');
+                }
+                return; // Terminamos aquí para que no ejecute el caso 2
             }
 
-            const itemContainer = button.closest('li');
-            eliminarItemYActualizarContador(itemContainer);
+            // CASO 2: Clic en la notificación (enlace) para leer y redirigir
+            const linkNotificacion = e.target.closest('.notif-link');
+            if (linkNotificacion) {
+                e.preventDefault(); // Evitamos que redirija instantáneamente
+                
+                // Buscamos el ID en el botón "X" hermano
+                const itemContainer = linkNotificacion.closest('.notif-item');
+                const idNotificacion = itemContainer.querySelector('.notif-remove-btn').getAttribute('data-id');
+
+                // Enviamos la petición asíncrona (no importa si tarda, redirigimos de inmediato)
+                if (idNotificacion) {
+                    marcarComoLeida(idNotificacion);
+                }
+                
+                // Redirigimos a la URL objetivo
+                window.location.href = linkNotificacion.href;
+            }
         });
-    });
+    }
 
-    // ------------------------------------------------------------
-    // Evento para enlaces de notificación (ir al módulo)
-    // ------------------------------------------------------------
-    document.querySelectorAll('#lista-notificaciones-items .notif-link').forEach(enlace => {
-        enlace.addEventListener('click', async (e) => {
-            e.preventDefault(); // Detenemos la navegación inmediata
-            e.stopPropagation();
-
-            const itemContainer = enlace.closest('li');
-            const botonEliminar = itemContainer?.querySelector('.notif-remove-btn');
-            const id = botonEliminar?.dataset.id;
-
-            if (!id) {
-                // Si no hay ID (caso raro), navegamos directamente
-                window.location.href = enlace.href;
-                return;
-            }
-
-            // Marcar como leída en el servidor
-            const resultado = await marcarComoLeida(id);
-            if (!resultado.estatus) {
-                Utilidades.mensaje('error', 'Atención', resultado.mensaje || 'Error al procesar la notificación.');
-                // Aún así navegamos
-            }
-
-            // Eliminar visualmente la notificación
-            eliminarItemYActualizarContador(itemContainer);
-
-            // Finalmente, navegar a la URL destino
-            window.location.href = enlace.href;
-        });
-    });
-
-    // ------------------------------------------------------------
-    // Evento para "Marcar todas como leídas"
-    // ------------------------------------------------------------
+    // MARCAR TODAS COMO LEÍDAS (Corregido el ID)
     const botonMarcarTodas = document.getElementById('marcar-todas-leidas');
     if (botonMarcarTodas) {
         botonMarcarTodas.addEventListener('click', async (e) => {
             e.preventDefault();
+            e.stopPropagation();
 
             const countLabel = document.getElementById('count-label');
             if (!countLabel || countLabel.classList.contains('d-none') || countLabel.textContent === '0') {
-                return; // No hay notificaciones
+                return;
             }
 
             const datos = new FormData();
             datos.append('operacion', 'marcar_todas_leidas');
             const url = '?pagina=notificaciones&accion=marcar_todas_leidas';
 
-            const resultado = await Utilidades.query(datos, false, url);
+            const resultado = await Peticiones.enviar(datos, url, false);
 
             if (resultado?.estatus) {
-                // Vaciar la lista
                 const listaItems = document.getElementById('lista-notificaciones-items');
                 if (listaItems) {
                     listaItems.innerHTML = `
-                        <li class="px-3 py-4 text-center text-muted" id="no-hay-notificaciones">
-                            <i class="bi bi-bell-slash fs-2 d-block mb-2"></i>
-                            No hay notificaciones nuevas
+                        <li class="notif-empty" id="no-hay-notificaciones">
+                            <i class="bi bi-bell-slash fs-1 d-block mb-3 opacity-50"></i>
+                            <span class="d-block">No hay notificaciones nuevas</span>
                         </li>
                     `;
                 }
                 countLabel.textContent = '0';
                 countLabel.classList.add('d-none');
             } else {
-                Utilidades.mensaje('error', 'Atención', resultado?.mensaje || 'Hubo un error al marcar las notificaciones.');
+                Alertas.mostrar('error', 'Atención', resultado?.mensaje || 'Hubo un error al marcar las notificaciones.');
             }
         });
     }
-
-    
 });

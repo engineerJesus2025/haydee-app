@@ -17,7 +17,7 @@ class Modulos extends Conexion
             'exists' => ['tabla' => 'modulos', 'campo' => 'id_modulo']
         ],
         'nombre' => [
-            'regex' => '/^[A-Za-zÁÉÍÓÚáéíóúñÑ\s]+$/'
+            'regex' => '/^[a-zA-ZáéíóúÁÉÍÓÚñÑ _\s]{3,30}$/'
         ]
     ];
 

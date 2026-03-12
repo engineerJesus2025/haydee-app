@@ -161,27 +161,39 @@
 }
 
 /* =========================================================
-   7. ESTILIZACIÓN DE BOTONES DE ACCIÓN
+   7. ESTILIZACIÓN DE BOTONES DE ACCIÓN (RESPONSIVOS Y ADAPTABLES)
 ========================================================= */
-/* Convertir botones en cuadrados perfectos */
 .tabulator-row .btn-sm {
-    width: 32px !important;
     height: 32px !important;
-    padding: 0 !important;
+    min-width: 32px !important;
+    max-width: 100% !important; /* <-- 1. El botón NUNCA se saldrá de su celda */
+    width: auto !important; 
+    padding: 0 8px !important; 
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    border-radius: 8px; /* Bordes suaves estilo app de celular */
-    transition: all 0.2s ease-in-out !important; /* Animación fluida */
+    border-radius: 8px; 
+    transition: all 0.2s ease-in-out !important; 
+    /* Quitamos el white-space de aquí para dárselo solo al texto */
 }
 
 /* Efecto levitación al pasar el ratón */
 .tabulator-row .btn-sm:hover {
-    transform: translateY(-2px); /* Sube 2 pixeles */
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15); /* Crea una sombra debajo */
+    transform: translateY(-2px); 
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15); 
 }
 
-/* Ajuste sutil para los íconos de Bootstrap dentro del botón */
+/* 2. Proteger el ícono para que NUNCA se aplaste o deforme */
 .tabulator-row .btn-sm i {
     font-size: 1rem;
+    line-height: 1;
+    flex-shrink: 0; /* Obliga al ícono a mantener su tamaño original */
+}
+
+/* 3. Hacer que el texto sea adaptable (Puntos suspensivos si no cabe) */
+.tabulator-row .btn-sm span {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    flex-grow: 1; /* Permite que el texto tome el espacio disponible */
 }

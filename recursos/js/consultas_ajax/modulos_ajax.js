@@ -79,7 +79,7 @@ async function prepararFormulario(e) {
     datos.append('id_modulo', id);
     datos.append('operacion', 'consultar_unico');
 
-    const respuesta = await Peticiones.enviar(datos, true);
+    const respuesta = await Peticiones.enviar(datos, '', true);
     if (!respuesta.estatus) {
         Alertas.mostrar('error', 'Error', respuesta.mensaje);
         return;
@@ -106,7 +106,7 @@ async function registrar() {
     const formData = new FormData(formulario);
     formData.append('operacion', 'registrar');
 
-    const respuesta = await Peticiones.enviar(formData, true);
+    const respuesta = await Peticiones.enviar(formData, '', true);;
     if (!respuesta.estatus) {
         Alertas.mostrar('error', 'Atención', respuesta.mensaje);
         return;
@@ -122,7 +122,7 @@ async function modificar(id) {
     formData.append('id_modulo', id);
     formData.append('operacion', 'modificar');
 
-    const respuesta = await Peticiones.enviar(formData, true);
+    const respuesta = await Peticiones.enviar(formData, '', true);;
     if (!respuesta.estatus) {
         Alertas.mostrar('error', 'Atención', respuesta.mensaje);
         return;
@@ -132,32 +132,6 @@ async function modificar(id) {
     tablaModulos.replaceData();
     Alertas.mostrar('success', 'Éxito', 'Módulo modificado correctamente');
 }
-
-botonFormulario?.addEventListener('click', async (e) => {
-    e.preventDefault();
-    const esEdicion = botonFormulario.hasAttribute('modificar');
-    const accion = esEdicion ? 'modificar' : 'Registrar';
-
-    if (await validarFormulario()) {
-        Swal.fire({
-            title: '¿Estás seguro?',
-            text: `¿Desea ${accion.toLowerCase()} este módulo?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#1b8a40',
-            confirmButtonText: `Sí, ${accion}`,
-            cancelButtonText: 'Cancelar'
-        }).then(result => {
-            if (result.isConfirmed) {
-                if (esEdicion) {
-                    modificar(botonFormulario.getAttribute('id_modificar'));
-                } else {
-                    registrar();
-                }
-            }
-        });
-    }
-});
 
 function confirmarEliminar(id) {
     Swal.fire({
@@ -198,14 +172,6 @@ function resetModal() {
     document.getElementById('id_modulo').value = '';
 }
 
-async function validarFormulario() {
-    const nombre = document.getElementById('nombre');
-    if (!Validaciones.keyUp(/^[A-Za-zÁÉÍÓÚáéíóúñÑ\s]{3,50}$/, nombre, nombre.nextElementSibling, 'Nombre inválido (mínimo 3 letras)')) {
-        Alertas.mostrar('error', 'Error', 'El nombre del módulo no es válido');
-        return false;
-    }
-    return true;
-}
 
 // ============================================================
 // MÓDULO DE AYUDA (DRIVER.JS) - MÓDULOS
@@ -243,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const stepsPrincipal = [
         { element: '.page-header', popover: { title: 'Gestión de Módulos', description: 'Este apartado es técnico. Aquí se registran las secciones del sistema (ej: USUARIOS, PAGOS) para luego asignarles permisos.', side: "bottom", align: 'center' } },
         { element: 'button[data-bs-target="#modal_modulo"]', popover: { title: 'Nuevo Módulo', description: 'Registra un nuevo componente del sistema en la base de datos.', side: "bottom", align: 'start' } },
-        { element: '#tabla_modulos_wrapper', popover: { title: 'Lista de Módulos', description: 'Catálogo de todos los módulos registrados que componen el sistema.', side: 'top', align: 'center' } }
+        { element: '#tabla_modulos', popover: { title: 'Lista de Módulos', description: 'Catálogo de todos los módulos registrados que componen el sistema.', side: 'top', align: 'center' } }
     ];
 
     // 2. TOUR MODAL DE REGISTRO

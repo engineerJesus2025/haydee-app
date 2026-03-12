@@ -428,8 +428,8 @@ class Mensualidad extends Conexion
             $notif->set_tabla_origen('mensualidad');
             $notif->set_id_registro_origen($id_mensualidad); // o el ID de la primera mensualidad si se desea
             $notif->set_tipo_evento('NUEVA_MENSUALIDAD');
-            $notif->set_rol_nombre('Propietario');
-            $notif->realizar_consulta('notificar_por_rol');
+            // $notif->set_rol_nombre('Propietario');
+            $notif->realizar_consulta('notificar_todos');
 
             return ['estatus' => true, 'mensaje' => 'Todas las mensualidades se registraron correctamente.'];
         } catch (Exception $e) {

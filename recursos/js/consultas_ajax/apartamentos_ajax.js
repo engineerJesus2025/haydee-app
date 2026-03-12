@@ -35,12 +35,18 @@ async function consultarApartamentos() {
     const formatoBotones = (cell) => {
         const id = cell.getData().id_apartamento;
         let html = `<div class="d-flex justify-content-center gap-2">
-            <button data-tooltip="true" type="button" class="btn btn-primary btn-sm vista-previa" title="Ver Habitantes del Apartamento" value="${id}"><i class="bi bi-people-fill"></i></button>`;
+                        <button data-tooltip="true" type="button" class="btn btn-primary btn-sm vista-previa" title="Ver Habitantes del Apartamento" value="${id}">
+                            <i class="bi bi-people-fill"></i>
+                        </button>`;
         if (window.permiso_modificar) {
-            html += `<button data-tooltip="true" type="button" class="btn btn-success btn-sm modificar" title="Modificar los detalles de este registro" value="${id}"><i class="bi bi-pencil"></i></button>`;
+            html += `<button data-tooltip="true" type="button" class="btn btn-success btn-sm modificar" title="Modificar los detalles de este registro" value="${id}">
+                        <i class="bi bi-pencil"></i>
+                    </button>`;
         }
         if (window.permiso_eliminar) {
-            html += `<button data-tooltip="true" type="button" class="btn btn-danger btn-sm eliminar" title="Quitar este elemento del sistema" value="${id}"><i class="bi bi-trash"></i></button>`;
+            html += `<button data-tooltip="true" type="button" class="btn btn-danger btn-sm eliminar" title="Quitar este elemento del sistema" value="${id}">
+                        <i class="bi bi-trash"></i>
+                    </button>`;
         }
         html += `</div>`;
         return html;
@@ -243,7 +249,8 @@ function initTablaHabitantes() {
         let html = `<div class="d-flex justify-content-center gap-2">
             <button data-tooltip="true" type="button" class="btn btn-primary btn-sm vista-previa-habitante" title="Detalles" value="${id}"><i class="bi bi-eye-fill"></i></button>`;
         if (window.permiso_modificar_habitantes) {
-            html += `<button data-tooltip="true" type="button" class="btn btn-success btn-sm modificar-habitante" title="Modificar los detalles de este registro" value="${id}" data-bs-toggle="modal" data-bs-target="#modal_habitantes"><i class="bi bi-pencil"></i></button>`;
+            html += `<button data-tooltip="true" type="button" class="btn btn-success btn-sm modificar-habitante" title="Modificar los detalles de este registro" value="${id}" data-bs-toggle="modal" data-bs-target="#modal_habitantes"><i class="bi bi-pencil"></i>
+    <span class="d-none d-lg-inline ms-2">Editar</span></button>`;
         }
         if (window.permiso_eliminar_habitantes) {
             html += `<button data-tooltip="true" type="button" class="btn btn-danger btn-sm eliminar-habitante" title="Quitar este elemento del sistema" value="${id}"><i class="bi bi-trash"></i></button>`;
@@ -475,7 +482,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const stepsPrincipal = [
         { element: '.page-header', popover: { title: 'Gestión Inmobiliaria', description: 'Aquí administras la estructura del condominio (Apartamentos) y quiénes viven en ellos (Habitantes).', side: "bottom", align: 'center' } },
         { element: 'button[data-bs-target="#modal_apartamentos"]', popover: { title: 'Registrar Propiedad', description: 'Usa este botón para dar de alta un nuevo apartamento en el sistema.', side: "bottom", align: 'start' } },
-        { element: '#tabla_apartamentos_wrapper', popover: { title: 'Directorio', description: 'Lista maestra de apartamentos. El botón azul "Personas" te permite gestionar a los habitantes de ese apartamento.', side: "top", align: 'center' } }
+        { element: '#tabla_apartamentos', popover: { title: 'Directorio', description: 'Lista maestra de apartamentos. El botón azul "Personas" te permite gestionar a los habitantes de ese apartamento.', side: "top", align: 'center' } }
     ];
 
     // 2. TOUR MODAL REGISTRO APARTAMENTO
@@ -490,7 +497,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const stepsModalListaHab = [
         { element: '#modal_vista_previa .modal-header', popover: { title: 'Residentes del Apartamento', description: 'Estás viendo quiénes viven en el apartamento seleccionado.', side: 'bottom', align: 'center' } },
         { element: '#boton_registrar', popover: { title: 'Nuevo Habitante', description: 'Haz clic aquí para vincular una persona (propietario o inquilino) a este apartamento.', side: 'bottom', align: 'start' } },
-        { element: '#tabla_habitantes_wrapper', popover: { title: 'Censo', description: 'Lista de personas registradas. Puedes ver sus detalles, editar sus datos o eliminarlos.', side: 'top', align: 'center' } }
+        { element: '#tabla_habitantes', popover: { title: 'Censo', description: 'Lista de personas registradas. Puedes ver sus detalles, editar sus datos o eliminarlos.', side: 'top', align: 'center' } }
     ];
 
     // 4. TOUR MODAL FORMULARIO HABITANTE

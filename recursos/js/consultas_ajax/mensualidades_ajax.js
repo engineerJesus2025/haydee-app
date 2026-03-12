@@ -128,24 +128,22 @@ async function consultarMensualidades() {
     ];
 
     const opcionesExtra = {
-        parametrosExtra: { operacion: 'consultar_mensualidades_mes' }
+        parametrosExtra: { operacion: 'consultar_mensualidades_mes' },
+        columnaBusqueda: 'ids' // para buuscar en caso de notificacions
     };
 
     tablaMensualidades = Tablas.cargarTabulador("tabla_mensualidad", "", columnas, opcionesExtra);
-    setTimeout(seleccionarMensualidadPorNotificacion, 500);
 
     const inputBusqueda = document.getElementById("busqueda_global");
     if (inputBusqueda) {
         inputBusqueda.addEventListener("input", function(e) {
             let valor = e.target.value.trim().toLowerCase();
             
-            // Si el input está vacío, limpiamos los filtros
             if (valor === "") {
                 tablaMensualidades.clearFilter();
                 return;
             }
 
-            // LA MAGIA: Función de filtrado personalizada
             tablaMensualidades.setFilter(function(data) {
                 // 1. Reconstruir el texto del período tal como se ve en pantalla
                 let fechaObj = new Date(`${data.mes}/01/${data.anio}`);
@@ -706,7 +704,7 @@ document.addEventListener('DOMContentLoaded', () => {
             { element: '.page-header', popover: { title: 'Módulo de Mensualidades', description: 'Bienvenido. Aquí podrás generar los cobros mensuales del condominio basados en los presupuestos vigentes.', side: "bottom", align: 'center' } },
             // Seleccionamos el contenedor del botón por si está oculto temporalmente
             { element: document.querySelector('#boton_registrar')?.parentElement || '#boton_registrar', popover: { title: 'Generar Mensualidad', description: 'Si hay meses con presupuestos listos, este botón te permitirá generar la mensualidad y distribuirla a los apartamentos.', side: "bottom", align: 'start' } },
-            { element: '#tabla_mensualidad_wrapper', popover: { title: 'Historial de Cobros', description: 'Aquí verás las mensualidades ya generadas, lo que se ha recaudado y lo que falta por pagar. Puedes ver detalles o editar.', side: "top", align: 'center' } }
+            { element: '#tabla_mensualidad', popover: { title: 'Historial de Cobros', description: 'Aquí verás las mensualidades ya generadas, lo que se ha recaudado y lo que falta por pagar. Puedes ver detalles o editar.', side: "top", align: 'center' } }
         ]
     };
 

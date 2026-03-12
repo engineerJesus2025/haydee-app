@@ -308,7 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const stepsPrincipal = [
         { element: '.page-header', popover: { title: 'Solicitudes de Gasto', description: 'Módulo para gestionar peticiones de dinero basadas en el presupuesto mensual del condominio.', side: "bottom", align: 'center' } },
         { element: 'button[data-bs-target="#modal_solicitud_gasto"]', popover: { title: 'Crear Solicitud', description: 'Inicia el proceso para solicitar recursos. Necesitarás saber a qué mes y año cargarás el gasto.', side: "bottom", align: 'start' } },
-        { element: '#tabla_solicitud_gasto_wrapper', popover: { title: 'Historial', description: 'Aquí verás el estado de tus solicitudes (Pendientes, Aprobadas o Rechazadas) y podrás editarlas si es necesario.', side: "top", align: 'center' } }
+        { element: '#tabla_solicitud_gasto', popover: { title: 'Historial', description: 'Aquí verás el estado de tus solicitudes (Pendientes, Aprobadas o Rechazadas) y podrás editarlas si es necesario.', side: "top", align: 'center' } }
     ];
 
     // 2. PASOS DEL MODAL (FASE 1: SELECCIÓN)

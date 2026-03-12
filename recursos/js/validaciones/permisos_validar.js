@@ -8,3 +8,38 @@ document.addEventListener("DOMContentLoaded", function() {
         inputAccion.addEventListener('keyup', e => Validador.evaluarInput(e.target, Patrones.accionPermiso, 'Mínimo 3 caracteres, solo letras y guión bajo'));
     }
 });
+
+async function validarFormulario() {
+    const accion = document.getElementById('accion');
+    if (!Validador.evaluarInput(accion, Patrones.accionPermiso, 'Mínimo 3 caracteres, solo letras y guión bajo')) {
+        Alertas.mostrar('error', 'Error', 'El nombre de la acción no es válido');
+        return false;
+    }
+    return true;
+}
+
+document.getElementById("boton_formulario")?.addEventListener('click', async (e) => {
+    e.preventDefault();
+    const esEdicion = document.getElementById("boton_formulario").hasAttribute('modificar');
+    const accion = esEdicion ? 'modificar' : 'Registrar';
+
+    if (await validarFormulario()) {
+        Swal.fire({
+            title: '¿Estás seguro?',
+            text: `¿Desea ${accion.toLowerCase()} este permiso?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#1b8a40',
+            confirmButtonText: `Sí, ${accion}`,
+            cancelButtonText: 'Cancelar'
+        }).then(result => {
+            if (result.isConfirmed) {
+                if (esEdicion) {
+                    modificar(document.getElementById("boton_formulario").getAttribute('id_modificar'));
+                } else {
+                    registrar();
+                }
+            }
+        });
+    }
+});

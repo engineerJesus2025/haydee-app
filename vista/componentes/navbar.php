@@ -1,15 +1,15 @@
 <?php 
 use haydee\ayuda\Sesiones; 
 
-// DEFINIMOS LA LÓGICA DE LOS SUBMENÚS (Más limpio y centralizado)
+// DEFINIMOS LA LÓGICA DE LOS SUBMENÚS
 // Reportes
 $sub_reporte_pdf = ($modulo === "reportes" && $accion === "reportes_pdf");
 $sub_reporte_est = ($modulo === "reportes" && in_array($accion, ["reportes_estadisticos", "habitantes", "ingreso_egreso"]));
 $es_reporte      = ($sub_reporte_pdf || $sub_reporte_est);
 
-// Configuración y Seguridad (Usamos in_array para simplificar los OR)
+// Configuración y Seguridad
 $es_configuracion = in_array($modulo, ["proveedores", "bancos", "tipo_gasto"]);
-$es_seguridad     = in_array($modulo, ["rol", "bitacora", "permisos", "modulos"]); // ¡Seguridad reparada!
+$es_seguridad = in_array($modulo, ["rol", "bitacora", "permisos", "modulos"]); 
 ?>
 
 <div class="l-navbar show" id="nav-bar">

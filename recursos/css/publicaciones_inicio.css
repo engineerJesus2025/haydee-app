@@ -255,3 +255,23 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
+
+/* ========================================================================== */
+/* ===================== ANIMACIÓN DE ENTRADA (FADE IN) ===================== */
+/* ========================================================================== */
+
+.animacion-aparecer {
+    animation: aparecerSuave 0.5s ease-out forwards;
+    opacity: 0; /* Comienza invisible */
+}
+
+@keyframes aparecerSuave {
+    0% {
+        opacity: 0;
+        transform: translateY(15px); /* Empieza un poco más abajo */
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0); /* Sube a su posición original */
+    }
+}

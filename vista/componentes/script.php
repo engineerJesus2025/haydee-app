@@ -11,6 +11,7 @@
 <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/Tooltips.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/Tablas.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/FormatoFechas.js"></script>
+<script src="<?php echo URL_BASE; ?>recursos/js/ayuda/Notificaciones.js"></script>
 <!-- Script personalizados globales -->
 <script src="<?php echo URL_BASE; ?>recursos/js/header.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/js/notificaciones.js"></script>

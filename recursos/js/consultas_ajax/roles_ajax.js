@@ -316,7 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const stepsPrincipal = [
         { element: '.page-header', popover: { title: 'Gestión de Roles', description: 'Aquí defines los perfiles de usuario y qué permisos tiene cada uno dentro del sistema.', side: "bottom", align: 'center' } },
         { element: 'button[data-bs-target="#modal_roles"]', popover: { title: 'Nuevo Rol', description: 'Crea un nuevo perfil (ej: "Secretaria", "Vigilante") para asignar permisos específicos.', side: "bottom", align: 'start' } },
-        { element: '#tabla_roles_wrapper', popover: { title: 'Lista de Roles', description: 'Aquí ves los roles existentes. El rol de "Administrador Global" y "Propietario" suelen venir predefinidos.', side: 'top', align: 'center' } }
+        { element: '#tabla_roles', popover: { title: 'Lista de Roles', description: 'Aquí ves los roles existentes. El rol de "Administrador Global" y "Propietario" suelen venir predefinidos.', side: 'top', align: 'center' } }
     ];
 
     // 2. TOUR MODAL DE REGISTRO

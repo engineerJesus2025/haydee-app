@@ -12,7 +12,7 @@
             <label for="fecha_cierre">Fecha Cierre <spam class="text-danger">*</spam></label>
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
-                <input type="date" class="form-control" name="fecha_cierre" id="fecha_cierre"  aria-label="fecha_cierre" aria-describedby="basic-addon1" readonly>
+                <input type="date" class="form-control" readonly name="fecha_cierre" id="fecha_cierre"  aria-label="fecha_cierre" aria-describedby="basic-addon1">
                 <span class="w-100 invalid-feedback"></span>
             </div>
         </div>

@@ -30,6 +30,7 @@ window.addEventListener("scroll", () => {
 });
 
 async function cargaInicio() {
+    // return
     await Promise.all([
         cargarTarjetasInicio(),
         cargarApartamentos(),
@@ -72,11 +73,16 @@ async function cargarGraficos() {
         document.getElementById('esqueleto_titulo_1').classList.add('d-none');
         document.getElementById('esqueleto_canva_1').classList.add('d-none');
         document.getElementById('canva_1').removeAttribute('hidden');
+        document.getElementById('canva_1').parentElement.classList.add('animacion-aparecer');
         document.getElementById('canva_1').parentElement.style.height = '250px';
 
         // Actualizar datos inferiores
         document.getElementById('esqueleto_dato_1_1').textContent = `${deudasData[0]} Aptos.`;
+        document.getElementById('esqueleto_dato_1_1').classList.add('animacion-aparecer');
         document.getElementById('esqueleto_dato_2_1').textContent = `${deudasData[1]} Aptos.`;
+        document.getElementById('esqueleto_dato_2_1').classList.add('animacion-aparecer');
+
+        // .className.add('animacion-aparecer');
 
         if (deudasData[0] === 0 && deudasData[1] === 0) {
             document.getElementById('div_alert_1').removeAttribute('hidden');
@@ -102,7 +108,14 @@ async function cargarGraficos() {
                     plugins: {
                         legend: { position: 'bottom' }
                     },
-                    cutout: '70%' // Hace que sea una dona más delgada y elegante
+                    cutout: '70%',
+                    // --- NUEVA ANIMACIÓN NATIVA DE CHART.JS ---
+                    animation: {
+                        animateScale: true,   // Crece desde el centro
+                        animateRotate: true,  // Gira mientras aparece
+                        duration: 1500,       // Dura 1.5 segundos (muy fluido)
+                        easing: 'easeOutQuart' // Aceleración elegante
+                    }
                 }
             });
         }
@@ -133,12 +146,15 @@ async function cargarGraficos() {
         document.getElementById('esqueleto_titulo_2').classList.add('d-none');
         document.getElementById('esqueleto_canva_2').classList.add('d-none');
         document.getElementById('canva_2').removeAttribute('hidden');
+        document.getElementById('canva_2').parentElement.classList.add('animacion-aparecer');
         document.getElementById('canva_2').parentElement.style.height = '250px';
 
         // Actualizar datos inferiores
         document.getElementById('esqueleto_dato_1_2').textContent = `${parseFloat(ingresoMesActual).toFixed(2)} Bs.`;
+        document.getElementById('esqueleto_dato_1_2').classList.add('animacion-aparecer');
         document.getElementById('esqueleto_dato_2_2').textContent = `${parseFloat(gastoMesActual).toFixed(2)} Bs.`;
-
+        document.getElementById('esqueleto_dato_2_2').classList.add('animacion-aparecer');
+        
         const ctx2 = document.getElementById('canva_2').getContext('2d');
         if (graficaChart_2) graficaChart_2.destroy();
         
@@ -168,6 +184,20 @@ async function cargarGraficos() {
                 scales: {
                     y: { beginAtZero: true, grid: { borderDash: [2, 4] } },
                     x: { grid: { display: false } }
+                },
+                // --- NUEVA ANIMACIÓN NATIVA DE CHART.JS ---
+                animation: {
+                    duration: 1500,
+                    easing: 'easeOutBack', // Da un pequeñísimo "rebote" al terminar de subir
+                    delay: (context) => {
+                        // Crea un efecto de "ola" retrasando cada barra un poquito
+                        let delay = 0;
+                        if (context.type === 'data' && context.mode === 'default' && !context.dropped) {
+                            delay = context.dataIndex * 150 + context.datasetIndex * 100;
+                            context.dropped = true;
+                        }
+                        return delay;
+                    }
                 }
             }
         });
@@ -275,17 +305,25 @@ async function cargarTarjetasInicio() {
             document.getElementById('kpi-recaudado').textContent = `${parseFloat(kpis.recaudado_mes).toFixed(2)} Bs.`;
             document.getElementById('kpi-pendientes').textContent = kpis.recibos_pendientes;
             
+            // --- APLICAR ANIMACIÓN A LAS TARJETAS ---
+            ['kpi-aptos', 'kpi-residentes', 'kpi-recaudado', 'kpi-pendientes', 'badge-aptos', 'badge-pendientes'].forEach(id => {
+                let elemento = document.getElementById(id);
+                if(elemento) elemento.classList.add('animacion-aparecer');
+            });
+
             // Badge 1: Porcentaje de ocupación
             let porcentajeOcupacion = 0;
             if (kpis.total_apartamentos > 0) {
                 porcentajeOcupacion = Math.round((kpis.apartamentos_ocupados / kpis.total_apartamentos) * 100);
             }
             document.getElementById('badge-aptos').textContent = `${porcentajeOcupacion}% Ocupado`;
+            document.getElementById('badge-aptos').removeAttribute("hidden");
 
             // Badge 4: Monto total de deuda
             let badgePendientes = document.getElementById('badge-pendientes');
             if(badgePendientes) {
                 badgePendientes.textContent = `${parseFloat(kpis.deuda_total).toFixed(2)} Bs.`;
+                badgePendientes.removeAttribute("hidden");
             }
         }
     } catch (error) {
@@ -331,7 +369,7 @@ async function cargarWidgetPublicaciones() {
 
             let divItem = document.createElement('div');
             // Le agregamos 'border-start border-4' y la clase dinámica del color
-            divItem.className = `card publi-item bg-light border-0 p-3 rounded-4 border-start border-4 ${colorBorde}`;
+            divItem.className = `card publi-item bg-light border-0 p-3 rounded-4 border-start border-4 ${colorBorde} animacion-aparecer`;
             
             divItem.innerHTML = `
                 <div class="d-flex align-items-start">
@@ -379,13 +417,14 @@ async function cargarApartamentos() {
         // 2. Creamos un fragmento de documento para optimizar el renderizado en el navegador (Mejor rendimiento)
         let fragment = document.createDocumentFragment();
 
-        apartamentos.forEach(apt => {
+        apartamentos.forEach((apt,index) => {
             // Evaluamos la clase de CSS a usar basándonos en el estado
             let claseEstado = apt.estado === 'Ocupado' ? 'apt-ocupado' : 'apt-libre';
 
             // Creamos el div principal del badge
             let divBadge = document.createElement('div');
-            divBadge.className = `apt-badge ${claseEstado}`;
+            divBadge.className = `apt-badge ${claseEstado} animacion-aparecer`;
+            divBadge.style.animationDelay = `${index * 0.05}s`;
             
             // Creamos el span para el número de apartamento
             let spanNro = document.createElement('span');
@@ -457,7 +496,7 @@ async function cargarActividadReciente() {
             }
 
             let divItem = document.createElement('div');
-            divItem.className = `d-flex align-items-start ${borderClass}`;
+            divItem.className = `d-flex align-items-start ${borderClass} animacion-aparecer`;
             
             divItem.innerHTML = `
                 <div class="activity-icon ${config.color} me-3" style="width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">

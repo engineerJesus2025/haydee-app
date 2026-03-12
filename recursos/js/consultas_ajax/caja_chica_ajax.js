@@ -158,33 +158,8 @@ async function consultarCajasChicas() {
         select.dispatchEvent(new Event('change'));
     }
 
-    // Verificar si hay parámetro 'buscar' en la URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const idBuscar = urlParams.get('buscar');
-    if (idBuscar) {
-        const checkSelect = setInterval(() => {
-            if (select.options.length > 0) {
-                clearInterval(checkSelect);
-                const option = Array.from(select.options).find(opt => opt.value === idBuscar);
-                if (option) {
-                    // Seleccionar la opción
-                    select.value = idBuscar;
-                    // Disparar evento change para cargar movimientos
-                    select.dispatchEvent(new Event('change'));
-                    
-                    // Resaltar el select con animación
-                    select.classList.add('caja-highlight');
-                    
-                    // Mostrar mensaje informativo
-                    // Alertas.mostrar('warning', 'Saldo Bajo', 'Esta caja requiere atención pronto.');
-                    
-                    select.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                } else {
-                    Alertas.mostrar('error', 'Error', 'La caja notificada no existe.');
-                }
-            }
-        }, 100);
-    }
+    // Usar la herramienta centralizada para notificaciones
+    Notificaciones.resaltarEnSelect('mes_select');
 }
 
 // ========== INICIALIZAR TABLA DE MOVIMIENTOS ==========
@@ -320,19 +295,8 @@ async function modificar(id) {
     datos.append("id_movimiento_caja", id);
 
     let montoInput = document.getElementById("monto");
-    // En edición solo se permite cambiar concepto y fecha, no el monto (por seguridad)
-    // Si se permite cambiar monto, habría que ajustar la lógica. Según el modelo actual, no se modifica monto.
-    // Por ahora, no enviamos monto.
-    datos.append("operacion", "modificar_movimiento"); // Nota: en el controlador no hay case 'modificar_movimiento'? Revisar.
 
-    // En el controlador no existe 'modificar_movimiento', solo 'registrar_movimiento' y 'eliminar_movimiento'.
-    // El modelo tiene _modificar_movimiento que solo actualiza concepto y fecha. Pero el controlador no lo llama.
-    // Debemos agregar un case en el controlador para 'modificar_movimiento'.
-    // Por ahora, asumimos que se agregará. Si no, esta función no funcionará.
-    // Mientras tanto, lo dejamos como placeholder.
-
-    // *** IMPORTANTE: El controlador debe tener un case 'modificar_movimiento' que llame a _modificar_movimiento.
-    // Por ahora, lo simulamos. En la versión final, asegurar que existe.
+    datos.append("operacion", "modificar_movimiento"); 
 
     let respuesta = await Peticiones.enviar(datos);
     if (!respuesta.estatus) {
@@ -563,8 +527,8 @@ document.addEventListener('DOMContentLoaded', () => {
             { element: '.page-header', popover: { title: 'Módulo de Caja Chica', description: 'Bienvenido. Aquí puedes administrar los fondos menores del condominio y registrar sus movimientos.', side: "bottom", align: 'center' } },
             { element: '#mes_select', popover: { title: 'Selector de Caja', description: 'Elige el mes/caja que deseas evaluar. Verás automáticamente el fondo fijo y si la caja está activa o cerrada.', side: "bottom", align: 'start' } },
             { element: '#botones_movimientos', popover: { title: 'Acciones de Caja', description: 'Si la caja está activa, aquí podrás Registrar un Nuevo Gasto o Reponer el dinero de la caja.', side: "bottom", align: 'start' } },
-            { element: '#tabla_registros_sistema_wrapper', popover: { title: 'Movimientos Registrados', description: 'Aquí se listan todos los gastos o reposiciones hechas en esta caja. Puedes editar o eliminar los registros.', side: "top", align: 'center' } },
-            { element: '#boton_editar_observacion', popover: { title: 'Descripción de Caja', description: 'Puedes añadir o editar una nota o descripción general para el mes de esta caja chica.', side: "top", align: 'start' } }
+            { element: '#tabla_registros_sistema', popover: { title: 'Movimientos Registrados', description: 'Aquí se listan todos los gastos o reposiciones hechas en esta caja. Puedes editar o eliminar los registros.', side: "top", align: 'center' } },
+            { element: '#boton_modificar_observacion', popover: { title: 'Descripción de Caja', description: 'Puedes añadir o editar una nota o descripción general para el mes de esta caja chica.', side: "top", align: 'start' } }
         ]
     };
 

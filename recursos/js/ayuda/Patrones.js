@@ -19,6 +19,7 @@ const Patrones = {
     textoCorto: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,30}$/,     // 3 a 30 caracteres
     textoMedio: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ() \s]{3,50}$/,  // 3 a 50 caracteres (Permite paréntesis)
     textoLargo: /^.{10,}$/,                           // Mínimo 10 caracteres (Cualquier tipo)
+    textoModulo: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ _\s]{3,30}$/,
     digitos: /^\d+$/,                                 // Solo números enteros (útil para IDs)
 
     // ============================================================

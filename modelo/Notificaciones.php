@@ -217,6 +217,132 @@ class Notificaciones extends Conexion
     }
 
     /**
+     * Notificar a todos los usuarios activos, opcionalmente asociado a un evento.
+     * Requiere: titulo, descripcion.
+     * Si se desea asociar un evento, deben establecerse además:
+     *   - tabla_origen
+     *   - id_registro_origen
+     *   - tipo_evento
+     * @return array ['estatus' => bool, 'mensaje' => string]
+     */
+    private function _notificar_todos()
+    {
+        // Validar campos obligatorios
+        $campos = ['titulo', 'descripcion'];
+        $validacion = $this->validar($campos);
+        if (!$validacion['estatus']) {
+            return $validacion;
+        }
+
+        // Manejo de fecha
+        if ($this->fecha === null) {
+            $this->fecha = date('Y-m-d');
+        } else {
+            $valFecha = $this->validar(['fecha']);
+            if (!$valFecha['estatus']) {
+                return $valFecha;
+            }
+        }
+
+        // Determinar si se incluirá evento (deben estar los tres campos)
+        $incluirEvento = !empty($this->tabla_origen) && !empty($this->id_registro_origen) && !empty($this->tipo_evento);
+        if ($incluirEvento) {
+            // Validar campos del evento
+            $valEvento = $this->validar(['tabla_origen', 'id_registro_origen', 'tipo_evento']);
+            if (!$valEvento['estatus']) {
+                return $valEvento;
+            }
+        }
+
+        $con = $this->get_conex('seguridad');
+
+        try {
+            // Si hay evento, trabajamos con transacción
+            if ($incluirEvento) {
+                $con->beginTransaction();
+
+                // 1. Insertar evento
+                $sqlEvento = "INSERT INTO eventos_sistema (tipo_evento, tabla_origen, id_registro_origen, fecha_evento)
+                              VALUES (:tipo, :tabla, :id_reg, NOW())";
+                $stmtEvento = $con->prepare($sqlEvento);
+                $stmtEvento->execute([
+                    ':tipo'   => $this->tipo_evento,
+                    ':tabla'  => $this->tabla_origen,
+                    ':id_reg' => $this->id_registro_origen
+                ]);
+                $idEvento = $con->lastInsertId();
+
+                // 2. Obtener todos los usuarios activos
+                $sqlUsuarios = "SELECT id_usuario FROM usuarios WHERE activo = 1";
+                $stmtUsu = $con->query($sqlUsuarios);
+                $usuarios = $stmtUsu->fetchAll(PDO::FETCH_COLUMN);
+
+                if (empty($usuarios)) {
+                    $con->commit();
+                    return ['estatus' => true, 'mensaje' => 'No hay usuarios activos para notificar'];
+                }
+
+                // 3. Insertar notificaciones y relaciones
+                $sqlNotif = "INSERT INTO notificaciones (titulo, descripcion, fecha, usuario_id, leido)
+                             VALUES (:tit, :desc, :fecha, :uid, 0)";
+                $stmtNotif = $con->prepare($sqlNotif);
+
+                $sqlRel = "INSERT INTO notificacion_evento (notificacion_id, evento_id) VALUES (:nid, :eid)";
+                $stmtRel = $con->prepare($sqlRel);
+
+                $contador = 0;
+                foreach ($usuarios as $uid) {
+                    $stmtNotif->execute([
+                        ':tit'   => $this->titulo,
+                        ':desc'  => $this->descripcion,
+                        ':fecha' => $this->fecha,
+                        ':uid'   => $uid
+                    ]);
+                    $idNotif = $con->lastInsertId();
+
+                    $stmtRel->execute([
+                        ':nid' => $idNotif,
+                        ':eid' => $idEvento
+                    ]);
+                    $contador++;
+                }
+
+                $con->commit();
+                return [
+                    'estatus' => true,
+                    'mensaje' => "Notificaciones enviadas a $contador usuarios (evento asociado)"
+                ];
+            } else {
+                // Sin evento: inserción masiva directa (más rápida)
+                $sql = "INSERT INTO notificaciones (titulo, descripcion, fecha, usuario_id, leido)
+                        SELECT :tit, :desc, :fecha, id_usuario, 0
+                        FROM usuarios
+                        WHERE activo = 1";
+                $stmt = $con->prepare($sql);
+                $stmt->execute([
+                    ':tit'   => $this->titulo,
+                    ':desc'  => $this->descripcion,
+                    ':fecha' => $this->fecha
+                ]);
+                $filas = $stmt->rowCount();
+                return [
+                    'estatus' => true,
+                    'mensaje' => "Notificaciones enviadas a $filas usuarios (sin evento)"
+                ];
+            }
+        } catch (PDOException $e) {
+            if ($incluirEvento && $con->inTransaction()) {
+                $con->rollBack();
+            }
+            error_log("Error en _notificar_todos: " . $e->getMessage());
+            return [
+                'estatus' => false,
+                'mensaje' => 'Error al notificar a todos: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
      * NOTIFICAR PAGO (Masivo a Admins)
      */
     private function _notificar_pago()
@@ -255,7 +381,7 @@ class Notificaciones extends Conexion
     }
 
     /**
-     * REGISTRO INTELIGENTE (1 a Muchos con Enlace)
+     *  (1 a Muchos con Enlace)
      */
     private function _notificar_evento_admins()
     {

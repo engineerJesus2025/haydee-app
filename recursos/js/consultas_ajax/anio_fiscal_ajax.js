@@ -37,10 +37,14 @@ async function consultar() {
         const id = cell.getData().id_anio_fiscal;
         let html = `<div class="d-flex justify-content-center gap-2">`;
         if (window.permiso_modificar) {
-            html += `<button data-tooltip="true" class="btn btn-success btn-sm modificar" value="${id}" title="Modificar los detalles de este registro"><i class="bi bi-pencil"></i></button>`;
+            html += `<button data-tooltip="true" class="btn btn-success btn-sm modificar" value="${id}" title="Modificar los detalles de este registro">
+                        <i class="bi bi-pencil"></i>
+                    </button>`;
         }
         if (window.permiso_eliminar) {
-            html += `<button data-tooltip="true" class="btn btn-danger btn-sm eliminar" value="${id}" title="Quitar este elemento del sistema"><i class="bi bi-trash"></i></button>`;
+            html += `<button data-tooltip="true" class="btn btn-danger btn-sm eliminar" value="${id}" title="Quitar este elemento del sistema">
+                        <i class="bi bi-trash"></i>
+                    </button>`;
         }
         html += `</div>`;
         return html;
@@ -119,9 +123,9 @@ async function registrar() {
     if (respuesta?.estatus) {
         modal.hide();
         tabla_anio_fiscal.replaceData();
-        Tablas.cargarTabulador('success', 'Éxito', 'Año fiscal registrado correctamente.');
+        Alertas.mostrar('success', 'Éxito', 'Año fiscal registrado correctamente.');
     } else {
-        Tablas.cargarTabulador('error', 'Error', respuesta?.mensaje || 'No se pudo registrar.');
+        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo registrar.');
     }
 }
 
@@ -134,7 +138,7 @@ async function prepararFormulario(e) {
 
     const respuesta = await Peticiones.enviar(datos, "", true);
     if (!respuesta?.estatus) {
-        Tablas.cargarTabulador('error', 'Error', 'No se pudo cargar el año fiscal.');
+        Alertas.mostrar('error', 'Error', 'No se pudo cargar el año fiscal.');
         return;
     }
 
@@ -166,9 +170,9 @@ async function modificar() {
     if (respuesta?.estatus) {
         modal.hide();
         tabla_anio_fiscal.replaceData();
-        Tablas.cargarTabulador('success', 'Éxito', 'Año fiscal actualizado correctamente.');
+        Alertas.mostrar('success', 'Éxito', 'Año fiscal actualizado correctamente.');
     } else {
-        Tablas.cargarTabulador('error', 'Error', respuesta?.mensaje || 'No se pudo actualizar.');
+        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo actualizar.');
     }
 }
 
@@ -180,9 +184,9 @@ async function eliminar(id) {
     const respuesta = await Peticiones.enviar(datos);
     if (respuesta?.estatus) {
         tabla_anio_fiscal.replaceData();
-        Tablas.cargarTabulador('success', 'Éxito', 'Año fiscal eliminado correctamente.');
+        Alertas.mostrar('success', 'Éxito', 'Año fiscal eliminado correctamente.');
     } else {
-        Tablas.cargarTabulador('error', 'Error', respuesta?.mensaje || 'No se pudo eliminar.');
+        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo eliminar.');
     }
 }
 
@@ -237,7 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const stepsPrincipal = [
         { element: '.page-header', popover: { title: 'Años Fiscales', description: 'Módulo para gestionar los periodos contables del condominio (Apertura y Cierre).', side: "bottom", align: 'center' } },
         { element: 'button[data-bs-target="#modal_anio_fiscal"]', popover: { title: 'Nuevo Periodo', description: 'Registra el inicio de un nuevo año fiscal para comenzar a procesar movimientos.', side: "bottom", align: 'start' } },
-        { element: '#tabla_anio_fiscal_wrapper', popover: { title: 'Historial', description: 'Lista de periodos anteriores. Aquí puedes ver cuáles están cerrados y cuál está activo actualmente.', side: "top", align: 'center' } }
+        { element: '#tabla_anio_fiscal', popover: { title: 'Historial', description: 'Lista de periodos anteriores. Aquí puedes ver cuáles están cerrados y cuál está activo actualmente.', side: "top", align: 'center' } }
     ];
 
     // 2. TOUR MODAL DE REGISTRO

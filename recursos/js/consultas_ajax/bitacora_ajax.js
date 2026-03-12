@@ -25,14 +25,24 @@ function formatearJSON(jsonString) {
 
 // Función para mostrar el detalle en el modal
 function mostrarDetalle(rowData) {
+    const colores = { 
+        'consultar': "badge-consultar", 
+        'eliminar': "badge-eliminar", 
+        'registrar': "badge-registrar", 
+        'modificar': "badge-modificar", 
+        'iniciar sesion': "badge-iniciar-sesion", 
+        'cerrar sesion': "badge-cerrar-sesion" 
+    };
+    const claseColor = colores[rowData.accion.toLowerCase()] || "badge bg-secondary";
     // Información general
     document.getElementById('detalle_usuario').textContent = rowData.nombre_usuario;
     document.getElementById('detalle_rol').textContent = rowData.nombre_rol;
     document.getElementById('detalle_fecha').textContent = FormatoFechas.formatear(rowData.fecha_hora, 'DD/MM/YYYY hh:mm:ss A');
     document.getElementById('detalle_modulo').textContent = rowData.nombre_modulo.split('_').join(' ');
-    document.getElementById('detalle_accion').textContent = rowData.accion;
-    document.getElementById('detalle_accion').setAttribute('class',`badge ${definirColorAccion(rowData.accion)}`);
 
+    const accionBadge = document.getElementById('detalle_accion');
+    accionBadge.textContent = rowData.accion;
+    accionBadge.className = `badge ${claseColor}`;
     // Determinar si es consulta
     if (rowData.accion.toLowerCase() === 'consultar' || rowData.accion.toLowerCase() === 'iniciar sesion' || rowData.accion.toLowerCase() === 'cerrar sesion') {
         document.getElementById('detalle_consulta').classList.remove('d-none');
@@ -89,7 +99,12 @@ function consultar() {
     };
 
     const formatoBotones = (cell) => {
-        return `<button data-tooltip="true" class="btn btn-sm btn-outline-primary ver-detalle"><i class="bi bi-eye"></i> Ver detalles</button>`;
+        return `
+            <button class="btn btn-sm btn-outline-primary ver-detalle" title="Ver detalles">
+                <i class="bi bi-eye"></i>
+                <span class="d-none d-lg-inline ms-2">Ver detalles</span>
+            </button>
+        `;
     };
 
     const columnas = [
