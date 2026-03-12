@@ -26,12 +26,12 @@ class Sesiones
         $_SESSION["notificaciones"] = array_filter($datosUsuario["notificaciones"],function($n){return $n['leido'] == 0;});
 
         // Verificar año fiscal (proximamente proceso automático -_-)
-        $anioFiscalModel = new AnioFiscal();
-        try {
-            $anioFiscalModel->realizar_consulta('verificar_anio_fiscal');
-        } finally {
-            $anioFiscalModel->cerrar();
-        }
+        // $anioFiscalModel = new AnioFiscal();
+        // try {
+        //     $anioFiscalModel->realizar_consulta('verificar_anio_fiscal');
+        // } finally {
+        //     $anioFiscalModel->cerrar();
+        // }
     }
 
     /**

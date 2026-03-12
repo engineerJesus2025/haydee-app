@@ -72,14 +72,13 @@ async function consultar() {
 
     // 2. COLUMNAS
     const columnas = [
-        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
-        { title: "FECHA", field: "ultima_fecha", formatter: formatoFecha, minWidth: 100, responsive: 0 },
-        { title: "MONTO", field: "monto_total", formatter: formatoMonto, minWidth: 120 },
-        { title: "TIPO", field: "clasificacion", formatter: formatoMayuscula, minWidth: 100 }, 
-        { title: "TIPO GASTO", field: "tipo", formatter: formatoMayuscula, minWidth: 150 }, 
-        { title: "DESCRIPCIÓN", field: "descripcion_gasto", minWidth: 200 }, 
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
+        { title: "Fecha", field: "ultima_fecha", formatter: formatoFecha, minWidth: 100, responsive: 0 },
+        { title: "Monto", field: "monto_total", formatter: formatoMonto, minWidth: 120 },
+        { title: "Tipo Gasto", field: "tipo", formatter: formatoMayuscula, minWidth: 150 }, 
+        { title: "Descripción", field: "descripcion_gasto", minWidth: 200 }, 
         { 
-            title: "ACCIONES", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 140, responsive: 0, download: false, 
+            title: "Acciones", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 140, responsive: 0, download: false, headerHozAlign: "center",
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
@@ -364,15 +363,16 @@ async function cargarDetallesEnTabla(idGasto) {
     const detalles = respuesta.datos || [];
 
     const columnas = [
-        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
-        { title: "FECHA", field: "fecha", formatter: (cell) => FormatoFechas.formatoUsuario(cell.getValue()), minWidth: 100, responsive: 0 },
-        { title: "MONTO", field: "monto", formatter: (cell) => formatearMontoConMoneda(cell.getValue(), cell.getData().metodo_pago), minWidth: 120 },
-        { title: "MÉTODO", field: "metodo_pago", minWidth: 120 },
-        { title: "DESCRIPCIÓN", field: "descripcion_detalle_gasto", minWidth: 200 },
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
+        { title: "Fecha", field: "fecha", formatter: (cell) => FormatoFechas.formatoUsuario(cell.getValue()), minWidth: 100, responsive: 0 },
+        { title: "Monto", field: "monto", formatter: (cell) => formatearMontoConMoneda(cell.getValue(), cell.getData().metodo_pago), minWidth: 120 },
+        { title: "Método", field: "metodo_pago", minWidth: 120 },
+        { title: "Descripción", field: "descripcion_detalle_gasto", minWidth: 200 },
         {
-            title: "ACCIÓN",
+            title: "Acciones",
             headerSort: false,
             hozAlign: "center",
+            headerHozAlign: "center",
             formatter: (cell) => `<button class="btn btn-sm btn-primary ver-detalle" value="${cell.getData().id_detalle_gasto}"><i class="bi bi-eye"></i></button>`,
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');

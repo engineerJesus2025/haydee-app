@@ -41,6 +41,10 @@ document.querySelector(`#modal_usuario`).addEventListener("hide.bs.modal", () =>
             }
         }
     });
+    document.getElementById("barra_seguridad").setAttribute("style","width: 0%; transition: width 0.4s ease;");
+    document.getElementById("barra_seguridad").setAttribute("class","progress-bar bg-danger transition-all");
+    document.getElementById("texto_seguridad").setAttribute("class","fw-medium text-danger d-block mb-3 w-100 invalid-feedback");
+    document.getElementById("texto_seguridad").textContent = "Nivel de seguridad: Vacío";
 });
 
 // Mostrar/Ocultar contraseñas
@@ -106,7 +110,7 @@ async function consultar() {
     };
 
     const columnas = [
-        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
         { title: "Nombre", field: "nombre", minWidth: 100, responsive: 0 },
         { title: "Apellido", field: "apellido", minWidth: 100 },
         { title: "Correo", field: "correo", minWidth: 180 }, 
@@ -116,6 +120,7 @@ async function consultar() {
             formatter: formatoBotones, 
             headerSort: false, 
             hozAlign: "center",
+            headerHozAlign: "center",
             vertAlign: "middle",
             minWidth: 100,
             responsive: 0,
@@ -211,18 +216,22 @@ async function modificar(id) {
 
     let respuesta = await Peticiones.enviar(datos);
 
-    formulario_usar.reset();
-    modal.hide();
-
     if (!respuesta.estatus) {
         Alertas.mostrar('error', 'Atención', respuesta.mensaje);
         return;
     }
 
-    if (respuesta.actual){
-        let nombre = formulario_usar.querySelector("#nombre").value;
-        document.getElementById('boton_accion_usuario').textContent = `Hola, ${nombre} (${rol_nombre})`;
+    if (respuesta.esMismoUsuario){
+
+       const nombreUsuario = document.getElementById('nombre_usuario_sesion');
+        if (nombreUsuario) {
+            const nuevoNombre = document.getElementById('nombre').value + " " + document.getElementById('apellido').value;
+            nombreUsuario.textContent = nuevoNombre;
+        }
     }
+
+    modal.hide();
+    formulario_usar.reset();
 
     boton_formulario.removeAttribute("modificar");
     boton_formulario.removeAttribute("id_modificar");   

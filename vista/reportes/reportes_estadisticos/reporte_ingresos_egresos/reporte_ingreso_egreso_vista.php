@@ -142,7 +142,7 @@
     </div>
     
     <!-- Scripts personalizado -->
-    <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/estadisticas/chart.js"></script>
+    <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/dependencias/chartjs/chart.js"></script>
     <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/reportes/reporte_ingreso_egreso.js"></script>
 </body>
 

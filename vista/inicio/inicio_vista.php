@@ -291,7 +291,7 @@
         require_once ROOT_PATH . "/vista/componentes/modal_carga.php";
     ?>
 
-	<script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/estadisticas/chart.js"></script>
+	<script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/dependencias/chartjs/chart.js"></script>
 	<script src="<?php echo URL_BASE; ?>recursos/js/consultas_ajax/inicio_ajax.js"></script>
 </body>
 </html>

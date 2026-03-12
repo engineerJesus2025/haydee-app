@@ -22,11 +22,12 @@ async function consultar() {
     const contenedor = document.querySelector(".tabla-sistema-haydee");
     if (!contenedor) return;
 
-    const formatoFecha = (cell) => FormatoFechas.formatoUsuario(cell.getValue());
     const formatoMonto = (cell) => `Bs. ${parseFloat(cell.getValue()).toFixed(2)}`;
     const formatoPrioridad = (cell) => {
-        const map = { '1': 'success', '2': 'warning', '3': 'danger' };
-        return `<span class="badge bg-${map[cell.getValue()] || 'secondary'}">${cell.getValue()}</span>`;
+        const p = cell.getValue();
+        const mapa = { "1": { texto: "Alta", color: "success" }, "2": { texto: "Media", color: "warning" }, "3": { texto: "Baja", color: "danger" } };
+        const conf = mapa[p] || { texto: "Desconocida", color: "secondary" };
+        return `<span class="badge bg-${conf.color}">${conf.texto}</span>`;
     };
 
     const formatoBotones = (cell) => {
@@ -39,15 +40,15 @@ async function consultar() {
     };
 
     const columnas = [
-        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
-        { title: "FECHA", field: "fecha_reporte", formatter: formatoFecha, minWidth: 100, responsive: 0 },
-        { title: "DESCRIPCIÓN", field: "descripcion_necesidad", minWidth: 200 },
-        { title: "SOLICITANTE", field: "nombre_solicitante", minWidth: 150 },
-        { title: "MONTO", field: "monto_estimado", formatter: formatoMonto, minWidth: 120 },
-        { title: "ESTADO", field: "estado", minWidth: 120 },
-        { title: "PRIORIDAD", field: "prioridad", formatter: formatoPrioridad, minWidth: 100 },
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
+        { title: "Solicitante", field: "nombre_solicitante", minWidth: 180 },
+        { title: "Monto", field: "monto_estimado", formatter: formatoMonto, minWidth: 120 },
+        { title: "Estado", field: "estado", minWidth: 120 },
+        { title: "Prioridad", field: "prioridad", formatter: formatoPrioridad, minWidth: 100, headerHozAlign: "center", hozAlign: "center" },
         {
-            title: "ACCIONES", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 100, responsive: 0, download: false,
+            title: "Acciones", formatter: formatoBotones, headerSort: false, 
+            hozAlign: "center", vertAlign: "middle", minWidth: 100, responsive: 0, 
+            download: false, headerHozAlign: "center",
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;

@@ -681,7 +681,7 @@ class Mensualidad extends Conexion
         if (!$val['estatus']) return $val;
 
         $sql = "SELECT MAX(mes) as mes, MAX(anio) as anio, MAX(tasa_dolar) as tasa_dolar
-                FROM mensualidad WHERE anio = :anio AND mes = :mes";
+                FROM mensualidad WHERE anio = :anio AND mes = TRIM(LEADING '0' FROM :mes)";
         try {
             $stmt = $this->get_conex('negocio')->prepare($sql);
             $stmt->bindParam(':mes', $this->mes);

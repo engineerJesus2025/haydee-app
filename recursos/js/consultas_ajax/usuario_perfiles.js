@@ -26,6 +26,11 @@ document.getElementById('modal_contra')?.addEventListener('hide.bs.modal', () =>
         input.value = '';
     });
     correo_an = null;
+
+    document.getElementById("barra_seguridad").setAttribute("style","width: 0%; transition: width 0.4s ease;");
+    document.getElementById("barra_seguridad").setAttribute("class","progress-bar bg-danger transition-all");
+    document.getElementById("texto_seguridad").setAttribute("class","fw-medium text-danger d-block mb-3 w-100 invalid-feedback");
+    document.getElementById("texto_seguridad").textContent = "Nivel de seguridad: Vacío";
 });
 
 // Mostrar/ocultar contraseñas
@@ -71,7 +76,7 @@ async function llenarCardUsuario() {
     const formData = new FormData();
     formData.append('operacion', 'consultar_perfil_usuario');
 
-    const respuesta = await Peticiones.enviar(formData);
+    const respuesta = await Peticiones.enviar(formData, '', false);
     if (!respuesta.estatus) {
         Alertas.mostrar('error', 'Atención', respuesta.mensaje || 'Error al cargar perfil');
         return;
@@ -80,24 +85,33 @@ async function llenarCardUsuario() {
     const usuario = respuesta.datos;
     const [claseBadge, claseIcono] = definirColorBadge(usuario.nombre_rol);
 
+    // --- NUEVA LÓGICA DE AVATAR VISUAL (INICIALES) ---
+    // Tomamos la primera letra del nombre y la primera del apellido
+    const inicialNombre = usuario.nombre_usuario.charAt(0).toUpperCase();
+    const inicialApellido = usuario.apellido.charAt(0).toUpperCase();
+    const iniciales = `${inicialNombre}${inicialApellido}`;
+    
+    // Inyectamos las iniciales eliminando el placeholder
+    const contenedorAvatar = document.getElementById('contenedor_avatar');
+    contenedorAvatar.innerHTML = iniciales;
+    
+    // Extraemos el color de fondo (bg-primary, bg-warning, etc.) del array claseBadge para pintar el avatar
+    const claseColorFondo = claseBadge.split(' ')[1]; // toma 'bg-primary' de 'badge bg-primary'
+    contenedorAvatar.classList.remove('bg-primary'); // quitamos el azul por defecto
+    contenedorAvatar.classList.add(claseColorFondo);
+    if(claseColorFondo === 'bg-warning' || claseColorFondo === 'bg-info') {
+        contenedorAvatar.classList.replace('text-white', 'text-dark');
+    }
+    // ------------------------------------------------
+
     document.getElementById('titulo_nombre').textContent = `${usuario.nombre_usuario} ${usuario.apellido}`;
-    document.getElementById('titulo_rol').textContent = usuario.nombre_rol;
     document.getElementById('p_nombre').textContent = usuario.nombre_usuario;
     document.getElementById('p_apellido').textContent = usuario.apellido;
     document.getElementById('p_correo').textContent = usuario.correo;
     document.getElementById('spam_rol').textContent = usuario.nombre_rol;
-    // document.getElementById('ultimo_acceso').textContent = formatearUltimoAcceso(usuario.ultima_vez);
     document.getElementById('ultimo_acceso').textContent = FormatoFechas.formatoUltimoAcceso(usuario.ultima_vez);
 
     correo_an = usuario.correo;
-
-    // Icono de rol
-    const iconoRol = document.createElement('i');
-    iconoRol.className = claseIcono;
-    iconoRol.style.fontSize = '4rem';
-    const tituloIcono = document.getElementById('titulo_icono');
-    tituloIcono.textContent = '';
-    tituloIcono.appendChild(iconoRol);
 
     const spamRol = document.getElementById('spam_rol');
     spamRol.className = claseBadge;
@@ -126,13 +140,17 @@ function llenarTablaNotificaciones() {
 
     // 3. Definición de Columnas
     const columnas = [
-        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
-        { title: "TÍTULO", field: "titulo", minWidth: 150, responsive: 0 },
-        { title: "DESCRIPCIÓN", field: "descripcion", minWidth: 250 },
-        { title: "FECHA", field: "fecha", formatter: (cell) => FormatoFechas.formatoUsuario(cell.getValue()), minWidth: 120 },
-        { title: "LEÍDO", field: "leido", formatter: formatoLeido, minWidth: 100 },
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center" },
+        { title: "Título", field: "titulo", minWidth: 150, responsive: 0 },
+        { title: "Descripción", field: "descripcion", minWidth: 300 },
+        { title: "Fecha", field: "fecha", formatter: (cell) => FormatoFechas.formatoUsuario(cell.getValue()), minWidth: 50 },
+        { title: "Leído", field: "leido", formatter: formatoLeido, minWidth: 50, hozAlign: "center", headerHozAlign: "center" },
         {
-            title: "ACCIONES", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 100, responsive: 0, download: false,
+            title: "Acciones", 
+            formatter: formatoBotones, 
+            headerSort: false, hozAlign: "center", vertAlign: "middle", 
+            minWidth: 100, responsive: 0, download: false,
+            headerHozAlign: "center",
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
@@ -152,8 +170,10 @@ function llenarTablaNotificaciones() {
         parametrosExtra: { operacion: 'consultar_mis_notificaciones' }
     };
 
+    let mostrarCarga = false;
+
     // 5. Inicialización de Tabulator
-    tabla_notificaciones = Tablas.cargarTabulador(contenedor.id, "", columnas, opcionesExtra);
+    tabla_notificaciones = Tablas.cargarTabulador(contenedor.id, "", columnas, opcionesExtra, mostrarCarga);
 
     // Activamos el elemento visual si existe (esto lo tenías en tu código original)
     document.getElementById('notificaciones')?.removeAttribute('disabled');
@@ -198,11 +218,12 @@ async function modificar() {
     }
 
     // Actualizar nombre en el botón de la barra superior (opcional)
-    const botonUsuario = document.getElementById('boton_accion_usuario');
-    if (botonUsuario) {
-        const nuevoNombre = document.getElementById('nombre').value;
+    const nombreUsuario = document.getElementById('nombre_usuario_sesion');
+    if (nombreUsuario) {
+        const nuevoNombre = document.getElementById('nombre').value + " " + document.getElementById('apellido').value;
         // botonUsuario.textContent = botonUsuario.textContent.replace(/\s\S+$/, ' ' + nuevoNombre);
-        botonUsuario.textContent = botonUsuario.textContent.replace(botonUsuario.textContent.trim().split(" ")[1],nuevoNombre);
+        
+        nombreUsuario.textContent = nuevoNombre;
     }
 
     await llenarCardUsuario(); // Recargar datos

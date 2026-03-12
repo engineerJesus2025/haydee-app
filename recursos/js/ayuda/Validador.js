@@ -47,8 +47,11 @@ const Validador = {
 
     /**
      * Valida una fecha asegurando formato YYYY-MM-DD y lógica de calendario.
+     * @param {HTMLElement} input - El elemento del DOM a evaluar.
+     * @param {string} mensajeError - Mensaje a mostrar si falla.
+     * @param {Object} opciones - { minAnio: 1900, maxHoy: false }
      */
-    evaluarFecha(input, mensajeError = "Fecha inválida o formato incorrecto") {
+    evaluarFecha(input, mensajeError = "Fecha inválida o formato incorrecto", opciones = {}) {
         const valor = input.value;
         const regex = /^\d{4}-\d{2}-\d{2}$/;
         
@@ -58,11 +61,30 @@ const Validador = {
         }
         
         const [anio, mes, dia] = valor.split('-').map(Number);
-        const fecha = new Date(anio, mes - 1, dia);
+        const fechaIngresada = new Date(anio, mes - 1, dia);
         
-        if (fecha.getFullYear() !== anio || fecha.getMonth() !== mes - 1 || fecha.getDate() !== dia || anio < 2000) {
+        // 1. Validar que la fecha exista en el calendario real (ej: que no sea 30 de febrero)
+        if (fechaIngresada.getFullYear() !== anio || fechaIngresada.getMonth() !== mes - 1 || fechaIngresada.getDate() !== dia) {
             EstadoInputs.marcarError(input, mensajeError);
             return false;
+        }
+        
+        // 2. Validar año mínimo (Por defecto 1900, evita errores de tipeo como año "0202")
+        const minAnio = opciones.minAnio !== undefined ? opciones.minAnio : 1900;
+        if (anio < minAnio) {
+            EstadoInputs.marcarError(input, `El año no puede ser menor a ${minAnio}`);
+            return false;
+        }
+
+        // 3. Validar que no sea una fecha en el futuro (Solo si maxHoy es true)
+        if (opciones.maxHoy) {
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0); // Ignorar la hora, evaluar solo el día
+            
+            if (fechaIngresada > hoy) {
+                EstadoInputs.marcarError(input, "La fecha no puede estar en el futuro");
+                return false;
+            }
         }
         
         EstadoInputs.marcarExito(input);

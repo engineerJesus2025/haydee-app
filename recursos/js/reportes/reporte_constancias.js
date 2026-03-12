@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 spinnerContainer.innerHTML = `<i class="bi bi-inbox text-secondary" style="font-size: 5rem !important;"></i>`;
             }
         }
-        // 2. Creamos el tooltip fresco de Bootstrap con el texto actualizado
+        // 2. Creamos el tooltip de Bootstrap con el texto actualizado
         new bootstrap.Tooltip(contenedorTarjeta, {
             placement: 'top',
             trigger: 'hover'
@@ -93,6 +93,8 @@ document.addEventListener('DOMContentLoaded', () => {
             fragment.appendChild(option);
         });
         select.appendChild(fragment);
+
+        select.dataset.valor = "habitante";
     }
 
     // Asignación de clics
@@ -101,6 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Validación asíncrona (si llegase a manipular el select por HTML inspector)
     document.getElementById('select_reporte')?.addEventListener('change', async function() {
+        if (this.dataset.valor != "habitante") return;
         if (!Validador.evaluarSelect(this.id)) return;
         await Validador.verificarExistenciaEnServidor(
             'validar_clave_foranea', 

@@ -1,250 +1,269 @@
 /**
  * reporte_habitantes.js
- * Reporte estadístico de habitantes con gráficos
- * Dependencias: utilidades.js, validaciones.js, chart.js, html2canvas, jspdf
+ * Reporte estadístico de habitantes con gráficos (Refactorizado y Optimizado)
  */
 
+// Variables globales para almacenar las instancias de los gráficos
 let graficoSexo, graficoVivienda, graficoEdades;
-let elementosEstadisticos = {
-    total_habitantes: 0,
-    total_propietarios: 0,
-    total_hombres: 0,
-    total_mujeres: 0,
-    menores_edad: 0,
-    adultos_jovenes: 0,
-    adultos: 0,
-    adultos_mayores: 0
-};
-const modal = new bootstrap.Modal(document.getElementById('modal_reporte_habitantes'));
+let modal;
 
-// Lógica de interfaz de filtros
-document.getElementById('filtro_tiempo')?.addEventListener('change', function() {
-    const esPersonalizado = this.value === 'personalizado';
-    document.getElementById('label_fechas_habitantes').hidden = !esPersonalizado;
-    document.getElementById('div_fecha_inicio_habitantes').hidden = !esPersonalizado;
-    document.getElementById('div_fecha_cierre_habitantes').hidden = !esPersonalizado;
-});
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Inicializamos el modal
+    const modalElement = document.getElementById('modal_reporte_habitantes');
+    if (modalElement) {
+        modal = new bootstrap.Modal(modalElement);
+    }
 
-document.getElementById('rango_edades')?.addEventListener('change', function() {
-    const esPersonalizado = this.value === 'personalizado';
-    document.getElementById('div_edad_minima').hidden = !esPersonalizado;
-    document.getElementById('div_edad_maxima').hidden = !esPersonalizado;
-});
-
-// Generación del reporte
-document.getElementById('boton_generar_reporte').addEventListener('click', async function() {
-    const contenidoModal = document.getElementById('contenido_reporte_habitantes');
+    // 2. Inicializamos la lógica de los filtros visuales
+    inicializarFiltros();
     
-    // --- 1. NUEVAS VALIDACIONES ANTES DE PROCESAR ---
-    const filtro = document.getElementById('filtro_tiempo').value;
-    if (filtro === 'personalizado') {
-        const fechaIn = document.getElementById('fecha_inicio_habitantes');
-        const fechaCierre = document.getElementById('fecha_cierre_habitantes');
-        if (!Validador.evaluarFecha(fechaIn) || !Validador.evaluarFecha(fechaCierre)) {
-            Alertas.mostrar('error', 'Error', 'Debe ingresar fechas válidas.');
-            return;
-        }
+    // 3. Agregamos el evento al botón (no al submit del formulario)
+    const btnGenerar = document.getElementById('boton_generar_reporte');
+    if (btnGenerar) {
+        btnGenerar.addEventListener('click', procesarReporte);
     }
 
-    const filtroEdad = document.getElementById('rango_edades').value;
-    if (filtroEdad === 'personalizado') {
-        const min = document.getElementById('edad_minima');
-        const max = document.getElementById('edad_maxima');
-        if (!Validador.evaluarInput(min, Patrones.digitos, '') || !Validador.evaluarInput(max, Patrones.digitos, '')) {
-            Alertas.mostrar('error', 'Error', 'Debe ingresar edades válidas.');
-            return;
-        }
+    // 4. Inicializamos el evento para exportar a PDF
+    const btnPdf = document.getElementById('boton_exportar_pdf');
+    if (btnPdf) {
+        btnPdf.addEventListener('click', exportarAPDF);
     }
-    // -------------------------------------------------
+});
 
-    modal.show();
-    contenidoModal.innerHTML = `
-        <div class="text-center py-5">
-            <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div>
-            <p class="mt-2">Generando reporte...</p>
-        </div>`;
+function inicializarFiltros() {
+    // Mostrar/Ocultar campos de fechas personalizadas
+    document.getElementById('filtro_tiempo')?.addEventListener('change', function() {
+        const esPersonalizado = this.value === 'personalizado';
+        document.getElementById('label_fechas_habitantes').hidden = !esPersonalizado;
+        document.getElementById('div_fecha_inicio_habitantes').hidden = !esPersonalizado;
+        document.getElementById('div_fecha_cierre_habitantes').hidden = !esPersonalizado;
+    });
 
+    // Mostrar/Ocultar campos de edades personalizadas
+    document.getElementById('rango_edades')?.addEventListener('change', function() {
+        const esPersonalizado = this.value === 'personalizado';
+        document.getElementById('div_edad_minima').hidden = !esPersonalizado;
+        document.getElementById('div_edad_maxima').hidden = !esPersonalizado;
+    });
+}
+
+async function procesarReporte(e) {
+    e.preventDefault(); // Prevenir cualquier comportamiento por defecto
+    
+    // Recolectar los datos del formulario
     const form = document.getElementById('form_reporte_habitantes');
     const formData = new FormData(form);
-    formData.append('operacion', 'consultar_habitantes');
+    formData.append("operacion", "consultar_habitantes");
+
+    // Recoger servicios de forma correcta según los IDs del HTML
+    const servicios = [];
+    if(document.getElementById('con_agua')?.checked) servicios.push('agua');
+    if(document.getElementById('con_gas')?.checked) servicios.push('gas');
+    formData.append("servicios", JSON.stringify(servicios));
+
+    // Deshabilitar el botón temporalmente para evitar múltiples clics
+    const btnGenerar = e.target;
+    btnGenerar.disabled = true;
 
     try {
-        // --- 2. CAMBIO A PETICIONES ---
-        const respuesta = await Peticiones.enviar(formData, "", false); 
-        // Usamos false porque este modal ya tiene su propio spinner interno
-        
-        if (!respuesta.estatus) {
-            throw new Error(respuesta.mensaje);
-        }
-        const datos = respuesta.datos || [];
+        // Enviar la petición al servidor (asegúrate de que esta ruta sea correcta en tu entorno)
+        const response = await fetch("?pagina=reportes", {
+            method: "POST",
+            body: formData
+        });
 
-        contenidoModal.innerHTML = '';
-        if (datos.length === 0) {
-            contenidoModal.innerHTML = '<p class="text-center p-5">No se encontraron resultados con los filtros seleccionados.</p>';
-            return;
-        }
+        const respuesta = await response.json();
 
-        // Crear canvas
-        contenidoModal.innerHTML = `
-            <div class="row">
-                <div class="col-md-6 col-lg-4 mb-4"><canvas id="graficoSexo"></canvas></div>
-                <div class="col-md-6 col-lg-4 mb-4"><canvas id="graficoTipoVivienda"></canvas></div>
-                <div class="col-md-12 col-lg-4 mb-4"><canvas id="graficoEdades"></canvas></div>
-            </div>
-        `;
-
-        // Destruir gráficos anteriores
-        if (graficoSexo) graficoSexo.destroy();
-        if (graficoVivienda) graficoVivienda.destroy();
-        if (graficoEdades) graficoEdades.destroy();
-
-        crearGraficoSexo(datos);
-        crearGraficoTipoVivienda(datos);
-        crearGraficoPorEdades(datos);
-
-        const modoVisual = document.getElementById('select_mostrar_datos').value;
-        if (modoVisual === "solo_texto") {
-            document.querySelector('#graficoSexo').parentElement.parentElement.setAttribute("hidden", "");
-            crearContenedorEstadistica();
-            document.getElementById('contenedor_estadistica').removeAttribute("hidden");
-        } else if (modoVisual === "grafico_texto") {
-            crearContenedorEstadistica();
-            document.getElementById('contenedor_estadistica').removeAttribute("hidden");
-            document.querySelector('#graficoSexo').parentElement.parentElement.removeAttribute("hidden");
+        if (respuesta.estatus && respuesta.datos.length > 0) {
+            calcularYMostrarEstadisticas(respuesta.datos);
+            if(modal) modal.show();
         } else {
-            document.getElementById('contenedor_estadistica').setAttribute("hidden", "");
+            Swal.fire({
+                icon: "warning",
+                title: "Atención",
+                text: respuesta.mensaje || "No se encontraron datos con esos filtros."
+            });
         }
     } catch (error) {
-        console.error('Error al generar el reporte:', error);
-        contenidoModal.innerHTML = '<p class="text-center text-danger p-5">Ocurrió un error al generar el reporte. Intente de nuevo.</p>';
+        console.error("Error al generar el reporte:", error);
+        Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Hubo un problema al procesar la solicitud con el servidor."
+        });
+    } finally {
+        // Habilitar el botón nuevamente
+        btnGenerar.disabled = false;
     }
-});
+}
 
-// Funciones de gráficos (se mantienen igual, solo cambia el acceso a datos)
-function crearGraficoSexo(datos) {
-    const hombres = datos.filter(p => p.sexo?.toLowerCase() === 'masculino').length;
-    const mujeres = datos.filter(p => p.sexo?.toLowerCase() === 'femenino').length;
-    elementosEstadisticos.total_hombres = hombres;
-    elementosEstadisticos.total_mujeres = mujeres;
+function calcularYMostrarEstadisticas(datos) {
+    // 1. Inicializar objeto de estadísticas
+    let stats = {
+        total_habitantes: 0,
+        total_propietarios: 0,
+        total_hombres: 0,
+        total_mujeres: 0,
+        menores_edad: 0,
+        adultos_jovenes: 0,
+        adultos: 0,
+        adultos_mayores: 0
+    };
 
-    const ctx = document.getElementById('graficoSexo').getContext('2d');
-    graficoSexo = new Chart(ctx, {
+    // 2. Procesar los datos de cada persona
+    datos.forEach(persona => {
+        if (persona.alquilado == 1 || persona.tipo_vinculo?.toLowerCase() === 'habitante') stats.total_habitantes++;
+        if (persona.alquilado == 0 || persona.tipo_vinculo?.toLowerCase() === 'propietario') stats.total_propietarios++;
+
+        if (persona.sexo === 'M' || persona.sexo?.toLowerCase() === 'masculino') stats.total_hombres++;
+        if (persona.sexo === 'F' || persona.sexo?.toLowerCase() === 'femenino') stats.total_mujeres++;
+
+        const edad = persona.edad !== undefined ? persona.edad : calcularEdad(persona.fecha_nacimiento);
+        if (edad <= 17) stats.menores_edad++;
+        else if (edad >= 18 && edad <= 35) stats.adultos_jovenes++;
+        else if (edad >= 36 && edad <= 59) stats.adultos++;
+        else if (edad >= 60) stats.adultos_mayores++;
+    });
+
+    // 3. Volcar los datos en el HTML
+    document.getElementById('total_personas').innerText = datos.length;
+    document.getElementById('total_habitantes').innerText = stats.total_habitantes;
+    document.getElementById('total_propietarios').innerText = stats.total_propietarios;
+    document.getElementById('total_hombres').innerText = stats.total_hombres;
+    document.getElementById('total_mujeres').innerText = stats.total_mujeres;
+    document.getElementById('menores_edad').innerText = stats.menores_edad;
+    document.getElementById('adultos_jovenes').innerText = stats.adultos_jovenes;
+    document.getElementById('adultos').innerText = stats.adultos;
+    document.getElementById('adultos_mayores').innerText = stats.adultos_mayores;
+
+    // 4. Lógica para mostrar/ocultar gráficos y texto según selección
+    const modoVista = document.getElementById('select_mostrar_datos').value;
+    
+    // Capturamos los contenedores del DOM
+    const contenedorGraficos = document.getElementById('grafico_sexo').closest('.row'); // El div de los gráficos
+    const contenedorTexto = document.getElementById('contenedor_estadistica_habitantes'); // Las tarjetas
+    const tituloTexto = document.querySelector('#modal_reporte_habitantes h4'); // El título "Resumen Estadístico"
+    const separador = document.querySelector('#modal_reporte_habitantes hr'); // La línea <hr>
+
+    if (modoVista === "solo_texto") {
+        contenedorGraficos.hidden = true;
+        contenedorTexto.hidden = false;
+        if(tituloTexto) tituloTexto.hidden = false;
+        if(separador) separador.hidden = false;
+    } else if (modoVista === "solo_grafico") {
+        contenedorGraficos.hidden = false;
+        contenedorTexto.hidden = true;
+        if(tituloTexto) tituloTexto.hidden = true;
+        if(separador) separador.hidden = true;
+        renderizarGraficos(stats); // Solo renderizamos los gráficos si se van a mostrar
+    } else {
+        // grafico_texto (Mostrar todo)
+        contenedorGraficos.hidden = false;
+        contenedorTexto.hidden = false;
+        if(tituloTexto) tituloTexto.hidden = false;
+        if(separador) separador.hidden = false;
+        renderizarGraficos(stats);
+    }
+}
+
+function calcularEdad(fechaNacimiento) {
+    if (!fechaNacimiento) return 0;
+    const hoy = new Date();
+    const nacimiento = new Date(fechaNacimiento);
+    let edad = hoy.getFullYear() - nacimiento.getFullYear();
+    const mes = hoy.getMonth() - nacimiento.getMonth();
+    if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
+        edad--;
+    }
+    return edad;
+}
+
+function renderizarGraficos(stats) {
+    // Definir opciones comunes para mantener el aspecto
+    const opcionesComunes = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } }
+    };
+
+    // 1. Gráfico de Sexo
+    const ctxSexo = document.getElementById('grafico_sexo').getContext('2d');
+    if (graficoSexo) graficoSexo.destroy(); // Destruir instancia previa para evitar superposición
+    graficoSexo = new Chart(ctxSexo, {
         type: 'pie',
         data: {
             labels: ['Hombres', 'Mujeres'],
-            datasets: [{ data: [hombres, mujeres], backgroundColor: ['#3498db', '#e74c3c'] }]
+            datasets: [{
+                data: [stats.total_hombres, stats.total_mujeres],
+                backgroundColor: ['#0d6efd', '#dc3545']
+            }]
         },
-        options: { responsive: true, plugins: { title: { display: true, text: 'Distribución por Sexo' } } }
+        options: { ...opcionesComunes, plugins: { ...opcionesComunes.plugins, title: { display: true, text: 'Distribución por Sexo' } } }
     });
-}
 
-function crearGraficoTipoVivienda(datos) {
-    const propietarios = datos.filter(p => p.alquilado == 0).length;
-    const alquilados = datos.filter(p => p.alquilado == 1).length;
-    elementosEstadisticos.total_propietarios = propietarios;
-    elementosEstadisticos.total_habitantes = alquilados;
-
-    const ctx = document.getElementById('graficoTipoVivienda').getContext('2d');
-    graficoVivienda = new Chart(ctx, {
+    // 2. Gráfico de Tipo de Vivienda
+    const ctxVivienda = document.getElementById('grafico_vivienda').getContext('2d');
+    if (graficoVivienda) graficoVivienda.destroy();
+    graficoVivienda = new Chart(ctxVivienda, {
         type: 'doughnut',
         data: {
             labels: ['Vivienda Propia', 'Vivienda Alquilada'],
-            datasets: [{ data: [propietarios, alquilados], backgroundColor: ['#2ecc71', '#f1c40f'] }]
+            datasets: [{
+                data: [stats.total_propietarios, stats.total_habitantes], 
+                backgroundColor: ['#198754', '#ffc107'] // Verde y Amarillo Bootstrap
+            }]
         },
-        options: { responsive: true, plugins: { title: { display: true, text: 'Habitantes por Tipo de Vivienda' } } }
+        options: { ...opcionesComunes, plugins: { ...opcionesComunes.plugins, title: { display: true, text: 'Tenencia de Vivienda' } } }
     });
-}
 
-function crearGraficoPorEdades(datos) {
-    const rangos = { '0-17': 0, '18-35': 0, '36-59': 0, '60+': 0 };
-    datos.forEach(p => {
-        if (p.edad <= 17) rangos['0-17']++;
-        else if (p.edad <= 35) rangos['18-35']++;
-        else if (p.edad <= 59) rangos['36-59']++;
-        else rangos['60+']++;
-    });
-    elementosEstadisticos.menores_edad = rangos['0-17'];
-    elementosEstadisticos.adultos_jovenes = rangos['18-35'];
-    elementosEstadisticos.adultos = rangos['36-59'];
-    elementosEstadisticos.adultos_mayores = rangos['60+'];
-
-    const ctx = document.getElementById('graficoEdades').getContext('2d');
-    graficoEdades = new Chart(ctx, {
+    // 3. Gráfico de Edades
+    const ctxEdades = document.getElementById('grafico_edades').getContext('2d');
+    if (graficoEdades) graficoEdades.destroy();
+    graficoEdades = new Chart(ctxEdades, {
         type: 'bar',
         data: {
-            labels: Object.keys(rangos),
+            labels: ['0-17', '18-35', '36-59', '60+'],
             datasets: [{
                 label: 'Cantidad de Habitantes',
-                data: Object.values(rangos),
-                backgroundColor: '#9b59b6'
+                data: [stats.menores_edad, stats.adultos_jovenes, stats.adultos, stats.adultos_mayores],
+                backgroundColor: '#6f42c1' // Morado Bootstrap
             }]
         },
         options: {
             responsive: true,
-            plugins: { title: { display: true, text: 'Distribución por Rango de Edad' } },
-            scales: { y: { beginAtZero: true } }
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false }, title: { display: true, text: 'Rango de Edades' } },
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } // precision:0 evita decimales en personas
         }
     });
 }
 
-// Exportar a PDF
-document.getElementById('boton_exportar_pdf').addEventListener('click', function() {
-    if (!graficoSexo || !graficoVivienda || !graficoEdades) {
-        Alertas.mostrar('warning', 'Atención', 'Primero debe generar un reporte');
-        return;
-    }
-
+async function exportarAPDF() {
     const { jsPDF } = window.jspdf;
-    const contenido = document.getElementById('cuerpo_modal');
-    const boton = this;
+    const elementoModal = document.querySelector('#modal_reporte_habitantes .modal-body');
+    const btnPdf = document.getElementById('boton_exportar_pdf');
 
-    boton.disabled = true;
-    boton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Exportando...';
+    btnPdf.disabled = true;
+    btnPdf.innerHTML = '<i class="bi bi-hourglass-split"></i> Generando...';
 
-    html2canvas(contenido, { scale: 2 })
-        .then(canvas => {
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+    try {
+        // Tomar 'captura' de la pantalla del modal
+        const canvas = await html2canvas(elementoModal, { scale: 2 });
+        const imgData = canvas.toDataURL('image/png');
 
-            pdf.setFontSize(18);
-            pdf.text("Reporte Estadístico de Habitantes", pdfWidth / 2, 20, { align: 'center' });
-            pdf.addImage(imgData, 'PNG', 10, 30, pdfWidth - 20, pdfHeight - 20);
-            pdf.save(`reporte-habitantes-${new Date().toISOString().slice(0, 10)}.pdf`);
+        // Configurar PDF (Orientación horizontal 'l', milímetros, tamaño A4)
+        const pdf = new jsPDF('l', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-            boton.disabled = false;
-            boton.innerHTML = '<i class="bi bi-file-earmark-pdf"></i> Exportar a PDF';
-        })
-        .catch(err => {
-            console.error("Error al generar el PDF:", err);
-            Utilidades.mensaje('error', 'Error', 'Ocurrió un error al generar el PDF');
-            boton.disabled = false;
-            boton.innerHTML = '<i class="bi bi-file-earmark-pdf"></i> Exportar a PDF';
-        });
-});
-
-function crearContenedorEstadistica() {
-    limpiarContenedorEstadistica();
-    document.getElementById('total_habitantes').textContent += elementosEstadisticos.total_habitantes;
-    document.getElementById('total_propietarios').textContent += elementosEstadisticos.total_propietarios;
-    document.getElementById('total_hombres').textContent += elementosEstadisticos.total_hombres;
-    document.getElementById('total_mujeres').textContent += elementosEstadisticos.total_mujeres;
-    document.getElementById('menores_edad').textContent += elementosEstadisticos.menores_edad;
-    document.getElementById('adultos_jovenes').textContent += elementosEstadisticos.adultos_jovenes;
-    document.getElementById('adultos').textContent += elementosEstadisticos.adultos;
-    document.getElementById('adultos_mayores').textContent += elementosEstadisticos.adultos_mayores;
-    document.getElementById('total_personas').textContent += (elementosEstadisticos.total_habitantes + elementosEstadisticos.total_propietarios);
-}
-
-function limpiarContenedorEstadistica() {
-    document.getElementById('total_personas').textContent = "Total de Personas Registradas: ";
-    document.getElementById('total_habitantes').textContent = "Total de Personas Habitantes: ";
-    document.getElementById('total_propietarios').textContent = "Total de Personas Propietarios: ";
-    document.getElementById('total_hombres').textContent = "Total Hombres: ";
-    document.getElementById('total_mujeres').textContent = "Total Mujeres: ";
-    document.getElementById('menores_edad').textContent = "Menores de Edad (0-17) años: ";
-    document.getElementById('adultos_jovenes').textContent = "Adultos Jóvenes (18-35) años: ";
-    document.getElementById('adultos').textContent = "Adultos (36-59) años: ";
-    document.getElementById('adultos_mayores').textContent = "Adultos Mayores (+60): ";
+        // Añadir imagen al PDF y descargar
+        pdf.addImage(imgData, 'PNG', 0, 10, pdfWidth, pdfHeight);
+        pdf.save('Reporte_Estadistico_Habitantes.pdf');
+    } catch (error) {
+        console.error("Error al exportar a PDF: ", error);
+        Swal.fire('Error', 'No se pudo generar el PDF. Intente nuevamente.', 'error');
+    } finally {
+        btnPdf.disabled = false;
+        btnPdf.innerHTML = '<i class="bi bi-file-earmark-pdf"></i> Exportar a PDF';
+    }
 }

@@ -11,22 +11,23 @@ require_once __DIR__ . '/../vendor/autoload.php';
 // Funciones auxiliares (si no quieres depender de la clase Mantenimiento)
 // -------------------------------------------------------------------
 function getMysqldumpPath() {
-    // Si está definida una constante personalizada, úsala
-    if (defined('MYSQLDUMP_PATH')) {
+    // Si la definiste en tu .env, úsala
+    if (defined('MYSQLDUMP_PATH') && MYSQLDUMP_PATH !== '') {
         return MYSQLDUMP_PATH;
     }
-    // Detección automática
-    if (DIRECTORY_SEPARATOR === '\\') {
-        // Ruta típica de XAMPP en Windows
-        return '"C:\xampp\mysql\bin\mysqldump.exe"';
+    
+    // Usamos la constante ENTORNO de tu config.php
+    if (ENTORNO === 'local') {
+        return '"C:\xampp\mysql\bin\mysqldump.exe"'; // Tu ruta en XAMPP
     }
-    // En Linux/Unix suele estar en el PATH
+    
+    // Entorno de producción (Alwaysdata / Linux)
     return 'mysqldump';
 }
 
 function getBackupDir() {
     // Usa la constante ROOT_PATH definida en config.php
-    return ROOT_PATH . DIRECTORY_SEPARATOR . 'recursos' . DIRECTORY_SEPARATOR . 'Backups' . DIRECTORY_SEPARATOR;
+    return ROOT_PATH . DIRECTORY_SEPARATOR . 'Backups' . DIRECTORY_SEPARATOR;
 }
 
 function removeDefinerFromSql($filepath) {

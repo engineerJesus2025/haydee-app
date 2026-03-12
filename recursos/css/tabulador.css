@@ -65,17 +65,39 @@
 .tabulator .tabulator-footer .tabulator-footer-contents {
     display: flex !important;
     flex-wrap: wrap !important;
-    justify-content: center !important;
+    justify-content: space-between !important; /* Selector a la izquierda, botones a la derecha */
     align-items: center !important;
-    gap: 10px;
     padding: 10px;
 }
-/* Tu corrección aplicada aquí */
+
+/* Tu idea: Enviar el texto del contador a una nueva línea en la parte inferior */
+.tabulator .tabulator-footer .tabulator-page-counter {
+    flex-basis: 100% !important; /* Obliga a ocupar todo el ancho */
+    text-align: center !important;
+    margin-top: 12px !important; /* Separación con los botones */
+    order: 99 !important; /* Lo envía al final de todo */
+    color: #6b7280; /* Un gris sutil */
+    font-size: 0.9em;
+}
+
+/* Mantener los botones centrados si la pantalla es de celular */
 .tabulator .tabulator-footer .tabulator-paginator {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
+    justify-content: flex-end; /* Pegar botones a la derecha en escritorio */
     align-items: center; 
+    flex-grow: 1; /* Permite que tome el espacio sobrante */
+}
+
+/* En celulares muy pequeños, centrar todo */
+@media (max-width: 576px) {
+    .tabulator .tabulator-footer .tabulator-footer-contents {
+        justify-content: center !important;
+    }
+    .tabulator .tabulator-footer .tabulator-paginator {
+        justify-content: center;
+        margin-top: 10px;
+    }
 }
 
 /* --- 5. ALINEACIÓN DEL SELECTOR "MOSTRAR" --- */
@@ -91,4 +113,71 @@
     vertical-align: middle !important;
     margin-bottom: 0 !important;
     padding: 4px;
+}
+
+/* Obligar a que el título de la cabecera respete la alineación de la columna */
+.tabulator .tabulator-header .tabulator-col .tabulator-col-content {
+    justify-content: inherit !important;
+}
+
+/* Alinear a la izquierda por defecto si no se especifica otra cosa */
+.tabulator .tabulator-header .tabulator-col .tabulator-col-title {
+    text-align: inherit;
+}
+
+/* =========================================================
+   6. ALINEACIÓN PRECISA DE CABECERAS (TH)
+========================================================= */
+
+/* 1. Por defecto, todo el contenido de la cabecera a la izquierda */
+.tabulator .tabulator-header .tabulator-col .tabulator-col-content {
+    justify-content: flex-start !important;
+    text-align: left !important;
+}
+
+/* 2. Si la columna en JS tiene hozAlign: "center", centramos la cabecera */
+.tabulator .tabulator-header .tabulator-col[tabulator-align="center"] .tabulator-col-content {
+    justify-content: center !important;
+    text-align: center !important;
+}
+
+/* 3. Si la columna en JS tiene hozAlign: "right", enviamos la cabecera a la derecha */
+.tabulator .tabulator-header .tabulator-col[tabulator-align="right"] .tabulator-col-content {
+    justify-content: flex-end !important;
+    text-align: right !important;
+}
+
+/* Unificar todas las cabeceras al estándar moderno (Mayúsculas pequeñas) */
+.tabulator .tabulator-header .tabulator-col-title {
+    text-transform: uppercase !important; /* Fuerza todo a mayúsculas sin importar cómo esté en JS */
+    font-size: 0.75rem !important; /* Letra más pequeña */
+    letter-spacing: 0.5px; /* Separación elegante entre letras */
+    font-weight: 600; /* Un poco de negrita */
+    color: #cbd5e1 !important; /* Un gris muy claro/azulado en lugar de blanco puro para no cansar la vista */
+}
+
+/* =========================================================
+   7. ESTILIZACIÓN DE BOTONES DE ACCIÓN
+========================================================= */
+/* Convertir botones en cuadrados perfectos */
+.tabulator-row .btn-sm {
+    width: 32px !important;
+    height: 32px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 8px; /* Bordes suaves estilo app de celular */
+    transition: all 0.2s ease-in-out !important; /* Animación fluida */
+}
+
+/* Efecto levitación al pasar el ratón */
+.tabulator-row .btn-sm:hover {
+    transform: translateY(-2px); /* Sube 2 pixeles */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15); /* Crea una sombra debajo */
+}
+
+/* Ajuste sutil para los íconos de Bootstrap dentro del botón */
+.tabulator-row .btn-sm i {
+    font-size: 1rem;
 }

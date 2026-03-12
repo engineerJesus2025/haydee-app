@@ -77,10 +77,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // 6. AUTO-SCROLL AL MÓDULO ACTIVO
     const activeLink = document.querySelector('.nav_link.active');
-    if (activeLink && nav) {
-        nav.scrollTo({
-            top: activeLink.offsetTop - 50,
-            behavior: 'smooth'
-        });
+    if (activeLink) {
+        // Usamos un pequeño timeout de 100ms para esperar a que 
+        // las transiciones de CSS del menú terminen de acomodarse.
+        setTimeout(() => {
+            activeLink.scrollIntoView({ 
+                behavior: 'smooth',
+                block: 'center'    
+            });
+        }, 100);
     }
 });

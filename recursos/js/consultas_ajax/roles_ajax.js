@@ -25,10 +25,7 @@ async function consultar() {
         const id = cell.getData().id_rol;
         // Protección especial para el Rol 1
         if (id == 1) {
-            return `<div class="d-flex justify-content-center gap-2">
-                <button type="button" class="btn btn-secondary btn-sm disabled" title="Modificar"><i class="bi bi-pencil"></i></button>
-                <button type="button" class="btn btn-secondary btn-sm disabled" title="Eliminar"><i class="bi bi-trash"></i></button>
-            </div>`;
+            return `No Modificable`;
         }
 
         let html = `<div class="d-flex justify-content-center gap-2">`;
@@ -39,13 +36,15 @@ async function consultar() {
     };
 
     const columnas = [
-        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
-        { title: "NOMBRE", field: "nombre", minWidth: 150, responsive: 0 },
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", headerHozAlign: "center", resizable: false, headerSort: false, },
+        { title: "Nombre", field: "nombre", minWidth: 150, responsive: 0 },
         {
-            title: "ACCIONES", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 100, responsive: 0, download: false,
+            title: "Acciones", 
+            formatter: formatoBotones, headerSort: false, 
+            hozAlign: "center", vertAlign: "middle", minWidth: 100, 
+            responsive: 0, download: false, headerHozAlign: "center",
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
-                if (!btn || btn.classList.contains('disabled')) return;
                 const mockEvent = { currentTarget: btn };
                 
                 if (btn.classList.contains('modificar')) prepararFormulario(mockEvent);
@@ -137,8 +136,6 @@ async function prepararFormulario(e) {
         respPermisos.datos.map(p => `${p.modulo_id}:${p.permiso_id}`)
     );
 
-    console.log('Permisos asignados (compuestos):', Array.from(permisosAsignados));
-
     // Marcar los checkboxes correspondientes
     checkboxesPermisos.forEach(checkbox => {
         // El checkbox debe tener atributos data-modulo y value (permiso_id)
@@ -167,6 +164,11 @@ async function prepararFormulario(e) {
                 }
             }
         }
+    });
+
+    // Evaluar cada fila para auto-activar los switches "Seleccionar Todo" si aplica
+    document.querySelectorAll('#tabla_permisos tbody tr').forEach(tr => {
+        actualizarSwitchSeleccionarTodo(tr);
     });
 
     // Actualizar interfaz del modal
@@ -221,8 +223,20 @@ async function eliminar(id) {
 }
 
 // ============================================
-// EVENTOS DEL MODAL
+// EVENTOS Y LÓGICA DE INTERFAZ
 // ============================================
+
+// Función para verificar y activar/desactivar el switch "Seleccionar Todo"
+function actualizarSwitchSeleccionarTodo(tr) {
+    const checks = tr.querySelectorAll("[name='permisos[]']");
+    const switchTodo = tr.querySelector('.seleccionar_todo');
+    if (checks.length === 0 || !switchTodo) return;
+    
+    const todosMarcados = Array.from(checks).every(cb => cb.checked);
+    switchTodo.checked = todosMarcados;
+}
+
+// 1. Evento al limpiar el modal
 document.getElementById('modal_roles').addEventListener('hide.bs.modal', () => {
     form.reset();
     document.querySelectorAll('.is-valid, .is-invalid').forEach(el => el.classList.remove('is-valid', 'is-invalid'));
@@ -236,10 +250,33 @@ document.getElementById('modal_roles').addEventListener('hide.bs.modal', () => {
     });
 });
 
-document.querySelectorAll('.seleccionar_todo').forEach(checkbox => {
-    checkbox.addEventListener('change', function() {
-        const checks = this.closest('tr').querySelectorAll("[name='permisos[]']");
+// Evento para el switch "Seleccionar Todo"
+document.querySelectorAll('.seleccionar_todo').forEach(switchCheckbox => {
+    switchCheckbox.addEventListener('change', function() {
+        const tr = this.closest('tr');
+        const checks = tr.querySelectorAll("[name='permisos[]']");
+        
         checks.forEach(cb => cb.checked = this.checked);
+
+        if (this.checked) {
+            // 1. Abrir acordeón (ya lo tienes)
+            const collapseEl = tr.querySelector('.accordion-collapse');
+            if (collapseEl && !collapseEl.classList.contains('show')) {
+                new bootstrap.Collapse(collapseEl, { show: true });
+            }
+
+            // 2. Feedback visual: Reiniciamos la animación quitando y poniendo la clase
+            tr.classList.remove('fila-resaltada');
+            void tr.offsetWidth; // Truco de JS para forzar el redibujado y que la animación se repita
+            tr.classList.add('fila-resaltada');
+        }
+    });
+});
+
+// Evento para checkboxes individuales
+document.querySelectorAll("[name='permisos[]']").forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+        actualizarSwitchSeleccionarTodo(this.closest('tr'));
     });
 });
 

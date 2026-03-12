@@ -12,11 +12,11 @@ async function consultar() {
     };
 
     const columnas = [
-        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
-        { title: "TÍTULO", field: "titulo", minWidth: 150, responsive: 0 },
-        { title: "DESCRIPCIÓN", field: "descripcion", minWidth: 250 },
-        { title: "FECHA", field: "fecha", formatter: (cell) => FormatoFechas.formatoUsuario(cell.getValue()), minWidth: 120 },
-        { title: "LEÍDO", field: "leido", formatter: formatoLeido, minWidth: 100 }
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
+        { title: "Título", field: "titulo", minWidth: 150, responsive: 0 },
+        { title: "Descripción", field: "descripcion", minWidth: 250 },
+        { title: "Fecha", field: "fecha", formatter: (cell) => FormatoFechas.formatoUsuario(cell.getValue()), minWidth: 120 },
+        { title: "Leído", field: "leido", formatter: formatoLeido, minWidth: 100, headerHozAlign: "center", hozAlign: "center" }
     ];
 
     tabla_notificaciones = Tablas.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consultar' } });

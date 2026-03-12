@@ -85,10 +85,10 @@ async function consultar() {
 
     // 3. Estructura de Columnas
     const columnas = [
-        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
         { title: "Banco", field: "nombre_banco", minWidth: 100, responsive: 0 },
-        { title: "Código", field: "codigo", minWidth: 80 },
-        { title: "Nro. Cuenta", field: "numero_cuenta", minWidth: 150 },
+        { title: "Código", field: "codigo", minWidth: 60 },
+        { title: "Nro. Cuenta", field: "numero_cuenta", minWidth: 180 },
         { title: "Teléfono", field: "telefono_afiliado", minWidth: 100 },
         { title: "RIF", field: "rif", minWidth: 100 },
         {
@@ -100,6 +100,7 @@ async function consultar() {
             minWidth: 100,
             responsive: 0,
             download: false,
+            headerHozAlign: "center",
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;

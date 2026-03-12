@@ -178,51 +178,96 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                         aria-label="Close"></button>
                 </div>
-                <div class="modal-body" id="cuerpo_modal">
-                    <!-- Aquí se cargará dinámicamente el contenido del reporte -->
-                    <div id="contenido_reporte_habitantes">
-                        <div class="text-center py-5">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Cargando...</span>
+                <div class="modal-body">
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <h5 class="text-center">Distribución por Sexo</h5>
+                            <div class="chart-container" style="position: relative; height:30vh; width:100%">
+                                <canvas id="grafico_sexo"></canvas>
                             </div>
-                            <p class="mt-2">Generando reporte...</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h5 class="text-center">Tipos de Habitantes</h5>
+                            <div class="chart-container" style="position: relative; height:30vh; width:100%">
+                                <canvas id="grafico_vivienda"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h5 class="text-center">Rangos de Edad</h5>
+                            <div class="chart-container" style="position: relative; height:30vh; width:100%">
+                                <canvas id="grafico_edades"></canvas>
+                            </div>
                         </div>
                     </div>
-                    <div class="container my-5" id="contenedor_estadistica">
-                        <h3 class="text-center">Datos de Estadísticas:</h3>
-                        <div class="row justify-content-center mt-4">
-                            <div class="col-sm-10 col-lg-8 card text-center">
-                              <div class="card-header">
-                                Resumen de Estadísticas:
-                              </div>
-                              <div class="card-body">
-                                <p id="total_personas">Total de Personas Registradas: </p>
-                                <p id="total_habitantes">Total de Personas Habitantes: </p>
-                                <p id="total_propietarios">Total de Personas Propietarios: </p>
-                              </div>
+
+                    <hr>
+                    <h4 class="text-center mb-4">Resumen Estadístico</h4>
+                    
+                    <div class="row g-3 justify-content-center" id="contenedor_estadistica_habitantes">
+                        
+                        <div class="col-md-4">
+                            <div class="card border-primary h-100 shadow-sm">
+                                <div class="card-header bg-primary text-white text-center fw-bold">
+                                    <i class="bi bi-people-fill"></i> Población General
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Total Registrados:</span>
+                                        <strong class="fs-5 text-primary" id="total_personas">0</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Habitantes:</span>
+                                        <strong id="total_habitantes">0</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Propietarios:</span>
+                                        <strong id="total_propietarios">0</strong>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <hr>
-                        <div class="row justify-content-around mt-4">
-                            <div class="col-lg-4 col-sm-8 mb-3 mb-lg-0 card text-center">
-                              <div class="card-header">
-                                Distribución por sexo:
-                              </div>
-                              <div class="card-body">
-                                <p id="total_hombres">Total Hombres: </p>
-                                <p id="total_mujeres">Total Mujeres: </p>
-                              </div>
+
+                        <div class="col-md-4">
+                            <div class="card border-info h-100 shadow-sm">
+                                <div class="card-header bg-info text-white text-center fw-bold">
+                                    <i class="bi bi-gender-ambiguous"></i> Género
+                                </div>
+                                <div class="card-body d-flex flex-column justify-content-center text-center">
+                                    <div class="mb-3">
+                                        <i class="bi bi-gender-female text-danger fs-4"></i> Mujeres: 
+                                        <strong class="fs-5" id="total_mujeres">0</strong>
+                                    </div>
+                                    <div>
+                                        <i class="bi bi-gender-male text-primary fs-4"></i> Hombres: 
+                                        <strong class="fs-5" id="total_hombres">0</strong>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-lg-6 col-sm-8 mb-3 mb-lg-0 card text-center">
-                              <div class="card-header">
-                                Distribución por rango de edad:
-                              </div>
-                              <div class="card-body">
-                                <p id="menores_edad">Menores de Edad (0-17) años:</p>
-                                <p id="adultos_jovenes">Adultos Jovenes (18-35) años:</p>
-                                <p id="adultos">Adultos (36-59) años: </p>
-                                <p id="adultos_mayores">Adultos Mayores (+60): </p>
-                              </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="card border-success h-100 shadow-sm">
+                                <div class="card-header bg-success text-white text-center fw-bold">
+                                    <i class="bi bi-bar-chart-fill"></i> Grupos de Edad
+                                </div>
+                                <div class="card-body small">
+                                    <div class="d-flex justify-content-between border-bottom pb-1 mb-1">
+                                        <span>Menores (0-17):</span>
+                                        <strong id="menores_edad">0</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between border-bottom pb-1 mb-1">
+                                        <span>Jóvenes (18-35):</span>
+                                        <strong id="adultos_jovenes">0</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between border-bottom pb-1 mb-1">
+                                        <span>Adultos (36-59):</span>
+                                        <strong id="adultos">0</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Mayores (+60):</span>
+                                        <strong id="adultos_mayores">0</strong>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -242,7 +287,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <!-- Scripts personalizado -->
-    <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/estadisticas/chart.js"></script>
+    <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/dependencias/chartjs/chart.js"></script>
     <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/reportes/reporte_habitantes.js"></script>
 </body>
 

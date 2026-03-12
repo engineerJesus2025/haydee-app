@@ -68,6 +68,10 @@ if (isset($_POST["operacion"])) {
 
                 $respuesta = $usuario->realizar_consulta('modificar_usuario');
                 if ($respuesta['estatus']) {
+                    if ($usuario->get_id_usuario() == $_SESSION["id_usuario"]) {
+                        $_SESSION["nombre_completo"] = $usuario->get_nombre() . " " . $usuario->get_apellido();
+                        $respuesta["esMismoUsuario"] = true;
+                    }
                     $nuevo = [
                         'nombre' => $usuario->get_nombre(),
                         'apellido' => $usuario->get_apellido(),

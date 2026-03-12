@@ -88,7 +88,6 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append("fecha_fin", fecha_fin);
         formData.append("operacion", "reporte_ingresos_egresos_completo");
 
-        // --- CAMBIO A NUESTRO HELPER DE PETICIONES (con spinner activado) ---
         let resultado = await Peticiones.enviar(formData, "", true);
         
         if (!resultado.estatus) {
@@ -109,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (graficaChart) {
                 graficaChart.destroy();
             }
-            document.getElementById('canva').setAttribute("hidden", "");
+            document.getElementById('canva').parentElement.setAttribute("hidden", "");
             document.getElementById('titulo_grafico').setAttribute("hidden", "");
             document.getElementById('contenedor_estadistica').removeAttribute("hidden");
         } else if (modo === "grafico_texto") {
@@ -118,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('titulo_grafico').removeAttribute("hidden");
         } else {
             document.getElementById('contenedor_estadistica').setAttribute("hidden", "");
-            document.getElementById('canva').removeAttribute("hidden");
+            document.getElementById('canva').parentElement.removeAttribute("hidden");
             document.getElementById('titulo_grafico').removeAttribute("hidden");
         }
 

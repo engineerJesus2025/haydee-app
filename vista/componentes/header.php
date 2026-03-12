@@ -170,7 +170,7 @@ switch ($pagina_actual) {
                     <?php echo strtoupper(substr($_SESSION["nombre_completo"], 0, 2)); ?>
                 </div>
                 <div class="d-flex flex-column text-start" style="line-height: 1.2;">
-                        <span class="fs-6"><?php echo $_SESSION["nombre_completo"]; ?></span>
+                        <span class="fs-6" id="nombre_usuario_sesion"><?php echo $_SESSION["nombre_completo"]; ?></span>
                         <span class="text-muted" style="font-size: 0.75rem;"><?php echo $_SESSION["rol"]; ?></span>
                 </div>
             </button>

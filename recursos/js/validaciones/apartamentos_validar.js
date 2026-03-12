@@ -4,7 +4,7 @@
  */
 
 // Variables globales para comparar valores originales (deben venir de tu vista/AJAX)
-let nro_apartamento_anterior = null;
+let nro_apartamento_an = null;
 let cedula_an = null;
 let correo_an = null;
 let tipo_vinculo_an = null;
@@ -19,11 +19,27 @@ document.addEventListener("DOMContentLoaded", function() {
         inputNroApto.addEventListener('keypress', e => Validador.bloquearTeclasInvalidas(e, Patrones.teclasApartamento));
         inputNroApto.addEventListener('keyup', e => Validador.evaluarInput(e.target, Patrones.nroApartamento, 'Número inválido (máx 3 dígitos)'));
         inputNroApto.addEventListener('blur', async function() {
-            if (this.value === nro_apartamento_anterior || this.value === '') return;
-            if (Patrones.nroApartamento.test(this.value)) {
-                await Validador.verificarDuplicadoEnServidor('nro_apartamento', { nro_apartamento: this.value }, this, 'Este número ya está registrado');
-            }
-        });
+        // Usamos la variable global correcta de tu ajax
+        const original = typeof nro_apartamento_an !== 'undefined' ? nro_apartamento_an : null;
+        
+        if (this.value === original || this.value === '') return;
+        
+        if (Patrones.nroApartamento.test(this.value)) {
+            // Capturamos el ID del apartamento si estamos modificando
+            const btn = document.getElementById('boton_formulario');
+            const idApto = btn.getAttribute('id_modificar') || '';
+
+            await Validador.verificarDuplicadoEnServidor(
+                'nro_apartamento', 
+                { 
+                    nro_apartamento: this.value,
+                    id_apartamento: idApto // <-- ¡Aquí está la magia! Le pasamos el ID
+                }, 
+                this, 
+                'Este número ya está registrado'
+            );
+        }
+    });
     }
 
     const inputPorcentaje = document.getElementById('porcentaje_participacion');
@@ -63,8 +79,12 @@ document.addEventListener("DOMContentLoaded", function() {
 
     const inputFechaNac = document.getElementById('fecha_nacimiento');
     if (inputFechaNac) {
-        inputFechaNac.addEventListener('keyup', function() { Validador.evaluarFecha(this); });
-        inputFechaNac.addEventListener('change', function() { Validador.evaluarFecha(this); });
+        inputFechaNac.addEventListener('keyup', function() { 
+            Validador.evaluarFecha(this, 'Fecha inválida', { maxHoy: true }); 
+        });
+        inputFechaNac.addEventListener('change', function() { 
+            Validador.evaluarFecha(this, 'Fecha inválida', { maxHoy: true }); 
+        });
     }
 
     const selectTipoCedula = document.getElementById('tipo_cedula');
@@ -201,7 +221,7 @@ async function validarEnvioApartamento(accion) {
         return false;
     }
 
-    if (nro_apartamento_anterior !== inputNro.value) {
+    if (nro_apartamento_an !== inputNro.value) {
         const duplicado = await Validador.verificarDuplicadoEnServidor('nro_apartamento', { nro_apartamento: inputNro.value }, inputNro, 'Este número ya está registrado.');
         if (!duplicado) return false;
     }
@@ -218,7 +238,7 @@ async function validarEnvioHabitante(accion) {
     if (!Validador.evaluarInput(inputCedula, Patrones.cedula, 'Cédula inválida')) esValido = false;
     if (!Validador.evaluarInput(document.getElementById('nombre'), Patrones.textoCorto, 'Nombre inválido')) esValido = false;
     if (!Validador.evaluarInput(document.getElementById('apellido'), Patrones.textoCorto, 'Apellido inválido')) esValido = false;
-    if (!Validador.evaluarFecha(document.getElementById('fecha_nacimiento'))) esValido = false;
+    if (!Validador.evaluarFecha(document.getElementById('fecha_nacimiento'), 'Fecha inválida', { maxHoy: true })) esValido = false;
     if (!Validador.evaluarInput(document.getElementById('telefono'), Patrones.telefono, 'Teléfono inválido')) esValido = false;
     
     const inputCorreo = document.getElementById('correo');

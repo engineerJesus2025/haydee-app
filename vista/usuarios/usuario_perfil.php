@@ -32,199 +32,141 @@
                     <p class="lead"></p>
                     <hr>
 
-                    <div class="row mb-3 justify-content-center">
-                        <div class="col-md-9 col-lg-9">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <div>
-                                    <h2 class="mb-1">
-                                        <i class="bi bi-person-circle me-2"></i>
-                                        Mi Perfil
-                                    </h2>
-                                <p class="text-muted mb-0">Información personal del usuario</p>
-                              </div>              
-                                <button class="btn btn-outline-primary" title="modificar Información" id="boton_modificar" disabled>
-                                    <div class="spinner-border text-primary" role="status" style="width: 1rem; height: 1rem; z-index: 1000">
-                                        <span class="visually-hidden">Cargando...</span>
+                    <div class="row g-4 mb-5">
+                        <div class="col-lg-4">
+                            <div class="card shadow-sm h-100 border-0 rounded-4">
+                                <div class="card-body text-center pt-5 pb-4 px-4">
+                                    <div id="contenedor_avatar" class="bg-primary text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center shadow-sm placeholder-glow" style="width: 110px; height: 110px; font-size: 2.8rem; font-weight: bold; letter-spacing: 2px;">
+                                        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true" id="spinner_modificar" style="width: 80px; height: 80px; font-size: 2.8rem; font-weight: bold; letter-spacing: 2px;"></span>
                                     </div>
-                                    Cargando...
-                                    <!-- <i class="bi bi-pencil me-1"></i>
-                                    modificar -->
-                                </button>              
-                            </div>
-                            <div class="card shadow-sm">
-                                <div class="card-header bg-primary text-white">
-                                    <div class="d-flex align-items-center">
-                                        <div class="mx-1" id="titulo_icono">
-                                            <div class="card-text placeholder-glow my-3" style="width: 4rem;">
-                                                <span class="placeholder w-100 rounded" style="height: 4rem"></span>
+                                    
+                                    <h4 class="fw-bold mb-1 text-dark" id="titulo_nombre">
+                                        <span class="placeholder-glow"><span class="placeholder col-8 rounded"></span></span>
+                                    </h4>
+                                    
+                                    <div class="mb-4">
+                                        <span id="spam_rol" class="placeholder-glow">
+                                            <span class="placeholder col-8 rounded"></span>
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="text-muted small mb-4 bg-light p-3 rounded-3 text-start">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="bi bi-calendar-check text-success me-2 fs-5"></i>
+                                            <div>
+                                                <span class="fw-bold d-block text-dark">Estado de Cuenta</span>
+                                                <span>Activo</span>
                                             </div>
                                         </div>
-                                        <div class="flex-grow-1">
-                                            <h4 class="mb-1" id="titulo_nombre">    
-                                                <div class="card-title placeholder-glow">
-                                                  <span class="placeholder placeholder-lg w-100 rounded"></span>
-                                                </div>
-                                            </h4>
-                                            <div class="text-white" id="titulo_rol">
-                                                <div class="card-text placeholder-glow">
-                                                    <span class="placeholder w-100 rounded"></span>
-                                                </div>
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-clock text-info me-2 fs-5"></i>
+                                            <div class="w-100">
+                                                <span class="fw-bold d-block text-dark">Último Acceso</span>
+                                                <span id="ultimo_acceso"><span class="placeholder col-8"></span></span>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <div class="card-body p-4">                
-                                    <div class="row g-3" id="body_perfil">
-                                        <div class="col-md-6">
-                                            <div class="border rounded p-3 h-100">
-                                                <div class="d-flex align-items-center mb-2">
-                                                    <i class="bi bi-person text-primary me-2"></i>
-                                                    <small class="text-muted text-uppercase fw-bold">Nombre</small>
-                                                </div>
-                                                <div class="mb-0 fs-5" id="p_nombre">
-                                                    <div class="card-title placeholder-glow">
-                                                        <span class="placeholder placeholder-lg w-100 rounded bg-dark"></span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="border rounded p-3 h-100">
-                                                <div class="d-flex align-items-center mb-2">
-                                                    <i class="bi bi-person text-primary me-2"></i>
-                                                    <small class="text-muted text-uppercase fw-bold">Apellido</small>
-                                                </div>
-                                                <div class="mb-0 fs-5" id="p_apellido">
-                                                    <div class="card-title placeholder-glow">
-                                                        <span class="placeholder placeholder-lg w-100 rounded"></span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+                                    <hr class="text-muted opacity-25">
 
-                                        <div class="col-12">
-                                            <div class="border rounded p-3">
-                                                <div class="d-flex align-items-center mb-2">
-                                                    <i class="bi bi-envelope text-primary me-2"></i>
-                                                    <small class="text-muted text-uppercase fw-bold">Correo Electrónico</small>
-                                                </div>
-                                                <div class="mb-0 fs-5" id="p_correo">
-                                                    <div class="card-title placeholder-glow">
-                                                        <span class="placeholder placeholder-lg w-100 rounded"></span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="col-12">
-                                            <div class="border rounded p-3">
-                                                <div class="d-flex align-items-center mb-2">
-                                                    <i class="bi bi-shield-check text-primary me-2"></i>
-                                                    <small class="text-muted text-uppercase fw-bold">Rol en el Condominio</small>
-                                                </div>
-                                                <span id="spam_rol">
-                                                    <div class="card-title placeholder-glow">
-                                                        <span class="placeholder placeholder-lg w-100 rounded"></span>
-                                                    </div>
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <form hidden id="form_perfil">
-                                        <div class="row g-3">
-                                            <div class="col-md-6">
-                                                <label htmlFor="nombre" class="form-label">
-                                                    <i class="bi bi-person me-1"></i>Nombre <spam class="text-danger">*</spam></label>
-                                                <input type="text" class="form-control" id="nombre" name="nombre" required/>
-                                                <span class="w-100 invalid-feedback"></span>
-                                            </div>
-
-                                            <div class="col-md-6">
-                                                <label htmlFor="apellido" class="form-label">
-                                                    <i class="bi bi-person me-1"></i>Apellido <spam class="text-danger">*</spam></label>
-                                            <input type="text" class="form-control" id="apellido" name="apellido" required/>
-                                            <span class="w-100 invalid-feedback"></span>
-                                            </div>
-
-                                            <div class="col-12">
-                                                <label htmlFor="correo" class="form-label">
-                                                    <i class="bi bi-envelope me-1"></i>Correo Electrónico <spam class="text-danger">*</spam>
-                                                </label>
-                                                <input type="email" class="form-control" id="correo" name="correo" required/>
-                                                <span class="w-100 invalid-feedback"></span>
-                                            </div>
-                                        </div>
-
-                                        <div class="d-flex gap-2 mt-4">
-                                            <button type="button" class="btn btn-success" title="Presione aqui para guardar los cambios" id="boton_guardar">
-                                                <i class="bi bi-check-lg me-1"></i>
-                                                Guardar Cambios
-                                            </button>
-                                            <button type="button" class="btn btn-secondary" title="Cancelar cambios" id="boton_cancelar">
-                                                <i class="bi bi-x-lg me-1"></i>
-                                                Cancelar
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                            <div class="card mt-4 shadow-sm">
-                                <div class="card-header">
-                                    <h5 class="mb-0">
-                                        <i class="bi bi-info-circle me-2"></i>
-                                        Información Adicional
-                                    </h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-md-6 mb-3">
-                                            <div class="d-flex align-items-center mb-2">
-                                                <i class="bi bi-calendar-check text-success me-2"></i>
-                                                <span class="fw-bold">Estado:</span>
-                                            </div>
-                                            <span class="badge bg-success">Activo</span>
-                                        </div>
-                                        <div class="col-md-6 mb-3">
-                                            <div class="d-flex align-items-center mb-2">
-                                                <i class="bi bi-clock text-info me-2"></i>
-                                                <span class="fw-bold">Último acceso:</span>
-                                            </div>
-                                            <span class="text-muted" id="ultimo_acceso">
-                                                <div class="card-title placeholder-glow">
-                                                    <span class="placeholder placeholder-lg w-100 rounded"></span>
-                                                </div>
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card mt-4 shadow-sm">
-                                <div class="card-header">
-                                    <h5 class="mb-0">
-                                        <i class="bi bi-gear me-2"></i>
-                                        Acciones de Cuenta
-                                    </h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="d-grid gap-2 d-md-flex">
-                                        <button class="btn btn-outline-warning" title="Presione aquí para ver sus notificaciones" id="notificaciones" disabled type="button" data-bs-toggle="modal" data-bs-target="#modal_notificaciones">
-                                            <i class="bi bi-bell me-1"></i>
-                                            Notificaciones
+                                    <div class="d-grid gap-3 mt-4">
+                                        <button class="btn btn-outline-warning d-flex justify-content-between align-items-center fw-medium px-4 py-2 rounded-3 shadow-sm" id="notificaciones" disabled type="button" data-bs-toggle="modal" data-bs-target="#modal_notificaciones">
+                                            <span><i class="bi bi-bell me-2"></i> Notificaciones</span>
+                                            <i class="bi bi-chevron-right small"></i>
                                         </button>
-                                        <button class="btn btn-outline-primary" title="Presione aquí para cambiar su contraseña" id="cambiar_contra" type="button" data-bs-toggle="modal" data-bs-target="#modal_contra">
-                                            <i class="bi bi-key me-1"></i>
-                                            Cambiar Contraseña
+                                        <button class="btn btn-outline-primary d-flex justify-content-between align-items-center fw-medium px-4 py-2 rounded-3 shadow-sm" id="cambiar_contra" type="button" data-bs-toggle="modal" data-bs-target="#modal_contra">
+                                            <span><i class="bi bi-key me-2"></i> Cambiar Contraseña</span>
+                                            <i class="bi bi-chevron-right small"></i>
                                         </button>
-                                        <a href="?pagina=login&accion=cerrar" class="btn btn-outline-danger">
-                                            <i class="bi bi-box-arrow-right me-1"></i>
-                                            Cerrar Sesión
+                                        <a href="?pagina=login&accion=cerrar" class="btn btn-outline-danger d-flex justify-content-between align-items-center fw-medium px-4 py-2 rounded-3 shadow-sm">
+                                            <span><i class="bi bi-box-arrow-right me-2"></i> Cerrar Sesión</span>
+                                            <i class="bi bi-chevron-right small"></i>
                                         </a>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>                    
+
+                        <div class="col-lg-8">
+                            <div class="card shadow-sm h-100 border-0 rounded-4">
+                                <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4 d-flex justify-content-between align-items-center">
+                                    <h4 class="mb-0 fw-bold text-dark">
+                                        <i class="bi bi-person-lines-fill text-primary me-2"></i> Información Personal
+                                    </h4>
+                                    <button class="btn btn-outline-primary rounded-pill px-3 shadow-sm" title="Modificar Información" id="boton_modificar" disabled>
+                                        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true" id="spinner_modificar"></span>
+                                        <span id="texto_modificar">Cargando...</span>
+                                    </button>
+                                </div>
+                                
+                                <div class="card-body p-4">
+                                    <div id="body_perfil" class="mt-2">
+                                        <div class="list-group list-group-flush gap-2">
+                                            
+                                            <div class="list-group-item px-3 py-3 border-0 rounded-3 bg-light d-flex align-items-center transition-all">
+                                                <div class="d-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-3 me-3 shadow-sm" style="width: 48px; height: 48px;">
+                                                    <i class="bi bi-person fs-4"></i>
+                                                </div>
+                                                <div class="w-100">
+                                                    <small class="text-muted text-uppercase fw-bold" style="letter-spacing: 0.5px; font-size: 0.75rem;">Nombre</small>
+                                                    <p class="fs-5 mb-0 fw-semibold text-dark" id="p_nombre"><span class="placeholder-glow"><span class="placeholder col-8"></span></span></p>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="list-group-item px-3 py-3 border-0 rounded-3 bg-light d-flex align-items-center transition-all mt-2">
+                                                <div class="d-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-3 me-3 shadow-sm" style="width: 48px; height: 48px;">
+                                                    <i class="bi bi-person-badge fs-4"></i>
+                                                </div>
+                                                <div class="w-100">
+                                                    <small class="text-muted text-uppercase fw-bold" style="letter-spacing: 0.5px; font-size: 0.75rem;">Apellido</small>
+                                                    <p class="fs-5 mb-0 fw-semibold text-dark" id="p_apellido"><span class="placeholder-glow"><span class="placeholder col-8"></span></span></p>
+                                                </div>
+                                            </div>
+
+                                            <div class="list-group-item px-3 py-3 border-0 rounded-3 bg-light d-flex align-items-center transition-all mt-2">
+                                                <div class="d-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-3 me-3 shadow-sm" style="width: 48px; height: 48px;">
+                                                    <i class="bi bi-envelope fs-4"></i>
+                                                </div>
+                                                <div class="w-100">
+                                                    <small class="text-muted text-uppercase fw-bold" style="letter-spacing: 0.5px; font-size: 0.75rem;">Correo Electrónico</small>
+                                                    <p class="fs-5 mb-0 fw-semibold text-dark text-truncate" id="p_correo"><span class="placeholder-glow"><span class="placeholder col-12"></span></span></p>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+
+                                    <form hidden id="form_perfil" class="mt-2">
+                                        <div class="row g-4">
+                                            <div class="col-md-6">
+                                                <label for="nombre" class="form-label fw-bold"><i class="bi bi-person text-primary me-1"></i> Nombre <span class="text-danger">*</span></label>
+                                                <input type="text" class="form-control form-control-lg bg-light" id="nombre" name="nombre" required/>
+                                                <span class="w-100 invalid-feedback"></span>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="apellido" class="form-label fw-bold"><i class="bi bi-person text-primary me-1"></i> Apellido <span class="text-danger">*</span></label>
+                                                <input type="text" class="form-control form-control-lg bg-light" id="apellido" name="apellido" required/>
+                                                <span class="w-100 invalid-feedback"></span>
+                                            </div>
+                                            <div class="col-12">
+                                                <label for="correo" class="form-label fw-bold"><i class="bi bi-envelope text-primary me-1"></i> Correo Electrónico <span class="text-danger">*</span></label>
+                                                <input type="email" class="form-control form-control-lg bg-light" id="correo" name="correo" required/>
+                                                <span class="w-100 invalid-feedback"></span>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex gap-2 mt-4 pt-3 border-top">
+                                            <button type="button" class="btn btn-success px-4 rounded-pill shadow-sm" title="Guardar cambios" id="boton_guardar">
+                                                <i class="bi bi-check-lg me-1"></i> Guardar Cambios
+                                            </button>
+                                            <button type="button" class="btn btn-secondary px-4 rounded-pill shadow-sm" title="Cancelar" id="boton_cancelar">
+                                                <i class="bi bi-x-lg me-1"></i> Cancelar
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>               
                 </main>
             </div>
         </div>
@@ -254,7 +196,7 @@
         </div>
     </div>
     <div class="modal fade" id="modal_notificaciones" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
                     <h1 class="modal-title fs-5" id="titulo_modal">Notificaciones</h1>

@@ -195,7 +195,6 @@ async function cargarMensualidades() {
 // CONSULTAS PRINCIPALES Y DATATABLE
 // ============================================================
 async function consultar() {
-    const formatoFecha = (cell) => FormatoFechas.formatoUsuario(cell.getValue());
     const formatoMonto = (cell) => `${cell.getValue()} Bs.`;
     const formatoPeriodo = (cell) => {
         let data = cell.getValue();
@@ -226,14 +225,13 @@ async function consultar() {
     };
 
     const columnas = [
-        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
-        { title: "FECHA", field: "ultima_fecha", formatter: formatoFecha, minWidth: 100, responsive: 0 },
-        { title: "MONTO", field: "monto_total", formatter: formatoMonto, minWidth: 120 },
-        { title: "PERÍODO", field: "periodos", formatter: formatoPeriodo, minWidth: 150 },
-        { title: "ESTADO", field: "estado", formatter: formatoEstado, minWidth: 120 },
-        { title: "APARTAMENTO", field: "apartamento", formatter: (cell) => `Nro: ${cell.getValue() || 'N/A'}`, minWidth: 120 },
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
+        { title: "Período", field: "periodos", formatter: formatoPeriodo, minWidth: 150 },
+        { title: "Monto", field: "monto_total", formatter: formatoMonto, minWidth: 120 },
+        { title: "Estado", field: "estado", formatter: formatoEstado, minWidth: 120 },
+        { title: "Apartamento", field: "apartamento", formatter: (cell) => `Nro: ${cell.getValue() || 'N/A'}`, minWidth: 120 },
         {
-            title: "ACCIONES", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 160, responsive: 0, download: false,
+            title: "Acciones", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 160, responsive: 0, download: false, headerHozAlign: "center",
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
@@ -494,17 +492,18 @@ async function mostrarVistaPrevia(id) {
 
     // 1. Definir columnas de Tabulator
     const columnas = [
-        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
-        { title: "FECHA", field: "fecha", formatter: (cell) => FormatoFechas.formatoUsuario(cell.getValue()), minWidth: 100, responsive: 0 },
-        { title: "MONTO BS", field: "monto", formatter: (cell) => `${cell.getValue()} Bs`, minWidth: 100 },
-        { title: "MONTO $", field: "monto_dolar", formatter: (cell) => `${cell.getValue()} $`, minWidth: 100 },
-        { title: "MÉTODO", field: "tipo_pago", minWidth: 120 },
-        { title: "BANCO", field: "nombre_banco", formatter: (cell) => cell.getValue() || '<span class="text-muted">N/A</span>', minWidth: 120 },
-        { title: "REFERENCIA", field: "referencia", formatter: (cell) => cell.getValue() || '<span class="text-muted">N/A</span>', minWidth: 120 },
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
+        { title: "Fecha", field: "fecha", formatter: (cell) => FormatoFechas.formatoUsuario(cell.getValue()), minWidth: 100, responsive: 0 },
+        { title: "Monto BS", field: "monto", formatter: (cell) => `${cell.getValue()} Bs`, minWidth: 100 },
+        { title: "Monto $", field: "monto_dolar", formatter: (cell) => `${cell.getValue()} $`, minWidth: 100 },
+        { title: "Método", field: "tipo_pago", minWidth: 120 },
+        { title: "Banco", field: "nombre_banco", formatter: (cell) => cell.getValue() || '<span class="text-muted">N/A</span>', minWidth: 120 },
+        { title: "Referencia", field: "referencia", formatter: (cell) => cell.getValue() || '<span class="text-muted">N/A</span>', minWidth: 120 },
         { 
-            title: "COMPROBANTE", 
+            title: "Comprobante", 
             headerSort: false, 
             hozAlign: "center",
+            headerHozAlign: "center",
             formatter: (cell) => {
                 const img = cell.getData().imagen;
                 if (img && img !== 'default.png') {

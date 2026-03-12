@@ -82,8 +82,8 @@ class Autenticacion
         $usuario['notificaciones'] = $notificaciones['datos'] ?? [];
 
         // Ejecutar procesos automáticos
-        $this->cajaModel->realizar_consulta('verificar_caja_mes');
-        $this->anioFiscalModel->realizar_consulta('verificar_anio_fiscal');
+        // $this->cajaModel->realizar_consulta('verificar_caja_mes');
+        // $this->anioFiscalModel->realizar_consulta('verificar_anio_fiscal');
 
 
         // Devolver datos para la sesión (sin el token si no se usó)

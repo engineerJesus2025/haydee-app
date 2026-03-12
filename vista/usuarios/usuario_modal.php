@@ -49,7 +49,10 @@
                 <button class="border border-dark btn contra-btn" type="button" title="Mostrar Contraseña" tabindex="-1">
                     <i class="bi bi-eye"></i>
                 </button>
-                <span class="w-100 invalid-feedback"></span>
+                <div class="progress mt-2 mb-1 w-100" style="height: 6px; border-radius: 10px;">
+                    <div id="barra_seguridad" class="progress-bar bg-danger transition-all" role="progressbar" style="width: 0%; transition: width 0.4s ease;"></div>
+                </div>
+                <small id="texto_seguridad" class="fw-medium text-danger d-block mb-3 w-100 invalid-feedback" style="font-size: 0.75rem;">Nivel de seguridad: Vacío</small>
             </div>
         </div>
         <div class="col-md-6">

@@ -4,7 +4,7 @@
  * Dependencias: Peticiones
  */
 const Tablas = {
-    cargarTabulador(idContenedor, url, columnas, opciones = {}) {
+    cargarTabulador(idContenedor, url, columnas, opciones = {}, mostrarCarga = true) {
         const config = {
             movableColumns: true,
             pagination: true,
@@ -57,7 +57,7 @@ const Tablas = {
                 }
                 
                 // Usamos: Peticiones.enviar(datos, url, mostrarCarga)
-                const respuesta = await Peticiones.enviar(datos, "", true);
+                const respuesta = await Peticiones.enviar(datos, "", mostrarCarga);
 
                 if (respuesta && respuesta.estatus === true) {
                     return respuesta.datos || respuesta.data || [];
@@ -79,6 +79,10 @@ const Tablas = {
                 }
             },
             placeholder: "No se encontraron registros",
+            columnDefaults: {
+                tooltip: true, // Muestra tooltip en las celdas si el texto es muy largo
+                headerTooltip: true // Muestra tooltip en los encabezados
+            },
             ...opciones
         };
 

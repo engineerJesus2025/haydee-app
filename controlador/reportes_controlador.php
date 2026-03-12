@@ -73,10 +73,13 @@ if (isset($_POST["operacion"])) {
                     'edad_minima' => $_POST['edad_minima'] ?? null,
                     'edad_maxima' => $_POST['edad_maxima'] ?? null,
                     'tipo_residente' => $_POST['tipo_residente'] ?? 'todos',
-                    'servicios' => $_POST['servicios'] ?? []
+                    'servicios' => $_POST['servicios'] ?? [],
+                    // --- FILTROS DE TIEMPO ---
+                    'filtro_tiempo' => $_POST['filtro_tiempo'] ?? 'todo',
+                    'fecha_inicio' => $_POST['fecha_inicio_habitantes'] ?? '',
+                    'fecha_fin' => $_POST['fecha_fin_habitantes'] ?? ''
                 ]);
                 $respuesta = $habitantes->realizar_consulta('obtener_datos_habitantes');
-                // $respuesta ya tiene la estructura estándar {estatus, datos, mensaje}
                 break;
 
             default:
@@ -211,7 +214,7 @@ switch ($accion) {
         if (!$resultadoCuadro['estatus']) {
             die('Error al obtener datos para el cuadro de pagos.');
         }
-
+        
         $cabecera_tabla = $resultadoCuadro['datos']['cabecera'];
         $cuerpo_tabla = $resultadoCuadro['datos']['cuerpo'];
         $total_mensual = $resultadoCuadro['datos']['totales'];
@@ -221,7 +224,7 @@ switch ($accion) {
         $mensualidad->set_anio($anio_limite);
         $tasa_resp = $mensualidad->realizar_consulta('consultar_tasa_dolar_mensualidades');
         $tasa_dolar = $tasa_resp['estatus'] ? $tasa_resp['datos'] : ['tasa_dolar' => 1, 'mes' => $mes_limite, 'anio' => $anio_limite];
-
+        
         // 3. Renderizar PDF
         ob_start();
         require_once "vista/reportes/reportes_pdf/pdf/cuadro_pagos_pdf.php";

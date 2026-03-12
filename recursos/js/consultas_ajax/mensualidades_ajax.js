@@ -79,12 +79,12 @@ async function consultarMensualidades() {
     };
 
     const columnas = [
-        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
-        { title: "PERÍODO", field: "anio", formatter: formatoMes, minWidth: 150, responsive: 0 },
-        { title: "MONTO TOTAL", field: "monto", formatter: formatoMonto, minWidth: 180 },
-        { title: "POR RECAUDAR", field: "pagado", formatter: formatoDeuda, minWidth: 180 },
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
+        { title: "Período", field: "anio", formatter: formatoMes, minWidth: 150, responsive: 0 },
+        { title: "Monto Total", field: "monto", formatter: formatoMonto, minWidth: 180 },
+        { title: "Deuda", field: "pagado", formatter: formatoDeuda, minWidth: 180 },
         {
-            title: "ACCIONES", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 180, responsive: 0, download: false,
+            title: "Acciones", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 180, responsive: 0, download: false, headerHozAlign: "center",
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
@@ -116,8 +116,8 @@ async function consultarMensualidades() {
                     let input = document.createElement('input');
                     input.type = "hidden";
                     input.name = "select_reporte";
-                    input.value = fecha;
-                    
+                    input.value = `${mes}-${row.anio}`;
+
                     form.appendChild(input);
                     document.body.appendChild(form);
                     form.submit();
@@ -322,17 +322,17 @@ function mostrarVistaPrevia(fila, fecha) {
     modalApartamentos.show();
 
     const columnas = [
-        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
-        { title: "APARTAMENTO", field: "nro_apartamento", formatter: (cell) => `Apartamento Nº ${cell.getValue()}`, minWidth: 150, responsive: 0 },
-        { title: "PROPIETARIO", field: "nombre", formatter: (cell) => `${cell.getValue()} ${cell.getData().apellido}`, minWidth: 150 },
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
+        { title: "Apartamento", field: "nro_apartamento", formatter: (cell) => `Apartamento Nº ${cell.getValue()}`, minWidth: 150, responsive: 0 },
+        { title: "Propietario", field: "nombre", formatter: (cell) => `${cell.getValue()} ${cell.getData().apellido}`, minWidth: 150 },
         { 
-            title: "MONTO A PAGAR", 
+            title: "Monto A Pagar", 
             field: "monto", 
             formatter: (cell) => `${parseFloat(cell.getValue()).toFixed(2)} Bs. / ${(cell.getValue() / cell.getData().tasa_dolar).toFixed(2)} $`, 
             minWidth: 180 
         },
         { 
-            title: "ESTATUS / DEUDA", 
+            title: "Estatus / Deuda", 
             field: "pagado", 
             formatter: (cell) => {
                 let row = cell.getData();
@@ -391,7 +391,7 @@ async function prepararModificarcion(fila, fecha, ids, idsApartamentos) {
     formData.append("ids_mensualidades", ids);
 
     // [MEJORA] Pasamos 'true' para bloquear la pantalla con el spinner mientras procesa
-    const respuesta = await Peticiones.enviar(formData, true); 
+    const respuesta = await Peticiones.enviar(formData, "", true); 
     
     if (respuesta.estatus && respuesta.datos) {
         const presupuestosPorMensualidad = respuesta.datos;
@@ -483,7 +483,7 @@ async function registrarMensualidad() {
     formData.append("limite_mensualidad", document.getElementById("dia_limite").value);
     formData.append("datos_apartamentos", JSON.stringify(datos));
 
-    const respuesta = await Peticiones.enviar(formData, true);
+    const respuesta = await Peticiones.enviar(formData, "", true);
     if (respuesta.estatus) {
         modalMensualidad.hide();
         tablaMensualidades.replaceData();
@@ -515,7 +515,7 @@ async function modificarMensualidad() {
     formData.append("limite_mensualidad", document.getElementById("dia_limite").value);
     formData.append("datos_apartamentos", JSON.stringify(datos));
 
-    const respuesta = await Peticiones.enviar(formData, true);
+    const respuesta = await Peticiones.enviar(formData, "", true);
     if (respuesta.estatus) {
         modalMensualidad.hide();
         tablaMensualidades.replaceData();

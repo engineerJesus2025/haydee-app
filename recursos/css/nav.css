@@ -124,8 +124,7 @@
 
 /* Textos */
 .nav_name {
-    white-space: nowrap;      
-    overflow: hidden;         
+    white-space: nowrap;
     text-overflow: ellipsis;  
     flex-grow: 1;             
     transition: transform 0.3s ease;

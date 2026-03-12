@@ -193,7 +193,9 @@ class Apartamento extends Conexion
 
     private function esUnico($tabla, $campo, $valor, $excludeField = null, $excludeValue = null)
     {
-        $sql = "SELECT COUNT(*) as total FROM $tabla WHERE $campo = :valor";
+        // Agregamos "AND activo = 1" para ignorar registros eliminados lógicamente
+        $sql = "SELECT COUNT(*) as total FROM $tabla WHERE $campo = :valor AND activo = 1";
+        
         if ($excludeField && $excludeValue !== null) {
             $sql .= " AND $excludeField != :exclude_val";
         }
@@ -218,21 +220,20 @@ class Apartamento extends Conexion
      */
     private function _validar()
     {
-        $v = $this->validar(['nro_apartamento']);
-        if (!$v['estatus']) {
-            return $v;
+        // Pasamos el contexto por si en el AJAX se envía el ID (buena práctica)
+        $contexto = [];
+        if (!empty($this->id_apartamento)) {
+            $contexto['exclude_id'] = $this->id_apartamento;
         }
 
-        $sql = "SELECT id_apartamento FROM apartamentos WHERE nro_apartamento = :nro AND activo = 1 LIMIT 1";
-        try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->execute([':nro' => $this->nro_apartamento]);
-            $existe = $stmt->fetch(PDO::FETCH_ASSOC) ? true : false;
-            return ['estatus' => true, 'existe' => $existe];
-        } catch (PDOException $e) {
-            error_log("Error en _validar: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al verificar número de apartamento'];
+        // Delegamos todo el trabajo a la función centralizada que ya llama a esUnico()
+        $v = $this->validar(['nro_apartamento'], $contexto);
+        
+        if (!$v['estatus']) {
+            return ['estatus' => false, 'existe' => true, 'mensaje' => $v['mensaje']];
         }
+
+        return ['estatus' => true, 'existe' => false, 'mensaje' => 'El número está disponible'];
     }
 
     /**

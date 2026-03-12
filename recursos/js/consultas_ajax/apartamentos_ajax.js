@@ -1,7 +1,6 @@
 let data_table_apartamentos;
 let data_table_habitantes;
 let id_apartamento_seleccionado;
-let nro_apartamento_an;
 
 const modalApartamento = new bootstrap.Modal(document.getElementById("modal_apartamentos"), { focus: false });
 const modalVistaPrevia = new bootstrap.Modal(document.getElementById("modal_vista_previa"), { focus: false });
@@ -49,14 +48,14 @@ async function consultarApartamentos() {
 
     // 2. COLUMNAS
     const columnas = [
-        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
-        { title: "NRO", field: "nro_apartamento", formatter: formatoNro, minWidth: 100, responsive: 0 },
-        { title: "PARTICIPACIÓN", field: "porcentaje_participacion", formatter: formatoPorcentaje, minWidth: 140 },
-        { title: "GAS", field: "gas", formatter: formatoTiene, minWidth: 100 },
-        { title: "AGUA", field: "agua", formatter: formatoTiene, minWidth: 100 },
-        { title: "ALQUILADO", field: "alquilado", formatter: formatoSiNo, minWidth: 120 },
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
+        { title: "Nro.", field: "nro_apartamento", formatter: formatoNro, minWidth: 80, responsive: 0 },
+        { title: "Participación", field: "porcentaje_participacion", formatter: formatoPorcentaje, minWidth: 200 },
+        { title: "Gas", field: "gas", formatter: formatoTiene, minWidth: 80 },
+        { title: "Agua", field: "agua", formatter: formatoTiene, minWidth: 80 },
+        { title: "Alquilado", field: "alquilado", formatter: formatoSiNo, minWidth: 150 },
         { 
-            title: "ACCIONES", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 150, responsive: 0, download: false, 
+            title: "Acciones", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 150, responsive: 0, download: false, headerHozAlign: "center",
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
@@ -224,7 +223,11 @@ async function mostrarVistaPrevia(e) {
     if (!data_table_habitantes) {
         initTablaHabitantes();
     } else {
-        data_table_habitantes.replaceData();
+        const parametrosExtra = { 
+            operacion: 'consultar_habitantes',
+            id_apartamento: id_apartamento_seleccionado
+        }
+        data_table_habitantes.setData("",parametrosExtra);
     }
 
     document.getElementById("apartamento_id").value = id_apartamento_seleccionado;
@@ -251,14 +254,14 @@ function initTablaHabitantes() {
 
     // 2. COLUMNAS
     const columnas = [
-        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
-        { title: "NOMBRE", field: "nombre", minWidth: 100, responsive: 0 },
-        { title: "APELLIDO", field: "apellido", minWidth: 100 },
-        { title: "CÉDULA", field: "cedula", minWidth: 100 },
-        { title: "APARTAMENTO", field: "nro_apartamento", formatter: formatoNro, minWidth: 120 },
-        { title: "VÍNCULO", field: "tipo_vinculo", minWidth: 120 },
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
+        { title: "Nombre", field: "nombre", minWidth: 100, responsive: 0 },
+        { title: "Apellido", field: "apellido", minWidth: 100 },
+        { title: "Cédula", field: "cedula", minWidth: 100 },
+        { title: "Apartamento", field: "nro_apartamento", formatter: formatoNro, minWidth: 120 },
+        { title: "Vínculo", field: "tipo_vinculo", minWidth: 120 },
         { 
-            title: "ACCIONES", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 140, responsive: 0, download: false, 
+            title: "Acciones", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 140, responsive: 0, download: false, headerHozAlign: "center",
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
@@ -288,7 +291,7 @@ function initTablaHabitantes() {
             operacion: 'consultar_habitantes',
             id_apartamento: id_apartamento_seleccionado
         },
-        cssClass: "tabla-vista-previa", // <-- AGREGA ESTA LÍNEA PARA LA CABECERA BLANCA
+        cssClass: "tabla-vista-previa",
         paginaSize: 5
     };
 

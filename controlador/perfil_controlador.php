@@ -53,7 +53,7 @@ if (isset($_POST["operacion"])) {
 
                 $respuesta = $usuario->realizar_consulta('modificar_perfil');
                 if ($respuesta['estatus']) {
-                    $_SESSION["nombre_completo"] = $usuario->get_nombre();
+                    $_SESSION["nombre_completo"] = $usuario->get_nombre() . " " . $usuario->get_apellido();
                     $nuevo = [
                         'nombre'   => $usuario->get_nombre(),
                         'apellido' => $usuario->get_apellido(),

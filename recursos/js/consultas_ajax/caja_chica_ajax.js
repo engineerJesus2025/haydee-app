@@ -53,7 +53,13 @@ document.getElementById("mes_select").addEventListener("change", (e) => {
 
     // Recargar tabla de movimientos
     if (tabla_movimientos) {
-        tabla_movimientos.replaceData();
+        const parametrosExtra = { 
+            operacion: 'consultar_movimientos_caja',
+            caja_chica_id: document.getElementById("mes_select").value 
+        }
+        tabla_movimientos.setData("",parametrosExtra);
+
+        // tabla_movimientos.replaceData();
     } else {
         inicializarTablaMovimientos();
     }
@@ -113,36 +119,6 @@ function intercambiarMoneda(idMonto, idCambio) {
         monto.parentElement.querySelector(".icono_moneda").textContent = "Bs.";
         cambio.parentElement.querySelector(".icono_moneda").textContent = "$";
     }
-}
-
-function formatearFecha(fecha) {
-    if (!fecha) return "N/A";
-    let partes = fecha.split("-");
-    return partes.length === 3 ? `${partes[2]}-${partes[1]}-${partes[0]}` : fecha;
-}
-
-function obtenerColorEstado(estado) {
-    let colores = {
-        'Pendiente por reposicion': 'badge bg-warning text-dark',
-        'Repuesto': 'badge bg-success'
-    };
-    return colores[estado] || 'badge bg-secondary';
-}
-
-function crearBotones(id) {
-    let div = document.createElement("div");
-    let html = `<div class="row justify-content-evenly">
-                    <button type="button" class="btn btn-success btn-sm col-lg-3 col-4 modificar" data-bs-toggle="modal" data-bs-target="#modal_registro_gastos" title="modificar" value="${id}">
-                        <i class="bi bi-pencil-square"></i>
-                    </button>`;
-    if (permiso_eliminar == 1) {
-        html += `<button type="button" class="btn btn-danger btn-sm col-lg-3 col-4 eliminar" title="Eliminar" value="${id}">
-                    <i class="bi bi-trash"></i>
-                </button>`;
-    }
-    html += `</div>`;
-    div.innerHTML = html;
-    return div;
 }
 
 // ========== CONSULTA DE CAJAS CHICAS ==========
@@ -222,7 +198,13 @@ function inicializarTablaMovimientos() {
         const row = cell.getData();
         return `${parseFloat(row.monto).toFixed(2)} Bs. / ${(row.monto / tasa_dolar).toFixed(2)} $`;
     };
-    const formatoEstado = (cell) => `<span class="${obtenerColorEstado(cell.getValue())}">${cell.getValue()}</span>`;
+    const formatoEstado = (cell) => {
+        let colores = {
+            'Pendiente por reposicion': 'badge bg-warning text-dark',
+            'Repuesto': 'badge bg-success'
+        };
+        return `<span class="${colores[cell.getValue()] || 'badge bg-secondary'}">${cell.getValue()}</span>`;
+    }
     
     const formatoBotones = (cell) => {
         const id = cell.getData().id_movimiento_caja;
@@ -236,13 +218,13 @@ function inicializarTablaMovimientos() {
     };
 
     const columnas = [
-        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
-        { title: "FECHA", field: "fecha", formatter: formatoFecha, minWidth: 100, responsive: 0 },
-        { title: "MONTO", field: "monto", formatter: formatoMonto, minWidth: 150 },
-        { title: "CONCEPTO", field: "concepto", minWidth: 200 },
-        { title: "ESTADO", field: "estado", formatter: formatoEstado, minWidth: 120 },
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
+        { title: "Fecha", field: "fecha", formatter: formatoFecha, minWidth: 100, responsive: 0 },
+        { title: "Monto", field: "monto", formatter: formatoMonto, minWidth: 150 },
+        { title: "Concepto", field: "concepto", minWidth: 200 },
+        { title: "Estado", field: "estado", formatter: formatoEstado, minWidth: 120, headerHozAlign: "center", hozAlign: "center" },
         {
-            title: "ACCIONES", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 120, responsive: 0, download: false,
+            title: "Acciones", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 120, responsive: 0, download: false, headerHozAlign: "center",
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;

@@ -735,10 +735,19 @@ class Habitantes extends Conexion
         $edad_maxima = $f['edad_maxima'] ?? null;
         $tipo_residente = $f['tipo_residente'] ?? 'todos';
         $servicios = $f['servicios'] ?? [];
+        
+        // Variables de tiempo
+        $filtro_tiempo = $f['filtro_tiempo'] ?? 'todo';
+        $fecha_inicio = $f['fecha_inicio'] ?? '';
+        $fecha_fin = $f['fecha_fin'] ?? '';
+
+        if (is_string($servicios)) {
+            $servicios = json_decode($servicios, true) ?? [];
+        }
 
         $sql = "SELECT 
                     h.sexo, 
-                    a.alquilado, 
+                    ha.tipo_vinculo, 
                     TIMESTAMPDIFF(YEAR, h.fecha_nacimiento, CURDATE()) AS edad
                 FROM habitantes h
                 JOIN habitantes_apartamentos ha ON h.id_habitante = ha.habitante_id
@@ -747,6 +756,32 @@ class Habitantes extends Conexion
 
         $params = [];
 
+        // 1. FILTRO DE TIEMPO (Fechas de registro)
+        if ($filtro_tiempo !== 'todo') {
+            switch ($filtro_tiempo) {
+                case 'mes':
+                    // Registrados este mes y este año
+                    $sql .= " AND MONTH(h.fecha_registro) = MONTH(CURDATE()) AND YEAR(h.fecha_registro) = YEAR(CURDATE())";
+                    break;
+                case 'trimestre':
+                    // Registrados en los últimos 3 meses
+                    $sql .= " AND h.fecha_registro >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)";
+                    break;
+                case 'año':
+                    // Registrados este año
+                    $sql .= " AND YEAR(h.fecha_registro) = YEAR(CURDATE())";
+                    break;
+                case 'personalizado':
+                    if (!empty($fecha_inicio) && !empty($fecha_fin)) {
+                        $sql .= " AND DATE(h.fecha_registro) BETWEEN :fecha_inicio AND :fecha_fin";
+                        $params[':fecha_inicio'] = $fecha_inicio;
+                        $params[':fecha_fin'] = $fecha_fin;
+                    }
+                    break;
+            }
+        }
+
+        // 2. FILTRO DE EDADES
         if ($rango_edades != 'todos') {
             switch ($rango_edades) {
                 case 'jovenes':
@@ -768,12 +803,14 @@ class Habitantes extends Conexion
             }
         }
 
+        // 3. FILTRO DE TIPO DE RESIDENTE
         if ($tipo_residente == 'propietarios') {
-            $sql .= " AND a.alquilado = 0";
+            $sql .= " AND ha.tipo_vinculo = 'Propietario'";
         } elseif ($tipo_residente == 'arrendatarios') {
-            $sql .= " AND a.alquilado = 1";
+            $sql .= " AND ha.tipo_vinculo = 'Habitante'"; 
         }
 
+        // 4. FILTRO DE SERVICIOS
         if (is_array($servicios)) {
             if (in_array('agua', $servicios)) {
                 $sql .= " AND a.agua = 1";

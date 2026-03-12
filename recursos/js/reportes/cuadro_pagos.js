@@ -40,6 +40,7 @@ botonCuadroPagos.addEventListener("click", () => {
     select.appendChild(fragment);
 
     botonGenerar.onclick = function(e) {
+        if (select.dataset.valor != "mensualidad") return;
         e.preventDefault();
         
         if (!Validador.evaluarInput(select, Patrones.mesAnio, '')) {
@@ -50,6 +51,8 @@ botonCuadroPagos.addEventListener("click", () => {
         document.getElementById('form_reporte').setAttribute('action', `?pagina=reportes&accion=${reporte}`);
         document.getElementById('form_reporte').submit();
     };
+
+    select.dataset.valor = "mensualidad";
 });
 
 function consultarMeses() {

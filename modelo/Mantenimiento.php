@@ -171,7 +171,6 @@ class Mantenimiento extends Conexion
      */
     private function getBackupDir()
     {
-        // Se asume que la estructura es: raíz del proyecto / recursos / Backups /
         $base = dirname(__DIR__); // Sube un nivel desde modelo/ a la raíz
         return $base . DIRECTORY_SEPARATOR . 'Backups' . DIRECTORY_SEPARATOR;
     }

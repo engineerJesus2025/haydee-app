@@ -48,7 +48,7 @@ async function consultar() {
 
     // 3. Estructura de Columnas
     const columnas = [
-        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
         { title: "Estado", field: "estado", formatter: formatoEstado, minWidth: 100, responsive: 0 },
         { title: "Fecha de Inicio", field: "fecha_inicio", formatter: formatoFecha, minWidth: 150 },
         { title: "Fecha de Cierre", field: "fecha_cierre", formatter: formatoFechaCierre, minWidth: 150 },
@@ -62,6 +62,7 @@ async function consultar() {
             minWidth: 100,
             responsive: 0,
             download: false,
+            headerHozAlign: "center",
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
@@ -91,7 +92,7 @@ async function consultar() {
         parametrosExtra: { operacion: 'consultar_anios_fiscales' }
     };
     
-    tabla_anio_fiscal = Utilidades.cargarTabulador(contenedor.id, "", columnas, opcionesExtra);
+    tabla_anio_fiscal = Tablas.cargarTabulador(contenedor.id, "", columnas, opcionesExtra);
 
     // 5. Buscador Global Dinámico
     const inputBusqueda = document.getElementById("busqueda_global");

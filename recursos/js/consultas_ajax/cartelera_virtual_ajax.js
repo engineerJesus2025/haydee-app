@@ -78,13 +78,13 @@ function consultar() {
     };
 
     const columnas = [
-        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false },
-        { title: "FECHA", field: "fecha", formatter: formatoFecha, minWidth: 100, responsive: 0 },
-        { title: "TÍTULO", field: "titulo", minWidth: 150 },
-        { title: "AUTOR", field: "nombre_usuario", minWidth: 120 },
-        { title: "PRIORIDAD", field: "prioridad", formatter: formatoPrioridad, minWidth: 100 },
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
+        { title: "Fecha", field: "fecha", formatter: formatoFecha, minWidth: 100, responsive: 0 },
+        { title: "Título", field: "titulo", minWidth: 150 },
+        { title: "Autor", field: "nombre_usuario", minWidth: 120 },
+        { title: "Prioridad", field: "prioridad", formatter: formatoPrioridad, minWidth: 100, headerHozAlign: "center", hozAlign: "center"},
         {
-            title: "ACCIONES", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 140, responsive: 0, download: false,
+            title: "Acciones", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 140, responsive: 0, download: false, headerHozAlign: "center",
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
