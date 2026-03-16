@@ -48,6 +48,7 @@ select_copias.addEventListener("change", (e) => {
     const valor = e.target.value;
     const infoDiv = document.getElementById('info_seleccion');
     const btn = document.getElementById('boton_importar');
+    const textoBoton = document.getElementById('texto_boton_importar');
     
     if (!valor) {
         infoDiv.innerHTML = '';
@@ -55,55 +56,71 @@ select_copias.addEventListener("change", (e) => {
         return;
     }
 
-    const esSeguridad = valor.includes("seguridad");
-    const textoDB = esSeguridad ? 'Seguridad' : 'Negocio';
-    const icono = esSeguridad ? 'bi-shield-check' : 'bi-building';
+    const valorMin = valor.toLowerCase();
+    const esSeguridad = valorMin.includes("seguridad");
+    const esAutomatico = valorMin.includes("automatico") || valorMin.includes("auto");
     
-    // Mostramos la alerta con el diseño de "info"
-    infoDiv.innerHTML = `
-        <div class="alert alert-info border-0 shadow-sm py-2 mb-0 d-flex align-items-center">
-            <i class="bi ${icono} fs-4 me-3"></i>
-            <div>
-                <strong>Archivo listo:</strong> Se restaurará en la base de datos de <u>${textoDB}</u>.
-            </div>
-        </div>`;
+    const valido = /^backup_.*_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}_(MANUAL|AUTOMATICO)\.sql$/i.test(valorMin);
     
-    document.getElementById('texto_boton_importar').textContent = `Restaurar datos de ${textoDB}`;
-    boton_importar.style.display = 'inline-block';
-    // Limpiar el otro input
-    input_file.value = '';
+    validarInput(e.target, valido, "Archivo no válido");
+    
+    if (valido) {
+        const textoDB = esSeguridad ? 'Seguridad' : 'Negocio';
+        const icono = esSeguridad ? 'bi-shield-check' : 'bi-building';
+        const tipoRespaldo = esAutomatico ? 'Automática 🤖' : 'Manual 👤';
+
+        infoDiv.innerHTML = `
+            <div class="alert alert-info border-0 shadow-sm py-2 mb-0 d-flex align-items-center">
+                <i class="bi ${icono} fs-4 me-3"></i>
+                <div>
+                    <strong>Archivo listo (${tipoRespaldo}):</strong><br>
+                    <small>Se restaurará en la base de datos de <u>${textoDB}</u>.</small>
+                </div>
+            </div>`;
+
+        // Actualizar el span dentro del botón (preservando tu icono de advertencia)
+        if(textoBoton) textoBoton.textContent = `Restaurar ${textoDB}`;
+        btn.style.display = 'inline-block';
+        
+        input_file.value = ''; 
+    } else {
+        btn.style.display = 'none';
+    }
 });
 
 // Subir archivo manual
 input_file.addEventListener("change", (e) => {
     const infoDiv = document.getElementById('info_seleccion');
+    const btn = document.getElementById('boton_importar');
+    const textoBoton = document.getElementById('texto_boton_importar');
     const archivo = e.target.files[0];
 
     if (!archivo) {
-        boton_importar.style.display = 'none';
+        btn.style.display = 'none';
         infoDiv.innerHTML = '';
         return;
     }
 
-    // Detección inteligente por nombre de archivo
     const nombre = archivo.name.toLowerCase();
     const esSeguridad = nombre.includes("seguridad");
+    const esAutomatico = nombre.includes("AUTOMATICO") || nombre.includes("auto");
     const textoDestino = esSeguridad ? "Seguridad" : "Negocio";
     const icono = esSeguridad ? "bi-shield-check" : "bi-building";
+    const tipoRespaldo = esAutomatico ? 'Automática' : 'Manual o Externa';
 
-    select_copias.value = ''; // Limpiar el select de copias guardadas
+    select_copias.value = ''; 
 
     infoDiv.innerHTML = `
         <div class="alert alert-secondary border-0 shadow-sm py-2 mb-0 d-flex align-items-center">
             <i class="bi bi-file-earmark-arrow-up fs-4 me-3"></i>
             <div>
-                <strong>Archivo local:</strong> ${archivo.name}<br>
-                <small><i class="bi ${icono} me-1"></i> Destino detectado: Base de Datos de <b>${textoDestino}</b></small>
+                <strong>Archivo local (${tipoRespaldo}):</strong> ${archivo.name}<br>
+                <small><i class="bi ${icono} me-1"></i> Destino detectado: <b>${textoDestino}</b></small>
             </div>
         </div>`;
 
-    document.getElementById('texto_boton_importar').textContent = `Importar datos de ${textoDestino}`;
-    boton_importar.style.display = 'inline-block';
+    if(textoBoton) textoBoton.textContent = `Importar en ${textoDestino}`;
+    btn.style.display = 'inline-block';
 });
 
 // Botón Exportar (Generar Backup)
@@ -225,7 +242,15 @@ async function obtenerCopiasGuardadas() {
     let fragment = document.createDocumentFragment();
 
     // Ordenar archivos por fecha descendente (más reciente primero)
-    listaArchivos.sort().reverse();
+    listaArchivos.sort((a, b) => {
+        // Extraemos la parte de la fecha YYYY-MM-DD_HH-mm-ss de cada nombre
+        const regexFecha = /\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}/;
+        const fechaA = a.match(regexFecha) ? a.match(regexFecha)[0] : "";
+        const fechaB = b.match(regexFecha) ? b.match(regexFecha)[0] : "";
+
+        // Comparamos de forma descendente (B vs A) para que el más nuevo esté arriba
+        return fechaB.localeCompare(fechaA);
+    });
 
     listaArchivos.forEach(fichero => {
         let option = document.createElement("option");
@@ -245,21 +270,23 @@ async function obtenerCopiasGuardadas() {
  * Ejemplo: backup_haydee_db_2026-02-21-07-23-31.sql 
  * Resultado: 📦 Negocio | 📅 21/02/2026 | 🕒 07:23:31
  */
-/**
- * Transforma el nombre técnico en un formato legible con iconos diferenciados
- */
 function formatearNombreArchivo(fichero) {
-    const esSeguridad = fichero.includes("seguridad");
-    
-    // Símbolos de color + Iconos de oficina/escudo
-    const prefijo = esSeguridad ? "🔹 🛡️" : "🔹 🏢";
-    const tipo = esSeguridad ? "SEGURIDAD" : "NEGOCIO";
-    
-    const match = fichero.match(/(\d{4})-(\d{2})-(\d{2})-(\d{2})-(\d{2})-(\d{2})/);
+    const nombreMin = fichero.toLowerCase();
+    const esSeguridad = nombreMin.includes("seguridad");
+    const esAuto = nombreMin.includes("automatico");
+
+    // Extraer fecha y hora: Busca YYYY-MM-DD_HH-mm-ss
+    const match = fichero.match(/(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2}-\d{2})/);
     
     if (match) {
-        const [_, anio, mes, dia, hora, min, seg] = match;
-        return `${prefijo} ${tipo} | 📅 ${dia}/${mes}/${anio} | 🕒 ${hora}:${min}:${seg}`;
+        const fecha = match[1].split('-').reverse().join('/'); // DD/MM/YYYY
+        const hora = match[2].replace(/-/g, ':'); // HH:mm:ss
+        
+        const iconoDB = esSeguridad ? "🛡️" : "🏢";
+        const etiquetaDB = esSeguridad ? "SEGURIDAD" : "NEGOCIO";
+        const origen = esAuto ? "🤖 AUTO" : "👤 MANUAL";
+
+        return `🔹 ${iconoDB} ${etiquetaDB} [${origen}] | 📅 ${fecha} | 🕒 ${hora}`;
     }
     return fichero;
 }

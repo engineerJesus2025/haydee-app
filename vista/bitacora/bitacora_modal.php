@@ -19,8 +19,8 @@
 	</div>
 
 	<!-- Sección para acciones de consulta -->
-	<div id="detalle_consulta" class="alert alert-info d-none">
-	    <i class="bi bi-info-circle me-2"></i>
+	<div id="detalle_consulta" class="alert alert-info d-none align-items-center">
+	    <i class="bi bi-info-circle me-2 fs-5" id="icono_consulta"></i>
 	    <span id="mensaje_consulta"></span>
 	</div>
 

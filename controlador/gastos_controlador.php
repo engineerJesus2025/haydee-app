@@ -6,6 +6,7 @@ use haydee\modelo\Proveedores;
 use haydee\modelo\SolicitudGasto;
 use haydee\modelo\TipoGasto;
 use haydee\modelo\Bitacora;
+use haydee\servicios\GestorAuditoria;
 use haydee\ayuda\GestorImagenes;
 use haydee\ayuda\ConstructorDetalles;
 
@@ -38,6 +39,9 @@ if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
+    // Instanciamos el auditor
+    $auditor = new GestorAuditoria($gastos, GESTIONAR_GASTOS);
+
     try {
         switch ($operacion) {
             // =========================================================
@@ -46,13 +50,12 @@ if (isset($_POST["operacion"])) {
             case 'consulta':
                 $respuesta = $gastos->realizar_consulta('consultar_gastos');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(CONSULTAR, GESTIONAR_GASTOS);
+                    $auditor->registrarAuditoria('consultar');
                 }
                 break;
 
             case 'consulta_especifica':
                 $respuesta = $gastos->realizar_consulta('consultar_gasto_unico');
-                // Se devuelve con estatus/datos (para el formulario de edición)
                 break;
 
             case 'consultar_detalles':
@@ -70,58 +73,26 @@ if (isset($_POST["operacion"])) {
                 $detalles = ConstructorDetalles::ConstruirDetallesGastos($_POST, $_FILES);
                 $gastos->set_detalles($detalles);
 
-                // Los campos de cabecera ya fueron asignados masivamente
-
                 $respuesta = $gastos->realizar_consulta('registrar');
                 if ($respuesta['estatus']) {
-                    $nuevos = [
-                        'clasificacion'      => $gastos->get_clasificacion(),
-                        'descripcion_gasto'  => $gastos->get_descripcion_gasto(),
-                        'tipo_gasto_id'      => $gastos->get_tipo_gasto_id(),
-                        'proveedor_id'       => $gastos->get_proveedor_id(),
-                        'cantidad_detalles'  => count($detalles),
-                        'monto_total'        => array_sum(array_column($detalles, 'monto'))
-                    ];
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_GASTOS, null, null, $nuevos);
+                    // TRUCO: Ocultamos el arreglo masivo al auditor
+                    $gastos->set_detalles(null);
+                    $auditor->registrarAuditoria('registrar');
                 }
                 break;
 
             case 'modificar':
-                $id_gasto = $_POST['id_gasto'] ?? null;
-                if (!$id_gasto) throw new Exception('ID de gasto no proporcionado');
-                $gastos->set_id_gasto($id_gasto);
-
-                // Obtener datos anteriores
-                $tempGastos = new Gastos();
-                $tempGastos->set_id_gasto($id_gasto);
-                $datosAnteriores = $tempGastos->realizar_consulta('consultar_gasto_unico');
-                $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
-                // Resumir anteriores
-                $anteriorResumen = [
-                    'clasificacion'      => $anterior['gasto']['clasificacion'] ?? '',
-                    'descripcion_gasto'  => $anterior['gasto']['descripcion_gasto'] ?? '',
-                    'tipo_gasto_id'      => $anterior['gasto']['tipo_gasto_id'] ?? '',
-                    'proveedor_id'       => $anterior['gasto']['proveedor_id'] ?? '',
-                    'cantidad_detalles'  => count($anterior['detalles'] ?? []),
-                    'monto_total'        => array_sum(array_column($anterior['detalles'] ?? [], 'monto'))
-                ];
+                // Utilizamos la nueva consulta plana para la foto previa
+                $auditor->capturarDatosAnteriores('consultar_cabecera_gasto');
 
                 $detalles = ConstructorDetalles::ConstruirDetallesGastos($_POST, $_FILES, true);
                 $gastos->set_detalles($detalles);
 
-                // Los campos de cabecera ya fueron asignados masivamente
-
                 $respuesta = $gastos->realizar_consulta('modificar');
-                if ($respuesta['estatus']) {
-                    $nuevo = [
-                        'clasificacion'      => $gastos->get_clasificacion(),
-                        'descripcion_gasto'  => $gastos->get_descripcion_gasto(),
-                        'tipo_gasto_id'      => $gastos->get_tipo_gasto_id(),
-                        'proveedor_id'       => $gastos->get_proveedor_id(),
-                        'cantidad_detalles'  => count($detalles),
-                        'monto_total'        => array_sum(array_column($detalles, 'monto'))
-                    ];
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_GASTOS, null, $anteriorResumen, $nuevo);
+                if ($respuesta['estatus']) { 
+                    // TRUCO: Ocultamos el arreglo masivo al auditor
+                    $gastos->set_detalles(null);
+                    $auditor->registrarAuditoria('modificar'); 
                 }
                 break;
 
@@ -129,22 +100,12 @@ if (isset($_POST["operacion"])) {
             // ELIMINACIÓN
             // =========================================================
             case 'eliminar':
-                $gastos->set_id_gasto($_POST['id_gasto'] ?? null);
-                $tempGastos = new Gastos();
-                $tempGastos->set_id_gasto($gastos->get_id_gasto());
-                $datosGasto = $tempGastos->realizar_consulta('consultar_gasto_unico');
-                $anterior = $datosGasto['estatus'] ? $datosGasto['datos'] : [];
-                $anteriorResumen = [
-                    'clasificacion'      => $anterior['gasto']['clasificacion'] ?? '',
-                    'descripcion_gasto'  => $anterior['gasto']['descripcion_gasto'] ?? '',
-                    'tipo_gasto_id'      => $anterior['gasto']['tipo_gasto_id'] ?? '',
-                    'proveedor_id'       => $anterior['gasto']['proveedor_id'] ?? '',
-                    'cantidad_detalles'  => count($anterior['detalles'] ?? [])
-                ];
+                // Utilizamos la nueva consulta plana para la foto previa
+                $auditor->capturarDatosAnteriores('consultar_cabecera_gasto');
 
                 $respuesta = $gastos->realizar_consulta('eliminar_gasto');
-                if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_GASTOS, null, $anteriorResumen, null);
+                if ($respuesta['estatus']) { 
+                    $auditor->registrarAuditoria('eliminar'); 
                 }
                 break;
 
@@ -175,11 +136,8 @@ if (isset($_POST["operacion"])) {
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
         if ($respuesta !== null) {
-            // Cerrar conexiones explícitamente
-            if (isset($gastos)) {
-                $gastos->cerrar();
-            }
-            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexión de seguridad
+            if (isset($gastos)) { $gastos->cerrar(); }
+            Bitacora::cerrarConexionBitacora();
 
             header('Content-Type: application/json');
             echo json_encode($respuesta);
@@ -229,6 +187,10 @@ $proveedores = $proveedor->realizar_consulta('consultar');
 $bancos = $banco->realizar_consulta('consultar');
 $solicitudes_gasto = $solicitudGasto->realizar_consulta('consultar');
 $tipos_gasto = $tipoGasto->realizar_consulta('consultar');
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_GASTOS);
+}
 
 require_once "vista/gastos/gastos_vista.php";
 ?>

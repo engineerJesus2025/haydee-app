@@ -1,10 +1,12 @@
 <?php
 
-define("REGISTRAR", "registrar");
-define("CONSULTAR", "consultar");
-define("MODIFICAR", "modificar");
-define("ELIMINAR", "eliminar");
-define("INICIAR_SESION", "iniciar sesion");
-define("CERRAR_SESION", "cerrar sesion");
-
+define("REGISTRAR", "REGISTRAR");
+define("CONSULTAR", "CONSULTAR");
+define("MODIFICAR", "MODIFICAR");
+define("ELIMINAR", "ELIMINAR");
+define("DESCARGAR", "DESCARGAR"); // Reportes
+define("RESPALDAR", "RESPALDAR"); // Copias de seguridad generadas
+define("RESTAURAR", "RESTAURAR"); // Respaldos cargados
+define("INICIAR_SESION", "INICIAR SESION");
+define("CERRAR_SESION", "CERRAR SESION");
 ?>

@@ -3,7 +3,7 @@ namespace haydee\modelo;
 
 use PDO;
 use PDOException;
-use haydee\modelo\Notificaciones;
+use haydee\servicios\GestorNotificaciones;
 
 class Mensualidad extends Conexion
 {
@@ -239,16 +239,20 @@ class Mensualidad extends Conexion
     // ====================================================================
     // MÉTODOS PRIVADOS (ACCIONES)
     // ====================================================================
-
     /**
      * Verifica qué meses tienen presupuesto pero no mensualidad.
      */
     private function _verificarMeses()
     {
-        $sql = "SELECT MONTH(p.fecha) as mes_presupuesto, YEAR(p.fecha) as anio_presupuesto 
+        $sql = "SELECT DISTINCT MONTH(p.fecha) as mes_presupuesto, YEAR(p.fecha) as anio_presupuesto 
                 FROM presupuesto p
-                LEFT JOIN mensualidad m ON CAST(CONCAT(m.anio, '-', m.mes, '-01') AS DATE) = p.fecha
-                WHERE m.id_mensualidad IS NULL";
+                LEFT JOIN mensualidad m 
+                       ON m.anio = YEAR(p.fecha) 
+                      AND m.mes = MONTH(p.fecha) 
+                      AND m.activo = 1
+                WHERE m.id_mensualidad IS NULL 
+                  AND p.activo = 1";
+                  
         try {
             $stmt = $this->get_conex('negocio')->prepare($sql);
             $stmt->execute();
@@ -256,7 +260,7 @@ class Mensualidad extends Conexion
             return ['estatus' => true, 'datos' => $datos];
         } catch (PDOException $e) {
             error_log("Error en _verificarMeses: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al verificar meses'];
+            return ['estatus' => false, 'mensaje' => 'Error al verificar meses disponibles'];
         }
     }
 
@@ -368,6 +372,41 @@ class Mensualidad extends Conexion
     }
 
     /**
+     * Consulta plana de la cabecera de la mensualidad (datos generales del mes)
+     * para la bitácora de auditoría, evitando arreglos masivos.
+     */
+    private function _consultar_cabecera_mensualidad()
+    {
+        $val = $this->validarMesAnio();
+        if (!$val['estatus']) return $val;
+
+        $mesInt = (int)$this->mes;
+        $anioInt = (int)$this->anio;
+
+        // Seleccionamos solo los datos globales que comparte ese mes/año
+        $sql = "SELECT tasa_dolar, mes, anio, porcentaje_interes, limite_mensualidad 
+                FROM mensualidad 
+                WHERE mes = :mes AND anio = :anio AND activo = 1 
+                LIMIT 1";
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->bindParam(':mes', $mesInt, PDO::PARAM_INT);
+            $stmt->bindParam(':anio', $anioInt, PDO::PARAM_INT);
+            $stmt->execute();
+            $datos = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$datos) {
+                return ['estatus' => false, 'mensaje' => 'Mensualidad no encontrada para este mes y año'];
+            }
+            
+            return ['estatus' => true, 'datos' => $datos];
+        } catch (PDOException $e) {
+            error_log("Error en _consultar_cabecera_mensualidad: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al consultar cabecera de la mensualidad'];
+        }
+    }
+
+    /**
      * Registrar masivo (unificado)
      */
     private function _registrar()
@@ -421,15 +460,14 @@ class Mensualidad extends Conexion
 
             $con->commit();
 
-            // Notificar a propietarios
-            $notif = new Notificaciones();
-            $notif->set_titulo("Nueva mensualidad disponible");
-            $notif->set_descripcion("Se han generado las mensualidades para el mes {$this->mes} del año {$this->anio}.");
-            $notif->set_tabla_origen('mensualidad');
-            $notif->set_id_registro_origen($id_mensualidad); // o el ID de la primera mensualidad si se desea
-            $notif->set_tipo_evento('NUEVA_MENSUALIDAD');
-            // $notif->set_rol_nombre('Propietario');
-            $notif->realizar_consulta('notificar_todos');
+            // Notificar a propietarios 
+            GestorNotificaciones::notificarTodos(
+                "Nueva mensualidad disponible",
+                "Se han generado las mensualidades para el mes {$this->mes} del año {$this->anio}.",
+                'mensualidad',
+                $id_mensualidad, // o el ID de la primera mensualidad
+                'NUEVA_MENSUALIDAD'
+            );
 
             return ['estatus' => true, 'mensaje' => 'Todas las mensualidades se registraron correctamente.'];
         } catch (Exception $e) {

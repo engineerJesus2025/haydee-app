@@ -1,0 +1,135 @@
+<?php
+namespace haydee\ayuda;
+
+use DateTime;
+use haydee\ayuda\ValidadorBD;
+
+/**
+ * Clase Validador
+ * Centraliza la validación de datos del Backend leyendo las reglas de los modelos.
+ */
+class Validador {
+    
+    private $errores = [];
+    
+    /** @var ValidadorBD|null */
+    private $validadorBD = null;
+
+    /**
+     * PATRÓN LAZY INITIALIZATION (Carga Perezosa)
+     * Solo instancia ValidadorBD (y conecta a MySQL) cuando realmente se necesita.
+     */
+    private function obtenerValidadorBD() {
+        if ($this->validadorBD === null) {
+            $this->validadorBD = new ValidadorBD();
+        }
+        return $this->validadorBD;
+    }
+
+    public function tieneErrores() {
+        return count($this->errores) > 0;
+    }
+
+    public function obtenerErrores() {
+        return $this->errores;
+    }
+
+    private function agregarError($campo, $mensaje) {
+        $this->errores[$campo][] = $mensaje;
+    }
+
+    /**
+     * Procesa los datos contra el arreglo de reglas del modelo.
+     */
+    public function validarConjunto($datos, $reglas, $contexto = []) {
+        foreach ($reglas as $campo => $regla) {
+            $valor = $datos[$campo] ?? null;
+            $tieneErrorDeFormato = false;
+
+            // 1. Evaluar si es requerido
+            $esRequerido = $this->evaluarSiEsRequerido($regla, $datos);
+
+            if ($esRequerido) {
+                if ($valor === null || (is_string($valor) && trim($valor) === '')) {
+                    $this->agregarError($campo, "El campo '$campo' es obligatorio.");
+                    continue;
+                }
+            } else {
+                if ($valor === null || (is_string($valor) && trim($valor) === '')) {
+                    continue; // Es opcional y está vacío
+                }
+            }
+
+            // 2. Validación Regex
+            if (isset($regla['regex']) && !preg_match($regla['regex'], (string)$valor)) {
+                $this->agregarError($campo, "El formato del campo '$campo' es inválido.");
+                $tieneErrorDeFormato = true;
+            }
+
+            // 3. Validación DateTime
+            if (isset($regla['type']) && $regla['type'] === 'datetime') {
+                $d = DateTime::createFromFormat('Y-m-d H:i:s', $valor);
+                if (!($d && $d->format('Y-m-d H:i:s') === $valor)) {
+                    $this->agregarError($campo, "El campo '$campo' debe ser una fecha/hora válida.");
+                    $tieneErrorDeFormato = true;
+                }
+            }
+
+            // 4. Validación Min / Max
+            if (isset($regla['min']) && is_numeric($valor) && $valor < $regla['min']) {
+                $this->agregarError($campo, "El campo '$campo' debe ser mayor o igual a {$regla['min']}.");
+                $tieneErrorDeFormato = true;
+            }
+            if (isset($regla['max']) && is_numeric($valor) && $valor > $regla['max']) {
+                $this->agregarError($campo, "El campo '$campo' debe ser menor o igual a {$regla['max']}.");
+                $tieneErrorDeFormato = true;
+            }
+
+            // Si hay error de formato, abortamos ir a la base de datos para ahorrar recursos
+            if ($tieneErrorDeFormato) {
+                continue; 
+            }
+
+            // 5. Validación EXISTS
+            if (isset($regla['exists'])) {
+                $tabla = $regla['exists']['tabla'];
+                $campoBd = $regla['exists']['campo'] ?? $campo;
+                
+                if (!$this->obtenerValidadorBD()->existe($tabla, $campoBd, $valor)) {
+                    $this->agregarError($campo, "El valor indicado en '$campo' no existe en el sistema.");
+                }
+            }
+
+            // 6. Validación UNIQUE
+            if (isset($regla['unique']) && !isset($contexto['skip_unique'])) {
+                $tabla = $regla['unique']['tabla'];
+                $campoBd = $regla['unique']['campo'] ?? $campo;
+                $excludeField = $regla['unique']['exclude_field'] ?? null;
+                $excludeValue = $contexto['exclude_id'] ?? null;
+                
+                if (!$this->obtenerValidadorBD()->esUnico($tabla, $campoBd, $valor, $excludeField, $excludeValue)) {
+                    $this->agregarError($campo, "El '$campo' ya se encuentra registrado.");
+                }
+            }
+        }
+    }
+
+    /**
+     * Evalúa si el campo es obligatorio tomando en cuenta dependencias ("requerido_si")
+     */
+    private function evaluarSiEsRequerido($regla, $datos) {
+        $requerido = !(isset($regla['opcional']) && $regla['opcional'] === true);
+
+        if (isset($regla['requerido_si'])) {
+            foreach ($regla['requerido_si'] as $campoCondicion => $valoresCondicion){
+                $valorActualCondicion = $datos[$campoCondicion] ?? null;
+                if (in_array($valorActualCondicion, $valoresCondicion)) {
+                    $requerido = true;
+                    break;
+                }
+            }
+        }
+        return $requerido;
+    }
+}
+?>

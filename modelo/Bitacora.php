@@ -11,7 +11,6 @@ class Bitacora extends Conexion
     private $id_bitacora;
     private $fecha_hora;
     private $accion;
-    private $registro_alterado;
     private $usuario_id;
     private $modulo_id;
     private $valores_anteriores;
@@ -23,8 +22,6 @@ class Bitacora extends Conexion
     public function get_fecha_hora() { return $this->fecha_hora; }
     public function set_accion($accion) { $this->accion = $accion; }
     public function get_accion() { return $this->accion; }
-    public function set_registro_alterado($registro_alterado) { $this->registro_alterado = $registro_alterado; }
-    public function get_registro_alterado() { return $this->registro_alterado; }
     public function set_usuario_id($usuario_id) { $this->usuario_id = $usuario_id; }
     public function get_usuario_id() { return $this->usuario_id; }
     public function set_modulo_id($modulo_id) { $this->modulo_id = $modulo_id; }
@@ -195,6 +192,17 @@ class Bitacora extends Conexion
                     $fila['accion'] = 'Cerró sesión';
                     $fila['descripcion'] = "Salió del sistema de forma segura.";
                     $fila['nombre_modulo'] = "Sistema"; 
+                } elseif (strpos($accion_original, 'DESCARGAR') !== false) {
+                    $fila['accion'] = 'Consultó';
+                    $fila['descripcion'] = "Generó un reporte del sistema.";
+                }
+                elseif (strpos($accion_original, 'RESPALDAR') !== false) {
+                    $fila['accion'] = 'Respaldó';
+                    $fila['descripcion'] = "Generó un respaldo del sistema.";
+                }
+                 elseif (strpos($accion_original, 'RESTAURAR') !== false) {
+                    $fila['accion'] = 'Restauró';
+                    $fila['descripcion'] = "Restauró el sistema a un punto anterior.";
                 } else {
                     $fila['accion'] = ucfirst(strtolower(rtrim($accion_original, 'R')));
                     $fila['descripcion'] = "Realizó una acción.";

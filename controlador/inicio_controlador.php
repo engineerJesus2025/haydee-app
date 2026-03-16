@@ -5,6 +5,7 @@ use haydee\modelo\CarteleraVirtual;
 use haydee\modelo\Apartamento;
 use haydee\servicios\Autenticacion;
 use haydee\modelo\Bitacora;
+use haydee\servicios\GestorAuditoria;
 
 Sesiones::verificarSesion();
 

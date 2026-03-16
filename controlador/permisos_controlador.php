@@ -2,6 +2,7 @@
 use haydee\ayuda\Sesiones;
 use haydee\modelo\Permisos;
 use haydee\modelo\Bitacora;
+use haydee\servicios\GestorAuditoria;
 
 Sesiones::verificarSesion();
 Sesiones::verificarPermiso(GESTIONAR_PERMISOS, CONSULTAR); // Ajusta según tus constantes
@@ -13,12 +14,17 @@ if (isset($_POST["operacion"])) {
     $permiso->set_id_permiso($_POST['id_permiso'] ?? null);
     $permiso->set_accion($_POST['accion'] ?? null);
 
+    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
+
+    // Instanciamos el auditor
+    $auditor = new GestorAuditoria($permiso, GESTIONAR_PERMISOS);
+
     try {
         switch ($operacion) {
             case 'consultar':
                 $respuesta = $permiso->realizar_consulta('consultar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(CONSULTAR, GESTIONAR_PERMISOS, 'Consulta general de módulos');
+                    $auditor->registrarAuditoria('consultar');
                 }
                 break;
 
@@ -29,35 +35,27 @@ if (isset($_POST["operacion"])) {
             case 'registrar':
                 $respuesta = $permiso->realizar_consulta('registrar');
                 if ($respuesta['estatus']) {
-                    $nuevos = ['accion' => $permiso->get_accion()];
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_PERMISOS, null, null, $nuevos);
+                    $auditor->registrarAuditoria('registrar');
                 }
                 break;
 
             case 'modificar':
-                // Obtener anteriores
-                $tempPermiso = new Permisos();
-                $tempPermiso->set_id_permiso($permiso->get_id_permiso());
-                $datosAnteriores = $tempPermiso->realizar_consulta('consultar_unico');
-                $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
+                // Obtener datos anteriores
+                $auditor->capturarDatosAnteriores('consultar_unico');
 
                 $respuesta = $permiso->realizar_consulta('modificar');
-                if ($respuesta['estatus']) {
-                    $nuevo = ['accion' => $permiso->get_accion()];
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_PERMISOS, null, $anterior, $nuevo);
+                if ($respuesta['estatus']) { 
+                    $auditor->registrarAuditoria('modificar'); 
                 }
                 break;
 
             case 'eliminar':
                 // Obtener datos anteriores
-                $tempPermiso = new Permisos();
-                $tempPermiso->set_id_permiso($permiso->get_id_permiso());
-                $datosAnteriores = $tempPermiso->realizar_consulta('consultar_unico');
-                $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
+                $auditor->capturarDatosAnteriores('consultar_unico');
 
                 $respuesta = $permiso->realizar_consulta('eliminar');
-                if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_PERMISOS, null, $anterior, null);
+                if ($respuesta['estatus']) { 
+                    $auditor->registrarAuditoria('eliminar'); 
                 }
                 break;
 
@@ -80,6 +78,10 @@ if (isset($_POST["operacion"])) {
             exit;
         }
     }
+}
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_PERMISOS);
 }
 
 // Cargar vista (si existe)

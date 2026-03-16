@@ -162,7 +162,7 @@
                                                 <p class="mb-0 text-muted">Descarga la guía oficial en formato PDF para consultarla sin conexión.</p>
                                             </div>
                                         </div>
-                                        <a href="recursos/manual/manual_usuario.pdf" target="_blank" class="btn btn-outline-danger btn-lg px-4 shadow-sm">
+                                        <a href="recursos/documentos/manual_usuario.pdf" target="_blank" class="btn btn-outline-danger btn-lg px-4 shadow-sm">
                                             <i class="bi bi-cloud-arrow-down-fill me-2"></i> Descargar PDF
                                         </a>
                                     </div>

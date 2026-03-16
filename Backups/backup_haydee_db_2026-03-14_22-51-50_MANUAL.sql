@@ -30,7 +30,7 @@ CREATE TABLE `anio_fiscal` (
   `descripcion` varchar(255) NOT NULL DEFAULT 'Sin descripción',
   `activo` tinyint(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id_anio_fiscal`)
-) ENGINE=InnoDB AUTO_INCREMENT=51 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=54 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -39,7 +39,7 @@ CREATE TABLE `anio_fiscal` (
 
 LOCK TABLES `anio_fiscal` WRITE;
 /*!40000 ALTER TABLE `anio_fiscal` DISABLE KEYS */;
-INSERT INTO `anio_fiscal` VALUES (45,'Cerrada','2026-02-02','2027-02-02','Año fiscal 2026',0),(47,'Abierto','2026-02-07','2027-02-07','Año fiscal 2026',1),(49,'Cerrada','2026-02-06','2027-02-06','asdasd',0),(50,'Cerrada','2026-03-05','2027-03-05','aaaaaaaaaa',0);
+INSERT INTO `anio_fiscal` VALUES (47,'Abierto','2026-02-07','2027-02-07','Año fiscal 2026',1),(52,'Cerrada','2026-03-12','2027-03-12','asdas',0),(53,'Cerrada','2026-03-05','2027-03-05','AAA',0);
 /*!40000 ALTER TABLE `anio_fiscal` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -68,7 +68,7 @@ CREATE TABLE `apartamentos` (
 
 LOCK TABLES `apartamentos` WRITE;
 /*!40000 ALTER TABLE `apartamentos` DISABLE KEYS */;
-INSERT INTO `apartamentos` VALUES (30,'1-2',22,1,1,1,1),(31,'2-3',23,1,1,1,1),(32,'2-1',1,2,1,1,1),(33,'12',23,1,1,1,0),(34,'2-8',2,1,2,1,0),(35,'3-1',5,2,1,1,1),(36,'2-5',52,1,1,1,0);
+INSERT INTO `apartamentos` VALUES (30,'1-2',22,2,1,1,1),(31,'2-3',23,1,1,1,1),(32,'2-1',1,2,1,1,1),(33,'12',23,1,1,1,0),(34,'2-8',2,1,2,1,0),(35,'3-1',5,2,1,1,1),(36,'2-5',52,1,1,1,0);
 /*!40000 ALTER TABLE `apartamentos` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -99,7 +99,7 @@ CREATE TABLE `bancos` (
 
 LOCK TABLES `bancos` WRITE;
 /*!40000 ALTER TABLE `bancos` DISABLE KEYS */;
-INSERT INTO `bancos` VALUES (1,'venezuela','0102','0102123412124232323','Ahorro','04152456842','23232421',1),(6,'Banesco','0117','1242342342424121211','Corriente','04142584985','V5464565',1),(9,'Bancaribe','0114','01140300063000253595','Corriente','04114124142','J305785457',1),(11,'rasdas','1231','2342342342342342323','','21321253213','V2123132',0),(12,'tesoro','1231','425646456456456456','','24243245564','V12345678',0),(13,'Tesoros','0102','2423423423423234234','','23423423232','V123412321',1);
+INSERT INTO `bancos` VALUES (1,'venezuela','0102','0102123412124232323','Ahorro','04152456842','J3232421',1),(6,'Banesco','0117','1242342342424121211','Corriente','04142584985','V5464565',1),(9,'Bancaribe','0114','01140300063000253595','Corriente','04114124142','J305785457',1),(11,'rasdas','1231','2342342342342342323','','21321253213','V2123132',0),(12,'tesoro','1231','425646456456456456','','24243245564','V12345678',0),(13,'Tesoros','0102','2423423423423234234','','23423423232','V123412321',1);
 /*!40000 ALTER TABLE `bancos` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -121,7 +121,7 @@ CREATE TABLE `caja_chica` (
   PRIMARY KEY (`id_caja_chica`),
   KEY `anio_fiscal_id` (`anio_fiscal_id`),
   CONSTRAINT `caja_chica_ibfk_1` FOREIGN KEY (`anio_fiscal_id`) REFERENCES `anio_fiscal` (`id_anio_fiscal`)
-) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -130,7 +130,7 @@ CREATE TABLE `caja_chica` (
 
 LOCK TABLES `caja_chica` WRITE;
 /*!40000 ALTER TABLE `caja_chica` DISABLE KEYS */;
-INSERT INTO `caja_chica` VALUES (23,1000.00,'Abierto','Caja chicas del mes Febreros - 2026','2026-02-06',45,1),(24,0.00,'Cerrada','Caja chicas del mes enero - 2026','2026-01-01',47,1);
+INSERT INTO `caja_chica` VALUES (24,0.00,'Cerrada','Caja chicas del mes enero - 2026','2026-01-01',47,1),(25,1000.00,'Abierto','Caja chicas del mes Marzo - 2026','2026-03-09',47,1);
 /*!40000 ALTER TABLE `caja_chica` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -312,7 +312,7 @@ CREATE TABLE `habitantes` (
   PRIMARY KEY (`id_habitante`) USING BTREE,
   UNIQUE KEY `cedula` (`cedula`),
   UNIQUE KEY `correo` (`correo`)
-) ENGINE=InnoDB AUTO_INCREMENT=43 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=48 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -321,7 +321,7 @@ CREATE TABLE `habitantes` (
 
 LOCK TABLES `habitantes` WRITE;
 /*!40000 ALTER TABLE `habitantes` DISABLE KEYS */;
-INSERT INTO `habitantes` VALUES (32,'carlo','rodriega','V30601403','01241223423','carlos@gmail.com','2001-10-10','Masculino',1),(35,'pepe','perez','V12312341','12351513255','pepe@gmail.com','1999-10-10','Masculino',1),(36,'asdasda','sdasdas','V21321332','12313233212','asdasd@fas.cp','1999-10-10','Masculino',0),(37,'pepe','pepas','E2112332','04121235221','epep@gmail.com','1999-10-10','Masculino',1),(38,'asdasd','asdasd','V3060143','12312312312','asd@gasd.com','1999-02-04','Masculino',1),(39,'deee','sdfsdfs','V4242142','23423423332','esad2f@agasd.com','1999-10-10','Masculino',0),(40,'asdasd','adasdas','V12321341','24234232323','asd@fasm.com','1999-03-01','Masculino',0),(41,'asdasd','asdasd','V12312323','23423423423','sdasd@fasa.com','1999-10-10','Masculino',0),(42,'miguel','miguelito','E2315657','23153468654','miguel@gmail.com','2000-10-10','Masculino',1);
+INSERT INTO `habitantes` VALUES (43,'jesus','asdasda','E1105510','12312312123','aaa@gasd.com','2000-12-12','Masculino',1),(44,'jesa','asdasd','V15321212','21312312121','asda@asasd.ocm','2000-10-10','Masculino',1),(45,'asdasd','asdasdas','V12012120','23423423434','ASDASD@sfas.com','1980-10-10','Femenino',1),(46,'papap','lalala','V23424234','21312312312','lala@gasmic.com','1950-10-10','Masculino',1),(47,'ssdfsdf','asda','V23432423','23423423423','asdasda@asfas.com','1945-10-10','Femenino',1);
 /*!40000 ALTER TABLE `habitantes` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -349,7 +349,7 @@ CREATE TABLE `habitantes_apartamentos` (
 
 LOCK TABLES `habitantes_apartamentos` WRITE;
 /*!40000 ALTER TABLE `habitantes_apartamentos` DISABLE KEYS */;
-INSERT INTO `habitantes_apartamentos` VALUES (30,32,'Propietario'),(30,39,'Habitante'),(30,40,'Habitante'),(30,41,'Habitante'),(30,42,'Habitante'),(31,37,'Propietario'),(32,35,'Propietario'),(32,36,'Habitante');
+INSERT INTO `habitantes_apartamentos` VALUES (30,43,'Propietario'),(30,44,'Habitante'),(31,46,'Propietario'),(32,45,'Propietario'),(35,47,'Propietario');
 /*!40000 ALTER TABLE `habitantes_apartamentos` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -403,7 +403,7 @@ CREATE TABLE `mensualidad` (
   PRIMARY KEY (`id_mensualidad`),
   KEY `apartamento_id` (`apartamento_id`),
   CONSTRAINT `mensualidad_ibfk_1` FOREIGN KEY (`apartamento_id`) REFERENCES `apartamentos` (`id_apartamento`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=548 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=556 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -412,7 +412,7 @@ CREATE TABLE `mensualidad` (
 
 LOCK TABLES `mensualidad` WRITE;
 /*!40000 ALTER TABLE `mensualidad` DISABLE KEYS */;
-INSERT INTO `mensualidad` VALUES (533,2.53,402.33,'1','2025',30,10,15,0),(534,0.11,402.33,'1','2025',32,10,15,0),(535,2.53,402.33,'1','2025',31,10,15,0),(536,890.33,402.33,'10','2025',30,10,15,1),(537,890.33,402.33,'10','2025',31,10,15,1),(538,38.71,402.33,'10','2025',32,10,15,1),(539,3.68,414.05,'2','2025',30,10,15,1),(540,0.10,414.05,'2','2025',32,10,15,1),(541,2.99,414.05,'2','2025',31,10,15,1),(542,138.69,405.35,'4','2025',30,10,15,0),(543,5.80,405.35,'4','2025',32,10,15,0),(544,138.69,405.35,'4','2025',31,10,15,0),(545,161.57,419.99,'3','2025',30,10,15,1),(546,5.55,419.99,'3','2025',32,10,15,1),(547,168.92,419.99,'3','2025',31,10,15,1);
+INSERT INTO `mensualidad` VALUES (533,2.53,402.33,'1','2025',30,10,15,0),(534,0.11,402.33,'1','2025',32,10,15,0),(535,2.53,402.33,'1','2025',31,10,15,0),(536,890.33,402.33,'10','2025',30,10,15,1),(537,890.33,402.33,'10','2025',31,10,15,1),(538,38.71,402.33,'10','2025',32,10,15,1),(539,3.68,414.05,'2','2025',30,10,15,1),(540,0.10,414.05,'2','2025',32,10,15,1),(541,2.99,414.05,'2','2025',31,10,15,1),(542,138.69,405.35,'4','2025',30,10,15,0),(543,5.80,405.35,'4','2025',32,10,15,0),(544,138.69,405.35,'4','2025',31,10,15,0),(545,161.57,419.99,'3','2025',30,10,15,1),(546,5.55,419.99,'3','2025',32,10,15,1),(547,168.92,419.99,'3','2025',31,10,15,1),(548,4.62,433.17,'5','2025',30,10,15,1),(549,0.21,433.17,'5','2025',32,10,15,1),(550,14.49,433.17,'5','2025',31,10,15,1),(551,1.05,433.17,'5','2025',35,10,15,1),(552,3.30,438.20,'6','2025',30,10,15,1),(553,0.15,438.20,'6','2025',32,10,15,1),(554,8.05,438.20,'6','2025',31,10,15,1),(555,0.75,438.20,'6','2025',35,10,15,1);
 /*!40000 ALTER TABLE `mensualidad` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -474,7 +474,7 @@ CREATE TABLE `movimientos_caja` (
   PRIMARY KEY (`id_movimiento_caja`),
   KEY `caja_chica_id` (`caja_chica_id`),
   CONSTRAINT `movimientos_caja_ibfk_1` FOREIGN KEY (`caja_chica_id`) REFERENCES `caja_chica` (`id_caja_chica`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=42 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=43 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -483,7 +483,7 @@ CREATE TABLE `movimientos_caja` (
 
 LOCK TABLES `movimientos_caja` WRITE;
 /*!40000 ALTER TABLE `movimientos_caja` DISABLE KEYS */;
-INSERT INTO `movimientos_caja` VALUES (37,'Cafe',100.00,'2026-02-22','Repuesto',23,1),(38,'Refresco',800.00,'2026-02-22','Repuesto',23,1),(39,'Pasajes',900.00,'2026-02-06','Pendiente por reposicion',23,1),(40,'agua',10.00,'2026-02-28','Pendiente por reposicion',23,1),(41,'general',10.00,'2026-03-02','Pendiente por reposicion',23,1);
+INSERT INTO `movimientos_caja` VALUES (42,'cafe',10.00,'2026-03-09','Pendiente por reposicion',25,1);
 /*!40000 ALTER TABLE `movimientos_caja` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -590,7 +590,7 @@ CREATE TABLE `presupuesto_mensualidad` (
 
 LOCK TABLES `presupuesto_mensualidad` WRITE;
 /*!40000 ALTER TABLE `presupuesto_mensualidad` DISABLE KEYS */;
-INSERT INTO `presupuesto_mensualidad` VALUES (745,539),(745,541),(746,539),(746,541),(750,539),(757,539),(757,540),(757,541),(758,539),(758,540),(758,541),(759,545),(759,547),(769,545),(769,546),(769,547),(770,545),(770,546),(770,547),(771,542),(771,544),(781,542),(781,543),(781,544),(782,542),(782,543),(782,544),(1183,533),(1183,534),(1183,535),(1189,533),(1189,534),(1189,535),(1190,533),(1190,534),(1190,535);
+INSERT INTO `presupuesto_mensualidad` VALUES (660,550),(667,548),(667,549),(667,550),(667,551),(745,539),(745,541),(746,539),(746,541),(750,539),(757,539),(757,540),(757,541),(758,539),(758,540),(758,541),(759,545),(759,547),(769,545),(769,546),(769,547),(770,545),(770,546),(770,547),(771,542),(771,544),(781,542),(781,543),(781,544),(782,542),(782,543),(782,544),(819,554),(824,552),(824,553),(824,554),(824,555),(1183,533),(1183,534),(1183,535),(1189,533),(1189,534),(1189,535),(1190,533),(1190,534),(1190,535);
 /*!40000 ALTER TABLE `presupuesto_mensualidad` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -645,7 +645,6 @@ CREATE TABLE `reposiciones` (
 
 LOCK TABLES `reposiciones` WRITE;
 /*!40000 ALTER TABLE `reposiciones` DISABLE KEYS */;
-INSERT INTO `reposiciones` VALUES (135,37),(135,38);
 /*!40000 ALTER TABLE `reposiciones` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -814,16 +813,15 @@ CREATE PROCEDURE `sp_gestion_caja_chica_mensual`()
 sp_block: BEGIN 
     DECLARE v_mes_actual VARCHAR(7);
     DECLARE v_existe_caja_abierta INT;
-    DECLARE v_saldo_final_mes_anterior DECIMAL(15,2); 
     DECLARE v_fecha_actual DATE;
     DECLARE v_id_anio_fiscal INT;
     DECLARE v_nombre_mes_espanol VARCHAR(20);
+    DECLARE v_id_caja_anterior INT;
     
     DECLARE v_monto_fondo_fijo DECIMAL(15,2) DEFAULT 1000.00; 
     
     SET v_fecha_actual = CURDATE();
-    SET v_mes_actual = DATE_FORMAT(v_fecha_actual, '%Y-%m');
-    
+    SET v_mes_actual = DATE_FORMAT(v_fecha_actual, '%Y-%m');    
     
     SELECT id_anio_fiscal INTO v_id_anio_fiscal
     FROM anio_fiscal
@@ -831,42 +829,28 @@ sp_block: BEGIN
     AND estado = 'Abierto'
     LIMIT 1;
     
-    
     IF v_id_anio_fiscal IS NULL THEN
-        
         LEAVE sp_block; 
     END IF;
-    
     
     SELECT COUNT(*) INTO v_existe_caja_abierta 
     FROM caja_chica 
     WHERE DATE_FORMAT(fecha_creacion, '%Y-%m') = v_mes_actual 
     AND anio_fiscal_id = v_id_anio_fiscal; 
     
-    
-    
     IF v_existe_caja_abierta = 0 THEN
     
-        
-        UPDATE caja_chica 
-        SET estado = 'Cerrada'
-        WHERE estado = 'Abierta'
-        AND anio_fiscal_id = v_id_anio_fiscal;
-        
-        
-        SET v_saldo_final_mes_anterior = NULL;
-        
-        SELECT saldo_actual INTO v_saldo_final_mes_anterior
+        SELECT id_caja_chica INTO v_id_caja_anterior
         FROM caja_chica
-        WHERE anio_fiscal_id = v_id_anio_fiscal
+        WHERE estado = 'Abierto'
+        AND anio_fiscal_id = v_id_anio_fiscal
         ORDER BY fecha_creacion DESC
         LIMIT 1;
-        
-        
-        IF v_saldo_final_mes_anterior IS NULL THEN
-            SET v_saldo_final_mes_anterior = v_monto_fondo_fijo;
-        END IF;
-        
+
+        UPDATE caja_chica 
+        SET estado = 'Cerrada'
+        WHERE estado = 'Abierto'
+        AND anio_fiscal_id = v_id_anio_fiscal;
         
         SET v_nombre_mes_espanol = 
             CASE MONTH(v_fecha_actual)
@@ -877,15 +861,12 @@ sp_block: BEGIN
                 ELSE 'Desconocido'
             END;
         
-        
-        
-        
         INSERT INTO caja_chica 
-            (fecha_creacion, fondo_fijo, saldo_actual, estado, 
-            descripcion, anio_fiscal_id) 
+            (fecha_creacion, fondo_fijo, estado, descripcion, anio_fiscal_id) 
         VALUES 
-            (v_fecha_actual, v_monto_fondo_fijo, v_saldo_final_mes_anterior, 
-            'Abierta', CONCAT('Caja chica del mes ', v_nombre_mes_espanol, ' - ', YEAR(v_fecha_actual)), v_id_anio_fiscal);
+            (v_fecha_actual, v_monto_fondo_fijo, 'Abierto', 
+             CONCAT('Caja chicas del mes ', v_nombre_mes_espanol, ' - ', YEAR(v_fecha_actual)), 
+             v_id_anio_fiscal);
        
     END IF;
 END ;;
@@ -1097,4 +1078,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-03-08 18:17:32
+-- Dump completed on 2026-03-14 17:51:52

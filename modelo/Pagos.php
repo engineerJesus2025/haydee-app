@@ -444,6 +444,45 @@ class Pagos extends Conexion
         }
     }
 
+    /**
+     * Consulta plana solo de la cabecera del pago para la bitácora de auditoría.
+     * Actualizado para consultar mensualidad_id y apartamento_id,
+     * permitiendo al GestorAuditoria registrar diferencias exactas.
+     */
+    private function _consultar_cabecera_pago()
+    {
+        $validacion = $this->validar(['id_pago']);
+        if (!$validacion['estatus']) return $validacion;
+
+        // Añadimos mensualidad_id y apartamento_id a la consulta plana
+        $sql = "SELECT 
+                    p.estado, 
+                    p.observacion,
+                    pm.mensualidad_id,
+                    m.apartamento_id
+                FROM pagos p
+                LEFT JOIN detalles_pagos dp ON p.id_pago = dp.pago_id
+                LEFT JOIN pagos_mensualidad pm ON dp.id_detalle_pago = pm.detalle_pago_id
+                LEFT JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
+                WHERE p.id_pago = :id_pago AND p.activo = 1
+                LIMIT 1";
+        
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->execute([':id_pago' => $this->id_pago]);
+            $datos = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$datos) {
+                return ['estatus' => false, 'mensaje' => 'Pago no encontrado'];
+            }
+            
+            return ['estatus' => true, 'datos' => $datos];
+        } catch (PDOException $e) {
+            error_log("Error en _consultar_cabecera_pago: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al consultar cabecera del pago'];
+        }
+    }
+
     private function _consultar_detalle_unico()
     {
         $validacion = $this->validar(['id_detalle_pago']);

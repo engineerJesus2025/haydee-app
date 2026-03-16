@@ -3,6 +3,7 @@ use haydee\ayuda\Sesiones;
 use haydee\modelo\Rol;
 use haydee\modelo\Permisos; // Solo para validación de permisos (temporal)
 use haydee\modelo\Bitacora;
+use haydee\servicios\GestorAuditoria;
 
 // Verificaciones de seguridad
 Sesiones::verificarSesion();
@@ -27,12 +28,15 @@ if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
+    // Instanciamos el auditor
+    $auditor = new GestorAuditoria($rol, GESTIONAR_ROLES);
+
     try {
         switch ($operacion) {
             case 'consulta':
                 $respuesta = $rol->realizar_consulta('consultar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(CONSULTAR, GESTIONAR_ROLES);
+                    $auditor->registrarAuditoria('consultar');
                 }
                 break;
 
@@ -61,16 +65,15 @@ if (isset($_POST["operacion"])) {
                             break;
                         }
                     }
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_ROLES, null, null, $nuevos);
+                    if ($respuesta['estatus']) {
+                        $auditor->registrarAuditoria('registrar');
+                    }
                 }
                 break;
 
             case 'modificar':
-                // Obtener datos anteriores del rol
-                $tempRol = new Rol();
-                $tempRol->set_id_rol($rol->get_id_rol());
-                $datosRol = $tempRol->realizar_consulta('consultar_rol');
-                $anterior = $datosRol['estatus'] ? ['nombre' => $datosRol['datos']['nombre'] ?? ''] : [];
+                // Obtener datos anteriores
+                $auditor->capturarDatosAnteriores('consultar_rol');
 
                 $respuesta = $rol->realizar_consulta('modificar');
                 if ($respuesta['estatus']) {
@@ -79,21 +82,17 @@ if (isset($_POST["operacion"])) {
                         $respuesta = $resPermisos;
                         break;
                     }
-                    $nuevo = ['nombre' => $rol->get_nombre()];
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_ROLES, null, $anterior, $nuevo);
+                    $auditor->registrarAuditoria('modificar');
                 }
                 break;
 
             case 'eliminar':
                 // Obtener datos anteriores
-                $tempRol = new Rol();
-                $tempRol->set_id_rol($rol->get_id_rol());
-                $datosRol = $tempRol->realizar_consulta('consultar_rol');
-                $anterior = $datosRol['estatus'] ? ['nombre' => $datosRol['datos']['nombre'] ?? ''] : [];
+                $auditor->capturarDatosAnteriores('consultar_rol');
 
                 $respuesta = $rol->realizar_consulta('eliminar');
-                if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_ROLES, null, $anterior, null);
+                if ($respuesta['estatus']) { 
+                    $auditor->registrarAuditoria('eliminar'); 
                 }
                 break;
 
@@ -153,6 +152,10 @@ if (isset($_POST["validar"])) {
 
     echo json_encode($respuesta);
     exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_ROLES);
 }
 
 // Cargar la vista

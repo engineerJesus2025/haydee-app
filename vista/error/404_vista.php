@@ -7,8 +7,8 @@ require_once __DIR__ . '/../../config/config.php';
     <title>Página no encontrada | Error 404</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="shortcut icon" href="<?php echo URL_BASE; ?>recursos/img/utils/logo-haydee.ico" type="image/x-icon">
-    <link rel="stylesheet" href="<?php echo URL_BASE; ?>recursos/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" href="<?php echo URL_BASE; ?>recursos/bootstrap-icons/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="<?php echo URL_BASE; ?>recursos/dependencias/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="<?php echo URL_BASE; ?>recursos/dependencias/bootstrap-icons/bootstrap-icons.min.css">
     <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/estilos_generales.css">
 </head>
 <body id="body-pd">

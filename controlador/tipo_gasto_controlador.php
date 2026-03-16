@@ -2,6 +2,7 @@
 use haydee\ayuda\Sesiones;
 use haydee\modelo\TipoGasto;
 use haydee\modelo\Bitacora;
+use haydee\servicios\GestorAuditoria;
 
 // Verificaciones de seguridad
 Sesiones::verificarSesion();
@@ -17,20 +18,23 @@ if (isset($_POST["operacion"])) {
 
     $operacion = $_POST["operacion"];
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
+
+    // Instanciamos el auditor
+    $auditor = new GestorAuditoria($tipoGasto, GESTIONAR_TIPO_GASTO);
+    
     try {
         switch ($operacion) {
             case 'consulta':
                 $respuesta = $tipoGasto->realizar_consulta('consultar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(CONSULTAR, GESTIONAR_TIPO_GASTO);
+                    $auditor->registrarAuditoria('consultar');
                 }
                 break;
 
             case 'registrar':
                 $respuesta = $tipoGasto->realizar_consulta('registrar');
                 if ($respuesta['estatus']) {
-                    $nuevos = ['nombre_tipo_gasto' => $tipoGasto->get_nombre_tipo_gasto()];
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_TIPO_GASTO, null, null, $nuevos);
+                    $auditor->registrarAuditoria('registrar');
                 }
                 break;
 
@@ -40,28 +44,21 @@ if (isset($_POST["operacion"])) {
 
             case 'modificar':
                 // Obtener datos anteriores
-                $tempTipo = new TipoGasto();
-                $tempTipo->set_id_tipo_gasto($tipoGasto->get_id_tipo_gasto());
-                $datosAnteriores = $tempTipo->realizar_consulta('consultar_tipo_gasto');
-                $anterior = $datosAnteriores['estatus'] ? ['nombre_tipo_gasto' => $datosAnteriores['datos']['nombre_tipo_gasto'] ?? ''] : [];
+                $auditor->capturarDatosAnteriores('consultar_tipo_gasto');
 
                 $respuesta = $tipoGasto->realizar_consulta('modificar');
-                if ($respuesta['estatus']) {
-                    $nuevo = ['nombre_tipo_gasto' => $tipoGasto->get_nombre_tipo_gasto()];
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_TIPO_GASTO, null, $anterior, $nuevo);
+                if ($respuesta['estatus']) { 
+                    $auditor->registrarAuditoria('modificar'); 
                 }
                 break;
 
             case 'eliminar':
                 // Obtener datos anteriores
-                $tempTipo = new TipoGasto();
-                $tempTipo->set_id_tipo_gasto($tipoGasto->get_id_tipo_gasto());
-                $datosTipo = $tempTipo->realizar_consulta('consultar_tipo_gasto');
-                $anterior = $datosTipo['estatus'] ? ['nombre_tipo_gasto' => $datosTipo['datos']['nombre_tipo_gasto'] ?? ''] : [];
+                $auditor->capturarDatosAnteriores('consultar_tipo_gasto');
 
                 $respuesta = $tipoGasto->realizar_consulta('eliminar');
-                if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_TIPO_GASTO, null, $anterior, null);
+                if ($respuesta['estatus']) { 
+                    $auditor->registrarAuditoria('eliminar'); 
                 }
                 break;
 
@@ -88,6 +85,10 @@ if (isset($_POST["operacion"])) {
             exit;
         }
     }
+}
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_TIPO_GASTO);
 }
 
 // Cargar la vista

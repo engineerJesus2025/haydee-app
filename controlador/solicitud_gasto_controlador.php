@@ -3,6 +3,7 @@ use haydee\ayuda\Sesiones;
 use haydee\modelo\SolicitudGasto;
 use haydee\modelo\Presupuesto;
 use haydee\modelo\Bitacora;
+use haydee\servicios\GestorAuditoria;
 
 // Verificaciones de seguridad
 Sesiones::verificarSesion();
@@ -29,12 +30,15 @@ if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
+    // Instanciamos el auditor
+    $auditor = new GestorAuditoria($solicitud, GESTIONAR_SOLICITUD_GASTO);
+
     try {
         switch ($operacion) {
             case 'consulta':
                 $respuesta = $solicitud->realizar_consulta('consultar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(CONSULTAR, GESTIONAR_SOLICITUD_GASTO);
+                    $auditor->registrarAuditoria('consultar');
                 }
                 break;
 
@@ -65,56 +69,27 @@ if (isset($_POST["operacion"])) {
             case 'registrar':
                 $respuesta = $solicitud->realizar_consulta('registrar');
                 if ($respuesta['estatus']) {
-                    $nuevos = [
-                        'descripcion' => $solicitud->get_descripcion_necesidad(),
-                        'nombre_solicitante' => $solicitud->get_nombre_solicitante(),
-                        'monto_estimado' => $solicitud->get_monto_estimado(),
-                        'prioridad' => $solicitud->get_prioridad(),
-                        'presupuesto_id' => $solicitud->get_presupuesto_id()
-                    ];
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_SOLICITUD_GASTO, null, null, $nuevos);
+                    $auditor->registrarAuditoria('registrar');
                 }
                 break;
 
             case 'modificar':
                 // Obtener datos anteriores
-                $tempSolicitud = new SolicitudGasto();
-                $tempSolicitud->set_id_solicitud($solicitud->get_id_solicitud());
-                $datosAnteriores = $tempSolicitud->realizar_consulta('consultar_solicitud_id');
-                $anterior = $datosAnteriores['estatus'] ? [
-                    'descripcion' => $datosAnteriores['datos']['descripcion_necesidad'] ?? '',
-                    'nombre_solicitante' => $datosAnteriores['datos']['nombre_solicitante'] ?? '',
-                    'monto_estimado' => $datosAnteriores['datos']['monto_estimado'] ?? '',
-                    'prioridad' => $datosAnteriores['datos']['prioridad'] ?? '',
-                    'presupuesto_id' => $datosAnteriores['datos']['presupuesto_id'] ?? ''
-                ] : [];
+                $auditor->capturarDatosAnteriores('consultar_solicitud_id');
 
                 $respuesta = $solicitud->realizar_consulta('modificar');
-                if ($respuesta['estatus']) {
-                    $nuevo = [
-                        'descripcion' => $solicitud->get_descripcion_necesidad(),
-                        'nombre_solicitante' => $solicitud->get_nombre_solicitante(),
-                        'monto_estimado' => $solicitud->get_monto_estimado(),
-                        'prioridad' => $solicitud->get_prioridad(),
-                        'presupuesto_id' => $solicitud->get_presupuesto_id()
-                    ];
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_SOLICITUD_GASTO, null, $anterior, $nuevo);
+                if ($respuesta['estatus']) { 
+                    $auditor->registrarAuditoria('modificar'); 
                 }
                 break;
 
             case 'eliminar':
                 // Obtener datos anteriores
-                $tempSolicitud = new SolicitudGasto();
-                $tempSolicitud->set_id_solicitud($solicitud->get_id_solicitud());
-                $datosSolicitud = $tempSolicitud->realizar_consulta('consultar_solicitud_id');
-                $anterior = $datosSolicitud['estatus'] ? [
-                    'descripcion' => $datosSolicitud['datos']['descripcion_necesidad'] ?? '',
-                    'nombre_solicitante' => $datosSolicitud['datos']['nombre_solicitante'] ?? ''
-                ] : [];
+                $auditor->capturarDatosAnteriores('consultar_solicitud_id');
 
                 $respuesta = $solicitud->realizar_consulta('eliminar');
-                if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_SOLICITUD_GASTO, null, $anterior, null);
+                if ($respuesta['estatus']) { 
+                    $auditor->registrarAuditoria('eliminar'); 
                 }
                 break;
 
@@ -173,6 +148,10 @@ if (isset($_POST["validar"])) {
 
     echo json_encode($respuesta);
     exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_SOLICITUD_GASTO);
 }
 
 // Si no hay POST, cargar los presupuestos para la vista

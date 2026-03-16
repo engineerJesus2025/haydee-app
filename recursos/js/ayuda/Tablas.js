@@ -101,7 +101,8 @@ const Tablas = {
         // ==============================================
         // Detección automática de búsqueda
         // ==============================================
-        if (opciones.columnaBusqueda && typeof Notificaciones !== 'undefined') {
+        if (typeof Notificaciones !== 'undefined') {
+            // Mandamos la columnaBusqueda (si no existe, llegará como undefined y Notificaciones hará el auto-descubrimiento)
             Notificaciones.resaltarEnTabulator(tabla, opciones.columnaBusqueda);
         }
 

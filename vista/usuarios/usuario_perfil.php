@@ -8,6 +8,7 @@
     ?>
 
     <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/contrasenias.css">
+    <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/esqueletos.css">
 </head>
 
 <body id="body-pd" class="body-pd">
@@ -36,17 +37,16 @@
                         <div class="col-lg-4">
                             <div class="card shadow-sm h-100 border-0 rounded-4">
                                 <div class="card-body text-center pt-5 pb-4 px-4">
-                                    <div id="contenedor_avatar" class="bg-primary text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center shadow-sm placeholder-glow" style="width: 110px; height: 110px; font-size: 2.8rem; font-weight: bold; letter-spacing: 2px;">
-                                        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true" id="spinner_modificar" style="width: 80px; height: 80px; font-size: 2.8rem; font-weight: bold; letter-spacing: 2px;"></span>
-                                    </div>
+                                    <div id="contenedor_avatar" class="bg-primary text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center shadow-sm skeleton" style="width: 110px; height: 110px; font-size: 2.8rem; font-weight: bold; letter-spacing: 2px;">
+                                        </div>
                                     
                                     <h4 class="fw-bold mb-1 text-dark" id="titulo_nombre">
-                                        <span class="placeholder-glow"><span class="placeholder col-8 rounded"></span></span>
+                                        <div class="skeleton skeleton-text short mb-0" style="height: 24px; margin: 0 auto;"></div>
                                     </h4>
                                     
                                     <div class="mb-4">
-                                        <span id="spam_rol" class="placeholder-glow">
-                                            <span class="placeholder col-8 rounded"></span>
+                                        <span id="spam_rol">
+                                            <div class="skeleton skeleton-text mt-2" style="width: 40%; margin: 0 auto;"></div>
                                         </span>
                                     </div>
                                     
@@ -62,7 +62,9 @@
                                             <i class="bi bi-clock text-info me-2 fs-5"></i>
                                             <div class="w-100">
                                                 <span class="fw-bold d-block text-dark">Último Acceso</span>
-                                                <span id="ultimo_acceso"><span class="placeholder col-8"></span></span>
+                                                <span id="ultimo_acceso">
+                                                    <div class="skeleton skeleton-text mt-1" style="width: 80px; margin: 0;"></div>
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
@@ -94,8 +96,8 @@
                                         <i class="bi bi-person-lines-fill text-primary me-2"></i> Información Personal
                                     </h4>
                                     <button class="btn btn-outline-primary rounded-pill px-3 shadow-sm" title="Modificar Información" id="boton_modificar" disabled>
-                                        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true" id="spinner_modificar"></span>
-                                        <span id="texto_modificar">Cargando...</span>
+                                        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                                        <span>Cargando...</span>
                                     </button>
                                 </div>
                                 
@@ -109,7 +111,9 @@
                                                 </div>
                                                 <div class="w-100">
                                                     <small class="text-muted text-uppercase fw-bold" style="letter-spacing: 0.5px; font-size: 0.75rem;">Nombre</small>
-                                                    <p class="fs-5 mb-0 fw-semibold text-dark" id="p_nombre"><span class="placeholder-glow"><span class="placeholder col-8"></span></span></p>
+                                                    <p class="fs-5 mb-0 fw-semibold text-dark" id="p_nombre">
+                                                        <span class="skeleton skeleton-text d-inline-block mt-2" style="width: 40%; margin: 0 auto;"></span>
+                                                    </p>
                                                 </div>
                                             </div>
                                             
@@ -119,7 +123,9 @@
                                                 </div>
                                                 <div class="w-100">
                                                     <small class="text-muted text-uppercase fw-bold" style="letter-spacing: 0.5px; font-size: 0.75rem;">Apellido</small>
-                                                    <p class="fs-5 mb-0 fw-semibold text-dark" id="p_apellido"><span class="placeholder-glow"><span class="placeholder col-8"></span></span></p>
+                                                    <p class="fs-5 mb-0 fw-semibold text-dark" id="p_apellido">
+                                                        <span class="skeleton skeleton-text d-inline-block mt-2" style="width: 40%; margin: 0 auto;"></span>
+                                                    </p>
                                                 </div>
                                             </div>
 
@@ -129,7 +135,9 @@
                                                 </div>
                                                 <div class="w-100">
                                                     <small class="text-muted text-uppercase fw-bold" style="letter-spacing: 0.5px; font-size: 0.75rem;">Correo Electrónico</small>
-                                                    <p class="fs-5 mb-0 fw-semibold text-dark text-truncate" id="p_correo"><span class="placeholder-glow"><span class="placeholder col-12"></span></span></p>
+                                                    <p class="fs-5 mb-0 fw-semibold text-dark text-truncate" id="p_correo">
+                                                        <span class="skeleton skeleton-text d-inline-block mt-2" style="width: 40%; margin: 0 auto;"></span>
+                                                    </p>
                                                 </div>
                                             </div>
 

@@ -3,6 +3,7 @@ use haydee\ayuda\Sesiones;
 use haydee\modelo\CarteleraVirtual;
 use haydee\modelo\Usuario;
 use haydee\modelo\Bitacora;
+use haydee\servicios\GestorAuditoria;
 use haydee\ayuda\GestorImagenes;
 
 // Verificaciones de seguridad
@@ -25,12 +26,15 @@ if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
+    // Instanciamos el auditor
+    $auditor = new GestorAuditoria($cartelera, GESTIONAR_CARTELERA_VIRTUAL);
+
     try {
         switch ($operacion) {
             case 'consulta':
                 $respuesta = $cartelera->realizar_consulta('consultar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(CONSULTAR, GESTIONAR_CARTELERA_VIRTUAL);
+                    $auditor->registrarAuditoria('consultar');
                 }
                 break;
 
@@ -45,14 +49,7 @@ if (isset($_POST["operacion"])) {
                 $cartelera->set_imagen($nombreImagen);
                 $respuesta = $cartelera->realizar_consulta('registrar');
                 if ($respuesta['estatus']) {
-                    $nuevos = [
-                        'titulo'      => $cartelera->get_titulo(),
-                        'descripcion' => $cartelera->get_descripcion(),
-                        'fecha'       => $cartelera->get_fecha(),
-                        'prioridad'   => $cartelera->get_prioridad(),
-                        'imagen'      => $nombreImagen
-                    ];
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_CARTELERA_VIRTUAL,null, null, $nuevos);
+                    $auditor->registrarAuditoria('registrar');
                 }
                 break;
 
@@ -62,10 +59,7 @@ if (isset($_POST["operacion"])) {
 
             case 'modificar':
                 // Obtener datos anteriores
-                $tempCart = new CarteleraVirtual();
-                $tempCart->set_id_cartelera($cartelera->get_id_cartelera());
-                $datosAnteriores = $tempCart->realizar_consulta('consultar_cartelera_id');
-                $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
+                $auditor->capturarDatosAnteriores('consultar_cartelera_id');
 
                 $imagenActual = $cartelera->obtenerImagenActual();
                 $eliminarImagen = isset($_POST["eliminar_imagen"]) && $_POST["eliminar_imagen"] == 1;
@@ -91,33 +85,24 @@ if (isset($_POST["operacion"])) {
 
                 $cartelera->set_imagen($nuevaImagen);
                 $respuesta = $cartelera->realizar_consulta('modificar_publicacion');
-                if ($respuesta['estatus']) {
-                    $nuevo = [
-                        'titulo'      => $cartelera->get_titulo(),
-                        'descripcion' => $cartelera->get_descripcion(),
-                        'fecha'       => $cartelera->get_fecha(),
-                        'prioridad'   => $cartelera->get_prioridad(),
-                        'imagen'      => $nuevaImagen
-                    ];
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_CARTELERA_VIRTUAL, null, $anterior, $nuevo);
+                if ($respuesta['estatus']) { 
+                    $auditor->registrarAuditoria('modificar'); 
                 }
                 break;
 
             case 'eliminar':
-                $tempCartelera = new CarteleraVirtual();
-                $tempCartelera->set_id_cartelera($cartelera->get_id_cartelera());
-                $datosPublicacion = $tempCartelera->realizar_consulta('consultar_cartelera_id');
-                $anterior = $datosPublicacion['estatus'] ? $datosPublicacion['datos'] : [];
+                // Obtener datos anteriores
+                $auditor->capturarDatosAnteriores('consultar_cartelera_id');
 
                 $respuesta = $cartelera->realizar_consulta('eliminar_publicacion');
-                if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_CARTELERA_VIRTUAL, null, $anterior, null);
+                if ($respuesta['estatus']) { 
+                    $auditor->registrarAuditoria('eliminar'); 
                 }
                 break;
 
-                        case 'ultimo_id':
-                            $respuesta = $cartelera->realizar_consulta('lastId');
-                            break;
+            case 'ultimo_id':
+                $respuesta = $cartelera->realizar_consulta('lastId');
+                break;
 
             default:
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
@@ -139,5 +124,10 @@ if (isset($_POST["operacion"])) {
         }
     }
 }
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_CARTELERA_VIRTUAL);
+}
+
 require_once "vista/cartelera_virtual/cartelera_virtual_vista.php";
 ?>

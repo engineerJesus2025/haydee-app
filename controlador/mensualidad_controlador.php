@@ -4,6 +4,7 @@ use haydee\modelo\Mensualidad;
 use haydee\modelo\Presupuesto;
 use haydee\modelo\Apartamento;
 use haydee\modelo\Bitacora;
+use haydee\servicios\GestorAuditoria;
 
 Sesiones::verificarSesion();
 Sesiones::verificarPermiso(GESTIONAR_MENSUALIDAD, CONSULTAR);
@@ -24,6 +25,9 @@ if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
+    // Instanciamos el auditor
+    $auditor = new GestorAuditoria($mensualidad, GESTIONAR_MENSUALIDAD);
+
     try {
         switch ($operacion) {
             // =========================================================
@@ -31,31 +35,28 @@ if (isset($_POST["operacion"])) {
             // =========================================================
             case 'verificar_meses':
                 $respuesta = $mensualidad->realizar_consulta('verificarMeses');
-                // Se devuelve tal cual (estatus/datos)
                 break;
 
             case 'consultar_mensualidades_mes':
                 $respuesta = $mensualidad->realizar_consulta('consultarPorMeses');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(CONSULTAR, GESTIONAR_MENSUALIDAD);
+                    $auditor->registrarAuditoria('consultar');
                 }
                 break;
 
             case 'consultar_mensualidades_apartamentos':
                 $fecha = $_POST["fecha"] ?? '';
-
                 list($anio, $mes, $dia) = explode('-', $fecha);
                 $mensualidad->set_mes($mes);
                 $mensualidad->set_anio($anio);
                 
                 $respuesta = $mensualidad->realizar_consulta('consultar_mensualidad_apartamentos');
-
                 break;
 
             case 'consultar_presupuestos_asociados':
                 $mensualidad->set_ids_mensualidades($_POST['ids_mensualidades'] ?? '');
                 $respuesta = $mensualidad->realizar_consulta('consultar_presupuestos_asociados');
-                    break;
+                break;
 
             case 'consultar_presupuestos_mensualidades':
                 $presupuesto = new Presupuesto();
@@ -70,14 +71,12 @@ if (isset($_POST["operacion"])) {
 
             case 'consultar_tasa_dolar':
                 $respuesta = $mensualidad->realizar_consulta('consultar_tasa_dolar_mensualidades');
-                // Se espera un objeto con datos
                 break;
 
             // =========================================================
-            // OPERACIONES MASIVAS (REGISTRAR/modificar)
+            // OPERACIONES MASIVAS (REGISTRAR/MODIFICAR)
             // =========================================================
             case 'registrar_masivo':
-                // Decodificar array de apartamentos
                 $datos_apartamentos = json_decode($_POST['datos_apartamentos'], true);
                 if (json_last_error() !== JSON_ERROR_NONE) {
                     throw new Exception('Error en el formato de datos JSON');
@@ -86,11 +85,15 @@ if (isset($_POST["operacion"])) {
 
                 $respuesta = $mensualidad->realizar_consulta('registrar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_MENSUALIDAD);
+                    // TRUCO: Ocultamos el arreglo masivo al auditor para que solo registre los datos base
+                    $mensualidad->set_datos_apartamentos(null);
+                    $auditor->registrarAuditoria('registrar');
                 }
                 break;
 
             case 'modificar_masivo':
+                $auditor->capturarDatosAnteriores('consultar_cabecera_mensualidad');
+
                 $datos_apartamentos = json_decode($_POST['datos_apartamentos'], true);
                 if (json_last_error() !== JSON_ERROR_NONE) {
                     throw new Exception('Error en el formato de datos JSON');
@@ -99,7 +102,9 @@ if (isset($_POST["operacion"])) {
 
                 $respuesta = $mensualidad->realizar_consulta('modificar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_MENSUALIDAD);
+                    // TRUCO: Ocultamos el arreglo masivo al auditor
+                    $mensualidad->set_datos_apartamentos(null);
+                    $auditor->registrarAuditoria('modificar');
                 }
                 break;
 
@@ -109,11 +114,17 @@ if (isset($_POST["operacion"])) {
             case 'eliminar_mensualidad':
                 $fecha = $_POST["fecha"] ?? '';
                 list($anio, $mes, $dia) = explode('-', $fecha);
+                
+                // Estos set permiten que el auditor sepa QUÉ mes y año se está eliminando
                 $mensualidad->set_mes($mes);
                 $mensualidad->set_anio($anio);
+
+                $auditor->capturarDatosAnteriores('consultar_cabecera_mensualidad');
+
                 $respuesta = $mensualidad->realizar_consulta('eliminar');
+
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_MENSUALIDAD);
+                    $auditor->registrarAuditoria('eliminar');
                 }
                 break;
 
@@ -125,17 +136,11 @@ if (isset($_POST["operacion"])) {
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
         if ($respuesta !== null) {
-            // Cerrar conexiones explícitamente
-            if (isset($mensualidad)) {
-                $mensualidad->cerrar();
-            }
-            if (isset($presupuesto)) {
-                $presupuesto->cerrar();
-            }
-            if (isset($apartamento)) {
-                $apartamento->cerrar();
-            }
-            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexión de seguridad
+            if (isset($mensualidad)) { $mensualidad->cerrar(); }
+            if (isset($presupuesto)) { $presupuesto->cerrar(); }
+            if (isset($apartamento)) { $apartamento->cerrar(); }
+            
+            Bitacora::cerrarConexionBitacora();
 
             header('Content-Type: application/json');
             echo json_encode($respuesta);
@@ -144,6 +149,9 @@ if (isset($_POST["operacion"])) {
     }
 }
 
+// =========================================================
+// VALIDACIONES AJAX (Se mantienen intactas)
+// =========================================================
 if (isset($_POST["validar"])) {
     header('Content-Type: application/json');
     $validar = $_POST["validar"];
@@ -161,4 +169,10 @@ if (isset($_POST["validar"])) {
 // Cargar vista con datos de apartamentos
 $apartamento = new Apartamento();
 $registros_apartamentos = $apartamento->realizar_consulta('consultar_apartamentos_mensualidad');
+
+// Inicializar la bandera de sesión si es carga de página
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_MENSUALIDAD);
+}
+
 require_once 'vista/mensualidad/mensualidad_vista.php';

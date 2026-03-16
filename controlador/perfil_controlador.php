@@ -4,6 +4,7 @@ use haydee\modelo\Rol;
 use haydee\modelo\Usuario;
 use haydee\modelo\Notificaciones;
 use haydee\modelo\Bitacora;
+use haydee\servicios\GestorAuditoria;
 
 // Verificación de sesión (sin permiso específico porque es el perfil del propio usuario)
 Sesiones::verificarSesion();
@@ -27,10 +28,16 @@ if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
+    // Instanciamos el auditor
+    $auditor = new GestorAuditoria($usuario, GESTIONAR_USUARIOS);
+
     try{
         switch ($operacion) {
             case 'consultar_perfil_usuario':
                 $respuesta = $usuario->realizar_consulta('consultar_perfil_usuario');
+                if ($respuesta['estatus']) {
+                    $auditor->registrarAuditoria('consultar');
+                }
                 break;
 
             case 'consultar_mis_notificaciones':
@@ -41,25 +48,12 @@ if (isset($_POST["operacion"])) {
 
             case 'modificar_perfil':
                 // Obtener datos anteriores
-                $tempUsuario = new Usuario();
-                $tempUsuario->set_id_usuario($_SESSION["id_usuario"]);
-                $datosAnteriores = $tempUsuario->realizar_consulta('consultar_usuario');
-                $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
-                $anteriorResumen = [
-                    'nombre'   => $anterior['nombre'] ?? '',
-                    'apellido' => $anterior['apellido'] ?? '',
-                    'correo'   => $anterior['correo'] ?? ''
-                ];
+                $auditor->capturarDatosAnteriores('consultar_usuario');
 
                 $respuesta = $usuario->realizar_consulta('modificar_perfil');
-                if ($respuesta['estatus']) {
+                if ($respuesta['estatus']) { 
                     $_SESSION["nombre_completo"] = $usuario->get_nombre() . " " . $usuario->get_apellido();
-                    $nuevo = [
-                        'nombre'   => $usuario->get_nombre(),
-                        'apellido' => $usuario->get_apellido(),
-                        'correo'   => $usuario->get_correo()
-                    ];
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_USUARIOS, null, $anteriorResumen, $nuevo);
+                    $auditor->registrarAuditoria('modificar'); 
                 }
                 break;
 
@@ -156,6 +150,10 @@ if (isset($_POST["validar"])) {
             echo json_encode(['estatus' => false, 'mensaje' => 'Validación no reconocida']);
     }
     exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_USUARIOS);
 }
 
 // Carga de vistas según acción

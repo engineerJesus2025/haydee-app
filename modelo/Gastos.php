@@ -657,6 +657,30 @@ class Gastos extends Conexion
     }
 
     /**
+     * Consulta plana solo de la cabecera del gasto para la bitácora de auditoría.
+     */
+    private function _consultar_cabecera_gasto()
+    {
+        $validacion = $this->validar(['id_gasto']);
+        if (!$validacion['estatus']) {
+            return $validacion;
+        }
+
+        $sql = "SELECT clasificacion, descripcion_gasto, solicitud_id, tipo_gasto_id, proveedor_id 
+                FROM gastos WHERE id_gasto = :id_gasto AND activo = 1";
+        
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->execute([':id_gasto' => $this->id_gasto]);
+            $datos = $stmt->fetch(PDO::FETCH_ASSOC);
+            return ['estatus' => true, 'datos' => $datos];
+        } catch (PDOException $e) {
+            error_log("Error en _consultar_cabecera_gasto: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al consultar cabecera'];
+        }
+    }
+
+    /**
      * Consulta todos los detalles de un gasto específico, incluyendo datos bancarios si existen
      */
     private function _consultar_detalles_por_gasto()

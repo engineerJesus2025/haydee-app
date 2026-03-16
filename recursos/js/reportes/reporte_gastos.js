@@ -42,13 +42,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function consultarPeriodos() {
     let datos = new FormData();
-    datos.append('operacion', 'consultar_periodos_gastos');
+    datos.append('operacion', 'listar_meses_con_gastos');
 
     try {
         // Enviar con Fetch usando el nuevo helper (sin mostrar modal extra de carga)
         const respuesta = await Peticiones.enviar(datos, "", false);
-        
-        if (tooltipPrevio) tooltipPrevio.dispose();
+
+        const contenedorTarjeta = botonCuadroGastos.parentElement;
 
         if (respuesta.estatus && respuesta.datos.length > 0) {
             periodosDisponibles = respuesta.datos.reduce((acc, item) => {

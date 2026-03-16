@@ -25,16 +25,29 @@ function formatearJSON(jsonString) {
 
 // Función para mostrar el detalle en el modal
 function mostrarDetalle(rowData) {
+    // 1. Usamos directamente las clases de Bootstrap para coincidir con tus botones
     const colores = { 
-        'consultar': "badge-consultar", 
-        'eliminar': "badge-eliminar", 
-        'registrar': "badge-registrar", 
-        'modificar': "badge-modificar", 
-        'iniciar sesion': "badge-iniciar-sesion", 
-        'cerrar sesion': "badge-cerrar-sesion" 
-    };
-    const claseColor = colores[rowData.accion.toLowerCase()] || "badge bg-secondary";
-    // Información general
+            'consultar': "badge-consultar", 
+            'eliminar': "bg-danger", 
+            'registrar': "bg-primary", 
+            'modificar': "bg-success", 
+            'iniciar sesion': "badge-iniciar-sesion", 
+            'cerrar sesion': "bg-info text-dark",
+            'descargar': "bg-warning text-dark",
+            'respaldar': "bg-indigo text-white", // Requiere CSS personalizado si usas Bootstrap estándar
+            'restaurar': "bg-teal text-white"    // Requiere CSS personalizado si usas Bootstrap estándar
+        };
+    
+    const accionNormalizada = rowData.accion.toLowerCase();
+    const claseColor = colores[accionNormalizada] || "bg-secondary";
+
+    // Elementos del DOM
+    const divConsulta = document.getElementById('detalle_consulta');
+    const iconoConsulta = document.getElementById('icono_consulta');
+    const mensajeConsulta = document.getElementById('mensaje_consulta');
+    const divCambios = document.getElementById('detalle_cambios');
+
+    // Llenar datos generales
     document.getElementById('detalle_usuario').textContent = rowData.nombre_usuario;
     document.getElementById('detalle_rol').textContent = rowData.nombre_rol;
     document.getElementById('detalle_fecha').textContent = FormatoFechas.formatear(rowData.fecha_hora, 'DD/MM/YYYY hh:mm:ss A');
@@ -43,42 +56,89 @@ function mostrarDetalle(rowData) {
     const accionBadge = document.getElementById('detalle_accion');
     accionBadge.textContent = rowData.accion;
     accionBadge.className = `badge ${claseColor}`;
-    // Determinar si es consulta
-    if (rowData.accion.toLowerCase() === 'consultar' || rowData.accion.toLowerCase() === 'iniciar sesion' || rowData.accion.toLowerCase() === 'cerrar sesion') {
-        document.getElementById('detalle_consulta').classList.remove('d-none');
-        document.getElementById('detalle_cambios').classList.add('d-none');
 
-        if (rowData.accion.toLowerCase() === 'consultar') document.getElementById('mensaje_consulta').textContent = `Se consultaron todos los registros del módulo ${rowData.nombre_modulo.split('_').join(' ')}.`;
-        else if(rowData.accion.toLowerCase() === 'iniciar sesion') document.getElementById('mensaje_consulta').textContent = `Incio de sesión exitoso.`;
-        else if(rowData.accion.toLowerCase() === 'cerrar sesion') document.getElementById('mensaje_consulta').textContent = `Cierre de sesión exitoso.`;
-    } 
-    else {
-        document.getElementById('detalle_consulta').classList.add('d-none');
-        document.getElementById('detalle_cambios').classList.remove('d-none');
+    const accionesDeSoloMensaje = ['consultar', 'iniciar sesion', 'cerrar sesion', 'descargar', 'respaldar', 'restaurar'];
 
-        // Mostrar valores anteriores y nuevos (si existen)
+    if (accionesDeSoloMensaje.includes(accionNormalizada)) {
+        divConsulta.classList.remove('d-none');
+        divCambios.classList.add('d-none');
+
+        if (accionNormalizada === 'descargar') {
+            // --- CASO DESCARGAR: Quitamos el estilo de alerta ---
+            divConsulta.classList.remove('alert', 'alert-info', 'align-items-center');
+            iconoConsulta.classList.add('d-none'); // Ocultamos el icono de info azul
+
+            let detalles = {};
+            try { detalles = JSON.parse(rowData.valores_nuevos || '{}'); } catch(e) {}
+
+            let contenidoHtml = `
+                <div class="border rounded-3 p-4 bg-light shadow-sm">
+                    <div class="d-flex align-items-center mb-4 border-bottom pb-3">
+                        <div class="bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 45px; height: 45px;">
+                            <i class="bi bi-file-earmark-text-fill fs-4"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0 fw-bold">DETALLES DEL DOCUMENTO</h6>
+                            <small class="text-muted">Información del reporte generado</small>
+                        </div>
+                    </div>
+                    <div class="row g-4">
+            `;
+
+            for (let [llave, valor] of Object.entries(detalles)) {
+                let etiqueta = llave.replace(/_/g, ' ').toUpperCase();
+                contenidoHtml += `
+                    <div class="col-sm-6">
+                        <p class="mb-0 text-muted" style="font-size: 0.75rem;">${etiqueta}</p>
+                        <p class="mb-0 fw-bold text-dark">${valor || 'N/A'}</p>
+                    </div>
+                `;
+            }
+            contenidoHtml += `</div></div>`;
+            mensajeConsulta.innerHTML = contenidoHtml;
+
+        } else {
+            // --- CASO CONSULTAR/OTROS: Restauramos el estilo de alerta ---
+            divConsulta.classList.add('alert', 'alert-info', 'align-items-center');
+            iconoConsulta.classList.remove('d-none');
+
+            const mensajes = {
+                'consultar': `Se visualizaron los registros del módulo.`,
+                'iniciar sesion': `Acceso al sistema concedido.`,
+                'cerrar sesion': `Sesión finalizada correctamente.`,
+                'respaldar': `Copia de seguridad generada con éxito.`,
+                'restaurar': `Restauración de base de datos completada.`
+            };
+            mensajeConsulta.innerHTML = mensajes[accionNormalizada] || 'Acción realizada correctamente.';
+        }
+
+    } else {
+        // Lógica para Registrar (Azul), Modificar (Verde), Eliminar (Rojo)
+        divConsulta.classList.add('d-none');
+        divCambios.classList.remove('d-none');
+
         let anteriores = rowData.valores_anteriores ? JSON.parse(rowData.valores_anteriores) : {};
         let nuevos = rowData.valores_nuevos ? JSON.parse(rowData.valores_nuevos) : {};
 
-        if (rowData.accion.toLowerCase() === 'registrar') {
-            document.getElementById('anteriores-tab').style.display = 'none';
-            document.getElementById('nuevos-tab').style.display = 'block';
-            document.getElementById('nuevos-tab').click(); // activar pestaña nuevos
-        } else if (rowData.accion.toLowerCase() === 'eliminar') {
-            document.getElementById('anteriores-tab').style.display = 'block';
-            document.getElementById('nuevos-tab').style.display = 'none';
-            document.getElementById('anteriores-tab').click(); // activar anteriores
-        } else {
-            // editar, ambas visibles
-            document.getElementById('anteriores-tab').style.display = 'block';
-            document.getElementById('nuevos-tab').style.display = 'block';
+        if (accionNormalizada === 'registrar') {
+            document.getElementById('anteriores-tab').parentElement.style.display = 'none';
+            document.getElementById('nuevos-tab').parentElement.style.display = 'block';
+            document.getElementById('nuevos-tab').click(); 
+        } else if (accionNormalizada === 'eliminar') {
+            document.getElementById('anteriores-tab').parentElement.style.display = 'block';
+            document.getElementById('nuevos-tab').parentElement.style.display = 'none';
+            document.getElementById('anteriores-tab').click(); 
+        } else { 
+            document.getElementById('anteriores-tab').parentElement.style.display = 'block';
+            document.getElementById('nuevos-tab').parentElement.style.display = 'block';
+            document.getElementById('nuevos-tab').click();
         }
 
         document.getElementById('valores_anteriores').innerHTML = objetoALista(anteriores);
         document.getElementById('valores_nuevos').innerHTML = objetoALista(nuevos);
     }
 
-    modalDetalle.show();
+    modalDetalle.show();    
 }
 
 /**
@@ -91,10 +151,21 @@ function consultar() {
     const formatoFecha = (cell) => FormatoFechas.formatoUsuario(cell.getValue());
     const formatoModulo = (cell) => cell.getValue().split("_").join(" ");
     
+    // 3. Actualizamos los colores de los badges en la tabla principal
     const formatoAccion = (cell) => {
         const accion = cell.getValue();
-        const colores = { 'consultar': "badge-consultar", 'eliminar': "badge-eliminar", 'registrar': "badge-registrar", 'modificar': "badge-modificar", 'iniciar sesion': "badge-iniciar-sesion", 'cerrar sesion': "badge-cerrar-sesion" };
-        const clase = colores[accion.toLowerCase()] || "badge bg-secondary";
+        const colores = { 
+            'consultar': "badge-consultar", 
+            'eliminar': "bg-danger", 
+            'registrar': "bg-primary", 
+            'modificar': "bg-success", 
+            'iniciar sesion': "badge-iniciar-sesion", 
+            'cerrar sesion': "bg-info text-dark",
+            'descargar': "bg-warning text-dark",
+            'respaldar': "bg-indigo text-white", // Requiere CSS personalizado si usas Bootstrap estándar
+            'restaurar': "bg-teal text-white"    // Requiere CSS personalizado si usas Bootstrap estándar
+        };
+        const clase = colores[accion.toLowerCase()] || "bg-secondary";
         return `<span class="badge ${clase}">${accion}</span>`;
     };
 
@@ -119,7 +190,7 @@ function consultar() {
                 const btn = e.target.closest('button');
                 if (!btn) return;
                 if (btn.classList.contains('ver-detalle')) {
-                    mostrarDetalle(cell.getData()); // En Bitácora pasas la data completa
+                    mostrarDetalle(cell.getData());
                 }
             }
         }

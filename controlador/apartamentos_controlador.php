@@ -3,6 +3,7 @@ use haydee\ayuda\Sesiones;
 use haydee\modelo\Apartamento;
 use haydee\modelo\Habitantes;
 use haydee\modelo\Bitacora;
+use haydee\servicios\GestorAuditoria;
 
 // Verificaciones de seguridad
 Sesiones::verificarSesion();
@@ -45,34 +46,30 @@ if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
+    // INSTANCIAMOS DOS AUDITORES (Uno para cada modelo)
+    $auditorApartamento = new GestorAuditoria($apartamento, GESTIONAR_APARTAMENTOS);
+    $auditorHabitante = new GestorAuditoria($habitante, GESTIONAR_HABITANTES);
+
     try {
         switch ($operacion) {
             // ================= APARTAMENTOS =================
             case 'consulta':
                 $respuesta = $apartamento->realizar_consulta('consultar_listado');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(CONSULTAR, GESTIONAR_APARTAMENTOS);
+                    $auditorApartamento->registrarAuditoria('consultar');
                 }
                 break;
 
             case 'registrar':
                 $respuesta = $apartamento->realizar_consulta('registrar_apartamento');
                 if ($respuesta['estatus']) {
-                    $nuevos = [
-                        'nro_apartamento' => $apartamento->get_nro_apartamento(),
-                        'porcentaje_participacion' => $apartamento->get_porcentaje_participacion(),
-                        'gas' => $apartamento->get_gas(),
-                        'agua' => $apartamento->get_agua(),
-                        'alquilado' => $apartamento->get_alquilado()
-                    ];
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_APARTAMENTOS, null, null, $nuevos);
+                    $auditorApartamento->registrarAuditoria('registrar');
                 }
                 break;
 
             case 'consulta_especifica':
                 $respuesta = $apartamento->realizar_consulta('consultar_detalle_completo');
                 if ($respuesta['estatus']) {
-                    // Reestructurar para mantener compatibilidad con el frontend
                     $datos = $respuesta['datos'];
                     $respuesta = [
                         'estatus' => true,
@@ -83,35 +80,18 @@ if (isset($_POST["operacion"])) {
                 break;
 
             case 'modificar':
-                // Obtener datos anteriores del apartamento
-                $tempApart = new Apartamento();
-                $tempApart->set_id_apartamento($apartamento->get_id_apartamento());
-                $datosAnteriores = $tempApart->realizar_consulta('consultar_detalle_completo');
-                $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
-
+                $auditorApartamento->capturarDatosAnteriores('consultar_detalle_completo');
                 $respuesta = $apartamento->realizar_consulta('modificar_apartamento');
-                if ($respuesta['estatus']) {
-                    $nuevo = [
-                        'nro_apartamento' => $apartamento->get_nro_apartamento(),
-                        'porcentaje_participacion' => $apartamento->get_porcentaje_participacion(),
-                        'gas' => $apartamento->get_gas(),
-                        'agua' => $apartamento->get_agua(),
-                        'alquilado' => $apartamento->get_alquilado()
-                    ];
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_APARTAMENTOS, null, $anterior, $nuevo);
+                if ($respuesta['estatus']) { 
+                    $auditorApartamento->registrarAuditoria('modificar'); 
                 }
                 break;
 
             case 'eliminar':
-                // Obtener datos anteriores
-                $tempApart = new Apartamento();
-                $tempApart->set_id_apartamento($apartamento->get_id_apartamento());
-                $datosAnteriores = $tempApart->realizar_consulta('consultar_detalle_completo');
-                $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
-
+                $auditorApartamento->capturarDatosAnteriores('consultar_detalle_completo');
                 $respuesta = $apartamento->realizar_consulta('eliminar_apartamento');
-                if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_APARTAMENTOS, null, $anterior, null);
+                if ($respuesta['estatus']) { 
+                    $auditorApartamento->registrarAuditoria('eliminar'); 
                 }
                 break;
 
@@ -130,22 +110,9 @@ if (isset($_POST["operacion"])) {
                 break;
 
             case 'registrar_habitantes':
-                // Preparar datos para bitácora (nuevos)
-                $nuevosDatos = [
-                    'nombre' => $habitante->get_nombre(),
-                    'apellido' => $habitante->get_apellido(),
-                    'cedula' => $habitante->get_cedula(),
-                    'telefono' => $habitante->get_telefono(),
-                    'correo' => $habitante->get_correo(),
-                    'fecha_nacimiento' => $habitante->get_fecha_nacimiento(),
-                    'sexo' => $habitante->get_sexo(),
-                    'apartamento_id' => $habitante->get_nuevo_apartamento_id(),
-                    'tipo_vinculo' => $habitante->get_nuevo_tipo_vinculo()
-                ];
-
                 $respuesta = $habitante->realizar_consulta('registrar_con_relacion');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_HABITANTES, null, null, $nuevosDatos);
+                    $auditorHabitante->registrarAuditoria('registrar');
                 }
                 break;
 
@@ -154,41 +121,21 @@ if (isset($_POST["operacion"])) {
                 break;
 
             case 'modificar_habitantes':
-                // Obtener datos anteriores del habitante
-                $tempHab = new Habitantes();
-                $tempHab->set_id_habitante($habitante->get_id_habitante());
-                $datosAnteriores = $tempHab->realizar_consulta('consultar_habitante');
-                $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
-
-                // Ejecutar modificación
+                // Capturar, Ejecutar, Auditar
+                $auditorHabitante->capturarDatosAnteriores('consultar_habitante');
                 $respuesta = $habitante->realizar_consulta('modificar_con_relacion');
+                
                 if ($respuesta['estatus']) {
-                    // Construir array con los nuevos datos
-                    $nuevo = [
-                        'nombre' => $habitante->get_nombre(),
-                        'apellido' => $habitante->get_apellido(),
-                        'cedula' => $habitante->get_cedula(),
-                        'telefono' => $habitante->get_telefono(),
-                        'correo' => $habitante->get_correo(),
-                        'fecha_nacimiento' => $habitante->get_fecha_nacimiento(),
-                        'sexo' => $habitante->get_sexo(),
-                        'apartamento_id' => $habitante->get_nuevo_apartamento_id(),
-                        'tipo_vinculo' => $habitante->get_nuevo_tipo_vinculo()
-                    ];
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_HABITANTES, null, $anterior, $nuevo);
+                    $auditorHabitante->registrarAuditoria('modificar');
                 }
                 break;
 
             case 'eliminar_habitantes':
-                // Obtener datos anteriores
-                $tempHab = new Habitantes();
-                $tempHab->set_id_habitante($habitante->get_id_habitante());
-                $datosAnteriores = $tempHab->realizar_consulta('consultar_habitante');
-                $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
-
+                $auditorHabitante->capturarDatosAnteriores('consultar_habitante');
                 $respuesta = $habitante->realizar_consulta('eliminar');
+                
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_HABITANTES, null, $anterior, null);
+                    $auditorHabitante->registrarAuditoria('eliminar');
                 }
                 break;
 
@@ -204,14 +151,10 @@ if (isset($_POST["operacion"])) {
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
         if ($respuesta !== null) {
-            // Cerrar conexiones explícitamente
-            if (isset($apartamento)) {
-                $apartamento->cerrar();
-            }
-            if (isset($habitante)) {
-                $habitante->cerrar();
-            }
-            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexión de seguridad
+            if (isset($apartamento)) $apartamento->cerrar();
+            if (isset($habitante)) $habitante->cerrar();
+            
+            Bitacora::cerrarConexionBitacora(); 
             
             header('Content-Type: application/json');
             echo json_encode($respuesta);
@@ -281,6 +224,10 @@ if (isset($_POST["validar"])) {
 
     echo json_encode($respuesta);
     exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_APARTAMENTOS);
 }
 
 // Cargar la vista

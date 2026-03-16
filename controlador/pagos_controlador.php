@@ -4,6 +4,7 @@ use haydee\modelo\Pagos;
 use haydee\modelo\Banco;
 use haydee\modelo\Apartamento;
 use haydee\modelo\Bitacora;
+use haydee\servicios\GestorAuditoria;
 use haydee\ayuda\ConstructorDetalles;
 
 // Verificar sesión
@@ -36,6 +37,9 @@ if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
+    // Instanciamos el auditor
+    $auditor = new GestorAuditoria($pagos, GESTIONAR_PAGOS);
+
     try {
         switch ($operacion) {
             // ==================== CONSULTAS ====================
@@ -46,7 +50,7 @@ if (isset($_POST["operacion"])) {
                     $respuesta = $pagos->realizar_consulta('consultar_pagos');
                 }
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(CONSULTAR, GESTIONAR_PAGOS, null, null, null);
+                    $auditor->registrarAuditoria('consultar');
                 }
                 break;
 
@@ -59,9 +63,6 @@ if (isset($_POST["operacion"])) {
                 break;
 
             case 'consultar_detalles':
-                $respuesta = $pagos->realizar_consulta('consultar_pago_unico');
-                break;
-
             case 'consulta_especifica':
                 $respuesta = $pagos->realizar_consulta('consultar_pago_unico');
                 break;
@@ -72,12 +73,10 @@ if (isset($_POST["operacion"])) {
 
             // ==================== REGISTRO ====================
             case 'registrar':
-                // Los propietarios pueden registrar
                 if ($esPropietario) {
                     $pagos->set_estado('No verificado');
                 }
 
-                // Construir detalles con el helper
                 $configPagos = [
                     'campos' => ['fecha', 'monto', 'tipo_pago', 'monto_dolar'],
                     'bancarios' => ['banco_id', 'referencia'],
@@ -93,40 +92,23 @@ if (isset($_POST["operacion"])) {
 
                 $respuesta = $pagos->realizar_consulta('registrar');
                 if ($respuesta['estatus']) {
-                    // Datos nuevos para bitácora (resumen)
-                    $nuevos = [
-                        'apartamento_id' => $pagos->get_apartamento_id(),
-                        'mensualidad_id' => $pagos->get_mensualidad_id(),
-                        'estado' => $pagos->get_estado(),
-                        'cantidad_detalles' => count($detalles),
-                        'monto_total' => array_sum(array_column($detalles, 'monto'))
-                    ];
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_PAGOS, null, null, $nuevos);
+                    // Ocultamos los detalles al auditor para evitar colapsos
+                    $pagos->setDetallesTemp(null);
+                    $auditor->registrarAuditoria('registrar');
                 }
                 break;
 
             // ==================== MODIFICAR ====================
             case 'modificar':
-                // Los propietarios NO pueden modificar
                 if ($esPropietario) {
                     $respuesta = ['estatus' => false, 'mensaje' => 'No autorizado para modificar'];
                     break;
                 }
 
-                // Obtener datos anteriores
-                $tempPagos = new Pagos();
-                $tempPagos->set_id_pago($_POST['id_pago']);
-                $datosAnteriores = $tempPagos->realizar_consulta('consultar_pago_unico');
-                $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
-                $anteriorResumen = [
-                    'apartamento_id' => $anterior['apartamento_id'] ?? null,
-                    'mensualidad_id' => $anterior['mensualidad_id'] ?? null,
-                    'estado' => $anterior['estado'] ?? null,
-                    'cantidad_detalles' => count($anterior['detalles'] ?? []),
-                    'monto_total' => array_sum(array_column($anterior['detalles'] ?? [], 'monto'))
-                ];
+                // Usamos la consulta plana para la bitácora
+                $auditor->capturarDatosAnteriores('consultar_cabecera_pago');
 
-                 $configPagos = [
+                $configPagos = [
                     'campos' => ['fecha', 'monto', 'tipo_pago', 'monto_dolar'],
                     'bancarios' => ['banco_id', 'referencia'],
                     'imagenes' => 'imagen',
@@ -137,20 +119,14 @@ if (isset($_POST["operacion"])) {
                     'indice_archivo_formato' => '/^imagen_(\d+)$/'
                 ];
 
-                // Construir nuevos detalles (con imágenes existentes)
                 $detalles = ConstructorDetalles::construirDetalles($_POST, $_FILES, $configPagos, true);
                 $pagos->setDetallesTemp($detalles);
 
                 $respuesta = $pagos->realizar_consulta('modificar');
                 if ($respuesta['estatus']) {
-                    $nuevoResumen = [
-                        'apartamento_id' => $pagos->get_apartamento_id(),
-                        'mensualidad_id' => $pagos->get_mensualidad_id(),
-                        'estado' => $pagos->get_estado(),
-                        'cantidad_detalles' => count($detalles),
-                        'monto_total' => array_sum(array_column($detalles, 'monto'))
-                    ];
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_PAGOS, null, $anteriorResumen, $nuevoResumen);
+                    // Ocultamos los detalles al auditor
+                    $pagos->setDetallesTemp(null);
+                    $auditor->registrarAuditoria('modificar');
                 }
                 break;
 
@@ -161,22 +137,12 @@ if (isset($_POST["operacion"])) {
                     break;
                 }
 
-                // Obtener datos anteriores
-                $tempPagos = new Pagos();
-                $tempPagos->set_id_pago($_POST['id_pago']);
-                $datosPago = $tempPagos->realizar_consulta('consultar_pago_unico');
-                $anterior = $datosPago['estatus'] ? $datosPago['datos'] : [];
-                $anteriorResumen = [
-                    'apartamento_id' => $anterior['apartamento_id'] ?? null,
-                    'mensualidad_id' => $anterior['mensualidad_id'] ?? null,
-                    'estado' => $anterior['estado'] ?? null,
-                    'cantidad_detalles' => count($anterior['detalles'] ?? []),
-                    'monto_total' => array_sum(array_column($anterior['detalles'] ?? [], 'monto'))
-                ];
+                // Usamos la consulta plana para la bitácora
+                $auditor->capturarDatosAnteriores('consultar_cabecera_pago');
 
                 $respuesta = $pagos->realizar_consulta('eliminar_pago');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_PAGOS, null, $anteriorResumen, null);
+                    $auditor->registrarAuditoria('eliminar');
                 }
                 break;
 
@@ -188,17 +154,11 @@ if (isset($_POST["operacion"])) {
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
         if ($respuesta !== null) {
-            // Cerrar conexiones explícitamente
-            if (isset($pagos)) {
-                $pagos->cerrar();
-            }
-            if (isset($banco)) {
-                $banco->cerrar();
-            }
-            if (isset($apartamento)) {
-                $apartamento->cerrar();
-            }
-            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexión de seguridad
+            if (isset($pagos)) { $pagos->cerrar(); }
+            if (isset($banco)) { $banco->cerrar(); }
+            if (isset($apartamento)) { $apartamento->cerrar(); }
+            
+            Bitacora::cerrarConexionBitacora();
 
             header('Content-Type: application/json');
             echo json_encode($respuesta);
@@ -234,10 +194,13 @@ if (isset($_POST["validar"])) {
 $registro_banco = $banco->realizar_consulta('consultar')['datos'] ?? [];
 if (!$esPropietario) {
     $registro_apartamento = $apartamento->realizar_consulta('consultar_listado')['datos'] ?? [];
-    
 } else {
     $apartamento->set_correo($_SESSION["usuario"]);
     $registro_apartamento = $apartamento->realizar_consulta('obtener_apartamentos_por_correo')['datos'] ?? [];
+}
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_PAGOS);
 }
 
 require_once "vista/pagos/pagos_vista.php";

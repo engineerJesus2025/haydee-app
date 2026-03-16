@@ -2,6 +2,7 @@
 use haydee\ayuda\Sesiones;
 use haydee\modelo\Banco;
 use haydee\modelo\Bitacora;
+use haydee\servicios\GestorAuditoria;
 
 // Verificaciones de seguridad
 Sesiones::verificarSesion();
@@ -22,27 +23,22 @@ if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
+    // Instanciamos el auditor
+    $auditor = new GestorAuditoria($banco, GESTIONAR_BANCOS);
+
     try{
         switch ($operacion) {
             case 'consulta':
                 $respuesta = $banco->realizar_consulta('consultar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(CONSULTAR, GESTIONAR_BANCOS);
+                    $auditor->registrarAuditoria('consultar');
                 }
                 break;
 
             case 'registrar':
                 $respuesta = $banco->realizar_consulta('registrar');
                 if ($respuesta['estatus']) {
-                    $nuevos = [
-                        'nombre_banco' => $banco->get_nombre_banco(),
-                        'numero_cuenta' => $banco->get_numero_cuenta(),
-                        'codigo' => $banco->get_codigo(),
-                        'telefono_afiliado' => $banco->get_telefono_afiliado(),
-                        'rif' => $banco->get_rif()
-                    ];
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_BANCOS,
-                        null, null, $nuevos);
+                    $auditor->registrarAuditoria('registrar');
                 }
                 break;
 
@@ -52,34 +48,21 @@ if (isset($_POST["operacion"])) {
 
             case 'modificar':
                 // Obtener datos anteriores
-                $tempBanco = new Banco();
-                $tempBanco->set_id_banco($banco->get_id_banco());
-                $datosAnteriores = $tempBanco->realizar_consulta('consultar_banco');
-                $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
+                $auditor->capturarDatosAnteriores('consultar_banco');
 
                 $respuesta = $banco->realizar_consulta('modificar');
-                if ($respuesta['estatus']) {
-                    $nuevo = [
-                        'nombre_banco' => $banco->get_nombre_banco(),
-                        'numero_cuenta' => $banco->get_numero_cuenta(),
-                        'codigo' => $banco->get_codigo(),
-                        'telefono_afiliado' => $banco->get_telefono_afiliado(),
-                        'rif' => $banco->get_rif()
-                    ];
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_BANCOS, null, $anterior, $nuevo);
+                if ($respuesta['estatus']) { 
+                    $auditor->registrarAuditoria('modificar'); 
                 }
                 break;
 
             case 'eliminar':
                 // Obtener datos anteriores
-                $tempBanco = new Banco();
-                $tempBanco->set_id_banco($banco->get_id_banco());
-                $datosAnteriores = $tempBanco->realizar_consulta('consultar_banco');
-                $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
+                $auditor->capturarDatosAnteriores('consultar_banco');
 
                 $respuesta = $banco->realizar_consulta('eliminar');
-                if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_BANCOS, null, $anterior, null);
+                if ($respuesta['estatus']) { 
+                    $auditor->registrarAuditoria('eliminar'); 
                 }
                 break;
 
@@ -130,6 +113,10 @@ if (isset($_POST["validar"])) {
         echo json_encode(['estatus' => false, 'mensaje' => 'Validación no reconocida']);
     }
     exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_BANCOS);
 }
 
 // Cargar la vista

@@ -110,60 +110,67 @@ switch ($pagina_actual) {
             <button class="btn btn-link nav-link position-relative text-secondary" role="button" data-bs-toggle="dropdown" aria-expanded="false" id="notificaciones-toggle">
                 <span data-tooltip="true" title="Ver Notificaciones" class="d-inline-block">
                     <i class="bi bi-bell fs-5"></i>
-                    <span id="count-label" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger <?php echo (count($_SESSION['notificaciones']) == 0) ? 'd-none' : ''; ?>">
+                    <span id="count-label" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger <?php echo (empty($_SESSION['notificaciones'])) ? 'd-none' : ''; ?>">
                         <?php echo (count($_SESSION["notificaciones"]) > 99) ? '+99' : count($_SESSION["notificaciones"]); ?>
                     </span>
                 </span>
             </button>
-            <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 dropdown-menu-notifications" aria-labelledby="notificaciones-toggle" id="notificaciones-list">
-                    
-                    <li class="dropdown-header py-3 px-3 d-flex justify-content-between align-items-center border-bottom">
-                        <span class="fw-bold fs-6">Notificaciones</span>
-                        <a href="#" class="text-primary small text-decoration-underline" id="marcar-todas-leidas">Marcar todas como leídas</a>
-                    </li>
-                    <div id="lista-notificaciones-items">
-                        <?php if (!empty($_SESSION["notificaciones"])): ?>
-                            <?php foreach ($_SESSION["notificaciones"] as $notificacion): ?>                                
-                                <li class="notif-item <?php echo (!empty($notificacion['leida']) && $notificacion['leida']) ? '' : 'notif-unread'; ?>">                            
-                                    <a href="?pagina=<?php echo $notificacion['tabla_origen']; ?>&accion=inicio&buscar=<?php echo $notificacion['id_registro_origen'] ?>"
-                                        class="notif-link"
-                                        title="Ir a la notificación">
-                                        <div class="notif-icon-circle">
-                                            <i class="bi bi-info-circle"></i>
-                                        </div>                                     
-                                        <div class="d-flex flex-column justify-content-between align-items-start">
-                                            <div>
-                                                <div class="notif-title">
-                                                    <?php echo htmlspecialchars($notificacion["titulo"]); ?>
-                                                </div>
-                                                <div class="notif-description">
-                                                    <?php echo htmlspecialchars($notificacion["descripcion"]); ?>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <div class="notif-date"><?php echo date('d/m/Y', strtotime($notificacion['fecha'] ?? 'now')); ?></div>
-                                            </div>
+            
+            <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 dropdown-menu-notifications p-0" aria-labelledby="notificaciones-toggle" id="notificaciones-list">
+                
+                <div class="dropdown-header py-3 px-3 d-flex justify-content-between align-items-center border-bottom bg-white rounded-top">
+                    <span class="fw-bold fs-6 text-dark">Notificaciones</span>
+                    <a href="#" class="text-primary small text-decoration-none <?php echo (empty($_SESSION["notificaciones"])) ? 'd-none' : ''; ?>" id="marcar-todas-leidas">
+                        Marcar todas como leídas
+                    </a>
+                </div>
+                
+                <div id="lista-notificaciones-items" class="bg-white">
+                    <?php if (!empty($_SESSION["notificaciones"])): ?>
+                        <?php foreach ($_SESSION["notificaciones"] as $notificacion): ?>                                
+                            <div class="notif-item d-flex align-items-start <?php echo (!empty($notificacion['leida']) && $notificacion['leida']) ? '' : 'notif-unread'; ?>">                            
+                                <a href="?pagina=<?php echo $notificacion['tabla_origen']; ?>&accion=inicio&buscar=<?php echo $notificacion['id_registro_origen'] ?>"
+                                    class="notif-link d-flex flex-grow-1 align-items-center text-decoration-none"
+                                    title="Ir a la notificación">
+                                    
+                                    <div class="notif-icon-circle bg-light text-primary me-3">
+                                        <i class="bi bi-info-circle"></i>
+                                    </div>                                     
+                                    
+                                    <div class="d-flex flex-column justify-content-center" style="width: calc(100% - 60px);">
+                                        <div class="notif-title text-truncate text-dark mb-1" style="max-width: 95%;">
+                                            <?php echo htmlspecialchars($notificacion["titulo"]); ?>
                                         </div>
-                                    </a>
-                                    <button type="button" class="btn notif-remove-btn"
-                                        data-id="<?php echo ($notificacion['id_notificacion']); ?>"
-                                        title="Marcar como leída" aria-label="Marcar notificación como leída">
-                                        <i class="bi bi-x-lg"></i>
-                                    </button>
-                                </li>
-
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <li class="notif-empty" id="no-hay-notificaciones">
-                                <i class="bi bi-bell-slash fs-1 d-block mb-3 opacity-50"></i>
-                                <span class="d-block">No hay notificaciones nuevas</span>
-                            </li>
-                        <?php endif; ?>
-                    </div>
-                    <li class="dropdown-footer text-center border-top">
-                        <a href="?pagina=notificaciones&accion=inicio" class="text-primary small text-decoration-none d-block py-2">Ver todas las notificaciones</a>
-                    </li>
-                </ul>
+                                        <div class="notif-description text-truncate text-muted mb-1" style="max-width: 95%;">
+                                            <?php echo htmlspecialchars($notificacion["descripcion"]); ?>
+                                        </div>
+                                        <div class="notif-date text-muted" style="font-size: 0.7rem;">
+                                            <i class="bi bi-clock me-1"></i><?php echo date('d/m/Y', strtotime($notificacion['fecha'] ?? 'now')); ?>
+                                        </div>
+                                    </div>
+                                </a>
+                                
+                                <button type="button" class="btn notif-remove-btn shadow-none ms-2 mt-1"
+                                    data-id="<?php echo ($notificacion['id_notificacion']); ?>"
+                                    title="Marcar como leída" aria-label="Marcar notificación como leída">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <div class="notif-empty py-5 text-center" id="no-hay-notificaciones">
+                            <div class="d-inline-flex justify-content-center align-items-center rounded-circle bg-light mb-3" style="width: 60px; height: 60px;">
+                                <i class="bi bi-bell-slash fs-3 text-secondary"></i>
+                            </div>
+                            <span class="d-block text-secondary fw-medium">No hay notificaciones nuevas</span>
+                        </div>
+                    <?php endif; ?>
+                </div>
+                
+                <div class="dropdown-footer text-center border-top bg-light rounded-bottom">
+                    <a href="?pagina=notificaciones&accion=inicio" class="text-primary fw-semibold small text-decoration-none d-block py-2">Ver el historial completo</a>
+                </div>
+            </div>
         </div>
 
         <div class="dropdown">

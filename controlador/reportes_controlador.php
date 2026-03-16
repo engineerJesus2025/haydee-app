@@ -74,7 +74,6 @@ if (isset($_POST["operacion"])) {
                     'edad_maxima' => $_POST['edad_maxima'] ?? null,
                     'tipo_residente' => $_POST['tipo_residente'] ?? 'todos',
                     'servicios' => $_POST['servicios'] ?? [],
-                    // --- FILTROS DE TIEMPO ---
                     'filtro_tiempo' => $_POST['filtro_tiempo'] ?? 'todo',
                     'fecha_inicio' => $_POST['fecha_inicio_habitantes'] ?? '',
                     'fecha_fin' => $_POST['fecha_fin_habitantes'] ?? ''
@@ -177,6 +176,16 @@ switch ($accion) {
         $dompdf = new Dompdf(['enable_remote' => true]);
         $dompdf->loadHtml($html);
         $dompdf->render();
+
+        // -> Registrar la acción en bitácora antes de descargar <-
+        $detallesReporte = [
+            'tipo_reporte' => 'Constancia de Solvencia',
+            'propietario'  => $registro_propietario["nombre"] . " " . $registro_propietario["apellido"],
+            'cedula'       => $registro_propietario["cedula"] ?? 'N/A'
+        ];
+        
+        Bitacora::registrar(DESCARGAR, GESTIONAR_REPORTES, null, null, $detallesReporte);
+
         $dompdf->stream("solvencia_" . $registro_propietario["nombre"] . "_" . $registro_propietario["apellido"]);
         break;
 
@@ -197,6 +206,13 @@ switch ($accion) {
         $dompdf = new Dompdf(['enable_remote' => true]);
         $dompdf->loadHtml($html);
         $dompdf->render();
+
+        $detallesReporte = [
+            'tipo_reporte' => 'Constancia de Residencia',
+            'habitante'    => $registro_propietario["nombre"] . " " . $registro_propietario["apellido"]
+        ];
+        Bitacora::registrar(DESCARGAR, GESTIONAR_REPORTES, null, null, $detallesReporte);
+
         $dompdf->stream("constancia_residencia_" . $registro_propietario["nombre"] . "_" . $registro_propietario["apellido"]);
         break;
 
@@ -232,8 +248,15 @@ switch ($accion) {
 
         $dompdf = new Dompdf(['enable_remote' => true]);
         $dompdf->loadHtml($html);
-        $dompdf->setPaper('A4', 'landscape'); // Sugerencia: Los cuadros de pago suelen requerir hoja horizontal
+        $dompdf->setPaper('A4', 'landscape'); // Nota para el jesus del futuro: segun los cuadros de pago suelen requerir hoja horizontal
         $dompdf->render();
+
+        $detallesReporte = [
+            'tipo_reporte' => 'Cuadro de Pagos',
+            'periodo'      => str_pad($mes_limite, 2, '0', STR_PAD_LEFT) . "-" . $anio_limite
+        ];
+        Bitacora::registrar(DESCARGAR, GESTIONAR_REPORTES, null, null, $detallesReporte);
+
         $dompdf->stream("Cuadro_Pagos_" . str_pad($mes_limite, 2, '0', STR_PAD_LEFT) . "-" . $anio_limite . ".pdf");
         break;
 
@@ -326,6 +349,15 @@ switch ($accion) {
         $dompdf = new Dompdf(['enable_remote' => true]);
         $dompdf->loadHtml($html);
         $dompdf->render();
+
+        $detallesReporte = [
+            'tipo_reporte' => 'Recibo de Pago Individual',
+            'recibo_nro'   => $detalles_recibo['id_pago'],
+            'propietario'  => $detalles_recibo['nombre'] . " " . $detalles_recibo['apellido'],
+            'monto_total'  => $detalles_recibo['total']
+        ];
+        Bitacora::registrar(DESCARGAR, GESTIONAR_REPORTES, null, null, $detallesReporte);
+
         $dompdf->stream("recibo_pago_". $detalles_recibo['nombre'] ."_" . $detalles_recibo['apellido'] . "_" . $fecha_pago->format('Y-m-d') . ".pdf");
         break;
 

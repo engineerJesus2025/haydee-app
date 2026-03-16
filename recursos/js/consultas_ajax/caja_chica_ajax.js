@@ -153,13 +153,24 @@ async function consultarCajasChicas() {
     });
     select.appendChild(fragment);
 
-    // Si hay una caja seleccionada por defecto, disparar el cambio
-    if (select.value) {
-        select.dispatchEvent(new Event('change'));
-    }
+    let idBuscar = Notificaciones.obtenerIdBusqueda();
+    let opcionExiste = idBuscar ? Array.from(select.options).some(opt => opt.value === String(idBuscar)) : false;
 
-    // Usar la herramienta centralizada para notificaciones
-    Notificaciones.resaltarEnSelect('mes_select');
+    if (idBuscar && opcionExiste) {
+        // 1. Si hay una notificación válida, dejamos que el script centralizado dispare el evento
+        Notificaciones.resaltarEnSelect('mes_select');
+    } else {
+        // 2. Si venía de una notificación pero la caja ya no existe, mostramos el error manual
+        if (idBuscar && !opcionExiste) {
+            Notificaciones.mostrarToast('error', 'No encontrado', 'La caja notificada no existe o se encuentra cerrada.');
+            Notificaciones.limpiarUrl();
+        }
+        
+        // 3. Como no hubo evento de notificación, disparamos el cambio normal para cargar la tabla
+        if (select.value) {
+            select.dispatchEvent(new Event('change'));
+        }
+    }
 }
 
 // ========== INICIALIZAR TABLA DE MOVIMIENTOS ==========

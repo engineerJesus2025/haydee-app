@@ -50,21 +50,44 @@ document.querySelectorAll('.contra-btn').forEach(boton => {
     });
 });
 
-// Botones de edición/cancelación
+// Botones de edición/cancelación con transición suave
 document.getElementById('boton_modificar')?.addEventListener('click', () => {
+    // Pasar datos al formulario (usamos el ID del correo de la columna derecha)
     document.getElementById('nombre').value = document.getElementById('p_nombre').textContent;
     document.getElementById('apellido').value = document.getElementById('p_apellido').textContent;
     document.getElementById('correo').value = document.getElementById('p_correo').textContent;
 
-    document.getElementById('body_perfil').setAttribute('hidden', '');
-    document.getElementById('form_perfil').removeAttribute('hidden');
+    const bodyPerfil = document.getElementById('body_perfil');
+    const formPerfil = document.getElementById('form_perfil');
+
+    // Intercambiar visibilidad
+    bodyPerfil.setAttribute('hidden', '');
+    formPerfil.removeAttribute('hidden');
+    
+    // Aplicar animación al formulario
+    formPerfil.classList.remove('animacion-aparecer');
+    void formPerfil.offsetWidth; // Truco para reiniciar la animación
+    formPerfil.classList.add('animacion-aparecer');
+
     document.getElementById('boton_modificar').setAttribute('disabled', '');
 });
 
 document.getElementById('boton_cancelar')?.addEventListener('click', () => {
+    // Limpiar clases de validación
     document.querySelectorAll('.is-valid, .is-invalid').forEach(input => input.classList.remove('is-valid', 'is-invalid'));
-    document.getElementById('form_perfil').setAttribute('hidden', '');
-    document.getElementById('body_perfil').removeAttribute('hidden');
+    
+    const bodyPerfil = document.getElementById('body_perfil');
+    const formPerfil = document.getElementById('form_perfil');
+
+    // Intercambiar visibilidad
+    formPerfil.setAttribute('hidden', '');
+    bodyPerfil.removeAttribute('hidden');
+    
+    // Aplicar animación a la vista de perfil
+    bodyPerfil.classList.remove('animacion-aparecer');
+    void bodyPerfil.offsetWidth; // Truco para reiniciar la animación
+    bodyPerfil.classList.add('animacion-aparecer');
+
     document.getElementById('boton_modificar').removeAttribute('disabled');
 });
 
@@ -76,7 +99,9 @@ async function llenarCardUsuario() {
     const formData = new FormData();
     formData.append('operacion', 'consultar_perfil_usuario');
 
+    // Mantenemos el 'false' para que sea una petición en silencio (sin modal de carga global)
     const respuesta = await Peticiones.enviar(formData, '', false);
+    
     if (!respuesta.estatus) {
         Alertas.mostrar('error', 'Atención', respuesta.mensaje || 'Error al cargar perfil');
         return;
@@ -85,25 +110,22 @@ async function llenarCardUsuario() {
     const usuario = respuesta.datos;
     const [claseBadge, claseIcono] = definirColorBadge(usuario.nombre_rol);
 
-    // --- NUEVA LÓGICA DE AVATAR VISUAL (INICIALES) ---
-    // Tomamos la primera letra del nombre y la primera del apellido
+    // --- LÓGICA DE AVATAR VISUAL (INICIALES) ---
     const inicialNombre = usuario.nombre_usuario.charAt(0).toUpperCase();
     const inicialApellido = usuario.apellido.charAt(0).toUpperCase();
     const iniciales = `${inicialNombre}${inicialApellido}`;
     
-    // Inyectamos las iniciales eliminando el placeholder
     const contenedorAvatar = document.getElementById('contenedor_avatar');
+    contenedorAvatar.classList.remove('skeleton'); // Quitamos la animación al avatar
     contenedorAvatar.innerHTML = iniciales;
     
-    // Extraemos el color de fondo (bg-primary, bg-warning, etc.) del array claseBadge para pintar el avatar
-    const claseColorFondo = claseBadge.split(' ')[1]; // toma 'bg-primary' de 'badge bg-primary'
-    contenedorAvatar.classList.remove('bg-primary'); // quitamos el azul por defecto
+    const claseColorFondo = claseBadge.split(' ')[1]; 
+    contenedorAvatar.classList.remove('bg-primary'); 
     contenedorAvatar.classList.add(claseColorFondo);
     if(claseColorFondo === 'bg-warning' || claseColorFondo === 'bg-info') {
         contenedorAvatar.classList.replace('text-white', 'text-dark');
     }
-    // ------------------------------------------------
-
+    // Inyectamos los datos y borramos los esqueletos
     document.getElementById('titulo_nombre').textContent = `${usuario.nombre_usuario} ${usuario.apellido}`;
     document.getElementById('p_nombre').textContent = usuario.nombre_usuario;
     document.getElementById('p_apellido').textContent = usuario.apellido;
@@ -117,7 +139,30 @@ async function llenarCardUsuario() {
     spamRol.className = claseBadge;
 
     document.getElementById('boton_modificar').removeAttribute('disabled');
-    document.getElementById('boton_modificar').innerHTML = '<i class="bi bi-pencil me-1"></i>modificar';
+
+    // Habilitar botón y cambiar texto
+    document.getElementById('boton_modificar').removeAttribute('disabled');
+    document.getElementById('boton_modificar').innerHTML = '<i class="bi bi-pencil me-1"></i> Modificar';
+
+    // --- ANIMACIÓN DE ENTRADA (FADE IN) ---
+    const elementosAAnimar = [
+        'contenedor_avatar', 
+        'titulo_nombre', 
+        'spam_rol', 
+        'ultimo_acceso', 
+        'p_nombre', 
+        'p_apellido', 
+        'p_correo',
+    ];
+    
+    elementosAAnimar.forEach(id => {
+        let el = document.getElementById(id);
+        if(el) {
+            el.classList.remove('animacion-aparecer');
+            void el.offsetWidth; // Truco de JS para forzar reinicio de la animación
+            el.classList.add('animacion-aparecer');
+        }
+    });
 }
 
 function llenarTablaNotificaciones() {
@@ -231,6 +276,12 @@ async function modificar() {
 
     document.getElementById('form_perfil').setAttribute('hidden', '');
     document.getElementById('body_perfil').removeAttribute('hidden');
+
+    // Disparamos la animación
+    bodyPerfil.classList.remove('animacion-aparecer');
+    void bodyPerfil.offsetWidth;
+    bodyPerfil.classList.add('animacion-aparecer');
+
     document.getElementById('boton_modificar').removeAttribute('disabled');
 }
 

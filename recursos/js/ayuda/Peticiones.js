@@ -53,6 +53,7 @@ const Peticiones = {
 
         } catch (error) {
             console.error("Error en Peticiones.enviar:", error);
+
             return {
                 estatus: false,
                 mensaje: "Error de conexión con el servidor.",

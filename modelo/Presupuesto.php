@@ -654,5 +654,33 @@ class Presupuesto extends Conexion
             return ['estatus' => false, 'mensaje' => 'Error al consultar presupuesto'];
         }
     }
+
+    /**
+     * Consulta plana solo de la cabecera del presupuesto para la bitácora de auditoría.
+     */
+    private function _consultar_cabecera_presupuesto()
+    {
+        $validacion = $this->validar(['id_presupuesto']);
+        if (!$validacion['estatus']) {
+            return $validacion;
+        }
+
+        try {
+            $sql = "SELECT fecha, cuota_reserva, observacion FROM presupuesto WHERE id_presupuesto = :id AND activo = 1";
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->execute([':id' => $this->id_presupuesto]);
+            $datos = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$datos) {
+                return ['estatus' => false, 'mensaje' => 'Presupuesto no encontrado'];
+            }
+
+            return ['estatus' => true, 'datos' => $datos];
+        } catch (PDOException $e) {
+            error_log("Error en _consultar_cabecera_presupuesto: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al consultar cabecera del presupuesto'];
+        }
+    }
+
 }
 ?>

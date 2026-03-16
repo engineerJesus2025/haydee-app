@@ -15,7 +15,10 @@ class Mantenimiento extends Conexion
             mkdir($backup_dir, 0777, true);
         }
 
-        $backup_file = $backup_dir . 'backup_' . $db_copiar . '_' . date('Y-m-d-H-i-s') . '.sql';
+        $timestamp = date('Y-m-d_H-i-s');
+        $tipo = "MANUAL";
+
+        $backup_file = $backup_dir . "backup_{$db_copiar}_{$timestamp}_{$tipo}.sql";
 
         $comando = $mysqldump_path
             . " --host=" . DB_HOST

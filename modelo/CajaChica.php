@@ -4,7 +4,7 @@ namespace haydee\modelo;
 use PDO;
 use PDOException;
 use DateTime;
-use haydee\modelo\Notificaciones;
+use haydee\servicios\GestorNotificaciones;
 
 class CajaChica extends Conexion
 {
@@ -502,13 +502,14 @@ class CajaChica extends Conexion
             }
 
             if (!empty($titulo)) {
-                $notificacion = new Notificaciones();
-                $notificacion->set_titulo($titulo);
-                $notificacion->set_descripcion($desc);
-                $notificacion->set_tabla_origen('caja_chica');
-                $notificacion->set_id_registro_origen($this->id_caja_chica);
-                $notificacion->set_tipo_evento('SALDO_BAJO');
-                $result = $notificacion->realizar_consulta('notificar_evento_admins');
+                // Usamos el gestor 
+                $result = GestorNotificaciones::notificarAdmins(
+                    $titulo,
+                    $desc,
+                    'caja_chica',
+                    $this->id_caja_chica,
+                    'SALDO_BAJO'
+                );
                 return $result['estatus'] ?? false;
             }
 

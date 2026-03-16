@@ -1,9 +1,9 @@
 <?php
-//Nota: quitar seccion de perfil, ya tiene su controlador aparte
 use haydee\ayuda\Sesiones;
 use haydee\modelo\Rol;
 use haydee\modelo\Usuario;
 use haydee\modelo\Bitacora;
+use haydee\servicios\GestorAuditoria;
 
 // Verificaciones de seguridad
 Sesiones::verificarSesion();
@@ -24,16 +24,20 @@ if (isset($_POST["operacion"])) {
     $usuario->set_correo($_POST['correo'] ?? null);
     $usuario->set_contra($_POST['contra'] ?? null);
     $usuario->set_rol_id($_POST['rol'] ?? null);
-    // También podría llegar 'rol_nombre' para actualizar sesión, pero no se asigna al modelo
+    // También podría llegar 'rol_nombre' para actualizar sesión, pero no se asigna al modelo :P
 
     $operacion = $_POST["operacion"];
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
+
+    // Instanciamos el auditor
+    $auditor = new GestorAuditoria($usuario, GESTIONAR_USUARIOS);
+    
     try {
         switch ($operacion) {
             case 'consulta':
                 $respuesta = $usuario->realizar_consulta('consultar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(CONSULTAR, GESTIONAR_USUARIOS);
+                    $auditor->registrarAuditoria('consultar');
                 }
                 break;
 
@@ -44,27 +48,13 @@ if (isset($_POST["operacion"])) {
             case 'registrar':
                 $respuesta = $usuario->realizar_consulta('registrar');
                 if ($respuesta['estatus']) {
-                    $nuevos = [
-                        'nombre' => $usuario->get_nombre(),
-                        'apellido' => $usuario->get_apellido(),
-                        'correo' => $usuario->get_correo(),
-                        'rol_id' => $usuario->get_rol_id()
-                    ];
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_USUARIOS, null, null, $nuevos);
+                    $auditor->registrarAuditoria('registrar');
                 }
                 break;
 
             case 'modificar_usuario':
                 // Obtener datos anteriores
-                $tempUsuario = new Usuario();
-                $tempUsuario->set_id_usuario($usuario->get_id_usuario());
-                $datosAnteriores = $tempUsuario->realizar_consulta('consultar_usuario');
-                $anterior = $datosAnteriores['estatus'] ? [
-                    'nombre' => $datosAnteriores['datos']['nombre_usuario'] ?? '',
-                    'apellido' => $datosAnteriores['datos']['apellido'] ?? '',
-                    'correo' => $datosAnteriores['datos']['correo'] ?? '',
-                    'rol_id' => $datosAnteriores['datos']['rol_id'] ?? ''
-                ] : [];
+                $auditor->capturarDatosAnteriores('consultar_usuario');
 
                 $respuesta = $usuario->realizar_consulta('modificar_usuario');
                 if ($respuesta['estatus']) {
@@ -72,37 +62,23 @@ if (isset($_POST["operacion"])) {
                         $_SESSION["nombre_completo"] = $usuario->get_nombre() . " " . $usuario->get_apellido();
                         $respuesta["esMismoUsuario"] = true;
                     }
-                    $nuevo = [
-                        'nombre' => $usuario->get_nombre(),
-                        'apellido' => $usuario->get_apellido(),
-                        'correo' => $usuario->get_correo(),
-                        'rol_id' => $usuario->get_rol_id()
-                    ];
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_USUARIOS, null, $anterior, $nuevo);
+                    $auditor->registrarAuditoria('modificar'); 
                 }
                 break;
 
             case 'eliminar':
                 // Obtener datos anteriores
-                $tempUsuario = new Usuario();
-                $tempUsuario->set_id_usuario($usuario->get_id_usuario());
-                $datosUsuario = $tempUsuario->realizar_consulta('consultar_usuario');
-                $anterior = $datosUsuario['estatus'] ? [
-                    'nombre' => $datosUsuario['datos']['nombre_usuario'] ?? '',
-                    'apellido' => $datosUsuario['datos']['apellido'] ?? '',
-                    'correo' => $datosUsuario['datos']['correo'] ?? '',
-                    'rol_id' => $datosUsuario['datos']['rol_id'] ?? ''
-                ] : [];
+                $auditor->capturarDatosAnteriores('consultar_usuario');
 
                 $respuesta = $usuario->realizar_consulta('eliminar_usuario');
-                if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_USUARIOS, null, $anterior, null);
+                if ($respuesta['estatus']) { 
+                    $auditor->registrarAuditoria('eliminar'); 
                 }
                 break;
 
             case 'ultimo_id':
                 $respuesta = $usuario->realizar_consulta('lastId');
-                            break;
+                break;
 
             default:
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
@@ -190,6 +166,10 @@ if (isset($_POST["validar"])) {
             echo json_encode(['estatus' => false, 'mensaje' => 'Validación no reconocida']);
     }
     exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_USUARIOS);
 }
 
 // Carga de vistas según acción

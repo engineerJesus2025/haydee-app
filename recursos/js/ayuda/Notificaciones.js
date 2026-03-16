@@ -68,26 +68,44 @@ const Notificaciones = {
         window.history.replaceState({}, document.title, url);
     },
 
-    resaltarEnTabulator: function(tabla, campoBusqueda) {
-        let idBuscar = this.obtenerIdBusqueda();
-        if (!idBuscar) return;
-
-        this.inyectarEstilos();
+    resaltarEnTabulator: function(tabla, campoBusqueda = null) {
+        // Quitamos la lectura de la URL aquí afuera.
+        // Dejaremos que la tabla la lea solo cuando termine de cargar.
 
         tabla.on("dataLoaded", function() {
             setTimeout(() => {
+                // Volvemos a consultar la URL en este exacto momento.
+                let idBuscar = Notificaciones.obtenerIdBusqueda();
+                
+                // Si la URL está limpia (porque el Select ya la consumió), abortamos en paz sin dar error
+                if (!idBuscar) return;
+
+                Notificaciones.inyectarEstilos();
+
                 let filas = tabla.getRows();
                 let filaEncontrada = filas.find(fila => {
-                    let valor = fila.getData()[campoBusqueda];
-                    if (typeof valor === 'string' && valor.includes(',')) {
-                        return valor.split(',').includes(String(idBuscar));
+                    let data = fila.getData();
+                    
+                    // 1. SI HAY COLUMNA EXPLÍCITA:
+                    if (campoBusqueda) {
+                        let valor = data[campoBusqueda];
+                        if (typeof valor === 'string' && valor.includes(',')) {
+                            return valor.split(',').includes(String(idBuscar));
+                        }
+                        return String(valor) === String(idBuscar);
+                    } 
+                    // 2. AUTO-DETECCIÓN INTELIGENTE:
+                    else {
+                        let clavePrimaria = Object.keys(data).find(key => key.startsWith('id_'));
+                        if (clavePrimaria) {
+                            return String(data[clavePrimaria]) === String(idBuscar);
+                        }
+                        return false;
                     }
-                    return String(valor) === String(idBuscar);
                 });
 
                 if (filaEncontrada) {
                     let elementoDOM = filaEncontrada.getElement();
-                    // Cambiamos a table-primary y border-primary
                     elementoDOM.classList.add('table-primary', 'border-primary', 'resaltar-pulso-azul');
                     
                     filaEncontrada.scrollTo().then(() => {
@@ -98,7 +116,7 @@ const Notificaciones = {
                         elementoDOM.classList.remove('table-primary', 'border-primary', 'resaltar-pulso-azul');
                     }, 5000);
 
-                    Notificaciones.limpiarUrl();
+                    Notificaciones.limpiarUrl(); 
                 } else {
                     Notificaciones.mostrarToast('error', 'No encontrado', 'El registro notificado ya no se encuentra en el sistema.');
                     Notificaciones.limpiarUrl();

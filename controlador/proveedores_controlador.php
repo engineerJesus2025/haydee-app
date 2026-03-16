@@ -2,6 +2,7 @@
 use haydee\ayuda\Sesiones;
 use haydee\modelo\Proveedores;
 use haydee\modelo\Bitacora;
+use haydee\servicios\GestorAuditoria;
 
 // Verificaciones de seguridad
 Sesiones::verificarSesion();
@@ -21,12 +22,15 @@ if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
+    // Instanciamos el auditor
+    $auditor = new GestorAuditoria($proveedor, GESTIONAR_PROVEEDORES);
+
     try {
         switch ($operacion) {
             case 'consulta':
                 $respuesta = $proveedor->realizar_consulta('consultar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(CONSULTAR, GESTIONAR_PROVEEDORES);
+                    $auditor->registrarAuditoria('consultar');
                 }
                 break;
 
@@ -38,55 +42,27 @@ if (isset($_POST["operacion"])) {
             case 'registrar':
                 $respuesta = $proveedor->realizar_consulta('registrar');
                 if ($respuesta['estatus']) {
-                    $nuevos = [
-                        'nombre_proveedor' => $proveedor->get_nombre_proveedor(),
-                        'servicio' => $proveedor->get_servicio(),
-                        'rif' => $proveedor->get_rif(),
-                        'direccion' => $proveedor->get_direccion()
-                    ];
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_PROVEEDORES, null, null, $nuevos);
+                    $auditor->registrarAuditoria('registrar');
                 }
                 break;
 
             case 'modificar':
                 // Obtener datos anteriores
-                $tempProveedor = new Proveedores();
-                $tempProveedor->set_id_proveedor($proveedor->get_id_proveedor());
-                $datosAnteriores = $tempProveedor->realizar_consulta('consultar_proveedor');
-                $anterior = $datosAnteriores['estatus'] ? [
-                    'nombre_proveedor' => $datosAnteriores['datos']['nombre_proveedor'] ?? '',
-                    'servicio' => $datosAnteriores['datos']['servicio'] ?? '',
-                    'rif' => $datosAnteriores['datos']['rif'] ?? '',
-                    'direccion' => $datosAnteriores['datos']['direccion'] ?? ''
-                ] : [];
+                $auditor->capturarDatosAnteriores('consultar_proveedor');
 
                 $respuesta = $proveedor->realizar_consulta('modificar');
-                if ($respuesta['estatus']) {
-                    $nuevo = [
-                        'nombre_proveedor' => $proveedor->get_nombre_proveedor(),
-                        'servicio' => $proveedor->get_servicio(),
-                        'rif' => $proveedor->get_rif(),
-                        'direccion' => $proveedor->get_direccion()
-                    ];
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_PROVEEDORES, null, $anterior, $nuevo);
+                if ($respuesta['estatus']) { 
+                    $auditor->registrarAuditoria('modificar'); 
                 }
                 break;
 
             case 'eliminar':
                 // Obtener datos anteriores
-                $tempProveedor = new Proveedores();
-                $tempProveedor->set_id_proveedor($proveedor->get_id_proveedor());
-                $datosProveedor = $tempProveedor->realizar_consulta('consultar_proveedor');
-                $anterior = $datosProveedor['estatus'] ? [
-                    'nombre_proveedor' => $datosProveedor['datos']['nombre_proveedor'] ?? '',
-                    'servicio' => $datosProveedor['datos']['servicio'] ?? '',
-                    'rif' => $datosProveedor['datos']['rif'] ?? '',
-                    'direccion' => $datosProveedor['datos']['direccion'] ?? ''
-                ] : [];
+                $auditor->capturarDatosAnteriores('consultar_proveedor');
 
                 $respuesta = $proveedor->realizar_consulta('eliminar');
-                if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_PROVEEDORES, null, $anterior, null);
+                if ($respuesta['estatus']) { 
+                    $auditor->registrarAuditoria('eliminar'); 
                 }
                 break;
 
@@ -113,6 +89,10 @@ if (isset($_POST["operacion"])) {
             exit;
         }
     }
+}
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_PROVEEDORES);
 }
 
 // Cargar la vista

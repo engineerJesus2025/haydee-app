@@ -2,6 +2,7 @@
 use haydee\ayuda\Sesiones;
 use haydee\modelo\CajaChica;
 use haydee\modelo\Bitacora;
+use haydee\servicios\GestorAuditoria;
 
 Sesiones::verificarSesion();
 Sesiones::verificarPermiso(GESTIONAR_CAJA_CHICA, CONSULTAR);
@@ -22,27 +23,25 @@ if (isset($_POST["operacion"])) {
 
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
+    // Instanciamos el auditor
+    $auditor = new GestorAuditoria($caja, GESTIONAR_CAJA_CHICA);
+
     try {
         switch ($operacion) {
             case 'consultar_cajas_chicas':
                 $respuesta = $caja->realizar_consulta('consultar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(CONSULTAR, GESTIONAR_CAJA_CHICA);
-                    
+                    $auditor->registrarAuditoria('consultar');
                 }
                 break;
 
             case 'modificar_descripcion':
-                // Obtener datos anteriores de la caja (necesitamos un método que devuelva la caja por ID)
-                $tempCaja = new CajaChica();
-                $tempCaja->set_id_caja_chica($caja->get_id_caja_chica());
-                $datosCaja = $tempCaja->realizar_consulta('consultar_caja_unica'); // Asumo que existe
-                $anterior = $datosCaja['estatus'] ? ['descripcion' => $datosCaja['datos']['descripcion']] : [];
+                // Obtener datos anteriores
+                $auditor->capturarDatosAnteriores('consultar_caja_unica');
 
                 $respuesta = $caja->realizar_consulta('modificar_descripcion');
-                if ($respuesta['estatus']) {
-                    $nuevo = ['descripcion' => $caja->get_descripcion()];
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_CAJA_CHICA, null, $anterior, $nuevo);
+                if ($respuesta['estatus']) { 
+                    $auditor->registrarAuditoria('modificar'); 
                 }
                 break;
 
@@ -56,11 +55,7 @@ if (isset($_POST["operacion"])) {
             case 'reponer_caja':
                 $respuesta = $caja->realizar_consulta('reponer_caja');
                 if ($respuesta['estatus']) {
-                    $nuevos = [
-                        'id_caja' => $caja->get_id_caja_chica(),
-                        'monto'   => $caja->get_monto_movimiento()
-                    ];
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_CAJA_CHICA, null, null, $nuevos);
+                    $auditor->registrarAuditoria('registrar');
                 }
                 break;
 
@@ -76,44 +71,27 @@ if (isset($_POST["operacion"])) {
             case 'registrar_movimiento':
                 $respuesta = $caja->realizar_consulta('registrar_movimiento');
                 if ($respuesta['estatus']) {
-                    $nuevos = [
-                        'concepto' => $caja->get_concepto(),
-                        'monto'    => $caja->get_monto_movimiento(),
-                        'fecha'    => $caja->get_fecha_movimiento()
-                    ];
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_CAJA_CHICA, null, null, $nuevos);
+                    $auditor->registrarAuditoria('registrar');
                 }
                 break;
 
             case 'modificar_movimiento':
                 // Obtener datos anteriores
-                $tempCaja = new CajaChica();
-                $tempCaja->set_id_movimiento_caja($caja->get_id_movimiento_caja());
-                $datosAnteriores = $tempCaja->realizar_consulta('consultar_movimiento_unico');
-                $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
+                $auditor->capturarDatosAnteriores('consultar_movimiento_unico');
 
                 $respuesta = $caja->realizar_consulta('modificar_movimiento');
-                if ($respuesta['estatus']) {
-                    // Datos nuevos (lo que se asignó)
-                    $nuevo = [
-                        'concepto' => $caja->get_concepto(),
-                        'fecha'    => $caja->get_fecha_movimiento()
-                        // Nota: el método _modificar_movimiento no modifica monto, por eso no se incluye
-                    ];
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_CAJA_CHICA, null, $anterior, $nuevo);
+                if ($respuesta['estatus']) { 
+                    $auditor->registrarAuditoria('modificar'); 
                 }
                 break;
 
             case 'eliminar_movimiento':
                 // Obtener datos anteriores
-                $tempCaja = new CajaChica();
-                $tempCaja->set_id_movimiento_caja($caja->get_id_movimiento_caja());
-                $datosAnteriores = $tempCaja->realizar_consulta('consultar_movimiento_unico');
-                $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
+                $auditor->capturarDatosAnteriores('consultar_movimiento_unico');
 
                 $respuesta = $caja->realizar_consulta('eliminar_movimiento');
-                if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_CAJA_CHICA, null, $anterior, null);
+                if ($respuesta['estatus']) { 
+                    $auditor->registrarAuditoria('eliminar'); 
                 }
                 break;
 
@@ -151,6 +129,10 @@ if (isset($_POST["validar"])) {
         }
     }
     exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_CAJA_CHICA);
 }
 
 require_once "vista/caja_chica/caja_chica_vista.php";

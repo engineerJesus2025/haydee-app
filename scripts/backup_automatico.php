@@ -65,7 +65,9 @@ echo "Directorio de backups: $backup_dir\n";
 echo "Ruta mysqldump: $mysqldump_path\n\n";
 
 foreach ($databases as $db) {
-    $filename = $backup_dir . $db . "_" . date('Y-m-d_H-i-s') . "_AUTOMATICO.sql";
+    $timestamp = date('Y-m-d_H-i-s');
+    $tipo = "AUTOMATICO";
+    $filename = $backup_dir . "backup_{$db}_{$timestamp}_{$tipo}.sql";
 
     // Escapar argumentos para el comando
     $command = sprintf(

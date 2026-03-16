@@ -2,6 +2,7 @@
 use haydee\ayuda\Sesiones;
 use haydee\modelo\Modulos;
 use haydee\modelo\Bitacora;
+use haydee\servicios\GestorAuditoria;
 
 Sesiones::verificarSesion();
 Sesiones::verificarPermiso(GESTIONAR_MODULOS, CONSULTAR); // Ajusta según tus constantes
@@ -13,12 +14,17 @@ if (isset($_POST["operacion"])) {
     $obj_modulo->set_id_modulo($_POST['id_modulo'] ?? null);
     $obj_modulo->set_nombre($_POST['nombre'] ?? null);
 
+    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
+
+    // Instanciamos el auditor
+    $auditor = new GestorAuditoria($obj_modulo, GESTIONAR_MODULOS);
+    
     try {
         switch ($operacion) {
             case 'consultar':
                 $respuesta = $obj_modulo->realizar_consulta('consultar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(CONSULTAR, GESTIONAR_obj_moduloS);
+                    $auditor->registrarAuditoria('consultar');
                 }
                 break;
 
@@ -29,35 +35,27 @@ if (isset($_POST["operacion"])) {
             case 'registrar':
                 $respuesta = $obj_modulo->realizar_consulta('registrar');
                 if ($respuesta['estatus']) {
-                    $nuevos = ['nombre' => $obj_modulo->get_nombre()];
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_obj_moduloS, null, null, $nuevos);
+                    $auditor->registrarAuditoria('registrar');
                 }
                 break;
 
             case 'modificar':
-                // Obtener anteriores
-                $tempobj_modulo = new Modulos;
-                $tempobj_modulo->set_id_modulo($obj_modulo->get_id_modulo());
-                $datosAnteriores = $tempobj_modulo->realizar_consulta('consultar_unico');
-                $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
+                // Obtener datos anteriores
+                $auditor->capturarDatosAnteriores('consultar_unico');
 
                 $respuesta = $obj_modulo->realizar_consulta('modificar');
                 if ($respuesta['estatus']) {
-                    $nuevo = ['nombre' => $obj_modulo->get_nombre()];
-                    Bitacora::registrar(MODIFICAR, GESTIONAR_obj_moduloS, null, $anterior, $nuevo);
+                    $auditor->registrarAuditoria('modificar');
                 }
                 break;
 
             case 'eliminar':
                 // Obtener datos anteriores
-                $tempobj_modulo = new Modulos;
-                $tempobj_modulo->set_id_modulo($obj_modulo->get_id_modulo());
-                $datosAnteriores = $tempobj_modulo->realizar_consulta('consultar_unico');
-                $anterior = $datosAnteriores['estatus'] ? $datosAnteriores['datos'] : [];
+                $auditor->capturarDatosAnteriores('consultar_unico');
 
                 $respuesta = $obj_modulo->realizar_consulta('eliminar');
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(ELIMINAR, GESTIONAR_obj_moduloS, null, $anterior, null);
+                    $auditor->registrarAuditoria('eliminar');
                 }
                 break;
 
@@ -80,6 +78,10 @@ if (isset($_POST["operacion"])) {
             exit;
         }
     }
+}
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_MODULOS);
 }
 
 // Cargar vista (si existe)

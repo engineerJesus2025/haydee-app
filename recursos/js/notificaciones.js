@@ -19,6 +19,8 @@ document.addEventListener('DOMContentLoaded', () => {
         itemContainer.remove();
 
         const countLabel = document.getElementById('count-label');
+        const btnMarcarTodas = document.getElementById('marcar-todas-leidas'); // Seleccionamos el enlace
+        
         if (!countLabel) return;
 
         // Contamos cuántas notificaciones quedan visualmente
@@ -31,13 +33,21 @@ document.addEventListener('DOMContentLoaded', () => {
             countLabel.textContent = '0';
             countLabel.classList.add('d-none');
             
+            // Ocultamos el enlace "Marcar todas como leídas"
+            if (btnMarcarTodas) {
+                btnMarcarTodas.classList.add('d-none');
+            }
+            
             const listaItems = document.getElementById('lista-notificaciones-items');
             if (listaItems) {
+                // Inyectamos el diseño vacío mejorado
                 listaItems.innerHTML = `
-                    <li class="notif-empty" id="no-hay-notificaciones">
-                        <i class="bi bi-bell-slash fs-1 d-block mb-3 opacity-50"></i>
-                        <span class="d-block">No hay notificaciones nuevas</span>
-                    </li>
+                    <div class="notif-empty py-5 text-center" id="no-hay-notificaciones">
+                        <div class="d-inline-flex justify-content-center align-items-center rounded-circle bg-light mb-3" style="width: 60px; height: 60px;">
+                            <i class="bi bi-bell-slash fs-3 text-secondary"></i>
+                        </div>
+                        <span class="d-block text-secondary fw-medium">No hay notificaciones nuevas</span>
+                    </div>
                 `;
             }
         }
@@ -78,12 +88,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 const itemContainer = linkNotificacion.closest('.notif-item');
                 const idNotificacion = itemContainer.querySelector('.notif-remove-btn').getAttribute('data-id');
 
-                // Enviamos la petición asíncrona (no importa si tarda, redirigimos de inmediato)
+                // Opcional: Le bajamos un poco la opacidad para que el usuario sepa que hizo clic
+                linkNotificacion.style.opacity = '0.5';
+
+                // AGREGAMOS AWAIT AQUÍ: Esperamos a que el servidor confirme que se marcó como leída
                 if (idNotificacion) {
-                    marcarComoLeida(idNotificacion);
+                    await marcarComoLeida(idNotificacion);
                 }
                 
-                // Redirigimos a la URL objetivo
+                // Ahora sí, con la petición terminada, redirigimos a la URL objetivo
                 window.location.href = linkNotificacion.href;
             }
         });
