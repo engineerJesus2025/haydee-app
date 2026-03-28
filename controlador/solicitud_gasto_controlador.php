@@ -3,26 +3,48 @@ use haydee\ayuda\Sesiones;
 use haydee\modelo\SolicitudGasto;
 use haydee\modelo\Presupuesto;
 use haydee\modelo\Bitacora;
+use haydee\ayuda\Validador;
+use haydee\ayuda\ValidadorBD;
 use haydee\servicios\GestorAuditoria;
 
 // Verificaciones de seguridad
 Sesiones::verificarSesion();
 Sesiones::verificarPermiso(GESTIONAR_SOLICITUD_GASTO, CONSULTAR);
 
-// Instancia del modelo principal
-$solicitud = new SolicitudGasto();
-
-// Variables para la vista (solo si no hay operación POST)
-$fecha_actual = date("Y-m");
-$presupuestos = [];
-
 if (isset($_POST["operacion"])) {
+    $operacion = $_POST["operacion"];
+
+    // =========================================================
+    // 0. NORMALIZACIÓN DE VARIABLES (Frontend -> Backend)
+    // =========================================================
+    if (isset($_POST['fecha'])) $_POST['fecha_reporte']  = $_POST['fecha'];
+    if (isset($_POST['descripcion'])) $_POST['descripcion_necesidad'] = $_POST['descripcion'];
+    if (isset($_POST['nombre'])) $_POST['nombre_solicitante'] = $_POST['nombre'];
+    if (isset($_POST['monto'])) $_POST['monto_estimado'] = $_POST['monto'];
+
+    // =========================================================
+    // 1. VALIDACIÓN CENTRALIZADA
+    // =========================================================
+    $reglas = SolicitudGasto::obtenerReglas($operacion);
+
+    if (!empty($reglas)) {
+        $validador = new Validador();
+        $validador->validarConjunto($_POST, $reglas);
+
+        if ($validador->tieneErrores()) {
+            echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
+            exit;
+        }
+    }
+
+    // Instancia del modelo principal
+    $solicitud = new SolicitudGasto();
     // Asignación masiva de campos que pueden llegar
     $solicitud->set_id_solicitud($_POST['id_solicitud'] ?? null);
-    $solicitud->set_fecha_reporte($_POST['fecha'] ?? null);      // El name en el form es "fecha"
-    $solicitud->set_descripcion_necesidad($_POST['descripcion'] ?? null);
-    $solicitud->set_nombre_solicitante($_POST['nombre'] ?? null);
-    $solicitud->set_monto_estimado($_POST['monto'] ?? null);
+    $solicitud->set_fecha_reporte($_POST['fecha_reporte'] ?? null);      // El name en el form es "fecha"
+    $solicitud->set_descripcion_necesidad($_POST['descripcion_necesidad'] ?? null);
+    $solicitud->set_nombre_solicitante($_POST['nombre_solicitante'] ?? null);
+    $solicitud->set_monto_estimado($_POST['monto_estimado'] ?? null);
     $solicitud->set_estado($_POST['estado'] ?? null);
     $solicitud->set_presupuesto_id($_POST['presupuesto_id'] ?? null);
     $solicitud->set_prioridad($_POST['prioridad'] ?? null);
@@ -42,8 +64,8 @@ if (isset($_POST["operacion"])) {
                 }
                 break;
 
-            case 'consulta_especifica':
-                $respuesta = $solicitud->realizar_consulta('consultar_solicitud_id');
+            case 'consultar_solicitud':
+                $respuesta = $solicitud->realizar_consulta('consultar_solicitud');
                 break;
 
             case 'consultar_presupuesto':
@@ -66,35 +88,31 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $solicitud->consultar_presupuesto($fecha);
                 break;
 
-            case 'registrar':
-                $respuesta = $solicitud->realizar_consulta('registrar');
+            case 'registrar_solicitud':
+                $respuesta = $solicitud->realizar_consulta('registrar_solicitud');
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria('registrar');
                 }
                 break;
 
-            case 'modificar':
+            case 'modificar_solicitud':
                 // Obtener datos anteriores
-                $auditor->capturarDatosAnteriores('consultar_solicitud_id');
+                $auditor->capturarDatosAnteriores('consultar_solicitud');
 
-                $respuesta = $solicitud->realizar_consulta('modificar');
+                $respuesta = $solicitud->realizar_consulta('modificar_solicitud');
                 if ($respuesta['estatus']) { 
                     $auditor->registrarAuditoria('modificar'); 
                 }
                 break;
 
-            case 'eliminar':
+            case 'eliminar_solicitud':
                 // Obtener datos anteriores
-                $auditor->capturarDatosAnteriores('consultar_solicitud_id');
+                $auditor->capturarDatosAnteriores('consultar_solicitud');
 
-                $respuesta = $solicitud->realizar_consulta('eliminar');
+                $respuesta = $solicitud->realizar_consulta('eliminar_solicitud');
                 if ($respuesta['estatus']) { 
                     $auditor->registrarAuditoria('eliminar'); 
                 }
-                break;
-
-            case 'ultimo_id':
-                $respuesta = $solicitud->realizar_consulta('lastId');
                 break;
 
             default:
@@ -121,10 +139,11 @@ if (isset($_POST["operacion"])) {
     }
 }
 
-// Validaciones AJAX
+// =========================================================
+// VALIDACIONES AJAX (Quedan igual)
+// =========================================================
 if (isset($_POST["validar"])) {
     header('Content-Type: application/json');
-
     $validar = $_POST["validar"];
     $presupuesto = new Presupuesto();
     $respuesta = ['estatus' => false, 'mensaje' => 'Validación no válida'];
@@ -142,18 +161,27 @@ if (isset($_POST["validar"])) {
                 break;
         }
     } catch (Exception $e) {
-        error_log("Error en validación AJAX: " . $e->getMessage());
+        error_log("Error en validación AJAX Solicitud: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
+    } finally {
+        $presupuesto->cerrar();
     }
 
     echo json_encode($respuesta);
     exit;
 }
 
+// =========================================================
+// CARGA DE DATOS PARA LA VISTA
+// =========================================================
+$fecha_actual = date("Y-m");
+$presupuestos = [];
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_SOLICITUD_GASTO);
+
+    $solicitud = new SolicitudGasto();
+    $presupuestos = $solicitud->consultar_presupuesto($fecha_actual);
 }
 
-// Si no hay POST, cargar los presupuestos para la vista
-$presupuestos = $solicitud->consultar_presupuesto($fecha_actual);
 require_once "vista/solicitud_gasto/solicitud_gasto_vista.php";

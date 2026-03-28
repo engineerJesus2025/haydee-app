@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", function() {
             e.preventDefault();
             const accion = this.hasAttribute("modificar") ? "modificar" : "Registrar";
 
-            if (await validarEnvio(accion)) {
+            // if (await validarEnvio(accion)) {
                 Swal.fire({
                     title: "¿Estás seguro?",
                     text: `¿Está seguro que desea ${accion} esta publicación?`,
@@ -53,7 +53,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 }).then((result) => {
                     if (result.isConfirmed) envio(accion);
                 });
-            }
+            // }
         });
     }
 });

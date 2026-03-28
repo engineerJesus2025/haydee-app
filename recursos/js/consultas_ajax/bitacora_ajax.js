@@ -25,7 +25,7 @@ function formatearJSON(jsonString) {
 
 // Función para mostrar el detalle en el modal
 function mostrarDetalle(rowData) {
-    // 1. Usamos directamente las clases de Bootstrap para coincidir con tus botones
+    // Usamos directamente las clases de Bootstrap para coincidir con tus botones
     const colores = { 
             'consultar': "badge-consultar", 
             'eliminar': "bg-danger", 
@@ -34,8 +34,8 @@ function mostrarDetalle(rowData) {
             'iniciar sesion': "badge-iniciar-sesion", 
             'cerrar sesion': "bg-info text-dark",
             'descargar': "bg-warning text-dark",
-            'respaldar': "bg-indigo text-white", // Requiere CSS personalizado si usas Bootstrap estándar
-            'restaurar': "bg-teal text-white"    // Requiere CSS personalizado si usas Bootstrap estándar
+            'respaldar': "bg-indigo text-white",
+            'restaurar': "bg-teal text-white"    
         };
     
     const accionNormalizada = rowData.accion.toLowerCase();
@@ -151,7 +151,7 @@ function consultar() {
     const formatoFecha = (cell) => FormatoFechas.formatoUsuario(cell.getValue());
     const formatoModulo = (cell) => cell.getValue().split("_").join(" ");
     
-    // 3. Actualizamos los colores de los badges en la tabla principal
+    // Actualizamos los colores de los badges en la tabla principal
     const formatoAccion = (cell) => {
         const accion = cell.getValue();
         const colores = { 
@@ -162,8 +162,8 @@ function consultar() {
             'iniciar sesion': "badge-iniciar-sesion", 
             'cerrar sesion': "bg-info text-dark",
             'descargar': "bg-warning text-dark",
-            'respaldar': "bg-indigo text-white", // Requiere CSS personalizado si usas Bootstrap estándar
-            'restaurar': "bg-teal text-white"    // Requiere CSS personalizado si usas Bootstrap estándar
+            'respaldar': "bg-indigo text-white", 
+            'restaurar': "bg-teal text-white"    
         };
         const clase = colores[accion.toLowerCase()] || "bg-secondary";
         return `<span class="badge ${clase}">${accion}</span>`;
@@ -171,7 +171,7 @@ function consultar() {
 
     const formatoBotones = (cell) => {
         return `
-            <button class="btn btn-sm btn-outline-primary ver-detalle" title="Ver detalles">
+            <button class="btn btn-sm btn-primary ver-detalle" title="Ver detalles">
                 <i class="bi bi-eye"></i>
                 <span class="d-none d-lg-inline ms-2">Ver detalles</span>
             </button>
@@ -181,11 +181,13 @@ function consultar() {
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
         { title: "Usuario", field: "nombre_usuario", minWidth: 150, responsive: 0 },
-        { title: "Fecha", field: "fecha_hora", formatter: formatoFecha, minWidth: 150 },
-        { title: "Módulo", field: "nombre_modulo", formatter: formatoModulo, minWidth: 150 },
         { title: "Acción", field: "accion", formatter: formatoAccion, minWidth: 120, headerHozAlign: "center", hozAlign: "center" },
+        { title: "Fecha", field: "fecha_hora", formatter: formatoFecha, minWidth: 150 },
+        { title: "Módulo", field: "nombre_modulo", formatter: formatoModulo, minWidth: 220, widthGrow: 2, },
         {
-            title: "DETALLES", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 140, responsive: 0, download: false, headerHozAlign: "center",
+            title: "DETALLES", formatter: formatoBotones, headerSort: false, 
+            hozAlign: "center", vertAlign: "middle", minWidth: 130, 
+            responsive: 0, download: false, headerHozAlign: "center",
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;

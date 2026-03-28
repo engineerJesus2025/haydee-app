@@ -10,16 +10,33 @@ class Modulos extends Conexion
     private $nombre;
     private $activo;
 
-    // Reglas de validación (aunque no se usen en este modelo, las dejamos por consistencia)
-    private $reglas = [
-        'id_modulo' => [
-            'regex' => '/^\d+$/',
-            'exists' => ['tabla' => 'modulos', 'campo' => 'id_modulo']
-        ],
-        'nombre' => [
-            'regex' => '/^[a-zA-ZáéíóúÁÉÍÓÚñÑ _\s]{3,30}$/'
-        ]
-    ];
+    // ====================================================================
+    // VALIDACIONES CENTRALIZADAS
+    // ====================================================================
+    public static function obtenerReglas($operacion) {
+        $reglasGenerales = [
+            'id_modulo' => [
+                'regex' => '/^\d+$/',
+                'exists' => ['tabla' => 'modulos', 'campo' => 'id_modulo']
+            ],
+            'nombre' => [
+                'regex' => '/^[a-zA-ZáéíóúÁÉÍÓÚñÑ _\s]{3,30}$/'
+            ]
+        ];
+
+        // Nombres estandarizados
+        $camposPorOperacion = [
+            'registrar_modulo' => ['nombre'],
+            'modificar_modulo' => ['id_modulo', 'nombre'],
+            'eliminar_modulo'  => ['id_modulo'],
+            'consultar_modulo' => ['id_modulo']
+        ];
+
+        if (isset($camposPorOperacion[$operacion])) {
+            return array_intersect_key($reglasGenerales, array_flip($camposPorOperacion[$operacion]));
+        }
+        return [];
+    }
 
     // Getters y Setters
     public function set_id_modulo($id) { $this->id_modulo = $id; }
@@ -47,92 +64,13 @@ class Modulos extends Conexion
         }
     }
 
-    // -----------------------------------------------------------------
-    // Método de validación (por si se necesita en el futuro)
-    // -----------------------------------------------------------------
-    private function validar($campos)
-    {
-        foreach ($campos as $campo) {
-            if (!isset($this->reglas[$campo])) {
-                return [
-                    'estatus' => false,
-                    'mensaje' => "No hay reglas de validación definidas para el campo '$campo'."
-                ];
-            }
-            $regla = $this->reglas[$campo];
-
-            $getter = 'get_' . $campo;
-            if (!method_exists($this, $getter)) {
-                return [
-                    'estatus' => false,
-                    'mensaje' => "El campo '$campo' no tiene un getter definido."
-                ];
-            }
-            $valor = $this->$getter();
-
-            // Requerido
-            if ($valor === null) {
-                return [
-                    'estatus' => false,
-                    'mensaje' => "El campo '$campo' es requerido y no se ha establecido."
-                ];
-            }
-            if (is_string($valor) && trim($valor) === '') {
-                return [
-                    'estatus' => false,
-                    'mensaje' => "El campo '$campo' no puede estar vacío."
-                ];
-            }
-
-            // Validar con expresión regular
-            if (isset($regla['regex'])) {
-                if (!preg_match($regla['regex'], (string)$valor)) {
-                    return [
-                        'estatus' => false,
-                        'mensaje' => "El campo '$campo' no tiene un formato válido."
-                    ];
-                }
-            }
-
-            // Validar existencia en otra tabla
-            if (isset($regla['exists'])) {
-                $tabla = $regla['exists']['tabla'];
-                $campoFor = $regla['exists']['campo'] ?? $campo;
-                if (!$this->existeEnTabla($tabla, $campoFor, $valor)) {
-                    return [
-                        'estatus' => false,
-                        'mensaje' => "El valor del campo '$campo' no existe en la tabla $tabla."
-                    ];
-                }
-            }
-        }
-        return ['estatus' => true];
-    }
-
-    /**
-     * Verifica si un valor existe en una tabla específica (usa BD seguridad).
-     */
-    private function existeEnTabla($tabla, $campo, $valor)
-    {
-        $sql = "SELECT COUNT(*) as total FROM $tabla WHERE $campo = :valor";
-        try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
-            $stmt->bindParam(':valor', $valor);
-            $stmt->execute();
-            $fila = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $fila['total'] > 0;
-        } catch (PDOException $e) {
-            error_log("Error en existeEnTabla: " . $e->getMessage());
-            return false;
-        }
-    }
-
     // ====================================================================
     // MÉTODOS PRIVADOS (CRUD)
     // ====================================================================
     
     /**
      * Consulta todos los módulos.
+     // SE USA EN EL MODULO
      */
     private function _consultar()
     {
@@ -149,14 +87,10 @@ class Modulos extends Conexion
     }
     /**
      * Registrar un nuevo módulo.
+     // SE USA EN EL MODULO
      */
-    private function _registrar()
+    private function _registrar_modulo()
     {
-        $validacion = $this->validar(['nombre']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         $sql = "INSERT INTO modulos (nombre, activo) VALUES (:nombre, 1)";
         try {
             $stmt = $this->get_conex('seguridad')->prepare($sql);
@@ -171,15 +105,10 @@ class Modulos extends Conexion
 
     /**
      * modificar un módulo existente.
+     // SE USA EN EL MODULO
      */
-    private function _modificar()
+    private function _modificar_modulo()
     {
-        $campos = ['id_modulo', 'nombre'];
-        $validacion = $this->validar($campos);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         $sql = "UPDATE modulos SET nombre = :nombre WHERE id_modulo = :id";
         try {
             $stmt = $this->get_conex('seguridad')->prepare($sql);
@@ -196,14 +125,10 @@ class Modulos extends Conexion
 
     /**
      * Eliminar (soft delete) un módulo.
+     // SE USA EN EL MODULO
      */
-    private function _eliminar()
+    private function _eliminar_modulo()
     {
-        $validacion = $this->validar(['id_modulo']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         $sql = "UPDATE modulos SET activo = 0 WHERE id_modulo = :id";
         try {
             $stmt = $this->get_conex('seguridad')->prepare($sql);
@@ -217,14 +142,10 @@ class Modulos extends Conexion
 
     /**
      * Consultar un módulo específico por ID.
+     // SE USA EN EL MODULO
      */
-    private function _consultar_unico()
+    private function _consultar_modulo()
     {
-        $validacion = $this->validar(['id_modulo']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         $sql = "SELECT * FROM modulos WHERE id_modulo = :id AND activo = 1";
         try {
             $stmt = $this->get_conex('seguridad')->prepare($sql);

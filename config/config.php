@@ -9,7 +9,7 @@ use Dotenv\Dotenv;
 $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->safeLoad();
 
-// 🛡️ Definir constantes SOLO si no han sido definidas previamente
+// Definir constantes SOLO si no han sido definidas previamente
 if (!defined('DB_NAME')) define("DB_NAME", $_ENV['DB_NAME'] ?? 'haydee_db');
 if (!defined('DB_HOST')) define("DB_HOST", $_ENV['DB_HOST'] ?? 'localhost');
 if (!defined('DB_USER')) define("DB_USER", $_ENV['DB_USER'] ?? 'app_condominio');

@@ -27,41 +27,60 @@ class Usuario extends Conexion
     // ====================================================================
     // VALIDACIONES CENTRALIZADAS
     // ====================================================================
-    private $reglas = [
-        // Usuario
-        'id_usuario' => [
-            'regex' => '/^\d+$/',
-            'exists' => ['tabla' => 'usuarios', 'campo' => 'id_usuario']
-        ],
-        'apellido' => [
-            'regex' => '/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,20}$/'
-        ],
-        'nombre' => [
-            'regex' => '/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,20}$/'
-        ],
-        'correo' => [
-            'regex' => '/^[a-zA-Z0-9._+-]{3,35}@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/',
-            'unique' => ['tabla' => 'usuarios', 'campo' => 'correo', 'exclude_field' => 'id_usuario']
-        ],
-        'contra' => [
-            'regex' => '/^[A-Za-z0-9_.+*$#%&@ñÑ-]{5,100}$/'
-        ],
-        'rol_id' => [
-            'regex' => '/^\d+$/',
-            'exists' => ['tabla' => 'roles', 'campo' => 'id_rol']
-        ],
+    public static function obtenerReglas($operacion) {
+        $reglasGenerales = [
+            'id_usuario' => [
+                'regex' => '/^\d+$/',
+                'exists' => ['tabla' => 'usuarios', 'campo' => 'id_usuario']
+            ],
+            'apellido' => [
+                'regex' => '/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,20}$/'
+            ],
+            'nombre' => [
+                'regex' => '/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,20}$/'
+            ],
+            'correo' => [
+                'regex' => '/^[-A-Za-z0-9_.]{3,35}@[A-Za-z0-9]{3,10}\.[A-Za-z]{2,3}$/',
+                'unique' => ['tabla' => 'usuarios', 'campo' => 'correo', 'exclude_field' => 'id_usuario']
+            ],
+            'contra' => [
+                'regex' => '/^[A-Za-z0-9_.+*$#%&@-]{5,100}$/'
+            ],
+            'rol_id' => [
+                'regex' => '/^\d+$/',
+                'exists' => ['tabla' => 'roles', 'campo' => 'id_rol']
+            ],
+            'token' => [
+                'regex' => '/^[a-f0-9]{64}$/'
+            ],
+            'token_expiracion' => [
+                'regex' => '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/'
+            ],
+            'token_tipo' => [
+                'regex' => '/^[A-Za-z]+$/'
+            ]
+        ];
 
-        // Token
-        'token' => [
-            'regex' => '/^\S+$/'  // Acepta cualquier cadena sin espacios
-        ],
-        'token_tipo' => [
-            'regex' => '/^[a-zA-Z0-9_]{3,30}$/'
-        ],
-        'token_expiracion' => [
-            'type' => 'datetime'  // Validación personalizada
-        ]
-    ];
+        // Definimos los campos exactos requeridos por cada operación (tanto de usuario como de perfil)
+        $camposPorOperacion = [
+            'registrar_usuario' => ['nombre', 'apellido', 'correo', 'contra', 'rol_id'],
+            'modificar_usuario' => ['id_usuario', 'nombre', 'apellido', 'correo', 'rol_id'],
+            'eliminar_usuario' => ['id_usuario'],
+            'consultar_usuario' => ['id_usuario'],
+            'restablecer_contrasenia' => ['id_usuario'],
+            'modificar_perfil' => ['id_usuario', 'nombre', 'apellido', 'correo'],
+            'cambiar_contrasenia' => ['id_usuario', 'contra'],
+            'entrar' => ['correo', 'contra'],
+            'recuperar_contrasenia' => ['correo'],
+            'guardar_contrasenia' => ['contra']
+        ];
+
+
+        if (isset($camposPorOperacion[$operacion])) {
+            return array_intersect_key($reglasGenerales, array_flip($camposPorOperacion[$operacion]));
+        }
+        return [];
+    }
 
     // ====================================================================
     // GETTERS Y SETTERS
@@ -108,100 +127,12 @@ class Usuario extends Conexion
     }
 
     // ====================================================================
-    // VALIDACIÓN (Usa BD Seguridad)
-    // ====================================================================
-    private function validar($campos, $contexto = [])
-    {
-        foreach ($campos as $campo) {
-            if (!isset($this->reglas[$campo])) continue;
-            $getter = 'get_' . $campo;
-            $valor = $this->$getter();
-            $regla = $this->reglas[$campo];
-
-            // Requerido
-            if ($valor === null || (is_string($valor) && trim($valor) === '')) {
-                return ['estatus' => false, 'mensaje' => "El campo '$campo' es obligatorio."];
-            }
-
-            // Regex
-            if (isset($regla['regex']) && !preg_match($regla['regex'], (string)$valor)) {
-                return ['estatus' => false, 'mensaje' => "Formato inválido para '$campo'."];
-            }
-
-            // Validación de tipo datetime
-            if (isset($regla['type']) && $regla['type'] === 'datetime') {
-                $d = \DateTime::createFromFormat('Y-m-d H:i:s', $valor);
-                if (!($d && $d->format('Y-m-d H:i:s') === $valor)) {
-                    return ['estatus' => false, 'mensaje' => "Formato de fecha/hora inválido para '$campo'."];
-                }
-            }
-
-            // Existencia
-            if (isset($regla['exists'])) {
-                if (!$this->existeEnTabla($regla['exists']['tabla'], $regla['exists']['campo'], $valor)) {
-                    return ['estatus' => false, 'mensaje' => "El valor de '$campo' no existe."];
-                }
-            }
-
-            // Unicidad - Se omite si en el contexto se indica 'skip_unique'
-            if (isset($regla['unique']) && !isset($contexto['skip_unique'])) {
-                $excludeValue = $contexto['exclude_id'] ?? null;
-                if (!$this->esUnico($regla['unique']['tabla'], $regla['unique']['campo'], $valor, $regla['unique']['exclude_field'] ?? null, $excludeValue)) {
-                    return ['estatus' => false, 'mensaje' => "El '$campo' ya está registrado."];
-                }
-            }
-        }
-        return ['estatus' => true];
-    }
-
-    private function existeEnTabla($tabla, $campo, $valor)
-    {
-        $sql = "SELECT COUNT(*) as total FROM $tabla WHERE $campo = :valor";
-        $stmt = $this->get_conex('seguridad')->prepare($sql);
-        $stmt->execute([':valor' => $valor]);
-        return $stmt->fetchColumn() > 0;
-    }
-
-    private function esUnico($tabla, $campo, $valor, $excludeField = null, $excludeValue = null)
-    {
-        $sql = "SELECT COUNT(*) as total FROM $tabla WHERE $campo = :valor";
-        if ($excludeField && $excludeValue) $sql .= " AND $excludeField != :exclude_val";
-
-        $stmt = $this->get_conex('seguridad')->prepare($sql);
-        $stmt->bindParam(':valor', $valor);
-        if ($excludeField && $excludeValue) $stmt->bindParam(':exclude_val', $excludeValue);
-
-        $stmt->execute();
-        return $stmt->fetchColumn() == 0;
-    }
-
-    /**
-     * Valida existencia en tablas externas (para validaciones AJAX desde controladores)
-     */
-    public function validarExistenciaExterna($tabla, $campo, $valor)
-    {
-        $tablasPermitidas = ['caja_chica', 'gastos', 'usuarios', 'roles'];
-        if (!in_array($tabla, $tablasPermitidas)) return false;
-
-        // Determinar qué conexión usar (Caja y Gastos son negocio, Usuarios y Roles son seguridad)
-        $dbType = in_array($tabla, ['usuarios', 'roles']) ? 'seguridad' : 'negocio';
-
-        $sql = "SELECT 1 FROM $tabla WHERE $campo = :valor LIMIT 1";
-        $stmt = $this->get_conex($dbType)->prepare($sql);
-        $stmt->execute([':valor' => $valor]);
-        return $stmt->fetchColumn() ? true : false;
-    }
-
-    // ====================================================================
     // LÓGICA DE USUARIOS (CRUD y Auth)
     // ====================================================================
 
+    // SE USA EN EL SERVICIO AUTENTICACION
     private function _validar_usuario()
     {
-        // Pasamos 'skip_unique' para que no valide que el correo sea único
-        $v = $this->validar(['correo', 'contra'], ['skip_unique' => true]);
-        if (!$v['estatus']) return $v;
-
         $sql = "SELECT u.id_usuario, u.correo, u.nombre, u.apellido, u.contrasenia, 
                        r.id_rol, r.nombre as nombre_rol
                 FROM usuarios u 
@@ -226,6 +157,7 @@ class Usuario extends Conexion
         }
     }
 
+    // SE USA EN EL MODULO
     private function _consultar()
     {
         $sql = "SELECT u.id_usuario, u.apellido, u.nombre, u.correo, r.nombre as nombre_rol, u.activo
@@ -243,11 +175,9 @@ class Usuario extends Conexion
         }
     }
 
+    // SE USA EN EL MODULO
     private function _consultar_usuario()
     {
-        $v = $this->validar(['id_usuario']);
-        if (!$v['estatus']) return $v;
-
         $sql = "SELECT u.*, r.nombre as nombre_rol 
                 FROM usuarios u 
                 INNER JOIN roles r ON u.rol_id = r.id_rol 
@@ -264,12 +194,9 @@ class Usuario extends Conexion
         }
     }
 
+    // SE USA EN EL MODULO (perfil)
     private function _consultar_perfil_usuario()
     {
-        // Validamos que el ID de usuario esté presente
-        $v = $this->validar(['id_usuario']);
-        if (!$v['estatus']) return $v;
-
         $sql = "SELECT 
                     u.nombre as nombre_usuario, 
                     u.apellido, 
@@ -309,11 +236,9 @@ class Usuario extends Conexion
         }
     }
 
+    // SE USA EN EL SERVICIO AUTENTICACION (repasar)    
     private function _existe_correo()
     {
-        $v = $this->validar(['correo'],['skip_unique' => true]);
-        if (!$v['estatus']) return $v;
-
         $sql = "SELECT id_usuario, nombre, apellido, correo, rol_id FROM usuarios WHERE correo = :correo AND activo = 1";
         try {
             $stmt = $this->get_conex('seguridad')->prepare($sql);
@@ -329,42 +254,9 @@ class Usuario extends Conexion
         }
     }
 
-    /**
-     * Verifica si un correo ya existe en la base de datos.
-     * Utilizado principalmente para validaciones AJAX.
-     */
-    private function _verificar_correo()
+    // SE USA EN EL MODULO
+    private function _registrar_usuario()
     {
-        // 1. Validamos que el formato del correo sea correcto según tus reglas
-        $v = $this->validar(['correo'], ['skip_unique' => true]);
-        if (!$v['estatus']) return $v;
-
-        try {
-            // 2. Usamos la función esUnico. 
-            // Si esUnico devuelve true, significa que NO existe.
-            // Por lo tanto, 'existe' será lo opuesto.
-            $no_existe = $this->esUnico(
-                $this->reglas['correo']['unique']['tabla'], 
-                $this->reglas['correo']['unique']['campo'], 
-                $this->correo
-            );
-
-            return [
-                'estatus' => true,
-                'existe'  => !$no_existe 
-            ];
-            
-        } catch (PDOException $e) {
-            error_log("Error en _verificar_correo: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al verificar disponibilidad'];
-        }
-    }
-
-    private function _registrar()
-    {
-        $v = $this->validar(['apellido', 'nombre', 'correo', 'contra', 'rol_id']);
-        if (!$v['estatus']) return $v;
-
         $hash = password_hash($this->contra, PASSWORD_DEFAULT);
 
         try {
@@ -386,12 +278,9 @@ class Usuario extends Conexion
         }
     }
 
+    // SE USA EN EL MODULO
     private function _modificar_usuario()
     {
-        // La contraseña es opcional. Validamos los campos obligatorios.
-        $v = $this->validar(['id_usuario', 'apellido', 'nombre', 'correo', 'rol_id'], ['exclude_id' => $this->id_usuario]);
-        if (!$v['estatus']) return $v;
-
         // Construir consulta dinámica
         $sql = "UPDATE usuarios SET apellido=:a, nombre=:n, correo=:c, rol_id=:r WHERE id_usuario=:id";
         $params = [
@@ -403,10 +292,6 @@ class Usuario extends Conexion
         ];
 
         if (!empty($this->contra)) {
-            // Validar que la contraseña cumpla el formato si se envía
-            $valPass = $this->validar(['contra']);
-            if (!$valPass['estatus']) return $valPass;
-
             $sql = "UPDATE usuarios SET apellido=:a, nombre=:n, correo=:c, rol_id=:r, contrasenia=:p WHERE id_usuario=:id";
             $params[':p'] = password_hash($this->contra, PASSWORD_DEFAULT);
         }
@@ -420,17 +305,9 @@ class Usuario extends Conexion
         }
     }
 
+    // SE USA EN EL MODULO (perfil)
     private function _modificar_perfil()
-    {
-        // Validamos campos obligatorios y la unicidad del correo
-        // (excluyendo al usuario actual de la comprobación de duplicados)
-        $v = $this->validar(
-            ['id_usuario', 'apellido', 'nombre', 'correo'], 
-            ['exclude_id' => $this->id_usuario]
-        );
-        
-        if (!$v['estatus']) return $v;
-
+    { 
         $sql = "UPDATE usuarios SET apellido = :ape, nombre = :nom, correo = :cor 
                 WHERE id_usuario = :id";
 
@@ -453,11 +330,9 @@ class Usuario extends Conexion
         }
     }
 
+    // SE USA EN EL MODULO
     private function _eliminar_usuario()
     {
-        $v = $this->validar(['id_usuario']);
-        if (!$v['estatus']) return $v;
-
         try {
             $sql = "UPDATE usuarios SET activo = 0 WHERE id_usuario = :id";
             $this->get_conex('seguridad')->prepare($sql)->execute([':id' => $this->id_usuario]);
@@ -468,12 +343,9 @@ class Usuario extends Conexion
         }
     }
 
+    // SE USA EN EL MODULO (perfil)
     private function _cambiar_contrasenia()
     {
-        // Se usa para recuperación ("Olvidé contraseña")
-        $v = $this->validar(['correo', 'contra'],['exclude_id' => $this->id_usuario]);
-        if (!$v['estatus']) return $v;
-
         $hash = password_hash($this->contra, PASSWORD_DEFAULT);
         $sql = "UPDATE usuarios SET contrasenia = :con WHERE correo = :cor AND activo = 1";
 
@@ -492,11 +364,9 @@ class Usuario extends Conexion
     // LÓGICA DE TOKENS (Integrada)
     // ====================================================================
 
+    // SE USA EN EL SERVICIO AUTENTICACION
     private function _registrar_token()
     {
-        $v = $this->validar(['id_usuario', 'token', 'token_tipo', 'token_expiracion']);
-        if (!$v['estatus']) return $v;
-
         try {
             $sql = "CALL sp_insertar_token(:uid, :tipo, :token, :exp)";
             $stmt = $this->get_conex('seguridad')->prepare($sql);
@@ -513,11 +383,9 @@ class Usuario extends Conexion
         }
     }
 
+    // SE USA EN EL SERVICIO AUTENTICACION
     private function _validar_token()
     {
-        $v = $this->validar(['token', 'token_tipo']);
-        if (!$v['estatus']) return $v;
-
         $sql = "SELECT u.id_usuario, u.correo 
                 FROM tokens_seguridad t
                 JOIN usuarios u ON t.usuario_id = u.id_usuario
@@ -537,6 +405,7 @@ class Usuario extends Conexion
         }
     }
 
+    // SE USA EN EL SERVICIO AUTENTICACION
     private function _eliminar_token()
     {
         if (empty($this->id_usuario) || empty($this->token_tipo)) {
@@ -552,58 +421,6 @@ class Usuario extends Conexion
             error_log("Error en _eliminar_token: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al eliminar token'];
         }
-    }
-
-    private function _validar_token_recuerdame()
-    {
-        $v = $this->validar(['correo']);
-        if (!$v['estatus']) return $v;
-
-        $sql = "SELECT u.id_usuario, u.correo, u.nombre, r.id_rol, r.nombre as nombre_rol, t.token, t.fecha_expiracion
-                FROM usuarios u
-                JOIN roles r ON u.rol_id = r.id_rol
-                JOIN tokens_seguridad t ON u.id_usuario = t.usuario_id
-                WHERE u.correo = :correo AND t.tipo = 'Recuerdame'";
-
-        try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
-            $stmt->execute([':correo' => $this->correo]);
-            $datos = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if (!$datos) return ['estatus' => false, 'mensaje' => 'No hay token de recuérdame'];
-            return ['estatus' => true, 'datos' => $datos];
-        } catch (PDOException $e) {
-            error_log("Error en _validar_token_recuerdame: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al validar token'];
-        }
-    }
-
-    // ====================================================================
-    // UTILIDADES (Recaptcha)
-    // ====================================================================
-    public function verificarRecaptcha($respuestaRecaptcha)
-    {
-        if (empty($respuestaRecaptcha)) return false;
-
-        $url = 'https://www.google.com/recaptcha/api/siteverify';
-        $datos = [
-            'secret' => defined('CLAVE_SECRETA_RECAPTCHA') ? CLAVE_SECRETA_RECAPTCHA : '',
-            'response' => $respuestaRecaptcha,
-            'remoteip' => $_SERVER['REMOTE_ADDR'] ?? ''
-        ];
-
-        $opciones = [
-            'http' => [
-                'header' => "Content-type: application/x-www-form-urlencoded\r\n",
-                'method' => 'POST',
-                'content' => http_build_query($datos)
-            ]
-        ];
-        $contexto = stream_context_create($opciones);
-        $resultado = @file_get_contents($url, false, $contexto);
-        $json = json_decode($resultado, true);
-
-        return ($json && isset($json['success']) && $json['success']);
     }
 }
 ?>

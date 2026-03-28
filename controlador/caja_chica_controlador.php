@@ -2,28 +2,44 @@
 use haydee\ayuda\Sesiones;
 use haydee\modelo\CajaChica;
 use haydee\modelo\Bitacora;
+use haydee\ayuda\Validador;
+use haydee\ayuda\ValidadorBD;
 use haydee\servicios\GestorAuditoria;
 
 Sesiones::verificarSesion();
 Sesiones::verificarPermiso(GESTIONAR_CAJA_CHICA, CONSULTAR);
 
-$caja = new CajaChica();
-
 if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
 
-    // Asignación masiva
-    $caja->set_id_caja_chica($_POST['caja_chica_id'] ?? null);
+    // 1. Validamos según la operación
+    $reglas = CajaChica::obtenerReglas($operacion);
+
+    if (!empty($reglas)) {
+        $validador = new Validador();
+        $validador->validarConjunto($_POST, $reglas);
+
+        if ($validador->tieneErrores()) {
+            echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
+            exit;
+        }
+    }
+
+    $caja = new CajaChica();
+
+    // Asignación masiva (Manejando tanto el id primario como el foráneo)
+    $caja->set_id_caja_chica($_POST['id_caja_chica'] ?? $_POST['caja_chica_id'] ?? null);
     $caja->set_descripcion($_POST['descripcion'] ?? null);
     $caja->set_fondo_fijo($_POST['fondo_fijo'] ?? null);
+    $caja->set_estado($_POST['estado'] ?? null);
+    
+    // Asignaciones de Movimientos
     $caja->set_id_movimiento_caja($_POST['id_movimiento_caja'] ?? null);
     $caja->set_concepto($_POST['concepto'] ?? null);
     $caja->set_monto_movimiento($_POST['monto'] ?? null);
     $caja->set_fecha_movimiento($_POST['fecha'] ?? null);
 
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
-
-    // Instanciamos el auditor
     $auditor = new GestorAuditoria($caja, GESTIONAR_CAJA_CHICA);
 
     try {
@@ -37,12 +53,12 @@ if (isset($_POST["operacion"])) {
 
             case 'modificar_descripcion':
                 // Obtener datos anteriores
-                $auditor->capturarDatosAnteriores('consultar_caja_unica');
+                // $auditor->capturarDatosAnteriores('consulta_caja_chica');
 
                 $respuesta = $caja->realizar_consulta('modificar_descripcion');
-                if ($respuesta['estatus']) { 
-                    $auditor->registrarAuditoria('modificar'); 
-                }
+                // if ($respuesta['estatus']) { 
+                //     $auditor->registrarAuditoria('modificar'); 
+                // }
                 break;
 
             case 'verificar_caja_mes':
@@ -59,6 +75,7 @@ if (isset($_POST["operacion"])) {
                 }
                 break;
 
+            // === OPERACIONES MOVIMIENTOS ===
             case 'consultar_movimientos_caja':
                 $respuesta = $caja->realizar_consulta('consultar_movimientos');
                 break;
@@ -116,17 +133,21 @@ if (isset($_POST["operacion"])) {
     }
 }
 
+// === VALIDACIONES AJAX ===
 if (isset($_POST["validar"])) {
     header('Content-Type: application/json');
     $validar = $_POST["validar"];
 
     if ($validar == "validar_clave_foranea") {
         if (isset($_POST['tabla'], $_POST['nombre_clave'], $_POST['valor'])) {
-            $existe = $caja->validarExistenciaExterna($_POST['tabla'], $_POST['nombre_clave'], $_POST['valor']);
-            echo json_encode(['estatus' => $existe]);
+            $validadorBD = new ValidadorBD();
+            $existe = $validadorBD->existe($_POST['tabla'], $_POST['nombre_clave'], $_POST['valor']);
+            echo json_encode(['estatus' => $existe, 'mensaje' => 'OK']);
         } else {
             echo json_encode(['estatus' => false, 'mensaje' => 'Faltan parámetros']);
         }
+    } else {
+        echo json_encode(['estatus' => false, 'mensaje' => 'Validación AJAX no reconocida']);
     }
     exit;
 }

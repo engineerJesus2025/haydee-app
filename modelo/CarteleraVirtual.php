@@ -11,39 +11,54 @@ class CarteleraVirtual extends Conexion
     private $titulo;
     private $descripcion;
     private $fecha;
-    private $tipo;
     private $imagen;
     private $prioridad;
     private $usuario_id;
 
-    // Reglas de validación centralizadas
-    private $reglas = [
-        'id_cartelera' => [
-            'regex' => '/^\d+$/',
-            'exists' => ['tabla' => 'cartelera_virtual', 'campo' => 'id_cartelera']
-        ],
-        'titulo' => [
-            'regex' => '/^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()\'"!?¡¿%°\- ]{3,200}$/'
-        ],
-        'descripcion' => [
-            'regex' => '/^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()\'"!?¡¿%°\- ]{3,200}$/'
-        ],
-        'fecha' => [
-            'regex' => '/^\d{4}-\d{2}-\d{2}$/',
-            'custom' => 'validarFecha'
-        ],
-        'imagen' => [
-            'regex' => '/^[a-zA-Z0-9_.-]+\.(jpg|jpeg|png|gif)$/i',
-            'opcional' => true
-        ],
-        'prioridad' => [
-            'regex' => '/^\d+$/'
-        ],
-        'usuario_id' => [
-            'regex' => '/^\d+$/',
-            'exists' => ['tabla' => 'usuarios', 'campo' => 'id_usuario']
-        ]
-    ];
+    // ====================================================================
+    // VALIDACIONES CENTRALIZADAS
+    // ====================================================================
+    public static function obtenerReglas($operacion) {
+        $reglasGenerales = [
+            'id_cartelera' => [
+                'regex' => '/^\d+$/',
+                'exists' => ['tabla' => 'cartelera_virtual', 'campo' => 'id_cartelera']
+            ],
+            'titulo' => [
+                'regex' => '/^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()\'"!?¡¿%°\- ]{3,200}$/'
+            ],
+            'descripcion' => [
+                'regex' => '/^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()\'"!?¡¿%°\- ]{3,200}$/'
+            ],
+            'fecha' => [
+                'regex' => '/^\d{4}-\d{2}-\d{2}$/'
+            ],
+            'imagen' => [
+                // La validamos como opcional, ya que a veces no se sube imagen nueva al modificar
+                'regex' => '/^[a-zA-Z0-9_.\- ]+\.(jpg|jpeg|png|gif)$/i',
+                'opcional' => true
+            ],
+            'prioridad' => [
+                'regex' => '/^(1|2|3)$/'
+            ],
+            'usuario_id' => [
+                'regex' => '/^\d+$/',
+                'exists' => ['tabla' => 'usuarios', 'campo' => 'id_usuario']
+            ]
+        ];
+
+        $camposPorOperacion = [
+            'registrar_cartelera' => ['titulo', 'descripcion', 'fecha', 'prioridad', 'usuario_id'],
+            'modificar_cartelera' => ['id_cartelera', 'titulo', 'descripcion', 'fecha', 'prioridad', 'usuario_id'],
+            'eliminar_cartelera'  => ['id_cartelera'],
+            'consultar_cartelera' => ['id_cartelera']
+        ];
+
+        if (isset($camposPorOperacion[$operacion])) {
+            return array_intersect_key($reglasGenerales, array_flip($camposPorOperacion[$operacion]));
+        }
+        return [];
+    }
 
     // Getters y Setters
     public function set_id_cartelera($id) { $this->id_cartelera = $id; }
@@ -54,8 +69,6 @@ class CarteleraVirtual extends Conexion
     public function get_descripcion() { return $this->descripcion; }
     public function set_fecha($fecha) { $this->fecha = $fecha; }
     public function get_fecha() { return $this->fecha; }
-    public function set_tipo($tipo) { $this->tipo = $tipo; }
-    public function get_tipo() { return $this->tipo; }
     public function set_imagen($img) { $this->imagen = $img; }
     public function get_imagen() { return $this->imagen; }
     public function set_prioridad($pri) { $this->prioridad = $pri; }
@@ -82,123 +95,16 @@ class CarteleraVirtual extends Conexion
     }
 
     // -----------------------------------------------------------------
-    // Método de validación centralizado
-    // -----------------------------------------------------------------
-
-    private function validar($campos)
-    {
-        foreach ($campos as $campo) {
-            if (!isset($this->reglas[$campo])) {
-                return [
-                    'estatus' => false,
-                    'mensaje' => "No hay reglas de validación definidas para el campo '$campo'."
-                ];
-            }
-            $regla = $this->reglas[$campo];
-
-            $getter = 'get_' . $campo;
-            if (!method_exists($this, $getter)) {
-                return [
-                    'estatus' => false,
-                    'mensaje' => "El campo '$campo' no tiene un getter definido."
-                ];
-            }
-            $valor = $this->$getter();
-
-            // Requerido (a menos que sea opcional)
-            $requerido = !(isset($regla['opcional']) && $regla['opcional'] === true);
-            if ($requerido) {
-                if ($valor === null) {
-                    return [
-                        'estatus' => false,
-                        'mensaje' => "El campo '$campo' es requerido y no se ha establecido."
-                    ];
-                }
-                if (is_string($valor) && trim($valor) === '') {
-                    return [
-                        'estatus' => false,
-                        'mensaje' => "El campo '$campo' no puede estar vacío."
-                    ];
-                }
-            } else {
-                // Si es opcional y está vacío, saltamos validaciones adicionales
-                if ($valor === null || (is_string($valor) && trim($valor) === '')) {
-                    continue;
-                }
-            }
-
-            // Validar con expresión regular
-            if (isset($regla['regex'])) {
-                if (!preg_match($regla['regex'], (string)$valor)) {
-                    return [
-                        'estatus' => false,
-                        'mensaje' => "El campo '$campo' no tiene un formato válido."
-                    ];
-                }
-            }
-
-            // Validación personalizada (método dentro de la clase)
-            if (isset($regla['custom']) && method_exists($this, $regla['custom'])) {
-                if (!$this->{$regla['custom']}($valor)) {
-                    return [
-                        'estatus' => false,
-                        'mensaje' => "El campo '$campo' no es válido."
-                    ];
-                }
-            }
-
-            // Validar existencia en otra tabla (foránea)
-            if (isset($regla['exists'])) {
-                $tabla = $regla['exists']['tabla'];
-                $campoFor = $regla['exists']['campo'] ?? $campo;
-                if (!$this->existeEnTabla($tabla, $campoFor, $valor)) {
-                    return [
-                        'estatus' => false,
-                        'mensaje' => "El valor del campo '$campo' no existe en la tabla $tabla."
-                    ];
-                }
-            }
-        }
-        return ['estatus' => true];
-    }
-
-    /**
-     * Verifica si un valor existe en una tabla específica (usa BD seguridad).
-     */
-    private function existeEnTabla($tabla, $campo, $valor)
-    {
-        $sql = "SELECT COUNT(*) as total FROM $tabla WHERE $campo = :valor";
-        try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
-            $stmt->bindParam(':valor', $valor);
-            $stmt->execute();
-            $fila = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $fila['total'] > 0;
-        } catch (PDOException $e) {
-            error_log("Error en existeEnTabla: " . $e->getMessage());
-            return false;
-        }
-    }
-
-    /**
-     * Validación personalizada para fecha.
-     */
-    private function validarFecha($fecha)
-    {
-        $valores = explode('-', $fecha);
-        return count($valores) == 3 && checkdate((int)$valores[1], (int)$valores[2], (int)$valores[0]);
-    }
-
-    // -----------------------------------------------------------------
     // Métodos privados (acciones)
     // -----------------------------------------------------------------
 
     /**
      * Lista todas las publicaciones (vista resumida).
+     // SE USA EN EL MODULO
      */
     private function _consultar()
     {
-        $sql = "SELECT id_cartelera, titulo, prioridad, fecha, usuarios.nombre as nombre_usuario 
+        $sql = "SELECT id_cartelera, titulo, prioridad, fecha, imagen, descripcion, usuarios.nombre as nombre_usuario 
                 FROM cartelera_virtual
                 INNER JOIN usuarios ON usuarios.id_usuario = cartelera_virtual.usuario_id
                 ORDER BY fecha ASC";
@@ -215,14 +121,10 @@ class CarteleraVirtual extends Conexion
 
     /**
      * Consulta detallada de una publicación por ID.
+     // SE USA EN EL MODULO
      */
-    private function _consultar_cartelera_id()
+    private function _consultar_cartelera()
     {
-        $validacion = $this->validar(['id_cartelera']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         $sql = "SELECT cv.*, u.nombre AS nombre_usuario
                 FROM cartelera_virtual cv
                 INNER JOIN usuarios u ON cv.usuario_id = u.id_usuario
@@ -244,15 +146,10 @@ class CarteleraVirtual extends Conexion
 
     /**
      * Registra una nueva publicación.
+     // SE USA EN EL MODULO
      */
-    private function _registrar()
+    private function _registrar_cartelera()
     {
-        $campos = ['titulo', 'descripcion', 'fecha', 'prioridad', 'usuario_id'];
-        $validacion = $this->validar($campos);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         $sql = "INSERT INTO cartelera_virtual (titulo, descripcion, fecha, imagen, prioridad, usuario_id)
                 VALUES (:titulo, :descripcion, :fecha, :imagen, :prioridad, :usuario_id)";
         try {
@@ -274,15 +171,10 @@ class CarteleraVirtual extends Conexion
 
     /**
      * Actualiza una publicación existente.
+     // SE USA EN EL MODULO
      */
-    private function _modificar_publicacion()
+    private function _modificar_cartelera()
     {
-        $campos = ['id_cartelera', 'titulo', 'descripcion', 'fecha', 'prioridad', 'usuario_id'];
-        $validacion = $this->validar($campos);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         $sql = "UPDATE cartelera_virtual SET
                     titulo = :titulo,
                     descripcion = :descripcion,
@@ -310,14 +202,10 @@ class CarteleraVirtual extends Conexion
 
     /**
      * Elimina una publicación (físicamente) y su imagen asociada.
+     // SE USA EN EL MODULO
      */
-    private function _eliminar_publicacion()
+    private function _eliminar_cartelera()
     {
-        $validacion = $this->validar(['id_cartelera']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         // Obtener el nombre de la imagen antes de eliminar
         $imagen = $this->obtenerImagenActual();
 
@@ -343,29 +231,13 @@ class CarteleraVirtual extends Conexion
         }
     }
 
-    /**
-     * Último ID insertado.
-     */
-    private function _lastId()
-    {
-        $sql = "SELECT MAX(id_cartelera) as last_id FROM cartelera_virtual";
-        try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
-            $stmt->execute();
-            $dato = $stmt->fetch(PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $dato];
-        } catch (PDOException $e) {
-            error_log("Error en _lastId: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al obtener último ID'];
-        }
-    }
-
     // -----------------------------------------------------------------
     // Métodos públicos auxiliares
     // -----------------------------------------------------------------
 
     /**
      * Obtiene el nombre de la imagen actual de una publicación.
+     // SE USA EN LA PROPIA CLASE (considerar quitar metodo)
      */
     public function obtenerImagenActual()
     {
@@ -387,6 +259,7 @@ class CarteleraVirtual extends Conexion
 
     /**
      * Consulta para la página de inicio (con paginación).
+     // SE USA EN INICIO
      */
     public function consultar_inicio($limite)
     {
@@ -409,6 +282,7 @@ class CarteleraVirtual extends Conexion
 
     /**
      * Consulta rápida de las últimas 3 publicaciones para el widget del Dashboard
+     // SE USA EN INICIO
      */
     public function consultar_widget_dashboard()
     {

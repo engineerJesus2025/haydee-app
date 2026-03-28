@@ -2,6 +2,7 @@ let tabla_anio_fiscal;
 let id_modificar;
 
 const modal = new bootstrap.Modal(document.getElementById("modal_anio_fiscal"), { focus: false });
+const modalDetalles = new bootstrap.Modal(document.getElementById("modal_detalles"), { focus: false });
 const form = document.querySelector("#form_anio_fiscal");
 
 // Exponer funciones necesarias para el validador
@@ -15,11 +16,11 @@ document.addEventListener('DOMContentLoaded', consultar);
 // CONSULTA Y TABULATOR
 // ============================================
 async function consultar() {
-    // 1. Encontrar el contenedor dinámicamente
+    // Encontrar el contenedor dinámicamente
     const contenedor = document.querySelector(".tabla-sistema-haydee");
     if (!contenedor) return;
 
-    // 2. Formateadores Específicos del Módulo
+    // Formateadores Específicos del Módulo
     const formatoEstado = (cell) => {
         const estado = cell.getValue();
         const clase = estado === 'Cerrada' ? 'badge bg-secondary' : 'badge bg-primary';
@@ -35,15 +36,21 @@ async function consultar() {
 
     const formatoBotones = (cell) => {
         const id = cell.getData().id_anio_fiscal;
-        let html = `<div class="d-flex justify-content-center gap-2">`;
+        let html = `<div class="d-flex justify-content-center flex-wrap gap-2">
+            <button type="button" class="btn btn-primary btn-sm vista-previa" value="${id}" data-tooltip="true" title="Ver Mas">
+                <i class="bi bi-eye"></i>
+                <span class="d-none d-lg-inline ms-2">Ver</span>
+            </button>`;
         if (window.permiso_modificar) {
-            html += `<button data-tooltip="true" class="btn btn-success btn-sm modificar" value="${id}" title="Modificar los detalles de este registro">
+            html += `<button class="btn btn-success btn-sm modificar" value="${id}" data-tooltip="true" title="Modificar los detalles de este registro">
                         <i class="bi bi-pencil"></i>
+                        <span class="d-none d-lg-inline ms-2">Editar</span>
                     </button>`;
         }
         if (window.permiso_eliminar) {
-            html += `<button data-tooltip="true" class="btn btn-danger btn-sm eliminar" value="${id}" title="Quitar este elemento del sistema">
+            html += `<button class="btn btn-danger btn-sm eliminar" value="${id}" data-tooltip="true" title="Quitar este elemento del sistema">
                         <i class="bi bi-trash"></i>
+                        <span class="d-none d-lg-inline ms-2">Borrar</span>
                     </button>`;
         }
         html += `</div>`;
@@ -53,17 +60,17 @@ async function consultar() {
     // 3. Estructura de Columnas
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
-        { title: "Estado", field: "estado", formatter: formatoEstado, minWidth: 100, responsive: 0 },
-        { title: "Fecha de Inicio", field: "fecha_inicio", formatter: formatoFecha, minWidth: 150 },
-        { title: "Fecha de Cierre", field: "fecha_cierre", formatter: formatoFechaCierre, minWidth: 150 },
-        { title: "Descripción", field: "descripcion", minWidth: 150 },
+        { title: "Estado", field: "estado", formatter: formatoEstado, minWidth: 120, responsive: 0 },
+        { title: "Fecha de Inicio", field: "fecha_inicio", formatter: formatoFecha, minWidth: 170 },
+        { title: "Fecha de Cierre", field: "fecha_cierre", formatter: formatoFechaCierre, minWidth: 170 },
         {
             title: "Acciones",
             formatter: formatoBotones,
             headerSort: false,
             hozAlign: "center",
             vertAlign: "middle",
-            minWidth: 100,
+            minWidth: 130,
+            widthGrow: 2,
             responsive: 0,
             download: false,
             headerHozAlign: "center",
@@ -73,6 +80,10 @@ async function consultar() {
 
                 // Emulamos el evento para que tus funciones prepararFormulario funcionen sin cambios
                 const mockEvent = { currentTarget: btn }; 
+
+                if (btn.classList.contains('vista-previa')) {
+                    mostrarVistaPrevia(cell.getData());
+                }
 
                 if (btn.classList.contains('modificar')) {
                     prepararFormulario(mockEvent);
@@ -112,6 +123,32 @@ async function consultar() {
     }
 }
 
+// Función que lee la memoria de Tabulator (Sin AJAX extra)
+function mostrarVistaPrevia(data) {
+    // 1. Estado (Cambiamos el color dependiendo de si está cerrado o abierto)
+    const estadoEl = document.getElementById("vp_estado");
+    estadoEl.textContent = data.estado;
+    if (data.estado === 'Cerrada') {
+        estadoEl.className = "mt-2 mb-0 fw-bold text-secondary"; // Gris si está cerrada
+    } else {
+        estadoEl.className = "mt-2 mb-0 fw-bold text-success"; // Verde si está activa
+    }
+
+    // 2. Descripción
+    document.getElementById("vp_descripcion").textContent = data.descripcion || 'Sin descripción';
+
+    // 3. Fechas (Reutilizamos la clase FormatoFechas que ya usas en la tabla)
+    document.getElementById("vp_fecha_inicio").textContent = FormatoFechas.formatoUsuario(data.fecha_inicio);
+    
+    // Mismo criterio de la tabla: si no está cerrada, mostramos un aviso
+    document.getElementById("vp_fecha_cierre").textContent = data.estado === 'Cerrada' 
+        ? FormatoFechas.formatoUsuario(data.fecha_cierre) 
+        : 'Aún sin cerrar';
+
+    // Mostramos el modal
+    modalDetalles.show();
+}
+
 // ============================================
 // OPERACIONES CRUD
 // ============================================
@@ -120,13 +157,13 @@ async function registrar() {
     datos.set('operacion', 'registrar');
 
     const respuesta = await Peticiones.enviar(datos, "", true);
-    if (respuesta?.estatus) {
+
+    // Le delegamos toda la validación de errores y alertas al Helper
+    Validador.procesarRespuesta(respuesta, () => {
+        // Esto solo se ejecuta si la respuesta fue exitosa (estatus: true)
         modal.hide();
-        tabla_anio_fiscal.replaceData();
-        Alertas.mostrar('success', 'Éxito', 'Año fiscal registrado correctamente.');
-    } else {
-        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo registrar.');
-    }
+        tabla_anio_fiscal.replaceData(); // Asumiendo que recarga los datos
+    });
 }
 
 async function prepararFormulario(e) {
@@ -137,27 +174,25 @@ async function prepararFormulario(e) {
     datos.append('operacion', 'consulta_especifica');
 
     const respuesta = await Peticiones.enviar(datos, "", true);
-    if (!respuesta?.estatus) {
-        Alertas.mostrar('error', 'Error', 'No se pudo cargar el año fiscal.');
-        return;
-    }
 
-    const data = respuesta.datos;
+    Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
+        const data = respuestaServidor.datos;
 
-    form.querySelector('#fecha_inicio').value = data.fecha_inicio;
-    form.querySelector('#fecha_cierre').value = data.fecha_cierre;
-    form.querySelector('#estado').value = data.estado;
-    form.querySelector('#descripcion').value = data.descripcion;
+        form.querySelector('#fecha_inicio').value = data.fecha_inicio;
+        form.querySelector('#fecha_cierre').value = data.fecha_cierre;
+        form.querySelector('#estado').value = data.estado;
+        form.querySelector('#descripcion').value = data.descripcion;
 
-    document.getElementById('titulo_modal').textContent = 'Modificar Año Fiscal';
-    form.querySelector('#boton_formulario').textContent = 'Guardar Cambios';
-    form.querySelector('#boton_formulario').dataset.id = id;
+        document.getElementById('titulo_modal').textContent = 'Modificar Año Fiscal';
+        form.querySelector('#boton_formulario').textContent = 'Guardar Cambios';
+        form.querySelector('#boton_formulario').dataset.id = id;
 
-    // Habilitar campos deshabilitados en registro
-    form.querySelector('#fecha_cierre').removeAttribute('disabled');
-    form.querySelector('#estado').removeAttribute('disabled');
+        // Habilitar campos deshabilitados en registro
+        form.querySelector('#fecha_cierre').removeAttribute('disabled');
+        form.querySelector('#estado').removeAttribute('disabled');
 
-    modal.show();
+        modal.show();
+    });
 }
 
 async function modificar() {
@@ -167,13 +202,11 @@ async function modificar() {
     datos.set('operacion', 'modificar');
 
     const respuesta = await Peticiones.enviar(datos, "", true);
-    if (respuesta?.estatus) {
+
+    Validador.procesarRespuesta(respuesta, () => {
         modal.hide();
         tabla_anio_fiscal.replaceData();
-        Alertas.mostrar('success', 'Éxito', 'Año fiscal actualizado correctamente.');
-    } else {
-        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo actualizar.');
-    }
+    });
 }
 
 async function eliminar(id) {
@@ -182,12 +215,10 @@ async function eliminar(id) {
     datos.append('operacion', 'eliminar');
 
     const respuesta = await Peticiones.enviar(datos);
-    if (respuesta?.estatus) {
+
+    Validador.procesarRespuesta(respuesta, () => {
         tabla_anio_fiscal.replaceData();
-        Alertas.mostrar('success', 'Éxito', 'Año fiscal eliminado correctamente.');
-    } else {
-        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo eliminar.');
-    }
+    });
 }
 
 // ============================================

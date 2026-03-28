@@ -2,28 +2,53 @@
 use haydee\ayuda\Sesiones;
 use haydee\modelo\Banco;
 use haydee\modelo\Bitacora;
+use haydee\ayuda\Validador;
+use haydee\ayuda\ValidadorBD;
 use haydee\servicios\GestorAuditoria;
 
 // Verificaciones de seguridad
 Sesiones::verificarSesion();
 Sesiones::verificarPermiso(GESTIONAR_BANCOS, CONSULTAR);
 
-// Instancia del modelo
-$banco = new Banco();
-
 if (isset($_POST["operacion"])) {
-    // Asignación masiva de campos que pueden llegar
+    $operacion = $_POST["operacion"];
+    
+    // 1. Obtenemos las reglas centralizadas
+    $reglas = Banco::obtenerReglas($operacion);
+
+    // 2. Ejecutamos la validación si aplica
+    if (!empty($reglas)) {
+        $validador = new Validador();
+        
+        $contexto = [];
+        // Permitimos que al modificar, se excluya el ID actual de la regla Unique de la cuenta
+        if (strpos($operacion, 'modificar') !== false) {
+            $contexto['exclude_id'] = $_POST['id_banco'] ?? null;
+        }
+
+        $validador->validarConjunto($_POST, $reglas, $contexto);
+
+        if ($validador->tieneErrores()) {
+            echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
+            exit;
+        }
+    }
+
+    // --- DATOS PUROS Y SEGUROS ---
+
+    // Instancia del modelo
+    $banco = new Banco();
+
+    // Asignación masiva 
     $banco->set_id_banco($_POST['id_banco'] ?? null);
     $banco->set_nombre_banco($_POST['nombre_banco'] ?? null);
     $banco->set_codigo($_POST['codigo'] ?? null);
     $banco->set_numero_cuenta($_POST['numero_cuenta'] ?? null);
+    $banco->set_tipo_cuenta($_POST['tipo_cuenta'] ?? null);
     $banco->set_telefono_afiliado($_POST['telefono_afiliado'] ?? null);
     $banco->set_rif($_POST['rif'] ?? null);
 
-    $operacion = $_POST["operacion"];
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
-
-    // Instanciamos el auditor
     $auditor = new GestorAuditoria($banco, GESTIONAR_BANCOS);
 
     try{
@@ -35,39 +60,35 @@ if (isset($_POST["operacion"])) {
                 }
                 break;
 
-            case 'registrar':
-                $respuesta = $banco->realizar_consulta('registrar');
+            case 'registrar_banco':
+                $respuesta = $banco->realizar_consulta('registrar_banco');
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria('registrar');
                 }
                 break;
 
-            case 'consulta_especifica':
+            case 'consultar_banco':
                 $respuesta = $banco->realizar_consulta('consultar_banco');
                 break;
 
-            case 'modificar':
+            case 'modificar_banco':
                 // Obtener datos anteriores
                 $auditor->capturarDatosAnteriores('consultar_banco');
 
-                $respuesta = $banco->realizar_consulta('modificar');
+                $respuesta = $banco->realizar_consulta('modificar_banco');
                 if ($respuesta['estatus']) { 
                     $auditor->registrarAuditoria('modificar'); 
                 }
                 break;
 
-            case 'eliminar':
+            case 'eliminar_banco':
                 // Obtener datos anteriores
                 $auditor->capturarDatosAnteriores('consultar_banco');
 
-                $respuesta = $banco->realizar_consulta('eliminar');
+                $respuesta = $banco->realizar_consulta('eliminar_banco');
                 if ($respuesta['estatus']) { 
                     $auditor->registrarAuditoria('eliminar'); 
                 }
-                break;
-
-            case 'ultimo_id':
-                $respuesta = $banco->realizar_consulta('lastId');
                 break;
 
             default:
@@ -91,27 +112,49 @@ if (isset($_POST["operacion"])) {
     }
 }
 
-// Validaciones AJAX (para verificar número de cuenta)
+// Validaciones AJAX
 if (isset($_POST["validar"])) {
     header('Content-Type: application/json');
-
     $validar = $_POST["validar"];
-    if ($validar == "numero_cuenta") {
-        $banco->set_numero_cuenta($_POST["numero_cuenta"] ?? null);
-        $resultado = $banco->realizar_consulta('validar');
+    $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
 
-        if ($resultado['estatus']) {
-            $existe = $resultado['existe'] ?? false;
-            echo json_encode([
-                'estatus' => true,
-                'busqueda' => $existe ? 'numero_cuenta' : null
-            ]);
-        } else {
-            echo json_encode($resultado); // En caso de error interno
+    $validadorBD = new ValidadorBD();
+
+    try {
+        switch ($validar) {
+            case 'numero_cuenta':
+                $numero_cuenta = $_POST["numero_cuenta"] ?? '';
+                $id = !empty($_POST["id_banco"]) ? $_POST["id_banco"] : null;
+                
+                $existe = !$validadorBD->esUnico('bancos', 'numero_cuenta', $numero_cuenta, 'id_banco', $id);
+                $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'El número de cuenta ya está registrado' : 'Disponible'];
+                break;
+
+            case 'validar_clave_foranea':
+                $tabla = $_POST['tabla'] ?? '';
+                $campo = $_POST['nombre_clave'] ?? '';
+                $valor = $_POST['valor'] ?? '';
+
+                if (empty($tabla) || empty($campo) || empty($valor)) {
+                    $respuesta = ['estatus' => false, 'mensaje' => 'Faltan parámetros de validación'];
+                    break;
+                }
+
+                if ($tabla !== 'bancos') {
+                    $respuesta = ['estatus' => false, 'mensaje' => 'Tabla no soportada'];
+                    break;
+                }
+
+                $existe = $validadorBD->existe($tabla, $campo, $valor);
+                $respuesta = ['estatus' => $existe, 'mensaje' => $existe ? 'OK' : 'No existe'];
+                break;
         }
-    } else {
-        echo json_encode(['estatus' => false, 'mensaje' => 'Validación no reconocida']);
+    } catch (Exception $e) {
+        error_log("Error en validación AJAX Bancos: " . $e->getMessage());
+        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
     }
+
+    echo json_encode($respuesta);
     exit;
 }
 

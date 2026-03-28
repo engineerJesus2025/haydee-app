@@ -35,15 +35,16 @@
                     <div class="row my-4 justify-content-center">
                         <div class="col-11">
                             <div class="card p-4 row">
-                                <div class="d-flex justify-content-between align-items-center mb-4">
-                                    <div class="col" hidden>
+                                <div class="row justify-content-end align-items-center">
+                                    <div class="col-12 col-sm-6 mb-4" hidden>
                                         <button class="btn btn-primary my-2" id="boton_registrar" type="button" data-bs-toggle="modal" data-bs-target="#modal_mensualidad" data-tooltip="true" title="Registrar Nueva mensualidad">Nueva Mensualidad</button>
                                         <p class="text-danger"></p>
                                     </div>
-                                    
-                                    <div class="input-group" style="max-width: 300px;">
-                                        <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                        <input type="text" id="busqueda_global" data-tooltip="true" title="Buscar Registro" class="form-control" placeholder="Buscar mensualidad...">
+                                    <div class="col-12 col-sm-6 mb-4">
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                            <input type="text" id="busqueda_global" data-tooltip="true" title="Buscar Registro" class="form-control" placeholder="Buscar mensualidad...">
+                                        </div>
                                     </div>
                                 </div>
                                 <div id="tabla_mensualidad" class="tabla-sistema-haydee"></div>
@@ -61,35 +62,57 @@
         require_once ROOT_PATH . "/vista/componentes/script.php";
         require_once ROOT_PATH . "/vista/componentes/modal_carga.php";
         require_once ROOT_PATH . "/vista/componentes/boton_ayuda.php";
+        // Modales
+        require_once ROOT_PATH . "/vista/mensualidad/mensualidad_modal.php";
     ?>
     
     <!-- Modales -->
-    <div class="modal fade" id="modal_mensualidad" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h1 class="modal-title fs-5" id="titulo_modal">Registrar mensualidad</h1>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="modal fade" id="modal_mensualidades_apartamentos" tabindex="-1" aria-labelledby="titulo_modal_mensualidad" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-primary text-white border-bottom-0">
+                    <h5 class="modal-title fw-bold" id="titulo_modal_mensualidad">
+                        <i class="bi bi-buildings me-2"></i>Estado de Mensualidades por Apartamento
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body p-4">
+                <div class="modal-body bg-light p-4">
+                    
+                    <div class="bg-white p-3 mb-4 rounded border shadow-sm">
+                        <div class="row text-center g-3">
+                            <div class="col-md-2 border-end">
+                                <span class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">Período</span>
+                                <h6 id="vp_periodo" class="text-primary mt-1 mb-0 fw-bold">---</h6>
+                            </div>
+                            <div class="col-md-3 border-end">
+                                <span class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">Monto Base</span>
+                                <h6 id="vp_monto_base_bs" class="text-dark mt-1 mb-0 fw-bold">---</h6>
+                                <span id="vp_monto_base_usd" class="text-muted" style="font-size: 0.75rem;">---</span>
+                            </div>
+                            <div class="col-md-2 border-end">
+                                <span class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">Tasa BCV Aplicada</span>
+                                <h6 id="vp_tasa" class="text-dark mt-1 mb-0 fw-bold">---</h6>
+                            </div>
+                            <div class="col-md-3 border-end">
+                                <span class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">Recargo por Mora</span>
+                                <h6 id="vp_recargo" class="text-danger mt-1 mb-0 fw-bold">---</h6>
+                            </div>
+                            <div class="col-md-2">
+                                <span class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">Día Límite</span>
+                                <h6 id="vp_limite" class="text-dark mt-1 mb-0 fw-bold">---</h6>
+                            </div>
+                        </div>
+                    </div>
 
-                    <?php
-                    require_once ROOT_PATH . "/vista/mensualidad/mensualidad_modal.php";
-                    ?>
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-0">
+                            <div id="mensualidades_apartamentos" class="tabla-sistema-haydee m-0 border-0 rounded-bottom"></div>
+                        </div>
+                    </div>
 
                 </div>
-            </div>
-        </div>
-    </div>
-    <div class="modal fade" id="modal_mensualidades_apartamentos" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h1 class="modal-title fs-5" id="titulo_modal">mensualidades de los Apartamentos</h1>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="mensualidades_apartamentos" class="tabla-sistema-haydee"></div>
+                <div class="modal-footer bg-white border-top justify-content-center">
+                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>

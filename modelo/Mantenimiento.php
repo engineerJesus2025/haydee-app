@@ -6,6 +6,29 @@ use PDOException;
 
 class Mantenimiento extends Conexion
 {
+    // ====================================================================
+    // VALIDACIONES CENTRALIZADAS
+    // ====================================================================
+    public static function obtenerReglas($operacion) {
+        $reglasGenerales = [
+            'db' => [
+                // Solo permitimos exactamente la palabra 'negocio' o 'seguridad'
+                'regex' => '/^(negocio|seguridad)$/'
+            ]
+        ];
+
+        // Mapeamos las operaciones que existan en tu controlador
+        $camposPorOperacion = [
+            'generar_copia_seguridad'   => ['db'],
+            'restaurar_copia_seguridad' => ['db']
+        ];
+
+        if (isset($camposPorOperacion[$operacion])) {
+            return array_intersect_key($reglasGenerales, array_flip($camposPorOperacion[$operacion]));
+        }
+        return [];
+    }
+
     public function generarCopiaSeguridad($db)
     {
         $db_copiar = ($db === 'negocio') ? DB_NAME : DB_SECURITY;

@@ -96,7 +96,7 @@ class ConstructorDetalles
     public static function ConstruirDetallesGastos($post, $files, $esEdicion = false)
     {
         $config = [
-            'campos' => ['fecha_detalle', 'monto', 'metodo_pago', 'descripcion_detalle'],
+            'campos' => ['fecha_detalle', 'monto', 'metodo_pago', 'descripcion_detalle_gasto'],
             'bancarios' => ['banco_id', 'referencia'],
             'imagenes' => 'imagen',
             'metodo_pago_campo' => 'metodo_pago',
@@ -115,14 +115,14 @@ class ConstructorDetalles
     {
         // Configuración específica para pagos
         $config = [
-            'campos' => ['fecha_pago', 'monto_pago', 'metodo_pago', 'referencia_pago'],
+            'campos' => ['fecha_pago', 'monto', 'tipo_pago', 'referencia'],
             'bancarios' => ['banco_id', 'referencia'],
-            'imagenes' => 'comprobante',
-            'metodo_pago_campo' => 'metodo_pago',
-            'metodos_con_archivo' => ['Transferencia', 'Depósito'],
+            'imagenes' => 'imagen',
+            'metodo_pago_campo' => 'tipo_pago',
+            'metodos_con_archivo' => ['Transferencia', 'Pago Movil'],
             'carpeta_imagenes' => 'pagos',
-            'campo_existente' => 'comprobante_existente',
-            'indice_archivo_formato' => '/^comprobante_(\d+)$/'
+            'campo_existente' => 'imagen_existente',
+            'indice_archivo_formato' => '/^imagen_(\d+)$/'
         ];
         return self::construirDetalles($post, $files, $config, $esEdicion);
     }

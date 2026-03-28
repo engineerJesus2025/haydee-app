@@ -41,27 +41,9 @@
         require_once ROOT_PATH . "/vista/componentes/footer.php";
         require_once ROOT_PATH . "/vista/componentes/script.php";
         require_once ROOT_PATH . "/vista/componentes/modal_carga.php";
+        // Modales
+        require_once ROOT_PATH . "/vista/bitacora/bitacora_modal.php";
     ?>
-
-    <!-- Modales -->
-    <div class="modal fade" id="modalDetalleBitacora" tabindex="-1" aria-labelledby="modalDetalleBitacoraLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="modalDetalleBitacoraLabel">
-                        <i class="bi bi-journal-text me-2"></i>Detalle de Bitácora
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <?php require_once ROOT_PATH . "/vista/bitacora/bitacora_modal.php"; ?>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                </div>
-            </div>
-        </div>
-    </div>
     
     <!-- Scripts personalizado -->
     <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/consultas_ajax/bitacora_ajax.js"></script>

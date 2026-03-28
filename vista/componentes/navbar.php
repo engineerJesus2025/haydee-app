@@ -14,9 +14,9 @@ $es_seguridad = in_array($modulo, ["rol", "bitacora", "permisos", "modulos"]);
 
 <div class="l-navbar show" id="nav-bar">
     <nav class="nav">
-        <div class="nav_logo_container">
+        <div class="nav_logo_container w-sm-100">
             <a title="Inicio" href="?pagina=inicio&accion=inicio" class="nav_logo text-decoration-none d-flex align-items-center ps-2">
-                <div class="d-flex align-items-center justify-content-center rounded bg-primary shadow-sm logo_box" style="min-width: 40px; height: 40px;">
+                <div class="d-flex align-items-center justify-content-center rounded bg-primary logo_box mx-0" style="min-width: 40px; height: 40px;">
                     <i class="bi bi-buildings text-white fs-4"></i>
                 </div>
                 <div class="d-flex flex-column ms-2 logo_text">
@@ -139,7 +139,7 @@ $es_seguridad = in_array($modulo, ["rol", "bitacora", "permisos", "modulos"]);
                 <?php endif; ?>
 
                 <?php if (Sesiones::tienePermiso(GESTIONAR_USUARIOS, CONSULTAR)): ?>
-                <a href="?pagina=usuario&accion=inicio" class="nav_link <?php echo ($modulo === 'usuario' || $accion === 'perfil') ? 'active' : ''; ?>" title="Usuarios">
+                <a href="?pagina=usuario&accion=inicio" class="nav_link <?php echo ($modulo === 'usuario') ? 'active' : ''; ?>" title="Usuarios">
                     <i class="bi bi-person-badge-fill nav_logo-icon"></i>
                     <span class="nav_name">Usuarios</span>
                 </a>

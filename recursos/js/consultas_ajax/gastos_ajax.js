@@ -60,11 +60,22 @@ async function consultar() {
 
     const formatoBotones = (cell) => {
         const id = cell.getData().id_gasto;
-        let html = `<div class="d-flex justify-content-center gap-2">
-            <button data-tooltip="true" type="button" class="btn btn-primary btn-sm vista-previa" title="Previsualizar contenido del registro" value="${id}"><i class="bi bi-eye-fill"></i></button>
-            <button data-tooltip="true" type="button" class="btn btn-success btn-sm modificar" title="Modificar los detalles de este registro" value="${id}" data-bs-toggle="modal" data-bs-target="#modal_gastos"><i class="bi bi-pencil-square"></i></button>`;
-        if (permiso_eliminar == 1) {
-            html += `<button data-tooltip="true" type="button" class="btn btn-danger btn-sm eliminar" title="Quitar este elemento del sistema" value="${id}"><i class="bi bi-trash"></i></button>`;
+        let html = `<div class="d-flex justify-content-center flex-wrap gap-2">
+            <button type="button" class="btn btn-primary btn-sm vista-previa" value="${id}" data-tooltip="true" title="Ver Mas">
+                <i class="bi bi-eye"></i>
+                <span class="d-none d-lg-inline ms-2">Ver</span>
+            </button>`;
+        if (permiso_modificar) {
+            html += `<button class="btn btn-success btn-sm modificar" value="${id}" data-tooltip="true" title="Modificar los detalles de este registro">
+                        <i class="bi bi-pencil"></i>
+                        <span class="d-none d-lg-inline ms-2">Editar</span>
+                    </button>`;
+        }
+        if (permiso_eliminar) {
+            html += `<button class="btn btn-danger btn-sm eliminar" value="${id}" data-tooltip="true" title="Quitar este elemento del sistema">
+                        <i class="bi bi-trash"></i>
+                        <span class="d-none d-lg-inline ms-2">Borrar</span>
+                    </button>`;
         }
         html += `</div>`;
         return html;
@@ -73,12 +84,14 @@ async function consultar() {
     // 2. COLUMNAS
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
-        { title: "Fecha", field: "ultima_fecha", formatter: formatoFecha, minWidth: 100, responsive: 0 },
-        { title: "Monto", field: "monto_total", formatter: formatoMonto, minWidth: 120 },
-        { title: "Tipo Gasto", field: "tipo", formatter: formatoMayuscula, minWidth: 150 }, 
-        { title: "Descripción", field: "descripcion_gasto", minWidth: 200 }, 
+        { title: "Tipo", field: "clasificacion", formatter: formatoMayuscula, minWidth: 130 }, 
+        { title: "Fecha", field: "ultima_fecha", formatter: formatoFecha, minWidth: 130, responsive: 0 },
+        { title: "Monto", field: "monto_total", formatter: formatoMonto, minWidth: 130 },
         { 
-            title: "Acciones", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 140, responsive: 0, download: false, headerHozAlign: "center",
+            title: "Acciones", formatter: formatoBotones, headerSort: false, 
+            hozAlign: "center", vertAlign: "middle", minWidth: 140, responsive: 0, 
+            widthGrow: 2,
+            download: false, headerHozAlign: "center",
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
@@ -116,9 +129,9 @@ function recolectarDatosFormulario() {
 
     // Campos de cabecera (siempre presentes)
     formData.append('clasificacion', document.getElementById('clasificacion').value);
-    formData.append('tipo_gasto', document.getElementById('tipo_gasto').value);
+    formData.append('tipo_gasto_id', document.getElementById('tipo_gasto_id').value);
     formData.append('descripcion_gasto', document.getElementById('descripcion_gasto').value);
-    formData.append('proveedor', document.getElementById('proveedor').value);
+    formData.append('proveedor_id', document.getElementById('proveedor_id').value);
     const solicitud = document.getElementById('solicitud').value;
     if (solicitud) formData.append('solicitud', solicitud);
 
@@ -129,7 +142,7 @@ function recolectarDatosFormulario() {
         formData.append('fecha_detalle[]', bloque.querySelector('.fecha_detalle').value);
         formData.append('monto[]', bloque.querySelector('.monto').value);
         formData.append('metodo_pago[]', bloque.querySelector('.metodo_pago').value);
-        formData.append('descripcion_detalle[]', bloque.querySelector('.descripcion_detalle').value);
+        formData.append('descripcion_detalle_gasto[]', bloque.querySelector('.descripcion_detalle_gasto').value);
 
         // Campos bancarios: se envían siempre (con valor vacío si no aplica)
         const refInput = bloque.querySelector('.referencia');
@@ -166,18 +179,13 @@ function recolectarDatosFormulario() {
  */
 async function registrar() {
     const formData = recolectarDatosFormulario();
-    formData.append('operacion', 'registrar');
+    formData.append('operacion', 'registrar_gasto');
 
     const respuesta = await Peticiones.enviar(formData,'', true);
-
-    if (!respuesta.estatus) {
-        Alertas.mostrar('error', 'Atención', respuesta.mensaje);
-        return;
-    }
-
-    modalGasto.hide();
-    tabla_gastos.replaceData();
-    Alertas.mostrar('success', 'Éxito', 'Gasto registrado correctamente');
+    Validador.procesarRespuesta(respuesta, () => {
+        modalGasto.hide();
+        tabla_gastos.replaceData();
+    });
 }
 
 /**
@@ -187,111 +195,107 @@ async function prepararFormularioEdicion(e) {
     let id = e.target.value || e.target.parentElement.value; 
     const datos = new FormData();
     datos.append('id_gasto', id);
-    datos.append('operacion', 'consulta_especifica');
+    datos.append('operacion', 'consultar_gasto');
 
     const respuesta = await Peticiones.enviar(datos, '',true);
+    Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
+        const gasto = respuestaServidor.datos.gasto;
+        const detalles = respuestaServidor.datos.detalles;
 
-    if (!respuesta.estatus) {
-        Alertas.mostrar('error', 'Error', respuesta.mensaje);
-        return;
-    }
-
-    const gasto = respuesta.datos.gasto;
-    const detalles = respuesta.datos.detalles;
-
-    // --- NUEVA LÓGICA PARA CLASIFICACIÓN ---
-    const selectClasificacion = formulario.querySelector('#clasificacion');
-    
-    // 1. Limpiamos por si quedó una opción de "Reposición" de una edición anterior
-    const opcionExistente = selectClasificacion.querySelector('option[value="Reposicion"]');
-    if (opcionExistente) opcionExistente.remove();
-
-    // 2. Verificamos si el registro actual es de tipo Reposición
-    // Nota: Asegúrate de que el string coincida exactamente con lo que devuelve tu base de datos
-    if (gasto.clasificacion === 'Reposicion' || gasto.clasificacion === 'Reposición') {
-        // Creamos la opción dinámicamente
-        const opcionRepo = document.createElement('option');
-        opcionRepo.value = gasto.clasificacion; // Usamos el valor exacto de la BD
-        opcionRepo.textContent = 'Reposición';
-        selectClasificacion.appendChild(opcionRepo);
+        const selectClasificacion = formulario.querySelector('#clasificacion');
         
-        // Opcional pero recomendado: Bloquear el campo para evitar que lo cambien a Fijo/Variable
-        selectClasificacion.disabled = true; 
-        
-        // También podrías bloquear el "tipo de gasto", "proveedor" y "solicitud" de la misma manera
-        formulario.querySelector('#tipo_gasto').disabled = true;
-        formulario.querySelector('#proveedor').disabled = true;
-        formulario.querySelector('#solicitud').disabled = true;
-    } else {
-        // Si es un gasto normal, nos aseguramos de que los campos estén habilitados
-        selectClasificacion.disabled = false;
-        formulario.querySelector('#tipo_gasto').disabled = false;
-        formulario.querySelector('#proveedor').disabled = false;
-        formulario.querySelector('#solicitud').disabled = false;
-    }
-    // ---------------------------------------
+        // Limpiamos por si quedó una opción de "Reposición" de una edición anterior
+        const opcionExistente = selectClasificacion.querySelector('option[value="Reposicion"]');
+        if (opcionExistente) opcionExistente.remove();
 
-    // Llenar cabecera
-    selectClasificacion.value = gasto.clasificacion || '';
-    formulario.querySelector('#tipo_gasto').value = gasto.tipo_gasto_id || '';
-    formulario.querySelector('#solicitud').value = gasto.solicitud_id || '';
-    formulario.querySelector('#descripcion_gasto').value = gasto.descripcion_gasto || '';
-    formulario.querySelector('#proveedor').value = gasto.proveedor_id || '';
-
-    // Limpiar y reconstruir detalles
-    contenedorDetalles.innerHTML = '';
-    if (detalles && detalles.length > 0) {
-        detalles.forEach((det, idx) => {
-            const nuevoBloque = plantillaDetalle.content.firstElementChild.cloneNode(true);
+        // Verificamos si el registro actual es de tipo Reposición
+        if (gasto.clasificacion === 'Reposicion' || gasto.clasificacion === 'Reposición') {
+            // Creamos la opción dinámicamente
+            const opcionRepo = document.createElement('option');
+            opcionRepo.value = gasto.clasificacion; // Usamos el valor exacto de la BD
+            opcionRepo.textContent = 'Reposición';
+            selectClasificacion.appendChild(opcionRepo);
             
-            // Llenar campos
-            nuevoBloque.querySelector('.fecha_detalle').value = det.fecha || '';
-            nuevoBloque.querySelector('.metodo_pago').value = det.metodo_pago || '';
-            nuevoBloque.querySelector('.monto').value = det.monto || '';
-            nuevoBloque.querySelector('.descripcion_detalle').value = det.descripcion_detalle_gasto || '';
+            // Debatible: Bloquear el campo para evitar que lo cambien a Fijo/Variable
+            selectClasificacion.disabled = true; 
+            
+            // También debatible: bloquear el "tipo de gasto", "proveedor" y "solicitud" de la misma manera
+            formulario.querySelector('#tipo_gasto_id').disabled = true;
+            formulario.querySelector('#proveedor_id').disabled = true;
+            formulario.querySelector('#solicitud').disabled = true;
+        } else {
+            // Si es un gasto normal, nos aseguramos de que los campos estén habilitados
+            selectClasificacion.disabled = false;
+            formulario.querySelector('#tipo_gasto_id').disabled = false;
+            formulario.querySelector('#proveedor_id').disabled = false;
+            formulario.querySelector('#solicitud').disabled = false;
+        }
+        // ---------------------------------------
 
-            // Campos bancarios si aplica
-            if (det.metodo_pago === 'Transferencia' || det.metodo_pago === 'Pago Movil') {
-                nuevoBloque.querySelector('.referencia').value = det.referencia || '';
-                nuevoBloque.querySelector('.banco').value = det.banco_id || '';
-                if (det.imagen) {
-                    nuevoBloque.querySelector('.nombre_imagen_cargada').textContent = `Comprobante: ${det.imagen}`;
+        // Llenar cabecera
+        selectClasificacion.value = gasto.clasificacion || '';
+        formulario.querySelector('#tipo_gasto_id').value = gasto.tipo_gasto_id || '';
+        formulario.querySelector('#solicitud').value = gasto.solicitud_id || '';
+        formulario.querySelector('#descripcion_gasto').value = gasto.descripcion_gasto || '';
+        formulario.querySelector('#proveedor_id').value = gasto.proveedor_id || '';
+
+        // Limpiar y reconstruir detalles
+        contenedorDetalles.innerHTML = '';
+        if (detalles && detalles.length > 0) {
+            detalles.forEach((det, idx) => {
+                const nuevoBloque = plantillaDetalle.content.firstElementChild.cloneNode(true);
+                
+                // Llenar campos
+                nuevoBloque.querySelector('.fecha_detalle').value = det.fecha || '';
+                nuevoBloque.querySelector('.metodo_pago').value = det.metodo_pago || '';
+                nuevoBloque.querySelector('.monto').value = det.monto || '';
+                nuevoBloque.querySelector('.descripcion_detalle_gasto').value = det.descripcion_detalle_gasto || '';
+
+                // Campos bancarios si aplica
+                if (det.metodo_pago === 'Transferencia' || det.metodo_pago === 'Pago Movil') {
+                    nuevoBloque.querySelector('.referencia').value = det.referencia || '';
+                    nuevoBloque.querySelector('.banco').value = det.banco_id || '';
+                    if (det.imagen) {
+                        nuevoBloque.querySelector('.nombre_imagen_cargada').textContent = `Comprobante: ${det.imagen}`;
+                    }
                 }
-            }
 
-            // Siempre crear input hidden para imagen existente (vacío si no hay)
-            const hidden = document.createElement('input');
-            hidden.type = 'hidden';
-            hidden.name = 'imagen_existente[]';
-            hidden.value = det.imagen || '';
-            nuevoBloque.appendChild(hidden);
+                // Siempre crear input hidden para imagen existente (vacío si no hay)
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = 'imagen_existente[]';
+                hidden.value = det.imagen || '';
+                nuevoBloque.appendChild(hidden);
 
-            // Actualizar visibilidad según método de pago
-            actualizarVisibilidadCampos(nuevoBloque.querySelector('.metodo_pago'));
+                // Actualizar visibilidad según método de pago
+                actualizarVisibilidadCampos(nuevoBloque.querySelector('.metodo_pago'));
 
-            // Agregar botón eliminar detalle si no es el único
-            if (idx > 0) {
-                const btnEliminar = document.createElement('button');
-                btnEliminar.type = 'button';
-                btnEliminar.className = 'btn btn-sm btn-outline-danger mb-3';
-                btnEliminar.innerHTML = '<i class="bi bi-x-circle"></i> Eliminar este Detalle';
-                btnEliminar.onclick = () => nuevoBloque.remove();
-                nuevoBloque.querySelector('.card-body').prepend(btnEliminar);
-            }
+                // Agregar botón eliminar detalle si no es el único
+                if (idx > 0) {
+                    const btnEliminar = document.createElement('button');
+                    btnEliminar.type = 'button';
+                    btnEliminar.className = 'btn btn-sm btn-outline-danger mb-3';
+                    btnEliminar.innerHTML = '<i class="bi bi-x-circle"></i> Eliminar este Detalle';
+                    btnEliminar.onclick = () => nuevoBloque.remove();
+                    nuevoBloque.querySelector('.card-body').prepend(btnEliminar);
+                }
 
-            contenedorDetalles.appendChild(nuevoBloque);
-        });
-    } else {
-        // Si no hay detalles, agregar un detalle vacío
-        agregarDetalle();
-    }
+                contenedorDetalles.appendChild(nuevoBloque);
+            });
+        } else {
+            // Si no hay detalles, agregar un detalle vacío
+            agregarDetalle();
+        }
 
-    // Configurar botón para edición
-    botonFormulario.setAttribute('modificar', 'true');
-    botonFormulario.setAttribute('id_modificar', id);
-    botonFormulario.textContent = 'Guardar Cambios';
-    document.getElementById('titulo_modal').textContent = 'Modificar Gasto';
-    id_modificar = id;
+        // Configurar botón para edición
+        botonFormulario.setAttribute('modificar', 'true');
+        botonFormulario.setAttribute('id_modificar', id);
+        botonFormulario.textContent = 'Guardar Cambios';
+        document.getElementById('titulo_modal').textContent = 'Modificar Gasto';
+        id_modificar = id;
+
+        modalGasto.show();
+    });
 }
 
 /**
@@ -300,18 +304,13 @@ async function prepararFormularioEdicion(e) {
 async function modificar(id) {
     const formData = recolectarDatosFormulario();
     formData.append('id_gasto', id);
-    formData.append('operacion', 'modificar');
+    formData.append('operacion', 'modificar_gasto');
 
     const respuesta = await Peticiones.enviar(formData, '',true);
-
-    if (!respuesta.estatus) {
-        Alertas.mostrar('error', 'Atención', respuesta.mensaje);
-        return;
-    }
-
-    modalGasto.hide();
-    tabla_gastos.replaceData();
-    Alertas.mostrar('success', 'Éxito', 'Gasto modificado correctamente');
+    Validador.procesarRespuesta(respuesta, () => {
+        modalGasto.hide();
+        tabla_gastos.replaceData();
+    });
 }
 
 // ============================================================
@@ -325,24 +324,45 @@ async function mostrarVistaPrevia(e) {
     let id = e.target.value || e.target.parentElement.value; 
     const datos = new FormData();
     datos.append('id_gasto', id);
-    datos.append('operacion', 'consulta_especifica');
+    datos.append('operacion', 'consultar_gasto');
 
     const respuesta = await Peticiones.enviar(datos);
+    Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
+        const data = respuestaServidor.datos.gasto;
+        console.log(data)
+        // 1. Clasificación (Con colores para distinguir rápidamente si es Fijo o Variable)
+        const clasificacionEl = document.getElementById("vp_clasificacion");
+        clasificacionEl.textContent = data.clasificacion || 'N/A';
+        
+        if (data.clasificacion === 'fijo') {
+            clasificacionEl.className = "badge bg-info text-dark fs-6 px-3 py-2 shadow-sm";
+        } else if (data.clasificacion === 'variable') {
+            clasificacionEl.className = "badge bg-warning text-dark fs-6 px-3 py-2 shadow-sm";
+        } else if (data.clasificacion === 'reposicion') {
+            clasificacionEl.className = "badge bg-success fs-6 px-3 py-2 shadow-sm";
+        }
+        else {
+            clasificacionEl.className = "badge bg-secondary fs-6 px-3 py-2 shadow-sm";
+        }
 
-    if (!respuesta.estatus) {
-        Alertas.mostrar('error', 'Error', respuesta.mensaje);
-        return;
-    }
+        // 2. Tipo de Gasto / Categoría
+        // Nota: Ajusta "nombre_tipo_gasto" si en tu consulta SQL lo llamaste diferente
+        document.getElementById("vp_tipo_gasto").textContent = data.nombre_tipo_gasto || 'No especificada';
 
-    const gasto = respuesta.datos.gasto;
+        // 3. Proveedor (Si es nulo, mostramos un texto por defecto)
+        document.getElementById("vp_proveedor").textContent = data.nombre_proveedor || 'Sin proveedor (No aplica)';
 
-    document.getElementById('vista_fecha').textContent = FormatoFechas.formatoUsuario(gasto.ultima_fecha);
+        // 4. Descripción
+        document.getElementById("vp_descripcion").textContent = data.descripcion_gasto || 'Sin descripción detallada.';
 
-    modalVistaPrevia.show();
+        // document.getElementById('vista_fecha').textContent = FormatoFechas.formatoUsuario(gasto.ultima_fecha);
 
-    setTimeout(async () => {
-        await cargarDetallesEnTabla(gasto.id_gasto);
-    }, 200);
+        modalVistaPrevia.show();
+
+        setTimeout(async () => {
+            await cargarDetallesEnTabla(data.id_gasto);
+        }, 200);
+    });
 }
 
 /**
@@ -354,44 +374,42 @@ async function cargarDetallesEnTabla(idGasto) {
     datos.append('operacion', 'consultar_detalles');
 
     const respuesta = await Peticiones.enviar(datos);
+    Validador.procesarRespuesta(respuesta, (respuestaServidor) => { 
+        const detalles = respuestaServidor.datos || [];
 
-    if (!respuesta.estatus) {
-        Alertas.mostrar('error', 'Error', respuesta.mensaje);
-        return;
-    }
+        const columnas = [
+            { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
+            { title: "Fecha", field: "fecha", formatter: (cell) => FormatoFechas.formatoUsuario(cell.getValue()), minWidth: 120, responsive: 0 },
+            { title: "Monto", field: "monto", formatter: (cell) => formatearMontoConMoneda(cell.getValue(), cell.getData().metodo_pago), minWidth: 120 },
+            { title: "Método", field: "metodo_pago", minWidth: 120 },
+            {
+                title: "Acciones",
+                headerSort: false,
+                hozAlign: "center",
+                minWidth: 100,
+                headerHozAlign: "center",
+                formatter: (cell) => `<button data-tooltip="true" class="btn btn-sm btn-primary ver-detalle" value="${cell.getData().id_detalle_gasto}">
+                                        <i class="bi bi-eye"></i>
+                                        <span class="d-none d-lg-inline ms-2">Ver</span>
+                                      </button>`,
+                cellClick: function(e, cell) {
+                    const btn = e.target.closest('button');
+                    if (!btn) return;
+                    if (btn.classList.contains('ver-detalle')) {
+                        mostrarVistaPreviaDetalle(btn.value); // Llama a la otra ventana modal
+                    }
+                },
+                responsive: 0
+            }
+        ];
 
-    const detalles = respuesta.datos || [];
-
-    const columnas = [
-        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
-        { title: "Fecha", field: "fecha", formatter: (cell) => FormatoFechas.formatoUsuario(cell.getValue()), minWidth: 100, responsive: 0 },
-        { title: "Monto", field: "monto", formatter: (cell) => formatearMontoConMoneda(cell.getValue(), cell.getData().metodo_pago), minWidth: 120 },
-        { title: "Método", field: "metodo_pago", minWidth: 120 },
-        { title: "Descripción", field: "descripcion_detalle_gasto", minWidth: 200 },
-        {
-            title: "Acciones",
-            headerSort: false,
-            hozAlign: "center",
-            headerHozAlign: "center",
-            formatter: (cell) => `<button data-tooltip="true" class="btn btn-sm btn-primary ver-detalle" value="${cell.getData().id_detalle_gasto}"><i class="bi bi-eye"></i></button>`,
-            cellClick: function(e, cell) {
-                const btn = e.target.closest('button');
-                if (!btn) return;
-                if (btn.classList.contains('ver-detalle')) {
-                    mostrarVistaPreviaDetalle(btn.value); // Llama a la otra ventana modal
-                }
-            },
-            minWidth: 100,
-            responsive: 0
-        }
-    ];
-
-    Tablas.cargarTabuladorEstatico(
-        "tabla_detalles_gastos", 
-        detalles, 
-        columnas, 
-        { cssClass: "tabla-vista-previa", paginaSize: 5 }
-    );
+        Tablas.cargarTabuladorEstatico(
+            "tabla_detalles_gastos", 
+            detalles, 
+            columnas, 
+            { cssClass: "tabla-vista-previa", paginaSize: 5 }
+        );
+    });
 }
 
 /**
@@ -403,25 +421,21 @@ async function mostrarVistaPreviaDetalle(idDetalle) {
     datos.append('operacion', 'consulta_especifica_detalles');
 
     const respuesta = await Peticiones.enviar(datos);
+    Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
+        const det = respuestaServidor.datos;
 
-    if (!respuesta.estatus) {
-        Alertas.mostrar('error', 'Error', respuesta.mensaje);
-        return;
-    }
+        document.getElementById('vista_fecha_detalles').textContent = FormatoFechas.formatoUsuario(det.fecha, 'DD-MM-YYYY');
+        document.getElementById('vista_monto_detalles').textContent = formatearMontoConMoneda(det.monto, det.metodo_pago);
+        document.getElementById('vista_metodo_pago_detalles').textContent = det.metodo_pago || '';
+        document.getElementById('vista_nombre_banco_detalles').textContent = det.nombre_banco || 'No hay banco registrado';
+        document.getElementById('vista_referencia_detalles').textContent = det.referencia || 'No hay referencia';
+        document.getElementById('vista_descripcion_detalles').textContent = det.descripcion_detalle_gasto || '';
 
-    const det = respuesta.datos;
+        const img = det.imagen ? `recursos/img/gastos/${det.imagen}` : '';
+        document.getElementById('vista_imagen_detalles').src = img;
 
-    document.getElementById('vista_fecha_detalles').textContent = FormatoFechas.formatoUsuario(det.fecha, 'DD-MM-YYYY');
-    document.getElementById('vista_monto_detalles').textContent = formatearMontoConMoneda(det.monto, det.metodo_pago);
-    document.getElementById('vista_metodo_pago_detalles').textContent = det.metodo_pago || '';
-    document.getElementById('vista_nombre_banco_detalles').textContent = det.nombre_banco || 'No hay banco registrado';
-    document.getElementById('vista_referencia_detalles').textContent = det.referencia || 'No hay referencia';
-    document.getElementById('vista_descripcion_detalles').textContent = det.descripcion_detalle_gasto || '';
-
-    const img = det.imagen ? `recursos/img/gastos/${det.imagen}` : '';
-    document.getElementById('vista_imagen_detalles').src = img;
-
-    modalVistaPreviaDetalles.show();
+        modalVistaPreviaDetalles.show();
+    });
 }
 
 // ============================================================
@@ -449,14 +463,9 @@ async function eliminar(id) {
     datos.append('operacion', 'eliminar');
 
     const respuesta = await Peticiones.enviar(datos);
-
-    if (!respuesta.estatus) {
-        Alertas.mostrar('error', 'Atención', respuesta.mensaje);
-        return;
-    }
-
-    tabla_gastos.replaceData();
-    Alertas.mostrar('success', 'Éxito', 'Gasto eliminado correctamente');
+    Validador.procesarRespuesta(respuesta, () => {    
+        tabla_gastos.replaceData();
+    });
 }
 
 // ============================================================
@@ -561,8 +570,8 @@ function resetModalGasto() {
     // --- NUEVO: Rehabilitar campos y limpiar opción dinámica ---
     const selectClasificacion = formulario.querySelector('#clasificacion');
     selectClasificacion.disabled = false;
-    formulario.querySelector('#tipo_gasto').disabled = false;
-    formulario.querySelector('#proveedor').disabled = false;
+    formulario.querySelector('#tipo_gasto_id').disabled = false;
+    formulario.querySelector('#proveedor_id').disabled = false;
     formulario.querySelector('#solicitud').disabled = false;
 
     const opcionExistente = selectClasificacion.querySelector('option[value="Reposicion"], option[value="Reposición"]');
@@ -613,7 +622,7 @@ function formatearMontoConMoneda(monto, metodoPago) {
     const num = parseFloat(monto);
     if (isNaN(num)) return '0,00 Bs';
     const formateado = num.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    return metodoPago && metodoPago.toLowerCase().includes('efectivo') ? `$ ${formateado}` : `${formateado} Bs`;
+    return metodoPago && metodoPago.toLowerCase().includes('efectivo') ? `${formateado} Bs` : `${formateado} Bs`;
 }
 
 /**
@@ -670,9 +679,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         steps: [
             { element: '#clasificacion', popover: { title: 'Clasificación', description: 'Indica si este gasto es Fijo (mensual/recurrente) o Variable (esporádico).', side: 'bottom', align: 'start' } },
-            { element: '#tipo_gasto', popover: { title: 'Tipo de Gasto', description: 'Selecciona la categoría exacta a la que pertenece este gasto.', side: 'bottom', align: 'start' } },
+            { element: '#tipo_gasto_id', popover: { title: 'Tipo de Gasto', description: 'Selecciona la categoría exacta a la que pertenece este gasto.', side: 'bottom', align: 'start' } },
             { element: '#descripcion_gasto', popover: { title: 'Descripción', description: 'Redacta el motivo general del gasto con claridad. (Debe tener al menos 10 caracteres).', side: 'top', align: 'start' } },
-            { element: '#proveedor', popover: { title: 'Datos del Proveedor', description: 'Selecciona la empresa o persona a la que se le pagó, y vincula una Solicitud si el gasto proviene de una.', side: 'top', align: 'start' } },
+            { element: '#proveedor_id', popover: { title: 'Datos del Proveedor', description: 'Selecciona la empresa o persona a la que se le pagó, y vincula una Solicitud si el gasto proviene de una.', side: 'top', align: 'start' } },
             { element: '.detalle-gasto', popover: { title: 'Detalles del Pago', description: 'En este bloque registrarás cómo y cuándo pagaste este gasto.', side: 'top', align: 'center' } },
             { element: '.metodo_pago', popover: { title: 'Método Dinámico', description: '¡Importante! Si eliges "Transferencia" o "Pago Móvil", aparecerán automáticamente los campos para que ingreses la Referencia, el Banco y la imagen del Comprobante.', side: 'top', align: 'start' } },
             { element: '#agregar_detalle', popover: { title: 'Pagos Fraccionados', description: '¿Pagaste una parte en efectivo y otra por transferencia? Usa este botón para añadir tantos métodos de pago como necesites.', side: 'top', align: 'start' } },

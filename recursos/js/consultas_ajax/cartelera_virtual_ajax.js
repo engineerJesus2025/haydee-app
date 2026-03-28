@@ -60,18 +60,29 @@ function consultar() {
     const formatoFecha = (cell) => FormatoFechas.formatoUsuario(cell.getValue());
     const formatoPrioridad = (cell) => {
         const p = cell.getValue();
-        const mapa = { "1": { texto: "Alta", color: "success" }, "2": { texto: "Media", color: "warning" }, "3": { texto: "Baja", color: "danger" } };
+        const mapa = { "1": { texto: "Urgente", color: "danger" }, "2": { texto: "Importante", color: "warning text-dark" }, "3": { texto: "Informativo", color: "success" } };
         const conf = mapa[p] || { texto: "Desconocida", color: "secondary" };
         return `<span class="badge bg-${conf.color}">${conf.texto}</span>`;
     };
 
     const formatoBotones = (cell) => {
         const id = cell.getData().id_cartelera;
-        let html = `<div class="d-flex justify-content-center gap-2">
-            <button data-tooltip="true" type="button" class="btn btn-primary btn-sm vista-previa" data-id="${id}" title="Previsualizar contenido de Publicación"><i class="bi bi-eye-fill"></i></button>
-            <button data-tooltip="true" type="button" class="btn btn-success btn-sm modificar" data-id="${id}" data-bs-toggle="modal" data-bs-target="#modal_cartelera" title="Modificar los detalles de este registro"><i class="bi bi-pencil-square"></i></button>`;
-        if (permiso_eliminar == 1) {
-            html += `<button data-tooltip="true" type="button" class="btn btn-danger btn-sm eliminar" data-id="${id}" title="Quitar este elemento del sistema"><i class="bi bi-trash3-fill"></i></button>`;
+        let html = `<div class="d-flex justify-content-center flex-wrap gap-2">
+            <button type="button" class="btn btn-primary btn-sm vista-previa" data-id="${id}" data-tooltip="true" title="Ver Mas">
+                <i class="bi bi-eye"></i>
+                <span class="d-none d-lg-inline ms-2">Ver</span>
+            </button>`;
+        if (window.permiso_modificar) {
+            html += `<button class="btn btn-success btn-sm modificar" data-id="${id}" data-tooltip="true" title="Modificar los detalles de este registro">
+                        <i class="bi bi-pencil"></i>
+                        <span class="d-none d-lg-inline ms-2">Editar</span>
+                    </button>`;
+        }
+        if (window.permiso_eliminar) {
+            html += `<button class="btn btn-danger btn-sm eliminar" data-id="${id}" data-tooltip="true" title="Quitar este elemento del sistema">
+                        <i class="bi bi-trash"></i>
+                        <span class="d-none d-lg-inline ms-2">Borrar</span>
+                    </button>`;
         }
         html += `</div>`;
         return html;
@@ -79,19 +90,21 @@ function consultar() {
 
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
-        { title: "Fecha", field: "fecha", formatter: formatoFecha, minWidth: 100, responsive: 0 },
+        { title: "Prioridad", field: "prioridad", formatter: formatoPrioridad, minWidth: 130},
         { title: "Título", field: "titulo", minWidth: 150 },
-        { title: "Autor", field: "nombre_usuario", minWidth: 120 },
-        { title: "Prioridad", field: "prioridad", formatter: formatoPrioridad, minWidth: 100, headerHozAlign: "center", hozAlign: "center"},
+        { title: "Fecha", field: "fecha", formatter: formatoFecha, minWidth: 130, responsive: 0 },
         {
-            title: "Acciones", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 140, responsive: 0, download: false, headerHozAlign: "center",
+            title: "Acciones", formatter: formatoBotones, headerSort: false, 
+            hozAlign: "center", vertAlign: "middle", minWidth: 130, responsive: 0, 
+            download: false, headerHozAlign: "center", widthGrow: 2,
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
                 const mockEvent = { target: btn };
-                
+                if (btn.classList.contains('vista-previa')) {
+                    mostrarVistaPrevia(cell.getData());
+                }
                 if (btn.classList.contains('modificar')) modificar_formulario(mockEvent);
-                if (btn.classList.contains('vista-previa')) mostrarVistaPrevia(mockEvent);
                 if (btn.classList.contains('eliminar')) {
                     const id = btn.getAttribute('data-id');
                     Swal.fire({
@@ -123,85 +136,90 @@ async function modificar_formulario(e) {
 
     const datos = new FormData();
     datos.append("id_cartelera", id);
-    datos.append("operacion", "consulta_especifica");
+    datos.append("operacion", "consultar_cartelera");
 
     const respuesta = await Peticiones.enviar(datos);
+    Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
+        const data = respuestaServidor.datos;
 
-    if (!respuesta.estatus) {
-        Alertas.mostrar('error', 'Error', respuesta.mensaje || 'No se pudieron cargar los datos');
-        return;
-    }
+        // Llenar formulario
+        formulario_usar.querySelector("#titulo").value = data.titulo;
+        formulario_usar.querySelector("#descripcion").value = data.descripcion;
+        formulario_usar.querySelector("#fecha").value = data.fecha;
+        formulario_usar.querySelector("#prioridad").value = data.prioridad;
 
-    const data = respuesta.datos;
+        // Mostrar información de la imagen
+        const nombreImagenSpan = document.querySelector("#nombre_imagen_cargada");
+        const botonEliminarImagen = document.querySelector("#boton_eliminar_imagen");
 
-    // Llenar formulario
-    formulario_usar.querySelector("#titulo").value = data.titulo;
-    formulario_usar.querySelector("#descripcion").value = data.descripcion;
-    formulario_usar.querySelector("#fecha").value = data.fecha;
-    formulario_usar.querySelector("#prioridad").value = data.prioridad;
+        if (data.imagen && data.imagen !== "") {
+            let nombre_archivo = data.imagen.split("/").pop();
+            nombreImagenSpan.textContent = `Imagen cargada: ${nombre_archivo}`;
+            botonEliminarImagen.classList.remove("d-none");
+            botonEliminarImagen.setAttribute("data-nombre", nombre_archivo);
+        } else {
+            nombreImagenSpan.textContent = "No hay imagen cargada.";
+            botonEliminarImagen.classList.add("d-none");
+            botonEliminarImagen.removeAttribute("data-nombre");
+        }
 
-    // Mostrar información de la imagen
-    const nombreImagenSpan = document.querySelector("#nombre_imagen_cargada");
-    const botonEliminarImagen = document.querySelector("#boton_eliminar_imagen");
+        if (permiso_modificar != 1) {
+            boton_formulario.setAttribute("hidden", true);
+            boton_formulario.setAttribute("disabled", true);
+        }
 
-    if (data.imagen && data.imagen !== "") {
-        let nombre_archivo = data.imagen.split("/").pop();
-        nombreImagenSpan.textContent = `Imagen cargada: ${nombre_archivo}`;
-        botonEliminarImagen.classList.remove("d-none");
-        botonEliminarImagen.setAttribute("data-nombre", nombre_archivo);
-    } else {
-        nombreImagenSpan.textContent = "No hay imagen cargada.";
-        botonEliminarImagen.classList.add("d-none");
-        botonEliminarImagen.removeAttribute("data-nombre");
-    }
+        boton_formulario.setAttribute("modificar", true);
+        boton_formulario.setAttribute("id_modificar", data.id_cartelera);
+        boton_formulario.textContent = "Guardar Cambios";
+        document.getElementById("titulo_modal").textContent = "Modificar Publicación";
+        id_modificar = id;
 
-    if (permiso_modificar != 1) {
-        boton_formulario.setAttribute("hidden", true);
-        boton_formulario.setAttribute("disabled", true);
-    }
+        modal.show();
+    });
 
-    boton_formulario.setAttribute("modificar", true);
-    boton_formulario.setAttribute("id_modificar", data.id_cartelera);
-    boton_formulario.textContent = "Guardar Cambios";
-    document.getElementById("titulo_modal").textContent = "Modificar Publicación";
-    id_modificar = id;
 }
 
-/**
- * Muestra la vista previa de una publicación
- */
-async function mostrarVistaPrevia(e) {
-    const boton = e.target.closest("button");
-    const id = boton.getAttribute("data-id");
-
-    const datos = new FormData();
-    datos.append("id_cartelera", id);
-    datos.append("operacion", "consulta_especifica");
-
-    const respuesta = await Peticiones.enviar(datos);
-
-    if (!respuesta.estatus) {
-        Alertas.mostrar('error', 'Error', respuesta.mensaje || 'No se pudieron cargar los datos');
-        return;
-    }
-
-    const data = respuesta.datos;
-
+// Función para mostrar los detalles de la publicación (cartelera_virtual_ajax.js)
+function mostrarVistaPrevia(data) {
+    // 1. Textos básicos
     document.getElementById("vista_titulo").textContent = data.titulo;
     document.getElementById("vista_descripcion").textContent = data.descripcion;
     document.getElementById("vista_fecha").textContent = FormatoFechas.formatoUsuario(data.fecha);
-    document.getElementById("vista_prioridad").innerHTML = obtenerPrioridadTexto(data.prioridad);
     document.getElementById("vista_autor").textContent = data.nombre_usuario;
 
-    // Resetear mensaje de error
-    document.getElementById("vista_imagen").style.display = "block";
-    document.getElementById("mensaje_error_imagen").classList.add("d-none");
+    // 2. Prioridad (Colores de Bootstrap)
+    let vista_prioridad = document.getElementById("vista_prioridad");
+    if (data.prioridad === "1") {
+        vista_prioridad.className = "badge bg-danger fs-6 px-3 py-2 shadow-sm text-nowrap";
+        vista_prioridad.textContent = "Urgente";
+    } else if (data.prioridad === "2") {
+        vista_prioridad.className = "badge bg-warning text-dark fs-6 px-3 py-2 shadow-sm text-nowrap";
+        vista_prioridad.textContent = "Importante";
+    } else {
+        vista_prioridad.className = "badge bg-success fs-6 px-3 py-2 shadow-sm text-nowrap";
+        vista_prioridad.textContent = "Informativo";
+    }
 
-    const imagen = (data.imagen && data.imagen !== "")
-        ? `recursos/img/cartelera/${data.imagen}`
-        : "";
-    document.getElementById("vista_imagen").setAttribute("src", imagen);
+    // 3. Lógica de la Imagen (Basada en tus archivos)
+    let imagen = document.getElementById("vista_imagen");
+    let mensaje_error = document.getElementById("mensaje_error_imagen");
+    let contenedor_imagen = document.getElementById("contenedor_imagen"); // El nuevo div que envuelve la imagen
 
+    if (data.imagen) {
+        // Si hay imagen, construimos la ruta y mostramos los contenedores
+        imagen.src = "recursos/img/cartelera/" + data.imagen;
+        imagen.style.display = "inline-block";
+        contenedor_imagen.style.display = "block"; // Mostramos el bloque completo
+        mensaje_error.classList.add("d-none");
+    } else {
+        // Si no hay imagen, limpiamos el src y ocultamos todo el bloque para que no quede un espacio en blanco
+        imagen.src = "";
+        imagen.style.display = "none";
+        contenedor_imagen.style.display = "none";
+        mensaje_error.classList.add("d-none");
+    }
+
+    // Mostramos el modal
     modalVistaPrevia.show();
 }
 
@@ -210,20 +228,13 @@ async function mostrarVistaPrevia(e) {
  */
 async function registrar() {
     let datos = new FormData(formulario_usar);
-    datos.append("operacion", "registrar");
+    datos.append("operacion", "registrar_cartelera");
 
     let respuesta = await Peticiones.enviar(datos);
-
-    if (!respuesta.estatus) {
-        Alertas.mostrar('error', 'Atención', respuesta.mensaje || 'Error al registrar');
-        return;
-    }
-
-    modal.hide();
-    formulario_usar.reset();
-
-    tabla_cartelera.replaceData();
-    Alertas.mostrar('success', 'Éxito', 'La publicación se ha registrado correctamente');
+    Validador.procesarRespuesta(respuesta, () => {
+        modal.hide();
+        tabla_cartelera.replaceData();
+    });
 }
 
 /**
@@ -232,26 +243,13 @@ async function registrar() {
 async function modificar(id) {
     let datos = new FormData(formulario_usar);
     datos.append("id_cartelera", id);
-    datos.append("operacion", "modificar");
+    datos.append("operacion", "modificar_cartelera");
 
     let respuesta = await Peticiones.enviar(datos);
-
-    if (!respuesta.estatus) {
-        Alertas.mostrar('error', 'Atención', respuesta.mensaje || 'Error al modificar');
-        // No cerrar el modal para que el usuario pueda corregir
-        return;
-    }
-
-    formulario_usar.reset();
-    modal.hide();
-
-    boton_formulario.removeAttribute("modificar");
-    boton_formulario.removeAttribute("id_modificar");
-    boton_formulario.textContent = "Guardar";
-    document.getElementById("titulo_modal").textContent = "Registrar Publicación";
-
-    tabla_cartelera.replaceData();
-    Alertas.mostrar('success', 'Éxito', 'La publicación se ha modificado correctamente');
+    Validador.procesarRespuesta(respuesta, () => {
+        modal.hide();
+        tabla_cartelera.replaceData();
+    });
 }
 
 /**
@@ -260,17 +258,12 @@ async function modificar(id) {
 async function eliminar(id) {
     let datos = new FormData();
     datos.append("id_cartelera", id);
-    datos.append("operacion", "eliminar");
+    datos.append("operacion", "eliminar_cartelera");
 
     let respuesta = await Peticiones.enviar(datos);
-
-    if (!respuesta.estatus) {
-        Alertas.mostrar('error', 'Atención', respuesta.mensaje || 'Error al eliminar');
-        return;
-    }
-
-    tabla_cartelera.replaceData();
-    Alertas.mostrar('success', 'Éxito', 'La publicación ha sido eliminada correctamente');
+    Validador.procesarRespuesta(respuesta, () => {
+        tabla_cartelera.replaceData();
+    });
 }
 
 // ============================================

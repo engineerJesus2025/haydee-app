@@ -64,7 +64,7 @@
                 
                 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                   <h5 class="text-muted mb-0"><i class="bi bi-list-check me-2"></i>Historial de Movimientos</h5>
-                  <div class="input-group" style="max-width: 300px;">
+                  <div class="input-group my-3" style="max-width: 300px;">
                     <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
                     <input type="text" class="form-control border-start-0 ps-0" id="busqueda_global" data-tooltip="true" title="Buscar Registro" placeholder="Buscar movimiento...">
                   </div>
@@ -96,54 +96,12 @@
       require_once ROOT_PATH . "/vista/componentes/script.php";
       require_once ROOT_PATH . "/vista/componentes/modal_carga.php";
       require_once ROOT_PATH . "/vista/componentes/boton_ayuda.php";
+      // Modales
+      require_once ROOT_PATH . "/vista/caja_chica/descripciones_modal.php";
+      require_once ROOT_PATH . "/vista/caja_chica/gasto_caja_modal.php";
+      require_once ROOT_PATH . "/vista/caja_chica/repocicion_caja_modal.php";
+      require_once ROOT_PATH . "/vista/caja_chica/caja_chica_detalles.php";
   ?>
-  
-  <!-- Modales -->
-  <div class="modal fade" id="modal_descripciones" tabindex="-1" aria-labelledby="titulo_modal_descripciones" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header bg-primary text-white">
-          <h1 class="modal-title fs-5" id="titulo_modal_descripciones">Cambiar  Descripción</h1>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <?php
-          require_once ROOT_PATH . "/vista/caja_chica/descripciones_modal.php";
-          ?>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="modal fade" id="modal_registro_gastos" tabindex="-1" aria-labelledby="titulo_modal_registro_gasto" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header bg-primary text-white">
-          <h1 class="modal-title fs-5" id="titulo_modal_registro_gasto">Registrar Gasto de Caja</h1>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <?php
-          require_once ROOT_PATH . "/vista/caja_chica/gasto_caja_modal.php";
-          ?>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="modal fade" id="modal_reponer_caja" tabindex="-1" aria-labelledby="titulo_modal_reponer_caja" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header bg-primary text-white">
-          <h1 class="modal-title fs-5" id="titulo_modal_reponer_caja">Reponer Caja</h1>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <?php
-            require_once ROOT_PATH . "/vista/caja_chica/repocicion_caja_modal.php";
-          ?>
-        </div>
-      </div>
-    </div>
-  </div>
   
   <!-- Scripts personalizado -->
 	<script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/consultas_ajax/caja_chica_ajax.js"></script>

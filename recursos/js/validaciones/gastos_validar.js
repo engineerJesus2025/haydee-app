@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", function () {
         selectClasificacion.addEventListener("change", function () { Validador.evaluarSelect(this.id); });
     }
 
-    const selectTipoGasto = document.getElementById("tipo_gasto");
+    const selectTipoGasto = document.getElementById("tipo_gasto_id");
     if (selectTipoGasto) {
         selectTipoGasto.addEventListener("change", async function () {
             if (!Validador.evaluarSelect(this.id)) return;
@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    const selectProveedor = document.getElementById("proveedor");
+    const selectProveedor = document.getElementById("proveedor_id");
     if (selectProveedor) {
         selectProveedor.addEventListener("change", async function () {
             if (!Validador.evaluarSelect(this.id)) return;
@@ -78,6 +78,19 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
                 await Validador.verificarExistenciaEnServidor('validar_clave_foranea', { tabla: 'bancos', nombre_clave: 'id_banco', valor: target.value }, target, 'El banco no existe');
             }
+            else if (target.classList.contains("referencia")) {
+                if (Validador.evaluarInput(target, Patrones.referenciaBancaria, "De 4 a 20 caracteres alfanuméricos")) {
+                    // Capturamos el ID del gasto si estamos modificando
+                    const idGastoActual = document.getElementById("boton_formulario").dataset.id || ""; 
+                    
+                    Validador.verificarDatoUnico(
+                        'referencia', 
+                        { referencia: target.value, id_gasto: idGastoActual }, 
+                        target, 
+                        'Referencia en uso'
+                    );
+                }
+            }
             // --- Mostrar nombre de la imagen ---
             else if (target.classList.contains("imagen")) {
                 const bloque = target.closest(".detalle-gasto");
@@ -113,7 +126,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (target.classList.contains("monto")) {
                 Validador.evaluarInput(target, Patrones.monto, "Monto inválido (ej: 150.50)");
             }
-            else if (target.classList.contains("descripcion_detalle")) {
+            else if (target.classList.contains("descripcion_detalle_gasto")) {
                 Validador.evaluarInput(target, Patrones.textoBreve, "Mínimo 3 caracteres");
             }
             else if (target.classList.contains("referencia")) {
@@ -132,7 +145,7 @@ document.addEventListener("DOMContentLoaded", function () {
             e.preventDefault();
             const accion = this.hasAttribute("modificar") ? "modificar" : "Registrar";
 
-            if (await validarFormularioCompleto()) {
+            // if (await validarFormularioCompleto()) {
                 Swal.fire({
                     title: "¿Estás seguro?",
                     text: `¿Desea ${accion.toLowerCase()} este gasto?`,
@@ -150,7 +163,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         }
                     }
                 });
-            }
+            // }
         });
     }
 
@@ -163,8 +176,8 @@ document.addEventListener("DOMContentLoaded", function () {
 async function validarFormularioCompleto() {
     // 1. Validar campos principales
     const selectClasificacion = document.getElementById("clasificacion");
-    const selectTipoGasto = document.getElementById("tipo_gasto");
-    const selectProveedor = document.getElementById("proveedor");
+    const selectTipoGasto = document.getElementById("tipo_gasto_id");
+    const selectProveedor = document.getElementById("proveedor_id");
     const inputSolicitud = document.getElementById("solicitud");
     const inputDescGasto = document.getElementById("descripcion_gasto");
 
@@ -233,7 +246,7 @@ async function validarFormularioCompleto() {
             return false;
         }
 
-        const descDet = bloque.querySelector(".descripcion_detalle");
+        const descDet = bloque.querySelector(".descripcion_detalle_gasto");
         if (!Validador.evaluarInput(descDet, Patrones.textoBreve, "Mínimo 3 caracteres")) {
             Alertas.mostrar("error", `Detalle #${num}`, "La descripción debe tener al menos 3 caracteres");
             return false;
@@ -242,10 +255,25 @@ async function validarFormularioCompleto() {
         const grupoRef = bloque.querySelector(".grupo_bancario");
         if (grupoRef && !grupoRef.classList.contains("d-none")) {
             const refInput = bloque.querySelector(".referencia");
-            if (!Validador.evaluarInput(refInput, /^\d{4,20}$/, "Referencia inválida")) {
-                Alertas.mostrar("error", `Detalle #${num}`, "Referencia inválida (solo números, 4-20 dígitos)");
+            if (!Validador.evaluarInput(refInput, Patrones.referenciaBancaria, "Referencia inválida")) {
+                Alertas.mostrar("error", `Detalle #${num}`, "Referencia bancaria inválida");
                 return false;
             }
+
+            const idGastoActual = document.getElementById("boton_formulario").dataset.id || ""; 
+
+            const refValida = await Validador.verificarDatoUnico(
+                'referencia', 
+                { referencia: refInput.value, id_gasto: idGastoActual }, 
+                refInput, 
+                'Referencia en uso'
+            );
+
+            if (!refValida) {
+                Alertas.mostrar("error", `Detalle #${num}`, "La referencia bancaria ya está registrada en otro gasto");
+                return false;
+            }
+            
 
             const bancoSelect = bloque.querySelector(".banco");
             if (!Validador.evaluarInput(bancoSelect, Patrones.digitos, "Seleccione un banco")) {

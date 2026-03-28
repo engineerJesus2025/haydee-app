@@ -6,6 +6,7 @@ let permiso_modificar = document.querySelector("#permiso_modificar").value;
 
 let boton_formulario = document.querySelector("#boton_formulario"); 
 let modal = new bootstrap.Modal(document.getElementById("modal_tipo_gasto"), { focus: false });
+const modalDetalles = new bootstrap.Modal(document.getElementById("modal_detalles"), { focus: false });
 let formulario_usar = document.querySelector(`#form_tipo_gasto`); 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -44,12 +45,25 @@ async function consultar() {
     if (!contenedor) return;
 
     const formatoBotones = (cell) => {
-        // CAMBIAR AQUÍ EL ID SEGÚN EL MÓDULO (id_proveedor, id_modulo, id_permiso, id_tipo_gasto)
         const id = cell.getData().id_tipo_gasto; 
         
-        let html = `<div class="d-flex justify-content-center gap-2">`;
-        if (window.permiso_modificar) html += `<button data-tooltip="true" type="button" class="btn btn-success btn-sm modificar" title="Modificar los detalles de este registro" value="${id}"><i class="bi bi-pencil"></i></button>`;
-        if (window.permiso_eliminar) html += `<button data-tooltip="true" type="button" class="btn btn-danger btn-sm eliminar" title="Quitar este elemento del sistema" value="${id}"><i class="bi bi-trash"></i></button>`;
+        let html = `<div class="d-flex justify-content-center flex-wrap gap-2">
+            <button type="button" class="btn btn-primary btn-sm vista-previa" value="${id}" data-tooltip="true" title="Ver Mas">
+                <i class="bi bi-eye"></i>
+                <span class="d-none d-lg-inline ms-2">Ver</span>
+            </button>`;
+        if (window.permiso_modificar) {
+            html += `<button class="btn btn-success btn-sm modificar" value="${id}" data-tooltip="true" title="Modificar los detalles de este registro">
+                        <i class="bi bi-pencil"></i>
+                        <span class="d-none d-lg-inline ms-2">Editar</span>
+                    </button>`;
+        }
+        if (window.permiso_eliminar) {
+            html += `<button class="btn btn-danger btn-sm eliminar" value="${id}" data-tooltip="true" title="Quitar este elemento del sistema">
+                        <i class="bi bi-trash"></i>
+                        <span class="d-none d-lg-inline ms-2">Borrar</span>
+                    </button>`;
+        }
         html += `</div>`;
         return html;
     };
@@ -63,17 +77,16 @@ async function consultar() {
 
         {
             title: "Acciones", formatter: formatoBotones, headerSort: false, 
-            hozAlign: "center", vertAlign: "middle", minWidth: 100, 
+            hozAlign: "center", vertAlign: "middle", minWidth: 130, 
             responsive: 0, download: false,
             headerHozAlign: "center",
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
                 
-                // NOTA: En modulo_ajax y permiso_ajax usabas prepararEdicion(id)
-                // En tipo_gasto_ajax usabas modificar_formulario(e)
-                // En proveedores usabas prepararFormulario(e)
-                // Asegúrate de llamar a la función que le corresponde a cada archivo.
+                if (btn.classList.contains('vista-previa')) {
+                    mostrarVistaPrevia(cell.getData());
+                }
                 
                 if (btn.classList.contains('modificar')) {
                     prepararFormulario({ currentTarget: btn }); // Para proveedores
@@ -89,7 +102,7 @@ async function consultar() {
     ];
 
     // Cambiar 'tabla_proveedores' por la variable que maneje la tabla de ese archivo
-    tabla_tipo_gasto = Tablas.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consulta' } }); // NOTA: modulos y permisos usan 'consultar', revisa el tuyo.
+    tabla_tipo_gasto = Tablas.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consultar' } });
 
     const inputBusqueda = document.getElementById("busqueda_global");
     if (inputBusqueda) {
@@ -104,20 +117,25 @@ async function consultar() {
     }
 }
 
+// Función que lee la memoria de Tabulator (Sin AJAX extra)
+function mostrarVistaPrevia(data) {
+    document.getElementById("vp_icono").className = "bi bi-tags";
+    document.getElementById("vp_titulo").textContent = "Tipo de Gasto";
+    document.getElementById("vp_etiqueta").textContent = "Nombre de la Categoría";
+    document.getElementById("vp_valor").textContent = data.nombre_tipo_gasto || 'N/A';
+    
+    modalDetalles.show();
+}
+
 async function registrar() {
 	let datos = new FormData(formulario_usar);
-	datos.append('operacion', 'registrar'); 
+	datos.append('operacion', 'registrar_tipo_gasto'); 
 	
 	let respuesta = await Peticiones.enviar(datos, "", true);
-	
-	if (!respuesta.estatus) {
-		Alertas.mostrar('error', 'Atención', respuesta.mensaje);
-		return;
-	}
-
-    modal.hide();
-    tabla_tipo_gasto.replaceData(); // Recarga la tabla de forma limpia
-	Alertas.mostrar('success', 'Éxito', 'El registro se ha realizado exitosamente');
+	Validador.procesarRespuesta(respuesta, () => {
+        modal.hide();
+        tabla_tipo_gasto.replaceData();
+    });
 }
 
 async function prepararFormulario(e) {
@@ -125,47 +143,38 @@ async function prepararFormulario(e) {
 	
 	let datos = new FormData();
 	datos.append("id_tipo_gasto", id);
-	datos.append('operacion', 'consulta_especifica');
+	datos.append('operacion', 'consultar_tipo_gasto');
 
 	let respuesta = await Peticiones.enviar(datos, "", true);	
-	
-    if (!respuesta.estatus) {
-		Alertas.mostrar('error', 'Error', respuesta.mensaje);
-		return;
-	}
+	Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
+        let data = respuestaServidor.datos;
+    	formulario_usar.querySelector("#nombre_tipo_gasto").value = data.nombre_tipo_gasto;
 
-    let data = respuesta.datos;
-	formulario_usar.querySelector("#nombre_tipo_gasto").value = data.nombre_tipo_gasto;
+    	if(!permiso_modificar){
+    		boton_formulario.setAttribute("hidden", true);
+    		boton_formulario.setAttribute("disabled", true);
+    	}
 
-	if(!permiso_modificar){
-		boton_formulario.setAttribute("hidden", true);
-		boton_formulario.setAttribute("disabled", true);
-	}
+    	boton_formulario.setAttribute("modificar", true);
+    	boton_formulario.setAttribute("id_modificar", data.id_tipo_gasto);
+    	boton_formulario.textContent = "Guardar Cambios";
+    	document.getElementById('titulo_modal').textContent = "Modificar Tipo de Gasto";
+    	id_modificar = id;
 
-	boton_formulario.setAttribute("modificar", true);
-	boton_formulario.setAttribute("id_modificar", data.id_tipo_gasto);
-	boton_formulario.textContent = "Guardar Cambios";
-	document.getElementById('titulo_modal').textContent = "Modificar Tipo de Gasto";
-	id_modificar = id;
-
-    modal.show();
+        modal.show();
+    });
 }
 
 async function modificar(id) {	
 	let datos = new FormData(formulario_usar);
 	datos.append("id_tipo_gasto", id);
-	datos.append('operacion', 'modificar');
+	datos.append('operacion', 'modificar_tipo_gasto');
 
 	let respuesta = await Peticiones.enviar(datos, "", true);
-
- 	if (!respuesta.estatus) {
-		Alertas.mostrar('error', 'Atención', respuesta.mensaje);
-		return;
-	}
-
-    modal.hide();
-    tabla_tipo_gasto.replaceData();
-	Alertas.mostrar('success', 'Éxito', 'El registro se ha modificado exitosamente');
+    Validador.procesarRespuesta(respuesta, () => {
+        modal.hide();
+        tabla_tipo_gasto.replaceData();
+    });
 }
 
 function eventoEliminar(e) {
@@ -186,17 +195,12 @@ function eventoEliminar(e) {
 async function eliminar(id) {
 	let datos = new FormData();
 	datos.append("id_tipo_gasto", id);
-	datos.append('operacion', 'eliminar');
+	datos.append('operacion', 'eliminar_tipo_gasto');
 
 	let respuesta = await Peticiones.enviar(datos);
-	
-	if (!respuesta.estatus) {
-		Alertas.mostrar('error', 'Atención', respuesta.mensaje);
-		return;
-	}
-
-    tabla_tipo_gasto.replaceData();
-	Alertas.mostrar('success', 'Éxito', 'El registro ha sido eliminado correctamente');
+	Validador.procesarRespuesta(respuesta, () => {
+        tabla_tipo_gasto.replaceData();
+    });
 }
 
 // ============================================================

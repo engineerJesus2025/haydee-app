@@ -75,7 +75,7 @@ class Bitacora extends Conexion
             $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
             return [
                 'estatus' => true,
-                'mensaje' => 'Consulta exitosa',
+                'mensaje' => '',
                 'datos' => $datos
             ];
         } catch (PDOException $e) {

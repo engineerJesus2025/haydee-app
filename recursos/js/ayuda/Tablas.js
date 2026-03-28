@@ -49,26 +49,25 @@ const Tablas = {
             ajaxURL: url || window.location.href, 
             ajaxParams: { operacion: "consulta", ...opciones.parametrosExtra },
 
-            // Aquí integramos Peticiones.js con el nuevo orden de parámetros
             ajaxRequestFunc: async function(urlAjax, configAjax, params) {
                 let datos = new FormData();
                 for (let key in params) {
                     datos.append(key, params[key]);
                 }
                 
-                // Usamos: Peticiones.enviar(datos, url, mostrarCarga)
                 const respuesta = await Peticiones.enviar(datos, "", mostrarCarga);
 
-                if (respuesta && respuesta.estatus === true) {
-                    return respuesta.datos || respuesta.data || [];
-                } else {
-                    console.error("Error en la consulta Tabulator:", respuesta?.mensaje);
-                    // Asume que tienes Alertas.js configurado
-                    if(typeof Alertas !== 'undefined') {
-                        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'Error al cargar la tabla');
-                    }
-                    return []; 
-                }
+                let registros = [];
+
+                /**
+                 * Si estatus es false, mostrará el error automáticamente.
+                 * Si estatus es true, ejecutará el callback para asignar los datos.
+                 */
+                Validador.procesarRespuesta(respuesta, (res) => {
+                    registros = res.datos || res.data || [];
+                });
+
+                return registros;
             },
 
             locale: "es",
@@ -93,7 +92,6 @@ const Tablas = {
 
         tabla.on("renderComplete", function() {
             if (typeof Tooltips !== 'undefined') {
-
                 Tooltips.inicializarTodos(contenedorHtml); 
             }
         });

@@ -15,7 +15,7 @@ class ValidadorBD extends Conexion {
      * Detecta qué base de datos usar según la tabla.
      */
     private function obtenerConexionPorTabla($tabla) {
-        $tablasSeguridad = ['usuarios', 'roles', 'tokens_seguridad'];
+        $tablasSeguridad = ['usuarios', 'roles', 'tokens_seguridad', 'cartelera_virtual', 'notificaciones', 'modulos', 'permisos', 'asignacion_permisos', 'bitacora'];
         $tipo = in_array($tabla, $tablasSeguridad) ? 'seguridad' : 'negocio';
         return $this->get_conex($tipo);
     }
@@ -66,6 +66,38 @@ class ValidadorBD extends Conexion {
             return $stmt->fetchColumn() == 0; // Es único si el conteo es 0
         } catch (PDOException $e) {
             error_log("Error ValidadorBD -> esUnico: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Verifica la existencia de un registro basándose en múltiples condiciones.
+     * Ideal para tablas puente o validaciones complejas en AJAX.
+     * @param string $tabla Nombre de la tabla.
+     * @param array $condiciones Arreglo asociativo ['campo' => 'valor', 'campo2' => 'valor2'].
+     * @return bool True si existe al menos un registro que cumpla todas las condiciones.
+     */
+    public function existeConCondicion($tabla, $condiciones) {
+        $sql = "SELECT COUNT(*) FROM $tabla WHERE 1=1";
+        $params = [];
+        
+        foreach ($condiciones as $campo => $valor) {
+            $sql .= " AND $campo = :$campo";
+            $params[":$campo"] = $valor;
+        }
+
+        // Agregar lógica de activo = 1 si la tabla lo maneja
+        $tablasConActivo = ['apartamentos', 'usuarios', 'habitantes', 'presupuesto', 'tipo_gasto', 'mensualidad']; 
+        if (in_array($tabla, $tablasConActivo)) {
+            $sql .= " AND activo = 1";
+        }
+
+        try {
+            $stmt = $this->obtenerConexionPorTabla($tabla)->prepare($sql);
+            $stmt->execute($params);
+            return $stmt->fetchColumn() > 0;
+        } catch (\PDOException $e) {
+            error_log("Error ValidadorBD -> existeConCondicion: " . $e->getMessage());
             return false;
         }
     }

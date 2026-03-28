@@ -3,21 +3,21 @@
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h1 class="modal-title fs-5" id="titulo_modal_gastos">Generar Relación de Gastos</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <p>Seleccione el período para el reporte.</p>
                 <form method="POST" action="?pagina=reportes&accion=generar_reporte_gastos_mensual" target="_blank" id="form_gastos_mensual">
                     <div class="mb-3">
                         <label for="anio_reporte" class="form-label">Año: <spam class="text-danger">*</spam></label>
-                        <select class="form-select" id="anio_reporte" name="anio" required>
+                        <select class="border border-dark form-select" id="anio_reporte" name="anio" required>
                             <option value="">Seleccione un año...</option>
                         </select>
                         <span class="w-100 invalid-feedback"></span>
                     </div>
                     <div class="mb-3">
                         <label for="mes_reporte" class="form-label">Mes: <spam class="text-danger">*</spam></label>
-                        <select class="form-select" id="mes_reporte" name="mes" required disabled>
+                        <select class="border border-dark form-select" id="mes_reporte" name="mes" required disabled>
                             <option value="">Seleccione un mes...</option>
                         </select>
                         <span class="w-100 invalid-feedback"></span>

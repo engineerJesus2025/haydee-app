@@ -35,24 +35,39 @@ document.addEventListener("DOMContentLoaded", function() {
 
     if (contenedor) {
         // Delegación para el evento CHANGE
-        contenedor.addEventListener("change", function(e) {
+        contenedor.addEventListener("change", async function(e) {
             const target = e.target;
 
-            if (target.classList.contains("fecha_admin")) {
+            if (target.classList.contains("fecha_pago")) {
                 Validador.evaluarFecha(target, "La fecha no es válida");
             } 
-            else if (target.classList.contains("tipo_pago_admin")) {
+            else if (target.classList.contains("tipo_pago")) {
                 Validador.evaluarInput(target, Patrones.textoCorto, "Seleccione un método válido");
             }
-            else if (target.classList.contains("banco_admin")) {
+            else if (target.classList.contains("banco_id")) {
                 Validador.evaluarInput(target, Patrones.digitos, "Debe seleccionar un banco");
             }
             else if (target.classList.contains("imagen")) {
                 validarImagen(target, 5 * 1024 * 1024);
             }
+            else if (target.classList.contains("referencia")) {
+                // Primero validamos formato. Si es correcto, consultamos la BD.
+                if (Validador.evaluarInput(target, Patrones.referenciaBancaria, "De 4 a 20 caracteres alfanuméricos")) {
+                    const idPagoActual = document.getElementById("boton_formulario").dataset.id || ""; 
+                    const refValida = await Validador.verificarDatoUnico(
+                        'referencia', 
+                        { 
+                            referencia: target.value, 
+                            id_pago: idPagoActual
+                        }, 
+                        target, 
+                        'Referencia en uso'
+                    );
+                }
+            }
         });
 
-        // Delegación para el evento KEYPRESS (Bloqueo de teclas)
+        // Delegación para el evento KEYPRESS (Solo Bloqueo de teclas)
         contenedor.addEventListener("keypress", function(e) {
             const target = e.target;
 
@@ -60,8 +75,9 @@ document.addEventListener("DOMContentLoaded", function() {
                 Validador.bloquearTeclasInvalidas(e, Patrones.teclasMonto);
             }
             else if (target.classList.contains("referencia")) {
-                // Letras y números sin espacios
+                // Solo permitimos Letras y números sin espacios
                 Validador.bloquearTeclasInvalidas(e, /^[0-9A-Za-z]$/i);
+                // ¡Se eliminó la llamada AJAX de aquí!
             }
         });
 
@@ -142,13 +158,13 @@ async function validarFormularioCompleto() {
         const bloque = bloques[i];
         const num = i + 1;
 
-        const fechaInput = bloque.querySelector(".fecha_admin");
+        const fechaInput = bloque.querySelector(".fecha_pago");
         if (!Validador.evaluarFecha(fechaInput)) {
             Alertas.mostrar("error", `Detalle #${num}`, "La fecha no es válida");
             return false;
         }
 
-        const metodoSelect = bloque.querySelector(".tipo_pago_admin");
+        const metodoSelect = bloque.querySelector(".tipo_pago");
         if (!Validador.evaluarInput(metodoSelect, Patrones.textoCorto, "Seleccione una opción")) {
             Alertas.mostrar("error", `Detalle #${num}`, "Seleccione un método de pago");
             return false;
@@ -169,7 +185,26 @@ async function validarFormularioCompleto() {
                 return false;
             }
 
-            const bancoSelect = bloque.querySelector(".banco_admin");
+            const idPagoActual = document.getElementById("boton_formulario").dataset.id || ""; 
+
+            // AÑADIMOS EL AWAIT PARA ESPERAR LA RESPUESTA
+            const refValida = await Validador.verificarExistenciaEnServidor(
+                'referencia', 
+                { 
+                    referencia: refInput.value, 
+                    id_pago: idPagoActual
+                }, 
+                refInput, 
+                'Referencia en uso'
+            );
+
+            // SI LA REFERENCIA ESTÁ OCUPADA, DETENEMOS EL FORMULARIO
+            if (!refValida) {
+                Alertas.mostrar("error", `Detalle #${num}`, "La referencia bancaria ya está registrada en otro pago");
+                return false;
+            }
+
+            const bancoSelect = bloque.querySelector(".banco_id");
             if (!Validador.evaluarInput(bancoSelect, Patrones.digitos, "Seleccione una opción")) {
                 Alertas.mostrar("error", `Detalle #${num}`, "Seleccione el banco destino");
                 return false;

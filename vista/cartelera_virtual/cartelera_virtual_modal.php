@@ -1,70 +1,84 @@
-<form id="form_cartelera" enctype="multipart/form-data">
-    <div class="container mt-4">
-        <div class="row mb-3">
-            <div class="col-md-12">
-                <label for="titulo">Título de la publicación <spam class="text-danger">*</spam></label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-type"></i></span>
-                    <input type="text" class="form-control" name="titulo" id="titulo" placeholder="Ingrese un título..."
-                        aria-label="titulo" minlength="3" maxlength="100" required>
-                        <span class="w-100 invalid-feedback"></span>
-                </div>
+<div class="modal fade" id="modal_cartelera" tabindex="-1"aria-labelledby="titulo-modal" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="titulo_modal">Registrar Publicación</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="form_cartelera" enctype="multipart/form-data">
+                    <div class="container mt-4">
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label for="titulo">Título de la publicación <spam class="text-danger">*</spam></label>
+                                <div class="input-group">
+                                    <span class="border border-primary input-group-text"><i class="bi bi-type"></i></span>
+                                    <input type="text" class="border border-dark rounded-end form-control" name="titulo" id="titulo" placeholder="Ingrese un título..."
+                                        aria-label="titulo" minlength="3" maxlength="100" required>
+                                        <span class="w-100 invalid-feedback"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label for="descripcion">Descripción de la publicación <spam class="text-danger">*</spam></label>
+                                <div class="input-group">
+                                    <span class="border border-primary input-group-text"><i class="bi bi-card-text"></i></span>
+                                    <textarea name="descripcion" id="descripcion" class="border border-dark rounded-end form-control" rows="4"
+                                        placeholder="Describe el contenido..." minlength="3" maxlength="200" required></textarea>
+                                        <span class="w-100 invalid-feedback"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-lg-6 mb-4">
+                                <label for="fecha">Fecha de la publicación <spam class="text-danger">*</spam></label>
+                                <div class="input-group">
+                                    <span class="border border-primary input-group-text"><i class="bi bi-calendar-event"></i></span>
+                                    <input type="date" class="border border-dark rounded-end form-control" name="fecha" id="fecha" required>
+                                    <span class="w-100 invalid-feedback"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-6 mb-4">
+                                <label for="imagen">Imagen de la publicación</label>
+                                <div class="input-group">
+                                    <span class="border border-primary input-group-text"><i class="bi bi-image"></i></span>
+                                    <input type="file" class="border border-dark rounded-end form-control" name="imagen" id="imagen" accept="image/*">
+                                    <span class="w-100 invalid-feedback"></span>
+                                </div>
+                                <small id="nombre_imagen_cargada" class="text-muted fst-italic d-block mt-1"></small>
+                                <button type="button" id="boton_eliminar_imagen" class="btn btn-sm btn-outline-danger mt-2 d-none">
+                                    <i class="bi bi-trash3"></i> Eliminar imagen cargada
+                                </button>
+                            </div>
+                            <div class="col-lg-6 mb-4">
+                                <label for="prioridad">Prioridad de la publicación <spam class="text-danger">*</spam></label>
+                                <div class="input-group">
+                                    <span class="border border-primary input-group-text"><i class="bi bi-exclamation-triangle"></i></span>
+                                    <select class="border border-dark rounded-end form-select" name="prioridad" id="prioridad" required>
+                                        <option value="" disabled selected>Seleccione una prioridad</option>
+                                        <option value="1">Alta</option>
+                                        <option value="2">Media</option>
+                                        <option value="3">Baja</option>
+                                    </select>
+                                    <span class="w-100 invalid-feedback"></span>
+                                </div>
+                            </div>
+                            <input type="hidden" id="nombre_usuario" value="<?php echo $_SESSION['nombre_completo']; ?>">
+
+                            <div class="row mb-3">
+                                <div class="col-md-12 text-center">
+                                    <button class="btn btn-primary" type="submit" id="boton_formulario">Guardar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
-
-        <div class="row mb-3">
-            <div class="col-md-12">
-                <label for="descripcion">Descripción de la publicación <spam class="text-danger">*</spam></label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-card-text"></i></span>
-                    <textarea name="descripcion" id="descripcion" class="form-control" rows="4"
-                        placeholder="Describe el contenido..." minlength="3" maxlength="200" required></textarea>
-                        <span class="w-100 invalid-feedback"></span>
-                </div>
-            </div>
-        </div>
-
-        <div class="row mb-3">
-            <div class="col-lg-6 mb-4">
-                <label for="fecha">Fecha de la publicación <spam class="text-danger">*</spam></label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
-                    <input type="date" class="form-control" name="fecha" id="fecha" required>
-                    <span class="w-100 invalid-feedback"></span>
-                </div>
-            </div>
-
-            <div class="col-lg-6 mb-4">
-                <label for="imagen">Imagen de la publicación</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-image"></i></span>
-                    <input type="file" class="form-control" name="imagen" id="imagen" accept="image/*">
-                    <span class="w-100 invalid-feedback"></span>
-                </div>
-                <small id="nombre_imagen_cargada" class="text-muted fst-italic d-block mt-1"></small>
-                <button type="button" id="boton_eliminar_imagen" class="btn btn-sm btn-outline-danger mt-2 d-none">
-                    <i class="bi bi-trash3"></i> Eliminar imagen cargada
-                </button>
-            </div>
-            <div class="col-lg-6 mb-4">
-                <label for="prioridad">Prioridad de la publicación <spam class="text-danger">*</spam></label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-exclamation-triangle"></i></span>
-                    <select class="form-select" name="prioridad" id="prioridad" required>
-                        <option value="" disabled selected>Seleccione una prioridad</option>
-                        <option value="1">Alta</option>
-                        <option value="2">Media</option>
-                        <option value="3">Baja</option>
-                    </select>
-                    <span class="w-100 invalid-feedback"></span>
-                </div>
-            </div>
-            <input type="hidden" id="nombre_usuario" value="<?php echo $_SESSION['nombre_completo']; ?>">
-
-            <div class="row mb-3">
-                <div class="col-md-12 text-center">
-                    <button class="btn btn-primary" type="submit" id="boton_formulario">Guardar</button>
-                </div>
-            </div>
-        </div>
-</form>
+    </div>
+</div>

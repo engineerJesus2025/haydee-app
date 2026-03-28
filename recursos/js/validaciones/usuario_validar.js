@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const inputsNombres = document.querySelectorAll("#nombre, #apellido");
     const inputCorreo = document.querySelector("#correo");
     const inputsContrasenas = document.querySelectorAll("#contra, #confir_contra");
-    const selectRol = document.querySelector("#rol");
+    const selectRol = document.querySelector("#rol_id");
 
     // Nombre y Apellido
     inputsNombres.forEach(input => {
@@ -39,6 +39,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Contraseñas
     inputsContrasenas.forEach(input => {
+        input.addEventListener("keypress", (e) => Validador.bloquearTeclasInvalidas(e, Patrones.teclasContrasenaExtendida));
         input.addEventListener("keyup", (e) => Validador.evaluarInput(e.target, Patrones.contrasena, 'La contraseña debe tener mínimo 5 caracteres'));
     });
 
@@ -88,7 +89,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Validación de Rol (Clave foránea)
     selectRol.addEventListener("change", async function() {
-        if (!Validador.evaluarInput(this, Patrones.idNumerico, "El valor del rol no es válido")) return;
+        if (!Validador.evaluarInput(this, Patrones.digitos, "El valor del rol no es válido")) return;
 
         let datos = new FormData();
         datos.append('validar', 'validar_clave_foranea');
@@ -195,7 +196,7 @@ async function validarEnvio(accion = "Registrar"){
     }
 
     // Validación final del rol contra la BD
-    let selectRolDOM = document.querySelector('#rol');  
+    let selectRolDOM = document.querySelector('#rol_id');  
     let datosRol = new FormData();
     datosRol.append('validar', 'validar_clave_foranea');
     datosRol.append('tabla', 'roles');

@@ -1,18 +1,36 @@
 <?php
 use haydee\ayuda\Sesiones;
 use haydee\modelo\Notificaciones;
+use haydee\ayuda\Validador;
 
 Sesiones::verificarSesion();
 
-// Instancia del modelo
-$notificaciones = new Notificaciones();
-
 if (isset($_POST["operacion"])) {
-    // Asignación masiva de campos que pueden llegar
-    $notificaciones->set_id_notificacion($_POST['id'] ?? null);      // El frontend envía 'id' para marcar una
-    $notificaciones->set_usuario_id($_SESSION['id_usuario'] ?? null); // Siempre usamos el de sesión
-
     $operacion = $_POST["operacion"];
+
+    // El frontend envía 'id', a 'id_notificacion' para que coincida con la regla
+    if (isset($_POST['id'])) {
+        $_POST['id_notificacion'] = $_POST['id'];
+    }
+
+    $reglas = Notificaciones::obtenerReglas($operacion);
+
+    if (!empty($reglas)) {
+        $validador = new Validador();
+        $validador->validarConjunto($_POST, $reglas);
+
+        if ($validador->tieneErrores()) {
+            echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
+            exit;
+        }
+    }
+
+    $notificaciones = new Notificaciones();
+
+    // Asignación de campos seguros
+    $notificaciones->set_id_notificacion($_POST['id_notificacion'] ?? null); 
+    $notificaciones->set_usuario_id($_SESSION['id_usuario'] ?? null);
+
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
     try {
@@ -22,21 +40,18 @@ if (isset($_POST["operacion"])) {
                 break;
 
             case 'marcar_como_leido':
-                $id = $notificaciones->get_id_notificacion();
-                if (!$id) {
-                    throw new Exception('ID de notificación no proporcionado');
-                }
                 $respuesta = $notificaciones->realizar_consulta('marcar_leida');
                 if ($respuesta['estatus']) {
                     // Eliminar la notificación de la sesión
                     if (isset($_SESSION['notificaciones']) && is_array($_SESSION['notificaciones'])) {
-                        foreach ($_SESSION['notificaciones'] as $index => $n) {
-                            if (isset($n['id_notificacion']) && $n['id_notificacion'] == $id) {
+                        $id_marcado = $notificaciones->get_id_notificacion();
+                        foreach ($_SESSION['notificaciones'] as $index => $notif) {
+                            if ($notif['id_notificacion'] == $id_marcado) {
                                 unset($_SESSION['notificaciones'][$index]);
                                 break;
                             }
                         }
-                        // Reindexar array. no era necesario pero me ahorraba codigo en js
+                        // Reindexar array
                         $_SESSION['notificaciones'] = array_values($_SESSION['notificaciones']);
                     }
                 }
@@ -45,7 +60,6 @@ if (isset($_POST["operacion"])) {
             case 'marcar_todas_leidas':
                 $respuesta = $notificaciones->realizar_consulta('marcar_todas_leidas');
                 if ($respuesta['estatus']) {
-                    // Vaciar las notificaciones de la sesión
                     $_SESSION['notificaciones'] = [];
                 }
                 break;
@@ -58,10 +72,7 @@ if (isset($_POST["operacion"])) {
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
         if ($respuesta !== null) {
-            // Cerrar conexiones explícitamente
-            if (isset($notificaciones)) {
-                $notificaciones->cerrar();
-            }
+            if (isset($notificaciones)) { $notificaciones->cerrar(); }
 
             header('Content-Type: application/json');
             echo json_encode($respuesta);
@@ -71,6 +82,6 @@ if (isset($_POST["operacion"])) {
 }
 
 // Carga de vistas
-if ($accion == "inicio") {
+if (isset($accion) && $accion == "inicio") {
     require_once "vista/notificaciones/notificaciones_vista.php";
 }

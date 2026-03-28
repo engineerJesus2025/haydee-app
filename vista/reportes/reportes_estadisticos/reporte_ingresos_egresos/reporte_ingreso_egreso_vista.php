@@ -36,8 +36,8 @@
                                 <div class="col-sm-8 mb-3">
                                     <label for="filtro">Buscar resultados a partir de:</label>
                                     <div class="input-group mb-3">
-                                        <span class="input-group-text" id="basic-addon1"><i class="bi bi-calendar-week"></i></span>
-                                        <select class="form-select" aria-label="Default select example" name="filtro" id="filtro" form="form_reporte">                
+                                        <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-calendar-week"></i></span>
+                                        <select class="border border-dark form-select" aria-label="Default select example" name="filtro" id="filtro" form="form_reporte">                
                                             <option value="mes" selected="">Este mes</option>
                                             <option value="trimestre">Ultimos 3 meses</option>
                                             <option value="semestre">Ultimos 6 meses</option>
@@ -51,11 +51,11 @@
                                     <label class="form-label fw-bold mb-2">Seleccione el rango de fechas para el reporte:</label>
                                     <div class="col-md-6 mb-3">
                                         <label for="fecha_inicio" class="form-label">Desde: <spam class="text-danger">*</spam></label>
-                                        <input type="date" class="form-control" name="fecha_inicio" id="fecha_inicio">
+                                        <input type="date" class="border border-dark form-control" name="fecha_inicio" id="fecha_inicio">
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label for="fecha_fin" class="form-label">Hasta: <spam class="text-danger">*</spam></label>
-                                        <input type="date" class="form-control" name="fecha_fin" id="fecha_fin">
+                                        <input type="date" class="border border-dark form-control" name="fecha_fin" id="fecha_fin">
                                     </div>
                                 </div>
                                 <label class="text-center mb-2">Filtros:</label>
@@ -97,7 +97,7 @@
                                     <label>¿Como deseas mostrar los datos?</label>
                                 </div>
                                 <div class="mb-sm-5 col-sm-8 col-lg-5 mb-4 mb-sm-0">
-                                    <select class="form-select" id="select_mostrar_datos" form="form_reporte">
+                                    <select class="border border-dark form-select" id="select_mostrar_datos" form="form_reporte">
                                         <option value="grafico_texto">Gráfico y texto</option>
                                         <option value="solo_grafico">Solo el Gráfico</option>
                                         <option value="solo_texto">Solo el texto</option>

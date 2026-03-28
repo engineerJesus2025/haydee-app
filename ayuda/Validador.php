@@ -85,6 +85,23 @@ class Validador {
                 $tieneErrorDeFormato = true;
             }
 
+            // Validación de Rango de Fechas (Asegurar que una fecha sea mayor a otra)
+            if (isset($regla['fecha_posterior_a'])) {
+                $campoAnterior = $regla['fecha_posterior_a'];
+                $valorAnterior = $datos[$campoAnterior] ?? null;
+
+                // Solo comparamos si ambos campos tienen valor y tienen formato correcto
+                if (!empty($valor) && !empty($valorAnterior) && !$tieneErrorDeFormato) {
+                    $fecha1 = strtotime($valorAnterior);
+                    $fecha2 = strtotime($valor);
+
+                    if ($fecha1 && $fecha2 && $fecha2 <= $fecha1) {
+                        $this->agregarError($campo, "La fecha en '$campo' debe ser posterior a la fecha de '$campoAnterior'.");
+                        $tieneErrorDeFormato = true;
+                    }
+                }
+            }
+
             // Si hay error de formato, abortamos ir a la base de datos para ahorrar recursos
             if ($tieneErrorDeFormato) {
                 continue; 

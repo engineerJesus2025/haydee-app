@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const inputNombre = document.getElementById("nombre_banco");
     const inputCodigo = document.getElementById("codigo");
     const inputCuenta = document.getElementById("numero_cuenta");
+    const selecTipoCuenta = document.getElementById("tipo_cuenta");
     const inputTlf = document.getElementById("telefono_afiliado");
     const inputRif = document.getElementById("rif");
     const selectDoc = document.getElementById("tipo_documento");
@@ -34,6 +35,12 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         });
     }
+
+    // TIpo de Cuenta
+    if (selecTipoCuenta) {
+        selecTipoCuenta.addEventListener("change", function() { Validador.evaluarSelect(this.id); });
+    }
+
 
     // Teléfono
     if (inputTlf) {
@@ -91,14 +98,19 @@ document.addEventListener("DOMContentLoaded", function() {
 
 async function validarEnvio(accion) {
     const inputNombre = document.getElementById("nombre_banco");
+    const inputCodigo = document.getElementById("codigo");
     const inputCuenta = document.getElementById("numero_cuenta");
+    const selecTipoCuenta = document.getElementById("tipo_cuenta");
+    const inputTlf = document.getElementById("telefono_afiliado");
+    const inputRif = document.getElementById("rif");
     
     if (!Validador.evaluarInput(inputNombre, Patrones.textoCorto, 'Solo letras, mínimo 3 caracteres') ||
-        !Validador.evaluarInput(document.getElementById("codigo"), Patrones.codigoBanco, 'Debe ser de 4 dígitos') ||
+        !Validador.evaluarInput(inputCodigo, Patrones.codigoBanco, 'Debe ser de 4 dígitos') ||
         !Validador.evaluarInput(inputCuenta, Patrones.numeroCuenta, 'Entre 18 y 30 dígitos') || 
-        !Validador.evaluarInput(document.getElementById("telefono_afiliado"), Patrones.telefono, 'Debe tener 11 dígitos') ||
+        !Validador.evaluarSelect("tipo_cuenta") ||
+        !Validador.evaluarInput(inputTlf, Patrones.telefono, 'Debe tener 11 dígitos') ||
         !Validador.evaluarSelect("tipo_documento") ||
-        !Validador.evaluarInput(document.getElementById("rif"), Patrones.rif, 'Entre 7 y 9 dígitos')) {
+        !Validador.evaluarInput(inputRif, Patrones.rif, 'Entre 7 y 9 dígitos')) {
         
         Alertas.mostrar('error', 'Error', 'Por favor, revise los campos marcados en rojo.');
         return false;

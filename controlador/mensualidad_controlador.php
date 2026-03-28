@@ -4,6 +4,7 @@ use haydee\modelo\Mensualidad;
 use haydee\modelo\Presupuesto;
 use haydee\modelo\Apartamento;
 use haydee\modelo\Bitacora;
+use haydee\ayuda\Validador;
 use haydee\servicios\GestorAuditoria;
 
 Sesiones::verificarSesion();
@@ -37,7 +38,7 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $mensualidad->realizar_consulta('verificarMeses');
                 break;
 
-            case 'consultar_mensualidades_mes':
+            case 'consultarPorMeses':
                 $respuesta = $mensualidad->realizar_consulta('consultarPorMeses');
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria('consultar');
@@ -76,7 +77,7 @@ if (isset($_POST["operacion"])) {
             // =========================================================
             // OPERACIONES MASIVAS (REGISTRAR/MODIFICAR)
             // =========================================================
-            case 'registrar_masivo':
+            case 'registrar_mensualidad':
                 $datos_apartamentos = json_decode($_POST['datos_apartamentos'], true);
                 if (json_last_error() !== JSON_ERROR_NONE) {
                     throw new Exception('Error en el formato de datos JSON');
@@ -91,7 +92,7 @@ if (isset($_POST["operacion"])) {
                 }
                 break;
 
-            case 'modificar_masivo':
+            case 'modificar_mensualidad':
                 $auditor->capturarDatosAnteriores('consultar_cabecera_mensualidad');
 
                 $datos_apartamentos = json_decode($_POST['datos_apartamentos'], true);

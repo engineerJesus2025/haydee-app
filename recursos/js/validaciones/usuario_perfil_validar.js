@@ -88,7 +88,7 @@ document.addEventListener("DOMContentLoaded", function() {
     if (btnGuardarPerfil) {
         btnGuardarPerfil.addEventListener('click', async function(e) {
             e.preventDefault();
-            if (await validarEnvioPerfil()) {
+            // if (await validarEnvioPerfil()) {
                 Swal.fire({
                     title: '¿Estás seguro?',
                     text: '¿Desea guardar los cambios en su perfil?',
@@ -103,7 +103,7 @@ document.addEventListener("DOMContentLoaded", function() {
                         correo_an = null;
                     }
                 });
-            }
+            // }
         });
     }
 
@@ -111,7 +111,7 @@ document.addEventListener("DOMContentLoaded", function() {
     if (btnGuardarContra) {
         btnGuardarContra.addEventListener('click', async function(e) {
             e.preventDefault();
-            if (await validarEnvioContra()) {
+            // if (await validarEnvioContra()) {
                 Swal.fire({
                     title: '¿Estás seguro?',
                     text: '¿Desea cambiar su contraseña?',
@@ -125,7 +125,7 @@ document.addEventListener("DOMContentLoaded", function() {
                         modificarContra();
                     }
                 });
-            }
+            // }
         });
     }
 });

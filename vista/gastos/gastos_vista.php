@@ -39,35 +39,23 @@
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="card p-4">
-                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                <div class="row">
+                                    <div class="col-12 col-sm-6 mb-4">
                                     <?php if (Sesiones::tienePermiso(GESTIONAR_GASTOS, REGISTRAR)): ?>
                                             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-tooltip="true" title="Registrar Nuevo Gasto"
                                                 data-bs-target="#modal_gastos">Nuevo Gasto</button>
-                                    <?php else: ?>
-                                    <div></div> <?php endif; ?>
-                                    
-                                    <div class="input-group" style="max-width: 300px;">
-                                        <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                        <input type="text" id="busqueda_global" data-tooltip="true" title="Buscar Registro" class="form-control" placeholder="Buscar gasto...">
+                                    <?php endif; ?>
+                                    </div>
+                                    <div class="col-12 col-sm-6 mb-4">
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                            <input type="text" id="busqueda_global" data-tooltip="true" title="Buscar Registro" class="form-control" placeholder="Buscar gasto...">
+                                        </div>
                                     </div>
                                 </div>
 
-
-                                <?php if (isset($_SESSION["mensaje"])): ?>
-                                    <div class="row ">
-                                        <div class="col-md-12">
-                                            <div class="alert alert-danger d-flex align-items-center" role="alert">
-                                                <span class="bi bi-exclamation-triangle"></span>
-                                                <div class="mx-3">
-                                                    <?php echo $_SESSION["mensaje"]; ?>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                <?php endif; ?>
                                 <div id="tabla_gastos"></div>
                             </div>
-
                             
                         </div>
                     </div>
@@ -82,41 +70,65 @@
         require_once ROOT_PATH . "/vista/componentes/script.php";
         require_once ROOT_PATH . "/vista/componentes/modal_carga.php";
         require_once ROOT_PATH . "/vista/componentes/boton_ayuda.php";
+        // Modales
+        require_once ROOT_PATH . "/vista/gastos/gastos_modal.php";
     ?>
     
     <!-- Modales -->
-    <div class="modal fade" id="modal_gastos" tabindex="-1" aria-labelledby="titulo-modal" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="titulo_modal">Registrar Gasto</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                        aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <?php
-                    require_once ROOT_PATH . "/vista/gastos/gastos_modal.php";
-                    ?>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="modal fade" id="modal_vista_previa" tabindex="-1" aria-labelledby="modal_vista_previa_label" aria-hidden="true">
+    <div class="modal fade" id="modal_vista_previa" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">Detalles del Gasto</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                        aria-label="Cerrar"></button>
+            <div class="modal-content border-0 shadow-lg">
+                
+                <div class="modal-header bg-primary text-white border-bottom-0">
+                    <h5 class="modal-title fw-bold">
+                        <i class="bi bi-cart-check me-2"></i>Detalles del Gasto
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
-                <div class="modal-body">
-                    <p><strong>Fecha Gasto:</strong> <span id="vista_fecha"></span></p>
-                    <div id="tabla_detalles_gastos" class="tabla-sistema-haydee"></div>
-                </div>
+                
+                <div class="modal-body bg-light p-4">
+                    
+                    <div class="bg-white p-3 mb-4 rounded border shadow-sm">
+                        <div class="row text-center g-3 align-items-center">
+                            
+                            <div class="col-md-4 border-end">
+                                <span class="text-muted text-uppercase fw-bold d-block mb-2" style="font-size: 0.7rem; letter-spacing: 0.5px;">Clasificación</span>
+                                <span id="vp_clasificacion" class="badge fs-6 px-3 py-2 shadow-sm">---</span>
+                            </div>
 
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                            <div class="col-md-4 border-end">
+                                <span class="text-muted text-uppercase fw-bold d-block mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Categoría</span>
+                                <h6 id="vp_tipo_gasto" class="text-dark mb-0 fw-bold">---</h6>
+                            </div>
+
+                            <div class="col-md-4">
+                                <span class="text-muted text-uppercase fw-bold d-block mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Proveedor Asociado</span>
+                                <h6 id="vp_proveedor" class="text-primary mb-0 fw-bold">---</h6>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="px-4 py-3 bg-white border rounded shadow-sm mb-4">
+                        <span class="text-muted text-uppercase fw-bold d-block mb-1" style="font-size: 0.75rem;"><i class="bi bi-card-text me-1"></i> Descripción General</span>
+                        <p id="vp_descripcion" class="mb-0 text-dark fst-italic" style="font-size: 0.9rem;">---</p>
+                    </div>
+
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white border-bottom py-3">
+                            <h6 class="mb-0 fw-bold text-secondary"><i class="bi bi-list-check me-2"></i>Desglose de Pagos / Facturas</h6>
+                        </div>
+                        <div class="card-body p-0">
+                            <div id="tabla_detalles_gastos" class="tabla-sistema-haydee m-0 border-0 rounded-bottom"></div>
+                        </div>
+                    </div>
+
                 </div>
+                
+                <div class="modal-footer bg-white border-top justify-content-center">
+                    <button class="btn btn-secondary px-4" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+                
             </div>
         </div>
     </div>

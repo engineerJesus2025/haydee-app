@@ -24,40 +24,70 @@ class CajaChica extends Conexion
     private $fecha_movimiento;
     private $estado_movimiento;
 
-    // -----------------------------------------------------------------
-    // Reglas de Validación (mejoradas con soporte opcional)
-    // -----------------------------------------------------------------
-    private $reglas = [
-        // Caja
-        'id_caja_chica' => [
-            'regex' => '/^\d+$/',
-            'exists' => ['tabla' => 'caja_chica', 'campo' => 'id_caja_chica']
-        ],
-        'descripcion' => [
-            'regex' => '/^[a-zA-Z0-9 áéíóúÁÉÍÓÚñÑ\.,-]{0,255}$/',
-            'opcional' => true
-        ],
-        'fondo_fijo' => [
-            'regex' => '/^\d+(\.\d{1,2})?$/',
-            'min' => 0
-        ],
-        
-        // Movimientos
-        'id_movimiento_caja' => [
-            'regex' => '/^\d+$/',
-            'exists' => ['tabla' => 'movimientos_caja', 'campo' => 'id_movimiento_caja']
-        ],
-        'concepto' => [
-            'regex' => '/^[a-zA-Z0-9 áéíóúÁÉÍÓÚñÑ\.,-]{1,100}$/'
-        ],
-        'monto_movimiento' => [
-            'regex' => '/^\d+(\.\d{1,2})?$/',
-            'min' => 0.01
-        ],
-        'fecha_movimiento' => [
-            'type' => 'date'
-        ]
-    ];
+    // ====================================================================
+    // VALIDACIONES CENTRALIZADAS
+    // ====================================================================
+    public static function obtenerReglas($operacion) {
+        $reglasGenerales = [
+            // Reglas de la Caja Chica
+            'id_caja_chica' => [
+                'regex' => '/^\d+$/',
+                'exists' => ['tabla' => 'caja_chica', 'campo' => 'id_caja_chica']
+            ],
+            'caja_chica_id' => [ // Para cuando se registra un movimiento
+                'regex' => '/^\d+$/',
+                'exists' => ['tabla' => 'caja_chica', 'campo' => 'id_caja_chica']
+            ],
+            'descripcion' => [
+                'regex' => '/^[a-zA-Z0-9 áéíóúÁÉÍÓÚñÑ\.,-]{0,255}$/',
+                'opcional' => true
+            ],
+            'fondo_fijo' => [
+                'regex' => '/^\d+(\.\d{1,2})?$/',
+                'min' => 1
+            ],
+            'estado' => [
+                'regex' => '/^(Abierta|Cerrada)$/',
+                'opcional' => true
+            ],
+
+            // Reglas de los Movimientos
+            'id_movimiento_caja' => [
+                'regex' => '/^\d+$/',
+                'exists' => ['tabla' => 'movimientos_caja', 'campo' => 'id_movimiento_caja']
+            ],
+            'concepto' => [
+                'regex' => '/^[a-zA-Z0-9 áéíóúÁÉÍÓÚñÑ\.,-]{3,255}$/'
+            ],
+            'monto' => [
+                'regex' => '/^\d+(\.\d{1,2})?$/',
+                'min' => 0.01
+            ],
+            'fecha' => [
+                'regex' => '/^\d{4}-\d{2}-\d{2}$/'
+            ]
+        ];
+
+        // Estandarización de nombres aplicada a la caja y sus movimientos
+        $camposPorOperacion = [
+            'registrar_caja_chica' => ['descripcion', 'fondo_fijo'],
+            'modificar_caja_chica' => ['id_caja_chica', 'descripcion', 'fondo_fijo', 'estado'],
+            'eliminar_caja_chica'  => ['id_caja_chica'],
+            'consulta_caja_chica' => ['id_caja_chica'],
+            'reponer_caja' => ['caja_chica_id','monto'],
+
+            'consultar_movimientos' => ['id_caja_chica'],
+            'registrar_movimiento' => ['caja_chica_id', 'concepto', 'monto', 'fecha'],
+            'modificar_movimiento' => ['id_movimiento_caja', 'concepto', 'monto', 'fecha'],
+            'eliminar_movimiento'  => ['id_movimiento_caja'],
+            'consultar_movimiento_unico' => ['id_movimiento_caja']
+        ];
+
+        if (isset($camposPorOperacion[$operacion])) {
+            return array_intersect_key($reglasGenerales, array_flip($camposPorOperacion[$operacion]));
+        }
+        return [];
+    }
 
     // -----------------------------------------------------------------
     // Getters y Setters (igual)
@@ -104,92 +134,12 @@ class CajaChica extends Conexion
     }
 
     // -----------------------------------------------------------------
-    // Validación Genérica (con soporte para opcionales)
-    // -----------------------------------------------------------------
-    private function validar($campos)
-    {
-        foreach ($campos as $campo) {
-            if (!isset($this->reglas[$campo])) continue;
-            $regla = $this->reglas[$campo];
-            $getter = 'get_' . $campo;
-            
-            if (!method_exists($this, $getter)) {
-                return ['estatus' => false, 'mensaje' => "Getter no encontrado para $campo."];
-            }
-            $valor = $this->$getter();
-
-            // Determinar si es opcional
-            $opcional = isset($regla['opcional']) && $regla['opcional'] === true;
-
-            // Si es opcional y está vacío (null o string vacío), saltamos validaciones
-            if ($opcional && ($valor === null || (is_string($valor) && trim($valor) === ''))) {
-                continue;
-            }
-
-            // Validar requerido (si no es opcional y está vacío)
-            if (!$opcional) {
-                if ($valor === null) {
-                    return ['estatus' => false, 'mensaje' => "El campo '$campo' es requerido y no se ha establecido."];
-                }
-                if (is_string($valor) && trim($valor) === '') {
-                    return ['estatus' => false, 'mensaje' => "El campo '$campo' no puede estar vacío."];
-                }
-            }
-
-            // Validar regex
-            if (isset($regla['regex']) && !preg_match($regla['regex'], (string)$valor)) {
-                return ['estatus' => false, 'mensaje' => "El formato de '$campo' no es válido."];
-            }
-
-            // Validar mínimo
-            if (isset($regla['min']) && $valor < $regla['min']) {
-                return ['estatus' => false, 'mensaje' => "El '$campo' debe ser mayor o igual a " . $regla['min']];
-            }
-
-            // Validar tipo fecha
-            if (isset($regla['type']) && $regla['type'] === 'date') {
-                $d = DateTime::createFromFormat('Y-m-d', $valor);
-                if (!($d && $d->format('Y-m-d') === $valor)) {
-                    return ['estatus' => false, 'mensaje' => "Fecha inválida en '$campo'."];
-                }
-            }
-
-            // Validar existencia en otra tabla
-            if (isset($regla['exists'])) {
-                if (!$this->existeEnTabla($regla['exists']['tabla'], $regla['exists']['campo'], $valor)) {
-                    return ['estatus' => false, 'mensaje' => "El valor de '$campo' no existe en el sistema."];
-                }
-            }
-        }
-        return ['estatus' => true];
-    }
-
-    private function existeEnTabla($tabla, $campo, $valor)
-    {
-        $sql = "SELECT COUNT(*) as total FROM $tabla WHERE $campo = :valor AND activo = 1";
-        $stmt = $this->get_conex('negocio')->prepare($sql);
-        $stmt->execute([':valor' => $valor]);
-        return $stmt->fetch(PDO::FETCH_ASSOC)['total'] > 0;
-    }
-
-    /**
-     * Método auxiliar para validaciones AJAX del frontend
-     */
-    public function validarExistenciaExterna($tabla, $campo, $valor)
-    {
-        $tablasPermitidas = ['caja_chica', 'gastos', 'movimientos_caja'];
-        if (!in_array($tabla, $tablasPermitidas)) {
-            return false;
-        }
-        return $this->existeEnTabla($tabla, $campo, $valor);
-    }
-
-    // -----------------------------------------------------------------
     // MÉTODOS DE NEGOCIO
     // -----------------------------------------------------------------
 
     /**
      * Consulta todas las cajas con su saldo calculado desde la vista
+     // SE USA EN EL MODULO
      */
     private function _consultar()
     {
@@ -210,11 +160,9 @@ class CajaChica extends Conexion
         }
     }
 
+    // SE USA EN EL MODULO
     private function _consultar_movimiento_unico()
     {
-        $v = $this->validar(['id_movimiento_caja']);
-        if (!$v['estatus']) return $v;
-
         try {
             $sql = "SELECT id_movimiento_caja, concepto, monto, fecha, estado 
                     FROM movimientos_caja 
@@ -232,48 +180,14 @@ class CajaChica extends Conexion
         }
     }
 
-    private function consultar_caja_unica()
-    {
-        $v = $this->validar(['id_caja_chica']);
-        if (!$v['estatus']) return $v;
-
-        try {
-            $sql = "SELECT * 
-                    FROM movimientos_caja 
-                    WHERE id_movimiento_caja = :id AND activo = 1";
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->execute([':id' => $this->id_movimiento_caja]);
-            $dato = $stmt->fetch(PDO::FETCH_ASSOC);
-            if (!$dato) {
-                return ['estatus' => false, 'mensaje' => 'Movimiento no encontrado'];
-            }
-            return ['estatus' => true, 'datos' => $dato];
-        } catch (PDOException $e) {
-            error_log("Error en _consultar_caja_unica: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar movimiento'];
-        }
-    }
-
     /**
      * Registra un nuevo movimiento (gasto) en caja chica
+     // SE USA EN EL MODULO
      */
     private function _registrar_movimiento()
-    {
-        // Validar que la caja exista
-        $valCaja = $this->validar(['id_caja_chica']);
-        if (!$valCaja['estatus']) {
-            return $valCaja;
-        }
-
-        // Validar datos del movimiento
-        $valMov = $this->validar(['concepto', 'monto_movimiento', 'fecha_movimiento']);
-        if (!$valMov['estatus']) {
-            return $valMov;
-        }
-
-        $pdo = $this->get_conex('negocio');
-        
+    {        
         try {
+            $pdo = $this->get_conex('negocio');
             $pdo->beginTransaction();
 
             // Consultar saldo disponible desde la vista
@@ -331,12 +245,10 @@ class CajaChica extends Conexion
 
     /**
      * Elimina (anula) un movimiento (soft delete)
+     // SE USA EN EL MODULO
      */
     private function _eliminar_movimiento()
     {
-        $v = $this->validar(['id_movimiento_caja']);
-        if (!$v['estatus']) return $v;
-
         try {
             $pdo = $this->get_conex('negocio');
             $pdo->beginTransaction();
@@ -359,12 +271,10 @@ class CajaChica extends Conexion
     
     /**
      * Edita la descripción de una caja chica
+     // SE USA EN EL MODULO
      */
     private function _modificar_descripcion()
     {
-        $v = $this->validar(['id_caja_chica', 'descripcion']);
-        if (!$v['estatus']) return $v;
-
         try {
             $sql = "UPDATE caja_chica SET descripcion = :desc WHERE id_caja_chica = :id";
             $stmt = $this->get_conex('negocio')->prepare($sql);
@@ -381,12 +291,10 @@ class CajaChica extends Conexion
 
     /**
      * Repone caja chica (llama al SP)
+     // SE USA EN EL MODULO
      */
     private function _reponer_caja()
     {
-        $v = $this->validar(['id_caja_chica', 'monto_movimiento']);
-        if (!$v['estatus']) return $v;
-
         try {
             $sql = "CALL sp_registrar_reposicion_caja(:monto, :id_caja)";
             $stmt = $this->get_conex('negocio')->prepare($sql);
@@ -407,12 +315,10 @@ class CajaChica extends Conexion
 
     /**
      * Edita concepto y fecha de un movimiento (no el monto por seguridad)
+     // SE USA EN EL MODULO
      */
     private function _modificar_movimiento()
     {
-        $v = $this->validar(['id_movimiento_caja', 'concepto', 'fecha_movimiento']);
-        if (!$v['estatus']) return $v;
-
         try {
             $sql = "UPDATE movimientos_caja SET concepto = :con, fecha = :fecha 
                     WHERE id_movimiento_caja = :id";
@@ -434,6 +340,7 @@ class CajaChica extends Conexion
 
     /**
      * Ejecuta el SP de verificación/cierre mensual
+     // SE USA EN EL SCRIPT AUTOMATICP
      */
     private function _verificar_caja_mes()
     {
@@ -449,12 +356,10 @@ class CajaChica extends Conexion
     
     /**
      * Consulta todos los movimientos de una caja específica
+     // SE USA EN EL MODULO
      */
     private function _consultar_movimientos()
     {
-        $v = $this->validar(['id_caja_chica']);
-        if (!$v['estatus']) return $v;
-
         try {
             $sql = "SELECT * FROM movimientos_caja WHERE caja_chica_id = :id AND activo = 1 ORDER BY fecha DESC";
             $stmt = $this->get_conex('negocio')->prepare($sql);
@@ -469,11 +374,10 @@ class CajaChica extends Conexion
     /**
      * Verifica el saldo de la caja chica actual y, si es bajo, envía notificaciones a los administradores.
      * @return bool True si se notificó o no hubo necesidad, false si hubo error.
+     // SE USA EN LA PROPIA CLASE
      */
     private function verificarSaldoYNotificar()
     {
-        $v = $this->validar(['id_movimiento_caja']);
-        // Verificar que tengamos un ID de caja
         if (empty($this->id_caja_chica)) {
             return false;
         }

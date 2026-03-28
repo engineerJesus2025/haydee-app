@@ -185,30 +185,16 @@
         require_once ROOT_PATH . "/vista/componentes/footer.php";
         require_once ROOT_PATH . "/vista/componentes/script.php";
         require_once 'vista/componentes/modal_carga.php';
+        // Modales
+        require_once ROOT_PATH . "/vista/usuarios/usuario_modal_contra.php";
     ?>
     
-    <!-- Modales -->
-    <div class="modal fade" id="modal_contra" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h1 class="modal-title fs-5" id="titulo_modal">Cambiar Contraseña</h1>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <?php
-                    require_once ROOT_PATH . "/vista/usuarios/usuario_modal_contra.php";
-                    ?>
-                </div>
-            </div>
-        </div>
-    </div>
     <div class="modal fade" id="modal_notificaciones" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
                     <h1 class="modal-title fs-5" id="titulo_modal">Notificaciones</h1>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="d-flex justify-content-between align-items-center mb-4">                                 

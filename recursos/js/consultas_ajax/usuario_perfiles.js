@@ -101,89 +101,84 @@ async function llenarCardUsuario() {
 
     // Mantenemos el 'false' para que sea una petición en silencio (sin modal de carga global)
     const respuesta = await Peticiones.enviar(formData, '', false);
-    
-    if (!respuesta.estatus) {
-        Alertas.mostrar('error', 'Atención', respuesta.mensaje || 'Error al cargar perfil');
-        return;
-    }
+    Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
+        const usuario = respuestaServidor.datos;
+        const [claseBadge, claseIcono] = definirColorBadge(usuario.nombre_rol);
 
-    const usuario = respuesta.datos;
-    const [claseBadge, claseIcono] = definirColorBadge(usuario.nombre_rol);
-
-    // --- LÓGICA DE AVATAR VISUAL (INICIALES) ---
-    const inicialNombre = usuario.nombre_usuario.charAt(0).toUpperCase();
-    const inicialApellido = usuario.apellido.charAt(0).toUpperCase();
-    const iniciales = `${inicialNombre}${inicialApellido}`;
-    
-    const contenedorAvatar = document.getElementById('contenedor_avatar');
-    contenedorAvatar.classList.remove('skeleton'); // Quitamos la animación al avatar
-    contenedorAvatar.innerHTML = iniciales;
-    
-    const claseColorFondo = claseBadge.split(' ')[1]; 
-    contenedorAvatar.classList.remove('bg-primary'); 
-    contenedorAvatar.classList.add(claseColorFondo);
-    if(claseColorFondo === 'bg-warning' || claseColorFondo === 'bg-info') {
-        contenedorAvatar.classList.replace('text-white', 'text-dark');
-    }
-    // Inyectamos los datos y borramos los esqueletos
-    document.getElementById('titulo_nombre').textContent = `${usuario.nombre_usuario} ${usuario.apellido}`;
-    document.getElementById('p_nombre').textContent = usuario.nombre_usuario;
-    document.getElementById('p_apellido').textContent = usuario.apellido;
-    document.getElementById('p_correo').textContent = usuario.correo;
-    document.getElementById('spam_rol').textContent = usuario.nombre_rol;
-    document.getElementById('ultimo_acceso').textContent = FormatoFechas.formatoUltimoAcceso(usuario.ultima_vez);
-
-    correo_an = usuario.correo;
-
-    const spamRol = document.getElementById('spam_rol');
-    spamRol.className = claseBadge;
-
-    document.getElementById('boton_modificar').removeAttribute('disabled');
-
-    // Habilitar botón y cambiar texto
-    document.getElementById('boton_modificar').removeAttribute('disabled');
-    document.getElementById('boton_modificar').innerHTML = '<i class="bi bi-pencil me-1"></i> Modificar';
-
-    // --- ANIMACIÓN DE ENTRADA (FADE IN) ---
-    const elementosAAnimar = [
-        'contenedor_avatar', 
-        'titulo_nombre', 
-        'spam_rol', 
-        'ultimo_acceso', 
-        'p_nombre', 
-        'p_apellido', 
-        'p_correo',
-    ];
-    
-    elementosAAnimar.forEach(id => {
-        let el = document.getElementById(id);
-        if(el) {
-            el.classList.remove('animacion-aparecer');
-            void el.offsetWidth; // Truco de JS para forzar reinicio de la animación
-            el.classList.add('animacion-aparecer');
+        // --- LÓGICA DE AVATAR VISUAL (INICIALES) ---
+        const inicialNombre = usuario.nombre_usuario.charAt(0).toUpperCase();
+        const inicialApellido = usuario.apellido.charAt(0).toUpperCase();
+        const iniciales = `${inicialNombre}${inicialApellido}`;
+        
+        const contenedorAvatar = document.getElementById('contenedor_avatar');
+        contenedorAvatar.classList.remove('skeleton'); // Quitamos la animación al avatar
+        contenedorAvatar.innerHTML = iniciales;
+        
+        const claseColorFondo = claseBadge.split(' ')[1]; 
+        contenedorAvatar.classList.remove('bg-primary'); 
+        contenedorAvatar.classList.add(claseColorFondo);
+        if(claseColorFondo === 'bg-warning' || claseColorFondo === 'bg-info') {
+            contenedorAvatar.classList.replace('text-white', 'text-dark');
         }
+        // Inyectamos los datos y borramos los esqueletos
+        document.getElementById('titulo_nombre').textContent = `${usuario.nombre_usuario} ${usuario.apellido}`;
+        document.getElementById('p_nombre').textContent = usuario.nombre_usuario;
+        document.getElementById('p_apellido').textContent = usuario.apellido;
+        document.getElementById('p_correo').textContent = usuario.correo;
+        document.getElementById('spam_rol').textContent = usuario.nombre_rol;
+        document.getElementById('ultimo_acceso').textContent = FormatoFechas.formatoUltimoAcceso(usuario.ultima_vez);
+
+        correo_an = usuario.correo;
+
+        const spamRol = document.getElementById('spam_rol');
+        spamRol.className = claseBadge;
+
+        document.getElementById('boton_modificar').removeAttribute('disabled');
+
+        // Habilitar botón y cambiar texto
+        document.getElementById('boton_modificar').removeAttribute('disabled');
+        document.getElementById('boton_modificar').innerHTML = '<i class="bi bi-pencil me-1"></i> Modificar';
+
+        // --- ANIMACIÓN DE ENTRADA (FADE IN) ---
+        const elementosAAnimar = [
+            'contenedor_avatar', 
+            'titulo_nombre', 
+            'spam_rol', 
+            'ultimo_acceso', 
+            'p_nombre', 
+            'p_apellido', 
+            'p_correo',
+        ];
+        
+        elementosAAnimar.forEach(id => {
+            let el = document.getElementById(id);
+            if(el) {
+                el.classList.remove('animacion-aparecer');
+                void el.offsetWidth; // Truco de JS para forzar reinicio de la animación
+                el.classList.add('animacion-aparecer');
+            }
+        });
     });
 }
 
 function llenarTablaNotificaciones() {
-    // 1. Encontrar el contenedor de la tabla
+    // Encontrar el contenedor de la tabla
     const contenedor = document.querySelector(".tabla-sistema-haydee");
     if (!contenedor) return;
 
-    // 2. Formateadores Visuales
+    // Formateadores Visuales
     const formatoLeido = (cell) => {
         const leido = cell.getValue();
         return `<span class="${leido == 1 ? 'badge bg-primary' : 'badge bg-warning text-dark'}">${leido == 1 ? 'Sí' : 'No'}</span>`;
     };
 
     const formatoBotones = (cell) => {
-        // Un botón HTML súper limpio, sin necesidad de inyectarle data-atributos
         return `<button data-tooltip="true" class="btn btn-sm btn-primary ver-notificacion" title="Ver Notificación" type="button">
                     <i class="bi bi-eye"></i>
                 </button>`;
     };
 
-    // 3. Definición de Columnas
+    // Definición de Columnas
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center" },
         { title: "Título", field: "titulo", minWidth: 150, responsive: 0 },
@@ -201,7 +196,6 @@ function llenarTablaNotificaciones() {
                 if (!btn) return;
 
                 if (btn.classList.contains('ver-notificacion')) {
-                    // Extraemos los datos necesarios directamente de la fila en memoria
                     const data = cell.getData();
                     const url = `?pagina=${data.tabla_origen}&accion=inicio&buscar=${data.id_registro_origen}`;
                     window.location.href = url;
@@ -210,20 +204,20 @@ function llenarTablaNotificaciones() {
         }
     ];
 
-    // 4. Parámetros a enviar a PHP
+    // Parámetros a enviar a PHP
     const opcionesExtra = {
         parametrosExtra: { operacion: 'consultar_mis_notificaciones' }
     };
 
     let mostrarCarga = false;
 
-    // 5. Inicialización de Tabulator
+    // Inicialización de Tabulator
     tabla_notificaciones = Tablas.cargarTabulador(contenedor.id, "", columnas, opcionesExtra, mostrarCarga);
 
-    // Activamos el elemento visual si existe (esto lo tenías en tu código original)
+    // Activamos el elemento visual si existe
     document.getElementById('notificaciones')?.removeAttribute('disabled');
 
-    // 6. Buscador global dinámico
+    // Buscador global dinámico
     const inputBusqueda = document.getElementById("busqueda_global");
     if (inputBusqueda) {
         inputBusqueda.addEventListener("input", function(e) {
@@ -257,32 +251,29 @@ async function modificar() {
     formData.append('operacion', 'modificar_perfil');
 
     const respuesta = await Peticiones.enviar(formData);
-    if (!respuesta.estatus) {
-        Alertas.mostrar('error', 'Atención', respuesta.mensaje);
-        return;
-    }
+    Validador.procesarRespuesta(respuesta, () => {
+        llenarCardUsuario(); // Recargar datos
+        // Actualizar nombre en el botón de la barra superior
+        const nombreUsuario = document.getElementById('nombre_usuario_sesion');
+        if (nombreUsuario) {
+            const nuevoNombre = document.getElementById('nombre').value + " " + document.getElementById('apellido').value;
+            // botonUsuario.textContent = botonUsuario.textContent.replace(/\s\S+$/, ' ' + nuevoNombre);
+            
+            nombreUsuario.textContent = nuevoNombre;
+        }
 
-    // Actualizar nombre en el botón de la barra superior (opcional)
-    const nombreUsuario = document.getElementById('nombre_usuario_sesion');
-    if (nombreUsuario) {
-        const nuevoNombre = document.getElementById('nombre').value + " " + document.getElementById('apellido').value;
-        // botonUsuario.textContent = botonUsuario.textContent.replace(/\s\S+$/, ' ' + nuevoNombre);
-        
-        nombreUsuario.textContent = nuevoNombre;
-    }
+        document.getElementById('form_perfil').setAttribute('hidden', '');
 
-    await llenarCardUsuario(); // Recargar datos
-    Alertas.mostrar('success', 'Éxito', 'Datos actualizados correctamente');
+        const bodyPerfil = document.getElementById('body_perfil');
+        bodyPerfil.removeAttribute('hidden');
 
-    document.getElementById('form_perfil').setAttribute('hidden', '');
-    document.getElementById('body_perfil').removeAttribute('hidden');
+        // Disparamos la animación
+        bodyPerfil.classList.remove('animacion-aparecer');
+        void bodyPerfil.offsetWidth;
+        bodyPerfil.classList.add('animacion-aparecer');
 
-    // Disparamos la animación
-    bodyPerfil.classList.remove('animacion-aparecer');
-    void bodyPerfil.offsetWidth;
-    bodyPerfil.classList.add('animacion-aparecer');
-
-    document.getElementById('boton_modificar').removeAttribute('disabled');
+        document.getElementById('boton_modificar').removeAttribute('disabled');
+    });
 }
 
 async function modificarContra() {
@@ -292,17 +283,10 @@ async function modificarContra() {
     formData.append('operacion', 'cambiar_contrasenia');
 
     const respuesta = await Peticiones.enviar(formData);
-    if (!respuesta.estatus) {
-        Alertas.mostrar('error', 'Atención', respuesta.mensaje);
-        return;
-    }
-
-    // Limpiar campos
-    document.querySelectorAll('input').forEach(input => input.value = '');
-    Alertas.mostrar('success', 'Éxito', 'Contraseña actualizada correctamente');
-
-    const modal = bootstrap.Modal.getInstance(document.getElementById('modal_contra'));
-    modal?.hide();
+    Validador.procesarRespuesta(respuesta, () => {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('modal_contra'));
+        modal?.hide();
+    });
 }
 
 // Exponer funciones para que las use el validador

@@ -66,20 +66,50 @@
     position: sticky;
     top: 0;
     background-color: var(--sidebar-bg);
-    padding: 1.5rem 0 1rem 0;
+    padding: .5rem 0 1rem 0;
     z-index: 1060;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transition: .5s;
 }
 
 .nav_logo {
     display: flex;
     align-items: center;
     transition: .5s;
+    padding: .5rem
 }
 
 .logo_box {
     transition: .3s;
     margin: 0 auto;
+}
+
+.nav_logo_container:hover{
+    background-color: rgba(37, 99, 235, 0.2);
+    border-radius: 12px;
+}
+
+.nav_logo_container:hover .logo_text .text-secondary{
+    color: #ddd !important;
+}
+
+/* --- ANIMACIONES PARA EL LOGO --- */
+/* Animación del icono (edificio) */
+.nav_logo i {
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+
+.nav_logo:hover i {
+    transform: scale(1.2);
+}
+
+/* Animación del texto (CondoHaydee) */
+.logo_text {
+    transition: transform 0.3s ease;
+}
+
+.l-navbar.show .nav_logo:hover .logo_text {
+    transform: translateX(3px);
 }
 
 /* ==========================================

@@ -26,57 +26,92 @@ class Pagos extends Conexion
     private $apartamento_id; // Para consultas por apartamento
     private $correo;
 
-    private $detalles_temp = [];
+    private $detalles = [];
     private $monto_mensualidad; // Añadido para mantener registro si es necesario
 
-    // Reglas de validación centralizadas
-    private $reglas = [
-        'id_pago' => [
-            'regex' => '/^\d+$/',
-            'exists' => ['tabla' => 'pagos', 'campo' => 'id_pago']
-        ],
-        'id_detalle_pago' => [
-            'regex' => '/^\d+$/',
-            'exists' => ['tabla' => 'detalles_pagos', 'campo' => 'id_detalle_pago']
-        ],
-        'estado' => [
-            'regex' => '/^(PENDIENTE|PROCESADO|RECHAZADO|ANULADO)$/'
-        ],
-        'monto' => [
-            'regex' => '/^\d+(\.\d{1,2})?$/',
-            'min' => 0.01
-        ],
-        'monto_dolar' => [
-            'regex' => '/^\d+(\.\d{1,2})?$/',
-            'opcional' => true
-        ],
-        'tipo_pago' => [
-            'regex' => '/^(Transferencia|Pago Movil|Efectivo|Divisa)$/'
-        ],
-        'referencia' => [
-            'regex' => '/^[a-zA-Z0-9-]{4,20}$/',
-            'opcional' => true,
-            'requerido_si' => ['tipo_pago' => ['Transferencia', 'Pago Movil']]
-        ],
-        'banco_id' => [
-            'regex' => '/^\d+$/',
-            'exists' => ['tabla' => 'bancos', 'campo' => 'id_banco'],
-            'opcional' => true,
-            'requerido_si' => ['tipo_pago' => ['Transferencia', 'Pago Movil']]
-        ],
-        'mensualidad_id' => [
-            'regex' => '/^\d+$/',
-            'exists' => ['tabla' => 'mensualidad', 'campo' => 'id_mensualidad']
-        ],
-        'apartamento_id' => [
-            'regex' => '/^\d+$/',
-            'exists' => ['tabla' => 'apartamentos', 'campo' => 'id_apartamento']
-        ],
-        'correo' => [
-            'regex' => '/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/',
-            'exists' => ['tabla' => 'habitantes', 'campo' => 'correo']
-        ]
-    ];
+    // ====================================================================
+    // VALIDACIONES CENTRALIZADAS
+    // ====================================================================
+    
+    /**
+     * Reglas para la tabla principal (Cabecera del Pago)
+     */
+    public static function obtenerReglas($operacion) {
+        $reglasGenerales = [
+            'id_pago' => [
+                'regex' => '/^\d+$/',
+                'exists' => ['tabla' => 'pagos', 'campo' => 'id_pago']
+            ],
+            'apartamento_id' => [
+                'regex' => '/^\d+$/',
+                'exists' => ['tabla' => 'apartamentos', 'campo' => 'id_apartamento']
+            ],
+            'observacion' => [
+                'regex' => '/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,:\/-]{0,255}$/',
+                'opcional' => true
+            ],
+            'estado' => [
+                'regex' => '/^(PENDIENTE|PROCESADO|RECHAZADO|ANULADO)$/',
+            ],
+            'mensualidad_id' => [
+                'regex' => '/^\d+$/',
+                'exists' => ['tabla' => 'mensualidad', 'campo' => 'id_mensualidad']
+            ],
+        ];
+
+        // Estandarización de nombres aplicada (registrar_pago, modificar_pago...)
+        $camposPorOperacion = [
+            'registrar_pago'           => ['apartamento_id', 'observacion','mensualidad_id','estado'],
+            'modificar_pago'           => ['id_pago', 'apartamento_id', 'observacion','mensualidad_id','estado'],
+            'eliminar_pago'            => ['id_pago'],
+            'actualizar_estado_pago'   => ['id_pago', 'estado', 'observacion'], // Usado por los admins (ya no)
+            'consultar_pago' => ['id_pago']
+        ];
+
+        if (isset($camposPorOperacion[$operacion])) {
+            return array_intersect_key($reglasGenerales, array_flip($camposPorOperacion[$operacion]));
+        }
+        return [];
+    }
+
+    /**
+     * Reglas para cada fila de la tabla de detalles (Detalles Pagos)
+     */
+    public static function obtenerReglasDetalles() {
+        return [
+            'fecha_pago' => [ 
+                'regex' => '/^\d{4}-\d{2}-\d{2}$/'
+            ],
+            'monto' => [
+                'regex' => '/^\d+(\.\d{1,2})?$/',
+                'min' => 0.01
+            ],
+            'monto_dolar' => [
+                'regex' => '/^\d+(\.\d{1,2})?$/',
+                'opcional' => true
+            ],
+            'tipo_pago' => [
+                'regex' => '/^(Efectivo|Pago Movil|Transferencia|Divisa)$/'
+            ],
+            'referencia' => [
+                'regex' => '/^[a-zA-Z0-9-]{4,20}$/',
+                'opcional' => true,
+                'requerido_si' => ['tipo_pago' => ['Transferencia', 'Pago Movil']]
+            ],
+
+            'imagen' => [
+                'regex' => '/^[a-zA-Z0-9_.-]+\.(jpg|jpeg|png|gif)$/i',
+                'opcional' => true,
+                'requerido_si' => ['tipo_pago' => ['Transferencia', 'Pago Movil']]
+            ],
+            'banco_id' => [
+                'regex' => '/^\d+$/',
+                'exists' => ['tabla' => 'bancos', 'campo' => 'id_banco'],
+                'opcional' => true,
+                'requerido_si' => ['tipo_pago' => ['Transferencia', 'Pago Movil']]
+            ]
+        ];
+    }
 
     // Getters y Setters
     public function set_id_pago($id) { $this->id_pago = $id; }
@@ -107,7 +142,8 @@ class Pagos extends Conexion
     public function get_apartamento_id() { return $this->apartamento_id; }
     public function set_correo($correo) { $this->correo = $correo; }
     public function get_correo() { return $this->correo; }
-    public function setDetallesTemp($d) { $this->detalles_temp = $d; }
+    public function set_detalles($detalles) { $this->detalles = $detalles; }
+    public function get_detalles() { return $this->detalles; }
     public function set_monto_mensualidad($m) { $this->monto_mensualidad = $m; }
     public function get_monto_mensualidad() { return $this->monto_mensualidad; }
 
@@ -133,84 +169,68 @@ class Pagos extends Conexion
         }
     }
 
-    // -----------------------------------------------------------------
-    // Validación centralizada
-    // -----------------------------------------------------------------
-    private function validar($campos)
-    {
-        foreach ($campos as $campo) {
-            if (!isset($this->reglas[$campo])) {
-                continue;
-            }
-            $regla = $this->reglas[$campo];
+    // ====================================================================
+    // REGLAS DE NEGOCIO Y VALIDACIONES COMPLEJAS
+    // ====================================================================
 
-            $getter = 'get_' . $campo;
-            if (!method_exists($this, $getter)) {
-                return ['estatus' => false, 'mensaje' => "Error interno: getter no encontrado para $campo."];
-            }
-            $valor = $this->$getter();
+    /**
+     * Regla de negocio: Verifica que las referencias bancarias no estén duplicadas 
+     * en el mismo formulario ni registradas en otros pagos.
+     */
+    private function _validar_referencias_unicas() {
+        $pdo = $this->get_conex('negocio');
+        $refsUsadas = [];
+        
+        foreach ($this->detalles as $idx => $det) {
+            if (!empty($det['referencia'])) {
+                $ref = trim($det['referencia']);
+                
+                // 1. Evitar duplicados en los renglones del mismo formulario
+                if (in_array($ref, $refsUsadas)) {
+                    return ['estatus' => false, 'mensaje' => "La referencia '$ref' está repetida en el renglón " . ($idx + 1) . "."];
+                }
+                $refsUsadas[] = $ref;
 
-            // Determinar si el campo es requerido
-            $requerido = !(isset($regla['opcional']) && $regla['opcional'] === true);
+                // 2. Verificar contra la base de datos mediante un JOIN
+                $sql = "SELECT dp.pago_id FROM ingresos_bancarios ib 
+                        JOIN detalles_pagos dp ON ib.detalle_pago_id = dp.id_detalle_pago 
+                        WHERE ib.referencia = :ref LIMIT 1";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute([':ref' => $ref]);
+                $pago_id_bd = $stmt->fetchColumn();
 
-            // Validación condicional (requerido_si)
-            if (isset($regla['requerido_si'])) {
-                foreach ($regla['requerido_si'] as $campoCond => $valoresCond) {
-                    $getterCond = 'get_' . $campoCond;
-                    $valorCond = $this->$getterCond();
-                    if (in_array($valorCond, $valoresCond)) {
-                        $requerido = true;
-                        break;
+                if ($pago_id_bd) {
+                    // Si existe, comprobamos si pertenece a otro pago distinto al actual
+                    if (empty($this->id_pago) || $pago_id_bd != $this->id_pago) {
+                        return ['estatus' => false, 'mensaje' => "La referencia bancaria '$ref' (Renglón " . ($idx + 1) . ") ya se encuentra registrada en otro pago."];
                     }
-                }
-            }
-
-            if ($requerido) {
-                if ($valor === null) {
-                    return ['estatus' => false, 'mensaje' => "El campo '$campo' es requerido y no se ha establecido."];
-                }
-                if (is_string($valor) && trim($valor) === '') {
-                    return ['estatus' => false, 'mensaje' => "El campo '$campo' no puede estar vacío."];
-                }
-            } else {
-                if ($valor === null || (is_string($valor) && trim($valor) === '')) {
-                    continue;
-                }
-            }
-
-            // Validar expresión regular
-            if (isset($regla['regex']) && !preg_match($regla['regex'], (string)$valor)) {
-                return ['estatus' => false, 'mensaje' => "El campo '$campo' no tiene un formato válido."];
-            }
-
-            // Validar valor mínimo
-            if (isset($regla['min']) && $valor < $regla['min']) {
-                return ['estatus' => false, 'mensaje' => "El campo '$campo' debe ser mayor o igual a " . $regla['min']];
-            }
-
-            // Validar existencia en otra tabla
-            if (isset($regla['exists'])) {
-                $tabla = $regla['exists']['tabla'];
-                $campoFor = $regla['exists']['campo'] ?? $campo;
-                if (!$this->existeEnTabla($tabla, $campoFor, $valor)) {
-                    return ['estatus' => false, 'mensaje' => "El valor del campo '$campo' no existe en la tabla $tabla."];
                 }
             }
         }
         return ['estatus' => true];
     }
 
-    private function existeEnTabla($tabla, $campo, $valor)
-    {
-        $sql = "SELECT COUNT(*) as total FROM $tabla WHERE $campo = :valor";
+    /**
+     * Utilidad para el AJAX: Verifica si la referencia está libre.
+     * Ignora la referencia si pertenece al mismo pago que se está modificando.
+     */
+    public function verificarReferenciaDisponible($referencia, $id_pago_actual = null) {
+        $sql = "SELECT dp.pago_id FROM ingresos_bancarios ib 
+                JOIN detalles_pagos dp ON ib.detalle_pago_id = dp.id_detalle_pago 
+                WHERE ib.referencia = :ref LIMIT 1";
         try {
             $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->bindParam(':valor', $valor);
-            $stmt->execute();
-            $fila = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $fila['total'] > 0;
-        } catch (PDOException $e) {
-            error_log("Error en existeEnTabla: " . $e->getMessage());
+            $stmt->execute([':ref' => $referencia]);
+            $pago_id_bd = $stmt->fetchColumn();
+
+            if ($pago_id_bd) {
+                // Si la referencia existe y NO es de este mismo pago, está OCUPADA (true)
+                if (empty($id_pago_actual) || $pago_id_bd != $id_pago_actual) {
+                    return true; 
+                }
+            }
+            return false; // Está DISPONIBLE (false)
+        } catch (\PDOException $e) {
             return false;
         }
     }
@@ -221,6 +241,7 @@ class Pagos extends Conexion
 
     /**
      * Consulta mensualidades pendientes de un apartamento (original)
+     // SE USA EN EL MODULO
      */
     public function _consultarMensualidadPendiente()
     {
@@ -253,51 +274,13 @@ class Pagos extends Conexion
         }
     }
 
-    /**
-     * Consulta una mensualidad específica (original)
-     */
-    public function consultarMensualidadEspecifica()
-    {
-        if (empty($this->mensualidad_id)) {
-            return ['estatus' => false, 'mensaje' => 'ID de mensualidad no proporcionado'];
-        }
-        $sql = "SELECT 
-                    m.id_mensualidad,
-                    m.monto,
-                    m.tasa_dolar,
-                    m.mes,
-                    m.anio,
-                    m.porcentaje_interes,
-                    m.limite_mensualidad,
-                    COALESCE(SUM(dp.monto), 0) AS total_pagado,
-                    (m.monto - COALESCE(SUM(dp.monto), 0)) AS pendiente
-                FROM mensualidad m
-                LEFT JOIN pagos_mensualidad pm ON m.id_mensualidad = pm.mensualidad_id
-                LEFT JOIN detalles_pagos dp ON pm.detalle_pago_id = dp.id_detalle_pago
-                WHERE m.id_mensualidad = :id_mensualidad AND m.activo = 1
-                GROUP BY m.id_mensualidad";
-        try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->bindParam(':id_mensualidad', $this->mensualidad_id);
-            $stmt->execute();
-            $datos = $stmt->fetch(PDO::FETCH_ASSOC);
-            if (!$datos) {
-                return ['estatus' => false, 'mensaje' => 'Mensualidad no encontrada'];
-            }
-            return ['estatus' => true, 'datos' => $datos];
-        } catch (PDOException $e) {
-            error_log("Error en consultarMensualidadEspecifica: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar mensualidad'];
-        }
-    }
-
     // ====================================================================
     // MÉTODOS PRIVADOS (acciones)
     // ====================================================================
 
     // -------------------- CONSULTAS --------------------
-
-    private function _consultar_pagos()
+    // SE USA EN EL MODULO
+    private function _consultar()
     {
         $sql = "SELECT 
                 p.id_pago,
@@ -336,18 +319,13 @@ class Pagos extends Conexion
         }
     }
 
+    // SE USA EN EL MODULO
     private function _consultar_por_correo()
     {
         // Obtener correo de la sesión
         $correo = $_SESSION['usuario'] ?? null;
         if (!$correo) {
             return ['estatus' => false, 'mensaje' => 'Correo no disponible en sesión'];
-        }
-
-        $this->set_correo($correo);
-        $validacion = $this->validar(['correo']);
-        if (!$validacion['estatus']) {
-            return $validacion;
         }
 
         $sql = "SELECT 
@@ -396,11 +374,9 @@ class Pagos extends Conexion
         }
     }
 
-    private function _consultar_pago_unico()
+    // SE USA EN EL MODULO
+    private function _consultar_pago()
     {
-        $validacion = $this->validar(['id_pago']);
-        if (!$validacion['estatus']) return $validacion;
-
         try {
             // 1. Cabecera del pago
             $sqlHead = "SELECT
@@ -448,12 +424,10 @@ class Pagos extends Conexion
      * Consulta plana solo de la cabecera del pago para la bitácora de auditoría.
      * Actualizado para consultar mensualidad_id y apartamento_id,
      * permitiendo al GestorAuditoria registrar diferencias exactas.
+     // SE USA EN EL MODULO
      */
     private function _consultar_cabecera_pago()
     {
-        $validacion = $this->validar(['id_pago']);
-        if (!$validacion['estatus']) return $validacion;
-
         // Añadimos mensualidad_id y apartamento_id a la consulta plana
         $sql = "SELECT 
                     p.estado, 
@@ -483,48 +457,18 @@ class Pagos extends Conexion
         }
     }
 
-    private function _consultar_detalle_unico()
-    {
-        $validacion = $this->validar(['id_detalle_pago']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
-        $sql = "SELECT dp.*, ib.referencia, ib.banco_id, ib.imagen, pm.mensualidad_id
-                FROM detalles_pagos dp
-                LEFT JOIN ingresos_bancarios ib ON dp.id_detalle_pago = ib.detalle_pago_id
-                LEFT JOIN pagos_mensualidad pm ON dp.id_detalle_pago = pm.detalle_pago_id
-                WHERE dp.id_detalle_pago = :id_det";
-        try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->bindParam(':id_det', $this->id_detalle_pago);
-            $stmt->execute();
-            $dato = $stmt->fetch(PDO::FETCH_ASSOC);
-            if (!$dato) {
-                return ['estatus' => false, 'mensaje' => 'Detalle no encontrado'];
-            }
-            return ['estatus' => true, 'datos' => $dato];
-        } catch (PDOException $e) {
-            error_log("Error en _consultar_detalle_unico: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar detalle'];
-        }
-    }
-
-    private function _consultar_mensualidad_especifica()
-    {
-        return $this->consultarMensualidadEspecifica();
-    }
 
     // -------------------- OPERACIONES DE PAGO --------------------
-
-    private function _registrar()
+    // SE USA EN EL MODULO
+    private function _registrar_pago()
     {
-        if (empty($this->detalles_temp) || !is_array($this->detalles_temp)) {
+        if (empty($this->detalles) || !is_array($this->detalles)) {
             return ['estatus' => false, 'mensaje' => 'No se recibieron detalles para el pago'];
         }
 
-        $validacion = $this->validar(['apartamento_id', 'mensualidad_id']);
-        if (!$validacion['estatus']) return $validacion;
+        // Validar que las referencias sean únicas
+        $valRef = $this->_validar_referencias_unicas();
+        if (!$valRef['estatus']) return $valRef;
 
         $pdo = $this->get_conex('negocio');
         try {
@@ -551,9 +495,9 @@ class Pagos extends Conexion
             $stmtRel = $pdo->prepare($sqlRel);
 
             // 3. Iterar e insertar
-            foreach ($this->detalles_temp as $det) {
+            foreach ($this->detalles as $det) {
                 $stmtDet->execute([
-                    ':fecha' => $det['fecha'],
+                    ':fecha' => $det['fecha_pago'],
                     ':monto' => $det['monto'],
                     ':md'    => $det['monto_dolar'] ?? 0,
                     ':tipo'  => $det['tipo_pago'],
@@ -584,22 +528,23 @@ class Pagos extends Conexion
         } catch (\Exception $e) {
             $pdo->rollBack();
             error_log("Error en _registrar pago: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error en la base de datos: ' . $e->getMessage()];
+            return ['estatus' => false, 'mensaje' => 'Error del servidor'];
         }
     }
 
     /**
      * Edita un pago completo borrando los detalles viejos y registrando los nuevos
+     // SE USA EN EL MODULO
      */
-    private function _modificar()
+    private function _modificar_pago()
     {
-        if (empty($this->id_pago)) {
-            return ['estatus' => false, 'mensaje' => 'ID de pago no proporcionado'];
-        }
-
-        if (empty($this->detalles_temp) || !is_array($this->detalles_temp)) {
+        if (empty($this->detalles) || !is_array($this->detalles)) {
             return ['estatus' => false, 'mensaje' => 'No se recibieron detalles para el pago'];
         }
+
+        // Validar que las referencias sean únicas
+        $valRef = $this->_validar_referencias_unicas();
+        if (!$valRef['estatus']) return $valRef;
 
         $pdo = $this->get_conex('negocio');
         try {
@@ -615,7 +560,7 @@ class Pagos extends Conexion
             ]);
 
             // 2. Gestionar las imágenes para no borrar las que aún se usan
-            $imagenesAConservar = array_column($this->detalles_temp, 'imagen');
+            $imagenesAConservar = array_column($this->detalles, 'imagen');
 
             $sqlGetDet = "SELECT id_detalle_pago FROM detalles_pagos WHERE pago_id = :id";
             $stmtGet = $pdo->prepare($sqlGetDet);
@@ -646,9 +591,9 @@ class Pagos extends Conexion
             $sqlRel = "INSERT INTO pagos_mensualidad (detalle_pago_id, mensualidad_id) VALUES (:det_id, :mens_id)";
             $stmtRel = $pdo->prepare($sqlRel);
 
-            foreach ($this->detalles_temp as $det) {
+            foreach ($this->detalles as $det) {
                 $stmtDet->execute([
-                    ':fecha' => $det['fecha'],
+                    ':fecha' => $det['fecha_pago'],
                     ':monto' => $det['monto'],
                     ':md'    => $det['monto_dolar'] ?? 0,
                     ':tipo'  => $det['tipo_pago'],
@@ -681,11 +626,9 @@ class Pagos extends Conexion
         }
     }
 
+    // SE USA EN EL MODULO
     private function _eliminar_pago()
     {
-        $validacion = $this->validar(['id_pago']);
-        if (!$validacion['estatus']) return $validacion;
-
         $sql = "UPDATE pagos SET activo = 0, estado = 'ANULADO' WHERE id_pago = :id";
         try {
             $stmt = $this->get_conex('negocio')->prepare($sql);
@@ -697,381 +640,9 @@ class Pagos extends Conexion
         }
     }
 
-    // -------------------- OPERACIONES DE DETALLES --------------------
-
-    private function _registrar_detalle()
-    {
-        $campos = ['fecha', 'monto', 'tipo_pago', 'pago_id', 'mensualidad_id'];
-        $validacion = $this->validar($campos);
-        if (!$validacion['estatus']) return $validacion;
-
-        $pdo = $this->get_conex('negocio');
-        try {
-            $pdo->beginTransaction();
-
-            $sqlDet = "INSERT INTO detalles_pagos (fecha, monto, monto_dolar, tipo_pago, pago_id) 
-                       VALUES (:fecha, :monto, :md, :tipo, :pago_id)";
-            $stmtDet = $pdo->prepare($sqlDet);
-            $md = $this->monto_dolar ?? 0;
-            $stmtDet->execute([
-                ':fecha' => $this->fecha,
-                ':monto' => $this->monto,
-                ':md' => $md,
-                ':tipo' => $this->tipo_pago,
-                ':pago_id' => $this->id_pago
-            ]);
-            $id_detalle = $pdo->lastInsertId();
-
-            if (in_array($this->tipo_pago, ['Transferencia', 'Pago Movil'])) {
-                $sqlBanco = "INSERT INTO ingresos_bancarios (referencia, imagen, detalle_pago_id, banco_id) 
-                             VALUES (:ref, :img, :det_id, :banco_id)";
-                $stmtBanco = $pdo->prepare($sqlBanco);
-                $img = $this->imagen ?? 'default.png';
-                $stmtBanco->execute([
-                    ':ref' => $this->referencia,
-                    ':img' => $img,
-                    ':det_id' => $id_detalle,
-                    ':banco_id' => $this->banco_id
-                ]);
-            }
-
-            $sqlRel = "INSERT INTO pagos_mensualidad (detalle_pago_id, mensualidad_id) VALUES (:det_id, :mens_id)";
-            $stmtRel = $pdo->prepare($sqlRel);
-            $stmtRel->execute([
-                ':det_id' => $id_detalle,
-                ':mens_id' => $this->mensualidad_id
-            ]);
-
-            $pdo->commit();
-            return ['estatus' => true, 'mensaje' => 'Detalle registrado', 'id_detalle' => $id_detalle];
-        } catch (PDOException $e) {
-            if ($pdo->inTransaction()) $pdo->rollBack();
-            error_log("Error en _registrar_detalle: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al registrar detalle'];
-        }
-    }
-
-    private function _modificar_detalle()
-    {
-        $campos = ['id_detalle_pago', 'fecha', 'monto', 'tipo_pago', 'pago_id', 'mensualidad_id'];
-        $validacion = $this->validar($campos);
-        if (!$validacion['estatus']) return $validacion;
-
-        $pdo = $this->get_conex('negocio');
-        try {
-            $pdo->beginTransaction();
-
-            $sqlDet = "UPDATE detalles_pagos SET fecha = :fecha, monto = :monto, monto_dolar = :md, tipo_pago = :tipo 
-                       WHERE id_detalle_pago = :id_det";
-            $stmtDet = $pdo->prepare($sqlDet);
-            $md = $this->monto_dolar ?? 0;
-            $stmtDet->execute([
-                ':fecha' => $this->fecha,
-                ':monto' => $this->monto,
-                ':md' => $md,
-                ':tipo' => $this->tipo_pago,
-                ':id_det' => $this->id_detalle_pago
-            ]);
-
-            if (in_array($this->tipo_pago, ['Transferencia', 'Pago Movil'])) {
-                $sqlCheck = "SELECT id_ingreso_bancario FROM ingresos_bancarios WHERE detalle_pago_id = :det_id";
-                $stmtCheck = $pdo->prepare($sqlCheck);
-                $stmtCheck->execute([':det_id' => $this->id_detalle_pago]);
-                $existe = $stmtCheck->fetchColumn();
-
-                if ($existe) {
-                    $sqlBanco = "UPDATE ingresos_bancarios SET referencia = :ref, imagen = :img, banco_id = :banco 
-                                 WHERE detalle_pago_id = :det_id";
-                } else {
-                    $sqlBanco = "INSERT INTO ingresos_bancarios (referencia, imagen, detalle_pago_id, banco_id) 
-                                 VALUES (:ref, :img, :det_id, :banco)";
-                }
-                $stmtBanco = $pdo->prepare($sqlBanco);
-                $img = $this->imagen ?? 'default.png';
-                $stmtBanco->execute([
-                    ':ref' => $this->referencia,
-                    ':img' => $img,
-                    ':det_id' => $this->id_detalle_pago,
-                    ':banco' => $this->banco_id
-                ]);
-            } else {
-                $sqlDelBanco = "DELETE FROM ingresos_bancarios WHERE detalle_pago_id = :det_id";
-                $stmtDel = $pdo->prepare($sqlDelBanco);
-                $stmtDel->execute([':det_id' => $this->id_detalle_pago]);
-            }
-
-            $sqlRel = "UPDATE pagos_mensualidad SET mensualidad_id = :mens_id WHERE detalle_pago_id = :det_id";
-            $stmtRel = $pdo->prepare($sqlRel);
-            $stmtRel->execute([
-                ':mens_id' => $this->mensualidad_id,
-                ':det_id' => $this->id_detalle_pago
-            ]);
-
-            $pdo->commit();
-            return ['estatus' => true, 'mensaje' => 'Detalle actualizado'];
-        } catch (PDOException $e) {
-            if ($pdo->inTransaction()) $pdo->rollBack();
-            error_log("Error en _modificar_detalle: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al modificar detalle'];
-        }
-    }
-
-    private function _eliminar_detalle()
-    {
-        $validacion = $this->validar(['id_detalle_pago']);
-        if (!$validacion['estatus']) return $validacion;
-
-        $pdo = $this->get_conex('negocio');
-        try {
-            $pdo->beginTransaction();
-
-            $sqlBanco = "DELETE FROM ingresos_bancarios WHERE detalle_pago_id = :det_id";
-            $stmtBanco = $pdo->prepare($sqlBanco);
-            $stmtBanco->execute([':det_id' => $this->id_detalle_pago]);
-
-            $sqlRel = "DELETE FROM pagos_mensualidad WHERE detalle_pago_id = :det_id";
-            $stmtRel = $pdo->prepare($sqlRel);
-            $stmtRel->execute([':det_id' => $this->id_detalle_pago]);
-
-            $sqlDet = "DELETE FROM detalles_pagos WHERE id_detalle_pago = :det_id";
-            $stmtDet = $pdo->prepare($sqlDet);
-            $stmtDet->execute([':det_id' => $this->id_detalle_pago]);
-
-            $pdo->commit();
-            return ['estatus' => true, 'mensaje' => 'Detalle eliminado'];
-        } catch (PDOException $e) {
-            if ($pdo->inTransaction()) $pdo->rollBack();
-            error_log("Error en _eliminar_detalle: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al eliminar detalle'];
-        }
-    }
-
-    // -------------------- OPERACIONES DE PAGO CON MÚLTIPLES DETALLES --------------------
-
-    private function _registrar_pago_con_detalles()
-    {
-        // Se espera que las propiedades fecha, monto, tipo_pago, etc. sean arrays
-        if (!isset($this->fecha) || !is_array($this->fecha) || empty($this->fecha)) {
-            return ['estatus' => false, 'mensaje' => 'No se recibieron detalles para el pago'];
-        }
-
-        $pdo = $this->get_conex('negocio');
-        try {
-            $pdo->beginTransaction();
-
-            $sqlHead = "INSERT INTO pagos (estado, observacion, activo) VALUES ('PENDIENTE', :obs, 1)";
-            $stmtHead = $pdo->prepare($sqlHead);
-            $obs = $this->observacion ?? 'Pago registrado por sistema';
-            $stmtHead->execute([':obs' => $obs]);
-            $id_pago = $pdo->lastInsertId();
-
-            $indice_imagen = 0;
-            foreach ($this->fecha as $i => $fecha) {
-                $monto = $this->monto[$i] ?? 0;
-                $tipo = $this->tipo_pago[$i] ?? '';
-                $monto_dolar = $this->monto_dolar[$i] ?? 0;
-                $mensualidad_id = is_array($this->mensualidad_id) ? $this->mensualidad_id[$i] : $this->mensualidad_id;
-
-                $sqlDet = "INSERT INTO detalles_pagos (fecha, monto, monto_dolar, tipo_pago, pago_id) 
-                           VALUES (:fecha, :monto, :md, :tipo, :pago_id)";
-                $stmtDet = $pdo->prepare($sqlDet);
-                $stmtDet->execute([
-                    ':fecha' => $fecha,
-                    ':monto' => $monto,
-                    ':md' => $monto_dolar,
-                    ':tipo' => $tipo,
-                    ':pago_id' => $id_pago
-                ]);
-                $id_detalle = $pdo->lastInsertId();
-
-                if (in_array($tipo, ['Transferencia', 'Pago Movil'])) {
-                    $referencia = $this->referencia[$i] ?? '';
-                    $banco_id = $this->banco_id[$i] ?? null;
-                    $imagen = '';
-                    if (isset($this->imagen[$indice_imagen])) {
-                        $imagen = $this->imagen[$indice_imagen];
-                        $indice_imagen++;
-                    }
-                    $sqlBanco = "INSERT INTO ingresos_bancarios (referencia, imagen, detalle_pago_id, banco_id) 
-                                 VALUES (:ref, :img, :det_id, :banco)";
-                    $stmtBanco = $pdo->prepare($sqlBanco);
-                    $stmtBanco->execute([
-                        ':ref' => $referencia,
-                        ':img' => $imagen ?: 'default.png',
-                        ':det_id' => $id_detalle,
-                        ':banco' => $banco_id
-                    ]);
-                }
-
-                $sqlRel = "INSERT INTO pagos_mensualidad (detalle_pago_id, mensualidad_id) VALUES (:det_id, :mens_id)";
-                $stmtRel = $pdo->prepare($sqlRel);
-                $stmtRel->execute([
-                    ':det_id' => $id_detalle,
-                    ':mens_id' => $mensualidad_id
-                ]);
-            }
-
-            $pdo->commit();
-            return ['estatus' => true, 'mensaje' => 'Pago registrado con éxito', 'id' => $id_pago];
-        } catch (PDOException $e) {
-            if ($pdo->inTransaction()) $pdo->rollBack();
-            error_log("Error en _registrar_pago_con_detalles: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error en la base de datos: ' . $e->getMessage()];
-        }
-    }
-
-    private function _modificar_pago_con_detalles()
-    {
-        if (empty($this->id_pago)) {
-            return ['estatus' => false, 'mensaje' => 'ID de pago no proporcionado'];
-        }
-
-        $pdo = $this->get_conex('negocio');
-        try {
-            $pdo->beginTransaction();
-
-            $sqlHead = "UPDATE pagos SET estado = :estado, observacion = :obs WHERE id_pago = :id";
-            $stmtHead = $pdo->prepare($sqlHead);
-            $stmtHead->execute([
-                ':estado' => $this->estado,
-                ':obs' => $this->observacion,
-                ':id' => $this->id_pago
-            ]);
-
-            // Obtener detalles antiguos para eliminar imágenes
-            $sqlGetDet = "SELECT id_detalle_pago FROM detalles_pagos WHERE pago_id = :id";
-            $stmtGet = $pdo->prepare($sqlGetDet);
-            $stmtGet->execute([':id' => $this->id_pago]);
-            $detallesViejos = $stmtGet->fetchAll(PDO::FETCH_COLUMN);
-
-            foreach ($detallesViejos as $id_det) {
-                $img = $this->obtenerNombreImagenPorDetalle($id_det);
-                if ($img && $img !== 'default.png') {
-                    GestorImagenes::eliminar($img, 'pagos');
-                }
-            }
-
-            // Eliminar relaciones y detalles
-            $sqlDelBanco = "DELETE FROM ingresos_bancarios WHERE detalle_pago_id IN (SELECT id_detalle_pago FROM detalles_pagos WHERE pago_id = :id)";
-            $pdo->prepare($sqlDelBanco)->execute([':id' => $this->id_pago]);
-            $sqlDelRel = "DELETE FROM pagos_mensualidad WHERE detalle_pago_id IN (SELECT id_detalle_pago FROM detalles_pagos WHERE pago_id = :id)";
-            $pdo->prepare($sqlDelRel)->execute([':id' => $this->id_pago]);
-            $sqlDelDet = "DELETE FROM detalles_pagos WHERE pago_id = :id";
-            $pdo->prepare($sqlDelDet)->execute([':id' => $this->id_pago]);
-
-            // Insertar nuevos detalles
-            if (!isset($this->fecha) || !is_array($this->fecha) || empty($this->fecha)) {
-                throw new Exception('No se recibieron detalles para el pago');
-            }
-
-            $indice_imagen = 0;
-            foreach ($this->fecha as $i => $fecha) {
-                $monto = $this->monto[$i] ?? 0;
-                $tipo = $this->tipo_pago[$i] ?? '';
-                $monto_dolar = $this->monto_dolar[$i] ?? 0;
-                $mensualidad_id = is_array($this->mensualidad_id) ? $this->mensualidad_id[$i] : $this->mensualidad_id;
-
-                $sqlDet = "INSERT INTO detalles_pagos (fecha, monto, monto_dolar, tipo_pago, pago_id) 
-                           VALUES (:fecha, :monto, :md, :tipo, :pago_id)";
-                $stmtDet = $pdo->prepare($sqlDet);
-                $stmtDet->execute([
-                    ':fecha' => $fecha,
-                    ':monto' => $monto,
-                    ':md' => $monto_dolar,
-                    ':tipo' => $tipo,
-                    ':pago_id' => $this->id_pago
-                ]);
-                $id_detalle = $pdo->lastInsertId();
-
-                if (in_array($tipo, ['Transferencia', 'Pago Movil'])) {
-                    $referencia = $this->referencia[$i] ?? '';
-                    $banco_id = $this->banco_id[$i] ?? null;
-                    $imagen = '';
-                    if (isset($this->imagen[$indice_imagen])) {
-                        $imagen = $this->imagen[$indice_imagen];
-                        $indice_imagen++;
-                    }
-                    $sqlBanco = "INSERT INTO ingresos_bancarios (referencia, imagen, detalle_pago_id, banco_id) 
-                                 VALUES (:ref, :img, :det_id, :banco)";
-                    $stmtBanco = $pdo->prepare($sqlBanco);
-                    $stmtBanco->execute([
-                        ':ref' => $referencia,
-                        ':img' => $imagen ?: 'default.png',
-                        ':det_id' => $id_detalle,
-                        ':banco' => $banco_id
-                    ]);
-                }
-
-                $sqlRel = "INSERT INTO pagos_mensualidad (detalle_pago_id, mensualidad_id) VALUES (:det_id, :mens_id)";
-                $stmtRel = $pdo->prepare($sqlRel);
-                $stmtRel->execute([
-                    ':det_id' => $id_detalle,
-                    ':mens_id' => $mensualidad_id
-                ]);
-            }
-
-            $pdo->commit();
-            return ['estatus' => true, 'mensaje' => 'Pago actualizado con éxito'];
-        } catch (Exception $e) {
-            if ($pdo->inTransaction()) $pdo->rollBack();
-            error_log("Error en _modificar_pago_con_detalles: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al actualizar pago: ' . $e->getMessage()];
-        }
-    }
-
-    // -------------------- OTROS --------------------
-
-    private function _validar_referencia()
-    {
-        if (empty($this->referencia)) {
-            return ['estatus' => false, 'mensaje' => 'Referencia no proporcionada'];
-        }
-        $sql = "SELECT COUNT(*) as total FROM ingresos_bancarios WHERE referencia = :ref";
-        try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->execute([':ref' => $this->referencia]);
-            $existe = $stmt->fetchColumn() > 0;
-            return ['estatus' => true, 'existe' => $existe];
-        } catch (PDOException $e) {
-            error_log("Error en _validar_referencia: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al validar referencia'];
-        }
-    }
-
-    private function _lastId()
-    {
-        $sql = "SELECT MAX(id_pago) as last_id FROM pagos";
-        try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->execute();
-            $dato = $stmt->fetch(PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $dato];
-        } catch (PDOException $e) {
-            error_log("Error en _lastId: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al obtener último ID'];
-        }
-    }
-
-    private function _lastIdDetalle()
-    {
-        $sql = "SELECT MAX(id_detalle_pago) as last_id FROM detalles_pagos";
-        try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->execute();
-            $dato = $stmt->fetch(PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $dato];
-        } catch (PDOException $e) {
-            error_log("Error en _lastIdDetalle: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al obtener último ID de detalle'];
-        }
-    }
-
+    // SE USA EN REPORTES
     private function _consultarReciboPago()
     {
-        // Ya existente
-        $validacion = $this->validar(['id_pago']);
-        if (!$validacion['estatus']) return $validacion;
-
         $sql = "SELECT 
                     h.nombre, h.apellido, a.nro_apartamento,
                     MAX(dp.fecha) as fecha_pago, m.mes, m.anio, p.id_pago,
@@ -1120,11 +691,5 @@ class Pagos extends Conexion
             error_log("Error en obtenerNombreImagenPorDetalle: " . $e->getMessage());
             return false;
         }
-    }
-
-    public function borrarImagenAsociada($id_detalle_pago)
-    {
-        $nombre = $this->obtenerNombreImagenPorDetalle($id_detalle_pago);
-         return GestorImagenes::eliminar($nombre, 'pagos');
     }
 }

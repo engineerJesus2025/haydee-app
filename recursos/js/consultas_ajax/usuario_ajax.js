@@ -9,7 +9,10 @@ const permiso_eliminar = document.querySelector("#permiso_eliminar").value;
 const permiso_modificar = document.querySelector("#permiso_modificar").value;
 
 const boton_formulario = document.querySelector("#boton_formulario"); 
+
 const modal = new bootstrap.Modal(document.getElementById("modal_usuario"), { focus: false });
+const modalDetalles = new bootstrap.Modal(document.getElementById("modal_detalles"), { focus: false });
+
 const formulario_usar = document.querySelector(`#form_usuario`); 
 let tabla_usuarios;
 
@@ -96,13 +99,21 @@ async function consultar() {
     
     const formatoBotones = (cell) => {
         const id = cell.getData().id_usuario;
-        let html = `<div class="d-flex justify-content-center gap-2">
-                        <button data-tooltip="true" type="button" class="btn btn-success btn-sm modificar" data-bs-toggle="modal" data-bs-target="#modal_usuario" title="Modificar los detalles de este registro" value="${id}">
-                            <i class="bi bi-pencil-square"></i>
-                        </button>`;
-        if (permiso_eliminar) {
-            html += `<button data-tooltip="true" type="button" class="btn btn-danger btn-sm eliminar" title="Quitar este elemento del sistema" value="${id}">
+        let html = `<div class="d-flex justify-content-center flex-wrap gap-2">
+            <button type="button" class="btn btn-primary btn-sm vista-previa" value="${id}" data-tooltip="true" title="Ver Mas">
+                <i class="bi bi-eye"></i>
+                <span class="d-none d-lg-inline ms-2">Ver</span>
+            </button>`;
+        if (window.permiso_modificar) {
+            html += `<button class="btn btn-success btn-sm modificar" value="${id}" data-tooltip="true" title="Modificar los detalles de este registro">
+                        <i class="bi bi-pencil"></i>
+                        <span class="d-none d-lg-inline ms-2">Editar</span>
+                    </button>`;
+        }
+        if (window.permiso_eliminar) {
+            html += `<button class="btn btn-danger btn-sm eliminar" value="${id}" data-tooltip="true" title="Quitar este elemento del sistema">
                         <i class="bi bi-trash"></i>
+                        <span class="d-none d-lg-inline ms-2">Borrar</span>
                     </button>`;
         }
         html += `</div>`;
@@ -111,9 +122,8 @@ async function consultar() {
 
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
-        { title: "Nombre", field: "nombre", minWidth: 100, responsive: 0 },
-        { title: "Apellido", field: "apellido", minWidth: 100 },
-        { title: "Correo", field: "correo", minWidth: 180 }, 
+        { title: "Nombre", field: "nombre", minWidth: 120, responsive: 0 },
+        { title: "Apellido", field: "apellido", minWidth: 120 },
         { title: "Rol", field: "nombre_rol", formatter: formatoRol, vertAlign: "middle", minWidth: 150 },      
         { 
             title: "Acciones", 
@@ -122,11 +132,15 @@ async function consultar() {
             hozAlign: "center",
             headerHozAlign: "center",
             vertAlign: "middle",
-            minWidth: 100,
+            minWidth: 130,
+            widthGrow: 2,
             responsive: 0,
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
+                if (btn.classList.contains('vista-previa')) {
+                    mostrarVistaPrevia(cell.getData());
+                }
                 if (btn.classList.contains('modificar')) preparar_formulario({ target: btn });
                 if (btn.classList.contains('eliminar')) eventoEliminar({ target: btn });
             }
@@ -147,22 +161,47 @@ async function consultar() {
     }
 }
 
+// Función que lee la memoria de Tabulator (Sin AJAX extra)
+function mostrarVistaPrevia(data) {
+    // 1. Nombre Completo
+    const nombreCompleto = `${data.nombre} ${data.apellido}`;
+    document.getElementById("vp_nombre_completo").textContent = nombreCompleto;
+
+    // 2. Avatar (Extraemos la primera letra del nombre)
+    const inicial = data.nombre ? data.nombre.charAt(0).toUpperCase() : 'U';
+    document.getElementById("vp_avatar_inicial").textContent = inicial;
+
+    // 3. Correo
+    document.getElementById("vp_correo").textContent = data.correo || 'No registrado';
+
+    // 4. Rol (Reutilizamos la asignación de colores de tu tabla)
+    const rolEl = document.getElementById("vp_rol_badge");
+    rolEl.textContent = data.nombre_rol;
+
+    const colores = {
+        'Administrador Global': "badge bg-warning text-dark fs-6 px-3 py-2 shadow-sm",
+        'Administrador': "badge bg-primary fs-6 px-3 py-2 shadow-sm",
+        'Propietario': "badge bg-success fs-6 px-3 py-2 shadow-sm",
+        'Contador': "badge bg-danger fs-6 px-3 py-2 shadow-sm",
+        'Presidente': "badge bg-info text-dark fs-6 px-3 py-2 shadow-sm"
+    };
+    
+    // Asignamos la clase correspondiente o un color gris por defecto
+    rolEl.className = colores[data.nombre_rol] || "badge bg-secondary fs-6 px-3 py-2 shadow-sm";
+
+    // Mostramos el modal
+    modalDetalles.show();
+}
+
 async function registrar() {
     let datos = new FormData(formulario_usar);
-    datos.append('operacion', 'registrar');
+    datos.append('operacion', 'registrar_usuario');
     
     let respuesta = await Peticiones.enviar(datos);
-
-    modal.hide();
-    formulario_usar.reset();
-
-    if (!respuesta.estatus) {
-        Alertas.mostrar('error', 'Atención', respuesta.mensaje);
-        return;
-    }
-
-    tabla_usuarios.replaceData();
-    Alertas.mostrar('success', 'Éxito', 'El registro se ha realizado exitosamente');
+    Validador.procesarRespuesta(respuesta, () => {
+        modal.hide();
+        tabla_usuarios.replaceData();
+    });
 }
 
 async function preparar_formulario(e) {
@@ -170,44 +209,42 @@ async function preparar_formulario(e) {
     let id = e.target.value || e.target.parentElement.value; 
     
     datos.append("id_usuario", id);
-    datos.append('operacion', 'consulta_especifica');
+    datos.append('operacion', 'consultar_usuario');
 
     let respuesta = await Peticiones.enviar(datos);    
-    
-    if (!respuesta.estatus) {
-        Alertas.mostrar('error', 'Error', respuesta.mensaje);
-        return;
-    }
+    Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
+        let data = respuestaServidor.datos; 
 
-    let data = respuesta.datos; 
+        formulario_usar.querySelector("#nombre").value = data.nombre;
+        formulario_usar.querySelector("#apellido").value = data.apellido;    
+        formulario_usar.querySelector("#correo").value = data.correo;
+        formulario_usar.querySelector("#rol_id").value = data.rol_id;  
 
-    formulario_usar.querySelector("#nombre").value = data.nombre;
-    formulario_usar.querySelector("#apellido").value = data.apellido;    
-    formulario_usar.querySelector("#correo").value = data.correo;
-    formulario_usar.querySelector("#rol").value = data.rol_id;  
+        if(!permiso_modificar){
+            boton_formulario.setAttribute("hidden", true);
+            boton_formulario.setAttribute("disabled", true);
+        }
+        
+        boton_formulario.setAttribute("modificar", true);
+        boton_formulario.setAttribute("id_modificar", data.id_usuario);
+        boton_formulario.textContent = "Guardar Cambios";
+        document.getElementById('titulo_modal').textContent = "Modificar Usuario";
+        
+        formulario_usar.querySelector("#confir_contra").parentElement.previousElementSibling.textContent = "Nueva Contraseña" ;
+        formulario_usar.querySelector("#confir_contra").placeholder = "Escriba su Nueva Contraseña" ;
+        formulario_usar.querySelector("#contra").placeholder = "Escriba su Contraseña";
 
-    if(!permiso_modificar){
-        boton_formulario.setAttribute("hidden", true);
-        boton_formulario.setAttribute("disabled", true);
-    }
-    
-    boton_formulario.setAttribute("modificar", true);
-    boton_formulario.setAttribute("id_modificar", data.id_usuario);
-    boton_formulario.textContent = "Guardar Cambios";
-    document.getElementById('titulo_modal').textContent = "Modificar Usuario";
-    
-    formulario_usar.querySelector("#confir_contra").parentElement.previousElementSibling.textContent = "Nueva Contraseña" ;
-    formulario_usar.querySelector("#confir_contra").placeholder = "Escriba su Nueva Contraseña" ;
-    formulario_usar.querySelector("#contra").placeholder = "Escriba su Contraseña";
+        id_modificar = id;
+        correo_an = data.correo;
 
-    id_modificar = id;
-    correo_an = data.correo;
+        modal.show();
+    });   
 }
 
 async function modificar(id) {  
     let datos = new FormData(formulario_usar);
     let nueva_contra = formulario_usar.querySelector("#confir_contra").value || formulario_usar.querySelector("#contra").value;
-    let rol_nombre = formulario_usar.querySelector("#rol").selectedOptions[0].textContent;
+    let rol_nombre = formulario_usar.querySelector("#rol_id").selectedOptions[0].textContent;
 
     datos.append("id_usuario", id);
     datos.append("contra", nueva_contra);
@@ -215,31 +252,18 @@ async function modificar(id) {
     datos.append('operacion', 'modificar_usuario');
 
     let respuesta = await Peticiones.enviar(datos);
+    Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
+        if (respuestaServidor.esMismoUsuario){
 
-    if (!respuesta.estatus) {
-        Alertas.mostrar('error', 'Atención', respuesta.mensaje);
-        return;
-    }
-
-    if (respuesta.esMismoUsuario){
-
-       const nombreUsuario = document.getElementById('nombre_usuario_sesion');
-        if (nombreUsuario) {
-            const nuevoNombre = document.getElementById('nombre').value + " " + document.getElementById('apellido').value;
-            nombreUsuario.textContent = nuevoNombre;
+           const nombreUsuario = document.getElementById('nombre_usuario_sesion');
+            if (nombreUsuario) {
+                const nuevoNombre = document.getElementById('nombre').value + " " + document.getElementById('apellido').value;
+                nombreUsuario.textContent = nuevoNombre;
+            }
         }
-    }
-
-    modal.hide();
-    formulario_usar.reset();
-
-    boton_formulario.removeAttribute("modificar");
-    boton_formulario.removeAttribute("id_modificar");   
-    boton_formulario.textContent = "Guardar";
-    document.getElementById('titulo_modal').textContent = "Registrar Usuario";
-
-    tabla_usuarios.replaceData();
-    Alertas.mostrar('success', 'Éxito', 'El registro se ha modificado exitosamente');
+        modal.hide();
+        tabla_usuarios.replaceData();
+    });
 }
 
 function eventoEliminar(e){
@@ -264,14 +288,9 @@ async function eliminar(id) {
     datos.append('operacion', 'eliminar');
 
     let respuesta = await Peticiones.enviar(datos);
-    
-    if (!respuesta.estatus) {
-        Alertas.mostrar('error', 'Atención', respuesta.mensaje);
-        return;
-    }
-
-    tabla_usuarios.replaceData();
-    Alertas.mostrar('success', 'Éxito', 'El registro ha sido eliminado correctamente');
+    Validador.procesarRespuesta(respuesta, () => {
+        tabla_usuarios.replaceData();
+    });
 }
 
 // ============================================================
@@ -317,7 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const stepsModal = [
         { element: '#nombre', popover: { title: 'Datos Personales', description: 'Ingresa el Nombre y Apellido del usuario.', side: 'bottom', align: 'start' } },
         { element: '#correo', popover: { title: 'Correo Electrónico', description: 'Email que servirá como usuario para el inicio de sesión.', side: 'top', align: 'start' } },
-        { element: '#rol', popover: { title: 'Rol y Permisos', description: 'Define qué puede hacer este usuario en el sistema (Administrador, Super Usuario, etc.).', side: 'top', align: 'start' } },
+        { element: '#rol_id', popover: { title: 'Rol y Permisos', description: 'Define qué puede hacer este usuario en el sistema (Administrador, Super Usuario, etc.).', side: 'top', align: 'start' } },
         { element: '#contra', popover: { title: 'Seguridad', description: 'Establece una contraseña. Puedes usar el botón del "ojo" a la derecha para verificar lo que escribes.', side: 'top', align: 'start' } },
         { element: '#boton_formulario', popover: { title: 'Guardar', description: 'Crea el usuario y otorga el acceso inmediato.', side: 'top', align: 'center' } }
     ];

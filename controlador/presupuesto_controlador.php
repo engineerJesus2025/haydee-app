@@ -3,31 +3,97 @@ use haydee\ayuda\Sesiones;
 use haydee\modelo\Presupuesto;
 use haydee\modelo\TipoGasto;
 use haydee\modelo\Bitacora;
+use haydee\ayuda\Validador;
+use haydee\ayuda\ValidadorBD;
+use haydee\ayuda\ConstructorDetalles;
 use haydee\servicios\GestorAuditoria;
 
 Sesiones::verificarSesion();
 Sesiones::verificarPermiso(GESTIONAR_PRESUPUESTO, CONSULTAR);
 
-$presupuesto = new Presupuesto();
-
 if (isset($_POST["operacion"])) {
-    // Asignación masiva de propiedades comunes (lo que venga fuera del JSON)
+$operacion = $_POST["operacion"];
+
+    // =========================================================
+    // 1. VALIDACIÓN DE LA CABECERA
+    // =========================================================
+    $reglasCabecera = Presupuesto::obtenerReglas($operacion);
+
+    if (!empty($reglasCabecera)) {
+        $validador = new Validador();
+        $validador->validarConjunto($_POST, $reglasCabecera);
+
+        if ($validador->tieneErrores()) {
+            echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
+            exit;
+        }
+    }
+
+    // =========================================================
+    // 2. CONSTRUCCIÓN Y VALIDACIÓN DE DETALLES
+    // =========================================================
+    if ($operacion === 'registrar_presupuesto' || $operacion === 'modificar_presupuesto') {
+        
+        // Configuramos el constructor para extraer solo los campos de presupuesto (Sin bancos ni imágenes)
+        $configPresupuesto = [
+            'campos' => ['nombre', 'monto', 'tipo_gasto_id']
+        ];
+        
+        $detalles = ConstructorDetalles::construirDetalles($_POST, [], $configPresupuesto);
+
+        if (empty($detalles)) {
+            echo json_encode(['estatus' => false, 'mensaje' => 'Debe proporcionar al menos un renglón en el presupuesto.']);
+            exit;
+        }
+
+        $reglasDetalle = Presupuesto::obtenerReglasDetalles();
+        $erroresDetalles = [];
+
+        // Validamos cada fila exactamente como en Gastos
+        foreach ($detalles as $index => $detalle) {
+            $validadorTemp = new Validador();
+            $validadorTemp->validarConjunto($detalle, $reglasDetalle);
+            
+            if ($validadorTemp->tieneErrores()) {
+                $erroresFila = $validadorTemp->obtenerErrores();
+                foreach($erroresFila as $campo => $mensajes) {
+                    $erroresDetalles["detalle_" . $index . "_" . $campo] = $mensajes; 
+                }
+            }
+        }
+
+        if (!empty($erroresDetalles)) {
+            echo json_encode([
+                'estatus' => false, 
+                'errores' => $erroresDetalles, 
+                'mensaje' => 'Hay errores en los renglones del presupuesto.'
+            ]);
+            exit;
+        }
+    }
+
+    $presupuesto = new Presupuesto();
+
+    // Asignación de detalles si existen
+    if (isset($detalles)) {
+        // Asumiendo que tienes un setter, o usa el método que tengas para asignarlos
+        $presupuesto->setDetallesTemp($detalles); 
+    }
+
+    // Asignación masiva de la cabecera
     $presupuesto->set_id_presupuesto($_POST['id_presupuesto'] ?? null);
     $presupuesto->set_fecha($_POST['fecha'] ?? null);
     $presupuesto->set_cuota_reserva($_POST['cuota_reserva'] ?? null);
-    $presupuesto->set_observacion($_POST['observacion'] ?? null);
+    $presupuesto->set_observacion($_POST['observacion'] ?? "Sin observación");
     $presupuesto->set_tasa_dolar($_POST['tasa_dolar'] ?? 1); 
 
-    $operacion = $_POST["operacion"];
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
-
-    // Instanciamos el auditor
     $auditor = new GestorAuditoria($presupuesto, GESTIONAR_PRESUPUESTO);
 
     try {
         switch ($operacion) {
-            case 'consulta':
-                $respuesta = $presupuesto->realizar_consulta('consultar_general');
+            case 'consultar':
+                $respuesta = $presupuesto->realizar_consulta('consultar');
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria('consultar');
                 }
@@ -43,55 +109,30 @@ if (isset($_POST["operacion"])) {
                 $tipoGasto->cerrar(); 
                 break;
 
-            case 'consulta_especifica':
-            case 'consultar_detalles_presupuestos':
-                $respuesta = $presupuesto->realizar_consulta('consultar_unico');
+            case 'consultar_presupuesto':
+                $respuesta = $presupuesto->realizar_consulta('consultar_presupuesto');
                 break;
 
-            case 'registrar_masivo':
-                $datos = json_decode($_POST['datos_presupuesto'], true);
-                if (json_last_error() !== JSON_ERROR_NONE) throw new Exception('Error JSON');
-                
-                $presupuesto->set_fecha($datos['fecha']);
-                $presupuesto->set_cuota_reserva($datos['cuota_reserva']);
-                $presupuesto->set_observacion($datos['observacion'] ?? '');
-                $presupuesto->setDetallesTemp($datos['detalles']);
-                $presupuesto->set_tasa_dolar($_POST['tasa_dolar'] ?? 1);
-
-                $respuesta = $presupuesto->realizar_consulta('registrar');
+            case 'registrar_presupuesto':
+                $respuesta = $presupuesto->realizar_consulta('registrar_presupuesto');
                 if ($respuesta['estatus']) {
-                    // TRUCO: Ocultamos el arreglo al auditor
-                    $presupuesto->setDetallesTemp(null);
+
                     $auditor->registrarAuditoria('registrar');
                 }
                 break;
 
-            case 'modificar_masivo':
-                $datos = json_decode($_POST['datos_presupuesto'], true);
-                if (json_last_error() !== JSON_ERROR_NONE) throw new Exception('Error JSON');
-
-                // 1. Asignar el ID que viene en el JSON para que el auditor sepa a quién buscar
-                $presupuesto->set_id_presupuesto($datos['id_presupuesto']);
-
-                // 2. Obtener datos anteriores (consulta plana)
+            case 'modificar_presupuesto':
+                // Obtener datos anteriores (consulta plana)
                 $auditor->capturarDatosAnteriores('consultar_cabecera_presupuesto');
 
-                // 3. Asignar el resto de los nuevos datos
-                $presupuesto->set_fecha($datos['fecha']);
-                $presupuesto->set_cuota_reserva($datos['cuota_reserva']);
-                $presupuesto->set_observacion($datos['observacion'] ?? '');
-                $presupuesto->setDetallesTemp($datos['detalles']);
-
-                // 4. Ejecutar y auditar
-                $respuesta = $presupuesto->realizar_consulta('modificar');
+                //  Ejecutar y auditar
+                $respuesta = $presupuesto->realizar_consulta('modificar_presupuesto');
                 if ($respuesta['estatus']) { 
-                    // TRUCO: Ocultamos el arreglo al auditor
-                    $presupuesto->setDetallesTemp(null);
                     $auditor->registrarAuditoria('modificar'); 
                 }
                 break;
 
-            case 'eliminar':
+            case 'eliminar_presupuesto':
                 // Utilizamos la consulta plana
                 $auditor->capturarDatosAnteriores('consultar_cabecera_presupuesto');
 
@@ -99,10 +140,6 @@ if (isset($_POST["operacion"])) {
                 if ($respuesta['estatus']) { 
                     $auditor->registrarAuditoria('eliminar'); 
                 }
-                break;
-
-            case 'ultimo_id':
-                $respuesta = $presupuesto->realizar_consulta('lastId');
                 break;
 
             default:
@@ -123,22 +160,58 @@ if (isset($_POST["operacion"])) {
     }
 }
 
+// =========================================================
+// VALIDACIONES AJAX
+// =========================================================
 if (isset($_POST["validar"])) {
     header('Content-Type: application/json');
     $validar = $_POST["validar"];
-    if ($validar === 'validar_fecha_presupuesto') {
-        $fecha = $_POST['fecha'] ?? '';
-        $presupuesto->set_fecha($fecha);
-        $resp = $presupuesto->realizar_consulta('consultar_presupuestos_mensualidades');
-        $existe = $resp['estatus'] && !empty($resp['datos']);
-        echo json_encode(['estatus' => $existe]);
+
+    try {
+        if ($validar === 'validar_fecha_presupuesto') {
+            $fecha = $_POST['fecha'] ?? '';
+            $presupuestoTemp = new Presupuesto();
+            $presupuestoTemp->set_fecha($fecha);
+            
+            $resp = $presupuestoTemp->realizar_consulta('consultar_presupuestos_mensualidades');
+            $existe = $resp['estatus'] && !empty($resp['datos']);
+            
+            echo json_encode(['estatus' => $existe]);
+            exit;
+
+        } elseif ($validar === 'validar_clave_foranea') {
+            if (isset($_POST['tabla'], $_POST['nombre_clave'], $_POST['valor'])) {
+                $validadorBD = new ValidadorBD();
+                $existe = $validadorBD->existe($_POST['tabla'], $_POST['nombre_clave'], $_POST['valor']);
+                echo json_encode(['estatus' => $existe, 'mensaje' => 'OK']);
+            } else {
+                echo json_encode(['estatus' => false, 'mensaje' => 'Faltan parámetros']);
+            }
+            exit;
+        } else {
+            echo json_encode(['estatus' => false, 'mensaje' => 'Validación no implementada']);
+            exit;
+        }
+    } catch (Exception $e) {
+        error_log("Error en validación AJAX Presupuesto: " . $e->getMessage());
+        echo json_encode(['estatus' => false, 'mensaje' => 'Error interno']);
         exit;
     }
 }
 
+// =========================================================
+// CARGA DE DATOS PARA LA VISTA (Solo al cargar la página)
+// =========================================================
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_PRESUPUESTO);
+
+    // Instanciamos solo cuando vamos a renderizar el HTML
+    $tipoGasto = new TipoGasto();
+    $tipos_gasto = $tipoGasto->realizar_consulta('consultar');
 }
+
+// Renderizamos el HTML
+require_once "vista/presupuesto_mensual/presupuesto_vista.php";
 
 // Cargar vista
 require_once "vista/presupuesto_mensual/presupuesto_vista.php";

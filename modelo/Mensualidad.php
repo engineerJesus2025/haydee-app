@@ -246,13 +246,14 @@ class Mensualidad extends Conexion
     {
         $sql = "SELECT DISTINCT MONTH(p.fecha) as mes_presupuesto, YEAR(p.fecha) as anio_presupuesto 
                 FROM presupuesto p
-                LEFT JOIN mensualidad m 
-                       ON m.anio = YEAR(p.fecha) 
-                      AND m.mes = MONTH(p.fecha) 
+                WHERE NOT EXISTS (
+                    SELECT 1 
+                    FROM mensualidad m 
+                    WHERE m.mes = MONTH(p.fecha) 
+                      AND m.anio = YEAR(p.fecha)
                       AND m.activo = 1
-                WHERE m.id_mensualidad IS NULL 
-                  AND p.activo = 1";
-                  
+                ) AND p.activo = 1
+                ORDER BY anio_presupuesto ASC, mes_presupuesto ASC";
         try {
             $stmt = $this->get_conex('negocio')->prepare($sql);
             $stmt->execute();
@@ -260,7 +261,7 @@ class Mensualidad extends Conexion
             return ['estatus' => true, 'datos' => $datos];
         } catch (PDOException $e) {
             error_log("Error en _verificarMeses: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al verificar meses disponibles'];
+            return ['estatus' => false, 'mensaje' => 'Error al verificar meses'];
         }
     }
 

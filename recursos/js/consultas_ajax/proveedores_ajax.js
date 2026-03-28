@@ -2,6 +2,8 @@ let tabla_proveedores;
 let id_modificar;
 
 const modal = new bootstrap.Modal(document.getElementById("modal_proveedores"), { focus: false });
+const modalDetalles = new bootstrap.Modal(document.getElementById("modal_detalles"), { focus: false });
+
 const form = document.querySelector("#form_proveedores");
 
 // Exponer funciones para el validador
@@ -21,9 +23,23 @@ async function consultar() {
     const formatoBotones = (cell) => {
         const id = cell.getData().id_proveedor; 
         
-        let html = `<div class="d-flex justify-content-center gap-2">`;
-        if (window.permiso_modificar) html += `<button data-tooltip="true" type="button" class="btn btn-success btn-sm modificar" title="Modificar los detalles de este registro" value="${id}"><i class="bi bi-pencil"></i></button>`;
-        if (window.permiso_eliminar) html += `<button data-tooltip="true" type="button" class="btn btn-danger btn-sm eliminar" title="Quitar este elemento del sistema" value="${id}"><i class="bi bi-trash"></i></button>`;
+        let html = `<div class="d-flex justify-content-center flex-wrap gap-2">
+            <button type="button" class="btn btn-primary btn-sm vista-previa" value="${id}" data-tooltip="true" title="Ver Mas">
+                <i class="bi bi-eye"></i>
+                <span class="d-none d-lg-inline ms-2">Ver</span>
+            </button>`;
+        if (window.permiso_modificar) {
+            html += `<button class="btn btn-success btn-sm modificar" value="${id}" data-tooltip="true" title="Modificar los detalles de este registro">
+                        <i class="bi bi-pencil"></i>
+                        <span class="d-none d-lg-inline ms-2">Editar</span>
+                    </button>`;
+        }
+        if (window.permiso_eliminar) {
+            html += `<button class="btn btn-danger btn-sm eliminar" value="${id}" data-tooltip="true" title="Quitar este elemento del sistema">
+                        <i class="bi bi-trash"></i>
+                        <span class="d-none d-lg-inline ms-2">Borrar</span>
+                    </button>`;
+        }
         html += `</div>`;
         return html;
     };
@@ -31,19 +47,22 @@ async function consultar() {
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center",},
         
-        { title: "Proveedor", field: "nombre_proveedor", minWidth: 150, responsive: 0 },
-        { title: "Servicio", field: "servicio", minWidth: 150 },
-        { title: "Rif", field: "rif", minWidth: 120 },
-        { title: "Dirección", field: "direccion", minWidth: 200 },
+        { title: "Proveedor", field: "nombre_proveedor", minWidth: 200, responsive: 0, widthGrow: 2, },
+        { title: "Servicio", field: "servicio", minWidth: 200 },
         // ---------------------------------------------
 
         {
             title: "Acciones", formatter: formatoBotones, headerSort: false, 
-            hozAlign: "center", vertAlign: "middle", minWidth: 100, 
+            hozAlign: "center", vertAlign: "middle", minWidth: 130, 
+            widthGrow: 3,
             responsive: 0, download: false, headerHozAlign: "center",
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
+                
+                if (btn.classList.contains('vista-previa')) {
+                    mostrarVistaPrevia(cell.getData());
+                }
                 
                 if (btn.classList.contains('modificar')) {
                     prepararFormulario({ currentTarget: btn }); 
@@ -58,7 +77,7 @@ async function consultar() {
         }
     ];
 
-    tabla_proveedores = Tablas.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consulta' } }); // NOTA: modulos y permisos usan 'consultar', revisa el tuyo.
+    tabla_proveedores = Tablas.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consultar' } });
 
     const inputBusqueda = document.getElementById("busqueda_global");
     if (inputBusqueda) {
@@ -73,6 +92,24 @@ async function consultar() {
     }
 }
 
+// Función que lee la memoria de Tabulator (Sin AJAX extra)
+function mostrarVistaPrevia(data) {
+    // 1. Nombre del Proveedor
+    document.getElementById("vp_nombre_proveedor").textContent = data.nombre_proveedor || 'N/A';
+
+    // 2. RIF
+    document.getElementById("vp_rif").textContent = `RIF: ${data.rif || 'No registrado'}`;
+
+    // 3. Servicio que presta
+    document.getElementById("vp_servicio").textContent = data.servicio || 'No especificado';
+
+    // 4. Dirección
+    document.getElementById("vp_direccion").textContent = data.direccion || 'Dirección no especificada';
+
+    // Mostramos el modal
+    // Asumimos que modalDetalles ya está instanciado en tu archivo principal
+    modalDetalles.show();
+}
 // ============================================
 // OPERACIONES CRUD
 // ============================================
@@ -81,16 +118,13 @@ async function registrar() {
     const tipoDoc = datos.get('tipo_documento');
     const rifNum = datos.get('rif');
     datos.set('rif', tipoDoc + rifNum);
-    datos.set('operacion', 'registrar');
+    datos.set('operacion', 'registrar_proveedor');
 
     const respuesta = await Peticiones.enviar(datos, "", true);
-    if (respuesta?.estatus) {
+    Validador.procesarRespuesta(respuesta, () => {
         modal.hide();
         tabla_proveedores.replaceData();
-        Alertas.mostrar('success', 'Éxito', 'Proveedor registrado correctamente.');
-    } else {
-        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo registrar.');
-    }
+    });
 }
 
 async function prepararFormulario(e) {
@@ -101,27 +135,24 @@ async function prepararFormulario(e) {
     datos.append('operacion', 'consultar_proveedor');
 
     const respuesta = await Peticiones.enviar(datos);
-    if (!respuesta?.estatus) {
-        Alertas.mostrar('error', 'Error', 'No se pudo cargar el proveedor.');
-        return;
-    }
+    Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
+        const data = respuestaServidor.datos;
 
-    const data = respuesta.datos;
+        form.querySelector('#nombre_proveedor').value = data.nombre_proveedor;
+        form.querySelector('#servicio').value = data.servicio;
+        const tipoDoc = data.rif.charAt(0);
+        const rifNum = data.rif.slice(1);
+        form.querySelector('#tipo_documento').value = tipoDoc;
+        form.querySelector('#rif').value = rifNum;
+        form.querySelector('#rif').removeAttribute('disabled');
+        form.querySelector('#direccion').value = data.direccion;
 
-    form.querySelector('#nombre_proveedor').value = data.nombre_proveedor;
-    form.querySelector('#servicio').value = data.servicio;
-    const tipoDoc = data.rif.charAt(0);
-    const rifNum = data.rif.slice(1);
-    form.querySelector('#tipo_documento').value = tipoDoc;
-    form.querySelector('#rif').value = rifNum;
-    form.querySelector('#rif').removeAttribute('disabled');
-    form.querySelector('#direccion').value = data.direccion;
+        document.getElementById('titulo_modal').textContent = 'Modificar Proveedor';
+        form.querySelector('#boton_formulario').textContent = 'Guardar Cambios';
+        form.querySelector('#boton_formulario').dataset.id = id;
 
-    document.getElementById('titulo_modal').textContent = 'Modificar Proveedor';
-    form.querySelector('#boton_formulario').textContent = 'Guardar Cambios';
-    form.querySelector('#boton_formulario').dataset.id = id;
-
-    modal.show();
+        modal.show();
+    });
 }
 
 async function modificar() {
@@ -131,30 +162,24 @@ async function modificar() {
     const rifNum = datos.get('rif');
     datos.set('rif', tipoDoc + rifNum);
     datos.set('id_proveedor', id);
-    datos.set('operacion', 'modificar');
+    datos.set('operacion', 'modificar_proveedor');
 
     const respuesta = await Peticiones.enviar(datos, "", true);
-    if (respuesta?.estatus) {
+    Validador.procesarRespuesta(respuesta, () => {
         modal.hide();
         tabla_proveedores.replaceData();
-        Alertas.mostrar('success', 'Éxito', 'Proveedor actualizado correctamente.');
-    } else {
-        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo actualizar.');
-    }
+    });
 }
 
 async function eliminar(id) {
     const datos = new FormData();
     datos.append('id_proveedor', id);
-    datos.append('operacion', 'eliminar');
+    datos.append('operacion', 'eliminar_proveedor');
 
     const respuesta = await Peticiones.enviar(datos);
-    if (respuesta?.estatus) {
+    Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
         tabla_proveedores.replaceData();
-        Alertas.mostrar('success', 'Éxito', 'Proveedor eliminado correctamente.');
-    } else {
-        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo eliminar.');
-    }
+    });
 }
 
 // ============================================

@@ -38,28 +38,55 @@ class Notificaciones extends Conexion
         ],
         'descripcion' => [
             'regex' => '/^.{3,255}$/'
-        ],
-        'fecha' => [
-            'regex' => '/^\d{4}-\d{2}-\d{2}$/',
-            'opcional' => true
-        ],
-        'usuario_id' => [
-            'regex' => '/^\d+$/',
-            'exists' => ['tabla' => 'usuarios', 'campo' => 'id_usuario']
-        ],
-        'tabla_origen' => [
-            'regex' => '/^[a-z_]+$/',
-            'opcional' => true
-        ],
-        'id_registro_origen' => [
-            'regex' => '/^\d+$/',
-            'opcional' => true
-        ],
-        'tipo_evento' => [
-            'regex' => '/^[A-Za-z0-9_]{3,30}$/',
-            'opcional' => true
         ]
     ];
+
+    // ====================================================================
+    // VALIDACIONES CENTRALIZADAS
+    // ====================================================================
+    public static function obtenerReglas($operacion) {
+        $reglasGenerales = [
+            'id_notificacion' => [
+                'regex' => '/^\d+$/',
+                'exists' => ['tabla' => 'notificaciones', 'campo' => 'id_notificacion']
+            ],
+            'titulo' => [
+                'regex' => '/^[A-Za-z0-9 áéíóúÁÉÍÓÚñÑ\.,-]{3,100}$/'
+            ],
+            'descripcion' => [
+                'regex' => '/^.{3,255}$/'
+            ],
+            'usuario_id' => [
+                'regex' => '/^\d+$/'
+            ],
+            'fecha' => [
+                'regex' => '/^\d{4}-\d{2}-\d{2}$/',
+                'opcional' => true
+            ],
+            'tabla_origen' => [
+                'regex' => '/^[a-z_]+$/',
+                'opcional' => true
+            ],
+            'id_registro_origen' => [
+                'regex' => '/^\d+$/',
+                'opcional' => true
+            ],
+            'tipo_evento' => [
+                'regex' => '/^[A-Za-z0-9_]{3,30}$/',
+                'opcional' => true
+            ]
+        ];
+
+        $camposPorOperacion = [
+            // El frontend envía la operación como 'marcar_como_leido'
+            'marcar_como_leido' => ['id_notificacion']
+        ];
+
+        if (isset($camposPorOperacion[$operacion])) {
+            return array_intersect_key($reglasGenerales, array_flip($camposPorOperacion[$operacion]));
+        }
+        return [];
+    }
 
     // ====================================================================
     // GETTERS Y SETTERS
@@ -114,65 +141,6 @@ class Notificaciones extends Conexion
     }
 
     // ====================================================================
-    // VALIDACIÓN CENTRALIZADA (MEJORADA)
-    // ====================================================================
-    private function validar($campos)
-    {
-        foreach ($campos as $campo) {
-            if (!isset($this->reglas[$campo])) {
-                continue;
-            }
-            $regla = $this->reglas[$campo];
-
-            $getter = 'get_' . $campo;
-            if (!method_exists($this, $getter)) {
-                return ['estatus' => false, 'mensaje' => "Getter no encontrado para $campo."];
-            }
-            $valor = $this->$getter();
-
-            // Determinar si el campo es requerido (por defecto sí, a menos que sea opcional)
-            $requerido = !(isset($regla['opcional']) && $regla['opcional'] === true);
-
-            if ($requerido) {
-                if ($valor === null) {
-                    return ['estatus' => false, 'mensaje' => "El campo '$campo' es requerido y no se ha establecido."];
-                }
-                if (is_string($valor) && trim($valor) === '') {
-                    return ['estatus' => false, 'mensaje' => "El campo '$campo' no puede estar vacío."];
-                }
-            } else {
-                // Si es opcional y está vacío (considerando que 0 no es vacío), saltamos validaciones adicionales
-                if ($valor === null || (is_string($valor) && trim($valor) === '')) {
-                    continue;
-                }
-            }
-
-            // Validar expresión regular
-            if (isset($regla['regex']) && !preg_match($regla['regex'], (string)$valor)) {
-                return ['estatus' => false, 'mensaje' => "El campo '$campo' no tiene un formato válido."];
-            }
-
-            // Validar existencia en otra tabla (foránea)
-            if (isset($regla['exists'])) {
-                $tabla = $regla['exists']['tabla'];
-                $campoFor = $regla['exists']['campo'] ?? $campo;
-                if (!$this->existeEnTabla($tabla, $campoFor, $valor)) {
-                    return ['estatus' => false, 'mensaje' => "El valor del campo '$campo' no existe en la tabla $tabla."];
-                }
-            }
-        }
-        return ['estatus' => true];
-    }
-
-    private function existeEnTabla($tabla, $campo, $valor)
-    {
-        $sql = "SELECT COUNT(*) as total FROM $tabla WHERE $campo = :valor";
-        $stmt = $this->get_conex('seguridad')->prepare($sql);
-        $stmt->execute([':valor' => $valor]);
-        return $stmt->fetchColumn() > 0;
-    }
-
-    // ====================================================================
     // LÓGICA DE NEGOCIO
     // ====================================================================
 
@@ -181,21 +149,9 @@ class Notificaciones extends Conexion
      */
     private function _registrar_simple()
     {
-        $campos = ['titulo', 'descripcion', 'usuario_id'];
-        $validacion = $this->validar($campos);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         // Asignar fecha si no se ha establecido
         if ($this->fecha === null) {
             $this->fecha = date('Y-m-d');
-        } else {
-            // Validar la fecha si fue establecida
-            $valFecha = $this->validar(['fecha']);
-            if (!$valFecha['estatus']) {
-                return $valFecha;
-            }
         }
 
         try {
@@ -227,32 +183,13 @@ class Notificaciones extends Conexion
      */
     private function _notificar_todos()
     {
-        // Validar campos obligatorios
-        $campos = ['titulo', 'descripcion'];
-        $validacion = $this->validar($campos);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         // Manejo de fecha
         if ($this->fecha === null) {
             $this->fecha = date('Y-m-d');
-        } else {
-            $valFecha = $this->validar(['fecha']);
-            if (!$valFecha['estatus']) {
-                return $valFecha;
-            }
         }
 
         // Determinar si se incluirá evento (deben estar los tres campos)
         $incluirEvento = !empty($this->tabla_origen) && !empty($this->id_registro_origen) && !empty($this->tipo_evento);
-        if ($incluirEvento) {
-            // Validar campos del evento
-            $valEvento = $this->validar(['tabla_origen', 'id_registro_origen', 'tipo_evento']);
-            if (!$valEvento['estatus']) {
-                return $valEvento;
-            }
-        }
 
         $con = $this->get_conex('seguridad');
 
@@ -347,20 +284,10 @@ class Notificaciones extends Conexion
      */
     private function _notificar_pago()
     {
-        $campos = ['titulo', 'descripcion'];
-        $validacion = $this->validar($campos);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
 
         if ($this->fecha === null) {
             $this->fecha = date('Y-m-d');
-        } else {
-            $valFecha = $this->validar(['fecha']);
-            if (!$valFecha['estatus']) {
-                return $valFecha;
-            }
-        }
+        } 
 
         try {
             $sql = "INSERT INTO notificaciones (titulo, descripcion, fecha, leido, usuario_id)
@@ -385,19 +312,6 @@ class Notificaciones extends Conexion
      */
     private function _notificar_evento_admins()
     {
-        $campos = ['titulo', 'descripcion', 'tabla_origen', 'id_registro_origen'];
-        $validacion = $this->validar($campos);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
-        if ($this->tipo_evento !== null) {
-            $valTipo = $this->validar(['tipo_evento']);
-            if (!$valTipo['estatus']) {
-                return $valTipo;
-            }
-        }
-
         try {
             $sql = "CALL sp_notificar_administradores(:tit, :desc, :tabla, :id_reg, :tipo)";
             $stmt = $this->get_conex('seguridad')->prepare($sql);
@@ -423,21 +337,6 @@ class Notificaciones extends Conexion
      */
     private function _notificar_por_rol()
     {
-        // Validar campos requeridos
-        $campos = ['titulo', 'descripcion', 'tabla_origen', 'id_registro_origen', 'tipo_evento', 'rol_nombre'];
-        $validacion = $this->validar($campos);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
-        // Si se proporciona usuario_excluir, validar que exista
-        if (!empty($this->usuario_excluir)) {
-            $valExcluir = $this->validar(['usuario_excluir']);
-            if (!$valExcluir['estatus']) {
-                return $valExcluir;
-            }
-        }
-
         $con = $this->get_conex('seguridad');
         try {
             $con->beginTransaction();
@@ -510,11 +409,6 @@ class Notificaciones extends Conexion
      */
     private function _consultar_mis_notificaciones()
     {
-        $validacion = $this->validar(['usuario_id']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         $sql = "SELECT n.id_notificacion, n.titulo, n.descripcion, n.fecha, n.leido,
                        e.tipo_evento, e.tabla_origen, e.id_registro_origen
                 FROM notificaciones n
@@ -538,11 +432,6 @@ class Notificaciones extends Conexion
      */
     private function _marcar_leida()
     {
-        $validacion = $this->validar(['id_notificacion']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         try {
             $sql = "UPDATE notificaciones SET leido = 1 WHERE id_notificacion = :id";
             $stmt = $this->get_conex('seguridad')->prepare($sql);
@@ -559,11 +448,6 @@ class Notificaciones extends Conexion
      */
     private function _marcar_todas_leidas()
     {
-        $validacion = $this->validar(['usuario_id']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         try {
             $sql = "UPDATE notificaciones SET leido = 1 WHERE usuario_id = :uid AND leido = 0";
             $stmt = $this->get_conex('seguridad')->prepare($sql);

@@ -1,190 +1,202 @@
-<form id="form_gastos" name="form_cartelera"
-    enctype="multipart/form-data">
-    <div class="container mt-4">
-        <div class="row mb-3">
-            <div class="col-lg-6 col-12 mb-3">
-                <label for="clasificacion" class="form-label fw-semibold">Tipo <spam class="text-danger">*</spam></label>
-                <div class="input-group has-validation">
-                    <span class="border border-primary input-group-text"><i class="bi bi-tags"></i></span>
-                    <select class="form-select border border-dark" name="clasificacion" id="clasificacion" required>
-                        <option value="" disabled selected>Seleccione un tipo</option>
-                        <option value="fijo">Fijo</option>
-                        <option value="variable">Variable</option>
-                    </select>
-                    <span class="w-100 invalid-feedback"></span>
-                </div>
+<div class="modal fade" id="modal_gastos" tabindex="-1" aria-labelledby="titulo-modal" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="titulo_modal">Registrar Gasto</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
             </div>
-            <div class="col-lg-6 col-12 mb-3">
-                <label for="tipo_gasto" class="form-label fw-semibold">Tipo de Gasto <spam class="text-danger">*</spam></label>
-                <div class="input-group has-validation">
-                    <span class="border border-primary input-group-text"><i class="bi bi-building"></i></span>
-                    <select class="form-select border border-dark" name="tipo_gasto" id="tipo_gasto" required>
-                        <option value="" disabled selected>Seleccione un tipo</option>
-                        <?php foreach ($tipos_gasto['datos'] as $tipo): ?>
-                            <option value="<?php echo $tipo["id_tipo_gasto"] ?>"><?php echo $tipo["nombre_tipo_gasto"] ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                    <span class="w-100 invalid-feedback"></span>
-                </div>
-            </div>
-        </div>
+            <div class="modal-body">
+                <form id="form_gastos" name="form_cartelera" enctype="multipart/form-data">
+                    <div class="container mt-4">
+                        <div class="row mb-3">
+                            <div class="col-lg-6 col-12 mb-3">
+                                <label for="clasificacion" class="form-label fw-semibold">Tipo <spam class="text-danger">*</spam></label>
+                                <div class="input-group has-validation">
+                                    <span class="border border-primary input-group-text"><i class="bi bi-tags"></i></span>
+                                    <select class="form-select border border-dark" name="clasificacion" id="clasificacion" required>
+                                        <option value="" disabled selected>Seleccione un tipo</option>
+                                        <option value="fijo">Fijo</option>
+                                        <option value="variable">Variable</option>
+                                    </select>
+                                    <span class="w-100 invalid-feedback"></span>
+                                </div>
+                            </div>
+                            <div class="col-lg-6 col-12 mb-3">
+                                <label for="tipo_gasto_id" class="form-label fw-semibold">Tipo de Gasto <spam class="text-danger">*</spam></label>
+                                <div class="input-group has-validation">
+                                    <span class="border border-primary input-group-text"><i class="bi bi-building"></i></span>
+                                    <select class="form-select border border-dark" name="tipo_gasto_id" id="tipo_gasto_id" required>
+                                        <option value="" disabled selected>Seleccione un tipo</option>
+                                        <?php foreach ($tipos_gasto['datos'] as $tipo): ?>
+                                            <option value="<?php echo $tipo["id_tipo_gasto"] ?>"><?php echo $tipo["nombre_tipo_gasto"] ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <span class="w-100 invalid-feedback"></span>
+                                </div>
+                            </div>
+                        </div>
 
-        <!-- Fila 3: Descripción general del gasto -->
-        <div class="row mb-3">
-            <div class="col-12">
-                <label for="descripcion_gasto" class="form-label fw-semibold">Descripción del Gasto <spam class="text-danger">*</spam></label>
-                <div class="input-group has-validation">
-                    <span class="border border-primary input-group-text"><i class="bi bi-card-text"></i></span>
-                    <textarea name="descripcion_gasto" id="descripcion_gasto" class="form-control border border-dark" rows="3"
-                        placeholder="Describa el detalle del gasto realizado..." minlength="10" required></textarea>
-                    <span class="w-100 invalid-feedback"></span>
-                </div>
-            </div>
-        </div>
+                        <!-- Fila 3: Descripción general del gasto -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <label for="descripcion_gasto" class="form-label fw-semibold">Descripción del Gasto <spam class="text-danger">*</spam></label>
+                                <div class="input-group has-validation">
+                                    <span class="border border-primary input-group-text"><i class="bi bi-card-text"></i></span>
+                                    <textarea name="descripcion_gasto" id="descripcion_gasto" class="form-control border border-dark" rows="3"
+                                        placeholder="Describa el detalle del gasto realizado..." minlength="10" required></textarea>
+                                    <span class="w-100 invalid-feedback"></span>
+                                </div>
+                            </div>
+                        </div>
 
-        <!-- Fila 4: Proveedor + Solicitud -->
-        <div class="row mb-3">
-            <div class="col-lg-6 col-12 mb-3">
-                <label for="proveedor" class="form-label fw-semibold">Proveedor <spam class="text-danger">*</spam></label>
-                <div class="input-group has-validation">
-                    <span class="border border-primary input-group-text"><i class="bi bi-building"></i></span>
-                    <select class="form-select border border-dark" name="proveedor" id="proveedor" required>
-                        <option value="" disabled selected>Seleccione un proveedor</option>
-                        <?php foreach ($proveedores['datos'] as $proveedor): ?>
-                            <option value="<?php echo $proveedor["id_proveedor"] ?>">
-                                <?php echo $proveedor["nombre_proveedor"] ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                    <span class="w-100 invalid-feedback"></span>
-                </div>
-            </div>
-            <div class="col-lg-6 col-12 mb-3">
-                <label for="solicitud" class="form-label fw-semibold">Solicitud <spam class="text-danger">*</spam></label>
-                <div class="input-group has-validation">
-                    <span class="border border-primary input-group-text"><i class="bi bi-building"></i></span>
-                    <select class="form-select border border-dark" name="solicitud" id="solicitud" required>
-                        <option value="" disabled selected>Seleccione una solicitud</option>
-                        <?php foreach ($solicitudes_gasto['datos'] as $solicitud): ?>
-                            <option value="<?php echo $solicitud["id_solicitud"] ?>">
-                                <?php echo $solicitud["descripcion_necesidad"] ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                    <span class="w-100 invalid-feedback"></span>
-                </div>
-            </div>
-        </div>
+                        <!-- Fila 4: Proveedor + Solicitud -->
+                        <div class="row mb-3">
+                            <div class="col-lg-6 col-12 mb-3">
+                                <label for="proveedor_id" class="form-label fw-semibold">Proveedor <spam class="text-danger">*</spam></label>
+                                <div class="input-group has-validation">
+                                    <span class="border border-primary input-group-text"><i class="bi bi-building"></i></span>
+                                    <select class="form-select border border-dark" name="proveedor_id" id="proveedor_id" required>
+                                        <option value="" disabled selected>Seleccione un proveedor</option>
+                                        <?php foreach ($proveedores['datos'] as $proveedor): ?>
+                                            <option value="<?php echo $proveedor["id_proveedor"] ?>">
+                                                <?php echo $proveedor["nombre_proveedor"] ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <span class="w-100 invalid-feedback"></span>
+                                </div>
+                            </div>
+                            <div class="col-lg-6 col-12 mb-3">
+                                <label for="solicitud" class="form-label fw-semibold">Solicitud <spam class="text-danger">*</spam></label>
+                                <div class="input-group has-validation">
+                                    <span class="border border-primary input-group-text"><i class="bi bi-building"></i></span>
+                                    <select class="form-select border border-dark" name="solicitud" id="solicitud" required>
+                                        <option value="" disabled selected>Seleccione una solicitud</option>
+                                        <?php foreach ($solicitudes_gasto['datos'] as $solicitud): ?>
+                                            <option value="<?php echo $solicitud["id_solicitud"] ?>">
+                                                <?php echo $solicitud["descripcion_necesidad"] ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <span class="w-100 invalid-feedback"></span>
+                                </div>
+                            </div>
+                        </div>
 
-        <!-- Detalles del Gasto -->
-        <div id="detalles-container">
-            <div class="detalle-gasto card border-0 shadow-sm p-4 mb-4">
-                <h5 class="card-title text-primary fw-bold mb-3">
-                    <i class="bi bi-receipt-cutoff me-2"></i> Detalles del Gasto
-                </h5>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-lg-6 col-12 mb-3">
-                            <label for="fecha_detalle" class="form-label fw-semibold">Fecha del detalle del
-                                Gasto <spam class="text-danger">*</spam></label>
-                            <div class="input-group has-validation">
-                                <span class="border border-primary input-group-text"><i class="bi bi-calendar-event"></i></span>
-                                <input type="date" class="form-control fecha_detalle border border-dark" name="fecha_detalle[]" required>
-                                <span class="w-100 invalid-feedback"></span>
+                        <!-- Detalles del Gasto -->
+                        <div id="detalles-container">
+                            <div class="detalle-gasto card border-0 shadow-sm p-4 mb-4">
+                                <h5 class="card-title text-primary fw-bold mb-3">
+                                    <i class="bi bi-receipt-cutoff me-2"></i> Detalles del Gasto
+                                </h5>
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="col-lg-6 col-12 mb-3">
+                                            <label for="fecha_detalle" class="form-label fw-semibold">Fecha del detalle del
+                                                Gasto <spam class="text-danger">*</spam></label>
+                                            <div class="input-group has-validation">
+                                                <span class="border border-primary input-group-text"><i class="bi bi-calendar-event"></i></span>
+                                                <input type="date" class="form-control fecha_detalle border border-dark" name="fecha_detalle[]" required>
+                                                <span class="w-100 invalid-feedback"></span>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-6 col-12 mb-3">
+                                            <label for="metodo_pago" class="form-label fw-semibold">Método de Pago <spam class="text-danger">*</spam></label>
+                                            <div class="input-group has-validation">
+                                                <span class="border border-primary input-group-text"><i class="bi bi-credit-card"></i></span>
+                                                <select class="form-select border border-dark metodo_pago" name="metodo_pago[]" required>
+                                                    <option value="" disabled selected>Seleccione un método</option>
+                                                    <option value="Pago Movil">Pago Movil</option>
+                                                    <option value="Transferencia">Transferencia</option>
+                                                    <option value="Efectivo">Efectivo ($)</option>
+                                                </select>
+                                                <span class="w-100 invalid-feedback"></span>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-6 col-12 mb-3">
+                                            <label for="monto" class="form-label fw-semibold">Monto <spam class="text-danger">*</spam></label>
+                                            <div class="input-group has-validation">
+                                                <span class="border border-primary input-group-text"><i class="bi bi-currency-dollar"></i></span>
+                                                <input type="text" inputmode="decimal" pattern="^[0-9]+([.,][0-9]{1,2})?$"
+                                                    class="form-control border border-dark monto" name="monto[]" placeholder="Ej: 250.00" required>
+                                                <span class="w-100 invalid-feedback"></span>
+                                            </div>
+                                            <div class="invalid-feedback" id="mensaje_monto"></div>
+                                        </div>
+                                        <div class="col-lg-6 col-12 mb-3 grupo_bancario d-none">
+                                            <label for="referencia" class="form-label fw-semibold">Referencia/N° Comprobante <spam class="text-danger">*</spam></label>
+                                            <div class="input-group has-validation">
+                                                <span class="border border-primary input-group-text"><i class="bi bi-receipt"></i></span>
+                                                <input type="text" class="form-control border border-dark referencia" minlength="4" maxlength="20" name="referencia[]" placeholder="Ingrese la referencia">
+                                                <span class="w-100 invalid-feedback"></span>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-6 col-12 mb-3 grupo_bancario d-none">
+                                            <label for="banco" class="form-label fw-semibold">Banco <spam class="text-danger">*</spam></label>
+                                            <div class="input-group has-validation">
+                                                <span class="border border-primary input-group-text"><i class="bi bi-bank"></i></span>
+                                                <select class="form-select border border-dark banco" name="banco_id[]">
+                                                    <option value="" disabled selected>Seleccione un banco</option>
+                                                    <?php foreach ($bancos['datos'] as $banco): ?>
+                                                        <option value="<?php echo $banco["id_banco"] ?>">
+                                                            <?php echo $banco["nombre_banco"] ?>
+                                                        </option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                                <span class="w-100 invalid-feedback"></span>
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <label for="descripcion_detalle_gasto" class="form-label fw-semibold">Descripción del
+                                                Detalle <spam class="text-danger">*</spam></label>
+                                            <div class="input-group has-validation">
+                                                <span class="border border-primary input-group-text"><i class="bi bi-card-text"></i></span>
+                                                <textarea name="descripcion_detalle_gasto[]" class="form-control border border-dark descripcion_detalle_gasto" rows="3"
+                                                    placeholder="Describa el detalle específico del pago..." minlength="10" required></textarea>
+                                                <span class="w-100 invalid-feedback"></span>
+                                            </div>
+                                        </div>
+                                        <div class="col-12 grupo_imagen d-none">
+                                            <label for="imagen" class="form-label fw-semibold">Comprobante (Imagen) <spam class="text-danger">*</spam></label>
+                                            <div class="input-group has-validation">
+                                                <span class="border border-primary input-group-text"><i class="bi bi-file-earmark-image"></i></span>
+                                                <input type="file" class="form-control border border-dark imagen" name="imagen[]" accept="image/*">
+                                                <span class="w-100 invalid-feedback"></span>
+                                            </div>
+                                            <small class="text-muted fst-italic d-block mt-1 nombre_imagen_cargada"></small>
+                                        </div>
+                                    </div>
+                                </div>
+
                             </div>
                         </div>
-                        <div class="col-lg-6 col-12 mb-3">
-                            <label for="metodo_pago" class="form-label fw-semibold">Método de Pago <spam class="text-danger">*</spam></label>
-                            <div class="input-group has-validation">
-                                <span class="border border-primary input-group-text"><i class="bi bi-credit-card"></i></span>
-                                <select class="form-select border border-dark metodo_pago" name="metodo_pago[]" required>
-                                    <option value="" disabled selected>Seleccione un método</option>
-                                    <option value="Pago Movil">Pago Movil</option>
-                                    <option value="Transferencia">Transferencia</option>
-                                    <option value="Efectivo">Efectivo ($)</option>
-                                </select>
-                                <span class="w-100 invalid-feedback"></span>
+
+                        <!-- Botón para agregar detalle -->
+                        <div class="row mb-4">
+                            <div class="col-lg-3">
+                                <button type="button" class="btn btn-outline-success w-100" id="agregar_detalle">
+                                    <i class="bi bi-plus-circle"></i> Agregar Detalle de Gasto
+                                </button>
                             </div>
                         </div>
-                        <div class="col-lg-6 col-12 mb-3">
-                            <label for="monto" class="form-label fw-semibold">Monto <spam class="text-danger">*</spam></label>
-                            <div class="input-group has-validation">
-                                <span class="border border-primary input-group-text"><i class="bi bi-currency-dollar"></i></span>
-                                <input type="text" inputmode="decimal" pattern="^[0-9]+([.,][0-9]{1,2})?$"
-                                    class="form-control border border-dark monto" name="monto[]" placeholder="Ej: 250.00" required>
-                                <span class="w-100 invalid-feedback"></span>
-                            </div>
-                            <div class="invalid-feedback" id="mensaje_monto"></div>
-                        </div>
-                        <div class="col-lg-6 col-12 mb-3 grupo_bancario d-none">
-                            <label for="referencia" class="form-label fw-semibold">Referencia/N° Comprobante <spam class="text-danger">*</spam></label>
-                            <div class="input-group has-validation">
-                                <span class="border border-primary input-group-text"><i class="bi bi-receipt"></i></span>
-                                <input type="text" class="form-control border border-dark referencia" minlength="4" maxlength="20" name="referencia[]" placeholder="Ingrese la referencia">
-                                <span class="w-100 invalid-feedback"></span>
+
+                        <!-- Botón de envío -->
+                        <div class="row">
+                            <div class="col-md-12 text-center">
+                                <button class="btn btn-primary px-4" type="submit" id="boton_formulario">
+                                    <i class="bi bi-save me-1"></i> Guardar
+                                </button>
                             </div>
                         </div>
-                        <div class="col-lg-6 col-12 mb-3 grupo_bancario d-none">
-                            <label for="banco" class="form-label fw-semibold">Banco <spam class="text-danger">*</spam></label>
-                            <div class="input-group has-validation">
-                                <span class="border border-primary input-group-text"><i class="bi bi-bank"></i></span>
-                                <select class="form-select border border-dark banco" name="banco_id[]">
-                                    <option value="" disabled selected>Seleccione un banco</option>
-                                    <?php foreach ($bancos['datos'] as $banco): ?>
-                                        <option value="<?php echo $banco["id_banco"] ?>">
-                                            <?php echo $banco["nombre_banco"] ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <span class="w-100 invalid-feedback"></span>
-                            </div>
-                        </div>
-                        <div class="col-12">
-                            <label for="descripcion_detalle" class="form-label fw-semibold">Descripción del
-                                Detalle <spam class="text-danger">*</spam></label>
-                            <div class="input-group has-validation">
-                                <span class="border border-primary input-group-text"><i class="bi bi-card-text"></i></span>
-                                <textarea name="descripcion_detalle[]" class="form-control border border-dark descripcion_detalle" rows="3"
-                                    placeholder="Describa el detalle específico del pago..." minlength="10" required></textarea>
-                                <span class="w-100 invalid-feedback"></span>
-                            </div>
-                        </div>
-                        <div class="col-12 grupo_imagen d-none">
-                            <label for="imagen" class="form-label fw-semibold">Comprobante (Imagen) <spam class="text-danger">*</spam></label>
-                            <div class="input-group has-validation">
-                                <span class="border border-primary input-group-text"><i class="bi bi-file-earmark-image"></i></span>
-                                <input type="file" class="form-control border border-dark imagen" name="imagen[]" accept="image/*">
-                                <span class="w-100 invalid-feedback"></span>
-                            </div>
-                            <small class="text-muted fst-italic d-block mt-1 nombre_imagen_cargada"></small>
-                        </div>
+
                     </div>
-                </div>
-
+                </form>
             </div>
         </div>
-
-        <!-- Botón para agregar detalle -->
-        <div class="row mb-4">
-            <div class="col-lg-3">
-                <button type="button" class="btn btn-outline-success w-100" id="agregar_detalle">
-                    <i class="bi bi-plus-circle"></i> Agregar Detalle de Gasto
-                </button>
-            </div>
-        </div>
-
-        <!-- Botón de envío -->
-        <div class="row">
-            <div class="col-md-12 text-center">
-                <button class="btn btn-primary px-4" type="submit" id="boton_formulario">
-                    <i class="bi bi-save me-1"></i> Guardar
-                </button>
-            </div>
-        </div>
-
     </div>
-</form>
+</div>
 
 <template id="plantilla-detalle-gasto">
     <div class="detalle-gasto card border-0 shadow-sm p-4 mb-4">
@@ -251,10 +263,10 @@
                 </div>
 
                 <div class="col-12">
-                    <label class="form-label fw-semibold">Descripción del Detalle <spam class="text-danger">*</spam></label>
+                    <label class="form-label fw-semibold" for="descripcion_detalle_gasto">Descripción del Detalle <spam class="text-danger">*</spam></label>
                     <div class="input-group has-validation">
                         <span class="border border-primary input-group-text"><i class="bi bi-card-text"></i></span>
-                        <textarea name="descripcion_detalle[]" class="form-control border border-dark descripcion_detalle" rows="3"
+                        <textarea name="descripcion_detalle_gasto[]" class="form-control border border-dark descripcion_detalle_gasto" rows="3"
                             placeholder="Describa el detalle específico del pago..." required></textarea>
                         <span class="w-100 invalid-feedback"></span>
                     </div>

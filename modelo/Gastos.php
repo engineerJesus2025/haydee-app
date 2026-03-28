@@ -26,7 +26,7 @@ class Gastos extends Conexion
     private $monto;
     private $monto_dolar;
     private $metodo_pago;       // 'Efectivo', 'Pago Movil', 'Transferencia', 'Divisa'
-    private $descripcion_detalle;
+    private $descripcion_detalle_gasto;
 
     private $detalles = [];  // Array de detalles (cada detalle es un array asociativo)
 
@@ -38,71 +38,93 @@ class Gastos extends Conexion
     private $filtros_reporte = [];
 
     // ====================================================================
-    // REGLAS DE VALIDACIÓN CENTRALIZADAS
+    // VALIDACIONES CENTRALIZADAS
     // ====================================================================
-    private $reglas = [
-        'id_gasto' => [
-            'regex' => '/^\d+$/',
-            'exists' => ['tabla' => 'gastos', 'campo' => 'id_gasto']
-        ],
-        'id_detalle_gasto' => [
-            'regex' => '/^\d+$/',
-            'exists' => ['tabla' => 'detalles_gastos', 'campo' => 'id_detalle_gasto']
-        ],
-        'clasificacion' => [
-            'regex' => '/^(Fijo|Variable|Reposicion)$/i'
-        ],
-        'descripcion_gasto' => [
-            'regex' => '/^[a-zA-Z0-9áéíóúñÁÉÍÓÚÑ\s.,:\/-]{3,255}$/'
-        ],
-        'solicitud_id' => [
-            'regex' => '/^\d+$/',
-            'exists' => ['tabla' => 'solicitudes_gasto', 'campo' => 'id_solicitud'],
-            'opcional' => true
-        ],
-        'tipo_gasto_id' => [
-            'regex' => '/^\d+$/',
-            'exists' => ['tabla' => 'tipo_gasto', 'campo' => 'id_tipo_gasto']
-        ],
-        'proveedor_id' => [
-            'regex' => '/^\d+$/',
-            'exists' => ['tabla' => 'proveedores', 'campo' => 'id_proveedor'],
-            'opcional' => true
-        ],
-        'fecha' => [
-            'regex' => '/^\d{4}-\d{2}-\d{2}$/'
-        ],
-        'monto' => [
-            'regex' => '/^\d+(\.\d{1,2})?$/',
-            'min' => 0.01
-        ],
-        'monto_dolar' => [
-            'regex' => '/^\d+(\.\d{1,2})?$/',
-            'opcional' => true
-        ],
-        'metodo_pago' => [
-            'regex' => '/^(Efectivo|Pago Movil|Transferencia|Divisa)$/'
-        ],
-        'descripcion_detalle' => [
-            'regex' => '/^[a-zA-Z0-9áéíóúñÁÉÍÓÚÑ\s.,:\/-]{0,255}$/',
-            'opcional' => true
-        ],
-        'referencia' => [
-            'regex' => '/^[a-zA-Z0-9-]{4,20}$/',
-            'opcional' => true,
-            'requerido_si' => ['metodo_pago' => ['Transferencia', 'Pago Movil']]
-        ],
-        'imagen' => [
-            'regex' => '/^[a-zA-Z0-9_.-]+\.(jpg|jpeg|png|gif)$/i',
-            'opcional' => true
-        ],
-        'banco_id' => [
-            'regex' => '/^\d+$/',
-            'exists' => ['tabla' => 'bancos', 'campo' => 'id_banco'],
-            'opcional' => true,
-            'requerido_si' => ['metodo_pago' => ['Transferencia', 'Pago Movil']]
-        ]
-    ];
+    
+    /**
+     * Reglas para la tabla principal (Cabecera)
+     */
+    public static function obtenerReglas($operacion) {
+        $reglasGenerales = [
+            'id_gasto' => [
+                'regex' => '/^\d+$/',
+                'exists' => ['tabla' => 'gastos', 'campo' => 'id_gasto']
+            ],
+            'clasificacion' => [
+                'regex' => '/^(Fijo|Variable|Reposicion)$/i'
+            ],
+            'descripcion_gasto' => [
+                'regex' => '/^[a-zA-Z0-9áéíóúñÁÉÍÓÚÑ\s.,:\/-]{3,255}$/'
+            ],
+            'solicitud_id' => [
+                'regex' => '/^\d+$/',
+                'exists' => ['tabla' => 'solicitudes_gasto', 'campo' => 'id_solicitud'],
+                'opcional' => true
+            ],
+            'tipo_gasto_id' => [
+                'regex' => '/^\d+$/',
+                'exists' => ['tabla' => 'tipo_gasto', 'campo' => 'id_tipo_gasto']
+            ],
+            'proveedor_id' => [
+                'regex' => '/^\d+$/',
+                'exists' => ['tabla' => 'proveedores', 'campo' => 'id_proveedor'],
+            ]
+        ];
+
+        $camposPorOperacion = [
+            'registrar_gasto'           => ['clasificacion', 'descripcion_gasto', 'solicitud_id', 'tipo_gasto_id', 'proveedor_id'],
+            'modificar_gasto'           => ['id_gasto', 'clasificacion', 'descripcion_gasto', 'solicitud_id', 'tipo_gasto_id', 'proveedor_id'],
+            'eliminar_gasto'            => ['id_gasto'],
+            'consulta_especifica_gasto' => ['id_gasto']
+        ];
+
+        if (isset($camposPorOperacion[$operacion])) {
+            return array_intersect_key($reglasGenerales, array_flip($camposPorOperacion[$operacion]));
+        }
+        return [];
+    }
+
+    /**
+     * Reglas para cada fila de la tabla de detalles (Detalles Gastos)
+     */
+    public static function obtenerReglasDetalles() {
+        return [
+            'fecha_detalle' => [
+                'regex' => '/^\d{4}-\d{2}-\d{2}$/'
+            ],
+            'monto' => [
+                'regex' => '/^\d+(\.\d{1,2})?$/',
+                'min' => 0.01
+            ],
+            'monto_dolar' => [
+                'regex' => '/^\d+(\.\d{1,2})?$/',
+                'opcional' => true
+            ],
+            'metodo_pago' => [
+                'regex' => '/^(Efectivo|Pago Movil|Transferencia|Divisa)$/'
+            ],
+            'descripcion_detalle_gasto' => [
+                'regex' => '/^[a-zA-Z0-9áéíóúñÁÉÍÓÚÑ\s.,:\/-]{0,255}$/',
+                'opcional' => true
+            ],
+            'referencia' => [
+                'regex' => '/^[a-zA-Z0-9-]{4,20}$/',
+                'opcional' => true,
+                'requerido_si' => ['metodo_pago' => ['Transferencia', 'Pago Movil']]
+            ],
+            'imagen' => [
+                'regex' => '/^[a-zA-Z0-9_.-]+\.(jpg|jpeg|png|gif)$/i',
+                'opcional' => true,
+                'requerido_si' => ['metodo_pago' => ['Transferencia', 'Pago Movil']]
+            ],
+            'banco_id' => [
+                'regex' => '/^\d+$/',
+                'exists' => ['tabla' => 'bancos', 'campo' => 'id_banco'],
+                'opcional' => true,
+                'requerido_si' => ['metodo_pago' => ['Transferencia', 'Pago Movil']]
+            ]
+        ];
+    }
 
     // ====================================================================
     // GETTERS Y SETTERS
@@ -130,8 +152,8 @@ class Gastos extends Conexion
     public function get_monto_dolar() { return $this->monto_dolar; }
     public function set_metodo_pago($mp) { $this->metodo_pago = $mp; }
     public function get_metodo_pago() { return $this->metodo_pago; }
-    public function set_descripcion_detalle($dd) { $this->descripcion_detalle = $dd; }
-    public function get_descripcion_detalle() { return $this->descripcion_detalle; }
+    public function set_descripcion_detalle_gasto($dd) { $this->descripcion_detalle_gasto = $dd; }
+    public function get_descripcion_detalle_gasto() { return $this->descripcion_detalle_gasto; }
 
     public function set_referencia($r) { $this->referencia = $r; }
     public function get_referencia() { return $this->referencia; }
@@ -168,67 +190,40 @@ class Gastos extends Conexion
     }
 
     // ====================================================================
-    // VALIDACIÓN CENTRALIZADA (CONDICIONAL Y CON EXISTS)
+    // REGLAS DE NEGOCIO Y VALIDACIONES COMPLEJAS
     // ====================================================================
-    private function validar($campos)
-    {
-        foreach ($campos as $campo) {
-            if (!isset($this->reglas[$campo])) {
-                continue;
-            }
-            $regla = $this->reglas[$campo];
 
-            $getter = 'get_' . $campo;
-            if (!method_exists($this, $getter)) {
-                return ['estatus' => false, 'mensaje' => "Error interno: getter no encontrado para $campo."];
-            }
-            $valor = $this->$getter();
+    /**
+     * Verifica que las referencias bancarias no estén duplicadas 
+     * en el mismo formulario ni en otros gastos.
+     */
+    private function _validar_referencias_unicas() {
+        $pdo = $this->get_conex('negocio');
+        $refsUsadas = [];
+        
+        foreach ($this->detalles as $idx => $det) {
+            if (!empty($det['referencia'])) {
+                $ref = trim($det['referencia']);
+                
+                // 1. Evitar duplicados en los renglones del mismo formulario
+                if (in_array($ref, $refsUsadas)) {
+                    return ['estatus' => false, 'mensaje' => "La referencia '$ref' está repetida en el renglón " . ($idx + 1) . "."];
+                }
+                $refsUsadas[] = $ref;
 
-            // Determinar si el campo es requerido
-            $requerido = !(isset($regla['opcional']) && $regla['opcional'] === true);
-            
-            // Validación condicional (requerido_si)
-            if (isset($regla['requerido_si'])) {
-                foreach ($regla['requerido_si'] as $campoCond => $valoresCond) {
-                    $getterCond = 'get_' . $campoCond;
-                    $valorCond = $this->$getterCond();
-                    if (in_array($valorCond, $valoresCond)) {
-                        $requerido = true;
-                        break;
+                // 2. Verificar contra la base de datos (egresos_bancarios y detalles_gastos)
+                $sql = "SELECT dg.gasto_id FROM egresos_bancarios eb 
+                        JOIN detalles_gastos dg ON eb.detalle_gasto_id = dg.id_detalle_gasto 
+                        WHERE eb.referencia = :ref LIMIT 1";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute([':ref' => $ref]);
+                $gasto_id_bd = $stmt->fetchColumn();
+
+                if ($gasto_id_bd) {
+                    // Comprobamos si pertenece a otro gasto distinto al actual
+                    if (empty($this->id_gasto) || $gasto_id_bd != $this->id_gasto) {
+                        return ['estatus' => false, 'mensaje' => "La referencia bancaria '$ref' (Renglón " . ($idx + 1) . ") ya se encuentra registrada en otro gasto."];
                     }
-                }
-            }
-
-            if ($requerido) {
-                if ($valor === null) {
-                    return ['estatus' => false, 'mensaje' => "El campo '$campo' es requerido y no se ha establecido."];
-                }
-                if (is_string($valor) && trim($valor) === '') {
-                    return ['estatus' => false, 'mensaje' => "El campo '$campo' no puede estar vacío."];
-                }
-            } else {
-                // Si es opcional y está vacío, saltamos validaciones adicionales
-                if ($valor === null || (is_string($valor) && trim($valor) === '')) {
-                    continue;
-                }
-            }
-
-            // Validar expresión regular
-            if (isset($regla['regex']) && !preg_match($regla['regex'], (string)$valor)) {
-                return ['estatus' => false, 'mensaje' => "El campo '$campo' no tiene un formato válido."];
-            }
-
-            // Validar valor mínimo
-            if (isset($regla['min']) && $valor < $regla['min']) {
-                return ['estatus' => false, 'mensaje' => "El campo '$campo' debe ser mayor o igual a " . $regla['min']];
-            }
-
-            // Validar existencia en otra tabla (foránea)
-            if (isset($regla['exists'])) {
-                $tabla = $regla['exists']['tabla'];
-                $campoFor = $regla['exists']['campo'] ?? $campo;
-                if (!$this->existeEnTabla($tabla, $campoFor, $valor)) {
-                    return ['estatus' => false, 'mensaje' => "El valor del campo '$campo' no existe en la tabla $tabla."];
                 }
             }
         }
@@ -236,121 +231,43 @@ class Gastos extends Conexion
     }
 
     /**
-     * Verifica existencia de un valor en una tabla
+     * Utilidad para el AJAX: Verifica si la referencia está libre.
      */
-    private function existeEnTabla($tabla, $campo, $valor)
-    {
-        $sql = "SELECT COUNT(*) as total FROM $tabla WHERE $campo = :valor";
+    public function verificarReferenciaDisponible($referencia, $id_gasto_actual = null) {
+        $sql = "SELECT dg.gasto_id FROM egresos_bancarios eb 
+                JOIN detalles_gastos dg ON eb.detalle_gasto_id = dg.id_detalle_gasto 
+                WHERE eb.referencia = :ref LIMIT 1";
         try {
             $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->bindParam(':valor', $valor);
-            $stmt->execute();
-            $fila = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $fila['total'] > 0;
-        } catch (PDOException $e) {
-            error_log("Error en existeEnTabla: " . $e->getMessage());
+            $stmt->execute([':ref' => $referencia]);
+            $gasto_id_bd = $stmt->fetchColumn();
+
+            if ($gasto_id_bd) {
+                if (empty($id_gasto_actual) || $gasto_id_bd != $id_gasto_actual) {
+                    return true; // Ocupada
+                }
+            }
+            return false; // Disponible
+        } catch (\PDOException $e) {
             return false;
         }
-    }
-
-    private function validarDetalle($datos)
-    {
-        // Normalizar nombres de campos (aceptar alias)
-        $alias = [
-            'fecha_detalle' => 'fecha',
-            'descripcion_detalle_gasto' => 'descripcion_detalle'
-        ];
-        foreach ($alias as $origen => $destino) {
-            if (isset($datos[$origen]) && !isset($datos[$destino])) {
-                $datos[$destino] = $datos[$origen];
-            }
-        }
-        // var_dump($datos);
-        $camposDetalle = ['fecha', 'monto', 'monto_dolar', 'metodo_pago', 'descripcion_detalle', 'referencia', 'banco_id', 'imagen'];
-        foreach ($camposDetalle as $campo) {
-            if (!isset($this->reglas[$campo])) continue;
-            $regla = $this->reglas[$campo];
-            $valor = $datos[$campo] ?? null;
-
-            // Determinar si es requerido (considerando condicionales)
-            $requerido = !(isset($regla['opcional']) && $regla['opcional'] === true);
-            if (isset($regla['requerido_si'])) {
-                foreach ($regla['requerido_si'] as $campoCond => $valoresCond) {
-                    if (in_array($datos[$campoCond] ?? null, $valoresCond)) {
-                        $requerido = true;
-                        break;
-                    }
-                }
-            }
-
-            if ($requerido) {
-                if ($valor === null) {
-                    return ['estatus' => false, 'mensaje' => "El campo '$campo' es requerido en el detalle."];
-                }
-                if (is_string($valor) && trim($valor) === '') {
-                    return ['estatus' => false, 'mensaje' => "El campo '$campo' no puede estar vacío."];
-                }
-            } else {
-                if ($valor === null || (is_string($valor) && trim($valor) === '')) {
-                    continue;
-                }
-            }
-
-            // Validar regex
-            if (isset($regla['regex']) && !preg_match($regla['regex'], (string)$valor)) {
-                return ['estatus' => false, 'mensaje' => "El campo '$campo' del detalle tiene formato inválido."];
-            }
-
-            // Validar mínimo
-            if (isset($regla['min']) && $valor < $regla['min']) {
-                return ['estatus' => false, 'mensaje' => "El campo '$campo' debe ser mayor o igual a " . $regla['min']];
-            }
-
-            // Validar existencia en otra tabla (si aplica)
-            if (isset($regla['exists'])) {
-                $tabla = $regla['exists']['tabla'];
-                $campoFor = $regla['exists']['campo'] ?? $campo;
-                if (!$this->existeEnTabla($tabla, $campoFor, $valor)) {
-                    return ['estatus' => false, 'mensaje' => "El valor de '$campo' no existe en $tabla."];
-                }
-            }
-        }
-        return ['estatus' => true];
-    }
-
-    public function validarExistenciaExterna($tabla, $campo, $valor)
-    {
-        // Lista de tablas permitidas (por seguridad)
-        $tablasPermitidas = ['tipo_gasto', 'proveedores', 'solicitudes_gasto', 'bancos'];
-        if (!in_array($tabla, $tablasPermitidas)) {
-            return false;
-        }
-        return $this->existeEnTabla($tabla, $campo, $valor);
     }
 
     // ====================================================================
     // LÓGICA DE NEGOCIO
     // ====================================================================
 
-    private function _registrar()
+    // SE USA EN EL MODULO
+    private function _registrar_gasto()
     {
-        // Validar cabecera
-        $camposCabecera = ['clasificacion', 'descripcion_gasto', 'tipo_gasto_id'];
-        $validacion = $this->validar($camposCabecera);
-        if (!$validacion['estatus']) return $validacion;
-
         // Validar que haya al menos un detalle
         if (empty($this->detalles)) {
             return ['estatus' => false, 'mensaje' => 'Debe proporcionar al menos un detalle de gasto.'];
         }
 
-        // Validar cada detalle
-        foreach ($this->detalles as $idx => $det) {
-            $valDet = $this->validarDetalle($det);
-            if (!$valDet['estatus']) {
-                return ['estatus' => false, 'mensaje' => "Error en detalle #" . ($idx+1) . ": " . $valDet['mensaje']];
-            }
-        }
+        // Validar que las referencias sean únicas
+        $valRef = $this->_validar_referencias_unicas();
+        if (!$valRef['estatus']) return $valRef;
 
         $pdo = $this->get_conex('negocio');
         try {
@@ -379,7 +296,7 @@ class Gastos extends Conexion
                     ':monto' => $det['monto'],
                     ':md' => $det['monto_dolar'] ?? 0,
                     ':metodo' => $det['metodo_pago'],
-                    ':desc_det' => $det['descripcion_detalle'] ?? $this->descripcion_gasto,
+                    ':desc_det' => $det['descripcion_detalle_gasto'] ?? $this->descripcion_gasto,
                     ':gasto_id' => $id_gasto
                 ]);
                 $id_detalle = $pdo->lastInsertId();
@@ -409,32 +326,21 @@ class Gastos extends Conexion
         } catch (PDOException $e) {
             $pdo->rollBack();
             error_log("Error en _registrar: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error en la base de datos: ' . $e->getMessage()];
+            return ['estatus' => false, 'mensaje' => 'Error del Servidor'];
         }
     }
 
-    private function _modificar()
+    // SE USA EN EL MODULO
+    private function _modificar_gasto()
     {
-        // Validar ID del gasto
-        $validacion = $this->validar(['id_gasto']);
-        if (!$validacion['estatus']) return $validacion;
-
-        // Validar cabecera (los campos editables)
-        $camposCabecera = ['clasificacion', 'descripcion_gasto', 'tipo_gasto_id', 'proveedor_id'];
-        $validacion = $this->validar($camposCabecera);
-        if (!$validacion['estatus']) return $validacion;
-
-        // Validar detalles (si se proporcionan)
-        if (!empty($this->detalles)) {
-            foreach ($this->detalles as $idx => $det) {
-                $valDet = $this->validarDetalle($det);
-                if (!$valDet['estatus']) {
-                    return ['estatus' => false, 'mensaje' => "Error en detalle #" . ($idx+1) . ": " . $valDet['mensaje']];
-                }
-            }
-        } else {
-            return ['estatus' => false, 'mensaje' => 'Debe proporcionar al menos un detalle para actualizar.'];
+        // Validar que haya al menos un detalle
+        if (empty($this->detalles)) {
+            return ['estatus' => false, 'mensaje' => 'Debe proporcionar al menos un detalle de gasto.'];
         }
+
+        // Validar que las referencias sean únicas
+        $valRef = $this->_validar_referencias_unicas();
+        if (!$valRef['estatus']) return $valRef;
 
         $pdo = $this->get_conex('negocio');
         try {
@@ -478,7 +384,7 @@ class Gastos extends Conexion
                     ':monto' => $det['monto'],
                     ':md' => $det['monto_dolar'] ?? 0,
                     ':metodo' => $det['metodo_pago'],
-                    ':desc_det' => $det['descripcion_detalle'] ?? $this->descripcion_gasto,
+                    ':desc_det' => $det['descripcion_detalle_gasto'] ?? $this->descripcion_gasto,
                     ':gasto_id' => $this->id_gasto
                 ]);
                 $id_detalle = $pdo->lastInsertId();
@@ -520,20 +426,16 @@ class Gastos extends Conexion
         } catch (PDOException $e) {
             $pdo->rollBack();
             error_log("Error en _modificar: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error en la base de datos: ' . $e->getMessage()];
+            return ['estatus' => false, 'mensaje' => 'Ocurrió un error en el servidor.'];
         }
     }
 
     /**
      * ELIMINAR GASTO (soft delete)
+     // SE USA EN EL MODULO
      */
     private function _eliminar_gasto()
     {
-        $validacion = $this->validar(['id_gasto']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         $sql = "UPDATE gastos SET activo = 0 WHERE id_gasto = :id";
         try {
             $stmt = $this->get_conex('negocio')->prepare($sql);
@@ -550,7 +452,8 @@ class Gastos extends Conexion
     // CONSULTAS
     // ====================================================================
 
-    private function _consultar_gastos()
+    // SE USA EN EL MODULO
+    private function _consultar()
     {
         $sql = "SELECT 
                     g.id_gasto, 
@@ -587,14 +490,10 @@ class Gastos extends Conexion
 
     /**
      * Consulta un gasto específico con todos sus detalles y datos bancarios asociados
+     // SE USA EN EL MODULO
      */
-    private function _consultar_gasto_unico()
+    private function _consultar_gasto()
     {
-        $validacion = $this->validar(['id_gasto']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         try {
             // 1. Obtener datos de la cabecera del gasto
             $sqlCabecera = "SELECT 
@@ -658,14 +557,10 @@ class Gastos extends Conexion
 
     /**
      * Consulta plana solo de la cabecera del gasto para la bitácora de auditoría.
+     // SE USA EN EL MODULO
      */
     private function _consultar_cabecera_gasto()
     {
-        $validacion = $this->validar(['id_gasto']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         $sql = "SELECT clasificacion, descripcion_gasto, solicitud_id, tipo_gasto_id, proveedor_id 
                 FROM gastos WHERE id_gasto = :id_gasto AND activo = 1";
         
@@ -682,14 +577,10 @@ class Gastos extends Conexion
 
     /**
      * Consulta todos los detalles de un gasto específico, incluyendo datos bancarios si existen
+     // SE USA EN EL MODULO
      */
     private function _consultar_detalles_por_gasto()
     {
-        $validacion = $this->validar(['id_gasto']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         $sql = "SELECT 
                     dg.id_detalle_gasto,
                     dg.fecha,
@@ -720,14 +611,10 @@ class Gastos extends Conexion
 
     /**
      * Consulta un detalle específico de gasto por su ID, incluyendo datos bancarios si existen
+     // SE USA EN EL MODULO
      */
     private function _consultar_detalle_unico()
     {
-        $validacion = $this->validar(['id_detalle_gasto']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         $sql = "SELECT 
                     dg.id_detalle_gasto,
                     dg.fecha,
@@ -766,198 +653,200 @@ class Gastos extends Conexion
     // METODOS PARA REPORTES
     // ====================================================================    
 
+    // SE USA EN REPORTES
     private function _reporte_ingresos_egresos_completo()
-{
-    $f = $this->filtros_reporte;
-    $balance = $f['balance'] ?? 'todos';
-    $metodo_pago = strtolower($f['metodo_pago'] ?? 'todos');
-    $tipo_gasto = strtolower($f['tipo_gasto'] ?? 'todos');
-    $fecha_inicio = $f['fecha_inicio'] ?? '';
-    $fecha_fin = $f['fecha_fin'] ?? '';
+    {
+        $f = $this->filtros_reporte;
+        $balance = $f['balance'] ?? 'todos';
+        $metodo_pago = strtolower($f['metodo_pago'] ?? 'todos');
+        $tipo_gasto = strtolower($f['tipo_gasto'] ?? 'todos');
+        $fecha_inicio = $f['fecha_inicio'] ?? '';
+        $fecha_fin = $f['fecha_fin'] ?? '';
 
-    // ============================================================
-    // 1. Construir condiciones y parámetros BASE
-    // ============================================================
-    $condicionesEgresos = ["g.activo = 1"];
-    $condicionesIngresos = ["p.activo = 1"];
-    $paramsEgresos = [];
-    $paramsIngresos = [];
+        // ============================================================
+        // 1. Construir condiciones y parámetros BASE
+        // ============================================================
+        $condicionesEgresos = ["g.activo = 1"];
+        $condicionesIngresos = ["p.activo = 1"];
+        $paramsEgresos = [];
+        $paramsIngresos = [];
 
-    // Filtro por fecha
-    if (!empty($fecha_inicio) && !empty($fecha_fin)) {
-        $condicionesEgresos[] = "dg.fecha BETWEEN :fecha_ini_egreso AND :fecha_fin_egreso";
-        $condicionesIngresos[] = "dp.fecha BETWEEN :fecha_ini_ingreso AND :fecha_fin_ingreso";
-        $paramsEgresos[':fecha_ini_egreso'] = $fecha_inicio;
-        $paramsEgresos[':fecha_fin_egreso'] = $fecha_fin;
-        $paramsIngresos[':fecha_ini_ingreso'] = $fecha_inicio;
-        $paramsIngresos[':fecha_fin_ingreso'] = $fecha_fin;
-    }
+        // Filtro por fecha
+        if (!empty($fecha_inicio) && !empty($fecha_fin)) {
+            $condicionesEgresos[] = "dg.fecha BETWEEN :fecha_ini_egreso AND :fecha_fin_egreso";
+            $condicionesIngresos[] = "dp.fecha BETWEEN :fecha_ini_ingreso AND :fecha_fin_ingreso";
+            $paramsEgresos[':fecha_ini_egreso'] = $fecha_inicio;
+            $paramsEgresos[':fecha_fin_egreso'] = $fecha_fin;
+            $paramsIngresos[':fecha_ini_ingreso'] = $fecha_inicio;
+            $paramsIngresos[':fecha_fin_ingreso'] = $fecha_fin;
+        }
 
-    // Filtro por método de pago (case-insensitive)
-    if ($metodo_pago !== 'todos') {
-        $condicionesEgresos[] = "LOWER(dg.metodo_pago) = LOWER(:metodo_pago_egreso)";
-        $condicionesIngresos[] = "LOWER(dp.tipo_pago) = LOWER(:metodo_pago_ingreso)";
-        $paramsEgresos[':metodo_pago_egreso'] = $metodo_pago;
-        $paramsIngresos[':metodo_pago_ingreso'] = $metodo_pago;
-    }
+        // Filtro por método de pago (case-insensitive)
+        if ($metodo_pago !== 'todos') {
+            $condicionesEgresos[] = "LOWER(dg.metodo_pago) = LOWER(:metodo_pago_egreso)";
+            $condicionesIngresos[] = "LOWER(dp.tipo_pago) = LOWER(:metodo_pago_ingreso)";
+            $paramsEgresos[':metodo_pago_egreso'] = $metodo_pago;
+            $paramsIngresos[':metodo_pago_ingreso'] = $metodo_pago;
+        }
 
-    // Filtro por tipo de gasto (basado en g.clasificacion, solo para egresos)
-    if ($tipo_gasto !== 'todos' && $balance !== 'Ingresos') {
-        // Los valores esperados son 'fijo' o 'variable'
-        $condicionesEgresos[] = "LOWER(g.clasificacion) = LOWER(:tipo_gasto)";
-        $paramsEgresos[':tipo_gasto'] = $tipo_gasto;
-    }
+        // Filtro por tipo de gasto (basado en g.clasificacion, solo para egresos)
+        if ($tipo_gasto !== 'todos' && $balance !== 'Ingresos') {
+            // Los valores esperados son 'fijo' o 'variable'
+            $condicionesEgresos[] = "LOWER(g.clasificacion) = LOWER(:tipo_gasto)";
+            $paramsEgresos[':tipo_gasto'] = $tipo_gasto;
+        }
 
-    // Convertir arrays de condiciones a strings
-    $whereEgresos = !empty($condicionesEgresos) ? " WHERE " . implode(" AND ", $condicionesEgresos) : "";
-    $whereIngresos = !empty($condicionesIngresos) ? " WHERE " . implode(" AND ", $condicionesIngresos) : "";
+        // Convertir arrays de condiciones a strings
+        $whereEgresos = !empty($condicionesEgresos) ? " WHERE " . implode(" AND ", $condicionesEgresos) : "";
+        $whereIngresos = !empty($condicionesIngresos) ? " WHERE " . implode(" AND ", $condicionesIngresos) : "";
 
-    // ============================================================
-    // 2. Consulta para el GRÁFICO (detalle)
-    // ============================================================
-    $sqlEgresosDetalle = "SELECT 
-                            'Egreso' as balance,
-                            dg.fecha,
-                            dg.monto,
-                            dg.metodo_pago,
-                            g.descripcion_gasto as concepto,
-                            tg.nombre_tipo_gasto as tipo
-                          FROM detalles_gastos dg
-                          INNER JOIN gastos g ON dg.gasto_id = g.id_gasto
-                          LEFT JOIN tipo_gasto tg ON g.tipo_gasto_id = tg.id_tipo_gasto
-                          $whereEgresos";
+        // ============================================================
+        // 2. Consulta para el GRÁFICO (detalle)
+        // ============================================================
+        $sqlEgresosDetalle = "SELECT 
+                                'Egreso' as balance,
+                                dg.fecha,
+                                dg.monto,
+                                dg.metodo_pago,
+                                g.descripcion_gasto as concepto,
+                                tg.nombre_tipo_gasto as tipo
+                              FROM detalles_gastos dg
+                              INNER JOIN gastos g ON dg.gasto_id = g.id_gasto
+                              LEFT JOIN tipo_gasto tg ON g.tipo_gasto_id = tg.id_tipo_gasto
+                              $whereEgresos";
 
-    $sqlIngresosDetalle = "SELECT 
-                            'Ingreso' as balance,
-                            dp.fecha,
-                            dp.monto,
-                            dp.tipo_pago as metodo_pago,
-                            CONCAT('Pago de mensualidad - Apto ', a.nro_apartamento) as concepto,
-                            NULL as tipo
-                           FROM detalles_pagos dp
-                           INNER JOIN pagos_mensualidad pm ON dp.id_detalle_pago = pm.detalle_pago_id
-                           INNER JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
-                           INNER JOIN apartamentos a ON m.apartamento_id = a.id_apartamento
-                           INNER JOIN pagos p ON dp.pago_id = p.id_pago
-                           $whereIngresos";
+        $sqlIngresosDetalle = "SELECT 
+                                'Ingreso' as balance,
+                                dp.fecha,
+                                dp.monto,
+                                dp.tipo_pago as metodo_pago,
+                                CONCAT('Pago de mensualidad - Apto ', a.nro_apartamento) as concepto,
+                                NULL as tipo
+                               FROM detalles_pagos dp
+                               INNER JOIN pagos_mensualidad pm ON dp.id_detalle_pago = pm.detalle_pago_id
+                               INNER JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
+                               INNER JOIN apartamentos a ON m.apartamento_id = a.id_apartamento
+                               INNER JOIN pagos p ON dp.pago_id = p.id_pago
+                               $whereIngresos";
 
-    // Elegir consulta según balance
-    if ($balance === 'Ingresos') {
-        $sqlGrafico = $sqlIngresosDetalle;
-        $paramsGrafico = $paramsIngresos;
-    } elseif ($balance === 'Egresos') {
-        $sqlGrafico = $sqlEgresosDetalle;
-        $paramsGrafico = $paramsEgresos;
-    } else {
-        $sqlGrafico = "($sqlEgresosDetalle) UNION ALL ($sqlIngresosDetalle) ORDER BY fecha DESC";
-        $paramsGrafico = array_merge($paramsEgresos, $paramsIngresos);
-    }
+        // Elegir consulta según balance
+        if ($balance === 'Ingresos') {
+            $sqlGrafico = $sqlIngresosDetalle;
+            $paramsGrafico = $paramsIngresos;
+        } elseif ($balance === 'Egresos') {
+            $sqlGrafico = $sqlEgresosDetalle;
+            $paramsGrafico = $paramsEgresos;
+        } else {
+            $sqlGrafico = "($sqlEgresosDetalle) UNION ALL ($sqlIngresosDetalle) ORDER BY fecha DESC";
+            $paramsGrafico = array_merge($paramsEgresos, $paramsIngresos);
+        }
 
-    try {
-        $con = $this->get_conex('negocio');
-        $stmt = $con->prepare($sqlGrafico);
-        $stmt->execute($paramsGrafico);
-        $datosGrafico = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-        error_log("Error en gráfico: " . $e->getMessage());
-        return ['estatus' => false, 'mensaje' => 'Error al obtener datos del gráfico'];
-    }
+        try {
+            $con = $this->get_conex('negocio');
+            $stmt = $con->prepare($sqlGrafico);
+            $stmt->execute($paramsGrafico);
+            $datosGrafico = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en gráfico: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al obtener datos del gráfico'];
+        }
 
-    // ============================================================
-    // 3. Consultas para ESTADÍSTICAS (agregadas)
-    // ============================================================
-    $resultadosEstadisticas = [];
+        // ============================================================
+        // 3. Consultas para ESTADÍSTICAS (agregadas)
+        // ============================================================
+        $resultadosEstadisticas = [];
 
-    // --- Egresos ---
-    if ($balance !== 'Ingresos') {
-        // Total de egresos
-        $sqlEgresosTotal = "SELECT 
-                                'total_gastos' as indicador,
-                                SUM(dg.monto) as valor
-                             FROM detalles_gastos dg
-                             INNER JOIN gastos g ON dg.gasto_id = g.id_gasto
-                             LEFT JOIN tipo_gasto tg ON g.tipo_gasto_id = tg.id_tipo_gasto
-                             $whereEgresos";
-
-        // Egresos por método de pago
-        $sqlEgresosPorMetodo = "SELECT 
-                                    CONCAT('gastos_', LOWER(REPLACE(dg.metodo_pago, ' ', '_'))) as indicador,
+        // --- Egresos ---
+        if ($balance !== 'Ingresos') {
+            // Total de egresos
+            $sqlEgresosTotal = "SELECT 
+                                    'total_gastos' as indicador,
                                     SUM(dg.monto) as valor
                                  FROM detalles_gastos dg
                                  INNER JOIN gastos g ON dg.gasto_id = g.id_gasto
                                  LEFT JOIN tipo_gasto tg ON g.tipo_gasto_id = tg.id_tipo_gasto
-                                 $whereEgresos
-                                 GROUP BY dg.metodo_pago";
+                                 $whereEgresos";
 
-        try {
-            $stmt = $con->prepare($sqlEgresosTotal);
-            $stmt->execute($paramsEgresos);
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            if ($row && $row['valor'] !== null) {
-                $resultadosEstadisticas[] = $row;
-            }
+            // Egresos por método de pago
+            $sqlEgresosPorMetodo = "SELECT 
+                                        CONCAT('gastos_', LOWER(REPLACE(dg.metodo_pago, ' ', '_'))) as indicador,
+                                        SUM(dg.monto) as valor
+                                     FROM detalles_gastos dg
+                                     INNER JOIN gastos g ON dg.gasto_id = g.id_gasto
+                                     LEFT JOIN tipo_gasto tg ON g.tipo_gasto_id = tg.id_tipo_gasto
+                                     $whereEgresos
+                                     GROUP BY dg.metodo_pago";
 
-            $stmt = $con->prepare($sqlEgresosPorMetodo);
-            $stmt->execute($paramsEgresos);
-            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                $resultadosEstadisticas[] = $row;
+            try {
+                $stmt = $con->prepare($sqlEgresosTotal);
+                $stmt->execute($paramsEgresos);
+                $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                if ($row && $row['valor'] !== null) {
+                    $resultadosEstadisticas[] = $row;
+                }
+
+                $stmt = $con->prepare($sqlEgresosPorMetodo);
+                $stmt->execute($paramsEgresos);
+                while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                    $resultadosEstadisticas[] = $row;
+                }
+            } catch (PDOException $e) {
+                error_log("Error en estadísticas egresos: " . $e->getMessage());
+                return ['estatus' => false, 'mensaje' => 'Error al obtener estadísticas de egresos'];
             }
-        } catch (PDOException $e) {
-            error_log("Error en estadísticas egresos: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al obtener estadísticas de egresos'];
         }
-    }
 
-    // --- Ingresos ---
-    if ($balance !== 'Egresos') {
-        // Total de ingresos
-        $sqlIngresosTotal = "SELECT 
-                                'total_pagos' as indicador,
-                                SUM(dp.monto) as valor
-                             FROM detalles_pagos dp
-                             INNER JOIN pagos p ON dp.pago_id = p.id_pago
-                             $whereIngresos";
-
-        // Ingresos por método de pago
-        $sqlIngresosPorMetodo = "SELECT 
-                                    CONCAT('pagos_', LOWER(REPLACE(dp.tipo_pago, ' ', '_'))) as indicador,
+        // --- Ingresos ---
+        if ($balance !== 'Egresos') {
+            // Total de ingresos
+            $sqlIngresosTotal = "SELECT 
+                                    'total_pagos' as indicador,
                                     SUM(dp.monto) as valor
                                  FROM detalles_pagos dp
                                  INNER JOIN pagos p ON dp.pago_id = p.id_pago
-                                 $whereIngresos
-                                 GROUP BY dp.tipo_pago";
+                                 $whereIngresos";
 
-        try {
-            $stmt = $con->prepare($sqlIngresosTotal);
-            $stmt->execute($paramsIngresos);
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            if ($row && $row['valor'] !== null) {
-                $resultadosEstadisticas[] = $row;
-            }
+            // Ingresos por método de pago
+            $sqlIngresosPorMetodo = "SELECT 
+                                        CONCAT('pagos_', LOWER(REPLACE(dp.tipo_pago, ' ', '_'))) as indicador,
+                                        SUM(dp.monto) as valor
+                                     FROM detalles_pagos dp
+                                     INNER JOIN pagos p ON dp.pago_id = p.id_pago
+                                     $whereIngresos
+                                     GROUP BY dp.tipo_pago";
 
-            $stmt = $con->prepare($sqlIngresosPorMetodo);
-            $stmt->execute($paramsIngresos);
-            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                $resultadosEstadisticas[] = $row;
+            try {
+                $stmt = $con->prepare($sqlIngresosTotal);
+                $stmt->execute($paramsIngresos);
+                $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                if ($row && $row['valor'] !== null) {
+                    $resultadosEstadisticas[] = $row;
+                }
+
+                $stmt = $con->prepare($sqlIngresosPorMetodo);
+                $stmt->execute($paramsIngresos);
+                while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                    $resultadosEstadisticas[] = $row;
+                }
+            } catch (PDOException $e) {
+                error_log("Error en estadísticas ingresos: " . $e->getMessage());
+                return ['estatus' => false, 'mensaje' => 'Error al obtener estadísticas de ingresos'];
             }
-        } catch (PDOException $e) {
-            error_log("Error en estadísticas ingresos: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al obtener estadísticas de ingresos'];
         }
-    }
 
-    return [
-        'estatus' => true,
-        'datos' => [
-            'grafico' => $datosGrafico,
-            'estadisticas' => $resultadosEstadisticas
-        ]
-    ];
-}
+        return [
+            'estatus' => true,
+            'datos' => [
+                'grafico' => $datosGrafico,
+                'estadisticas' => $resultadosEstadisticas
+            ]
+        ];
+    }
 
     /**
      * Lista los meses y años con gastos registrados.
      * @return array ['estatus' => bool, 'datos' => array, 'mensaje' => string]
+     // SE USA EN REPORTES
      */
     private function _listar_meses_con_gastos()
     {
@@ -984,6 +873,7 @@ class Gastos extends Conexion
      * @param int $mes
      * @param int $anio
      * @return array ['estatus' => bool, 'datos' => array, 'mensaje' => string]
+     // SE USA EN REPORTES
      */
     private function _obtener_datos_reporte_mensual()
     {
@@ -1015,6 +905,7 @@ class Gastos extends Conexion
     // UTILIDADES (IMÁGENES)
     // ====================================================================
 
+    // SE USA EN LA PROPIA CLASE (modificar)
     private function obtenerImagenPorDetalle($idDetalle)
     {
         $sql = "SELECT imagen FROM egresos_bancarios WHERE detalle_gasto_id = :id";
@@ -1027,15 +918,6 @@ class Gastos extends Conexion
             error_log("Error en obtenerImagenPorDetalle: " . $e->getMessage());
             return false;
         }
-    }
-
-    /**
-     * Método público para eliminar imagen asociada a un detalle (útil desde controlador)
-     */
-    public function borrarImagenAsociada($id_detalle_gasto)
-    {
-        $nombre = $this->obtenerImagenPorDetalle($id_detalle_gasto);
-        return GestorImagenes::eliminar($nombre, 'gastos');
     }
 }
 ?>

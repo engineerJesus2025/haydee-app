@@ -37,9 +37,9 @@
                                 <div class="col-sm-8 mb-3">
                                     <label for="filtro_tiempo">Buscar resultados a partir de:</label>
                                     <div class="input-group mb-3">
-                                        <span class="input-group-text" id="basic-addon1"><i
+                                        <span class="border border-primary input-group-text" id="basic-addon1"><i
                                                 class="bi bi-calendar-week"></i></span>
-                                        <select class="form-select" aria-label="Default select example"
+                                        <select class="border border-dark form-select" aria-label="Default select example"
                                             name="filtro_tiempo" id="filtro_tiempo" form="form_reporte_habitantes">
                                             <option selected hidden value="">Seleccione tiempo</option>
                                             <option value="mes">Este mes</option>
@@ -56,16 +56,16 @@
                                 <div class="col-sm-6 col-lg-5 mb-3" id="div_fecha_inicio_habitantes" hidden>
                                     <label for="fecha_inicio_habitantes">Fecha de inicio</label>
                                     <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-calendar2-check"></i></span>
-                                        <input type="date" name="fecha_inicio_habitantes" id="fecha_inicio_habitantes"
+                                        <span class="border border-primary input-group-text"><i class="bi bi-calendar2-check"></i></span>
+                                        <input class="border border-dark rounded-end" type="date" name="fecha_inicio_habitantes" id="fecha_inicio_habitantes"
                                             class="form-control">
                                     </div>
                                 </div>
                                 <div class="col-sm-6 col-lg-5 mb-3" id="div_fecha_cierre_habitantes" hidden>
                                     <label for="fecha_fin_habitantes">Fecha de fin</label>
                                     <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-calendar2-check"></i></span>
-                                        <input type="date" name="fecha_fin_habitantes" id="fecha_fin_habitantes"
+                                        <span class="border border-primary input-group-text"><i class="bi bi-calendar2-check"></i></span>
+                                        <input class="border border-dark rounded-end" type="date" name="fecha_fin_habitantes" id="fecha_fin_habitantes"
                                             class="form-control">
                                     </div>
                                 </div>
@@ -74,8 +74,8 @@
                                 <div class="col-sm-8 mb-3">
                                     <label for="rango_edades">Rango de edades:</label>
                                     <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-people-fill"></i></span>
-                                        <select class="form-select" id="rango_edades" name="rango_edades">
+                                        <span class="border border-primary input-group-text"><i class="bi bi-people-fill"></i></span>
+                                        <select class="border border-dark form-select" id="rango_edades" name="rango_edades">
                                             <option value="todos" selected>Todas las edades</option>
                                             <option value="jovenes">Jóvenes (18-35 años)</option>
                                             <option value="adultos">Adultos (36-59 años)</option>
@@ -88,12 +88,12 @@
                                 <!-- Edades personalizadas -->
                                 <div class="col-6 col-lg-5 mb-3" id="div_edad_minima" hidden>
                                     <label for="edad_minima">Edad mínima</label>
-                                    <input type="number" class="form-control" id="edad_minima" name="edad_minima"
+                                    <input type="number" class="border border-dark form-control" id="edad_minima" name="edad_minima"
                                         min="0" max="120">
                                 </div>
                                 <div class="col-6 col-lg-5 mb-3" id="div_edad_maxima" hidden>
                                     <label for="edad_maxima">Edad máxima</label>
-                                    <input type="number" class="form-control" id="edad_maxima" name="edad_maxima"
+                                    <input type="number" class="border border-dark form-control" id="edad_maxima" name="edad_maxima"
                                         min="0" max="120">
                                 </div>
 
@@ -137,7 +137,7 @@
                                 <div class="col-sm-9 mb-3">
                                     <label for="select_mostrar_datos">¿Como deseas mostrar los datos?:</label>
                                     <div class="input-group">
-                                        <select class="form-select" id="select_mostrar_datos" name="select_mostrar_datos">
+                                        <select class="border border-dark form-select" id="select_mostrar_datos" name="select_mostrar_datos">
                                             <option value="grafico_texto">Gráfico y texto</option>
                                             <option value="solo_grafico">Solo el Gráfico</option>
                                             <option value="solo_texto">Solo el texto</option>

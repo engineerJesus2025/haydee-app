@@ -32,49 +32,68 @@ class Presupuesto extends Conexion
     private $tasa_dolar;
 
     // ====================================================================
-    // REGLAS DE VALIDACIÓN CENTRALIZADAS
+    // VALIDACIONES CENTRALIZADAS
     // ====================================================================
-    private $reglas = [
-        // Cabecera
-        'id_presupuesto' => [
-            'regex' => '/^\d+$/',
-            'exists' => ['tabla' => 'presupuesto', 'campo' => 'id_presupuesto']
-        ],
-        'fecha' => [
-            'regex' => '/^\d{4}-\d{2}-\d{2}$/'
-        ],
-        'cuota_reserva' => [
-            'regex' => '/^\d+(\.\d{1,2})?$/',
-            'opcional' => true
-        ],
-        'observacion' => [
-            'regex' => '/^[a-zA-Z0-9áéíóúñÁÉÍÓÚÑ\s.,-]{0,255}$/',
-            'opcional' => true
-        ],
+    
+    /**
+     * Reglas para la Cabecera del Presupuesto
+     */
+    public static function obtenerReglas($operacion) {
+        $reglasGenerales = [
+            'id_presupuesto' => [
+                'regex' => '/^\d+$/',
+                'exists' => ['tabla' => 'presupuesto', 'campo' => 'id_presupuesto']
+            ],
+            'fecha' => [
+                'regex' => '/^\d{4}-\d{2}-\d{2}$/'
+            ],
+            'cuota_reserva' => [
+                'regex' => '/^\d+(\.\d{1,2})?$/',
+                'min' => 0
+            ],
+            'observacion' => [
+                'regex' => '/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,:\/-]{0,255}$/',
+                'opcional' => true
+            ],
+            'tasa_dolar' => [
+                'regex' => '/^\d+(\.\d{1,4})?$/',
+                'opcional' => true
+            ]
+        ];
 
-        // Detalles
-        'id_detalle_presupuesto' => [
-            'regex' => '/^\d+$/',
-            'exists' => ['tabla' => 'detalles_presupuesto', 'campo' => 'id_detalle_presupuesto']
-        ],
-        'monto_detalle' => [
-            'regex' => '/^\d+(\.\d{1,2})?$/',
-            'min' => 0.01
-        ],
-        'nombre_detalle' => [
-            'regex' => '/^[a-zA-Z0-9áéíóúñÁÉÍÓÚÑ\s.,-]{2,100}$/'
-        ],
-        'tipo_gasto_id' => [
-            'regex' => '/^\d+$/',
-            'exists' => ['tabla' => 'tipo_gasto', 'campo' => 'id_tipo_gasto']
-        ],
+        // Estandarización de nombres (registrar_presupuesto, etc.)
+        $camposPorOperacion = [
+            'registrar_presupuesto' => ['fecha', 'cuota_reserva', 'observacion', 'tasa_dolar'],
+            'modificar_presupuesto' => ['id_presupuesto', 'fecha', 'cuota_reserva', 'observacion', 'tasa_dolar'],
+            'eliminar_presupuesto'  => ['id_presupuesto'],
+            'consultar_presupuesto'   => ['id_presupuesto']
+        ];
 
-        // Relación Mensualidad
-        'mensualidad_id' => [
-            'regex' => '/^\d+$/',
-            'exists' => ['tabla' => 'mensualidad', 'campo' => 'id_mensualidad']
-        ]
-    ];
+        if (isset($camposPorOperacion[$operacion])) {
+            return array_intersect_key($reglasGenerales, array_flip($camposPorOperacion[$operacion]));
+        }
+        return [];
+    }
+
+    /**
+     * Reglas para cada fila (Renglón) del Presupuesto
+     * Basado en las claves de tu arreglo detalles_temp (monto, nombre, tipo_gasto_id)
+     */
+    public static function obtenerReglasDetalles() {
+        return [
+            'nombre' => [
+                'regex' => '/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,:\/-]{3,100}$/'
+            ],
+            'monto' => [
+                'regex' => '/^\d+(\.\d{1,2})?$/',
+                'min' => 0.01
+            ],
+            'tipo_gasto_id' => [
+                'regex' => '/^\d+$/',
+                'exists' => ['tabla' => 'tipo_gasto', 'campo' => 'id_tipo_gasto']
+            ]
+        ];
+    }
 
     // ====================================================================
     // GETTERS Y SETTERS
@@ -127,97 +146,16 @@ class Presupuesto extends Conexion
     }
 
     // ====================================================================
-    // VALIDACIÓN CENTRALIZADA (MEJORADA)
-    // ====================================================================
-    private function validar($campos)
-    {
-        foreach ($campos as $campo) {
-            if (!isset($this->reglas[$campo])) {
-                continue;
-            }
-            $regla = $this->reglas[$campo];
-
-            $getter = 'get_' . $campo;
-            if (!method_exists($this, $getter)) {
-                return ['estatus' => false, 'mensaje' => "Error interno: getter no encontrado para $campo."];
-            }
-            $valor = $this->$getter();
-
-            // Determinar si el campo es requerido (por defecto sí, a menos que sea opcional)
-            $requerido = !(isset($regla['opcional']) && $regla['opcional'] === true);
-
-            if ($requerido) {
-                if ($valor === null) {
-                    return ['estatus' => false, 'mensaje' => "El campo '$campo' es requerido y no se ha establecido."];
-                }
-                if (is_string($valor) && trim($valor) === '') {
-                    return ['estatus' => false, 'mensaje' => "El campo '$campo' no puede estar vacío."];
-                }
-            } else {
-                // Si es opcional y está vacío (considerando que 0 es válido), saltamos validaciones adicionales
-                if ($valor === null || (is_string($valor) && trim($valor) === '')) {
-                    continue;
-                }
-            }
-
-            // Validar expresión regular
-            if (isset($regla['regex']) && !preg_match($regla['regex'], (string)$valor)) {
-                return ['estatus' => false, 'mensaje' => "El campo '$campo' no tiene un formato válido."];
-            }
-
-            // Validar valor mínimo
-            if (isset($regla['min']) && $valor < $regla['min']) {
-                return ['estatus' => false, 'mensaje' => "El campo '$campo' debe ser mayor o igual a " . $regla['min']];
-            }
-
-            // Validar existencia en otra tabla (foránea)
-            if (isset($regla['exists'])) {
-                $tabla = $regla['exists']['tabla'];
-                $campoFor = $regla['exists']['campo'] ?? $campo;
-                if (!$this->existeEnTabla($tabla, $campoFor, $valor)) {
-                    return ['estatus' => false, 'mensaje' => "El valor del campo '$campo' no existe en la tabla $tabla."];
-                }
-            }
-        }
-        return ['estatus' => true];
-    }
-
-    /**
-     * Verifica existencia de un valor en una tabla, considerando 'activo' si existe.
-     */
-    private function existeEnTabla($tabla, $campo, $valor)
-    {
-        $sql = "SELECT COUNT(*) as total FROM $tabla WHERE $campo = :valor";
-        // Si la tabla tiene columna 'activo', filtramos por ella.
-        $tablasConActivo = ['presupuesto', 'tipo_gasto', 'mensualidad', 'detalles_presupuesto'];
-        if (in_array($tabla, $tablasConActivo)) {
-            $sql .= " AND activo = 1";
-        }
-        try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->bindParam(':valor', $valor);
-            $stmt->execute();
-            return $stmt->fetchColumn() > 0;
-        } catch (PDOException $e) {
-            error_log("Error en existeEnTabla: " . $e->getMessage());
-            return false;
-        }
-    }
-
-    // ====================================================================
     // LÓGICA DE NEGOCIO
     // ====================================================================
 
     /**
      * Registro completo de presupuesto (cabecera + detalles) y generación de mensualidades.
      * Requiere que estén seteadas: fecha, cuota_reserva, observacion, detalles_temp, tasa_dolar.
+     // SE USA EN EL MODULO
      */
-    private function _registrar()
+    private function _registrar_presupuesto()
     {
-        // Validar cabecera
-        $val = $this->validar(['fecha']);
-        if (!$val['estatus']) return $val;
-
         if (empty($this->detalles_temp) || !is_array($this->detalles_temp)) {
             return ['estatus' => false, 'mensaje' => 'No hay detalles para el presupuesto'];
         }
@@ -304,12 +242,10 @@ class Presupuesto extends Conexion
     /**
      * Edición de presupuesto: actualiza cabecera y reemplaza detalles.
      * No regenera mensualidades.
+     // SE USA EN EL MODULO
      */
-    private function _modificar()
+    private function _modificar_presupuesto()
     {
-        $val = $this->validar(['id_presupuesto', 'fecha']);
-        if (!$val['estatus']) return $val;
-
         $con = $this->get_conex('negocio');
         try {
             $con->beginTransaction();
@@ -354,36 +290,11 @@ class Presupuesto extends Conexion
     }
 
     /**
-     * ELIMINAR DETALLE ESPECÍFICO
-     */
-    private function _eliminar_detalle()
-    {
-        $validacion = $this->validar(['id_detalle_presupuesto']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
-        try {
-            $sql = "DELETE FROM detalles_presupuesto WHERE id_detalle_presupuesto = :id";
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->execute([':id' => $this->id_detalle_presupuesto]);
-            return ['estatus' => true, 'mensaje' => 'Detalle eliminado'];
-        } catch (PDOException $e) {
-            error_log("Error en _eliminar_detalle: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al eliminar detalle: ' . $e->getMessage()];
-        }
-    }
-
-    /**
      * ELIMINAR PRESUPUESTO (Soft delete)
+     // SE USA EN EL MODULO
      */
     private function _eliminar_presupuesto()
     {
-        $validacion = $this->validar(['id_presupuesto']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         try {
             $sql = "UPDATE presupuesto SET activo = 0 WHERE id_presupuesto = :id";
             $stmt = $this->get_conex('negocio')->prepare($sql);
@@ -399,136 +310,19 @@ class Presupuesto extends Conexion
     // GESTIÓN DE RELACIÓN CON MENSUALIDAD
     // ====================================================================
 
-    /**
-     * Sincroniza detalles de presupuesto con una mensualidad usando SP.
-     * Requiere: mensualidad_id y ids_detalles_string (string de IDs separados por comas)
-     */
-    private function _sincronizar_mensualidad()
-    {
-        $validacion = $this->validar(['mensualidad_id']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
-        if (empty($this->ids_detalles_string)) {
-            return ['estatus' => false, 'mensaje' => 'Faltan los IDs de detalles a sincronizar'];
-        }
-
-        // Validar que los IDs existan (opcional, pero recomendable)
-        $ids = array_filter(array_map('trim', explode(',', $this->ids_detalles_string)));
-        if (empty($ids)) {
-            return ['estatus' => false, 'mensaje' => 'La lista de IDs está vacía o es inválida'];
-        }
-
-        // Verificar existencia de cada ID en detalles_presupuesto
-        $placeholders = implode(',', array_fill(0, count($ids), '?'));
-        $sqlCheck = "SELECT COUNT(*) FROM detalles_presupuesto WHERE id_detalle_presupuesto IN ($placeholders) AND activo = 1";
-        $stmtCheck = $this->get_conex('negocio')->prepare($sqlCheck);
-        $stmtCheck->execute($ids);
-        if ($stmtCheck->fetchColumn() != count($ids)) {
-            return ['estatus' => false, 'mensaje' => 'Uno o más IDs de detalles no existen o están inactivos'];
-        }
-
-        try {
-            $sql = "CALL sp_sincronizar_presupuestos_mensualidad(:mens_id, :lista_ids)";
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->execute([
-                ':mens_id'   => $this->mensualidad_id,
-                ':lista_ids' => $this->ids_detalles_string
-            ]);
-            return ['estatus' => true, 'mensaje' => 'Presupuesto sincronizado con la mensualidad'];
-        } catch (PDOException $e) {
-            error_log("Error en _sincronizar_mensualidad: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al sincronizar: ' . $e->getMessage()];
-        }
-    }
-
-    /**
-     * Consultar detalles de presupuesto asociados a una mensualidad
-     */
-    private function _consultar_asociados_mensualidad()
-    {
-        $validacion = $this->validar(['mensualidad_id']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
-        try {
-            $sql = "SELECT dp.*, p.fecha, tg.nombre_tipo_gasto
-                    FROM detalles_presupuesto dp
-                    JOIN presupuesto p ON dp.presupuesto_id = p.id_presupuesto
-                    JOIN tipo_gasto tg ON dp.tipo_gasto_id = tg.id_tipo_gasto
-                    JOIN presupuesto_mensualidad pm ON dp.id_detalle_presupuesto = pm.detalle_presupuesto_id
-                    WHERE pm.mensualidad_id = :id";
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->execute([':id' => $this->mensualidad_id]);
-            return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
-        } catch (PDOException $e) {
-            error_log("Error en _consultar_asociados_mensualidad: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar asociados: ' . $e->getMessage()];
-        }
-    }
-
-    /**
-     * Verifica si existe al menos un presupuesto para el mes dado.
-     * Se espera que la propiedad $fecha contenga el número de mes (1-12).
-     * @return array ['estatus' => bool, 'datos' => bool, 'mensaje' => string]
-     */
-    private function _consultar_mes_presupuesto()
-    {
-        $mes = (int)$this->fecha;
-        if ($mes < 1 || $mes > 12) {
-            return ['estatus' => false, 'mensaje' => 'Mes inválido'];
-        }
-        $sql = "SELECT 1 FROM presupuesto WHERE MONTH(fecha) = :mes AND activo = 1 LIMIT 1";
-        try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->bindParam(':mes', $mes, PDO::PARAM_INT);
-            $stmt->execute();
-            $existe = $stmt->fetch(PDO::FETCH_ASSOC) ? true : false;
-            return ['estatus' => true, 'datos' => $existe];
-        } catch (PDOException $e) {
-            error_log("Error en _consultar_mes_presupuesto: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar mes'];
-        }
-    }
-
-    /**
-     * Verifica si existe al menos un presupuesto para el año dado.
-     * Se espera que la propiedad $fecha contenga el año (ej. 2025).
-     * @return array ['estatus' => bool, 'datos' => bool, 'mensaje' => string]
-     */
-    private function _consultar_anio_presupuesto()
-    {
-        $anio = (int)$this->fecha;
-        if ($anio < 2000 || $anio > 2100) {
-            return ['estatus' => false, 'mensaje' => 'Año inválido'];
-        }
-        $sql = "SELECT 1 FROM presupuesto WHERE YEAR(fecha) = :anio AND activo = 1 LIMIT 1";
-        try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->bindParam(':anio', $anio, PDO::PARAM_INT);
-            $stmt->execute();
-            $existe = $stmt->fetch(PDO::FETCH_ASSOC) ? true : false;
-            return ['estatus' => true, 'datos' => $existe];
-        } catch (PDOException $e) {
-            error_log("Error en _consultar_anio_presupuesto: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar año'];
-        }
-    }
 
     /**
      * Consulta los presupuestos agrupados por tipo de gasto para una fecha específica.
      * Devuelve el nombre del tipo, el monto total y los IDs de los detalles de presupuesto asociados.
+     // SE USA EN MENSUALIDAD
      */
     private function _consultar_presupuestos_mensualidades()
     {
+        // Extraemos el mes y el año de la fecha recibida
+        $mes = date('m', strtotime($this->fecha));
+        $anio = date('Y', strtotime($this->fecha));
 
-        $validacion = $this->validar(['fecha']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
+        //  Usamos dos parámetros distintos: :mes y :anio
         $sql = "SELECT 
                     tg.nombre_tipo_gasto AS nombre, 
                     SUM(dp.monto) AS monto, 
@@ -536,12 +330,20 @@ class Presupuesto extends Conexion
                 FROM tipo_gasto tg
                 INNER JOIN detalles_presupuesto dp ON dp.tipo_gasto_id = tg.id_tipo_gasto
                 INNER JOIN presupuesto p ON dp.presupuesto_id = p.id_presupuesto
-                WHERE p.fecha = :fecha AND p.activo = 1
+                WHERE MONTH(p.fecha) = :mes 
+                  AND YEAR(p.fecha) = :anio 
+                  AND p.activo = 1
                 GROUP BY tg.nombre_tipo_gasto";
 
         try {
             $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->execute([':fecha' => $this->fecha]);
+            
+            // Pasamos ambos parámetros al execute
+            $stmt->execute([
+                ':mes' => $mes,
+                ':anio' => $anio
+            ]);
+            
             $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
             return ['estatus' => true, 'datos' => $datos];
         } catch (PDOException $e) {
@@ -554,7 +356,8 @@ class Presupuesto extends Conexion
     // CONSULTAS GENERALES
     // ====================================================================
 
-    private function _consultar_general()
+    // SE USA EN EL MODULO
+    private function _consultar()
     {
         try {
             $sql = "SELECT p.*, 
@@ -575,24 +378,24 @@ class Presupuesto extends Conexion
     }
 
     /**
-     * Consulta los meses (y años) para los que no existe un presupuesto.
+     * Consulta los meses (y años) para los que no existe un presupuesto activo.
      * @return array ['estatus' => bool, 'datos' => array, 'mensaje' => string]
      */
     private function _consultar_meses_faltantes()
     {
-        // Generamos una serie de meses desde el primer presupuesto hasta la fecha actual
+        // Generamos una serie de meses desde el primer presupuesto ACTIVO hasta la fecha actual
         // Usamos una CTE recursiva
         $sql = "
             WITH RECURSIVE MesesDelCalendario (anio, mes) AS (
                 SELECT 
                     CASE 
-                        WHEN EXISTS (SELECT 1 FROM presupuesto) 
-                        THEN (SELECT YEAR(MIN(fecha)) FROM presupuesto)
+                        WHEN EXISTS (SELECT 1 FROM presupuesto WHERE activo = 1) 
+                        THEN (SELECT YEAR(MIN(fecha)) FROM presupuesto WHERE activo = 1)
                         ELSE YEAR(CURDATE())
                     END,
                     CASE 
-                        WHEN EXISTS (SELECT 1 FROM presupuesto) 
-                        THEN (SELECT MONTH(MIN(fecha)) FROM presupuesto)
+                        WHEN EXISTS (SELECT 1 FROM presupuesto WHERE activo = 1) 
+                        THEN (SELECT MONTH(MIN(fecha)) FROM presupuesto WHERE activo = 1)
                         ELSE 1
                     END
                 UNION ALL
@@ -606,9 +409,9 @@ class Presupuesto extends Conexion
                 c.anio AS anio_faltante,
                 c.mes AS mes_faltante
             FROM MesesDelCalendario c
-            LEFT JOIN presupuesto p ON c.anio = YEAR(p.fecha) AND c.mes = MONTH(p.fecha)
+            LEFT JOIN presupuesto p ON c.anio = YEAR(p.fecha) AND c.mes = MONTH(p.fecha) AND p.activo = 1
             WHERE p.id_presupuesto IS NULL
-            ORDER BY anio_faltante, mes_faltante
+            ORDER BY c.anio, c.mes
         ";
 
         try {
@@ -622,13 +425,9 @@ class Presupuesto extends Conexion
         }
     }
 
-    private function _consultar_unico()
+    // SE USA EN EL MODULO
+    private function _consultar_presupuesto()
     {
-        $validacion = $this->validar(['id_presupuesto']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         try {
             // Cabecera
             $sqlHead = "SELECT * FROM presupuesto WHERE id_presupuesto = :id AND activo = 1";
@@ -657,14 +456,10 @@ class Presupuesto extends Conexion
 
     /**
      * Consulta plana solo de la cabecera del presupuesto para la bitácora de auditoría.
+     // SE USA EN EL MODULO
      */
     private function _consultar_cabecera_presupuesto()
     {
-        $validacion = $this->validar(['id_presupuesto']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         try {
             $sql = "SELECT fecha, cuota_reserva, observacion FROM presupuesto WHERE id_presupuesto = :id AND activo = 1";
             $stmt = $this->get_conex('negocio')->prepare($sql);
@@ -681,6 +476,57 @@ class Presupuesto extends Conexion
             return ['estatus' => false, 'mensaje' => 'Error al consultar cabecera del presupuesto'];
         }
     }
+
+    /**
+     * Verifica si existe al menos un presupuesto para el mes dado.
+     * Se espera que la propiedad $fecha contenga el número de mes (1-12).
+     * @return array ['estatus' => bool, 'datos' => bool, 'mensaje' => string]
+     // SE USA EN SOLICITUD GASTO
+     */
+    private function _consultar_mes_presupuesto()
+    {
+        $mes = (int)$this->fecha;
+        if ($mes < 1 || $mes > 12) {
+            return ['estatus' => false, 'mensaje' => 'Mes inválido'];
+        }
+        $sql = "SELECT 1 FROM presupuesto WHERE MONTH(fecha) = :mes AND activo = 1 LIMIT 1";
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->bindParam(':mes', $mes, PDO::PARAM_INT);
+            $stmt->execute();
+            $existe = $stmt->fetch(PDO::FETCH_ASSOC) ? true : false;
+            return ['estatus' => true, 'datos' => $existe];
+        } catch (PDOException $e) {
+            error_log("Error en _consultar_mes_presupuesto: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al consultar mes'];
+        }
+    }
+
+    /**
+     * Verifica si existe al menos un presupuesto para el año dado.
+     * Se espera que la propiedad $fecha contenga el año (ej. 2025).
+     * @return array ['estatus' => bool, 'datos' => bool, 'mensaje' => string]
+     // SE USA EN SOLICITUD GASTO
+     */
+    private function _consultar_anio_presupuesto()
+    {
+        $anio = (int)$this->fecha;
+        if ($anio < 2000 || $anio > 2100) {
+            return ['estatus' => false, 'mensaje' => 'Año inválido'];
+        }
+        $sql = "SELECT 1 FROM presupuesto WHERE YEAR(fecha) = :anio AND activo = 1 LIMIT 1";
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->bindParam(':anio', $anio, PDO::PARAM_INT);
+            $stmt->execute();
+            $existe = $stmt->fetch(PDO::FETCH_ASSOC) ? true : false;
+            return ['estatus' => true, 'datos' => $existe];
+        } catch (PDOException $e) {
+            error_log("Error en _consultar_anio_presupuesto: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al consultar año'];
+        }
+    }
+
 
 }
 ?>

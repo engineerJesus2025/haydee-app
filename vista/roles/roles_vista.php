@@ -81,15 +81,17 @@
                     <div class="row mb-3 justify-content-center">
                         <div class="col-9">
                             <div class="card p-4">
-                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                <div class="row">
+                                    <div class="col-12 col-sm-6 mb-4">
                                     <?php if (Sesiones::tienePermiso(GESTIONAR_ROLES, REGISTRAR)) : ?>
                                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-tooltip="true" title="Registrar Nuevo Rol" data-bs-target="#modal_roles">Nuevo Rol</button>
-                                    <?php else: ?>
-                                        <div></div> <?php endif; ?>
-                                    
-                                    <div class="input-group" style="max-width: 300px;">
-                                        <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                        <input type="text" id="busqueda_global" data-tooltip="true" title="Buscar Registro" class="form-control" placeholder="Buscar Rol...">
+                                    <?php endif; ?>
+                                    </div>
+                                    <div class="col-12 col-sm-6 mb-4">
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                            <input type="text" id="busqueda_global" data-tooltip="true" title="Buscar Registro" class="form-control" placeholder="Buscar Rol...">
+                                        </div>
                                     </div>
                                 </div>
                                 <div id="tabla_roles" class="tabla-sistema-haydee"></div>
@@ -107,22 +109,10 @@
         require_once ROOT_PATH . "/vista/componentes/script.php";
         require_once ROOT_PATH . "/vista/componentes/modal_carga.php";
         require_once ROOT_PATH . "/vista/componentes/boton_ayuda.php";
+        // Modales
+        require_once ROOT_PATH . "/vista/roles/roles_modal.php";
+        require_once ROOT_PATH . "/vista/roles/roles_detalles.php";
     ?>
-    
-    <!-- Modales -->
-    <div class="modal fade modal-xl" id="modal_roles" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content"> 
-                <div class="modal-header bg-primary text-white">
-                    <h1 class="modal-title fs-5" id="titulo_modal">Registrar rol</h1>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                 </div>
-                 <div class="modal-body">
-                     <?php require_once ROOT_PATH . "/vista/roles/rol_modal.php";?>
-                 </div>
-             </div>
-         </div>
-    </div>
     
     <!-- Scripts personalizado -->
     <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/validaciones/roles_validar.js"></script>

@@ -1,103 +1,71 @@
 <?php
 use haydee\ayuda\Sesiones;
 use haydee\modelo\Rol;
-use haydee\modelo\Permisos; // Solo para validación de permisos (temporal)
 use haydee\modelo\Bitacora;
+use haydee\ayuda\Validador;
+use haydee\ayuda\ValidadorBD;
 use haydee\servicios\GestorAuditoria;
 
-// Verificaciones de seguridad
 Sesiones::verificarSesion();
 Sesiones::verificarPermiso(GESTIONAR_ROLES, CONSULTAR);
 
-// Instancia del modelo principal
-$rol = new Rol();
-
-// Obtener datos para la vista (módulos y permisos)
-$matriz = $rol->realizar_consulta('consultar_matriz_permisos');
-$registros_modulos = $matriz['estatus'] ? $matriz['datos']['modulos'] : [];
-$registros_permisos_usuarios = $matriz['estatus'] ? $matriz['datos']['permisos'] : [];
-
 if (isset($_POST["operacion"])) {
-    // Asignación masiva de campos que pueden llegar
+    $operacion = $_POST["operacion"];
+    
+    $reglas = Rol::obtenerReglas($operacion);
+
+    if (!empty($reglas)) {
+        $validador = new Validador();
+        // ID para evitar choques del campo UNIQUE al modificar
+        $contexto = ['exclude_id' => $_POST['id_rol'] ?? null];
+        $validador->validarConjunto($_POST, $reglas, $contexto);
+
+        if ($validador->tieneErrores()) {
+            echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
+            exit;
+        }
+    }
+
+    $rol = new Rol();
     $rol->set_id_rol($_POST['id_rol'] ?? null);
     $rol->set_nombre($_POST['nombre'] ?? null);
-    // Los permisos vienen como JSON en 'permisos'
+    
+    // Decodificamos el JSON de permisos
     $permisosJson = $_POST['permisos'] ?? '[]';
     $rol->set_permisos_asignados(json_decode($permisosJson, true) ?: []);
 
-    $operacion = $_POST["operacion"];
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
-
-    // Instanciamos el auditor
     $auditor = new GestorAuditoria($rol, GESTIONAR_ROLES);
 
     try {
         switch ($operacion) {
-            case 'consulta':
+            case 'consultar':
                 $respuesta = $rol->realizar_consulta('consultar');
-                if ($respuesta['estatus']) {
-                    $auditor->registrarAuditoria('consultar');
-                }
+                if ($respuesta['estatus']) { $auditor->registrarAuditoria('consultar'); }
                 break;
 
-            case 'consulta_especifica':
+            case 'consultar_rol':
                 $respuesta = $rol->realizar_consulta('consultar_rol');
                 break;
 
-            case 'consulta_permisos':
-                $respuesta = $rol->realizar_consulta('consultar_permisos_asignados');
-                break;
-
             case 'registrar_rol':
-                $respuesta = $rol->realizar_consulta('registrar');
-                if ($respuesta['estatus']) {
-                    $idRol = $respuesta['lastId'];
-                    $permisosAsignados = $rol->get_permisos_asignados();
-                    $nuevos = [
-                        'nombre' => $rol->get_nombre(),
-                        'cantidad_permisos' => count($permisosAsignados)
-                    ];
-                    if (!empty($permisosAsignados)) {
-                        $rol->set_id_rol($idRol);
-                        $resPermisos = $rol->realizar_consulta('sincronizar_permisos');
-                        if (!$resPermisos['estatus']) {
-                            $respuesta = $resPermisos;
-                            break;
-                        }
-                    }
-                    if ($respuesta['estatus']) {
-                        $auditor->registrarAuditoria('registrar');
-                    }
-                }
+                $respuesta = $rol->realizar_consulta('registrar_rol');
+                if ($respuesta['estatus']) { $auditor->registrarAuditoria('registrar'); }
                 break;
 
-            case 'modificar':
-                // Obtener datos anteriores
+            case 'modificar_rol':
                 $auditor->capturarDatosAnteriores('consultar_rol');
-
-                $respuesta = $rol->realizar_consulta('modificar');
-                if ($respuesta['estatus']) {
-                    $resPermisos = $rol->realizar_consulta('sincronizar_permisos');
-                    if (!$resPermisos['estatus']) {
-                        $respuesta = $resPermisos;
-                        break;
-                    }
-                    $auditor->registrarAuditoria('modificar');
-                }
+                $respuesta = $rol->realizar_consulta('modificar_rol');
+                if ($respuesta['estatus']) { $auditor->registrarAuditoria('modificar'); }
                 break;
 
-            case 'eliminar':
-                // Obtener datos anteriores
+            case 'eliminar_rol':
                 $auditor->capturarDatosAnteriores('consultar_rol');
-
-                $respuesta = $rol->realizar_consulta('eliminar');
-                if ($respuesta['estatus']) { 
-                    $auditor->registrarAuditoria('eliminar'); 
-                }
+                $respuesta = $rol->realizar_consulta('eliminar_rol');
+                if ($respuesta['estatus']) { $auditor->registrarAuditoria('eliminar'); }
                 break;
-
-            case 'ultimo_id':
-                $respuesta = $rol->realizar_consulta('lastId');
+            case 'consultar_permisos_rol':
+                $respuesta = $rol->realizar_consulta('consultar_permisos_asignados');
                 break;
 
             default:
@@ -108,14 +76,8 @@ if (isset($_POST["operacion"])) {
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
         if ($respuesta !== null) {
-            // Cerrar conexiones explícitamente
-            if (isset($rol)) {
-                $rol->cerrar();
-            }
-            if (isset($permisos)) {
-                $permisos->cerrar();
-            }
-            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexión de seguridad
+            if (isset($rol)) { $rol->cerrar(); }
+            Bitacora::cerrarConexionBitacora();
 
             header('Content-Type: application/json');
             echo json_encode($respuesta);
@@ -124,39 +86,49 @@ if (isset($_POST["operacion"])) {
     }
 }
 
-// Validaciones AJAX (separadas)
+// =========================================================
+// VALIDACIONES AJAX
+// =========================================================
 if (isset($_POST["validar"])) {
     header('Content-Type: application/json');
-
     $validar = $_POST["validar"];
-    $respuesta = ['estatus' => false, 'mensaje' => 'Validación no válida'];
 
     try {
-        switch ($validar) {
-            case 'nombre':
-                $rol->set_nombre($_POST["nombre"] ?? '');
-                $respuesta = $rol->realizar_consulta('verificar_nombre');
-                break;
+        $validadorBD = new ValidadorBD();
+        
+        if ($validar === 'nombre') {
+            $nombre = $_POST["nombre"] ?? '';
+            $id_rol = $_POST["id_rol"] ?? null;
+            
+            // Verificamos si el nombre existe, ignorando el rol actual
+            $existe = !$validadorBD->esUnico('roles', 'nombre', $nombre, 'id_rol', $id_rol);
+            echo json_encode(['estatus' => true, 'existe' => $existe]);
+            exit;
+        } 
 
-            case 'validar_permisos_usuarios':
-                $permisos = new Permisos();
-                $arreglo_id_permisos = $_POST["valor"] ?? [];
-                $permisos->set_id_permiso($arreglo_id_permisos);
-                $respuesta = $permisos->realizar_consulta('validar_permisos_usuarios');
-                break;
-        }
     } catch (Exception $e) {
-        error_log("Error en validación AJAX: " . $e->getMessage());
-        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
+        error_log("Error en validación AJAX Roles: " . $e->getMessage());
+        echo json_encode(['estatus' => false, 'mensaje' => 'Error interno']);
+        exit;
     }
-
-    echo json_encode($respuesta);
-    exit;
 }
+
+// =========================================================
+// CARGA DE DATOS PARA LA VISTA
+// =========================================================
+$registros_modulos = [];
+$registros_permisos_usuarios = [];
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_ROLES);
+    
+    $rol = new Rol();
+    $matriz = $rol->realizar_consulta('consultar_matriz_permisos');
+    if ($matriz['estatus']) {
+        $registros_modulos = $matriz['datos']['modulos'];
+        $registros_permisos_usuarios = $matriz['datos']['permisos'];
+    }
+    $rol->cerrar();
 }
 
-// Cargar la vista
-require_once "vista/roles/rol_vista.php";
+require_once "vista/roles/roles_vista.php";

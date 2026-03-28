@@ -10,16 +10,32 @@ class Permisos extends Conexion
     private $accion;
     private $activo;
 
-    // Reglas de validación (por si se usan en el futuro)
-    private $reglas = [
-        'id_permiso' => [
-            'regex' => '/^\d+$/',
-            'exists' => ['tabla' => 'permisos', 'campo' => 'id_permiso']
-        ],
-        'accion' => [
-            'regex' => '/^[A-Za-z_]+$/'
-        ]
-    ];
+    // ====================================================================
+    // VALIDACIONES CENTRALIZADAS
+    // ====================================================================
+    public static function obtenerReglas($operacion) {
+        $reglasGenerales = [
+            'id_permiso' => [
+                'regex' => '/^\d+$/',
+                'exists' => ['tabla' => 'permisos', 'campo' => 'id_permiso']
+            ],
+            'accion' => [
+                'regex' => '/^[A-Za-z_]+$/'
+            ]
+        ];
+
+        $camposPorOperacion = [
+            'registrar_permiso' => ['accion'],
+            'modificar_permiso' => ['id_permiso', 'accion'],
+            'eliminar_permiso'  => ['id_permiso'],
+            'consultar_permiso' => ['id_permiso']
+        ];
+
+        if (isset($camposPorOperacion[$operacion])) {
+            return array_intersect_key($reglasGenerales, array_flip($camposPorOperacion[$operacion]));
+        }
+        return [];
+    }
 
     // Getters y Setters
     public function set_id_permiso($id) { $this->id_permiso = $id; }
@@ -47,89 +63,13 @@ class Permisos extends Conexion
         }
     }
 
-    // -----------------------------------------------------------------
-    // Método de validación (por si se necesita)
-    // -----------------------------------------------------------------
-    private function validar($campos)
-    {
-        foreach ($campos as $campo) {
-            if (!isset($this->reglas[$campo])) {
-                return [
-                    'estatus' => false,
-                    'mensaje' => "No hay reglas de validación definidas para el campo '$campo'."
-                ];
-            }
-            $regla = $this->reglas[$campo];
-
-            $getter = 'get_' . $campo;
-            if (!method_exists($this, $getter)) {
-                return [
-                    'estatus' => false,
-                    'mensaje' => "El campo '$campo' no tiene un getter definido."
-                ];
-            }
-            $valor = $this->$getter();
-
-            if ($valor === null) {
-                return [
-                    'estatus' => false,
-                    'mensaje' => "El campo '$campo' es requerido y no se ha establecido."
-                ];
-            }
-            if (is_string($valor) && trim($valor) === '') {
-                return [
-                    'estatus' => false,
-                    'mensaje' => "El campo '$campo' no puede estar vacío."
-                ];
-            }
-
-            if (isset($regla['regex'])) {
-                if (!preg_match($regla['regex'], (string)$valor)) {
-                    return [
-                        'estatus' => false,
-                        'mensaje' => "El campo '$campo' no tiene un formato válido."
-                    ];
-                }
-            }
-
-            if (isset($regla['exists'])) {
-                $tabla = $regla['exists']['tabla'];
-                $campoFor = $regla['exists']['campo'] ?? $campo;
-                if (!$this->existeEnTabla($tabla, $campoFor, $valor)) {
-                    return [
-                        'estatus' => false,
-                        'mensaje' => "El valor del campo '$campo' no existe en la tabla $tabla."
-                    ];
-                }
-            }
-        }
-        return ['estatus' => true];
-    }
-
-    /**
-     * Verifica si un valor existe en una tabla específica (usa BD seguridad).
-     */
-    private function existeEnTabla($tabla, $campo, $valor)
-    {
-        $sql = "SELECT COUNT(*) as total FROM $tabla WHERE $campo = :valor";
-        try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
-            $stmt->bindParam(':valor', $valor);
-            $stmt->execute();
-            $fila = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $fila['total'] > 0;
-        } catch (PDOException $e) {
-            error_log("Error en existeEnTabla: " . $e->getMessage());
-            return false;
-        }
-    }
-
     // ====================================================================
     // MÉTODOS PRIVADOS (CRUD)
     // ====================================================================
 
     /**
      * Consulta todos los permisos.
+     // SE USA EN EL MODULO
      */
     private function _consultar()
     {
@@ -148,6 +88,7 @@ class Permisos extends Conexion
     /**
      * Valida que un array de IDs de permisos existan en la base de datos.
      * La propiedad id_permiso debe contener el array de IDs a validar.
+     // SE USA EN ROLES
      */
     private function _validar_permisos_usuarios()
     {
@@ -196,14 +137,10 @@ class Permisos extends Conexion
 
     /**
      * Registrar un nuevo permiso.
+     // SE USA EN EL MODULO
      */
-    private function _registrar()
+    private function _registrar_permiso()
     {
-        $validacion = $this->validar(['accion']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         $sql = "INSERT INTO permisos (accion, activo) VALUES (:accion, 1)";
         try {
             $stmt = $this->get_conex('seguridad')->prepare($sql);
@@ -218,14 +155,10 @@ class Permisos extends Conexion
 
     /**
      * modificar un permiso existente.
+     // SE USA EN EL MODULO
      */
-    private function _modificar()
+    private function _modificar_permiso()
     {
-        $campos = ['id_permiso', 'accion'];
-        $validacion = $this->validar($campos);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
 
         $sql = "UPDATE permisos SET accion = :accion WHERE id_permiso = :id";
         try {
@@ -243,13 +176,10 @@ class Permisos extends Conexion
 
     /**
      * Eliminar (soft delete) un permiso.
+     // SE USA EN EL MODULO
      */
-    private function _eliminar()
+    private function _eliminar_permiso()
     {
-        $validacion = $this->validar(['id_permiso']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
 
         $sql = "UPDATE permisos SET activo = 0 WHERE id_permiso = :id";
         try {
@@ -264,14 +194,10 @@ class Permisos extends Conexion
 
     /**
      * Consultar un permiso específico por ID.
+     // SE USA EN EL MODULO
      */
-    private function _consultar_unico()
+    private function _consultar_permiso()
     {
-        $validacion = $this->validar(['id_permiso']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         $sql = "SELECT * FROM permisos WHERE id_permiso = :id AND activo = 1";
         try {
             $stmt = $this->get_conex('seguridad')->prepare($sql);

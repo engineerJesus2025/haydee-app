@@ -1,9 +1,24 @@
+/*
+
+
+
+
+Nota: unificar consultas de prepararFormulario
+
+
+
+
+
+
+*/
 // roles_ajax.js
 let tabla_roles;
 let id_modificar;
 let nombre_anterior;
 
 const modal = new bootstrap.Modal(document.getElementById("modal_roles"), { focus: false });
+const modalDetalles = new bootstrap.Modal(document.getElementById("modal_detalles"), { focus: false });
+
 const form = document.querySelector("#form_rol");
 const checkboxesPermisos = document.querySelectorAll("[name='permisos[]']");
 
@@ -27,10 +42,23 @@ async function consultar() {
         if (id == 1) {
             return `No Modificable`;
         }
-
-        let html = `<div class="d-flex justify-content-center gap-2">`;
-        if (window.permiso_modificar) html += `<button data-tooltip="true" type="button" class="btn btn-success btn-sm modificar" title="Modificar los detalles de este registro" value="${id}"><i class="bi bi-pencil"></i></button>`;
-        if (window.permiso_eliminar) html += `<button data-tooltip="true" type="button" class="btn btn-danger btn-sm eliminar" title="Quitar este elemento del sistema" value="${id}"><i class="bi bi-trash"></i></button>`;
+        let html = `<div class="d-flex justify-content-center flex-wrap gap-2">
+            <button type="button" class="btn btn-primary btn-sm vista-previa" value="${id}" data-tooltip="true" title="Ver Mas">
+                <i class="bi bi-eye"></i>
+                <span class="d-none d-lg-inline ms-2">Ver</span>
+            </button>`;
+        if (window.permiso_modificar) {
+            html += `<button class="btn btn-success btn-sm modificar" value="${id}" data-tooltip="true" title="Modificar los detalles de este registro">
+                        <i class="bi bi-pencil"></i>
+                        <span class="d-none d-lg-inline ms-2">Editar</span>
+                    </button>`;
+        }
+        if (window.permiso_eliminar) {
+            html += `<button class="btn btn-danger btn-sm eliminar" value="${id}" data-tooltip="true" title="Quitar este elemento del sistema">
+                        <i class="bi bi-trash"></i>
+                        <span class="d-none d-lg-inline ms-2">Borrar</span>
+                    </button>`;
+        }
         html += `</div>`;
         return html;
     };
@@ -41,11 +69,15 @@ async function consultar() {
         {
             title: "Acciones", 
             formatter: formatoBotones, headerSort: false, 
-            hozAlign: "center", vertAlign: "middle", minWidth: 100, 
+            hozAlign: "center", vertAlign: "middle", minWidth: 130, 
             responsive: 0, download: false, headerHozAlign: "center",
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 const mockEvent = { currentTarget: btn };
+                
+                if (btn.classList.contains('vista-previa')) {
+                    mostrarVistaPrevia(cell.getData());
+                }
                 
                 if (btn.classList.contains('modificar')) prepararFormulario(mockEvent);
                 if (btn.classList.contains('eliminar')) {
@@ -56,7 +88,7 @@ async function consultar() {
         }
     ];
 
-    tabla_roles = Tablas.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consulta' } });
+    tabla_roles = Tablas.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consultar' } });
 
     const inputBusqueda = document.getElementById("busqueda_global");
     if (inputBusqueda) {
@@ -71,155 +103,156 @@ async function consultar() {
     }
 }
 
-// ============================================
-// OPERACIONES CRUD
-// ============================================
-async function registrar() {
-    const datos = new FormData(form);
-    datos.set('operacion', 'registrar_rol');
+// Función asíncrona para Vista Previa
+async function mostrarVistaPrevia(data) {
+    // 1. Asignamos el nombre y mostramos el modal rápidamente con el estado de "Cargando"
+    document.getElementById("vp_nombre_rol").textContent = data.nombre || 'N/A';
+    const contenedor = document.getElementById("vp_contenedor_permisos");
+    
+    // Mostramos loader
+    contenedor.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><div class="text-muted mt-2 small">Cargando permisos...</div></div>';
+    modalDetalles.show();
 
-    const permisosSeleccionados = [];
-    document.querySelectorAll("[data-modulo]").forEach(moduloTr => {
-        const moduloId = moduloTr.dataset.modulo;
-        const checks = moduloTr.querySelectorAll("[name='permisos[]']:checked");
-        if (checks.length > 0) {
-            permisosSeleccionados.push({
-                modulo_id: moduloId,
-                permisos: Array.from(checks).map(c => c.value)
-            });
+    // 2. Hacemos la petición AJAX para traer los permisos específicos
+    const formData = new FormData();
+    formData.append('operacion', 'consultar_permisos_rol');
+    formData.append('id_rol', data.id_rol);
+
+    // true al final para que sea silencioso y no muestre alertas de "Cargando" del sistema general
+    const respuesta = await Peticiones.enviar(formData, "", true); 
+
+    // 3. Renderizamos los datos
+    if (respuesta.estatus && respuesta.datos && respuesta.datos.length > 0) {
+        
+        // Agrupamos los permisos por módulo (Para que no salgan sueltos)
+        const agrupados = respuesta.datos.reduce((acc, curr) => {
+            if (!acc[curr.modulo]) acc[curr.modulo] = [];
+            acc[curr.modulo].push(curr.permiso);
+            return acc;
+        }, {});
+
+        const coloresPermisos = {
+            REGISTRAR:'bg-primary',
+            CONSULTAR:'bg-info text-dark',
+            MODIFICAR:'bg-success',
+            ELIMINAR:'bg-danger',
+        };
+
+        // Construimos el HTML
+        let html = '';
+        for (const [modulo, permisos] of Object.entries(agrupados)) {
+            // Creamos las pastilas (badges) para cada permiso (ej: registrar, eliminar)
+            const badges = permisos.map(p => `<span class="badge ${coloresPermisos[p]} text-capitalize fw-normal px-2 py-1 shadow-sm">${p}</span>`).join(' ');
+            
+            // Creamos la tarjeta por módulo
+            html += `
+                <div class="border rounded p-3 bg-light bg-opacity-50">
+                    <div class="fw-bold text-dark text-uppercase mb-2" style="font-size: 0.8rem; letter-spacing: 0.5px;">
+                        <i class="bi bi-grid-1x2 me-2 text-secondary"></i>${modulo.replace(/_/g, ' ')}
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">${badges}</div>
+                </div>
+            `;
         }
-    });
-    datos.set('permisos', JSON.stringify(permisosSeleccionados));
+        contenedor.innerHTML = html;
 
-    const respuesta = await Peticiones.enviar(datos, "", true);
-    if (respuesta?.estatus) {
-        modal.hide();
-        tabla_roles.replaceData();
-        Alertas.mostrar('success', 'Éxito', 'Rol registrado correctamente.');
     } else {
-        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo registrar el rol.');
+        // Caso: Rol sin permisos
+        contenedor.innerHTML = `
+            <div class="alert alert-warning d-flex align-items-center mb-0 shadow-sm" role="alert">
+                <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
+                <div>Este rol no tiene ningún permiso asignado en el sistema actualmente.</div>
+            </div>`;
     }
 }
 
-async function prepararFormulario(e) {
-    const id = e.currentTarget.value;
+// ===========================================
+// ACCIONES (REGISTRAR, MODIFICAR, ELIMINAR)
+// ===========================================
 
-    // Cargar datos del rol
-    const datosRol = new FormData();
-    datosRol.append('id_rol', id);
-    datosRol.append('operacion', 'consulta_especifica');
-    const respRol = await Peticiones.enviar(datosRol);
-    if (!respRol?.estatus) {
-        Alertas.mostrar('error', 'Error', 'No se pudo cargar el rol.');
-        return;
-    }
+async function registrar() {
+    const checkboxesPermisos = document.querySelectorAll("[name='permisos[]']");
+    const permisos = Array.from(checkboxesPermisos)
+                          .filter(cb => cb.checked)
+                          .map(cb => parseInt(cb.value));
 
-    // Cargar permisos asignados al rol
-    const datosPermisos = new FormData();
-    datosPermisos.append('id_rol', id);
-    datosPermisos.append('operacion', 'consulta_permisos');
-    const respPermisos = await Peticiones.enviar(datosPermisos);
-    if (!respPermisos?.estatus) {
-        Alertas.mostrar('error', 'Error', 'No se pudieron cargar los permisos.');
-        return;
-    }
+    const formData = new FormData();
+    formData.append('operacion', 'registrar_rol');
+    formData.append('nombre', document.querySelector('#nombre').value.trim());
+    formData.append('permisos', JSON.stringify(permisos));
 
-    // Asignar nombre del rol
-    form.querySelector('#nombre').value = respRol.datos.nombre;
-    nombre_anterior = respRol.datos.nombre;
-
-    // Desmarcar todos los checkboxes primero
-    checkboxesPermisos.forEach(cb => cb.checked = false);
-
-    // Crear un Set con identificadores compuestos "modulo_id:permiso_id"
-    const permisosAsignados = new Set(
-        respPermisos.datos.map(p => `${p.modulo_id}:${p.permiso_id}`)
-    );
-
-    // Marcar los checkboxes correspondientes
-    checkboxesPermisos.forEach(checkbox => {
-        // El checkbox debe tener atributos data-modulo y value (permiso_id)
-        const moduloId = checkbox.closest('[data-modulo]')?.dataset.modulo;
-        const permisoId = checkbox.value;
-        
-        if (!moduloId) return; // Si no encuentra el módulo, salir
-        
-        const identificador = `${moduloId}:${permisoId}`;
-        
-        if (permisosAsignados.has(identificador)) {
-            checkbox.checked = true;
-            
-            // Expandir el acordeón que contiene este checkbox
-            const accordionItem = checkbox.closest('.accordion-item');
-            if (accordionItem) {
-                const accordionCollapse = accordionItem.querySelector('.accordion-collapse');
-                const accordionButton = accordionItem.querySelector('.accordion-button');
-                
-                if (accordionCollapse) {
-                    accordionCollapse.classList.add('show');
-                }
-                if (accordionButton) {
-                    accordionButton.classList.remove('collapsed');
-                    accordionButton.setAttribute('aria-expanded', 'true');
-                }
-            }
-        }
+    const respuesta = await Peticiones.enviar(formData, "", true);
+    Validador.procesarRespuesta(respuesta, () => {
+        tabla_roles.replaceData();
+        modal.hide();
     });
-
-    // Evaluar cada fila para auto-activar los switches "Seleccionar Todo" si aplica
-    document.querySelectorAll('#tabla_permisos tbody tr').forEach(tr => {
-        actualizarSwitchSeleccionarTodo(tr);
-    });
-
-    // Actualizar interfaz del modal
-    document.getElementById('titulo_modal').textContent = 'Modificar Rol';
-    form.querySelector('#boton_formulario').textContent = 'Guardar Cambios';
-    form.querySelector('#boton_formulario').dataset.id = id;
-
-    modal.show();
 }
 
 async function modificar() {
-    const id = form.querySelector('#boton_formulario').dataset.id;
-    const datos = new FormData(form);
-    datos.set('id_rol', id);
-    datos.set('operacion', 'modificar');
+    const checkboxesPermisos = document.querySelectorAll("[name='permisos[]']");
+    const permisos = Array.from(checkboxesPermisos)
+                          .filter(cb => cb.checked)
+                          .map(cb => parseInt(cb.value));
 
-    const permisosSeleccionados = [];
-    document.querySelectorAll("[data-modulo]").forEach(moduloTr => {
-        const moduloId = moduloTr.dataset.modulo;
-        const checks = moduloTr.querySelectorAll("[name='permisos[]']:checked");
-        if (checks.length > 0) {
-            permisosSeleccionados.push({
-                modulo_id: moduloId,
-                permisos: Array.from(checks).map(c => c.value)
-            });
-        }
-    });
-    datos.set('permisos', JSON.stringify(permisosSeleccionados));
+    const formData = new FormData();
+    formData.append('operacion', 'modificar_rol');
+    formData.append('id_rol', id_modificar);
+    formData.append('nombre', document.querySelector('#nombre').value.trim());
+    formData.append('permisos', JSON.stringify(permisos));
 
-    const respuesta = await Peticiones.enviar(datos, "", true);
-    if (respuesta?.estatus) {
-        modal.hide();
+    const respuesta = await Peticiones.enviar(formData, "", true);
+    Validador.procesarRespuesta(respuesta, () => {
         tabla_roles.replaceData();
-        Alertas.mostrar('success', 'Éxito', 'Rol actualizado correctamente.');
-    } else {
-        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo actualizar el rol.');
-    }
+        modal.hide();
+    });
 }
 
 async function eliminar(id) {
-    const datos = new FormData();
-    datos.append('id_rol', id);
-    datos.append('operacion', 'eliminar');
+    const formData = new FormData();
+    formData.append('operacion', 'eliminar_rol');
+    formData.append('id_rol', id);
 
-    const respuesta = await Peticiones.enviar(datos);
-    if (respuesta?.estatus) {
+    const respuesta = await Peticiones.enviar(formData);
+    Validador.procesarRespuesta(respuesta, () => {
         tabla_roles.replaceData();
-        Alertas.mostrar('success', 'Éxito', 'Rol eliminado correctamente.');
-    } else {
-        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo eliminar el rol.');
-    }
+    });
+}
+
+async function prepararFormulario(e) {
+    const id = e.currentTarget.closest("button").value;
+    id_modificar = id;
+
+    const formData = new FormData();
+    formData.append('operacion', 'consultar_rol');
+    formData.append('id_rol', id);
+
+    const respuesta = await Peticiones.enviar(formData, "", true);
+    Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
+        const datos = respuestaServidor.datos;
+        
+        const inputNombre = document.querySelector("#nombre");
+        inputNombre.value = datos.rol.nombre;
+        nombre_anterior = datos.rol.nombre; 
+
+        // Limpiar checkboxes
+        document.querySelectorAll("[name='permisos[]']").forEach(cb => cb.checked = false);
+
+        // Marcar los asignados (ahora que PHP los devuelve correctamente)
+        if (datos.permisos && datos.permisos.length > 0) {
+            datos.permisos.forEach(p => {
+                const cb = document.querySelector(`[name='permisos[]'][value='${p.permiso_id}']`);
+                if (cb) cb.checked = true;
+            });
+        }
+
+        document.querySelector("#titulo_modal").textContent = "Modificar Rol";
+        document.querySelector("#boton_formulario").textContent = "Guardar Cambios";
+        // Añadimos el atributo para que el Validador sepa que es una modificación
+        document.querySelector("#boton_formulario").setAttribute("modificar", "true");
+        EstadoInputs.limpiar(inputNombre);
+
+        modal.show();
+    });
 }
 
 // ============================================

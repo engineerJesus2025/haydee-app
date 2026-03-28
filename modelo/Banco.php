@@ -9,34 +9,55 @@ class Banco extends Conexion
     private $id_banco;
     private $nombre_banco;
     private $codigo;
+    private $tipo_cuenta;
     private $numero_cuenta;
     private $telefono_afiliado;
     private $rif;
     private $activo;
 
-    // Reglas de validación centralizadas
-    private $reglas = [
-        'id_banco' => [
-            'regex' => '/^\d+$/',
-            'exists' => ['tabla' => 'bancos', 'campo' => 'id_banco']
-        ],
-        'nombre_banco' => [
-            'regex' => '/^[A-Za-z ]{3,30}$/'
-        ],
-        'codigo' => [
-            'regex' => '/^\d{4}$/'
-        ],
-        'numero_cuenta' => [
-            'regex' => '/^\d{18,30}$/',
-            'unique' => ['tabla' => 'bancos', 'campo' => 'numero_cuenta', 'exclude_field' => 'id_banco']
-        ],
-        'telefono_afiliado' => [
-            'regex' => '/^\d{11}$/'
-        ],
-        'rif' => [
-            'regex' => '/^[VEJG]{1}[0-9]{7,10}$/'
-        ]
-    ];
+    // ====================================================================
+    // VALIDACIONES CENTRALIZADAS
+    // ====================================================================
+    public static function obtenerReglas($operacion) {
+        $reglasGenerales = [
+            'id_banco' => [
+                'regex' => '/^\d+$/',
+                'exists' => ['tabla' => 'bancos', 'campo' => 'id_banco']
+            ],
+            'nombre_banco' => [
+                'regex' => '/^[A-Za-z ]{3,30}$/'
+            ],
+            'codigo' => [
+                'regex' => '/^\d{4}$/'
+            ],
+            'numero_cuenta' => [
+                'regex' => '/^\d{18,30}$/',
+                'unique' => ['tabla' => 'bancos', 'campo' => 'numero_cuenta', 'exclude_field' => 'id_banco']
+            ],
+            'tipo_cuenta' => [
+                'regex' => '/^(Ahorro|Corriente)$/'
+            ],
+            'telefono_afiliado' => [
+                'regex' => '/^\d{11}$/'
+            ],
+            'rif' => [
+                'regex' => '/^[VEJG]{1}[0-9]{7,10}$/'
+            ]
+        ];
+
+        // Estandarización de nombres aplicada aquí
+        $camposPorOperacion = [
+            'registrar_banco'  => ['nombre_banco', 'codigo', 'numero_cuenta', 'tipo_cuenta', 'telefono_afiliado', 'rif'],
+            'modificar_banco'  => ['id_banco', 'nombre_banco', 'codigo', 'numero_cuenta', 'tipo_cuenta', 'telefono_afiliado', 'rif'],
+            'eliminar_banco'   => ['id_banco'],
+            'consultar_banco' => ['id_banco']
+        ];
+
+        if (isset($camposPorOperacion[$operacion])) {
+            return array_intersect_key($reglasGenerales, array_flip($camposPorOperacion[$operacion]));
+        }
+        return [];
+    }
 
     // Getters y Setters
     public function set_id_banco($id) { $this->id_banco = $id; }
@@ -45,6 +66,8 @@ class Banco extends Conexion
     public function get_nombre_banco() { return $this->nombre_banco; }
     public function set_codigo($codigo) { $this->codigo = $codigo; }
     public function get_codigo() { return $this->codigo; }
+    public function set_tipo_cuenta($tipo_cuenta) { $this->tipo_cuenta = $tipo_cuenta; }
+    public function get_tipo_cuenta() { return $this->tipo_cuenta; }
     public function set_numero_cuenta($num) { $this->numero_cuenta = $num; }
     public function get_numero_cuenta() { return $this->numero_cuenta; }
     public function set_telefono_afiliado($tel) { $this->telefono_afiliado = $tel; }
@@ -72,154 +95,14 @@ class Banco extends Conexion
         }
     }
 
-    // -----------------------------------------------------------------
-    // Método de validación centralizado
-    // -----------------------------------------------------------------
-
-    private function validar($campos, $contexto = [])
-    {
-        foreach ($campos as $campo) {
-            if (!isset($this->reglas[$campo])) {
-                return [
-                    'estatus' => false,
-                    'mensaje' => "No hay reglas de validación definidas para el campo '$campo'."
-                ];
-            }
-            $regla = $this->reglas[$campo];
-
-            $getter = 'get_' . $campo;
-            if (!method_exists($this, $getter)) {
-                return [
-                    'estatus' => false,
-                    'mensaje' => "El campo '$campo' no tiene un getter definido."
-                ];
-            }
-            $valor = $this->$getter();
-
-            // Requerido (todos lo son en este modelo)
-            if ($valor === null) {
-                return [
-                    'estatus' => false,
-                    'mensaje' => "El campo '$campo' es requerido y no se ha establecido."
-                ];
-            }
-            if (is_string($valor) && trim($valor) === '') {
-                return [
-                    'estatus' => false,
-                    'mensaje' => "El campo '$campo' no puede estar vacío."
-                ];
-            }
-
-            // Validar con expresión regular
-            if (isset($regla['regex'])) {
-                if (!preg_match($regla['regex'], (string)$valor)) {
-                    return [
-                        'estatus' => false,
-                        'mensaje' => "El campo '$campo' no tiene un formato válido."
-                    ];
-                }
-            }
-
-            // Validar existencia en otra tabla (foránea)
-            if (isset($regla['exists'])) {
-                $tabla = $regla['exists']['tabla'];
-                $campoFor = $regla['exists']['campo'] ?? $campo;
-                if (!$this->existeEnTabla($tabla, $campoFor, $valor)) {
-                    return [
-                        'estatus' => false,
-                        'mensaje' => "El valor del campo '$campo' no existe en la tabla $tabla."
-                    ];
-                }
-            }
-
-            // Validar unicidad
-            if (isset($regla['unique'])) {
-                $tabla = $regla['unique']['tabla'];
-                $campoUnico = $regla['unique']['campo'] ?? $campo;
-                $excludeField = $regla['unique']['exclude_field'] ?? null;
-                $excludeValue = $contexto['exclude_id'] ?? null;
-                if (!$this->esUnico($tabla, $campoUnico, $valor, $excludeField, $excludeValue)) {
-                    return [
-                        'estatus' => false,
-                        'mensaje' => "El valor del campo '$campo' ya está registrado."
-                    ];
-                }
-            }
-        }
-        return ['estatus' => true];
-    }
-
-    /**
-     * Verifica si un valor existe en una tabla específica.
-     */
-    private function existeEnTabla($tabla, $campo, $valor)
-    {
-        $sql = "SELECT COUNT(*) as total FROM $tabla WHERE $campo = :valor";
-        try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->bindParam(':valor', $valor);
-            $stmt->execute();
-            $fila = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $fila['total'] > 0;
-        } catch (PDOException $e) {
-            error_log("Error en existeEnTabla: " . $e->getMessage());
-            return false;
-        }
-    }
-
-    /**
-     * Verifica si un valor es único (exceptuando un ID dado).
-     */
-    private function esUnico($tabla, $campo, $valor, $excludeField = null, $excludeValue = null)
-    {
-        $sql = "SELECT COUNT(*) as total FROM $tabla WHERE $campo = :valor";
-        if ($excludeField && $excludeValue !== null) {
-            $sql .= " AND $excludeField != :exclude_val";
-        }
-        try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->bindParam(':valor', $valor);
-            if ($excludeField && $excludeValue !== null) {
-                $stmt->bindParam(':exclude_val', $excludeValue);
-            }
-            $stmt->execute();
-            $fila = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $fila['total'] == 0;
-        } catch (PDOException $e) {
-            error_log("Error en esUnico: " . $e->getMessage());
-            return false;
-        }
-    }
 
     // -----------------------------------------------------------------
     // Métodos privados (acciones)
     // -----------------------------------------------------------------
 
     /**
-     * Verifica si ya existe un banco con el mismo número de cuenta (para validación rápida).
-     */
-    private function _validar()
-    {
-        $validacion = $this->validar(['numero_cuenta']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
-        $sql = "SELECT id_banco FROM bancos WHERE numero_cuenta = :numero_cuenta AND activo = 1";
-        try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->bindParam(':numero_cuenta', $this->numero_cuenta);
-            $stmt->execute();
-            $existe = $stmt->fetch(PDO::FETCH_ASSOC) ? true : false;
-            return ['estatus' => true, 'existe' => $existe];
-        } catch (PDOException $e) {
-            error_log("Error en _validar: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al verificar banco'];
-        }
-    }
-
-    /**
      * Lista todos los bancos activos.
+     // SE USA EN EL MODULO
      */
     private function _consultar()
     {
@@ -237,14 +120,10 @@ class Banco extends Conexion
 
     /**
      * Consulta un banco específico por ID.
+     // SE USA EN EL MODULO
      */
     private function _consultar_banco()
     {
-        $validacion = $this->validar(['id_banco']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         $sql = "SELECT * FROM bancos WHERE id_banco = :id_banco AND activo = 1";
         try {
             $stmt = $this->get_conex('negocio')->prepare($sql);
@@ -263,22 +142,18 @@ class Banco extends Conexion
 
     /**
      * Registra un nuevo banco.
+     // SE USA EN EL MODULO
      */
-    private function _registrar()
+    private function _registrar_banco()
     {
-        $campos = ['nombre_banco', 'codigo', 'numero_cuenta', 'telefono_afiliado', 'rif'];
-        $validacion = $this->validar($campos);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
-        $sql = "INSERT INTO bancos (nombre_banco, codigo, numero_cuenta, telefono_afiliado, rif)
-                VALUES (:nombre_banco, :codigo, :numero_cuenta, :telefono_afiliado, :rif)";
+        $sql = "INSERT INTO bancos (nombre_banco, codigo, numero_cuenta, tipo_cuenta, telefono_afiliado, rif)
+                VALUES (:nombre_banco, :codigo, :numero_cuenta, :tipo_cuenta, :telefono_afiliado, :rif)";
         try {
             $stmt = $this->get_conex('negocio')->prepare($sql);
             $stmt->bindParam(':nombre_banco', $this->nombre_banco);
             $stmt->bindParam(':codigo', $this->codigo);
             $stmt->bindParam(':numero_cuenta', $this->numero_cuenta);
+            $stmt->bindParam(':tipo_cuenta', $this->tipo_cuenta);
             $stmt->bindParam(':telefono_afiliado', $this->telefono_afiliado);
             $stmt->bindParam(':rif', $this->rif);
             $stmt->execute();
@@ -292,20 +167,15 @@ class Banco extends Conexion
 
     /**
      * Actualiza un banco existente.
+     // SE USA EN EL MODULO
      */
-    private function _modificar()
+    private function _modificar_banco()
     {
-        $campos = ['id_banco', 'nombre_banco', 'codigo', 'numero_cuenta', 'telefono_afiliado', 'rif'];
-        $contexto = ['exclude_id' => $this->id_banco];
-        $validacion = $this->validar($campos, $contexto);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         $sql = "UPDATE bancos SET 
                     nombre_banco = :nombre_banco,
                     codigo = :codigo,
                     numero_cuenta = :numero_cuenta,
+                    tipo_cuenta = :tipo_cuenta,
                     telefono_afiliado = :telefono_afiliado,
                     rif = :rif
                 WHERE id_banco = :id_banco";
@@ -315,6 +185,7 @@ class Banco extends Conexion
             $stmt->bindParam(':nombre_banco', $this->nombre_banco);
             $stmt->bindParam(':codigo', $this->codigo);
             $stmt->bindParam(':numero_cuenta', $this->numero_cuenta);
+            $stmt->bindParam(':tipo_cuenta', $this->tipo_cuenta);
             $stmt->bindParam(':telefono_afiliado', $this->telefono_afiliado);
             $stmt->bindParam(':rif', $this->rif);
             $stmt->execute();
@@ -327,14 +198,10 @@ class Banco extends Conexion
 
     /**
      * Elimina un banco (soft delete).
+     // SE USA EN EL MODULO
      */
-    private function _eliminar()
+    private function _eliminar_banco()
     {
-        $validacion = $this->validar(['id_banco']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         $sql = "UPDATE bancos SET activo = 0 WHERE id_banco = :id_banco";
         try {
             $stmt = $this->get_conex('negocio')->prepare($sql);
@@ -344,23 +211,6 @@ class Banco extends Conexion
         } catch (PDOException $e) {
             error_log("Error en _eliminar: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al eliminar el banco'];
-        }
-    }
-
-    /**
-     * Último ID insertado en bancos.
-     */
-    private function _lastId()
-    {
-        $sql = "SELECT MAX(id_banco) as last_id FROM bancos";
-        try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->execute();
-            $dato = $stmt->fetch(PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $dato];
-        } catch (PDOException $e) {
-            error_log("Error en _lastId: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al obtener último ID'];
         }
     }
 }

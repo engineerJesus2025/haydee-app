@@ -6,6 +6,7 @@ use haydee\servicios\Autenticacion;
 use haydee\modelo\Rol;
 use haydee\modelo\Notificaciones;
 use haydee\modelo\AnioFiscal;
+use haydee\modelo\CajaChica;
 
 class Sesiones
 {
@@ -25,13 +26,16 @@ class Sesiones
         $_SESSION["permisos"] = $datosUsuario['permisos'];
         $_SESSION["notificaciones"] = array_filter($datosUsuario["notificaciones"],function($n){return $n['leido'] == 0;});
 
-        // Verificar año fiscal (proximamente proceso automático -_-)
-        // $anioFiscalModel = new AnioFiscal();
-        // try {
-        //     $anioFiscalModel->realizar_consulta('verificar_anio_fiscal');
-        // } finally {
-        //     $anioFiscalModel->cerrar();
-        // }
+        // Verificar año fiscal y caja (proximamente proceso automático -_-)
+        try {
+            $anioFiscalModel = new AnioFiscal();
+            $anioFiscalModel->realizar_consulta('verificar_anio_fiscal');
+
+            $caja = new CajaChica();
+            $caja->realizar_consulta('verificar_caja_mes');
+        } finally {
+            $anioFiscalModel->cerrar();
+        }
     }
 
     /**

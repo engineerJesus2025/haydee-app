@@ -10,7 +10,10 @@
 let permiso_eliminar = document.querySelector("#permiso_eliminar")?.value;
 let permiso_modificar = document.querySelector("#permiso_modificar")?.value;
 let boton_formulario = document.querySelector("#boton_formulario");
+
 let modal = new bootstrap.Modal(document.getElementById("modal_presupuesto"), { focus: false });
+let modalDetalles = new bootstrap.Modal(document.getElementById("modal_detalles"), { focus: false });
+
 let formulario_usar = document.querySelector("#form_presupuesto");
 let select_mes = document.querySelector("#fecha");
 let detalles_presupuestos_base;
@@ -74,7 +77,7 @@ function agregar_fila_presupuesto(e) {
     div_nombre.setAttribute("class","col-sm-5");
 
     let input_nombre = document.createElement("input");
-    input_nombre.setAttribute('class','form-control');
+    input_nombre.setAttribute('class','border border-dark form-control');
     input_nombre.setAttribute('type','text');
     input_nombre.setAttribute('placeholder','nombre del gasto');
 
@@ -94,23 +97,23 @@ function agregar_fila_presupuesto(e) {
     div_input_group.setAttribute("class","input-group");
 
     let input_monto = document.createElement("input");
-    input_monto.setAttribute('class','form-control');
+    input_monto.setAttribute('class','border border-dark form-control');
     input_monto.setAttribute('type','number');
     input_monto.setAttribute('title','Valor del monto en bolivares');
     input_monto.setAttribute('placeholder','Ingrese un monto');
     input_monto.setAttribute('value',0);
     input_monto.setAttribute('monto','bs');
 
+    let spam_moneda = document.createElement("spam");
+    spam_moneda.setAttribute('class','border border-primary rounded-end input-group-text icono_moneda');
+    spam_moneda.textContent = "Bs.";
+
     let spam_monto = document.createElement("spam");
     spam_monto.setAttribute('class','w-100 invalid-feedback');
 
-    let spam_moneda = document.createElement("spam");
-    spam_moneda.setAttribute('class','input-group-text icono_moneda');
-    spam_moneda.textContent = "Bs.";
-
     div_input_group.appendChild(input_monto);
-    div_input_group.appendChild(spam_monto);
     div_input_group.appendChild(spam_moneda);
+    div_input_group.appendChild(spam_monto);
     div_monto.appendChild(div_input_group);
 
     let div_intercambio = document.createElement("div");
@@ -361,19 +364,19 @@ function agregarGastoFijo(nombre_gasto,ultimo = false) {
     div_input_group.setAttribute("class","input-group");
 
     let input_monto = document.createElement("input");
-    input_monto.setAttribute('class','form-control');
+    input_monto.setAttribute('class','border border-dark form-control');
     input_monto.setAttribute('type','number');
     input_monto.setAttribute('value',0);
     input_monto.setAttribute('title','Valor del monto en bolivares');
     input_monto.setAttribute('placeholder','Ingrese un monto'); 
     input_monto.setAttribute('monto','bs');
 
+    let spam_moneda = document.createElement("spam");
+    spam_moneda.setAttribute('class','border border-primary rounded-end input-group-text icono_moneda');
+    spam_moneda.textContent = "Bs.";
+
     let spam_monto = document.createElement("spam");
     spam_monto.setAttribute('class','w-100 invalid-feedback');
-
-    let spam_moneda = document.createElement("spam");
-    spam_moneda.setAttribute('class','input-group-text icono_moneda');
-    spam_moneda.textContent = "Bs.";
 
     div_input_group.appendChild(input_monto);
     div_input_group.appendChild(spam_monto);
@@ -573,6 +576,36 @@ function asignarEventosCambioMoneda(){
             }
         });
     });
+
+    document.querySelector(".boton_intercambio_cuota").addEventListener("click",e=>{
+        if (typeof e.preventDefault === 'function') {
+            e.preventDefault();
+        }
+        let input_monto = e.target.closest(".row").querySelector("[monto]"), 
+        input_cambio = e.target.closest(".row").querySelector("[convertido]"),
+        valor_temporal = 0;
+
+        if (input_monto.getAttribute("monto") == "bs") {
+            input_monto.setAttribute("monto",'$');
+
+            valor_temporal = input_monto.value;
+            input_monto.value = input_cambio.value;
+            input_cambio.value = valor_temporal;
+
+            input_monto.parentElement.querySelector(".icono_moneda").textContent = "$";
+            input_cambio.parentElement.querySelector(".icono_moneda").textContent = "Bs.";
+        }
+        else{
+            input_monto.setAttribute("monto",'bs');
+
+            valor_temporal = input_monto.value;
+            input_monto.value = input_cambio.value;
+            input_cambio.value = valor_temporal;
+
+            input_monto.parentElement.querySelector(".icono_moneda").textContent = "Bs.";
+            input_cambio.parentElement.querySelector(".icono_moneda").textContent = "$";
+        }
+    });
 }
 
 // ============================================================
@@ -581,16 +614,28 @@ function asignarEventosCambioMoneda(){
 async function consultar() {
     const formatoPeriodo = (cell) => {
         let [anio, mes] = cell.getValue().split('-');
-        return `${FormatoFechas.nombreMes(parseInt(mes))} del ${anio}`.toUpperCase();
+        return `${FormatoFechas.nombreMes(parseInt(mes).toString().padStart(2,0))} del ${anio}`.toUpperCase();
     };
     const formatoMonto = (cell) => `${parseFloat(cell.getValue()).toFixed(2)} Bs. / ${(cell.getValue() / tasa_dolar).toFixed(2)} $`;
 
     const formatoBotones = (cell) => {
         const id = cell.getData().id_presupuesto;
-        let html = `<div class="d-flex justify-content-center gap-2">
-            <button data-tooltip="true" type="button" class="btn btn-success btn-sm modificar" data-bs-toggle="modal" data-bs-target="#modal_presupuesto" title="Modificar los detalles de este registro" value="${id}"><i class="bi bi-pencil-square"></i></button>`;
-        if (permiso_eliminar == 1) {
-            html += `<button data-tooltip="true" type="button" class="btn btn-danger btn-sm eliminar" title="Quitar este elemento del sistema" value="${id}"><i class="bi bi-trash"></i></button>`;
+        let html = `<div class="d-flex justify-content-center flex-wrap gap-2">
+            <button type="button" class="btn btn-primary btn-sm vista-previa" value="${id}" data-tooltip="true" title="Ver Mas">
+                <i class="bi bi-eye"></i>
+                <span class="d-none d-lg-inline ms-2">Ver</span>
+            </button>`;
+        if (permiso_modificar) {
+            html += `<button class="btn btn-success btn-sm modificar" value="${id}" data-tooltip="true" title="Modificar los detalles de este registro">
+                        <i class="bi bi-pencil"></i>
+                        <span class="d-none d-lg-inline ms-2">Editar</span>
+                    </button>`;
+        }
+        if (permiso_eliminar) {
+            html += `<button class="btn btn-danger btn-sm eliminar" value="${id}" data-tooltip="true" title="Quitar este elemento del sistema">
+                        <i class="bi bi-trash"></i>
+                        <span class="d-none d-lg-inline ms-2">Borrar</span>
+                    </button>`;
         }
         html += `</div>`;
         return html;
@@ -598,25 +643,31 @@ async function consultar() {
 
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
-        { title: "Período", field: "fecha", formatter: formatoPeriodo, minWidth: 150, responsive: 0 },
+        { title: "Período", field: "fecha", formatter: formatoPeriodo, minWidth: 180, responsive: 0 },
         { title: "Estimado", field: "total_estimado", formatter: formatoMonto, minWidth: 180 },
-        { title: "Observación", field: "observacion", minWidth: 200 },
         {
             title: "Acciones", 
             formatter: formatoBotones, headerSort: false, hozAlign: "center", 
-            vertAlign: "middle", minWidth: 100, responsive: 0, download: false,
+            vertAlign: "middle", minWidth: 130, responsive: 0, download: false,widthGrow: 2,
             headerHozAlign: "center",
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
                 const mockEvent = { target: btn };
+                if (btn.classList.contains('vista-previa')) {
+                    mostrarVistaPrevia(cell.getData());
+                }
                 if (btn.classList.contains('modificar')) modificar_formulario(mockEvent);
                 if (btn.classList.contains('eliminar')) eventoEliminar(mockEvent);
             }
         }
     ];
 
-    tabla_presupuesto = Tablas.cargarTabulador("tabla_presupuesto", "", columnas);
+    const opcionesExtra = {
+        parametrosExtra: { operacion: 'consultar' },
+    };
+
+    tabla_presupuesto = Tablas.cargarTabulador("tabla_presupuesto", "", columnas, opcionesExtra);
     
     // Llamada vital del módulo
     await consultarInformacionFormulario();
@@ -631,135 +682,247 @@ async function consultar() {
     }
 }
 
+// Función asíncrona para Vista Previa
+async function mostrarVistaPrevia(data) {
+    // 1. Formateo rápido de los datos base (memoria de Tabulator)
+    let [anio, mes] = data.fecha.split('-');
+    document.getElementById("vp_periodo").textContent = `${FormatoFechas.nombreMes(parseInt(mes).toString().padStart(2,0))} ${anio}`.toUpperCase();
+    
+    // Totales (Usando la variable global tasa_dolar)
+    let totalBs = parseFloat(data.total_estimado) || 0;
+    document.getElementById("vp_total_bs").textContent = `${totalBs.toFixed(2)} Bs.`;
+    document.getElementById("vp_total_usd").textContent = `Ref: ${(totalBs / tasa_dolar).toFixed(2)} $`;
+
+    document.getElementById("vp_observacion").textContent = data.observacion || 'Sin observaciones.';
+
+    // Preparamos el contenedor y mostramos el modal con loader
+    const contenedor = document.getElementById("vp_contenedor_detalles_presupuesto");
+    contenedor.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><div class="text-muted mt-2 small">Cargando desglose...</div></div>';
+    
+    // Limpiamos la reserva hasta que llegue la petición (Tabulator no la trae por defecto en la consulta general)
+    document.getElementById("vp_reserva_bs").textContent = "...";
+    document.getElementById("vp_reserva_usd").textContent = "...";
+    
+    modalDetalles.show();
+
+    // 2. Solicitamos los detalles al servidor
+    const formData = new FormData();
+    formData.append('operacion', 'consultar_presupuesto');
+    formData.append('id_presupuesto', data.id_presupuesto);
+
+    const respuesta = await Peticiones.enviar(formData, "", true);
+
+    // 3. Renderizamos la respuesta
+    if (respuesta.estatus && respuesta.datos) {
+        const pres = respuesta.datos;
+
+        // Actualizamos la cuota de reserva real
+        let reservaBs = parseFloat(pres.cuota_reserva) || 0;
+        document.getElementById("vp_reserva_bs").textContent = `${reservaBs.toFixed(2)} Bs.`;
+        document.getElementById("vp_reserva_usd").textContent = `Ref: ${(reservaBs / tasa_dolar).toFixed(2)} $`;
+
+        // Renderizado de detalles
+        if (pres.detalles && pres.detalles.length > 0) {
+            
+            // Agrupamos los detalles por nombre_tipo_gasto
+            const agrupados = pres.detalles.reduce((acc, curr) => {
+                const categoria = curr.nombre_tipo_gasto || 'Otros Gastos';
+                if (!acc[categoria]) acc[categoria] = [];
+                acc[categoria].push(curr);
+                return acc;
+            }, {});
+
+            // Construimos el HTML
+            let html = '';
+            for (const [categoria, items] of Object.entries(agrupados)) {
+                
+                // Sumamos el subtotal de esta categoría
+                const subtotal = items.reduce((sum, item) => sum + parseFloat(item.monto), 0);
+
+                // Creamos las filas de la tabla
+                const filas = items.map(item => `
+                    <tr>
+                        <td class="text-dark align-middle border-0 border-bottom border-light">
+                            <i class="bi bi-caret-right text-primary me-1" style="font-size: 0.8rem;"></i> ${item.nombre_detalle}
+                        </td>
+                        <td class="text-end fw-semibold text-dark align-middle border-0 border-bottom border-light">
+                            ${parseFloat(item.monto).toFixed(2)} Bs.
+                        </td>
+                    </tr>
+                `).join('');
+                
+                // Tarjeta por categoría
+                html += `
+                    <div class="card border-0 shadow-sm mb-2">
+                        <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-2">
+                            <span class="fw-bold text-uppercase text-secondary" style="font-size: 0.8rem; letter-spacing: 0.5px;">
+                                <i class="bi bi-folder2-open me-2 text-primary"></i>${categoria}
+                            </span>
+                            <span class="badge bg-primary rounded-pill">Subtotal: ${subtotal.toFixed(2)} Bs.</span>
+                        </div>
+                        <div class="card-body p-0">
+                            <table class="table table-sm table-borderless mb-0">
+                                <tbody>
+                                    ${filas}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+            contenedor.innerHTML = html;
+
+        } else {
+            contenedor.innerHTML = `
+                <div class="alert alert-warning d-flex align-items-center mb-0 shadow-sm" role="alert">
+                    <i class="bi bi-info-circle-fill fs-4 me-3"></i>
+                    <div>Este presupuesto no tiene detalles registrados.</div>
+                </div>`;
+        }
+    } else {
+        contenedor.innerHTML = '<div class="text-center text-danger py-3">Error al cargar los detalles.</div>';
+    }
+}
+
 async function consultarInformacionFormulario() {
     const formData = new FormData();
     formData.append('operacion', 'consultar_meses_faltantes');
     const respuesta = await Peticiones.enviar(formData);
-    if (!respuesta.estatus) {
-        Alertas.mostrar('error', 'Error', respuesta.mensaje);
-        return;
-    }
+    Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
+        const meses = respuestaServidor.datos || [];
+        if (meses.length === 0) {
+            document.getElementById('boton_registrar').nextElementSibling.textContent = "No hay meses para definir presupuesto";
+            document.getElementById('boton_registrar').setAttribute('style', 'display:none');
+            return;
+        }
 
-    const meses = respuesta.datos || [];
-    if (meses.length === 0) {
-        document.getElementById('boton_registrar').nextElementSibling.textContent = "No hay meses para definir presupuesto";
-        document.getElementById('boton_registrar').setAttribute('style', 'display:none');
-        return;
-    }
+        select_mes.innerHTML = '';
+        let fragment = document.createDocumentFragment();
+        meses.forEach(m => {
+            let option = document.createElement("option");
+            option.value = `${m.anio_faltante}-${m.mes_faltante.toString().padStart(2,0)}-01`;
 
-    select_mes.innerHTML = '';
-    let fragment = document.createDocumentFragment();
-    meses.forEach(m => {
-        let option = document.createElement("option");
-        option.value = `${m.anio_faltante}-${m.mes_faltante}-01`;
+            option.textContent = `${FormatoFechas.nombreMes(m.mes_faltante)} del ${m.anio_faltante}`.toUpperCase();
 
-        option.textContent = `${FormatoFechas.nombreMes(m.mes_faltante)} del ${m.anio_faltante}`.toUpperCase();
+            fragment.appendChild(option);
+        });
+        select_mes.appendChild(fragment);
 
-        fragment.appendChild(option);
+        llenarDetallesPresupuestos();
     });
-    select_mes.appendChild(fragment);
-
-    await llenarDetallesPresupuestos();
 }
 
 async function llenarDetallesPresupuestos() {
     const formData = new FormData();
     formData.append('operacion', 'consultar_tipo_gastos');
     const respuesta = await Peticiones.enviar(formData);
-    if (!respuesta.estatus) {
-        Alertas.mostrar('error', 'Error', respuesta.mensaje);
-        return;
-    }
 
-    const tiposGasto = respuesta.datos || [];
-    const contenedor = document.getElementById('contenedor_presupuestos');
-    contenedor.innerHTML = '';
-    let fragment = document.createDocumentFragment();
+    Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
+        const tiposGasto = respuestaServidor.datos || [];
+        const contenedor = document.getElementById('contenedor_presupuestos');
+        contenedor.innerHTML = '';
+        let fragment = document.createDocumentFragment();
 
-    tiposGasto.forEach(tipo => {
-    	if (tipo.nombre_tipo_gasto === "Reposición de Caja Chica") return;
+        tiposGasto.forEach(tipo => {
+        	if (tipo.nombre_tipo_gasto === "Reposición de Caja Chica") return;
 
-        let nombreFormat = tipo.nombre_tipo_gasto.replaceAll(" ", "-");
-        let acordeon = document.createElement("div");
-        acordeon.className = "accordion col-12";
-        acordeon.id = nombreFormat;
-        acordeon.setAttribute('id_tipo_gasto', tipo.id_tipo_gasto);
+            let nombreFormat = tipo.nombre_tipo_gasto.replaceAll(" ", "-");
+            let acordeon = document.createElement("div");
+            acordeon.className = "accordion col-12";
+            acordeon.id = nombreFormat;
+            acordeon.setAttribute('id_tipo_gasto', tipo.id_tipo_gasto);
 
-        let item = document.createElement("div");
-        item.className = "accordion-item";
-        let header = document.createElement("h2");
-        header.className = "accordion-header";
-        let boton = document.createElement("button");
-        boton.className = "accordion-button";
-        boton.type = "button";
-        boton.setAttribute('data-bs-toggle', 'collapse');
-        boton.setAttribute('data-bs-target', `#${nombreFormat}-body`);
-        boton.textContent = tipo.nombre_tipo_gasto;
-        header.appendChild(boton);
+            let item = document.createElement("div");
+            item.className = "accordion-item";
+            let header = document.createElement("h2");
+            header.className = "accordion-header";
+            let boton = document.createElement("button");
+            boton.className = "accordion-button";
+            boton.type = "button";
+            boton.setAttribute('data-bs-toggle', 'collapse');
+            boton.setAttribute('data-bs-target', `#${nombreFormat}-body`);
+            boton.textContent = tipo.nombre_tipo_gasto;
+            header.appendChild(boton);
 
-        let cuerpo = document.createElement("div");
-        cuerpo.className = "align-items-center my-3 accordion-collapse collapse show";
-        cuerpo.id = `${nombreFormat}-body`;
+            let cuerpo = document.createElement("div");
+            cuerpo.className = "align-items-center my-3 accordion-collapse collapse show";
+            cuerpo.id = `${nombreFormat}-body`;
 
-        // Agregar filas según el tipo (similar al código original)
-        if (tipo.nombre_tipo_gasto === "Servicio de Gas") {
-            cuerpo.appendChild(agregarGastoFijo("GAS LARA", true));
-        } else if (tipo.nombre_tipo_gasto === "Servicios Públicos") {
-            cuerpo.appendChild(agregarGastoFijo("CORPOELEC"));
-            cuerpo.appendChild(agregarGastoFijo("HIDROLARA", true));
-        } else if (tipo.nombre_tipo_gasto === "Personal y Obligaciones Laborales") {
-            cuerpo.appendChild(agregarGastoFijo("Trabajadora Residencial"));
-            cuerpo.appendChild(agregarGastoFijo("Bono de alimentacion"));
-            cuerpo.appendChild(agregarGastoFijo("Bono de ayuda"));
-            cuerpo.appendChild(agregarGastoFijo("Seguridad Social", true));
-        } else if (tipo.nombre_tipo_gasto === "Mantenimientos y Reparaciones") {
-            cuerpo.appendChild(agregarGastoFijo("Mantenimiento ascensor", true));
-        } else if (tipo.nombre_tipo_gasto === "Suministros de Limpieza y Operacion") {
-            cuerpo.appendChild(agregarGastoFijo("Bolsas de Basura"));
-            cuerpo.appendChild(agregarGastoFijo("Productos de Limpieza", true));
-        } else if (tipo.nombre_tipo_gasto === "Gastos Administrativos y Financieros") {
-            cuerpo.appendChild(agregarGastoFijo("Comisiones Bancarias"));
-            cuerpo.appendChild(agregarGastoFijo("Exencion cuota del administrador", true));
-        } else {
-            cuerpo.appendChild(agregarGastoFijo("", true));
-        }
+            // Agregar filas según el tipo (similar al código original)
+            if (tipo.nombre_tipo_gasto === "Servicio de Gas") {
+                cuerpo.appendChild(agregarGastoFijo("GAS LARA", true));
+            } else if (tipo.nombre_tipo_gasto === "Servicios Públicos" || tipo.nombre_tipo_gasto === "Servicios Publicos") {
+                cuerpo.appendChild(agregarGastoFijo("CORPOELEC"));
+                cuerpo.appendChild(agregarGastoFijo("HIDROLARA", true));
+            } else if (tipo.nombre_tipo_gasto === "Personal y Obligaciones Laborales") {
+                cuerpo.appendChild(agregarGastoFijo("Trabajadora Residencial"));
+                cuerpo.appendChild(agregarGastoFijo("Bono de alimentacion"));
+                cuerpo.appendChild(agregarGastoFijo("Bono de ayuda"));
+                cuerpo.appendChild(agregarGastoFijo("Seguridad Social", true));
+            } else if (tipo.nombre_tipo_gasto === "Mantenimientos y Reparaciones") {
+                cuerpo.appendChild(agregarGastoFijo("Mantenimiento ascensor", true));
+            } else if (tipo.nombre_tipo_gasto === "Suministros de Limpieza y Operacion") {
+                cuerpo.appendChild(agregarGastoFijo("Bolsas de Basura"));
+                cuerpo.appendChild(agregarGastoFijo("Productos de Limpieza", true));
+            } else if (tipo.nombre_tipo_gasto === "Gastos Administrativos y Financieros") {
+                cuerpo.appendChild(agregarGastoFijo("Comisiones Bancarias"));
+                cuerpo.appendChild(agregarGastoFijo("Exencion cuota del administrador", true));
+            } else {
+                cuerpo.appendChild(agregarGastoFijo("", true));
+            }
 
-        item.appendChild(header);
-        item.appendChild(cuerpo);
-        acordeon.appendChild(item);
-        fragment.appendChild(acordeon);
-        fragment.appendChild(document.createElement("hr"));
+            item.appendChild(header);
+            item.appendChild(cuerpo);
+            acordeon.appendChild(item);
+            fragment.appendChild(acordeon);
+            fragment.appendChild(document.createElement("hr"));
+        });
+
+        contenedor.appendChild(fragment);
+        asignarEventosDetalles();
+        asignarEventosCambioMoneda();
+        detalles_presupuestos_base = contenedor.innerHTML; // Guardar para reset
     });
-
-    contenedor.appendChild(fragment);
-    asignarEventosDetalles();
-    asignarEventosCambioMoneda();
-    detalles_presupuestos_base = contenedor.innerHTML; // Guardar para reset
 }
 
 // ============================================================
 // ACCIONES: REGISTRAR, modificar, ELIMINAR
 // ============================================================
 
+// ============================================================
+// ACCIONES: REGISTRAR, modificar, ELIMINAR
+// ============================================================
+
 /**
- * Recolecta los datos del formulario (cabecera + detalles)
+ * Agrega los datos del formulario (cabecera + detalles) al FormData
+ * simulando el comportamiento de inputs con name="arreglo[]"
+ * Retorna la cantidad de renglones válidos procesados.
  */
-function recolectarDatosPresupuesto(id_presupuesto = null) {
+function empaquetarDatosPresupuesto(formData) {
     let fecha = document.getElementById('fecha').value;
-    let observacion = document.getElementById("observacion").value;
+    let observacion = document.getElementById("observacion").value || "Sin observación";
 
     // Cuota de reserva (siempre en Bs.)
     let input_reserva = document.getElementById("cuota_reserva");
-    let cuota_reserva = input_reserva.getAttribute("monto") === "bs" ?
-        input_reserva.value :
-        input_reserva.closest(".row").querySelector("[convertido]").value;
+    let cuota_reserva = 0;
+    if (input_reserva) {
+        cuota_reserva = input_reserva.getAttribute("monto") === "bs" ?
+            input_reserva.value :
+            input_reserva.closest(".row").querySelector("[convertido]").value;
+    }
 
-    let detalles = [];
+    // Cabecera
+    formData.append('fecha', fecha);
+    formData.append('cuota_reserva', parseFloat(cuota_reserva || 0));
+    formData.append('observacion', observacion);
+
+    let cantidadDetalles = 0;
     let acordeones = document.querySelectorAll(".accordion");
 
     acordeones.forEach(acordion => {
         let tipo_gasto_id = acordion.getAttribute("id_tipo_gasto");
         let filas = acordion.querySelectorAll(".accordion-body");
+        
         filas.forEach(fila => {
             let input_nombre = fila.querySelector("[type='text']");
             if (!input_nombre) return;
@@ -776,48 +939,62 @@ function recolectarDatosPresupuesto(id_presupuesto = null) {
             monto = parseFloat(monto);
             if (monto <= 0) return;
 
-            detalles.push({
-                nombre: nombre,
-                monto: monto,
-                tipo_gasto_id: tipo_gasto_id
-            });
+            // AQUÍ ESTÁ LA MAGIA: Enviamos los campos como arreglos [] para PHP
+            formData.append('nombre[]', nombre);
+            formData.append('monto[]', monto);
+            formData.append('tipo_gasto_id[]', tipo_gasto_id);
+            
+            cantidadDetalles++;
         });
     });
 
-    return {
-        id_presupuesto: id_presupuesto,
-        fecha: fecha,
-        cuota_reserva: parseFloat(cuota_reserva || 0),
-        observacion: observacion,
-        detalles: detalles
-    };
+    return cantidadDetalles;
 }
 
 /**
- * Registrar nuevo presupuesto (envía una sola petición)
+ * Registrar nuevo presupuesto
  */
 async function registrar() {
-    let datos = recolectarDatosPresupuesto();
-    if (datos.detalles.length === 0) {
-        Alertas.mostrar('warning', 'Atención', 'Debe agregar al menos un detalle con monto > 0');
+    let formData = new FormData();
+    formData.append('operacion', 'registrar_presupuesto');
+    formData.append('tasa_dolar', tasa_dolar);
+
+    let totalDetalles = empaquetarDatosPresupuesto(formData);
+
+    if (totalDetalles === 0) {
+        Alertas.mostrar('warning', 'Atención', 'Debe agregar al menos un detalle con monto mayor a 0');
         return;
     }
-
-    let formData = new FormData();
-    formData.append('operacion', 'registrar_masivo');
-    formData.append('tasa_dolar', tasa_dolar);
-    formData.append('datos_presupuesto', JSON.stringify(datos));
 
     let respuesta = await Peticiones.enviar(formData, "", true);
-    if (!respuesta.estatus) {
-        Alertas.mostrar('error', 'Error', respuesta.mensaje);
+    Validador.procesarRespuesta(respuesta, () => {
+        modal.hide();
+        consultarInformacionFormulario();
+        tabla_presupuesto.replaceData();
+    });
+}
+
+/**
+ * Modificar presupuesto existente
+ */
+async function modificar(id) {
+    let formData = new FormData();
+    formData.append('operacion', 'modificar_presupuesto');
+    formData.append('id_presupuesto', id);
+    formData.append('tasa_dolar', tasa_dolar);
+
+    let totalDetalles = empaquetarDatosPresupuesto(formData);
+
+    if (totalDetalles === 0) {
+        Alertas.mostrar('warning', 'Atención', 'Debe agregar al menos un detalle con monto mayor a 0');
         return;
     }
 
-    modal.hide();
-    await consultarInformacionFormulario();
-    tabla_presupuesto.replaceData();
-    Alertas.mostrar('success', 'Éxito', respuesta.mensaje);
+    let respuesta = await Peticiones.enviar(formData, "", true);
+    Validador.procesarRespuesta(respuesta, () => {
+        tabla_presupuesto.replaceData();
+        modal.hide();
+    });
 }
 
 /**
@@ -832,109 +1009,84 @@ async function modificar_formulario(e) {
 
     let formData = new FormData();
     formData.append("id_presupuesto", id);
-    formData.append('operacion', 'consulta_especifica');
+    formData.append('operacion', 'consultar_presupuesto');
 
     let respuesta = await Peticiones.enviar(formData, "", true);
-    if (!respuesta.estatus) {
-        Alertas.mostrar('error', 'Error', respuesta.mensaje);
-        return;
-    }
+    Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
+        let presupuesto = respuestaServidor.datos;
 
-    let presupuesto = respuesta.datos;
+        // Mostrar la fecha en el select (puede que no esté en la lista, así que la creamos)
+        let [anio, mes] = presupuesto.fecha.split('-');
+        mes = parseInt(mes);
+        let fechaStr = `${anio}-${mes.toString().padStart(2, '0')}-01`;
 
-    // Mostrar la fecha en el select (puede que no esté en la lista, así que la creamos)
-    let [anio, mes] = presupuesto.fecha.split('-');
-    mes = parseInt(mes);
-    let fechaStr = `${anio}-${mes.toString().padStart(2, '0')}-01`;
-
-    let option = document.createElement("option");
-    option.value = fechaStr;
-    option.textContent = `${FormatoFechas.nombreMes(mes)} del ${anio}`.toUpperCase();
-    option.id = 'fecha_editada';
-    option.selected = true;
-    select_mes.appendChild(option);
-    select_mes.value = fechaStr;
+        let option = document.createElement("option");
+        option.value = fechaStr;
+        option.textContent = `${FormatoFechas.nombreMes(mes)} del ${anio}`.toUpperCase();
+        option.id = 'fecha_editada';
+        option.selected = true;
+        select_mes.appendChild(option);
+        select_mes.value = fechaStr;
 
 
-    document.getElementById("observacion").value = presupuesto.observacion || '';
-    document.getElementById("cuota_reserva").value = presupuesto.cuota_reserva;
+        document.getElementById("observacion").value = presupuesto.observacion || '';
+        document.getElementById("cuota_reserva").value = presupuesto.cuota_reserva;
 
-    // Calcular el equivalente en dólares
-    let inputConvertir = document.getElementById("cuota_reserva").closest(".row").querySelector("[convertido]");
-    inputConvertir.value = (presupuesto.cuota_reserva / tasa_dolar).toFixed(2);
+        // Calcular el equivalente en dólares
+        let inputConvertir = document.getElementById("cuota_reserva").closest(".row").querySelector("[convertido]");
+        inputConvertir.value = (presupuesto.cuota_reserva / tasa_dolar).toFixed(2);
 
-    // Marcar detalles existentes
-    if (presupuesto.detalles && presupuesto.detalles.length > 0) {
-        presupuesto.detalles.forEach(det => {
-            let encontrado = false;
-            // Buscar si ya existe un input de texto con ese nombre (gasto fijo)
-            document.querySelectorAll("[type='text']").forEach(input => {
-                if (input.value === det.nombre_detalle) {
-                    input.closest(".row").querySelector("[type='number']").value = det.monto;
-                    let convertido = input.closest(".row").querySelector("[convertido]");
-                    convertido.value = (det.monto / tasa_dolar).toFixed(2);
-                    encontrado = true;
-                }
-            });
-            // Si no es gasto fijo, agregar nueva fila
-            if (!encontrado) {
-                let acordeon = document.querySelector(`[id_tipo_gasto='${det.tipo_gasto_id}']`);
-                if (acordeon) {
-                    let botonAgregar = acordeon.querySelector("[accion='agregar']");
-                    if (botonAgregar) {
-                        // Simular clic nativo para crear nueva fila de forma segura
-                        let clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true });
-                        botonAgregar.dispatchEvent(clickEvent);
-                        
-                        // Pequeño delay para asegurar que el DOM se actualizó antes de buscar los inputs
-                        setTimeout(() => {
-                            let nuevosInputs = acordeon.querySelectorAll("[type='text']");
-                            let ultimo = nuevosInputs[nuevosInputs.length - 1];
-                            ultimo.value = det.nombre_detalle;
-                            ultimo.closest(".row").querySelector("[type='number']").value = det.monto;
-                            let convertido = ultimo.closest(".row").querySelector("[convertido]");
-                            convertido.value = (det.monto / tasa_dolar).toFixed(2);
-                        }, 10);
+        // Marcar detalles existentes
+        if (presupuesto.detalles && presupuesto.detalles.length > 0) {
+            presupuesto.detalles.forEach(det => {
+                let encontrado = false;
+                // Buscar si ya existe un input de texto con ese nombre (gasto fijo)
+                document.querySelectorAll("[type='text']").forEach(input => {
+                    if (input.value === det.nombre_detalle) {
+                        input.closest(".row").querySelector("[type='number']").value = det.monto;
+                        let convertido = input.closest(".row").querySelector("[convertido]");
+                        convertido.value = (det.monto / tasa_dolar).toFixed(2);
+                        encontrado = true;
+                    }
+                });
+                // Si no es gasto fijo, agregar nueva fila
+                if (!encontrado) {
+                    let acordeon = document.querySelector(`[id_tipo_gasto='${det.tipo_gasto_id}']`);
+                    if (acordeon) {
+                        let botonAgregar = acordeon.querySelector("[accion='agregar']");
+                        if (botonAgregar) {
+                            // Simular clic nativo para crear nueva fila de forma segura
+                            let clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true });
+                            botonAgregar.dispatchEvent(clickEvent);
+                            
+                            // Pequeño delay para asegurar que el DOM se actualizó antes de buscar los inputs
+                            setTimeout(() => {
+                                let nuevosInputs = acordeon.querySelectorAll("[type='text']");
+                                let ultimo = nuevosInputs[nuevosInputs.length - 1];
+                                ultimo.value = det.nombre_detalle;
+                                ultimo.closest(".row").querySelector("[type='number']").value = det.monto;
+                                let convertido = ultimo.closest(".row").querySelector("[convertido]");
+                                convertido.value = (det.monto / tasa_dolar).toFixed(2);
+                            }, 10);
+                        }
                     }
                 }
-            }
-        });
-    }
+            });
+        }
 
-    if (permiso_modificar != 1) {
-        boton_formulario.setAttribute("hidden", true);
-    }
+        if (permiso_modificar != 1) {
+            boton_formulario.setAttribute("hidden", true);
+        }
 
-    boton_formulario.setAttribute("modificar", true);
-    boton_formulario.setAttribute("id_modificar", id);
-    boton_formulario.textContent = "Guardar Cambios";
-    document.getElementById('titulo_modal').textContent = "Modificar presupuesto";
+        boton_formulario.setAttribute("modificar", true);
+        boton_formulario.setAttribute("id_modificar", id);
+        boton_formulario.textContent = "Guardar Cambios";
+        document.getElementById('titulo_modal').textContent = "Modificar presupuesto";
+
+        modal.show();
+    });
 }
 
-/**
- * modificar presupuesto existente
- */
-async function modificar(id) {
-    let datos = recolectarDatosPresupuesto(id);
-    if (datos.detalles.length === 0) {
-        Alertas.mostrar('warning', 'Atención', 'Debe agregar al menos un detalle con monto > 0');
-        return;
-    }
-
-    let formData = new FormData();
-    formData.append('operacion', 'modificar_masivo');
-    formData.append('datos_presupuesto', JSON.stringify(datos));
-
-    let respuesta = await Peticiones.enviar(formData, "", true);
-    if (!respuesta.estatus) {
-        Alertas.mostrar('error', 'Error', respuesta.mensaje);
-        return;
-    }
-
-    tabla_presupuesto.replaceData();
-    modal.hide();
-    Alertas.mostrar('success', 'Éxito', respuesta.mensaje);
-}
 
 // ============================================================
 // ELIMINACIÓN
@@ -957,15 +1109,12 @@ function eventoEliminar(e) {
 async function eliminar(id) {
     let formData = new FormData();
     formData.append("id_presupuesto", id);
-    formData.append('operacion', 'eliminar');
+    formData.append('operacion', 'eliminar_presupuesto');
     let respuesta = await Peticiones.enviar(formData);
-    if (!respuesta.estatus) {
-        Alertas.mostrar('error', 'Error', respuesta.mensaje);
-        return;
-    }
-    tabla_presupuesto.replaceData();
-    await consultarInformacionFormulario();
-    Alertas.mostrar('success', 'Éxito', respuesta.mensaje);
+    Validador.procesarRespuesta(respuesta, () => {
+        tabla_presupuesto.replaceData();
+        consultarInformacionFormulario();
+    });
 }
 
 // ============================================================

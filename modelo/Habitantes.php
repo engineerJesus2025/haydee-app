@@ -21,40 +21,63 @@ class Habitantes extends Conexion
     private $nuevo_apartamento_id;
     private $nuevo_tipo_vinculo;
 
-    // Reglas de validación centralizadas
-    private $reglas = [
-        'id_habitante' => [
-            'regex' => '/^\d+$/',
-            'exists' => ['tabla' => 'habitantes', 'campo' => 'id_habitante']
-        ],
-        'nombre' => [
-            'regex' => '/^[A-Za-z ]{3,30}$/'
-        ],
-        'apellido' => [
-            'regex' => '/^[A-Za-z ]{3,30}$/'
-        ],
-        'cedula' => [
-            'regex' => '/^[VE]{1}[0-9]{7,8}$/',
-            'unique' => ['tabla' => 'habitantes', 'campo' => 'cedula', 'exclude_field' => 'id_habitante']
-        ],
-        'telefono' => [
-            'regex' => '/^\d{11}$/'
-        ],
-        'correo' => [
-            'regex' => '/^[-A-Za-z0-9_.]{3,35}@[A-Za-z0-9]{3,10}\.[A-Za-z]{2,3}$/',
-            'unique' => ['tabla' => 'habitantes', 'campo' => 'correo', 'exclude_field' => 'id_habitante']
-        ],
-        'fecha_nacimiento' => [
-            'regex' => '/^\d{4}-\d{2}-\d{2}$/',
-            'custom' => 'validarFecha'
-        ],
-        'sexo' => [
-            'regex' => '/^(Masculino|Femenino)$/'  // Asumiendo que sexo es M o F, ajustar si hay más opciones
-        ],
-        'nuevo_tipo_vinculo' => [
-            'regex' => '/^(Propietario|Inquilino|Habitante|Otro)$/'
-        ]
-    ];
+    /**
+     * Devuelve las reglas de validación según la operación solicitada.
+     */
+    public static function obtenerReglas($operacion) {
+        $reglasGenerales = [
+            'id_habitante' => [
+                'regex' => '/^\d+$/',
+                'exists' => ['tabla' => 'habitantes', 'campo' => 'id_habitante']
+            ],
+            'nombre' => [
+                'regex' => '/^[A-Za-z ]{3,30}$/'
+            ],
+            'apellido' => [
+                'regex' => '/^[A-Za-z ]{3,30}$/'
+            ],
+            'cedula' => [
+                'regex' => '/^[VE]{1}[0-9]{7,8}$/',
+                'unique' => ['tabla' => 'habitantes', 'campo' => 'cedula', 'exclude_field' => 'id_habitante']
+            ],
+            'telefono' => [
+                'regex' => '/^\d{11}$/'
+            ],
+            'correo' => [
+                'regex' => '/^[-A-Za-z0-9_.]{3,35}@[A-Za-z0-9]{3,10}\.[A-Za-z]{2,3}$/',
+                'unique' => ['tabla' => 'habitantes', 'campo' => 'correo', 'exclude_field' => 'id_habitante']
+            ],
+            'fecha_nacimiento' => [
+                'regex' => '/^\d{4}-\d{2}-\d{2}$/'
+            ],
+            'sexo' => [
+                'regex' => '/^(Masculino|Femenino)$/'
+            ],
+            'nuevo_tipo_vinculo' => [
+                'regex' => '/^(Propietario|Inquilino|Habitante|Otro)$/'
+            ],
+            'apartamento_id' => [
+                'regex' => '/^\d+$/',
+                'exists' => ['tabla' => 'apartamentos', 'campo' => 'id_apartamento']
+            ],
+            'tipo_vinculo' => [
+                'regex' => '/^(Propietario|Inquilino|Habitante|Otro)$/'
+            ]
+        ];
+
+        // Mapeamos las operaciones que involucran a habitantes
+        $camposPorOperacion = [
+            'registrar_habitantes' => ['nombre', 'apellido', 'cedula', 'telefono', 'correo', 'fecha_nacimiento', 'sexo', 'apartamento_id', 'tipo_vinculo'],
+            'modificar_habitantes'          => ['id_habitante', 'nombre', 'apellido', 'cedula', 'telefono', 'correo', 'fecha_nacimiento', 'sexo', 'apartamento_id', 'tipo_vinculo'],
+            'eliminar_habitantes'           => ['id_habitante'],
+            'consulta_especifica_habitante' => ['id_habitante']
+        ];
+
+        if (isset($camposPorOperacion[$operacion])) {
+            return array_intersect_key($reglasGenerales, array_flip($camposPorOperacion[$operacion]));
+        }
+        return [];
+    }
 
     // Getters y Setters
     public function set_id_habitante($id) { $this->id_habitante = $id; }
@@ -104,258 +127,15 @@ class Habitantes extends Conexion
     }
 
     // -----------------------------------------------------------------
-    // Método de validación centralizado
-    // -----------------------------------------------------------------
-
-    private function validar($campos, $contexto = [])
-    {
-        foreach ($campos as $campo) {
-            if (!isset($this->reglas[$campo])) {
-                return [
-                    'estatus' => false,
-                    'mensaje' => "No hay reglas de validación definidas para el campo '$campo'."
-                ];
-            }
-            $regla = $this->reglas[$campo];
-
-            $getter = 'get_' . $campo;
-            if (!method_exists($this, $getter)) {
-                return [
-                    'estatus' => false,
-                    'mensaje' => "El campo '$campo' no tiene un getter definido."
-                ];
-            }
-            $valor = $this->$getter();
-
-            // Requerido
-            if ($valor === null) {
-                return [
-                    'estatus' => false,
-                    'mensaje' => "El campo '$campo' es requerido y no se ha establecido."
-                ];
-            }
-            if (is_string($valor) && trim($valor) === '') {
-                return [
-                    'estatus' => false,
-                    'mensaje' => "El campo '$campo' no puede estar vacío."
-                ];
-            }
-
-            // Validar con expresión regular
-            if (isset($regla['regex'])) {
-                if (!preg_match($regla['regex'], (string)$valor)) {
-                    return [
-                        'estatus' => false,
-                        'mensaje' => "El campo '$campo' no tiene un formato válido."
-                    ];
-                }
-            }
-
-            // Validación personalizada
-            if (isset($regla['custom']) && method_exists($this, $regla['custom'])) {
-                if (!$this->{$regla['custom']}($valor)) {
-                    return [
-                        'estatus' => false,
-                        'mensaje' => "El campo '$campo' no es válido."
-                    ];
-                }
-            }
-
-            // Validar existencia en otra tabla
-            if (isset($regla['exists'])) {
-                $tabla = $regla['exists']['tabla'];
-                $campoFor = $regla['exists']['campo'] ?? $campo;
-                if (!$this->existeEnTabla($tabla, $campoFor, $valor)) {
-                    return [
-                        'estatus' => false,
-                        'mensaje' => "El valor del campo '$campo' no existe en la tabla $tabla."
-                    ];
-                }
-            }
-
-            // Validar unicidad
-            if (isset($regla['unique'])) {
-                $tabla = $regla['unique']['tabla'];
-                $campoUnico = $regla['unique']['campo'] ?? $campo;
-                $excludeField = $regla['unique']['exclude_field'] ?? null;
-                $excludeValue = $contexto['exclude_id'] ?? null;
-                if (!$this->esUnico($tabla, $campoUnico, $valor, $excludeField, $excludeValue)) {
-                    return [
-                        'estatus' => false,
-                        'mensaje' => "El valor del campo '$campo' ya está registrado."
-                    ];
-                }
-            }
-        }
-        return ['estatus' => true];
-    }
-
-    /**
-     * Verifica si un valor existe en una tabla específica (usa BD negocio).
-     */
-    private function existeEnTabla($tabla, $campo, $valor)
-    {
-        $sql = "SELECT COUNT(*) as total FROM $tabla WHERE $campo = :valor";
-        try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->bindParam(':valor', $valor);
-            $stmt->execute();
-            $fila = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $fila['total'] > 0;
-        } catch (PDOException $e) {
-            error_log("Error en existeEnTabla: " . $e->getMessage());
-            return false;
-        }
-    }
-
-    /**
-     * Verifica si un valor es único (exceptuando un ID dado).
-     */
-    private function esUnico($tabla, $campo, $valor, $excludeField = null, $excludeValue = null)
-    {
-        $sql = "SELECT COUNT(*) as total FROM $tabla WHERE $campo = :valor";
-        if ($excludeField && $excludeValue !== null) {
-            $sql .= " AND $excludeField != :exclude_val";
-        }
-        try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->bindParam(':valor', $valor);
-            if ($excludeField && $excludeValue !== null) {
-                $stmt->bindParam(':exclude_val', $excludeValue);
-            }
-            $stmt->execute();
-            $fila = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $fila['total'] == 0;
-        } catch (PDOException $e) {
-            error_log("Error en esUnico: " . $e->getMessage());
-            return false;
-        }
-    }
-
-    /**
-     * Validación personalizada para fecha.
-     */
-    private function validarFecha($fecha)
-    {
-        $valores = explode('-', $fecha);
-        return count($valores) == 3 && checkdate((int)$valores[1], (int)$valores[2], (int)$valores[0]);
-    }
-
-    /**
-     * Verifica si existe un habitante activo con el ID seteado.
-     * @return array ['estatus' => bool, 'existe' => bool, 'mensaje' => string]
-     */
-    private function _existe_habitante()
-    {
-        $validacion = $this->validar(['id_habitante']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
-        $sql = "SELECT 1 FROM habitantes WHERE id_habitante = :id AND activo = 1 LIMIT 1";
-        try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->execute([':id' => $this->id_habitante]);
-            $existe = $stmt->fetchColumn() ? true : false;
-            return ['estatus' => true, 'existe' => $existe];
-        } catch (PDOException $e) {
-            error_log("Error en _existe_habitante: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al verificar habitante'];
-        }
-    }
-
-    // -----------------------------------------------------------------
     // Métodos privados (acciones)
     // -----------------------------------------------------------------
 
     /**
-     * Verifica si existe un habitante por cédula (para validación rápida).
-     */
-    private function _validar()
-    {
-        $validacion = $this->validar(['cedula']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
-        $sql = "SELECT id_habitante FROM habitantes WHERE cedula = :cedula AND activo = 1";
-        try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->bindParam(':cedula', $this->cedula);
-            $stmt->execute();
-            $existe = $stmt->fetch(PDO::FETCH_ASSOC) ? true : false;
-            return ['estatus' => true, 'existe' => $existe];
-        } catch (PDOException $e) {
-            error_log("Error en _validar: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al verificar habitante'];
-        }
-    }
-
-    /**
-     * Verifica si existe un habitante por correo.
-     */
-    private function _verificar_correo()
-    {
-        $validacion = $this->validar(['correo']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
-        $sql = "SELECT id_habitante FROM habitantes WHERE correo = :correo AND activo = 1";
-        try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->bindParam(':correo', $this->correo);
-            $stmt->execute();
-            $existe = $stmt->fetch(PDO::FETCH_ASSOC) ? true : false;
-            return ['estatus' => true, 'existe' => $existe];
-        } catch (PDOException $e) {
-            error_log("Error en _verificar_correo: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al verificar correo'];
-        }
-    }
-
-    /**
-     * Lista todos los habitantes con información de apartamento.
-     */
-    private function _consultar()
-    {
-        $sql = "SELECT
-                    h.id_habitante,
-                    h.nombre,
-                    h.apellido,
-                    h.cedula,
-                    h.telefono,
-                    h.correo,
-                    h.fecha_nacimiento,
-                    h.sexo,
-                    a.nro_apartamento,
-                    ha.tipo_vinculo
-                FROM habitantes h
-                INNER JOIN habitantes_apartamentos ha ON h.id_habitante = ha.habitante_id
-                INNER JOIN apartamentos a ON ha.apartamento_id = a.id_apartamento
-                WHERE h.activo = 1
-                ORDER BY h.id_habitante";
-        try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->execute();
-            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $datos];
-        } catch (PDOException $e) {
-            error_log("Error en _consultar: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar habitantes'];
-        }
-    }
-
-    /**
      * Consulta un habitante específico por ID.
+     // SE USA EN EL MODULO
      */
     private function _consultar_habitante()
     {
-        $validacion = $this->validar(['id_habitante']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         $sql = "SELECT 
                 h.id_habitante,
                 h.nombre,
@@ -392,84 +172,26 @@ class Habitantes extends Conexion
     }
 
     /**
-     * Registra un nuevo habitante.
+     * Registra un habitante y su relación con un apartamento en una sola transacción.
+     // SE USA EN EL MODULO
      */
-    private function _registrar()
+    private function _registrar_habitantes()
     {
-        $campos = ['cedula', 'nombre', 'apellido', 'telefono', 'correo', 'fecha_nacimiento', 'sexo'];
-        $validacion = $this->validar($campos);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
-        $sql = "INSERT INTO habitantes (nombre, apellido, cedula, telefono, correo, fecha_nacimiento, sexo)
-                VALUES (:nombre, :apellido, :cedula, :telefono, :correo, :fecha_nacimiento, :sexo)";
-        try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->bindParam(':nombre', $this->nombre);
-            $stmt->bindParam(':apellido', $this->apellido);
-            $stmt->bindParam(':cedula', $this->cedula);
-            $stmt->bindParam(':telefono', $this->telefono);
-            $stmt->bindParam(':correo', $this->correo);
-            $stmt->bindParam(':fecha_nacimiento', $this->fecha_nacimiento);
-            $stmt->bindParam(':sexo', $this->sexo);
-            $stmt->execute();
-            $lastId = $this->get_conex('negocio')->lastInsertId();
-            return ['estatus' => true, 'mensaje' => 'Habitante registrado correctamente', 'lastId' => $lastId];
-        } catch (PDOException $e) {
-            error_log("Error en _registrar: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al registrar el habitante'];
-        }
-    }
-
-    private function _registrar_con_relacion()
-    {
-        // Validar datos del habitante
-        $campos = ['cedula', 'nombre', 'apellido', 'telefono', 'correo', 'fecha_nacimiento', 'sexo'];
-        $validacion = $this->validar($campos);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
-        $apartamentoId = $this->nuevo_apartamento_id;
-        $tipoVinculo = $this->nuevo_tipo_vinculo;
-
-        // Validar datos de la relación si se proporcionan
-        if ($apartamentoId) {
-            // Verificar que el apartamento exista
-            $apto = new Apartamento();
-            $apto->set_id_apartamento($apartamentoId);
-            $existe = $apto->realizar_consulta('existe_apartamento');
-
-            if (!$existe['estatus'] || !$existe['existe']) {
-                return ['estatus' => false, 'mensaje' => 'El apartamento seleccionado no es válido.'];
-            }
-            // Validar tipo de vínculo
-            $valTipo = $this->validar(['nuevo_tipo_vinculo']);
-            if (!$valTipo['estatus']) {
-                return $valTipo;
-            }
-            // Si es propietario, verificar que no haya otro
-            if ($tipoVinculo === 'Propietario') {
-                $sql = "SELECT COUNT(*) FROM habitantes_apartamentos WHERE apartamento_id = :id AND tipo_vinculo = 'Propietario'";
-                try {
-                    $stmt = $this->get_conex('negocio')->prepare($sql);
-                    $stmt->execute([':id' => $apartamentoId]);
-                    if ($stmt->fetchColumn() > 0) {
-                        return ['estatus' => false, 'mensaje' => 'Este apartamento ya tiene un propietario.'];
-                    }
-                } catch (PDOException $e) {
-                    error_log("Error verificando propietario: " . $e->getMessage());
-                    return ['estatus' => false, 'mensaje' => 'Error al verificar disponibilidad.'];
-                }
-            }
-        }
-
         $pdo = $this->get_conex('negocio');
         try {
+            // Validar regla de negocio estricta (Evitar 2 propietarios por error de concurrencia)
+            if (!empty($this->nuevo_apartamento_id) && $this->nuevo_tipo_vinculo === 'Propietario') {
+                $sqlCheck = "SELECT COUNT(*) FROM habitantes_apartamentos WHERE apartamento_id = :id AND tipo_vinculo = 'Propietario'";
+                $stmtCheck = $pdo->prepare($sqlCheck);
+                $stmtCheck->execute([':id' => $this->nuevo_apartamento_id]);
+                if ($stmtCheck->fetchColumn() > 0) {
+                    return ['estatus' => false, 'mensaje' => 'Este apartamento ya tiene un propietario asignado.'];
+                }
+            }
+
             $pdo->beginTransaction();
 
-            // Insertar habitante
+            //  Insertar habitante
             $sql = "INSERT INTO habitantes (nombre, apellido, cedula, telefono, correo, fecha_nacimiento, sexo)
                     VALUES (:nombre, :apellido, :cedula, :telefono, :correo, :fecha_nacimiento, :sexo)";
             $stmt = $pdo->prepare($sql);
@@ -484,158 +206,97 @@ class Habitantes extends Conexion
             ]);
             $idHabitante = $pdo->lastInsertId();
 
-            // Si hay relación, insertarla
-            if ($apartamentoId) {
+            //  Insertar relación directamente en la tabla puente (Sin llamar a Apartamento.php)
+            if (!empty($this->nuevo_apartamento_id)) {
                 $sqlRel = "INSERT INTO habitantes_apartamentos (apartamento_id, habitante_id, tipo_vinculo)
                            VALUES (:aid, :hid, :tipo)";
                 $stmtRel = $pdo->prepare($sqlRel);
                 $stmtRel->execute([
-                    ':aid' => $apartamentoId,
+                    ':aid' => $this->nuevo_apartamento_id,
                     ':hid' => $idHabitante,
-                    ':tipo' => $tipoVinculo
+                    ':tipo' => $this->nuevo_tipo_vinculo
                 ]);
             }
 
             $pdo->commit();
             return ['estatus' => true, 'mensaje' => 'Habitante registrado correctamente', 'lastId' => $idHabitante];
-        } catch (Exception $e) {
-            $pdo->rollBack();
-            error_log("Error en _registrar_con_relacion: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al registrar el habitante: ' . $e->getMessage()];
-        } finally{
-            $apto->cerrar();
+        } catch (\Exception $e) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            error_log("Error en _registrar_habitantes: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al registrar el habitante.'];
         }
     }
 
     /**
-     * Actualiza un habitante existente.
-    */
-    private function _modificar()
-    {
-        $campos = ['id_habitante', 'cedula', 'nombre', 'apellido', 'telefono', 'correo', 'fecha_nacimiento', 'sexo'];
-        $contexto = ['exclude_id' => $this->id_habitante];
-        $validacion = $this->validar($campos, $contexto);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
-        $sql = "UPDATE habitantes SET
-                    nombre = :nombre,
-                    apellido = :apellido,
-                    cedula = :cedula,
-                    telefono = :telefono,
-                    correo = :correo,
-                    fecha_nacimiento = :fecha_nacimiento,
-                    sexo = :sexo
-                WHERE id_habitante = :id_habitante";
-        try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->bindParam(':id_habitante', $this->id_habitante);
-            $stmt->bindParam(':nombre', $this->nombre);
-            $stmt->bindParam(':apellido', $this->apellido);
-            $stmt->bindParam(':cedula', $this->cedula);
-            $stmt->bindParam(':telefono', $this->telefono);
-            $stmt->bindParam(':correo', $this->correo);
-            $stmt->bindParam(':fecha_nacimiento', $this->fecha_nacimiento);
-            $stmt->bindParam(':sexo', $this->sexo);
-            $stmt->execute();
-            return ['estatus' => true, 'mensaje' => 'Habitante actualizado correctamente'];
-        } catch (PDOException $e) {
-            error_log("Error en _modificar: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al actualizar el habitante'];
-        }
-    }
-
-
-    /**
-     * Edita un habitante y opcionalmente reasigna su apartamento/vínculo en una transacción.
-     * @param array $datos Datos del habitante (nombre, apellido, etc.)
-     * @param int|null $nuevoApartamento ID del nuevo apartamento (null si no cambia)
-     * @param string|null $nuevoTipo Nuevo tipo de vínculo (null si no cambia)
-     * @param int $usuarioId (opcional) ID del usuario que realiza la acción (para bitácora)
-     * @return array
+     * Edita un habitante y sincroniza su vínculo usando el patrón "Sync" (Borrar y Recrear).
+     // SE USA EN EL MODULO
      */
-    private function _modificar_con_relacion()
+    private function _modificar_habitantes()
     {
-        // Se espera que las propiedades del habitante ya estén seteadas (id, nombre, etc.)
-        // y además se espera que estén seteadas las propiedades adicionales:
-        // $this->nuevo_apartamento_id y $this->nuevo_tipo_vinculo
-        // Para simplificar, recibimos los datos por POST y los asignamos en el controlador.
-        // Pero aquí asumimos que ya se asignaron.
-
         $pdo = $this->get_conex('negocio');
         try {
-            $pdo->beginTransaction();
-
-            // 1. Actualizar datos del habitante
-            $resEdit = $this->_modificar();
-            if (!$resEdit['estatus']) {
-                throw new Exception($resEdit['mensaje']);
+            // Validar regla de negocio estricta (Ignorando a sí mismo)
+            if (!empty($this->nuevo_apartamento_id) && $this->nuevo_tipo_vinculo === 'Propietario') {
+                $sqlCheck = "SELECT COUNT(*) FROM habitantes_apartamentos 
+                             WHERE apartamento_id = :aid AND tipo_vinculo = 'Propietario' AND habitante_id != :hid";
+                $stmtCheck = $pdo->prepare($sqlCheck);
+                $stmtCheck->execute([':aid' => $this->nuevo_apartamento_id, ':hid' => $this->id_habitante]);
+                if ($stmtCheck->fetchColumn() > 0) {
+                    return ['estatus' => false, 'mensaje' => 'Este apartamento ya tiene otro propietario asignado.'];
+                }
             }
 
-            // 2. Si hay cambio de apartamento o tipo de vínculo
-            $apartamentoModel = new Apartamento();
-            $apartamentoModel->set_habitante_id($this->id_habitante);
+            $pdo->beginTransaction();
 
-            // Obtener la relación actual (si existe)
-            $sqlRel = "SELECT apartamento_id, tipo_vinculo FROM habitantes_apartamentos WHERE habitante_id = :hid";
-            $stmtRel = $pdo->prepare($sqlRel);
-            $stmtRel->execute([':hid' => $this->id_habitante]);
-            $relacionActual = $stmtRel->fetch(PDO::FETCH_ASSOC);
+            // Actualizar datos base del habitante
+            $sql = "UPDATE habitantes SET 
+                        nombre = :nombre, apellido = :apellido, cedula = :cedula, 
+                        telefono = :telefono, correo = :correo, fecha_nacimiento = :fecha_nacimiento, sexo = :sexo
+                    WHERE id_habitante = :id";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                ':nombre' => $this->nombre,
+                ':apellido' => $this->apellido,
+                ':cedula' => $this->cedula,
+                ':telefono' => $this->telefono,
+                ':correo' => $this->correo,
+                ':fecha_nacimiento' => $this->fecha_nacimiento,
+                ':sexo' => $this->sexo,
+                ':id' => $this->id_habitante
+            ]);
 
-            $nuevoApartamento = $this->nuevo_apartamento_id ?? null;
-            $nuevoTipo = $this->nuevo_tipo_vinculo ?? null;
+            // Patrón Sync: Borramos cualquier vínculo anterior que tuviera este habitante
+            $sqlDel = "DELETE FROM habitantes_apartamentos WHERE habitante_id = :hid";
+            $stmtDel = $pdo->prepare($sqlDel);
+            $stmtDel->execute([':hid' => $this->id_habitante]);
 
-            if ($relacionActual) {
-                // Ya existe relación, verificar si cambió
-                if ($relacionActual['apartamento_id'] != $nuevoApartamento || $relacionActual['tipo_vinculo'] != $nuevoTipo) {
-                    // Eliminar relación anterior
-                    $apartamentoModel->set_id_apartamento($relacionActual['apartamento_id']);
-                    $apartamentoModel->set_tipo_vinculo($relacionActual['tipo_vinculo']);
-                    $apartamentoModel->realizar_consulta('desvincular_habitante');
-                    // Crear nueva si se proporciona
-                    if ($nuevoApartamento) {
-                        $apartamentoModel->set_id_apartamento($nuevoApartamento);
-                        $apartamentoModel->set_tipo_vinculo($nuevoTipo);
-                        $resAsignar = $apartamentoModel->realizar_consulta('asignar_habitante');
-                        if (!$resAsignar['estatus']) {
-                            throw new Exception($resAsignar['mensaje']);
-                        }
-                    }
-                }
-            } else {
-                // No existe relación, crear nueva si se proporciona
-                if ($nuevoApartamento) {
-                    $apartamentoModel->set_id_apartamento($nuevoApartamento);
-                    $apartamentoModel->set_tipo_vinculo($nuevoTipo);
-                    $resAsignar = $apartamentoModel->realizar_consulta('asignar_habitante');
-                    if (!$resAsignar['estatus']) {
-                        throw new Exception($resAsignar['mensaje']);
-                    }
-                }
+            // Si el formulario envió un apartamento, creamos el nuevo vínculo
+            if (!empty($this->nuevo_apartamento_id)) {
+                $sqlRel = "INSERT INTO habitantes_apartamentos (apartamento_id, habitante_id, tipo_vinculo)
+                           VALUES (:aid, :hid, :tipo)";
+                $stmtRel = $pdo->prepare($sqlRel);
+                $stmtRel->execute([
+                    ':aid' => $this->nuevo_apartamento_id,
+                    ':hid' => $this->id_habitante,
+                    ':tipo' => $this->nuevo_tipo_vinculo
+                ]);
             }
 
             $pdo->commit();
             return ['estatus' => true, 'mensaje' => 'Habitante actualizado correctamente'];
-        } catch (Exception $e) {
-            $pdo->rollBack();
-            error_log("Error en _modificar_con_relacion: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => $e->getMessage()];
-        } finally{
-            $apartamentoModel->cerrar();
+        } catch (\Exception $e) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            error_log("Error en _modificar_habitantes: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al modificar el habitante.'];
         }
     }
 
     /**
      * Elimina un habitante (soft delete).
+     // SE USA EN EL MODULO
      */
-    private function _eliminar()
+    private function _eliminar_habitantes()
     {
-        $validacion = $this->validar(['id_habitante']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         $sql = "UPDATE habitantes SET activo = 0 WHERE id_habitante = :id_habitante";
         try {
             $stmt = $this->get_conex('negocio')->prepare($sql);
@@ -648,29 +309,13 @@ class Habitantes extends Conexion
         }
     }
 
-    /**
-     * Último ID insertado.
-     */
-    private function _lastId()
-    {
-        $sql = "SELECT MAX(id_habitante) as last_id FROM habitantes";
-        try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->execute();
-            $dato = $stmt->fetch(PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $dato];
-        } catch (PDOException $e) {
-            error_log("Error en _lastId: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al obtener último ID'];
-        }
-    }
-
     // -----------------------------------------------------------------
     // Métodos públicos auxiliares (reportes, etc.)
     // -----------------------------------------------------------------
 
     /**
      * Consulta personas solventes (propietarios sin deuda)
+     * USADO EN REPORTES
      */
     private function _consultar_personas_solvencia()
     {
@@ -704,6 +349,7 @@ class Habitantes extends Conexion
 
     /**
      * Consulta todos los propietarios con sus apartamentos
+     * USADO EN REPORTES
      */
     private function _consultar_propietarios()
     {
@@ -726,6 +372,7 @@ class Habitantes extends Conexion
     /**
      * Obtiene datos para reportes estadísticos de habitantes según filtros.
      * Los filtros se reciben a través de $this->filtros_reporte.
+     * USADO EN REPORTES
      */
     private function _obtener_datos_habitantes()
     {
@@ -831,24 +478,5 @@ class Habitantes extends Conexion
         }
     }
 
-    /**
-     * Valida la existencia de un valor en una tabla externa (para validaciones AJAX)
-     */
-    public function validarExistenciaExterna($tabla, $campo, $valor)
-    {
-        $tablasPermitidas = ['habitantes', 'apartamentos'];
-        if (!in_array($tabla, $tablasPermitidas)) {
-            return false;
-        }
-        $sql = "SELECT COUNT(*) FROM $tabla WHERE $campo = :valor";
-        try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->execute([':valor' => $valor]);
-            return $stmt->fetchColumn() > 0;
-        } catch (PDOException $e) {
-            error_log("Error en validarExistenciaExterna (Habitantes): " . $e->getMessage());
-            return false;
-        }
-    }
 }
 ?>

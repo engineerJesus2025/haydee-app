@@ -35,15 +35,17 @@
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="card p-4">
-                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                <div class="row">
+                                    <div class="col-12 col-sm-6 mb-4">
                                     <?php if (Sesiones::tienePermiso(GESTIONAR_USUARIOS, REGISTRAR)) : ?>
                                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-tooltip="true" title="Registrar Nuevo Usuario" data-bs-target="#modal_usuario">Nuevo Usuario</button>
-                                    <?php else: ?>
-                                        <div></div> <?php endif; ?>
-                                    
-                                    <div class="input-group" style="max-width: 300px;">
-                                        <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                        <input type="text" id="busqueda_global" data-tooltip="true" title="Buscar Registro" class="form-control" placeholder="Buscar usuario...">
+                                    <?php endif; ?>
+                                    </div>
+                                    <div class="col-12 col-sm-6 mb-4">
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                            <input type="text" id="busqueda_global" data-tooltip="true" title="Buscar Registro" class="form-control" placeholder="Buscar usuario...">
+                                        </div>
                                     </div>
                                 </div>
                                 <div id="tabla_usuario" class="tabla-sistema-haydee"></div>
@@ -61,26 +63,11 @@
         require_once ROOT_PATH . "/vista/componentes/script.php";
         require_once ROOT_PATH . "/vista/componentes/modal_carga.php";
         require_once ROOT_PATH . "/vista/componentes/boton_ayuda.php";
+        // Modales
+        require_once ROOT_PATH . "/vista/usuarios/usuario_modal.php";
+        require_once ROOT_PATH . "/vista/usuarios/usuarios_detalles.php";
     ?>
 
-    <!-- Modales -->
-    <div class="modal fade" id="modal_usuario" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h1 class="modal-title fs-5" id="titulo_modal">Registrar usuario</h1>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-
-                    <?php
-                    require_once ROOT_PATH . "/vista/usuarios/usuario_modal.php";
-                    ?>
-
-                </div>
-            </div>
-        </div>
-    </div>
     <!-- Scripts personalizado -->
     <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/validaciones/usuario_validar.js"></script>
     <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/consultas_ajax/usuario_ajax.js"></script>

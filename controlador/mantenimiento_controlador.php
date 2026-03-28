@@ -2,17 +2,33 @@
 use haydee\ayuda\Sesiones;
 use haydee\modelo\Mantenimiento;
 use haydee\modelo\Bitacora;
+use haydee\ayuda\Validador;
 
 // Verificaciones de seguridad
 Sesiones::verificarSesion();
 Sesiones::verificarPermiso(GESTIONAR_MANTENIMIENTO, CONSULTAR);
 
-// Instancia de la clase Mantenimiento
-$mantenimiento = new Mantenimiento();
-
 if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
+
+    // =========================================================
+    // VALIDACIÓN CENTRALIZADA (Protección contra Inyección de Comandos)
+    // =========================================================
+    $reglas = Mantenimiento::obtenerReglas($operacion);
+
+    if (!empty($reglas)) {
+        $validador = new Validador();
+        $validador->validarConjunto($_POST, $reglas);
+
+        if ($validador->tieneErrores()) {
+            echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
+            exit;
+        }
+    }
+
+    // Instancia de la clase Mantenimiento
+    $mantenimiento = new Mantenimiento();
 
     try{
         switch ($operacion) {
@@ -22,7 +38,6 @@ if (isset($_POST["operacion"])) {
                     $respuesta = $mantenimiento->generarCopiaSeguridad($db);
                     if ($respuesta['estatus']) {
                         
-                        // -> NUEVO: Registro manual <-
                         $detalles = [
                             'accion' => 'Generó copia de seguridad',
                             'base_datos' => strtoupper($db)
@@ -126,7 +141,6 @@ if (isset($_POST["operacion"])) {
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
         if ($respuesta !== null) {
-            // Cerrar conexiones explícitamente
             if (isset($mantenimiento)) {
                 $mantenimiento->cerrar();
             }

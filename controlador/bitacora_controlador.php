@@ -6,9 +6,6 @@ use haydee\modelo\Bitacora;
 Sesiones::verificarSesion();
 Sesiones::verificarPermiso(GESTIONAR_SEGURIDAD, CONSULTAR);
 
-// Instancia del modelo
-$bitacora = new Bitacora();
-
 // Validamos si es una petición AJAX (POST)
 if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
@@ -16,19 +13,13 @@ if (isset($_POST["operacion"])) {
     // Respuesta por defecto
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida', 'datos' => []];
 
+    // Instancia del modelo
+    $bitacora = new Bitacora();
+
     try {
         switch ($operacion) {
             case 'consulta':
-                $resultado = $bitacora->realizar_consulta('consultar');
-                if ($resultado['estatus']) {
-                    $respuesta = [
-                        'estatus' => true, 
-                        'mensaje' => 'Consulta exitosa',
-                        'datos' => $resultado['datos']
-                    ];
-                } else {
-                    $respuesta['mensaje'] = $resultado['mensaje'];
-                }
+                $respuesta = $bitacora->realizar_consulta('consultar');
                 break;
 
             default:

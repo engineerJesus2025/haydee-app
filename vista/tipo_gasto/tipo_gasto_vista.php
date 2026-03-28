@@ -35,15 +35,17 @@
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="card p-4">
-                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                <div class="row">
+                                    <div class="col-12 col-sm-6 mb-4">
                                     <?php if (Sesiones::tienePermiso(GESTIONAR_TIPO_GASTO, REGISTRAR)) : ?>
                                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-tooltip="true" title="Registrar Nuevo Tipo de Gasto" data-bs-target="#modal_tipo_gasto">Nuevo Tipo de Gasto</button>
-                                    <?php else: ?>
-                                        <div></div> <?php endif; ?>
-                                    
-                                    <div class="input-group" style="max-width: 300px;">
-                                        <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                        <input type="text" id="busqueda_global" data-tooltip="true" title="Buscar Registro" class="form-control" placeholder="Buscar tipo de gasto...">
+                                    <?php endif; ?>
+                                    </div>
+                                    <div class="col-12 col-sm-6 mb-4">
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                            <input type="text" id="busqueda_global" data-tooltip="true" title="Buscar Registro" class="form-control" placeholder="Buscar tipo de gasto...">
+                                        </div>
                                     </div>
                                 </div>
                                 <div id="tabla_tipo_gasto" class="tabla-sistema-haydee"></div>
@@ -61,26 +63,10 @@
         require_once ROOT_PATH . "/vista/componentes/script.php";
         require_once ROOT_PATH . "/vista/componentes/modal_carga.php";
         require_once ROOT_PATH . "/vista/componentes/boton_ayuda.php";
+        // Modales
+        require_once ROOT_PATH . "/vista/tipo_gasto/tipo_gasto_modal.php";
+        require_once ROOT_PATH . "/vista/tipo_gasto/tipo_gasto_detalles.php";
     ?>
-    
-    <!-- Modales -->
-    <div class="modal fade" id="modal_tipo_gasto" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header  bg-primary text-white">
-                    <h1 class="modal-title fs-5" id="titulo_modal">Registrar tipo de gasto</h1>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-
-                    <?php
-                    require_once ROOT_PATH . "/vista/tipo_gasto/tipo_gasto_modal.php";
-                    ?>
-
-                </div>
-            </div>
-        </div>
-    </div>
     
     <!-- Scripts personalizado -->
     <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/validaciones/tipo_gasto_validar.js"></script>

@@ -4,33 +4,13 @@
  */
 
 const Notificaciones = {
-    // Inyecta los estilos de animación de pulso en tono azul (Primary)
-    inyectarEstilos: function() {
-        if (!document.getElementById('estilos-notificaciones')) {
-            const style = document.createElement('style');
-            style.id = 'estilos-notificaciones';
-            style.innerHTML = `
-                @keyframes pulso-notificacion-azul {
-                    0% { box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.7); } /* Azul de Bootstrap */
-                    70% { box-shadow: 0 0 0 10px rgba(13, 110, 253, 0); }
-                    100% { box-shadow: 0 0 0 0 rgba(13, 110, 253, 0); }
-                }
-                .resaltar-pulso-azul {
-                    animation: pulso-notificacion-azul 2s infinite !important;
-                    background-color: #f0f7ff !important; /* Un fondo azul muy sutil para el select */
-                }
-            `;
-            document.head.appendChild(style);
-        }
-    },
-
     mostrarToast: function(tipo, titulo, mensaje) {
         let toastContainer = document.getElementById('toast-container');
         if (!toastContainer) {
             toastContainer = document.createElement('div');
             toastContainer.id = 'toast-container';
             toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
-            toastContainer.style.zIndex = '1055';
+            toastContainer.style.zIndex = '1100';
             document.body.appendChild(toastContainer);
         }
 
@@ -79,8 +59,6 @@ const Notificaciones = {
                 
                 // Si la URL está limpia (porque el Select ya la consumió), abortamos en paz sin dar error
                 if (!idBuscar) return;
-
-                Notificaciones.inyectarEstilos();
 
                 let filas = tabla.getRows();
                 let filaEncontrada = filas.find(fila => {
@@ -132,7 +110,7 @@ const Notificaciones = {
         let select = document.getElementById(idSelect);
         if (!select) return;
 
-        this.inyectarEstilos();
+        // this.inyectarEstilos();
 
         let optionExists = Array.from(select.options).some(opt => opt.value === String(idBuscar));
         

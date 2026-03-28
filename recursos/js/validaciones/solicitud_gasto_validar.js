@@ -6,9 +6,9 @@
 document.addEventListener("DOMContentLoaded", function() {
     
     const inputMonto = document.querySelector('#monto_estimado');
-    const inputDesc = document.querySelector('#descripcion');
-    const inputNombre = document.querySelector('#nombre');
-    const inputFecha = document.querySelector('#fecha');
+    const inputDesc = document.querySelector('#descripcion_necesidad');
+    const inputNombre = document.querySelector('#nombre_solicitante');
+    const inputFecha = document.querySelector('#fecha_reporte');
     const selectPrioridad = document.querySelector('#prioridad');
     const selectMes = document.querySelector('#selector_mes');
     const selectAnio = document.querySelector('#selector_anio');
@@ -86,12 +86,12 @@ async function validarEnvio(accion) {
     // 1. Validaciones de formato visual
     const vMes = Validador.evaluarInput(elMes, Patrones.digitos, 'Seleccione mes');
     const vAnio = Validador.evaluarInput(elAnio, Patrones.digitos, 'Seleccione año');
-    const vNombre = Validador.evaluarInput(document.querySelector('#nombre'), Patrones.nombrePersona, 'Nombre inválido');
-    const vDesc = Validador.evaluarInput(document.querySelector('#descripcion'), Patrones.descripcion, 'Descripción inválida');
+    const vNombre = Validador.evaluarInput(document.querySelector('#nombre_solicitante'), Patrones.nombrePersona, 'Nombre inválido');
+    const vDesc = Validador.evaluarInput(document.querySelector('#descripcion_necesidad'), Patrones.descripcion, 'Descripción inválida');
     const vMonto = Validador.evaluarInput(elMonto, Patrones.monto, 'Monto inválido');
     const vPrioridad = Validador.evaluarInput(document.querySelector('#prioridad'), Patrones.prioridad, 'Seleccione prioridad');
     
-    const elFecha = document.querySelector('#fecha');
+    const elFecha = document.querySelector('#fecha_reporte');
     if (!elFecha.value) EstadoInputs.marcarError(elFecha, 'Seleccione fecha');
 
     if (!vMes || !vAnio || !vNombre || !vDesc || !vMonto || !vPrioridad || !elFecha.value) {

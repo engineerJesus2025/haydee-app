@@ -2,6 +2,28 @@ let data_table_apartamentos;
 let data_table_habitantes;
 let id_apartamento_seleccionado;
 
+// ============================================
+// FORMATOS VISUALES GLOBALES
+// ============================================
+const FormatosVisuales = {
+    nro: (valor) => `Nro: ${valor}`,
+    porcentaje: (valor) => `${valor}%`,
+    tiene: (valor) => {
+        if (valor == 1) {
+            return `<span class="badge bg-success"><i class="bi bi-check-circle"></i> TIENE</span>`;
+        } else {
+            return `<span class="badge bg-danger"><i class="bi bi-x-circle"></i> NO TIENE</span>`;
+        }
+    },
+    siNo: (valor) => {
+        if (valor == 1) {
+            return `<span class="badge bg-primary">SÍ</span>`;
+        } else {
+            return `<span class="badge bg-secondary">NO</span>`;
+        }
+    }
+};
+
 const modalApartamento = new bootstrap.Modal(document.getElementById("modal_apartamentos"), { focus: false });
 const modalVistaPrevia = new bootstrap.Modal(document.getElementById("modal_vista_previa"), { focus: false });
 const modalHabitante = new bootstrap.Modal(document.getElementById("modal_habitantes"), { focus: false });
@@ -26,26 +48,29 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function consultarApartamentos() {
-    // 1. FORMATOS VISUALES
-    const formatoNro = (cell) => `Nro: ${cell.getValue()}`;
-    const formatoPorcentaje = (cell) => `${cell.getValue()}%`;
-    const formatoTiene = (cell) => cell.getValue() == 1 ? 'TIENE' : 'NO TIENE';
-    const formatoSiNo = (cell) => cell.getValue() == 1 ? 'SI' : 'NO';
+    // 1. FORMATOS VISUALES (Consumiendo objeto global)
+    const formatoNro = (cell) => FormatosVisuales.nro(cell.getValue());
+    const formatoPorcentaje = (cell) => FormatosVisuales.porcentaje(cell.getValue());
+    const formatoTiene = (cell) => FormatosVisuales.tiene(cell.getValue());
+    const formatoSiNo = (cell) => FormatosVisuales.siNo(cell.getValue());
 
     const formatoBotones = (cell) => {
         const id = cell.getData().id_apartamento;
-        let html = `<div class="d-flex justify-content-center gap-2">
+        let html = `<div class="d-flex justify-content-center flex-wrap gap-2">
                         <button data-tooltip="true" type="button" class="btn btn-primary btn-sm vista-previa" title="Ver Habitantes del Apartamento" value="${id}">
                             <i class="bi bi-people-fill"></i>
+                            <span class="d-none d-lg-inline ms-2">Habitantes</span>
                         </button>`;
-        if (window.permiso_modificar) {
-            html += `<button data-tooltip="true" type="button" class="btn btn-success btn-sm modificar" title="Modificar los detalles de este registro" value="${id}">
+         if (window.permiso_modificar) {
+            html += `<button class="btn btn-success btn-sm modificar" value="${id}" data-tooltip="true" title="Modificar los detalles de este registro">
                         <i class="bi bi-pencil"></i>
+                        <span class="d-none d-lg-inline ms-2">Editar</span>
                     </button>`;
         }
         if (window.permiso_eliminar) {
-            html += `<button data-tooltip="true" type="button" class="btn btn-danger btn-sm eliminar" title="Quitar este elemento del sistema" value="${id}">
+            html += `<button class="btn btn-danger btn-sm eliminar" value="${id}" data-tooltip="true" title="Quitar este elemento del sistema">
                         <i class="bi bi-trash"></i>
+                        <span class="d-none d-lg-inline ms-2">Borrar</span>
                     </button>`;
         }
         html += `</div>`;
@@ -55,13 +80,14 @@ async function consultarApartamentos() {
     // 2. COLUMNAS
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
-        { title: "Nro.", field: "nro_apartamento", formatter: formatoNro, minWidth: 80, responsive: 0 },
-        { title: "Participación", field: "porcentaje_participacion", formatter: formatoPorcentaje, minWidth: 200 },
-        { title: "Gas", field: "gas", formatter: formatoTiene, minWidth: 80 },
-        { title: "Agua", field: "agua", formatter: formatoTiene, minWidth: 80 },
+        { title: "Nro.", field: "nro_apartamento", formatter: formatoNro, minWidth: 100, responsive: 0 },
+        { title: "Participación", field: "porcentaje_participacion", formatter: formatoPorcentaje, minWidth: 150 },
         { title: "Alquilado", field: "alquilado", formatter: formatoSiNo, minWidth: 150 },
         { 
-            title: "Acciones", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 150, responsive: 0, download: false, headerHozAlign: "center",
+            title: "Acciones", formatter: formatoBotones, headerSort: false, 
+            hozAlign: "center", vertAlign: "middle", minWidth: 150, 
+            responsive: 0, download: false, headerHozAlign: "center",
+            widthGrow: 2,
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
@@ -119,16 +145,14 @@ async function consultarApartamentos() {
 
 async function registrarApartamento() {
     const datos = new FormData(formApartamento);
-    datos.set('operacion', 'registrar');
+    datos.set('operacion', 'registrar_apartamento');
 
     const respuesta = await Peticiones.enviar(datos, "", true);
-    if (respuesta?.estatus) {
+
+    Validador.procesarRespuesta(respuesta, () => {
         modalApartamento.hide();
         data_table_apartamentos.replaceData();
-        Alertas.mostrar('success', 'Éxito', 'Apartamento registrado correctamente.');
-    } else {
-        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo registrar.');
-    }
+    });
 }
 
 async function prepararEdicion(e) {
@@ -138,41 +162,36 @@ async function prepararEdicion(e) {
     datos.append('operacion', 'consulta_especifica');
 
     const respuesta = await Peticiones.enviar(datos);
-    if (!respuesta?.estatus) {
-        Alertas.mostrar('error', 'Error', 'No se pudo cargar el apartamento.');
-        return;
-    }
 
-    const apto = respuesta.apartamento;
-    formApartamento.querySelector('#nro_apartamento').value = apto.nro_apartamento;
-    formApartamento.querySelector('#porcentaje_participacion').value = apto.porcentaje_participacion;
-    formApartamento.querySelector('#gas').value = apto.gas;
-    formApartamento.querySelector('#agua').value = apto.agua;
-    formApartamento.querySelector('#alquilado').value = apto.alquilado;
+    Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
+        const apto = respuestaServidor.apartamento;
+        formApartamento.querySelector('#nro_apartamento').value = apto.nro_apartamento;
+        formApartamento.querySelector('#porcentaje_participacion').value = apto.porcentaje_participacion;
+        formApartamento.querySelector('#gas').value = apto.gas;
+        formApartamento.querySelector('#agua').value = apto.agua;
+        formApartamento.querySelector('#alquilado').value = apto.alquilado;
 
-    nro_apartamento_an = apto.nro_apartamento;
+        nro_apartamento_an = apto.nro_apartamento;
 
-    document.getElementById('titulo_modal').textContent = 'Modificar Apartamento';
-    btnFormulario.textContent = 'Guardar Cambios';
-    btnFormulario.dataset.id = id;
+        document.getElementById('titulo_modal').textContent = 'Modificar Apartamento';
+        btnFormulario.textContent = 'Guardar Cambios';
+        btnFormulario.dataset.id = id;
 
-    modalApartamento.show();
+        modalApartamento.show();
+    });
 }
 
 async function modificarApartamento() {
     const id = btnFormulario.dataset.id;
     const datos = new FormData(formApartamento);
     datos.set('id_apartamento', id);
-    datos.set('operacion', 'modificar');
+    datos.set('operacion', 'modificar_apartamento');
 
     const respuesta = await Peticiones.enviar(datos, "", true);
-    if (respuesta?.estatus) {
+    Validador.procesarRespuesta(respuesta, () => {
         modalApartamento.hide();
         data_table_apartamentos.replaceData();
-        Alertas.mostrar('success', 'Éxito', 'Apartamento actualizado correctamente.');
-    } else {
-        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo actualizar.');
-    }
+    });
 }
 
 async function eliminarApartamento(id) {
@@ -181,12 +200,9 @@ async function eliminarApartamento(id) {
     datos.append('operacion', 'eliminar');
 
     const respuesta = await Peticiones.enviar(datos);
-    if (respuesta?.estatus) {
+    Validador.procesarRespuesta(respuesta, () => {
         data_table_apartamentos.replaceData();
-        Alertas.mostrar('success', 'Éxito', 'Apartamento eliminado correctamente.');
-    } else {
-        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo eliminar.');
-    }
+    });
 }
 
 document.getElementById('modal_apartamentos').addEventListener('hide.bs.modal', () => {
@@ -209,51 +225,52 @@ async function mostrarVistaPrevia(e) {
     datosApto.append('id_apartamento', id);
     datosApto.append('operacion', 'consulta_especifica');
     const respApto = await Peticiones.enviar(datosApto);
-    if (respApto?.estatus) {
-        const apto = respApto.apartamento;
+
+    Validador.procesarRespuesta(respApto, (respuestaServidor) => {
+        const apto = respuestaServidor.apartamento;
+        document.getElementById('apt_nro').textContent = apto.nro_apartamento || 'N/A';
         document.getElementById('apartamento_nro_visual').value = apto.nro_apartamento || 'N/A';
         document.getElementById('apt_porcentaje').textContent = apto.porcentaje_participacion || '0';
-        document.getElementById('apt_gas').textContent = apto.gas == 1 ? 'Sí' : 'No';
-        document.getElementById('apt_agua').textContent = apto.agua == 1 ? 'Sí' : 'No';
-        document.getElementById('apt_alquilado').textContent = apto.alquilado == 1 ? 'Sí' : 'No';
-    } else {
-        // Si no se puede cargar, mostrar valores por defecto
-        document.getElementById('apt_nro').textContent = 'Error';
-        document.getElementById('apt_porcentaje').textContent = '-';
-        document.getElementById('apt_gas').textContent = '?';
-        document.getElementById('apt_agua').textContent = '?';
-        document.getElementById('apt_alquilado').textContent = '?';
-    }
-
-    // Inicializar o recargar tabla de habitantes
-    if (!data_table_habitantes) {
-        initTablaHabitantes();
-    } else {
-        const parametrosExtra = { 
-            operacion: 'consultar_habitantes',
-            id_apartamento: id_apartamento_seleccionado
+        document.getElementById('apt_gas').innerHTML = FormatosVisuales.tiene(apto.gas);
+        document.getElementById('apt_agua').innerHTML = FormatosVisuales.tiene(apto.agua);
+        document.getElementById('apt_alquilado').innerHTML = FormatosVisuales.siNo(apto.alquilado);
+        // Inicializar o recargar tabla de habitantes
+        if (!data_table_habitantes) {
+            initTablaHabitantes();
+        } else {
+            const parametrosExtra = { 
+                operacion: 'consultar_habitantes',
+                id_apartamento: id_apartamento_seleccionado
+            }
+            data_table_habitantes.setData("",parametrosExtra);
         }
-        data_table_habitantes.setData("",parametrosExtra);
-    }
-
-    document.getElementById("apartamento_id").value = id_apartamento_seleccionado;
-    modalVistaPrevia.show();
+        document.getElementById("apartamento_id").value = id_apartamento_seleccionado;
+        modalVistaPrevia.show();   
+    });
 }
 
 function initTablaHabitantes() {
     // 1. FORMATOS VISUALES
-    const formatoNro = (cell) => `Nro: ${cell.getValue()}`;
+    const formatoNro = (cell) => FormatosVisuales.nro(cell.getValue());
 
     const formatoBotones = (cell) => {
         const id = cell.getData().id_habitante;
-        let html = `<div class="d-flex justify-content-center gap-2">
-            <button data-tooltip="true" type="button" class="btn btn-primary btn-sm vista-previa-habitante" title="Detalles" value="${id}"><i class="bi bi-eye-fill"></i></button>`;
+        let html = `<div class="d-flex justify-content-center flex-wrap gap-2">
+            <button type="button" class="btn btn-primary btn-sm vista-previa" value="${id}" data-tooltip="true" title="Ver Mas">
+                <i class="bi bi-eye"></i>
+                <span class="d-none d-lg-inline ms-2">Ver</span>
+            </button>`;
         if (window.permiso_modificar_habitantes) {
-            html += `<button data-tooltip="true" type="button" class="btn btn-success btn-sm modificar-habitante" title="Modificar los detalles de este registro" value="${id}" data-bs-toggle="modal" data-bs-target="#modal_habitantes"><i class="bi bi-pencil"></i>
-    <span class="d-none d-lg-inline ms-2">Editar</span></button>`;
+            html += `<button data-tooltip="true" type="button" class="btn btn-success btn-sm modificar-habitante" title="Modificar los detalles de este registro" value="${id}" data-bs-toggle="modal" data-bs-target="#modal_habitantes">
+                        <i class="bi bi-pencil"></i>
+                        <span class="d-none d-lg-inline ms-2">Editar</span>
+                    </button>`;
         }
         if (window.permiso_eliminar_habitantes) {
-            html += `<button data-tooltip="true" type="button" class="btn btn-danger btn-sm eliminar-habitante" title="Quitar este elemento del sistema" value="${id}"><i class="bi bi-trash"></i></button>`;
+            html += `<button data-tooltip="true" type="button" class="btn btn-danger btn-sm eliminar-habitante" title="Quitar este elemento del sistema" value="${id}">
+                        <i class="bi bi-trash"></i>
+                        <span class="d-none d-lg-inline ms-2">Borrar</span>
+                    </button>`;
         }
         html += `</div>`;
         return html;
@@ -262,13 +279,13 @@ function initTablaHabitantes() {
     // 2. COLUMNAS
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
-        { title: "Nombre", field: "nombre", minWidth: 100, responsive: 0 },
-        { title: "Apellido", field: "apellido", minWidth: 100 },
-        { title: "Cédula", field: "cedula", minWidth: 100 },
-        { title: "Apartamento", field: "nro_apartamento", formatter: formatoNro, minWidth: 120 },
-        { title: "Vínculo", field: "tipo_vinculo", minWidth: 120 },
+        { title: "Nombre", field: "nombre", minWidth: 130, responsive: 0 },
+        { title: "Apellido", field: "apellido", minWidth: 130 },
+        { title: "Vínculo", field: "tipo_vinculo", minWidth: 130 },
         { 
-            title: "Acciones", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 140, responsive: 0, download: false, headerHozAlign: "center",
+            title: "Acciones", formatter: formatoBotones, headerSort: false, 
+            hozAlign: "center", vertAlign: "middle", minWidth: 140, responsive: 0, 
+            download: false, headerHozAlign: "center", widthGrow: 2,
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
@@ -314,13 +331,11 @@ async function registrarHabitante() {
     datos.set('apartamento_id', id_apartamento_seleccionado);
 
     const respuesta = await Peticiones.enviar(datos, "", true);
-    if (respuesta?.estatus) {
+
+    Validador.procesarRespuesta(respuesta, () => {
         modalHabitante.hide();
         data_table_habitantes.replaceData();
-        Alertas.mostrar('success', 'Éxito', 'Habitante registrado correctamente.');
-    } else {
-        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo registrar.');
-    }
+    });
 }
 
 async function prepararEdicionHabitante(e) {
@@ -330,33 +345,31 @@ async function prepararEdicionHabitante(e) {
     datos.append('operacion', 'consulta_especifica_habitante');
 
     const respuesta = await Peticiones.enviar(datos);
-    if (!respuesta?.estatus) {
-        Alertas.mostrar('error', 'Error', 'No se pudo cargar el habitante.');
-        return;
-    }
 
-    const data = respuesta.datos;
-    formHabitantes.querySelector('#nombre').value = data.nombre;
-    formHabitantes.querySelector('#apellido').value = data.apellido;
-    formHabitantes.querySelector('#tipo_cedula').value = data.cedula.charAt(0);
-    formHabitantes.querySelector('#cedula').value = data.cedula.slice(1);
-    formHabitantes.querySelector('#telefono').value = data.telefono;
-    formHabitantes.querySelector('#correo').value = data.correo;
-    formHabitantes.querySelector('#fecha_nacimiento').value = data.fecha_nacimiento;
-    formHabitantes.querySelector('#sexo').value = data.sexo;
-    formHabitantes.querySelector('#apartamento_id').value = data.apartamento_id;
-    formHabitantes.querySelector('#apartamento_nro_visual').value = data.apartamento;
-    formHabitantes.querySelector('#tipo_vinculo').value = data.tipo_vinculo;
+    Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
+        const data = respuestaServidor.datos;
+        formHabitantes.querySelector('#nombre').value = data.nombre;
+        formHabitantes.querySelector('#apellido').value = data.apellido;
+        formHabitantes.querySelector('#tipo_cedula').value = data.cedula.charAt(0);
+        formHabitantes.querySelector('#cedula').value = data.cedula.slice(1);
+        formHabitantes.querySelector('#telefono').value = data.telefono;
+        formHabitantes.querySelector('#correo').value = data.correo;
+        formHabitantes.querySelector('#fecha_nacimiento').value = data.fecha_nacimiento;
+        formHabitantes.querySelector('#sexo').value = data.sexo;
+        formHabitantes.querySelector('#apartamento_id').value = data.apartamento_id;
+        formHabitantes.querySelector('#apartamento_nro_visual').value = data.apartamento;
+        formHabitantes.querySelector('#tipo_vinculo').value = data.tipo_vinculo;
 
-    // Guardar valores originales para comparar en validaciones
-    cedula_an = data.cedula;
-    correo_an = data.correo;
-    tipo_vinculo_an = data.tipo_vinculo;
+        // Guardar valores originales para comparar en validaciones
+        cedula_an = data.cedula;
+        correo_an = data.correo;
+        tipo_vinculo_an = data.tipo_vinculo;
 
-    document.getElementById('titulo_modal_habitantes').textContent = 'Modificar Habitante';
-    btnFormularioHabitante.textContent = 'Guardar Cambios';
-    btnFormularioHabitante.dataset.id = id;
-    formHabitantes.querySelector('#cedula').removeAttribute('disabled');
+        document.getElementById('titulo_modal_habitantes').textContent = 'Modificar Habitante';
+        btnFormularioHabitante.textContent = 'Guardar Cambios';
+        btnFormularioHabitante.dataset.id = id;
+        formHabitantes.querySelector('#cedula').removeAttribute('disabled');
+    });
 }
 
 async function modificarHabitante() {
@@ -367,13 +380,11 @@ async function modificarHabitante() {
     datos.set('apartamento_id', id_apartamento_seleccionado);
 
     const respuesta = await Peticiones.enviar(datos, "", true);
-    if (respuesta?.estatus) {
+
+    Validador.procesarRespuesta(respuesta, () => {
         modalHabitante.hide();
         data_table_habitantes.replaceData();
-        Alertas.mostrar('success', 'Éxito', 'Habitante actualizado correctamente.');
-    } else {
-        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo actualizar.');
-    }
+    });
 }
 
 async function eliminarHabitante(id) {
@@ -382,12 +393,10 @@ async function eliminarHabitante(id) {
     datos.append('operacion', 'eliminar_habitantes');
 
     const respuesta = await Peticiones.enviar(datos);
-    if (respuesta?.estatus) {
+
+    Validador.procesarRespuesta(respuesta, () => {
         data_table_habitantes.replaceData();
-        Alertas.mostrar('success', 'Éxito', 'Habitante eliminado correctamente.');
-    } else {
-        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo eliminar.');
-    }
+    });
 }
 
 async function mostrarVistaPreviaHabitante(e) {
@@ -397,28 +406,25 @@ async function mostrarVistaPreviaHabitante(e) {
     datos.append('operacion', 'consulta_especifica_habitante');
 
     const respuesta = await Peticiones.enviar(datos);
-    if (!respuesta?.estatus) {
-        Alertas.mostrar('error', 'Error', 'No se pudo cargar el detalle del habitante.');
-        return;
-    }
+    Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
+        const data = respuestaServidor.datos;
+        // Datos personales
+        document.getElementById('vista_nombre').textContent = data.nombre || '';
+        document.getElementById('vista_apellido').textContent = data.apellido || '';
+        document.getElementById('vista_cedula').textContent = data.cedula || '';
+        document.getElementById('vista_telefono').textContent = data.telefono || '';
+        document.getElementById('vista_correo').textContent = data.correo || '';
+        document.getElementById('vista_fecha_nacimiento').textContent = FormatoFechas.formatoUsuario(data.fecha_nacimiento);
+        document.getElementById('vista_sexo').textContent = data.sexo || '';
+        // Datos del apartamento
+        document.getElementById('vista_apartamento_nro').textContent = data.nro_apartamento ? `Nro ${data.nro_apartamento}` : 'No asignado';
+        document.getElementById('vista_apartamento_porcentaje').textContent = data.porcentaje_participacion || '0';
+        document.getElementById('vista_apartamento_gas').innerHTML = FormatosVisuales.tiene(data.gas);
+        document.getElementById('vista_apartamento_agua').innerHTML = FormatosVisuales.tiene(data.agua);
+        document.getElementById('vista_apartamento_alquilado').innerHTML = FormatosVisuales.siNo(data.alquilado);
 
-    const data = respuesta.datos;
-    // Datos personales
-    document.getElementById('vista_nombre').textContent = data.nombre || '';
-    document.getElementById('vista_apellido').textContent = data.apellido || '';
-    document.getElementById('vista_cedula').textContent = data.cedula || '';
-    document.getElementById('vista_telefono').textContent = data.telefono || '';
-    document.getElementById('vista_correo').textContent = data.correo || '';
-    document.getElementById('vista_fecha_nacimiento').textContent = FormatoFechas.formatoUsuario(data.fecha_nacimiento);
-    document.getElementById('vista_sexo').textContent = data.sexo || '';
-    // Datos del apartamento
-    document.getElementById('vista_apartamento_nro').textContent = data.nro_apartamento ? `Nro ${data.nro_apartamento}` : 'No asignado';
-    document.getElementById('vista_apartamento_porcentaje').textContent = data.porcentaje_participacion || '0';
-    document.getElementById('vista_apartamento_gas').textContent = data.gas == 1 ? 'Sí' : 'No';
-    document.getElementById('vista_apartamento_agua').textContent = data.agua == 1 ? 'Sí' : 'No';
-    document.getElementById('vista_apartamento_alquilado').textContent = data.alquilado == 1 ? 'Sí' : 'No';
-
-    modalVistaPreviaHabitantes.show();
+        modalVistaPreviaHabitantes.show();
+    });
 }
 
 // Eventos del modal de habitantes

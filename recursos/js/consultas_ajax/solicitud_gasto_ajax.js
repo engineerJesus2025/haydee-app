@@ -3,6 +3,8 @@ let id_modificar;
 let tasa_dolar = parseFloat(localStorage.getItem("tasa_dolar")) || 1;
 
 const modal = new bootstrap.Modal(document.getElementById("modal_solicitud_gasto"), { focus: false });
+const modalDetalles = new bootstrap.Modal(document.getElementById("modal_detalles"), { focus: false });
+
 const form = document.querySelector("#form_solicitud_gasto");
 
 // Exponer funciones necesarias para el validador
@@ -32,27 +34,45 @@ async function consultar() {
 
     const formatoBotones = (cell) => {
         const id = cell.getData().id_solicitud;
-        let html = `<div class="d-flex justify-content-center gap-2">`;
-        if (window.permiso_modificar) html += `<button data-tooltip="true" class="btn btn-success btn-sm modificar" title="Modificar los detalles de este registro" value="${id}"><i class="bi bi-pencil"></i></button>`;
-        if (window.permiso_eliminar) html += `<button data-tooltip="true" class="btn btn-danger btn-sm eliminar" title="Quitar este elemento del sistema" value="${id}"><i class="bi bi-trash"></i></button>`;
+        let html = `<div class="d-flex justify-content-center flex-wrap gap-2">
+            <button type="button" class="btn btn-primary btn-sm vista-previa" value="${id}" data-tooltip="true" title="Ver Mas">
+                <i class="bi bi-eye"></i>
+                <span class="d-none d-lg-inline ms-2">Ver</span>
+            </button>`;
+        if (window.permiso_modificar) {
+            html += `<button class="btn btn-success btn-sm modificar" value="${id}" data-tooltip="true" title="Modificar los detalles de este registro">
+                        <i class="bi bi-pencil"></i>
+                        <span class="d-none d-lg-inline ms-2">Editar</span>
+                    </button>`;
+        }
+        if (window.permiso_eliminar) {
+            html += `<button class="btn btn-danger btn-sm eliminar" value="${id}" data-tooltip="true" title="Quitar este elemento del sistema">
+                        <i class="bi bi-trash"></i>
+                        <span class="d-none d-lg-inline ms-2">Borrar</span>
+                    </button>`;
+        }
         html += `</div>`;
         return html;
     };
 
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
-        { title: "Solicitante", field: "nombre_solicitante", minWidth: 180 },
-        { title: "Monto", field: "monto_estimado", formatter: formatoMonto, minWidth: 120 },
-        { title: "Estado", field: "estado", minWidth: 120 },
-        { title: "Prioridad", field: "prioridad", formatter: formatoPrioridad, minWidth: 100, headerHozAlign: "center", hozAlign: "center" },
+        { title: "Estado", field: "estado", minWidth: 130, responsive: 0 },
+        { title: "Prioridad", field: "prioridad", formatter: formatoPrioridad, minWidth: 140, headerHozAlign: "center", hozAlign: "center" },
+        { title: "Monto", field: "monto_estimado", formatter: formatoMonto, minWidth: 130 },
         {
             title: "Acciones", formatter: formatoBotones, headerSort: false, 
-            hozAlign: "center", vertAlign: "middle", minWidth: 100, responsive: 0, 
+            hozAlign: "center", vertAlign: "middle", minWidth: 130, responsive: 0, widthGrow: 2,
             download: false, headerHozAlign: "center",
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
                 const mockEvent = { currentTarget: btn };
+
+                if (btn.classList.contains('vista-previa')) {
+                    mostrarVistaPrevia(cell.getData());
+                }
+
                 if (btn.classList.contains('modificar')) prepararFormulario(mockEvent);
                 if (btn.classList.contains('eliminar')) {
                     Swal.fire({ title: '¿Estás seguro?', text: 'Esta acción no se puede deshacer.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e01d22', confirmButtonText: 'Eliminar' })
@@ -77,12 +97,64 @@ async function consultar() {
     }
 }
 
+// Función que lee la memoria de Tabulator (Sin AJAX extra)
+function mostrarVistaPrevia(data) {
+    // 1. Cálculos de Monto (Usando tu variable global tasa_dolar)
+    let montoBs = parseFloat(data.monto_estimado);
+    let montoUsd = montoBs / tasa_dolar;
+    
+    document.getElementById("vp_monto_bs").textContent = `${montoBs.toFixed(2)} Bs.`;
+    document.getElementById("vp_monto_usd").textContent = `Ref: ${montoUsd.toFixed(2)} $`;
+
+    // 2. Solicitante
+    document.getElementById("vp_solicitante").textContent = data.nombre_solicitante || 'N/A';
+
+    // 3. Estado (Colores dinámicos)
+    const estadoEl = document.getElementById("vp_estado");
+    estadoEl.textContent = data.estado;
+    if (data.estado === 'Aprobada') {
+        estadoEl.className = "fw-bold text-end text-success";
+    } else if (data.estado === 'Rechazada') {
+        estadoEl.className = "fw-bold text-end text-danger";
+    } else {
+        estadoEl.className = "fw-bold text-end text-warning text-dark"; // Pendiente
+    }
+
+    // 4. Prioridad (Mapeo de números a textos y colores)
+    const prioEl = document.getElementById("vp_prioridad");
+    const mapaPrio = { 
+        "1": { text: "Alta", color: "text-danger" }, 
+        "2": { text: "Media", color: "text-warning text-dark" }, 
+        "3": { text: "Baja", color: "text-success" } 
+    };
+    const confPrio = mapaPrio[data.prioridad] || { text: "Desconocida", color: "text-secondary" };
+    
+    prioEl.textContent = confPrio.text;
+    prioEl.className = `fw-bold text-end ${confPrio.color}`;
+
+    // 5. Fecha (Mismo formato estándar)
+    // Asumiendo que FormatoFechas está disponible globalmente como en otros módulos
+    if (window.FormatoFechas && typeof FormatoFechas.formatoUsuario === "function") {
+        document.getElementById("vp_fecha").textContent = FormatoFechas.formatoUsuario(data.fecha_reporte);
+    } else {
+        // Fallback nativo por si acaso
+        let partes = data.fecha_reporte.split('-');
+        document.getElementById("vp_fecha").textContent = `${partes[2]}-${partes[1]}-${partes[0]}`;
+    }
+
+    // 6. Justificación
+    document.getElementById("vp_descripcion").textContent = data.descripcion_necesidad || 'Sin justificación provista.';
+
+    // Mostramos el modal
+    modalDetalles.show();
+}
+
 // ============================================
 // OPERACIONES CRUD
 // ============================================
 async function registrar() {
     const datos = new FormData(form);
-    datos.set('operacion', 'registrar');
+    datos.set('operacion', 'registrar_solicitud');
 
     const disponible = await consultarPresupuestoDisponible(datos.get('presupuesto_id'));
     if (disponible === null) return;
@@ -93,53 +165,47 @@ async function registrar() {
     datos.set('estado', 'Pendiente');
 
     const respuesta = await Peticiones.enviar(datos, "", true);
-    if (respuesta?.estatus) {
+    Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
         modal.hide();
         tabla_solicitud_gasto.replaceData();
-        Alertas.mostrar('success', 'Éxito', 'Solicitud registrada.');
-    } else {
-        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo registrar.');
-    }
+    });
 }
 
 async function prepararFormulario(e) {
     const id = e.currentTarget.value;
     const datos = new FormData();
     datos.append('id_solicitud', id);
-    datos.append('operacion', 'consulta_especifica');
+    datos.append('operacion', 'consultar_solicitud');
 
     const respuesta = await Peticiones.enviar(datos);
-    if (!respuesta?.estatus) {
-        Alertas.mostrar('error', 'Error', 'No se pudo cargar la solicitud.');
-        return;
-    }
+    Validador.procesarRespuesta(respuesta, async (respuestaServidor) => {
+        const data = respuestaServidor.datos;
+        
+        await cargarMesesYAniosConPresupuesto(); // asegurar selects
 
-    const data = respuesta.datos;
-    
-    await cargarMesesYAniosConPresupuesto(); // asegurar selects
+        form.querySelector('#selector_mes').value = data.mes;
+        form.querySelector('#selector_anio').value = data.anio;
+        await buscarPresupuesto(); // para llenar info
 
-    form.querySelector('#selector_mes').value = data.mes;
-    form.querySelector('#selector_anio').value = data.anio;
-    await buscarPresupuesto(); // para llenar info
+        form.querySelector('#fecha_reporte').value = data.fecha_reporte;
+        form.querySelector('#descripcion_necesidad').value = data.descripcion_necesidad;
+        form.querySelector('#nombre_solicitante').value = data.nombre_solicitante;
+        form.querySelector('#monto_estimado').value = data.monto_estimado;
+        form.querySelector('#monto_estimado').dataset.original = data.monto_estimado;
+        form.querySelector('#prioridad').value = data.prioridad;
 
-    form.querySelector('#fecha').value = data.fecha_reporte;
-    form.querySelector('#descripcion').value = data.descripcion_necesidad;
-    form.querySelector('#nombre').value = data.nombre_solicitante;
-    form.querySelector('#monto_estimado').value = data.monto_estimado;
-    form.querySelector('#monto_estimado').dataset.original = data.monto_estimado;
-    form.querySelector('#prioridad').value = data.prioridad;
+        document.getElementById('presupuesto_total').textContent = 
+            `Bs. ${parseFloat(data.monto_presupuesto_total).toFixed(2) || '-'}`;
+        
 
-    document.getElementById('presupuesto_total').textContent = 
-        `Bs. ${parseFloat(data.monto_presupuesto_total).toFixed(2) || '-'}`;
-    
+        form.querySelector('#presupuesto_id').value = data.presupuesto_id;
 
-    form.querySelector('#presupuesto_id').value = data.presupuesto_id;
+        document.getElementById('titulo_modal').textContent = 'Modificar Solicitud';
+        form.querySelector('#boton_formulario').textContent = 'Guardar Cambios';
+        form.querySelector('#boton_formulario').dataset.id = id;
 
-    document.getElementById('titulo_modal').textContent = 'Modificar Solicitud';
-    form.querySelector('#boton_formulario').textContent = 'Guardar Cambios';
-    form.querySelector('#boton_formulario').dataset.id = id;
-
-    modal.show();
+        modal.show();
+    });
 }
 
 async function modificar() {
@@ -158,31 +224,25 @@ async function modificar() {
 
     const datos = new FormData(form);
     datos.set('id_solicitud', id);
-    datos.set('operacion', 'modificar');
+    datos.set('operacion', 'modificar_solicitud');
     datos.set('estado', 'Pendiente');
 
     const respuesta = await Peticiones.enviar(datos, "", true);
-    if (respuesta?.estatus) {
+    Validador.procesarRespuesta(respuesta, () => {
         modal.hide();
         tabla_solicitud_gasto.replaceData();
-        Alertas.mostrar('success', 'Éxito', 'Solicitud actualizada.');
-    } else {
-        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo actualizar.');
-    }
+    });
 }
 
 async function eliminar(id) {
     const datos = new FormData();
     datos.append('id_solicitud', id);
-    datos.append('operacion', 'eliminar');
+    datos.append('operacion', 'eliminar_solicitud');
 
     const respuesta = await Peticiones.enviar(datos);
-    if (respuesta?.estatus) {
+    Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
         tabla_solicitud_gasto.replaceData();
-        Alertas.mostrar('success', 'Éxito', 'Solicitud eliminada.');
-    } else {
-        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudo eliminar.');
-    }
+    });
 }
 
 // ============================================
@@ -192,31 +252,28 @@ async function cargarMesesYAniosConPresupuesto() {
     const datos = new FormData();
     datos.append('operacion', 'meses_anios_con_presupuesto');
     const respuesta = await Peticiones.enviar(datos);
-    if (!respuesta?.estatus) {
-        Alertas.mostrar('error', 'Error', respuesta?.mensaje || 'No se pudieron cargar los períodos.');
-        return;
-    }
+    Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
+        const selectorMes = document.getElementById('selector_mes');
+        const selectorAnio = document.getElementById('selector_anio');
+        selectorMes.innerHTML = '<option value="" hidden>Seleccione mes</option>';
+        selectorAnio.innerHTML = '<option value="" hidden>Seleccione año</option>';
 
-    const selectorMes = document.getElementById('selector_mes');
-    const selectorAnio = document.getElementById('selector_anio');
-    selectorMes.innerHTML = '<option value="" hidden>Seleccione mes</option>';
-    selectorAnio.innerHTML = '<option value="" hidden>Seleccione año</option>';
+        const meses = [...new Set(respuestaServidor.data.map(p => p.mes))].sort((a,b)=>a-b);
+        const anios = [...new Set(respuestaServidor.data.map(p => p.anio))].sort((a,b)=>b-a);
 
-    const meses = [...new Set(respuesta.data.map(p => p.mes))].sort((a,b)=>a-b);
-    const anios = [...new Set(respuesta.data.map(p => p.anio))].sort((a,b)=>b-a);
+        meses.forEach(mes => {
+            const op = document.createElement('option');
+            op.value = mes;
+            op.textContent = FormatoFechas.nombreMes(mes);
+            selectorMes.appendChild(op);
+        });
 
-    meses.forEach(mes => {
-        const op = document.createElement('option');
-        op.value = mes;
-        op.textContent = FormatoFechas.nombreMes(mes);
-        selectorMes.appendChild(op);
-    });
-
-    anios.forEach(anio => {
-        const op = document.createElement('option');
-        op.value = anio;
-        op.textContent = anio;
-        selectorAnio.appendChild(op);
+        anios.forEach(anio => {
+            const op = document.createElement('option');
+            op.value = anio;
+            op.textContent = anio;
+            selectorAnio.appendChild(op);
+        });
     });
 }
 
@@ -230,8 +287,7 @@ async function buscarPresupuesto() {
     datos.append('mes', mes);
     datos.append('anio', anio);
     const respuesta = await Peticiones.enviar(datos);
-
-    if (respuesta?.estatus) {
+    Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
         document.getElementById('presupuesto_total').textContent = 
             `Bs. ${parseFloat(respuesta.monto_presupuesto_total).toFixed(2)}`;
         document.getElementById('presupuesto_disponible').textContent = 
@@ -239,12 +295,8 @@ async function buscarPresupuesto() {
         document.getElementById('presupuesto_id').value = respuesta.id_presupuesto;
         document.getElementById('info_presupuesto').style.display = 'block';
         document.getElementById('campos_formulario_completo').style.display = 'block';
-    } else {
-        Alertas.mostrar('error', 'Atención', respuesta?.mensaje || 'No hay presupuesto para ese período.');
-        document.getElementById('info_presupuesto').style.display = 'none';
-        document.getElementById('campos_formulario_completo').style.display = 'none';
-        document.getElementById('presupuesto_id').value = '';
-    }
+    });
+    // Revisar caso negativo
 }
 
 async function consultarPresupuestoDisponible(presupuestoId) {
@@ -320,10 +372,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // 3. PASOS DEL MODAL (FASE 2: LLENADO COMPLETO)
     const stepsModalCompleto = [
         { element: '#info_presupuesto', popover: { title: 'Disponibilidad', description: 'Aquí puedes ver cuánto dinero queda disponible en el presupuesto seleccionado.', side: 'bottom', align: 'center' } },
-        { element: '#fecha', popover: { title: 'Datos Básicos', description: 'Indica la fecha de la solicitud y quién la está realizando.', side: 'bottom', align: 'start' } },
+        { element: '#fecha_reporte', popover: { title: 'Datos Básicos', description: 'Indica la fecha de la solicitud y quién la está realizando.', side: 'bottom', align: 'start' } },
         { element: '#monto_estimado', popover: { title: 'Monto Requerido', description: 'Ingresa la cantidad exacta que necesitas. El sistema no te dejará guardar si supera el disponible.', side: 'top', align: 'start' } },
         { element: '#prioridad', popover: { title: 'Prioridad', description: 'Define qué tan urgente es esta solicitud para que la administración la priorice.', side: 'top', align: 'start' } },
-        { element: '#descripcion', popover: { title: 'Justificación', description: 'Explica brevemente para qué se usará el dinero.', side: 'top', align: 'start' } },
+        { element: '#descripcion_necesidad', popover: { title: 'Justificación', description: 'Explica brevemente para qué se usará el dinero.', side: 'top', align: 'start' } },
         { element: '#boton_formulario', popover: { title: 'Finalizar', description: 'Guarda la solicitud para que entre en estado de revisión.', side: 'top', align: 'center' } }
     ];
 

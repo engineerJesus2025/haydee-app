@@ -53,155 +53,150 @@ async function cargarGraficos() {
     try {
         // Pedimos los datos (sin spinner)
         let respuesta = await Peticiones.enviar(datos_consulta, "", false);
+        Validador.procesarRespuesta(respuesta, (respuestaServidor) => {    
+            const data = respuestaServidor.datos;
 
-        if (!respuesta.estatus) {
-            console.error("Error al cargar gráficos:", respuesta.mensaje);
-            return;
-        }
+            // ==================================================
+            // PREPARAR GRÁFICO 1: ESTADO DE DEUDAS
+            // ==================================================
+            let deudasData = [
+                data.grafico_deudas.aptos_solventes || 0,
+                data.grafico_deudas.aptos_morosos || 0
+            ];
 
-        const data = respuesta.datos;
+            // Ocultar esqueletos
+            document.getElementById('esqueleto_titulo_1').classList.add('d-none');
+            document.getElementById('esqueleto_canva_1').classList.add('d-none');
+            document.getElementById('canva_1').removeAttribute('hidden');
+            document.getElementById('canva_1').parentElement.classList.add('animacion-aparecer');
+            document.getElementById('canva_1').parentElement.style.height = '250px';
 
-        // ==================================================
-        // PREPARAR GRÁFICO 1: ESTADO DE DEUDAS
-        // ==================================================
-        let deudasData = [
-            data.grafico_deudas.aptos_solventes || 0,
-            data.grafico_deudas.aptos_morosos || 0
-        ];
+            // Actualizar datos inferiores
+            document.getElementById('esqueleto_dato_1_1').textContent = `${deudasData[0]} Aptos.`;
+            document.getElementById('esqueleto_dato_1_1').classList.add('animacion-aparecer');
+            document.getElementById('esqueleto_dato_2_1').textContent = `${deudasData[1]} Aptos.`;
+            document.getElementById('esqueleto_dato_2_1').classList.add('animacion-aparecer');
 
-        // Ocultar esqueletos
-        document.getElementById('esqueleto_titulo_1').classList.add('d-none');
-        document.getElementById('esqueleto_canva_1').classList.add('d-none');
-        document.getElementById('canva_1').removeAttribute('hidden');
-        document.getElementById('canva_1').parentElement.classList.add('animacion-aparecer');
-        document.getElementById('canva_1').parentElement.style.height = '250px';
+            // .className.add('animacion-aparecer');
 
-        // Actualizar datos inferiores
-        document.getElementById('esqueleto_dato_1_1').textContent = `${deudasData[0]} Aptos.`;
-        document.getElementById('esqueleto_dato_1_1').classList.add('animacion-aparecer');
-        document.getElementById('esqueleto_dato_2_1').textContent = `${deudasData[1]} Aptos.`;
-        document.getElementById('esqueleto_dato_2_1').classList.add('animacion-aparecer');
+            if (deudasData[0] === 0 && deudasData[1] === 0) {
+                document.getElementById('div_alert_1').removeAttribute('hidden');
+                document.getElementById('canva_1').parentElement.style.display = 'none';
+            } else {
+                const ctx1 = document.getElementById('canva_1').getContext('2d');
+                if (graficaChart_1) graficaChart_1.destroy();
+                
+                graficaChart_1 = new Chart(ctx1, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Solventes', 'Con Deuda'],
+                        datasets: [{
+                            data: deudasData,
+                            backgroundColor: ['#10b981', '#ef4444'],
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        },
+                        cutout: '70%',
+                        // --- NUEVA ANIMACIÓN NATIVA DE CHART.JS ---
+                        animation: {
+                            animateScale: true,   // Crece desde el centro
+                            animateRotate: true,  // Gira mientras aparece
+                            duration: 1500,       // Dura 1.5 segundos (muy fluido)
+                            easing: 'easeOutQuart' // Aceleración elegante
+                        }
+                    }
+                });
+            }
 
-        // .className.add('animacion-aparecer');
-
-        if (deudasData[0] === 0 && deudasData[1] === 0) {
-            document.getElementById('div_alert_1').removeAttribute('hidden');
-            document.getElementById('canva_1').parentElement.style.display = 'none';
-        } else {
-            const ctx1 = document.getElementById('canva_1').getContext('2d');
-            if (graficaChart_1) graficaChart_1.destroy();
+            // ==================================================
+            // PREPARAR GRÁFICO 2: INGRESOS VS GASTOS
+            // ==================================================
+            let labelsMeses = [];
+            let datosIngresos = [];
+            let datosGastos = [];
             
-            graficaChart_1 = new Chart(ctx1, {
-                type: 'doughnut',
+            // Sumatorias para la parte inferior
+            let ingresoMesActual = 0;
+            let gastoMesActual = 0;
+
+            data.grafico_ingresos_gastos.forEach((mes, index) => {
+                labelsMeses.push(mes.etiqueta);
+                datosIngresos.push(mes.ingresos);
+                datosGastos.push(mes.gastos);
+                
+                if (index === data.grafico_ingresos_gastos.length - 1) {
+                    ingresoMesActual = mes.ingresos;
+                    gastoMesActual = mes.gastos;
+                }
+            });
+
+            // Ocultar esqueletos
+            document.getElementById('esqueleto_titulo_2').classList.add('d-none');
+            document.getElementById('esqueleto_canva_2').classList.add('d-none');
+            document.getElementById('canva_2').removeAttribute('hidden');
+            document.getElementById('canva_2').parentElement.classList.add('animacion-aparecer');
+            document.getElementById('canva_2').parentElement.style.height = '250px';
+
+            // Actualizar datos inferiores
+            document.getElementById('esqueleto_dato_1_2').textContent = `${parseFloat(ingresoMesActual).toFixed(2)} Bs.`;
+            document.getElementById('esqueleto_dato_1_2').classList.add('animacion-aparecer');
+            document.getElementById('esqueleto_dato_2_2').textContent = `${parseFloat(gastoMesActual).toFixed(2)} Bs.`;
+            document.getElementById('esqueleto_dato_2_2').classList.add('animacion-aparecer');
+            
+            const ctx2 = document.getElementById('canva_2').getContext('2d');
+            if (graficaChart_2) graficaChart_2.destroy();
+            
+            graficaChart_2 = new Chart(ctx2, {
+                type: 'bar',
                 data: {
-                    labels: ['Solventes', 'Con Deuda'],
-                    datasets: [{
-                        data: deudasData,
-                        backgroundColor: ['#10b981', '#ef4444'],
-                        borderWidth: 0,
-                        hoverOffset: 4
-                    }]
+                    labels: labelsMeses,
+                    datasets: [
+                        {
+                            label: 'Ingresos',
+                            data: datosIngresos,
+                            backgroundColor: '#3b82f6',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Egresos',
+                            data: datosGastos,
+                            backgroundColor: '#f43f5e',
+                            borderRadius: 4
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom' }
+                    plugins: { legend: { position: 'bottom' } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { borderDash: [2, 4] } },
+                        x: { grid: { display: false } }
                     },
-                    cutout: '70%',
                     // --- NUEVA ANIMACIÓN NATIVA DE CHART.JS ---
                     animation: {
-                        animateScale: true,   // Crece desde el centro
-                        animateRotate: true,  // Gira mientras aparece
-                        duration: 1500,       // Dura 1.5 segundos (muy fluido)
-                        easing: 'easeOutQuart' // Aceleración elegante
+                        duration: 1500,
+                        easing: 'easeOutBack', // Da un pequeñísimo "rebote" al terminar de subir
+                        delay: (context) => {
+                            // Crea un efecto de "ola" retrasando cada barra un poquito
+                            let delay = 0;
+                            if (context.type === 'data' && context.mode === 'default' && !context.dropped) {
+                                delay = context.dataIndex * 150 + context.datasetIndex * 100;
+                                context.dropped = true;
+                            }
+                            return delay;
+                        }
                     }
                 }
             });
-        }
-
-        // ==================================================
-        // PREPARAR GRÁFICO 2: INGRESOS VS GASTOS
-        // ==================================================
-        let labelsMeses = [];
-        let datosIngresos = [];
-        let datosGastos = [];
-        
-        // Sumatorias para la parte inferior
-        let ingresoMesActual = 0;
-        let gastoMesActual = 0;
-
-        data.grafico_ingresos_gastos.forEach((mes, index) => {
-            labelsMeses.push(mes.etiqueta);
-            datosIngresos.push(mes.ingresos);
-            datosGastos.push(mes.gastos);
-            
-            if (index === data.grafico_ingresos_gastos.length - 1) {
-                ingresoMesActual = mes.ingresos;
-                gastoMesActual = mes.gastos;
-            }
         });
-
-        // Ocultar esqueletos
-        document.getElementById('esqueleto_titulo_2').classList.add('d-none');
-        document.getElementById('esqueleto_canva_2').classList.add('d-none');
-        document.getElementById('canva_2').removeAttribute('hidden');
-        document.getElementById('canva_2').parentElement.classList.add('animacion-aparecer');
-        document.getElementById('canva_2').parentElement.style.height = '250px';
-
-        // Actualizar datos inferiores
-        document.getElementById('esqueleto_dato_1_2').textContent = `${parseFloat(ingresoMesActual).toFixed(2)} Bs.`;
-        document.getElementById('esqueleto_dato_1_2').classList.add('animacion-aparecer');
-        document.getElementById('esqueleto_dato_2_2').textContent = `${parseFloat(gastoMesActual).toFixed(2)} Bs.`;
-        document.getElementById('esqueleto_dato_2_2').classList.add('animacion-aparecer');
-        
-        const ctx2 = document.getElementById('canva_2').getContext('2d');
-        if (graficaChart_2) graficaChart_2.destroy();
-        
-        graficaChart_2 = new Chart(ctx2, {
-            type: 'bar',
-            data: {
-                labels: labelsMeses,
-                datasets: [
-                    {
-                        label: 'Ingresos',
-                        data: datosIngresos,
-                        backgroundColor: '#3b82f6',
-                        borderRadius: 4
-                    },
-                    {
-                        label: 'Egresos',
-                        data: datosGastos,
-                        backgroundColor: '#f43f5e',
-                        borderRadius: 4
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom' } },
-                scales: {
-                    y: { beginAtZero: true, grid: { borderDash: [2, 4] } },
-                    x: { grid: { display: false } }
-                },
-                // --- NUEVA ANIMACIÓN NATIVA DE CHART.JS ---
-                animation: {
-                    duration: 1500,
-                    easing: 'easeOutBack', // Da un pequeñísimo "rebote" al terminar de subir
-                    delay: (context) => {
-                        // Crea un efecto de "ola" retrasando cada barra un poquito
-                        let delay = 0;
-                        if (context.type === 'data' && context.mode === 'default' && !context.dropped) {
-                            delay = context.dataIndex * 150 + context.datasetIndex * 100;
-                            context.dropped = true;
-                        }
-                        return delay;
-                    }
-                }
-            }
-        });
-
     } catch (error) {
         console.error("Error en consulta de gráficos:", error);
     }
@@ -219,27 +214,23 @@ async function consultarPublicaciones() {
     try {
         let respuesta = await Peticiones.enviar(datos_consulta, "", false);
         document.getElementById('carga_publicaciones').setAttribute('hidden', '');
+        Validador.procesarRespuesta(respuesta, (respuestaServidor) => {    
+            const publicaciones = respuestaServidor.datos;
 
-        if (!respuesta.estatus) {
-            console.error("Error del servidor:", respuesta.mensaje);
-            return;
-        }
+            if (!publicaciones || publicaciones.length === 0) {
+                fin = true;
+                mostrarMensajeFin(limite === 0 ? "No hay publicaciones" : "No hay más resultados");
+                return;
+            }
 
-        const publicaciones = respuesta.datos;
+            let fragment = document.createDocumentFragment();
+            publicaciones.forEach(publicacion => {
+                fragment.appendChild(construirHTMLPublicacion(publicacion));
+            });
 
-        if (!publicaciones || publicaciones.length === 0) {
-            fin = true;
-            mostrarMensajeFin(limite === 0 ? "No hay publicaciones" : "No hay más resultados");
-            return;
-        }
-
-        let fragment = document.createDocumentFragment();
-        publicaciones.forEach(publicacion => {
-            fragment.appendChild(construirHTMLPublicacion(publicacion));
+            limite += 2;
+            contenido_principal.appendChild(fragment);
         });
-
-        limite += 2;
-        contenido_principal.appendChild(fragment);
 
     } catch (error) {
         console.error("Error en consulta:", error);
@@ -296,8 +287,8 @@ async function cargarTarjetasInicio() {
 
     try {
         let respuesta = await Peticiones.enviar(datos, "", false);
-        if (respuesta.estatus && respuesta.datos) {
-            const kpis = respuesta.datos;
+        Validador.procesarRespuesta(respuesta, (respuestaServidor) => {    
+            const kpis = respuestaServidor.datos;
             
             // Textos principales
             document.getElementById('kpi-aptos').textContent = `${kpis.apartamentos_ocupados}/${kpis.total_apartamentos}`;
@@ -325,7 +316,7 @@ async function cargarTarjetasInicio() {
                 badgePendientes.textContent = `${parseFloat(kpis.deuda_total).toFixed(2)} Bs.`;
                 badgePendientes.removeAttribute("hidden");
             }
-        }
+        });
     } catch (error) {
         console.error("Error al cargar KPIs:", error);
     }
@@ -337,16 +328,16 @@ async function cargarWidgetPublicaciones() {
     datos.append("operacion", "consulta_widget_publicaciones");
 
     try {
-        let respuesta = await Peticiones.enviar(datos, "", false); // false = sin spinner
         const contenedor = document.getElementById('contenedor-widget-publicaciones');
         if (!contenedor) return;
 
-        contenedor.innerHTML = ''; // Borramos los esqueletos
-
+        let respuesta = await Peticiones.enviar(datos, "", false); // false = sin spinner
         if (!respuesta.estatus || respuesta.datos.length === 0) {
             contenedor.innerHTML = '<p class="text-center text-muted my-3">No hay publicaciones recientes.</p>';
             return;
         }
+
+        contenedor.innerHTML = ''; // Borramos los esqueletos
 
         let fragment = document.createDocumentFragment();
 

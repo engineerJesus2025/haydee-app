@@ -99,28 +99,11 @@
         require_once ROOT_PATH . "/vista/componentes/footer.php";
         require_once ROOT_PATH . "/vista/componentes/script.php";
         require_once ROOT_PATH . "/vista/componentes/modal_carga.php";
+        // Modales
+        require_once ROOT_PATH . "/vista/reportes/reportes_pdf/reporte_gastos_mensual_modal.php";
+        require_once ROOT_PATH . "/vista/reportes/reportes_pdf/reporte_persona_modal.php";
     ?>
     
-    <!-- Modales -->
-    <div class="modal fade" id="modal_reporte_persona" tabindex="-1" aria-labelledby="titulo_modal_persona" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h1 class="modal-title fs-5" id="titulo_modal_persona">Generar Cuadro de pagos</h1>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                        aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-
-                    <?php
-                    require_once ROOT_PATH . "/vista/reportes/reportes_pdf/reporte_persona_modal.php";
-                    ?>
-
-                </div>
-            </div>
-        </div>
-    </div>
-    <?php require_once ROOT_PATH . "/vista/reportes/reportes_pdf/reporte_gastos_mensual_modal.php"; ?>
     <!-- Scripts personalizado -->
     <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/reportes/reporte_constancias.js"></script>
     <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/reportes/cuadro_pagos.js"></script>

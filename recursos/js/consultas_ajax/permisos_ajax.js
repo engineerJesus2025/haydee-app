@@ -9,6 +9,8 @@ let permiso_eliminar = document.querySelector("#permiso_eliminar")?.value;
 let permiso_modificar = document.querySelector("#permiso_modificar")?.value;
 
 const modalPermiso = new bootstrap.Modal(document.getElementById("modal_permiso"), { focus: false });
+const modalDetalles = new bootstrap.Modal(document.getElementById("modal_detalles"), { focus: false });
+
 const formulario = document.getElementById("form_permiso");
 const botonFormulario = document.getElementById("boton_formulario");
 
@@ -27,9 +29,23 @@ async function consultar() {
     const formatoBotones = (cell) => {
         const id = cell.getData().id_permiso; 
         
-        let html = `<div class="d-flex justify-content-center gap-2">`;
-        if (window.permiso_modificar) html += `<button data-tooltip="true" type="button" class="btn btn-success btn-sm modificar" title="Modificar los detalles de este registro" value="${id}"><i class="bi bi-pencil"></i></button>`;
-        if (window.permiso_eliminar) html += `<button data-tooltip="true" type="button" class="btn btn-danger btn-sm eliminar" title="Quitar este elemento del sistema" value="${id}"><i class="bi bi-trash"></i></button>`;
+        let html = `<div class="d-flex justify-content-center flex-wrap gap-2">
+            <button type="button" class="btn btn-primary btn-sm vista-previa" value="${id}" data-tooltip="true" title="Ver Mas">
+                <i class="bi bi-eye"></i>
+                <span class="d-none d-lg-inline ms-2">Ver</span>
+            </button>`;
+        if (window.permiso_modificar) {
+            html += `<button class="btn btn-success btn-sm modificar" value="${id}" data-tooltip="true" title="Modificar los detalles de este registro">
+                        <i class="bi bi-pencil"></i>
+                        <span class="d-none d-lg-inline ms-2">Editar</span>
+                    </button>`;
+        }
+        if (window.permiso_eliminar) {
+            html += `<button class="btn btn-danger btn-sm eliminar" value="${id}" data-tooltip="true" title="Quitar este elemento del sistema">
+                        <i class="bi bi-trash"></i>
+                        <span class="d-none d-lg-inline ms-2">Borrar</span>
+                    </button>`;
+        }
         html += `</div>`;
         return html;
     };
@@ -40,10 +56,14 @@ async function consultar() {
         { title: "Permiso", field: "accion", minWidth: 150, responsive: 0 },
 
         {
-            title: "Acciones", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 100, responsive: 0, download: false, headerHozAlign: "center",
+            title: "Acciones", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 130, responsive: 0, download: false, headerHozAlign: "center",
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
+                
+                if (btn.classList.contains('vista-previa')) {
+                    mostrarVistaPrevia(cell.getData());
+                }
                 
                 if (btn.classList.contains('modificar')) {
                     prepararFormulario({ currentTarget: btn }); 
@@ -73,65 +93,63 @@ async function consultar() {
     }
 }
 
+// Función que lee la memoria de Tabulator (Sin AJAX extra)
+function mostrarVistaPrevia(data) {
+    document.getElementById("vp_icono").className = "bi bi-shield-lock";
+    document.getElementById("vp_titulo").textContent = "Permiso";
+    document.getElementById("vp_etiqueta").textContent = "Acción Permitida";
+    document.getElementById("vp_valor").textContent = data.accion || 'N/A';
+    
+    modalDetalles.show();
+}
 
 async function prepararFormulario(e) {
     const id = e.currentTarget.value;
     const datos = new FormData();
     datos.append('id_permiso', id);
-    datos.append('operacion', 'consultar_unico');
+    datos.append('operacion', 'consultar_permiso');
 
     const respuesta = await Peticiones.enviar(datos, "", true);
-    if (!respuesta.estatus) {
-        Alertas.mostrar('error', 'Error', respuesta.mensaje);
-        return;
-    }
+    Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
+        const permiso = respuestaServidor.datos;
+        document.getElementById('id_permiso').value = permiso.id_permiso;
+        document.getElementById('accion').value = permiso.accion;
 
-    const permiso = respuesta.datos;
-    document.getElementById('id_permiso').value = permiso.id_permiso;
-    document.getElementById('accion').value = permiso.accion;
+        if (permiso_modificar != 1) {
+            botonFormulario.setAttribute('hidden', true);
+        }
 
-    if (permiso_modificar != 1) {
-        botonFormulario.setAttribute('hidden', true);
-    }
+        botonFormulario.setAttribute('modificar', true);
+        botonFormulario.setAttribute('id_modificar', permiso.id_permiso);
+        botonFormulario.textContent = 'Guardar Cambios';
+        document.getElementById('titulo_modal').textContent = 'Modificar Permiso';
+        id_modificar = permiso.id_permiso;
 
-    botonFormulario.setAttribute('modificar', true);
-    botonFormulario.setAttribute('id_modificar', permiso.id_permiso);
-    botonFormulario.textContent = 'Guardar Cambios';
-    document.getElementById('titulo_modal').textContent = 'Modificar Permiso';
-    id_modificar = permiso.id_permiso;
-
-    modalPermiso.show();
+        modalPermiso.show();
+    });
 }
 
 async function registrar() {
     const formData = new FormData(formulario);
-    formData.append('operacion', 'registrar');
+    formData.append('operacion', 'registrar_permiso');
 
     const respuesta = await Peticiones.enviar(formData, "", true);
-    if (!respuesta.estatus) {
-        Alertas.mostrar('error', 'Atención', respuesta.mensaje);
-        return;
-    }
-
-    modalPermiso.hide();
-    tablaPermisos.replaceData();
-    Alertas.mostrar('success', 'Éxito', 'Permiso registrado correctamente');
+    Validador.procesarRespuesta(respuesta, () => {
+        modalPermiso.hide();
+        tablaPermisos.replaceData();
+    });
 }
 
 async function modificar(id) {
     const formData = new FormData(formulario);
     formData.append('id_permiso', id);
-    formData.append('operacion', 'modificar');
+    formData.append('operacion', 'modificar_permiso');
 
     const respuesta = await Peticiones.enviar(formData, "", true);
-    if (!respuesta.estatus) {
-        Alertas.mostrar('error', 'Atención', respuesta.mensaje);
-        return;
-    }
-
-    modalPermiso.hide();
-    tablaPermisos.replaceData();
-    Alertas.mostrar('success', 'Éxito', 'Permiso modificado correctamente');
+    Validador.procesarRespuesta(respuesta, () => {
+        modalPermiso.hide();
+        tablaPermisos.replaceData();
+    });
 }
 
 function confirmarEliminar(id) {
@@ -151,16 +169,12 @@ function confirmarEliminar(id) {
 async function eliminar(id) {
     const datos = new FormData();
     datos.append('id_permiso', id);
-    datos.append('operacion', 'eliminar');
+    datos.append('operacion', 'eliminar_permiso');
 
     const respuesta = await Peticiones.enviar(datos);
-    if (!respuesta.estatus) {
-        Alertas.mostrar('error', 'Atención', respuesta.mensaje);
-        return;
-    }
-
-    tablaPermisos.replaceData();
-    Alertas.mostrar('success', 'Éxito', 'Permiso eliminado correctamente');
+    Validador.procesarRespuesta(respuesta, () => {
+        tablaPermisos.replaceData();
+    });
 }
 
 function resetModal() {

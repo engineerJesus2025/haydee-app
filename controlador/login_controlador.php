@@ -1,8 +1,10 @@
 <?php
 use haydee\ayuda\Recaptcha;
+use haydee\modelo\Usuario;
+use haydee\ayuda\Sesiones;
+use haydee\ayuda\Validador;
 use haydee\servicios\Autenticacion;
 use haydee\servicios\Recuperacion;
-use haydee\ayuda\Sesiones;
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -10,14 +12,34 @@ if (session_status() === PHP_SESSION_NONE) {
 
 $recaptchaDeshabilitado = defined('ENTORNO') && ENTORNO === 'local';
 
-// ====================================================================
-// 1. Manejo de Peticiones AJAX (JSON)
-// ====================================================================
 if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación desconocida'];
 
-    // Extraer datos comunes (pueden usarse en varios casos)
+    // --- NORMALIZACIÓN PARA EL VALIDADOR ---
+    // Copiamos los inputs del frontend al nombre estándar ('correo') para poder validarlos
+    if (isset($_POST['usuario'])) {
+        $_POST['correo'] = $_POST['usuario'];
+    }
+    if (isset($_POST['correo_recuperar'])) {
+        $_POST['correo'] = $_POST['correo_recuperar'];
+    }
+
+    // --- VALIDACIÓN CENTRALIZADA ---
+    $reglas = Usuario::obtenerReglas($operacion);
+    if (!empty($reglas)) {
+        $validador = new Validador();
+        
+        // Usamos skip_unique para evitar que nos rebote por tener el correo registrado
+        $validador->validarConjunto($_POST, $reglas, ['skip_unique' => true]);
+
+        if ($validador->tieneErrores()) {
+            echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
+            exit;
+        }
+    }
+
+    // Extraer datos comunes (Ya validados y seguros)
     $usuario = $_POST['usuario'] ?? '';
     $contra = $_POST['contra'] ?? '';
     $mantenerSesion = ($_POST['mantener_sesion'] ?? 'false') === 'true';

@@ -3,18 +3,36 @@ use haydee\ayuda\Sesiones;
 use haydee\modelo\CarteleraVirtual;
 use haydee\modelo\Usuario;
 use haydee\modelo\Bitacora;
-use haydee\servicios\GestorAuditoria;
+use haydee\ayuda\Validador;
+use haydee\ayuda\ValidadorBD;
 use haydee\ayuda\GestorImagenes;
+use haydee\servicios\GestorAuditoria;
 
 // Verificaciones de seguridad
 Sesiones::verificarSesion();
 Sesiones::verificarPermiso(GESTIONAR_CARTELERA_VIRTUAL, CONSULTAR);
 
-$cartelera = new CarteleraVirtual();
-$usuario = new Usuario();
-$usuarios = $usuario->realizar_consulta('consultar')['datos'] ?? [];
-
 if (isset($_POST["operacion"])) {
+    $operacion = $_POST["operacion"];
+
+    // 1. Validamos según la operación
+    $reglas = CarteleraVirtual::obtenerReglas($operacion);
+
+    if (!isset($_POST['usuario_id'])) {
+        $_POST['usuario_id'] = $_SESSION['id_usuario'] ?? null;
+    }
+
+    if (!empty($reglas)) {
+        $validador = new Validador();
+        $validador->validarConjunto($_POST, $reglas);
+
+        if ($validador->tieneErrores()) {
+            echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
+            exit;
+        }
+    }
+
+    $cartelera = new CarteleraVirtual();
     // Asignación masiva
     $cartelera->set_id_cartelera($_POST['id_cartelera'] ?? null);
     $cartelera->set_titulo($_POST['titulo'] ?? null);
@@ -23,7 +41,6 @@ if (isset($_POST["operacion"])) {
     $cartelera->set_prioridad($_POST['prioridad'] ?? null);
     $cartelera->set_usuario_id($_SESSION['id_usuario'] ?? null);
 
-    $operacion = $_POST["operacion"];
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
     // Instanciamos el auditor
@@ -38,7 +55,7 @@ if (isset($_POST["operacion"])) {
                 }
                 break;
 
-            case 'registrar':
+            case 'registrar_cartelera':
                 $nombreImagen = '';
                 if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
                     $nombreImagen = GestorImagenes::subir($_FILES['imagen'], 'cartelera');
@@ -47,19 +64,19 @@ if (isset($_POST["operacion"])) {
                     }
                 }
                 $cartelera->set_imagen($nombreImagen);
-                $respuesta = $cartelera->realizar_consulta('registrar');
+                $respuesta = $cartelera->realizar_consulta('registrar_cartelera');
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria('registrar');
                 }
                 break;
 
-            case 'consulta_especifica':
-                $respuesta = $cartelera->realizar_consulta('consultar_cartelera_id');
+            case 'consultar_cartelera':
+                $respuesta = $cartelera->realizar_consulta('consultar_cartelera');
                 break;
 
-            case 'modificar':
+            case 'modificar_cartelera':
                 // Obtener datos anteriores
-                $auditor->capturarDatosAnteriores('consultar_cartelera_id');
+                $auditor->capturarDatosAnteriores('consultar_cartelera');
 
                 $imagenActual = $cartelera->obtenerImagenActual();
                 $eliminarImagen = isset($_POST["eliminar_imagen"]) && $_POST["eliminar_imagen"] == 1;
@@ -84,24 +101,20 @@ if (isset($_POST["operacion"])) {
                 }
 
                 $cartelera->set_imagen($nuevaImagen);
-                $respuesta = $cartelera->realizar_consulta('modificar_publicacion');
+                $respuesta = $cartelera->realizar_consulta('modificar_cartelera');
                 if ($respuesta['estatus']) { 
                     $auditor->registrarAuditoria('modificar'); 
                 }
                 break;
 
-            case 'eliminar':
+            case 'eliminar_cartelera':
                 // Obtener datos anteriores
-                $auditor->capturarDatosAnteriores('consultar_cartelera_id');
+                $auditor->capturarDatosAnteriores('consultar_cartelera');
 
-                $respuesta = $cartelera->realizar_consulta('eliminar_publicacion');
+                $respuesta = $cartelera->realizar_consulta('eliminar_cartelera');
                 if ($respuesta['estatus']) { 
                     $auditor->registrarAuditoria('eliminar'); 
                 }
-                break;
-
-            case 'ultimo_id':
-                $respuesta = $cartelera->realizar_consulta('lastId');
                 break;
 
             default:
@@ -127,6 +140,9 @@ if (isset($_POST["operacion"])) {
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_CARTELERA_VIRTUAL);
+
+    $usuario = new Usuario();
+    $usuarios = $usuario->realizar_consulta('consultar')['datos'] ?? [];
 }
 
 require_once "vista/cartelera_virtual/cartelera_virtual_vista.php";

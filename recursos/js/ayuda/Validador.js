@@ -139,5 +139,124 @@ const Validador = {
         
         EstadoInputs.marcarExito(input);
         return true; // Es válido porque SÍ existe
-    }
+    },
+    /**
+     * Procesa los errores del Backend. Los campos visibles se marcan en rojo.
+     * Detecta dinámicamente si el error pertenece a un arreglo de detalles (ej. detalle_0_monto).
+     */
+    mostrarErroresBackend(errores) {
+        let erroresGlobales = []; 
+
+        for (const campo in errores) {
+            if (errores.hasOwnProperty(campo)) {
+                const primerMensaje = errores[campo][0];
+                let input = null;
+                let esErrorDetalle = false;
+
+                // 1. Verificamos si es un error de los detalles usando Regex
+                // Busca el patrón: "detalle_" seguido de un número, "_" y el nombre del campo
+                const coincidenciaDetalle = campo.match(/^detalle_(\d+)_(.+)$/);
+
+                if (coincidenciaDetalle) {
+                    esErrorDetalle = true;
+                    const indiceFila = parseInt(coincidenciaDetalle[1], 10); // Ej: 0, 1, 2...
+                    const nombreCampo = coincidenciaDetalle[2]; // Ej: "monto", "fecha_detalle"
+
+                    // Intentamos buscar por el atributo name de PHP (ej: name="monto[]")
+                    const inputsPorNombre = document.querySelectorAll(`[name="${nombreCampo}[]"]`);
+                    if (inputsPorNombre.length > indiceFila) {
+                        input = inputsPorNombre[indiceFila];
+                    } else {
+                        // Si no lo encuentra por name, lo buscamos por la clase (ej: .monto)
+                        const inputsPorClase = document.querySelectorAll(`.${nombreCampo}`);
+                        if (inputsPorClase.length > indiceFila) {
+                            input = inputsPorClase[indiceFila];
+                        }
+                    }
+                } else {
+                    // 2. Si NO es un detalle, lo buscamos normalmente por su ID (Cabecera)
+                    input = document.getElementById(campo);
+                }
+
+                // 3. Evaluamos si encontramos el input en el HTML y si está visible
+                const esInputValido = input && input.nodeName !== 'SELECT' && input.type !== 'hidden';
+                const esSelectValido = input && input.nodeName === 'SELECT' && !input.hidden;
+
+                if (esInputValido || esSelectValido) {
+                    EstadoInputs.marcarError(input, primerMensaje);
+                } else {
+                    // Si el input no existe, está oculto (hidden), o es un ID interno, va a la alerta
+                    let textoAlerta = primerMensaje;
+                    
+                    if (esErrorDetalle) {
+                        const filaLogica = parseInt(coincidenciaDetalle[1], 10) + 1;
+                        textoAlerta = `Renglón ${filaLogica}: ${primerMensaje}`;
+                    }
+                    
+                    erroresGlobales.push(`• ${textoAlerta}`);
+                }
+            }
+        }
+
+        // Mostramos la alerta dinámica según los errores encontrados
+        if (erroresGlobales.length > 0) {
+            Alertas.mostrar('error', 'Error de Validación', erroresGlobales.join('<br>'), 6000);
+        } else {
+            Alertas.mostrar('error', 'Errores en el formulario', 'Por favor, revise los campos marcados en rojo.', 5000);
+        }
+    },
+
+    /**
+     * Evalúa genéricamente la respuesta del servidor para no repetir código en AJAX.
+     * @param {Object} respuesta - El JSON parseado del servidor.
+     * @param {Function} accionExito - Función que se ejecuta si estatus es true.
+     */
+    procesarRespuesta(respuesta, accionExito) {
+        if (!respuesta.estatus) {
+            // Evaluamos de dónde viene el error
+            if (respuesta.errores) {
+                this.mostrarErroresBackend(respuesta.errores);
+            } else if (respuesta.mensaje) {
+                Alertas.mostrar('error', 'Error', respuesta.mensaje);
+            } else {
+                Alertas.mostrar('error', 'Error', 'Ocurrió un error inesperado al procesar la solicitud.');
+            }
+            return false; // Detenemos la ejecución
+        }
+
+        // Si llegó aquí, la operación en el servidor fue un éxito
+        if (respuesta.mensaje) {
+            Alertas.mostrar('success', '¡Éxito!', respuesta.mensaje);
+        }
+        
+        // Ejecutamos lo que sea que el módulo necesite hacer al tener éxito
+        if (typeof accionExito === 'function') {
+            accionExito(respuesta);
+        }
+        return true;
+    },
+    /**
+     * Consulta al servidor si un dato es ÚNICO (no debe existir en BD).
+     * Útil para Cédulas, Correos y Referencias Bancarias.
+     * Retorna true si es ÚNICO (verde), false si YA EXISTE (rojo).
+     */
+    async verificarDatoUnico(accionBackend, datosExtra, input, mensajeError) {
+        const formData = new FormData();
+        formData.append('validar', accionBackend);
+        
+        for (const llave in datosExtra) {
+            formData.append(llave, datosExtra[llave]);
+        }
+
+        const respuesta = await Peticiones.enviar(formData, "", false); 
+        
+        // LÓGICA INVERTIDA: Si 'existe' es true, entonces está ocupado y DA ERROR.
+        if (respuesta.estatus === false || respuesta.existe === true) {
+            EstadoInputs.marcarError(input, mensajeError);
+            return false; // Es inválido porque YA EXISTE
+        }
+        
+        EstadoInputs.marcarExito(input);
+        return true; // Es válido porque está disponible
+    },
 };

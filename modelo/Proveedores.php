@@ -13,27 +13,43 @@ class Proveedores extends Conexion
     private $direccion;
     private $activo;
 
-    // Reglas de validación centralizadas
-    private $reglas = [
-        'id_proveedor' => [
-            'regex' => '/^\d+$/',
-            'exists' => ['tabla' => 'proveedores', 'campo' => 'id_proveedor']
-        ],
-        'nombre_proveedor' => [
-            'regex' => '/^[A-Za-záéíóúÁÉÍÓÚñÑ\s]+$/',
-            'unique' => ['tabla' => 'proveedores', 'campo' => 'nombre_proveedor', 'exclude_field' => 'id_proveedor']
-        ],
-        'servicio' => [
-            'regex' => '/^[A-Za-záéíóúÁÉÍÓÚñÑ\s]+$/'
-        ],
-        'rif' => [
-            'regex' => '/^[VEJG]{1}[0-9]{7,10}$/',
-            'unique' => ['tabla' => 'proveedores', 'campo' => 'rif', 'exclude_field' => 'id_proveedor']
-        ],
-        'direccion' => [
-            'regex' => '/^[A-Za-z0-9áéíóúÁÉÍÓÚñÑ\s,.#\-]+$/'
-        ]
-    ];
+    // ====================================================================
+    // VALIDACIONES CENTRALIZADAS
+    // ====================================================================
+    public static function obtenerReglas($operacion) {
+        $reglasGenerales = [
+            'id_proveedor' => [
+                'regex' => '/^\d+$/',
+                'exists' => ['tabla' => 'proveedores', 'campo' => 'id_proveedor']
+            ],
+            'nombre_proveedor' => [
+                'regex' => '/^[A-Za-záéíóúÁÉÍÓÚñÑ\s]+$/',
+                'unique' => ['tabla' => 'proveedores', 'campo' => 'nombre_proveedor', 'exclude_field' => 'id_proveedor']
+            ],
+            'servicio' => [
+                'regex' => '/^[A-Za-záéíóúÁÉÍÓÚñÑ\s]+$/'
+            ],
+            'rif' => [
+                'regex' => '/^[VEJG]{1}[0-9]{7,10}$/',
+                'unique' => ['tabla' => 'proveedores', 'campo' => 'rif', 'exclude_field' => 'id_proveedor']
+            ],
+            'direccion' => [
+                'regex' => '/^[A-Za-z0-9áéíóúÁÉÍÓÚñÑ\s.,:\/-]{5,255}$/'
+            ]
+        ];
+
+        $camposPorOperacion = [
+            'registrar_proveedor' => ['nombre_proveedor', 'servicio', 'rif', 'direccion'],
+            'modificar_proveedor' => ['id_proveedor', 'nombre_proveedor', 'servicio', 'rif', 'direccion'],
+            'eliminar_proveedor'  => ['id_proveedor'],
+            'consultar_proveedor' => ['id_proveedor']
+        ];
+
+        if (isset($camposPorOperacion[$operacion])) {
+            return array_intersect_key($reglasGenerales, array_flip($camposPorOperacion[$operacion]));
+        }
+        return [];
+    }
 
     // Getters y Setters
     public function set_id_proveedor($id) { $this->id_proveedor = $id; }
@@ -68,128 +84,10 @@ class Proveedores extends Conexion
     }
 
     // -----------------------------------------------------------------
-    // Método de validación centralizado
-    // -----------------------------------------------------------------
-
-    private function validar($campos, $contexto = [])
-    {
-        foreach ($campos as $campo) {
-            if (!isset($this->reglas[$campo])) {
-                return [
-                    'estatus' => false,
-                    'mensaje' => "No hay reglas de validación definidas para el campo '$campo'."
-                ];
-            }
-            $regla = $this->reglas[$campo];
-
-            $getter = 'get_' . $campo;
-            if (!method_exists($this, $getter)) {
-                return [
-                    'estatus' => false,
-                    'mensaje' => "El campo '$campo' no tiene un getter definido."
-                ];
-            }
-            $valor = $this->$getter();
-
-            // Requerido
-            if ($valor === null) {
-                return [
-                    'estatus' => false,
-                    'mensaje' => "El campo '$campo' es requerido y no se ha establecido."
-                ];
-            }
-            if (is_string($valor) && trim($valor) === '') {
-                return [
-                    'estatus' => false,
-                    'mensaje' => "El campo '$campo' no puede estar vacío."
-                ];
-            }
-
-            // Validar con expresión regular
-            if (isset($regla['regex'])) {
-                if (!preg_match($regla['regex'], (string)$valor)) {
-                    return [
-                        'estatus' => false,
-                        'mensaje' => "El campo '$campo' no tiene un formato válido."
-                    ];
-                }
-            }
-
-            // Validar existencia en otra tabla (foránea)
-            if (isset($regla['exists'])) {
-                $tabla = $regla['exists']['tabla'];
-                $campoFor = $regla['exists']['campo'] ?? $campo;
-                if (!$this->existeEnTabla($tabla, $campoFor, $valor)) {
-                    return [
-                        'estatus' => false,
-                        'mensaje' => "El valor del campo '$campo' no existe en la tabla $tabla."
-                    ];
-                }
-            }
-
-            // Validar unicidad
-            if (isset($regla['unique'])) {
-                $tabla = $regla['unique']['tabla'];
-                $campoUnico = $regla['unique']['campo'] ?? $campo;
-                $excludeField = $regla['unique']['exclude_field'] ?? null;
-                $excludeValue = $contexto['exclude_id'] ?? null;
-                if (!$this->esUnico($tabla, $campoUnico, $valor, $excludeField, $excludeValue)) {
-                    return [
-                        'estatus' => false,
-                        'mensaje' => "El valor del campo '$campo' ya está registrado."
-                    ];
-                }
-            }
-        }
-        return ['estatus' => true];
-    }
-
-    /**
-     * Verifica si un valor existe en una tabla específica.
-     */
-    private function existeEnTabla($tabla, $campo, $valor)
-    {
-        $sql = "SELECT COUNT(*) as total FROM $tabla WHERE $campo = :valor";
-        try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->bindParam(':valor', $valor);
-            $stmt->execute();
-            $fila = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $fila['total'] > 0;
-        } catch (PDOException $e) {
-            error_log("Error en existeEnTabla: " . $e->getMessage());
-            return false;
-        }
-    }
-
-    /**
-     * Verifica si un valor es único (exceptuando un ID dado).
-     */
-    private function esUnico($tabla, $campo, $valor, $excludeField = null, $excludeValue = null)
-    {
-        $sql = "SELECT COUNT(*) as total FROM $tabla WHERE $campo = :valor";
-        if ($excludeField && $excludeValue !== null) {
-            $sql .= " AND $excludeField != :exclude_val";
-        }
-        try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->bindParam(':valor', $valor);
-            if ($excludeField && $excludeValue !== null) {
-                $stmt->bindParam(':exclude_val', $excludeValue);
-            }
-            $stmt->execute();
-            $fila = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $fila['total'] == 0;
-        } catch (PDOException $e) {
-            error_log("Error en esUnico: " . $e->getMessage());
-            return false;
-        }
-    }
-
-    // -----------------------------------------------------------------
     // Métodos privados (acciones)
     // -----------------------------------------------------------------
 
+    // SE USA EN EL MODULO
     private function _consultar()
     {
         $sql = "SELECT id_proveedor, nombre_proveedor, servicio, rif, direccion 
@@ -206,13 +104,9 @@ class Proveedores extends Conexion
         }
     }
 
+    // SE USA EN EL MODULO
     private function _consultar_proveedor()
     {
-        $validacion = $this->validar(['id_proveedor']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         $sql = "SELECT id_proveedor, nombre_proveedor, servicio, rif, direccion 
                 FROM proveedores 
                 WHERE id_proveedor = :id_proveedor AND activo = 1";
@@ -231,14 +125,9 @@ class Proveedores extends Conexion
         }
     }
 
-    private function _registrar()
+    // SE USA EN EL MODULO
+    private function _registrar_proveedor()
     {
-        $campos = ['nombre_proveedor', 'servicio', 'rif', 'direccion'];
-        $validacion = $this->validar($campos);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         $sql = "INSERT INTO proveedores (nombre_proveedor, servicio, rif, direccion) 
                 VALUES (:nombre_proveedor, :servicio, :rif, :direccion)";
         try {
@@ -256,15 +145,9 @@ class Proveedores extends Conexion
         }
     }
 
-    private function _modificar()
+    // SE USA EN EL MODULO
+    private function _modificar_proveedor()
     {
-        $campos = ['id_proveedor', 'nombre_proveedor', 'servicio', 'rif', 'direccion'];
-        $contexto = ['exclude_id' => $this->id_proveedor];
-        $validacion = $this->validar($campos, $contexto);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         $sql = "UPDATE proveedores SET 
                     nombre_proveedor = :nombre_proveedor,
                     servicio = :servicio,
@@ -286,13 +169,9 @@ class Proveedores extends Conexion
         }
     }
 
-    private function _eliminar()
+    // SE USA EN EL MODULO
+    private function _eliminar_proveedor()
     {
-        $validacion = $this->validar(['id_proveedor']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         $sql = "UPDATE proveedores SET activo = 0 WHERE id_proveedor = :id_proveedor";
         try {
             $stmt = $this->get_conex('negocio')->prepare($sql);
@@ -305,18 +184,5 @@ class Proveedores extends Conexion
         }
     }
 
-    private function _lastId()
-    {
-        $sql = "SELECT MAX(id_proveedor) as last_id FROM proveedores";
-        try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->execute();
-            $dato = $stmt->fetch(PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $dato];
-        } catch (PDOException $e) {
-            error_log("Error en _lastId: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al obtener último ID'];
-        }
-    }
 }
 ?>

@@ -13,29 +13,6 @@ class AnioFiscal extends Conexion
     private $descripcion;
     private $activo;
 
-    // Reglas de validación centralizadas
-    private $reglas = [
-        'id_anio_fiscal' => [
-            'regex' => '/^\d+$/',
-            'exists' => ['tabla' => 'anio_fiscal', 'campo' => 'id_anio_fiscal']
-        ],
-        'fecha_inicio' => [
-            'regex' => '/^\d{4}-\d{2}-\d{2}$/',
-            'custom' => 'validarFecha'
-        ],
-        'fecha_cierre' => [
-            'regex' => '/^\d{4}-\d{2}-\d{2}$/',
-            'custom' => 'validarFecha'
-        ],
-        'estado' => [
-            'regex' => '/^[A-Za-z]+$/'
-        ],
-        'descripcion' => [
-            'regex' => '/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ,.\s]{0,50}$/',
-            'opcional' => true
-        ]
-    ];
-
     // Getters y Setters
     public function set_id_anio_fiscal($id) { $this->id_anio_fiscal = $id; }
     public function get_id_anio_fiscal() { return $this->id_anio_fiscal; }
@@ -68,126 +45,54 @@ class AnioFiscal extends Conexion
         }
     }
 
-    // -----------------------------------------------------------------
-    // Método de validación centralizado
-    // -----------------------------------------------------------------
-
-    private function validar($campos)
-    {
-        foreach ($campos as $campo) {
-            if (!isset($this->reglas[$campo])) {
-                return [
-                    'estatus' => false,
-                    'mensaje' => "No hay reglas de validación definidas para el campo '$campo'."
-                ];
-            }
-            $regla = $this->reglas[$campo];
-
-            $getter = 'get_' . $campo;
-            if (!method_exists($this, $getter)) {
-                return [
-                    'estatus' => false,
-                    'mensaje' => "El campo '$campo' no tiene un getter definido."
-                ];
-            }
-            $valor = $this->$getter();
-
-            // Requerido (a menos que sea opcional)
-            $requerido = !(isset($regla['opcional']) && $regla['opcional'] === true);
-            if ($requerido) {
-                if ($valor === null) {
-                    return [
-                        'estatus' => false,
-                        'mensaje' => "El campo '$campo' es requerido y no se ha establecido."
-                    ];
-                }
-                if (is_string($valor) && trim($valor) === '') {
-                    return [
-                        'estatus' => false,
-                        'mensaje' => "El campo '$campo' no puede estar vacío."
-                    ];
-                }
-            } else {
-                // Si es opcional y está vacío, saltamos validaciones adicionales
-                if ($valor === null || (is_string($valor) && trim($valor) === '')) {
-                    continue;
-                }
-            }
-
-            // Validar con expresión regular
-            if (isset($regla['regex'])) {
-                if (!preg_match($regla['regex'], (string)$valor)) {
-                    return [
-                        'estatus' => false,
-                        'mensaje' => "El campo '$campo' no tiene un formato válido."
-                    ];
-                }
-            }
-
-            // Validación personalizada (método dentro de la clase)
-            if (isset($regla['custom']) && method_exists($this, $regla['custom'])) {
-                if (!$this->{$regla['custom']}($valor)) {
-                    return [
-                        'estatus' => false,
-                        'mensaje' => "El campo '$campo' no es válido."
-                    ];
-                }
-            }
-
-            // Validar existencia en otra tabla (foránea)
-            if (isset($regla['exists'])) {
-                $tabla = $regla['exists']['tabla'];
-                $campoFor = $regla['exists']['campo'] ?? $campo;
-                if (!$this->existeEnTabla($tabla, $campoFor, $valor)) {
-                    return [
-                        'estatus' => false,
-                        'mensaje' => "El valor del campo '$campo' no existe en la tabla $tabla."
-                    ];
-                }
-            }
-        }
-        return ['estatus' => true];
-    }
-
     /**
-     * Verifica si un valor existe en una tabla específica.
+     * Devuelve las reglas de validación según la operación solicitada.
+     * @param string $operacion El nombre de la operación (ej: 'insertar', 'modificar')
+     * @return array Reglas aplicables a la operación
      */
-    private function existeEnTabla($tabla, $campo, $valor)
-    {
-        $sql = "SELECT COUNT(*) as total FROM $tabla WHERE $campo = :valor";
-        try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->bindParam(':valor', $valor);
-            $stmt->execute();
-            $fila = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $fila['total'] > 0;
-        } catch (PDOException $e) {
-            error_log("Error en existeEnTabla: " . $e->getMessage());
-            return false;
+    public static function obtenerReglas($operacion) {
+        $reglasGenerales = [
+            'id_anio_fiscal' => [
+                'regex' => '/^\d+$/',
+                'exists' => ['tabla' => 'anio_fiscal', 'campo' => 'id_anio_fiscal']
+            ],
+            'fecha_inicio' => [
+                'regex' => '/^\d{4}-\d{2}-\d{2}$/'
+            ],
+            'fecha_cierre' => [
+                'regex' => '/^\d{4}-\d{2}-\d{2}$/',
+                'fecha_posterior_a' => 'fecha_inicio' // Le decimos contra qué campo compararse
+            ],
+            'estado' => [
+                'regex' => '/^[A-Za-z]+$/'
+            ],
+            'descripcion' => [
+                'regex' => '/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ,.\s]{0,50}$/',
+                'opcional' => true
+            ]
+        ];
+
+        // Definimos qué campos se validan en cada operación
+        $camposPorOperacion = [
+            'registrar'  => ['fecha_inicio', 'fecha_cierre', 'estado', 'descripcion'],
+            'modificar' => ['id_anio_fiscal', 'fecha_inicio', 'fecha_cierre', 'estado', 'descripcion'],
+            'eliminar'  => ['id_anio_fiscal']
+        ];
+
+        // Si la operación existe en nuestro mapeo, devolvemos solo las reglas de esos campos
+        if (isset($camposPorOperacion[$operacion])) {
+            return array_intersect_key($reglasGenerales, array_flip($camposPorOperacion[$operacion]));
         }
+
+        return [];
     }
 
     /**
-     * Validación personalizada para fecha (usa checkdate)
-     */
-    private function validarFecha($fecha)
-    {
-        $valores = explode('-', $fecha);
-        return count($valores) == 3 && checkdate((int)$valores[1], (int)$valores[2], (int)$valores[0]);
-    }
-
-    /**
-     * Validación adicional para el rango de fechas (debe ser aproximadamente un año)
+     * Regla de Negocio: El periodo fiscal debe ser de aproximadamente un año.
+     * Nota: El controlador ya garantizó que fecha_cierre es mayor a fecha_inicio.
      */
     private function validarRangoFechas()
     {
-        $inicio = strtotime($this->fecha_inicio);
-        $cierre = strtotime($this->fecha_cierre);
-
-        if ($inicio >= $cierre) {
-            return ['estatus' => false, 'mensaje' => 'La fecha de inicio debe ser inferior a la fecha de cierre.'];
-        }
-
         $inicio_dt = new \DateTime($this->fecha_inicio);
         $cierre_dt = new \DateTime($this->fecha_cierre);
         $intervalo = $inicio_dt->diff($cierre_dt);
@@ -206,6 +111,7 @@ class AnioFiscal extends Conexion
 
     /**
      * Lista todos los años fiscales activos.
+     // SE USA EN EL MODULO
      */
     private function _consultar()
     {
@@ -224,14 +130,10 @@ class AnioFiscal extends Conexion
 
     /**
      * Consulta un año fiscal específico por ID.
+     // SE USA EN EL MODULO
      */
     private function _consultar_anio_fiscal()
     {
-        $validacion = $this->validar(['id_anio_fiscal']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         $sql = "SELECT * FROM anio_fiscal WHERE id_anio_fiscal = :id_anio_fiscal AND activo = 1";
 
         try {
@@ -251,15 +153,10 @@ class AnioFiscal extends Conexion
 
     /**
      * Registra un nuevo año fiscal.
+     // SE USA EN EL MODULO
      */
     private function _registrar()
     {
-        $campos = ['fecha_inicio', 'fecha_cierre', 'estado'];
-        $validacion = $this->validar($campos);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         // Validación de rango de fechas
         $rango = $this->validarRangoFechas();
         if (!$rango['estatus']) {
@@ -277,7 +174,7 @@ class AnioFiscal extends Conexion
             $stmt->bindParam(':descripcion', $this->descripcion);
             $stmt->execute();
             $lastId = $this->get_conex('negocio')->lastInsertId();
-            return ['estatus' => true, 'mensaje' => 'Año fiscal registrado correctamente', 'lastId' => $lastId];
+            return ['estatus' => true, 'mensaje' => 'Año fiscal registrado correctamente'];
         } catch (PDOException $e) {
             error_log("Error en _registrar: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al registrar el año fiscal'];
@@ -286,15 +183,10 @@ class AnioFiscal extends Conexion
 
     /**
      * Actualiza un año fiscal existente.
+     // SE USA EN EL MODULO
      */
     private function _modificar()
     {
-        $campos = ['id_anio_fiscal', 'fecha_inicio', 'fecha_cierre', 'estado'];
-        $validacion = $this->validar($campos);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         // Validación de rango de fechas
         $rango = $this->validarRangoFechas();
         if (!$rango['estatus']) {
@@ -325,14 +217,10 @@ class AnioFiscal extends Conexion
 
     /**
      * Elimina (cierra) un año fiscal (soft delete y cambia estado).
+     // SE USA EN EL MODULO
      */
     private function _eliminar()
     {
-        $validacion = $this->validar(['id_anio_fiscal']);
-        if (!$validacion['estatus']) {
-            return $validacion;
-        }
-
         $sql = "UPDATE anio_fiscal SET activo = 0, estado = 'Cerrada' WHERE id_anio_fiscal = :id_anio_fiscal";
 
         try {
@@ -348,6 +236,7 @@ class AnioFiscal extends Conexion
 
     /**
      * Ejecuta el procedimiento almacenado para verificar/cerrar años fiscales.
+     // SE USA EN EL SCRIPT AUTOMATICO
      */
     private function _verificar_anio_fiscal()
     {

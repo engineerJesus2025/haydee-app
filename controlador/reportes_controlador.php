@@ -5,6 +5,7 @@ use haydee\modelo\Gastos;
 use haydee\modelo\Mensualidad;
 use haydee\modelo\Pagos;
 use haydee\modelo\Bitacora;
+use haydee\ayuda\Validador;
 
 use Dompdf\Dompdf;
 

@@ -2,25 +2,37 @@
 use haydee\ayuda\Sesiones;
 use haydee\modelo\AnioFiscal;
 use haydee\modelo\Bitacora;
+use haydee\ayuda\Validador;
 use haydee\servicios\GestorAuditoria; 
-
 // Verificaciones de seguridad
 Sesiones::verificarSesion();
 Sesiones::verificarPermiso(GESTIONAR_ANIO_FISCAL, CONSULTAR);
 
-// Instancia del modelo
-$anioFiscal = new AnioFiscal();
-
 if (isset($_POST["operacion"])) {
+    $operacion = $_POST["operacion"];
+
+    $reglas = AnioFiscal::obtenerReglas($operacion);
+
+    if (!empty($reglas)) {
+        $validador = new Validador();
+        
+        $validador->validarConjunto($_POST, $reglas);
+
+        if ($validador->tieneErrores()) {
+            echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
+            exit;
+        }
+    }
+
+    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
+    // Instancia del modelo
+    $anioFiscal = new AnioFiscal();
     // Asignación masiva
     $anioFiscal->set_id_anio_fiscal($_POST['id_anio_fiscal'] ?? null);
     $anioFiscal->set_fecha_inicio($_POST['fecha_inicio'] ?? null);
     $anioFiscal->set_fecha_cierre($_POST['fecha_cierre'] ?? null);
     $anioFiscal->set_estado($_POST['estado'] ?? null);
     $anioFiscal->set_descripcion($_POST['descripcion'] ?? null);
-
-    $operacion = $_POST["operacion"];
-    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
     // Instanciamos el auditor
     $auditor = new GestorAuditoria($anioFiscal, GESTIONAR_ANIO_FISCAL);
@@ -57,11 +69,10 @@ if (isset($_POST["operacion"])) {
                     $auditor->registrarAuditoria('modificar');
                 }
                 break;
-
             case 'eliminar':
                 // 1. Tomamos foto previa
                 $auditor->capturarDatosAnteriores('consultar_anio_fiscal');
-                
+
                 // 2. Ejecutamos eliminación lógica
                 $respuesta = $anioFiscal->realizar_consulta('eliminar');
                 
