@@ -165,4 +165,20 @@ class Sesiones
             exit;
         }
     }
+
+    /**
+     * Obtiene todos los permisos de un módulo estructurados en un arreglo para la vista.
+     * Asume que las constantes CONSULTAR, REGISTRAR, MODIFICAR y ELIMINAR son globales.
+     * * @param int $moduloId ID del módulo a consultar
+     * @return array Arreglo asociativo con los permisos booleanos
+     */
+    public static function obtenerPermisosVista($moduloId)
+    {
+        return [
+            'consultar' => self::tienePermiso($moduloId, CONSULTAR),
+            'registrar' => self::tienePermiso($moduloId, REGISTRAR),
+            'modificar' => self::tienePermiso($moduloId, MODIFICAR),
+            'eliminar'  => self::tienePermiso($moduloId, ELIMINAR)
+        ];
+    }
 }

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 05-03-2026 a las 05:37:09
+-- Tiempo de generación: 29-03-2026 a las 01:25:14
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -43,19 +43,18 @@ CREATE DEFINER=`app_condominio`@`localhost` PROCEDURE `gestionar_anio_fiscal` ()
     END IF;
 END$$
 
-CREATE DEFINER=`app_condominio`@`localhost` PROCEDURE `sp_gestion_caja_chica_mensual` ()   sp_block: BEGIN 
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_gestion_caja_chica_mensual` ()   sp_block: BEGIN 
     DECLARE v_mes_actual VARCHAR(7);
     DECLARE v_existe_caja_abierta INT;
-    DECLARE v_saldo_final_mes_anterior DECIMAL(15,2); 
     DECLARE v_fecha_actual DATE;
     DECLARE v_id_anio_fiscal INT;
     DECLARE v_nombre_mes_espanol VARCHAR(20);
+    DECLARE v_id_caja_anterior INT;
     
     DECLARE v_monto_fondo_fijo DECIMAL(15,2) DEFAULT 1000.00; 
     
     SET v_fecha_actual = CURDATE();
-    SET v_mes_actual = DATE_FORMAT(v_fecha_actual, '%Y-%m');
-    
+    SET v_mes_actual = DATE_FORMAT(v_fecha_actual, '%Y-%m');    
     
     SELECT id_anio_fiscal INTO v_id_anio_fiscal
     FROM anio_fiscal
@@ -63,42 +62,28 @@ CREATE DEFINER=`app_condominio`@`localhost` PROCEDURE `sp_gestion_caja_chica_men
     AND estado = 'Abierto'
     LIMIT 1;
     
-    
     IF v_id_anio_fiscal IS NULL THEN
-        
         LEAVE sp_block; 
     END IF;
-    
     
     SELECT COUNT(*) INTO v_existe_caja_abierta 
     FROM caja_chica 
     WHERE DATE_FORMAT(fecha_creacion, '%Y-%m') = v_mes_actual 
     AND anio_fiscal_id = v_id_anio_fiscal; 
     
-    
-    
     IF v_existe_caja_abierta = 0 THEN
     
-        
-        UPDATE caja_chica 
-        SET estado = 'Cerrada'
-        WHERE estado = 'Abierta'
-        AND anio_fiscal_id = v_id_anio_fiscal;
-        
-        
-        SET v_saldo_final_mes_anterior = NULL;
-        
-        SELECT saldo_actual INTO v_saldo_final_mes_anterior
+        SELECT id_caja_chica INTO v_id_caja_anterior
         FROM caja_chica
-        WHERE anio_fiscal_id = v_id_anio_fiscal
+        WHERE estado = 'Abierto'
+        AND anio_fiscal_id = v_id_anio_fiscal
         ORDER BY fecha_creacion DESC
         LIMIT 1;
-        
-        
-        IF v_saldo_final_mes_anterior IS NULL THEN
-            SET v_saldo_final_mes_anterior = v_monto_fondo_fijo;
-        END IF;
-        
+
+        UPDATE caja_chica 
+        SET estado = 'Cerrada'
+        WHERE estado = 'Abierto'
+        AND anio_fiscal_id = v_id_anio_fiscal;
         
         SET v_nombre_mes_espanol = 
             CASE MONTH(v_fecha_actual)
@@ -109,15 +94,12 @@ CREATE DEFINER=`app_condominio`@`localhost` PROCEDURE `sp_gestion_caja_chica_men
                 ELSE 'Desconocido'
             END;
         
-        
-        
-        
         INSERT INTO caja_chica 
-            (fecha_creacion, fondo_fijo, saldo_actual, estado, 
-            descripcion, anio_fiscal_id) 
+            (fecha_creacion, fondo_fijo, estado, descripcion, anio_fiscal_id) 
         VALUES 
-            (v_fecha_actual, v_monto_fondo_fijo, v_saldo_final_mes_anterior, 
-            'Abierta', CONCAT('Caja chica del mes ', v_nombre_mes_espanol, ' - ', YEAR(v_fecha_actual)), v_id_anio_fiscal);
+            (v_fecha_actual, v_monto_fondo_fijo, 'Abierto', 
+             CONCAT('Caja chicas del mes ', v_nombre_mes_espanol, ' - ', YEAR(v_fecha_actual)), 
+             v_id_anio_fiscal);
        
     END IF;
 END$$
@@ -166,7 +148,7 @@ CREATE DEFINER=`app_condominio`@`localhost` PROCEDURE `sp_registrar_reposicion_c
     INSERT INTO gastos (descripcion_gasto, proveedor_id, tipo_gasto_id, solicitud_id, clasificacion, activo)
     VALUES (
         CONCAT('Reposición de Caja Chica - ', DATE_FORMAT(NOW(), '%d/%m/%Y')), 
-        v_proveedor_id, v_tipo_gasto_id, v_solicitud_gasto_id, 'Reposicion', 1
+        v_proveedor_id, v_tipo_gasto_id, v_solicitud_gasto_id, 'reposicion', 1
     );
     SET v_gasto_id = LAST_INSERT_ID(); 
 
@@ -191,7 +173,7 @@ CREATE DEFINER=`app_condominio`@`localhost` PROCEDURE `sp_registrar_reposicion_c
     CLOSE cur_movimientos;
 
     COMMIT;
-    SELECT CONCAT('Reposición exitosa. Gasto ID: ', v_gasto_id, '. Total Repuesto: ', v_saldo_acumulado) AS mensaje;
+    SELECT CONCAT('Reposición exitosa. Total Repuesto: ', v_saldo_acumulado) AS mensaje;
 END$$
 
 CREATE DEFINER=`app_condominio`@`localhost` PROCEDURE `sp_sincronizar_presupuestos_mensualidad` (IN `p_mensualidad_id` INT, IN `p_nuevos_presupuestos_ids` TEXT)   BEGIN
@@ -253,9 +235,14 @@ CREATE TABLE `anio_fiscal` (
 --
 
 INSERT INTO `anio_fiscal` (`id_anio_fiscal`, `estado`, `fecha_inicio`, `fecha_cierre`, `descripcion`, `activo`) VALUES
-(45, 'Cerrada', '2026-02-02', '2027-02-02', 'Año fiscal 2026', 0),
 (47, 'Abierto', '2026-02-07', '2027-02-07', 'Año fiscal 2026', 1),
-(49, 'Cerrada', '2026-02-06', '2027-02-06', 'asdasd', 0);
+(52, 'Cerrada', '2026-03-12', '2027-03-12', 'asdas', 0),
+(53, 'Cerrada', '2026-03-05', '2027-03-05', 'AAA', 0),
+(54, 'Cerrada', '2026-03-14', '2027-03-14', 'nueva des', 0),
+(55, 'Cerrada', '2026-03-13', '2027-03-13', 'asda', 0),
+(56, 'Cerrada', '2026-03-16', '2027-03-16', '', 0),
+(57, 'Cerrada', '2026-03-02', '2027-03-02', '', 0),
+(58, 'Cerrada', '2026-03-10', '2027-03-10', 'asd', 0);
 
 -- --------------------------------------------------------
 
@@ -278,13 +265,18 @@ CREATE TABLE `apartamentos` (
 --
 
 INSERT INTO `apartamentos` (`id_apartamento`, `nro_apartamento`, `porcentaje_participacion`, `gas`, `agua`, `alquilado`, `activo`) VALUES
-(30, '1-2', 22, 1, 1, 1, 1),
+(30, '1-2', 22, 2, 1, 2, 1),
 (31, '2-3', 23, 1, 1, 1, 1),
 (32, '2-1', 1, 2, 1, 1, 1),
 (33, '12', 23, 1, 1, 1, 0),
 (34, '2-8', 2, 1, 2, 1, 0),
 (35, '3-1', 5, 2, 1, 1, 1),
-(36, '2-5', 52, 1, 1, 1, 0);
+(36, '2-5', 52, 1, 1, 1, 0),
+(37, '4-1', 5, 1, 1, 2, 1),
+(38, '4-2', 5, 1, 1, 2, 0),
+(39, '3-2', 1, 2, 1, 1, 1),
+(40, '', 0, 0, 0, 0, 0),
+(41, '5-1', 5, 1, 1, 1, 1);
 
 -- --------------------------------------------------------
 
@@ -308,12 +300,14 @@ CREATE TABLE `bancos` (
 --
 
 INSERT INTO `bancos` (`id_banco`, `nombre_banco`, `codigo`, `numero_cuenta`, `tipo_cuenta`, `telefono_afiliado`, `rif`, `activo`) VALUES
-(1, 'venezuela', '0102', '0102123412124232323', 'Ahorro', '04152456842', '23232421', 1),
+(1, 'venezuela', '0102', '0102123412124232323', 'Ahorro', '04152456842', 'J3232421', 1),
 (6, 'Banesco', '0117', '1242342342424121211', 'Corriente', '04142584985', 'V5464565', 1),
 (9, 'Bancaribe', '0114', '01140300063000253595', 'Corriente', '04114124142', 'J305785457', 1),
 (11, 'rasdas', '1231', '2342342342342342323', '', '21321253213', 'V2123132', 0),
 (12, 'tesoro', '1231', '425646456456456456', '', '24243245564', 'V12345678', 0),
-(13, 'Tesoros', '0102', '2423423423423234234', '', '23423423232', 'V123412321', 1);
+(13, 'Tesoros', '0102', '2423423423423234234', 'Corriente', '23423423232', 'V123412321', 1),
+(14, 'sdfsdfs', '2342', '2315646545645656564', '', '23123153545', 'V24653215', 0),
+(15, 'aASDASD', '1234', '1231312312312312123', 'Corriente', '12312312323', 'V231231231', 1);
 
 -- --------------------------------------------------------
 
@@ -336,8 +330,8 @@ CREATE TABLE `caja_chica` (
 --
 
 INSERT INTO `caja_chica` (`id_caja_chica`, `fondo_fijo`, `estado`, `descripcion`, `fecha_creacion`, `anio_fiscal_id`, `activo`) VALUES
-(23, 1000.00, 'Abierto', 'Caja chicas del mes Febreros - 2026', '2026-02-06', 45, 1),
-(24, 0.00, 'Cerrada', 'Caja chicas del mes enero - 2026', '2026-01-01', 47, 1);
+(24, 0.00, 'Cerrada', 'Caja chicas del mes enero - 2026', '2026-01-01', 47, 1),
+(25, 1000.00, 'Abierto', 'Caja chicas del mes Marzo - 2026', '2026-03-09', 47, 1);
 
 -- --------------------------------------------------------
 
@@ -361,16 +355,25 @@ CREATE TABLE `detalles_gastos` (
 
 INSERT INTO `detalles_gastos` (`id_detalle_gasto`, `fecha`, `monto`, `monto_dolar`, `metodo_pago`, `gasto_id`, `descripcion_detalle_gasto`) VALUES
 (164, '2026-02-03', 12.00, 0.00, 'Pago Movil', 133, 'asdasdasdasdasd'),
-(178, '2026-02-05', 12.00, 0.00, 'Pago Movil', 132, 'adiossssssssssssssss'),
-(213, '2026-02-21', 32.00, 0.00, 'Efectivo', 134, 'detalle 1 s'),
-(214, '2026-02-06', 12.00, 0.00, 'Pago Movil', 134, 'detalle 2s'),
 (217, '2026-02-21', 12.00, 0.00, 'Efectivo', 136, 'adasdas'),
 (218, '2026-02-21', 900.00, 0.00, 'Efectivo', 135, 'Detalle de reposición por monto de: 900.00'),
 (2001, '2025-12-20', 150.00, 4.00, 'Transferencia', 201, 'Mes diciembre'),
 (2002, '2026-01-15', 700.00, 20.00, 'Transferencia', 202, 'Quincena 1'),
 (2003, '2026-01-25', 1500.00, 40.00, 'Divisa', 203, 'Repuestos bomba'),
 (2004, '2026-02-15', 720.00, 20.00, 'Pago Movil', 204, 'Quincena 1 feb'),
-(2005, '2026-03-02', 300.00, 8.00, 'Efectivo', 205, 'Limpieza pasillos');
+(2005, '2026-03-02', 300.00, 8.00, 'Efectivo', 205, 'Limpieza pasillos'),
+(2006, '2026-03-05', 43.00, 0.00, 'Efectivo', 206, 'xxxxxxxxxxxxxxxxxxxx'),
+(2011, '2026-03-08', 12312.00, 0.00, 'Efectivo', 207, 'prueba detalle 1'),
+(2012, '2026-03-07', 21.00, 0.00, 'Pago Movil', 207, 'prueba detalle 2'),
+(2017, '2026-03-16', 910.00, 0.00, 'Efectivo', 208, 'Detalle de reposición por monto de: 910.00'),
+(2018, '2026-02-21', 32.00, 0.00, 'Efectivo', 134, 'detalle 1 s'),
+(2019, '2026-02-06', 12.00, 0.00, 'Pago Movil', 134, 'detalle 2s'),
+(2020, '2026-03-17', 0.00, 0.00, 'Efectivo', 209, 'Detalle de reposición por monto de: 0.00'),
+(2021, '2026-03-17', 0.00, 0.00, 'Efectivo', 210, 'Detalle de reposición por monto de: 0.00'),
+(2022, '2026-02-05', 12.00, 0.00, 'Pago Movil', 132, 'adiossssssssssssssss'),
+(2023, '2026-03-17', 15.00, 0.00, 'Efectivo', 211, 'asdasd'),
+(2024, '2026-03-17', 10.00, 0.00, 'Transferencia', 211, 'asddasdas'),
+(2026, '2026-03-11', 123.00, 0.00, 'Pago Movil', 212, 'assas');
 
 -- --------------------------------------------------------
 
@@ -395,7 +398,6 @@ INSERT INTO `detalles_pagos` (`id_detalle_pago`, `fecha`, `monto`, `monto_dolar`
 (362, '2026-02-01', 10.00, 0.03, 'Pago Movil', 116),
 (370, '2026-02-14', 10.00, 0.02, 'Pago Movil', 118),
 (371, '2026-02-21', 100.00, 0.25, 'Efectivo', 118),
-(381, '2026-02-25', 0.10, 0.00, 'Efectivo', 120),
 (382, '2026-02-22', 12.00, 0.03, 'Pago Movil', 119),
 (383, '2026-02-01', 12.00, 1.00, 'Efectivo', 119),
 (384, '2026-02-05', 12.00, 0.03, 'Pago Movil', 117),
@@ -405,7 +407,18 @@ INSERT INTO `detalles_pagos` (`id_detalle_pago`, `fecha`, `monto`, `monto_dolar`
 (1002, '2026-01-10', 360.00, 10.00, 'Transferencia', 102),
 (1003, '2026-02-05', 180.00, 5.00, 'Efectivo', 103),
 (1004, '2026-02-28', 360.00, 10.00, 'Divisa', 104),
-(1005, '2026-03-01', 365.00, 10.00, 'Pago Movil', 105);
+(1005, '2026-03-01', 365.00, 10.00, 'Pago Movil', 105),
+(1007, '2026-03-05', 800.00, 1.87, 'Transferencia', 121),
+(1008, '2026-03-05', 4.00, 0.01, 'Efectivo', 122),
+(1010, '2026-03-07', 10.00, 0.02, 'Efectivo', 123),
+(1012, '2026-02-25', 1.40, 0.00, 'Efectivo', 120),
+(1014, '2026-03-04', 10.00, 0.02, 'Efectivo', 124),
+(1016, '2026-03-04', 10.00, 0.00, 'Pago Movil', 127),
+(1017, '2026-03-05', 10.00, 0.00, 'Transferencia', 128),
+(1018, '2026-03-18', 23.00, 0.00, 'Pago Movil', 129),
+(1020, '2026-03-18', 23.00, 0.00, 'Pago Movil', 131),
+(1022, '2026-03-04', 50.00, 0.00, 'Efectivo', 132),
+(1023, '2026-03-25', 50.00, 0.00, 'Transferencia', 132);
 
 -- --------------------------------------------------------
 
@@ -427,128 +440,31 @@ CREATE TABLE `detalles_presupuesto` (
 --
 
 INSERT INTO `detalles_presupuesto` (`id_detalle_presupuesto`, `monto`, `monto_dolar`, `nombre_detalle`, `presupuesto_id`, `tipo_gasto_id`) VALUES
-(660, 42.00, 0.00, 'GAS LARA', 70, 5),
-(661, 15.00, 0.00, 'CORPOELEC', 70, 2),
-(662, 34.00, 0.00, 'HIDROLARA', 70, 2),
-(663, 23.00, 0.00, 'Trabajadora Residencial', 70, 3),
-(664, 5623.00, 0.00, 'Bono de alimentacion', 70, 3),
-(665, 2.00, 0.00, 'Bono de ayuda', 70, 3),
-(666, 123.00, 0.00, 'Seguridad Social', 70, 3),
-(667, 21.00, 0.00, 'Mantenimiento ascensor', 70, 4),
-(668, 23.00, 0.00, 'Bolsas de Basura', 70, 9),
-(669, 21.00, 0.00, 'Productos de Limpieza', 70, 9),
-(670, 124.00, 0.00, 'Comisiones Bancarias', 70, 10),
-(671, 12.00, 0.00, 'Exencion cuota del administrador', 70, 10),
-(745, 1.00, 0.00, 'GAS LARA', 57, 5),
-(746, 2.00, 0.00, 'gato', 57, 5),
-(747, 2.00, 0.00, 'CORPOELEC', 57, 2),
-(748, 2.00, 0.00, 'HIDROLARA', 57, 2),
-(749, 2.00, 0.00, 'pepe', 57, 2),
-(750, 3.00, 0.00, 'Mantenimiento ascensor', 57, 4),
-(751, 4.00, 0.00, 'Bolsas de Basura', 57, 9),
-(752, 4.00, 0.00, 'Productos de Limpieza', 57, 9),
-(753, 3.00, 0.00, 'Trabajadora Residencial', 57, 3),
-(754, 3.00, 0.00, 'Bono de alimentacion', 57, 3),
-(755, 3.00, 0.00, 'Bono de ayuda', 57, 3),
-(756, 3.00, 0.00, 'Seguridad Social', 57, 3),
-(757, 5.00, 0.00, 'Comisiones Bancarias', 57, 10),
-(758, 5.00, 0.00, 'Exencion cuota del administrador', 57, 10),
-(759, 179.43, 0.00, 'GAS LARA', 67, 5),
-(760, 222.00, 0.00, 'CORPOELEC', 67, 2),
-(761, 333.00, 0.00, 'HIDROLARA', 67, 2),
-(762, 777.00, 0.00, 'Bolsas de Basura', 67, 9),
-(763, 123.00, 0.00, 'Productos de Limpieza', 67, 9),
-(764, 666.00, 0.00, 'Mantenimiento ascensor', 67, 4),
-(765, 444.00, 0.00, 'Trabajadora Residencial', 67, 3),
-(766, 555.00, 0.00, 'Bono de alimentacion', 67, 3),
-(767, 555.00, 0.00, 'Bono de ayuda', 67, 3),
-(768, 666.00, 0.00, 'Seguridad Social', 67, 3),
-(769, 321.00, 0.00, 'Comisiones Bancarias', 67, 10),
-(770, 234.00, 0.00, 'Exencion cuota del administrador', 67, 10),
-(771, 23.00, 0.00, 'GAS LARA', 68, 5),
-(772, 24.00, 0.00, 'CORPOELEC', 68, 2),
-(773, 24.00, 0.00, 'HIDROLARA', 68, 2),
-(774, 25.00, 0.00, 'Trabajadora Residencial', 68, 3),
-(775, 52.00, 0.00, 'Bono de alimentacion', 68, 3),
-(776, 12.00, 0.00, 'Bono de ayuda', 68, 3),
-(777, 31.00, 0.00, 'Seguridad Social', 68, 3),
-(778, 34.00, 0.00, 'Bolsas de Basura', 68, 9),
-(779, 53.00, 0.00, 'Productos de Limpieza', 68, 9),
-(780, 42.00, 0.00, 'Mantenimiento ascensor', 68, 4),
-(781, 546.00, 0.00, 'Comisiones Bancarias', 68, 10),
-(782, 34.00, 0.00, 'Exencion cuota del administrador', 68, 10),
-(819, 20.00, 0.00, 'GAS LARA', 76, 5),
-(820, 12.00, 0.00, 'Trabajadora Residencial', 76, 3),
-(821, 10.00, 0.00, 'Bono de alimentacion', 76, 3),
-(822, 15.00, 0.00, 'Bono de ayuda', 76, 3),
-(823, 10.00, 0.00, 'Seguridad Social', 76, 3),
-(824, 15.00, 0.00, 'Mantenimiento ascensor', 76, 4),
-(825, 41.00, 0.00, 'Bolsas de Basura', 76, 9),
-(826, 41.00, 0.00, 'Productos de Limpieza', 76, 9),
-(827, 54.00, 0.00, 'Comisiones Bancarias', 76, 10),
-(828, 42.00, 0.00, 'Exencion cuota del administrador', 76, 10),
-(829, 15.00, 0.00, 'CORPOELEC', 76, 2),
-(830, 10.00, 0.00, 'HIDROLARA', 76, 2),
-(1095, 1000.00, 0.00, 'GAS LARA', 98, 5),
-(1096, 0.00, 0.00, 'CORPOELEC', 98, 2),
-(1097, 0.00, 0.00, 'HIDROLARA', 98, 2),
-(1098, 0.00, 0.00, 'Trabajadora Residencial', 98, 3),
-(1099, 0.00, 0.00, 'Bono de alimentacion', 98, 3),
-(1100, 0.00, 0.00, 'Bono de ayuda', 98, 3),
-(1101, 0.00, 0.00, 'Seguridad Social', 98, 3),
-(1102, 0.00, 0.00, 'Mantenimiento ascensor', 98, 4),
-(1103, 0.00, 0.00, 'Bolsas de Basura', 98, 9),
-(1104, 0.00, 0.00, 'Productos de Limpieza', 98, 9),
-(1105, 0.00, 0.00, 'Comisiones Bancarias', 98, 10),
-(1106, 0.00, 0.00, 'Exencion cuota del administrador', 98, 10),
-(1179, 3.00, 0.00, 'CORPOELEC', 56, 2),
-(1180, 4.00, 0.00, 'HIDROLARA', 56, 2),
-(1181, 2.00, 0.00, 'Bolsas de Basura', 56, 9),
-(1182, 3.00, 0.00, 'Productos de Limpieza', 56, 9),
-(1183, 2.00, 0.00, 'GAS LARA', 56, 5),
-(1184, 1.00, 0.00, 'Mantenimiento ascensor', 56, 4),
-(1185, 5.00, 0.00, 'Trabajadora Residencial', 56, 3),
-(1186, 6.00, 0.00, 'Bono de alimentacion', 56, 3),
-(1187, 7.00, 0.00, 'Bono de ayuda', 56, 3),
-(1188, 8.00, 0.00, 'Seguridad Social', 56, 3),
-(1189, 4.00, 0.00, 'Comisiones Bancarias', 56, 10),
-(1190, 5.00, 0.00, 'Exencion cuota del administrador', 56, 10),
-(1251, 14.00, 0.00, 'CORPOELEC', 84, 2),
-(1252, 2.00, 0.00, 'HIDROLARA', 84, 2),
-(1253, 52.00, 0.00, 'Trabajadora Residencial', 84, 3),
-(1254, 32.00, 0.00, 'Bono de alimentacion', 84, 3),
-(1255, 24.00, 0.00, 'Bono de ayuda', 84, 3),
-(1256, 12.00, 0.00, 'Seguridad Social', 84, 3),
-(1257, 41.00, 0.00, 'Mantenimiento ascensor', 84, 4),
-(1258, 13.00, 0.00, 'GAS LARA', 84, 5),
-(1259, 23.00, 0.00, 'Bolsas de Basura', 84, 9),
-(1260, 24.00, 0.00, 'Productos de Limpieza', 84, 9),
-(1261, 10.00, 0.00, 'Comisiones Bancarias', 84, 10),
-(1262, 21.00, 0.00, 'Exencion cuota del administrador', 84, 10),
-(1263, 1.50, 0.00, 'CORPOELEC', 101, 2),
-(1264, 23.00, 0.00, 'HIDROLARA', 101, 2),
-(1265, 231.00, 0.00, 'Trabajadora Residencial', 101, 3),
-(1266, 232.00, 0.00, 'Bono de alimentacion', 101, 3),
-(1267, 54.00, 0.00, 'Bono de ayuda', 101, 3),
-(1268, 89.00, 0.00, 'Seguridad Social', 101, 3),
-(1269, 245.00, 0.00, 'Mantenimiento ascensor', 101, 4),
-(1270, 546.00, 0.00, 'GAS LARA', 101, 5),
-(1271, 545.00, 0.00, 'Bolsas de Basura', 101, 9),
-(1272, 564.00, 0.00, 'Productos de Limpieza', 101, 9),
-(1273, 564.00, 0.00, 'Comisiones Bancarias', 101, 10),
-(1274, 654.00, 0.00, 'Exencion cuota del administrador', 101, 10),
-(1275, 14.00, 0.00, 'CORPOELEC', 77, 2),
-(1276, 2.00, 0.00, 'HIDROLARA', 77, 2),
-(1277, 23.00, 0.00, 'Trabajadora Residencial', 77, 3),
-(1278, 23.00, 0.00, 'Bono de alimentacion', 77, 3),
-(1279, 42.00, 0.00, 'Bono de ayuda', 77, 3),
-(1280, 42.00, 0.00, 'Seguridad Social', 77, 3),
-(1281, 12.00, 0.00, 'Mantenimiento ascensor', 77, 4),
-(1282, 13.00, 0.00, 'GAS LARA', 77, 5),
-(1283, 24.00, 0.00, 'Bolsas de Basura', 77, 9),
-(1284, 12.00, 0.00, 'Productos de Limpieza', 77, 9),
-(1285, 12.00, 0.00, 'Comisiones Bancarias', 77, 10),
-(1286, 124.00, 0.00, 'Exencion cuota del administrador', 77, 10);
+(1327, 15.00, 0.00, 'CORPOELEC', 106, 2),
+(1328, 12.00, 0.00, 'HIDROLARA', 106, 2),
+(1329, 100.00, 0.00, 'Trabajadora Residencial', 106, 3),
+(1330, 100.00, 0.00, 'Bono de alimentacion', 106, 3),
+(1331, 100.00, 0.00, 'Bono de ayuda', 106, 3),
+(1332, 100.00, 0.00, 'Seguridad Social', 106, 3),
+(1333, 100.00, 0.00, 'Mantenimiento ascensor', 106, 4),
+(1334, 100.00, 0.00, 'GAS LARA', 106, 5),
+(1335, 100.00, 0.00, 'Bolsas de Basura', 106, 9),
+(1336, 100.00, 0.00, 'Productos de Limpieza', 106, 9),
+(1337, 100.00, 0.00, 'Comisiones Bancarias', 106, 10),
+(1338, 100.00, 0.00, 'Exencion cuota del administrador', 106, 10),
+(1351, 23.00, 0.00, 'CORPOELEC', 107, 2),
+(1352, 15.00, 0.00, 'HIDROLARA', 107, 2),
+(1353, 233.00, 0.00, 'Trabajadora Residencial', 107, 3),
+(1354, 12.00, 0.00, 'Bono de alimentacion', 107, 3),
+(1355, 12.00, 0.00, 'Bono de ayuda', 107, 3),
+(1356, 100.00, 0.00, 'Seguridad Social', 107, 3),
+(1357, 12.00, 0.00, 'Mantenimiento ascensor', 107, 4),
+(1358, 200.00, 0.00, 'GAS LARA', 107, 5),
+(1359, 20.00, 0.00, 'Bolsas de Basura', 107, 9),
+(1360, 200.00, 0.00, 'Productos de Limpieza', 107, 9),
+(1361, 200.00, 0.00, 'Comisiones Bancarias', 107, 10),
+(1362, 200.00, 0.00, 'Exencion cuota del administrador', 107, 10),
+(1387, 12.00, 0.00, 'Exencion cuota del administrador', 110, 10);
 
 -- --------------------------------------------------------
 
@@ -569,11 +485,14 @@ CREATE TABLE `egresos_bancarios` (
 
 INSERT INTO `egresos_bancarios` (`referencia`, `imagen`, `banco_id`, `detalle_gasto_id`) VALUES
 ('31231', 'javascript-logo-javascript-icon-transparent-free-png_1771563760_144.png', 1, 164),
-('123123123', 'CSS-Logo_1771706140_757.jpg', 1, 178),
 ('GASTO-001', '', 1, 2001),
 ('GASTO-002', '', 1, 2002),
 ('GASTO-003', '', 1, 2004),
-('412123', 'mensualidad_1771710356_291.PNG', 6, 214);
+('123123123', 'CSS-Logo_1771706140_757.jpg', 1, 2022),
+('1235412', 'CSS-Logo_1773003460_864.jpg', 6, 2012),
+('412123', 'mensualidad_1771710356_291.PNG', 6, 2019),
+('543524', 'images__2__1773805029_187.png', 9, 2024),
+('5435245', 'images__2__1774719607_329.png', 9, 2026);
 
 -- --------------------------------------------------------
 
@@ -585,7 +504,7 @@ CREATE TABLE `gastos` (
   `id_gasto` int(11) NOT NULL,
   `clasificacion` varchar(20) NOT NULL,
   `tipo_gasto_id` int(11) NOT NULL,
-  `solicitud_id` int(11) NOT NULL,
+  `solicitud_id` int(11) DEFAULT NULL,
   `proveedor_id` int(11) NOT NULL,
   `descripcion_gasto` text NOT NULL DEFAULT 'Sin descripción',
   `activo` tinyint(1) NOT NULL DEFAULT 1
@@ -596,16 +515,23 @@ CREATE TABLE `gastos` (
 --
 
 INSERT INTO `gastos` (`id_gasto`, `clasificacion`, `tipo_gasto_id`, `solicitud_id`, `proveedor_id`, `descripcion_gasto`, `activo`) VALUES
-(132, 'fijo', 2, 12, 2, 'holasssssssssssssssaaa', 1),
-(133, 'fijo', 2, 8, 3, 'asdasdasasd', 0),
-(134, 'fijo', 2, 12, 3, '222222222222224', 1),
-(135, 'Reposicion', 1, 12, 1, 'Reposición de Caja Chica - 22/02/2026', 1),
-(136, 'fijo', 2, 12, 3, 'wwwwwwwwwwwww', 0),
-(201, 'Fijo', 1, 12, 1, 'Pago de servicio de agua', 1),
-(202, 'Fijo', 2, 12, 1, 'Honorarios de vigilancia Enero', 1),
-(203, 'Variable', 3, 12, 1, 'Reparación de bomba de agua', 1),
-(204, 'Fijo', 2, 12, 1, 'Honorarios de vigilancia Febrero', 1),
-(205, 'Variable', 4, 12, 1, 'Compra de artículos de limpieza', 1);
+(132, 'fijo', 2, NULL, 2, 'holasssssssssssssssaaa', 1),
+(133, 'fijo', 2, NULL, 3, 'asdasdasasd', 0),
+(134, 'fijo', 2, NULL, 3, '22222a2222222224', 1),
+(135, 'reposicion', 1, NULL, 1, 'Reposición de Caja Chica - 22/02/2026', 1),
+(136, 'fijo', 2, NULL, 3, 'wwwwwwwwwwwww', 0),
+(201, 'Fijo', 1, NULL, 1, 'Pago de servicio de agua', 0),
+(202, 'Fijo', 2, NULL, 1, 'Honorarios de vigilancia Enero', 0),
+(203, 'Variable', 3, NULL, 1, 'Reparación de bomba de agua', 1),
+(204, 'Fijo', 2, NULL, 1, 'Honorarios de vigilancia Febrero', 1),
+(205, 'Variable', 4, NULL, 1, 'Compra de artículos de limpieza', 1),
+(206, 'fijo', 1, NULL, 2, 'zzzzzzzzzzzzzzzzz', 0),
+(207, 'variable', 2, NULL, 3, 'prueba de gasto 1', 1),
+(208, 'reposicion', 1, NULL, 1, 'Reposición de Caja Chica - 16/03/2026', 1),
+(209, 'reposicion', 1, NULL, 1, 'Reposición de Caja Chica - 17/03/2026', 1),
+(210, 'reposicion', 1, NULL, 1, 'Reposición de Caja Chica - 17/03/2026', 1),
+(211, 'variable', 2, NULL, 3, 'asdasdasdasd', 1),
+(212, 'fijo', 1, NULL, 3, 'asdasdasdasd', 1);
 
 -- --------------------------------------------------------
 
@@ -630,14 +556,16 @@ CREATE TABLE `habitantes` (
 --
 
 INSERT INTO `habitantes` (`id_habitante`, `nombre`, `apellido`, `cedula`, `telefono`, `correo`, `fecha_nacimiento`, `sexo`, `activo`) VALUES
-(32, 'carlo', 'rodriega', 'V30601403', '01241223423', 'carlos@gmail.com', '2001-10-10', 'Masculino', 1),
-(35, 'pepe', 'perez', 'V12312341', '12351513255', 'pepe@gmail.com', '1999-10-10', 'Masculino', 1),
-(36, 'asdasda', 'sdasdas', 'V21321332', '12313233212', 'asdasd@fas.cp', '1999-10-10', 'Masculino', 0),
-(37, 'pepe', 'pepas', 'E2112332', '04121235221', 'epep@gmail.com', '1999-10-10', 'Masculino', 1),
-(38, 'asdasd', 'asdasd', 'V3060143', '12312312312', 'asd@gasd.com', '1999-02-04', 'Masculino', 1),
-(39, 'deee', 'sdfsdfs', 'V4242142', '23423423332', 'esad2f@agasd.com', '1999-10-10', 'Masculino', 0),
-(40, 'asdasd', 'adasdas', 'V12321341', '24234232323', 'asd@fasm.com', '1999-03-01', 'Masculino', 0),
-(41, 'asdasd', 'asdasd', 'V12312323', '23423423423', 'sdasd@fasa.com', '1999-10-10', 'Masculino', 0);
+(43, 'jesus', 'asdasda', 'E1105510', '12312312123', 'aaa@gasd.com', '2000-12-12', 'Masculino', 1),
+(44, 'jesa', 'asdasd', 'V15321212', '21312312121', 'asda@asasd.ocm', '2000-10-10', 'Masculino', 1),
+(45, 'asdasd', 'asdasdas', 'V12012120', '23423423434', 'ASDASD@sfas.com', '1980-10-10', 'Femenino', 1),
+(46, 'papap', 'lalala', 'V23424234', '21312312312', 'lala@gasmic.com', '1950-10-10', 'Masculino', 1),
+(47, 'ssdfsdf', 'asda', 'V23432423', '23423423423', 'asdasda@asfas.com', '1945-10-10', 'Femenino', 1),
+(48, 'boor', 'borra', 'V23423234', '23654564321', 'asd@asd.com', '1999-01-01', 'Masculino', 0),
+(49, 'asa', 'asdasd', 'V2343121', '12313455648', 'asda@adsd.com', '1999-10-10', 'Masculino', 0),
+(50, 'asa', 'asdasd', 'V23432121', '12313455648', 'asda@adaassdsd.com', '1999-10-10', 'Masculino', 0),
+(51, 'fhfgh', 'asdasd', 'V2342342', '42342342342', 'asdasd@asd.com', '1999-10-10', 'Masculino', 1),
+(52, 'dasdas', 'asdasd', 'E12312313', '22342323232', 'ada@asd.com', '2000-10-10', 'Femenino', 0);
 
 -- --------------------------------------------------------
 
@@ -656,13 +584,16 @@ CREATE TABLE `habitantes_apartamentos` (
 --
 
 INSERT INTO `habitantes_apartamentos` (`apartamento_id`, `habitante_id`, `tipo_vinculo`) VALUES
-(30, 32, 'Propietario'),
-(30, 39, 'Habitante'),
-(30, 40, 'Habitante'),
-(30, 41, 'Habitante'),
-(31, 37, 'Propietario'),
-(32, 35, 'Propietario'),
-(32, 36, 'Habitante');
+(30, 43, 'Propietario'),
+(30, 44, 'Habitante'),
+(30, 48, 'Habitante'),
+(30, 49, 'Habitante'),
+(30, 50, 'Habitante'),
+(30, 51, 'Habitante'),
+(30, 52, 'Habitante'),
+(31, 46, 'Propietario'),
+(32, 45, 'Propietario'),
+(35, 47, 'Propietario');
 
 -- --------------------------------------------------------
 
@@ -689,7 +620,13 @@ INSERT INTO `ingresos_bancarios` (`referencia`, `imagen`, `banco_id`, `detalle_p
 ('REF-555666', '', 1, 1005),
 ('2312', 'virustotla_1771651369_672.PNG', 6, 370),
 ('4213123', 'lenguaje_comun_1771707846_116.PNG', 6, 384),
-('234sad2', 'colores_inicio_2_1771708881_962.PNG', 9, 385);
+('4213', 'CSS-Logo_1772718346_856.jpg', 6, 1007),
+('678678', 'default.png', 6, 1016),
+('532423', 'default.png', 6, 1018),
+('532434345', 'colores_inicio_1_1773856062_104.PNG', 6, 1020),
+('234sad2', 'colores_inicio_2_1771708881_962.PNG', 9, 385),
+('45654', 'default.png', 9, 1017),
+('23423412', 'lenguaje_comun_1774402497_922.PNG', 9, 1023);
 
 -- --------------------------------------------------------
 
@@ -699,10 +636,8 @@ INSERT INTO `ingresos_bancarios` (`referencia`, `imagen`, `banco_id`, `detalle_p
 
 CREATE TABLE `mensualidad` (
   `id_mensualidad` int(11) NOT NULL,
+  `periodo_id` int(11) NOT NULL,
   `monto` decimal(15,2) NOT NULL,
-  `tasa_dolar` decimal(15,2) NOT NULL,
-  `mes` varchar(2) NOT NULL,
-  `anio` varchar(4) NOT NULL,
   `apartamento_id` int(11) NOT NULL,
   `porcentaje_interes` int(11) NOT NULL DEFAULT 10,
   `limite_mensualidad` int(11) NOT NULL DEFAULT 15,
@@ -713,22 +648,46 @@ CREATE TABLE `mensualidad` (
 -- Volcado de datos para la tabla `mensualidad`
 --
 
-INSERT INTO `mensualidad` (`id_mensualidad`, `monto`, `tasa_dolar`, `mes`, `anio`, `apartamento_id`, `porcentaje_interes`, `limite_mensualidad`, `activo`) VALUES
-(533, 2.53, 402.33, '1', '2025', 30, 10, 15, 1),
-(534, 0.11, 402.33, '1', '2025', 32, 10, 15, 1),
-(535, 2.53, 402.33, '1', '2025', 31, 10, 15, 1),
-(536, 890.33, 402.33, '10', '2025', 30, 10, 15, 1),
-(537, 890.33, 402.33, '10', '2025', 31, 10, 15, 1),
-(538, 38.71, 402.33, '10', '2025', 32, 10, 15, 1),
-(539, 3.68, 414.05, '2', '2025', 30, 10, 15, 1),
-(540, 0.10, 414.05, '2', '2025', 32, 10, 15, 1),
-(541, 2.99, 414.05, '2', '2025', 31, 10, 15, 1),
-(542, 138.69, 405.35, '4', '2025', 30, 10, 15, 0),
-(543, 5.80, 405.35, '4', '2025', 32, 10, 15, 0),
-(544, 138.69, 405.35, '4', '2025', 31, 10, 15, 0),
-(545, 161.57, 419.99, '3', '2025', 30, 10, 15, 1),
-(546, 5.55, 419.99, '3', '2025', 32, 10, 15, 1),
-(547, 168.92, 419.99, '3', '2025', 31, 10, 15, 1);
+INSERT INTO `mensualidad` (`id_mensualidad`, `periodo_id`, `monto`, `apartamento_id`, `porcentaje_interes`, `limite_mensualidad`, `activo`) VALUES
+(610, 1, 203.94, 30, 10, 15, 1),
+(611, 1, 213.21, 31, 10, 15, 1),
+(612, 1, 46.35, 35, 10, 15, 1),
+(613, 1, 9.27, 39, 10, 15, 1),
+(614, 1, 46.35, 37, 10, 15, 1),
+(615, 1, 9.27, 32, 10, 15, 1),
+(616, 2, 2.64, 30, 10, 15, 0),
+(617, 2, 48.76, 31, 10, 15, 0),
+(618, 2, 0.12, 32, 10, 15, 0),
+(619, 2, 0.60, 35, 10, 15, 0),
+(620, 2, 10.60, 37, 10, 15, 0),
+(621, 2, 0.12, 39, 10, 15, 0),
+(622, 3, 5035.58, 30, 10, 15, 0),
+(623, 3, 5264.47, 31, 10, 15, 0),
+(624, 3, 228.89, 32, 10, 15, 0),
+(625, 3, 1144.45, 35, 10, 15, 0),
+(626, 3, 1144.45, 37, 10, 15, 0),
+(627, 3, 228.89, 39, 10, 15, 0),
+(628, 3, 29.04, 30, 10, 15, 0),
+(629, 3, 30.36, 31, 10, 15, 0),
+(630, 3, 1.32, 32, 10, 15, 0),
+(631, 3, 6.60, 35, 10, 15, 0),
+(632, 3, 6.60, 37, 10, 15, 0),
+(633, 3, 1.32, 39, 10, 15, 0),
+(634, 3, 2.64, 30, 10, 15, 0),
+(635, 3, 2.76, 31, 10, 15, 0),
+(636, 3, 0.12, 32, 10, 15, 0),
+(637, 3, 0.60, 35, 10, 15, 0),
+(638, 3, 0.60, 37, 10, 15, 0),
+(639, 3, 0.12, 39, 10, 15, 0),
+(640, 3, 0.60, 41, 10, 15, 0),
+(641, 1, 25.00, 41, 10, 15, 1),
+(642, 2, 90.64, 30, 10, 15, 1),
+(643, 2, 4.12, 32, 10, 15, 1),
+(644, 2, 140.76, 31, 10, 15, 1),
+(645, 2, 20.60, 35, 10, 15, 1),
+(646, 2, 6.12, 39, 10, 15, 1),
+(647, 2, 30.60, 37, 10, 15, 1),
+(648, 2, 30.60, 41, 10, 15, 1);
 
 --
 -- Disparadores `mensualidad`
@@ -773,11 +732,9 @@ CREATE TABLE `movimientos_caja` (
 --
 
 INSERT INTO `movimientos_caja` (`id_movimiento_caja`, `concepto`, `monto`, `fecha`, `estado`, `caja_chica_id`, `activo`) VALUES
-(37, 'Cafe', 100.00, '2026-02-22', 'Repuesto', 23, 1),
-(38, 'Refresco', 800.00, '2026-02-22', 'Repuesto', 23, 1),
-(39, 'Pasajes', 900.00, '2026-02-06', 'Pendiente por reposicion', 23, 1),
-(40, 'agua', 10.00, '2026-02-28', 'Pendiente por reposicion', 23, 1),
-(41, 'general', 10.00, '2026-03-02', 'Pendiente por reposicion', 23, 1);
+(42, 'cafe', 10.00, '2026-03-09', 'Repuesto', 25, 1),
+(43, 'se pagaron 3 bombillos nuevos', 900.00, '2026-03-15', 'Repuesto', 25, 1),
+(44, 'aaaaa', 10.00, '2026-03-16', 'Pendiente por reposicion', 25, 0);
 
 -- --------------------------------------------------------
 
@@ -797,16 +754,25 @@ CREATE TABLE `pagos` (
 --
 
 INSERT INTO `pagos` (`id_pago`, `estado`, `observacion`, `activo`) VALUES
-(101, 'PROCESADO', 'Pago de mensualidad Diciembre', 1),
-(102, 'PROCESADO', 'Pago de mensualidad Enero', 1),
-(103, 'PROCESADO', 'Abono a deuda', 1),
-(104, 'PENDIENTE', 'Pago en revisión', 1),
-(105, 'PROCESADO', 'Pago mensualidad Marzo', 1),
+(101, 'ANULADO', 'Pago de mensualidad Diciembre', 0),
+(102, 'ANULADO', 'Pago de mensualidad Enero', 0),
+(103, 'ANULADO', 'Abono a deuda', 0),
+(104, 'ANULADO', 'Pago en revisión', 0),
+(105, 'ANULADO', 'Pago mensualidad Marzo', 0),
 (116, 'Procesado', 'asdasd', 0),
 (117, 'RECHAZADO', 'sesss', 1),
-(118, 'No verificado', 'si mi panax', 1),
+(118, 'ANULADO', 'si mi panax', 0),
 (119, 'PROCESADO', 'pago', 1),
-(120, 'No verificado', 'mitasd de pago', 1);
+(120, 'ANULADO', 'mitasd de pagok', 0),
+(121, 'No verificado', 'Broder', 1),
+(122, 'PROCESADO', 'ssssssssssssssss', 1),
+(123, 'No verificado', '', 1),
+(124, 'ANULADO', 'xxxxxxxxxxxxx', 0),
+(127, 'PROCESADO', '', 1),
+(128, 'RECHAZADO', '', 1),
+(129, 'PROCESADO', '', 1),
+(131, 'PROCESADO', '', 1),
+(132, 'PROCESADO', 'pago de ayer', 1);
 
 -- --------------------------------------------------------
 
@@ -824,14 +790,31 @@ CREATE TABLE `pagos_mensualidad` (
 --
 
 INSERT INTO `pagos_mensualidad` (`detalle_pago_id`, `mensualidad_id`) VALUES
-(370, 536),
-(371, 536),
-(381, 534),
-(382, 536),
-(383, 536),
-(384, 533),
-(385, 533),
-(386, 533);
+(1022, 611),
+(1023, 611);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `periodos_mensualidad`
+--
+
+CREATE TABLE `periodos_mensualidad` (
+  `id_periodo` int(11) NOT NULL,
+  `mes` varchar(2) NOT NULL,
+  `anio` varchar(4) NOT NULL,
+  `tasa_dolar` decimal(15,2) NOT NULL,
+  `activo` tinyint(1) NOT NULL DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `periodos_mensualidad`
+--
+
+INSERT INTO `periodos_mensualidad` (`id_periodo`, `mes`, `anio`, `tasa_dolar`, `activo`) VALUES
+(1, '1', '2026', 455.25, 1),
+(2, '2', '2026', 455.25, 1),
+(3, '3', '2026', 455.25, 1);
 
 -- --------------------------------------------------------
 
@@ -852,16 +835,9 @@ CREATE TABLE `presupuesto` (
 --
 
 INSERT INTO `presupuesto` (`id_presupuesto`, `fecha`, `cuota_reserva`, `observacion`, `activo`) VALUES
-(56, '2025-01-01', 1, 'presupuesto modificado 5864', 0),
-(57, '2025-02-01', 1, 'Mes de Febrero', 1),
-(67, '2025-03-01', 122, 'Mes de Marzo', 1),
-(68, '2025-04-01', 12, 'Mes de abril', 1),
-(70, '2025-05-01', 12, 'mayo', 1),
-(76, '2025-06-01', 10, 'asdas', 1),
-(77, '2025-07-01', 12, 'presupuesto', 1),
-(84, '2025-08-01', 12, 'agosto', 1),
-(98, '2025-09-01', 1000, 'presupuesto Varios Selenium 2024', 0),
-(101, '2025-10-01', 125, 'Presupuesto obtubre', 1);
+(106, '2026-01-01', 10, 'enero 2026', 1),
+(107, '2026-02-01', 230, 'febrero 2026 editado', 1),
+(110, '2026-03-01', 234, 'Sin observación', 1);
 
 -- --------------------------------------------------------
 
@@ -879,42 +855,117 @@ CREATE TABLE `presupuesto_mensualidad` (
 --
 
 INSERT INTO `presupuesto_mensualidad` (`detalle_presupuesto_id`, `mensualidad_id`) VALUES
-(745, 539),
-(745, 541),
-(746, 539),
-(746, 541),
-(750, 539),
-(757, 539),
-(757, 540),
-(757, 541),
-(758, 539),
-(758, 540),
-(758, 541),
-(759, 545),
-(759, 547),
-(769, 545),
-(769, 546),
-(769, 547),
-(770, 545),
-(770, 546),
-(770, 547),
-(771, 542),
-(771, 544),
-(781, 542),
-(781, 543),
-(781, 544),
-(782, 542),
-(782, 543),
-(782, 544),
-(1183, 533),
-(1183, 534),
-(1183, 535),
-(1189, 533),
-(1189, 534),
-(1189, 535),
-(1190, 533),
-(1190, 534),
-(1190, 535);
+(1327, 610),
+(1327, 611),
+(1327, 612),
+(1327, 613),
+(1327, 614),
+(1327, 615),
+(1328, 610),
+(1328, 611),
+(1328, 612),
+(1328, 613),
+(1328, 614),
+(1328, 615),
+(1329, 610),
+(1329, 611),
+(1329, 612),
+(1329, 613),
+(1329, 614),
+(1329, 615),
+(1329, 641),
+(1330, 610),
+(1330, 611),
+(1330, 612),
+(1330, 613),
+(1330, 614),
+(1330, 615),
+(1330, 641),
+(1331, 610),
+(1331, 611),
+(1331, 612),
+(1331, 613),
+(1331, 614),
+(1331, 615),
+(1331, 641),
+(1332, 610),
+(1332, 611),
+(1332, 612),
+(1332, 613),
+(1332, 614),
+(1332, 615),
+(1332, 641),
+(1334, 610),
+(1334, 611),
+(1334, 612),
+(1334, 613),
+(1334, 614),
+(1334, 615),
+(1334, 641),
+(1335, 610),
+(1335, 611),
+(1335, 612),
+(1335, 613),
+(1335, 614),
+(1335, 615),
+(1336, 610),
+(1336, 611),
+(1336, 612),
+(1336, 613),
+(1336, 614),
+(1336, 615),
+(1337, 610),
+(1337, 611),
+(1337, 612),
+(1337, 613),
+(1337, 614),
+(1337, 615),
+(1338, 610),
+(1338, 611),
+(1338, 612),
+(1338, 613),
+(1338, 614),
+(1338, 615),
+(1357, 616),
+(1357, 617),
+(1357, 618),
+(1357, 619),
+(1357, 620),
+(1357, 621),
+(1357, 642),
+(1357, 643),
+(1357, 644),
+(1357, 645),
+(1357, 646),
+(1357, 647),
+(1357, 648),
+(1358, 617),
+(1358, 620),
+(1358, 644),
+(1358, 646),
+(1358, 647),
+(1358, 648),
+(1361, 642),
+(1361, 643),
+(1361, 644),
+(1361, 645),
+(1361, 646),
+(1361, 647),
+(1361, 648),
+(1362, 642),
+(1362, 643),
+(1362, 644),
+(1362, 645),
+(1362, 646),
+(1362, 647),
+(1362, 648),
+(1387, 634),
+(1387, 635),
+(1387, 636),
+(1387, 637),
+(1387, 638),
+(1387, 639),
+(1387, 640);
 
 -- --------------------------------------------------------
 
@@ -959,8 +1010,8 @@ CREATE TABLE `reposiciones` (
 --
 
 INSERT INTO `reposiciones` (`gasto_id`, `movimiento_caja_id`) VALUES
-(135, 37),
-(135, 38);
+(208, 42),
+(208, 43);
 
 -- --------------------------------------------------------
 
@@ -985,10 +1036,7 @@ CREATE TABLE `solicitudes_gasto` (
 --
 
 INSERT INTO `solicitudes_gasto` (`id_solicitud`, `fecha_reporte`, `descripcion_necesidad`, `nombre_solicitante`, `monto_estimado`, `estado`, `presupuesto_id`, `prioridad`, `activo`) VALUES
-(8, '2025-09-01', 'Solicitud de consumo de Algo', 'Pablo', 10, 'Pendiente', 56, '2', 1),
-(10, '2010-10-10', 'Solicitud de gasto de ejemplo', 'Juan', 15, 'Pendiente', 56, '1', 0),
-(12, '2026-02-06', 'Sin Solicitud', 'Administracion', 1, 'Pendiente', 56, '3', 1),
-(13, '2026-02-12', 'seee', 'pepe', 12, 'Pendiente', 56, '2', 0);
+(15, '2026-03-18', 'asdasdasdas', 'aasasd', 12, 'Pendiente', 106, '2', 1);
 
 -- --------------------------------------------------------
 
@@ -1015,7 +1063,8 @@ INSERT INTO `tipo_gasto` (`id_tipo_gasto`, `nombre_tipo_gasto`, `activo`) VALUES
 (9, 'Suministros de Limpieza y Operacion', 1),
 (10, 'Gastos Administrativos y Financieros', 1),
 (14, 'random', 0),
-(15, 'hola', 0);
+(15, 'hola', 0),
+(16, 'aaaa', 0);
 
 -- --------------------------------------------------------
 
@@ -1080,7 +1129,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`app_condominio`@`localhost` SQL SECURITY DEF
 --
 DROP TABLE IF EXISTS `vw_estado_cuentas_mensualidad`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`app_condominio`@`localhost` SQL SECURITY DEFINER VIEW `vw_estado_cuentas_mensualidad`  AS SELECT `m`.`id_mensualidad` AS `id_mensualidad`, `a`.`nro_apartamento` AS `nro_apartamento`, `m`.`mes` AS `mes`, `m`.`anio` AS `anio`, `m`.`monto` AS `monto_cuota`, ifnull((select sum(`dp`.`monto`) from ((`pagos_mensualidad` `pm` join `detalles_pagos` `dp` on(`pm`.`detalle_pago_id` = `dp`.`id_detalle_pago`)) join `pagos` `p` on(`dp`.`pago_id` = `p`.`id_pago`)) where `pm`.`mensualidad_id` = `m`.`id_mensualidad` and `p`.`activo` = 1),0) AS `total_abonado`, `m`.`monto`- ifnull((select sum(`dp`.`monto`) from ((`pagos_mensualidad` `pm` join `detalles_pagos` `dp` on(`pm`.`detalle_pago_id` = `dp`.`id_detalle_pago`)) join `pagos` `p` on(`dp`.`pago_id` = `p`.`id_pago`)) where `pm`.`mensualidad_id` = `m`.`id_mensualidad` and `p`.`activo` = 1),0) AS `deuda_pendiente`, CASE WHEN `m`.`monto` - ifnull((select sum(`dp`.`monto`) from ((`pagos_mensualidad` `pm` join `detalles_pagos` `dp` on(`pm`.`detalle_pago_id` = `dp`.`id_detalle_pago`)) join `pagos` `p` on(`dp`.`pago_id` = `p`.`id_pago`)) where `pm`.`mensualidad_id` = `m`.`id_mensualidad` AND `p`.`activo` = 1),0) <= 0 THEN 'Solvente' ELSE 'Pendiente' END AS `estado_pago` FROM (`mensualidad` `m` join `apartamentos` `a` on(`m`.`apartamento_id` = `a`.`id_apartamento`)) WHERE `m`.`activo` = 1 AND `a`.`activo` = 1 ;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vw_estado_cuentas_mensualidad`  AS SELECT `m`.`id_mensualidad` AS `id_mensualidad`, `a`.`nro_apartamento` AS `nro_apartamento`, `p`.`mes` AS `mes`, `p`.`anio` AS `anio`, `m`.`monto` AS `monto_cuota`, ifnull((select sum(`dp`.`monto`) from ((`pagos_mensualidad` `pm` join `detalles_pagos` `dp` on(`pm`.`detalle_pago_id` = `dp`.`id_detalle_pago`)) join `pagos` `pg` on(`dp`.`pago_id` = `pg`.`id_pago`)) where `pm`.`mensualidad_id` = `m`.`id_mensualidad` and `pg`.`activo` = 1),0) AS `total_abonado`, `m`.`monto`- ifnull((select sum(`dp`.`monto`) from ((`pagos_mensualidad` `pm` join `detalles_pagos` `dp` on(`pm`.`detalle_pago_id` = `dp`.`id_detalle_pago`)) join `pagos` `pg` on(`dp`.`pago_id` = `pg`.`id_pago`)) where `pm`.`mensualidad_id` = `m`.`id_mensualidad` and `pg`.`activo` = 1),0) AS `deuda_pendiente`, CASE WHEN `m`.`monto` - ifnull((select sum(`dp`.`monto`) from ((`pagos_mensualidad` `pm` join `detalles_pagos` `dp` on(`pm`.`detalle_pago_id` = `dp`.`id_detalle_pago`)) join `pagos` `pg` on(`dp`.`pago_id` = `pg`.`id_pago`)) where `pm`.`mensualidad_id` = `m`.`id_mensualidad` AND `pg`.`activo` = 1),0) <= 0 THEN 'Solvente' ELSE 'Pendiente' END AS `estado_pago` FROM ((`mensualidad` `m` join `apartamentos` `a` on(`m`.`apartamento_id` = `a`.`id_apartamento`)) join `periodos_mensualidad` `p` on(`m`.`periodo_id` = `p`.`id_periodo`)) WHERE `m`.`activo` = 1 AND `a`.`activo` = 1 ;
 
 -- --------------------------------------------------------
 
@@ -1188,7 +1237,8 @@ ALTER TABLE `ingresos_bancarios`
 --
 ALTER TABLE `mensualidad`
   ADD PRIMARY KEY (`id_mensualidad`),
-  ADD KEY `apartamento_id` (`apartamento_id`);
+  ADD KEY `apartamento_id` (`apartamento_id`),
+  ADD KEY `mensualidad_ibfk_periodo` (`periodo_id`);
 
 --
 -- Indices de la tabla `movimientos_caja`
@@ -1209,6 +1259,13 @@ ALTER TABLE `pagos`
 ALTER TABLE `pagos_mensualidad`
   ADD PRIMARY KEY (`detalle_pago_id`,`mensualidad_id`),
   ADD KEY `pagos_mensualidad_ibfk_2` (`mensualidad_id`);
+
+--
+-- Indices de la tabla `periodos_mensualidad`
+--
+ALTER TABLE `periodos_mensualidad`
+  ADD PRIMARY KEY (`id_periodo`),
+  ADD UNIQUE KEY `periodo_unico` (`mes`,`anio`);
 
 --
 -- Indices de la tabla `presupuesto`
@@ -1257,79 +1314,85 @@ ALTER TABLE `tipo_gasto`
 -- AUTO_INCREMENT de la tabla `anio_fiscal`
 --
 ALTER TABLE `anio_fiscal`
-  MODIFY `id_anio_fiscal` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
+  MODIFY `id_anio_fiscal` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=59;
 
 --
 -- AUTO_INCREMENT de la tabla `apartamentos`
 --
 ALTER TABLE `apartamentos`
-  MODIFY `id_apartamento` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
+  MODIFY `id_apartamento` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
 
 --
 -- AUTO_INCREMENT de la tabla `bancos`
 --
 ALTER TABLE `bancos`
-  MODIFY `id_banco` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id_banco` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT de la tabla `caja_chica`
 --
 ALTER TABLE `caja_chica`
-  MODIFY `id_caja_chica` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `id_caja_chica` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
 -- AUTO_INCREMENT de la tabla `detalles_gastos`
 --
 ALTER TABLE `detalles_gastos`
-  MODIFY `id_detalle_gasto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2006;
+  MODIFY `id_detalle_gasto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2027;
 
 --
 -- AUTO_INCREMENT de la tabla `detalles_pagos`
 --
 ALTER TABLE `detalles_pagos`
-  MODIFY `id_detalle_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1006;
+  MODIFY `id_detalle_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1024;
 
 --
 -- AUTO_INCREMENT de la tabla `detalles_presupuesto`
 --
 ALTER TABLE `detalles_presupuesto`
-  MODIFY `id_detalle_presupuesto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1287;
+  MODIFY `id_detalle_presupuesto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1388;
 
 --
 -- AUTO_INCREMENT de la tabla `gastos`
 --
 ALTER TABLE `gastos`
-  MODIFY `id_gasto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=206;
+  MODIFY `id_gasto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=213;
 
 --
 -- AUTO_INCREMENT de la tabla `habitantes`
 --
 ALTER TABLE `habitantes`
-  MODIFY `id_habitante` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
+  MODIFY `id_habitante` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
 
 --
 -- AUTO_INCREMENT de la tabla `mensualidad`
 --
 ALTER TABLE `mensualidad`
-  MODIFY `id_mensualidad` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=548;
+  MODIFY `id_mensualidad` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=649;
 
 --
 -- AUTO_INCREMENT de la tabla `movimientos_caja`
 --
 ALTER TABLE `movimientos_caja`
-  MODIFY `id_movimiento_caja` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
+  MODIFY `id_movimiento_caja` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=45;
 
 --
 -- AUTO_INCREMENT de la tabla `pagos`
 --
 ALTER TABLE `pagos`
-  MODIFY `id_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=121;
+  MODIFY `id_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=133;
+
+--
+-- AUTO_INCREMENT de la tabla `periodos_mensualidad`
+--
+ALTER TABLE `periodos_mensualidad`
+  MODIFY `id_periodo` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `presupuesto`
 --
 ALTER TABLE `presupuesto`
-  MODIFY `id_presupuesto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=102;
+  MODIFY `id_presupuesto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=111;
 
 --
 -- AUTO_INCREMENT de la tabla `proveedores`
@@ -1341,13 +1404,13 @@ ALTER TABLE `proveedores`
 -- AUTO_INCREMENT de la tabla `solicitudes_gasto`
 --
 ALTER TABLE `solicitudes_gasto`
-  MODIFY `id_solicitud` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id_solicitud` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT de la tabla `tipo_gasto`
 --
 ALTER TABLE `tipo_gasto`
-  MODIFY `id_tipo_gasto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id_tipo_gasto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- Restricciones para tablas volcadas
@@ -1391,7 +1454,7 @@ ALTER TABLE `egresos_bancarios`
 ALTER TABLE `gastos`
   ADD CONSTRAINT `gastos_ibfk_1` FOREIGN KEY (`proveedor_id`) REFERENCES `proveedores` (`id_proveedor`) ON UPDATE CASCADE,
   ADD CONSTRAINT `gastos_ibfk_2` FOREIGN KEY (`tipo_gasto_id`) REFERENCES `tipo_gasto` (`id_tipo_gasto`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `gastos_ibfk_3` FOREIGN KEY (`solicitud_id`) REFERENCES `solicitudes_gasto` (`id_solicitud`) ON DELETE CASCADE ON UPDATE CASCADE;
+  ADD CONSTRAINT `gastos_ibfk_3` FOREIGN KEY (`solicitud_id`) REFERENCES `solicitudes_gasto` (`id_solicitud`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `habitantes_apartamentos`
@@ -1411,7 +1474,8 @@ ALTER TABLE `ingresos_bancarios`
 -- Filtros para la tabla `mensualidad`
 --
 ALTER TABLE `mensualidad`
-  ADD CONSTRAINT `mensualidad_ibfk_1` FOREIGN KEY (`apartamento_id`) REFERENCES `apartamentos` (`id_apartamento`) ON UPDATE CASCADE;
+  ADD CONSTRAINT `mensualidad_ibfk_1` FOREIGN KEY (`apartamento_id`) REFERENCES `apartamentos` (`id_apartamento`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `mensualidad_ibfk_periodo` FOREIGN KEY (`periodo_id`) REFERENCES `periodos_mensualidad` (`id_periodo`) ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `movimientos_caja`
@@ -1444,7 +1508,7 @@ ALTER TABLE `reposiciones`
 -- Filtros para la tabla `solicitudes_gasto`
 --
 ALTER TABLE `solicitudes_gasto`
-  ADD CONSTRAINT `solicitudes_gasto_ibfk_1` FOREIGN KEY (`presupuesto_id`) REFERENCES `presupuesto` (`id_presupuesto`) ON UPDATE CASCADE;
+  ADD CONSTRAINT `solicitudes_gasto_ibfk_1` FOREIGN KEY (`presupuesto_id`) REFERENCES `presupuesto` (`id_presupuesto`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

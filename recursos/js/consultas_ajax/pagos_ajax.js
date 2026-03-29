@@ -8,8 +8,8 @@ let formulario_usar = document.getElementById("form_pagos");
 let boton_formulario = document.getElementById("boton_formulario");
 
 let tasa_dolar = parseFloat(localStorage.getItem("tasa_dolar") || 1).toFixed(2);
-let permiso_eliminar = document.querySelector("#permiso_eliminar")?.value;
-let permiso_modificar = document.querySelector("#permiso_modificar")?.value;
+const permisoModificar = window.PermisosModulo?.modificar || false;
+const permisoEliminar = window.PermisosModulo?.eliminar || false;
 
 // ============================================================
 // INICIALIZACIÓN
@@ -221,13 +221,13 @@ async function consultar() {
                 <span class="d-none d-lg-inline ms-2">Reporte</span>
             </button>
             `;
-        if (permiso_modificar) {
+        if (permisoModificar) {
             html += `<button class="btn btn-success btn-sm modificar" data-tooltip="true" title="Modificar los detalles de este registro" value="${id}">
                         <i class="bi bi-pencil"></i>
                         <span class="d-none d-lg-inline ms-2">Editar</span>
                     </button>`;
         }
-        if (permiso_eliminar) {
+        if (permisoEliminar) {
             html += `<button class="btn btn-danger btn-sm eliminar" data-tooltip="true" title="Quitar este elemento del sistema" value="${id}">
                         <i class="bi bi-trash"></i>
                         <span class="d-none d-lg-inline ms-2">Borrar</span>

@@ -8,7 +8,7 @@ use haydee\servicios\GestorNotificaciones;
 class Mensualidad extends Conexion
 {
     // ====================================================================
-    // PROPIEDADES (Tabla mensualidad)
+    // PROPIEDADES
     // ====================================================================
     private $id_mensualidad;
     private $monto;
@@ -19,52 +19,74 @@ class Mensualidad extends Conexion
     private $porcentaje_interes;
     private $limite_mensualidad;
     private $activo;
+    private $periodo_id;
 
     private $datos_apartamentos = [];
-    // Propiedad para almacenar los IDs de mensualidad (como string separado por comas)
     private $ids_mensualidades;
 
     // ====================================================================
-    // REGLAS DE VALIDACIÓN CENTRALIZADAS
+    // REGLAS DE VALIDACIÓN (Para el Helper Validador)
     // ====================================================================
-    private $reglas = [
-        'id_mensualidad' => [
-            'regex' => '/^\d+$/',
-            'exists' => ['tabla' => 'mensualidad', 'campo' => 'id_mensualidad']
-        ],
-        'monto' => [
-            'regex' => '/^\d+(\.\d{1,2})?$/',
-            'min' => 0
-        ],
-        'tasa_dolar' => [
-            'regex' => '/^\d+(\.\d{1,2})?$/',
-            'min' => 0
-        ],
-        'mes' => [
-            'regex' => '/^(0?[1-9]|1[0-2])$/',
-            'min' => 1,
-            'max' => 12
-        ],
-        'anio' => [
-            'regex' => '/^\d{4}$/',
-            'min' => 2000,
-            'max' => 2100
-        ],
-        'apartamento_id' => [
-            'regex' => '/^\d+$/',
-            'exists' => ['tabla' => 'apartamentos', 'campo' => 'id_apartamento']
-        ],
-        'porcentaje_interes' => [
-            'regex' => '/^\d+(\.\d{1,2})?$/',
-            'min' => 0,
-            'opcional' => true
-        ],
-        'limite_mensualidad' => [
-            'regex' => '/^\d+$/',
-            'min' => 0,
-            'opcional' => true
-        ]
-    ];
+    public static function obtenerReglas($operacion) {
+        $reglasGenerales = [
+            'fecha' => [
+                'regex' => '/^\d{4}-\d{2}-\d{2}$/'
+            ],
+            'mes' => [
+                'regex' => '/^(0?[1-9]|1[0-2])$/'
+            ],
+            'anio' => [
+                'regex' => '/^\d{4}$/',
+                'min' => 2000,
+                'max' => 2100
+            ],
+            'tasa_dolar' => [
+                'regex' => '/^\d+(\.\d{1,4})?$/',
+                'min' => 0
+            ],
+            'porcentaje_interes' => [
+                'regex' => '/^\d+(\.\d{1,2})?$/',
+                'min' => 0,
+                'opcional' => true
+            ],
+            'limite_mensualidad' => [
+                'regex' => '/^\d+$/',
+                'min' => 0,
+                'opcional' => true
+            ]
+        ];
+
+        $camposPorOperacion = [
+            'registrar_mensualidad' => ['mes', 'anio', 'tasa_dolar', 'porcentaje_interes', 'limite_mensualidad'],
+            'modificar_mensualidad' => ['mes', 'anio', 'tasa_dolar', 'porcentaje_interes', 'limite_mensualidad'],
+            'eliminar_mensualidad'  => ['fecha'],
+            'consultar_mensualidades_apartamentos' => ['fecha'],
+            'consultar_tasa_dolar'  => ['mes', 'anio']
+        ];
+
+        if (isset($camposPorOperacion[$operacion])) {
+            return array_intersect_key($reglasGenerales, array_flip($camposPorOperacion[$operacion]));
+        }
+        return [];
+    }
+
+    public static function obtenerReglasDetalles() {
+        return [
+            'id_apartamento' => [
+                'regex' => '/^\d+$/',
+                'exists' => ['tabla' => 'apartamentos', 'campo' => 'id_apartamento']
+            ],
+            'monto' => [
+                'regex' => '/^\d+(\.\d{1,2})?$/',
+                'min' => 0.01
+            ],
+            'id_mensualidad' => [
+                'regex' => '/^\d+$/',
+                'exists' => ['tabla' => 'mensualidad', 'campo' => 'id_mensualidad'],
+                'opcional' => true
+            ]
+        ];
+    }
 
     // ====================================================================
     // GETTERS Y SETTERS
@@ -87,6 +109,8 @@ class Mensualidad extends Conexion
     public function get_limite_mensualidad() { return $this->limite_mensualidad; }
     public function set_activo($a) { $this->activo = $a; }
     public function get_activo() { return $this->activo; }
+    public function set_periodo_id($id) { $this->periodo_id = $id; }
+    public function get_periodo_id() { return $this->periodo_id; }
     public function set_datos_apartamentos($datos) { $this->datos_apartamentos = $datos; }
     public function get_datos_apartamentos() { return $this->datos_apartamentos; }
     public function set_ids_mensualidades($ids) { $this->ids_mensualidades = $ids; }
@@ -111,147 +135,18 @@ class Mensualidad extends Conexion
     }
 
     // ====================================================================
-    // VALIDACIÓN CENTRALIZADA
-    // ====================================================================
-    private function validar($campos, $contexto = [])
-    {
-        foreach ($campos as $campo) {
-            if (!isset($this->reglas[$campo])) {
-                return [
-                    'estatus' => false,
-                    'mensaje' => "No hay reglas de validación definidas para el campo '$campo'."
-                ];
-            }
-            $regla = $this->reglas[$campo];
-
-            $getter = 'get_' . $campo;
-            if (!method_exists($this, $getter)) {
-                return ['estatus' => false, 'mensaje' => "Error interno: getter no encontrado para $campo."];
-            }
-            $valor = $this->$getter();
-
-            // Requerido (a menos que sea opcional)
-            $requerido = !(isset($regla['opcional']) && $regla['opcional'] === true);
-            if ($requerido) {
-                if ($valor === null) {
-                    return ['estatus' => false, 'mensaje' => "El campo '$campo' es requerido y no se ha establecido."];
-                }
-                if (is_string($valor) && trim($valor) === '') {
-                    return ['estatus' => false, 'mensaje' => "El campo '$campo' no puede estar vacío."];
-                }
-            } else {
-                // Si es opcional y está vacío, saltamos validaciones adicionales
-                if ($valor === null || (is_string($valor) && trim($valor) === '')) {
-                    continue;
-                }
-            }
-
-            // Validar expresión regular
-            if (isset($regla['regex']) && !preg_match($regla['regex'], (string)$valor)) {
-                return ['estatus' => false, 'mensaje' => "El campo '$campo' no tiene un formato válido."];
-            }
-
-            // Validar mínimo/máximo
-            if (isset($regla['min']) && $valor < $regla['min']) {
-                return ['estatus' => false, 'mensaje' => "El campo '$campo' debe ser mayor o igual a " . $regla['min']];
-            }
-            if (isset($regla['max']) && $valor > $regla['max']) {
-                return ['estatus' => false, 'mensaje' => "El campo '$campo' debe ser menor o igual a " . $regla['max']];
-            }
-
-            // Validar existencia en otra tabla (foránea)
-            if (isset($regla['exists'])) {
-                $tabla = $regla['exists']['tabla'];
-                $campoFor = $regla['exists']['campo'] ?? $campo;
-                if (!$this->existeEnTabla($tabla, $campoFor, $valor)) {
-                    return ['estatus' => false, 'mensaje' => "El valor del campo '$campo' no existe en la tabla $tabla."];
-                }
-            }
-        }
-        return ['estatus' => true];
-    }
-
-    private function validarApartamento($datos)
-    {
-        // Campos requeridos
-        if (!isset($datos['id_apartamento']) || empty($datos['id_apartamento'])) {
-            return ['estatus' => false, 'mensaje' => 'Falta el id del apartamento.'];
-        }
-        if (!isset($datos['monto']) || !is_numeric($datos['monto']) || $datos['monto'] <= 0) {
-            return ['estatus' => false, 'mensaje' => 'Monto inválido para el apartamento ' . $datos['id_apartamento']];
-        }
-        if (!isset($datos['id_presupuestos']) || !is_array($datos['id_presupuestos'])) {
-            return ['estatus' => false, 'mensaje' => 'Falta la lista de presupuestos para el apartamento ' . $datos['id_apartamento']];
-        }
-
-        // Validar existencia del apartamento
-        if (!$this->existeEnTabla('apartamentos', 'id_apartamento', $datos['id_apartamento'])) {
-            return ['estatus' => false, 'mensaje' => 'El apartamento ID ' . $datos['id_apartamento'] . ' no existe.'];
-        }
-
-        // Validar existencia de cada presupuesto
-        foreach ($datos['id_presupuestos'] as $id_p) {
-            if (!$this->existeEnTabla('detalles_presupuesto', 'id_detalle_presupuesto', $id_p)) {
-                return ['estatus' => false, 'mensaje' => 'El detalle de presupuesto ID ' . $id_p . ' no existe.'];
-            }
-        }
-
-        // Si es edición, validar que la mensualidad exista
-        if (isset($datos['id_mensualidad']) && !empty($datos['id_mensualidad'])) {
-            if (!$this->existeEnTabla('mensualidad', 'id_mensualidad', $datos['id_mensualidad'])) {
-                return ['estatus' => false, 'mensaje' => 'La mensualidad ID ' . $datos['id_mensualidad'] . ' no existe.'];
-            }
-        }
-
-        return ['estatus' => true];
-    }
-
-    /**
-     * Verifica existencia de un valor en una tabla (negocio).
-     */
-    private function existeEnTabla($tabla, $campo, $valor)
-    {
-        $sql = "SELECT COUNT(*) as total FROM $tabla WHERE $campo = :valor";
-        try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->bindParam(':valor', $valor);
-            $stmt->execute();
-            $fila = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $fila['total'] > 0;
-        } catch (PDOException $e) {
-            error_log("Error en existeEnTabla: " . $e->getMessage());
-            return false;
-        }
-    }
-
-    // ====================================================================
-    // VALIDACIÓN AUXILIAR PARA MES/AÑO
-    // ====================================================================
-    private function validarMesAnio()
-    {
-        $v = $this->validar(['mes', 'anio']);
-        if (!$v['estatus']) {
-            return $v;
-        }
-        return ['estatus' => true];
-    }
-
-    // ====================================================================
     // MÉTODOS PRIVADOS (ACCIONES)
     // ====================================================================
-    /**
-     * Verifica qué meses tienen presupuesto pero no mensualidad.
-     */
     private function _verificarMeses()
     {
         $sql = "SELECT DISTINCT MONTH(p.fecha) as mes_presupuesto, YEAR(p.fecha) as anio_presupuesto 
                 FROM presupuesto p
                 WHERE NOT EXISTS (
                     SELECT 1 
-                    FROM mensualidad m 
-                    WHERE m.mes = MONTH(p.fecha) 
-                      AND m.anio = YEAR(p.fecha)
-                      AND m.activo = 1
+                    FROM periodos_mensualidad pm 
+                    WHERE pm.mes = MONTH(p.fecha) 
+                      AND pm.anio = YEAR(p.fecha)
+                      AND pm.activo = 1
                 ) AND p.activo = 1
                 ORDER BY anio_presupuesto ASC, mes_presupuesto ASC";
         try {
@@ -265,30 +160,28 @@ class Mensualidad extends Conexion
         }
     }
 
-    /**
-     * Consulta mensualidades agrupadas por mes/año con totales.
-     */
     private function _consultarPorMeses()
     {
         $sql = "SELECT 
                     GROUP_CONCAT(m.id_mensualidad) as ids,
                     GROUP_CONCAT(m.apartamento_id) as ids_apartamentos,
                     SUM(m.monto) as monto,
-                    m.tasa_dolar,
-                    m.mes,
-                    m.anio,
+                    pm.tasa_dolar,
+                    pm.mes,
+                    pm.anio,
                     SUM(LEAST(m.monto, COALESCE(pagos.total_pagado, 0))) as pagado,
                     m.porcentaje_interes,
                     m.limite_mensualidad
                 FROM mensualidad m
+                INNER JOIN periodos_mensualidad pm ON m.periodo_id = pm.id_periodo
                 LEFT JOIN (
-                    SELECT pm.mensualidad_id, SUM(dp.monto) as total_pagado
+                    SELECT p_m.mensualidad_id, SUM(dp.monto) as total_pagado
                     FROM detalles_pagos dp
-                    JOIN pagos_mensualidad pm ON dp.id_detalle_pago = pm.detalle_pago_id
-                    GROUP BY pm.mensualidad_id
+                    JOIN pagos_mensualidad p_m ON dp.id_detalle_pago = p_m.detalle_pago_id
+                    GROUP BY p_m.mensualidad_id
                 ) as pagos ON m.id_mensualidad = pagos.mensualidad_id
-                WHERE m.activo = 1
-                GROUP BY m.mes, m.anio";
+                WHERE m.activo = 1 AND pm.activo = 1
+                GROUP BY pm.id_periodo, pm.mes, pm.anio, pm.tasa_dolar, m.porcentaje_interes, m.limite_mensualidad";
         try {
             $stmt = $this->get_conex('negocio')->prepare($sql);
             $stmt->execute();
@@ -300,34 +193,29 @@ class Mensualidad extends Conexion
         }
     }
 
-    /**
-     * Consulta mensualidades de un mes/año específico con detalles de apartamento y propietario.
-     */
     private function _consultar_mensualidad_apartamentos()
     {
-        $val = $this->validarMesAnio();
-        if (!$val['estatus']) return $val;
-
         $mesInt = (int)$this->mes;
         $anioInt = (int)$this->anio;
 
-        $sql = "SELECT id_mensualidad, id_apartamento, mensualidad.mes, mensualidad.anio,
-                       apartamentos.nro_apartamento,
-                       habitantes.nombre, habitantes.apellido,
-                       mensualidad.monto, mensualidad.tasa_dolar,
+        $sql = "SELECT m.id_mensualidad, m.apartamento_id, pm.mes, pm.anio,
+                       a.nro_apartamento,
+                       h.nombre, h.apellido,
+                       m.monto, pm.tasa_dolar,
                        COALESCE((SELECT SUM(dp.monto) FROM detalles_pagos dp
-                                 INNER JOIN pagos_mensualidad pm ON dp.id_detalle_pago = pm.detalle_pago_id
-                                 WHERE pm.mensualidad_id = mensualidad.id_mensualidad),0) as pagado,
+                                 INNER JOIN pagos_mensualidad p_m ON dp.id_detalle_pago = p_m.detalle_pago_id
+                                 WHERE p_m.mensualidad_id = m.id_mensualidad),0) as pagado,
                        COALESCE((SELECT SUM(dp.monto_dolar) FROM detalles_pagos dp
-                                 INNER JOIN pagos_mensualidad pm ON dp.id_detalle_pago = pm.detalle_pago_id
-                                 WHERE pm.mensualidad_id = mensualidad.id_mensualidad),0) as pagado_dolar
-                FROM mensualidad
-                INNER JOIN apartamentos ON mensualidad.apartamento_id = apartamentos.id_apartamento
-                INNER JOIN habitantes_apartamentos ON habitantes_apartamentos.apartamento_id = apartamentos.id_apartamento
-                INNER JOIN habitantes ON habitantes_apartamentos.habitante_id = habitantes.id_habitante
-                WHERE mensualidad.mes = :mes AND mensualidad.anio = :anio
-                  AND habitantes_apartamentos.tipo_vinculo = 'Propietario'
-                  AND mensualidad.activo = 1";
+                                 INNER JOIN pagos_mensualidad p_m ON dp.id_detalle_pago = p_m.detalle_pago_id
+                                 WHERE p_m.mensualidad_id = m.id_mensualidad),0) as pagado_dolar
+                FROM mensualidad m
+                INNER JOIN periodos_mensualidad pm ON m.periodo_id = pm.id_periodo
+                INNER JOIN apartamentos a ON m.apartamento_id = a.id_apartamento
+                INNER JOIN habitantes_apartamentos ha ON ha.apartamento_id = a.id_apartamento
+                INNER JOIN habitantes h ON ha.habitante_id = h.id_habitante
+                WHERE pm.mes = :mes AND pm.anio = :anio
+                  AND ha.tipo_vinculo = 'Propietario'
+                  AND m.activo = 1";
         try {
             $stmt = $this->get_conex('negocio')->prepare($sql);
             $stmt->bindParam(':mes', $mesInt, PDO::PARAM_INT);
@@ -341,10 +229,6 @@ class Mensualidad extends Conexion
         }
     }
 
-    /**
-     * Consulta los presupuestos asociados a las mensualidades cuyos IDs se han seteado.
-     * @return array ['estatus' => bool, 'datos' => array, 'mensaje' => string]
-     */
     private function _consultar_presupuestos_asociados()
     {
         if (empty($this->ids_mensualidades)) {
@@ -362,44 +246,32 @@ class Mensualidad extends Conexion
                 $stmt = $this->get_conex('negocio')->prepare($sql);
                 $stmt->execute([':id' => $id]);
                 $filas = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                // Extraer solo los IDs
                 $resultados[] = array_column($filas, 'detalle_presupuesto_id');
             }
             return ['estatus' => true, 'datos' => $resultados];
         } catch (PDOException $e) {
             error_log("Error en _consultar_presupuestos_asociados: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar presupuestos asociados.' . $e->getMessage()];
+            return ['estatus' => false, 'mensaje' => 'Error al consultar presupuestos asociados.'];
         }
     }
 
-    /**
-     * Consulta plana de la cabecera de la mensualidad (datos generales del mes)
-     * para la bitácora de auditoría, evitando arreglos masivos.
-     */
     private function _consultar_cabecera_mensualidad()
     {
-        $val = $this->validarMesAnio();
-        if (!$val['estatus']) return $val;
-
-        $mesInt = (int)$this->mes;
-        $anioInt = (int)$this->anio;
-
-        // Seleccionamos solo los datos globales que comparte ese mes/año
-        $sql = "SELECT tasa_dolar, mes, anio, porcentaje_interes, limite_mensualidad 
-                FROM mensualidad 
-                WHERE mes = :mes AND anio = :anio AND activo = 1 
+        $sql = "SELECT pm.tasa_dolar, pm.mes, pm.anio, m.porcentaje_interes, m.limite_mensualidad 
+                FROM mensualidad m
+                INNER JOIN periodos_mensualidad pm ON m.periodo_id = pm.id_periodo
+                WHERE pm.mes = :mes AND pm.anio = :anio AND m.activo = 1 
                 LIMIT 1";
         try {
             $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->bindParam(':mes', $mesInt, PDO::PARAM_INT);
-            $stmt->bindParam(':anio', $anioInt, PDO::PARAM_INT);
+            $stmt->bindParam(':mes', $this->mes, PDO::PARAM_INT);
+            $stmt->bindParam(':anio', $this->anio, PDO::PARAM_INT);
             $stmt->execute();
             $datos = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if (!$datos) {
                 return ['estatus' => false, 'mensaje' => 'Mensualidad no encontrada para este mes y año'];
             }
-            
             return ['estatus' => true, 'datos' => $datos];
         } catch (PDOException $e) {
             error_log("Error en _consultar_cabecera_mensualidad: " . $e->getMessage());
@@ -407,66 +279,61 @@ class Mensualidad extends Conexion
         }
     }
 
-    /**
-     * Registrar masivo (unificado)
-     */
     private function _registrar()
     {
-        if (empty($this->datos_apartamentos)) {
-            return ['estatus' => false, 'mensaje' => 'No hay datos de apartamentos para registrar.'];
-        }
-
-        // Validar cada elemento del array
-        foreach ($this->datos_apartamentos as $item) {
-            $validacion = $this->validarApartamento($item);
-            if (!$validacion['estatus']) {
-                return $validacion;
-            }
-        }
-
-        $id_mensualidad;
-
+        $id_mensualidad = null;
         $con = $this->get_conex('negocio');
+        
         try {
             $con->beginTransaction();
 
-            $sqlM = "INSERT INTO mensualidad (monto, tasa_dolar, mes, anio, apartamento_id, porcentaje_interes, limite_mensualidad)
-                     VALUES (:monto, :tasa_dolar, :mes, :anio, :apartamento_id, :porcentaje_interes, :limite_mensualidad)";
+            $sqlBuscaPeriodo = "SELECT id_periodo FROM periodos_mensualidad WHERE mes = :mes AND anio = :anio LIMIT 1";
+            $stmtBusca = $con->prepare($sqlBuscaPeriodo);
+            $stmtBusca->execute([':mes' => $this->mes, ':anio' => $this->anio]);
+            $periodo = $stmtBusca->fetch(PDO::FETCH_ASSOC);
+
+            if ($periodo) {
+                $id_periodo_actual = $periodo['id_periodo'];
+            } else {
+                $sqlInsertaPeriodo = "INSERT INTO periodos_mensualidad (mes, anio, tasa_dolar, activo) VALUES (:mes, :anio, :tasa_dolar, 1)";
+                $stmtInsertaPer = $con->prepare($sqlInsertaPeriodo);
+                $stmtInsertaPer->execute([
+                    ':mes' => $this->mes, 
+                    ':anio' => $this->anio, 
+                    ':tasa_dolar' => $this->tasa_dolar
+                ]);
+                $id_periodo_actual = $con->lastInsertId();
+            }
+
+            $sqlM = "INSERT INTO mensualidad (monto, periodo_id, apartamento_id, porcentaje_interes, limite_mensualidad)
+                     VALUES (:monto, :periodo_id, :apartamento_id, :porcentaje_interes, :limite_mensualidad)";
             $stmtM = $con->prepare($sqlM);
 
             $sqlP = "INSERT INTO presupuesto_mensualidad (detalle_presupuesto_id, mensualidad_id) VALUES (:det_id, :men_id)";
             $stmtP = $con->prepare($sqlP);
 
             foreach ($this->datos_apartamentos as $item) {
-                // Insertar mensualidad
                 $stmtM->execute([
                     ':monto' => $item['monto'],
-                    ':tasa_dolar' => $this->tasa_dolar,
-                    ':mes' => $this->mes,
-                    ':anio' => $this->anio,
+                    ':periodo_id' => $id_periodo_actual, 
                     ':apartamento_id' => $item['id_apartamento'],
                     ':porcentaje_interes' => $this->porcentaje_interes,
                     ':limite_mensualidad' => $this->limite_mensualidad
                 ]);
                 $id_mensualidad = $con->lastInsertId();
 
-                // Insertar relaciones en tabla puente
                 foreach ($item['id_presupuestos'] as $id_detalle) {
-                    $stmtP->execute([
-                        ':det_id' => $id_detalle,
-                        ':men_id' => $id_mensualidad
-                    ]);
+                    $stmtP->execute([':det_id' => $id_detalle, ':men_id' => $id_mensualidad]);
                 }
             }
 
             $con->commit();
 
-            // Notificar a propietarios 
             GestorNotificaciones::notificarTodos(
                 "Nueva mensualidad disponible",
                 "Se han generado las mensualidades para el mes {$this->mes} del año {$this->anio}.",
                 'mensualidad',
-                $id_mensualidad, // o el ID de la primera mensualidad
+                $id_mensualidad,
                 'NUEVA_MENSUALIDAD'
             );
 
@@ -478,40 +345,34 @@ class Mensualidad extends Conexion
         }
     }
 
-    /**
-     * modificar masivo (unificado)
-     */
     private function _modificar()
     {
-        if (empty($this->datos_apartamentos)) {
-            return ['estatus' => false, 'mensaje' => 'No hay datos de apartamentos para modificar.'];
-        }
-
-        // Validar cada elemento
-        foreach ($this->datos_apartamentos as $item) {
-            $validacion = $this->validarApartamento($item);
-            if (!$validacion['estatus']) {
-                return $validacion;
-            }
-        }
-
         $con = $this->get_conex('negocio');
         try {
             $con->beginTransaction();
 
+            $sqlUpdatePeriodo = "UPDATE periodos_mensualidad SET tasa_dolar = :tasa_dolar WHERE mes = :mes AND anio = :anio";
+            $stmtUpdPer = $con->prepare($sqlUpdatePeriodo);
+            $stmtUpdPer->execute([
+                ':tasa_dolar' => $this->tasa_dolar, 
+                ':mes' => $this->mes, 
+                ':anio' => $this->anio
+            ]);
+
+            $stmtBusca = $con->prepare("SELECT id_periodo FROM periodos_mensualidad WHERE mes = :mes AND anio = :anio");
+            $stmtBusca->execute([':mes' => $this->mes, ':anio' => $this->anio]);
+            $id_periodo_actual = $stmtBusca->fetchColumn();
+
             $sqlUpdate = "UPDATE mensualidad SET 
                             monto = :monto,
-                            tasa_dolar = :tasa_dolar,
-                            mes = :mes,
-                            anio = :anio,
                             apartamento_id = :apartamento_id,
                             porcentaje_interes = :porcentaje_interes,
                             limite_mensualidad = :limite_mensualidad
                           WHERE id_mensualidad = :id_mensualidad";
             $stmtUpdate = $con->prepare($sqlUpdate);
 
-            $sqlInsert = "INSERT INTO mensualidad (monto, tasa_dolar, mes, anio, apartamento_id, porcentaje_interes, limite_mensualidad)
-                          VALUES (:monto, :tasa_dolar, :mes, :anio, :apartamento_id, :porcentaje_interes, :limite_mensualidad)";
+            $sqlInsert = "INSERT INTO mensualidad (monto, periodo_id, apartamento_id, porcentaje_interes, limite_mensualidad)
+                          VALUES (:monto, :periodo_id, :apartamento_id, :porcentaje_interes, :limite_mensualidad)";
             $stmtInsert = $con->prepare($sqlInsert);
 
             $sqlDeletePuente = "DELETE FROM presupuesto_mensualidad WHERE mensualidad_id = :men_id";
@@ -522,25 +383,18 @@ class Mensualidad extends Conexion
 
             foreach ($this->datos_apartamentos as $item) {
                 if (!empty($item['id_mensualidad'])) {
-                    // Actualizar existente
                     $stmtUpdate->execute([
                         ':id_mensualidad' => $item['id_mensualidad'],
                         ':monto' => $item['monto'],
-                        ':tasa_dolar' => $this->tasa_dolar,
-                        ':mes' => $this->mes,
-                        ':anio' => $this->anio,
                         ':apartamento_id' => $item['id_apartamento'],
                         ':porcentaje_interes' => $this->porcentaje_interes,
                         ':limite_mensualidad' => $this->limite_mensualidad
                     ]);
                     $id_mensualidad = $item['id_mensualidad'];
                 } else {
-                    // Insertar nuevo
                     $stmtInsert->execute([
                         ':monto' => $item['monto'],
-                        ':tasa_dolar' => $this->tasa_dolar,
-                        ':mes' => $this->mes,
-                        ':anio' => $this->anio,
+                        ':periodo_id' => $id_periodo_actual,
                         ':apartamento_id' => $item['id_apartamento'],
                         ':porcentaje_interes' => $this->porcentaje_interes,
                         ':limite_mensualidad' => $this->limite_mensualidad
@@ -548,19 +402,13 @@ class Mensualidad extends Conexion
                     $id_mensualidad = $con->lastInsertId();
                 }
 
-                // Reemplazar relaciones en tabla puente
                 $stmtDelete->execute([':men_id' => $id_mensualidad]);
 
-                // Validar que exista el array de presupuestos
                 if (isset($item['id_presupuestos']) && is_array($item['id_presupuestos'])) {
                     foreach ($item['id_presupuestos'] as $id_detalle) {
-                        $stmtInsertPuente->execute([
-                            ':det_id' => $id_detalle,
-                            ':men_id' => $id_mensualidad
-                        ]);
+                        $stmtInsertPuente->execute([':det_id' => $id_detalle, ':men_id' => $id_mensualidad]);
                     }
                 }
-
             }
 
             $con->commit();
@@ -572,22 +420,16 @@ class Mensualidad extends Conexion
         }
     }
 
-    /**
-     * Elimina (soft delete) mensualidades de un mes/año.
-     */
     private function _eliminar()
     {
-        $val = $this->validarMesAnio();
-        if (!$val['estatus']) return $val;
-
-        $mesInt = (int)$this->mes;
-        $anioInt = (int)$this->anio;
-
-        $sql = "UPDATE mensualidad SET activo = 0 WHERE mes = :mes AND anio = :anio";
+        $sql = "UPDATE mensualidad m
+                INNER JOIN periodos_mensualidad pm ON m.periodo_id = pm.id_periodo
+                SET m.activo = 0 
+                WHERE pm.mes = :mes AND pm.anio = :anio";
         try {
             $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->bindParam(':mes', $mesInt, PDO::PARAM_INT);
-            $stmt->bindParam(':anio', $anioInt, PDO::PARAM_INT);
+            $stmt->bindParam(':mes', $this->mes, PDO::PARAM_INT);
+            $stmt->bindParam(':anio', $this->anio, PDO::PARAM_INT);
             $stmt->execute();
             return ['estatus' => true, 'mensaje' => 'Mensualidades eliminadas'];
         } catch (PDOException $e) {
@@ -596,17 +438,10 @@ class Mensualidad extends Conexion
         }
     }
 
-    /**
-     * Consulta las estadísticas para los gráficos del inicio
-     */
     private function _consultar_estadisticas_inicio()
     {
         try {
             $pdo = $this->get_conex('negocio');
-
-            // ==========================================================
-            // GRÁFICO 1: APARTAMENTOS SOLVENTES VS MOROSOS
-            // ==========================================================
             $sql = "
                 SELECT 
                     SUM(CASE WHEN deuda_pendiente > 0 THEN 1 ELSE 0 END) as aptos_morosos,
@@ -625,29 +460,18 @@ class Mensualidad extends Conexion
             $stmt1->execute();
             $datos_grafico_1 = $stmt1->fetch(PDO::FETCH_ASSOC);
 
-            // ==========================================================
-            // GRÁFICO 2: INGRESOS VS GASTOS (Últimos 6 meses)
-            // ==========================================================
-            
-            // 1. Crear el esqueleto de los últimos 6 meses en PHP (Garantiza que no falten meses)
             $meses_nombres = ['01'=>'Ene', '02'=>'Feb', '03'=>'Mar', '04'=>'Abr', '05'=>'May', '06'=>'Jun', '07'=>'Jul', '08'=>'Ago', '09'=>'Sep', '10'=>'Oct', '11'=>'Nov', '12'=>'Dic'];
             $grafico_2 = [];
             
             for ($i = 5; $i >= 0; $i--) {
                 $fecha_calculo = strtotime("-$i months");
-                $llave_mes = date('Y-m', $fecha_calculo); // Ej: "2023-10"
-                $nombre_mes = $meses_nombres[date('m', $fecha_calculo)] . ' ' . date('y', $fecha_calculo); // Ej: "Oct 23"
-                
-                $grafico_2[$llave_mes] = [
-                    'etiqueta' => $nombre_mes,
-                    'ingresos' => 0,
-                    'gastos' => 0
-                ];
+                $llave_mes = date('Y-m', $fecha_calculo); 
+                $nombre_mes = $meses_nombres[date('m', $fecha_calculo)] . ' ' . date('y', $fecha_calculo);
+                $grafico_2[$llave_mes] = ['etiqueta' => $nombre_mes, 'ingresos' => 0, 'gastos' => 0];
             }
             
             $fecha_inicio_filtro = date('Y-m-01', strtotime("-5 months"));
 
-            // 2. Consulta de INGRESOS (Pagos reales procesados)
             $sql_ingresos = "SELECT DATE_FORMAT(dp.fecha, '%Y-%m') as mes_anio, SUM(dp.monto) as total
                              FROM detalles_pagos dp
                              JOIN pagos p ON dp.pago_id = p.id_pago
@@ -662,7 +486,6 @@ class Mensualidad extends Conexion
                 }
             }
 
-            // 3. Consulta de GASTOS
             $sql_gastos = "SELECT DATE_FORMAT(dg.fecha, '%Y-%m') as mes_anio, SUM(dg.monto) as total
                            FROM detalles_gastos dg
                            JOIN gastos g ON dg.gasto_id = g.id_gasto
@@ -677,29 +500,27 @@ class Mensualidad extends Conexion
                 }
             }
 
-            // ==========================================================
-            // EMPAQUETAR RESPUESTA
-            // ==========================================================
             return [
                 'estatus' => true, 
                 'datos' => [
                     'grafico_deudas' => $datos_grafico_1,
-                    'grafico_ingresos_gastos' => array_values($grafico_2) // Reindexamos para el JS
+                    'grafico_ingresos_gastos' => array_values($grafico_2) 
                 ]
             ];
-
         } catch (PDOException $e) {
             error_log("Error en _consultar_estadisticas_inicio: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al consultar las estadísticas'];
         }
     }
 
-    /**
-     * Consulta los meses y años para los que existen mensualidades.
-     */
     private function _consultar_meses_mensualidad()
     {
-        $sql = "SELECT mes, anio FROM mensualidad GROUP BY anio, mes ORDER BY anio, mes DESC";
+        $sql = "SELECT pm.mes, pm.anio 
+                FROM periodos_mensualidad pm
+                INNER JOIN mensualidad m ON m.periodo_id = pm.id_periodo
+                WHERE m.activo = 1
+                GROUP BY pm.anio, pm.mes 
+                ORDER BY pm.anio DESC, pm.mes DESC";
         try {
             $stmt = $this->get_conex('negocio')->prepare($sql);
             $stmt->execute();
@@ -711,16 +532,11 @@ class Mensualidad extends Conexion
         }
     }
 
-    /**
-     * Consulta la tasa de dólar de un mes/año (la máxima registrada).
-     */
     private function _consultar_tasa_dolar_mensualidades()
     {
-        $val = $this->validarMesAnio();
-        if (!$val['estatus']) return $val;
-
         $sql = "SELECT MAX(mes) as mes, MAX(anio) as anio, MAX(tasa_dolar) as tasa_dolar
-                FROM mensualidad WHERE anio = :anio AND mes = TRIM(LEADING '0' FROM :mes)";
+                FROM periodos_mensualidad 
+                WHERE anio = :anio AND mes = TRIM(LEADING '0' FROM :mes)";
         try {
             $stmt = $this->get_conex('negocio')->prepare($sql);
             $stmt->bindParam(':mes', $this->mes);
@@ -734,22 +550,22 @@ class Mensualidad extends Conexion
         }
     }
 
-    /**
-     * Consulta el estado de deuda de todos los apartamentos (histórico).
-     */
     private function _consultar_mensualidades_pendientes()
     {
         $sql = "WITH FacturacionMensual AS (
-                    SELECT apartamento_id, anio, mes, SUM(monto) AS total_facturado
-                    FROM mensualidad
-                    GROUP BY apartamento_id, anio, mes
+                    SELECT m.apartamento_id, pm.anio, pm.mes, SUM(m.monto) AS total_facturado
+                    FROM mensualidad m
+                    JOIN periodos_mensualidad pm ON m.periodo_id = pm.id_periodo
+                    WHERE m.activo = 1
+                    GROUP BY m.apartamento_id, pm.anio, pm.mes
                 ),
                 PagosMensuales AS (
-                    SELECT m.apartamento_id, m.anio, m.mes, SUM(dp.monto) AS total_pagado
+                    SELECT m.apartamento_id, pm.anio, pm.mes, SUM(dp.monto) AS total_pagado
                     FROM detalles_pagos dp
-                    JOIN pagos_mensualidad pm ON dp.id_detalle_pago = pm.detalle_pago_id
-                    JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
-                    GROUP BY m.apartamento_id, m.anio, m.mes
+                    JOIN pagos_mensualidad p_m ON dp.id_detalle_pago = p_m.detalle_pago_id
+                    JOIN mensualidad m ON p_m.mensualidad_id = m.id_mensualidad
+                    JOIN periodos_mensualidad pm ON m.periodo_id = pm.id_periodo
+                    GROUP BY m.apartamento_id, pm.anio, pm.mes
                 ),
                 BalanceDelMes AS (
                     SELECT f.apartamento_id, f.anio, f.mes,
@@ -779,9 +595,6 @@ class Mensualidad extends Conexion
         }
     }
 
-    // ====================================================================
-    // MÉTODO AUXILIAR (API de tasa de dólar) - se mantiene público si es necesario
-    // ====================================================================
     public function obtenerTasaDolarAPI()
     {
         $apiUrl = "https://pydolarve.org/api/v2/tipo-cambio?currency=usd";
@@ -797,49 +610,35 @@ class Mensualidad extends Conexion
         return (json_last_error() === JSON_ERROR_NONE && isset($data['price'])) ? (float) $data['price'] : 0;
     }
 
-    /**
-     * Genera la estructura de datos lista para el reporte PDF del Cuadro de Pagos.
-     * @param string $mes_limite Mes tope (ej. '08')
-     * @param string $anio_limite Año tope (ej. '2024')
-     */
     public function generarEstructuraCuadroPagos($mes_limite, $anio_limite)
     {
-        // 1. Obtener todas las deudas históricas
         $resp_deudas = $this->_consultar_mensualidades_pendientes();
         if (!$resp_deudas['estatus']) {
             return $resp_deudas;
         }
         $deudas_globales = $resp_deudas['datos'];
-
         $meses_nombres = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 
-        // 2. Recolectar y filtrar períodos
         $periodos = [];
         foreach ($deudas_globales as $deuda) {
             $periodo = $deuda['anio'] . '-' . str_pad($deuda['mes'], 2, '0', STR_PAD_LEFT);
-            // Filtrar hasta el límite
             if ($deuda['anio'] < $anio_limite || ($deuda['anio'] == $anio_limite && $deuda['mes'] <= $mes_limite)) {
                 $periodos[$periodo] = ['anio' => $deuda['anio'], 'mes' => $deuda['mes']];
             }
         }
 
-        // Ordenar períodos
         uasort($periodos, function($a, $b) {
             if ($a['anio'] == $b['anio']) return $a['mes'] - $b['mes'];
             return $a['anio'] - $b['anio'];
         });
 
-        // 3. Construir Cabecera
         $cabecera_tabla = [];
         foreach ($periodos as $per) {
             $cabecera_tabla[] = $meses_nombres[$per['mes'] - 1] . ' ' . $per['anio'];
         }
 
-        // 4. Construir Cuerpo y Totales
         $cuerpo_tabla = [];
         $total_mensual = array_fill(0, count($periodos), 0);
-
-        // Reindexar periodos para búsqueda rápida
         $periodos_indexados = array_values($periodos);
 
         foreach ($deudas_globales as $deuda) {
@@ -852,12 +651,10 @@ class Mensualidad extends Conexion
                 if (!isset($cuerpo_tabla[$apto])) {
                     $cuerpo_tabla[$apto] = array_fill(0, count($periodos_indexados), 0);
                 }
-                
-                // Buscar índice del periodo
                 foreach ($periodos_indexados as $idx => $per) {
                     if ($per['anio'] == $anio && $per['mes'] == $mes) {
                         $cuerpo_tabla[$apto][$idx] = $deuda_acum;
-                        $total_mensual[$idx] += $deuda_acum; // Sumar al total general
+                        $total_mensual[$idx] += $deuda_acum; 
                         break;
                     }
                 }
@@ -874,36 +671,27 @@ class Mensualidad extends Conexion
         ];
     }
 
-    /**
-     * Consulta los 4 KPIs principales para las tarjetas del Dashboard.
-     */
     private function _consultar_tarjetas_resumen()
     {
         $sql = "SELECT 
                     (SELECT COUNT(*) FROM apartamentos WHERE activo = 1) AS total_apartamentos,
-                    
                     (SELECT COUNT(DISTINCT ha.apartamento_id) 
                      FROM habitantes_apartamentos ha 
                      JOIN habitantes h ON ha.habitante_id = h.id_habitante 
                      WHERE h.activo = 1) AS apartamentos_ocupados,
-                     
                     (SELECT COUNT(*) FROM habitantes WHERE activo = 1) AS residentes_activos,
-                    
                     (SELECT COALESCE(SUM(dp.monto), 0) 
                      FROM detalles_pagos dp 
                      JOIN pagos p ON dp.pago_id = p.id_pago 
                      WHERE p.activo = 1 
                        AND MONTH(dp.fecha) = MONTH(CURDATE()) 
                        AND YEAR(dp.fecha) = YEAR(CURDATE())) AS recaudado_mes,
-                       
                     (SELECT COUNT(*) 
                      FROM vw_estado_cuentas_mensualidad 
                      WHERE estado_pago = 'Pendiente') AS recibos_pendientes,
-
                     (SELECT COALESCE(SUM(deuda_pendiente), 0) 
                      FROM vw_estado_cuentas_mensualidad 
                      WHERE CAST(estado_pago AS CHAR) = 'Pendiente') AS deuda_total";
-                     
         try {
             $stmt = $this->get_conex('negocio')->prepare($sql);
             $stmt->execute();
@@ -914,6 +702,5 @@ class Mensualidad extends Conexion
             return ['estatus' => false, 'mensaje' => 'Error al consultar los KPIs del inicio'];
         }
     }
-
 }
 ?>

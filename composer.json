@@ -11,7 +11,9 @@
             "config/acciones.php",
             "config/modulos.php",
             "config/config.php",
-            "config/rutas.php"
+            "config/rutas.php",
+            "config/config_menu.php",
+            "config/config_titulos.php"
         ]
     },
     "require": {

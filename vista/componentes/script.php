@@ -16,3 +16,16 @@
 <script src="<?php echo URL_BASE; ?>recursos/js/header.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/js/notificaciones.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/js/driver.js"></script>
+
+<!-- Variable de permisos -->
+<?php
+// Validamos si el controlador actual definió la variable $permisosVista
+if (isset($permisosVista) && is_array($permisosVista)) {
+    // json_encode convierte el arreglo de PHP en un objeto JSON para JavaScript
+    $permisosJson = json_encode($permisosVista);
+    echo "<script> window.PermisosModulo = {$permisosJson}; </script>";
+} else {
+    // Si no hay permisos (ej. módulo de inicio), creamos un objeto vacío
+    echo "<script> window.PermisosModulo = {}; </script>";
+}
+?>

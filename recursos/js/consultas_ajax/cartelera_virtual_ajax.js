@@ -5,8 +5,8 @@
  */
 
 let id_modificar;
-let permiso_eliminar = document.querySelector("#permiso_eliminar")?.value;
-let permiso_modificar = document.querySelector("#permiso_modificar")?.value;
+const permisoModificar = window.PermisosModulo?.modificar || false;
+const permisoEliminar = window.PermisosModulo?.eliminar || false;
 let nombre_usuario = document.querySelector("#nombre_usuario")?.value || "Desconocido";
 
 let boton_formulario = document.querySelector("#boton_formulario");
@@ -72,13 +72,13 @@ function consultar() {
                 <i class="bi bi-eye"></i>
                 <span class="d-none d-lg-inline ms-2">Ver</span>
             </button>`;
-        if (window.permiso_modificar) {
+        if (permisoModificar) {
             html += `<button class="btn btn-success btn-sm modificar" data-id="${id}" data-tooltip="true" title="Modificar los detalles de este registro">
                         <i class="bi bi-pencil"></i>
                         <span class="d-none d-lg-inline ms-2">Editar</span>
                     </button>`;
         }
-        if (window.permiso_eliminar) {
+        if (permisoEliminar) {
             html += `<button class="btn btn-danger btn-sm eliminar" data-id="${id}" data-tooltip="true" title="Quitar este elemento del sistema">
                         <i class="bi bi-trash"></i>
                         <span class="d-none d-lg-inline ms-2">Borrar</span>
@@ -145,7 +145,6 @@ async function modificar_formulario(e) {
         // Llenar formulario
         formulario_usar.querySelector("#titulo").value = data.titulo;
         formulario_usar.querySelector("#descripcion").value = data.descripcion;
-        formulario_usar.querySelector("#fecha").value = data.fecha;
         formulario_usar.querySelector("#prioridad").value = data.prioridad;
 
         // Mostrar información de la imagen
@@ -163,7 +162,7 @@ async function modificar_formulario(e) {
             botonEliminarImagen.removeAttribute("data-nombre");
         }
 
-        if (permiso_modificar != 1) {
+        if (permisoModificar != 1) {
             boton_formulario.setAttribute("hidden", true);
             boton_formulario.setAttribute("disabled", true);
         }
@@ -207,7 +206,7 @@ function mostrarVistaPrevia(data) {
 
     if (data.imagen) {
         // Si hay imagen, construimos la ruta y mostramos los contenedores
-        imagen.src = "recursos/img/cartelera/" + data.imagen;
+        imagen.src = "recursos/img/cartelera_virtual/" + data.imagen;
         imagen.style.display = "inline-block";
         contenedor_imagen.style.display = "block"; // Mostramos el bloque completo
         mensaje_error.classList.add("d-none");
@@ -366,7 +365,6 @@ document.addEventListener('DOMContentLoaded', () => {
         steps: [
             { element: '#titulo', popover: { title: 'Título', description: 'Escribe un título llamativo y claro para tu comunicado.', side: 'bottom', align: 'start' } },
             { element: '#descripcion', popover: { title: 'Descripción', description: 'Redacta el contenido detallado de tu publicación aquí.', side: 'bottom', align: 'start' } },
-            { element: '#fecha', popover: { title: 'Fecha', description: 'Indica la fecha correspondiente al comunicado.', side: 'top', align: 'start' } },
             { element: '#imagen', popover: { title: 'Imagen (Opcional)', description: 'Puedes adjuntar una foto o imagen para que la publicación sea mucho más visual.', side: 'top', align: 'start' } },
             { element: '#prioridad', popover: { title: 'Prioridad', description: 'Clasifica la urgencia del aviso (Alta, Media o Baja) para llamar la atención rápidamente.', side: 'top', align: 'start' } },
             { element: '#boton_formulario', popover: { title: 'Guardar', description: 'Haz clic aquí para publicar tu aviso en la cartelera virtual.', side: 'top', align: 'center' } }

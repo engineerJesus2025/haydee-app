@@ -24,7 +24,8 @@ class ValidadorBD extends Conexion {
      * Verifica si un valor existe en una tabla específica.
      */
     public function existe($tabla, $campo, $valor) {
-        $tablasConActivo = ['presupuesto', 'tipo_gasto', 'mensualidad', 'detalles_presupuesto', 'apartamentos', 'habitantes'];
+        // SOLUCIÓN: Quitamos 'detalles_presupuesto' de esta lista porque no tiene columna 'activo'
+        $tablasConActivo = ['presupuesto', 'tipo_gasto', 'mensualidad', 'apartamentos', 'habitantes'];
         
         $sql = "SELECT COUNT(*) FROM $tabla WHERE $campo = :valor";
         if (in_array($tabla, $tablasConActivo)) {

@@ -239,7 +239,10 @@ class Usuario extends Conexion
     // SE USA EN EL SERVICIO AUTENTICACION (repasar)    
     private function _existe_correo()
     {
-        $sql = "SELECT id_usuario, nombre, apellido, correo, rol_id FROM usuarios WHERE correo = :correo AND activo = 1";
+        $sql = "SELECT u.id_usuario, u.nombre, u.apellido, u.correo, u.rol_id, r.nombre as nombre_rol 
+                FROM usuarios u 
+                INNER JOIN roles r ON u.rol_id = r.id_rol 
+                WHERE u.correo = :correo AND u.activo = 1";
         try {
             $stmt = $this->get_conex('seguridad')->prepare($sql);
             $stmt->execute([':correo' => $this->correo]);

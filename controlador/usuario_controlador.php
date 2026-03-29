@@ -190,8 +190,5 @@ if (isset($_POST["validar"])) {
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_USUARIOS);
 }
-
-// Carga de vistas según acción
-if ($accion == "inicio") {
-    require_once "vista/usuarios/usuario_vista.php";
-}
+$permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_USUARIOS);
+require_once "vista/usuarios/usuario_vista.php";

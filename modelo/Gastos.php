@@ -701,7 +701,7 @@ class Gastos extends Conexion
         $whereIngresos = !empty($condicionesIngresos) ? " WHERE " . implode(" AND ", $condicionesIngresos) : "";
 
         // ============================================================
-        // 2. Consulta para el GRÁFICO (detalle)
+        //  Consulta para el GRÁFICO (detalle) - 
         // ============================================================
         $sqlEgresosDetalle = "SELECT 
                                 'Egreso' as balance,
@@ -720,11 +720,12 @@ class Gastos extends Conexion
                                 dp.fecha,
                                 dp.monto,
                                 dp.tipo_pago as metodo_pago,
-                                CONCAT('Pago de mensualidad - Apto ', a.nro_apartamento) as concepto,
+                                CONCAT('Pago mes ', pm_per.mes, '/', pm_per.anio, ' - Apto ', a.nro_apartamento) as concepto,
                                 NULL as tipo
                                FROM detalles_pagos dp
-                               INNER JOIN pagos_mensualidad pm ON dp.id_detalle_pago = pm.detalle_pago_id
-                               INNER JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
+                               INNER JOIN pagos_mensualidad pm_rel ON dp.id_detalle_pago = pm_rel.detalle_pago_id
+                               INNER JOIN mensualidad m ON pm_rel.mensualidad_id = m.id_mensualidad
+                               INNER JOIN periodos_mensualidad pm_per ON m.periodo_id = pm_per.id_periodo
                                INNER JOIN apartamentos a ON m.apartamento_id = a.id_apartamento
                                INNER JOIN pagos p ON dp.pago_id = p.id_pago
                                $whereIngresos";

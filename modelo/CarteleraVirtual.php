@@ -30,9 +30,6 @@ class CarteleraVirtual extends Conexion
             'descripcion' => [
                 'regex' => '/^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()\'"!?¡¿%°\- ]{3,200}$/'
             ],
-            'fecha' => [
-                'regex' => '/^\d{4}-\d{2}-\d{2}$/'
-            ],
             'imagen' => [
                 // La validamos como opcional, ya que a veces no se sube imagen nueva al modificar
                 'regex' => '/^[a-zA-Z0-9_.\- ]+\.(jpg|jpeg|png|gif)$/i',
@@ -48,8 +45,8 @@ class CarteleraVirtual extends Conexion
         ];
 
         $camposPorOperacion = [
-            'registrar_cartelera' => ['titulo', 'descripcion', 'fecha', 'prioridad', 'usuario_id'],
-            'modificar_cartelera' => ['id_cartelera', 'titulo', 'descripcion', 'fecha', 'prioridad', 'usuario_id'],
+            'registrar_cartelera' => ['titulo', 'descripcion', 'prioridad', 'usuario_id'],
+            'modificar_cartelera' => ['id_cartelera', 'titulo', 'descripcion', 'prioridad', 'usuario_id'],
             'eliminar_cartelera'  => ['id_cartelera'],
             'consultar_cartelera' => ['id_cartelera']
         ];
@@ -150,13 +147,12 @@ class CarteleraVirtual extends Conexion
      */
     private function _registrar_cartelera()
     {
-        $sql = "INSERT INTO cartelera_virtual (titulo, descripcion, fecha, imagen, prioridad, usuario_id)
-                VALUES (:titulo, :descripcion, :fecha, :imagen, :prioridad, :usuario_id)";
+        $sql = "INSERT INTO cartelera_virtual (titulo, descripcion, imagen, prioridad, usuario_id)
+                VALUES (:titulo, :descripcion, :imagen, :prioridad, :usuario_id)";
         try {
             $stmt = $this->get_conex('seguridad')->prepare($sql);
             $stmt->bindParam(':titulo', $this->titulo);
             $stmt->bindParam(':descripcion', $this->descripcion);
-            $stmt->bindParam(':fecha', $this->fecha);
             $stmt->bindParam(':imagen', $this->imagen);
             $stmt->bindParam(':prioridad', $this->prioridad);
             $stmt->bindParam(':usuario_id', $this->usuario_id);
@@ -178,7 +174,6 @@ class CarteleraVirtual extends Conexion
         $sql = "UPDATE cartelera_virtual SET
                     titulo = :titulo,
                     descripcion = :descripcion,
-                    fecha = :fecha,
                     imagen = :imagen,
                     prioridad = :prioridad,
                     usuario_id = :usuario_id
@@ -188,7 +183,6 @@ class CarteleraVirtual extends Conexion
             $stmt->bindParam(':id_cartelera', $this->id_cartelera);
             $stmt->bindParam(':titulo', $this->titulo);
             $stmt->bindParam(':descripcion', $this->descripcion);
-            $stmt->bindParam(':fecha', $this->fecha);
             $stmt->bindParam(':imagen', $this->imagen);
             $stmt->bindParam(':prioridad', $this->prioridad);
             $stmt->bindParam(':usuario_id', $this->usuario_id);
@@ -281,7 +275,7 @@ class CarteleraVirtual extends Conexion
     }
 
     /**
-     * Consulta rápida de las últimas 3 publicaciones para el widget del Dashboard
+     * Consulta rápida de las últimas 5 publicaciones para el widget del Dashboard
      // SE USA EN INICIO
      */
     public function consultar_widget_dashboard()
@@ -289,7 +283,7 @@ class CarteleraVirtual extends Conexion
         $sql = "SELECT titulo, fecha, usuarios.nombre as nombre_usuario, prioridad 
                 FROM cartelera_virtual
                 INNER JOIN usuarios ON usuarios.id_usuario = cartelera_virtual.usuario_id
-                ORDER BY prioridad ASC, fecha DESC LIMIT 3";
+                ORDER BY prioridad ASC, fecha DESC LIMIT 5";
         try {
             $stmt = $this->get_conex('seguridad')->prepare($sql);
             $stmt->execute();

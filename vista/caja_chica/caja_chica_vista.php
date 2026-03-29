@@ -1,4 +1,3 @@
-<?php use haydee\ayuda\Sesiones; ?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -10,9 +9,6 @@
 </head>
 
 <body id="body-pd" class="body-pd">  
-  <input type="text" hidden id="permiso_registrar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_CAJA_CHICA, REGISTRAR) ?>">
-  <input type="text" hidden id="permiso_eliminar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_CAJA_CHICA, ELIMINAR) ?>">
-  <input type="text" hidden id="permiso_modificar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_CAJA_CHICA, MODIFICAR) ?>">
 	<div class="container-fluid">
 		<div class="row flex-nowrap mb-2">
 			<?php
@@ -52,8 +48,10 @@
                   </div>
                 </span>
                 <div id="botones_movimientos" class="mt-3" hidden>
+                  <?php if ($permisosVista['registrar']) : ?>
                   <button class="btn btn-primary m-1" id="boton_registrar_gasto" data-bs-toggle="modal" data-bs-target="#modal_registro_gastos" data-tooltip="true" title="Registrar Nuevo Gasto de Caja">Nuevo Gasto</button>
                   <button class="btn btn-secondary m-1" id="boton_reponer_caja" data-bs-toggle="modal" data-bs-target="#modal_reponer_caja" data-tooltip="true" title="Reponer Saldo de Caja">Reponer Caja</button>
+                  <?php endif; ?>
                 </div>
 					    </div>
 					  </div>            

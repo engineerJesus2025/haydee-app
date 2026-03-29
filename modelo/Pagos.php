@@ -248,20 +248,21 @@ class Pagos extends Conexion
         $sql = "SELECT 
                     m.id_mensualidad,
                     m.monto,
-                    m.tasa_dolar,
-                    m.mes,
-                    m.anio,
+                    pm_per.tasa_dolar,
+                    pm_per.mes,
+                    pm_per.anio,
                     m.porcentaje_interes,
                     m.limite_mensualidad,
                     COALESCE(SUM(dp.monto), 0) AS total_pagado,
                     (m.monto - COALESCE(SUM(dp.monto), 0)) AS pendiente
                 FROM mensualidad m
-                LEFT JOIN pagos_mensualidad pm ON m.id_mensualidad = pm.mensualidad_id
-                LEFT JOIN detalles_pagos dp ON pm.detalle_pago_id = dp.id_detalle_pago
+                INNER JOIN periodos_mensualidad pm_per ON m.periodo_id = pm_per.id_periodo
+                LEFT JOIN pagos_mensualidad p_m ON m.id_mensualidad = p_m.mensualidad_id
+                LEFT JOIN detalles_pagos dp ON p_m.detalle_pago_id = dp.id_detalle_pago
                 WHERE m.apartamento_id = :id_apartamento AND m.activo = 1
                 GROUP BY m.id_mensualidad
                 HAVING pendiente > 0
-                ORDER BY m.anio, m.mes";
+                ORDER BY pm_per.anio, pm_per.mes";
         try {
             $stmt = $this->get_conex('negocio')->prepare($sql);
             $stmt->bindParam(':id_apartamento', $this->apartamento_id, PDO::PARAM_INT);
@@ -287,23 +288,15 @@ class Pagos extends Conexion
                 p.estado,
                 MAX(dp.fecha) AS ultima_fecha,
                 SUM(dp.monto) AS monto_total,
-                -- Método de pago del último detalle (para mostrar moneda) peri
-                (SELECT tipo_pago 
-                 FROM detalles_pagos 
-                 WHERE pago_id = p.id_pago 
-                 ORDER BY fecha DESC 
-                 LIMIT 1) AS tipo_pago_predominante,
-                CASE WHEN COUNT(DISTINCT a.nro_apartamento) = 1 
-                     THEN MAX(a.nro_apartamento) 
-                     ELSE 'Varios' 
-                END AS apartamento,
-                -- Periodos de las mensualidades asociadas (concatenados)
-                GROUP_CONCAT(DISTINCT CONCAT(m.mes, '/', m.anio) ORDER BY m.anio, m.mes SEPARATOR ', ') AS periodos
+                (SELECT tipo_pago FROM detalles_pagos WHERE pago_id = p.id_pago ORDER BY fecha DESC LIMIT 1) AS tipo_pago_predominante,
+                CASE WHEN COUNT(DISTINCT a.nro_apartamento) = 1 THEN MAX(a.nro_apartamento) ELSE 'Varios' END AS apartamento,
+                GROUP_CONCAT(DISTINCT CONCAT(pm_per.mes, '/', pm_per.anio) ORDER BY pm_per.anio, pm_per.mes SEPARATOR ', ') AS periodos
             FROM pagos p
             JOIN detalles_pagos dp ON p.id_pago = dp.pago_id
             LEFT JOIN ingresos_bancarios ib ON dp.id_detalle_pago = ib.detalle_pago_id
             LEFT JOIN pagos_mensualidad pm ON dp.id_detalle_pago = pm.detalle_pago_id
             LEFT JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
+            LEFT JOIN periodos_mensualidad pm_per ON m.periodo_id = pm_per.id_periodo
             LEFT JOIN apartamentos a ON m.apartamento_id = a.id_apartamento
             WHERE p.activo = 1
             GROUP BY p.id_pago
@@ -333,21 +326,15 @@ class Pagos extends Conexion
                     p.estado,
                     MAX(dp.fecha) AS ultima_fecha,
                     SUM(dp.monto) AS monto_total,
-                    (SELECT tipo_pago 
-                     FROM detalles_pagos 
-                     WHERE pago_id = p.id_pago 
-                     ORDER BY fecha DESC 
-                     LIMIT 1) AS tipo_pago_predominante,
-                    CASE WHEN COUNT(DISTINCT a.nro_apartamento) = 1 
-                         THEN MAX(a.nro_apartamento) 
-                         ELSE 'Varios' 
-                    END AS apartamento,
-                    GROUP_CONCAT(DISTINCT CONCAT(m.mes, '/', m.anio) ORDER BY m.anio, m.mes SEPARATOR ', ') AS periodos
+                    (SELECT tipo_pago FROM detalles_pagos WHERE pago_id = p.id_pago ORDER BY fecha DESC LIMIT 1) AS tipo_pago_predominante,
+                    CASE WHEN COUNT(DISTINCT a.nro_apartamento) = 1 THEN MAX(a.nro_apartamento) ELSE 'Varios' END AS apartamento,
+                    GROUP_CONCAT(DISTINCT CONCAT(pm_per.mes, '/', pm_per.anio) ORDER BY pm_per.anio, pm_per.mes SEPARATOR ', ') AS periodos
                 FROM pagos p
                 JOIN detalles_pagos dp ON p.id_pago = dp.pago_id
                 LEFT JOIN ingresos_bancarios ib ON dp.id_detalle_pago = ib.detalle_pago_id
                 LEFT JOIN pagos_mensualidad pm ON dp.id_detalle_pago = pm.detalle_pago_id
                 LEFT JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
+                LEFT JOIN periodos_mensualidad pm_per ON m.periodo_id = pm_per.id_periodo
                 LEFT JOIN apartamentos a ON m.apartamento_id = a.id_apartamento
                 WHERE p.activo = 1
                   AND EXISTS (
@@ -645,7 +632,7 @@ class Pagos extends Conexion
     {
         $sql = "SELECT 
                     h.nombre, h.apellido, a.nro_apartamento,
-                    MAX(dp.fecha) as fecha_pago, m.mes, m.anio, p.id_pago,
+                    MAX(dp.fecha) as fecha_pago, pm_per.mes, pm_per.anio, p.id_pago,
                     SUM(dp.monto) as total,
                     COUNT(CASE WHEN dp.tipo_pago = 'Transferencia' THEN 1 END) as count_transferencia,
                     COUNT(CASE WHEN dp.tipo_pago = 'Pago Movil' THEN 1 END) as count_pago_movil,
@@ -654,15 +641,16 @@ class Pagos extends Conexion
                     GROUP_CONCAT(DISTINCT ib.referencia SEPARATOR ', ') as referencias
                 FROM pagos p
                 JOIN detalles_pagos dp ON p.id_pago = dp.pago_id
-                JOIN pagos_mensualidad pm ON dp.id_detalle_pago = pm.detalle_pago_id
-                JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
+                JOIN pagos_mensualidad p_m ON dp.id_detalle_pago = p_m.detalle_pago_id
+                JOIN mensualidad m ON p_m.mensualidad_id = m.id_mensualidad
+                JOIN periodos_mensualidad pm_per ON m.periodo_id = pm_per.id_periodo
                 JOIN apartamentos a ON m.apartamento_id = a.id_apartamento
                 JOIN habitantes_apartamentos ha ON a.id_apartamento = ha.apartamento_id
                 JOIN habitantes h ON ha.habitante_id = h.id_habitante
                 LEFT JOIN ingresos_bancarios ib ON dp.id_detalle_pago = ib.detalle_pago_id
                 LEFT JOIN bancos b ON ib.banco_id = b.id_banco
                 WHERE p.id_pago = :id_pago AND ha.tipo_vinculo = 'Propietario'
-                GROUP BY p.id_pago";
+                GROUP BY p.id_pago, pm_per.mes, pm_per.anio, h.nombre, h.apellido, a.nro_apartamento";
         try {
             $stmt = $this->get_conex('negocio')->prepare($sql);
             $stmt->execute([':id_pago' => $this->id_pago]);

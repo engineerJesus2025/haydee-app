@@ -1,4 +1,3 @@
-<?php use haydee\ayuda\Sesiones; ?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -10,8 +9,6 @@
 </head>
 
 <body id="body-pd" class="body-pd">
-    <input type="text" hidden id="permiso_eliminar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_MODULOS, ELIMINAR) ?>">
-    <input type="text" hidden id="permiso_modificar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_MODULOS, MODIFICAR) ?>">
     <div class="container-fluid">
         <div class="row flex-nowrap ">
             <?php require_once ROOT_PATH . "/vista/componentes/navbar.php"; ?>
@@ -29,7 +26,7 @@
                             <div class="card p-4">
                                 <div class="row">
                                     <div class="col-12 col-sm-6 mb-4">
-                                    <?php if (Sesiones::tienePermiso(GESTIONAR_MODULOS, REGISTRAR)) : ?>
+                                    <?php if ($permisosVista['registrar']) : ?>
                                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-tooltip="true" title="Registrar Nuevo Módulo" data-bs-target="#modal_modulo">Nuevo Módulo</button>
                                     <?php endif; ?>
                                     </div>

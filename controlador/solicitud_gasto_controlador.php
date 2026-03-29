@@ -183,5 +183,5 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     $solicitud = new SolicitudGasto();
     $presupuestos = $solicitud->consultar_presupuesto($fecha_actual);
 }
-
+$permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_SOLICITUD_GASTO);
 require_once "vista/solicitud_gasto/solicitud_gasto_vista.php";

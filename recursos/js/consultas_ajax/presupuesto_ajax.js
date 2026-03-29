@@ -7,8 +7,8 @@
 // ============================================================
 // VARIABLES GLOBALES
 // ============================================================
-let permiso_eliminar = document.querySelector("#permiso_eliminar")?.value;
-let permiso_modificar = document.querySelector("#permiso_modificar")?.value;
+const permisoModificar = window.PermisosModulo?.modificar || false;
+const permisoEliminar = window.PermisosModulo?.eliminar || false;
 let boton_formulario = document.querySelector("#boton_formulario");
 
 let modal = new bootstrap.Modal(document.getElementById("modal_presupuesto"), { focus: false });
@@ -625,13 +625,13 @@ async function consultar() {
                 <i class="bi bi-eye"></i>
                 <span class="d-none d-lg-inline ms-2">Ver</span>
             </button>`;
-        if (permiso_modificar) {
+        if (permisoModificar) {
             html += `<button class="btn btn-success btn-sm modificar" value="${id}" data-tooltip="true" title="Modificar los detalles de este registro">
                         <i class="bi bi-pencil"></i>
                         <span class="d-none d-lg-inline ms-2">Editar</span>
                     </button>`;
         }
-        if (permiso_eliminar) {
+        if (permisoEliminar) {
             html += `<button class="btn btn-danger btn-sm eliminar" value="${id}" data-tooltip="true" title="Quitar este elemento del sistema">
                         <i class="bi bi-trash"></i>
                         <span class="d-none d-lg-inline ms-2">Borrar</span>
@@ -791,8 +791,10 @@ async function consultarInformacionFormulario() {
     Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
         const meses = respuestaServidor.datos || [];
         if (meses.length === 0) {
-            document.getElementById('boton_registrar').nextElementSibling.textContent = "No hay meses para definir presupuesto";
-            document.getElementById('boton_registrar').setAttribute('style', 'display:none');
+            let boton_registrar = document.getElementById('boton_registrar');
+            if (!boton_registrar) return;
+            boton_registrar.nextElementSibling.textContent = "No hay meses para definir presupuesto";
+            boton_registrar.setAttribute('style', 'display:none');
             return;
         }
 
@@ -1074,7 +1076,7 @@ async function modificar_formulario(e) {
             });
         }
 
-        if (permiso_modificar != 1) {
+        if (permisoModificar != 1) {
             boton_formulario.setAttribute("hidden", true);
         }
 

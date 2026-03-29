@@ -105,6 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     // Le avisamos al gestor que permita auditar la próxima consulta de este módulo
     GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_ANIO_FISCAL);
 }
+$permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_ANIO_FISCAL);
 
 // Cargar la vista
 require_once "vista/anio_fiscal/anio_fiscal_vista.php";

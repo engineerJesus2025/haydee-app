@@ -32,6 +32,10 @@ if (isset($_POST["operacion"])) {
 
     try{
         switch ($operacion) {
+            case 'obtener_copias':
+                $respuesta = $mantenimiento->obtenerCopias();
+                break;
+
             case 'generar_copia_seguridad':
                 $db = $_POST['db'] ?? '';
                 if (in_array($db, ['negocio', 'seguridad'])) {
@@ -52,34 +56,24 @@ if (isset($_POST["operacion"])) {
 
             case 'descargar_copia_seguridad':
                 $db = $_POST['db'] ?? '';
-                if (!in_array($db, ['negocio', 'seguridad'])) {
-                    echo json_encode(['estatus' => false, 'mensaje' => 'Base de datos no válida']);
-                    exit;
-                }
+                
+                // Anulamos la respuesta para evitar que el bloque 'finally' imprima el JSON en pantalla blanca
+                $respuesta = null; 
 
-                $backupFile = "recursos/backups/backup_{$db}.sql";
-
-                if (file_exists($backupFile)) {
-                    // -> NUEVO: Registro manual antes de descargar <-
-                    $detalles = [
-                        'accion' => 'Descargó archivo SQL',
-                        'base_datos' => strtoupper($db),
-                        'archivo' => basename($backupFile)
-                    ];
-                    Bitacora::registrar(RESPALDAR, GESTIONAR_MANTENIMIENTO, null, null, $detalles);
-
-                    // Forzar la descarga del archivo
-                    header('Content-Description: File Transfer');
-                    header('Content-Type: application/octet-stream');
-                    header('Content-Disposition: attachment; filename="' . basename($backupFile) . '"');
-                    header('Expires: 0');
-                    header('Cache-Control: must-revalidate');
-                    header('Pragma: public');
-                    header('Content-Length: ' . filesize($backupFile));
-                    readfile($backupFile);
-                    exit;
+                if (in_array($db, ['negocio', 'seguridad'])) {
+                    $resultado = $mantenimiento->descargarCopiaSeguridad($db);
+                    
+                    // Si el método nos devuelve un arreglo con estatus false, falló
+                    if (is_array($resultado) && !$resultado['estatus']) {
+                        $mensaje = urlencode($resultado['mensaje']);
+                        header("Location: ?pagina=mantenimiento&accion=inicio&e=1&msg=$mensaje");
+                        exit;
+                    }
+                    
+                    // Si fue exitoso, el método descargarCopiaSeguridad ya envió el archivo e hizo exit.
+                    exit; 
                 } else {
-                    echo json_encode(['estatus' => false, 'mensaje' => 'El archivo de respaldo no existe. Primero debe generarlo.']);
+                    header("Location: ?pagina=mantenimiento&accion=inicio&e=1&msg=" . urlencode("Base de datos no válida"));
                     exit;
                 }
                 break;
@@ -99,7 +93,6 @@ if (isset($_POST["operacion"])) {
                 $archivo_tmp = $_FILES['backup_file']['tmp_name'];
                 $nombre_archivo = $_FILES['backup_file']['name'];
                 
-                // ... (Validaciones de extensión y tamaño se mantienen igual) ...
                 $extension = strtolower(pathinfo($nombre_archivo, PATHINFO_EXTENSION));
                 if ($extension !== 'sql') {
                     $respuesta = ['estatus' => false, 'mensaje' => 'Solo se permiten archivos SQL.'];
@@ -112,7 +105,6 @@ if (isset($_POST["operacion"])) {
                     break;
                 }
 
-                // ... (Validación de seguridad vs negocio se mantiene igual) ...
                 $es_seguridad = stripos($contenido_sql, "Database: seguridad_haydee_db") !== false;
                 if (($db === 'seguridad' && !$es_seguridad) || ($db === 'negocio' && $es_seguridad)) {
                     $respuesta = ['estatus' => false, 'mensaje' => 'El archivo no corresponde a la base de datos destino.'];
@@ -122,7 +114,7 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $mantenimiento->importarSQL($contenido_sql, $db);
                 if ($respuesta['estatus']) {
                     
-                    // -> NUEVO: Registro manual <-
+                    // -> Registro manual <-
                     $detalles = [
                         'accion' => 'Restauró base de datos desde archivo local',
                         'base_datos' => strtoupper($db),

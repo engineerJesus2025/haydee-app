@@ -1,4 +1,3 @@
-<?php use haydee\ayuda\Sesiones; ?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -10,17 +9,12 @@
     <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/contrasenias.css">
 </head>
 <body id="body-pd" class="body-pd">
-    <input type="text" hidden id="permiso_eliminar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_USUARIOS, ELIMINAR) ?>">
-    <input type="text" hidden id="permiso_modificar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_USUARIOS, MODIFICAR) ?>">
     <div class="container-fluid">
         <div class="row flex-nowrap ">
-
             <?php
             require_once ROOT_PATH . "/vista/componentes/navbar.php";
             ?>
-
             <div class="col d-flex flex-column  min-vh-100 gris">
-
                 <?php
                 require_once ROOT_PATH . "/vista/componentes/header.php";
                 ?>
@@ -37,7 +31,7 @@
                             <div class="card p-4">
                                 <div class="row">
                                     <div class="col-12 col-sm-6 mb-4">
-                                    <?php if (Sesiones::tienePermiso(GESTIONAR_USUARIOS, REGISTRAR)) : ?>
+                                    <?php if ($permisosVista['registrar']) : ?>
                                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-tooltip="true" title="Registrar Nuevo Usuario" data-bs-target="#modal_usuario">Nuevo Usuario</button>
                                     <?php endif; ?>
                                     </div>

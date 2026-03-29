@@ -130,5 +130,5 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     }
     $rol->cerrar();
 }
-
+$permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_ROLES);
 require_once "vista/roles/roles_vista.php";

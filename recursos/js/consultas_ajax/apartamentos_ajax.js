@@ -34,11 +34,11 @@ const formHabitantes = document.querySelector("#form_habitantes");
 const btnFormulario = document.querySelector("#boton_formulario");
 const btnFormularioHabitante = document.querySelector("#boton_formulario_habitantes");
 
-// Permisos (vienen desde PHP)
-window.permiso_modificar = document.querySelector("#permiso_modificar")?.value === "1";
-window.permiso_eliminar = document.querySelector("#permiso_eliminar")?.value === "1";
-window.permiso_modificar_habitantes = window.permiso_modificar; // o podrían venir separados
-window.permiso_eliminar_habitantes = window.permiso_eliminar;
+// Permisos
+const permisoModificar = window.PermisosModulo?.apartamentos?.modificar || false;
+const permisoEliminar = window.PermisosModulo?.apartamentos?.eliminar || false;
+const permisoModificarHabitantes = window.PermisosModulo?.habitantes?.modificar || false;
+const permisoEliminarHabitantes = window.PermisosModulo?.habitantes?.eliminar || false;
 
 // ============================================
 // APARTAMENTOS
@@ -61,13 +61,13 @@ async function consultarApartamentos() {
                             <i class="bi bi-people-fill"></i>
                             <span class="d-none d-lg-inline ms-2">Habitantes</span>
                         </button>`;
-         if (window.permiso_modificar) {
+         if (permisoModificar) {
             html += `<button class="btn btn-success btn-sm modificar" value="${id}" data-tooltip="true" title="Modificar los detalles de este registro">
                         <i class="bi bi-pencil"></i>
                         <span class="d-none d-lg-inline ms-2">Editar</span>
                     </button>`;
         }
-        if (window.permiso_eliminar) {
+        if (permisoEliminar) {
             html += `<button class="btn btn-danger btn-sm eliminar" value="${id}" data-tooltip="true" title="Quitar este elemento del sistema">
                         <i class="bi bi-trash"></i>
                         <span class="d-none d-lg-inline ms-2">Borrar</span>
@@ -260,13 +260,13 @@ function initTablaHabitantes() {
                 <i class="bi bi-eye"></i>
                 <span class="d-none d-lg-inline ms-2">Ver</span>
             </button>`;
-        if (window.permiso_modificar_habitantes) {
+        if (permisoModificarHabitantes) {
             html += `<button data-tooltip="true" type="button" class="btn btn-success btn-sm modificar-habitante" title="Modificar los detalles de este registro" value="${id}" data-bs-toggle="modal" data-bs-target="#modal_habitantes">
                         <i class="bi bi-pencil"></i>
                         <span class="d-none d-lg-inline ms-2">Editar</span>
                     </button>`;
         }
-        if (window.permiso_eliminar_habitantes) {
+        if (permisoEliminarHabitantes) {
             html += `<button data-tooltip="true" type="button" class="btn btn-danger btn-sm eliminar-habitante" title="Quitar este elemento del sistema" value="${id}">
                         <i class="bi bi-trash"></i>
                         <span class="d-none d-lg-inline ms-2">Borrar</span>

@@ -269,6 +269,9 @@ if (isset($_POST["validar"])) {
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_APARTAMENTOS);
 }
-
+$permisosVista = [
+    'apartamentos' => Sesiones::obtenerPermisosVista(GESTIONAR_APARTAMENTOS),
+    'habitantes'   => Sesiones::obtenerPermisosVista(GESTIONAR_HABITANTES)
+];
 // Cargar la vista
 require_once "vista/apartamentos/apartamentos_vista.php";

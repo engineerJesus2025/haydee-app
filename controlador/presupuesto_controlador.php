@@ -76,7 +76,6 @@ $operacion = $_POST["operacion"];
 
     // Asignación de detalles si existen
     if (isset($detalles)) {
-        // Asumiendo que tienes un setter, o usa el método que tengas para asignarlos
         $presupuesto->setDetallesTemp($detalles); 
     }
 
@@ -209,9 +208,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     $tipoGasto = new TipoGasto();
     $tipos_gasto = $tipoGasto->realizar_consulta('consultar');
 }
-
-// Renderizamos el HTML
-require_once "vista/presupuesto_mensual/presupuesto_vista.php";
-
+$permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_PRESUPUESTO);
 // Cargar vista
 require_once "vista/presupuesto_mensual/presupuesto_vista.php";

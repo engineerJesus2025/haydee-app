@@ -5,8 +5,8 @@
  */
 
 let id_modificar, numero_cuenta_an;
-let permiso_eliminar = document.querySelector("#permiso_eliminar")?.value;
-let permiso_modificar = document.querySelector("#permiso_modificar")?.value;
+const permisoModificar = window.PermisosModulo?.modificar || false;
+const permisoEliminar = window.PermisosModulo?.eliminar || false;
 
 let boton_formulario = document.querySelector("#boton_formulario");
 let formulario_usar = document.querySelector("#form_banco");
@@ -60,13 +60,13 @@ async function consultar() {
                 <i class="bi bi-eye"></i>
                 <span class="d-none d-lg-inline ms-2">Ver</span>
             </button>`;
-        if (window.permiso_modificar) {
+        if (permisoModificar) {
             html += `<button class="btn btn-success btn-sm modificar" value="${id}" data-tooltip="true" title="Modificar los detalles de este registro">
                     	<i class="bi bi-pencil"></i>
                         <span class="d-none d-lg-inline ms-2">Editar</span>
                     </button>`;
         }
-        if (window.permiso_eliminar) {
+        if (permisoEliminar) {
             html += `<button class="btn btn-danger btn-sm eliminar" value="${id}" data-tooltip="true" title="Quitar este elemento del sistema">
                         <i class="bi bi-trash"></i>
                         <span class="d-none d-lg-inline ms-2">Borrar</span>
@@ -178,7 +178,7 @@ async function prepararFormulario(e) {
         formulario_usar.querySelector("#rif").value = numeroRif;
         formulario_usar.querySelector("#rif").removeAttribute("disabled");
 
-        if (permiso_modificar != 1) {
+        if (permisoModificar != 1) {
             boton_formulario.setAttribute("hide", true);
             boton_formulario.setAttribute("disabled", true);
         }

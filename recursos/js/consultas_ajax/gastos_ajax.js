@@ -9,8 +9,8 @@
 // ============================================================
 let tabla_gastos;
 let id_modificar = null;
-let permiso_eliminar = document.querySelector("#permiso_eliminar")?.value;
-let permiso_modificar = document.querySelector("#permiso_modificar")?.value;
+const permisoModificar = window.PermisosModulo?.modificar || false;
+const permisoEliminar = window.PermisosModulo?.eliminar || false;
 
 // Elementos del DOM
 const modalGasto = new bootstrap.Modal(document.getElementById("modal_gastos"), { focus: false });
@@ -65,13 +65,13 @@ async function consultar() {
                 <i class="bi bi-eye"></i>
                 <span class="d-none d-lg-inline ms-2">Ver</span>
             </button>`;
-        if (permiso_modificar) {
+        if (permisoModificar) {
             html += `<button class="btn btn-success btn-sm modificar" value="${id}" data-tooltip="true" title="Modificar los detalles de este registro">
                         <i class="bi bi-pencil"></i>
                         <span class="d-none d-lg-inline ms-2">Editar</span>
                     </button>`;
         }
-        if (permiso_eliminar) {
+        if (permisoEliminar) {
             html += `<button class="btn btn-danger btn-sm eliminar" value="${id}" data-tooltip="true" title="Quitar este elemento del sistema">
                         <i class="bi bi-trash"></i>
                         <span class="d-none d-lg-inline ms-2">Borrar</span>

@@ -47,7 +47,7 @@ $iconos_modulos = [
                     </div>
                     <div class="table-responsive shadow-sm border rounded" style="max-height: 500px; overflow-y: auto;">
                         <table id="tabla_permisos" class="table table-hover align-top mb-0">
-                            <thead class="table-light sticky-top shadow-sm" style="z-index: 2;">
+                            <thead class="table-light sticky-top shadow-sm">
                                 <tr>
                                     <th style="width: 35%;" class="py-3 text-secondary text-uppercase" scope="col">
                                         <i class="bi bi-grid-1x2 me-2"></i>Módulo del Sistema
@@ -71,7 +71,7 @@ $iconos_modulos = [
                                     <tr data-modulo="<?php echo $registro_modulo['id_modulo'] ?>">
                                         <td>
                                             <div class="d-flex flex-column gap-2 py-2 ps-2">
-                                                <span class="fw-bold text-uppercase text-primary d-flex align-items-center" style="letter-spacing: 0.5px;">
+                                                <span class="fw-bold text-primary d-flex align-items-center" style="letter-spacing: 0.5px;">
                                                     <div class="p-2 text-primary me-2">
                                                         <i class="bi <?php echo $icono_modulo; ?> fs-5"></i>
                                                     </div>
@@ -113,7 +113,7 @@ $iconos_modulos = [
                                                                                    value="<?php echo $registro_permiso["id_permiso"]; ?>" 
                                                                                    error='0'
                                                                                    style="margin-top: 0; cursor: pointer;"/>
-                                                                            <span class="text-capitalize text-dark"><?php echo $registro_permiso["accion"] ?></span>
+                                                                            <span class=" text-dark"><?php echo $registro_permiso["accion"] ?></span>
                                                                         </label>
                                                                     </div>
                                                                 <?php endforeach; ?>

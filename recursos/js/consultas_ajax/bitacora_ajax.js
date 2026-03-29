@@ -47,6 +47,49 @@ function mostrarDetalle(rowData) {
     const mensajeConsulta = document.getElementById('mensaje_consulta');
     const divCambios = document.getElementById('detalle_cambios');
 
+    // ==========================================
+    // NUEVA LÓGICA: DETECCIÓN DE IMAGEN
+    // ==========================================
+    let contenedorImg = document.getElementById("contenedor_imagen_bitacora");
+    let imgElement = document.getElementById("imagen_bitacora");
+    let msgErrorImg = document.getElementById("mensaje_error_img_bitacora");
+
+    // Resetear el estado de la imagen
+    contenedorImg.classList.add("d-none");
+    imgElement.style.display = "inline-block";
+    imgElement.src = "";
+    msgErrorImg.classList.add("d-none");
+
+    let nombreImagenDetectada = null;
+
+    // Buscar imagen en valores nuevos (Registros y Modificaciones)
+    try {
+        if (rowData.valores_nuevos) {
+            let objNuevos = JSON.parse(rowData.valores_nuevos);
+            if (objNuevos.imagen) nombreImagenDetectada = objNuevos.imagen;
+        }
+    } catch (e) {}
+
+    // Si no hay en nuevos, buscar en anteriores (Eliminaciones)
+    if (!nombreImagenDetectada) {
+        try {
+            if (rowData.valores_anteriores) {
+                let objAnt = JSON.parse(rowData.valores_anteriores);
+                if (objAnt.imagen) nombreImagenDetectada = objAnt.imagen;
+            }
+        } catch (e) {}
+    }
+
+    // Si se encontró un nombre de imagen, armamos la ruta
+    if (nombreImagenDetectada) {
+        // Normalizamos el nombre del módulo para que coincida con la carpeta (ej: "CARTELERA_VIRTUAL" -> "cartelera_virtual")
+        let carpetaModulo = rowData.nombre_modulo.toLowerCase().split("gestionar_")[1];
+        
+        // Asignamos la ruta y mostramos el contenedor
+        imgElement.src = `recursos/img/${carpetaModulo}/${nombreImagenDetectada}`;
+        contenedorImg.classList.remove("d-none");
+    }
+
     // Llenar datos generales
     document.getElementById('detalle_usuario').textContent = rowData.nombre_usuario;
     document.getElementById('detalle_rol').textContent = rowData.nombre_rol;

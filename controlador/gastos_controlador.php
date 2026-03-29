@@ -250,6 +250,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     $solicitudes_gasto = $solicitudGasto->realizar_consulta('consultar');
     $tipos_gasto = $tipoGasto->realizar_consulta('consultar');
 }
-
+$permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_GASTOS);
 require_once "vista/gastos/gastos_vista.php";
 ?>

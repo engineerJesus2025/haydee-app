@@ -247,7 +247,7 @@ function construirHTMLPublicacion(publicacion) {
     
     // 1. Llenar los textos usando tus helpers
     card.querySelector('.post-title').textContent = publicacion.titulo;
-    card.querySelector('.post-date').textContent = FormatoFechas.formatoUsuario(publicacion.fecha) || publicacion.fecha;
+    card.querySelector('.post-date').textContent = FormatoFechas.tiempoRelativo(publicacion.fecha) || publicacion.fecha;
     card.querySelector('.post-description').textContent = publicacion.descripcion;
     card.querySelector('.author-name').textContent = publicacion.nombre_usuario;
     
@@ -257,7 +257,7 @@ function construirHTMLPublicacion(publicacion) {
     const svgPorDefecto = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22400%22%20height%3D%22200%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20200%22%20preserveAspectRatio%3D%22none%22%3E%3Crect%20width%3D%22400%22%20height%3D%22200%22%20fill%3D%22%23e9ecef%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20fill%3D%22%236c757d%22%20font-size%3D%2216%22%20font-family%3D%22Arial%2C%20sans-serif%22%20text-anchor%3D%22middle%22%20dy%3D%22.3em%22%3ESin%20Imagen%3C%2Ftext%3E%3C%2Fsvg%3E';
     
     if (publicacion.imagen && publicacion.imagen.trim() !== '') {
-        imgElement.src = `recursos/img/cartelera/${publicacion.imagen}`;
+        imgElement.src = `recursos/img/cartelera_virtual/${publicacion.imagen}`;
     } else {
         imgElement.src = svgPorDefecto;
     }
@@ -340,9 +340,9 @@ async function cargarWidgetPublicaciones() {
         contenedor.innerHTML = ''; // Borramos los esqueletos
 
         let fragment = document.createDocumentFragment();
-
+console.log(respuesta)
         respuesta.datos.forEach(pub => {
-            let fechaFormateada = FormatoFechas.formatoUsuario(pub.fecha) || pub.fecha;
+            let fechaFormateada = FormatoFechas.tiempoRelativo(pub.fecha) || pub.fecha;
 
             // Configuramos los colores según la prioridad
             let colorIcono, colorBorde;
@@ -473,7 +473,7 @@ async function cargarActividadReciente() {
             let borderClass = index === actividades.length - 1 ? '' : 'mb-3 pb-3 border-bottom';
 
             // Usamos tu helper de fechas (Ajusta el nombre del método según tu formatoFechas.js)
-            let fechaFormateada = FormatoFechas.formatoUsuario(item.fecha_evento); 
+            let fechaFormateada = FormatoFechas.tiempoRelativo(item.fecha_evento); 
 
             // Lógica inteligente para mostrar el texto
             let textoActividad = '';
@@ -551,20 +551,6 @@ function obtenerConfiguracionIcono(accion) {
     }
 }
 
-// Función auxiliar para calcular "Hace X días"
-function calcularTiempoHace(fechaStr) {
-    const fechaEvento = new Date(fechaStr + 'T00:00:00'); 
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-    
-    const diffTiempo = hoy.getTime() - fechaEvento.getTime();
-    const diffDias = Math.floor(diffTiempo / (1000 * 60 * 60 * 24)); 
-    
-    if (diffDias === 0) return "Hoy";
-    if (diffDias === 1) return "Ayer";
-    if (diffDias < 0) return "En el futuro"; // Por si hay fechas adelantadas
-    return `Hace ${diffDias} días`;
-}
 
 // funciones específicas de esta vista
 function mostrarMensajeFin(mensajeTexto) {
@@ -574,28 +560,4 @@ function mostrarMensajeFin(mensajeTexto) {
     div_no_hay.className = "col-10 text-center my-2 text-muted";
     div_no_hay.textContent = mensajeTexto;
     contenido_principal.appendChild(div_no_hay);
-}
-
-function actualizarInfoGrafico(idEsqueleto, textoLabel, valor, claseColor) {
-    const contenedor = document.createElement("p");
-    contenedor.textContent = textoLabel + " ";
-    const valorNegrita = document.createElement("b");
-    valorNegrita.className = claseColor;
-    valorNegrita.textContent = (parseFloat(valor).toFixed(2) || 0) + " Bs.";
-    contenedor.appendChild(valorNegrita);
-    
-    // JS Puro en lugar de Utilidades
-    const esqueleto = document.getElementById(idEsqueleto);
-    if (esqueleto) esqueleto.replaceWith(contenedor);
-}
-
-function mostrarAlertaSinDatos(idAlerta, idsAEliminar) {
-    const alerta = document.getElementById(idAlerta);
-    if (alerta) alerta.removeAttribute("hidden");
-    
-    // JS Puro en lugar de Utilidades
-    idsAEliminar.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.remove();
-    });
 }

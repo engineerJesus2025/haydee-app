@@ -252,10 +252,21 @@ switch ($accion) {
         $dompdf->setPaper('A4', 'landscape'); // Nota para el jesus del futuro: segun los cuadros de pago suelen requerir hoja horizontal
         $dompdf->render();
 
+        $meses = [
+            1 => 'enero', 2 => 'febrero', 3 => 'marzo', 4 => 'abril',
+            5 => 'mayo', 6 => 'junio', 7 => 'julio', 8 => 'agosto',
+            9 => 'septiembre', 10 => 'octubre', 11 => 'noviembre', 12 => 'diciembre'
+        ];
+
+        // Usamos (int) para asegurar que sea un número entero y coincida con las llaves del arreglo
+        $nombreMes = $meses[(int)$mes_limite];
+
         $detallesReporte = [
             'tipo_reporte' => 'Cuadro de Pagos',
-            'periodo'      => str_pad($mes_limite, 2, '0', STR_PAD_LEFT) . "-" . $anio_limite
+            'periodo'      => $nombreMes . " del " . $anio_limite
         ];
+
+        // Registro en bitácora
         Bitacora::registrar(DESCARGAR, GESTIONAR_REPORTES, null, null, $detallesReporte);
 
         $dompdf->stream("Cuadro_Pagos_" . str_pad($mes_limite, 2, '0', STR_PAD_LEFT) . "-" . $anio_limite . ".pdf");

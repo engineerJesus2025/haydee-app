@@ -41,7 +41,7 @@ async function consultar() {
         return `<div class="d-flex justify-content-center flex-wrap gap-2">
                     <button type="button" class="btn btn-primary btn-sm vista-previa" value="${id}" title="Ver Detalles">
                         <i class="bi bi-eye"></i>
-                        <span class="d-none d-lg-inline ms-2">Ver</span>
+                        <span class="d-none d-lg-inline ms-2">Detalles</span>
                     </button>
                     ${btnIr}
                 </div>`;
@@ -49,7 +49,7 @@ async function consultar() {
 
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", responsive: 0 },
-        { title: "Título", field: "titulo", formatter: formatoTitulo, minWidth: 200, widthGrow: 3, responsive: 0 },
+        { title: "Título", field: "titulo", formatter: formatoTitulo, minWidth: 190, widthGrow: 3, responsive: 0 },
         { title: "Fecha", field: "fecha", formatter: (cell) => FormatoFechas.formatoUsuario(cell.getValue()), minWidth: 110,},
         { title: "Estado", field: "leido", formatter: formatoLeido, minWidth: 110, headerHozAlign: "center", hozAlign: "center", },
         

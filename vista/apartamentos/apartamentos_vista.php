@@ -1,4 +1,3 @@
-<?php use haydee\ayuda\Sesiones; ?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -8,16 +7,7 @@
     require_once ROOT_PATH . "/vista/componentes/estilos.php";
     ?>
 </head>
-
 <body id="body-pd" class="body-pd">
-    <input type="text" hidden id="permiso_eliminar"
-        value="<?php echo Sesiones::tienePermiso(GESTIONAR_APARTAMENTOS, ELIMINAR) ?>">
-    <input type="text" hidden id="permiso_modificar"
-        value="<?php echo Sesiones::tienePermiso(GESTIONAR_APARTAMENTOS, MODIFICAR) ?>">
-    <input type="text" hidden id="permiso_eliminar_habitantes"
-        value="<?php echo Sesiones::tienePermiso(GESTIONAR_HABITANTES, ELIMINAR) ?>">
-    <input type="text" hidden id="permiso_modificar_habitantes"
-        value="<?php echo Sesiones::tienePermiso(GESTIONAR_HABITANTES, MODIFICAR) ?>">
     <div class="container-fluid">
         <div class="row flex-nowrap ">
 
@@ -30,7 +20,6 @@
                 <?php
                 require_once ROOT_PATH . "/vista/componentes/header.php";
                 ?>
-
                 <main class="col ps-md-2 pt-2 mb-5">
                     <div class="page-header pt-3">
                         <h2>GESTIONAR APARTAMENTOS Y HABITANTES</h2>
@@ -43,7 +32,7 @@
                             <div class="card p-4">
                                 <div class="row">
                                     <div class="col-12 col-sm-6 mb-4">
-                                    <?php if (Sesiones::tienePermiso(GESTIONAR_APARTAMENTOS, REGISTRAR)) : ?>
+                                    <?php if ($permisosVista['apartamentos']['registrar']) : ?>
                                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-tooltip="true" title="Registrar Nuevo Apartamento" data-bs-target="#modal_apartamentos">Nuevo Apartamento</button>
                                     <?php endif; ?>
                                     </div>
@@ -116,7 +105,7 @@
                             </div>
                         </div>
                     </div>
-                    <?php if (Sesiones::tienePermiso(GESTIONAR_HABITANTES, REGISTRAR)): ?>
+                    <?php if ($permisosVista['habitantes']['registrar']): ?>
                         <div class="button mb-4">
                             <button type="button" id="boton_registrar" class="btn btn-primary"
                                 data-bs-toggle="modal" data-bs-target="#modal_habitantes" data-tooltip="true" title="Registrar Nuevo Habitante">Nuevo Habitante</a>

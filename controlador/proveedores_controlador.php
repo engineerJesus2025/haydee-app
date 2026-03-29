@@ -93,4 +93,5 @@ if (isset($_POST["operacion"])) {
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_PROVEEDORES);
 }
+$permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_PROVEEDORES);
 require_once "vista/proveedores/proveedores_vista.php";

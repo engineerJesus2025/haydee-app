@@ -37,7 +37,6 @@ if (isset($_POST["operacion"])) {
     $cartelera->set_id_cartelera($_POST['id_cartelera'] ?? null);
     $cartelera->set_titulo($_POST['titulo'] ?? null);
     $cartelera->set_descripcion($_POST['descripcion'] ?? null);
-    $cartelera->set_fecha($_POST['fecha'] ?? null);
     $cartelera->set_prioridad($_POST['prioridad'] ?? null);
     $cartelera->set_usuario_id($_SESSION['id_usuario'] ?? null);
 
@@ -58,7 +57,7 @@ if (isset($_POST["operacion"])) {
             case 'registrar_cartelera':
                 $nombreImagen = '';
                 if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
-                    $nombreImagen = GestorImagenes::subir($_FILES['imagen'], 'cartelera');
+                    $nombreImagen = GestorImagenes::subir($_FILES['imagen'], 'cartelera_virtual');
                     if ($nombreImagen === false) {
                         throw new Exception('Error al procesar la imagen.');
                     }
@@ -84,16 +83,16 @@ if (isset($_POST["operacion"])) {
 
                 // (lógica de imagen igual)
                 if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
-                    $nuevaImagen = GestorImagenes::subir($_FILES['imagen'], 'cartelera');
+                    $nuevaImagen = GestorImagenes::subir($_FILES['imagen'], 'cartelera_virtual');
                     if ($nuevaImagen === false) {
                         throw new Exception('Error al procesar la nueva imagen.');
                     }
                     if ($imagenActual) {
-                        GestorImagenes::eliminar($imagenActual, 'cartelera');
+                        GestorImagenes::eliminar($imagenActual, 'cartelera_virtual');
                     }
                 } elseif ($eliminarImagen) {
                     if ($imagenActual) {
-                        GestorImagenes::eliminar($imagenActual, 'cartelera');
+                        GestorImagenes::eliminar($imagenActual, 'cartelera_virtual');
                     }
                     $nuevaImagen = '';
                 } else {
@@ -144,6 +143,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     $usuario = new Usuario();
     $usuarios = $usuario->realizar_consulta('consultar')['datos'] ?? [];
 }
-
+$permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_CARTELERA_VIRTUAL);
 require_once "vista/cartelera_virtual/cartelera_virtual_vista.php";
 ?>

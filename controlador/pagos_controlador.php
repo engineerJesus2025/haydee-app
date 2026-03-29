@@ -20,9 +20,6 @@ if (!$esPropietario) {
     Sesiones::verificarPermiso(GESTIONAR_PAGOS, CONSULTAR);
 }
 
-// Instancia del modelo principal
-$pagos = new Pagos();
-
 if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
 
@@ -264,6 +261,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         $registro_apartamento = $apartamento->realizar_consulta('consultar_por_propietario')['datos'] ?? [];
     }
 }
-
+$permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_PAGOS);
 // Renderizamos el HTML
 require_once "vista/pagos/pagos_vista.php";

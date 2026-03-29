@@ -1,4 +1,3 @@
-<?php use haydee\ayuda\Sesiones; ?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -9,8 +8,6 @@
     ?>
 </head>
 <body id="body-pd" class="body-pd">
-    <input type="text" hidden id="permiso_eliminar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_MENSUALIDAD, ELIMINAR) ?>">
-    <input type="text" hidden id="permiso_modificar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_MENSUALIDAD, MODIFICAR) ?>">
     <div class="container-fluid">
         <div class="row flex-nowrap">
 
@@ -37,8 +34,10 @@
                             <div class="card p-4 row">
                                 <div class="row justify-content-end align-items-center">
                                     <div class="col-12 col-sm-6 mb-4" hidden>
+                                        <?php if ($permisosVista['registrar']) : ?>
                                         <button class="btn btn-primary my-2" id="boton_registrar" type="button" data-bs-toggle="modal" data-bs-target="#modal_mensualidad" data-tooltip="true" title="Registrar Nueva mensualidad">Nueva Mensualidad</button>
                                         <p class="text-danger"></p>
+                                        <?php endif; ?>
                                     </div>
                                     <div class="col-12 col-sm-6 mb-4">
                                         <div class="input-group">

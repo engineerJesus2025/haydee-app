@@ -381,16 +381,23 @@ function alternarVisibilidad(elemento, mostrar) {
 }
 
 /**
- * Limpia la URL si hubo error de descarga anteriormente
+ * Limpia la URL si hubo error de descarga y muestra una alerta elegante
  */
 function verificarErroresURL() {
     const urlParams = new URLSearchParams(window.location.search);
+    
+    // Si detectamos el parámetro 'e' de error
     if (urlParams.get('e')) {
-        Alertas.mostrar('error', 'Error', 'Ocurrió un error al intentar descargar el archivo.');
+        // Obtenemos el mensaje dinámico o ponemos uno por defecto
+        const mensajeError = urlParams.get('msg') || 'Ocurrió un error al intentar descargar el archivo.';
         
-        // Limpiar URL sin recargar
+        // Mostramos el SweetAlert (usamos warning porque es un error de usuario, no de sistema)
+        Alertas.mostrar('warning', 'Descarga no disponible', mensajeError);
+        
+        // Limpiamos la URL silenciosamente sin recargar la página
         const currentURL = new URL(window.location.href);
         currentURL.searchParams.delete('e');
-        window.history.replaceState({}, '', currentURL.toString());
+        currentURL.searchParams.delete('msg');
+        window.history.replaceState({}, '', currentURL);
     }
 }

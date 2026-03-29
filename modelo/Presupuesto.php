@@ -164,7 +164,7 @@ class Presupuesto extends Conexion
         try {
             $con->beginTransaction();
 
-            // 1. Insertar cabecera
+            // 1. Insertar cabecera presupuesto
             $sqlHead = "INSERT INTO presupuesto (fecha, cuota_reserva, observacion, activo) 
                         VALUES (:fecha, :cuota, :obs, 1)";
             $stmtH = $con->prepare($sqlHead);
@@ -183,7 +183,6 @@ class Presupuesto extends Conexion
             $stmtD = $con->prepare($sqlDet);
 
             foreach ($this->detalles_temp as $det) {
-                // Validar cada detalle
                 if (!isset($det['monto'], $det['nombre'], $det['tipo_gasto_id'])) {
                     throw new \Exception('Detalle incompleto');
                 }
@@ -204,23 +203,34 @@ class Presupuesto extends Conexion
                 throw new \Exception('No hay apartamentos activos para generar mensualidades');
             }
 
-            // 4. Generar mensualidades y asociar detalles
-            $sqlMens = "INSERT INTO mensualidad (monto, tasa_dolar, mes, anio, apartamento_id, porcentaje_interes, limite_mensualidad, activo) 
-                        VALUES (:monto, :tasa, :mes, :anio, :apt_id, 10, 15, 1)";
+            // 4. Gestionar el Periodo de Mensualidad
+            list($anio, $mes) = explode('-', $this->fecha);
+            
+            // Buscar si ya existe el periodo
+            $stmtBuscaPer = $con->prepare("SELECT id_periodo FROM periodos_mensualidad WHERE mes = :mes AND anio = :anio LIMIT 1");
+            $stmtBuscaPer->execute([':mes' => $mes, ':anio' => $anio]);
+            $periodo_id = $stmtBuscaPer->fetchColumn();
+
+            // Si no existe, crearlo
+            if (!$periodo_id) {
+                $stmtInsertaPer = $con->prepare("INSERT INTO periodos_mensualidad (mes, anio, tasa_dolar, activo) VALUES (:mes, :anio, :tasa, 1)");
+                $stmtInsertaPer->execute([':mes' => $mes, ':anio' => $anio, ':tasa' => $this->tasa_dolar]);
+                $periodo_id = $con->lastInsertId();
+            }
+
+            // 5. Generar mensualidades y asociar detalles
+            $sqlMens = "INSERT INTO mensualidad (monto, periodo_id, apartamento_id, porcentaje_interes, limite_mensualidad, activo) 
+                        VALUES (:monto, :periodo_id, :apt_id, 10, 15, 1)";
             $stmtMens = $con->prepare($sqlMens);
 
             $sqlPuente = "INSERT INTO presupuesto_mensualidad (mensualidad_id, detalle_presupuesto_id) VALUES (:m_id, :dp_id)";
             $stmtPuente = $con->prepare($sqlPuente);
 
-            list($anio, $mes) = explode('-', $this->fecha);
-
             foreach ($apartamentos as $apt) {
                 $monto_apt = round(($total_monto * $apt['porcentaje_participacion']) / 100, 2);
                 $stmtMens->execute([
                     ':monto'  => $monto_apt,
-                    ':tasa'   => $this->tasa_dolar,
-                    ':mes'    => $mes,
-                    ':anio'   => $anio,
+                    ':periodo_id' => $periodo_id,
                     ':apt_id' => $apt['id_apartamento']
                 ]);
                 $id_mensualidad = $con->lastInsertId();
@@ -234,7 +244,7 @@ class Presupuesto extends Conexion
             return ['estatus' => true, 'mensaje' => 'Presupuesto y mensualidades registrados con éxito', 'id' => $id_presupuesto];
         } catch (\Exception $e) {
             $con->rollBack();
-            error_log("Error en _registrar: " . $e->getMessage());
+            error_log("Error en _registrar_presupuesto: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al registrar: ' . $e->getMessage()];
         }
     }

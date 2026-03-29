@@ -155,6 +155,6 @@ if (isset($_POST["validar"])) {
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_CAJA_CHICA);
 }
-
+$permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_CAJA_CHICA);
 require_once "vista/caja_chica/caja_chica_vista.php";
 ?>

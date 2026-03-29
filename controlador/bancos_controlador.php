@@ -161,6 +161,6 @@ if (isset($_POST["validar"])) {
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_BANCOS);
 }
-
+$permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_BANCOS);
 // Cargar la vista
 require_once "vista/bancos/bancos_vista.php";

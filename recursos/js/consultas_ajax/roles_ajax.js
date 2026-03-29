@@ -1,17 +1,3 @@
-/*
-
-
-
-
-Nota: unificar consultas de prepararFormulario
-
-
-
-
-
-
-*/
-// roles_ajax.js
 let tabla_roles;
 let id_modificar;
 let nombre_anterior;
@@ -26,6 +12,9 @@ const checkboxesPermisos = document.querySelectorAll("[name='permisos[]']");
 window.registrar = registrar;
 window.modificar = modificar;
 window.prepararFormulario = prepararFormulario;
+
+const permisoModificar = window.PermisosModulo?.modificar || false;
+const permisoEliminar = window.PermisosModulo?.eliminar || false;
 
 document.addEventListener('DOMContentLoaded', consultar);
 
@@ -47,13 +36,13 @@ async function consultar() {
                 <i class="bi bi-eye"></i>
                 <span class="d-none d-lg-inline ms-2">Ver</span>
             </button>`;
-        if (window.permiso_modificar) {
+        if (permisoModificar) {
             html += `<button class="btn btn-success btn-sm modificar" value="${id}" data-tooltip="true" title="Modificar los detalles de este registro">
                         <i class="bi bi-pencil"></i>
                         <span class="d-none d-lg-inline ms-2">Editar</span>
                     </button>`;
         }
-        if (window.permiso_eliminar) {
+        if (permisoEliminar) {
             html += `<button class="btn btn-danger btn-sm eliminar" value="${id}" data-tooltip="true" title="Quitar este elemento del sistema">
                         <i class="bi bi-trash"></i>
                         <span class="d-none d-lg-inline ms-2">Borrar</span>
@@ -173,8 +162,15 @@ async function mostrarVistaPrevia(data) {
 async function registrar() {
     const checkboxesPermisos = document.querySelectorAll("[name='permisos[]']");
     const permisos = Array.from(checkboxesPermisos)
-                          .filter(cb => cb.checked)
-                          .map(cb => parseInt(cb.value));
+        .filter(cb => cb.checked)
+        .map(cb => {
+            // Buscamos la fila (tr) padre para extraer el ID del módulo
+            const tr = cb.closest('tr');
+            return {
+                modulo_id: parseInt(tr.dataset.modulo),
+                permiso_id: parseInt(cb.value)
+            };
+        });
 
     const formData = new FormData();
     formData.append('operacion', 'registrar_rol');
@@ -191,8 +187,15 @@ async function registrar() {
 async function modificar() {
     const checkboxesPermisos = document.querySelectorAll("[name='permisos[]']");
     const permisos = Array.from(checkboxesPermisos)
-                          .filter(cb => cb.checked)
-                          .map(cb => parseInt(cb.value));
+        .filter(cb => cb.checked)
+        .map(cb => {
+            // Buscamos la fila (tr) padre para extraer el ID del módulo
+            const tr = cb.closest('tr');
+            return {
+                modulo_id: parseInt(tr.dataset.modulo),
+                permiso_id: parseInt(cb.value)
+            };
+        });
 
     const formData = new FormData();
     formData.append('operacion', 'modificar_rol');
@@ -234,20 +237,34 @@ async function prepararFormulario(e) {
         inputNombre.value = datos.rol.nombre;
         nombre_anterior = datos.rol.nombre; 
 
-        // Limpiar checkboxes
         document.querySelectorAll("[name='permisos[]']").forEach(cb => cb.checked = false);
 
-        // Marcar los asignados (ahora que PHP los devuelve correctamente)
         if (datos.permisos && datos.permisos.length > 0) {
             datos.permisos.forEach(p => {
-                const cb = document.querySelector(`[name='permisos[]'][value='${p.permiso_id}']`);
-                if (cb) cb.checked = true;
+                const tr = document.querySelector(`tr[data-modulo='${p.modulo_id}']`);
+                if (tr) {
+                    const cb = tr.querySelector(`[name='permisos[]'][value='${p.permiso_id}']`);
+                    if (cb) cb.checked = true;
+                }
+            });
+            
+            document.querySelectorAll('tr[data-modulo]').forEach(tr => {
+                actualizarSwitchSeleccionarTodo(tr);
+                
+                const tieneMarcados = Array.from(tr.querySelectorAll("[name='permisos[]']")).some(cb => cb.checked);
+                
+                if (tieneMarcados) {
+                    const collapseEl = tr.querySelector('.accordion-collapse');
+                    if (collapseEl && !collapseEl.classList.contains('show')) {
+                        // Instanciamos el Collapse de Bootstrap y lo mostramos
+                        new bootstrap.Collapse(collapseEl, { show: true });
+                    }
+                }
             });
         }
 
         document.querySelector("#titulo_modal").textContent = "Modificar Rol";
-        document.querySelector("#boton_formulario").textContent = "Guardar Cambios";
-        // Añadimos el atributo para que el Validador sepa que es una modificación
+        document.querySelector("#boton_formulario").innerHTML = `<i class="bi bi-floppy me-1"></i> Guardar Cambios`;
         document.querySelector("#boton_formulario").setAttribute("modificar", "true");
         EstadoInputs.limpiar(inputNombre);
 
@@ -269,17 +286,35 @@ function actualizarSwitchSeleccionarTodo(tr) {
     switchTodo.checked = todosMarcados;
 }
 
-// 1. Evento al limpiar el modal
+// Evento al limpiar el modal
 document.getElementById('modal_roles').addEventListener('hide.bs.modal', () => {
     form.reset();
     document.querySelectorAll('.is-valid, .is-invalid').forEach(el => el.classList.remove('is-valid', 'is-invalid'));
     document.getElementById('titulo_modal').textContent = 'Registrar Rol';
     form.querySelector('#boton_formulario').textContent = 'Guardar';
-    delete form.querySelector('#boton_formulario').dataset.id;
-    document.querySelectorAll('.accordion-collapse').forEach(acc => {
-        acc.classList.remove('show');
-        acc.previousElementSibling?.querySelector('button')?.classList.add('collapsed');
-        acc.previousElementSibling?.querySelector('button')?.setAttribute('aria-expanded', 'false');
+    document.querySelector("#boton_formulario").removeAttribute('modificar'); // Limpiamos el atributo modificar
+    
+    // --- Cerrar todos los acordeones abiertos ---
+    document.querySelectorAll('.accordion-collapse.show').forEach(acc => {
+        // Obtenemos la instancia de Bootstrap si existe, o creamos una para ocultarlo
+        let bsCollapse = bootstrap.Collapse.getInstance(acc);
+        if (bsCollapse) {
+            bsCollapse.hide();
+        } else {
+            // Respaldo manual por si acaso
+            acc.classList.remove('show');
+        }
+        
+        // Restaurar la apariencia del botón del acordeón
+        const btn = acc.closest('.accordion-item').querySelector('.accordion-button');
+        if (btn) {
+            btn.classList.add('collapsed');
+            btn.setAttribute('aria-expanded', 'false');
+        }
+        
+        // Limpiamos la animación de la fila (si la hubiera)
+        const tr = acc.closest('tr');
+        if(tr) tr.classList.remove('fila-resaltada');
     });
 });
 

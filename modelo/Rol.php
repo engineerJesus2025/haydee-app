@@ -30,7 +30,7 @@ class Rol extends Conexion
                 'unique' => ['tabla' => 'roles', 'campo' => 'nombre', 'exclude_field' => 'id_rol']
             ],
             'permisos' => [
-                'regex' => '/^\[(\d+(,\d+)*)?\]$/',
+                'regex' => '/^\[.*\]$/s',
                 'opcional' => true
             ]
         ];
@@ -139,7 +139,7 @@ class Rol extends Conexion
             }
 
             // Buscamos los permisos asociados a este rol
-            $sqlPermisos = "SELECT permiso_id FROM asignacion_permisos WHERE rol_id = :id";
+            $sqlPermisos = "SELECT modulo_id, permiso_id FROM asignacion_permisos WHERE rol_id = :id";
             $stmtPermisos = $this->get_conex('seguridad')->prepare($sqlPermisos);
             $stmtPermisos->execute([':id' => $this->id_rol]);
             $permisos = $stmtPermisos->fetchAll(PDO::FETCH_ASSOC);

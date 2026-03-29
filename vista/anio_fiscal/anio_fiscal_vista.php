@@ -1,4 +1,3 @@
-<?php use haydee\ayuda\Sesiones; ?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -8,13 +7,9 @@
     require_once ROOT_PATH . "/vista/componentes/estilos.php";
     ?>
 </head>
-
 <body id="body-pd" class="body-pd">
-    <input type="text" hidden id="permiso_eliminar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_ANIO_FISCAL, ELIMINAR) ?>">
-    <input type="text" hidden id="permiso_modificar" value="<?php echo Sesiones::tienePermiso(GESTIONAR_ANIO_FISCAL, MODIFICAR) ?>">
     <div class="container-fluid">
         <div class="row flex-nowrap ">
-
             <?php
             require_once ROOT_PATH . "/vista/componentes/navbar.php";
             ?>
@@ -31,13 +26,12 @@
                     </div>
                     <p class="lead"></p>
                     <hr>
-
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="card p-4">
                                 <div class="row">
                                     <div class="col-12 col-sm-6 mb-4">
-                                    <?php if (Sesiones::tienePermiso(GESTIONAR_ANIO_FISCAL, REGISTRAR)) : ?>
+                                    <?php if ($permisosVista['registrar']) : ?>
                                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_anio_fiscal" data-tooltip="true" title="Registrar Nuevo Año Fiscal" data-tooltip="true">Nuevo Año Fiscal</button>
                                     <?php endif; ?>
                                     </div>

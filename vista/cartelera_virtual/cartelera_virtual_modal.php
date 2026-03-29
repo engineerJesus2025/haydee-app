@@ -35,10 +35,15 @@
 
                         <div class="row mb-3">
                             <div class="col-lg-6 mb-4">
-                                <label for="fecha">Fecha de la publicación <spam class="text-danger">*</spam></label>
+                                <label for="prioridad">Prioridad de la publicación <spam class="text-danger">*</spam></label>
                                 <div class="input-group">
-                                    <span class="border border-primary input-group-text"><i class="bi bi-calendar-event"></i></span>
-                                    <input type="date" class="border border-dark rounded-end form-control" name="fecha" id="fecha" required>
+                                    <span class="border border-primary input-group-text"><i class="bi bi-exclamation-triangle"></i></span>
+                                    <select class="border border-dark rounded-end form-select" name="prioridad" id="prioridad" required>
+                                        <option value="" disabled selected>Seleccione una prioridad</option>
+                                        <option value="1">Alta</option>
+                                        <option value="2">Media</option>
+                                        <option value="3">Baja</option>
+                                    </select>
                                     <span class="w-100 invalid-feedback"></span>
                                 </div>
                             </div>
@@ -54,19 +59,6 @@
                                 <button type="button" id="boton_eliminar_imagen" class="btn btn-sm btn-outline-danger mt-2 d-none">
                                     <i class="bi bi-trash3"></i> Eliminar imagen cargada
                                 </button>
-                            </div>
-                            <div class="col-lg-6 mb-4">
-                                <label for="prioridad">Prioridad de la publicación <spam class="text-danger">*</spam></label>
-                                <div class="input-group">
-                                    <span class="border border-primary input-group-text"><i class="bi bi-exclamation-triangle"></i></span>
-                                    <select class="border border-dark rounded-end form-select" name="prioridad" id="prioridad" required>
-                                        <option value="" disabled selected>Seleccione una prioridad</option>
-                                        <option value="1">Alta</option>
-                                        <option value="2">Media</option>
-                                        <option value="3">Baja</option>
-                                    </select>
-                                    <span class="w-100 invalid-feedback"></span>
-                                </div>
                             </div>
                             <input type="hidden" id="nombre_usuario" value="<?php echo $_SESSION['nombre_completo']; ?>">
 

@@ -1,15 +1,16 @@
 <?php 
 use haydee\ayuda\Sesiones; 
 
-// DEFINIMOS LA LÓGICA DE LOS SUBMENÚS
-// Reportes
 $sub_reporte_pdf = ($modulo === "reportes" && $accion === "reportes_pdf");
 $sub_reporte_est = ($modulo === "reportes" && in_array($accion, ["reportes_estadisticos", "habitantes", "ingreso_egreso"]));
 $es_reporte      = ($sub_reporte_pdf || $sub_reporte_est);
 
-// Configuración y Seguridad
 $es_configuracion = in_array($modulo, ["proveedores", "bancos", "tipo_gasto"]);
-$es_seguridad = in_array($modulo, ["rol", "bitacora", "permisos", "modulos"]); 
+$es_seguridad     = in_array($modulo, ["rol", "bitacora", "permisos", "modulos"]); 
+
+//  MATRIZ DE ELEMENTOS (Sacada de config_menu)
+$elementos_menu = obtenerElementosMenu($modulo, $accion);
+
 ?>
 
 <div class="l-navbar show" id="nav-bar">
@@ -25,171 +26,41 @@ $es_seguridad = in_array($modulo, ["rol", "bitacora", "permisos", "modulos"]);
                 </div>
             </a>
         </div>
-
         <div id="nav-accordion" class="w-100 nav_scrollable_content">
             <div class="nav_list mt-3 ps-2 pe-2">
                 
-                <?php if (Sesiones::tienePermiso(GESTIONAR_PAGOS, CONSULTAR)): ?>
-                <a href="?pagina=pagos&accion=inicio" class="nav_link <?php echo ($modulo === 'pagos') ? 'active' : ''; ?>" title="Pagos">
-                    <i class="bi bi-cash-coin nav_logo-icon"></i>
-                    <span class="nav_name">Pagos</span>
-                </a>
-                <?php endif; ?>
+                <?php foreach ($elementos_menu as $item): ?>
+                    
+                    <?php if (!$item['mostrar']) continue; ?>
 
-                <?php if (Sesiones::tienePermiso(GESTIONAR_GASTOS, CONSULTAR)): ?>
-                <a href="?pagina=gastos&accion=inicio" class="nav_link <?php echo ($modulo === 'gastos') ? 'active' : ''; ?>" title="Gastos">
-                    <i class="bi bi-cart-plus nav_logo-icon"></i>
-                    <span class="nav_name">Gastos</span>
-                </a>
-                <?php endif; ?>
+                    <?php if ($item['tipo'] === 'enlace'): ?>
+                        <a href="<?php echo $item['url']; ?>" class="nav_link <?php echo $item['activo'] ? 'active' : ''; ?>" title="<?php echo $item['titulo']; ?>">
+                            <i class="bi <?php echo $item['icono']; ?> nav_logo-icon"></i>
+                            <span class="nav_name"><?php echo $item['titulo']; ?></span>
+                        </a>
 
-                <?php if (Sesiones::tienePermiso(GESTIONAR_CAJA_CHICA, CONSULTAR)): ?>
-                <a href="?pagina=caja_chica&accion=inicio" class="nav_link <?php echo ($modulo === 'caja_chica') ? 'active' : ''; ?>" title="Caja Chica">
-                    <i class="bi bi-bank2 nav_logo-icon"></i>
-                    <span class="nav_name">Caja Chica</span>
-                </a>
-                <?php endif; ?>
-
-                <?php if (Sesiones::tienePermiso(GESTIONAR_MENSUALIDAD, CONSULTAR)) : ?>
-                <a href="?pagina=mensualidad&accion=inicio" class="nav_link <?php echo ($modulo === 'mensualidad') ? 'active' : ''; ?>" title="Mensualidad">
-                    <i class="bi bi-piggy-bank-fill nav_logo-icon"></i>
-                    <span class="nav_name">Mensualidad</span>
-                </a>
-                <?php endif; ?>
-
-                <?php if (Sesiones::tienePermiso(GESTIONAR_CARTELERA_VIRTUAL, CONSULTAR)): ?>
-                <a href="?pagina=cartelera_virtual&accion=inicio" class="nav_link <?php echo ($modulo === 'cartelera_virtual') ? 'active' : ''; ?>" title="Cartelera Virtual">
-                    <i class="bi bi-tv nav_logo-icon"></i>
-                    <span class="nav_name">Cartelera Virtual</span>
-                </a>
-                <?php endif; ?>
-
-                <?php if (Sesiones::tienePermiso(GESTIONAR_APARTAMENTOS, CONSULTAR)): ?>
-                <a href="?pagina=apartamentos&accion=inicio" class="nav_link <?php echo ($modulo === 'apartamentos') ? 'active' : ''; ?>" title="Apartamentos">
-                    <i class="bi bi-door-open nav_logo-icon"></i>
-                    <span class="nav_name">Apartamentos</span>
-                </a>
-                <?php endif; ?>
-
-                <?php if (Sesiones::tienePermiso(GESTIONAR_SOLICITUD_GASTO, CONSULTAR)) : ?>
-                <a href="?pagina=solicitud_gasto&accion=inicio" class="nav_link <?php echo ($modulo === 'solicitud_gasto') ? 'active' : ''; ?>" title="Solicitud Gasto">
-                    <i class="bi bi-clipboard-check nav_logo-icon"></i>
-                    <span class="nav_name">Solicitud Gasto</span>
-                </a>
-                <?php endif; ?>
-
-                <?php if (Sesiones::tienePermiso(GESTIONAR_PRESUPUESTO, CONSULTAR)) : ?>
-                <a href="?pagina=presupuesto&accion=inicio" class="nav_link <?php echo ($modulo === 'presupuesto') ? 'active' : ''; ?>" title="Presupuesto Mensual">
-                    <i class="bi bi-calculator nav_logo-icon"></i>
-                    <span class="nav_name">Presupuesto</span>
-                </a>
-                <?php endif; ?>
-
-                <?php if (Sesiones::tienePermiso(GESTIONAR_ANIO_FISCAL, CONSULTAR)) : ?>
-                <a href="?pagina=anio_fiscal&accion=inicio" class="nav_link <?php echo ($modulo === 'anio_fiscal') ? 'active' : ''; ?>" title="Año Fiscal">
-                    <i class="bi bi-calendar-range nav_logo-icon"></i>
-                    <span class="nav_name">Año Fiscal</span>
-                </a>
-                <?php endif; ?>
-
-                <?php if (Sesiones::tienePermiso(GESTIONAR_REPORTES, CONSULTAR)) : ?>
-                <a title="Reportes" class="nav_link <?php echo $es_reporte ? '' : 'collapsed'; ?>" data-bs-toggle="collapse" href="#collapse_reporte" role="button" aria-expanded="<?php echo $es_reporte ? 'true' : 'false'; ?>">
-                    <i class="bi bi-card-checklist nav_logo-icon"></i>
-                    <span class="nav_name">Reportes</span>
-                    <i class="bi bi-chevron-right arrow-icon"></i>
-                </a>
-                <div class="collapse <?php echo $es_reporte ? 'show' : ''; ?>" id="collapse_reporte" data-bs-parent="#nav-accordion">
-                    <a title="Reportes PDF" href="?pagina=reportes&accion=reportes_pdf" class="nav_link <?php echo $sub_reporte_pdf ? 'active' : ''; ?>">
-                        <i class="bi bi-filetype-pdf nav_logo-icon"></i>
-                        <span class="nav_name">Reportes PDF</span>
-                    </a>
-                    <a title="Reportes Estadísticos" href="?pagina=reportes&accion=reportes_estadisticos" class="nav_link <?php echo $sub_reporte_est ? 'active' : ''; ?>">
-                        <i class="bi bi-clipboard-data nav_logo-icon"></i>
-                        <span class="nav_name">Estadísticos</span>
-                    </a>
-                </div>
-                <?php endif; ?>
-
-                <?php if (Sesiones::tienePermiso(GESTIONAR_CONFIGURACION, CONSULTAR)): ?>
-                <a class="nav_link <?php echo $es_configuracion ? '' : 'collapsed'; ?>" title="Configuración" data-bs-toggle="collapse" href="#collapse_configuracion" role="button" aria-expanded="<?php echo $es_configuracion ? 'true' : 'false'; ?>">
-                    <i class="bi bi-gear-wide-connected nav_logo-icon"></i>
-                    <span class="nav_name">Configuración</span>
-                    <i class="bi bi-chevron-right arrow-icon"></i>
-                </a>
-                <div class="collapse <?php echo $es_configuracion ? 'show' : ''; ?>" id="collapse_configuracion" data-bs-parent="#nav-accordion">
-                    <?php if (Sesiones::tienePermiso(GESTIONAR_PROVEEDORES, CONSULTAR)): ?>
-                    <a title="Proveedores" href="?pagina=proveedores&accion=inicio" class="nav_link <?php echo ($modulo === 'proveedores') ? 'active' : ''; ?>">
-                        <i class="bi bi-truck nav_logo-icon"></i>
-                        <span class="nav_name">Proveedores</span>
-                    </a>
+                    <?php elseif ($item['tipo'] === 'desplegable'): ?>
+                        <a title="<?php echo $item['titulo']; ?>" class="nav_link <?php echo $item['abierto'] ? '' : 'collapsed'; ?>" data-bs-toggle="collapse" href="#<?php echo $item['id_collapse']; ?>" role="button" aria-expanded="<?php echo $item['abierto'] ? 'true' : 'false'; ?>">
+                            <i class="bi <?php echo $item['icono']; ?> nav_logo-icon"></i>
+                            <span class="nav_name"><?php echo $item['titulo']; ?></span>
+                            <i class="bi bi-chevron-right arrow-icon"></i>
+                        </a>
+                        
+                        <div class="collapse <?php echo $item['abierto'] ? 'show' : ''; ?>" id="<?php echo $item['id_collapse']; ?>" data-bs-parent="#nav-accordion">
+                            <?php foreach ($item['submenus'] as $sub): ?>
+                                <?php if (!$sub['mostrar']) continue; ?>
+                                
+                                <a title="<?php echo $sub['titulo']; ?>" href="<?php echo $sub['url']; ?>" class="nav_link <?php echo $sub['activo'] ? 'active' : ''; ?>">
+                                    <i class="bi <?php echo $sub['icono']; ?> nav_logo-icon"></i>
+                                    <span class="nav_name"><?php echo $sub['titulo']; ?></span>
+                                </a>
+                            <?php endforeach; ?>
+                        </div>
+                        
                     <?php endif; ?>
-                    <?php if (Sesiones::tienePermiso(GESTIONAR_BANCOS, CONSULTAR)): ?>
-                    <a title="Bancos" href="?pagina=bancos&accion=inicio" class="nav_link <?php echo ($modulo === 'bancos') ? 'active' : ''; ?>">
-                        <i class="bi bi-bank nav_logo-icon"></i>
-                        <span class="nav_name">Bancos</span>
-                    </a>
-                    <?php endif; ?>
-                    <?php if (Sesiones::tienePermiso(GESTIONAR_TIPO_GASTO, CONSULTAR)): ?>
-                    <a title="Tipo de Gastos" href="?pagina=tipo_gasto&accion=inicio" class="nav_link <?php echo ($modulo === 'tipo_gasto') ? 'active' : ''; ?>">
-                        <i class="bi bi-columns-gap nav_logo-icon"></i>
-                        <span class="nav_name">Tipo de Gastos</span>
-                    </a>
-                    <?php endif; ?>
-                </div>
-                <?php endif; ?>
 
-                <?php if (Sesiones::tienePermiso(GESTIONAR_USUARIOS, CONSULTAR)): ?>
-                <a href="?pagina=usuario&accion=inicio" class="nav_link <?php echo ($modulo === 'usuario') ? 'active' : ''; ?>" title="Usuarios">
-                    <i class="bi bi-person-badge-fill nav_logo-icon"></i>
-                    <span class="nav_name">Usuarios</span>
-                </a>
-                <?php endif; ?>
+                <?php endforeach; ?>
 
-                <?php if (Sesiones::tienePermiso(GESTIONAR_SEGURIDAD, CONSULTAR)): ?>
-                <a class="nav_link <?php echo $es_seguridad ? '' : 'collapsed'; ?>" title="Seguridad" data-bs-toggle="collapse" href="#collapse_seguridad" role="button" aria-expanded="<?php echo $es_seguridad ? 'true' : 'false'; ?>">
-                    <i class="bi bi-shield-fill-check nav_logo-icon"></i>
-                    <span class="nav_name">Seguridad</span>
-                    <i class="bi bi-chevron-right arrow-icon"></i>
-                </a>
-                <div class="collapse <?php echo $es_seguridad ? 'show' : ''; ?>" id="collapse_seguridad" data-bs-parent="#nav-accordion">
-                    <?php if (Sesiones::tienePermiso(GESTIONAR_ROLES, CONSULTAR)): ?>
-                    <a title="Roles" href="?pagina=rol&accion=inicio" class="nav_link <?php echo ($modulo === 'rol') ? 'active' : ''; ?>">
-                        <i class="bi bi-person-gear nav_logo-icon"></i>
-                        <span class="nav_name">Roles</span>
-                    </a>
-                    <?php endif; ?>
-                    <?php if (Sesiones::tienePermiso(GESTIONAR_BITACORA, CONSULTAR)): ?>
-                    <a title="Bitácora" href="?pagina=bitacora&accion=inicio" class="nav_link <?php echo ($modulo === 'bitacora') ? 'active' : ''; ?>">
-                        <i class="bi bi-journal-text nav_logo-icon"></i>
-                        <span class="nav_name">Bitácora</span>
-                    </a>
-                    <?php endif; ?>
-                    <?php if (Sesiones::tienePermiso(GESTIONAR_PERMISOS, CONSULTAR)): ?>
-                    <a title="Permisos" href="?pagina=permisos&accion=inicio" class="nav_link <?php echo ($modulo === 'permisos') ? 'active' : ''; ?>">
-                        <i class="bi bi-key-fill nav_logo-icon"></i>
-                        <span class="nav_name">Permisos</span>
-                    </a>
-                    <?php endif; ?>
-                    <?php if (Sesiones::tienePermiso(GESTIONAR_MODULOS, CONSULTAR)): ?>
-                    <a title="Módulos" href="?pagina=modulos&accion=inicio" class="nav_link <?php echo ($modulo === 'modulos') ? 'active' : ''; ?>">
-                        <i class="bi bi-stack nav_logo-icon"></i>
-                        <span class="nav_name">Módulos</span>
-                    </a>
-                    <?php endif; ?>
-                </div>
-                <?php endif; ?>
-
-                <a href="?pagina=notificaciones&accion=inicio" class="nav_link <?php echo ($modulo === 'notificaciones') ? 'active' : ''; ?>" title="Notificaciones">
-                    <i class="bi bi-bell-fill nav_logo-icon"></i>
-                    <span class="nav_name">Notificaciones</span>
-                </a>
-
-                <?php if (Sesiones::tienePermiso(GESTIONAR_MANTENIMIENTO, CONSULTAR)): ?>
-                <a href="?pagina=mantenimiento&accion=inicio" class="nav_link <?php echo ($modulo === 'mantenimiento') ? 'active' : ''; ?>" title="Mantenimiento">
-                    <i class="bi bi-tools nav_logo-icon"></i>
-                    <span class="nav_name">Mantenimiento</span>
-                </a>
-                <?php endif; ?>
             </div>
         </div>
     </nav>

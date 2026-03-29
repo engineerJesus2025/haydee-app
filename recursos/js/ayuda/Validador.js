@@ -34,7 +34,10 @@ const Validador = {
      */
     evaluarSelect(idSelect) {
         const select = document.getElementById(idSelect);
-        if (!select) return false;
+        if (!select) {
+            console.log(`Select con id ${idSelect} no encontrado`);
+            return false;
+        }
 
         if (select.value === '') {
             EstadoInputs.marcarError(select, "Debe seleccionar una opción");

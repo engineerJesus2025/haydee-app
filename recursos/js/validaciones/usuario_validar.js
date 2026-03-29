@@ -141,7 +141,7 @@ async function validarEnvio(accion = "Registrar"){
     const nombreV = Validador.evaluarInput(document.querySelector("#nombre"), Patrones.nombrePersona, 'Formato incorrecto');
     const apellidoV = Validador.evaluarInput(document.querySelector("#apellido"), Patrones.nombrePersona, 'Formato incorrecto');
     const correoV = Validador.evaluarInput(document.querySelector("#correo"), Patrones.correo, 'Correo inválido');
-    const rolV = Validador.evaluarSelect("rol");
+    const rolV = Validador.evaluarSelect("rol_id");
 
     if (!nombreV || !apellidoV || !correoV || !rolV) {
         Alertas.mostrar('error', 'Error', 'Por favor, revise los campos marcados en rojo.');

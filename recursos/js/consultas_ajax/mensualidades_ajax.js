@@ -21,9 +21,8 @@ let tablaMensualidadAsignar = document.querySelector("#tabla_mensualidad_asignar
 let tablaAsignarInicial = tablaMensualidadAsignar?.innerHTML || '';
 
 let tasaDolar = parseFloat(localStorage.getItem("tasa_dolar") || 1).toFixed(2);
-let permisoEliminar = document.querySelector("#permiso_eliminar")?.value;
-let permisoModificar = document.querySelector("#permiso_modificar")?.value;
-
+const permisoModificar = window.PermisosModulo?.modificar || false;
+const permisoEliminar = window.PermisosModulo?.eliminar || false;
 // ============================================================
 // INICIALIZACIÓN
 // ============================================================
@@ -198,7 +197,6 @@ async function verificarMeses() {
     Validador.procesarRespuesta(respuesta, (respuestaServidor) => {    
         const meses = respuestaServidor.datos || [];
         if (meses.length === 0) {
-            document.getElementById("boton_registrar")?.closest(".col")?.setAttribute("hidden", "");
             return;
         }
 
