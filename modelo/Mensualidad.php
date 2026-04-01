@@ -137,6 +137,8 @@ class Mensualidad extends Conexion
     // ====================================================================
     // MÉTODOS PRIVADOS (ACCIONES)
     // ====================================================================
+
+    // SE USA EN EL MODULO
     private function _verificarMeses()
     {
         $sql = "SELECT DISTINCT MONTH(p.fecha) as mes_presupuesto, YEAR(p.fecha) as anio_presupuesto 
@@ -160,6 +162,7 @@ class Mensualidad extends Conexion
         }
     }
 
+    // SE USA EN EL MODULO
     private function _consultarPorMeses()
     {
         $sql = "SELECT 
@@ -193,6 +196,7 @@ class Mensualidad extends Conexion
         }
     }
 
+    // SE USA EN EL MODULO
     private function _consultar_mensualidad_apartamentos()
     {
         $mesInt = (int)$this->mes;
@@ -229,6 +233,7 @@ class Mensualidad extends Conexion
         }
     }
 
+    // SE USA EN EL MODULO
     private function _consultar_presupuestos_asociados()
     {
         if (empty($this->ids_mensualidades)) {
@@ -255,6 +260,7 @@ class Mensualidad extends Conexion
         }
     }
 
+    // SE USA EN EL MODULO
     private function _consultar_cabecera_mensualidad()
     {
         $sql = "SELECT pm.tasa_dolar, pm.mes, pm.anio, m.porcentaje_interes, m.limite_mensualidad 
@@ -279,6 +285,7 @@ class Mensualidad extends Conexion
         }
     }
 
+    // SE USA EN EL MODULO
     private function _registrar()
     {
         $id_mensualidad = null;
@@ -345,6 +352,7 @@ class Mensualidad extends Conexion
         }
     }
 
+    // SE USA EN EL MODULO
     private function _modificar()
     {
         $con = $this->get_conex('negocio');
@@ -420,6 +428,7 @@ class Mensualidad extends Conexion
         }
     }
 
+    // SE USA EN EL MODULO
     private function _eliminar()
     {
         $sql = "UPDATE mensualidad m
@@ -438,6 +447,46 @@ class Mensualidad extends Conexion
         }
     }
 
+    // SE USA EN EL MODULO
+    private function _consultar_meses_mensualidad()
+    {
+        $sql = "SELECT pm.mes, pm.anio 
+                FROM periodos_mensualidad pm
+                INNER JOIN mensualidad m ON m.periodo_id = pm.id_periodo
+                WHERE m.activo = 1
+                GROUP BY pm.anio, pm.mes 
+                ORDER BY pm.anio DESC, pm.mes DESC";
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->execute();
+            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return ['estatus' => true, 'datos' => $datos];
+        } catch (PDOException $e) {
+            error_log("Error en _consultar_meses_mensualidad: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al consultar meses'];
+        }
+    }
+
+    // SE USA EN REPORTES
+    private function _consultar_tasa_dolar_mensualidades()
+    {
+        $sql = "SELECT MAX(mes) as mes, MAX(anio) as anio, MAX(tasa_dolar) as tasa_dolar
+                FROM periodos_mensualidad 
+                WHERE anio = :anio AND mes = TRIM(LEADING '0' FROM :mes)";
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->bindParam(':mes', $this->mes);
+            $stmt->bindParam(':anio', $this->anio);
+            $stmt->execute();
+            $dato = $stmt->fetch(PDO::FETCH_ASSOC);
+            return ['estatus' => true, 'datos' => $dato];
+        } catch (PDOException $e) {
+            error_log("Error en _consultar_tasa_dolar_mensualidades: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al consultar tasa de dólar'];
+        }
+    }
+
+    // SE USA EN EL INICIO
     private function _consultar_estadisticas_inicio()
     {
         try {
@@ -513,164 +562,7 @@ class Mensualidad extends Conexion
         }
     }
 
-    private function _consultar_meses_mensualidad()
-    {
-        $sql = "SELECT pm.mes, pm.anio 
-                FROM periodos_mensualidad pm
-                INNER JOIN mensualidad m ON m.periodo_id = pm.id_periodo
-                WHERE m.activo = 1
-                GROUP BY pm.anio, pm.mes 
-                ORDER BY pm.anio DESC, pm.mes DESC";
-        try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->execute();
-            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $datos];
-        } catch (PDOException $e) {
-            error_log("Error en _consultar_meses_mensualidad: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar meses'];
-        }
-    }
-
-    private function _consultar_tasa_dolar_mensualidades()
-    {
-        $sql = "SELECT MAX(mes) as mes, MAX(anio) as anio, MAX(tasa_dolar) as tasa_dolar
-                FROM periodos_mensualidad 
-                WHERE anio = :anio AND mes = TRIM(LEADING '0' FROM :mes)";
-        try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->bindParam(':mes', $this->mes);
-            $stmt->bindParam(':anio', $this->anio);
-            $stmt->execute();
-            $dato = $stmt->fetch(PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $dato];
-        } catch (PDOException $e) {
-            error_log("Error en _consultar_tasa_dolar_mensualidades: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar tasa de dólar'];
-        }
-    }
-
-    private function _consultar_mensualidades_pendientes()
-    {
-        $sql = "WITH FacturacionMensual AS (
-                    SELECT m.apartamento_id, pm.anio, pm.mes, SUM(m.monto) AS total_facturado
-                    FROM mensualidad m
-                    JOIN periodos_mensualidad pm ON m.periodo_id = pm.id_periodo
-                    WHERE m.activo = 1
-                    GROUP BY m.apartamento_id, pm.anio, pm.mes
-                ),
-                PagosMensuales AS (
-                    SELECT m.apartamento_id, pm.anio, pm.mes, SUM(dp.monto) AS total_pagado
-                    FROM detalles_pagos dp
-                    JOIN pagos_mensualidad p_m ON dp.id_detalle_pago = p_m.detalle_pago_id
-                    JOIN mensualidad m ON p_m.mensualidad_id = m.id_mensualidad
-                    JOIN periodos_mensualidad pm ON m.periodo_id = pm.id_periodo
-                    GROUP BY m.apartamento_id, pm.anio, pm.mes
-                ),
-                BalanceDelMes AS (
-                    SELECT f.apartamento_id, f.anio, f.mes,
-                           (COALESCE(f.total_facturado, 0) - COALESCE(p.total_pagado, 0)) AS cambio_neto_mes
-                    FROM FacturacionMensual f
-                    LEFT JOIN PagosMensuales p ON f.apartamento_id = p.apartamento_id AND f.anio = p.anio AND f.mes = p.mes
-                    UNION
-                    SELECT p.apartamento_id, p.anio, p.mes,
-                           (COALESCE(f.total_facturado, 0) - COALESCE(p.total_pagado, 0)) AS cambio_neto_mes
-                    FROM FacturacionMensual f
-                    RIGHT JOIN PagosMensuales p ON f.apartamento_id = p.apartamento_id AND f.anio = p.anio AND f.mes = p.mes
-                    WHERE f.apartamento_id IS NULL
-                )
-                SELECT a.nro_apartamento, b.anio, b.mes, b.cambio_neto_mes,
-                       SUM(b.cambio_neto_mes) OVER (PARTITION BY b.apartamento_id ORDER BY b.anio, b.mes) AS deuda_acumulada
-                FROM BalanceDelMes b
-                JOIN apartamentos a ON b.apartamento_id = a.id_apartamento
-                ORDER BY a.nro_apartamento, b.anio, b.mes";
-        try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->execute();
-            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $datos];
-        } catch (PDOException $e) {
-            error_log("Error en _consultar_mensualidades_pendientes: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar pendientes'];
-        }
-    }
-
-    public function obtenerTasaDolarAPI()
-    {
-        $apiUrl = "https://pydolarve.org/api/v2/tipo-cambio?currency=usd";
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $apiUrl);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-        $response = curl_exec($ch);
-        curl_close($ch);
-        if ($response === false) return 0;
-        $data = json_decode($response, true);
-        return (json_last_error() === JSON_ERROR_NONE && isset($data['price'])) ? (float) $data['price'] : 0;
-    }
-
-    public function generarEstructuraCuadroPagos($mes_limite, $anio_limite)
-    {
-        $resp_deudas = $this->_consultar_mensualidades_pendientes();
-        if (!$resp_deudas['estatus']) {
-            return $resp_deudas;
-        }
-        $deudas_globales = $resp_deudas['datos'];
-        $meses_nombres = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
-
-        $periodos = [];
-        foreach ($deudas_globales as $deuda) {
-            $periodo = $deuda['anio'] . '-' . str_pad($deuda['mes'], 2, '0', STR_PAD_LEFT);
-            if ($deuda['anio'] < $anio_limite || ($deuda['anio'] == $anio_limite && $deuda['mes'] <= $mes_limite)) {
-                $periodos[$periodo] = ['anio' => $deuda['anio'], 'mes' => $deuda['mes']];
-            }
-        }
-
-        uasort($periodos, function($a, $b) {
-            if ($a['anio'] == $b['anio']) return $a['mes'] - $b['mes'];
-            return $a['anio'] - $b['anio'];
-        });
-
-        $cabecera_tabla = [];
-        foreach ($periodos as $per) {
-            $cabecera_tabla[] = $meses_nombres[$per['mes'] - 1] . ' ' . $per['anio'];
-        }
-
-        $cuerpo_tabla = [];
-        $total_mensual = array_fill(0, count($periodos), 0);
-        $periodos_indexados = array_values($periodos);
-
-        foreach ($deudas_globales as $deuda) {
-            $anio = $deuda['anio'];
-            $mes = $deuda['mes'];
-            $apto = $deuda['nro_apartamento'];
-            $deuda_acum = $deuda['deuda_acumulada'];
-
-            if ($anio < $anio_limite || ($anio == $anio_limite && $mes <= $mes_limite)) {
-                if (!isset($cuerpo_tabla[$apto])) {
-                    $cuerpo_tabla[$apto] = array_fill(0, count($periodos_indexados), 0);
-                }
-                foreach ($periodos_indexados as $idx => $per) {
-                    if ($per['anio'] == $anio && $per['mes'] == $mes) {
-                        $cuerpo_tabla[$apto][$idx] = $deuda_acum;
-                        $total_mensual[$idx] += $deuda_acum; 
-                        break;
-                    }
-                }
-            }
-        }
-
-        return [
-            'estatus' => true,
-            'datos' => [
-                'cabecera' => $cabecera_tabla,
-                'cuerpo' => $cuerpo_tabla,
-                'totales' => $total_mensual
-            ]
-        ];
-    }
-
+    // SE USA EN EL INICIO
     private function _consultar_tarjetas_resumen()
     {
         $sql = "SELECT 

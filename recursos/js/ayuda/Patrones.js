@@ -66,6 +66,7 @@ const Patrones = {
     // Fechas y Años Fiscales
     diaMes: /^([1-9]|[12]\d|3[01])$/,                 // Días válidos del 1 al 31
     anio: /^\d{4}$/,                                  // Año de 4 dígitos (Ej: 2024)
+    mes: /^(0?[1-9]|1[0-2])$/,                         // Mes (1-12) con 0 opcionales
     mesAnio: /^\d{1,2}-\d{4}$/,                       // Formato MM-YYYY o M-YYYY
     estadoAnio: /^[A-Za-z]{3,15}$/,                   // Estado del año fiscal (Abierta, Cerrada)
 

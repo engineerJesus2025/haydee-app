@@ -76,7 +76,7 @@
                         <div class="col-lg-3 col-md-6">
                             <div class="card mb-3 shadow" title="Click para ver opciones para el cuadro de gastos">
                                 <button type="button" class="btn text-decoration-none text-black" data-bs-toggle="modal"
-                                    data-bs-target="#modal_gastos_mensual" id="boton_cuadro_gastos" disabled>
+                                    data-bs-target="#modalGastosMensual" id="boton_cuadro_gastos" disabled>
                                     <div class="card-header text-center bg-white border-bottom-0">
                                         <div class="spinner-grow text-dark" role="status" style="width: 5rem; height: 5rem; z-index: 1000">
                                             <span class="visually-hidden">Loading...</span>

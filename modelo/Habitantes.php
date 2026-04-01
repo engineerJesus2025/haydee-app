@@ -313,168 +313,25 @@ class Habitantes extends Conexion
     // Métodos públicos auxiliares (reportes, etc.)
     // -----------------------------------------------------------------
 
+
     /**
-     * Consulta personas solventes (propietarios sin deuda)
-     * USADO EN REPORTES
+     * Verifica si un habitante existe en la base de datos (por su ID).
+     * Retorna un booleano en la llave 'existe'.
+     Se usa en reportes
      */
-    private function _consultar_personas_solvencia()
+    private function _existe_habitante()
     {
-        $sql = "SELECT h.*, a.nro_apartamento 
-                FROM habitantes h
-                INNER JOIN habitantes_apartamentos ha ON h.id_habitante = ha.habitante_id
-                INNER JOIN apartamentos a ON ha.apartamento_id = a.id_apartamento
-                WHERE a.id_apartamento IN (
-                    SELECT apartamentos.id_apartamento 
-                    FROM mensualidad 
-                    INNER JOIN apartamentos ON mensualidad.apartamento_id = apartamentos.id_apartamento
-                    WHERE (SELECT SUM(mensualidad.monto) 
-                           FROM mensualidad 
-                           WHERE mensualidad.apartamento_id = apartamentos.id_apartamento) 
-                          <= (SELECT SUM(detalles_pagos.monto) 
-                              FROM detalles_pagos 
-                              INNER JOIN pagos_mensualidad ON pagos_mensualidad.detalle_pago_id = detalles_pagos.id_detalle_pago 
-                              INNER JOIN mensualidad ON mensualidad.id_mensualidad = pagos_mensualidad.mensualidad_id 
-                              WHERE mensualidad.apartamento_id = apartamentos.id_apartamento)
-                )";
+        $sql = "SELECT COUNT(*) FROM habitantes WHERE id_habitante = :id_habitante AND activo = 1";
         try {
             $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->bindParam(':id_habitante', $this->id_habitante);
             $stmt->execute();
-            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $datos];
+            $conteo = $stmt->fetchColumn();
+            
+            return ['estatus' => true, 'existe' => ($conteo > 0)];
         } catch (PDOException $e) {
-            error_log("Error en _consultar_personas_solvencia: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar personas solventes'];
-        }
-    }
-
-    /**
-     * Consulta todos los propietarios con sus apartamentos
-     * USADO EN REPORTES
-     */
-    private function _consultar_propietarios()
-    {
-        $sql = "SELECT h.*, a.nro_apartamento 
-                FROM habitantes h
-                INNER JOIN habitantes_apartamentos ha ON h.id_habitante = ha.habitante_id
-                INNER JOIN apartamentos a ON ha.apartamento_id = a.id_apartamento
-                WHERE ha.tipo_vinculo = 'Propietario'";
-        try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->execute();
-            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $datos];
-        } catch (PDOException $e) {
-            error_log("Error en _consultar_propietarios: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar propietarios'];
-        }
-    }
-
-    /**
-     * Obtiene datos para reportes estadísticos de habitantes según filtros.
-     * Los filtros se reciben a través de $this->filtros_reporte.
-     * USADO EN REPORTES
-     */
-    private function _obtener_datos_habitantes()
-    {
-        $f = $this->filtros_reporte;
-        $rango_edades = $f['rango_edades'] ?? 'todos';
-        $edad_minima = $f['edad_minima'] ?? null;
-        $edad_maxima = $f['edad_maxima'] ?? null;
-        $tipo_residente = $f['tipo_residente'] ?? 'todos';
-        $servicios = $f['servicios'] ?? [];
-        
-        // Variables de tiempo
-        $filtro_tiempo = $f['filtro_tiempo'] ?? 'todo';
-        $fecha_inicio = $f['fecha_inicio'] ?? '';
-        $fecha_fin = $f['fecha_fin'] ?? '';
-
-        if (is_string($servicios)) {
-            $servicios = json_decode($servicios, true) ?? [];
-        }
-
-        $sql = "SELECT 
-                    h.sexo, 
-                    ha.tipo_vinculo, 
-                    TIMESTAMPDIFF(YEAR, h.fecha_nacimiento, CURDATE()) AS edad
-                FROM habitantes h
-                JOIN habitantes_apartamentos ha ON h.id_habitante = ha.habitante_id
-                JOIN apartamentos a ON ha.apartamento_id = a.id_apartamento
-                WHERE 1=1";
-
-        $params = [];
-
-        // 1. FILTRO DE TIEMPO (Fechas de registro)
-        if ($filtro_tiempo !== 'todo') {
-            switch ($filtro_tiempo) {
-                case 'mes':
-                    // Registrados este mes y este año
-                    $sql .= " AND MONTH(h.fecha_registro) = MONTH(CURDATE()) AND YEAR(h.fecha_registro) = YEAR(CURDATE())";
-                    break;
-                case 'trimestre':
-                    // Registrados en los últimos 3 meses
-                    $sql .= " AND h.fecha_registro >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)";
-                    break;
-                case 'año':
-                    // Registrados este año
-                    $sql .= " AND YEAR(h.fecha_registro) = YEAR(CURDATE())";
-                    break;
-                case 'personalizado':
-                    if (!empty($fecha_inicio) && !empty($fecha_fin)) {
-                        $sql .= " AND DATE(h.fecha_registro) BETWEEN :fecha_inicio AND :fecha_fin";
-                        $params[':fecha_inicio'] = $fecha_inicio;
-                        $params[':fecha_fin'] = $fecha_fin;
-                    }
-                    break;
-            }
-        }
-
-        // 2. FILTRO DE EDADES
-        if ($rango_edades != 'todos') {
-            switch ($rango_edades) {
-                case 'jovenes':
-                    $sql .= " AND TIMESTAMPDIFF(YEAR, h.fecha_nacimiento, CURDATE()) BETWEEN 18 AND 35";
-                    break;
-                case 'adultos':
-                    $sql .= " AND TIMESTAMPDIFF(YEAR, h.fecha_nacimiento, CURDATE()) BETWEEN 36 AND 59";
-                    break;
-                case 'mayores':
-                    $sql .= " AND TIMESTAMPDIFF(YEAR, h.fecha_nacimiento, CURDATE()) >= 60";
-                    break;
-                case 'personalizado':
-                    if ($edad_minima !== null && $edad_maxima !== null) {
-                        $sql .= " AND TIMESTAMPDIFF(YEAR, h.fecha_nacimiento, CURDATE()) BETWEEN :edad_min AND :edad_max";
-                        $params[':edad_min'] = $edad_minima;
-                        $params[':edad_max'] = $edad_maxima;
-                    }
-                    break;
-            }
-        }
-
-        // 3. FILTRO DE TIPO DE RESIDENTE
-        if ($tipo_residente == 'propietarios') {
-            $sql .= " AND ha.tipo_vinculo = 'Propietario'";
-        } elseif ($tipo_residente == 'arrendatarios') {
-            $sql .= " AND ha.tipo_vinculo = 'Habitante'"; 
-        }
-
-        // 4. FILTRO DE SERVICIOS
-        if (is_array($servicios)) {
-            if (in_array('agua', $servicios)) {
-                $sql .= " AND a.agua = 1";
-            }
-            if (in_array('gas', $servicios)) {
-                $sql .= " AND a.gas = 1";
-            }
-        }
-
-        try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->execute($params);
-            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $datos];
-        } catch (PDOException $e) {
-            error_log("Error en _obtener_datos_habitantes: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al obtener datos de habitantes'];
+            error_log("Error en _existe_habitante: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al validar la existencia del habitante.'];
         }
     }
 

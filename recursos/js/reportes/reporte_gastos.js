@@ -1,27 +1,37 @@
 /**
  * reporte_gastos.js
- * Generación de reporte mensual de gastos
+ * Generación de reporte mensual de gastos (PDF y Excel)
  * Dependencias: Validador.js, Patrones.js, Alertas.js, Peticiones.js
  */
 
-const anioSelect = document.getElementById('anio_reporte');
-const mesSelect = document.getElementById('mes_reporte');
-const btnGenerar = document.getElementById('btn_generar_reporte_gastos');
+const anioSelect = document.getElementById('anio_gasto');
+const mesSelect = document.getElementById('mes_gasto');
+const formReporte = document.getElementById('reporteGastosForm');
+// Seleccionamos TODOS los botones de envío (PDF y Excel)
+const botonesGenerar = formReporte.querySelectorAll('button[type="submit"]'); 
 const botonCuadroGastos = document.getElementById("boton_cuadro_gastos");
-const formReporte = document.getElementById('form_gastos_mensual');
+const inputTasaDolar = document.getElementById("tasa_dolar_gasto");
+const btnObtenerTasa = document.getElementById("btn_obtener_tasa_gasto");
 
 let periodosDisponibles = {};
 const nombresMeses = ["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 
+// --- FUNCIÓN UTILITARIA ---
+// Habilita o deshabilita ambos botones (PDF y Excel) al mismo tiempo
+const toggleBotones = (deshabilitar) => {
+    botonesGenerar.forEach(btn => btn.disabled = deshabilitar);
+};
+
+// --- EVENTOS DEL FORMULARIO ---
 anioSelect.addEventListener('change', () => {
     if (!Validador.evaluarInput(anioSelect, Patrones.anio, 'Año inválido')) {
-        btnGenerar.disabled = true;
+        toggleBotones(true);
         return;
     }
     const anio = anioSelect.value;
     mesSelect.innerHTML = '<option value="">Seleccione un mes...</option>';
     mesSelect.disabled = true;
-    btnGenerar.disabled = true;
+    toggleBotones(true);
 
     if (anio && periodosDisponibles[anio]) {
         periodosDisponibles[anio].sort((a, b) => a - b).forEach(mes => {
@@ -32,33 +42,37 @@ anioSelect.addEventListener('change', () => {
 });
 
 mesSelect.addEventListener('change', () => {
-    btnGenerar.disabled = !mesSelect.value;
+    if (Validador.evaluarInput(mesSelect, Patrones.mes, 'Mes inválido')) {
+        toggleBotones(false); // Si el mes es válido, habilitamos los botones
+    } else {
+        toggleBotones(true);
+    }
 });
 
-// Obtener periodos al abrir el modal
-document.addEventListener("DOMContentLoaded", () => {
-    consultarPeriodos();
+// Cargar tasa del dólar al hacer clic en el botón de recargar del input
+btnObtenerTasa.addEventListener('click', () => {
+    let tasaDolar = parseFloat(localStorage.getItem("tasa_dolar") || 1).toFixed(2);
+    inputTasaDolar.value = tasaDolar;
 });
 
-async function consultarPeriodos() {
-    let datos = new FormData();
-    datos.append('operacion', 'listar_meses_con_gastos');
+// Inicializar la tasa de dólar visible por defecto
+inputTasaDolar.value = parseFloat(localStorage.getItem("tasa_dolar") || 1).toFixed(2);
 
+// --- CARGA INICIAL DE DATOS ---
+async function cargarPeriodosGastos() {
     try {
-        // Enviar con Fetch usando el nuevo helper (sin mostrar modal extra de carga)
+        const datos = new FormData();
+        datos.append("operacion", "listar_meses_con_gastos");
         const respuesta = await Peticiones.enviar(datos, "", false);
-
-        const contenedorTarjeta = botonCuadroGastos.parentElement;
+        // const respuesta = await Peticiones.enviar(datos, "", false);
+        let contenedorTarjeta = botonCuadroGastos.parentElement;
 
         if (respuesta.estatus && respuesta.datos.length > 0) {
-            periodosDisponibles = respuesta.datos.reduce((acc, item) => {
-                const { anio, mes } = item;
-                if (!acc[anio]) acc[anio] = [];
-                acc[anio].push(parseInt(mes));
-                return acc;
-            }, {});
+            respuesta.datos.forEach(row => {
+                if (!periodosDisponibles[row.anio]) periodosDisponibles[row.anio] = [];
+                periodosDisponibles[row.anio].push(row.mes);
+            });
 
-            anioSelect.innerHTML = '<option value="">Seleccione un año...</option>';
             Object.keys(periodosDisponibles).sort((a, b) => b - a).forEach(anio => {
                 anioSelect.add(new Option(anio, anio));
             });
@@ -85,7 +99,7 @@ async function consultarPeriodos() {
     }
 }
 
-formReporte.addEventListener('submit', function(event) {
-    let tasaDolar = parseFloat(localStorage.getItem("tasa_dolar") || 1).toFixed(2);
-    document.getElementById('tasa_dolar_reporte').value = tasaDolar;
+// Obtener periodos al abrir el modal
+document.addEventListener("DOMContentLoaded", () => {
+    cargarPeriodosGastos();
 });

@@ -627,43 +627,6 @@ class Pagos extends Conexion
         }
     }
 
-    // SE USA EN REPORTES
-    private function _consultarReciboPago()
-    {
-        $sql = "SELECT 
-                    h.nombre, h.apellido, a.nro_apartamento,
-                    MAX(dp.fecha) as fecha_pago, pm_per.mes, pm_per.anio, p.id_pago,
-                    SUM(dp.monto) as total,
-                    COUNT(CASE WHEN dp.tipo_pago = 'Transferencia' THEN 1 END) as count_transferencia,
-                    COUNT(CASE WHEN dp.tipo_pago = 'Pago Movil' THEN 1 END) as count_pago_movil,
-                    COUNT(CASE WHEN dp.tipo_pago = 'Efectivo' THEN 1 END) as count_efectivo,
-                    GROUP_CONCAT(DISTINCT b.nombre_banco SEPARATOR ', ') as bancos,
-                    GROUP_CONCAT(DISTINCT ib.referencia SEPARATOR ', ') as referencias
-                FROM pagos p
-                JOIN detalles_pagos dp ON p.id_pago = dp.pago_id
-                JOIN pagos_mensualidad p_m ON dp.id_detalle_pago = p_m.detalle_pago_id
-                JOIN mensualidad m ON p_m.mensualidad_id = m.id_mensualidad
-                JOIN periodos_mensualidad pm_per ON m.periodo_id = pm_per.id_periodo
-                JOIN apartamentos a ON m.apartamento_id = a.id_apartamento
-                JOIN habitantes_apartamentos ha ON a.id_apartamento = ha.apartamento_id
-                JOIN habitantes h ON ha.habitante_id = h.id_habitante
-                LEFT JOIN ingresos_bancarios ib ON dp.id_detalle_pago = ib.detalle_pago_id
-                LEFT JOIN bancos b ON ib.banco_id = b.id_banco
-                WHERE p.id_pago = :id_pago AND ha.tipo_vinculo = 'Propietario'
-                GROUP BY p.id_pago, pm_per.mes, pm_per.anio, h.nombre, h.apellido, a.nro_apartamento";
-        try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->execute([':id_pago' => $this->id_pago]);
-            $datos = $stmt->fetch(PDO::FETCH_ASSOC);
-            if (!$datos) {
-                return ['estatus' => false, 'mensaje' => 'No se encontraron datos para el recibo'];
-            }
-            return ['estatus' => true, 'datos' => $datos];
-        } catch (PDOException $e) {
-            error_log("Error en _consultarReciboPago: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar recibo'];
-        }
-    }
 
     // -----------------------------------------------------------------
     // Helpers de archivos (privados)

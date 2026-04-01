@@ -121,3 +121,8 @@ document.addEventListener('DOMContentLoaded', () => {
         bootstrap.Modal.getInstance(document.getElementById('modal_reporte_persona'))?.hide();
     });
 });
+
+document.getElementById('modal_reporte_persona').addEventListener('hide.bs.modal', () => {
+    document.getElementById('form_reporte').reset();
+    document.querySelectorAll('.is-valid, .is-invalid').forEach(el => el.classList.remove('is-valid', 'is-invalid'));
+});
