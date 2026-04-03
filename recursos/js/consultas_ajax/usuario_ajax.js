@@ -149,16 +149,7 @@ async function consultar() {
 
     tabla_usuarios = Tablas.cargarTabulador(contenedorTabla.id, "", columnas);
 
-    const inputBusqueda = document.getElementById("busqueda_global");
-    if (inputBusqueda) {
-        inputBusqueda.addEventListener("input", function(e) {
-            let valor = e.target.value.trim();
-            let filtros = columnas
-                .filter(col => col.field) 
-                .map(col => ({ field: col.field, type: "like", value: valor }));
-            tabla_usuarios.setFilter([filtros]);
-        });
-    }
+    Tablas.inicializarBuscadorGlobal(tabla_usuarios, "busqueda_global", columnas);
 }
 
 // Función que lee la memoria de Tabulator (Sin AJAX extra)

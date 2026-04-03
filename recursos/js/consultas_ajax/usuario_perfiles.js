@@ -218,14 +218,7 @@ function llenarTablaNotificaciones() {
     document.getElementById('notificaciones')?.removeAttribute('disabled');
 
     // Buscador global dinámico
-    const inputBusqueda = document.getElementById("busqueda_global");
-    if (inputBusqueda) {
-        inputBusqueda.addEventListener("input", function(e) {
-            let valor = e.target.value.trim();
-            let filtros = columnas.filter(col => col.field).map(col => ({ field: col.field, type: "like", value: valor }));
-            tabla_notificaciones.setFilter([filtros]);
-        });
-    }
+    Tablas.inicializarBuscadorGlobal(tabla_notificaciones, "busqueda_global", columnas);
 }
 
 function definirColorBadge(nombreRol) {

@@ -50,10 +50,17 @@ async function consultar() {
         return html;
     };
 
+    const formatoNombre = (cell) =>{
+        const nombre = cell.getData().accion; 
+        let titulo_modulo = nombre.replace(/_/g, ' ').toLowerCase();
+        let titulo_capitalizado = titulo_modulo.split(' ').map(palabra => palabra[0].toUpperCase() + palabra.slice(1)).join(' ');
+
+        return titulo_capitalizado;
+    }
+
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
-        
-        { title: "Permiso", field: "accion", minWidth: 150, responsive: 0 },
+        { title: "Permiso", field:"accion", formatter: formatoNombre, minWidth: 150, responsive: 0 },
 
         {
             title: "Acciones", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", minWidth: 130, responsive: 0, download: false, headerHozAlign: "center",
@@ -80,25 +87,19 @@ async function consultar() {
 
     tablaPermisos = Tablas.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consultar' } });
 
-    const inputBusqueda = document.getElementById("busqueda_global");
-    if (inputBusqueda) {
-        inputBusqueda.addEventListener("input", function(e) {
-            let valor = e.target.value.trim();
-            let filtros = columnas
-                .filter(col => col.field) 
-                .map(col => ({ field: col.field, type: "like", value: valor }));
-
-            tablaPermisos.setFilter([filtros]);
-        });
-    }
+    Tablas.inicializarBuscadorGlobal(tablaPermisos, "busqueda_global", columnas);
 }
 
 // Función que lee la memoria de Tabulator (Sin AJAX extra)
 function mostrarVistaPrevia(data) {
+    const nombre = data.accion; 
+    let titulo_modulo = nombre.replace(/_/g, ' ').toLowerCase();
+    let titulo_capitalizado = titulo_modulo.split(' ').map(palabra => palabra[0].toUpperCase() + palabra.slice(1)).join(' ');
+
     document.getElementById("vp_icono").className = "bi bi-shield-lock";
-    document.getElementById("vp_titulo").textContent = "Permiso";
+    document.getElementById("vp_titulo").textContent = " Permiso";
     document.getElementById("vp_etiqueta").textContent = "Acción Permitida";
-    document.getElementById("vp_valor").textContent = data.accion || 'N/A';
+    document.getElementById("vp_valor").textContent = titulo_capitalizado || 'N/A';
     
     modalDetalles.show();
 }

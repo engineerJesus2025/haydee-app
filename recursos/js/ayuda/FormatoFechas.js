@@ -1,4 +1,3 @@
-// ayuda/FormatoFechas.js
 const FormatoFechas = (function() {
     // ============================================================
     // CONSTANTES PRIVADAS (inmutables)

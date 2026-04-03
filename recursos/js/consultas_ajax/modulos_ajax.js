@@ -47,10 +47,18 @@ async function consultar() {
         return html;
     };
 
+    const formatoNombre = (cell) =>{
+        const nombre = cell.getData().nombre; 
+        let titulo_modulo = nombre.replace(/_/g, ' ').toLowerCase();
+        let titulo_capitalizado = titulo_modulo.split(' ').map(palabra => palabra[0].toUpperCase() + palabra.slice(1)).join(' ');
+
+        return titulo_capitalizado;
+    }
+
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
         
-        { title: "Modulo", field: "nombre", minWidth: 150, responsive: 0 },
+        { title: "Módulo", field:"nombre" , formatter: formatoNombre, minWidth: 150, responsive: 0 },
 
         {
             title: "Acciones", formatter: formatoBotones, headerSort: false, hozAlign: "center", vertAlign: "middle", 
@@ -76,28 +84,27 @@ async function consultar() {
         }
     ];
 
-    // Cambiar 'tabla_proveedores' por la variable que maneje la tabla de ese archivo
+    const filtroNombre = (data, valorBuscado) => {
+        if (!data.nombre) return false;
+        let tituloFormateado = data.nombre.replace(/_/g, ' ').toLowerCase();
+        return tituloFormateado.includes(valorBuscado);
+    };
+
     tablaModulos = Tablas.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consultar' } });
 
-    const inputBusqueda = document.getElementById("busqueda_global");
-    if (inputBusqueda) {
-        inputBusqueda.addEventListener("input", function(e) {
-            let valor = e.target.value.trim();
-            let filtros = columnas
-                .filter(col => col.field) 
-                .map(col => ({ field: col.field, type: "like", value: valor }));
-
-            tablaModulos.setFilter([filtros]);
-        });
-    }
+    Tablas.inicializarBuscadorGlobal(tablaModulos, "busqueda_global", columnas, filtroNombre);
 }
 
 // Función que lee la memoria de Tabulator (Sin AJAX extra)
 function mostrarVistaPrevia(data) {
+    const nombre = data.nombre; 
+    let titulo_modulo = nombre.replace(/_/g, ' ').toLowerCase();
+    let titulo_capitalizado = titulo_modulo.split(' ').map(palabra => palabra[0].toUpperCase() + palabra.slice(1)).join(' ');
+
     document.getElementById("vp_icono").className = "bi bi-box-seam";
-    document.getElementById("vp_titulo").textContent = "Módulo";
+    document.getElementById("vp_titulo").textContent = " Módulo";
     document.getElementById("vp_etiqueta").textContent = "Nombre Técnico";
-    document.getElementById("vp_valor").textContent = data.nombre || 'N/A';
+    document.getElementById("vp_valor").textContent = titulo_capitalizado || 'N/A';
     
     modalDetalles.show();
 }

@@ -124,17 +124,7 @@ async function consultar() {
     tabla_bancos = Tablas.cargarTabulador(contenedor.id, "", columnas);
 
     // 5. Buscador Global Dinámico
-    const inputBusqueda = document.getElementById("busqueda_global");
-    if (inputBusqueda) {
-        inputBusqueda.addEventListener("input", function(e) {
-            let valor = e.target.value.trim();
-            let filtros = columnas
-                .filter(col => col.field) 
-                .map(col => ({ field: col.field, type: "like", value: valor }));
-
-            tabla_bancos.setFilter([filtros]);
-        });
-    }
+    Tablas.inicializarBuscadorGlobal(tabla_bancos, "busqueda_global", columnas);
 }
 
 // Función que lee la memoria de Tabulator (Sin AJAX extra)

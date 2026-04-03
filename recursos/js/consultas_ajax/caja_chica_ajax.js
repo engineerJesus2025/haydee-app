@@ -285,14 +285,7 @@ function inicializarTablaMovimientos() {
 
     tabla_movimientos = Tablas.cargarTabulador(contenedor.id, "", columnas, opcionesExtra);
 
-    const inputBusqueda = document.getElementById("busqueda_global");
-    if (inputBusqueda) {
-        inputBusqueda.addEventListener("input", function(e) {
-            let valor = e.target.value.trim();
-            let filtros = columnas.filter(col => col.field).map(col => ({ field: col.field, type: "like", value: valor }));
-            tabla_movimientos.setFilter([filtros]);
-        });
-    }
+    Tablas.inicializarBuscadorGlobal(tabla_movimientos, "busqueda_global", columnas);
 }
 
 // ========== REGISTRAR GASTO ==========

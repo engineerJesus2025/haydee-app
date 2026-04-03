@@ -7,7 +7,7 @@
     require_once ROOT_PATH . "/vista/componentes/estilos.php";
     ?>
     <style>
-        /* 1. Animación de Feedback de Fila (Seleccionar Todo) */
+        /* Animación de Feedback de Fila (Seleccionar Todo) */
         .fila-resaltada td {
             animation: highlight-fade 1.2s ease-out;
         }
@@ -17,7 +17,7 @@
             100% { background-color: transparent; }
         }
 
-        /* 2. Animación para los Checkboxes (Efecto Pop) */
+        /* Animación para los Checkboxes (Efecto Pop) */
         .form-check-input {
             transition: all 0.2s cubic-bezier(0.12, 0.4, 0.29, 1.46);
             cursor: pointer;
@@ -85,10 +85,7 @@
                                     <?php endif; ?>
                                     </div>
                                     <div class="col-12 col-sm-6 mb-4">
-                                        <div class="input-group">
-                                            <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                            <input type="text" id="busqueda_global" data-tooltip="true" title="Buscar Registro" class="form-control" placeholder="Buscar Rol...">
-                                        </div>
+                                        <?php require_once ROOT_PATH . "/vista/componentes/buscador_global.php"; ?>
                                     </div>
                                 </div>
                                 <div id="tabla_roles" class="tabla-sistema-haydee"></div>

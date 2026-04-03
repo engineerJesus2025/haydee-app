@@ -105,15 +105,8 @@ async function consultar() {
 
     tabla_gastos = Tablas.cargarTabulador("tabla_gastos", "", columnas);
 
-    // 3. BUSCADOR
-    const inputBusqueda = document.getElementById("busqueda_global");
-    if (inputBusqueda) {
-        inputBusqueda.addEventListener("input", function(e) {
-            let valor = e.target.value.trim();
-            let filtros = columnas.filter(col => col.field).map(col => ({ field: col.field, type: "like", value: valor }));
-            tabla_gastos.setFilter([filtros]);
-        });
-    }
+    // BUSCADOR
+    Tablas.inicializarBuscadorGlobal(tabla_gastos, "busqueda_global", columnas);
 }
 
 

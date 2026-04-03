@@ -49,10 +49,10 @@ $iconos_modulos = [
                         <table id="tabla_permisos" class="table table-hover align-top mb-0">
                             <thead class="table-light sticky-top shadow-sm">
                                 <tr>
-                                    <th style="width: 35%;" class="py-3 text-secondary text-uppercase" scope="col">
+                                    <th style="width: 35%;" class="py-3 text-secondary" scope="col">
                                         <i class="bi bi-grid-1x2 me-2"></i>Módulo del Sistema
                                     </th>
-                                    <th style="width: 65%;" class="py-3 text-secondary text-uppercase" scope="col">
+                                    <th style="width: 65%;" class="py-3 text-secondary" scope="col">
                                         <i class="bi bi-ui-checks me-2"></i>Configuración de Accesos
                                     </th>
                                 </tr>
@@ -65,7 +65,7 @@ $iconos_modulos = [
                                         // Preparar el nombre e icono
                                         $nombre_bd = strtolower(str_replace("GESTIONAR_","",$registro_modulo['nombre']))    ;
                                         $icono_modulo = isset($iconos_modulos[$nombre_bd]) ? $iconos_modulos[$nombre_bd] : 'bi-folder2-open';
-                                        $nombre_mostrar = str_replace("_", " ", $registro_modulo["nombre"]);
+                                        $nombre_mostrar = ucwords(strtolower(str_replace("_", " ", $registro_modulo["nombre"])));
                                     ?>
 
                                     <tr data-modulo="<?php echo $registro_modulo['id_modulo'] ?>">

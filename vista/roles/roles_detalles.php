@@ -16,9 +16,9 @@
                 </div>
 
                 <div class="p-4 bg-white">
-                    <h6 class="fw-bold text-secondary mb-3">
+                    <h5 class="fw-bold text-secondary mb-3">
                         <i class="bi bi-shield-check me-2"></i>Permisos Asignados
-                    </h6>
+                    </h5>
                     
                     <div id="vp_contenedor_permisos" class="d-flex flex-column gap-3">
                         <div class="text-center py-4">

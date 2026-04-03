@@ -67,13 +67,6 @@ async function consultarMensualidades() {
     };
 
     const formatoBotones = (cell) => {
-        // let html = `<div class="d-flex justify-content-center gap-2">
-        //     <button data-tooltip="true" type="button" class="btn btn-primary btn-sm vista-previa" title="Ver Detalles de Mensualidad"><i class="bi bi-eye-fill"></i></button>
-        //     <button data-tooltip="true" type="button" class="btn btn-info btn-sm text-white cuadro-pagos" style="background-color:#3939a9;" title="Descargar Cuadro de Pagos (PDF)"><i class="bi bi-card-checklist"></i></button>
-        //     <button data-tooltip="true" type="button" class="btn btn-success btn-sm modificar" title="Modificar los detalles de este registro"><i class="bi bi bi-pencil"></i></button>`;
-        // if (permisoEliminar == 1) {
-        //     html += `<button data-tooltip="true" type="button" class="btn btn-danger btn-sm eliminar" title="Quitar este elemento del sistema"><i class="bi bi-trash"></i></button>`;
-        // }
         let html = `<div class="d-flex justify-content-center flex-wrap gap-2">
             <button type="button" class="btn btn-primary btn-sm vista-previa" data-tooltip="true" title="Ver Mas">
                 <i class="bi bi-eye"></i>
@@ -157,34 +150,22 @@ async function consultarMensualidades() {
 
     tablaMensualidades = Tablas.cargarTabulador("tabla_mensualidad", "", columnas, opcionesExtra);
 
-    const inputBusqueda = document.getElementById("busqueda_global");
-    if (inputBusqueda) {
-        inputBusqueda.addEventListener("input", function(e) {
-            let valor = e.target.value.trim().toLowerCase();
-            
-            if (valor === "") {
-                tablaMensualidades.clearFilter();
-                return;
-            }
+    // Definimos la lógica de búsqueda específica para Mensualidades
+    const filtroEspecialMensualidades = (data, valorBuscado) => {
+        let fechaObj = new Date(`${data.mes}/01/${data.anio}`);
+        let textoPeriodo = `${fechaObj.toLocaleString("es-ES", { month: 'long' })} del ${data.anio}`.toLowerCase();
+        
+        let montoTotal = parseFloat(data.monto).toFixed(2);
+        let deuda = data.monto - data.pagado;
+        let textoEstado = deuda <= 0 ? "deuda cancelada" : deuda.toFixed(2);
+        
+        return textoPeriodo.includes(valorBuscado) || 
+               String(data.anio).includes(valorBuscado) || 
+               montoTotal.includes(valorBuscado) || 
+               textoEstado.includes(valorBuscado);
+    };
 
-            tablaMensualidades.setFilter(function(data) {
-                // 1. Reconstruir el texto del período tal como se ve en pantalla
-                let fechaObj = new Date(`${data.mes}/01/${data.anio}`);
-                let textoPeriodo = `${fechaObj.toLocaleString("es-ES", { month: 'long' })} del ${data.anio}`.toLowerCase();
-                
-                // 2. Reconstruir los textos de los montos y deudas
-                let montoTotal = parseFloat(data.monto).toFixed(2);
-                let deuda = data.monto - data.pagado;
-                let textoEstado = deuda <= 0 ? "deuda cancelada" : deuda.toFixed(2);
-                
-                // 3. Evaluar si lo que escribió el usuario coincide con alguna columna
-                return textoPeriodo.includes(valor) || 
-                       String(data.anio).includes(valor) || 
-                       montoTotal.includes(valor) || 
-                       textoEstado.includes(valor);
-            });
-        });
-    }
+    Tablas.inicializarBuscadorGlobal(tablaMensualidades, "busqueda_global", columnas, filtroEspecialMensualidades);
 }
 
 /**

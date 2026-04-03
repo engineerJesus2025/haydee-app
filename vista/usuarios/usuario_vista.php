@@ -36,10 +36,7 @@
                                     <?php endif; ?>
                                     </div>
                                     <div class="col-12 col-sm-6 mb-4">
-                                        <div class="input-group">
-                                            <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                            <input type="text" id="busqueda_global" data-tooltip="true" title="Buscar Registro" class="form-control" placeholder="Buscar usuario...">
-                                        </div>
+                                        <?php require_once ROOT_PATH . "/vista/componentes/buscador_global.php"; ?>
                                     </div>
                                 </div>
                                 <div id="tabla_usuario" class="tabla-sistema-haydee"></div>

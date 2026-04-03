@@ -79,17 +79,7 @@ async function consultar() {
 
     tabla_roles = Tablas.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consultar' } });
 
-    const inputBusqueda = document.getElementById("busqueda_global");
-    if (inputBusqueda) {
-        inputBusqueda.addEventListener("input", function(e) {
-            let valor = e.target.value.trim();
-            let filtros = columnas
-                .filter(col => col.field) 
-                .map(col => ({ field: col.field, type: "like", value: valor }));
-
-            tabla_roles.setFilter([filtros]);
-        });
-    }
+    Tablas.inicializarBuscadorGlobal(tabla_roles, "busqueda_global", columnas);
 }
 
 // Función asíncrona para Vista Previa
@@ -128,18 +118,57 @@ async function mostrarVistaPrevia(data) {
         };
 
         // Construimos el HTML
+        // 1. Replicamos el diccionario de iconos en JS
+        const iconosModulos = {
+            'pagos': 'bi-cash-coin',
+            'gastos': 'bi-cart-plus',
+            'caja_chica': 'bi-bank2',
+            'mensualidad': 'bi-piggy-bank-fill',
+            'cartelera_virtual': 'bi-tv',
+            'apartamentos': 'bi-door-open',
+            'solicitud_gasto': 'bi-clipboard-check',
+            'presupuesto': 'bi-calculator',
+            'anio_fiscal': 'bi-calendar-range',
+            'reportes': 'bi-card-checklist',
+            'configuracion': 'bi-gear-wide-connected',
+            'proveedores': 'bi-truck',
+            'bancos': 'bi-bank',
+            'tipo_gasto': 'bi-columns-gap',
+            'usuarios': 'bi-person-badge-fill',
+            'seguridad': 'bi-shield-fill-check',
+            'rol': 'bi-person-gear',
+            'roles': 'bi-person-gear',
+            'bitacora': 'bi-journal-text',
+            'permisos': 'bi-key-fill',
+            'modulos': 'bi-stack',
+            'notificaciones': 'bi-bell-fill',
+            'mantenimiento': 'bi-tools'
+        };
+
+        // Construimos el HTML
         let html = '';
         for (const [modulo, permisos] of Object.entries(agrupados)) {
-            // Creamos las pastilas (badges) para cada permiso (ej: registrar, eliminar)
-            const badges = permisos.map(p => `<span class="badge ${coloresPermisos[p]} text-capitalize fw-normal px-2 py-1 shadow-sm">${p}</span>`).join(' ');
+            // Badges para los permisos
+            const badges = permisos.map(p => `<span class="badge ${coloresPermisos[p]} fw-normal px-2 py-1 shadow-sm">${p[0] + p.slice(1).toLowerCase()}</span>`).join(' ');
+
+            // Limpiamos el nombre del módulo (ej: GESTIONAR_GASTOS -> gastos)
+            let nombre_limpio = modulo.replace("GESTIONAR_", "").toLowerCase();
             
-            // Creamos la tarjeta por módulo
+            // Buscamos el icono (si no existe, usamos la carpeta abierta por defecto)
+            let icono = iconosModulos[nombre_limpio] || 'bi-folder2-open';
+
+            // Formateamos el título para mostrarlo bonito (Ej: Gastos)
+            let titulo_modulo = nombre_limpio.replace(/_/g, ' ');
+            let titulo_capitalizado = titulo_modulo.split(' ').map(palabra => palabra[0].toUpperCase() + palabra.slice(1)).join(' ');
+
+            // Creamos la tarjeta por módulo, inyectando el icono dinámico
             html += `
                 <div class="border rounded p-3 bg-light bg-opacity-50">
-                    <div class="fw-bold text-dark text-uppercase mb-2" style="font-size: 0.8rem; letter-spacing: 0.5px;">
-                        <i class="bi bi-grid-1x2 me-2 text-secondary"></i>${modulo.replace(/_/g, ' ')}
+                    <div class="fw-bold text-dark mb-2 d-flex align-items-center" style="font-size: 1rem; letter-spacing: 0.5px;">
+                        <i class="bi ${icono} me-2 text-primary fs-5"></i>
+                        ${titulo_capitalizado}
                     </div>
-                    <div class="d-flex flex-wrap gap-2">${badges}</div>
+                    <div class="d-flex flex-wrap gap-2" style="font-size: 1rem;">${badges}</div>
                 </div>
             `;
         }

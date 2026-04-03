@@ -340,7 +340,7 @@ async function cargarWidgetPublicaciones() {
         contenedor.innerHTML = ''; // Borramos los esqueletos
 
         let fragment = document.createDocumentFragment();
-console.log(respuesta)
+
         respuesta.datos.forEach(pub => {
             let fechaFormateada = FormatoFechas.tiempoRelativo(pub.fecha) || pub.fecha;
 

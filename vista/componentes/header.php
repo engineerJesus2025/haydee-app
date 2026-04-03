@@ -59,8 +59,9 @@ $subtitulo_header = $info_header['subtitulo'];
                                         <div class="notif-description text-truncate text-muted mb-1" style="max-width: 95%;" title="<?php echo htmlspecialchars($notificacion["descripcion"]); ?>" data-tooltip="true">
                                             <?php echo htmlspecialchars($notificacion["descripcion"]); ?>
                                         </div>
-                                        <div class="notif-date text-muted" style="font-size: 0.7rem;">
-                                            <i class="bi bi-clock me-1"></i><?php echo date('d/m/Y', strtotime($notificacion['fecha'] ?? 'now')); ?>
+                                        <div class="notif-date text-muted" data-fecha="<?php echo $notificacion['fecha']; ?>" style="font-size: 0.7rem;">
+                                            <i class="bi bi-clock me-1"></i>
+                                            <span class="fecha"><?php echo date('d/m/Y', strtotime($notificacion['fecha'] ?? 'now')); ?></span>
                                         </div>
                                     </div>
                                 </a>

@@ -101,20 +101,9 @@ async function consultar() {
         }
     ];
 
-    // Cambiar 'tabla_proveedores' por la variable que maneje la tabla de ese archivo
     tabla_tipo_gasto = Tablas.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consultar' } });
 
-    const inputBusqueda = document.getElementById("busqueda_global");
-    if (inputBusqueda) {
-        inputBusqueda.addEventListener("input", function(e) {
-            let valor = e.target.value.trim();
-            let filtros = columnas
-                .filter(col => col.field) 
-                .map(col => ({ field: col.field, type: "like", value: valor }));
-
-            tabla_tipo_gasto.setFilter([filtros]);
-        });
-    }
+    Tablas.inicializarBuscadorGlobal(tabla_tipo_gasto, "busqueda_global", columnas);
 }
 
 // Función que lee la memoria de Tabulator (Sin AJAX extra)

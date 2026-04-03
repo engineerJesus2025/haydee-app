@@ -60,28 +60,19 @@ async function consultar() {
         parametrosExtra: { operacion: 'consultar' } 
     });
 
-    // Filtro de búsqueda inteligente
-    const inputBusqueda = document.getElementById("busqueda_global");
-    if (inputBusqueda) {
-        inputBusqueda.addEventListener("input", function(e) {
-            let valor = e.target.value.trim().toLowerCase();
-            
-            if (valor === "") {
-                tabla_notificaciones.clearFilter();
-                return;
-            }
+    // Definimos la lógica de búsqueda específica para Notificaciones
+    const filtroEspecialNotificaciones = (data, valorBuscado) => {
+        let fechaFormateada = FormatoFechas.formatoUsuario(data.fecha).toLowerCase();
+        let estadoTexto = data.leido == 1 ? "leída leida" : "no leída nueva";
+        
+        return String(data.titulo).toLowerCase().includes(valorBuscado) || 
+               String(data.descripcion).toLowerCase().includes(valorBuscado) || 
+               fechaFormateada.includes(valorBuscado) || 
+               estadoTexto.includes(valorBuscado);
+    };
 
-            tabla_notificaciones.setFilter(function(data) {
-                let fechaFormateada = FormatoFechas.formatoUsuario(data.fecha).toLowerCase();
-                let estadoTexto = data.leido == 1 ? "leída leida" : "no leída nueva";
-                
-                return String(data.titulo).toLowerCase().includes(valor) || 
-                       String(data.descripcion).toLowerCase().includes(valor) || 
-                       fechaFormateada.includes(valor) || 
-                       estadoTexto.includes(valor);
-            });
-        });
-    }
+    // Llamamos al Helper pasándole la función
+    Tablas.inicializarBuscadorGlobal(tabla_notificaciones, "busqueda_global", columnas, filtroEspecialNotificaciones);
 
     // Interceptar el clic en "Ver registro" para marcar como leída antes de saltar
     // Interceptar los clics en los botones de la tabla

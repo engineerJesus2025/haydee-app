@@ -672,14 +672,7 @@ async function consultar() {
     // Llamada vital del módulo
     await consultarInformacionFormulario();
 
-    const inputBusqueda = document.getElementById("busqueda_global");
-    if (inputBusqueda) {
-        inputBusqueda.addEventListener("input", function(e) {
-            let valor = e.target.value.trim();
-            let filtros = columnas.filter(col => col.field).map(col => ({ field: col.field, type: "like", value: valor }));
-            tabla_presupuesto.setFilter([filtros]);
-        });
-    }
+    Tablas.inicializarBuscadorGlobal(tabla_presupuesto, "busqueda_global", columnas);
 }
 
 // Función asíncrona para Vista Previa

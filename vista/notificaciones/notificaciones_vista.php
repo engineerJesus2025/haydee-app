@@ -29,11 +29,8 @@
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="card p-4">
-                                <div class="d-flex justify-content-between align-items-center mb-4">                        
-                                    <div class="input-group" style="max-width: 300px;">
-                                        <span class="input-group-text"><i class="bi bi-search"></i></span>
-                                        <input type="text" id="busqueda_global" class="form-control" placeholder="Buscar registro...">
-                                    </div>
+                                <div class="d-flex justify-content-between align-items-center mb-4" style="max-width: 300px;">                        
+                                    <?php require_once ROOT_PATH . "/vista/componentes/buscador_global.php"; ?>
                                 </div>
                                 <div id="tabla_notificaciones" class="tabla-sistema-haydee"></div>
                             </div>

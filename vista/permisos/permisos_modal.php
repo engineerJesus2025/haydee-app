@@ -13,7 +13,7 @@
                             <label for="accion">Acción del Permiso <spam class="text-danger">*</spam></label>
                             <div class="input-group mb-3">
                                 <span class="border border-primary input-group-text"><i class="bi bi-key"></i></span>
-                                <input type="text" class="border border-dark rounded-end form-control" name="accion" id="accion" placeholder="Ej: REGISTRAR" aria-label="accion" maxlength="50">
+                                <input type="text" class="border border-dark rounded-end form-control" name="accion" id="accion" placeholder="Ej: Registrar" aria-label="accion" maxlength="50">
                                 <span class="w-100 invalid-feedback"></span>
                             </div>
                         </div>

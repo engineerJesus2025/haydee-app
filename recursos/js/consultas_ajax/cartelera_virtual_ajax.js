@@ -117,14 +117,7 @@ function consultar() {
 
     tabla_cartelera = Tablas.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consulta' } });
     
-    const inputBusqueda = document.getElementById("busqueda_global");
-    if (inputBusqueda) {
-        inputBusqueda.addEventListener("input", function(e) {
-            let valor = e.target.value.trim();
-            let filtros = columnas.filter(col => col.field).map(col => ({ field: col.field, type: "like", value: valor }));
-            tabla_cartelera.setFilter([filtros]);
-        });
-    }
+    Tablas.inicializarBuscadorGlobal(tabla_cartelera, "busqueda_global", columnas);
 }
 
 /**
@@ -180,13 +173,13 @@ async function modificar_formulario(e) {
 
 // Función para mostrar los detalles de la publicación (cartelera_virtual_ajax.js)
 function mostrarVistaPrevia(data) {
-    // 1. Textos básicos
+    // Textos básicos
     document.getElementById("vista_titulo").textContent = data.titulo;
     document.getElementById("vista_descripcion").textContent = data.descripcion;
     document.getElementById("vista_fecha").textContent = FormatoFechas.formatoUsuario(data.fecha);
     document.getElementById("vista_autor").textContent = data.nombre_usuario;
 
-    // 2. Prioridad (Colores de Bootstrap)
+    // Prioridad (Colores de Bootstrap)
     let vista_prioridad = document.getElementById("vista_prioridad");
     if (data.prioridad === "1") {
         vista_prioridad.className = "badge bg-danger fs-6 px-3 py-2 shadow-sm text-nowrap";
@@ -199,7 +192,7 @@ function mostrarVistaPrevia(data) {
         vista_prioridad.textContent = "Informativo";
     }
 
-    // 3. Lógica de la Imagen (Basada en tus archivos)
+    // Lógica de la Imagen (Basada en tus archivos)
     let imagen = document.getElementById("vista_imagen");
     let mensaje_error = document.getElementById("mensaje_error_imagen");
     let contenedor_imagen = document.getElementById("contenedor_imagen"); // El nuevo div que envuelve la imagen

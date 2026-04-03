@@ -77,7 +77,13 @@ const Tablas = {
                     "data": { "loading": "Cargando registros...", "error": "Error de carga" }
                 }
             },
-            placeholder: "No se encontraron registros",
+            placeholder: `
+                <div class="text-center p-5 text-muted d-flex flex-column align-items-center justify-content-center">
+                    <i class="bi bi-search fs-1 mb-3 opacity-50"></i>
+                    <h5 class="fw-bold mb-1">No se encontraron resultados</h5>
+                    <p class="mb-0 small">No hay registros que coincidan con tu búsqueda o la tabla está vacía.</p>
+                </div>
+            `,
             columnDefaults: {
                 tooltip: true, // Muestra tooltip en las celdas si el texto es muy largo
                 headerTooltip: true // Muestra tooltip en los encabezados
@@ -147,7 +153,13 @@ const Tablas = {
                 return `Mostrando registros del ${startRow} al ${endRow} de un total de ${totalRows} registros`;
             },
             
-            placeholder: "No hay detalles para mostrar",
+            placeholder: `
+                <div class="text-center p-4 text-muted d-flex flex-column align-items-center justify-content-center">
+                    <i class="bi bi-clipboard-x fs-2 mb-2 opacity-50"></i>
+                    <h6 class="fw-bold mb-1">Sin detalles para mostrar</h6>
+                    <p class="mb-0 small">No se encontró información asociada a este registro.</p>
+                </div>
+            `,
             
             // Reutilizamos el formateador responsivo de Bootstrap
             responsiveLayout: "collapse",
@@ -193,5 +205,68 @@ const Tablas = {
 
         return tabla;
     },
+
+    // Actualiza esta función en tu Helper de Tablas
+    inicializarBuscadorGlobal(tablaInstancia, idInput, columnasFiltro, filtroPersonalizado = null) {
+        const inputBusqueda = document.getElementById(idInput);
+        const btnLimpiar = document.getElementById("btn_limpiar_busqueda");
+        const iconoBusqueda = document.getElementById("icono_busqueda");
+
+        if (!inputBusqueda) return; 
+
+        let timeoutBusqueda;
+
+        inputBusqueda.addEventListener("input", function(e) {
+            clearTimeout(timeoutBusqueda);
+            let valor = e.target.value.trim().toLowerCase(); // Aseguramos minúsculas aquí
+
+            // Lógica visual
+            if (valor.length > 0) {
+                btnLimpiar?.classList.remove("d-none");
+                iconoBusqueda?.classList.add("text-primary");
+                inputBusqueda.classList.replace("rounded-end","border-end-0");
+            } else {
+                btnLimpiar?.classList.add("d-none");
+                iconoBusqueda?.classList.remove("text-primary");
+                inputBusqueda.classList.replace("border-end-0","rounded-end");
+            }
+
+            // Lógica de búsqueda (Debounce)
+            timeoutBusqueda = setTimeout(() => {
+                if (valor === "") {
+                    tablaInstancia.clearFilter();
+                } else {
+                    if (filtroPersonalizado && typeof filtroPersonalizado === 'function') {
+                        // Si el módulo envió una función propia, la usamos
+                        tablaInstancia.setFilter(function(data) {
+                            return filtroPersonalizado(data, valor);
+                        });
+                    } else {
+                        // Si no, usamos el comportamiento por defecto (automático)
+                        let filtros = columnasFiltro
+                            .filter(col => col.field) 
+                            .map(col => ({ field: col.field, type: "like", value: valor }));
+                        tablaInstancia.setFilter([filtros]);
+                    }
+                }
+            }, 300); 
+        });
+
+        if (btnLimpiar) {
+            btnLimpiar.addEventListener("click", () => {
+                inputBusqueda.value = "";
+                inputBusqueda.dispatchEvent(new Event("input"));
+                inputBusqueda.focus();
+            });
+        }
+
+        // Atajo de teclado global
+        document.addEventListener("keydown", function(e) {
+            if (e.key === "/" && e.target.tagName !== "INPUT" && e.target.tagName !== "TEXTAREA") {
+                e.preventDefault();
+                inputBusqueda.focus();
+            }
+        });
+    }
 
 };

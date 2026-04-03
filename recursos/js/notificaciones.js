@@ -1,7 +1,3 @@
-/**
- * notificaciones.js
- * Maneja la lógica del menú desplegable de notificaciones en el header.
- */
 document.addEventListener('DOMContentLoaded', () => {
     
     // Función para comunicarse con el servidor
@@ -100,9 +96,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.location.href = linkNotificacion.href;
             }
         });
+
+        // Cambiar fecha a tiempo relativo
+        document.querySelectorAll('.notif-date').forEach(div_fecha => {
+            const fecha = div_fecha.dataset.fecha;
+            if (fecha) {
+                const tiempor_relativo = FormatoFechas.tiempoRelativo(fecha);
+                div_fecha.querySelector('.fecha').innerText = tiempor_relativo;
+            }
+        });
     }
 
-    // MARCAR TODAS COMO LEÍDAS (Corregido el ID)
+    // MARCAR TODAS COMO LEÍDAS
     const botonMarcarTodas = document.getElementById('marcar-todas-leidas');
     if (botonMarcarTodas) {
         botonMarcarTodas.addEventListener('click', async (e) => {

@@ -1,4 +1,4 @@
-let data_table_apartamentos;
+let tabla_apartamentos;
 let data_table_habitantes;
 let id_apartamento_seleccionado;
 
@@ -130,17 +130,10 @@ async function consultarApartamentos() {
         }
     };
 
-    data_table_apartamentos = Tablas.cargarTabulador("tabla_apartamentos", "", columnas, opcionesExtra);
+    tabla_apartamentos = Tablas.cargarTabulador("tabla_apartamentos", "", columnas, opcionesExtra);
 
     // 4. BUSCADOR GLOBAL
-    const inputBusqueda = document.getElementById("busqueda_global");
-    if (inputBusqueda) {
-        inputBusqueda.addEventListener("input", function(e) {
-            let valor = e.target.value.trim();
-            let filtros = columnas.filter(col => col.field).map(col => ({ field: col.field, type: "like", value: valor }));
-            data_table_apartamentos.setFilter([filtros]);
-        });
-    }
+    Tablas.inicializarBuscadorGlobal(tabla_apartamentos, "busqueda_global", columnas);
 }
 
 async function registrarApartamento() {
@@ -151,7 +144,7 @@ async function registrarApartamento() {
 
     Validador.procesarRespuesta(respuesta, () => {
         modalApartamento.hide();
-        data_table_apartamentos.replaceData();
+        tabla_apartamentos.replaceData();
     });
 }
 
@@ -190,7 +183,7 @@ async function modificarApartamento() {
     const respuesta = await Peticiones.enviar(datos, "", true);
     Validador.procesarRespuesta(respuesta, () => {
         modalApartamento.hide();
-        data_table_apartamentos.replaceData();
+        tabla_apartamentos.replaceData();
     });
 }
 
@@ -201,7 +194,7 @@ async function eliminarApartamento(id) {
 
     const respuesta = await Peticiones.enviar(datos);
     Validador.procesarRespuesta(respuesta, () => {
-        data_table_apartamentos.replaceData();
+        tabla_apartamentos.replaceData();
     });
 }
 

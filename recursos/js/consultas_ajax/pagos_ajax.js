@@ -279,14 +279,7 @@ async function consultar() {
 
     tabla_pagos = Tablas.cargarTabulador("tabla_pagos", "", columnas);
 
-    const inputBusqueda = document.getElementById("busqueda_global");
-    if (inputBusqueda) {
-        inputBusqueda.addEventListener("input", function(e) {
-            let valor = e.target.value.trim();
-            let filtros = columnas.filter(col => col.field).map(col => ({ field: col.field, type: "like", value: valor }));
-            tabla_pagos.setFilter([filtros]);
-        });
-    }
+    Tablas.inicializarBuscadorGlobal(tabla_pagos, "busqueda_global", columnas);
 }
 
 // ============================================================

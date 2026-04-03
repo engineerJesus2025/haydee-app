@@ -11,4 +11,5 @@
 <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/tabulador.css">
 <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/notificaciones.css">
 <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/estilos_modal_carga.css">
+<link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/busqueda_tabla.css">
 <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/driver.css">

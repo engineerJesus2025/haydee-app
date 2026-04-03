@@ -112,18 +112,7 @@ async function consultar() {
     
     tabla_anio_fiscal = Tablas.cargarTabulador(contenedor.id, "", columnas, opcionesExtra);
 
-    // 5. Buscador Global Dinámico
-    const inputBusqueda = document.getElementById("busqueda_global");
-    if (inputBusqueda) {
-        inputBusqueda.addEventListener("input", function(e) {
-            let valor = e.target.value.trim();
-            let filtros = columnas
-                .filter(col => col.field) 
-                .map(col => ({ field: col.field, type: "like", value: valor }));
-
-            tabla_anio_fiscal.setFilter([filtros]);
-        });
-    }
+    Tablas.inicializarBuscadorGlobal(tabla_anio_fiscal, "busqueda_global", columnas);
 }
 
 // Función que lee la memoria de Tabulator (Sin AJAX extra)
