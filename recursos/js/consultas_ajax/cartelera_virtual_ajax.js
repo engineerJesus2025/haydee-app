@@ -299,94 +299,26 @@ document.querySelector("#boton_eliminar_imagen").addEventListener("click", funct
 });
 
 // ============================================================
-// MÓDULO DE AYUDA (DRIVER.JS) - CARTELERA VIRTUAL
+// MÓDULO DE AYUDA INTERACTIVA
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
-    const driver = window.driver.js.driver;
-    let tourActivo = null;
-
-    // El micro-retraso infalible para anclar la burbuja con precisión
-    const alinearBurbuja = () => {
-        setTimeout(() => {
-            window.dispatchEvent(new Event('resize'));
-        }, 10);
-    };
-
-    // 1. CONFIGURACIÓN DE LA VISTA PRINCIPAL
-    const configPrincipal = {
-        showProgress: true,
-        animate: true,
-        smoothScroll: false, 
-        allowKeyboardControl: false,
-        nextBtnText: 'Siguiente ➔',
-        prevBtnText: '⬅ Anterior',
-        doneBtnText: 'Entendido',
-        progressText: 'Paso {{current}} de {{total}}',
-        
-        onHighlightStarted: (element) => {
-            if (element) {
-                element.scrollIntoView({ behavior: 'instant', block: 'center' });
-                alinearBurbuja();
-            }
-        },
-
-        steps: [
+    const stepsPrincipal = [
             { element: '.page-header', popover: { title: 'Cartelera Virtual', description: 'Bienvenido. Aquí puedes publicar avisos, noticias y comunicados importantes para todos los residentes del condominio.', side: "bottom", align: 'center' } },
             { element: 'button[data-bs-target="#modal_cartelera"]', popover: { title: 'Nueva Publicación', description: 'Haz clic aquí para crear un nuevo aviso o subir un afiche informativo a la cartelera.', side: "bottom", align: 'start' } },
             { element: '#tabla_cartelera_virtual', popover: { title: 'Lista de Publicaciones', description: 'Aquí verás todos los comunicados. Puedes ver cómo lucen (Vista previa), editarlos o eliminarlos.', side: "top", align: 'center' } }
-        ]
-    };
+        ];
 
-    // 2. CONFIGURACIÓN DEL MODAL DE CARTELERA
-    const configModalCartelera = {
-        showProgress: true,
-        animate: true, 
-        smoothScroll: false, 
-        allowKeyboardControl: false, 
-        nextBtnText: 'Siguiente ➔',
-        prevBtnText: '⬅ Anterior',
-        doneBtnText: 'Entendido',
-        progressText: 'Paso {{current}} de {{total}}',
-        
-        onHighlightStarted: (element) => {
-            if (element) {
-                element.scrollIntoView({ behavior: 'instant', block: 'center' });
-                alinearBurbuja();
-            }
-        },
-
-        steps: [
+    const stepsModal = [
             { element: '#titulo', popover: { title: 'Título', description: 'Escribe un título llamativo y claro para tu comunicado.', side: 'bottom', align: 'start' } },
             { element: '#descripcion', popover: { title: 'Descripción', description: 'Redacta el contenido detallado de tu publicación aquí.', side: 'bottom', align: 'start' } },
             { element: '#imagen', popover: { title: 'Imagen (Opcional)', description: 'Puedes adjuntar una foto o imagen para que la publicación sea mucho más visual.', side: 'top', align: 'start' } },
             { element: '#prioridad', popover: { title: 'Prioridad', description: 'Clasifica la urgencia del aviso (Alta, Media o Baja) para llamar la atención rápidamente.', side: 'top', align: 'start' } },
             { element: '#boton_formulario', popover: { title: 'Guardar', description: 'Haz clic aquí para publicar tu aviso en la cartelera virtual.', side: 'top', align: 'center' } }
-        ]
-    };
+        ];
 
-    // 3. LÓGICA DEL BOTÓN FLOTANTE
-    const btnAyuda = document.getElementById('btn-ayuda-tour');
-    const modalCarteleraHTML = document.getElementById('modal_cartelera');
-
-    if(btnAyuda) {
-        btnAyuda.addEventListener('click', () => {
-            if (modalCarteleraHTML && modalCarteleraHTML.classList.contains('show')) {
-                tourActivo = driver(configModalCartelera);
-                tourActivo.drive();
-            } else {
-                window.scrollTo({ top: 0, behavior: 'instant' });
-                tourActivo = driver(configPrincipal);
-                tourActivo.drive();
-            }
-        });
-    }
-
-    // Limpiar al cerrar el modal
-    if (modalCarteleraHTML) {
-        modalCarteleraHTML.addEventListener('hide.bs.modal', () => {
-            if (tourActivo) {
-                try { tourActivo.destroy(); } catch (e) {}
-            }
-        });
-    }
+    AyudaInteractiva.inicializar({
+        idModal: 'modal_cartelera',
+        pasosPrincipal: stepsPrincipal,
+        pasosModal: stepsModal
+    });
 });

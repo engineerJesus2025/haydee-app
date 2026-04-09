@@ -188,45 +188,15 @@ document.getElementById('modal_proveedores').addEventListener('hide.bs.modal', (
 });
 
 // ============================================================
-// MÓDULO DE AYUDA (DRIVER.JS) - PROVEEDORES
+// MÓDULO DE AYUDA INTERACTIVA
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
-    const driver = window.driver.js.driver;
-    let tourActivo = null;
-
-    // Micro-retraso para asegurar que la burbuja se ancle con precisión milimétrica
-    const alinearBurbuja = () => {
-        setTimeout(() => {
-            window.dispatchEvent(new Event('resize'));
-        }, 10);
-    };
-
-    // Configuración base
-    const configBase = {
-        showProgress: true,
-        animate: true,
-        smoothScroll: false, 
-        allowKeyboardControl: false,
-        nextBtnText: 'Siguiente ➔',
-        prevBtnText: '⬅ Anterior',
-        doneBtnText: 'Entendido',
-        progressText: 'Paso {{current}} de {{total}}',
-        onHighlightStarted: (element) => {
-            if (element) {
-                element.scrollIntoView({ behavior: 'instant', block: 'center' });
-                alinearBurbuja();
-            }
-        }
-    };
-
-    // 1. TOUR VISTA PRINCIPAL
     const stepsPrincipal = [
         { element: '.page-header', popover: { title: 'Gestión de Proveedores', description: 'Aquí administras el directorio de empresas y personas que prestan servicios al condominio.', side: "bottom", align: 'center' } },
         { element: 'button[data-bs-target="#modal_proveedores"]', popover: { title: 'Nuevo Proveedor', description: 'Registra un nuevo prestador de servicios (ej: Hidrolara, Corpoelec, Jardineros) para poder asignarle gastos.', side: "bottom", align: 'start' } },
         { element: '#tabla_proveedores', popover: { title: 'Directorio', description: 'Lista de todos los proveedores registrados. Puedes editar sus datos o eliminarlos si ya no prestan servicio.', side: 'top', align: 'center' } }
     ];
 
-    // 2. TOUR MODAL DE REGISTRO
     const stepsModal = [
         { element: '#nombre_proveedor', popover: { title: 'Razón Social', description: 'Escribe el nombre de la empresa o la persona natural.', side: 'bottom', align: 'start' } },
         { element: '#servicio', popover: { title: 'Tipo de Servicio', description: 'Indica qué servicio presta (Ej: Agua, Electricidad, Limpieza, Mantenimiento).', side: 'bottom', align: 'start' } },
@@ -235,31 +205,9 @@ document.addEventListener('DOMContentLoaded', () => {
         { element: '#boton_formulario', popover: { title: 'Guardar', description: 'Registra al proveedor en el sistema.', side: 'top', align: 'center' } }
     ];
 
-    // LÓGICA DEL BOTÓN FLOTANTE
-    const btnAyuda = document.getElementById('btn-ayuda-tour');
-    const modalHTML = document.getElementById('modal_proveedores');
-
-    if(btnAyuda) {
-        btnAyuda.addEventListener('click', () => {
-            if (modalHTML && modalHTML.classList.contains('show')) {
-                // Si el modal está abierto, lanzamos el tour del formulario
-                tourActivo = driver({ ...configBase, steps: stepsModal });
-                tourActivo.drive();
-            } else {
-                // Si estamos en la tabla principal
-                window.scrollTo({ top: 0, behavior: 'instant' });
-                tourActivo = driver({ ...configBase, steps: stepsPrincipal });
-                tourActivo.drive();
-            }
-        });
-    }
-
-    // Limpieza de seguridad al cerrar el modal
-    if (modalHTML) {
-        modalHTML.addEventListener('hide.bs.modal', () => {
-            if (tourActivo) {
-                try { tourActivo.destroy(); } catch (e) {}
-            }
-        });
-    }
+    AyudaInteractiva.inicializar({
+        idModal: 'modal_proveedores',
+        pasosPrincipal: stepsPrincipal,
+        pasosModal: stepsModal
+    });
 });

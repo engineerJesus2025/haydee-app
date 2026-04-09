@@ -12,10 +12,19 @@
 <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/Tablas.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/FormatoFechas.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/Notificaciones.js"></script>
+<script src="<?php echo URL_BASE; ?>recursos/js/ayuda/AyudaInteractiva.js"></script>
 <!-- Script personalizados globales -->
 <script src="<?php echo URL_BASE; ?>recursos/js/header.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/js/notificaciones.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/js/driver.js"></script>
+
+<!-- Variables VAPID: -->
+<script>
+    // Pasamos la variable de PHP a JavaScript de forma segura
+    const PUBLIC_VAPID_KEY = "<?php echo VAPID_PUBLIC_KEY; ?>";
+    const URL_BASE = "<?php echo URL_BASE; ?>";
+</script>
+<script src="<?php echo URL_BASE; ?>recursos/js/push_registro.js"></script>
 
 <!-- Variable de permisos -->
 <?php

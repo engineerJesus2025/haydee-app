@@ -96,16 +96,25 @@
 @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } 
 @keyframes animloader { 50% { transform: scale(1) translate(-50%, -50%); } }
 
-/* ========================================================================== */
-/* ================== NUEVOS ESTILOS DEL DASHBOARD ========================== */
-/* ========================================================================== */
+/* =============== NUEVOS ESTILOS DEL DASHBOARD ================== */
 
+/* --- EFECTOS HOVER PARA TARJETAS DASHBOARD Y KPIs --- */
 .dashboard-card { 
     border: none; 
     border-radius: 1.2rem; 
     box-shadow: 0 4px 15px rgba(0,0,0,0.03); 
     background-color: #ffffff; 
+    /* Agregamos una transición suave para la sombra y el movimiento */
+    transition: transform 0.3s ease, box-shadow 0.3s ease; 
 }
+
+/* Al pasar el ratón: elevamos la tarjeta y hacemos la sombra más pronunciada */
+.dashboard-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 25px rgba(0,0,0,0.08);
+}
+
+/* Animamos los iconos para que reaccionen cuando el cursor está sobre la tarjeta */
 .icon-box { 
     width: 48px; 
     height: 48px; 
@@ -113,7 +122,13 @@
     display: flex; 
     align-items: center; 
     justify-content: center; 
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Efecto rebote */
 }
+
+.dashboard-card:hover .icon-box {
+    transform: scale(1.15) rotate(3deg); /* Crece y gira muy ligeramente */
+}
+
 .icon-box-blue { background-color: #e6f0ff; color: #3b82f6; }
 .icon-box-green { background-color: #dcfce7; color: #22c55e; }
 .icon-box-yellow { background-color: #fef3c7; color: #f59e0b; }
@@ -141,6 +156,7 @@
     gap: 12px;
     width: 100%;
 }
+/* --- EFECTOS HOVER PARA BADGES DE APARTAMENTOS --- */
 .apt-badge { 
     height: 60px; 
     border-radius: 10px; 
@@ -152,6 +168,17 @@
     font-weight: bold; 
     margin: 0; 
     border: 1px solid transparent; 
+    /* Añadimos transición y cursor tipo mano para incitar interacción */
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+    cursor: pointer;
+}
+
+/* Al pasar el ratón sobre un apartamento */
+.apt-badge:hover {
+    transform: scale(1.08); /* Crece un 8% */
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1); /* Sombra suave */
+    filter: brightness(0.95); /* Se oscurece un poquitito para dar contraste */
+    z-index: 2; /* Asegura que se superponga a los vecinos al crecer */
 }
 .apt-ocupado { background-color: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
 .apt-libre { background-color: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
@@ -169,14 +196,27 @@
     margin-right: 15px; 
     flex-shrink: 0;
 }
+/* --- EFECTOS HOVER PARA ÚLTIMAS PUBLICACIONES --- */
 .publi-item {
-    transition: transform 0.2s;
-    border: 1px solid #f1f5f9;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important; 
+    border: 1px solid transparent; 
 }
+
 .publi-item:hover {
-    transform: translateX(5px);
-    border-color: #e2e8f0;
+    margin-left: 8px !important;
+    margin-right: -8px !important;
+    background-color: #eef2ff !important; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.06) !important;
+    cursor: pointer; 
 }
+
+.publi-item .activity-icon {
+    transition: transform 0.3s ease !important;
+}
+
+.publi-item:hover .activity-icon {
+    transform: scale(1.15) rotate(-5deg) !important; /* El ícono crece un poquito y se inclina */
+} 
 
 /* --- ESTILOS PARA TARJETAS DE PUBLICACIONES --- */
 .tarjeta-publicacion {
@@ -214,4 +254,93 @@
     -webkit-line-clamp: 3; /* Máximo 3 líneas, luego muestra "..." */
     -webkit-box-orient: vertical;
     overflow: hidden;
+}
+
+/* --- EFECTOS HOVER PARA ACTIVIDAD RECIENTE --- */
+#contenedor-actividad > div {
+    transition: background-color 0.2s ease, transform 0.2s ease, padding 0.2s ease;
+    border-radius: 8px;
+    /* Agregamos padding transparente base para que el movimiento sea fluido */
+    padding: 0.5rem; 
+    margin-left: -0.5rem; /* Compensamos el padding visualmente */
+    margin-right: -0.5rem;
+}
+
+#contenedor-actividad > div:hover {
+    background-color: #f8fafc; /* Un gris-azulado extremadamente claro */
+    transform: translateX(6px); /* Se mueve a la derecha */
+}
+
+/* Evitamos que el borde inferior se vea feo al hacer hover cambiando su opacidad */
+#contenedor-actividad > div.border-bottom {
+    border-bottom-color: #e2e8f0 !important;
+}
+
+
+/* --- ESTILOS PARA AVATARES Y TIMELINE DE ACTIVIDAD --- */
+
+/* Contenedor del Avatar + Insignia */
+.avatar-container {
+    position: relative;
+    width: 42px;
+    height: 42px;
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+/* El círculo con las iniciales */
+.user-avatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* La insignia pequeñita de la acción */
+.action-badge {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white; /* Borde blanco para separarlo del avatar */
+    background-color: white; /* Fondo por si el SVG es transparente */
+}
+
+/* Separadores de fecha (Timeline) */
+.timeline-date-separator {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 1.5rem 0 1rem 0;
+    color: #64748b;
+    font-size: 0.75rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.timeline-date-separator::before,
+.timeline-date-separator::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.timeline-date-separator:not(:empty)::before {
+    margin-right: .5em;
+}
+
+.timeline-date-separator:not(:empty)::after {
+    margin-left: .5em;
 }

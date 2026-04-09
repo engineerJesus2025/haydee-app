@@ -11,6 +11,8 @@ Sesiones::verificarPermiso(GESTIONAR_ANIO_FISCAL, CONSULTAR);
 if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
 
+    Sesiones::verificarPermisoAccion(GESTIONAR_ANIO_FISCAL, $operacion);
+
     $reglas = AnioFiscal::obtenerReglas($operacion);
 
     if (!empty($reglas)) {

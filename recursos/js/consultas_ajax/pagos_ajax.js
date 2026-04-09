@@ -536,61 +536,16 @@ async function mostrarVistaPrevia(id) {
 }
 
 // ============================================================
-// MÓDULO DE AYUDA (DRIVER.JS) - PAGOS
+// MÓDULO DE AYUDA INTERACTIVA
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
-    const driver = window.driver.js.driver;
-    let tourActivo = null;
-
-    // Función clave para recalcular coordenadas cuando el modal hace scroll
-    const forzarRecalculo = () => {
-        window.dispatchEvent(new Event('resize'));
-    };
-
-    // 1. CONFIGURACIÓN DE LA VISTA PRINCIPAL
-    const configPrincipal = {
-        showProgress: true,
-        animate: true,
-        nextBtnText: 'Siguiente ➔',
-        prevBtnText: '⬅ Anterior',
-        doneBtnText: 'Entendido',
-        progressText: 'Paso {{current}} de {{total}}',
-        steps: [
+    const stepsPrincipal = [
             { element: '.page-header', popover: { title: 'Módulo de Pagos', description: 'Bienvenido. Desde aquí puedes registrar, verificar y gestionar los pagos de las mensualidades del condominio.', side: "bottom", align: 'start' } },
             { element: '[data-bs-target="#modal_pagos"]', popover: { title: 'Nuevo Pago', description: 'Haz clic aquí para abrir el formulario y reportar un nuevo pago de un apartamento.', side: "right", align: 'start' } },
             { element: '#tabla_pagos', popover: { title: 'Tabla de Registros', description: 'Aquí verás el historial de pagos. Usa los botones de acción para Ver detalles, Generar Recibo (PDF), Editar o Anular un pago.', side: "top", align: 'center' } }
-        ]
-    };
+        ];
 
-    // 2. CONFIGURACIÓN DEL MODAL DE PAGOS
-    const configModal = {
-        showProgress: true,
-        animate: true,
-        smoothScroll: false, // Apagado para usar nuestro scroll matemático
-        allowKeyboardControl: false, // Para que Bootstrap no pelee por el enfoque
-        nextBtnText: 'Siguiente ➔',
-        prevBtnText: '⬅ Anterior',
-        doneBtnText: 'Entendido',
-        progressText: 'Paso {{current}} de {{total}}',
-        
-        onHighlightStarted: (element) => {
-            if (element) {
-                // Scroll instantáneo y recálculo de coordenadas
-                element.scrollIntoView({ behavior: 'auto', block: 'center' });
-                setTimeout(forzarRecalculo, 50);
-            }
-        },
-        onPopoverRender: () => {
-            const modal = document.getElementById('modal_pagos');
-            if (modal) modal.addEventListener('scroll', forzarRecalculo);
-        },
-        onDestroyed: () => {
-            const modal = document.getElementById('modal_pagos');
-            if (modal) modal.removeEventListener('scroll', forzarRecalculo);
-        },
-
-        // Recorrido adaptado a los elementos de pagos_modal.php
-        steps: [
+    const stepsModal = [
             { element: '#apartamento_id', popover: { title: 'Apartamento', description: 'Primero, selecciona el apartamento que está realizando el pago.', side: 'bottom', align: 'start' } },
             { element: '#mensualidad_id', popover: { title: 'Mensualidad a Pagar', description: 'Al elegir el apartamento, el sistema buscará sus meses pendientes. Selecciona cuál se está pagando.', side: 'bottom', align: 'start' } },
             { element: '#monto_mensualidad', popover: { title: 'Deuda Total', description: 'Aquí aparecerá reflejada automáticamente la deuda total (con recargos si aplica) de esa mensualidad.', side: 'bottom', align: 'start' } },
@@ -600,33 +555,11 @@ document.addEventListener('DOMContentLoaded', () => {
             { element: '#agregar_detalle', popover: { title: 'Pagos Mixtos', description: '¿Pagó una parte en divisas y otra en pago móvil? Usa este botón para añadir varios métodos de pago a una misma mensualidad.', side: 'top', align: 'center' } },
             { element: '#observacion', popover: { title: 'Observación', description: 'Puedes añadir una nota aclaratoria sobre este pago si lo consideras necesario.', side: 'top', align: 'start' } },
             { element: '#boton_formulario', popover: { title: 'Procesar Pago', description: 'Verifica que todo esté correcto y haz clic aquí para registrar el pago en el sistema.', side: 'top', align: 'center' } }
-        ]
-    };
+        ];
 
-    // 3. LÓGICA DEL BOTÓN FLOTANTE INTELIGENTE
-    const btnAyuda = document.getElementById('btn-ayuda-tour');
-    const modalPagos = document.getElementById('modal_pagos');
-
-    if(btnAyuda) {
-        btnAyuda.addEventListener('click', () => {
-            // Verificamos si el modal de pagos está abierto en pantalla
-            if (modalPagos && window.getComputedStyle(modalPagos).display === 'block') {
-                modalPagos.scrollTo(0, 0); // Iniciamos el tour desde arriba
-                tourActivo = driver(configModal);
-                tourActivo.drive();
-            } else {
-                tourActivo = driver(configPrincipal);
-                tourActivo.drive();
-            }
-        });
-    }
-
-    // Cancelar el tour si el usuario cierra la ventana de golpe
-    if (modalPagos) {
-        modalPagos.addEventListener('hide.bs.modal', () => {
-            if (tourActivo) {
-                try { tourActivo.destroy(); } catch (e) {}
-            }
-        });
-    }
+    AyudaInteractiva.inicializar({
+        idModal: 'modal_pagos',
+        pasosPrincipal: stepsPrincipal,
+        pasosModal: stepsModal
+    });
 });

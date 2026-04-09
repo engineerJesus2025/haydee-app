@@ -258,80 +258,53 @@ async function eliminar(id) {
 }
 
 // ============================================================
-// MÓDULO DE AYUDA (DRIVER.JS) - BANCOS
+// MÓDULO DE AYUDA - BANCOS
+// ============================================================
+// document.addEventListener('DOMContentLoaded', () => {
+//     // Usamos el Helper tal como usamos Tablas.cargarTabulador()
+//     AyudaInteractiva.inicializar({
+//         idModal: 'modal_banco',
+//         pasosPrincipal: [
+//             { element: '.page-header', popover: { title: 'Cuentas Bancarias', description: 'Aquí gestionas los bancos receptores donde el condominio recibe los pagos.', side: "bottom", align: 'center' } },
+//             { element: 'button[data-bs-target="#modal_banco"]', popover: { title: 'Registrar Banco', description: 'Agrega una nueva cuenta bancaria o billetera digital.', side: "bottom", align: 'start' } },
+//             { element: '#tabla_banco', popover: { title: 'Cuentas Activas', description: 'Listado de cuentas registradas.', side: "top", align: 'center' } }
+//         ],
+//         pasosModal: [
+//         { element: '#nombre_banco', popover: { title: 'Entidad Bancaria', description: 'Nombre del banco o plataforma (ej: Banco de Venezuela, Banesco, Binance).', side: 'bottom', align: 'start' } },
+//         { element: '#codigo', popover: { title: 'Código Bancario', description: 'Los primeros 4 dígitos que identifican al banco (ej: 0102).', side: 'bottom', align: 'start' } },
+//         { element: '#numero_cuenta', popover: { title: 'Número de Cuenta', description: 'El número completo de la cuenta o la dirección de la billetera/correo (si es Zelle/Paypal).', side: 'top', align: 'start' } },
+//         { element: '#tipo_cuenta', popover: { title: 'Tipo de Cuenta', description: 'El tipo de cuenta utilizado (si es Ahorro o Corriente).', side: 'top', align: 'start' } },
+//         { element: '#telefono_afiliado', popover: { title: 'Teléfono Afiliado', description: 'Número de teléfono asociado a la cuenta para validaciones de Pago Móvil.', side: 'top', align: 'start' } },
+//         { element: '#rif', popover: { title: 'Titular', description: 'Cédula o RIF del titular de la cuenta bancaria.', side: 'top', align: 'start' } },
+//         { element: '#boton_formulario', popover: { title: 'Guardar', description: 'Registra la cuenta para empezar a recibir operaciones.', side: 'top', align: 'center' } }
+//         ]
+//     });
+// });
+
+
+// ============================================================
+// MÓDULO DE AYUDA INTERACTIVA
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
-    const driver = window.driver.js.driver;
-    let tourActivo = null;
-
-    // Función de alineación precisa con micro-retraso
-    const alinearBurbuja = () => {
-        setTimeout(() => {
-            window.dispatchEvent(new Event('resize'));
-        }, 10);
-    };
-
-    // Configuración Base
-    const configBase = {
-        showProgress: true,
-        animate: true,
-        smoothScroll: false, 
-        allowKeyboardControl: false,
-        nextBtnText: 'Siguiente ➔',
-        prevBtnText: '⬅ Anterior',
-        doneBtnText: 'Entendido',
-        progressText: 'Paso {{current}} de {{total}}',
-        onHighlightStarted: (element) => {
-            if (element) {
-                element.scrollIntoView({ behavior: 'instant', block: 'center' });
-                alinearBurbuja();
-            }
-        }
-    };
-
-    // 1. TOUR VISTA PRINCIPAL
     const stepsPrincipal = [
-        { element: '.page-header', popover: { title: 'Cuentas Bancarias', description: 'Aquí gestionas los bancos receptores donde el condominio recibe los pagos de los propietarios.', side: "bottom", align: 'center' } },
-        { element: 'button[data-bs-target="#modal_banco"]', popover: { title: 'Registrar Banco', description: 'Agrega una nueva cuenta bancaria (nacional o internacional) o billetera digital al sistema.', side: "bottom", align: 'start' } },
-        { element: '#tabla_banco', popover: { title: 'Cuentas Activas', description: 'Listado de cuentas registradas. Estos datos aparecerán en los reportes y opciones de pago para los usuarios.', side: "top", align: 'center' } }
-    ];
+            { element: '.page-header', popover: { title: 'Cuentas Bancarias', description: 'Aquí gestionas los bancos receptores donde el condominio recibe los pagos.', side: "bottom", align: 'center' } },
+            { element: 'button[data-bs-target="#modal_banco"]', popover: { title: 'Registrar Banco', description: 'Agrega una nueva cuenta bancaria o billetera digital.', side: "bottom", align: 'start' } },
+            { element: '#tabla_banco', popover: { title: 'Cuentas Activas', description: 'Listado de cuentas registradas.', side: "top", align: 'center' } }
+        ];
 
-    // 2. TOUR MODAL DE REGISTRO
     const stepsModal = [
-        { element: '#nombre_banco', popover: { title: 'Entidad Bancaria', description: 'Nombre del banco o plataforma (ej: Banco de Venezuela, Banesco, Binance).', side: 'bottom', align: 'start' } },
-        { element: '#codigo', popover: { title: 'Código Bancario', description: 'Los primeros 4 dígitos que identifican al banco (ej: 0102).', side: 'bottom', align: 'start' } },
-        { element: '#numero_cuenta', popover: { title: 'Número de Cuenta', description: 'El número completo de la cuenta o la dirección de la billetera/correo (si es Zelle/Paypal).', side: 'top', align: 'start' } },
-        { element: '#tipo_cuenta', popover: { title: 'Tipo de Cuenta', description: 'El tipo de cuenta utilizado (si es Ahorro o Corriente).', side: 'top', align: 'start' } },
-        { element: '#telefono_afiliado', popover: { title: 'Teléfono Afiliado', description: 'Número de teléfono asociado a la cuenta para validaciones de Pago Móvil.', side: 'top', align: 'start' } },
-        { element: '#rif', popover: { title: 'Titular', description: 'Cédula o RIF del titular de la cuenta bancaria.', side: 'top', align: 'start' } },
-        { element: '#boton_formulario', popover: { title: 'Guardar', description: 'Registra la cuenta para empezar a recibir operaciones.', side: 'top', align: 'center' } }
-    ];
+            { element: '#nombre_banco', popover: { title: 'Entidad Bancaria', description: 'Nombre del banco o plataforma (ej: Banco de Venezuela, Banesco, Binance).', side: 'bottom', align: 'start' } },
+            { element: '#codigo', popover: { title: 'Código Bancario', description: 'Los primeros 4 dígitos que identifican al banco (ej: 0102).', side: 'bottom', align: 'start' } },
+            { element: '#numero_cuenta', popover: { title: 'Número de Cuenta', description: 'El número completo de la cuenta o la dirección de la billetera/correo (si es Zelle/Paypal).', side: 'top', align: 'start' } },
+            { element: '#tipo_cuenta', popover: { title: 'Tipo de Cuenta', description: 'El tipo de cuenta utilizado (si es Ahorro o Corriente).', side: 'top', align: 'start' } },
+            { element: '#telefono_afiliado', popover: { title: 'Teléfono Afiliado', description: 'Número de teléfono asociado a la cuenta para validaciones de Pago Móvil.', side: 'top', align: 'start' } },
+            { element: '#rif', popover: { title: 'Titular', description: 'Cédula o RIF del titular de la cuenta bancaria.', side: 'top', align: 'start' } },
+            { element: '#boton_formulario', popover: { title: 'Guardar', description: 'Registra la cuenta para empezar a recibir operaciones.', side: 'top', align: 'center' } }
+        ];
 
-    // LÓGICA DEL BOTÓN FLOTANTE
-    const btnAyuda = document.getElementById('btn-ayuda-tour');
-    const modalHTML = document.getElementById('modal_banco');
-
-    if(btnAyuda) {
-        btnAyuda.addEventListener('click', () => {
-            if (modalHTML && modalHTML.classList.contains('show')) {
-                // Si el modal está abierto
-                tourActivo = driver({ ...configBase, steps: stepsModal });
-                tourActivo.drive();
-            } else {
-                // Si estamos en la vista principal
-                window.scrollTo({ top: 0, behavior: 'instant' });
-                tourActivo = driver({ ...configBase, steps: stepsPrincipal });
-                tourActivo.drive();
-            }
-        });
-    }
-
-    // Limpieza de seguridad
-    if (modalHTML) {
-        modalHTML.addEventListener('hide.bs.modal', () => {
-            if (tourActivo) {
-                try { tourActivo.destroy(); } catch (e) {}
-            }
-        });
-    }
+    AyudaInteractiva.inicializar({
+        idModal: 'modal_banco',
+        pasosPrincipal: stepsPrincipal,
+        pasosModal: stepsModal
+    });
 });

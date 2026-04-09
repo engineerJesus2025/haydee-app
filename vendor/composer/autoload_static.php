@@ -10,14 +10,15 @@ class ComposerStaticInitcbe1707b410f2f343a82925692838e3a
         '6e3fae29631ef280660b3cdad06f25a8' => __DIR__ . '/..' . '/symfony/deprecation-contracts/function.php',
         '7b11c4dc42b3b3023073cb14e519683c' => __DIR__ . '/..' . '/ralouphie/getallheaders/src/getallheaders.php',
         '9c67151ae59aff4788964ce8eb2a0f43' => __DIR__ . '/..' . '/clue/stream-filter/src/functions_include.php',
-        'a4a119a56e50fbb293281d9a48007e0e' => __DIR__ . '/..' . '/symfony/polyfill-php80/bootstrap.php',
         '37a3dc5111fe8f707ab4c132ef1dbc62' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/functions_include.php',
+        'a4a119a56e50fbb293281d9a48007e0e' => __DIR__ . '/..' . '/symfony/polyfill-php80/bootstrap.php',
         '8cff32064859f4559445b89279f3199c' => __DIR__ . '/..' . '/php-http/message/src/filters.php',
         '0e6d7bf4a5811bfa5cf40c5ccd6fae6a' => __DIR__ . '/..' . '/symfony/polyfill-mbstring/bootstrap.php',
         'a4ecaeafb8cfb009ad0e052c90355e98' => __DIR__ . '/..' . '/beberlei/assert/lib/Assert/functions.php',
         '6124b4c8570aa390c21fafd04a26c69f' => __DIR__ . '/..' . '/myclabs/deep-copy/src/DeepCopy/deep_copy.php',
         '79f66bc0a1900f77abe4a9a299057a0a' => __DIR__ . '/..' . '/starkbank/ecdsa/src/ellipticcurve.php',
         '320cde22f66dd4f5d3fd621d3e88b98f' => __DIR__ . '/..' . '/symfony/polyfill-ctype/bootstrap.php',
+        '662a729f963d39afe703c9d9b7ab4a8c' => __DIR__ . '/..' . '/symfony/polyfill-php83/bootstrap.php',
         '2a3c2110e8e0295330dc3d11a4cbc4cb' => __DIR__ . '/..' . '/php-webdriver/webdriver/lib/Exception/TimeoutException.php',
         'ec07570ca5a812141189b1fa81503674' => __DIR__ . '/..' . '/phpunit/phpunit/src/Framework/Assert/Functions.php',
         '0754989a10baadda533479884b399278' => __DIR__ . '/..' . '/resend/resend-php/src/Resend.php',
@@ -44,12 +45,14 @@ class ComposerStaticInitcbe1707b410f2f343a82925692838e3a
         ),
         'S' =>
         array (
+            'Symfony\\Polyfill\\Php83\\' => 23,
             'Symfony\\Polyfill\\Php80\\' => 23,
             'Symfony\\Polyfill\\Mbstring\\' => 26,
             'Symfony\\Polyfill\\Ctype\\' => 23,
             'Symfony\\Component\\Process\\' => 26,
             'Symfony\\Component\\OptionsResolver\\' => 34,
             'Svg\\' => 4,
+            'SpomkyLabs\\Pki\\' => 15,
             'SendGrid\\Stats\\' => 15,
             'SendGrid\\Mail\\' => 14,
             'SendGrid\\Helper\\' => 16,
@@ -67,6 +70,7 @@ class ComposerStaticInitcbe1707b410f2f343a82925692838e3a
             'Psr\\SimpleCache\\' => 16,
             'Psr\\Http\\Message\\' => 17,
             'Psr\\Http\\Client\\' => 16,
+            'Psr\\Clock\\' => 10,
             'PhpXmlRpc\\' => 10,
             'PhpParser\\' => 10,
             'PhpOption\\' => 10,
@@ -79,9 +83,14 @@ class ComposerStaticInitcbe1707b410f2f343a82925692838e3a
         ),
         'M' =>
         array (
+            'Minishlink\\WebPush\\' => 19,
             'Matrix\\' => 7,
             'Masterminds\\' => 12,
             'MailerSend\\' => 11,
+        ),
+        'J' =>
+        array (
+            'Jose\\Component\\' => 15,
         ),
         'H' =>
         array (
@@ -116,6 +125,11 @@ class ComposerStaticInitcbe1707b410f2f343a82925692838e3a
             'Complex\\' => 8,
             'Clue\\StreamFilter\\' => 18,
         ),
+        'B' =>
+        array (
+            'Brick\\Math\\' => 11,
+            'Base64Url\\' => 10,
+        ),
         'A' =>
         array (
             'Assert\\' => 7,
@@ -147,6 +161,10 @@ class ComposerStaticInitcbe1707b410f2f343a82925692838e3a
         array (
             0 => __DIR__ . '/..' . '/maennchen/zipstream-php/src',
         ),
+        'Symfony\\Polyfill\\Php83\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/symfony/polyfill-php83',
+        ),
         'Symfony\\Polyfill\\Php80\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-php80',
@@ -170,6 +188,10 @@ class ComposerStaticInitcbe1707b410f2f343a82925692838e3a
         'Svg\\' =>
         array (
             0 => __DIR__ . '/..' . '/phenx/php-svg-lib/src/Svg',
+        ),
+        'SpomkyLabs\\Pki\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/spomky-labs/pki-framework/src',
         ),
         'SendGrid\\Stats\\' =>
         array (
@@ -216,6 +238,10 @@ class ComposerStaticInitcbe1707b410f2f343a82925692838e3a
         array (
             0 => __DIR__ . '/..' . '/psr/http-client/src',
         ),
+        'Psr\\Clock\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/psr/clock/src',
+        ),
         'PhpXmlRpc\\' =>
         array (
             0 => __DIR__ . '/..' . '/phpxmlrpc/phpxmlrpc/src',
@@ -240,6 +266,10 @@ class ComposerStaticInitcbe1707b410f2f343a82925692838e3a
         array (
             0 => __DIR__ . '/..' . '/nyholm/psr7/src',
         ),
+        'Minishlink\\WebPush\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/minishlink/web-push/src',
+        ),
         'Matrix\\' =>
         array (
             0 => __DIR__ . '/..' . '/markbaker/matrix/classes/src',
@@ -251,6 +281,10 @@ class ComposerStaticInitcbe1707b410f2f343a82925692838e3a
         'MailerSend\\' =>
         array (
             0 => __DIR__ . '/..' . '/mailersend/mailersend/src',
+        ),
+        'Jose\\Component\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/web-token/jwt-library',
         ),
         'Http\\Promise\\' =>
         array (
@@ -324,6 +358,14 @@ class ComposerStaticInitcbe1707b410f2f343a82925692838e3a
         array (
             0 => __DIR__ . '/..' . '/clue/stream-filter/src',
         ),
+        'Brick\\Math\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/brick/math/src',
+        ),
+        'Base64Url\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/spomky-labs/base64url/src',
+        ),
         'Assert\\' =>
         array (
             0 => __DIR__ . '/..' . '/beberlei/assert/lib/Assert',
@@ -334,7 +376,17 @@ class ComposerStaticInitcbe1707b410f2f343a82925692838e3a
         'Attribute' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
         'BaseSendGridClientInterface' => __DIR__ . '/..' . '/sendgrid/sendgrid/lib/BaseSendGridClientInterface.php',
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
+        'DateError' => __DIR__ . '/..' . '/symfony/polyfill-php83/Resources/stubs/DateError.php',
+        'DateException' => __DIR__ . '/..' . '/symfony/polyfill-php83/Resources/stubs/DateException.php',
+        'DateInvalidOperationException' => __DIR__ . '/..' . '/symfony/polyfill-php83/Resources/stubs/DateInvalidOperationException.php',
+        'DateInvalidTimeZoneException' => __DIR__ . '/..' . '/symfony/polyfill-php83/Resources/stubs/DateInvalidTimeZoneException.php',
+        'DateMalformedIntervalStringException' => __DIR__ . '/..' . '/symfony/polyfill-php83/Resources/stubs/DateMalformedIntervalStringException.php',
+        'DateMalformedPeriodStringException' => __DIR__ . '/..' . '/symfony/polyfill-php83/Resources/stubs/DateMalformedPeriodStringException.php',
+        'DateMalformedStringException' => __DIR__ . '/..' . '/symfony/polyfill-php83/Resources/stubs/DateMalformedStringException.php',
+        'DateObjectError' => __DIR__ . '/..' . '/symfony/polyfill-php83/Resources/stubs/DateObjectError.php',
+        'DateRangeError' => __DIR__ . '/..' . '/symfony/polyfill-php83/Resources/stubs/DateRangeError.php',
         'Dompdf\\Cpdf' => __DIR__ . '/..' . '/dompdf/dompdf/lib/Cpdf.php',
+        'Override' => __DIR__ . '/..' . '/symfony/polyfill-php83/Resources/stubs/Override.php',
         'PHPUnit\\Event\\Application\\Finished' => __DIR__ . '/..' . '/phpunit/phpunit/src/Event/Events/Application/Finished.php',
         'PHPUnit\\Event\\Application\\FinishedSubscriber' => __DIR__ . '/..' . '/phpunit/phpunit/src/Event/Events/Application/FinishedSubscriber.php',
         'PHPUnit\\Event\\Application\\Started' => __DIR__ . '/..' . '/phpunit/phpunit/src/Event/Events/Application/Started.php',
@@ -1348,6 +1400,7 @@ class ComposerStaticInitcbe1707b410f2f343a82925692838e3a
         'PharIo\\Version\\VersionConstraintValue' => __DIR__ . '/..' . '/phar-io/version/src/VersionConstraintValue.php',
         'PharIo\\Version\\VersionNumber' => __DIR__ . '/..' . '/phar-io/version/src/VersionNumber.php',
         'PhpToken' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/PhpToken.php',
+        'SQLite3Exception' => __DIR__ . '/..' . '/symfony/polyfill-php83/Resources/stubs/SQLite3Exception.php',
         'SebastianBergmann\\CliParser\\AmbiguousOptionException' => __DIR__ . '/..' . '/sebastian/cli-parser/src/exceptions/AmbiguousOptionException.php',
         'SebastianBergmann\\CliParser\\Exception' => __DIR__ . '/..' . '/sebastian/cli-parser/src/exceptions/Exception.php',
         'SebastianBergmann\\CliParser\\OptionDoesNotAllowArgumentException' => __DIR__ . '/..' . '/sebastian/cli-parser/src/exceptions/OptionDoesNotAllowArgumentException.php',

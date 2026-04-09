@@ -5,12 +5,20 @@ use haydee\modelo\Bitacora;
 use haydee\ayuda\Validador;
 use haydee\ayuda\ValidadorBD;
 use haydee\servicios\GestorAuditoria;
+use haydee\servicios\GestorNotificaciones;
 
 Sesiones::verificarSesion();
 Sesiones::verificarPermiso(GESTIONAR_CAJA_CHICA, CONSULTAR);
 
 if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
+
+    // Mapeamos las operaciones que no contengan las palabras clave estándar
+    $operacionesEspeciales = [
+        'reponer_caja' => REGISTRAR
+    ];
+
+    Sesiones::verificarPermisoAccion(GESTIONAR_CAJA_CHICA, $operacion, $operacionesEspeciales);
 
     // 1. Validamos según la operación
     $reglas = CajaChica::obtenerReglas($operacion);
@@ -87,8 +95,21 @@ if (isset($_POST["operacion"])) {
 
             case 'registrar_movimiento':
                 $respuesta = $caja->realizar_consulta('registrar_movimiento');
+
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria('registrar');
+
+                    // Verificamos si el modelo nos mandó un aviso sobre el saldo
+                    if (isset($respuesta['alerta_saldo']) && $respuesta['alerta_saldo'] !== null) {
+                        $alerta = $respuesta['alerta_saldo'];
+                        GestorNotificaciones::notificarAdmins(
+                            $alerta['titulo'], 
+                            $alerta['desc'], 
+                            'caja_chica', 
+                            $_POST['caja_chica_id'], 
+                            $alerta['tipo']
+                        );
+                    }
                 }
                 break;
 
@@ -99,6 +120,18 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $caja->realizar_consulta('modificar_movimiento');
                 if ($respuesta['estatus']) { 
                     $auditor->registrarAuditoria('modificar'); 
+
+                    // Verificamos si el modelo nos mandó un aviso sobre el saldo
+                    if (isset($respuesta['alerta_saldo']) && $respuesta['alerta_saldo'] !== null) {
+                        $alerta = $respuesta['alerta_saldo'];
+                        GestorNotificaciones::notificarAdmins(
+                            $alerta['titulo'], 
+                            $alerta['desc'], 
+                            'caja_chica', 
+                            $_POST['caja_chica_id'], 
+                            $alerta['tipo']
+                        );
+                    }
                 }
                 break;
 
@@ -109,6 +142,18 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $caja->realizar_consulta('eliminar_movimiento');
                 if ($respuesta['estatus']) { 
                     $auditor->registrarAuditoria('eliminar'); 
+
+                    // Verificamos si el modelo nos mandó un aviso sobre el saldo
+                    if (isset($respuesta['alerta_saldo']) && $respuesta['alerta_saldo'] !== null) {
+                        $alerta = $respuesta['alerta_saldo'];
+                        GestorNotificaciones::notificarAdmins(
+                            $alerta['titulo'], 
+                            $alerta['desc'], 
+                            'caja_chica', 
+                            $_POST['caja_chica_id'], 
+                            $alerta['tipo']
+                        );
+                    }
                 }
                 break;
 

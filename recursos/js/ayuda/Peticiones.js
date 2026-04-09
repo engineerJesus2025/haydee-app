@@ -52,6 +52,13 @@ const Peticiones = {
             return json;
 
         } catch (error) {
+            // Si el usuario está cambiando de módulo, no mostramos ni reportamos el error
+            if (window.estaSaliendoDeLaPagina) {
+                return {
+                    estatus: false,
+                    silencioso: true // Flag opcional por si tu Validador necesita saberlo
+                };
+            }
             console.error("Error en Peticiones.enviar:", error);
 
             return {
@@ -67,3 +74,10 @@ const Peticiones = {
         }
     }
 };
+
+// Variable global para detectar si el usuario está abandonando la página
+window.estaSaliendoDeLaPagina = false;
+
+window.addEventListener('beforeunload', () => {
+    window.estaSaliendoDeLaPagina = true;
+});

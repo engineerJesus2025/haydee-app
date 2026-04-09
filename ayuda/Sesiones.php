@@ -181,4 +181,44 @@ class Sesiones
             'eliminar'  => self::tienePermiso($moduloId, ELIMINAR)
         ];
     }
+
+    /**
+     * Verifica los permisos para operaciones que se ejecutan vía AJAX.
+     * Evalúa el nombre de la operación para requerir el permiso adecuado automáticamente.
+     * Si no tiene permisos, devuelve un JSON con estatus false y termina la ejecución.
+     * * @param int $moduloId ID del módulo actual.
+     * @param string $operacion Nombre de la operación (ej. 'registrar_pago', 'modificar').
+     * @param array $mapaExtra Mapeo opcional para operaciones especiales ['cambiar_estado' => MODIFICAR].
+     */
+    public static function verificarPermisoAccion($moduloId, $operacion, $mapaExtra = [])
+    {
+        $permisoRequerido = null;
+        $operacionNormalizada = strtolower($operacion);
+
+        // Verificamos si está en el mapa de operaciones especiales (tiene prioridad)
+        if (array_key_exists($operacionNormalizada, $mapaExtra)) {
+            $permisoRequerido = $mapaExtra[$operacionNormalizada];
+        } else {
+            // Búsqueda por coincidencia de palabras clave
+            if (strpos($operacionNormalizada, 'registrar') !== false) {
+                $permisoRequerido = REGISTRAR;
+            } elseif (strpos($operacionNormalizada, 'modificar') !== false) {
+                $permisoRequerido = MODIFICAR;
+            } elseif (strpos($operacionNormalizada, 'eliminar') !== false) {
+                $permisoRequerido = ELIMINAR;
+            }
+        }
+
+        // Si se requiere un permiso, lo validamos internamente
+        if ($permisoRequerido !== null) {
+            if (!self::tienePermiso($moduloId, $permisoRequerido)) {
+                header('Content-Type: application/json');
+                echo json_encode([
+                    'estatus' => false, 
+                    'mensaje' => 'No tienes permisos suficientes para realizar esta acción.'
+                ]);
+                exit; // Detenemos la ejecución inmediatamente para proteger el backend
+            }
+        }
+    }
 }

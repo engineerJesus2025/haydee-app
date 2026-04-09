@@ -2,8 +2,6 @@
 // --- Inicialización de variables para los cálculos ---
 $total_fijos_bs = 0;
 $total_variables_bs = 0;
-$total_gas_bs = $datos_reporte['gasto_gas']['monto'] ?? 0; // Usamos el valor que viene del modelo
-$total_aptos = $datos_reporte['total_aptos'];
 
 // Array para traducir los meses a español
 $meses_espanol = [
@@ -48,7 +46,7 @@ $nombre_mes = $meses_espanol[(int)$mes];
         </thead>
         <tbody>
             <tr><td colspan="5" class="font-bold bg-grey">CONCEPTOS FIJOS</td></tr>
-            <?php foreach ($datos_reporte['gastos_fijos'] as $gasto): $total_fijos_bs += $gasto['monto']; ?>
+            <?php foreach ($gastos_fijos as $gasto): $total_fijos_bs += $gasto['monto']; ?>
                 <tr>
                     <td><?php echo htmlentities($gasto['descripcion_gasto']); ?></td>
                     <td class="text-right"><?php echo number_format($gasto['monto'], 2, ',', '.'); ?></td>
@@ -66,7 +64,7 @@ $nombre_mes = $meses_espanol[(int)$mes];
             </tr>
 
             <tr><td colspan="5" class="font-bold bg-grey">CONCEPTOS VARIABLES</td></tr>
-            <?php foreach ($datos_reporte['gastos_variables'] as $gasto): $total_variables_bs += $gasto['monto']; ?>
+            <?php foreach ($gastos_variables as $gasto): $total_variables_bs += $gasto['monto']; ?>
                  <tr>
                     <td><?php echo htmlentities($gasto['descripcion_gasto']); ?></td>
                     <td class="text-right"><?php echo number_format($gasto['monto'], 2, ',', '.'); ?></td>

@@ -23,6 +23,8 @@ if (!$esPropietario) {
 if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
 
+    Sesiones::verificarPermisoAccion(GESTIONAR_PAGOS, $operacion);
+
     // =========================================================
     // VALIDACIÓN DE LA CABECERA
     // =========================================================

@@ -7,6 +7,7 @@ use haydee\ayuda\Validador;
 use haydee\ayuda\ValidadorBD;
 use haydee\ayuda\GestorImagenes;
 use haydee\servicios\GestorAuditoria;
+use haydee\servicios\GestorNotificaciones;
 
 // Verificaciones de seguridad
 Sesiones::verificarSesion();
@@ -14,6 +15,8 @@ Sesiones::verificarPermiso(GESTIONAR_CARTELERA_VIRTUAL, CONSULTAR);
 
 if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
+
+    Sesiones::verificarPermisoAccion(GESTIONAR_CARTELERA_VIRTUAL, $operacion);
 
     // 1. Validamos según la operación
     $reglas = CarteleraVirtual::obtenerReglas($operacion);
@@ -66,6 +69,18 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $cartelera->realizar_consulta('registrar_cartelera');
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria('registrar');
+
+                    $tituloNotif = "Nuevo aviso: " . $_POST['titulo'];
+                    // acortar la descripción si es muy larga, o pasarla completa
+                    $descNotif = $_POST['descripcion']; 
+                    
+                    GestorNotificaciones::notificarTodos(
+                        $tituloNotif, 
+                        $descNotif, 
+                        'cartelera_virtual', 
+                        $respuesta['lastId'], // Usamos el ID que tu modelo retornó de forma inteligente
+                        'CREACION_AVISO' // O el código de evento que utilices en tu sistema
+                    );
                 }
                 break;
 

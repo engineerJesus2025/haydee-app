@@ -1113,38 +1113,9 @@ async function eliminar(id) {
 }
 
 // ============================================================
-// MÓDULO DE AYUDA (DRIVER.JS) - PRESUPUESTO MENSUAL
+// MÓDULO DE AYUDA INTERACTIVA
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
-    const driver = window.driver.js.driver;
-    let tourActivo = null;
-
-    // Micro-retraso para asegurar que la burbuja se ancle bien
-    const alinearBurbuja = () => {
-        setTimeout(() => {
-            window.dispatchEvent(new Event('resize'));
-        }, 10);
-    };
-
-    // Configuración base para todos los tours
-    const configBase = {
-        showProgress: true,
-        animate: true,
-        smoothScroll: false, 
-        allowKeyboardControl: false,
-        nextBtnText: 'Siguiente ➔',
-        prevBtnText: '⬅ Anterior',
-        doneBtnText: 'Entendido',
-        progressText: 'Paso {{current}} de {{total}}',
-        onHighlightStarted: (element) => {
-            if (element) {
-                element.scrollIntoView({ behavior: 'instant', block: 'center' });
-                alinearBurbuja();
-            }
-        }
-    };
-
-    // 1. TOUR VISTA PRINCIPAL
     const stepsPrincipal = [
         { element: '.page-header', popover: { title: 'Gestión de Presupuestos', description: 'Aquí planificas los gastos del mes siguiente para calcular cuánto deberá pagar cada apartamento.', side: "bottom", align: 'center' } },
         // Usamos una lógica segura para encontrar el botón, incluso si está oculto por validaciones PHP
@@ -1152,7 +1123,6 @@ document.addEventListener('DOMContentLoaded', () => {
         { element: '#tabla_presupuesto', popover: { title: 'Historial', description: 'Lista de presupuestos registrados. Puedes ver el monto total esperado y la cuota de reserva asignada.', side: 'top', align: 'center' } }
     ];
 
-    // 2. TOUR MODAL DE REGISTRO
     const stepsModal = [
         { element: '#fecha', popover: { title: 'Periodo', description: 'Selecciona a qué mes corresponde este presupuesto. Solo aparecerán los meses futuros disponibles.', side: 'bottom', align: 'start' } },
         { element: '#cuota_reserva', popover: { title: 'Fondo de Reserva', description: 'Ingresa el monto destinado al fondo de reserva del condominio.', side: 'top', align: 'start' } },
@@ -1162,31 +1132,9 @@ document.addEventListener('DOMContentLoaded', () => {
         { element: '#boton_formulario', popover: { title: 'Guardar', description: 'Registra el presupuesto para que luego puedas generar las mensualidades de cobro.', side: 'top', align: 'center' } }
     ];
 
-    // LÓGICA DEL BOTÓN FLOTANTE
-    const btnAyuda = document.getElementById('btn-ayuda-tour');
-    const modalPresupuesto = document.getElementById('modal_presupuesto');
-
-    if(btnAyuda) {
-        btnAyuda.addEventListener('click', () => {
-            if (modalPresupuesto && modalPresupuesto.classList.contains('show')) {
-                // Si el modal está abierto, iniciamos el tour del formulario
-                tourActivo = driver({ ...configBase, steps: stepsModal });
-                tourActivo.drive();
-            } else {
-                // Si estamos en la tabla principal
-                window.scrollTo({ top: 0, behavior: 'instant' });
-                tourActivo = driver({ ...configBase, steps: stepsPrincipal });
-                tourActivo.drive();
-            }
-        });
-    }
-
-    // Limpieza al cerrar el modal
-    if (modalPresupuesto) {
-        modalPresupuesto.addEventListener('hide.bs.modal', () => {
-            if (tourActivo) {
-                try { tourActivo.destroy(); } catch (e) {}
-            }
-        });
-    }
+    AyudaInteractiva.inicializar({
+        idModal: 'modal_presupuesto',
+        pasosPrincipal: stepsPrincipal,
+        pasosModal: stepsModal
+    });
 });

@@ -4,7 +4,6 @@ namespace haydee\modelo;
 use PDO;
 use PDOException;
 use DateTime;
-use haydee\servicios\GestorNotificaciones;
 
 class CajaChica extends Conexion
 {
@@ -228,11 +227,16 @@ class CajaChica extends Conexion
             
             $lastId = $pdo->lastInsertId();
 
+            $alertaSaldo = $this->verificarEstadoSaldo();
+
             $pdo->commit();
-
-            $this->verificarSaldoYNotificar();
-
-            return ['estatus' => true, 'mensaje' => 'Gasto registrado correctamente.', 'lastId' => $lastId];
+            
+            return [
+                'estatus' => true, 
+                'mensaje' => 'Gasto registrado.', 
+                'lastId' => $lastId,
+                'alerta_saldo' => $alertaSaldo 
+            ];
 
         } catch (PDOException $e) {
             if ($pdo->inTransaction()) {
@@ -259,9 +263,13 @@ class CajaChica extends Conexion
 
             $pdo->commit();
 
-            $this->verificarSaldoYNotificar();
+            $alertaSaldo = $this->verificarEstadoSaldo();
 
-            return ['estatus' => true, 'mensaje' => 'Movimiento eliminado (anulado) correctamente.'];
+            return [
+                'estatus' => true, 
+                'mensaje' => 'Movimiento eliminado (anulado) correctamente.',
+                'alerta_saldo' => $alertaSaldo 
+            ];
         } catch (PDOException $e) {
             if ($pdo->inTransaction()) $pdo->rollBack();
             error_log("Error en _eliminar_movimiento: " . $e->getMessage());
@@ -329,9 +337,13 @@ class CajaChica extends Conexion
                 ':id' => $this->id_movimiento_caja
             ]);
 
-            $this->verificarSaldoYNotificar();
+            $alertaSaldo = $this->verificarEstadoSaldo();
             
-            return ['estatus' => true, 'mensaje' => 'Movimiento actualizado (solo concepto y fecha).'];
+            return [
+                'estatus' => true, 
+                'mensaje' => 'Movimiento actualizado (solo concepto y fecha).',
+                'alerta_saldo' => $alertaSaldo 
+            ];
         } catch (PDOException $e) {
             error_log("Error en _modificar_movimiento: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al modificar movimiento: ' . $e->getMessage()];
@@ -376,11 +388,9 @@ class CajaChica extends Conexion
      * @return bool True si se notificó o no hubo necesidad, false si hubo error.
      // SE USA EN LA PROPIA CLASE
      */
-    private function verificarSaldoYNotificar()
+    private function verificarEstadoSaldo()
     {
-        if (empty($this->id_caja_chica)) {
-            return false;
-        }
+        if (empty($this->id_caja_chica)) return null;
 
         // Consultar saldo actual desde la vista
         $sqlSaldo = "SELECT saldo_disponible FROM vw_saldo_caja_chica WHERE id_caja_chica = :id";
@@ -393,33 +403,16 @@ class CajaChica extends Conexion
                 return false; // No se pudo obtener saldo
             }
 
-            $umbral = 200; // Puedes hacerlo configurable (ej. en constantes)
-            $titulo = '';
-            $desc = '';
+            $umbral = 200; // Jesus del futuro: hacerlo configurable (ej. en constantes)
 
             if ($saldo <= 0) {
-                $titulo = "Caja chica sin saldo";
-                $desc = "La caja chica ID {$this->id_caja_chica} ha quedado sin saldo.";
+                return ['tipo' => 'SALDO_BAJO', 'titulo' => 'Caja chica sin saldo', 'desc' => "La caja ID {$this->id_caja_chica} quedó en 0."];
             } elseif ($saldo < $umbral) {
-                $titulo = "Saldo bajo en caja chica";
-                $desc = "La caja chica ID {$this->id_caja_chica} tiene saldo de " . number_format($saldo, 2, ',', '.') . " Bs.";
+                return ['tipo' => 'SALDO_BAJO', 'titulo' => 'Saldo bajo en caja chica', 'desc' => "La caja ID {$this->id_caja_chica} tiene $saldo Bs."];
             }
-
-            if (!empty($titulo)) {
-                // Usamos el gestor 
-                $result = GestorNotificaciones::notificarAdmins(
-                    $titulo,
-                    $desc,
-                    'caja_chica',
-                    $this->id_caja_chica,
-                    'SALDO_BAJO'
-                );
-                return $result['estatus'] ?? false;
-            }
-
-            return true;
+            return null;
         } catch (\Exception $e) {
-            error_log("Error en verificarSaldoYNotificar: " . $e->getMessage());
+            error_log("Error en verificarEstadoSaldo: " . $e->getMessage());
             return false;
         }
     }

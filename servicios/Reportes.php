@@ -499,5 +499,45 @@ class Reportes extends Conexion
             ]
         ];
     }
+
+    /**
+     * Obtiene y procesa los datos para el reporte mensual de gastos,
+     * clasificándolos en Fijos, Variables y Gas.
+     *
+     */
+    private function _generar_data_reporte_gastos_mensual()
+    {
+        $respuestaRaw = $this->_obtener_datos_reporte_mensual();
+        if (!$respuestaRaw['estatus']) return $respuestaRaw;
+
+        $detalles = $respuestaRaw['datos'];
+        $gastos_fijos = [];
+        $gastos_variables = [];
+        $total_gas_bs = 0;
+
+        foreach ($detalles as $row) {
+            $concepto = $row['concepto'] ?? '';
+            $monto = (float)($row['monto'] ?? 0);
+
+            if (stripos($concepto, 'GAS LARA') !== false) {
+                $total_gas_bs += $monto;
+            } else {
+                if (($row['clasificacion'] ?? '') === 'Fijo') {
+                    $gastos_fijos[] = ['descripcion_gasto' => $concepto, 'monto' => $monto];
+                } else {
+                    $gastos_variables[] = ['descripcion_gasto' => $concepto, 'monto' => $monto];
+                }
+            }
+        }
+
+        return [
+            'estatus' => true,
+            'datos' => [
+                'gastos_fijos' => $gastos_fijos,
+                'gastos_variables' => $gastos_variables,
+                'gasto_gas' => ['monto' => $total_gas_bs]
+            ]
+        ];
+    }
 }
 ?>

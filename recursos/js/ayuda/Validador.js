@@ -217,13 +217,10 @@ const Validador = {
     procesarRespuesta(respuesta, accionExito) {
         if (!respuesta.estatus) {
             // Evaluamos de dónde viene el error
-            if (respuesta.errores) {
-                this.mostrarErroresBackend(respuesta.errores);
-            } else if (respuesta.mensaje) {
-                Alertas.mostrar('error', 'Error', respuesta.mensaje);
-            } else {
-                Alertas.mostrar('error', 'Error', 'Ocurrió un error inesperado al procesar la solicitud.');
-            }
+            if (respuesta.silencioso) return;
+            else if (respuesta.errores) this.mostrarErroresBackend(respuesta.errores);
+            else if (respuesta.mensaje) Alertas.mostrar('error', 'Error', respuesta.mensaje);
+            else Alertas.mostrar('error', 'Error', 'Ocurrió un error inesperado al procesar la solicitud.');
             return false; // Detenemos la ejecución
         }
 
@@ -252,8 +249,7 @@ const Validador = {
         }
 
         const respuesta = await Peticiones.enviar(formData, "", false); 
-        
-        // LÓGICA INVERTIDA: Si 'existe' es true, entonces está ocupado y DA ERROR.
+        // Si 'existe' es true, entonces está ocupado y DA ERROR.
         if (respuesta.estatus === false || respuesta.existe === true) {
             EstadoInputs.marcarError(input, mensajeError);
             return false; // Es inválido porque YA EXISTE

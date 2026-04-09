@@ -107,6 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('boton_generar')?.addEventListener('click', function(e) {
         e.preventDefault();
         const select = document.getElementById('select_reporte');
+        if (select.dataset.valor != "habitante") return;
         
         if (!Validador.evaluarSelect(select.id)) {
             Alertas.mostrar('error', 'Atención', 'Debe seleccionar un residente válido');

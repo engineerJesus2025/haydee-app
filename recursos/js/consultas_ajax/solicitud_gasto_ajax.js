@@ -318,96 +318,23 @@ document.getElementById('selector_mes').addEventListener('change', buscarPresupu
 document.getElementById('selector_anio').addEventListener('change', buscarPresupuesto);
 
 // ============================================================
-// MÓDULO DE AYUDA (DRIVER.JS) - SOLICITUD DE GASTO
+// MÓDULO DE AYUDA INTERACTIVA
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
-    const driver = window.driver.js.driver;
-    let tourActivo = null;
-
-    // Función para anclar la burbuja perfectamente
-    const alinearBurbuja = () => {
-        setTimeout(() => {
-            window.dispatchEvent(new Event('resize'));
-        }, 10);
-    };
-
-    // Configuración Base
-    const configBase = {
-        showProgress: true,
-        animate: true,
-        smoothScroll: false, 
-        allowKeyboardControl: false,
-        nextBtnText: 'Siguiente ➔',
-        prevBtnText: '⬅ Anterior',
-        doneBtnText: 'Entendido',
-        progressText: 'Paso {{current}} de {{total}}',
-        onHighlightStarted: (element) => {
-            if (element) {
-                element.scrollIntoView({ behavior: 'instant', block: 'center' });
-                alinearBurbuja();
-            }
-        }
-    };
-
-    // 1. PASOS DE LA VISTA PRINCIPAL
     const stepsPrincipal = [
         { element: '.page-header', popover: { title: 'Solicitudes de Gasto', description: 'Módulo para gestionar peticiones de dinero basadas en el presupuesto mensual del condominio.', side: "bottom", align: 'center' } },
         { element: 'button[data-bs-target="#modal_solicitud_gasto"]', popover: { title: 'Crear Solicitud', description: 'Inicia el proceso para solicitar recursos. Necesitarás saber a qué mes y año cargarás el gasto.', side: "bottom", align: 'start' } },
         { element: '#tabla_solicitud_gasto', popover: { title: 'Historial', description: 'Aquí verás el estado de tus solicitudes (Pendientes, Aprobadas o Rechazadas) y podrás editarlas si es necesario.', side: "top", align: 'center' } }
     ];
 
-    // 2. PASOS DEL MODAL (FASE 1: SELECCIÓN)
-    const stepsModalInicio = [
+    const stepsModal = [
         { element: '#selector_mes', popover: { title: 'Periodo Presupuestario', description: 'Selecciona el Mes y el Año. El sistema verificará automáticamente si existe presupuesto disponible.', side: 'bottom', align: 'start' } },
         { element: '#modal_solicitud_gasto .modal-body', popover: { title: 'Formulario Dinámico', description: 'Una vez selecciones un periodo válido con fondos disponibles, aparecerán aquí el resto de los campos para completar la solicitud.', side: 'top', align: 'center' } }
     ];
 
-    // 3. PASOS DEL MODAL (FASE 2: LLENADO COMPLETO)
-    const stepsModalCompleto = [
-        { element: '#info_presupuesto', popover: { title: 'Disponibilidad', description: 'Aquí puedes ver cuánto dinero queda disponible en el presupuesto seleccionado.', side: 'bottom', align: 'center' } },
-        { element: '#fecha_reporte', popover: { title: 'Datos Básicos', description: 'Indica la fecha de la solicitud y quién la está realizando.', side: 'bottom', align: 'start' } },
-        { element: '#monto_estimado', popover: { title: 'Monto Requerido', description: 'Ingresa la cantidad exacta que necesitas. El sistema no te dejará guardar si supera el disponible.', side: 'top', align: 'start' } },
-        { element: '#prioridad', popover: { title: 'Prioridad', description: 'Define qué tan urgente es esta solicitud para que la administración la priorice.', side: 'top', align: 'start' } },
-        { element: '#descripcion_necesidad', popover: { title: 'Justificación', description: 'Explica brevemente para qué se usará el dinero.', side: 'top', align: 'start' } },
-        { element: '#boton_formulario', popover: { title: 'Finalizar', description: 'Guarda la solicitud para que entre en estado de revisión.', side: 'top', align: 'center' } }
-    ];
-
-    // LÓGICA INTELIGENTE DEL BOTÓN
-    const btnAyuda = document.getElementById('btn-ayuda-tour');
-    const modalSolicitud = document.getElementById('modal_solicitud_gasto');
-    const contenedorCampos = document.getElementById('campos_formulario_completo');
-
-    if(btnAyuda) {
-        btnAyuda.addEventListener('click', () => {
-            // Caso 1: Modal Abierto
-            if (modalSolicitud && modalSolicitud.classList.contains('show')) {
-                // Detectamos si el formulario ya se expandió (si el div oculto está visible)
-                const camposVisibles = contenedorCampos && contenedorCampos.style.display !== 'none';
-                
-                if (camposVisibles) {
-                    // Tour Completo
-                    tourActivo = driver({ ...configBase, steps: stepsModalCompleto });
-                } else {
-                    // Tour Inicial (Solo selectores)
-                    tourActivo = driver({ ...configBase, steps: stepsModalInicio });
-                }
-                tourActivo.drive();
-            } 
-            // Caso 2: Vista Principal
-            else {
-                window.scrollTo({ top: 0, behavior: 'instant' });
-                tourActivo = driver({ ...configBase, steps: stepsPrincipal });
-                tourActivo.drive();
-            }
-        });
-    }
-
-    // Limpieza al cerrar
-    if (modalSolicitud) {
-        modalSolicitud.addEventListener('hide.bs.modal', () => {
-            if (tourActivo) {
-                try { tourActivo.destroy(); } catch (e) {}
-            }
-        });
-    }
+    AyudaInteractiva.inicializar({
+        idModal: 'modal_solicitud_gasto',
+        pasosPrincipal: stepsPrincipal,
+        pasosModal: stepsModal
+    });
 });

@@ -449,97 +449,29 @@ function envio(operacion) {
 }
 
 // ============================================================
-// MÓDULO DE AYUDA (DRIVER.JS) - CAJA CHICA
+// MÓDULO DE AYUDA INTERACTIVA
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
-    const driver = window.driver.js.driver;
-    let tourActivo = null;
-
-    //Obliga a Driver a recalcular su posición EXACTA
-    const alinearBurbuja = () => {
-        setTimeout(() => {
-            window.dispatchEvent(new Event('resize'));
-        }, 10);
-    };
-
-    // 1. CONFIGURACIÓN DE LA VISTA PRINCIPAL
-    const configPrincipal = {
-        showProgress: true,
-        animate: true,
-        smoothScroll: false, // Apagado para controlarlo nosotros
-        allowKeyboardControl: false,
-        nextBtnText: 'Siguiente ➔',
-        prevBtnText: '⬅ Anterior',
-        doneBtnText: 'Entendido',
-        progressText: 'Paso {{current}} de {{total}}',
-        
-        onHighlightStarted: (element) => {
-            if (element) {
-                // Salto instantáneo y luego forzamos el recálculo
-                element.scrollIntoView({ behavior: 'instant', block: 'center' });
-                alinearBurbuja();
-            }
-        },
-
-        steps: [
+    const stepsPrincipal = [
             { element: '.page-header', popover: { title: 'Módulo de Caja Chica', description: 'Bienvenido. Aquí puedes administrar los fondos menores del condominio y registrar sus movimientos.', side: "bottom", align: 'center' } },
             { element: '#mes_select', popover: { title: 'Selector de Caja', description: 'Elige el mes/caja que deseas evaluar. Verás automáticamente el fondo fijo y si la caja está activa o cerrada.', side: "bottom", align: 'start' } },
             { element: '#botones_movimientos', popover: { title: 'Acciones de Caja', description: 'Si la caja está activa, aquí podrás Registrar un Nuevo Gasto o Reponer el dinero de la caja.', side: "bottom", align: 'start' } },
             { element: '#tabla_registros_sistema', popover: { title: 'Movimientos Registrados', description: 'Aquí se listan todos los gastos o reposiciones hechas en esta caja. Puedes editar o eliminar los registros.', side: "top", align: 'center' } },
             { element: '#boton_modificar_observacion', popover: { title: 'Descripción de Caja', description: 'Puedes añadir o editar una nota o descripción general para el mes de esta caja chica.', side: "top", align: 'start' } }
-        ]
-    };
+        ];
 
-    // 2. CONFIGURACIÓN DEL MODAL DE GASTO
-    const configModalGasto = {
-        showProgress: true,
-        animate: true, 
-        smoothScroll: false, 
-        allowKeyboardControl: false, 
-        nextBtnText: 'Siguiente ➔',
-        prevBtnText: '⬅ Anterior',
-        doneBtnText: 'Entendido',
-        progressText: 'Paso {{current}} de {{total}}',
-        
-        onHighlightStarted: (element) => {
-            if (element) {
-                element.scrollIntoView({ behavior: 'instant', block: 'center' });
-                alinearBurbuja();
-            }
-        },
-
-        steps: [
+    const stepsModal = [
             { element: '#fecha', popover: { title: 'Fecha', description: 'Indica la fecha en que se realizó este gasto menor.', side: 'bottom', align: 'start' } },
             { element: '#monto', popover: { title: 'Monto del Gasto', description: 'Ingresa la cantidad gastada. Si necesitas ingresarlo en divisas, usa el botón de intercambio.', side: 'bottom', align: 'start' } },
             { element: '#boton_intercambio_monto', popover: { title: 'Cambio de Moneda', description: 'Haz clic aquí para alternar entre Bolívares y Dólares. El sistema calculará el equivalente automáticamente según la Tasa BCV.', side: 'bottom', align: 'center' } },
             { element: '#fondos_restante', popover: { title: 'Control de Fondos', description: 'El sistema te mostrará cuánto dinero queda en la caja para evitar que gastes más de lo disponible.', side: 'top', align: 'start' } },
             { element: '#concepto', popover: { title: 'Concepto', description: 'Escribe de forma clara y precisa en qué se gastó el dinero.', side: 'top', align: 'start' } }, 
             { element: '#boton_gasto_caja', popover: { title: 'Guardar', description: 'Verifica los datos y registra el movimiento en la caja.', side: 'top', align: 'center' } }
-        ]
-    };
+        ];
 
-    // 3. LÓGICA DEL BOTÓN FLOTANTE
-    const btnAyuda = document.getElementById('btn-ayuda-tour');
-    const modalGasto = document.getElementById('modal_registro_gastos');
-
-    if(btnAyuda) {
-        btnAyuda.addEventListener('click', () => {
-            if (modalGasto && modalGasto.classList.contains('show')) {
-                tourActivo = driver(configModalGasto);
-                tourActivo.drive();
-            } else {
-                window.scrollTo({ top: 0, behavior: 'instant' });
-                tourActivo = driver(configPrincipal);
-                tourActivo.drive();
-            }
-        });
-    }
-
-    if (modalGasto) {
-        modalGasto.addEventListener('hide.bs.modal', () => {
-            if (tourActivo) {
-                try { tourActivo.destroy(); } catch (e) {}
-            }
-        });
-    }
+    AyudaInteractiva.inicializar({
+        idModal: 'modal_registro_gastos',
+        pasosPrincipal: stepsPrincipal,
+        pasosModal: stepsModal
+    });
 });

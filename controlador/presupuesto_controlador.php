@@ -12,7 +12,9 @@ Sesiones::verificarSesion();
 Sesiones::verificarPermiso(GESTIONAR_PRESUPUESTO, CONSULTAR);
 
 if (isset($_POST["operacion"])) {
-$operacion = $_POST["operacion"];
+    $operacion = $_POST["operacion"];
+
+    Sesiones::verificarPermisoAccion(GESTIONAR_PRESUPUESTO, $operacion);
 
     // =========================================================
     // 1. VALIDACIÓN DE LA CABECERA

@@ -25,7 +25,8 @@ define('RUTAS', [
     'reportes'          => 'reportes_controlador.php',
     'rol'               => 'rol_controlador.php',
     'solicitud_gasto'   => 'solicitud_gasto_controlador.php',
-    'usuario'           => 'usuario_controlador.php'
+    'usuario'           => 'usuario_controlador.php',
+    'suscripcion_push'  => 'suscripcion_push_controlador.php'
 ]);
 
 ?>

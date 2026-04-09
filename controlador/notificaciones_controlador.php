@@ -8,6 +8,8 @@ Sesiones::verificarSesion();
 if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
 
+    Sesiones::verificarPermisoAccion(GESTIONAR_ANIO_FISCAL, $operacion);
+
     // El frontend envía 'id', a 'id_notificacion' para que coincida con la regla
     if (isset($_POST['id'])) {
         $_POST['id_notificacion'] = $_POST['id'];

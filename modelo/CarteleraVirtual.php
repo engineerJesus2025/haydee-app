@@ -280,7 +280,7 @@ class CarteleraVirtual extends Conexion
      */
     public function consultar_widget_dashboard()
     {
-        $sql = "SELECT titulo, fecha, usuarios.nombre as nombre_usuario, prioridad 
+        $sql = "SELECT id_cartelera, titulo, prioridad, fecha, imagen, descripcion, usuarios.nombre as nombre_usuario
                 FROM cartelera_virtual
                 INNER JOIN usuarios ON usuarios.id_usuario = cartelera_virtual.usuario_id
                 ORDER BY prioridad ASC, fecha DESC LIMIT 5";
@@ -294,7 +294,6 @@ class CarteleraVirtual extends Conexion
             return ['estatus' => false, 'mensaje' => 'Error al consultar publicaciones'];
         }
     }
-
 
 }
 ?>

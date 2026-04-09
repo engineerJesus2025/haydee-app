@@ -14,6 +14,11 @@ Sesiones::verificarPermiso(GESTIONAR_APARTAMENTOS, CONSULTAR);
 if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
 
+    // Si la cadena tiene "habitante" (ej: registrar_habitantes, eliminar_habitantes), asignamos ese módulo
+    $moduloAfectado = strpos($operacion, 'habitante') !== false ? GESTIONAR_HABITANTES : GESTIONAR_APARTAMENTOS;
+
+    Sesiones::verificarPermisoAccion($moduloAfectado, $operacion);
+
     // Obtenemos las reglas de ambos modelos para la operación actual
     $reglasApartamento = Apartamento::obtenerReglas($operacion);
     $reglasHabitante = Habitantes::obtenerReglas($operacion);

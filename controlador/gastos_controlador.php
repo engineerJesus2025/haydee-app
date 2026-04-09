@@ -18,6 +18,8 @@ Sesiones::verificarPermiso(GESTIONAR_GASTOS, CONSULTAR);
 if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
 
+    Sesiones::verificarPermisoAccion(GESTIONAR_GASTOS, $operacion);
+
     // =========================================================
     // 1. VALIDACIÓN DE LA CABECERA
     // =========================================================

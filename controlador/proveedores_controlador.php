@@ -12,6 +12,8 @@ Sesiones::verificarPermiso(GESTIONAR_PROVEEDORES, CONSULTAR);
 
 if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
+
+    Sesiones::verificarPermisoAccion(GESTIONAR_PROVEEDORES, $operacion);
     
     // =========================================================
     // 1. VALIDACIÓN CENTRALIZADA

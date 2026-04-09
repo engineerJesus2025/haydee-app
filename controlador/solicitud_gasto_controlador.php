@@ -14,6 +14,8 @@ Sesiones::verificarPermiso(GESTIONAR_SOLICITUD_GASTO, CONSULTAR);
 if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
 
+    Sesiones::verificarPermisoAccion(GESTIONAR_SOLICITUD_GASTO, $operacion);
+
     // =========================================================
     // 0. NORMALIZACIÓN DE VARIABLES (Frontend -> Backend)
     // =========================================================

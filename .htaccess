@@ -4,9 +4,10 @@ ErrorDocument 403 /haydee-app/vista/error/403_vista.php
 RewriteEngine On
 Options All -Indexes
 
-# Permitir acceso a la raíz, index.php, y carpetas públicas
+# Permitir acceso a la raíz, index.php, sw.js y carpetas públicas
 RewriteCond %{REQUEST_URI} ^/haydee-app/?$ [OR]
 RewriteCond %{REQUEST_URI} ^/haydee-app/index\.php$ [OR]
+RewriteCond %{REQUEST_URI} ^/haydee-app/sw\.js$ [OR] 
 RewriteCond %{REQUEST_URI} ^/haydee-app/recursos/ [OR]
 RewriteCond %{REQUEST_URI} ^/haydee-app/vendor/ [OR]
 RewriteCond %{REQUEST_URI} ^/haydee-app/vista/

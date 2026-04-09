@@ -12,6 +12,8 @@ Sesiones::verificarPermiso(GESTIONAR_TIPO_GASTO, CONSULTAR);
 
 if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
+
+    Sesiones::verificarPermisoAccion(GESTIONAR_TIPO_GASTO, $operacion);
     
     $reglas = TipoGasto::obtenerReglas($operacion);
 

@@ -11,6 +11,8 @@ Sesiones::verificarPermiso(GESTIONAR_ROLES, CONSULTAR);
 
 if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
+
+    Sesiones::verificarPermisoAccion(GESTIONAR_ROLES, $operacion);
     
     $reglas = Rol::obtenerReglas($operacion);
 

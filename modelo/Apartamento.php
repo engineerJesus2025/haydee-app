@@ -304,11 +304,11 @@ class Apartamento extends Conexion
 
     /**
      * USADO EN INICIO
-     * Consulta el estado actual de los apartamentos para el Dashboard (Ocupado o Libre).
+     * Consulta el estado actual de los apartamentos para el Dashboard (Ocupado o Libre),
+     * junto con el nombre del residente principal y el total de deuda.
      */
     private function _consultar_estado_inicio()
     {
-        // Usamos una subconsulta rápida para saber si hay habitantes activos vinculados a este apartamento
         $sql = "SELECT 
                     a.nro_apartamento,
                     CASE 
@@ -318,7 +318,23 @@ class Apartamento extends Conexion
                               WHERE ha.apartamento_id = a.id_apartamento AND h.activo = 1) > 0 
                         THEN 'Ocupado'
                         ELSE 'Libre'
-                    END as estado
+                    END as estado,
+                    COALESCE(
+                        (SELECT CONCAT(h.nombre, ' ', h.apellido) 
+                         FROM habitantes h 
+                         JOIN habitantes_apartamentos ha ON h.id_habitante = ha.habitante_id 
+                         WHERE ha.apartamento_id = a.id_apartamento 
+                           AND h.activo = 1 
+                         ORDER BY CASE WHEN ha.tipo_vinculo = 'Propietario' THEN 1 ELSE 2 END 
+                         LIMIT 1), 
+                    'Sin habitante registrado') as residente_principal,
+                    COALESCE(
+                        (SELECT SUM(deuda_pendiente) 
+                         FROM vw_estado_cuentas_mensualidad 
+                         WHERE nro_apartamento = a.nro_apartamento 
+                           AND deuda_pendiente > 0), 
+                    0.00) as deuda_total
+                    
                 FROM apartamentos a
                 WHERE a.activo = 1
                 ORDER BY a.nro_apartamento ASC";

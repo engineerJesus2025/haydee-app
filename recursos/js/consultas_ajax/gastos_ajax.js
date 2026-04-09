@@ -627,50 +627,16 @@ function mayuscula(texto) {
 }
 
 // ============================================================
-// MÓDULO DE AYUDA (DRIVER.JS)
+// MÓDULO DE AYUDA INTERACTIVA
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
-    const driver = window.driver.js.driver;
-    let tourActivo = null;
-
-    const forzarRecalculo = () => {
-        window.dispatchEvent(new Event('resize'));
-    };
-
-    // 1. CONFIGURACIÓN DE LA VISTA PRINCIPAL
-    const configPrincipal = {
-        showProgress: true,
-        animate: true,
-        nextBtnText: 'Siguiente ➔',
-        prevBtnText: '⬅ Anterior',
-        doneBtnText: 'Entendido',
-        progressText: 'Paso {{current}} de {{total}}',
-        steps: [
+    const stepsPrincipal = [
             { element: '.page-header', popover: { title: 'Módulo de Gastos', description: 'Bienvenido. Desde aquí puedes gestionar y controlar todas las salidas de dinero.', side: "bottom", align: 'start' } },
             { element: '[data-bs-target="#modal_gastos"]', popover: { title: 'Nuevo Gasto', description: 'Haz clic en este botón para abrir el formulario y registrar un nuevo gasto.', side: "right", align: 'start' } },
             { element: '#tabla_gastos', popover: { title: 'Tabla de Registros', description: 'Aquí se listan tus gastos. Usa el buscador interno y los botones de acción para Ver, Editar o Eliminar.', side: "top", align: 'center' } }
-        ]
-    };
+        ];
 
-    // 2. CONFIGURACIÓN DEL MODAL
-    const configModal = {
-        showProgress: true,
-        animate: true,
-        smoothScroll: false, // Apagamos el scroll de Driver para usar el nuestro
-        nextBtnText: 'Siguiente ➔',
-        prevBtnText: '⬅ Anterior',
-        doneBtnText: 'Entendido',
-        progressText: 'Paso {{current}} de {{total}}',
-        
-        // Simplemente bajamos el modal al elemento, sin pelear con Bootstrap
-        onHighlightStarted: (element) => {
-            if (element) {
-                // block: 'center' deja el elemento cómodamente en el medio de la vista
-                element.scrollIntoView({ behavior: 'auto', block: 'center' });
-            }
-        },
-
-        steps: [
+    const stepsModal = [
             { element: '#clasificacion', popover: { title: 'Clasificación', description: 'Indica si este gasto es Fijo (mensual/recurrente) o Variable (esporádico).', side: 'bottom', align: 'start' } },
             { element: '#tipo_gasto_id', popover: { title: 'Tipo de Gasto', description: 'Selecciona la categoría exacta a la que pertenece este gasto.', side: 'bottom', align: 'start' } },
             { element: '#descripcion_gasto', popover: { title: 'Descripción', description: 'Redacta el motivo general del gasto con claridad. (Debe tener al menos 10 caracteres).', side: 'top', align: 'start' } },
@@ -679,32 +645,11 @@ document.addEventListener('DOMContentLoaded', () => {
             { element: '.metodo_pago', popover: { title: 'Método Dinámico', description: '¡Importante! Si eliges "Transferencia" o "Pago Móvil", aparecerán automáticamente los campos para que ingreses la Referencia, el Banco y la imagen del Comprobante.', side: 'top', align: 'start' } },
             { element: '#agregar_detalle', popover: { title: 'Pagos Fraccionados', description: '¿Pagaste una parte en efectivo y otra por transferencia? Usa este botón para añadir tantos métodos de pago como necesites.', side: 'top', align: 'start' } },
             { element: '#boton_formulario', popover: { title: 'Guardar', description: 'Una vez valides que todo está correcto, haz clic aquí para registrar el gasto en el sistema.', side: 'top', align: 'center' } }
-        ]
-    };
+        ];
 
-    // 3. Lógica del Botón
-    const btnAyuda = document.getElementById('btn-ayuda-tour');
-    const modalGastos = document.getElementById('modal_gastos');
-
-    if(btnAyuda) {
-        btnAyuda.addEventListener('click', () => {
-            if (modalGastos && window.getComputedStyle(modalGastos).display === 'block') {
-                modalGastos.scrollTo(0, 0); // Iniciamos el tour desde arriba
-                tourActivo = driver(configModal);
-                tourActivo.drive();
-            } else {
-                tourActivo = driver(configPrincipal);
-                tourActivo.drive();
-            }
-        });
-    }
-
-    // Limpieza de memoria si cierran el modal
-    if (modalGastos) {
-        modalGastos.addEventListener('hide.bs.modal', () => {
-            if (tourActivo) {
-                try { tourActivo.destroy(); } catch (e) {}
-            }
-        });
-    }
+    AyudaInteractiva.inicializar({
+        idModal: 'modal_gastos',
+        pasosPrincipal: stepsPrincipal,
+        pasosModal: stepsModal
+    });
 });

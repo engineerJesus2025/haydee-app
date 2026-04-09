@@ -12,6 +12,8 @@ Sesiones::verificarPermiso(GESTIONAR_BANCOS, CONSULTAR);
 
 if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
+
+    Sesiones::verificarPermisoAccion(GESTIONAR_BANCOS, $operacion);
     
     // 1. Obtenemos las reglas centralizadas
     $reglas = Banco::obtenerReglas($operacion);

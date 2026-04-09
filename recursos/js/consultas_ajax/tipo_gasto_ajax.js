@@ -193,75 +193,23 @@ async function eliminar(id) {
 }
 
 // ============================================================
-// MÓDULO DE AYUDA (DRIVER.JS) - TIPO DE GASTO
+// MÓDULO DE AYUDA INTERACTIVA
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
-    const driver = window.driver.js.driver;
-    let tourActivo = null;
-
-    // Micro-retraso para asegurar la precisión de la burbuja
-    const alinearBurbuja = () => {
-        setTimeout(() => {
-            window.dispatchEvent(new Event('resize'));
-        }, 10);
-    };
-
-    // Configuración base
-    const configBase = {
-        showProgress: true,
-        animate: true,
-        smoothScroll: false,
-        allowKeyboardControl: false,
-        nextBtnText: 'Siguiente ➔',
-        prevBtnText: '⬅ Anterior',
-        doneBtnText: 'Entendido',
-        progressText: 'Paso {{current}} de {{total}}',
-        onHighlightStarted: (element) => {
-            if (element) {
-                element.scrollIntoView({ behavior: 'instant', block: 'center' });
-                alinearBurbuja();
-            }
-        }
-    };
-
-    // 1. TOUR VISTA PRINCIPAL
     const stepsPrincipal = [
         { element: '.page-header', popover: { title: 'Tipos de Gastos', description: 'Aquí defines las categorías para clasificar los egresos (Ej: Servicios Públicos, Mantenimiento, Limpieza).', side: "bottom", align: 'center' } },
         { element: 'button[data-bs-target="#modal_tipo_gasto"]', popover: { title: 'Nuevo Tipo', description: 'Crea una nueva categoría para organizar mejor los gastos del condominio.', side: "bottom", align: 'start' } },
         { element: '#tabla_tipo_gasto', popover: { title: 'Catálogo', description: 'Lista de categorías existentes. Puedes editar el nombre o eliminarlas si no se están usando.', side: 'top', align: 'center' } }
     ];
 
-    // 2. TOUR MODAL DE REGISTRO
     const stepsModal = [
         { element: '#nombre_tipo_gasto', popover: { title: 'Nombre de la Categoría', description: 'Escribe un nombre claro y descriptivo (Ej: "Jardinería", "Reparaciones Menores").', side: 'bottom', align: 'start' } },
         { element: '#boton_formulario', popover: { title: 'Guardar', description: 'Registra la categoría en el sistema.', side: 'top', align: 'center' } }
     ];
 
-    // LÓGICA DEL BOTÓN FLOTANTE
-    const btnAyuda = document.getElementById('btn-ayuda-tour');
-    const modalHTML = document.getElementById('modal_tipo_gasto');
-
-    if(btnAyuda) {
-        btnAyuda.addEventListener('click', () => {
-            if (modalHTML && modalHTML.classList.contains('show')) {
-                // Si el modal está abierto
-                tourActivo = driver({ ...configBase, steps: stepsModal });
-                tourActivo.drive();
-            } else {
-                // Si estamos en la vista principal
-                window.scrollTo({ top: 0, behavior: 'instant' });
-                tourActivo = driver({ ...configBase, steps: stepsPrincipal });
-                tourActivo.drive();
-            }
-        });
-    }
-
-    // Limpieza de seguridad al cerrar modal
-    if (modalHTML) {
-        modalHTML.addEventListener('hide.bs.modal', () => {
-            if (tourActivo) {
-                try { tourActivo.destroy(); } catch (e) {}
-            }
-        });
-    }
+    AyudaInteractiva.inicializar({
+        idModal: 'modal_tipo_gasto',
+        pasosPrincipal: stepsPrincipal,
+        pasosModal: stepsModal
+    });
 });

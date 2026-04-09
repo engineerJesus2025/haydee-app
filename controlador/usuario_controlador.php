@@ -19,6 +19,8 @@ $roles = $rol_obj->realizar_consulta('consultar');
 
 if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
+
+    Sesiones::verificarPermisoAccion(GESTIONAR_USUARIOS, $operacion);
     
     // 1. Obtenemos las reglas de validación
     $reglas = Usuario::obtenerReglas($operacion);

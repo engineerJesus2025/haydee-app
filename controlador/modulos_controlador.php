@@ -11,6 +11,8 @@ Sesiones::verificarPermiso(GESTIONAR_MODULOS, CONSULTAR);
 
 if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
+
+    Sesiones::verificarPermisoAccion(GESTIONAR_MODULOS, $operacion);
     
     // 1. VALIDACIÓN
     $reglas = Modulos::obtenerReglas($operacion);

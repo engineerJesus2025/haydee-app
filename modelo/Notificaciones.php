@@ -183,11 +183,6 @@ class Notificaciones extends Conexion
      */
     private function _notificar_todos()
     {
-        // Manejo de fecha
-        if ($this->fecha === null) {
-            $this->fecha = date('Y-m-d');
-        }
-
         // Determinar si se incluirá evento (deben estar los tres campos)
         $incluirEvento = !empty($this->tabla_origen) && !empty($this->id_registro_origen) && !empty($this->tipo_evento);
 
@@ -221,7 +216,7 @@ class Notificaciones extends Conexion
 
                 // 3. Insertar notificaciones y relaciones
                 $sqlNotif = "INSERT INTO notificaciones (titulo, descripcion, fecha, usuario_id, leido)
-                             VALUES (:tit, :desc, :fecha, :uid, 0)";
+                             VALUES (:tit, :desc, NOW(), :uid, 0)";
                 $stmtNotif = $con->prepare($sqlNotif);
 
                 $sqlRel = "INSERT INTO notificacion_evento (notificacion_id, evento_id) VALUES (:nid, :eid)";
@@ -232,7 +227,6 @@ class Notificaciones extends Conexion
                     $stmtNotif->execute([
                         ':tit'   => $this->titulo,
                         ':desc'  => $this->descripcion,
-                        ':fecha' => $this->fecha,
                         ':uid'   => $uid
                     ]);
                     $idNotif = $con->lastInsertId();
@@ -252,14 +246,13 @@ class Notificaciones extends Conexion
             } else {
                 // Sin evento: inserción masiva directa (más rápida)
                 $sql = "INSERT INTO notificaciones (titulo, descripcion, fecha, usuario_id, leido)
-                        SELECT :tit, :desc, :fecha, id_usuario, 0
+                        SELECT :tit, :desc, NOW(), id_usuario, 0
                         FROM usuarios
                         WHERE activo = 1";
                 $stmt = $con->prepare($sql);
                 $stmt->execute([
                     ':tit'   => $this->titulo,
-                    ':desc'  => $this->descripcion,
-                    ':fecha' => $this->fecha
+                    ':desc'  => $this->descripcion
                 ]);
                 $filas = $stmt->rowCount();
                 return [
@@ -284,21 +277,15 @@ class Notificaciones extends Conexion
      */
     private function _notificar_pago()
     {
-
-        if ($this->fecha === null) {
-            $this->fecha = date('Y-m-d');
-        } 
-
         try {
             $sql = "INSERT INTO notificaciones (titulo, descripcion, fecha, leido, usuario_id)
-                    SELECT :tit, :desc, :fecha, 0, id_usuario
+                    SELECT :tit, :desc, NOW(), 0, id_usuario
                     FROM usuarios 
                     WHERE rol_id IN (1, 2) AND activo = 1";
             $stmt = $this->get_conex('seguridad')->prepare($sql);
             $stmt->execute([
                 ':tit'   => $this->titulo,
-                ':desc'  => $this->descripcion,
-                ':fecha' => $this->fecha
+                ':desc'  => $this->descripcion
             ]);
             return ['estatus' => true, 'mensaje' => 'Administradores notificados del pago'];
         } catch (PDOException $e) {
@@ -374,7 +361,7 @@ class Notificaciones extends Conexion
 
             // 3. Insertar notificaciones
             $sqlNotif = "INSERT INTO notificaciones (titulo, descripcion, fecha, usuario_id, leido) 
-                         VALUES (:tit, :desc, CURDATE(), :uid, 0)";
+                         VALUES (:tit, :desc, NOW(), :uid, 0)";
             $stmtNotif = $con->prepare($sqlNotif);
 
             $sqlRel = "INSERT INTO notificacion_evento (notificacion_id, evento_id) VALUES (:nid, :eid)";

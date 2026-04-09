@@ -33,7 +33,7 @@ botonCuadroPagos.addEventListener("click", () => {
         let nombreMes = FormatoFechas.nombreMes(mes.mes);
         let option = document.createElement("option");
         option.textContent = `${nombreMes} del ${mes.anio}`;
-        option.value = `${mes.mes}-${mes.anio}`;
+        option.value = FormatoFechas.formatear(`1-${mes.mes}-${mes.anio}`,"MM-YYYY");
         fragment.appendChild(option);
     });
 
@@ -43,7 +43,7 @@ botonCuadroPagos.addEventListener("click", () => {
         if (select.dataset.valor != "mensualidad") return;
         e.preventDefault();
         
-        if (!Validador.evaluarInput(select, Patrones.mesAnio, '')) {
+        if (!Validador.evaluarInput(select, Patrones.mesAnio, 'seleccione un mes válido')) {
             Alertas.mostrar('error', 'Atención', 'Debe seleccionar un mes válido');
             return;
         }

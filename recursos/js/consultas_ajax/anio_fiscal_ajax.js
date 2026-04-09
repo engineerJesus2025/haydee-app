@@ -229,75 +229,26 @@ document.getElementById('modal_anio_fiscal').addEventListener('hide.bs.modal', (
 });
 
 // ============================================================
-// MÓDULO DE AYUDA (DRIVER.JS) - AÑO FISCAL
+// MÓDULO DE AYUDA INTERACTIVA
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
-    const driver = window.driver.js.driver;
-    let tourActivo = null;
-
-    // Micro-retraso para asegurar que la burbuja se ancle bien
-    const alinearBurbuja = () => {
-        setTimeout(() => {
-            window.dispatchEvent(new Event('resize'));
-        }, 10);
-    };
-
-    // Configuración base
-    const configBase = {
-        showProgress: true,
-        animate: true,
-        smoothScroll: false,
-        allowKeyboardControl: false,
-        nextBtnText: 'Siguiente ➔',
-        prevBtnText: '⬅ Anterior',
-        doneBtnText: 'Entendido',
-        progressText: 'Paso {{current}} de {{total}}',
-        onHighlightStarted: (element) => {
-            if (element) {
-                element.scrollIntoView({ behavior: 'instant', block: 'center' });
-                alinearBurbuja();
-            }
-        }
-    };
-
-    // 1. TOUR VISTA PRINCIPAL
     const stepsPrincipal = [
-        { element: '.page-header', popover: { title: 'Años Fiscales', description: 'Módulo para gestionar los periodos contables del condominio (Apertura y Cierre).', side: "bottom", align: 'center' } },
-        { element: 'button[data-bs-target="#modal_anio_fiscal"]', popover: { title: 'Nuevo Periodo', description: 'Registra el inicio de un nuevo año fiscal para comenzar a procesar movimientos.', side: "bottom", align: 'start' } },
-        { element: '#tabla_anio_fiscal', popover: { title: 'Historial', description: 'Lista de periodos anteriores. Aquí puedes ver cuáles están cerrados y cuál está activo actualmente.', side: "top", align: 'center' } }
-    ];
+            { element: '.page-header', popover: { title: 'Años Fiscales', description: 'Módulo para gestionar los periodos contables del condominio (Apertura y Cierre).', side: "bottom", align: 'center' } },
+            { element: 'button[data-bs-target="#modal_anio_fiscal"]', popover: { title: 'Nuevo Periodo', description: 'Registra el inicio de un nuevo año fiscal para comenzar a procesar movimientos.', side: "bottom", align: 'start' } },
+            { element: '#tabla_anio_fiscal', popover: { title: 'Historial', description: 'Lista de periodos anteriores. Aquí puedes ver cuáles están cerrados y cuál está activo actualmente.', side: "top", align: 'center' } }
+        ];
 
-    // 2. TOUR MODAL DE REGISTRO
     const stepsModal = [
-        { element: '#fecha_inicio', popover: { title: 'Fecha de Inicio', description: 'Indica cuándo comienza este nuevo periodo fiscal.', side: 'bottom', align: 'start' } },
-        { element: '#fecha_cierre', popover: { title: 'Fecha de Cierre', description: 'Esta fecha se llenará automáticamente o se definirá cuando decidas cerrar el año fiscal en el futuro.', side: 'bottom', align: 'start' } },
-        { element: '#estado', popover: { title: 'Estado', description: 'Muestra si el año fiscal está "Abierto" (Activo) o "Cerrado" (Histórico).', side: 'top', align: 'start' } },
-        { element: '#descripcion', popover: { title: 'Descripción', description: 'Puedes agregar una etiqueta o nombre para identificar este periodo (ej: "Periodo 2026").', side: 'top', align: 'start' } },
-        { element: '#boton_formulario', popover: { title: 'Guardar', description: 'Registra el año fiscal en el sistema.', side: 'top', align: 'center' } }
-    ];
+            { element: '#fecha_inicio', popover: { title: 'Fecha de Inicio', description: 'Indica cuándo comienza este nuevo periodo fiscal.', side: 'bottom', align: 'start' } },
+            { element: '#fecha_cierre', popover: { title: 'Fecha de Cierre', description: 'Esta fecha se llenará automáticamente o se definirá cuando decidas cerrar el año fiscal en el futuro.', side: 'bottom', align: 'start' } },
+            { element: '#estado', popover: { title: 'Estado', description: 'Muestra si el año fiscal está "Abierto" (Activo) o "Cerrado" (Histórico).', side: 'top', align: 'start' } },
+            { element: '#descripcion', popover: { title: 'Descripción', description: 'Puedes agregar una etiqueta o nombre para identificar este periodo (ej: "Periodo 2026").', side: 'top', align: 'start' } },
+            { element: '#boton_formulario', popover: { title: 'Guardar', description: 'Registra el año fiscal en el sistema.', side: 'top', align: 'center' } }
+        ];
 
-    // LÓGICA DEL BOTÓN FLOTANTE
-    const btnAyuda = document.getElementById('btn-ayuda-tour');
-    const modalHTML = document.getElementById('modal_anio_fiscal');
-
-    if(btnAyuda) {
-        btnAyuda.addEventListener('click', () => {
-            if (modalHTML && modalHTML.classList.contains('show')) {
-                tourActivo = driver({ ...configBase, steps: stepsModal });
-                tourActivo.drive();
-            } else {
-                window.scrollTo({ top: 0, behavior: 'instant' });
-                tourActivo = driver({ ...configBase, steps: stepsPrincipal });
-                tourActivo.drive();
-            }
-        });
-    }
-
-    if (modalHTML) {
-        modalHTML.addEventListener('hide.bs.modal', () => {
-            if (tourActivo) {
-                try { tourActivo.destroy(); } catch (e) {}
-            }
-        });
-    }
+    AyudaInteractiva.inicializar({
+        idModal: 'modal_anio_fiscal',
+        pasosPrincipal: stepsPrincipal,
+        pasosModal: stepsModal
+    });
 });

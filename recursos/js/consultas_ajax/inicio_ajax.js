@@ -203,7 +203,7 @@ async function cargarGraficos() {
 }
 
 async function consultarPublicaciones() {
-    if (fin) return; // Optimizacion simple
+    if (fin) return; 
 
     document.getElementById('carga_publicaciones').removeAttribute('hidden');
 
@@ -219,7 +219,6 @@ async function consultarPublicaciones() {
 
             if (!publicaciones || publicaciones.length === 0) {
                 fin = true;
-                mostrarMensajeFin(limite === 0 ? "No hay publicaciones" : "No hay más resultados");
                 return;
             }
 
@@ -245,13 +244,12 @@ function construirHTMLPublicacion(publicacion) {
     const clone = template.content.cloneNode(true);
     const card = clone.querySelector('.item-publicacion');
     
-    // 1. Llenar los textos usando tus helpers
     card.querySelector('.post-title').textContent = publicacion.titulo;
     card.querySelector('.post-date').textContent = FormatoFechas.tiempoRelativo(publicacion.fecha) || publicacion.fecha;
     card.querySelector('.post-description').textContent = publicacion.descripcion;
     card.querySelector('.author-name').textContent = publicacion.nombre_usuario;
     
-    // 2. Lógica de la Imagen y su Fallback
+    // Imagen y su Fallback
     const imgElement = card.querySelector('.post-image');
     // SVG convertido en Base64 para inyectarlo sin hacer peticiones extra
     const svgPorDefecto = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22400%22%20height%3D%22200%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20200%22%20preserveAspectRatio%3D%22none%22%3E%3Crect%20width%3D%22400%22%20height%3D%22200%22%20fill%3D%22%23e9ecef%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20fill%3D%22%236c757d%22%20font-size%3D%2216%22%20font-family%3D%22Arial%2C%20sans-serif%22%20text-anchor%3D%22middle%22%20dy%3D%22.3em%22%3ESin%20Imagen%3C%2Ftext%3E%3C%2Fsvg%3E';
@@ -262,7 +260,6 @@ function construirHTMLPublicacion(publicacion) {
         imgElement.src = svgPorDefecto;
     }
 
-    // 3. Lógica Semántica para la Etiqueta de Prioridad
     const badge = card.querySelector('.priority-badge');
     const prioridadStr = String(publicacion.prioridad); 
     
@@ -276,6 +273,9 @@ function construirHTMLPublicacion(publicacion) {
         badge.textContent = "Informativo";
         badge.classList.add('bg-success');
     }
+
+    card.style.cursor = 'pointer'; // Para que el ratón cambie a una manito
+    card.addEventListener('click', () => mostrarVistaPreviaPublicacion(publicacion));
     
     return card;
 }
@@ -375,6 +375,9 @@ async function cargarWidgetPublicaciones() {
                     </div>
                 </div>
             `;
+
+            divItem.addEventListener('click', () => mostrarVistaPreviaPublicacion(pub));
+
             fragment.appendChild(divItem);
         });
 
@@ -402,37 +405,34 @@ async function cargarApartamentos() {
         
         if (!contenedorGrid) return;
 
-        // 1. Limpiamos el contenido HTML estático
         contenedorGrid.innerHTML = '';
-
-        // 2. Creamos un fragmento de documento para optimizar el renderizado en el navegador (Mejor rendimiento)
         let fragment = document.createDocumentFragment();
 
-        apartamentos.forEach((apt,index) => {
-            // Evaluamos la clase de CSS a usar basándonos en el estado
+        apartamentos.forEach((apt, index) => {
             let claseEstado = apt.estado === 'Ocupado' ? 'apt-ocupado' : 'apt-libre';
 
-            // Creamos el div principal del badge
             let divBadge = document.createElement('div');
             divBadge.className = `apt-badge ${claseEstado} animacion-aparecer`;
-            divBadge.style.animationDelay = `${index * 0.05}s`;
+            divBadge.style.animationDelay = `${index * 0.02}s`; // Animación en cascada más rápida
             
-            // Creamos el span para el número de apartamento
             let spanNro = document.createElement('span');
             spanNro.textContent = apt.nro_apartamento;
             
-            // Creamos el span para el texto inferior
             let spanTexto = document.createElement('span');
             spanTexto.className = 'apt-text-small';
             spanTexto.textContent = apt.estado.toUpperCase();
             
-            // Unimos todo
+            // --- NUEVO: Evento Click para abrir el modal ---
+            divBadge.addEventListener('click', () => {
+                mostrarInfoApartamento(apt);
+            });
+            // -----------------------------------------------
+
             divBadge.appendChild(spanNro);
             divBadge.appendChild(spanTexto);
             fragment.appendChild(divBadge);
         });
 
-        // 3. Inyectamos todo el grid de una sola vez
         contenedorGrid.appendChild(fragment);
 
     } catch (error) {
@@ -440,12 +440,63 @@ async function cargarApartamentos() {
     }
 }
 
+// --- Llena y abre el modal de Apartamentos ---
+function mostrarInfoApartamento(apt) {
+    document.getElementById('info-apt-nro').textContent = apt.nro_apartamento;
+    document.getElementById('info-apt-residente').textContent = apt.residente_principal.toLowerCase(); // Convertimos a minúscula para que el CSS haga el Capitalize
+    
+    // 1. Configurar colores de cabecera y estado
+    const header = document.getElementById('info-apt-header');
+    const badgeEstado = document.getElementById('info-apt-estado');
+    
+    if (apt.estado === 'Ocupado') {
+        header.className = 'modal-header border-0 pb-4 pt-4 justify-content-center position-relative bg-primary';
+        badgeEstado.textContent = 'Ocupado';
+        badgeEstado.className = 'badge bg-primary text-white rounded-pill shadow-sm px-4 py-2 fs-6 text-uppercase border border-2 border-white';
+    } else {
+        header.className = 'modal-header border-0 pb-4 pt-4 justify-content-center position-relative bg-success';
+        badgeEstado.textContent = 'Libre';
+        badgeEstado.className = 'badge bg-success text-white rounded-pill shadow-sm px-4 py-2 fs-6 text-uppercase border border-2 border-white';
+    }
+
+    // 2. Configurar colores de la caja de deuda
+    const cajaDeuda = document.getElementById('info-apt-caja-deuda');
+    const h3Deuda = document.getElementById('info-apt-deuda');
+    const msgDeuda = document.getElementById('info-apt-mensaje-deuda');
+    const iconoDeuda = document.getElementById('info-apt-icono-deuda');
+    const montoDeuda = parseFloat(apt.deuda_total);
+
+    h3Deuda.textContent = `${montoDeuda.toFixed(2)} Bs.`;
+
+    if (montoDeuda > 0) {
+        // Estado: Con Deuda (Tonos Rojos)
+        cajaDeuda.style.backgroundColor = '#fef2f2'; // Fondo rojo muy suave pastel
+        cajaDeuda.style.color = '#dc2626'; // Texto rojo oscuro
+        h3Deuda.className = 'fw-bolder mb-0 text-danger';
+        iconoDeuda.className = 'fas fa-exclamation-triangle me-1 text-danger';
+        msgDeuda.textContent = 'Posee deuda pendiente';
+        msgDeuda.className = 'fw-bold text-danger';
+    } else {
+        // Estado: Solvente (Tonos Verdes)
+        cajaDeuda.style.backgroundColor = '#f0fdf4'; // Fondo verde muy suave pastel
+        cajaDeuda.style.color = '#16a34a'; // Texto verde oscuro
+        h3Deuda.className = 'fw-bolder mb-0 text-success';
+        iconoDeuda.className = 'fas fa-check-circle me-1 text-success';
+        msgDeuda.textContent = 'Solvente';
+        msgDeuda.className = 'fw-bold text-success';
+    }
+
+    // 3. Mostrar Modal
+    const modalElement = document.getElementById('modalInfoApartamento');
+    const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+    modal.show();
+}
+
 async function cargarActividadReciente() {
     let datos_consulta = new FormData();
     datos_consulta.append("operacion", "consulta_actividad");
 
     try {
-        // Usamos tu helper Utilidades
         let respuesta = await Peticiones.enviar(datos_consulta, "", false);
         const contenedor = document.getElementById('contenedor-actividad');
         
@@ -457,7 +508,7 @@ async function cargarActividadReciente() {
         }
 
         const actividades = respuesta.datos;
-        contenedor.innerHTML = ''; // Limpiar el esqueleto estático
+        contenedor.innerHTML = ''; // Limpiar el esqueleto
 
         if (actividades.length === 0) {
             contenedor.innerHTML = '<p class="text-center text-muted">No hay actividad reciente.</p>';
@@ -465,23 +516,39 @@ async function cargarActividadReciente() {
         }
 
         let fragment = document.createDocumentFragment();
+        let fechaAnterior = null; // Para llevar control de las agrupaciones
 
         actividades.forEach((item, index) => {
+            // 1. Lógica de agrupación por fechas
+            let fechaSoloDia = item.fecha_evento.split(' ')[0]; // Extrae 'YYYY-MM-DD'
+            
+            if (fechaSoloDia !== fechaAnterior) {
+                let etiquetaFecha = obtenerEtiquetaFecha(fechaSoloDia);
+                let separador = document.createElement('div');
+                separador.className = 'timeline-date-separator animacion-aparecer';
+                separador.textContent = etiquetaFecha;
+                fragment.appendChild(separador);
+                fechaAnterior = fechaSoloDia;
+            }
+
+            // 2. Lógica del Avatar (Iniciales + Color)
+            let iniciales = obtenerIniciales(item.nombre_usuario);
+            let colorAvatar = obtenerColorPorNombre(item.nombre_usuario);
+
+            // 3. Configuración del ícono de acción (ahora pequeñito)
             let config = obtenerConfiguracionIcono(item.accion);
 
             // Quitar el borde inferior al último elemento para estética
             let borderClass = index === actividades.length - 1 ? '' : 'mb-3 pb-3 border-bottom';
 
-            // Usamos tu helper de fechas (Ajusta el nombre del método según tu formatoFechas.js)
-            let fechaFormateada = FormatoFechas.tiempoRelativo(item.fecha_evento); 
+            // Hora del evento (ya no necesitamos la fecha completa aquí, solo la hora o 'Hace X')
+            let horaEvento = item.fecha_evento.split(' ')[1].substring(0, 5); // Ej: 14:30
 
-            // Lógica inteligente para mostrar el texto
+            // 4. Construcción del texto
             let textoActividad = '';
             if (item.accion === 'Inició sesión' || item.accion === 'Cerró sesión') {
-                // Para login/logout mostramos un mensaje directo
                 textoActividad = `<span class="text-muted">${item.accion.toLowerCase()} en el sistema.</span>`;
             } else {
-                // Para el resto, mostramos el módulo y la descripción
                 textoActividad = `<span class="text-muted">${item.accion.toLowerCase()} en ${item.nombre_modulo}:</span>
                                   <span class="text-dark"> ${item.descripcion}</span>`;
             }
@@ -490,17 +557,29 @@ async function cargarActividadReciente() {
             divItem.className = `d-flex align-items-start ${borderClass} animacion-aparecer`;
             
             divItem.innerHTML = `
-                <div class="activity-icon ${config.color} me-3" style="width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
-                    ${config.icono}
+                <div class="avatar-container">
+                    <div class="user-avatar" style="background-color: ${colorAvatar};">
+                        ${iniciales}
+                    </div>
+                    <div class="action-badge ${config.color}">
+                        ${config.icono}
+                    </div>
                 </div>
                 <div>
                     <div class="mb-1">
                         <span class="fw-bold text-dark">${item.nombre_usuario}</span> 
                         ${textoActividad}
                     </div>
-                    <div class="text-muted-custom" style="font-size: 0.8rem;">${fechaFormateada}</div>
+                    <div class="text-muted-custom" style="font-size: 0.75rem;">
+                        <i class="far fa-clock me-1"></i>${horaEvento} 
+                    </div>
                 </div>
             `;
+
+            divItem.style.cursor = 'pointer';
+            divItem.addEventListener('click', () => {
+                mostrarDetalleBitacoraRapido(item);
+            });
             
             fragment.appendChild(divItem);
         });
@@ -512,52 +591,216 @@ async function cargarActividadReciente() {
     }
 }
 
+// --- FUNCIÓN: Mostrar detalles de una Actividad en el Modal del Dashboard ---
+function mostrarDetalleBitacoraRapido(item) {
+    // 1. Configuración de colores
+    const colores = { 
+        'consultó': "bg-secondary", 
+        'eliminó': "bg-danger", 
+        'registró': "bg-primary", 
+        'modificó': "bg-success", 
+        'inició sesión': "bg-info text-dark", 
+        'cerró sesión': "bg-danger text-white",
+        'respaldó': "bg-indigo text-white",
+        'restauró': "bg-teal text-white"    
+    };
+    
+    const accionNormalizada = item.accion.toLowerCase();
+    const claseColor = colores[accionNormalizada] || "bg-secondary";
+
+    // 2. Referencias al DOM
+    const divConsulta = document.getElementById('detalle_consulta_dash');
+    const iconoConsulta = document.getElementById('icono_consulta_dash');
+    const mensajeConsulta = document.getElementById('mensaje_consulta_dash');
+    const divCambios = document.getElementById('detalle_cambios_dash');
+
+    // 3. Llenar datos generales
+    document.getElementById('detalle_usuario_dash').textContent = item.nombre_usuario;
+    document.getElementById('detalle_fecha_dash').textContent = FormatoFechas.tiempoRelativo(item.fecha_evento) || item.fecha_evento;
+    document.getElementById('detalle_modulo_dash').textContent = item.nombre_modulo;
+
+    const accionBadge = document.getElementById('detalle_accion_dash');
+    accionBadge.textContent = item.accion;
+    accionBadge.className = `badge ${claseColor}`;
+
+    // 4. Lógica de visualización (Mensaje simple vs Pestañas de JSON)
+    const accionesDeSoloMensaje = ['consultó', 'inició sesión', 'cerró sesión', 'respaldó', 'restauró'];
+
+    if (accionesDeSoloMensaje.includes(accionNormalizada)) {
+        // Modo Mensaje
+        divConsulta.classList.remove('d-none');
+        divCambios.classList.add('d-none');
+        mensajeConsulta.textContent = item.descripcion;
+    } else {
+        // Modo JSON (Requiere datos que actualmente tu consulta de dashboard no trae)
+        // NOTA: Tu modelo Bitacora._consultar_actividad_dashboard actual borra los JSON. 
+        // Mostraremos un aviso elegante si no están disponibles.
+        divConsulta.classList.add('d-none');
+        divCambios.classList.remove('d-none');
+
+        let anterioresHtml = '<p class="text-muted">Detalles técnicos no cargados en la vista rápida.</p>';
+        let nuevosHtml = '<p class="text-muted">Detalles técnicos no cargados en la vista rápida.</p>';
+
+        if(item.valores_anteriores) anterioresHtml = objetoAListaDash(JSON.parse(item.valores_anteriores));
+        if(item.valores_nuevos) nuevosHtml = objetoAListaDash(JSON.parse(item.valores_nuevos));
+
+        if (accionNormalizada === 'registró') {
+            document.getElementById('anteriores-tab-dash').parentElement.style.display = 'none';
+            document.getElementById('nuevos-tab-dash').parentElement.style.display = 'block';
+            document.getElementById('nuevos-tab-dash').click(); 
+        } else if (accionNormalizada === 'eliminó') {
+            document.getElementById('anteriores-tab-dash').parentElement.style.display = 'block';
+            document.getElementById('nuevos-tab-dash').parentElement.style.display = 'none';
+            document.getElementById('anteriores-tab-dash').click(); 
+        } else { 
+            document.getElementById('anteriores-tab-dash').parentElement.style.display = 'block';
+            document.getElementById('nuevos-tab-dash').parentElement.style.display = 'block';
+            document.getElementById('nuevos-tab-dash').click();
+        }
+
+        document.getElementById('valores_anteriores_dash').innerHTML = anterioresHtml;
+        document.getElementById('valores_nuevos_dash').innerHTML = nuevosHtml;
+    }
+
+    // 5. Mostrar Modal
+    const modalElement = document.getElementById('modalDetalleBitacoraDashboard');
+    const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+    modal.show();
+}
+
+function objetoAListaDash(obj) {
+    if (!obj || Object.keys(obj).length === 0) return '<p class="text-muted">No hay datos</p>';
+    let html = '<ul class="list-group">';
+    for (let [key, value] of Object.entries(obj)) {
+        let valorMostrar = typeof value === 'object' && value !== null ? JSON.stringify(value) : value;
+        html += `<li class="list-group-item"><strong>${key}:</strong> ${valorMostrar}</li>`;
+    }
+    html += '</ul>';
+    return html;
+}
+
+// --- FUNCIONES AUXILIARES PARA LA BITÁCORA ---
+
+function obtenerIniciales(nombreCompleto) {
+    let partes = nombreCompleto.trim().split(' ');
+    if (partes.length >= 2) {
+        return (partes[0][0] + partes[1][0]).toUpperCase();
+    } else if (partes.length === 1) {
+        return partes[0].substring(0, 2).toUpperCase();
+    }
+    return "?";
+}
+
+// Genera un color consistente basado en el string del nombre
+function obtenerColorPorNombre(nombre) {
+    let hash = 0;
+    for (let i = 0; i < nombre.length; i++) {
+        hash = nombre.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    // Paleta de colores agradables
+    const colores = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
+    let index = Math.abs(hash) % colores.length;
+    return colores[index];
+}
+
+function obtenerEtiquetaFecha(fechaString) {
+    // fechaString viene en formato 'YYYY-MM-DD'
+    let partes = fechaString.split('-');
+    let fechaEvento = new Date(partes[0], partes[1] - 1, partes[2]);
+    let hoy = new Date();
+    hoy.setHours(0,0,0,0);
+    
+    let ayer = new Date(hoy);
+    ayer.setDate(hoy.getDate() - 1);
+
+    if (fechaEvento.getTime() === hoy.getTime()) return "Hoy";
+    if (fechaEvento.getTime() === ayer.getTime()) return "Ayer";
+    
+    // Si es más antiguo, devolvemos formato DD/MM/YYYY
+    return `${partes[2]}/${partes[1]}/${partes[0]}`;
+}
+
 /**
  * Retorna un color e ícono SVG basado en la acción formateada
+ * (Los SVGs se han ajustado a viewBox="0 0 24 24" y tamaño 12x12 para que quepan en el badge)
  */
 function obtenerConfiguracionIcono(accion) {
     let accionUpper = accion.toUpperCase();
+    let svgProps = 'width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"';
     
     if (accionUpper.includes('REGISTRÓ') || accionUpper.includes('CREÓ')) {
         return {
             color: 'icon-box-green',
-            icono: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"></path></svg>'
+            icono: `<svg ${svgProps}><path d="M12 5v14M5 12h14"></path></svg>`
         };
     } else if (accionUpper.includes('ELIMINÓ') || accionUpper.includes('ANULÓ')) {
         return {
             color: 'icon-box-red',
-            icono: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>'
+            icono: `<svg ${svgProps}><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`
         };
     } else if (accionUpper.includes('MODIFICÓ') || accionUpper.includes('ACTUALIZÓ')) {
         return {
             color: 'icon-box-yellow',
-            icono: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>'
+            icono: `<svg ${svgProps}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`
         };
     } else if (accionUpper.includes('INICIÓ')) {
         return {
             color: 'icon-box-blue',
-            icono: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>'
+            icono: `<svg ${svgProps}><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>`
         };
     } else if (accionUpper.includes('CERRÓ')) {
         return {
             color: 'icon-box-red', 
-            icono: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>'
+            icono: `<svg ${svgProps}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>`
         };
     } else { // Consultó y otros
         return {
             color: 'icon-box-blue',
-            icono: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>'
+            icono: `<svg ${svgProps}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`
         };
     }
 }
 
+// --- FUNCIÓN PARA VISTA PREVIA DE PUBLICACIONES ---
+function mostrarVistaPreviaPublicacion(pub) {
+    // Llenar los textos básicos
+    document.getElementById('vista_titulo').textContent = pub.titulo;
+    document.getElementById('vista_autor').textContent = pub.nombre_usuario;
+    document.getElementById('vista_fecha').textContent = FormatoFechas.tiempoRelativo(pub.fecha) || pub.fecha;
+    document.getElementById('vista_descripcion').textContent = pub.descripcion;
+    
+    // Lógica de la etiqueta de prioridad
+    const badge = document.getElementById('vista_prioridad');
+    if (pub.prioridad == 1) {
+        badge.textContent = "Urgente";
+        badge.className = "badge bg-danger mb-2";
+    } else if (pub.prioridad == 2) {
+        badge.textContent = "Importante";
+        badge.className = "badge bg-warning text-dark mb-2";
+    } else {
+        badge.textContent = "Informativo";
+        badge.className = "badge bg-success mb-2";
+    }
 
-// funciones específicas de esta vista
-function mostrarMensajeFin(mensajeTexto) {
-    if(document.getElementById('msg-fin-posts')) return;
-    let div_no_hay = document.createElement("div");
-    div_no_hay.id = 'msg-fin-posts';
-    div_no_hay.className = "col-10 text-center my-2 text-muted";
-    div_no_hay.textContent = mensajeTexto;
-    contenido_principal.appendChild(div_no_hay);
+    // --- LÓGICA DE LA IMAGEN CORREGIDA ---
+    const imgContainer = document.getElementById('contenedor_imagen');
+    const img = document.getElementById('vista_imagen');
+    const msgError = document.getElementById('mensaje_error_imagen');
+    
+    // 1. REINICIAR ESTADOS: Volvemos a hacer visible el tag <img> y ocultamos el error
+    img.style.display = 'inline-block'; 
+    if(msgError) msgError.classList.add('d-none');
+
+    if (pub.imagen && pub.imagen.trim() !== '') {
+        img.src = `recursos/img/cartelera_virtual/${pub.imagen}`;
+        imgContainer.style.display = 'block'; // Mostramos todo el bloque de la foto
+    } else {
+        imgContainer.style.display = 'none'; // Ocultamos todo el bloque
+        img.removeAttribute('src'); // Evitamos usar src='' para no provocar el evento 'onerror'
+    }
+
+    // Mostrar el Modal usando la API de Bootstrap 5
+    const modalElement = document.getElementById('modalVistaPreviaPublicacion');
+    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalElement);
+    modalInstance.show();
 }

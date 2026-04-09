@@ -446,112 +446,25 @@ window.eliminarHabitante = eliminarHabitante;
 window.prepararEdicionHabitante = prepararEdicionHabitante;
 
 // ============================================================
-// MÓDULO DE AYUDA (DRIVER.JS) - APARTAMENTOS Y HABITANTES
+// MÓDULO DE AYUDA INTERACTIVA
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
-    const driver = window.driver.js.driver;
-    let tourActivo = null;
-
-    // Función de alineación precisa
-    const alinearBurbuja = () => {
-        setTimeout(() => {
-            window.dispatchEvent(new Event('resize'));
-        }, 10);
-    };
-
-    // CONFIGURACIÓN COMÚN PARA MODALES (Para no repetir código)
-    const configBaseModal = {
-        showProgress: true,
-        animate: true,
-        smoothScroll: false,
-        allowKeyboardControl: false,
-        nextBtnText: 'Siguiente ➔',
-        prevBtnText: '⬅ Anterior',
-        doneBtnText: 'Entendido',
-        progressText: 'Paso {{current}} de {{total}}',
-        onHighlightStarted: (element) => {
-            if (element) {
-                element.scrollIntoView({ behavior: 'instant', block: 'center' });
-                alinearBurbuja();
-            }
-        }
-    };
-
-    // 1. TOUR VISTA PRINCIPAL
     const stepsPrincipal = [
         { element: '.page-header', popover: { title: 'Gestión Inmobiliaria', description: 'Aquí administras la estructura del condominio (Apartamentos) y quiénes viven en ellos (Habitantes).', side: "bottom", align: 'center' } },
         { element: 'button[data-bs-target="#modal_apartamentos"]', popover: { title: 'Registrar Propiedad', description: 'Usa este botón para dar de alta un nuevo apartamento en el sistema.', side: "bottom", align: 'start' } },
         { element: '#tabla_apartamentos', popover: { title: 'Directorio', description: 'Lista maestra de apartamentos. El botón azul "Personas" te permite gestionar a los habitantes de ese apartamento.', side: "top", align: 'center' } }
     ];
 
-    // 2. TOUR MODAL REGISTRO APARTAMENTO
-    const stepsModalApto = [
+    const stepsModal = [
         { element: '#nro_apartamento', popover: { title: 'Identificación', description: 'Número o código del apartamento (Ej: 1-A, PH-1).', side: 'bottom', align: 'start' } },
         { element: '#porcentaje_participacion', popover: { title: 'Alícuota', description: 'Porcentaje de participación del apartamento para el cálculo de gastos comunes.', side: 'top', align: 'start' } },
         { element: '#gas', popover: { title: 'Servicios', description: 'Indica si este apartamento posee conexión a servicios específicos como Gas o Agua.', side: 'top', align: 'start' } },
         { element: '#boton_formulario', popover: { title: 'Guardar', description: 'Registra el inmueble en la base de datos.', side: 'top', align: 'center' } }
     ];
 
-    // 3. TOUR MODAL LISTA DE HABITANTES (VISTA PREVIA)
-    const stepsModalListaHab = [
-        { element: '#modal_vista_previa .modal-header', popover: { title: 'Residentes del Apartamento', description: 'Estás viendo quiénes viven en el apartamento seleccionado.', side: 'bottom', align: 'center' } },
-        { element: '#boton_registrar', popover: { title: 'Nuevo Habitante', description: 'Haz clic aquí para vincular una persona (propietario o inquilino) a este apartamento.', side: 'bottom', align: 'start' } },
-        { element: '#tabla_habitantes', popover: { title: 'Censo', description: 'Lista de personas registradas. Puedes ver sus detalles, editar sus datos o eliminarlos.', side: 'top', align: 'center' } }
-    ];
-
-    // 4. TOUR MODAL FORMULARIO HABITANTE
-    const stepsModalFormHab = [
-        { element: '#cedula', popover: { title: 'Documento', description: 'Cédula de identidad del habitante. Es obligatoria.', side: 'bottom', align: 'start' } },
-        { element: '#nombre', popover: { title: 'Datos Personales', description: 'Nombre y Apellido del residente.', side: 'bottom', align: 'start' } },
-        { element: '#telefono', popover: { title: 'Contacto', description: 'Número telefónico principal para contactar al vecino.', side: 'top', align: 'start' } },
-        { element: '#correo', popover: { title: 'Email', description: 'Correo electrónico para envío de recibos y notificaciones.', side: 'top', align: 'start' } },
-        { element: '#tipo_vinculo', popover: { title: 'Relación', description: 'Define si esta persona es el Propietario legal o solo un Habitante.', side: 'top', align: 'start' } },
-        { element: '#boton_formulario_habitantes', popover: { title: 'Guardar', description: 'Finaliza el registro del habitante.', side: 'top', align: 'center' } }
-    ];
-
-    // LÓGICA DEL BOTÓN INTELIGENTE (DETECTA CONTEXTO)
-    const btnAyuda = document.getElementById('btn-ayuda-tour');
-
-    // Referencias a los modales del DOM
-    const mApartamento = document.getElementById('modal_apartamentos');
-    const mListaHab = document.getElementById('modal_vista_previa'); // Lista de habitantes
-    const mFormHab = document.getElementById('modal_habitantes');   // Formulario habitante
-
-    if(btnAyuda) {
-        btnAyuda.addEventListener('click', () => {
-            // Caso 1: Formulario de Habitante Abierto (Prioridad Máxima)
-            if (mFormHab && mFormHab.classList.contains('show')) {
-                tourActivo = driver({ ...configBaseModal, steps: stepsModalFormHab });
-                tourActivo.drive();
-                return;
-            }
-
-            // Caso 2: Lista de Habitantes Abierta
-            if (mListaHab && mListaHab.classList.contains('show')) {
-                // Truco: Scroll al tope del modal lista antes de iniciar
-                mListaHab.querySelector('.modal-body').scrollTo(0,0); 
-                tourActivo = driver({ ...configBaseModal, steps: stepsModalListaHab });
-                tourActivo.drive();
-                return;
-            }
-
-            // Caso 3: Formulario de Apartamento Abierto
-            if (mApartamento && mApartamento.classList.contains('show')) {
-                tourActivo = driver({ ...configBaseModal, steps: stepsModalApto });
-                tourActivo.drive();
-                return;
-            }
-
-            // Caso 4: Vista Principal (Por defecto)
-            window.scrollTo({ top: 0, behavior: 'instant' });
-            tourActivo = driver({ ...configBaseModal, steps: stepsPrincipal });
-            tourActivo.drive();
-        });
-    }
-
-    // Limpieza de tours al cerrar cualquier modal
-    const cerrarTour = () => { if (tourActivo) try { tourActivo.destroy(); } catch (e) {} };
-    [mApartamento, mListaHab, mFormHab].forEach(m => {
-        if(m) m.addEventListener('hide.bs.modal', cerrarTour);
+    AyudaInteractiva.inicializar({
+        idModal: 'modal_apartamentos',
+        pasosPrincipal: stepsPrincipal,
+        pasosModal: stepsModal
     });
 });

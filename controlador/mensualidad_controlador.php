@@ -14,6 +14,8 @@ Sesiones::verificarPermiso(GESTIONAR_MENSUALIDAD, CONSULTAR);
 if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
 
+    Sesiones::verificarPermisoAccion(GESTIONAR_MENSUALIDAD, $operacion);
+
     // =========================================================
     // VALIDACIÓN CENTRALIZADA DE CABECERA
     // =========================================================

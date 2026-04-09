@@ -187,8 +187,7 @@ async function validarFormularioCompleto() {
 
             const idPagoActual = document.getElementById("boton_formulario").dataset.id || ""; 
 
-            // AÑADIMOS EL AWAIT PARA ESPERAR LA RESPUESTA
-            const refValida = await Validador.verificarExistenciaEnServidor(
+            const refValida = await Validador.verificarDatoUnico(
                 'referencia', 
                 { 
                     referencia: refInput.value, 
@@ -197,7 +196,6 @@ async function validarFormularioCompleto() {
                 refInput, 
                 'Referencia en uso'
             );
-
             // SI LA REFERENCIA ESTÁ OCUPADA, DETENEMOS EL FORMULARIO
             if (!refValida) {
                 Alertas.mostrar("error", `Detalle #${num}`, "La referencia bancaria ya está registrada en otro pago");
