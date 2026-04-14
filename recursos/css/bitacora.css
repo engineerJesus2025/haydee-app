@@ -1,22 +1,7 @@
-.badge-consultar { background-color: #2d3436; color: white; }
-.badge-eliminar { background-color: #b22222; color: white; }
-.badge-registrar { background-color: #0d6efd; color: white; }
-.badge-modificar { background-color: #198754; color: white; }
-.badge-iniciar-sesion { background-color: #6559BA; color: white; }
-.badge-cerrar-sesion { background-color: #9bb7d4; color: #372323; }
-
-/* Colores existentes (asumiendo los que ya tienes) */
-.badge-registrar { background-color: #198754; color: white; } /* Verde */
-.badge-modificar { background-color: #ffc107; color: black; } /* Amarillo */
-.badge-eliminar { background-color: #dc3545; color: white; } /* Rojo */
-/*.badge-consultar { background-color: #0dcaf0; color: black; } /* Celeste */*/
-/*.badge-iniciar-sesion { background-color: #0d6efd; color: white; } /* Azul */*/
-.badge-cerrar-sesion { background-color: #6c757d; color: white; } /* Gris */
-
-/* NUEVOS COLORES SUGERIDOS */
-.badge-descargar { background-color: #20c997; color: white; } /* Verde azulado (Teal) */
-.badge-respaldar { background-color: #6610f2; color: white; } /* Índigo / Morado */
-.badge-restaurar { background-color: #fd7e14; color: white; } /* Naranja oscuro */
+/* Colores personalizados para los badges que no trae Bootstrap */
+.bg-indigo { background-color: #6610f2 !important; }
+.bg-teal { background-color: #20c997 !important; }
+.bg-iniciar-sesion { background-color: #6559BA; color: white; }
 
 /* Estilo para el contenedor de información de reportes en el modal */
 #mensaje_consulta .report-container {
@@ -29,7 +14,3 @@
     font-size: 0.75rem;
     color: #6c757d;
 }
-
-/* Colores personalizados para los badges que no trae Bootstrap */
-.bg-indigo { background-color: #6610f2 !important; }
-.bg-teal { background-color: #20c997 !important; }

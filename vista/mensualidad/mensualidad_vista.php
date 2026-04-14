@@ -32,12 +32,10 @@
                     <div class="row my-4 justify-content-center">
                         <div class="col-11">
                             <div class="card p-4 row">
-                                <div class="row justify-content-end align-items-center">
-                                    <div class="col-12 col-sm-6 mb-4" hidden>
-                                        <?php if ($permisosVista['registrar']) : ?>
-                                        <button class="btn btn-primary my-2" id="boton_registrar" type="button" data-bs-toggle="modal" data-bs-target="#modal_mensualidad" data-tooltip="true" title="Registrar Nueva mensualidad">Nueva Mensualidad</button>
+                                <div class="row justify-content-end align-items-start">
+                                    <div class="col-12 col-sm-6 mb-4">
+                                        <?php require ROOT_PATH . "/vista/componentes/boton_nuevo.php"; ?>
                                         <p class="text-danger"></p>
-                                        <?php endif; ?>
                                     </div>
                                     <div class="col-12 col-sm-6 mb-4">
                                         <?php require_once ROOT_PATH . "/vista/componentes/buscador_global.php"; ?>
@@ -75,27 +73,37 @@
                 <div class="modal-body bg-light p-4">
                     
                     <div class="bg-white p-3 mb-4 rounded border shadow-sm">
-                        <div class="row text-center g-3">
+                        <div class="row text-center g-3 align-items-start">
                             <div class="col-md-2 border-end">
-                                <span class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">Período</span>
-                                <h6 id="vp_periodo" class="text-primary mt-1 mb-0 fw-bold">---</h6>
+                                <div class="text-muted text-uppercase fw-bold mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">
+                                    <i class="bi bi-calendar2-month text-primary me-1 fs-6"></i> Período
+                                </div>
+                                <h6 id="vp_periodo" class="text-dark mb-0 fw-bold">---</h6>
                             </div>
                             <div class="col-md-3 border-end">
-                                <span class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">Monto Base</span>
-                                <h6 id="vp_monto_base_bs" class="text-dark mt-1 mb-0 fw-bold">---</h6>
+                                <div class="text-muted text-uppercase fw-bold mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">
+                                    <i class="bi bi-cash-stack text-success me-1 fs-6"></i> Monto Base
+                                </div>
+                                <h6 id="vp_monto_base_bs" class="text-dark mb-0 fw-bold">---</h6>
                                 <span id="vp_monto_base_usd" class="text-muted" style="font-size: 0.75rem;">---</span>
                             </div>
                             <div class="col-md-2 border-end">
-                                <span class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">Tasa BCV Aplicada</span>
-                                <h6 id="vp_tasa" class="text-dark mt-1 mb-0 fw-bold">---</h6>
+                                <div class="text-muted text-uppercase fw-bold mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">
+                                    <i class="bi bi-currency-exchange text-info me-1 fs-6"></i> Tasa BCV
+                                </div>
+                                <h6 id="vp_tasa" class="text-dark mb-0 fw-bold">---</h6>
                             </div>
-                            <div class="col-md-3 border-end">
-                                <span class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">Recargo por Mora</span>
-                                <h6 id="vp_recargo" class="text-danger mt-1 mb-0 fw-bold">---</h6>
+                            <div class="col-md-2 border-end">
+                                <div class="text-muted text-uppercase fw-bold mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">
+                                    <i class="bi bi-graph-up-arrow text-danger me-1 fs-6"></i> Recargo
+                                </div>
+                                <span id="vp_recargo" class="badge bg-danger bg-opacity-10 text-danger border border-danger px-2 py-1 shadow-sm">---</span>
                             </div>
-                            <div class="col-md-2">
-                                <span class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">Día Límite</span>
-                                <h6 id="vp_limite" class="text-dark mt-1 mb-0 fw-bold">---</h6>
+                            <div class="col-md-3">
+                                <div class="text-muted text-uppercase fw-bold mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">
+                                    <i class="bi bi-calendar-x text-warning me-1 fs-6"></i> Día Límite
+                                </div>
+                                <h6 id="vp_limite" class="text-dark mb-0 fw-bold">---</h6>
                             </div>
                         </div>
                     </div>
@@ -107,8 +115,11 @@
                     </div>
 
                 </div>
-                <div class="modal-footer bg-white border-top justify-content-center">
-                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cerrar</button>
+                <div class="modal-footer bg-white border-top d-flex justify-content-between">
+                    <button type="button" id="btn_generar_reporte_modal" class="btn btn-info text-white px-4 shadow-sm" style="background-color:#3939a9;" title="Descargar Reporte de Pagos" data-tooltip="true">
+                        <i class="bi bi-file-earmark-pdf me-2"></i>Cuadro de Pagos
+                    </button>
+                    <button type="button" class="btn btn-secondary px-4 shadow-sm" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>

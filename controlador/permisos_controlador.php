@@ -1,5 +1,5 @@
 <?php
-use haydee\ayuda\Sesiones;
+use haydee\servicios\Sesiones;
 use haydee\modelo\Permisos;
 use haydee\modelo\Bitacora;
 use haydee\ayuda\Validador;
@@ -85,4 +85,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_PERMISOS);
 }
 $permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_PERMISOS);
+$btn_nuevo = [
+    'target'  => '#modal_permiso',
+    'texto'   => 'Nuevo Permiso',
+    'tooltip' => 'Registrar Nuevo Permiso'
+];
+$placeholder_buscar = "Buscar permiso...";
+
 require_once "vista/permisos/permisos_vista.php";

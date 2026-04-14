@@ -49,10 +49,47 @@ function envio(operacion) {
 }
 
 async function consultar() {
-    // 1. Encontrar el contenedor dinámicamente
+    // Encontrar el contenedor dinámicamente
     const contenedor = document.querySelector(".tabla-sistema-haydee");
     if (!contenedor) return;
 
+    const formatoBanco = (cell) => {
+        let nombre = cell.getValue() || "";
+        // Forzamos primera letra mayúscula y el resto minúscula para estandarizar
+        nombre = nombre.charAt(0).toUpperCase() + nombre.slice(1).toLowerCase();
+        return `<div class="d-flex align-items-center fw-bold text-dark">
+                    <i class="bi bi-bank2 text-primary me-2 fs-5"></i> ${nombre}
+                </div>`;
+    };
+
+    // Formato para el Código Bancario
+    const formatoCodigo = (cell) => {
+        let codigo = cell.getValue() || "---";
+        return `<span class="text-muted fw-semibold">
+                    <i class="bi bi-upc-scan me-1 opacity-50"></i> ${codigo}
+                </span>`;
+    };
+
+    // Formato para Tipo de Cuenta
+    const formatoTipo = (cell) => {
+        let tipo = cell.getValue() || "";
+        let color = "secondary";
+        let icono = "bi-wallet2";
+
+        if (tipo.toLowerCase() === "corriente") {
+            color = "info"; // Azul claro
+            icono = "bi-briefcase-fill";
+        } else if (tipo.toLowerCase() === "ahorro") {
+            color = "success"; // Verde
+            icono = "bi-safe2-fill";
+        }
+
+        return `<span class="badge bg-${color} bg-opacity-10 text-${color} border border-${color} px-3 py-2 shadow-sm" style="font-size: .85rem;">
+                    <i class="bi ${icono} me-1"></i> ${tipo}
+                </span>`;
+    };
+
+    // Formato de Botones
     const formatoBotones = (cell) => {
         const id = cell.getData().id_banco;
         let html = `<div class="d-flex justify-content-center flex-wrap gap-2">
@@ -62,7 +99,7 @@ async function consultar() {
             </button>`;
         if (permisoModificar) {
             html += `<button class="btn btn-success btn-sm modificar" value="${id}" data-tooltip="true" title="Modificar los detalles de este registro">
-                    	<i class="bi bi-pencil"></i>
+                        <i class="bi bi-pencil"></i>
                         <span class="d-none d-lg-inline ms-2">Editar</span>
                     </button>`;
         }
@@ -76,12 +113,12 @@ async function consultar() {
         return html;
     };
 
-    // 3. Estructura de Columnas
+    // Estructura de Columnas
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
-        { title: "Banco", field: "nombre_banco", minWidth: 120, responsive: 0 },
-        { title: "Código", field: "codigo", minWidth: 120 },
-        { title: "Tipo de Cuenta", field: "tipo_cuenta", minWidth: 160 },
+        { title: "Banco", field: "nombre_banco", formatter: formatoBanco, minWidth: 150, responsive: 0 },
+        { title: "Código", field: "codigo", formatter: formatoCodigo, minWidth: 120 },
+        { title: "Tipo de Cuenta", field: "tipo_cuenta", formatter: formatoTipo, minWidth: 160 },
         {
             title: "Acciones",
             formatter: formatoBotones,
@@ -97,7 +134,6 @@ async function consultar() {
                 const btn = e.target.closest('button');
                 if (!btn) return;
 
-                // Emulamos el evento para que tus funciones prepararFormulario funcionen sin cambios
                 const mockEvent = { currentTarget: btn }; 
 
                 if (btn.classList.contains('vista-previa')) {
@@ -127,11 +163,42 @@ async function consultar() {
     Tablas.inicializarBuscadorGlobal(tabla_bancos, "busqueda_global", columnas);
 }
 
-// Función que lee la memoria de Tabulator (Sin AJAX extra)
+// Función que lee la memoria de Tabulator
 function mostrarVistaPrevia(data) {
-    // Rellenamos los campos del modal
-    document.getElementById("vp_nombre_banco").textContent = data.nombre_banco || 'N/A';
-    document.getElementById("vp_tipo_cuenta").textContent = data.tipo_cuenta || 'N/A';
+    // Formatear Nombre del Banco (Capitalizamos la primera letra)
+    let nombreBanco = data.nombre_banco || 'N/A';
+    if (nombreBanco !== 'N/A') {
+        nombreBanco = nombreBanco.charAt(0).toUpperCase() + nombreBanco.slice(1).toLowerCase();
+    }
+    document.getElementById("vp_nombre_banco").textContent = nombreBanco;
+
+    // Agregar el Código Bancario
+    document.getElementById("vp_codigo").textContent = data.codigo || '---';
+
+    // Formatear Tipo de Cuenta
+    let tipo = data.tipo_cuenta || 'N/A';
+    let color = "secondary";
+    let icono = "bi-wallet2";
+
+    if (tipo.toLowerCase() === "corriente") {
+        color = "info";
+        icono = "bi-briefcase-fill";
+    } else if (tipo.toLowerCase() === "ahorro") {
+        color = "success";
+        icono = "bi-safe2-fill";
+    }
+
+    if (tipo !== 'N/A') {
+        // Usamos innerHTML para inyectar la etiqueta
+        document.getElementById("vp_tipo_cuenta").innerHTML = `
+            <span class="badge bg-${color} bg-opacity-10 text-${color} border border-${color} px-3 py-2 shadow-sm" style="font-size: 0.85rem;">
+                <i class="bi ${icono} me-1"></i> ${tipo}
+            </span>`;
+    } else {
+        document.getElementById("vp_tipo_cuenta").textContent = tipo;
+    }
+
+    // Rellenar el resto de campos normalmente
     document.getElementById("vp_nro_cuenta").textContent = data.numero_cuenta || 'N/A';
     document.getElementById("vp_documento").textContent = data.rif || 'N/A';
     document.getElementById("vp_telefono").textContent = data.telefono_afiliado || 'N/A';

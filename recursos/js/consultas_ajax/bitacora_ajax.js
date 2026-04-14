@@ -22,24 +22,54 @@ function formatearJSON(jsonString) {
         return jsonString; // Si no es JSON válido, mostrarlo como texto
     }
 }
+// Formato de Acción
+function formatoAccion(cell) {
+    let accion;
+    if (typeof cell.getValue === "function") {
+        accion = (cell.getValue()).toLowerCase();
+    }
+    else {
+     accion = (cell).toLowerCase();
+    }
+    
+    let color = "secondary";
+    let icono = "bi-activity";
+
+    // Asignación semántica de colores e íconos
+    switch (accion) {
+        case 'consultar':      color = "info";    icono = "bi-search"; break;
+        case 'registrar':      color = "primary"; icono = "bi-plus-circle-fill"; break;
+        case 'modificar':      color = "success"; icono = "bi-pencil-fill"; break;
+        case 'eliminar':       color = "danger";  icono = "bi-trash-fill"; break;
+        case 'iniciar sesion': color = "iniciar-sesion"; icono = "bi-box-arrow-in-right"; break;
+        case 'cerrar sesion':  color = "secondary"; icono = "bi-box-arrow-left"; break;
+        case 'descargar':      color = "warning";    icono = "bi-download"; break;
+        case 'respaldar':      color = "indigo"; icono = "bi-database-down"; break;
+        case 'restaurar':      color = "teal"; icono = "bi-database-up"; break;
+    }
+
+    // Capitalizar la primera letra ("Iniciar sesion", "Registrar")
+    const texto = accion.charAt(0).toUpperCase() + accion.slice(1);
+
+    let claseTextoBorder;
+    if (["primary", "success", "danger", "teal"].includes(color)) {
+        claseTextoBorder = `text-${color} border border-${color}`;
+    }
+    else if (["warning", "info", "secondary"].includes(color)) {
+        claseTextoBorder = `text-dark border border-${color}`;
+    }
+    else if (["iniciar-sesion", "indigo"].includes(color)) {
+        claseTextoBorder = `border border-dark`;
+    }
+
+    return `<span class="badge bg-${color} bg-opacity-10 ${claseTextoBorder} px-3 py-2 shadow-sm text-nowrap" style="font-size: .85rem;">
+                <i class="bi ${icono} me-1"></i> ${texto}
+            </span>`;
+};
 
 // Función para mostrar el detalle en el modal
 function mostrarDetalle(rowData) {
-    // Usamos directamente las clases de Bootstrap para coincidir con tus botones
-    const colores = { 
-            'consultar': "badge-consultar", 
-            'eliminar': "bg-danger", 
-            'registrar': "bg-primary", 
-            'modificar': "bg-success", 
-            'iniciar sesion': "badge-iniciar-sesion", 
-            'cerrar sesion': "bg-info text-dark",
-            'descargar': "bg-warning text-dark",
-            'respaldar': "bg-indigo text-white",
-            'restaurar': "bg-teal text-white"    
-        };
-    
     const accionNormalizada = rowData.accion.toLowerCase();
-    const claseColor = colores[accionNormalizada] || "bg-secondary";
 
     // Elementos del DOM
     const divConsulta = document.getElementById('detalle_consulta');
@@ -47,9 +77,6 @@ function mostrarDetalle(rowData) {
     const mensajeConsulta = document.getElementById('mensaje_consulta');
     const divCambios = document.getElementById('detalle_cambios');
 
-    // ==========================================
-    // NUEVA LÓGICA: DETECCIÓN DE IMAGEN
-    // ==========================================
     let contenedorImg = document.getElementById("contenedor_imagen_bitacora");
     let imgElement = document.getElementById("imagen_bitacora");
     let msgErrorImg = document.getElementById("mensaje_error_img_bitacora");
@@ -96,9 +123,7 @@ function mostrarDetalle(rowData) {
     document.getElementById('detalle_fecha').textContent = FormatoFechas.formatear(rowData.fecha_hora, 'DD/MM/YYYY hh:mm:ss A');
     document.getElementById('detalle_modulo').textContent = rowData.nombre_modulo.split('_').join(' ');
 
-    const accionBadge = document.getElementById('detalle_accion');
-    accionBadge.textContent = rowData.accion;
-    accionBadge.className = `badge ${claseColor}`;
+    document.getElementById('detalle_accion').innerHTML = formatoAccion(rowData.accion);
 
     const accionesDeSoloMensaje = ['consultar', 'iniciar sesion', 'cerrar sesion', 'descargar', 'respaldar', 'restaurar'];
 
@@ -191,26 +216,26 @@ function consultar() {
     const contenedor = document.querySelector(".tabla-sistema-haydee");
     if (!contenedor) return;
 
-    const formatoFecha = (cell) => FormatoFechas.formatoUsuario(cell.getValue());
-    const formatoModulo = (cell) => cell.getValue().split("_").join(" ");
-    
-    // Actualizamos los colores de los badges en la tabla principal
-    const formatoAccion = (cell) => {
-        const accion = cell.getValue();
-        const colores = { 
-            'consultar': "badge-consultar", 
-            'eliminar': "bg-danger", 
-            'registrar': "bg-primary", 
-            'modificar': "bg-success", 
-            'iniciar sesion': "badge-iniciar-sesion", 
-            'cerrar sesion': "bg-info text-dark",
-            'descargar': "bg-warning text-dark",
-            'respaldar': "bg-indigo text-white", 
-            'restaurar': "bg-teal text-white"    
-        };
-        const clase = colores[accion.toLowerCase()] || "bg-secondary";
-        return `<span class="badge ${clase}">${accion}</span>`;
+    // 1. Formato de Usuario (Capitalizado + Ícono)
+    const formatoUsuario = (cell) => {
+        let nombre = cell.getValue() || "";
+        nombre = nombre.charAt(0).toUpperCase() + nombre.slice(1).toLowerCase();
+        return `<div class="d-flex align-items-center fw-bold text-dark">
+                    <i class="bi bi-person-circle text-primary me-2 fs-5"></i> ${nombre}
+                </div>`;
     };
+
+    // 2. Formato de Módulo (Limpieza de guiones bajos y Capitalización)
+    const formatoModulo = (cell) => {
+        let modulo = cell.getValue() || "";
+        // Convierte "GESTIONAR_ROLES" en "Gestionar Roles"
+        modulo = modulo.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+        return `<span class="text-muted fw-semibold">
+                    <i class="bi bi-box-seam me-2 opacity-50"></i>${modulo}
+                </span>`;
+    };
+
+    const formatoFecha = (cell) => FormatoFechas.formatoUsuario(cell.getValue());
 
     const formatoBotones = (cell) => {
         return `
@@ -223,9 +248,9 @@ function consultar() {
 
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
-        { title: "Usuario", field: "nombre_usuario", minWidth: 150, responsive: 0 },
-        { title: "Acción", field: "accion", formatter: formatoAccion, minWidth: 120, headerHozAlign: "center", hozAlign: "center" },
-        { title: "Fecha", field: "fecha_hora", formatter: formatoFecha, minWidth: 150 },
+        { title: "Usuario", field: "nombre_usuario", formatter: formatoUsuario, minWidth: 150, responsive: 0 },
+        { title: "Acción", field: "accion", formatter: formatoAccion, minWidth: 150, headerHozAlign: "center", hozAlign: "center" },
+        { title: "Fecha", field: "fecha_hora", formatter: formatoFecha, minWidth: 160 },
         { title: "Módulo", field: "nombre_modulo", formatter: formatoModulo, minWidth: 220, widthGrow: 2, },
         {
             title: "DETALLES", formatter: formatoBotones, headerSort: false, 

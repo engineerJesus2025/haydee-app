@@ -108,13 +108,13 @@
                                         <div class="mt-4 pt-3 border-top">
                                             <ul class="list-unstyled text-muted-custom m-0 p-0" style="font-size: 0.9rem;">
                                                 <li class="d-flex justify-content-between mb-2">
-                                                    <span><i class="fas fa-arrow-up text-success me-2"></i> Ingreso Mes Actual</span>
+                                                    <span><i class="bi bi-arrow-up text-success me-2"></i> Ingreso Mes Actual</span>
                                                     <span class="fw-bold text-dark" id="esqueleto_dato_1_2">
                                                         <div class="skeleton skeleton-text short mb-0" style="width: 8rem;"></div>
                                                     </span>
                                                 </li>
                                                 <li class="d-flex justify-content-between">
-                                                    <span><i class="fas fa-arrow-down text-danger me-2"></i> Egreso Mes Actual</span>
+                                                    <span><i class="bi bi-arrow-down text-danger me-2"></i> Egreso Mes Actual</span>
                                                     <span class="fw-bold text-dark" id="esqueleto_dato_2_2">
                                                         <div class="skeleton skeleton-text short mb-0" style="width: 8rem;"></div>
                                                     </span>
@@ -146,13 +146,13 @@
                                         <div class="mt-4 pt-3 border-top">
                                             <ul class="list-unstyled text-muted-custom m-0 p-0" style="font-size: 0.9rem;">
                                                 <li class="d-flex justify-content-between mb-2">
-                                                    <span><i class="fas fa-user-check text-success me-2"></i> Deuda Solvente</span>
+                                                    <span><i class="bi bi-patch-check-fill  text-success me-2"></i> Deuda Solvente</span>
                                                     <span class="fw-bold text-dark" id="esqueleto_dato_1_1">
                                                         <div class="skeleton skeleton-text short mb-0" style="width: 4rem;"></div>
                                                     </span>
                                                 </li>
                                                 <li class="d-flex justify-content-between">
-                                                    <span><i class="fas fa-user-times text-danger me-2"></i> Deuda Pendiente</span>
+                                                    <span><i class="bi bi-exclamation-circle-fill text-danger me-2"></i> Deuda Pendiente</span>
                                                     <span class="fw-bold text-dark" id="esqueleto_dato_2_1">
                                                         <div class="skeleton skeleton-text short mb-0" style="width: 4rem;"></div>
                                                     </span>
@@ -273,8 +273,11 @@
             <div class="card w-100 shadow-sm tarjeta-publicacion">
                 <div class="position-relative">
                     <img class="card-img-top imagen-tarjeta post-image" alt="Imagen de la publicación" 
-                         onerror="this.src='data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22400%22%20height%3D%22200%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20200%22%20preserveAspectRatio%3D%22none%22%3E%3Crect%20width%3D%22400%22%20height%3D%22200%22%20fill%3D%22%23e9ecef%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20fill%3D%22%236c757d%22%20font-size%3D%2216%22%20font-family%3D%22Arial%2C%20sans-serif%22%20text-anchor%3D%22middle%22%20dy%3D%22.3em%22%3ESin%20Imagen%3C%2Ftext%3E%3C%2Fsvg%3E';">
-                    <span class="badge etiqueta-prioridad shadow-sm priority-badge"></span>
+                        onerror="this.src='data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22400%22%20height%3D%22200%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20200%22%20preserveAspectRatio%3D%22none%22%3E%3Crect%20width%3D%22400%22%20height%3D%22200%22%20fill%3D%22%23f8f9fa%22%2F%3E%3Cpath%20d%3D%22M140%2080%20h35%20v90%20h-35%20z%22%20fill%3D%22%23dee2e6%22%2F%3E%3Cpath%20d%3D%22M147%2090%20h8%20v8%20h-8%20z%20M160%2090%20h8%20v8%20h-8%20z%20M147%20105%20h8%20v8%20h-8%20z%20M160%20105%20h8%20v8%20h-8%20z%20M147%20120%20h8%20v8%20h-8%20z%20M160%20120%20h8%20v8%20h-8%20z%20M147%20135%20h8%20v8%20h-8%20z%20M160%20135%20h8%20v8%20h-8%20z%20M147%20150%20h8%20v8%20h-8%20z%20M160%20150%20h8%20v8%20h-8%20z%22%20fill%3D%22%23f8f9fa%22%2F%3E%3Cpath%20d%3D%22M185%2050%20h45%20v120%20h-45%20z%22%20fill%3D%22%23ced4da%22%2F%3E%3Cpath%20d%3D%22M195%2065%20h10%20v10%20h-10%20z%20M210%2065%20h10%20v10%20h-10%20z%20M195%2085%20h10%20v10%20h-10%20z%20M210%2085%20h10%20v10%20h-10%20z%20M195%20105%20h10%20v10%20h-10%20z%20M210%20105%20h10%20v10%20h-10%20z%20M195%20125%20h10%20v10%20h-10%20z%20M210%20125%20h10%20v10%20h-10%20z%20M195%20145%20h10%20v10%20h-10%20z%20M210%20145%20h10%20v10%20h-10%20z%22%20fill%3D%22%23f8f9fa%22%2F%3E%3Cpath%20d%3D%22M220%2070%20h30%20v100%20h-30%20z%22%20fill%3D%22%23e9ecef%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%22190%22%20fill%3D%22%23adb5bd%22%20font-size%3D%2212%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-weight%3D%22bold%22%20letter-spacing%3D%222%22%20text-anchor%3D%22middle%22%3ECOMUNICADO%3C%2Ftext%3E%3C%2Fsvg%3E';">
+                    <span class="badge etiqueta-prioridad shadow-sm priority-badge d-flex align-items-center gap-1">
+                        <i class="icono-prioridad"></i>
+                        <span class="texto-prioridad"></span>
+                    </span>
                 </div>
                 
                 <div class="card-body d-flex flex-column">
@@ -283,10 +286,12 @@
                     
                     <div class="mt-auto border-top pt-3 d-flex justify-content-between align-items-center">
                         <small class="text-secondary d-flex align-items-center">
-                            <i class="fas fa-user-circle me-1"></i> <strong class="author-name"></strong>
+                            <i class="bi bi-person-fill text-primary me-2"></i> 
+                            <strong class="author-name"></strong>
                         </small>
                         <small class="text-secondary d-flex align-items-center">
-                            <i class="fas fa-calendar-alt me-1"></i> <span class="post-date"></span>
+                            <i class="bi bi-clock text-muted me-2"></i> 
+                            <span class="post-date"></span>
                         </small>
                     </div>
                 </div>
@@ -379,7 +384,7 @@
                 <div id="info-apt-header" class="modal-header border-0 pb-4 pt-4 justify-content-center position-relative">
                     <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
                     <div class="text-center text-white">
-                        <i class="fas fa-door-closed fs-1 mb-2 opacity-75"></i>
+                        <i class="bi bi-door-closed fs-1 mb-2 opacity-75"></i>
                         <h4 class="modal-title fw-bold mb-0">Apt. <span id="info-apt-nro"></span></h4>
                     </div>
                 </div>
@@ -393,7 +398,7 @@
                     <div class="mt-3 mb-4">
                         <p class="text-muted mb-1 fw-bold" style="font-size: 0.7rem; letter-spacing: 1px;">RESIDENTE PRINCIPAL</p>
                         <div class="d-flex align-items-center justify-content-center text-dark">
-                            <i class="fas fa-user-circle fs-4 me-2 text-secondary"></i>
+                            <i class="bi bi-user-circle fs-4 me-2 text-secondary"></i>
                             <h6 class="fw-bold mb-0 fs-5 text-wrap" id="info-apt-residente" style="text-transform: capitalize;">---</h6>
                         </div>
                     </div>
@@ -402,70 +407,11 @@
                         <p class="mb-1 fw-bold text-uppercase" style="font-size: 0.7rem; letter-spacing: 1px; opacity: 0.8;">Estado de Cuenta</p>
                         <h3 class="fw-bolder mb-0" id="info-apt-deuda" style="letter-spacing: -0.5px;">0.00 Bs.</h3>
                         <div class="d-flex align-items-center justify-content-center mt-2">
-                            <i id="info-apt-icono-deuda" class="fas fa-check-circle me-1"></i>
+                            <i id="info-apt-icono-deuda" class="bi bi-check-circle me-1"></i>
                             <small id="info-apt-mensaje-deuda" class="fw-bold">Al día</small>
                         </div>
                     </div>
 
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="modal fade" id="modalDetalleBitacoraDashboard" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">
-                        <i class="fas fa-book me-2"></i>Detalle de Actividad
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="container-fluid">
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <p><strong><i class="fas fa-user-circle me-2 text-primary"></i>Usuario:</strong> <span id="detalle_usuario_dash"></span></p>
-                            </div>
-                            <div class="col-md-6">
-                                <p><strong><i class="far fa-calendar-alt me-2 text-primary"></i>Fecha:</strong> <span id="detalle_fecha_dash"></span></p>
-                                <p><strong><i class="fas fa-puzzle-piece me-2 text-primary"></i>Módulo:</strong> <span id="detalle_modulo_dash" class="text-uppercase"></span></p>
-                            </div>
-                        </div>
-                        <div class="row mb-4 border-bottom pb-3">
-                            <div class="col-12">
-                                <p class="mb-0"><strong><i class="fas fa-tag me-2 text-primary"></i>Acción:</strong> 
-                                    <span id="detalle_accion_dash" class="badge bg-primary" style="font-size:90%"></span>
-                                </p>
-                            </div>
-                        </div>
-
-                        <div id="detalle_consulta_dash" class="alert alert-info d-none shadow-sm align-items-center">
-                            <i class="fas fa-info-circle me-2 fs-5" id="icono_consulta_dash"></i>
-                            <span id="mensaje_consulta_dash"></span>
-                        </div>
-
-                        <div id="detalle_cambios_dash" class="d-none">
-                            <ul class="nav nav-tabs" id="cambiosTabsDash" role="tablist">
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link active" id="anteriores-tab-dash" data-bs-toggle="tab" data-bs-target="#anteriores_dash" type="button" role="tab" aria-selected="true">Valores Anteriores</button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="nuevos-tab-dash" data-bs-toggle="tab" data-bs-target="#nuevos_dash" type="button" role="tab" aria-selected="false">Valores Nuevos</button>
-                                </li>
-                            </ul>
-                            <div class="tab-content p-3 border border-top-0 rounded-bottom bg-white" id="cambiosTabsContentDash">
-                                <div class="tab-pane fade show active" id="anteriores_dash" role="tabpanel">
-                                    <pre id="valores_anteriores_dash" class="bg-light p-3 rounded text-dark" style="max-height: 300px; overflow: auto; font-size: 0.85rem;"></pre>
-                                </div>
-                                <div class="tab-pane fade" id="nuevos_dash" role="tabpanel">
-                                    <pre id="valores_nuevos_dash" class="bg-light p-3 rounded text-dark" style="max-height: 300px; overflow: auto; font-size: 0.85rem;"></pre>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>

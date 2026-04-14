@@ -36,10 +36,7 @@
                             <div class="card p-4">
                                 <div class="row">
                                     <div class="col-12 col-sm-6 mb-4">
-                                    <?php if ($permisosVista['registrar']) : ?>
-                                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-tooltip="true" title="Registrar Nuevo Gasto"
-                                                data-bs-target="#modal_gastos">Nuevo Gasto</button>
-                                    <?php endif; ?>
+                                        <?php require ROOT_PATH . "/vista/componentes/boton_nuevo.php"; ?>
                                     </div>
                                     <div class="col-12 col-sm-6 mb-4">
                                         <?php require_once ROOT_PATH . "/vista/componentes/buscador_global.php"; ?>
@@ -84,7 +81,9 @@
                         <div class="row text-center g-3 align-items-center">
                             
                             <div class="col-md-4 border-end">
-                                <span class="text-muted text-uppercase fw-bold d-block mb-2" style="font-size: 0.7rem; letter-spacing: 0.5px;">Clasificación</span>
+                                <span class="text-muted text-uppercase fw-bold d-block mb-2" style="font-size: 0.7rem; letter-spacing: 0.5px;">
+                                    Clasificación
+                                </span>
                                 <span id="vp_clasificacion" class="badge fs-6 px-3 py-2 shadow-sm">---</span>
                             </div>
 

@@ -1,5 +1,5 @@
 <?php
-use haydee\ayuda\Sesiones;
+use haydee\servicios\Sesiones;
 use haydee\modelo\Rol;
 use haydee\modelo\Bitacora;
 use haydee\ayuda\Validador;
@@ -133,4 +133,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     $rol->cerrar();
 }
 $permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_ROLES);
+$btn_nuevo = [
+    'target'  => '#modal_roles',
+    'texto'   => 'Nuevo Rol',
+    'tooltip' => 'Registrar Nuevo Rol'
+];
+$placeholder_buscar = "Buscar rol...";
+
 require_once "vista/roles/roles_vista.php";

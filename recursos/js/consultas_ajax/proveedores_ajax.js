@@ -23,6 +23,14 @@ async function consultar() {
     const contenedor = document.querySelector(".tabla-sistema-haydee");
     if (!contenedor) return;
 
+    const formatoProveedor = (cell) => {
+        let nombre = cell.getValue() || "";
+        nombre = nombre.charAt(0).toUpperCase() + nombre.slice(1);
+        return `<div class="d-flex align-items-center fw-bold text-dark">
+                    <i class="bi bi-truck text-primary me-3 fs-5 opacity-75"></i> ${nombre}
+                </div>`;
+    };
+
     const formatoBotones = (cell) => {
         const id = cell.getData().id_proveedor; 
         
@@ -50,7 +58,7 @@ async function consultar() {
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center",},
         
-        { title: "Proveedor", field: "nombre_proveedor", minWidth: 200, responsive: 0, widthGrow: 2, },
+        { title: "Proveedor", field: "nombre_proveedor", formatter: formatoProveedor, minWidth: 220, responsive: 0, widthGrow: 2, },
         { title: "Servicio", field: "servicio", minWidth: 200 },
         // ---------------------------------------------
 

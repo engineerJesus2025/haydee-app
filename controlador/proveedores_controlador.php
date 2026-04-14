@@ -1,5 +1,5 @@
 <?php
-use haydee\ayuda\Sesiones;
+use haydee\servicios\Sesiones;
 use haydee\modelo\Proveedores;
 use haydee\modelo\Bitacora;
 use haydee\ayuda\Validador;
@@ -96,4 +96,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_PROVEEDORES);
 }
 $permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_PROVEEDORES);
+$btn_nuevo = [
+    'target'  => '#modal_proveedores',
+    'texto'   => 'Nuevo Proveedor',
+    'tooltip' => 'Registrar Nuevo Proveedor'
+];
+$placeholder_buscar = "Buscar proveedor...";
+
 require_once "vista/proveedores/proveedores_vista.php";

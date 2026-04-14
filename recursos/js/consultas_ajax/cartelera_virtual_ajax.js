@@ -59,10 +59,12 @@ function consultar() {
 
     const formatoFecha = (cell) => FormatoFechas.formatoUsuario(cell.getValue());
     const formatoPrioridad = (cell) => {
-        const p = cell.getValue();
-        const mapa = { "1": { texto: "Urgente", color: "danger" }, "2": { texto: "Importante", color: "warning text-dark" }, "3": { texto: "Informativo", color: "success" } };
-        const conf = mapa[p] || { texto: "Desconocida", color: "secondary" };
-        return `<span class="badge bg-${conf.color}">${conf.texto}</span>`;
+        const config = obtenerConfigPrioridad(cell.getValue());
+        
+        return `<span class="badge bg-${config.color} bg-opacity-10 ${config.claseTextoBorder} px-3 py-2 shadow-sm text-nowrap" style="font-size: .85rem;">
+                    <i class="bi ${config.icono} me-1"></i>
+                    ${config.texto}
+                </span>`;
     };
 
     const formatoBotones = (cell) => {
@@ -90,7 +92,7 @@ function consultar() {
 
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
-        { title: "Prioridad", field: "prioridad", formatter: formatoPrioridad, minWidth: 130},
+        { title: "Prioridad", field: "prioridad", formatter: formatoPrioridad, minWidth: 130,},
         { title: "Título", field: "titulo", minWidth: 150 },
         { title: "Fecha", field: "fecha", formatter: formatoFecha, minWidth: 130, responsive: 0 },
         {
@@ -179,18 +181,18 @@ function mostrarVistaPrevia(data) {
     document.getElementById("vista_fecha").textContent = FormatoFechas.formatoUsuario(data.fecha);
     document.getElementById("vista_autor").textContent = data.nombre_usuario;
 
-    // Prioridad (Colores de Bootstrap)
+    // Prioridad (Con Soft Badges centralizados)
+    const config = obtenerConfigPrioridad(data.prioridad);
     let vista_prioridad = document.getElementById("vista_prioridad");
-    if (data.prioridad === "1") {
-        vista_prioridad.className = "badge bg-danger fs-6 px-3 py-2 shadow-sm text-nowrap";
-        vista_prioridad.textContent = "Urgente";
-    } else if (data.prioridad === "2") {
-        vista_prioridad.className = "badge bg-warning text-dark fs-6 px-3 py-2 shadow-sm text-nowrap";
-        vista_prioridad.textContent = "Importante";
-    } else {
-        vista_prioridad.className = "badge bg-success fs-6 px-3 py-2 shadow-sm text-nowrap";
-        vista_prioridad.textContent = "Informativo";
-    }
+    
+    // Limpiamos clases previas e inyectamos el HTML del Soft Badge
+    vista_prioridad.className = ""; 
+    vista_prioridad.innerHTML = `
+        <span class="badge bg-${config.color} bg-opacity-10 ${config.claseTextoBorder} fs-6 px-3 py-2 shadow-sm text-nowrap">
+            <i class="bi ${config.icono} me-1"></i>
+            ${config.texto}
+        </span>
+    `;
 
     // Lógica de la Imagen (Basada en tus archivos)
     let imagen = document.getElementById("vista_imagen");
@@ -261,14 +263,36 @@ async function eliminar(id) {
 // ============================================
 // DELEGACIÓN DE EVENTOS EN LA TABLA
 // ============================================
-function obtenerPrioridadTexto(prioridad) {
-    const mapa = {
-        "1": { texto: "Alta", color: "success" },
-        "2": { texto: "Media", color: "warning" },
-        "3": { texto: "Baja", color: "danger" }
-    };
-    const p = mapa[prioridad] || { texto: "Desconocida", color: "secondary" };
-    return `<span class="badge bg-${p.color}">${p.texto}</span>`;
+/**
+ * Procesa la prioridad de un aviso y devuelve su configuración visual (Soft Badge)
+ * @param {string|number} prioridad - Nivel de prioridad (1, 2, 3)
+ * @returns {object} Configuración visual
+ */
+function obtenerConfigPrioridad(prioridad) {
+    const p = String(prioridad);
+    let color = "secondary";
+    let icono = "bi-bookmark-fill";
+    let texto = "Desconocida";
+    let claseTextoBorder = "text-secondary border border-secondary";
+
+    if (p === "1") {
+        color = "danger";
+        icono = "bi-exclamation-triangle-fill";
+        texto = "Urgente";
+        claseTextoBorder = "text-danger border border-danger";
+    } else if (p === "2") {
+        color = "warning";
+        icono = "bi-star-fill";
+        texto = "Importante";
+        claseTextoBorder = "text-dark border border-warning"; // Texto oscuro para el amarillo
+    } else if (p === "3") {
+        color = "success";
+        icono = "bi-info-circle-fill";
+        texto = "Informativo";
+        claseTextoBorder = "text-success border border-success";
+    }
+
+    return { color, claseTextoBorder, icono, texto };
 }
 
 // ============================================

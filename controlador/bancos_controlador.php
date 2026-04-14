@@ -1,5 +1,5 @@
 <?php
-use haydee\ayuda\Sesiones;
+use haydee\servicios\Sesiones;
 use haydee\modelo\Banco;
 use haydee\modelo\Bitacora;
 use haydee\ayuda\Validador;
@@ -164,5 +164,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_BANCOS);
 }
 $permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_BANCOS);
+$btn_nuevo = [
+    'target'  => '#modal_banco',
+    'texto'   => 'Nuevo Banco',
+    'tooltip' => 'Registrar Nuevo Banco'
+];
+$placeholder_buscar = "Buscar banco...";
+
 // Cargar la vista
 require_once "vista/bancos/bancos_vista.php";

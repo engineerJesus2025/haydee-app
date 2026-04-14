@@ -1,5 +1,5 @@
 <?php
-use haydee\ayuda\Sesiones;
+use haydee\servicios\Sesiones;
 
 /**
  * Función que genera y devuelve la estructura del menú de navegación.

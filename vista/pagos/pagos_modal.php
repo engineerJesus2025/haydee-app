@@ -149,8 +149,8 @@
                                     <span class="border border-primary input-group-text"><i class="bi bi-check-circle-fill"></i></span>
                                     <select class="border border-dark form-select" id="estado" name="estado">
                                         <option value="No verificado">NO VERIFICADO</option>
-                                        <option value="PROCESADO">PROCESADO (Aprobado)</option>
-                                        <option value="RECHAZADO">RECHAZADO</option>
+                                        <option value="Procesado">PROCESADO (Aprobado)</option>
+                                        <option value="Rechazado">RECHAZADO</option>
                                     </select>
                                     <span class="w-100 invalid-feedback"></span>
                                 </div>

@@ -1,6 +1,6 @@
 <?php
 
-namespace haydee\ayuda;
+namespace haydee\servicios;
 
 use haydee\servicios\Autenticacion;
 use haydee\modelo\Rol;

@@ -1,5 +1,5 @@
 <?php 
-use haydee\ayuda\Sesiones;
+use haydee\servicios\Sesiones;
 Sesiones::verificarSesion();
 
 if($accion == "inicio"){

@@ -1,5 +1,5 @@
 <?php
-use haydee\ayuda\Sesiones;
+use haydee\servicios\Sesiones;
 use haydee\modelo\Gastos;
 use haydee\modelo\Banco;
 use haydee\modelo\Proveedores;
@@ -253,5 +253,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     $tipos_gasto = $tipoGasto->realizar_consulta('consultar');
 }
 $permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_GASTOS);
+$btn_nuevo = [
+    'target'  => '#modal_gastos',
+    'texto'   => 'Nuevo Gasto',
+    'tooltip' => 'Registrar Nuevo Gasto'
+];
+$placeholder_buscar = "Buscar gasto...";
+
 require_once "vista/gastos/gastos_vista.php";
 ?>

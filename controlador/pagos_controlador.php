@@ -1,5 +1,5 @@
 <?php
-use haydee\ayuda\Sesiones;
+use haydee\servicios\Sesiones;
 use haydee\modelo\Pagos;
 use haydee\modelo\Banco;
 use haydee\modelo\Apartamento;
@@ -264,5 +264,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     }
 }
 $permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_PAGOS);
+$btn_nuevo = [
+    'target'  => '#modal_pagos',
+    'texto'   => 'Nuevo Pago',
+    'tooltip' => 'Registrar Nuevo Pago'
+];
+$placeholder_buscar = "Buscar pago...";
+
 // Renderizamos el HTML
 require_once "vista/pagos/pagos_vista.php";

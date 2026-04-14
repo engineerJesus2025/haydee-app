@@ -1,5 +1,5 @@
 <?php
-use haydee\ayuda\Sesiones;
+use haydee\servicios\Sesiones;
 use haydee\modelo\Notificaciones;
 use haydee\ayuda\Validador;
 
@@ -82,6 +82,8 @@ if (isset($_POST["operacion"])) {
         }
     }
 }
+
+$placeholder_buscar = "Buscar notificación...";
 
 // Carga de vistas
 if (isset($accion) && $accion == "inicio") {

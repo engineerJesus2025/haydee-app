@@ -142,6 +142,39 @@ function actualizarVisibilidadMetodo(selectElement) {
     }
 }
 
+/**
+ * Procesa el estado de un pago y devuelve su configuración visual (Soft Badge)
+ * @param {string} estado - El estado del pago (PROCESADO, PENDIENTE, RECHAZADO, etc.)
+ * @returns {object} Configuración visual: { color, claseTextoBorder, icono, texto }
+ */
+function obtenerConfigEstadoPago(estado) {
+    const est = (estado || "No verificado").toUpperCase();
+    let color = "secondary";
+    let icono = "bi-question-circle";
+    let claseTextoBorder = "text-secondary border border-secondary";
+
+    if (est === "PROCESADO") {
+        color = "success";
+        icono = "bi-check-all";
+        claseTextoBorder = "text-success border border-success";
+    } else if (est === "PENDIENTE" || est === "NO VERIFICADO") {
+        color = "warning";
+        icono = "bi-clock-history";
+        claseTextoBorder = "text-dark border border-warning"; // Texto oscuro por legibilidad
+    } else if (est === "ANULADO" || est === "RECHAZADO") {
+        color = "danger";
+        icono = "bi-x-circle-fill";
+        claseTextoBorder = "text-danger border border-danger";
+    }
+
+    return {
+        color: color,
+        claseTextoBorder: claseTextoBorder,
+        icono: icono,
+        texto: est
+    };
+}
+
 // ============================================================
 // CARGA ASÍNCRONA DE DATOS (DEPENDENCIAS)
 // ============================================================
@@ -192,20 +225,35 @@ async function cargarMensualidades() {
 // CONSULTAS PRINCIPALES Y DATATABLE
 // ============================================================
 async function consultar() {
-    const formatoMonto = (cell) => `${cell.getValue()} Bs.`;
+    const formatoMonto = (cell) => {
+        const monto = cell.getValue();
+        const estado = cell.getData().estado;
+        
+        let colorClass = "text-dark"; 
+
+        if (estado === "PROCESADO") {
+            colorClass = "text-success fw-bold"; // Verde y negrita para pagos confirmados
+        } else if (estado === "ANULADO" || estado === "RECHAZADO") {
+            colorClass = "text-danger"; // Rojo para problemas
+        } else if (estado === "PENDIENTE" || estado === "No verificado") {
+            colorClass = "text-muted italic"; // Gris o cursiva para lo que aún no es "dinero real"
+        }
+
+        return `<span class="${colorClass}">${monto} Bs.</span>`;
+    };
     const formatoPeriodo = (cell) => {
         let data = cell.getValue();
         if (!data) return "N/A";
         let [mes, anio] = data.split('/');
         return `${FormatoFechas.nombreMes(parseInt(mes))} del ${anio}`;
     };
+
     const formatoEstado = (cell) => {
-        let estado = cell.getValue();
-        let color = "secondary";
-        if (estado === "PROCESADO") color = "success";
-        if (estado === "PENDIENTE" || estado === "No verificado") color = "warning text-dark";
-        if (estado === "ANULADO" || estado === "RECHAZADO") color = "danger";
-        return `<span class="badge bg-${color}">${estado}</span>`;
+        const config = obtenerConfigEstadoPago(cell.getValue());
+        
+        return `<span class="badge bg-${config.color} bg-opacity-10 ${config.claseTextoBorder} px-3 py-2 shadow-sm text-nowrap" style="font-size: .70rem;">
+                    <i class="bi ${config.icono} me-1"></i> ${config.texto}
+                </span>`;
     };
 
     const formatoBotones = (cell) => {
@@ -216,7 +264,7 @@ async function consultar() {
                 <i class="bi bi-eye"></i>
                 <span class="d-none d-lg-inline ms-2">Ver</span>
             </button>
-            <button data-tooltip="true" type="button" class="btn btn-info btn-sm text-white cuadro-pagos" style="background-color:#3939a9;" title="Descargar Cuadro de Pagos (PDF)" value="${id}">
+            <button data-tooltip="true" type="button" class="btn btn-info btn-sm text-white recibo-pago" style="background-color:#3939a9;" title="Descargar Cuadro de Pagos (PDF)" value="${id}">
                 <i class="bi bi-card-checklist"></i>
                 <span class="d-none d-lg-inline ms-2">Reporte</span>
             </button>
@@ -240,7 +288,7 @@ async function consultar() {
 
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
-        { title: "Estado", field: "estado", formatter: formatoEstado, minWidth: 120, responsive: 0 },
+        { title: "Estado", field: "estado", formatter: formatoEstado, minWidth: 160, responsive: 0 },
         { title: "Período", field: "periodos", formatter: formatoPeriodo, minWidth: 150 },
         { title: "Monto", field: "monto_total", formatter: formatoMonto, minWidth: 120 },
         {
@@ -261,7 +309,7 @@ async function consultar() {
                     let form = document.createElement('form');
                     form.action = "?pagina=reportes&accion=recibo_pago";
                     form.method = "POST";
-                    form.target = "_blank"; // Opcional: abre en otra pestaña
+                    form.target = "_blank"; // abre en otra pestaña
                     
                     let input = document.createElement('input');
                     input.type = "hidden";
@@ -478,20 +526,17 @@ async function mostrarVistaPrevia(id) {
         const monto = parseFloat(data.monto_mensualidad) || 0;
         document.getElementById("vp_monto").textContent = `${monto.toFixed(2)} Bs.`;
 
-        // Estado con Colores Dinámicos
+        // Estado con Colores Dinámicos (Usando la función centralizada)
+        const config = obtenerConfigEstadoPago(data.estado);
         const estadoEl = document.getElementById("vp_estado");
-        estadoEl.textContent = data.estado;
         
-        // Mapeamos los estados definidos en tu backend a colores de Bootstrap
-        const coloresEstado = {
-            'PROCESADO': 'badge bg-success fs-6 px-3 py-2 shadow-sm',
-            'PENDIENTE': 'badge bg-warning text-dark fs-6 px-3 py-2 shadow-sm',
-            'RECHAZADO': 'badge bg-danger fs-6 px-3 py-2 shadow-sm',
-            'ANULADO': 'badge bg-secondary fs-6 px-3 py-2 shadow-sm'
-        };
-        
-        // Asignamos la clase, asegurando que el estado esté en mayúsculas para que coincida con el diccionario
-        estadoEl.className = coloresEstado[data.estado.toUpperCase()] || 'badge bg-secondary fs-6 px-3 py-2 shadow-sm';
+        // Inyectamos el Soft Badge
+        estadoEl.className = ""; // Limpiamos clases previas
+        estadoEl.innerHTML = `
+            <span class="badge bg-${config.color} bg-opacity-10 ${config.claseTextoBorder} fs-6 px-3 py-2 shadow-sm text-nowrap">
+                <i class="bi ${config.icono} me-1"></i> ${config.texto}
+            </span>
+        `;
 
         // Observación
         document.getElementById("vp_observacion").textContent = data.observacion || 'Sin observaciones adicionales.';

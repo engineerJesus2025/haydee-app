@@ -34,10 +34,8 @@
                             <div class="card p-4">
                                 <div class="row">
                                     <div class="col-12 col-sm-6 mb-4">
-                                    <?php if ($permisosVista['registrar']) : ?>
-                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-tooltip="true" title="Registrar Nuevo Presupuesto" data-bs-target="#modal_presupuesto" id="boton_registrar">Nuevo Presupuesto</button>
+                                        <?php require ROOT_PATH . "/vista/componentes/boton_nuevo.php"; ?>
                                         <spam class="text-danger"></spam>
-                                    <?php endif; ?>
                                     </div>
                                     <div class="col-12 col-sm-6 mb-4">
                                         <?php require_once ROOT_PATH . "/vista/componentes/buscador_global.php"; ?>

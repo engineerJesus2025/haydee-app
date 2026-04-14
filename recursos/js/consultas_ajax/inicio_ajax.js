@@ -252,30 +252,45 @@ function construirHTMLPublicacion(publicacion) {
     // Imagen y su Fallback
     const imgElement = card.querySelector('.post-image');
     // SVG convertido en Base64 para inyectarlo sin hacer peticiones extra
-    const svgPorDefecto = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22400%22%20height%3D%22200%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20200%22%20preserveAspectRatio%3D%22none%22%3E%3Crect%20width%3D%22400%22%20height%3D%22200%22%20fill%3D%22%23e9ecef%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20fill%3D%22%236c757d%22%20font-size%3D%2216%22%20font-family%3D%22Arial%2C%20sans-serif%22%20text-anchor%3D%22middle%22%20dy%3D%22.3em%22%3ESin%20Imagen%3C%2Ftext%3E%3C%2Fsvg%3E';
     
     if (publicacion.imagen && publicacion.imagen.trim() !== '') {
         imgElement.src = `recursos/img/cartelera_virtual/${publicacion.imagen}`;
     } else {
-        imgElement.src = svgPorDefecto;
+        // imgElement.src = `recursos/img/utils/imagen_default.png`;
+        imgElement.src = `data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22400%22%20height%3D%22200%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20200%22%20preserveAspectRatio%3D%22none%22%3E%3Crect%20width%3D%22400%22%20height%3D%22200%22%20fill%3D%22%23f8f9fa%22%2F%3E%3Cpath%20d%3D%22M140%2080%20h35%20v90%20h-35%20z%22%20fill%3D%22%23dee2e6%22%2F%3E%3Cpath%20d%3D%22M147%2090%20h8%20v8%20h-8%20z%20M160%2090%20h8%20v8%20h-8%20z%20M147%20105%20h8%20v8%20h-8%20z%20M160%20105%20h8%20v8%20h-8%20z%20M147%20120%20h8%20v8%20h-8%20z%20M160%20120%20h8%20v8%20h-8%20z%20M147%20135%20h8%20v8%20h-8%20z%20M160%20135%20h8%20v8%20h-8%20z%20M147%20150%20h8%20v8%20h-8%20z%20M160%20150%20h8%20v8%20h-8%20z%22%20fill%3D%22%23f8f9fa%22%2F%3E%3Cpath%20d%3D%22M185%2050%20h45%20v120%20h-45%20z%22%20fill%3D%22%23ced4da%22%2F%3E%3Cpath%20d%3D%22M195%2065%20h10%20v10%20h-10%20z%20M210%2065%20h10%20v10%20h-10%20z%20M195%2085%20h10%20v10%20h-10%20z%20M210%2085%20h10%20v10%20h-10%20z%20M195%20105%20h10%20v10%20h-10%20z%20M210%20105%20h10%20v10%20h-10%20z%20M195%20125%20h10%20v10%20h-10%20z%20M210%20125%20h10%20v10%20h-10%20z%20M195%20145%20h10%20v10%20h-10%20z%20M210%20145%20h10%20v10%20h-10%20z%22%20fill%3D%22%23f8f9fa%22%2F%3E%3Cpath%20d%3D%22M220%2070%20h30%20v100%20h-30%20z%22%20fill%3D%22%23e9ecef%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%22190%22%20fill%3D%22%23adb5bd%22%20font-size%3D%2212%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-weight%3D%22bold%22%20letter-spacing%3D%222%22%20text-anchor%3D%22middle%22%3ECOMUNICADO%3C%2Ftext%3E%3C%2Fsvg%3E`;
+
     }
 
-    const badge = card.querySelector('.priority-badge');
-    const prioridadStr = String(publicacion.prioridad); 
-    
-    if (prioridadStr === "1") {
-        badge.textContent = "Urgente";
-        badge.classList.add('bg-danger');
-    } else if (prioridadStr === "2") {
-        badge.textContent = "Importante";
-        badge.classList.add('bg-warning', 'text-dark');
-    } else {
-        badge.textContent = "Informativo";
-        badge.classList.add('bg-success');
+    const iconoPrioridad = card.querySelector('.icono-prioridad');
+    const textoPrioridad = card.querySelector('.texto-prioridad');
+    const badgeContenedor = card.querySelector('.priority-badge');
+
+    iconoPrioridad.className = 'icono-prioridad bi'; 
+
+    // 3. Asignas colores e íconos según el caso
+    switch(publicacion.prioridad.toLowerCase()) {
+        case '1':
+            badgeContenedor.className = 'badge etiqueta-prioridad shadow-sm priority-badge d-flex align-items-center gap-1 bg-danger text-white';
+            iconoPrioridad.classList.add('bi-exclamation-triangle-fill'); // Triángulo de alerta
+            textoPrioridad.textContent = "Urgente";
+            break;
+        case '2':
+            badgeContenedor.className = 'badge etiqueta-prioridad shadow-sm priority-badge d-flex align-items-center gap-1 bg-warning text-dark';
+            iconoPrioridad.classList.add('bi-star-fill'); // Estrella
+            textoPrioridad.textContent = "Importante";
+            break;
+        case '3':
+            badgeContenedor.className = 'badge etiqueta-prioridad shadow-sm priority-badge d-flex align-items-center gap-1 bg-success text-white';
+            iconoPrioridad.classList.add('bi-info-circle-fill'); // Círculo de información
+            textoPrioridad.textContent = "Informativo";
+            break;
+        default:
+            badgeContenedor.className = 'badge etiqueta-prioridad shadow-sm priority-badge d-flex align-items-center gap-1 bg-secondary text-white';
+            iconoPrioridad.classList.add('bi-bookmark-fill'); // Por defecto
+            textoPrioridad.textContent = "Desconocida";
     }
 
-    card.style.cursor = 'pointer'; // Para que el ratón cambie a una manito
-    card.addEventListener('click', () => mostrarVistaPreviaPublicacion(publicacion));
+    card.firstElementChild.addEventListener('click', () => mostrarVistaPreviaPublicacion(publicacion));
     
     return card;
 }
@@ -520,7 +535,7 @@ async function cargarActividadReciente() {
 
         actividades.forEach((item, index) => {
             // 1. Lógica de agrupación por fechas
-            let fechaSoloDia = item.fecha_evento.split(' ')[0]; // Extrae 'YYYY-MM-DD'
+            let fechaSoloDia = item.fecha_hora.split(' ')[0]; // Extrae 'YYYY-MM-DD'
             
             if (fechaSoloDia !== fechaAnterior) {
                 let etiquetaFecha = obtenerEtiquetaFecha(fechaSoloDia);
@@ -542,7 +557,7 @@ async function cargarActividadReciente() {
             let borderClass = index === actividades.length - 1 ? '' : 'mb-3 pb-3 border-bottom';
 
             // Hora del evento (ya no necesitamos la fecha completa aquí, solo la hora o 'Hace X')
-            let horaEvento = item.fecha_evento.split(' ')[1].substring(0, 5); // Ej: 14:30
+            let horaEvento = item.fecha_hora.split(' ')[1].substring(0, 5); // Ej: 14:30
 
             // 4. Construcción del texto
             let textoActividad = '';
@@ -591,84 +606,151 @@ async function cargarActividadReciente() {
     }
 }
 
-// --- FUNCIÓN: Mostrar detalles de una Actividad en el Modal del Dashboard ---
-function mostrarDetalleBitacoraRapido(item) {
-    // 1. Configuración de colores
-    const colores = { 
-        'consultó': "bg-secondary", 
-        'eliminó': "bg-danger", 
-        'registró': "bg-primary", 
-        'modificó': "bg-success", 
-        'inició sesión': "bg-info text-dark", 
-        'cerró sesión': "bg-danger text-white",
-        'respaldó': "bg-indigo text-white",
-        'restauró': "bg-teal text-white"    
-    };
-    
-    const accionNormalizada = item.accion.toLowerCase();
-    const claseColor = colores[accionNormalizada] || "bg-secondary";
+// --- Mostrar detalles de una Actividad en el Modal del Dashboard ---
+function mostrarDetalleBitacoraRapido(rowData) {
+    const accionNormalizada = rowData.accion.toLowerCase();
 
-    // 2. Referencias al DOM
-    const divConsulta = document.getElementById('detalle_consulta_dash');
-    const iconoConsulta = document.getElementById('icono_consulta_dash');
-    const mensajeConsulta = document.getElementById('mensaje_consulta_dash');
-    const divCambios = document.getElementById('detalle_cambios_dash');
+    // Elementos del DOM
+    const divConsulta = document.getElementById('detalle_consulta');
+    const iconoConsulta = document.getElementById('icono_consulta');
+    const mensajeConsulta = document.getElementById('mensaje_consulta');
+    const divCambios = document.getElementById('detalle_cambios');
 
-    // 3. Llenar datos generales
-    document.getElementById('detalle_usuario_dash').textContent = item.nombre_usuario;
-    document.getElementById('detalle_fecha_dash').textContent = FormatoFechas.tiempoRelativo(item.fecha_evento) || item.fecha_evento;
-    document.getElementById('detalle_modulo_dash').textContent = item.nombre_modulo;
+    let contenedorImg = document.getElementById("contenedor_imagen_bitacora");
+    let imgElement = document.getElementById("imagen_bitacora");
+    let msgErrorImg = document.getElementById("mensaje_error_img_bitacora");
 
-    const accionBadge = document.getElementById('detalle_accion_dash');
-    accionBadge.textContent = item.accion;
-    accionBadge.className = `badge ${claseColor}`;
+    // Resetear el estado de la imagen
+    contenedorImg.classList.add("d-none");
+    imgElement.style.display = "inline-block";
+    imgElement.src = "";
+    msgErrorImg.classList.add("d-none");
 
-    // 4. Lógica de visualización (Mensaje simple vs Pestañas de JSON)
-    const accionesDeSoloMensaje = ['consultó', 'inició sesión', 'cerró sesión', 'respaldó', 'restauró'];
+    let nombreImagenDetectada = null;
+
+    // Buscar imagen en valores nuevos (Registros y Modificaciones)
+    try {
+        if (rowData.valores_nuevos) {
+            let objNuevos = JSON.parse(rowData.valores_nuevos);
+            if (objNuevos.imagen) nombreImagenDetectada = objNuevos.imagen;
+        }
+    } catch (e) {}
+
+    // Si no hay en nuevos, buscar en anteriores (Eliminaciones)
+    if (!nombreImagenDetectada) {
+        try {
+            if (rowData.valores_anteriores) {
+                let objAnt = JSON.parse(rowData.valores_anteriores);
+                if (objAnt.imagen) nombreImagenDetectada = objAnt.imagen;
+            }
+        } catch (e) {}
+    }
+
+    // Si se encontró un nombre de imagen, armamos la ruta
+    if (nombreImagenDetectada) {
+        // Normalizamos el nombre del módulo para que coincida con la carpeta (ej: "CARTELERA_VIRTUAL" -> "cartelera_virtual")
+        let carpetaModulo = rowData.nombre_modulo.toLowerCase().split(" ").join("_")
+        
+        // Asignamos la ruta y mostramos el contenedor
+        imgElement.src = `recursos/img/${carpetaModulo}/${nombreImagenDetectada}`;
+        contenedorImg.classList.remove("d-none");
+    }
+
+    // Llenar datos generales
+    document.getElementById('detalle_usuario').textContent = rowData.nombre_usuario;
+    document.getElementById('detalle_rol').textContent = rowData.nombre_rol;
+    document.getElementById('detalle_fecha').textContent = FormatoFechas.formatear(rowData.fecha_hora, 'DD/MM/YYYY hh:mm:ss A');
+    document.getElementById('detalle_modulo').textContent = rowData.nombre_modulo.split('_').join(' ');
+
+    document.getElementById('detalle_accion').innerHTML = formatoAccion(rowData.accion);
+
+    const accionesDeSoloMensaje = ['consultó', 'inició sesión', 'cerró sesión', 'descargó', 'respaldó', 'restauró'];
 
     if (accionesDeSoloMensaje.includes(accionNormalizada)) {
-        // Modo Mensaje
         divConsulta.classList.remove('d-none');
         divCambios.classList.add('d-none');
-        mensajeConsulta.textContent = item.descripcion;
+
+        if (accionNormalizada === 'descargó') {
+            // --- CASO DESCARGAR: Quitamos el estilo de alerta ---
+            divConsulta.classList.remove('alert', 'alert-info', 'align-items-center');
+            iconoConsulta.classList.add('d-none'); // Ocultamos el icono de info azul
+
+            let detalles = {};
+            try { detalles = JSON.parse(rowData.valores_nuevos || '{}'); } catch(e) {}
+
+            let contenidoHtml = `
+                <div class="border rounded-3 p-4 bg-light shadow-sm">
+                    <div class="d-flex align-items-center mb-4 border-bottom pb-3">
+                        <div class="bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 45px; height: 45px;">
+                            <i class="bi bi-file-earmark-text-fill fs-4"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0 fw-bold">DETALLES DEL DOCUMENTO</h6>
+                            <small class="text-muted">Información del reporte generado</small>
+                        </div>
+                    </div>
+                    <div class="row g-4">
+            `;
+
+            for (let [llave, valor] of Object.entries(detalles)) {
+                let etiqueta = llave.replace(/_/g, ' ').toUpperCase();
+                contenidoHtml += `
+                    <div class="col-sm-6">
+                        <p class="mb-0 text-muted" style="font-size: 0.75rem;">${etiqueta}</p>
+                        <p class="mb-0 fw-bold text-dark">${valor || 'N/A'}</p>
+                    </div>
+                `;
+            }
+            contenidoHtml += `</div></div>`;
+            mensajeConsulta.innerHTML = contenidoHtml;
+
+        } else {
+            // --- CASO CONSULTAR/OTROS: Restauramos el estilo de alerta ---
+            divConsulta.classList.add('alert', 'alert-info', 'align-items-center');
+            iconoConsulta.classList.remove('d-none');
+
+            const mensajes = {
+                'consultó': `Se visualizaron los registros del módulo.`,
+                'inició sesión': `Acceso al sistema concedido.`,
+                'cerró sesión': `Sesión finalizada correctamente.`,
+                'respaldó': `Copia de seguridad generada con éxito.`,
+                'restauró': `Restauración de base de datos completada.`
+            };
+            mensajeConsulta.innerHTML = mensajes[accionNormalizada] || 'Acción realizada correctamente.';
+        }
+
     } else {
-        // Modo JSON (Requiere datos que actualmente tu consulta de dashboard no trae)
-        // NOTA: Tu modelo Bitacora._consultar_actividad_dashboard actual borra los JSON. 
-        // Mostraremos un aviso elegante si no están disponibles.
+        // Lógica para Registrar (Azul), Modificar (Verde), Eliminar (Rojo)
         divConsulta.classList.add('d-none');
         divCambios.classList.remove('d-none');
 
-        let anterioresHtml = '<p class="text-muted">Detalles técnicos no cargados en la vista rápida.</p>';
-        let nuevosHtml = '<p class="text-muted">Detalles técnicos no cargados en la vista rápida.</p>';
-
-        if(item.valores_anteriores) anterioresHtml = objetoAListaDash(JSON.parse(item.valores_anteriores));
-        if(item.valores_nuevos) nuevosHtml = objetoAListaDash(JSON.parse(item.valores_nuevos));
+        let anteriores = rowData.valores_anteriores ? JSON.parse(rowData.valores_anteriores) : {};
+        let nuevos = rowData.valores_nuevos ? JSON.parse(rowData.valores_nuevos) : {};
 
         if (accionNormalizada === 'registró') {
-            document.getElementById('anteriores-tab-dash').parentElement.style.display = 'none';
-            document.getElementById('nuevos-tab-dash').parentElement.style.display = 'block';
-            document.getElementById('nuevos-tab-dash').click(); 
+            document.getElementById('anteriores-tab').parentElement.style.display = 'none';
+            document.getElementById('nuevos-tab').parentElement.style.display = 'block';
+            document.getElementById('nuevos-tab').click(); 
         } else if (accionNormalizada === 'eliminó') {
-            document.getElementById('anteriores-tab-dash').parentElement.style.display = 'block';
-            document.getElementById('nuevos-tab-dash').parentElement.style.display = 'none';
-            document.getElementById('anteriores-tab-dash').click(); 
+            document.getElementById('anteriores-tab').parentElement.style.display = 'block';
+            document.getElementById('nuevos-tab').parentElement.style.display = 'none';
+            document.getElementById('anteriores-tab').click(); 
         } else { 
-            document.getElementById('anteriores-tab-dash').parentElement.style.display = 'block';
-            document.getElementById('nuevos-tab-dash').parentElement.style.display = 'block';
-            document.getElementById('nuevos-tab-dash').click();
+            document.getElementById('anteriores-tab').parentElement.style.display = 'block';
+            document.getElementById('nuevos-tab').parentElement.style.display = 'block';
+            document.getElementById('nuevos-tab').click();
         }
 
-        document.getElementById('valores_anteriores_dash').innerHTML = anterioresHtml;
-        document.getElementById('valores_nuevos_dash').innerHTML = nuevosHtml;
+        document.getElementById('valores_anteriores').innerHTML = objetoALista(anteriores);
+        document.getElementById('valores_nuevos').innerHTML = objetoALista(nuevos);
     }
 
-    // 5. Mostrar Modal
-    const modalElement = document.getElementById('modalDetalleBitacoraDashboard');
+    const modalElement = document.getElementById('modalDetalleBitacora');
     const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
     modal.show();
 }
 
-function objetoAListaDash(obj) {
+function objetoALista(obj) {
     if (!obj || Object.keys(obj).length === 0) return '<p class="text-muted">No hay datos</p>';
     let html = '<ul class="list-group">';
     for (let [key, value] of Object.entries(obj)) {
@@ -760,6 +842,51 @@ function obtenerConfiguracionIcono(accion) {
         };
     }
 }
+
+// Formato de Acción
+function formatoAccion(cell) {
+    let accion;
+    if (typeof cell.getValue === "function") {
+        accion = (cell.getValue()).toLowerCase();
+    }
+    else {
+     accion = (cell).toLowerCase();
+    }
+    
+    let color = "secondary";
+    let icono = "bi-activity";
+
+    // Asignación semántica de colores e íconos
+    switch (accion) {
+        case 'consultó':      color = "info";    icono = "bi-search"; break;
+        case 'eliminó':      color = "primary"; icono = "bi-plus-circle-fill"; break;
+        case 'registró':      color = "success"; icono = "bi-pencil-fill"; break;
+        case 'modificó':       color = "danger";  icono = "bi-trash-fill"; break;
+        case 'inició sesion': color = "iniciar-sesion"; icono = "bi-box-arrow-in-right"; break;
+        case 'cerró sesion':  color = "secondary"; icono = "bi-box-arrow-left"; break;
+        case 'descargó':      color = "warning";    icono = "bi-download"; break;
+        case 'respaldó':      color = "indigo"; icono = "bi-database-down"; break;
+        case 'restauró':      color = "teal"; icono = "bi-database-up"; break;
+    }
+
+    // Capitalizar la primera letra ("Iniciar sesion", "Registrar")
+    const texto = accion.charAt(0).toUpperCase() + accion.slice(1);
+
+    let claseTextoBorder;
+    if (["primary", "success", "danger", "teal"].includes(color)) {
+        claseTextoBorder = `text-${color} border border-${color}`;
+    }
+    else if (["warning", "info", "secondary"].includes(color)) {
+        claseTextoBorder = `text-dark border border-${color}`;
+    }
+    else if (["iniciar-sesion", "indigo"].includes(color)) {
+        claseTextoBorder = `border border-dark`;
+    }
+
+    return `<span class="badge bg-${color} bg-opacity-10 ${claseTextoBorder} px-3 py-2 shadow-sm text-nowrap" style="font-size: .85rem;">
+                <i class="bi ${icono} me-1"></i> ${texto}
+            </span>`;
+};
 
 // --- FUNCIÓN PARA VISTA PREVIA DE PUBLICACIONES ---
 function mostrarVistaPreviaPublicacion(pub) {

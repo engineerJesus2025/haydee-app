@@ -613,9 +613,13 @@ function asignarEventosCambioMoneda(){
 // ============================================================
 async function consultar() {
     const formatoPeriodo = (cell) => {
+        const row = cell.getData();
         let [anio, mes] = cell.getValue().split('-');
-        return `${FormatoFechas.nombreMes(parseInt(mes).toString().padStart(2,0))} del ${anio}`.toUpperCase();
+        let textoFecha = `${FormatoFechas.nombreMes(parseInt(mes).toString().padStart(2,0))} del ${anio}`.toUpperCase();
+        
+        return `<div class="fw-bold text-dark">${textoFecha}</div>`;
     };
+
     const formatoMonto = (cell) => `${parseFloat(cell.getValue()).toFixed(2)} Bs. / ${(cell.getValue() / tasa_dolar).toFixed(2)} $`;
 
     const formatoBotones = (cell) => {

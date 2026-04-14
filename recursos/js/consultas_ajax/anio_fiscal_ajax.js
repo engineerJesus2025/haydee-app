@@ -23,11 +23,13 @@ async function consultar() {
     const contenedor = document.querySelector(".tabla-sistema-haydee");
     if (!contenedor) return;
 
-    // Formateadores Específicos del Módulo
     const formatoEstado = (cell) => {
-        const estado = cell.getValue();
-        const clase = estado === 'Cerrada' ? 'badge bg-secondary' : 'badge bg-primary';
-        return `<span class="${clase}">${estado}</span>`;
+        const config = obtenerConfigEstadoAnio(cell.getValue());
+        
+        return `<span class="badge bg-${config.color} bg-opacity-10 ${config.claseTextoBorder} px-3 py-2 shadow-sm text-nowrap" style="font-size: .85rem;">
+                    <i class="bi ${config.icono} me-1"></i>
+                    ${config.texto}
+                </span>`;
     };
 
     const formatoFecha = (cell) => FormatoFechas.formatoUsuario(cell.getValue());
@@ -63,7 +65,7 @@ async function consultar() {
     // 3. Estructura de Columnas
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
-        { title: "Estado", field: "estado", formatter: formatoEstado, minWidth: 120, responsive: 0 },
+        { title: "Estado", field: "estado", formatter: formatoEstado, minWidth: 140, responsive: 0 },
         { title: "Fecha de Inicio", field: "fecha_inicio", formatter: formatoFecha, minWidth: 170 },
         { title: "Fecha de Cierre", field: "fecha_cierre", formatter: formatoFechaCierre, minWidth: 170 },
         {
@@ -117,14 +119,18 @@ async function consultar() {
 
 // Función que lee la memoria de Tabulator (Sin AJAX extra)
 function mostrarVistaPrevia(data) {
-    // 1. Estado (Cambiamos el color dependiendo de si está cerrado o abierto)
+    // 1. Estado con Soft Badges
+    const config = obtenerConfigEstadoAnio(data.estado);
     const estadoEl = document.getElementById("vp_estado");
-    estadoEl.textContent = data.estado;
-    if (data.estado === 'Cerrada') {
-        estadoEl.className = "mt-2 mb-0 fw-bold text-secondary"; // Gris si está cerrada
-    } else {
-        estadoEl.className = "mt-2 mb-0 fw-bold text-success"; // Verde si está activa
-    }
+    
+    // Limpiamos las clases de texto plano e inyectamos el Badge
+    estadoEl.className = "mt-2 mb-0"; 
+    estadoEl.innerHTML = `
+        <span class="badge bg-${config.color} bg-opacity-10 ${config.claseTextoBorder} fs-6 px-3 py-2 shadow-sm text-nowrap">
+            <i class="bi ${config.icono} me-1"></i>
+            ${config.texto}
+        </span>
+    `;
 
     // 2. Descripción
     document.getElementById("vp_descripcion").textContent = data.descripcion || 'Sin descripción';
@@ -139,7 +145,7 @@ function mostrarVistaPrevia(data) {
 
     // Mostramos el modal
     modalDetalles.show();
-}
+}   
 
 // ============================================
 // OPERACIONES CRUD
@@ -211,6 +217,32 @@ async function eliminar(id) {
     Validador.procesarRespuesta(respuesta, () => {
         tabla_anio_fiscal.replaceData();
     });
+}
+
+
+/**
+ * Procesa el estado del año fiscal y devuelve su configuración visual (Soft Badge)
+ * @param {string} estado - El estado (Ej: 'Abierta', 'Cerrada')
+ * @returns {object} Configuración visual
+ */
+function obtenerConfigEstadoAnio(estado) {
+    const est = estado || 'Abierta';
+    let color = "success";
+    let icono = "bi-check-circle-fill";
+    let claseTextoBorder = "text-success border border-success";
+
+    if (est === 'Cerrada') {
+        color = "secondary";
+        icono = "bi-lock-fill";
+        claseTextoBorder = "text-secondary border border-secondary";
+    }
+
+    return { 
+        color: color, 
+        claseTextoBorder: claseTextoBorder, 
+        icono: icono, 
+        texto: est 
+    };
 }
 
 // ============================================

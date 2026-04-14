@@ -51,11 +51,11 @@ async function consultar() {
     };
 
     const formatoNombre = (cell) =>{
-        const nombre = cell.getData().accion; 
-        let titulo_modulo = nombre.replace(/_/g, ' ').toLowerCase();
-        let titulo_capitalizado = titulo_modulo.split(' ').map(palabra => palabra[0].toUpperCase() + palabra.slice(1)).join(' ');
+        const config = obtenerConfigPermiso(cell.getValue());
 
-        return titulo_capitalizado;
+        return `<span class="badge bg-${config.color} bg-opacity-10 ${config.claseTextoBorder} px-3 py-2 shadow-sm text-nowrap" style="font-size: 0.9rem;">
+                    <i class="bi bi-${config.icono} me-1"></i> ${config.nombreLimpio}
+                </span>`;
     }
 
     const columnas = [
@@ -93,13 +93,12 @@ async function consultar() {
 // Función que lee la memoria de Tabulator (Sin AJAX extra)
 function mostrarVistaPrevia(data) {
     const nombre = data.accion; 
-    let titulo_modulo = nombre.replace(/_/g, ' ').toLowerCase();
-    let titulo_capitalizado = titulo_modulo.split(' ').map(palabra => palabra[0].toUpperCase() + palabra.slice(1)).join(' ');
+    const config = obtenerConfigPermiso(nombre);
 
-    document.getElementById("vp_icono").className = "bi bi-shield-lock";
+    document.getElementById("vp_icono").className = `bi bi-${config.icono} me-2`;
     document.getElementById("vp_titulo").textContent = " Permiso";
     document.getElementById("vp_etiqueta").textContent = "Acción Permitida";
-    document.getElementById("vp_valor").textContent = titulo_capitalizado || 'N/A';
+    document.getElementById("vp_valor").textContent = config.nombreLimpio || 'N/A';
     
     modalDetalles.show();
 }
@@ -186,6 +185,34 @@ function resetModal() {
     document.getElementById('titulo_modal').textContent = 'Registrar Permiso';
     id_modificar = null;
     document.getElementById('id_permiso').value = '';
+}
+
+// Función centralizada para la identidad visual de las acciones
+function obtenerConfigPermiso(nombre) {
+    const permiso = (nombre || "").toLowerCase().trim();
+    let color = "secondary";
+    let icono = "key-fill"; // Ícono por defecto
+
+    // Mapeo idéntico al de la Bitácora
+    switch (permiso) {
+        case 'consultar': color = "info";    icono = "search"; break;
+        case 'registrar': color = "primary"; icono = "plus-circle-fill"; break;
+        case 'modificar': color = "success"; icono = "pencil-fill"; break;
+        case 'eliminar':  color = "danger";  icono = "trash-fill"; break;
+    }
+    
+    // Ajuste de legibilidad para el amarillo
+    let claseTextoBorder = (color === 'warning') 
+    ? "text-dark border border-warning" 
+    : (color === 'info') ? "text-dark border border-info" 
+    : `text-${color} border border-${color}`;
+    
+    return { 
+        color, 
+        icono, 
+        claseTextoBorder, 
+        nombreLimpio: permiso.charAt(0).toUpperCase() + permiso.slice(1) 
+    };
 }
 
 

@@ -1,5 +1,5 @@
 <?php
-use haydee\ayuda\Sesiones;
+use haydee\servicios\Sesiones;
 use haydee\modelo\Mantenimiento;
 use haydee\modelo\Bitacora;
 use haydee\ayuda\Validador;

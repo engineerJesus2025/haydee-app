@@ -32,8 +32,23 @@ document.getElementById("mes_select").addEventListener("change", (e) => {
     let id_caja = e.target.value;
     let option = e.target.options[e.target.selectedIndex];
 
-    document.getElementById("descripciones").textContent = descripciones[id_caja] || '';
-    document.getElementById("descripciones").closest(".col-7")?.removeAttribute("hidden");
+    // (Dentro de tu evento change del mes_select)
+    let descripcionActual = descripciones[id_caja] || '';
+    let pDescripciones = document.getElementById("descripciones");
+    
+    if (descripcionActual.trim() === '') {
+        pDescripciones.innerHTML = '<span class="text-muted fst-italic">Sin observaciones registradas para este mes.</span>';
+    } else {
+        pDescripciones.textContent = descripcionActual;
+    }
+    
+    // Mostrar la tarjeta de nota
+    document.getElementById("contenedor_tarjeta_nota").removeAttribute("hidden");
+    
+    // Asegurarnos de que siempre empiece en modo lectura al cambiar de mes
+    document.getElementById("modo_edicion_nota").classList.add("d-none");
+    document.getElementById("modo_lectura_nota").classList.remove("d-none");
+    document.getElementById("btn_activar_edicion").classList.remove("d-none");
 
     // Actualizar fondo fijo mostrado
     let saldoActual = option.getAttribute("saldo_actual") || 0;
@@ -42,14 +57,15 @@ document.getElementById("mes_select").addEventListener("change", (e) => {
 
     actualizarSaldos();
     // Estado de la caja
+    const spanCajaActiva = document.getElementById("span_caja_activa");
     if (option.getAttribute("activa") === "Cerrada") {
         document.getElementById("botones_movimientos")?.setAttribute("hidden", "");
-        document.getElementById("span_caja_activa").className = "text-danger";
-        document.getElementById("span_caja_activa").textContent = "Esta caja está cerrada";
+        spanCajaActiva.className = "badge rounded-pill bg-danger bg-opacity-10 text-danger border border-danger fs-6 px-3 py-2 shadow-sm";
+        spanCajaActiva.innerHTML = "<i class='bi bi-lock-fill me-1'></i> Caja Cerrada";
     } else {
         document.getElementById("botones_movimientos")?.removeAttribute("hidden");
-        document.getElementById("span_caja_activa").className = "text-success";
-        document.getElementById("span_caja_activa").textContent = "Esta es la caja actual";
+        spanCajaActiva.className = "badge rounded-pill bg-success bg-opacity-10 text-success border border-success fs-6 px-3 py-2 shadow-sm";
+        spanCajaActiva.innerHTML = "<i class='bi bi-unlock-fill me-1'></i> Caja Activa";
     }
 
     // Recargar tabla de movimientos
@@ -99,6 +115,24 @@ document.getElementById("modal_registro_gastos")?.addEventListener("hide.bs.moda
         intercambiarMoneda('monto', 'monto_cambio');
     }
     diferencia = 0;
+});
+
+// Activar modo edición
+document.getElementById("btn_activar_edicion")?.addEventListener('click', () => {
+    let id_caja = document.getElementById("mes_select").value;
+    document.getElementById("descripcion_input_inline").value = descripciones[id_caja] || '';
+    
+    document.getElementById("modo_lectura_nota").classList.add("d-none");
+    document.getElementById("btn_activar_edicion").classList.add("d-none");
+    document.getElementById("modo_edicion_nota").classList.remove("d-none");
+    document.getElementById("descripcion_input_inline").focus();
+});
+
+// Cancelar edición
+document.getElementById("btn_cancelar_edicion")?.addEventListener('click', () => {
+    document.getElementById("modo_edicion_nota").classList.add("d-none");
+    document.getElementById("modo_lectura_nota").classList.remove("d-none");
+    document.getElementById("btn_activar_edicion").classList.remove("d-none");
 });
 
 // ========== FUNCIONES AUXILIARES ==========
@@ -182,22 +216,31 @@ async function consultarCajasChicas() {
 
 // Función que lee la memoria de Tabulator (Sin AJAX extra)
 function mostrarVistaPrevia(data) {
-    // 1. Cálculos de Monto (Usando tu variable global tasa_dolar)
+    // Cálculos de Monto (Usando tu variable global tasa_dolar)
     let montoBs = parseFloat(data.monto);
     let montoUsd = montoBs / tasa_dolar;
     
     document.getElementById("vp_monto_bs").textContent = `${montoBs.toFixed(2)} Bs.`;
     document.getElementById("vp_monto_usd").textContent = `Ref: ${montoUsd.toFixed(2)} $`;
 
-    // 2. Concepto
+    // Concepto
     document.getElementById("vp_concepto").textContent = data.concepto || 'Sin descripción';
 
-    // 3. Fecha 
+    // Fecha 
     document.getElementById("vp_fecha").textContent = FormatoFechas.formatear(data.fecha, 'DD-MM-YYYY');
 
-    // 4. Estado 
+    // Estado 
+    const config = obtenerConfigEstadoCaja(data.estado);
     const estadoEl = document.getElementById("vp_estado");
-    estadoEl.textContent = data.estado;
+    
+    // Limpiamos las clases viejas de texto y le inyectamos el Soft Badge flotando a la derecha
+    estadoEl.className = "text-end"; 
+    estadoEl.innerHTML = `
+        <span class="badge bg-${config.color} bg-opacity-10 ${config.claseTextoBorder} fs-6 px-3 py-2 shadow-sm text-nowrap">
+            <i class="bi ${config.icono} me-1"></i>
+            ${config.texto}
+        </span>
+    `;
     
     if (data.estado === 'Repuesto') {
         estadoEl.className = "fw-bold text-end text-success";
@@ -217,17 +260,18 @@ function inicializarTablaMovimientos() {
     const contenedor = document.querySelector(".tabla-sistema-haydee");
     if (!contenedor) return;
 
-    const formatoFecha = (cell) => FormatoFechas.formatear(cell.getValue(), 'DD-MM-YYYY');
+    const formatoFecha = (cell) => FormatoFechas.formatear(cell.getValue(), 'DD/MM/YYYY');
     const formatoMonto = (cell) => {
         const row = cell.getData();
         return `${parseFloat(row.monto).toFixed(2)} Bs. / ${(row.monto / tasa_dolar).toFixed(2)} $`;
     };
     const formatoEstado = (cell) => {
-        let colores = {
-            'Pendiente por reposicion': 'badge bg-warning text-dark',
-            'Repuesto': 'badge bg-success'
-        };
-        return `<span class="${colores[cell.getValue()] || 'badge bg-secondary'}">${cell.getValue()}</span>`;
+        const config = obtenerConfigEstadoCaja(cell.getValue());
+
+        return `<span class="badge bg-${config.color} bg-opacity-10 ${config.claseTextoBorder} px-3 py-2 shadow-sm text-nowrap" style="font-size: .85rem;">
+                    <i class="bi ${config.icono} me-1"></i>
+                    ${config.texto}
+                </span>`;
     }
     
     const formatoBotones = (cell) => {
@@ -255,7 +299,7 @@ function inicializarTablaMovimientos() {
 
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
-        { title: "Estado", field: "estado", formatter: formatoEstado, minWidth: 130 },
+        { title: "Estado", field: "estado", formatter: formatoEstado, minWidth: 170, widthGrow: 3 },
         { title: "Fecha", field: "fecha", formatter: formatoFecha, minWidth: 130, responsive: 0 },
         { title: "Monto", field: "monto", formatter: formatoMonto, minWidth: 160 },
         {
@@ -405,21 +449,44 @@ async function reponerCaja() {
     });
 }
 
-// ========== modificar DESCRIPCIÓN DE CAJA ==========
-async function modificarObservacion() {
+// ========== MODIFICAR DESCRIPCIÓN DE CAJA ==========
+async function modificarObservacionInline() {
     let id_caja = document.getElementById("mes_select").value;
-    let descripcion = document.getElementById("descripcion_input").value;
+    let descripcionNueva = document.getElementById("descripcion_input_inline").value;
+
+    // Deshabilitar botón y mostrar un pequeño spinner de carga nativo de Bootstrap
+    let btnGuardar = document.getElementById("btn_guardar_edicion");
+    let textoOriginal = btnGuardar.textContent;
+    btnGuardar.disabled = true;
+    btnGuardar.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
 
     let datos = new FormData();
     datos.append("caja_chica_id", id_caja);
-    datos.append("descripcion", descripcion);
+    datos.append("descripcion", descripcionNueva);
     datos.append("operacion", "modificar_descripcion");
 
     let respuesta = await Peticiones.enviar(datos);
     Validador.procesarRespuesta(respuesta, () => {
-        modal_observacion.hide();
-        consultarCajasChicas(); // Recargar para actualizar descripción en el objeto
+        // Actualizar el diccionario local para que no se pierda al cambiar de mes
+        descripciones[id_caja] = descripcionNueva;
+        
+        // Actualizar la vista 
+        let pDescripciones = document.getElementById("descripciones");
+        if (descripcionNueva.trim() === '') {
+            pDescripciones.innerHTML = '<span class="text-muted fst-italic">Sin observaciones registradas para este mes.</span>';
+        } else {
+            pDescripciones.textContent = descripcionNueva;
+        }
+
+        // Ocultar inputs y volver al modo lectura
+        document.getElementById("modo_edicion_nota").classList.add("d-none");
+        document.getElementById("modo_lectura_nota").classList.remove("d-none");
+        document.getElementById("btn_activar_edicion").classList.remove("d-none");
     });
+    
+    // Restaurar el botón a su estado original
+    btnGuardar.disabled = false;
+    btnGuardar.textContent = textoOriginal;
 }
 
 // ========== ACTUALIZAR SALDOS MOSTRADOS ==========
@@ -446,6 +513,39 @@ function envio(operacion) {
     } else {
         Alertas.mostrar('error', 'Atención', 'Operación no válida');
     }
+}
+
+
+/**
+ * Procesa el estado de un movimiento de caja y devuelve su configuración visual (Soft Badge)
+ * @param {string} valor - El estado (Repuesto, Pendiente por reposicion, Por Reponer)
+ * @returns {object} Configuración visual
+ */
+function obtenerConfigEstadoCaja(valor) {
+    let est = valor || "";
+    // Normalizamos por si viene con el nombre viejo de la BD
+    if (est === 'Pendiente por reposicion') est = 'Por Reponer';
+
+    let color = "secondary";
+    let icono = "bi-circle";
+    let claseTextoBorder = "text-secondary border border-secondary";
+
+    if (est === "Por Reponer") {
+        color = "warning";
+        icono = "bi-arrow-clockwise";
+        claseTextoBorder = "text-dark border border-warning"; // Texto oscuro por legibilidad
+    } else if (est === "Repuesto") {
+        color = "success";
+        icono = "bi-check-circle-fill";
+        claseTextoBorder = "text-success border border-success";
+    }
+
+    return {
+        color: color,
+        claseTextoBorder: claseTextoBorder,
+        icono: icono,
+        texto: est
+    };
 }
 
 // ============================================================

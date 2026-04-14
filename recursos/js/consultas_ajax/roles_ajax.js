@@ -25,12 +25,28 @@ async function consultar() {
     const contenedor = document.querySelector(".tabla-sistema-haydee");
     if (!contenedor) return;
 
+    const formatoNombre = (cell) => {
+        let rol = cell.getValue() || "";
+        
+        rol = rol.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+        
+        const [icono, colorIcono] = obtenerIconoRol(rol);
+
+        return `<div class="d-flex align-items-center fw-bold text-dark">
+                    <i class="bi bi-${icono} ${colorIcono} me-3 fs-5 opacity-75"></i> ${rol}
+                </div>`;
+    };
+
     const formatoBotones = (cell) => {
         const id = cell.getData().id_rol;
-        // Protección especial para el Rol 1
+        
+        // Protección especial para el Rol 1 (Administrador Global)
         if (id == 1) {
-            return `No Modificable`;
+            return `<span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary px-3 py-2 shadow-sm text-nowrap">
+                        <i class="bi bi-lock-fill me-1"></i> Rol del Sistema
+                    </span>`;
         }
+
         let html = `<div class="d-flex justify-content-center flex-wrap gap-2">
             <button type="button" class="btn btn-primary btn-sm vista-previa" value="${id}" data-tooltip="true" title="Ver Mas">
                 <i class="bi bi-eye"></i>
@@ -54,13 +70,15 @@ async function consultar() {
 
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", headerHozAlign: "center", resizable: false, headerSort: false, },
-        { title: "Nombre", field: "nombre", minWidth: 150, responsive: 0 },
+        { title: "Nombre", field: "nombre", formatter: formatoNombre, minWidth: 200, responsive: 0, widthGrow: 2 },
         {
             title: "Acciones", 
             formatter: formatoBotones, headerSort: false, 
             hozAlign: "center", vertAlign: "middle", minWidth: 130, 
             responsive: 0, download: false, headerHozAlign: "center",
             cellClick: function(e, cell) {
+                if (cell.getData().id_rol == 1) return;
+
                 const btn = e.target.closest('button');
                 const mockEvent = { currentTarget: btn };
                 
@@ -84,18 +102,24 @@ async function consultar() {
 
 // Función asíncrona para Vista Previa
 async function mostrarVistaPrevia(data) {
-    // 1. Asignamos el nombre y mostramos el modal rápidamente con el estado de "Cargando"
-    document.getElementById("vp_nombre_rol").textContent = data.nombre || 'N/A';
+    nombre = data.nombre;
+    id_rol = data.id_rol;
+    // Asignamos el nombre y mostramos el modal rápidamente con el estado de "Cargando"
+    document.getElementById("vp_nombre_rol").textContent = nombre || 'N/A';
+
+    const [icono] = obtenerIconoRol(nombre);
+    document.getElementById("vp_icono").className = `bi bi-${icono} me-2`;
+
     const contenedor = document.getElementById("vp_contenedor_permisos");
     
     // Mostramos loader
     contenedor.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><div class="text-muted mt-2 small">Cargando permisos...</div></div>';
     modalDetalles.show();
 
-    // 2. Hacemos la petición AJAX para traer los permisos específicos
+    // Hacemos la petición AJAX para traer los permisos específicos
     const formData = new FormData();
     formData.append('operacion', 'consultar_permisos_rol');
-    formData.append('id_rol', data.id_rol);
+    formData.append('id_rol', id_rol);
 
     // true al final para que sea silencioso y no muestre alertas de "Cargando" del sistema general
     const respuesta = await Peticiones.enviar(formData, "", true); 
@@ -118,7 +142,7 @@ async function mostrarVistaPrevia(data) {
         };
 
         // Construimos el HTML
-        // 1. Replicamos el diccionario de iconos en JS
+        // Replicamos el diccionario de iconos en JS
         const iconosModulos = {
             'pagos': 'bi-cash-coin',
             'gastos': 'bi-cart-plus',
@@ -299,6 +323,20 @@ async function prepararFormulario(e) {
 
         modal.show();
     });
+}
+
+function obtenerIconoRol(nombre){
+    let icono = "person-badge";
+    let colorIcono = "text-secondary";
+
+    switch (nombre.toUpperCase()) {
+        case 'ADMINISTRADOR GLOBAL': icono = 'shield-lock-fill'; colorIcono = "text-warning"; break;
+        case 'ADMINISTRADOR': icono = 'shield-check'; colorIcono = "text-primary"; break;
+        case 'PROPIETARIO': icono = 'house-door-fill'; colorIcono = "text-success"; break;
+        case 'CONTADOR':  icono = 'calculator-fill'; colorIcono = "text-danger"; break;
+        case 'PRESIDENTE':  icono = 'person-workspace'; colorIcono = "text-info"; break;
+    }
+    return [icono,colorIcono];
 }
 
 // ============================================

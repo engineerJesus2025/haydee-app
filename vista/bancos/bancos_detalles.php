@@ -25,13 +25,23 @@
                             </div>
                             <span id="vp_nombre_banco" class="fw-bold text-dark text-end">---</span>
                         </li>
+
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-3">
+                            <div class="d-flex align-items-center text-muted">
+                                <i class="bi bi-upc-scan fs-5 me-3 text-primary"></i>
+                                <span class="fw-semibold">Código Bancario</span>
+                            </div>
+                            <span id="vp_codigo" class="fw-bold text-muted text-end">
+                                ---
+                            </span>
+                        </li>
                         
                         <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-3">
                             <div class="d-flex align-items-center text-muted">
                                 <i class="bi bi-wallet2 fs-5 me-3 text-primary"></i>
                                 <span class="fw-semibold">Tipo de Cuenta</span>
                             </div>
-                            <span id="vp_tipo_cuenta" class="fw-bold text-dark text-end">---</span>
+                            <span id="vp_tipo_cuenta" class="text-end">---</span>
                         </li>
                         
                         <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-3">

@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const inputsMonto = document.querySelectorAll("#monto, #monto_reponer");
     const inputConcepto = document.getElementById("concepto");
     const selectCaja = document.getElementById("mes_select");
-    const inputDesc = document.getElementById("descripcion_input");
+    const inputDesc = document.getElementById("descripcion_input_inline");
 
     // Fecha (Permitimos años antiguos, pero bloqueamos futuros con maxHoy: true)
     if (inputFecha) {
@@ -52,9 +52,13 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Descripción modal
     if (inputDesc) {
-        inputDesc.addEventListener("keypress", e => Validador.bloquearTeclasInvalidas(e, Patrones.teclasAlfanumerico));
+        inputDesc.addEventListener("keypress", e => Validador.bloquearTeclasInvalidas(e, Patrones.descripcionCaja));
         inputDesc.addEventListener("keyup", function() {
-            Validador.evaluarInput(this, Patrones.descripcionCaja, "Máximo 100 caracteres");
+            if(!Validador.evaluarInput(this, Patrones.descripcionCaja, "Máximo 100 caracteres")){
+                document.getElementById("btn_guardar_edicion").disabled = true;
+            }else{
+                document.getElementById("btn_guardar_edicion").disabled = false;
+            }
         });
     }
 
@@ -118,27 +122,19 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-    // Botón Editar Descripción
-    const btnObservacion = document.getElementById("boton_formulario_observacion");
-    if (btnObservacion) {
-        btnObservacion.addEventListener("click", async function(e) {
+    // Botón Editar Descripción (Edición Inline)
+    const btnGuardarNota = document.getElementById("btn_guardar_edicion");
+    if (btnGuardarNota) {
+        btnGuardarNota.addEventListener("click", function(e) {
             e.preventDefault();
-            let desc = document.getElementById("descripcion_input");
+            let desc = document.getElementById("descripcion_input_inline");
             
+            // Validamos que cumpla el patrón antes de enviar
             if (Validador.evaluarInput(desc, Patrones.descripcionCaja, "Inválido")) {
-                Swal.fire({
-                    title: "¿Estás seguro?",
-                    text: "¿Guardar cambios en la descripción?",
-                    icon: "warning",
-                    showCancelButton: true,
-                    confirmButtonText: "Sí, guardar",
-                    confirmButtonColor: "#1b8a40",
-                    cancelButtonText: "Cancelar"
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        if(typeof modificarObservacion === 'function') modificarObservacion(); 
-                    }
-                });
+                // Llamamos a la función AJAX directamente, sin SweetAlert para mayor fluidez
+                if(typeof modificarObservacionInline === 'function') {
+                    modificarObservacionInline(); 
+                }
             }
         });
     }

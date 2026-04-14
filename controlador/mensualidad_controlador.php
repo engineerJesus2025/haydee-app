@@ -1,5 +1,5 @@
 <?php
-use haydee\ayuda\Sesiones;
+use haydee\servicios\Sesiones;
 use haydee\modelo\Mensualidad;
 use haydee\modelo\Presupuesto;
 use haydee\modelo\Apartamento;
@@ -7,6 +7,7 @@ use haydee\modelo\Bitacora;
 use haydee\ayuda\Validador;
 use haydee\ayuda\ValidadorBD;
 use haydee\servicios\GestorAuditoria;
+use haydee\servicios\GestorNotificaciones;
 
 Sesiones::verificarSesion();
 Sesiones::verificarPermiso(GESTIONAR_MENSUALIDAD, CONSULTAR);
@@ -104,8 +105,8 @@ if (isset($_POST["operacion"])) {
     // Desglosar la fecha si viene en operaciones de consulta o eliminación
     if (isset($_POST['fecha']) && strpos($_POST['fecha'], '-') !== false) {
         list($anio, $mes, $dia) = explode('-', $_POST['fecha']);
-        $mensualidad->set_mes($mes);
-        $mensualidad->set_anio($anio);
+        $mensualidad->set_mes(intval($mes));
+        $mensualidad->set_anio(intval($anio));
     }
 
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
@@ -155,6 +156,14 @@ if (isset($_POST["operacion"])) {
                 if ($respuesta['estatus']) {
                     $mensualidad->set_datos_apartamentos(null); // Ocultar datos masivos para auditoría
                     $auditor->registrarAuditoria('registrar');
+
+                    GestorNotificaciones::notificarTodos(
+                        "Nueva mensualidad disponible",
+                        "Se han generado las mensualidades para el mes {$mensualidad->get_mes()} del año {$mensualidad->get_anio()}.",
+                        'mensualidad',
+                        $respuesta['lastId'],
+                        'NUEVA_MENSUALIDAD'
+                    );
                 }
                 break;
 
@@ -221,4 +230,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_MENSUALIDAD);
 }
 $permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_MENSUALIDAD);
+$btn_nuevo = [
+    'target'  => '#modal_mensualidad',
+    'texto'   => 'Nueva Mensualidad',
+    'tooltip' => 'Registrar Nueva Mensualidad'
+];
+$placeholder_buscar = "Buscar mensualidad...";
+
 require_once 'vista/mensualidad/mensualidad_vista.php';

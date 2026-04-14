@@ -1,5 +1,5 @@
 <?php
-use haydee\ayuda\Sesiones;
+use haydee\servicios\Sesiones;
 use haydee\modelo\SolicitudGasto;
 use haydee\modelo\Presupuesto;
 use haydee\modelo\Bitacora;
@@ -186,4 +186,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     $presupuestos = $solicitud->consultar_presupuesto($fecha_actual);
 }
 $permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_SOLICITUD_GASTO);
+$btn_nuevo = [
+    'target'  => '#modal_solicitud_gasto',
+    'texto'   => 'Nueva Solicitud',
+    'tooltip' => 'Registrar Nueva Solicitud para Gasto'
+];
+$placeholder_buscar = "Buscar solicitud...";
+
 require_once "vista/solicitud_gasto/solicitud_gasto_vista.php";

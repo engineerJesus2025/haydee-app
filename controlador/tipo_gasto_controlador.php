@@ -1,5 +1,5 @@
 <?php
-use haydee\ayuda\Sesiones;
+use haydee\servicios\Sesiones;
 use haydee\modelo\TipoGasto;
 use haydee\modelo\Bitacora;
 use haydee\ayuda\Validador;
@@ -86,4 +86,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_TIPO_GASTO);
 }
 $permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_TIPO_GASTO);
+$btn_nuevo = [
+    'target'  => '#modal_tipo_gasto',
+    'texto'   => 'Nuevo Tipo de Gasto',
+    'tooltip' => 'Registrar Nuevo Tipo de Gasto'
+];
+$placeholder_buscar = "Buscar tipo de gasto...";
+
 require_once "vista/tipo_gasto/tipo_gasto_vista.php";

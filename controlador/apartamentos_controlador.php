@@ -1,5 +1,5 @@
 <?php
-use haydee\ayuda\Sesiones;
+use haydee\servicios\Sesiones;
 use haydee\modelo\Apartamento;
 use haydee\modelo\Habitantes;
 use haydee\modelo\Bitacora;
@@ -278,5 +278,8 @@ $permisosVista = [
     'apartamentos' => Sesiones::obtenerPermisosVista(GESTIONAR_APARTAMENTOS),
     'habitantes'   => Sesiones::obtenerPermisosVista(GESTIONAR_HABITANTES)
 ];
+
+$placeholder_buscar = "Buscar apartamento...";
+
 // Cargar la vista
 require_once "vista/apartamentos/apartamentos_vista.php";

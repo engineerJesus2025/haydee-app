@@ -39,7 +39,7 @@ class GestorNotificaciones
         $resultado = $notif->realizar_consulta($accion);
 
         // ==================================================================
-        // INTEGRACIÓN PUSH
+        // PUSH
         // ==================================================================
         if (isset($resultado['estatus']) && $resultado['estatus'] === true) {
             self::dispararPush($titulo, $descripcion, $accion);
@@ -53,7 +53,7 @@ class GestorNotificaciones
      */
     private static function dispararPush($titulo, $descripcion, $accion_original)
     {
-        // Configurar credenciales VAPID desde el .env
+        // Configurar credenciales VAPID 
         $auth = [
             'VAPID' => [
                 'subject' => 'mailto:' . CORREO_CONDOMINIO,

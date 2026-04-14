@@ -5,6 +5,12 @@
     font-style: normal;
 }
 
+/* Colores personalizados para los badges que no trae Bootstrap */
+.bg-indigo { background-color: #6610f2 !important; }
+.bg-teal { background-color: #20c997 !important; }
+.badge-consultar { background-color: #2d3436; color: white; }
+.badge-iniciar-sesion { background-color: #6559BA; color: white; }
+
 /* Estilo principal de la tarjeta */
 .post-card {
     font-family: 'Inter', sans-serif;
@@ -229,6 +235,7 @@
 .tarjeta-publicacion:hover {
     transform: translateY(-5px);
     box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+    cursor: pointer;
 }
 
 .imagen-tarjeta {

@@ -1,5 +1,5 @@
 <?php
-use haydee\ayuda\Sesiones;
+use haydee\servicios\Sesiones;
 use haydee\ayuda\Validador;
 use haydee\ayuda\GestorPDF;
 use haydee\modelo\Habitantes;

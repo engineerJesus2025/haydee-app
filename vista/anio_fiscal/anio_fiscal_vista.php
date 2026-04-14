@@ -31,9 +31,7 @@
                             <div class="card p-4">
                                 <div class="row">
                                     <div class="col-12 col-sm-6 mb-4">
-                                    <?php if ($permisosVista['registrar']) : ?>
-                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_anio_fiscal" data-tooltip="true" title="Registrar Nuevo Año Fiscal" data-tooltip="true">Nuevo Año Fiscal</button>
-                                    <?php endif; ?>
+                                        <?php require ROOT_PATH . "/vista/componentes/boton_nuevo.php"; ?>
                                     </div>
                                     <div class="col-12 col-sm-6 mb-4">
                                         <?php require_once ROOT_PATH . "/vista/componentes/buscador_global.php"; ?>

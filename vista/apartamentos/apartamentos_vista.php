@@ -33,7 +33,10 @@
                                 <div class="row">
                                     <div class="col-12 col-sm-6 mb-4">
                                     <?php if ($permisosVista['apartamentos']['registrar']) : ?>
-                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-tooltip="true" title="Registrar Nuevo Apartamento" data-bs-target="#modal_apartamentos">Nuevo Apartamento</button>
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-tooltip="true" title="Registrar Nuevo Apartamento" data-bs-target="#modal_apartamentos">
+                                            <i class="bi bi-plus-lg me-1"></i>
+                                            Nuevo Apartamento
+                                        </button>
                                     <?php endif; ?>
                                     </div>
                                     <div class="col-12 col-sm-6 mb-4">
@@ -105,7 +108,10 @@
                     <?php if ($permisosVista['habitantes']['registrar']): ?>
                         <div class="button mb-4">
                             <button type="button" id="boton_registrar" class="btn btn-primary"
-                                data-bs-toggle="modal" data-bs-target="#modal_habitantes" data-tooltip="true" title="Registrar Nuevo Habitante">Nuevo Habitante</a>
+                                data-bs-toggle="modal" data-bs-target="#modal_habitantes" data-tooltip="true" title="Registrar Nuevo Habitante">
+                                <i class="bi bi-plus-lg me-1"></i>
+                                Nuevo Habitante
+                            </button>
                         </div><br>
                     <?php endif; ?>
                     <div id="tabla_habitantes" class="tabla-sistema-haydee"></div>

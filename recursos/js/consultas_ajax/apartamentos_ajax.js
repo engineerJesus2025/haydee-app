@@ -5,9 +5,20 @@ let id_apartamento_seleccionado;
 // ============================================
 // FORMATOS VISUALES GLOBALES
 // ============================================
+// ============================================
+// FORMATOS VISUALES GLOBALES
+// ============================================
 const FormatosVisuales = {
-    nro: (valor) => `Nro: ${valor}`,
-    porcentaje: (valor) => `${valor}%`,
+    // 1. Número de apartamento más limpio y con ícono
+    nro: (valor) => `<div class="d-flex align-items-center fw-bold text-dark">
+                        <i class="bi bi-door-closed text-primary me-2 fs-5"></i> ${valor}
+                     </div>`,
+
+    // 2. Participación con contexto visual
+    porcentaje: (valor) => `<span class="text-muted fw-semibold">
+                                <i class="bi bi-pie-chart-fill me-1 opacity-50"></i> ${valor}%
+                            </span>`,
+
     tiene: (valor) => {
         if (valor == 1) {
             return `<span class="badge bg-success"><i class="bi bi-check-circle"></i> TIENE</span>`;
@@ -15,11 +26,19 @@ const FormatosVisuales = {
             return `<span class="badge bg-danger"><i class="bi bi-x-circle"></i> NO TIENE</span>`;
         }
     },
+
+    // 3. Badges de estado de ocupación semánticos
     siNo: (valor) => {
         if (valor == 1) {
-            return `<span class="badge bg-primary">SÍ</span>`;
+            // Alquilado: Azul suave (Primary)
+            return `<span class="badge bg-primary bg-opacity-10 text-primary border border-primary px-3 py-2 shadow-sm" style="font-size: .85rem;">
+                        <i class="bi bi-key-fill me-1"></i> Alquilado
+                    </span>`;
         } else {
-            return `<span class="badge bg-secondary">NO</span>`;
+            // Propietario: Gris suave (Secondary) o un tono oscuro sutil
+            return `<span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary px-3 py-2 shadow-sm" style="font-size: .85rem;">
+                        <i class="bi bi-house-door-fill me-1"></i> Propietario
+                    </span>`;
         }
     }
 };

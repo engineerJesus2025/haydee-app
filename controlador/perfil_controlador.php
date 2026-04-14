@@ -1,5 +1,5 @@
 <?php
-use haydee\ayuda\Sesiones;
+use haydee\servicios\Sesiones;
 use haydee\modelo\Rol;
 use haydee\modelo\Usuario;
 use haydee\modelo\Notificaciones;
@@ -180,5 +180,6 @@ if ($accion == "perfil") {
     $usuario->set_id_usuario($_SESSION["id_usuario"]);
     $usuarioData = $usuario->realizar_consulta('consultar_usuario');
     $usuario = $usuarioData['estatus'] ? $usuarioData['datos'] : [];
+    $placeholder_buscar = "Buscar notificación...";
     require_once "vista/usuarios/usuario_perfil.php";
 }

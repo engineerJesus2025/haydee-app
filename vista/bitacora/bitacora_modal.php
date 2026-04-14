@@ -9,7 +9,7 @@
             </div>
             <div class="modal-body">
                 <div class="container-fluid">
-				    <div class="row mb-3">
+				    <div class="row">
 				        <div class="col-md-6">
 				            <p><strong><i class="bi bi-person-circle me-2 text-primary"></i>Usuario:</strong> <span id="detalle_usuario"></span></p>
 				            <p><strong><i class="bi bi-shield me-2 text-primary"></i>Rol:</strong> <span id="detalle_rol"></span></p>
@@ -21,9 +21,11 @@
 				    </div>
 				    <div class="row mb-4 border-bottom pb-3">
 				        <div class="col-12">
-				            <p class="mb-0"><strong><i class="bi bi-tag me-2 text-primary"></i>Acción:</strong> 
-				                <span id="detalle_accion" class="badge bg-primary" style="font-size:90%"></span>
-				            </p>
+				            <div class="mb-0 d-flex gap-3 align-items-center"><strong><i class="bi bi-tag me-2 text-primary"></i>Acción:</strong>
+				            	<div id="detalle_accion">
+				            		<span class="badge bg-primary" style="font-size:90%"></span>
+				            	</div>
+				            </div>
 				        </div>
 				    </div>
 

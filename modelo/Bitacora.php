@@ -147,14 +147,19 @@ class Bitacora extends Conexion
      */
     private function _consultar_actividad_dashboard()
     {
-        $sql = "SELECT 
-                    bitacora.fecha_hora AS fecha_evento,
+        $sql = "SELECT
+                    bitacora.id_bitacora,
+                    bitacora.fecha_hora,
                     bitacora.accion,
+                    bitacora.valores_anteriores,
+                    bitacora.valores_nuevos,
                     usuarios.nombre AS nombre_usuario,
-                    modulos.nombre AS nombre_modulo
+                    modulos.nombre AS nombre_modulo,
+                    roles.nombre AS nombre_rol
                 FROM bitacora
                 INNER JOIN usuarios ON usuarios.id_usuario = bitacora.usuario_id
                 INNER JOIN modulos ON modulos.id_modulo = bitacora.modulo_id
+                INNER JOIN roles ON roles.id_rol = usuarios.rol_id
                 ORDER BY bitacora.fecha_hora DESC
                 LIMIT 6 OFFSET 1";
 
@@ -193,7 +198,7 @@ class Bitacora extends Conexion
                     $fila['descripcion'] = "Salió del sistema de forma segura.";
                     $fila['nombre_modulo'] = "Sistema"; 
                 } elseif (strpos($accion_original, 'DESCARGAR') !== false) {
-                    $fila['accion'] = 'Consultó';
+                    $fila['accion'] = 'Descargó';
                     $fila['descripcion'] = "Generó un reporte del sistema.";
                 }
                 elseif (strpos($accion_original, 'RESPALDAR') !== false) {
@@ -207,10 +212,6 @@ class Bitacora extends Conexion
                     $fila['accion'] = ucfirst(strtolower(rtrim($accion_original, 'R')));
                     $fila['descripcion'] = "Realizó una acción.";
                 }
-
-                // Eliminamos las columnas JSON pesadas de la respuesta
-                unset($fila['valores_anteriores']);
-                unset($fila['valores_nuevos']);
             }
 
             return ['estatus' => true, 'datos' => $datos];

@@ -44,8 +44,8 @@
                                         <div class="skeleton skeleton-text short mb-0" style="height: 24px; margin: 0 auto;"></div>
                                     </h4>
                                     
-                                    <div class="mb-4">
-                                        <span id="spam_rol">
+                                    <div class="mb-4" id="rol_container">
+                                        <span>
                                             <div class="skeleton skeleton-text mt-2" style="width: 40%; margin: 0 auto;"></div>
                                         </span>
                                     </div>

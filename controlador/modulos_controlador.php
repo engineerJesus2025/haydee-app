@@ -1,5 +1,5 @@
 <?php
-use haydee\ayuda\Sesiones;
+use haydee\servicios\Sesiones;
 use haydee\modelo\Modulos;
 use haydee\modelo\Bitacora;
 use haydee\ayuda\Validador;
@@ -86,4 +86,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_MODULOS);
 }
 $permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_MODULOS);
+$btn_nuevo = [
+    'target'  => '#modal_modulo',
+    'texto'   => 'Nuevo Módulo',
+    'tooltip' => 'Registrar Nuevo Módulo'
+];
+$placeholder_buscar = "Buscar módulo...";
+
 require_once "vista/modulos/modulos_vista.php";

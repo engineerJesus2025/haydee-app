@@ -6,6 +6,13 @@
 	<?php
 		require_once ROOT_PATH . "/vista/componentes/estilos.php";
 	?>
+  <style>
+  @media (min-width: 992px) {
+    .border-end-lg {
+        border-right: 1px solid #dee2e6 !important;
+    }
+  }
+  </style>
 </head>
 
 <body id="body-pd" class="body-pd">  
@@ -24,65 +31,87 @@
 					</div>
 					<p class="lead"></p>
 					<hr>
-					<div class="row mb-3 align-items-center justify-content-start">
-					  <div class="col-md-5 mt-2">
-					    <div class="card p-4">
-                <h5 class="mb-4">Seleccione el mes para evaluar:</h5>
-					    	<div class="col-md-12">
-						      <div class="input-group">
-						        <span class="input-group-text" id="basic-addon1"><i class="bi bi-calendar2-date"></i></span>
-  						        <select class="form-select " aria-label="Default select example" name="mes_seleccionado" id="mes_select">
-                        <option>Cargando registros...<option>
-  						        </select>
-                    <span class="w-100 invalid-feedback"></span>
-						      </div>
-						    </div>
-						    <span id="span_fondo_fijo" class="text-muted mb-2 mt-1">
-                  <div class="placeholder-glow m-0">
-                    <span class="placeholder placeholder-lg w-100 rounded m-0"></span>
-                  </div>      
-                </span>
-                <span id="span_caja_activa">
-                  <div class="placeholder-glow m-0">
-                    <span class="placeholder placeholder-lg w-100 rounded m-0"></span>
-                  </div>
-                </span>
-                <div id="botones_movimientos" class="mt-3" hidden>
-                  <?php if ($permisosVista['registrar']) : ?>
-                  <button class="btn btn-primary m-1" id="boton_registrar_gasto" data-bs-toggle="modal" data-bs-target="#modal_registro_gastos" data-tooltip="true" title="Registrar Nuevo Gasto de Caja">Nuevo Gasto</button>
-                  <button class="btn btn-secondary m-1" id="boton_reponer_caja" data-bs-toggle="modal" data-bs-target="#modal_reponer_caja" data-tooltip="true" title="Reponer Saldo de Caja">Reponer Caja</button>
-                  <?php endif; ?>
+					<div class="row mb-4">
+            <div class="col-12 mt-2">
+              <div class="card p-0 overflow-hidden shadow-sm border-0">
+                <div class="bg-light border-bottom px-4 py-3 d-flex justify-content-between align-items-center">
+                  <h5 class="mb-0 text-secondary fw-bold">
+                      <i class="bi bi-calendar2-date text-primary me-2"></i> Período de Evaluación
+                  </h5>
+                  <span id="span_caja_activa" class="badge rounded-pill bg-secondary fs-6 px-3 py-2">
+                      Cargando estado...
+                  </span>
                 </div>
-					    </div>
-					  </div>            
-					</div>
-					<div class="row mb-3 justify-content-center">
-            <div class="col-12">
-              <div class="card p-4 pt-3">
-                
-                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2 row">
-                  <h5 class="text-muted mb-0 col-md-5"><i class="bi bi-list-check me-2"></i>Historial de Movimientos</h5>
-                  <div class="col-md-6">
-                    <?php require_once ROOT_PATH . "/vista/componentes/buscador_global.php"; ?>
-                  </div>
-                </div>
-                <div id="tabla_registros_sistema" class="tabla-sistema-haydee"></div>
-              
-              </div>
-            </div>
-            
-            <div class="col-7 row p-3 card my-3" hidden>
-              <h4 class="h4 col">Descripción de caja:</h4>              
-              <div class="col-12">
-                <p id="descripciones"></p>
-              </div>
-              <div class="col">
-                <button id="boton_modificar_observacion" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_descripciones">modificar</button>
-              </div>
+                <div class="card-body p-4">
+                  <div class="row g-4 align-items-center">
+                    <div class="col-lg-4 border-end-lg pe-lg-4">
+                      <label class="form-label text-muted small text-uppercase fw-bold mb-2">Seleccione el mes</label>
+                      <select class="form-select form-select-lg mb-3 shadow-sm border-primary" aria-label="Selector de mes" name="mes_seleccionado" id="mes_select">
+                          <option>Cargando registros...</option>
+                      </select>
+                      
+                      <div id="botones_movimientos" class="d-flex gap-2" hidden>
+                        <?php 
+                            require ROOT_PATH . "/vista/componentes/boton_nuevo.php"; 
+                        ?>
+                        <?php if ($permisosVista['registrar']) : ?>
+                        <button class="btn btn-outline-secondary" id="boton_reponer_caja" data-bs-toggle="modal" data-bs-target="#modal_reponer_caja" data-tooltip="true" title="Reponer Saldo de Caja">
+                            <i class="bi bi-arrow-repeat me-1"></i> Reponer
+                        </button>
+                        <?php endif; ?>
+                      </div>
+                    </div>
+
+                    <div class="col-lg-4 border-end-lg px-lg-4">
+                      <div class="d-flex flex-column h-100 justify-content-center">
+                          <p class="text-muted small text-uppercase fw-bold mb-1">Fondo Actual de Caja</p>
+                          <h5 id="span_fondo_fijo" class="fw-bolder text-dark mb-0" style="letter-spacing: -0.5px;">
+                              <div class="placeholder-glow m-0"><span class="placeholder col-6 rounded"></span></div>
+                          </h5>
+                      </div>
+                    </div>
+
+                    <div class="col-lg-4 ps-lg-4" id="contenedor_tarjeta_nota" hidden>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                          <p class="text-muted small text-uppercase fw-bold mb-0">
+                              <i class="bi bi-sticky text-warning me-1"></i> Observaciones
+                          </p>
+                          <button class="btn btn-sm btn-light text-primary rounded-circle p-1 lh-1" id="btn_activar_edicion" title="Editar nota" data-tooltip="true">
+                              <i class="bi bi-pencil-square"></i>
+                          </button>
+                        </div>
+                        
+                        <div id="modo_lectura_nota" class="p-3 bg-light rounded-3 border h-100">
+                          <p id="descripciones" class="text-dark small mb-0" style="white-space: pre-wrap; font-size: 0.85rem;"></p>
+                        </div>
+
+                        <div id="modo_edicion_nota" class="d-none d-flex flex-column h-100">
+                          <textarea id="descripcion_input_inline" class="form-control form-control-sm mb-2 border-primary shadow-sm" rows="3" placeholder="Escribe una observación para este mes..." style="font-size: 0.85rem;"></textarea>
+                          <span class="w-100 invalid-feedback"></span>
+                          <div class="d-flex justify-content-end gap-2 mt-auto">
+                            <button class="btn btn-sm btn-light border" id="btn_cancelar_edicion">Cancelar</button>
+                            <button class="btn btn-sm btn-primary" id="btn_guardar_edicion">Guardar</button>
+                          </div>
+                        </div>
+                    </div>
+                  </div> 
+                </div> 
+              </div> 
             </div>
           </div>
-          
-
+        <div class="row mb-3 justify-content-center">
+            <div class="col-12">
+                <div class="card p-4 pt-3">
+                    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2 row">
+                        <h5 class="text-muted mb-0 col-md-5"><i class="bi bi-list-check me-2"></i>Historial de Movimientos</h5>
+                        <div class="col-md-6">
+                            <?php require_once ROOT_PATH . "/vista/componentes/buscador_global.php"; ?>
+                        </div>
+                    </div>
+                    <div id="tabla_registros_sistema" class="tabla-sistema-haydee"></div>
+                </div>
+            </div>
+        </div>
 				</main>
 			</div>
 		</div>

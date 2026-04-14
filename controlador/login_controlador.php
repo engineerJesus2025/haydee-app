@@ -1,7 +1,7 @@
 <?php
 use haydee\ayuda\Recaptcha;
 use haydee\modelo\Usuario;
-use haydee\ayuda\Sesiones;
+use haydee\servicios\Sesiones;
 use haydee\ayuda\Validador;
 use haydee\servicios\Autenticacion;
 use haydee\servicios\Recuperacion;

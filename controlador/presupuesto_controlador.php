@@ -1,5 +1,5 @@
 <?php
-use haydee\ayuda\Sesiones;
+use haydee\servicios\Sesiones;
 use haydee\modelo\Presupuesto;
 use haydee\modelo\TipoGasto;
 use haydee\modelo\Bitacora;
@@ -211,5 +211,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     $tipos_gasto = $tipoGasto->realizar_consulta('consultar');
 }
 $permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_PRESUPUESTO);
+$btn_nuevo = [
+    'target'  => '#modal_presupuesto',
+    'texto'   => 'Nuevo Presupuesto',
+    'tooltip' => 'Registrar Nuevo Presupuesto'
+];
+$placeholder_buscar = "Buscar presupuesto...";
+
 // Cargar vista
 require_once "vista/presupuesto_mensual/presupuesto_vista.php";

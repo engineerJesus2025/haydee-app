@@ -1,5 +1,5 @@
 <?php 
-use haydee\ayuda\Sesiones;
+use haydee\servicios\Sesiones;
 use haydee\modelo\Bitacora;
 
 // Verificaciones de seguridad
@@ -42,6 +42,8 @@ if (isset($_POST["operacion"])) {
         }
     }
 }
+
+$placeholder_buscar = "Buscar registro en bitácora...";
 
 // Si no es una petición POST, cargamos la vista
 require_once "vista/bitacora/bitacora_vista.php";

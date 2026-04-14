@@ -4,7 +4,7 @@
             
             <div class="modal-header bg-primary text-white border-bottom-0">
                 <h5 class="modal-title fw-bold">
-                    <i class="bi bi-person-gear me-2"></i>Detalles del Rol
+                    <i class="bi bi-person-gear me-2" id="vp_icono"></i>Detalles del Rol
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>

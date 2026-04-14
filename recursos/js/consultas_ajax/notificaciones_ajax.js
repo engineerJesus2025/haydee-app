@@ -10,18 +10,40 @@ async function consultar() {
     if (!contenedor) return;
 
     // Formateador visual para destacar las no leídas
+    // Formateador visual para el Título (Capitalizado y con jerarquía visual)
     const formatoTitulo = (cell) => {
         const row = cell.getData();
-        const titulo = cell.getValue();
-        // Agrega un puntito rojo al inicio si no está leída
-        return row.leido == 0 
-            ? `<span class="bg-danger rounded-circle d-inline-block me-2 shadow-sm" style="width: 8px; height: 8px;"></span><strong>${titulo}</strong>` 
-            : `<span class="d-inline-block me-2" style="width: 8px;"></span>${titulo}`; // Espacio en blanco para alinear con las leídas
+        let titulo = cell.getValue() || "";
+        titulo = titulo.charAt(0).toUpperCase() + titulo.slice(1);
+        
+        if (row.leido == 0) {
+            // No leída: Texto oscuro, negrita y un indicador rojo vibrante
+            return `<div class="d-flex align-items-center fw-bold text-dark">
+                        <span class="bg-danger rounded-circle d-inline-block me-3 shadow-sm" style="width: 8px; height: 8px;"></span>
+                        ${titulo}
+                    </div>`;
+        } else {
+            // Leída: Texto atenuado y sin indicador
+            return `<div class="d-flex align-items-center text-muted">
+                        <span class="d-inline-block me-3" style="width: 8px;"></span>
+                        ${titulo}
+                    </div>`;
+        }
     };
 
+    // Formateador para el Estado (Soft Badges)
     const formatoLeido = (cell) => {
         const leido = cell.getValue();
-        return `<span class="${leido == 1 ? 'badge bg-light text-secondary border' : 'badge bg-warning text-dark'}">${leido == 1 ? 'Leída' : 'No leída'}</span>`;
+        if (leido == 1) {
+            return `<span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary px-3 py-2 shadow-sm" style="font-size: 0.9rem;">
+                        <i class="bi bi-check2-all me-1"></i> Leída
+                    </span>`;
+        } else {
+            // Usamos Primary (Azul) para las nuevas, indica "Acción Requerida" sin ser una alerta de error (Rojo)
+            return `<span class="badge bg-primary bg-opacity-10 text-primary border border-primary px-3 py-2 shadow-sm" style="font-size: 0.9rem;">
+                        <i class="bi bi-envelope-exclamation-fill me-1"></i> Nueva
+                    </span>`;
+        }
     };
 
     // Botón para redirigir al módulo origen
@@ -120,24 +142,33 @@ async function consultar() {
         }
     });
 }
-
 function mostrarVistaPrevia(data) {
-    // Título
-    document.getElementById("vp_titulo").textContent = data.titulo || 'Sin Título';
+    // Título (Capitalizado)
+    let titulo = data.titulo || 'Sin Título';
+    document.getElementById("vp_titulo").textContent = titulo.charAt(0).toUpperCase() + titulo.slice(1);
 
-    // Estado (Leído / No Leído con colores)
+    // Estado (Soft Badges inyectados con innerHTML)
     const estadoEl = document.getElementById("vp_estado");
+    // Limpiamos las clases que le asignabas antes para que no choquen con el Soft Badge
+    estadoEl.className = ""; 
+    
     if (data.leido == 1) {
-        estadoEl.textContent = 'Notificación Leída';
-        estadoEl.className = "badge bg-success fs-6 px-3 py-1 mt-2 shadow-sm";
+        estadoEl.innerHTML = `
+            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary px-3 py-2 shadow-sm fs-6 mt-2">
+                <i class="bi bi-check2-all me-1"></i> Notificación Leída
+            </span>`;
     } else {
-        estadoEl.textContent = 'Nueva (No Leída)';
-        estadoEl.className = "badge bg-danger fs-6 px-3 py-1 mt-2 shadow-sm";
+        estadoEl.innerHTML = `
+            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary px-3 py-2 shadow-sm fs-6 mt-2">
+                <i class="bi bi-envelope-exclamation-fill me-1"></i> Nueva (No Leída)
+            </span>`;
     }
 
-    // Tipo de Evento (Normalizamos reemplazando guiones bajos)
+    // Tipo de Evento (Normalizamos y le damos un toque visual)
     const tipoEvento = data.tipo_evento ? data.tipo_evento.replace(/_/g, ' ') : 'General';
-    document.getElementById("vp_tipo_evento").textContent = tipoEvento;
+    // Capitalizar cada palabra para que "saldo bajo" se vea "Saldo Bajo"
+    const tipoCapitalizado = tipoEvento.replace(/\b\w/g, l => l.toUpperCase());
+    document.getElementById("vp_tipo_evento").textContent = tipoCapitalizado;
 
     // Fecha
     if (window.FormatoFechas && typeof FormatoFechas.formatoUsuario === "function") {
@@ -150,7 +181,6 @@ function mostrarVistaPrevia(data) {
     document.getElementById("vp_descripcion").textContent = data.descripcion || 'Sin descripción detallada.';
 
     // Mostrar el Modal
-    // Aseguramos que la instancia del modal exista
     let modalDetalles = bootstrap.Modal.getInstance(document.getElementById("modal_detalles"));
     if (!modalDetalles) {
         modalDetalles = new bootstrap.Modal(document.getElementById("modal_detalles"), { focus: false });

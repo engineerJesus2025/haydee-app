@@ -1,5 +1,5 @@
 <?php
-use haydee\ayuda\Sesiones;
+use haydee\servicios\Sesiones;
 use haydee\modelo\CajaChica;
 use haydee\modelo\Bitacora;
 use haydee\ayuda\Validador;
@@ -201,5 +201,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_CAJA_CHICA);
 }
 $permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_CAJA_CHICA);
+$btn_nuevo = [
+    'target'  => '#modal_registro_gastos',
+    'texto'   => 'Nuevo Gasto',
+    'tooltip' => 'Registrar Nuevo Gasto de Caja'
+];
+$placeholder_buscar = "Buscar movimiento...";
+
 require_once "vista/caja_chica/caja_chica_vista.php";
 ?>

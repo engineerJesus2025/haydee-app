@@ -1,8 +1,3 @@
-/**
- * Script AJAX para la gestión de Usuarios
- * Dependencias: Peticiones.js, Alertas.js, Tablas.js, EstadoInputs.js
- */
-
 let id_modificar, correo_an;
 
 const permisoModificar = window.PermisosModulo?.modificar || false;
@@ -84,17 +79,29 @@ async function consultar() {
     const contenedorTabla = document.querySelector(".tabla-sistema-haydee");
     if (!contenedorTabla) return;
 
+    const formatoNombre = (cell) => {
+        let nombre = cell.getValue() || "";
+        nombre = nombre.charAt(0).toUpperCase() + nombre.slice(1).toLowerCase();
+        return `<div class="d-flex align-items-center fw-bold text-dark">
+                    <i class="bi bi-person-circle text-primary me-2 fs-5"></i> ${nombre}
+                </div>`;
+    };
+
+    // Formato Apellido (Solo capitalizado)
+    const formatoApellido = (cell) => {
+        let apellido = cell.getValue() || "";
+        return apellido.charAt(0).toUpperCase() + apellido.slice(1).toLowerCase();
+    };
+
+    // Formato Rol (Soft Badges + Íconos)
     const formatoRol = (cell) => {
-        const rol = cell.getValue();
-        const colores = {
-            'Administrador Global': "badge bg-warning text-dark",
-            'Administrador': "badge bg-primary",
-            'Propietario': "badge bg-success",
-            'Contador': "badge bg-danger",
-            'Presidente': "badge bg-info text-dark"
-        };
-        const claseBadge = colores[rol] || "badge bg-secondary";
-        return `<span class="${claseBadge}">${rol}</span>`;
+        const rol = cell.getValue() || "Desconocido";
+
+        const [icono,color,claseTextoBorder,claseIcono] = obtenerIconoRol(rol);
+
+        return `<span class="badge bg-${color} bg-opacity-10 ${claseTextoBorder} px-3 py-2 shadow-sm" style="font-size: .85rem;">
+                    <i class="bi bi-${icono} ${claseIcono} me-1"></i> ${rol}
+                </span>`;
     };
     
     const formatoBotones = (cell) => {
@@ -122,9 +129,9 @@ async function consultar() {
 
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
-        { title: "Nombre", field: "nombre", minWidth: 120, responsive: 0 },
-        { title: "Apellido", field: "apellido", minWidth: 120 },
-        { title: "Rol", field: "nombre_rol", formatter: formatoRol, vertAlign: "middle", minWidth: 150 },      
+        { title: "Nombre", field: "nombre", formatter: formatoNombre, minWidth: 150, responsive: 0 },
+        { title: "Apellido", field: "apellido", formatter: formatoApellido, minWidth: 130 },
+        { title: "Rol", field: "nombre_rol", formatter: formatoRol, vertAlign: "middle", minWidth: 200 },      
         { 
             title: "Acciones", 
             formatter: formatoBotones, 
@@ -154,31 +161,45 @@ async function consultar() {
 
 // Función que lee la memoria de Tabulator (Sin AJAX extra)
 function mostrarVistaPrevia(data) {
-    // 1. Nombre Completo
-    const nombreCompleto = `${data.nombre} ${data.apellido}`;
-    document.getElementById("vp_nombre_completo").textContent = nombreCompleto;
+    // Nombre Completo (Capitalizado)
+    let nombre = data.nombre ? data.nombre.charAt(0).toUpperCase() + data.nombre.slice(1).toLowerCase() : "";
+    let apellido = data.apellido ? data.apellido.charAt(0).toUpperCase() + data.apellido.slice(1).toLowerCase() : "";
+    
+    document.getElementById("vp_nombre_completo").textContent = `${nombre} ${apellido}`;
 
-    // 2. Avatar (Extraemos la primera letra del nombre)
-    const inicial = data.nombre ? data.nombre.charAt(0).toUpperCase() : 'U';
-    document.getElementById("vp_avatar_inicial").textContent = inicial;
+    // 2. Avatar (Extraemos la primera letra del nombre ya capitalizada)
+    document.getElementById("vp_avatar_inicial").textContent = nombre ? nombre.charAt(0) : 'U';
 
-    // 3. Correo
+    // Correo
     document.getElementById("vp_correo").textContent = data.correo || 'No registrado';
 
-    // 4. Rol (Reutilizamos la asignación de colores de tu tabla)
+    // Rol (Inyectamos el mismo Soft Badge de la tabla)
     const rolEl = document.getElementById("vp_rol_badge");
-    rolEl.textContent = data.nombre_rol;
-
-    const colores = {
-        'Administrador Global': "badge bg-warning text-dark fs-6 px-3 py-2 shadow-sm",
-        'Administrador': "badge bg-primary fs-6 px-3 py-2 shadow-sm",
-        'Propietario': "badge bg-success fs-6 px-3 py-2 shadow-sm",
-        'Contador': "badge bg-danger fs-6 px-3 py-2 shadow-sm",
-        'Presidente': "badge bg-info text-dark fs-6 px-3 py-2 shadow-sm"
-    };
+    const rol = data.nombre_rol || "Desconocido";
     
-    // Asignamos la clase correspondiente o un color gris por defecto
-    rolEl.className = colores[data.nombre_rol] || "badge bg-secondary fs-6 px-3 py-2 shadow-sm";
+    let color = "secondary";
+    let icono = "bi-person-badge";
+
+    if (rol === 'Administrador Global') {
+        color = "warning text-dark border-warning"; 
+        icono = "bi-shield-lock-fill text-warning";
+    } else if (rol === 'Administrador') {
+        color = "primary"; icono = "bi-shield-check";
+    } else if (rol === 'Propietario') {
+        color = "success"; icono = "bi-house-door-fill";
+    } else if (rol === 'Contador') {
+        color = "info"; icono = "bi-calculator-fill";
+    }
+
+    let claseTextoBorder = rol === 'Administrador Global' ? "text-dark border border-warning" : `text-${color} border border-${color}`;
+    let claseIcono = rol === 'Administrador Global' ? "text-warning" : "";
+
+    // Como estamos inyectando HTML, le quitamos cualquier clase previa que tuviera el <span> en tu PHP
+    rolEl.className = ""; 
+    rolEl.innerHTML = `
+        <span class="badge bg-${color} bg-opacity-10 ${claseTextoBorder} px-3 py-2 shadow-sm" style="font-size: 0.9rem;">
+            <i class="bi ${icono} ${claseIcono} me-1"></i> ${rol}
+        </span>`;
 
     // Mostramos el modal
     modalDetalles.show();
@@ -277,6 +298,54 @@ async function eliminar(id) {
     Validador.procesarRespuesta(respuesta, () => {
         tabla_usuarios.replaceData();
     });
+}
+
+function obtenerIconoRol(nombre){
+    let icono = "person-badge";
+    let colorIcono = "secondary";
+
+    switch (nombre.toUpperCase()) {
+        case 'ADMINISTRADOR GLOBAL': 
+            icono = 'shield-lock-fill'; 
+            colorIcono = "warning text-dark border-warning";
+            break;
+        case 'ADMINISTRADOR': 
+            icono = 'shield-check';
+            colorIcono = "primary";
+            break;
+        case 'PROPIETARIO': 
+            icono = 'house-door-fill';
+            colorIcono = "success";
+            break;
+        case 'CONTADOR':  
+            icono = 'calculator-fill';
+            colorIcono = "danger";
+            break;
+        case 'PRESIDENTE':  
+            icono = 'person-workspace';
+            colorIcono = "info text-dark";
+            break;
+    }
+
+    // Si es el warning (Global) necesitamos ajustar el color del texto para que no sea amarillo sobre blanco
+    let claseTextoBorder = nombre.toUpperCase() === 'ADMINISTRADOR GLOBAL' ? "text-dark border border-warning" : `text-${colorIcono} border border-${colorIcono}`;
+    let claseIcono = nombre.toUpperCase() === 'ADMINISTRADOR GLOBAL' ? "text-warning" : "";
+
+    return [icono,colorIcono,claseTextoBorder,claseIcono];
+
+        if (rol === 'Administrador Global') {
+            color = "warning text-dark border-warning"; 
+            icono = "bi-shield-lock-fill text-warning";
+        } else if (rol === 'Administrador') {
+            color = "primary"; 
+            icono = "bi-shield-check";
+        } else if (rol === 'Propietario') {
+            color = "success"; 
+            icono = "bi-house-door-fill";
+        } else if (rol === 'Contador') {
+            color = "info"; 
+            icono = "bi-calculator-fill";
+        }         
 }
 
 // ============================================================

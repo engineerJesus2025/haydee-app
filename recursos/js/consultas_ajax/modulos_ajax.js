@@ -48,11 +48,15 @@ async function consultar() {
     };
 
     const formatoNombre = (cell) =>{
-        const nombre = cell.getData().nombre; 
-        let titulo_modulo = nombre.replace(/_/g, ' ').toLowerCase();
-        let titulo_capitalizado = titulo_modulo.split(' ').map(palabra => palabra[0].toUpperCase() + palabra.slice(1)).join(' ');
+        let valor = cell.getValue() || "";
+        // Limpieza: GESTIONAR_USUARIOS -> Gestionar Usuarios
+        const nombreLimpio = valor.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+        const icono = obtenerIconoModulo(valor);
 
-        return titulo_capitalizado;
+        return `<div class="d-flex align-items-center text-dark">
+                    <i class="bi bi-${icono} text-primary me-2 opacity-75"></i> 
+                    <span class="fw-semibold">${nombreLimpio}</span>
+                </div>`;
     }
 
     const columnas = [
@@ -101,7 +105,9 @@ function mostrarVistaPrevia(data) {
     let titulo_modulo = nombre.replace(/_/g, ' ').toLowerCase();
     let titulo_capitalizado = titulo_modulo.split(' ').map(palabra => palabra[0].toUpperCase() + palabra.slice(1)).join(' ');
 
-    document.getElementById("vp_icono").className = "bi bi-box-seam";
+    const icono = obtenerIconoModulo(nombre);
+
+    document.getElementById("vp_icono").className = `bi bi-${icono} me-2`;
     document.getElementById("vp_titulo").textContent = " Módulo";
     document.getElementById("vp_etiqueta").textContent = "Nombre Técnico";
     document.getElementById("vp_valor").textContent = titulo_capitalizado || 'N/A';
@@ -193,6 +199,34 @@ function resetModal() {
     document.getElementById('id_modulo').value = '';
 }
 
+function obtenerIconoModulo(nombre){
+    let icono = "box";
+    switch (nombre.toUpperCase()) {
+       case 'GESTIONAR_PAGOS':             icono = 'cash-coin'; break;
+       case 'GESTIONAR_GASTOS':            icono = 'receipt'; break;
+       case 'GESTIONAR_MENSUALIDAD':       icono = 'calendar-check'; break;
+       case 'GESTIONAR_CAJA_CHICA':        icono = 'piggy-bank'; break;
+       case 'GESTIONAR_CARTELERA_VIRTUAL': icono = 'megaphone'; break;
+       case 'GESTIONAR_APARTAMENTOS':      icono = 'building'; break;
+       case 'GESTIONAR_SOLICITUD_GASTO':   icono = 'file-earmark-text'; break;
+       case 'GESTIONAR_PRESUPUESTO':       icono = 'calculator'; break;
+       case 'GESTIONAR_ANIO_FISCAL':       icono = 'calendar3'; break;
+       case 'GESTIONAR_CONFIGURACION':     icono = 'gear'; break;
+       case 'GESTIONAR_PROVEEDORES':       icono = 'truck'; break; // o shop
+       case 'GESTIONAR_BANCOS':            icono = 'bank'; break;
+       case 'GESTIONAR_TIPO_GASTO':        icono = 'tags'; break;
+       case 'GESTIONAR_USUARIOS':          icono = 'people'; break;
+       case 'GESTIONAR_REPORTES':          icono = 'bar-chart-line'; break;
+       case 'GESTIONAR_SEGURIDAD':         icono = 'shield-lock'; break;
+       case 'GESTIONAR_ROLES':             icono = 'person-badge'; break;
+       case 'GESTIONAR_BITACORA':          icono = 'journal-text'; break;
+       case 'GESTIONAR_MANTENIMIENTO':     icono = 'tools'; break;
+       case 'GESTIONAR_HABITANTES':        icono = 'person-vcard'; break;
+       case 'GESTIONAR_PERMISOS':          icono = 'key'; break;
+       case 'GESTIONAR_MODULOS':           icono = 'grid-1x2'; break;
+    }
+    return icono;
+}
 
 // ============================================================
 // MÓDULO DE AYUDA INTERACTIVA

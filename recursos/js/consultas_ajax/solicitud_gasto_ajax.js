@@ -23,16 +23,28 @@ document.addEventListener('DOMContentLoaded', () => {
 // ============================================
 // CONSULTA Y DATATABLE
 // ============================================
+// ============================================
+// CONSULTA Y DATATABLE
+// ============================================
 async function consultar() {
     const contenedor = document.querySelector(".tabla-sistema-haydee");
     if (!contenedor) return;
 
-    const formatoMonto = (cell) => `Bs. ${parseFloat(cell.getValue()).toFixed(2)}`;
+    const formatoMonto = (cell) => `<span class="fw-semibold">Bs. ${parseFloat(cell.getValue()).toFixed(2)}</span>`;
+    
+    // Formato para el Estado con Íconos
+    const formatoEstado = (cell) => {
+        const config = obtenerConfigEstadoSolicitud(cell.getValue());
+        return `<span class="badge bg-${config.color} bg-opacity-10 ${config.claseTextoBorder} px-3 py-2 shadow-sm text-nowrap" style="font-size: .85rem;">
+                    <i class="bi ${config.icono} me-1"></i> ${config.texto}
+                </span>`;
+    };
+
     const formatoPrioridad = (cell) => {
-        const p = cell.getValue();
-        const mapa = { "1": { texto: "Alta", color: "success" }, "2": { texto: "Media", color: "warning" }, "3": { texto: "Baja", color: "danger" } };
-        const conf = mapa[p] || { texto: "Desconocida", color: "secondary" };
-        return `<span class="badge bg-${conf.color}">${conf.texto}</span>`;
+        const config = obtenerConfigPrioridadSolicitud(cell.getValue());
+        return `<span class="badge bg-${config.color} bg-opacity-10 ${config.claseTextoBorder} px-3 py-2 shadow-sm text-nowrap" style="font-size: .85rem;">
+                    <i class="bi ${config.icono} me-1"></i> ${config.texto}
+                </span>`;
     };
 
     const formatoBotones = (cell) => {
@@ -60,7 +72,7 @@ async function consultar() {
 
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
-        { title: "Estado", field: "estado", minWidth: 130, responsive: 0 },
+        { title: "Estado", field: "estado", formatter: formatoEstado, minWidth: 140, responsive: 0 },
         { title: "Prioridad", field: "prioridad", formatter: formatoPrioridad, minWidth: 140, headerHozAlign: "center", hozAlign: "center" },
         { title: "Monto", field: "monto_estimado", formatter: formatoMonto, minWidth: 130 },
         {
@@ -92,40 +104,43 @@ async function consultar() {
 
 // Función que lee la memoria de Tabulator (Sin AJAX extra)
 function mostrarVistaPrevia(data) {
-    // 1. Cálculos de Monto (Usando tu variable global tasa_dolar)
+    // Cálculos de Monto (Usando variable global tasa_dolar)
     let montoBs = parseFloat(data.monto_estimado);
     let montoUsd = montoBs / tasa_dolar;
     
-    document.getElementById("vp_monto_bs").textContent = `${montoBs.toFixed(2)} Bs.`;
+    const tituloMonto = document.getElementById("vp_monto_bs"); // Seleccionamos el título del monto
+
+    tituloMonto.textContent = `${montoBs.toFixed(2)} Bs.`;
     document.getElementById("vp_monto_usd").textContent = `Ref: ${montoUsd.toFixed(2)} $`;
 
-    // 2. Solicitante
+    // Solicitante
     document.getElementById("vp_solicitante").textContent = data.nombre_solicitante || 'N/A';
 
-    // 3. Estado (Colores dinámicos)
     const estadoEl = document.getElementById("vp_estado");
-    estadoEl.textContent = data.estado;
-    if (data.estado === 'Aprobada') {
-        estadoEl.className = "fw-bold text-end text-success";
-    } else if (data.estado === 'Rechazada') {
-        estadoEl.className = "fw-bold text-end text-danger";
-    } else {
-        estadoEl.className = "fw-bold text-end text-warning text-dark"; // Pendiente
-    }
-
-    // 4. Prioridad (Mapeo de números a textos y colores)
-    const prioEl = document.getElementById("vp_prioridad");
-    const mapaPrio = { 
-        "1": { text: "Alta", color: "text-danger" }, 
-        "2": { text: "Media", color: "text-warning text-dark" }, 
-        "3": { text: "Baja", color: "text-success" } 
-    };
-    const confPrio = mapaPrio[data.prioridad] || { text: "Desconocida", color: "text-secondary" };
     
-    prioEl.textContent = confPrio.text;
-    prioEl.className = `fw-bold text-end ${confPrio.color}`;
+    // Limpiamos colores previos por si el usuario abre varios modales seguidos
+    tituloMonto.classList.remove('text-success', 'text-danger', 'text-primary');
 
-    // 5. Fecha (Mismo formato estándar)
+    // Estado
+    const configEstado = obtenerConfigEstadoSolicitud(data.estado);
+    estadoEl.className = "text-end"; // Solo mantenemos la alineación
+    estadoEl.innerHTML = `
+        <span class="badge bg-${configEstado.color} bg-opacity-10 ${configEstado.claseTextoBorder} fs-6 px-3 py-2 shadow-sm text-nowrap">
+            <i class="bi ${configEstado.icono} me-1"></i> ${configEstado.texto}
+        </span>
+    `;
+
+    // Prioridad
+    const configPrioridad = obtenerConfigPrioridadSolicitud(data.prioridad);
+    const prioEl = document.getElementById("vp_prioridad");
+    prioEl.className = "text-end"; // Solo mantenemos la alineación
+    prioEl.innerHTML = `
+        <span class="badge bg-${configPrioridad.color} bg-opacity-10 ${configPrioridad.claseTextoBorder} fs-6 px-3 py-2 shadow-sm text-nowrap">
+            <i class="bi ${configPrioridad.icono} me-1"></i> ${configPrioridad.texto}
+        </span>
+    `;
+
+    // Fecha (Mismo formato estándar)
     // Asumiendo que FormatoFechas está disponible globalmente como en otros módulos
     if (window.FormatoFechas && typeof FormatoFechas.formatoUsuario === "function") {
         document.getElementById("vp_fecha").textContent = FormatoFechas.formatoUsuario(data.fecha_reporte);
@@ -298,6 +313,59 @@ async function consultarPresupuestoDisponible(presupuestoId) {
     datos.append('presupuesto_id', presupuestoId);
     const respuesta = await Peticiones.enviar(datos);
     return respuesta?.estatus ? parseFloat(respuesta.disponible) : null;
+}
+
+/**
+ * Procesa el estado de la solicitud y devuelve su configuración visual
+ */
+function obtenerConfigEstadoSolicitud(estado) {
+    let est = estado || "Pendiente";
+    let color = "warning";
+    let icono = "bi-clock-history";
+    let claseTextoBorder = "text-dark border border-warning";
+
+    if (est === "Aprobada") {
+        color = "success";
+        icono = "bi-check-circle-fill";
+        claseTextoBorder = "text-success border border-success";
+    } else if (est === "Rechazada") {
+        color = "danger";
+        icono = "bi-x-circle-fill";
+        claseTextoBorder = "text-danger border border-danger";
+    }
+
+    return { color, claseTextoBorder, icono, texto: est };
+}
+
+/**
+ * Procesa la prioridad de la solicitud y devuelve su configuración visual
+ */
+function obtenerConfigPrioridadSolicitud(prioridad) {
+    let p = String(prioridad).toLowerCase();
+    let color = "secondary";
+    let icono = "bi-bookmark";
+    let texto = "Desconocida";
+    let claseTextoBorder = "text-secondary border border-secondary";
+
+    // Validamos por número o por texto por seguridad
+    if (p === "1" || p === "alta") {
+        color = "danger";
+        icono = "bi-arrow-up-circle-fill";
+        texto = "Alta";
+        claseTextoBorder = "text-danger border border-danger";
+    } else if (p === "2" || p === "media") {
+        color = "warning";
+        icono = "bi-dash-circle-fill";
+        texto = "Media";
+        claseTextoBorder = "text-dark border border-warning";
+    } else if (p === "3" || p === "baja") {
+        color = "info";
+        icono = "bi-arrow-down-circle-fill";
+        texto = "Baja";
+        claseTextoBorder = "text-info border border-info";
+    }
+
+    return { color, claseTextoBorder, icono, texto };
 }
 
 // ============================================

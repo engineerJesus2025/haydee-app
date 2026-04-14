@@ -13,7 +13,7 @@
                 <div class="bg-light p-4 text-center border-bottom">
                     <span class="text-muted text-uppercase fw-bold" style="font-size: 0.75rem; letter-spacing: 1px;">Nombre / Razón Social</span>
                     <h4 id="vp_nombre_proveedor" class="text-primary mt-2 mb-1 fw-bold text-wrap" style="word-break: break-word;">---</h4>
-                    <span id="vp_rif" class="badge bg-secondary fs-6 px-3 py-1 mt-2 shadow-sm">---</span>
+                    <span id="vp_rif" class="badge bg-primary fs-6 px-3 py-1 mt-2 shadow-sm">---</span>
                 </div>
 
                 <div class="p-4">

@@ -3,7 +3,6 @@ namespace haydee\modelo;
 
 use PDO;
 use PDOException;
-use haydee\servicios\GestorNotificaciones;
 
 class Mensualidad extends Conexion
 {
@@ -336,15 +335,7 @@ class Mensualidad extends Conexion
 
             $con->commit();
 
-            GestorNotificaciones::notificarTodos(
-                "Nueva mensualidad disponible",
-                "Se han generado las mensualidades para el mes {$this->mes} del año {$this->anio}.",
-                'mensualidad',
-                $id_mensualidad,
-                'NUEVA_MENSUALIDAD'
-            );
-
-            return ['estatus' => true, 'mensaje' => 'Todas las mensualidades se registraron correctamente.'];
+            return ['estatus' => true, 'mensaje' => 'Todas las mensualidades se registraron correctamente.','lastId' => $id_mensualidad];
         } catch (Exception $e) {
             $con->rollBack();
             error_log("Error en _registrar: " . $e->getMessage());
@@ -431,9 +422,8 @@ class Mensualidad extends Conexion
     // SE USA EN EL MODULO
     private function _eliminar()
     {
-        $sql = "UPDATE mensualidad m
-                INNER JOIN periodos_mensualidad pm ON m.periodo_id = pm.id_periodo
-                SET m.activo = 0 
+        $sql = "UPDATE periodos_mensualidad pm 
+                SET pm.activo = 0 
                 WHERE pm.mes = :mes AND pm.anio = :anio";
         try {
             $stmt = $this->get_conex('negocio')->prepare($sql);

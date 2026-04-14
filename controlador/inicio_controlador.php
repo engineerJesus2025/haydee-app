@@ -1,5 +1,5 @@
 <?php
-use haydee\ayuda\Sesiones;
+use haydee\servicios\Sesiones;
 use haydee\modelo\Mensualidad;
 use haydee\modelo\CarteleraVirtual;
 use haydee\modelo\Apartamento;

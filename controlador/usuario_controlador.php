@@ -1,5 +1,5 @@
 <?php
-use haydee\ayuda\Sesiones;
+use haydee\servicios\Sesiones;
 use haydee\modelo\Rol;
 use haydee\modelo\Usuario;
 use haydee\modelo\Bitacora;
@@ -193,4 +193,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_USUARIOS);
 }
 $permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_USUARIOS);
+$btn_nuevo = [
+    'target'  => '#modal_usuario',
+    'texto'   => 'Nuevo Usuario',
+    'tooltip' => 'Registrar Nuevo Usuario'
+];
+$placeholder_buscar = "Buscar usuario...";
+
 require_once "vista/usuarios/usuario_vista.php";

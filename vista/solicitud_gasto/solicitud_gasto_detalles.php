@@ -12,7 +12,7 @@
             <div class="modal-body p-0">
                 <div class="bg-light p-4 text-center border-bottom">
                     <span class="text-muted text-uppercase fw-bold" style="font-size: 0.75rem; letter-spacing: 1px;">Monto Solicitado</span>
-                    <h3 id="vp_monto_bs" class="text-primary mt-2 mb-0 fw-bold" style="letter-spacing: 1px;">---</h3>
+                    <h3 id="vp_monto_bs" class="mt-2 mb-0 fw-bold" style="letter-spacing: 1px;">---</h3>
                     <span id="vp_monto_usd" class="text-muted fw-semibold" style="font-size: 0.9rem;">---</span>
                 </div>
 
@@ -51,14 +51,15 @@
                             <span id="vp_fecha" class="fw-bold text-dark text-end">---</span>
                         </li>
                         
-                        <li class="list-group-item d-flex flex-column justify-content-center px-0 py-3 border-bottom-0">
-                            <div class="d-flex align-items-center text-muted mb-2">
+                        <li class="list-group-item px-0 py-3 border-bottom-0 bg-transparent">
+                            <div class="d-flex align-items-center text-muted mb-3">
                                 <i class="bi bi-card-text fs-5 me-3 text-primary"></i>
                                 <span class="fw-semibold">Justificación de la Necesidad</span>
                             </div>
-                            <span id="vp_descripcion" class="fw-bold text-dark text-wrap ms-4 ps-3 border-start border-3 border-primary">---</span>
+                            <div class="ms-4 p-3 bg-white border-start border-4 border-primary rounded shadow-sm">
+                                <span id="vp_descripcion" class="text-dark" style="font-size: 0.95rem; white-space: pre-wrap; line-height: 1.6;">---</span>
+                            </div>
                         </li>
-                        
                     </ul>
                 </div>
             </div>

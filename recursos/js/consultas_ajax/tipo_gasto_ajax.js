@@ -68,11 +68,23 @@ async function consultar() {
         return html;
     };
 
+    // Formateador para el Tipo de Gasto con detección de palabras clave
+    const formatoTipoGasto = (cell) => {
+        let nombre = cell.getValue() || "";
+        let nombreMinuscula = nombre.toLowerCase();
+        
+        const icono = obtenerIconoTipoGasto(nombre);
+
+        return `<div class="d-flex align-items-center text-dark">
+                    <i class="bi bi-${icono} text-primary me-3 opacity-75 fs-5"></i> 
+                    <span class="fw-semibold">${nombre}</span>
+                </div>`;
+    };
+
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center" },
         
-        // --- CAMBIAR ESTOS FIELDS SEGÚN EL MÓDULO ---
-        { title: "Tipo de Gasto", field: "nombre_tipo_gasto", minWidth: 150, responsive: 0 },
+        { title: "Tipo de Gasto", field: "nombre_tipo_gasto", formatter: formatoTipoGasto, minWidth: 250, responsive: 0, widthGrow: 2 },
         // ---------------------------------------------
 
         {
@@ -108,10 +120,13 @@ async function consultar() {
 
 // Función que lee la memoria de Tabulator (Sin AJAX extra)
 function mostrarVistaPrevia(data) {
-    document.getElementById("vp_icono").className = "bi bi-tags";
+    nombre = data.nombre_tipo_gasto;
+    const icono = obtenerIconoTipoGasto(nombre);
+
+    document.getElementById("vp_icono").className = `bi bi-${icono} me-2`;
     document.getElementById("vp_titulo").textContent = "Tipo de Gasto";
     document.getElementById("vp_etiqueta").textContent = "Nombre de la Categoría";
-    document.getElementById("vp_valor").textContent = data.nombre_tipo_gasto || 'N/A';
+    document.getElementById("vp_valor").textContent = nombre || 'N/A';
     
     modalDetalles.show();
 }
@@ -190,6 +205,28 @@ async function eliminar(id) {
 	Validador.procesarRespuesta(respuesta, () => {
         tabla_tipo_gasto.replaceData();
     });
+}
+
+function obtenerIconoTipoGasto(nombre){
+    let icono = "tag";
+
+    nombreMinuscula = nombre.toLowerCase();
+
+    // Asignación inteligente basada en palabras clave
+    if (nombreMinuscula.includes("caja chica")) {
+        icono = "box-seam";
+    } else if (nombreMinuscula.includes("servicio") || nombreMinuscula.includes("gas") || nombreMinuscula.includes("agua") || nombreMinuscula.includes("electricidad")) {
+        icono = "lightning-charge";
+    } else if (nombreMinuscula.includes("personal") || nombreMinuscula.includes("laboral") || nombreMinuscula.includes("honorario")) {
+        icono = "people";
+    } else if (nombreMinuscula.includes("mantenimiento") || nombreMinuscula.includes("reparacion")) {
+        icono = "tools";
+    } else if (nombreMinuscula.includes("limpieza") || nombreMinuscula.includes("suministro")) {
+        icono = "stars";
+    } else if (nombreMinuscula.includes("administrativo") || nombreMinuscula.includes("financiero") || nombreMinuscula.includes("banco")) {
+        icono = "calculator";
+    }
+    return icono;
 }
 
 // ============================================================

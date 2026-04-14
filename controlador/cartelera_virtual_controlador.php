@@ -1,5 +1,5 @@
 <?php
-use haydee\ayuda\Sesiones;
+use haydee\servicios\Sesiones;
 use haydee\modelo\CarteleraVirtual;
 use haydee\modelo\Usuario;
 use haydee\modelo\Bitacora;
@@ -78,8 +78,8 @@ if (isset($_POST["operacion"])) {
                         $tituloNotif, 
                         $descNotif, 
                         'cartelera_virtual', 
-                        $respuesta['lastId'], // Usamos el ID que tu modelo retornó de forma inteligente
-                        'CREACION_AVISO' // O el código de evento que utilices en tu sistema
+                        $respuesta['lastId'], 
+                        'CREACION_AVISO'
                     );
                 }
                 break;
@@ -159,5 +159,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     $usuarios = $usuario->realizar_consulta('consultar')['datos'] ?? [];
 }
 $permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_CARTELERA_VIRTUAL);
+$btn_nuevo = [
+    'target'  => '#modal_cartelera',
+    'texto'   => 'Nueva Publicación',
+    'tooltip' => 'Registrar Nueva Publicación'
+];
+$placeholder_buscar = "Buscar publicación...";
+
 require_once "vista/cartelera_virtual/cartelera_virtual_vista.php";
 ?>

@@ -48,43 +48,79 @@ document.addEventListener('DOMContentLoaded', () => {
  * Consulta la lista de mensualidades agrupadas por mes
  */
 async function consultarMensualidades() {
+    
+    // Formato Período 
     const formatoMes = (cell) => {
         const row = cell.getData();
-        let fecha = new Date(`${row.mes}/01/${row.anio}`);
-        return `${fecha.toLocaleString("es-ES", { month: 'long' })} del ${row.anio}`.toUpperCase();
+        let fecha = new Date(row.anio, row.mes - 1, 1);
+        let textoFecha = `${fecha.toLocaleString("es-ES", { month: 'long' })} del ${row.anio}`.toUpperCase();
+        
+        return `<div class="fw-bold text-dark">
+                    <i class="bi bi-calendar2-month text-primary me-2 opacity-75 fs-5"></i> 
+                    ${textoFecha}
+                </div>`;
     };
     
-    const formatoMonto = (cell) => {
+    // Estado Dinámico (Calculado en tiempo real)
+    const formatoEstado = (cell) => {
         const row = cell.getData();
-        return `${parseFloat(row.monto).toFixed(2)} Bs. / ${(row.monto / row.tasa_dolar).toFixed(2)} $`;
+        let deuda = row.monto - row.pagado;
+        
+        //  Si ya la deuda es cero o menor
+        if (deuda <= 0) {
+            return `<span class="badge bg-success bg-opacity-10 text-success border border-success px-3 py-2 shadow-sm">
+                        <i class="bi bi-check-circle-fill me-1"></i> Completada
+                    </span>`;
+        }
+
+        //  Si hay deuda, verificamos si pasó la fecha límite
+        let hoy = new Date();
+        // Creamos la fecha límite exacta usando el día (limite_mensualidad)
+        let diaLimite = row.limite_mensualidad || 31; // Por si viene vacío
+        let fechaLim = new Date(row.anio, row.mes - 1, diaLimite, 23, 59, 59);
+
+        if (hoy > fechaLim) {
+            return `<span class="badge bg-danger bg-opacity-10 text-danger border border-danger px-3 py-2 shadow-sm text-nowrap">
+                        <i class="bi bi-exclamation-octagon-fill me-1"></i> En Mora
+                    </span>`;
+        } else {
+            return `<span class="badge bg-primary bg-opacity-10 text-primary border border-primary px-3 py-2 shadow-sm text-nowrap">
+                        <i class="bi bi-clock-fill me-1"></i> Vigente
+                    </span>`;
+        }
     };
 
+    // Formato Deuda
     const formatoDeuda = (cell) => {
         const row = cell.getData();
         let deuda = row.monto - row.pagado;
-        if (deuda < 0) return '<span class="text-success fw-bold">Deuda Cancelada</span>';
-        return `<span class="text-danger">${deuda.toFixed(2)} Bs. / ${(deuda / row.tasa_dolar).toFixed(2)} $</span>`;
+        
+        if (deuda <= 0) {
+            return `<span class="text-success fw-bold"><i class="bi bi-check2-all me-1"></i> Sin Deuda</span>`;
+        }
+        
+        // Mostramos Bs grande y $ pequeño abajo para no alargar la tabla
+        return `<div class="d-flex flex-column justify-content-center">
+                    <span class="text-danger fw-bold">${deuda.toFixed(2)} Bs.</span>
+                    <span class="text-muted" style="font-size: 0.8rem;">Ref: ${(deuda / row.tasa_dolar).toFixed(2)} $</span>
+                </div>`;
     };
 
+    // Formato Botones 
     const formatoBotones = (cell) => {
         let html = `<div class="d-flex justify-content-center flex-wrap gap-2">
-            <button type="button" class="btn btn-primary btn-sm vista-previa" data-tooltip="true" title="Ver Mas">
+            <button type="button" class="btn btn-primary btn-sm vista-previa" data-tooltip="true" title="Ver Detalles">
                 <i class="bi bi-eye"></i>
                 <span class="d-none d-lg-inline ms-2">Ver</span>
-            </button>
-            <button data-tooltip="true" type="button" class="btn btn-info btn-sm text-white cuadro-pagos" style="background-color:#3939a9;" title="Descargar Cuadro de Pagos (PDF)">
-                <i class="bi bi-card-checklist"></i>
-                <span class="d-none d-lg-inline ms-2">Reporte</span>
-            </button>
-            `;
+            </button>`;
         if (permisoModificar) {
-            html += `<button class="btn btn-success btn-sm modificar" data-tooltip="true" title="Modificar los detalles de este registro">
+            html += `<button class="btn btn-success btn-sm modificar" data-tooltip="true" title="Modificar Mensualidad">
                         <i class="bi bi-pencil"></i>
                         <span class="d-none d-lg-inline ms-2">Editar</span>
                     </button>`;
         }
         if (permisoEliminar) {
-            html += `<button class="btn btn-danger btn-sm eliminar" data-tooltip="true" title="Quitar este elemento del sistema">
+            html += `<button class="btn btn-danger btn-sm eliminar" data-tooltip="true" title="Eliminar Mensualidad">
                         <i class="bi bi-trash"></i>
                         <span class="d-none d-lg-inline ms-2">Borrar</span>
                     </button>`;
@@ -93,71 +129,68 @@ async function consultarMensualidades() {
         return html;
     };
 
+    // Configuración de Columnas
     const columnas = [
-        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
-        { title: "Período", field: "anio", formatter: formatoMes, minWidth: 180, responsive: 0 },
-        { title: "Deuda", field: "pagado", formatter: formatoDeuda, minWidth: 180 },
+        { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center" },
+        { title: "Período", field: "anio", formatter: formatoMes, minWidth: 200, responsive: 0 },
+        { title: "Estado", formatter: formatoEstado, minWidth: 140, hozAlign: "center", headerHozAlign: "center" }, // NUEVA COLUMNA DINÁMICA
+        { title: "Pendiente", field: "pagado", formatter: formatoDeuda, minWidth: 140 },
         {
             title: "Acciones", formatter: formatoBotones, headerSort: false, 
-            hozAlign: "center", vertAlign: "middle", minWidth: 180, responsive: 0, 
-            download: false, headerHozAlign: "center", widthGrow: 3,
+            hozAlign: "center", vertAlign: "middle", minWidth: 130, responsive: 0, 
+            download: false, headerHozAlign: "center", widthGrow: 2,
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
                 
-                // Extraemos TODA la información directamente desde Tabulator
                 const row = cell.getData();
                 const mes = String(row.mes).padStart(2, '0');
                 const fecha = `${row.anio}-${mes}-01`;
 
                 if (btn.classList.contains('vista-previa')) {
-                    // Solo necesita la fecha
                     mostrarVistaPrevia(row, fecha);
                 } 
                 else if (btn.classList.contains('modificar')) {
-                    // Simulamos el "fila.dataset" que esperaba la función antigua
                     const mockFila = { dataset: { intereses: row.porcentaje_interes, limite: row.limite_mensualidad } };
                     prepararModificarcion(mockFila, fecha, row.ids, row.ids_apartamentos);
                 } 
                 else if (btn.classList.contains('eliminar')) {
                     confirmarEliminar(fecha);
                 } 
-                else if (btn.classList.contains('cuadro-pagos')) {
-                    // Envío dinámico de formulario PDF
-                    let form = document.createElement('form');
-                    form.action = "?pagina=reportes&accion=cuadro_pagos";
-                    form.method = "POST";
-                    form.target = "_blank";
+                // else if (btn.classList.contains('cuadro-pagos')) {
+                //     let form = document.createElement('form');
+                //     form.action = "?pagina=reportes&accion=cuadro_pagos";
+                //     form.method = "POST";
+                //     form.target = "_blank";
                     
-                    let input = document.createElement('input');
-                    input.type = "hidden";
-                    input.name = "select_reporte";
-                    input.value = `${mes}-${row.anio}`;
+                //     let input = document.createElement('input');
+                //     input.type = "hidden";
+                //     input.name = "select_reporte";
+                //     input.value = `${mes}-${row.anio}`;
 
-                    form.appendChild(input);
-                    document.body.appendChild(form);
-                    form.submit();
-                    document.body.removeChild(form);
-                }
+                //     form.appendChild(input);
+                //     document.body.appendChild(form);
+                //     form.submit();
+                //     document.body.removeChild(form);
+                // }
             }
         }
     ];
 
     const opcionesExtra = {
         parametrosExtra: { operacion: 'consultarPorMeses' },
-        columnaBusqueda: 'ids' // para buuscar en caso de notificacions
+        columnaBusqueda: 'ids'
     };
 
     tablaMensualidades = Tablas.cargarTabulador("tabla_mensualidad", "", columnas, opcionesExtra);
 
-    // Definimos la lógica de búsqueda específica para Mensualidades
     const filtroEspecialMensualidades = (data, valorBuscado) => {
-        let fechaObj = new Date(`${data.mes}/01/${data.anio}`);
+        let fechaObj = new Date(data.anio, data.mes - 1, 1);
         let textoPeriodo = `${fechaObj.toLocaleString("es-ES", { month: 'long' })} del ${data.anio}`.toLowerCase();
         
         let montoTotal = parseFloat(data.monto).toFixed(2);
         let deuda = data.monto - data.pagado;
-        let textoEstado = deuda <= 0 ? "deuda cancelada" : deuda.toFixed(2);
+        let textoEstado = deuda <= 0 ? "completada" : (new Date() > new Date(data.anio, data.mes - 1, data.limite_mensualidad || 31, 23, 59, 59) ? "en mora" : "vigente");
         
         return textoPeriodo.includes(valorBuscado) || 
                String(data.anio).includes(valorBuscado) || 
@@ -320,12 +353,9 @@ function manejarCheckbox(e, fila, tfoot) {
 }
 
 function mostrarVistaPrevia(data, fecha) {
-    // Formateamos y mostramos el Período
-    // Asumiendo que FormatoFechas.nombreMes existe y recibe un número (ej: 1 -> Enero)
     const nombreMes = FormatoFechas.nombreMes(parseInt(data.mes)) || data.mes;
     document.getElementById("vp_periodo").textContent = `${nombreMes} ${data.anio}`.toUpperCase();
 
-    // Cálculos de Monto (usando los datos de la fila de la BD)
     const montoUsd = parseFloat(data.monto) || 0;
     const tasa = parseFloat(data.tasa_dolar) || 1;
     const montoBs = montoUsd * tasa;
@@ -334,41 +364,77 @@ function mostrarVistaPrevia(data, fecha) {
     document.getElementById("vp_monto_base_bs").textContent = `${montoBs.toFixed(2)} Bs.`;
     document.getElementById("vp_tasa").textContent = `${tasa.toFixed(2)} Bs/$`;
 
-    // Recargos y Límite
-    document.getElementById("vp_recargo").textContent = `${data.porcentaje_interes}%`;
+    document.getElementById("vp_recargo").innerHTML = `<i class="bi bi-exclamation-circle me-1"></i> ${data.porcentaje_interes}%`;
     document.getElementById("vp_limite").textContent = `Día ${data.limite_mensualidad}`;
 
-    // Mostrar el modal ANTES de crear la tabla
+    const btnReporte = document.getElementById("btn_generar_reporte_modal");
+    // Removemos event listeners anteriores clonando el botón para evitar que se acumulen clics
+    const nuevoBtnReporte = btnReporte.cloneNode(true);
+    btnReporte.parentNode.replaceChild(nuevoBtnReporte, btnReporte);
+    
+    nuevoBtnReporte.addEventListener("click", () => {
+        let mesFormateado = String(data.mes).padStart(2, '0');
+        let form = document.createElement('form');
+        form.action = "?pagina=reportes&accion=cuadro_pagos";
+        form.method = "POST";
+        form.target = "_blank";
+        
+        let input = document.createElement('input');
+        input.type = "hidden";
+        input.name = "select_reporte";
+        input.value = `${mesFormateado}-${data.anio}`;
+
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+    });
+
     modalApartamentos.show();
 
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
-        { title: "Apartamento", field: "nro_apartamento", formatter: (cell) => `Apartamento Nº ${cell.getValue()}`, minWidth: 150, responsive: 0 },
+        { title: "Apartamento", field: "nro_apartamento", formatter: (cell) => `<div class="fw-bold text-dark"><i class="bi bi-door-closed text-primary me-2 opacity-75"></i>Apt. ${cell.getValue()}</div>`, minWidth: 150, responsive: 0 },
         { title: "Propietario", field: "nombre", formatter: (cell) => `${cell.getValue()} ${cell.getData().apellido}`, minWidth: 150 },
         { 
             title: "Monto A Pagar", 
             field: "monto", 
-            formatter: (cell) => `${parseFloat(cell.getValue()).toFixed(2)} Bs. / ${(cell.getValue() / cell.getData().tasa_dolar).toFixed(2)} $`, 
+            formatter: (cell) => `<span class="fw-semibold text-dark">${parseFloat(cell.getValue()).toFixed(2)} Bs.</span> <span class="text-muted small">/ ${(cell.getValue() / cell.getData().tasa_dolar).toFixed(2)} $</span>`, 
             minWidth: 180 
         },
         { 
             title: "Estatus / Deuda", 
             field: "pagado", 
+            hozAlign: "center", headerHozAlign: "center",vertAlign:"middle",
             formatter: (cell) => {
                 let row = cell.getData();
                 let deuda = row.monto - row.pagado;
-                if (deuda <= 0) return '<span class="text-success fw-bold">Deuda Cancelada</span>';
-                return `<span class="text-danger">${deuda.toFixed(2)} Bs. / ${(deuda / row.tasa_dolar).toFixed(2)} $</span>`;
+                
+                if (deuda <= 0) {
+                    // Contenedor flex con align-items-start evita que el badge se expanda a lo ancho
+                    return `<div class="d-flex align-items-start">
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success px-3 py-2 shadow-sm text-nowrap">
+                                    <i class="bi bi-check2-all me-1"></i> Solvente
+                                </span>
+                            </div>`;
+                }
+                
+                // align-items-start mantiene el badge y el texto compactos a la izquierda
+                return `<div class="d-flex flex-column align-items-start justify-content-center">
+                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger px-3 py-1 shadow-sm text-nowrap mb-1">
+                                <i class="bi bi-exclamation-circle me-1"></i> Deuda
+                            </span>
+                            <span class="fw-bold text-danger" style="font-size: 0.85rem;">${deuda.toFixed(2)} Bs.</span>
+                        </div>`;
             }, 
-            minWidth: 180 
+            minWidth: 160 
         }
     ];
 
-    // Retrasar Tabulator ligeramente para que el DOM mida bien el ancho
     setTimeout(() => {
         tablaApartamentos = Tablas.cargarTabulador("mensualidades_apartamentos", "", columnas, {
             parametrosExtra: { operacion: "consultar_mensualidades_apartamentos", fecha: fecha },
-            cssClass: "tabla-vista-previa", // Aplica la cabecera blanca
+            cssClass: "tabla-vista-previa",
             paginaSize: 10
         });
     }, 200);
