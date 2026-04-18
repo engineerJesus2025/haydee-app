@@ -161,44 +161,29 @@ async function consultar() {
 
 // Función que lee la memoria de Tabulator (Sin AJAX extra)
 function mostrarVistaPrevia(data) {
-    // Nombre Completo (Capitalizado)
+    // Nombre Completo
     let nombre = data.nombre ? data.nombre.charAt(0).toUpperCase() + data.nombre.slice(1).toLowerCase() : "";
     let apellido = data.apellido ? data.apellido.charAt(0).toUpperCase() + data.apellido.slice(1).toLowerCase() : "";
     
     document.getElementById("vp_nombre_completo").textContent = `${nombre} ${apellido}`;
 
-    // 2. Avatar (Extraemos la primera letra del nombre ya capitalizada)
+    // Avatar
     document.getElementById("vp_avatar_inicial").textContent = nombre ? nombre.charAt(0) : 'U';
 
     // Correo
     document.getElementById("vp_correo").textContent = data.correo || 'No registrado';
 
-    // Rol (Inyectamos el mismo Soft Badge de la tabla)
+    // Rol
     const rolEl = document.getElementById("vp_rol_badge");
     const rol = data.nombre_rol || "Desconocido";
+
+    const [icono,color,claseTextoBorder,claseIcono] = obtenerIconoRol(rol);
     
-    let color = "secondary";
-    let icono = "bi-person-badge";
-
-    if (rol === 'Administrador Global') {
-        color = "warning text-dark border-warning"; 
-        icono = "bi-shield-lock-fill text-warning";
-    } else if (rol === 'Administrador') {
-        color = "primary"; icono = "bi-shield-check";
-    } else if (rol === 'Propietario') {
-        color = "success"; icono = "bi-house-door-fill";
-    } else if (rol === 'Contador') {
-        color = "info"; icono = "bi-calculator-fill";
-    }
-
-    let claseTextoBorder = rol === 'Administrador Global' ? "text-dark border border-warning" : `text-${color} border border-${color}`;
-    let claseIcono = rol === 'Administrador Global' ? "text-warning" : "";
-
     // Como estamos inyectando HTML, le quitamos cualquier clase previa que tuviera el <span> en tu PHP
     rolEl.className = ""; 
     rolEl.innerHTML = `
         <span class="badge bg-${color} bg-opacity-10 ${claseTextoBorder} px-3 py-2 shadow-sm" style="font-size: 0.9rem;">
-            <i class="bi ${icono} ${claseIcono} me-1"></i> ${rol}
+            <i class="bi bi-${icono} ${claseIcono} me-1"></i> ${rol}
         </span>`;
 
     // Mostramos el modal

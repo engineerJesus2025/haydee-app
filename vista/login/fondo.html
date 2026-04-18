@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+	<style>
+
+body {
+    /* Color oscuro base del edificio (Azul marino casi negro) */
+    background-color: #10121a; 
+
+    /* LA MAGIA: Silueta de Alta Fidelidad */
+    background-image: 
+        /* Capa 1 (Frente): Losas / Pisos horizontales oscuros */
+        repeating-linear-gradient(to bottom, 
+            transparent 0%, transparent 13.5%, 
+            #10121a 13.5%, #10121a 14.5%
+        ),
+        
+        /* Capa 2: Columnas y marcos de ventanas oscuros */
+        repeating-linear-gradient(to right, 
+            #10121a 0%, #10121a 3%,          /* Columna izquierda */
+            transparent 3%, transparent 15%, /* Hueco para el cristal brillante */
+            #10121a 15%, #10121a 16%,        /* Marco central delgadito */
+            transparent 16%, transparent 30%,/* Hueco para el cristal oscuro */
+            #10121a 30%, #10121a 33.33%      /* Columna derecha gruesa */
+        ),
+        
+        /* Capa 3: Cristales (El vidrio pintado debajo de las columnas) */
+        repeating-linear-gradient(to right, 
+            #e8b0a1 0%, #d59a8c 15%,   /* Cristales reflejando el atardecer (Durazno) */
+            #25222b 15%, #1b1920 33.33% /* Cristales en sombra (Gris muy oscuro) */
+        ),
+        
+        /* Capa 4 (Fondo): Cielo del atardecer con colores extraídos de la foto */
+        linear-gradient(to bottom, 
+            #d6b8c8 0%,   /* Lila claro arriba */
+            #f0c9cb 30%,  /* Rosa suave */
+            #ecb0a5 65%,  /* Durazno central */
+            #c5918e 100%  /* Tierra cálido abajo */
+        );
+
+    /* Posicionamiento: 
+       Las capas del edificio (1, 2 y 3) ocupan el 65% derecho de la pantalla.
+       El cielo (Capa 4) ocupa el 100%. */
+    background-size: 
+        65% 100%, /* Pisos */
+        65% 100%, /* Columnas */
+        65% 100%, /* Cristales */
+        100% 100%; /* Cielo */
+
+    background-position: 
+        right top, 
+        right top, 
+        right top, 
+        left top; 
+
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    min-height: 100vh;
+    margin: 0; 
+    position: relative;
+    z-index: 0; 
+}
+
+/* La capa virtual donde cargará la foto real con animación */
+body::before {
+    content: "";
+    position: fixed; 
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    
+    
+    background-image: url("../img/utils/apartament.jpg");
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: cover;
+    
+    /* El box-shadow se mantiene por si tu foto original lo necesita para contrastar el texto */
+    box-shadow: inset 2000px 0 0 0 rgba(0, 0, 0, 0.4);
+    
+    z-index: 1; 
+    
+    /* Animación de desvanecimiento suave */
+    opacity: 0;
+    animation: fadeInBackground 0.8s ease-in-out forwards;
+    animation-delay: 0.1s; 
+}
+
+@keyframes fadeInBackground {
+    to {
+        opacity: 1;
+    }
+}
+
+
+
+	</style>
+</head>
+<body>
+
+</body>
+</html>

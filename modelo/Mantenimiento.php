@@ -20,7 +20,9 @@ class Mantenimiento extends Conexion
         // Mapeamos las operaciones que existan en tu controlador
         $camposPorOperacion = [
             'generar_copia_seguridad'   => ['db'],
-            'restaurar_copia_seguridad' => ['db']
+            'descargar_copia_seguridad' => ['db'],
+            'importar_copia_seguridad'  => ['db'], // Para restaurar copias del servidor
+            'importar_archivo_sql'      => ['db']  // Para restaurar archivos desde la PC
         ];
 
         if (isset($camposPorOperacion[$operacion])) {

@@ -54,14 +54,14 @@ async function consultar() {
         let btnIr = '';
         if (row.tabla_origen && row.id_registro_origen) {
             let ruta = `?pagina=${row.tabla_origen}&buscar=${row.id_registro_origen}`;
-            btnIr = `<button type="button" class="btn btn-outline-primary btn-sm btn-ir-registro" data-id="${id}" data-leido="${row.leido}" data-href="${ruta}" title="Ir al registro">
+            btnIr = `<button type="button" class="btn btn-outline-primary btn-sm btn-ir-registro" data-id="${id}" data-leido="${row.leido}" data-href="${ruta}" title="Ir al registro" data-tooltip="true">
                         <i class="bi bi-box-arrow-in-right"></i>
                         <span class="d-none d-lg-inline ms-2">Ir al Registro</span>
                      </button>`;
         }
 
         return `<div class="d-flex justify-content-center flex-wrap gap-2">
-                    <button type="button" class="btn btn-primary btn-sm vista-previa" value="${id}" title="Ver Detalles">
+                    <button type="button" class="btn btn-primary btn-sm vista-previa" value="${id}" title="Ver Detalles" data-tooltip="true">
                         <i class="bi bi-eye"></i>
                         <span class="d-none d-lg-inline ms-2">Detalles</span>
                     </button>

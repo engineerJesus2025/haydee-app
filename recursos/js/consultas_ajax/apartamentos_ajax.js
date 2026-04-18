@@ -262,13 +262,13 @@ async function mostrarVistaPrevia(e) {
 }
 
 function initTablaHabitantes() {
-    // 1. FORMATOS VISUALES
+    // FORMATOS VISUALES
     const formatoNro = (cell) => FormatosVisuales.nro(cell.getValue());
 
     const formatoBotones = (cell) => {
         const id = cell.getData().id_habitante;
         let html = `<div class="d-flex justify-content-center flex-wrap gap-2">
-            <button type="button" class="btn btn-primary btn-sm vista-previa" value="${id}" data-tooltip="true" title="Ver Mas">
+            <button type="button" class="btn btn-primary btn-sm vista-previa-habitante" value="${id}" data-tooltip="true" title="Ver Mas">
                 <i class="bi bi-eye"></i>
                 <span class="d-none d-lg-inline ms-2">Ver</span>
             </button>`;
@@ -288,7 +288,7 @@ function initTablaHabitantes() {
         return html;
     };
 
-    // 2. COLUMNAS
+    // COLUMNAS
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
         { title: "Nombre", field: "nombre", minWidth: 130, responsive: 0 },

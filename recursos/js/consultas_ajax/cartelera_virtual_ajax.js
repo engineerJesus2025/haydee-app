@@ -286,10 +286,10 @@ function obtenerConfigPrioridad(prioridad) {
         texto = "Importante";
         claseTextoBorder = "text-dark border border-warning"; // Texto oscuro para el amarillo
     } else if (p === "3") {
-        color = "success";
+        color = "primary";
         icono = "bi-info-circle-fill";
         texto = "Informativo";
-        claseTextoBorder = "text-success border border-success";
+        claseTextoBorder = "text-primary border border-primary";
     }
 
     return { color, claseTextoBorder, icono, texto };

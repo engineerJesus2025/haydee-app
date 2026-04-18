@@ -3,10 +3,11 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 29-03-2026 a las 01:25:35
+-- Tiempo de generación: 18-04-2026 a las 23:41:28
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
+SET FOREIGN_KEY_CHECKS=0;
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
@@ -18,60 +19,1319 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
+-- Base de datos: `haydee_db`
+--
+DROP DATABASE IF EXISTS `haydee_db`;
+CREATE DATABASE IF NOT EXISTS `haydee_db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+USE `haydee_db`;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `anio_fiscal`
+--
+
+DROP TABLE IF EXISTS `anio_fiscal`;
+CREATE TABLE IF NOT EXISTS `anio_fiscal` (
+  `id_anio_fiscal` int(11) NOT NULL AUTO_INCREMENT,
+  `estado` varchar(20) NOT NULL,
+  `fecha_inicio` date NOT NULL,
+  `fecha_cierre` date NOT NULL,
+  `descripcion` varchar(255) NOT NULL DEFAULT 'Sin descripción',
+  `activo` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id_anio_fiscal`)
+) ENGINE=InnoDB AUTO_INCREMENT=60 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Truncar tablas antes de insertar `anio_fiscal`
+--
+
+TRUNCATE TABLE `anio_fiscal`;
+--
+-- Volcado de datos para la tabla `anio_fiscal`
+--
+
+INSERT INTO `anio_fiscal` (`id_anio_fiscal`, `estado`, `fecha_inicio`, `fecha_cierre`, `descripcion`, `activo`) VALUES
+(47, 'Abierto', '2026-02-07', '2027-02-07', 'Año fiscal 2026', 1),
+(52, 'Cerrada', '2026-03-12', '2027-03-12', 'asdas', 0),
+(53, 'Cerrada', '2026-03-05', '2027-03-05', 'AAA', 0),
+(54, 'Cerrada', '2026-03-14', '2027-03-14', 'nueva des', 0),
+(55, 'Cerrada', '2026-03-13', '2027-03-13', 'asda', 0),
+(56, 'Cerrada', '2026-03-16', '2027-03-16', '', 0),
+(57, 'Cerrada', '2026-03-02', '2027-03-02', '', 0),
+(58, 'Cerrada', '2026-03-10', '2027-03-10', 'asd', 0),
+(59, 'Cerrada', '2026-04-07', '2027-04-07', 'pepe', 1);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `apartamentos`
+--
+
+DROP TABLE IF EXISTS `apartamentos`;
+CREATE TABLE IF NOT EXISTS `apartamentos` (
+  `id_apartamento` int(11) NOT NULL AUTO_INCREMENT,
+  `nro_apartamento` varchar(3) NOT NULL,
+  `porcentaje_participacion` float NOT NULL,
+  `gas` tinyint(1) NOT NULL,
+  `agua` tinyint(1) NOT NULL,
+  `alquilado` tinyint(1) NOT NULL,
+  `activo` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id_apartamento`)
+) ENGINE=InnoDB AUTO_INCREMENT=42 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Truncar tablas antes de insertar `apartamentos`
+--
+
+TRUNCATE TABLE `apartamentos`;
+--
+-- Volcado de datos para la tabla `apartamentos`
+--
+
+INSERT INTO `apartamentos` (`id_apartamento`, `nro_apartamento`, `porcentaje_participacion`, `gas`, `agua`, `alquilado`, `activo`) VALUES
+(30, '1-2', 22, 2, 1, 2, 1),
+(31, '2-3', 23, 1, 1, 1, 1),
+(32, '2-1', 1, 2, 1, 1, 1),
+(33, '12', 23, 1, 1, 1, 0),
+(34, '2-8', 2, 1, 2, 1, 0),
+(35, '3-1', 5, 2, 1, 1, 1),
+(36, '2-5', 52, 1, 1, 1, 0),
+(37, '4-1', 5, 1, 1, 2, 1),
+(38, '4-2', 5, 1, 1, 2, 0),
+(39, '3-2', 1, 2, 1, 1, 1),
+(40, '', 0, 0, 0, 0, 0),
+(41, '5-1', 5, 1, 1, 1, 1);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `bancos`
+--
+
+DROP TABLE IF EXISTS `bancos`;
+CREATE TABLE IF NOT EXISTS `bancos` (
+  `id_banco` int(11) NOT NULL AUTO_INCREMENT,
+  `nombre_banco` varchar(50) NOT NULL,
+  `codigo` varchar(7) NOT NULL,
+  `numero_cuenta` varchar(50) NOT NULL,
+  `tipo_cuenta` varchar(30) NOT NULL,
+  `telefono_afiliado` varchar(50) NOT NULL,
+  `rif` varchar(20) NOT NULL,
+  `activo` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id_banco`),
+  UNIQUE KEY `numero_cuenta` (`numero_cuenta`)
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Truncar tablas antes de insertar `bancos`
+--
+
+TRUNCATE TABLE `bancos`;
+--
+-- Volcado de datos para la tabla `bancos`
+--
+
+INSERT INTO `bancos` (`id_banco`, `nombre_banco`, `codigo`, `numero_cuenta`, `tipo_cuenta`, `telefono_afiliado`, `rif`, `activo`) VALUES
+(1, 'venezuela', '0102', '0102123412124232323', 'Ahorro', '04152456842', 'J3232421', 1),
+(6, 'Banesco', '0117', '1242342342424121211', 'Corriente', '04142584985', 'V5464565', 1),
+(9, 'Bancaribe', '0114', '01140300063000253595', 'Corriente', '04114124142', 'J305785457', 1),
+(11, 'rasdas', '1231', '2342342342342342323', '', '21321253213', 'V2123132', 0),
+(12, 'tesoro', '1231', '425646456456456456', '', '24243245564', 'V12345678', 0),
+(13, 'Tesoros', '0102', '2423423423423234234', 'Corriente', '23423423232', 'V123412321', 1),
+(14, 'sdfsdfs', '2342', '2315646545645656564', '', '23123153545', 'V24653215', 0),
+(15, 'aASDASD', '1234', '1231312312312312123', 'Corriente', '12312312323', 'V231231231', 1);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `caja_chica`
+--
+
+DROP TABLE IF EXISTS `caja_chica`;
+CREATE TABLE IF NOT EXISTS `caja_chica` (
+  `id_caja_chica` int(11) NOT NULL AUTO_INCREMENT,
+  `fondo_fijo` decimal(15,2) NOT NULL,
+  `estado` varchar(20) NOT NULL,
+  `descripcion` varchar(255) NOT NULL DEFAULT 'Sin descripción',
+  `fecha_creacion` date NOT NULL DEFAULT current_timestamp(),
+  `anio_fiscal_id` int(11) NOT NULL,
+  `activo` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id_caja_chica`),
+  KEY `anio_fiscal_id` (`anio_fiscal_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Truncar tablas antes de insertar `caja_chica`
+--
+
+TRUNCATE TABLE `caja_chica`;
+--
+-- Volcado de datos para la tabla `caja_chica`
+--
+
+INSERT INTO `caja_chica` (`id_caja_chica`, `fondo_fijo`, `estado`, `descripcion`, `fecha_creacion`, `anio_fiscal_id`, `activo`) VALUES
+(24, 0.00, 'Cerrada', 'Caja chicas del mes enero - 2026', '2026-01-01', 47, 1),
+(25, 1000.00, 'Cerrada', 'Caja chicas del mes Marzo - 2026', '2026-03-09', 47, 1),
+(26, 1000.00, 'Abierto', 'Caja chica - 2026', '2026-04-02', 47, 1);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `detalles_gastos`
+--
+
+DROP TABLE IF EXISTS `detalles_gastos`;
+CREATE TABLE IF NOT EXISTS `detalles_gastos` (
+  `id_detalle_gasto` int(11) NOT NULL AUTO_INCREMENT,
+  `fecha` date NOT NULL,
+  `monto` decimal(15,2) NOT NULL,
+  `monto_dolar` decimal(15,2) NOT NULL,
+  `metodo_pago` varchar(20) NOT NULL,
+  `gasto_id` int(11) NOT NULL,
+  `descripcion_detalle_gasto` varchar(255) NOT NULL DEFAULT 'Sin descripción',
+  PRIMARY KEY (`id_detalle_gasto`),
+  KEY `gasto_id` (`gasto_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2027 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Truncar tablas antes de insertar `detalles_gastos`
+--
+
+TRUNCATE TABLE `detalles_gastos`;
+--
+-- Volcado de datos para la tabla `detalles_gastos`
+--
+
+INSERT INTO `detalles_gastos` (`id_detalle_gasto`, `fecha`, `monto`, `monto_dolar`, `metodo_pago`, `gasto_id`, `descripcion_detalle_gasto`) VALUES
+(164, '2026-02-03', 12.00, 0.00, 'Pago Movil', 133, 'asdasdasdasdasd'),
+(217, '2026-02-21', 12.00, 0.00, 'Efectivo', 136, 'adasdas'),
+(218, '2026-02-21', 900.00, 0.00, 'Efectivo', 135, 'Detalle de reposición por monto de: 900.00'),
+(2001, '2025-12-20', 150.00, 4.00, 'Transferencia', 201, 'Mes diciembre'),
+(2002, '2026-01-15', 700.00, 20.00, 'Transferencia', 202, 'Quincena 1'),
+(2003, '2026-01-25', 1500.00, 40.00, 'Divisa', 203, 'Repuestos bomba'),
+(2004, '2026-02-15', 720.00, 20.00, 'Pago Movil', 204, 'Quincena 1 feb'),
+(2005, '2026-03-02', 300.00, 8.00, 'Efectivo', 205, 'Limpieza pasillos'),
+(2006, '2026-03-05', 43.00, 0.00, 'Efectivo', 206, 'xxxxxxxxxxxxxxxxxxxx'),
+(2011, '2026-03-08', 12312.00, 0.00, 'Efectivo', 207, 'prueba detalle 1'),
+(2012, '2026-03-07', 21.00, 0.00, 'Pago Movil', 207, 'prueba detalle 2'),
+(2017, '2026-03-16', 910.00, 0.00, 'Efectivo', 208, 'Detalle de reposición por monto de: 910.00'),
+(2018, '2026-02-21', 32.00, 0.00, 'Efectivo', 134, 'detalle 1 s'),
+(2019, '2026-02-06', 12.00, 0.00, 'Pago Movil', 134, 'detalle 2s'),
+(2020, '2026-03-17', 0.00, 0.00, 'Efectivo', 209, 'Detalle de reposición por monto de: 0.00'),
+(2021, '2026-03-17', 0.00, 0.00, 'Efectivo', 210, 'Detalle de reposición por monto de: 0.00'),
+(2022, '2026-02-05', 12.00, 0.00, 'Pago Movil', 132, 'adiossssssssssssssss'),
+(2023, '2026-03-17', 15.00, 0.00, 'Efectivo', 211, 'asdasd'),
+(2024, '2026-03-17', 10.00, 0.00, 'Transferencia', 211, 'asddasdas'),
+(2026, '2026-03-11', 123.00, 0.00, 'Pago Movil', 212, 'assas');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `detalles_pagos`
+--
+
+DROP TABLE IF EXISTS `detalles_pagos`;
+CREATE TABLE IF NOT EXISTS `detalles_pagos` (
+  `id_detalle_pago` int(11) NOT NULL AUTO_INCREMENT,
+  `fecha` date NOT NULL,
+  `monto` decimal(15,2) NOT NULL,
+  `monto_dolar` decimal(15,2) NOT NULL,
+  `tipo_pago` varchar(20) NOT NULL,
+  `pago_id` int(11) NOT NULL,
+  PRIMARY KEY (`id_detalle_pago`),
+  KEY `detalles_pagos_ibfk_1` (`pago_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1026 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Truncar tablas antes de insertar `detalles_pagos`
+--
+
+TRUNCATE TABLE `detalles_pagos`;
+--
+-- Volcado de datos para la tabla `detalles_pagos`
+--
+
+INSERT INTO `detalles_pagos` (`id_detalle_pago`, `fecha`, `monto`, `monto_dolar`, `tipo_pago`, `pago_id`) VALUES
+(362, '2026-02-01', 10.00, 0.03, 'Pago Movil', 116),
+(370, '2026-02-14', 10.00, 0.02, 'Pago Movil', 118),
+(371, '2026-02-21', 100.00, 0.25, 'Efectivo', 118),
+(382, '2026-02-22', 12.00, 0.03, 'Pago Movil', 119),
+(383, '2026-02-01', 12.00, 1.00, 'Efectivo', 119),
+(384, '2026-02-05', 12.00, 0.03, 'Pago Movil', 117),
+(385, '2026-02-04', 100.00, 0.25, 'Transferencia', 117),
+(386, '2026-02-20', 100.00, 0.25, 'Efectivo', 117),
+(1001, '2025-12-15', 350.00, 10.00, 'Pago Movil', 101),
+(1002, '2026-01-10', 360.00, 10.00, 'Transferencia', 102),
+(1003, '2026-02-05', 180.00, 5.00, 'Efectivo', 103),
+(1004, '2026-02-28', 360.00, 10.00, 'Divisa', 104),
+(1005, '2026-03-01', 365.00, 10.00, 'Pago Movil', 105),
+(1007, '2026-03-05', 800.00, 1.87, 'Transferencia', 121),
+(1008, '2026-03-05', 4.00, 0.01, 'Efectivo', 122),
+(1010, '2026-03-07', 10.00, 0.02, 'Efectivo', 123),
+(1012, '2026-02-25', 1.40, 0.00, 'Efectivo', 120),
+(1014, '2026-03-04', 10.00, 0.02, 'Efectivo', 124),
+(1016, '2026-03-04', 10.00, 0.00, 'Pago Movil', 127),
+(1017, '2026-03-05', 10.00, 0.00, 'Transferencia', 128),
+(1018, '2026-03-18', 23.00, 0.00, 'Pago Movil', 129),
+(1020, '2026-03-18', 23.00, 0.00, 'Pago Movil', 131),
+(1022, '2026-03-04', 50.00, 0.00, 'Efectivo', 132),
+(1023, '2026-03-25', 50.00, 0.00, 'Transferencia', 132),
+(1024, '2026-04-04', 224.33, 0.00, 'Pago Movil', 133),
+(1025, '2026-04-04', 100.00, 0.00, 'Efectivo', 134);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `detalles_presupuesto`
+--
+
+DROP TABLE IF EXISTS `detalles_presupuesto`;
+CREATE TABLE IF NOT EXISTS `detalles_presupuesto` (
+  `id_detalle_presupuesto` int(11) NOT NULL AUTO_INCREMENT,
+  `monto` decimal(15,2) NOT NULL,
+  `monto_dolar` decimal(15,2) NOT NULL,
+  `nombre_detalle` varchar(50) NOT NULL,
+  `presupuesto_id` int(11) NOT NULL,
+  `tipo_gasto_id` int(11) NOT NULL,
+  PRIMARY KEY (`id_detalle_presupuesto`),
+  KEY `presupuesto_id` (`presupuesto_id`),
+  KEY `tipo_gasto_id` (`tipo_gasto_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1388 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Truncar tablas antes de insertar `detalles_presupuesto`
+--
+
+TRUNCATE TABLE `detalles_presupuesto`;
+--
+-- Volcado de datos para la tabla `detalles_presupuesto`
+--
+
+INSERT INTO `detalles_presupuesto` (`id_detalle_presupuesto`, `monto`, `monto_dolar`, `nombre_detalle`, `presupuesto_id`, `tipo_gasto_id`) VALUES
+(1327, 15.00, 0.00, 'CORPOELEC', 106, 2),
+(1328, 12.00, 0.00, 'HIDROLARA', 106, 2),
+(1329, 100.00, 0.00, 'Trabajadora Residencial', 106, 3),
+(1330, 100.00, 0.00, 'Bono de alimentacion', 106, 3),
+(1331, 100.00, 0.00, 'Bono de ayuda', 106, 3),
+(1332, 100.00, 0.00, 'Seguridad Social', 106, 3),
+(1333, 100.00, 0.00, 'Mantenimiento ascensor', 106, 4),
+(1334, 100.00, 0.00, 'GAS LARA', 106, 5),
+(1335, 100.00, 0.00, 'Bolsas de Basura', 106, 9),
+(1336, 100.00, 0.00, 'Productos de Limpieza', 106, 9),
+(1337, 100.00, 0.00, 'Comisiones Bancarias', 106, 10),
+(1338, 100.00, 0.00, 'Exencion cuota del administrador', 106, 10),
+(1351, 23.00, 0.00, 'CORPOELEC', 107, 2),
+(1352, 15.00, 0.00, 'HIDROLARA', 107, 2),
+(1353, 233.00, 0.00, 'Trabajadora Residencial', 107, 3),
+(1354, 12.00, 0.00, 'Bono de alimentacion', 107, 3),
+(1355, 12.00, 0.00, 'Bono de ayuda', 107, 3),
+(1356, 100.00, 0.00, 'Seguridad Social', 107, 3),
+(1357, 12.00, 0.00, 'Mantenimiento ascensor', 107, 4),
+(1358, 200.00, 0.00, 'GAS LARA', 107, 5),
+(1359, 20.00, 0.00, 'Bolsas de Basura', 107, 9),
+(1360, 200.00, 0.00, 'Productos de Limpieza', 107, 9),
+(1361, 200.00, 0.00, 'Comisiones Bancarias', 107, 10),
+(1362, 200.00, 0.00, 'Exencion cuota del administrador', 107, 10),
+(1387, 12.00, 0.00, 'Exencion cuota del administrador', 110, 10);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `egresos_bancarios`
+--
+
+DROP TABLE IF EXISTS `egresos_bancarios`;
+CREATE TABLE IF NOT EXISTS `egresos_bancarios` (
+  `referencia` varchar(20) NOT NULL,
+  `imagen` varchar(255) NOT NULL,
+  `banco_id` int(11) NOT NULL,
+  `detalle_gasto_id` int(11) NOT NULL,
+  PRIMARY KEY (`banco_id`,`detalle_gasto_id`),
+  UNIQUE KEY `referencia` (`referencia`),
+  KEY `egresos_bancarios_ibfk_1` (`detalle_gasto_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Truncar tablas antes de insertar `egresos_bancarios`
+--
+
+TRUNCATE TABLE `egresos_bancarios`;
+--
+-- Volcado de datos para la tabla `egresos_bancarios`
+--
+
+INSERT INTO `egresos_bancarios` (`referencia`, `imagen`, `banco_id`, `detalle_gasto_id`) VALUES
+('31231', 'javascript-logo-javascript-icon-transparent-free-png_1771563760_144.png', 1, 164),
+('GASTO-001', '', 1, 2001),
+('GASTO-002', '', 1, 2002),
+('GASTO-003', '', 1, 2004),
+('123123123', 'CSS-Logo_1771706140_757.jpg', 1, 2022),
+('1235412', 'CSS-Logo_1773003460_864.jpg', 6, 2012),
+('412123', 'mensualidad_1771710356_291.PNG', 6, 2019),
+('543524', 'images__2__1773805029_187.png', 9, 2024),
+('5435245', 'images__2__1774719607_329.png', 9, 2026);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `gastos`
+--
+
+DROP TABLE IF EXISTS `gastos`;
+CREATE TABLE IF NOT EXISTS `gastos` (
+  `id_gasto` int(11) NOT NULL AUTO_INCREMENT,
+  `clasificacion` varchar(20) NOT NULL,
+  `tipo_gasto_id` int(11) NOT NULL,
+  `solicitud_id` int(11) DEFAULT NULL,
+  `proveedor_id` int(11) NOT NULL,
+  `descripcion_gasto` text NOT NULL DEFAULT 'Sin descripción',
+  `activo` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id_gasto`),
+  KEY `proveedor_id` (`proveedor_id`),
+  KEY `tipo_gasto_id` (`tipo_gasto_id`),
+  KEY `solicitud_id` (`solicitud_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=213 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Truncar tablas antes de insertar `gastos`
+--
+
+TRUNCATE TABLE `gastos`;
+--
+-- Volcado de datos para la tabla `gastos`
+--
+
+INSERT INTO `gastos` (`id_gasto`, `clasificacion`, `tipo_gasto_id`, `solicitud_id`, `proveedor_id`, `descripcion_gasto`, `activo`) VALUES
+(132, 'fijo', 2, NULL, 2, 'holasssssssssssssssaaa', 1),
+(133, 'fijo', 2, NULL, 3, 'asdasdasasd', 0),
+(134, 'fijo', 2, NULL, 3, '22222a2222222224', 1),
+(135, 'reposicion', 1, NULL, 1, 'Reposición de Caja Chica - 22/02/2026', 1),
+(136, 'fijo', 2, NULL, 3, 'wwwwwwwwwwwww', 0),
+(201, 'Fijo', 1, NULL, 1, 'Pago de servicio de agua', 0),
+(202, 'Fijo', 2, NULL, 1, 'Honorarios de vigilancia Enero', 0),
+(203, 'Variable', 3, NULL, 1, 'Reparación de bomba de agua', 1),
+(204, 'Fijo', 2, NULL, 1, 'Honorarios de vigilancia Febrero', 1),
+(205, 'Variable', 4, NULL, 1, 'Compra de artículos de limpieza', 1),
+(206, 'fijo', 1, NULL, 2, 'zzzzzzzzzzzzzzzzz', 0),
+(207, 'variable', 2, NULL, 3, 'prueba de gasto 1', 1),
+(208, 'reposicion', 1, NULL, 1, 'Reposición de Caja Chica - 16/03/2026', 1),
+(209, 'reposicion', 1, NULL, 1, 'Reposición de Caja Chica - 17/03/2026', 1),
+(210, 'reposicion', 1, NULL, 1, 'Reposición de Caja Chica - 17/03/2026', 1),
+(211, 'variable', 2, NULL, 3, 'asdasdasdasd', 1),
+(212, 'fijo', 1, NULL, 3, 'asdasdasdasd', 1);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `habitantes`
+--
+
+DROP TABLE IF EXISTS `habitantes`;
+CREATE TABLE IF NOT EXISTS `habitantes` (
+  `id_habitante` int(11) NOT NULL AUTO_INCREMENT,
+  `nombre` varchar(20) NOT NULL,
+  `apellido` varchar(20) NOT NULL,
+  `cedula` varchar(9) NOT NULL,
+  `telefono` varchar(20) NOT NULL,
+  `correo` varchar(50) NOT NULL,
+  `fecha_nacimiento` date NOT NULL,
+  `sexo` varchar(10) NOT NULL,
+  `activo` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id_habitante`) USING BTREE,
+  UNIQUE KEY `cedula` (`cedula`),
+  UNIQUE KEY `correo` (`correo`)
+) ENGINE=InnoDB AUTO_INCREMENT=53 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Truncar tablas antes de insertar `habitantes`
+--
+
+TRUNCATE TABLE `habitantes`;
+--
+-- Volcado de datos para la tabla `habitantes`
+--
+
+INSERT INTO `habitantes` (`id_habitante`, `nombre`, `apellido`, `cedula`, `telefono`, `correo`, `fecha_nacimiento`, `sexo`, `activo`) VALUES
+(43, 'jesus', 'asdasda', 'E1105510', '12312312123', 'aaa@gasd.com', '2000-12-12', 'Masculino', 1),
+(44, 'jesa', 'asdasd', 'V15321212', '21312312121', 'asda@asasd.ocm', '2000-10-10', 'Masculino', 1),
+(45, 'asdasd', 'asdasdas', 'V12012120', '23423423434', 'ASDASD@sfas.com', '1980-10-10', 'Femenino', 1),
+(46, 'papap', 'lalala', 'V23424234', '21312312312', 'lala@gasmic.com', '1950-10-10', 'Masculino', 1),
+(47, 'ssdfsdf', 'asda', 'V23432423', '23423423423', 'asdasda@asfas.com', '1945-10-10', 'Femenino', 1),
+(48, 'boor', 'borra', 'V23423234', '23654564321', 'asd@asd.com', '1999-01-01', 'Masculino', 0),
+(49, 'asa', 'asdasd', 'V2343121', '12313455648', 'asda@adsd.com', '1999-10-10', 'Masculino', 0),
+(50, 'asa', 'asdasd', 'V23432121', '12313455648', 'asda@adaassdsd.com', '1999-10-10', 'Masculino', 0),
+(51, 'fhfgh', 'asdasd', 'V2342342', '42342342342', 'asdasd@asd.com', '1999-10-10', 'Masculino', 1),
+(52, 'dasdas', 'asdasd', 'E12312313', '22342323232', 'ada@asd.com', '2000-10-10', 'Femenino', 0);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `habitantes_apartamentos`
+--
+
+DROP TABLE IF EXISTS `habitantes_apartamentos`;
+CREATE TABLE IF NOT EXISTS `habitantes_apartamentos` (
+  `apartamento_id` int(11) NOT NULL,
+  `habitante_id` int(11) NOT NULL,
+  `tipo_vinculo` varchar(20) NOT NULL,
+  PRIMARY KEY (`apartamento_id`,`habitante_id`),
+  KEY `habitantes_apartamentos_ibfk_2` (`habitante_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Truncar tablas antes de insertar `habitantes_apartamentos`
+--
+
+TRUNCATE TABLE `habitantes_apartamentos`;
+--
+-- Volcado de datos para la tabla `habitantes_apartamentos`
+--
+
+INSERT INTO `habitantes_apartamentos` (`apartamento_id`, `habitante_id`, `tipo_vinculo`) VALUES
+(30, 43, 'Propietario'),
+(30, 44, 'Habitante'),
+(30, 48, 'Habitante'),
+(30, 49, 'Habitante'),
+(30, 50, 'Habitante'),
+(30, 51, 'Habitante'),
+(30, 52, 'Habitante'),
+(31, 46, 'Propietario'),
+(32, 45, 'Propietario'),
+(35, 47, 'Propietario');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `ingresos_bancarios`
+--
+
+DROP TABLE IF EXISTS `ingresos_bancarios`;
+CREATE TABLE IF NOT EXISTS `ingresos_bancarios` (
+  `referencia` varchar(20) NOT NULL,
+  `imagen` varchar(255) NOT NULL,
+  `banco_id` int(11) NOT NULL,
+  `detalle_pago_id` int(11) NOT NULL,
+  PRIMARY KEY (`banco_id`,`detalle_pago_id`),
+  UNIQUE KEY `referencia` (`referencia`),
+  KEY `ingresos_bancarios_ibfk_1` (`detalle_pago_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Truncar tablas antes de insertar `ingresos_bancarios`
+--
+
+TRUNCATE TABLE `ingresos_bancarios`;
+--
+-- Volcado de datos para la tabla `ingresos_bancarios`
+--
+
+INSERT INTO `ingresos_bancarios` (`referencia`, `imagen`, `banco_id`, `detalle_pago_id`) VALUES
+('45342', 'cog_1770410107_961.PNG', 1, 362),
+('12312', 'fiabil_1771818751_885.PNG', 1, 382),
+('REF-123456', '', 1, 1001),
+('REF-987654', '', 1, 1002),
+('REF-555666', '', 1, 1005),
+('2312', 'virustotla_1771651369_672.PNG', 6, 370),
+('4213123', 'lenguaje_comun_1771707846_116.PNG', 6, 384),
+('4213', 'CSS-Logo_1772718346_856.jpg', 6, 1007),
+('678678', 'default.png', 6, 1016),
+('532423', 'default.png', 6, 1018),
+('532434345', 'colores_inicio_1_1773856062_104.PNG', 6, 1020),
+('234sad2', 'colores_inicio_2_1771708881_962.PNG', 9, 385),
+('45654', 'default.png', 9, 1017),
+('23423412', 'lenguaje_comun_1774402497_922.PNG', 9, 1023),
+('5231234', 'meme_1775350129_999.PNG', 13, 1024);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `mensualidad`
+--
+
+DROP TABLE IF EXISTS `mensualidad`;
+CREATE TABLE IF NOT EXISTS `mensualidad` (
+  `id_mensualidad` int(11) NOT NULL AUTO_INCREMENT,
+  `periodo_id` int(11) NOT NULL,
+  `monto` decimal(15,2) NOT NULL,
+  `apartamento_id` int(11) NOT NULL,
+  `porcentaje_interes` int(11) NOT NULL DEFAULT 10,
+  `limite_mensualidad` int(11) NOT NULL DEFAULT 15,
+  `activo` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id_mensualidad`),
+  KEY `apartamento_id` (`apartamento_id`),
+  KEY `mensualidad_ibfk_periodo` (`periodo_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=656 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Truncar tablas antes de insertar `mensualidad`
+--
+
+TRUNCATE TABLE `mensualidad`;
+--
+-- Volcado de datos para la tabla `mensualidad`
+--
+
+INSERT INTO `mensualidad` (`id_mensualidad`, `periodo_id`, `monto`, `apartamento_id`, `porcentaje_interes`, `limite_mensualidad`, `activo`) VALUES
+(610, 1, 203.94, 30, 10, 15, 1),
+(611, 1, 213.21, 31, 10, 15, 1),
+(612, 1, 46.35, 35, 10, 15, 1),
+(613, 1, 9.27, 39, 10, 15, 1),
+(614, 1, 46.35, 37, 10, 15, 1),
+(615, 1, 9.27, 32, 10, 15, 1),
+(616, 2, 2.64, 30, 10, 15, 0),
+(617, 2, 48.76, 31, 10, 15, 0),
+(618, 2, 0.12, 32, 10, 15, 0),
+(619, 2, 0.60, 35, 10, 15, 0),
+(620, 2, 10.60, 37, 10, 15, 0),
+(621, 2, 0.12, 39, 10, 15, 0),
+(622, 3, 5035.58, 30, 10, 15, 0),
+(623, 3, 5264.47, 31, 10, 15, 0),
+(624, 3, 228.89, 32, 10, 15, 0),
+(625, 3, 1144.45, 35, 10, 15, 0),
+(626, 3, 1144.45, 37, 10, 15, 0),
+(627, 3, 228.89, 39, 10, 15, 0),
+(628, 3, 29.04, 30, 10, 15, 0),
+(629, 3, 30.36, 31, 10, 15, 0),
+(630, 3, 1.32, 32, 10, 15, 0),
+(631, 3, 6.60, 35, 10, 15, 0),
+(632, 3, 6.60, 37, 10, 15, 0),
+(633, 3, 1.32, 39, 10, 15, 0),
+(634, 3, 2.64, 30, 10, 15, 0),
+(635, 3, 2.76, 31, 10, 15, 0),
+(636, 3, 0.12, 32, 10, 15, 0),
+(637, 3, 0.60, 35, 10, 15, 0),
+(638, 3, 0.60, 37, 10, 15, 0),
+(639, 3, 0.12, 39, 10, 15, 0),
+(640, 3, 0.60, 41, 10, 15, 0),
+(641, 1, 25.00, 41, 10, 15, 1),
+(642, 2, 169.18, 30, 10, 15, 1),
+(643, 2, 7.69, 32, 10, 15, 1),
+(644, 2, 222.87, 31, 10, 15, 1),
+(645, 2, 38.45, 35, 10, 15, 1),
+(646, 2, 9.69, 39, 10, 15, 1),
+(647, 2, 48.45, 37, 10, 15, 1),
+(648, 2, 48.45, 41, 10, 15, 1),
+(649, 2, 90.64, 30, 10, 15, 1),
+(650, 2, 4.12, 32, 10, 15, 1),
+(651, 2, 140.76, 31, 10, 15, 1),
+(652, 2, 20.60, 35, 10, 15, 1),
+(653, 2, 4.12, 39, 10, 15, 1),
+(654, 2, 30.60, 37, 10, 15, 1),
+(655, 2, 30.60, 41, 10, 15, 1);
+
+--
+-- Disparadores `mensualidad`
+--
+DROP TRIGGER IF EXISTS `tr_validar_montos_mensualidad_editar`;
+DELIMITER $$
+CREATE TRIGGER `tr_validar_montos_mensualidad_editar` BEFORE UPDATE ON `mensualidad` FOR EACH ROW BEGIN
+
+    IF NEW.monto < 0 THEN
+
+        SIGNAL SQLSTATE '45000'
+
+        SET MESSAGE_TEXT = 'Error Crítico de BD: No se permiten montos negativos en Mensualidades.';
+
+    END IF;
+
+END
+$$
+DELIMITER ;
+DROP TRIGGER IF EXISTS `tr_validar_montos_mensualidad_registrar`;
+DELIMITER $$
+CREATE TRIGGER `tr_validar_montos_mensualidad_registrar` BEFORE INSERT ON `mensualidad` FOR EACH ROW BEGIN
+
+    IF NEW.monto < 0 THEN
+
+        SIGNAL SQLSTATE '45000'
+
+        SET MESSAGE_TEXT = 'Error Crítico de BD: No se permiten montos negativos en Mensualidades.';
+
+    END IF;
+
+END
+$$
+DELIMITER ;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `movimientos_caja`
+--
+
+DROP TABLE IF EXISTS `movimientos_caja`;
+CREATE TABLE IF NOT EXISTS `movimientos_caja` (
+  `id_movimiento_caja` int(11) NOT NULL AUTO_INCREMENT,
+  `concepto` varchar(100) NOT NULL,
+  `monto` decimal(15,2) NOT NULL,
+  `fecha` date NOT NULL,
+  `estado` varchar(50) NOT NULL,
+  `caja_chica_id` int(11) NOT NULL,
+  `activo` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id_movimiento_caja`),
+  KEY `caja_chica_id` (`caja_chica_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=51 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Truncar tablas antes de insertar `movimientos_caja`
+--
+
+TRUNCATE TABLE `movimientos_caja`;
+--
+-- Volcado de datos para la tabla `movimientos_caja`
+--
+
+INSERT INTO `movimientos_caja` (`id_movimiento_caja`, `concepto`, `monto`, `fecha`, `estado`, `caja_chica_id`, `activo`) VALUES
+(42, 'cafe', 10.00, '2026-03-09', 'Repuesto', 25, 1),
+(43, 'se pagaron 3 bombillos nuevos', 900.00, '2026-03-15', 'Repuesto', 25, 1),
+(44, 'aaaaa', 10.00, '2026-03-16', 'Pendiente por reposicion', 25, 0),
+(45, 'pago de transporte', 900.00, '2026-04-07', 'Pendiente por reposicion', 26, 0),
+(46, 'pago de trasnporte', 900.00, '2026-04-07', 'Pendiente por reposicion', 26, 0),
+(47, 'pago', 900.00, '2026-04-07', 'Pendiente por reposicion', 26, 0),
+(48, 'pago', 900.00, '2026-04-07', 'Pendiente por reposicion', 26, 0),
+(49, 'pago', 900.00, '2026-04-07', 'Pendiente por reposicion', 26, 0),
+(50, 'pago', 900.00, '2026-04-07', 'Pendiente por reposicion', 26, 1);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `pagos`
+--
+
+DROP TABLE IF EXISTS `pagos`;
+CREATE TABLE IF NOT EXISTS `pagos` (
+  `id_pago` int(11) NOT NULL AUTO_INCREMENT,
+  `estado` varchar(20) NOT NULL,
+  `observacion` text NOT NULL DEFAULT 'Sin observación',
+  `activo` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id_pago`)
+) ENGINE=InnoDB AUTO_INCREMENT=135 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Truncar tablas antes de insertar `pagos`
+--
+
+TRUNCATE TABLE `pagos`;
+--
+-- Volcado de datos para la tabla `pagos`
+--
+
+INSERT INTO `pagos` (`id_pago`, `estado`, `observacion`, `activo`) VALUES
+(101, 'ANULADO', 'Pago de mensualidad Diciembre', 0),
+(102, 'ANULADO', 'Pago de mensualidad Enero', 0),
+(103, 'ANULADO', 'Abono a deuda', 0),
+(104, 'ANULADO', 'Pago en revisión', 0),
+(105, 'ANULADO', 'Pago mensualidad Marzo', 0),
+(116, 'Procesado', 'asdasd', 0),
+(117, 'RECHAZADO', 'sesss', 1),
+(118, 'ANULADO', 'si mi panax', 0),
+(119, 'PROCESADO', 'pago', 1),
+(120, 'ANULADO', 'mitasd de pagok', 0),
+(121, 'No verificado', 'Broder', 1),
+(122, 'PROCESADO', 'ssssssssssssssss', 1),
+(123, 'No verificado', '', 1),
+(124, 'ANULADO', 'xxxxxxxxxxxxx', 0),
+(127, 'PROCESADO', '', 1),
+(128, 'RECHAZADO', '', 1),
+(129, 'PROCESADO', '', 1),
+(131, 'PROCESADO', '', 1),
+(132, 'PROCESADO', 'pago de ayer', 1),
+(133, 'PROCESADO', 'Pago completo enero', 1),
+(134, 'PROCESADO', 'pago completo febrero', 1);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `pagos_mensualidad`
+--
+
+DROP TABLE IF EXISTS `pagos_mensualidad`;
+CREATE TABLE IF NOT EXISTS `pagos_mensualidad` (
+  `detalle_pago_id` int(11) NOT NULL,
+  `mensualidad_id` int(11) NOT NULL,
+  PRIMARY KEY (`detalle_pago_id`,`mensualidad_id`),
+  KEY `pagos_mensualidad_ibfk_2` (`mensualidad_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Truncar tablas antes de insertar `pagos_mensualidad`
+--
+
+TRUNCATE TABLE `pagos_mensualidad`;
+--
+-- Volcado de datos para la tabla `pagos_mensualidad`
+--
+
+INSERT INTO `pagos_mensualidad` (`detalle_pago_id`, `mensualidad_id`) VALUES
+(1022, 611),
+(1023, 611),
+(1024, 610),
+(1025, 642);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `periodos_mensualidad`
+--
+
+DROP TABLE IF EXISTS `periodos_mensualidad`;
+CREATE TABLE IF NOT EXISTS `periodos_mensualidad` (
+  `id_periodo` int(11) NOT NULL AUTO_INCREMENT,
+  `mes` varchar(2) NOT NULL,
+  `anio` varchar(4) NOT NULL,
+  `tasa_dolar` decimal(15,2) NOT NULL,
+  `activo` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id_periodo`),
+  UNIQUE KEY `periodo_unico` (`mes`,`anio`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Truncar tablas antes de insertar `periodos_mensualidad`
+--
+
+TRUNCATE TABLE `periodos_mensualidad`;
+--
+-- Volcado de datos para la tabla `periodos_mensualidad`
+--
+
+INSERT INTO `periodos_mensualidad` (`id_periodo`, `mes`, `anio`, `tasa_dolar`, `activo`) VALUES
+(1, '1', '2026', 455.25, 1),
+(2, '2', '2026', 476.43, 0),
+(3, '3', '2026', 455.25, 1);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `presupuesto`
+--
+
+DROP TABLE IF EXISTS `presupuesto`;
+CREATE TABLE IF NOT EXISTS `presupuesto` (
+  `id_presupuesto` int(11) NOT NULL AUTO_INCREMENT,
+  `fecha` date NOT NULL,
+  `cuota_reserva` float NOT NULL,
+  `observacion` varchar(50) NOT NULL DEFAULT 'Sin observación',
+  `activo` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id_presupuesto`)
+) ENGINE=InnoDB AUTO_INCREMENT=111 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Truncar tablas antes de insertar `presupuesto`
+--
+
+TRUNCATE TABLE `presupuesto`;
+--
+-- Volcado de datos para la tabla `presupuesto`
+--
+
+INSERT INTO `presupuesto` (`id_presupuesto`, `fecha`, `cuota_reserva`, `observacion`, `activo`) VALUES
+(106, '2026-01-01', 10, 'enero 2026', 1),
+(107, '2026-02-01', 230, 'febrero 2026 editado', 1),
+(110, '2026-03-01', 234, 'Sin observación', 1);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `presupuesto_mensualidad`
+--
+
+DROP TABLE IF EXISTS `presupuesto_mensualidad`;
+CREATE TABLE IF NOT EXISTS `presupuesto_mensualidad` (
+  `detalle_presupuesto_id` int(11) NOT NULL,
+  `mensualidad_id` int(11) NOT NULL,
+  PRIMARY KEY (`detalle_presupuesto_id`,`mensualidad_id`),
+  KEY `presupuesto_mensualidad_ibfk_2` (`mensualidad_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Truncar tablas antes de insertar `presupuesto_mensualidad`
+--
+
+TRUNCATE TABLE `presupuesto_mensualidad`;
+--
+-- Volcado de datos para la tabla `presupuesto_mensualidad`
+--
+
+INSERT INTO `presupuesto_mensualidad` (`detalle_presupuesto_id`, `mensualidad_id`) VALUES
+(1327, 610),
+(1327, 611),
+(1327, 612),
+(1327, 613),
+(1327, 614),
+(1327, 615),
+(1328, 610),
+(1328, 611),
+(1328, 612),
+(1328, 613),
+(1328, 614),
+(1328, 615),
+(1329, 610),
+(1329, 611),
+(1329, 612),
+(1329, 613),
+(1329, 614),
+(1329, 615),
+(1329, 641),
+(1330, 610),
+(1330, 611),
+(1330, 612),
+(1330, 613),
+(1330, 614),
+(1330, 615),
+(1330, 641),
+(1331, 610),
+(1331, 611),
+(1331, 612),
+(1331, 613),
+(1331, 614),
+(1331, 615),
+(1331, 641),
+(1332, 610),
+(1332, 611),
+(1332, 612),
+(1332, 613),
+(1332, 614),
+(1332, 615),
+(1332, 641),
+(1334, 610),
+(1334, 611),
+(1334, 612),
+(1334, 613),
+(1334, 614),
+(1334, 615),
+(1334, 641),
+(1335, 610),
+(1335, 611),
+(1335, 612),
+(1335, 613),
+(1335, 614),
+(1335, 615),
+(1336, 610),
+(1336, 611),
+(1336, 612),
+(1336, 613),
+(1336, 614),
+(1336, 615),
+(1337, 610),
+(1337, 611),
+(1337, 612),
+(1337, 613),
+(1337, 614),
+(1337, 615),
+(1338, 610),
+(1338, 611),
+(1338, 612),
+(1338, 613),
+(1338, 614),
+(1338, 615),
+(1353, 642),
+(1353, 643),
+(1353, 644),
+(1353, 645),
+(1353, 646),
+(1353, 647),
+(1353, 648),
+(1354, 642),
+(1354, 643),
+(1354, 644),
+(1354, 645),
+(1354, 646),
+(1354, 647),
+(1354, 648),
+(1355, 642),
+(1355, 643),
+(1355, 644),
+(1355, 645),
+(1355, 646),
+(1355, 647),
+(1355, 648),
+(1356, 642),
+(1356, 643),
+(1356, 644),
+(1356, 645),
+(1356, 646),
+(1356, 647),
+(1356, 648),
+(1357, 616),
+(1357, 617),
+(1357, 618),
+(1357, 619),
+(1357, 620),
+(1357, 621),
+(1357, 642),
+(1357, 643),
+(1357, 644),
+(1357, 645),
+(1357, 646),
+(1357, 647),
+(1357, 648),
+(1357, 649),
+(1357, 650),
+(1357, 651),
+(1357, 652),
+(1357, 653),
+(1357, 654),
+(1357, 655),
+(1358, 617),
+(1358, 620),
+(1358, 644),
+(1358, 646),
+(1358, 647),
+(1358, 648),
+(1358, 651),
+(1358, 654),
+(1358, 655),
+(1361, 642),
+(1361, 643),
+(1361, 644),
+(1361, 645),
+(1361, 646),
+(1361, 647),
+(1361, 648),
+(1361, 649),
+(1361, 650),
+(1361, 651),
+(1361, 652),
+(1361, 653),
+(1361, 654),
+(1361, 655),
+(1362, 642),
+(1362, 643),
+(1362, 644),
+(1362, 645),
+(1362, 646),
+(1362, 647),
+(1362, 648),
+(1362, 649),
+(1362, 650),
+(1362, 651),
+(1362, 652),
+(1362, 653),
+(1362, 654),
+(1362, 655),
+(1387, 634),
+(1387, 635),
+(1387, 636),
+(1387, 637),
+(1387, 638),
+(1387, 639),
+(1387, 640);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `proveedores`
+--
+
+DROP TABLE IF EXISTS `proveedores`;
+CREATE TABLE IF NOT EXISTS `proveedores` (
+  `id_proveedor` int(11) NOT NULL AUTO_INCREMENT,
+  `nombre_proveedor` varchar(100) NOT NULL,
+  `servicio` varchar(100) NOT NULL,
+  `rif` varchar(20) NOT NULL,
+  `direccion` text NOT NULL,
+  `activo` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id_proveedor`)
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Truncar tablas antes de insertar `proveedores`
+--
+
+TRUNCATE TABLE `proveedores`;
+--
+-- Volcado de datos para la tabla `proveedores`
+--
+
+INSERT INTO `proveedores` (`id_proveedor`, `nombre_proveedor`, `servicio`, `rif`, `direccion`, `activo`) VALUES
+(1, 'Administración (Caja Chica)', 'Reposición de Caja', 'J0000000', 'Oficina Administrativa', 1),
+(2, 'Proimca', 'Luz', 'V3434523', 'Quibor', 1),
+(3, 'Jardinero', 'Trabajos en jardineria', 'E13123343', 'terminal', 1),
+(4, 'Reparaciones CA', 'Reparara', 'V2342344', 'Zona industrial', 1),
+(5, 'Gas Lara', 'Gas', 'V2352345', 'Lara', 1),
+(14, 'pepe', 'pepes', 'E1231245', 'Pepelandia', 1);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `reposiciones`
+--
+
+DROP TABLE IF EXISTS `reposiciones`;
+CREATE TABLE IF NOT EXISTS `reposiciones` (
+  `gasto_id` int(11) NOT NULL,
+  `movimiento_caja_id` int(11) NOT NULL,
+  PRIMARY KEY (`gasto_id`,`movimiento_caja_id`),
+  KEY `reposiciones_ibfk_2` (`movimiento_caja_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Truncar tablas antes de insertar `reposiciones`
+--
+
+TRUNCATE TABLE `reposiciones`;
+--
+-- Volcado de datos para la tabla `reposiciones`
+--
+
+INSERT INTO `reposiciones` (`gasto_id`, `movimiento_caja_id`) VALUES
+(208, 42),
+(208, 43);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `solicitudes_gasto`
+--
+
+DROP TABLE IF EXISTS `solicitudes_gasto`;
+CREATE TABLE IF NOT EXISTS `solicitudes_gasto` (
+  `id_solicitud` int(11) NOT NULL AUTO_INCREMENT,
+  `fecha_reporte` date NOT NULL,
+  `descripcion_necesidad` varchar(100) NOT NULL,
+  `nombre_solicitante` varchar(20) NOT NULL,
+  `monto_estimado` float NOT NULL,
+  `estado` varchar(20) NOT NULL,
+  `presupuesto_id` int(11) NOT NULL,
+  `prioridad` varchar(20) NOT NULL,
+  `activo` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id_solicitud`),
+  KEY `presupuesto_mensual_id` (`presupuesto_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Truncar tablas antes de insertar `solicitudes_gasto`
+--
+
+TRUNCATE TABLE `solicitudes_gasto`;
+--
+-- Volcado de datos para la tabla `solicitudes_gasto`
+--
+
+INSERT INTO `solicitudes_gasto` (`id_solicitud`, `fecha_reporte`, `descripcion_necesidad`, `nombre_solicitante`, `monto_estimado`, `estado`, `presupuesto_id`, `prioridad`, `activo`) VALUES
+(15, '2026-03-18', 'asdasdasdas', 'aasasd', 12, 'Pendiente', 106, '2', 1),
+(16, '2026-04-12', 'ssssss', 'aaaaa', 12, 'Pendiente', 106, '1', 1),
+(17, '2026-04-11', 'asassss', 'miguel', 10, 'Pendiente', 110, '3', 1);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `tipo_gasto`
+--
+
+DROP TABLE IF EXISTS `tipo_gasto`;
+CREATE TABLE IF NOT EXISTS `tipo_gasto` (
+  `id_tipo_gasto` int(11) NOT NULL AUTO_INCREMENT,
+  `nombre_tipo_gasto` varchar(50) NOT NULL,
+  `activo` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id_tipo_gasto`)
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Truncar tablas antes de insertar `tipo_gasto`
+--
+
+TRUNCATE TABLE `tipo_gasto`;
+--
+-- Volcado de datos para la tabla `tipo_gasto`
+--
+
+INSERT INTO `tipo_gasto` (`id_tipo_gasto`, `nombre_tipo_gasto`, `activo`) VALUES
+(1, 'Reposición de Caja Chica', 1),
+(2, 'Servicios Públicos', 1),
+(3, 'Personal y Obligaciones Laborales', 1),
+(4, 'Mantenimientos y Reparaciones', 1),
+(5, 'Servicio de Gas', 1),
+(9, 'Suministros de Limpieza y Operacion', 1),
+(10, 'Gastos Administrativos y Financieros', 1),
+(14, 'random', 0),
+(15, 'hola', 0),
+(16, 'aaaa', 0);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura Stand-in para la vista `vw_ejecucion_presupuesto`
+-- (Véase abajo para la vista actual)
+--
+DROP VIEW IF EXISTS `vw_ejecucion_presupuesto`;
+CREATE TABLE IF NOT EXISTS `vw_ejecucion_presupuesto` (
+`id_presupuesto` int(11)
+,`anio_presupuesto` int(4)
+,`descripcion_presupuesto` varchar(50)
+,`partida` varchar(50)
+,`monto_presupuestado` decimal(15,2)
+,`monto_ejecutado` decimal(37,2)
+,`disponible` decimal(38,2)
+);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura Stand-in para la vista `vw_estado_cuentas_mensualidad`
+-- (Véase abajo para la vista actual)
+--
+DROP VIEW IF EXISTS `vw_estado_cuentas_mensualidad`;
+CREATE TABLE IF NOT EXISTS `vw_estado_cuentas_mensualidad` (
+`id_mensualidad` int(11)
+,`nro_apartamento` varchar(3)
+,`mes` varchar(2)
+,`anio` varchar(4)
+,`monto_cuota` decimal(15,2)
+,`total_abonado` decimal(37,2)
+,`deuda_pendiente` decimal(38,2)
+,`estado_pago` varchar(9)
+);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura Stand-in para la vista `vw_saldo_caja_chica`
+-- (Véase abajo para la vista actual)
+--
+DROP VIEW IF EXISTS `vw_saldo_caja_chica`;
+CREATE TABLE IF NOT EXISTS `vw_saldo_caja_chica` (
+`id_caja_chica` int(11)
+,`estado` varchar(20)
+,`monto_base` decimal(15,2)
+,`total_gastado_pendiente` decimal(37,2)
+,`saldo_disponible` decimal(38,2)
+);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura para la vista `vw_ejecucion_presupuesto`
+--
+DROP TABLE IF EXISTS `vw_ejecucion_presupuesto`;
+
+DROP VIEW IF EXISTS `vw_ejecucion_presupuesto`;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vw_ejecucion_presupuesto`  AS SELECT `p`.`id_presupuesto` AS `id_presupuesto`, year(`p`.`fecha`) AS `anio_presupuesto`, `p`.`observacion` AS `descripcion_presupuesto`, `tg`.`nombre_tipo_gasto` AS `partida`, `dp`.`monto` AS `monto_presupuestado`, ifnull((select sum(`dg`.`monto`) from (`gastos` `g` join `detalles_gastos` `dg` on(`g`.`id_gasto` = `dg`.`gasto_id`)) where `g`.`tipo_gasto_id` = `dp`.`tipo_gasto_id` and year(`dg`.`fecha`) = year(`p`.`fecha`) and `g`.`activo` = 1),0) AS `monto_ejecutado`, `dp`.`monto`- ifnull((select sum(`dg`.`monto`) from (`gastos` `g` join `detalles_gastos` `dg` on(`g`.`id_gasto` = `dg`.`gasto_id`)) where `g`.`tipo_gasto_id` = `dp`.`tipo_gasto_id` and year(`dg`.`fecha`) = year(`p`.`fecha`) and `g`.`activo` = 1),0) AS `disponible` FROM ((`presupuesto` `p` join `detalles_presupuesto` `dp` on(`p`.`id_presupuesto` = `dp`.`presupuesto_id`)) join `tipo_gasto` `tg` on(`dp`.`tipo_gasto_id` = `tg`.`id_tipo_gasto`)) WHERE `p`.`activo` = 1 ;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura para la vista `vw_estado_cuentas_mensualidad`
+--
+DROP TABLE IF EXISTS `vw_estado_cuentas_mensualidad`;
+
+DROP VIEW IF EXISTS `vw_estado_cuentas_mensualidad`;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vw_estado_cuentas_mensualidad`  AS SELECT `m`.`id_mensualidad` AS `id_mensualidad`, `a`.`nro_apartamento` AS `nro_apartamento`, `p`.`mes` AS `mes`, `p`.`anio` AS `anio`, `m`.`monto` AS `monto_cuota`, ifnull((select sum(`dp`.`monto`) from ((`pagos_mensualidad` `pm` join `detalles_pagos` `dp` on(`pm`.`detalle_pago_id` = `dp`.`id_detalle_pago`)) join `pagos` `pg` on(`dp`.`pago_id` = `pg`.`id_pago`)) where `pm`.`mensualidad_id` = `m`.`id_mensualidad` and `pg`.`activo` = 1),0) AS `total_abonado`, `m`.`monto`- ifnull((select sum(`dp`.`monto`) from ((`pagos_mensualidad` `pm` join `detalles_pagos` `dp` on(`pm`.`detalle_pago_id` = `dp`.`id_detalle_pago`)) join `pagos` `pg` on(`dp`.`pago_id` = `pg`.`id_pago`)) where `pm`.`mensualidad_id` = `m`.`id_mensualidad` and `pg`.`activo` = 1),0) AS `deuda_pendiente`, CASE WHEN `m`.`monto` - ifnull((select sum(`dp`.`monto`) from ((`pagos_mensualidad` `pm` join `detalles_pagos` `dp` on(`pm`.`detalle_pago_id` = `dp`.`id_detalle_pago`)) join `pagos` `pg` on(`dp`.`pago_id` = `pg`.`id_pago`)) where `pm`.`mensualidad_id` = `m`.`id_mensualidad` AND `pg`.`activo` = 1),0) <= 0 THEN 'Solvente' ELSE 'Pendiente' END AS `estado_pago` FROM ((`mensualidad` `m` join `apartamentos` `a` on(`m`.`apartamento_id` = `a`.`id_apartamento`)) join `periodos_mensualidad` `p` on(`m`.`periodo_id` = `p`.`id_periodo`)) WHERE `m`.`activo` = 1 AND `a`.`activo` = 1 ;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura para la vista `vw_saldo_caja_chica`
+--
+DROP TABLE IF EXISTS `vw_saldo_caja_chica`;
+
+DROP VIEW IF EXISTS `vw_saldo_caja_chica`;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vw_saldo_caja_chica`  AS SELECT `cc`.`id_caja_chica` AS `id_caja_chica`, `cc`.`estado` AS `estado`, `cc`.`fondo_fijo` AS `monto_base`, ifnull((select sum(`mc`.`monto`) from `movimientos_caja` `mc` where `mc`.`caja_chica_id` = `cc`.`id_caja_chica` and `mc`.`activo` = 1 and `mc`.`estado` <> 'Repuesto'),0) AS `total_gastado_pendiente`, `cc`.`fondo_fijo`- ifnull((select sum(`mc`.`monto`) from `movimientos_caja` `mc` where `mc`.`caja_chica_id` = `cc`.`id_caja_chica` and `mc`.`activo` = 1 and `mc`.`estado` <> 'Repuesto'),0) AS `saldo_disponible` FROM `caja_chica` AS `cc` WHERE `cc`.`activo` = 1 ;
+
+--
+-- Restricciones para tablas volcadas
+--
+
+--
+-- Filtros para la tabla `caja_chica`
+--
+ALTER TABLE `caja_chica`
+  ADD CONSTRAINT `caja_chica_ibfk_1` FOREIGN KEY (`anio_fiscal_id`) REFERENCES `anio_fiscal` (`id_anio_fiscal`);
+
+--
+-- Filtros para la tabla `detalles_gastos`
+--
+ALTER TABLE `detalles_gastos`
+  ADD CONSTRAINT `detalles_gastos_ibfk_1` FOREIGN KEY (`gasto_id`) REFERENCES `gastos` (`id_gasto`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Filtros para la tabla `detalles_pagos`
+--
+ALTER TABLE `detalles_pagos`
+  ADD CONSTRAINT `detalles_pagos_ibfk_1` FOREIGN KEY (`pago_id`) REFERENCES `pagos` (`id_pago`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Filtros para la tabla `detalles_presupuesto`
+--
+ALTER TABLE `detalles_presupuesto`
+  ADD CONSTRAINT `detalles_presupuesto_ibfk_1` FOREIGN KEY (`presupuesto_id`) REFERENCES `presupuesto` (`id_presupuesto`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `detalles_presupuesto_ibfk_2` FOREIGN KEY (`tipo_gasto_id`) REFERENCES `tipo_gasto` (`id_tipo_gasto`) ON UPDATE CASCADE;
+
+--
+-- Filtros para la tabla `egresos_bancarios`
+--
+ALTER TABLE `egresos_bancarios`
+  ADD CONSTRAINT `egresos_bancarios_ibfk_1` FOREIGN KEY (`detalle_gasto_id`) REFERENCES `detalles_gastos` (`id_detalle_gasto`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `egresos_bancarios_ibfk_2` FOREIGN KEY (`banco_id`) REFERENCES `bancos` (`id_banco`);
+
+--
+-- Filtros para la tabla `gastos`
+--
+ALTER TABLE `gastos`
+  ADD CONSTRAINT `gastos_ibfk_1` FOREIGN KEY (`proveedor_id`) REFERENCES `proveedores` (`id_proveedor`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `gastos_ibfk_2` FOREIGN KEY (`tipo_gasto_id`) REFERENCES `tipo_gasto` (`id_tipo_gasto`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `gastos_ibfk_3` FOREIGN KEY (`solicitud_id`) REFERENCES `solicitudes_gasto` (`id_solicitud`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Filtros para la tabla `habitantes_apartamentos`
+--
+ALTER TABLE `habitantes_apartamentos`
+  ADD CONSTRAINT `habitantes_apartamentos_ibfk_1` FOREIGN KEY (`apartamento_id`) REFERENCES `apartamentos` (`id_apartamento`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `habitantes_apartamentos_ibfk_2` FOREIGN KEY (`habitante_id`) REFERENCES `habitantes` (`id_habitante`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Filtros para la tabla `ingresos_bancarios`
+--
+ALTER TABLE `ingresos_bancarios`
+  ADD CONSTRAINT `ingresos_bancarios_ibfk_1` FOREIGN KEY (`detalle_pago_id`) REFERENCES `detalles_pagos` (`id_detalle_pago`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `ingresos_bancarios_ibfk_2` FOREIGN KEY (`banco_id`) REFERENCES `bancos` (`id_banco`);
+
+--
+-- Filtros para la tabla `mensualidad`
+--
+ALTER TABLE `mensualidad`
+  ADD CONSTRAINT `mensualidad_ibfk_1` FOREIGN KEY (`apartamento_id`) REFERENCES `apartamentos` (`id_apartamento`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `mensualidad_ibfk_periodo` FOREIGN KEY (`periodo_id`) REFERENCES `periodos_mensualidad` (`id_periodo`) ON UPDATE CASCADE;
+
+--
+-- Filtros para la tabla `movimientos_caja`
+--
+ALTER TABLE `movimientos_caja`
+  ADD CONSTRAINT `movimientos_caja_ibfk_1` FOREIGN KEY (`caja_chica_id`) REFERENCES `caja_chica` (`id_caja_chica`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Filtros para la tabla `pagos_mensualidad`
+--
+ALTER TABLE `pagos_mensualidad`
+  ADD CONSTRAINT `pagos_mensualidad_ibfk_2` FOREIGN KEY (`mensualidad_id`) REFERENCES `mensualidad` (`id_mensualidad`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `pagos_mensualidad_ibfk_3` FOREIGN KEY (`detalle_pago_id`) REFERENCES `detalles_pagos` (`id_detalle_pago`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Filtros para la tabla `presupuesto_mensualidad`
+--
+ALTER TABLE `presupuesto_mensualidad`
+  ADD CONSTRAINT `presupuesto_mensualidad_ibfk_1` FOREIGN KEY (`detalle_presupuesto_id`) REFERENCES `detalles_presupuesto` (`id_detalle_presupuesto`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `presupuesto_mensualidad_ibfk_2` FOREIGN KEY (`mensualidad_id`) REFERENCES `mensualidad` (`id_mensualidad`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Filtros para la tabla `reposiciones`
+--
+ALTER TABLE `reposiciones`
+  ADD CONSTRAINT `reposiciones_ibfk_1` FOREIGN KEY (`gasto_id`) REFERENCES `gastos` (`id_gasto`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `reposiciones_ibfk_2` FOREIGN KEY (`movimiento_caja_id`) REFERENCES `movimientos_caja` (`id_movimiento_caja`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Filtros para la tabla `solicitudes_gasto`
+--
+ALTER TABLE `solicitudes_gasto`
+  ADD CONSTRAINT `solicitudes_gasto_ibfk_1` FOREIGN KEY (`presupuesto_id`) REFERENCES `presupuesto` (`id_presupuesto`) ON DELETE CASCADE ON UPDATE CASCADE;
+--
 -- Base de datos: `seguridad_haydee_db`
 --
-
-DELIMITER $$
---
--- Procedimientos
---
-CREATE DEFINER=`app_condominio`@`localhost` PROCEDURE `sp_insertar_token` (IN `p_usuario_id` INT, IN `p_tipo` VARCHAR(50), IN `p_token` VARCHAR(255), IN `p_fecha_expiracion` DATETIME)   BEGIN
-    DELETE FROM tokens_seguridad 
-    WHERE usuario_id = p_usuario_id 
-      AND tipo = p_tipo;
-
-    INSERT INTO tokens_seguridad (usuario_id, tipo, token, fecha_expiracion)
-    VALUES (p_usuario_id, p_tipo, p_token, p_fecha_expiracion);
-END$$
-
-CREATE DEFINER=`app_condominio`@`localhost` PROCEDURE `sp_notificar_administradores` (IN `p_titulo` VARCHAR(100), IN `p_descripcion` TEXT, IN `p_tabla_origen` VARCHAR(50), IN `p_id_registro_origen` INT, IN `p_tipo_evento` VARCHAR(50))   BEGIN
-    DECLARE v_evento_id INT;
-    DECLARE v_usuario_id INT;
-    DECLARE v_notificacion_id INT;
-    DECLARE done INT DEFAULT FALSE;
-    
-    DECLARE cur_admins CURSOR FOR 
-        SELECT id_usuario FROM usuarios WHERE rol_id IN (1, 2) AND activo = 1;
-    
-    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
-
-    INSERT INTO eventos_sistema (tipo_evento, tabla_origen, id_registro_origen, fecha_evento)
-    VALUES (p_tipo_evento, p_tabla_origen, p_id_registro_origen, NOW());
-    
-    SET v_evento_id = LAST_INSERT_ID();
-
-    OPEN cur_admins;
-
-    read_loop: LOOP
-        FETCH cur_admins INTO v_usuario_id;
-        IF done THEN
-            LEAVE read_loop;
-        END IF;
-
-        INSERT INTO notificaciones (titulo, descripcion, fecha, leido, usuario_id)
-        VALUES (p_titulo, p_descripcion, CURDATE(), 0, v_usuario_id);
-        
-        SET v_notificacion_id = LAST_INSERT_ID();
-        
-        INSERT INTO notificacion_evento (notificacion_id, evento_id)
-        VALUES (v_notificacion_id, v_evento_id);
-
-    END LOOP;
-
-    CLOSE cur_admins;
-END$$
-
-DELIMITER ;
+DROP DATABASE IF EXISTS `seguridad_haydee_db`;
+CREATE DATABASE IF NOT EXISTS `seguridad_haydee_db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+USE `seguridad_haydee_db`;
 
 -- --------------------------------------------------------
 
@@ -79,12 +1339,21 @@ DELIMITER ;
 -- Estructura de tabla para la tabla `asignacion_permisos`
 --
 
-CREATE TABLE `asignacion_permisos` (
+DROP TABLE IF EXISTS `asignacion_permisos`;
+CREATE TABLE IF NOT EXISTS `asignacion_permisos` (
   `rol_id` int(11) NOT NULL,
   `permiso_id` int(11) NOT NULL,
-  `modulo_id` int(11) NOT NULL
+  `modulo_id` int(11) NOT NULL,
+  PRIMARY KEY (`rol_id`,`permiso_id`,`modulo_id`) USING BTREE,
+  KEY `asignacion_permisos_ibfk_1` (`modulo_id`),
+  KEY `asignacion_permisos_ibfk_2` (`permiso_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Truncar tablas antes de insertar `asignacion_permisos`
+--
+
+TRUNCATE TABLE `asignacion_permisos`;
 --
 -- Volcado de datos para la tabla `asignacion_permisos`
 --
@@ -280,7 +1549,6 @@ INSERT INTO `asignacion_permisos` (`rol_id`, `permiso_id`, `modulo_id`) VALUES
 (4, 2, 3),
 (4, 2, 4),
 (4, 2, 15),
-(4, 2, 16),
 (4, 3, 1),
 (4, 3, 2),
 (4, 3, 3),
@@ -352,16 +1620,25 @@ INSERT INTO `asignacion_permisos` (`rol_id`, `permiso_id`, `modulo_id`) VALUES
 -- Estructura de tabla para la tabla `bitacora`
 --
 
-CREATE TABLE `bitacora` (
-  `id_bitacora` int(11) NOT NULL,
+DROP TABLE IF EXISTS `bitacora`;
+CREATE TABLE IF NOT EXISTS `bitacora` (
+  `id_bitacora` int(11) NOT NULL AUTO_INCREMENT,
   `fecha_hora` datetime NOT NULL,
   `accion` varchar(100) NOT NULL,
   `usuario_id` int(11) NOT NULL,
   `modulo_id` int(11) NOT NULL,
   `valores_anteriores` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT '{}' CHECK (json_valid(`valores_anteriores`)),
-  `valores_nuevos` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT '{}' CHECK (json_valid(`valores_nuevos`))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `valores_nuevos` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT '{}' CHECK (json_valid(`valores_nuevos`)),
+  PRIMARY KEY (`id_bitacora`),
+  KEY `bitacora_ibfk_1` (`usuario_id`),
+  KEY `bitacora_ibfk_2` (`modulo_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3184 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Truncar tablas antes de insertar `bitacora`
+--
+
+TRUNCATE TABLE `bitacora`;
 --
 -- Volcado de datos para la tabla `bitacora`
 --
@@ -2754,7 +4031,782 @@ INSERT INTO `bitacora` (`id_bitacora`, `fecha_hora`, `accion`, `usuario_id`, `mo
 (2406, '2026-03-28 20:17:36', 'CONSULTAR', 1, 1, '{}', '{}'),
 (2407, '2026-03-28 20:18:57', 'CERRAR SESION', 1, 14, '{}', '{}'),
 (2408, '2026-03-28 20:19:19', 'INICIAR SESION', 1, 14, '{}', '{}'),
-(2409, '2026-03-28 20:19:26', 'CONSULTAR', 1, 2, '{}', '{}');
+(2409, '2026-03-28 20:19:26', 'CONSULTAR', 1, 2, '{}', '{}'),
+(2410, '2026-03-30 10:39:42', 'CONSULTAR', 1, 15, '{}', '{}'),
+(2411, '2026-03-30 10:40:41', 'DESCARGAR', 1, 15, '{}', '{\"tipo_reporte\":\"Constancia de Residencia\",\"habitante\":\"jesus asdasda\"}'),
+(2412, '2026-03-30 10:40:52', 'DESCARGAR', 1, 15, '{}', '{\"tipo_reporte\":\"Cuadro de Pagos\",\"periodo\":\"febrero del 2026\"}'),
+(2413, '2026-03-30 11:02:17', 'CONSULTAR', 1, 15, '{}', '{}'),
+(2414, '2026-03-30 11:02:53', 'CONSULTAR', 1, 15, '{}', '{}'),
+(2415, '2026-03-30 11:18:56', 'CONSULTAR', 1, 15, '{}', '{}'),
+(2416, '2026-03-30 11:20:04', 'CONSULTAR', 1, 15, '{}', '{}'),
+(2417, '2026-03-30 11:20:10', 'CONSULTAR', 1, 15, '{}', '{}'),
+(2418, '2026-03-30 11:21:29', 'CONSULTAR', 1, 15, '{}', '{}'),
+(2419, '2026-03-30 11:22:06', 'CONSULTAR', 1, 15, '{}', '{}'),
+(2420, '2026-03-30 11:24:12', 'CONSULTAR', 1, 15, '{}', '{}'),
+(2421, '2026-03-30 11:33:00', 'CONSULTAR', 1, 15, '{}', '{}'),
+(2422, '2026-03-30 11:33:07', 'CONSULTAR', 1, 15, '{}', '{}'),
+(2423, '2026-03-30 11:33:39', 'CONSULTAR', 1, 15, '{}', '{}'),
+(2424, '2026-03-30 11:35:04', 'CONSULTAR', 1, 15, '{}', '{}'),
+(2425, '2026-03-30 11:35:10', 'CONSULTAR', 1, 15, '{}', '{}'),
+(2426, '2026-03-30 11:35:19', 'CONSULTAR', 1, 15, '{}', '{}'),
+(2427, '2026-03-30 11:36:39', 'CONSULTAR', 1, 15, '{}', '{}'),
+(2428, '2026-03-30 11:37:18', 'CONSULTAR', 1, 15, '{}', '{}'),
+(2429, '2026-03-30 11:38:31', 'CONSULTAR', 1, 15, '{}', '{}'),
+(2430, '2026-03-30 11:43:08', 'CONSULTAR', 1, 15, '{}', '{}'),
+(2431, '2026-03-30 11:43:19', 'CONSULTAR', 1, 15, '{}', '{}'),
+(2432, '2026-03-30 11:43:50', 'CONSULTAR', 1, 15, '{}', '{}'),
+(2433, '2026-04-02 15:39:46', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2434, '2026-04-02 15:39:53', 'CONSULTAR', 1, 2, '{}', '{}'),
+(2435, '2026-04-02 15:40:00', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2436, '2026-04-02 15:40:08', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2437, '2026-04-02 15:40:17', 'CONSULTAR', 1, 5, '{}', '{}'),
+(2438, '2026-04-02 15:40:27', 'CONSULTAR', 1, 6, '{}', '{}'),
+(2439, '2026-04-02 15:40:54', 'CONSULTAR', 1, 7, '{}', '{}'),
+(2440, '2026-04-02 15:40:58', 'CONSULTAR', 1, 8, '{}', '{}'),
+(2441, '2026-04-02 15:41:09', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2442, '2026-04-02 15:41:19', 'CONSULTAR', 1, 11, '{}', '{}'),
+(2443, '2026-04-02 15:41:25', 'CONSULTAR', 1, 12, '{}', '{}'),
+(2444, '2026-04-02 15:41:30', 'CONSULTAR', 1, 13, '{}', '{}'),
+(2445, '2026-04-02 15:41:36', 'CONSULTAR', 1, 14, '{}', '{}'),
+(2446, '2026-04-02 15:41:41', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2447, '2026-04-02 15:42:08', 'CONSULTAR', 1, 22, '{}', '{}'),
+(2448, '2026-04-02 15:42:17', 'CONSULTAR', 1, 19, '{}', '{}'),
+(2449, '2026-04-02 16:19:22', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(2450, '2026-04-02 16:19:27', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(2451, '2026-04-02 16:23:59', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2452, '2026-04-02 16:34:07', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2453, '2026-04-02 16:34:16', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2454, '2026-04-02 16:34:24', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2455, '2026-04-02 16:35:24', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2456, '2026-04-02 16:43:17', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2457, '2026-04-02 16:50:11', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2458, '2026-04-02 16:50:28', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2459, '2026-04-02 16:55:04', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2460, '2026-04-02 16:57:12', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2461, '2026-04-02 17:00:09', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2462, '2026-04-02 17:00:54', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2463, '2026-04-02 17:05:46', 'CONSULTAR', 1, 6, '{}', '{}'),
+(2464, '2026-04-02 17:07:34', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2465, '2026-04-02 17:07:41', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2466, '2026-04-02 17:07:53', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2467, '2026-04-02 17:07:57', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2468, '2026-04-02 17:08:19', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2469, '2026-04-02 17:09:58', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2470, '2026-04-02 17:18:37', 'CONSULTAR', 1, 6, '{}', '{}'),
+(2471, '2026-04-02 17:18:41', 'CONSULTAR', 1, 6, '{}', '{}'),
+(2472, '2026-04-02 17:24:31', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2473, '2026-04-02 17:25:00', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2474, '2026-04-02 17:28:37', 'CONSULTAR', 1, 6, '{}', '{}'),
+(2475, '2026-04-02 17:28:42', 'CONSULTAR', 1, 6, '{}', '{}'),
+(2476, '2026-04-02 17:30:47', 'CONSULTAR', 1, 5, '{}', '{}'),
+(2477, '2026-04-02 17:32:02', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2478, '2026-04-02 17:35:02', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2479, '2026-04-02 17:35:09', 'CONSULTAR', 1, 2, '{}', '{}'),
+(2480, '2026-04-02 17:35:11', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2481, '2026-04-02 17:35:23', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2482, '2026-04-02 17:35:28', 'CONSULTAR', 1, 5, '{}', '{}'),
+(2483, '2026-04-02 17:35:31', 'CONSULTAR', 1, 6, '{}', '{}'),
+(2484, '2026-04-02 17:35:33', 'CONSULTAR', 1, 7, '{}', '{}'),
+(2485, '2026-04-02 17:35:36', 'CONSULTAR', 1, 8, '{}', '{}'),
+(2486, '2026-04-02 17:35:38', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2487, '2026-04-02 17:35:47', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2488, '2026-04-02 17:37:03', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2489, '2026-04-02 17:37:27', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2490, '2026-04-02 17:38:00', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2491, '2026-04-02 17:38:24', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2492, '2026-04-02 17:39:53', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2493, '2026-04-02 17:40:18', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2494, '2026-04-02 17:40:45', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2495, '2026-04-02 22:30:31', 'CONSULTAR', 1, 8, '{}', '{}'),
+(2496, '2026-04-02 22:31:18', 'CONSULTAR', 1, 23, '{}', '{}'),
+(2497, '2026-04-02 22:31:27', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2498, '2026-04-02 22:34:04', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2499, '2026-04-02 22:35:09', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2500, '2026-04-02 22:35:21', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2501, '2026-04-02 22:37:10', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2502, '2026-04-02 22:37:33', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2503, '2026-04-02 22:38:15', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2504, '2026-04-02 22:39:53', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2505, '2026-04-02 22:46:21', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2506, '2026-04-02 22:46:45', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2507, '2026-04-02 22:47:25', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2508, '2026-04-02 22:48:23', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2509, '2026-04-02 22:50:52', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2510, '2026-04-02 22:51:50', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2511, '2026-04-02 22:52:19', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2512, '2026-04-02 22:52:45', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2513, '2026-04-02 22:54:22', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2514, '2026-04-02 22:54:52', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2515, '2026-04-02 22:55:08', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2516, '2026-04-02 22:56:21', 'CONSULTAR', 1, 23, '{}', '{}'),
+(2517, '2026-04-02 22:56:46', 'CONSULTAR', 1, 23, '{}', '{}'),
+(2518, '2026-04-02 22:57:42', 'CONSULTAR', 1, 23, '{}', '{}'),
+(2519, '2026-04-02 22:57:52', 'CONSULTAR', 1, 23, '{}', '{}'),
+(2520, '2026-04-02 23:00:34', 'CONSULTAR', 1, 23, '{}', '{}'),
+(2521, '2026-04-02 23:00:50', 'CONSULTAR', 1, 23, '{}', '{}'),
+(2522, '2026-04-02 23:01:50', 'CONSULTAR', 1, 23, '{}', '{}'),
+(2523, '2026-04-02 23:02:10', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2524, '2026-04-02 23:09:07', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2525, '2026-04-02 23:09:47', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2526, '2026-04-02 23:10:03', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2527, '2026-04-02 23:11:57', 'CONSULTAR', 1, 23, '{}', '{}'),
+(2528, '2026-04-02 23:12:01', 'CONSULTAR', 1, 22, '{}', '{}'),
+(2529, '2026-04-02 23:14:18', 'CONSULTAR', 1, 22, '{}', '{}'),
+(2530, '2026-04-02 23:14:28', 'CONSULTAR', 1, 23, '{}', '{}'),
+(2531, '2026-04-02 23:14:31', 'CONSULTAR', 1, 22, '{}', '{}'),
+(2532, '2026-04-02 23:14:55', 'CONSULTAR', 1, 22, '{}', '{}'),
+(2533, '2026-04-02 23:16:05', 'CONSULTAR', 1, 22, '{}', '{}'),
+(2534, '2026-04-02 23:16:31', 'CONSULTAR', 1, 22, '{}', '{}'),
+(2535, '2026-04-02 23:17:09', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2536, '2026-04-02 23:18:41', 'CONSULTAR', 1, 23, '{}', '{}'),
+(2537, '2026-04-02 23:20:47', 'CONSULTAR', 1, 23, '{}', '{}'),
+(2538, '2026-04-02 23:21:02', 'CONSULTAR', 1, 22, '{}', '{}'),
+(2539, '2026-04-02 23:21:16', 'CONSULTAR', 1, 23, '{}', '{}'),
+(2540, '2026-04-02 23:21:34', 'CONSULTAR', 1, 23, '{}', '{}'),
+(2541, '2026-04-02 23:21:54', 'CONSULTAR', 1, 23, '{}', '{}'),
+(2542, '2026-04-02 23:22:55', 'CONSULTAR', 1, 23, '{}', '{}'),
+(2543, '2026-04-02 23:23:41', 'CONSULTAR', 1, 23, '{}', '{}'),
+(2544, '2026-04-02 23:24:11', 'CONSULTAR', 1, 23, '{}', '{}'),
+(2545, '2026-04-02 23:24:28', 'CONSULTAR', 1, 23, '{}', '{}'),
+(2546, '2026-04-02 23:24:49', 'CONSULTAR', 1, 23, '{}', '{}'),
+(2547, '2026-04-02 23:25:40', 'CONSULTAR', 1, 13, '{}', '{}'),
+(2548, '2026-04-02 23:26:07', 'CONSULTAR', 1, 7, '{}', '{}'),
+(2549, '2026-04-02 23:26:42', 'CONSULTAR', 1, 23, '{}', '{}'),
+(2550, '2026-04-04 12:34:36', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2551, '2026-04-04 12:34:39', 'CONSULTAR', 1, 2, '{}', '{}'),
+(2552, '2026-04-04 12:34:55', 'CONSULTAR', 1, 2, '{}', '{}'),
+(2553, '2026-04-04 12:34:58', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2554, '2026-04-04 12:34:59', 'CONSULTAR', 1, 2, '{}', '{}'),
+(2555, '2026-04-04 12:35:01', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2556, '2026-04-04 12:36:19', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2557, '2026-04-04 12:36:21', 'CONSULTAR', 1, 2, '{}', '{}'),
+(2558, '2026-04-04 12:36:23', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2559, '2026-04-04 12:36:24', 'CONSULTAR', 1, 2, '{}', '{}'),
+(2560, '2026-04-04 12:39:31', 'CONSULTAR', 1, 2, '{}', '{}'),
+(2561, '2026-04-04 12:39:34', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2562, '2026-04-04 12:39:35', 'CONSULTAR', 1, 2, '{}', '{}'),
+(2563, '2026-04-04 12:39:36', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2564, '2026-04-04 12:39:38', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2565, '2026-04-04 12:39:39', 'CONSULTAR', 1, 2, '{}', '{}'),
+(2566, '2026-04-04 12:39:42', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2567, '2026-04-04 12:39:43', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2568, '2026-04-04 12:39:44', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2569, '2026-04-04 12:39:47', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2570, '2026-04-04 12:39:49', 'CONSULTAR', 1, 2, '{}', '{}'),
+(2571, '2026-04-04 12:40:03', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2572, '2026-04-04 13:00:28', 'CONSULTAR', 1, 15, '{}', '{}'),
+(2573, '2026-04-04 13:00:40', 'DESCARGAR', 1, 15, '{}', '{\"tipo_reporte\":\"Constancia de Residencia\",\"habitante\":\"jesus asdasda\"}'),
+(2574, '2026-04-04 13:06:14', 'CONSULTAR', 1, 15, '{}', '{}'),
+(2575, '2026-04-04 13:11:23', 'CONSULTAR', 1, 15, '{}', '{}'),
+(2576, '2026-04-04 13:11:27', 'CONSULTAR', 1, 15, '{}', '{}'),
+(2577, '2026-04-04 13:14:49', 'CONSULTAR', 1, 15, '{}', '{}'),
+(2578, '2026-04-04 13:15:06', 'CONSULTAR', 1, 15, '{}', '{}'),
+(2579, '2026-04-04 13:15:31', 'CONSULTAR', 1, 15, '{}', '{}'),
+(2580, '2026-04-04 13:16:14', 'CONSULTAR', 1, 15, '{}', '{}'),
+(2581, '2026-04-04 13:22:37', 'CONSULTAR', 1, 15, '{}', '{}'),
+(2582, '2026-04-04 13:33:57', 'CONSULTAR', 1, 15, '{}', '{}'),
+(2583, '2026-04-04 19:34:51', 'CONSULTAR', 1, 5, '{}', '{}'),
+(2584, '2026-04-04 20:06:15', 'CONSULTAR', 1, 5, '{}', '{}'),
+(2585, '2026-04-04 20:10:51', 'CONSULTAR', 1, 5, '{}', '{}'),
+(2586, '2026-04-04 20:20:36', 'CONSULTAR', 1, 5, '{}', '{}'),
+(2587, '2026-04-04 20:36:12', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2588, '2026-04-04 20:41:56', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2589, '2026-04-04 20:45:21', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2590, '2026-04-04 20:46:31', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2591, '2026-04-04 20:47:59', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2592, '2026-04-04 20:48:50', 'REGISTRAR', 1, 1, '{}', '{\"estado\":\"PROCESADO\",\"observacion\":\"Pago completo enero\"}'),
+(2593, '2026-04-04 20:49:23', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2594, '2026-04-04 20:50:05', 'REGISTRAR', 1, 1, '{}', '{\"estado\":\"PROCESADO\",\"observacion\":\"pago completo febrero\"}'),
+(2595, '2026-04-07 09:54:46', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(2596, '2026-04-07 09:54:58', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(2597, '2026-04-07 09:55:07', 'CONSULTAR', 1, 14, '{}', '{}'),
+(2598, '2026-04-07 09:55:15', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(2599, '2026-04-07 09:55:25', 'INICIAR SESION', 91, 14, '{}', '{}'),
+(2600, '2026-04-07 09:55:36', 'CONSULTAR', 91, 9, '{}', '{}'),
+(2601, '2026-04-07 09:56:05', 'REGISTRAR', 91, 9, '{}', '{\"fecha_inicio\":\"2026-04-07\",\"fecha_cierre\":\"2027-04-07\",\"estado\":\"Abierto\",\"descripcion\":\"pepe\"}'),
+(2602, '2026-04-07 10:10:27', 'CONSULTAR', 91, 14, '{}', '{}'),
+(2603, '2026-04-07 10:11:11', 'CONSULTAR', 91, 4, '{}', '{}'),
+(2604, '2026-04-07 10:29:36', 'CONSULTAR', 91, 12, '{}', '{}'),
+(2605, '2026-04-07 10:30:08', 'CONSULTAR', 91, 12, '{}', '{}'),
+(2606, '2026-04-07 10:30:12', 'CONSULTAR', 91, 12, '{}', '{}'),
+(2607, '2026-04-07 10:30:14', 'CERRAR SESION', 91, 14, '{}', '{}'),
+(2608, '2026-04-07 10:30:17', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(2609, '2026-04-07 10:30:24', 'CONSULTAR', 1, 12, '{}', '{}'),
+(2610, '2026-04-07 10:36:34', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2611, '2026-04-07 10:36:39', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2612, '2026-04-07 10:52:44', 'CONSULTAR', 1, 12, '{}', '{}'),
+(2613, '2026-04-07 10:53:19', 'CONSULTAR', 1, 12, '{}', '{}'),
+(2614, '2026-04-07 10:54:19', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2615, '2026-04-07 10:54:24', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2616, '2026-04-07 10:54:28', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2617, '2026-04-07 10:55:42', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2618, '2026-04-07 10:56:31', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2619, '2026-04-07 10:58:19', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2620, '2026-04-07 10:58:53', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2621, '2026-04-07 11:03:47', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2622, '2026-04-07 11:03:55', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2623, '2026-04-07 11:04:11', 'CONSULTAR', 1, 12, '{}', '{}'),
+(2624, '2026-04-07 11:04:14', 'CONSULTAR', 1, 12, '{}', '{}'),
+(2625, '2026-04-07 11:10:19', 'CONSULTAR', 1, 12, '{}', '{}'),
+(2626, '2026-04-07 19:15:45', 'CONSULTAR', 1, 5, '{}', '{}'),
+(2627, '2026-04-07 19:16:28', 'CONSULTAR', 1, 5, '{}', '{}'),
+(2628, '2026-04-07 19:16:57', 'REGISTRAR', 1, 5, '{}', '{\"titulo\":\"hola pana\",\"descripcion\":\"nueva publicacione\",\"imagen\":\"Captura__2__1775603817_147.PNG\",\"prioridad\":\"1\"}'),
+(2629, '2026-04-07 19:22:54', 'REGISTRAR', 1, 5, '{}', '{\"titulo\":\"hola\",\"descripcion\":\"publicacion 2\",\"imagen\":\"ejemplo2_1775604174_147.PNG\",\"prioridad\":\"2\"}'),
+(2630, '2026-04-07 19:23:57', 'CONSULTAR', 1, 5, '{}', '{}');
+INSERT INTO `bitacora` (`id_bitacora`, `fecha_hora`, `accion`, `usuario_id`, `modulo_id`, `valores_anteriores`, `valores_nuevos`) VALUES
+(2631, '2026-04-07 19:25:16', 'REGISTRAR', 1, 5, '{}', '{\"titulo\":\"sfasdasd\",\"descripcion\":\"sadasdas\",\"imagen\":\"ref_tarjeta_1775604316_210.PNG\",\"prioridad\":\"1\"}'),
+(2632, '2026-04-07 19:25:39', 'CONSULTAR', 1, 5, '{}', '{}'),
+(2633, '2026-04-07 19:25:54', 'REGISTRAR', 1, 5, '{}', '{\"titulo\":\"asdasd\",\"descripcion\":\"asdasd\",\"imagen\":\"\",\"prioridad\":\"2\"}'),
+(2634, '2026-04-07 19:26:08', 'REGISTRAR', 1, 5, '{}', '{\"titulo\":\"adasdas\",\"descripcion\":\"asdasd\",\"imagen\":\"\",\"prioridad\":\"3\"}'),
+(2635, '2026-04-07 19:32:16', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2636, '2026-04-07 19:33:04', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2637, '2026-04-07 19:33:14', 'ELIMINAR', 1, 4, '{\"concepto\":\"pago de transporte\",\"monto\":\"900.00\",\"fecha\":\"2026-04-07\",\"estado\":\"Pendiente por reposicion\"}', '{}'),
+(2638, '2026-04-07 19:33:17', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2639, '2026-04-07 19:36:05', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2640, '2026-04-07 19:36:08', 'ELIMINAR', 1, 4, '{\"concepto\":\"pago de trasnporte\",\"monto\":\"900.00\",\"fecha\":\"2026-04-07\",\"estado\":\"Pendiente por reposicion\"}', '{}'),
+(2641, '2026-04-07 19:36:18', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2642, '2026-04-07 19:37:38', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2643, '2026-04-07 19:40:37', 'ELIMINAR', 1, 4, '{}', '{}'),
+(2644, '2026-04-07 19:40:51', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2645, '2026-04-07 19:41:05', 'REGISTRAR', 1, 4, '{}', '{\"concepto\":\"pago\",\"monto_movimiento\":\"900\",\"fecha_movimiento\":\"2026-04-07\"}'),
+(2646, '2026-04-07 19:41:14', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(2647, '2026-04-07 19:41:18', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(2648, '2026-04-07 19:41:41', 'CONSULTAR', 1, 5, '{}', '{}'),
+(2649, '2026-04-07 19:42:21', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2650, '2026-04-07 19:42:25', 'ELIMINAR', 1, 4, '{\"concepto\":\"pago\",\"monto\":\"900.00\",\"fecha\":\"2026-04-07\",\"estado\":\"Pendiente por reposicion\"}', '{}'),
+(2651, '2026-04-07 19:42:30', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2652, '2026-04-07 19:42:44', 'REGISTRAR', 1, 4, '{}', '{\"concepto\":\"pago\",\"monto_movimiento\":\"900\",\"fecha_movimiento\":\"2026-04-07\"}'),
+(2653, '2026-04-07 19:42:49', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(2654, '2026-04-07 19:42:53', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(2655, '2026-04-07 19:43:17', 'CONSULTAR', 1, 5, '{}', '{}'),
+(2656, '2026-04-07 19:43:22', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2657, '2026-04-07 19:44:03', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2658, '2026-04-07 19:44:06', 'ELIMINAR', 1, 4, '{\"concepto\":\"pago\",\"monto\":\"900.00\",\"fecha\":\"2026-04-07\",\"estado\":\"Pendiente por reposicion\"}', '{}'),
+(2659, '2026-04-07 19:44:09', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2660, '2026-04-07 19:45:02', 'REGISTRAR', 1, 4, '{}', '{\"concepto\":\"pago\",\"monto_movimiento\":\"900\",\"fecha_movimiento\":\"2026-04-07\"}'),
+(2661, '2026-04-07 19:45:20', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(2662, '2026-04-07 19:45:24', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(2663, '2026-04-11 13:50:30', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(2664, '2026-04-11 14:21:05', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2665, '2026-04-11 14:21:13', 'CONSULTAR', 1, 8, '{}', '{}'),
+(2666, '2026-04-11 14:21:32', 'CONSULTAR', 1, 8, '{}', '{}'),
+(2667, '2026-04-11 14:21:45', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2668, '2026-04-11 14:21:53', 'ELIMINAR', 1, 3, '{}', '{}'),
+(2669, '2026-04-11 14:22:06', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2670, '2026-04-11 14:22:10', 'ELIMINAR', 1, 3, '{}', '{}'),
+(2671, '2026-04-11 14:22:20', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2672, '2026-04-11 14:22:22', 'ELIMINAR', 1, 3, '{}', '{}'),
+(2673, '2026-04-11 14:23:11', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2674, '2026-04-11 14:23:14', 'ELIMINAR', 1, 3, '{}', '{}'),
+(2675, '2026-04-11 14:23:26', 'ELIMINAR', 1, 3, '{}', '{}'),
+(2676, '2026-04-11 14:23:52', 'MODIFICAR', 1, 3, '{\"tasa_dolar\":\"455.25\"}', '{\"tasa_dolar\":\"476.43\"}'),
+(2677, '2026-04-11 14:23:57', 'ELIMINAR', 1, 3, '{}', '{}'),
+(2678, '2026-04-11 14:47:09', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2679, '2026-04-11 14:47:36', 'ELIMINAR', 1, 3, '{}', '{}'),
+(2680, '2026-04-11 14:49:46', 'ELIMINAR', 1, 3, '{}', '{}'),
+(2681, '2026-04-11 14:50:20', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2682, '2026-04-11 14:51:43', 'ELIMINAR', 1, 3, '{}', '{}'),
+(2683, '2026-04-11 14:53:28', 'ELIMINAR', 1, 3, '{\"tasa_dolar\":\"476.43\",\"mes\":\"2\",\"anio\":\"2026\",\"porcentaje_interes\":10,\"limite_mensualidad\":15}', '{}'),
+(2684, '2026-04-11 14:53:40', 'REGISTRAR', 1, 3, '{}', '{\"tasa_dolar\":\"476.43\",\"mes\":\"2\",\"anio\":\"2026\",\"porcentaje_interes\":\"10\",\"limite_mensualidad\":\"15\"}'),
+(2685, '2026-04-11 14:53:54', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(2686, '2026-04-11 14:53:59', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(2687, '2026-04-11 22:21:34', 'CONSULTAR', 1, 5, '{}', '{}'),
+(2688, '2026-04-11 22:23:00', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2689, '2026-04-11 22:25:07', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2690, '2026-04-11 22:27:18', 'CONSULTAR', 1, 5, '{}', '{}'),
+(2691, '2026-04-11 22:27:22', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2692, '2026-04-11 22:29:12', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2693, '2026-04-11 22:31:17', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2694, '2026-04-11 22:33:38', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2695, '2026-04-11 22:35:58', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2696, '2026-04-11 22:38:21', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2697, '2026-04-11 22:38:50', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2698, '2026-04-11 22:40:45', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2699, '2026-04-11 22:44:31', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2700, '2026-04-11 22:45:05', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2701, '2026-04-11 22:45:12', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2702, '2026-04-11 22:45:17', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2703, '2026-04-11 22:45:21', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2704, '2026-04-11 22:51:42', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2705, '2026-04-11 22:53:39', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2706, '2026-04-11 22:54:51', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2707, '2026-04-11 22:55:00', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2708, '2026-04-11 22:56:41', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2709, '2026-04-11 22:57:08', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2710, '2026-04-11 22:58:04', 'CONSULTAR', 1, 2, '{}', '{}'),
+(2711, '2026-04-11 22:58:12', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2712, '2026-04-11 22:58:52', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2713, '2026-04-11 22:58:57', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2714, '2026-04-11 22:59:10', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2715, '2026-04-11 22:59:26', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2716, '2026-04-11 23:00:08', 'CONSULTAR', 1, 2, '{}', '{}'),
+(2717, '2026-04-11 23:00:15', 'CONSULTAR', 1, 5, '{}', '{}'),
+(2718, '2026-04-11 23:00:20', 'CONSULTAR', 1, 6, '{}', '{}'),
+(2719, '2026-04-11 23:00:30', 'CONSULTAR', 1, 7, '{}', '{}'),
+(2720, '2026-04-11 23:00:51', 'CONSULTAR', 1, 8, '{}', '{}'),
+(2721, '2026-04-11 23:01:10', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2722, '2026-04-11 23:01:19', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2723, '2026-04-11 23:17:51', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2724, '2026-04-11 23:18:40', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2725, '2026-04-11 23:18:56', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2726, '2026-04-11 23:19:44', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2727, '2026-04-11 23:20:19', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2728, '2026-04-11 23:36:46', 'CONSULTAR', 1, 8, '{}', '{}'),
+(2729, '2026-04-11 23:41:43', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2730, '2026-04-11 23:41:56', 'CONSULTAR', 1, 2, '{}', '{}'),
+(2731, '2026-04-11 23:42:04', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2732, '2026-04-11 23:42:17', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2733, '2026-04-11 23:43:00', 'CONSULTAR', 1, 5, '{}', '{}'),
+(2734, '2026-04-11 23:43:06', 'CONSULTAR', 1, 6, '{}', '{}'),
+(2735, '2026-04-11 23:43:16', 'CONSULTAR', 1, 7, '{}', '{}'),
+(2736, '2026-04-11 23:43:39', 'CONSULTAR', 1, 8, '{}', '{}'),
+(2737, '2026-04-11 23:43:47', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2738, '2026-04-11 23:43:56', 'CONSULTAR', 1, 11, '{}', '{}'),
+(2739, '2026-04-11 23:44:02', 'CONSULTAR', 1, 12, '{}', '{}'),
+(2740, '2026-04-11 23:44:07', 'CONSULTAR', 1, 13, '{}', '{}'),
+(2741, '2026-04-11 23:44:14', 'CONSULTAR', 1, 14, '{}', '{}'),
+(2742, '2026-04-11 23:44:21', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2743, '2026-04-11 23:44:33', 'CONSULTAR', 1, 22, '{}', '{}'),
+(2744, '2026-04-11 23:44:39', 'CONSULTAR', 1, 23, '{}', '{}'),
+(2745, '2026-04-11 23:45:09', 'CONSULTAR', 1, 6, '{}', '{}'),
+(2746, '2026-04-11 23:46:15', 'CONSULTAR', 1, 6, '{}', '{}'),
+(2747, '2026-04-12 16:12:24', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(2748, '2026-04-12 16:12:28', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(2749, '2026-04-12 16:13:12', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(2750, '2026-04-12 16:13:16', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(2751, '2026-04-12 16:15:37', 'CONSULTAR', 1, 5, '{}', '{}'),
+(2752, '2026-04-12 16:16:00', 'REGISTRAR', 1, 5, '{}', '{\"titulo\":\"hola pepe \",\"descripcion\":\"hola pepe como estas\",\"imagen\":\"fake_new_1776024960_274.PNG\",\"prioridad\":\"2\"}'),
+(2753, '2026-04-12 16:16:24', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2754, '2026-04-12 16:26:48', 'CONSULTAR', 1, 2, '{}', '{}'),
+(2755, '2026-04-12 16:28:52', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2756, '2026-04-12 16:31:10', 'CONSULTAR', 1, 2, '{}', '{}'),
+(2757, '2026-04-12 16:34:59', 'CONSULTAR', 1, 2, '{}', '{}'),
+(2758, '2026-04-12 16:35:22', 'CONSULTAR', 1, 2, '{}', '{}'),
+(2759, '2026-04-12 16:35:32', 'CONSULTAR', 1, 2, '{}', '{}'),
+(2760, '2026-04-12 16:35:43', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2761, '2026-04-12 16:38:23', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2762, '2026-04-12 16:39:39', 'CONSULTAR', 1, 2, '{}', '{}'),
+(2763, '2026-04-12 16:39:55', 'CONSULTAR', 1, 2, '{}', '{}'),
+(2764, '2026-04-12 16:40:36', 'CONSULTAR', 1, 2, '{}', '{}'),
+(2765, '2026-04-12 16:46:55', 'CONSULTAR', 1, 2, '{}', '{}'),
+(2766, '2026-04-12 16:53:35', 'CONSULTAR', 1, 2, '{}', '{}'),
+(2767, '2026-04-12 16:54:36', 'CONSULTAR', 1, 2, '{}', '{}'),
+(2768, '2026-04-12 16:54:57', 'CONSULTAR', 1, 2, '{}', '{}'),
+(2769, '2026-04-12 16:55:16', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2770, '2026-04-12 16:56:04', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2771, '2026-04-12 16:56:09', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2772, '2026-04-12 17:00:20', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2773, '2026-04-12 17:03:52', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2774, '2026-04-12 17:06:02', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2775, '2026-04-12 17:10:21', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2776, '2026-04-12 17:10:53', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2777, '2026-04-12 17:10:58', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2778, '2026-04-12 17:12:25', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2779, '2026-04-12 17:18:18', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2780, '2026-04-12 17:22:50', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2781, '2026-04-12 17:23:50', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2782, '2026-04-12 17:25:04', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2783, '2026-04-12 17:28:15', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2784, '2026-04-12 17:29:22', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2785, '2026-04-12 17:32:37', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2786, '2026-04-12 17:32:57', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2787, '2026-04-12 17:33:35', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2788, '2026-04-12 17:33:40', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2789, '2026-04-12 17:36:46', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2790, '2026-04-12 17:37:46', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2791, '2026-04-12 17:37:54', 'CONSULTAR', 1, 5, '{}', '{}'),
+(2792, '2026-04-12 17:41:27', 'CONSULTAR', 1, 5, '{}', '{}'),
+(2793, '2026-04-12 17:41:30', 'CONSULTAR', 1, 5, '{}', '{}'),
+(2794, '2026-04-12 17:42:24', 'CONSULTAR', 1, 5, '{}', '{}'),
+(2795, '2026-04-12 17:44:51', 'CONSULTAR', 1, 2, '{}', '{}'),
+(2796, '2026-04-12 17:44:58', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2797, '2026-04-12 17:49:29', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2798, '2026-04-12 17:49:36', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2799, '2026-04-12 17:49:44', 'CONSULTAR', 1, 5, '{}', '{}'),
+(2800, '2026-04-12 17:50:11', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2801, '2026-04-12 17:55:03', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2802, '2026-04-12 17:56:05', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2803, '2026-04-12 17:56:31', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2804, '2026-04-12 17:57:21', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2805, '2026-04-12 17:57:35', 'CONSULTAR', 1, 6, '{}', '{}'),
+(2806, '2026-04-12 18:05:15', 'CONSULTAR', 1, 6, '{}', '{}'),
+(2807, '2026-04-12 18:08:53', 'CONSULTAR', 1, 6, '{}', '{}'),
+(2808, '2026-04-12 18:09:37', 'CONSULTAR', 1, 7, '{}', '{}'),
+(2809, '2026-04-12 18:21:09', 'REGISTRAR', 1, 7, '{}', '{\"fecha_reporte\":\"2026-04-12\",\"descripcion_necesidad\":\"ssssss\",\"nombre_solicitante\":\"aaaaa\",\"monto_estimado\":\"12\",\"estado\":\"Pendiente\",\"prioridad\":\"1\"}'),
+(2810, '2026-04-12 18:21:44', 'REGISTRAR', 1, 7, '{}', '{\"fecha_reporte\":\"2026-04-11\",\"descripcion_necesidad\":\"asassss\",\"nombre_solicitante\":\"miguel\",\"monto_estimado\":\"10\",\"estado\":\"Pendiente\",\"prioridad\":\"3\"}'),
+(2811, '2026-04-12 18:28:59', 'CONSULTAR', 1, 7, '{}', '{}'),
+(2812, '2026-04-12 18:30:14', 'CONSULTAR', 1, 6, '{}', '{}'),
+(2813, '2026-04-12 18:31:01', 'CONSULTAR', 1, 7, '{}', '{}'),
+(2814, '2026-04-12 18:31:18', 'CONSULTAR', 1, 7, '{}', '{}'),
+(2815, '2026-04-12 18:31:24', 'CONSULTAR', 1, 6, '{}', '{}'),
+(2816, '2026-04-12 18:31:44', 'CONSULTAR', 1, 6, '{}', '{}'),
+(2817, '2026-04-12 18:31:56', 'CONSULTAR', 1, 7, '{}', '{}'),
+(2818, '2026-04-12 18:32:26', 'CONSULTAR', 1, 8, '{}', '{}'),
+(2819, '2026-04-12 18:32:30', 'CONSULTAR', 1, 7, '{}', '{}'),
+(2820, '2026-04-12 18:35:22', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2821, '2026-04-12 18:35:27', 'CONSULTAR', 1, 7, '{}', '{}'),
+(2822, '2026-04-12 18:42:13', 'CONSULTAR', 1, 7, '{}', '{}'),
+(2823, '2026-04-12 18:43:05', 'CONSULTAR', 1, 8, '{}', '{}'),
+(2824, '2026-04-12 18:43:09', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2825, '2026-04-12 18:43:39', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2826, '2026-04-12 18:43:48', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2827, '2026-04-12 18:43:52', 'CONSULTAR', 1, 14, '{}', '{}'),
+(2828, '2026-04-12 18:44:16', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2829, '2026-04-12 18:44:40', 'CONSULTAR', 1, 22, '{}', '{}'),
+(2830, '2026-04-12 18:44:45', 'CONSULTAR', 1, 23, '{}', '{}'),
+(2831, '2026-04-12 18:44:49', 'CONSULTAR', 1, 11, '{}', '{}'),
+(2832, '2026-04-12 18:45:02', 'CONSULTAR', 1, 8, '{}', '{}'),
+(2833, '2026-04-12 18:45:04', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2834, '2026-04-12 18:45:15', 'CONSULTAR', 1, 5, '{}', '{}'),
+(2835, '2026-04-12 18:46:25', 'CONSULTAR', 1, 5, '{}', '{}'),
+(2836, '2026-04-12 18:46:39', 'CONSULTAR', 1, 5, '{}', '{}'),
+(2837, '2026-04-12 22:19:28', 'CONSULTAR', 1, 7, '{}', '{}'),
+(2838, '2026-04-12 22:19:36', 'CONSULTAR', 1, 8, '{}', '{}'),
+(2839, '2026-04-12 22:19:51', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2840, '2026-04-12 22:20:12', 'CONSULTAR', 1, 11, '{}', '{}'),
+(2841, '2026-04-12 22:21:58', 'CONSULTAR', 1, 12, '{}', '{}'),
+(2842, '2026-04-12 22:27:01', 'CONSULTAR', 1, 12, '{}', '{}'),
+(2843, '2026-04-12 22:28:10', 'CONSULTAR', 1, 12, '{}', '{}'),
+(2844, '2026-04-12 22:28:21', 'CONSULTAR', 1, 12, '{}', '{}'),
+(2845, '2026-04-12 22:28:43', 'CONSULTAR', 1, 12, '{}', '{}'),
+(2846, '2026-04-12 22:29:10', 'CONSULTAR', 1, 11, '{}', '{}'),
+(2847, '2026-04-12 22:29:19', 'CONSULTAR', 1, 12, '{}', '{}'),
+(2848, '2026-04-12 22:30:50', 'CONSULTAR', 1, 11, '{}', '{}'),
+(2849, '2026-04-12 22:31:02', 'CONSULTAR', 1, 13, '{}', '{}'),
+(2850, '2026-04-12 22:31:59', 'CONSULTAR', 1, 13, '{}', '{}'),
+(2851, '2026-04-12 22:32:41', 'CONSULTAR', 1, 13, '{}', '{}'),
+(2852, '2026-04-12 22:32:48', 'CONSULTAR', 1, 12, '{}', '{}'),
+(2853, '2026-04-12 22:34:55', 'CONSULTAR', 1, 12, '{}', '{}'),
+(2854, '2026-04-12 22:37:47', 'CONSULTAR', 1, 12, '{}', '{}'),
+(2855, '2026-04-12 22:38:08', 'CONSULTAR', 1, 12, '{}', '{}'),
+(2856, '2026-04-12 22:39:48', 'CONSULTAR', 1, 12, '{}', '{}'),
+(2857, '2026-04-12 22:40:47', 'CONSULTAR', 1, 12, '{}', '{}'),
+(2858, '2026-04-12 22:41:23', 'CONSULTAR', 1, 12, '{}', '{}'),
+(2859, '2026-04-12 22:41:33', 'CONSULTAR', 1, 11, '{}', '{}'),
+(2860, '2026-04-12 22:41:42', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2861, '2026-04-12 22:41:48', 'CONSULTAR', 1, 8, '{}', '{}'),
+(2862, '2026-04-12 22:42:01', 'CONSULTAR', 1, 14, '{}', '{}'),
+(2863, '2026-04-12 22:46:17', 'CONSULTAR', 1, 14, '{}', '{}'),
+(2864, '2026-04-12 22:47:11', 'CONSULTAR', 1, 14, '{}', '{}'),
+(2865, '2026-04-12 22:47:46', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2866, '2026-04-12 22:47:51', 'CONSULTAR', 1, 14, '{}', '{}'),
+(2867, '2026-04-12 22:48:28', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2868, '2026-04-12 23:47:35', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2869, '2026-04-12 23:47:42', 'CONSULTAR', 1, 19, '{}', '{}'),
+(2870, '2026-04-12 23:47:53', 'CONSULTAR', 1, 5, '{}', '{}'),
+(2871, '2026-04-12 23:47:59', 'CONSULTAR', 1, 2, '{}', '{}'),
+(2872, '2026-04-12 23:48:01', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2873, '2026-04-13 17:51:38', 'CONSULTAR', 1, 22, '{}', '{}'),
+(2874, '2026-04-13 17:51:43', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2875, '2026-04-13 17:51:52', 'CONSULTAR', 1, 5, '{}', '{}'),
+(2876, '2026-04-13 17:51:57', 'CONSULTAR', 1, 6, '{}', '{}'),
+(2877, '2026-04-13 17:52:00', 'CONSULTAR', 1, 7, '{}', '{}'),
+(2878, '2026-04-13 17:52:03', 'CONSULTAR', 1, 8, '{}', '{}'),
+(2879, '2026-04-13 17:52:29', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2880, '2026-04-13 17:52:36', 'CONSULTAR', 1, 14, '{}', '{}'),
+(2881, '2026-04-13 17:52:43', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2882, '2026-04-13 17:53:05', 'CONSULTAR', 1, 22, '{}', '{}'),
+(2883, '2026-04-13 17:53:08', 'CONSULTAR', 1, 23, '{}', '{}'),
+(2884, '2026-04-13 17:56:53', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2885, '2026-04-13 17:56:56', 'CONSULTAR', 1, 7, '{}', '{}'),
+(2886, '2026-04-13 17:57:00', 'CONSULTAR', 1, 8, '{}', '{}'),
+(2887, '2026-04-13 17:57:06', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2888, '2026-04-13 17:57:18', 'CONSULTAR', 1, 23, '{}', '{}'),
+(2889, '2026-04-13 18:01:36', 'CONSULTAR', 1, 23, '{}', '{}'),
+(2890, '2026-04-13 18:01:51', 'CONSULTAR', 1, 22, '{}', '{}'),
+(2891, '2026-04-13 18:07:55', 'CONSULTAR', 1, 22, '{}', '{}'),
+(2892, '2026-04-13 18:09:40', 'CONSULTAR', 1, 13, '{}', '{}'),
+(2893, '2026-04-13 18:11:58', 'CONSULTAR', 1, 13, '{}', '{}'),
+(2894, '2026-04-13 18:13:25', 'CONSULTAR', 1, 23, '{}', '{}'),
+(2895, '2026-04-13 18:19:19', 'CONSULTAR', 1, 23, '{}', '{}'),
+(2896, '2026-04-13 18:20:19', 'CONSULTAR', 1, 23, '{}', '{}'),
+(2897, '2026-04-13 18:20:24', 'CONSULTAR', 1, 22, '{}', '{}'),
+(2898, '2026-04-13 18:23:53', 'CONSULTAR', 1, 22, '{}', '{}'),
+(2899, '2026-04-13 18:24:30', 'CONSULTAR', 1, 13, '{}', '{}'),
+(2900, '2026-04-13 18:32:46', 'CONSULTAR', 1, 13, '{}', '{}'),
+(2901, '2026-04-13 18:33:00', 'CONSULTAR', 1, 13, '{}', '{}'),
+(2902, '2026-04-13 18:33:30', 'CONSULTAR', 1, 23, '{}', '{}'),
+(2903, '2026-04-13 18:34:56', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2904, '2026-04-13 18:35:08', 'CONSULTAR', 1, 11, '{}', '{}'),
+(2905, '2026-04-13 18:35:12', 'CONSULTAR', 1, 12, '{}', '{}'),
+(2906, '2026-04-13 18:35:20', 'CONSULTAR', 1, 8, '{}', '{}'),
+(2907, '2026-04-13 18:35:26', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2908, '2026-04-13 18:35:32', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2909, '2026-04-13 18:39:56', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2910, '2026-04-13 18:48:46', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2911, '2026-04-13 18:49:31', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2912, '2026-04-13 18:49:44', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2913, '2026-04-13 18:50:24', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2914, '2026-04-13 18:50:40', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2915, '2026-04-13 18:50:57', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2916, '2026-04-13 18:52:12', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2917, '2026-04-13 18:52:20', 'CONSULTAR', 1, 14, '{}', '{}'),
+(2918, '2026-04-13 18:54:18', 'REGISTRAR', 1, 14, '{}', '{\"apellido\":\"presi\",\"nombre\":\"presi\",\"correo\":\"presi@gmail.com\",\"contra\":\"12345\"}'),
+(2919, '2026-04-13 18:54:34', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2920, '2026-04-13 18:56:54', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2921, '2026-04-13 18:57:48', 'CONSULTAR', 1, 14, '{}', '{}'),
+(2922, '2026-04-13 19:04:09', 'CONSULTAR', 1, 14, '{}', '{}'),
+(2923, '2026-04-13 19:04:20', 'CONSULTAR', 1, 14, '{}', '{}'),
+(2924, '2026-04-13 19:04:40', 'CONSULTAR', 1, 14, '{}', '{}'),
+(2925, '2026-04-13 19:05:02', 'CONSULTAR', 1, 14, '{}', '{}'),
+(2926, '2026-04-13 19:05:15', 'CONSULTAR', 1, 14, '{}', '{}'),
+(2927, '2026-04-13 19:05:32', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2928, '2026-04-13 19:05:47', 'CONSULTAR', 1, 22, '{}', '{}'),
+(2929, '2026-04-13 19:06:17', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2930, '2026-04-13 19:06:20', 'CONSULTAR', 1, 14, '{}', '{}'),
+(2931, '2026-04-13 19:06:23', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2932, '2026-04-13 19:07:09', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2933, '2026-04-13 19:13:35', 'CONSULTAR', 1, 22, '{}', '{}'),
+(2934, '2026-04-13 19:14:08', 'CONSULTAR', 1, 12, '{}', '{}'),
+(2935, '2026-04-13 19:14:10', 'CONSULTAR', 1, 11, '{}', '{}'),
+(2936, '2026-04-13 19:14:14', 'CONSULTAR', 1, 12, '{}', '{}'),
+(2937, '2026-04-13 19:14:15', 'CONSULTAR', 1, 22, '{}', '{}'),
+(2938, '2026-04-13 19:18:15', 'CONSULTAR', 1, 22, '{}', '{}'),
+(2939, '2026-04-13 19:18:55', 'CONSULTAR', 1, 22, '{}', '{}'),
+(2940, '2026-04-13 19:20:40', 'CONSULTAR', 1, 22, '{}', '{}'),
+(2941, '2026-04-13 19:21:48', 'CONSULTAR', 1, 22, '{}', '{}'),
+(2942, '2026-04-13 19:22:16', 'CONSULTAR', 1, 22, '{}', '{}'),
+(2943, '2026-04-13 19:22:18', 'CONSULTAR', 1, 22, '{}', '{}'),
+(2944, '2026-04-13 19:22:56', 'CONSULTAR', 1, 23, '{}', '{}'),
+(2945, '2026-04-13 19:23:29', 'CONSULTAR', 1, 17, '{}', '{}'),
+(2946, '2026-04-13 19:23:32', 'CONSULTAR', 1, 14, '{}', '{}'),
+(2947, '2026-04-13 19:24:53', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2948, '2026-04-13 19:24:59', 'CONSULTAR', 1, 11, '{}', '{}'),
+(2949, '2026-04-13 19:25:38', 'CONSULTAR', 1, 8, '{}', '{}'),
+(2950, '2026-04-13 19:31:06', 'CONSULTAR', 1, 11, '{}', '{}'),
+(2951, '2026-04-13 19:31:08', 'CONSULTAR', 1, 11, '{}', '{}'),
+(2952, '2026-04-13 19:31:59', 'CONSULTAR', 1, 11, '{}', '{}'),
+(2953, '2026-04-13 19:32:06', 'CONSULTAR', 1, 8, '{}', '{}'),
+(2954, '2026-04-13 19:32:15', 'CONSULTAR', 1, 11, '{}', '{}'),
+(2955, '2026-04-13 19:33:04', 'CONSULTAR', 1, 8, '{}', '{}'),
+(2956, '2026-04-13 19:40:50', 'CONSULTAR', 1, 8, '{}', '{}'),
+(2957, '2026-04-13 19:41:35', 'CONSULTAR', 1, 8, '{}', '{}'),
+(2958, '2026-04-13 19:41:56', 'CONSULTAR', 1, 8, '{}', '{}'),
+(2959, '2026-04-13 19:45:54', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2960, '2026-04-13 19:53:17', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2961, '2026-04-13 19:53:54', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2962, '2026-04-13 19:54:07', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2963, '2026-04-13 19:54:16', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2964, '2026-04-13 19:54:27', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2965, '2026-04-13 19:54:37', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2966, '2026-04-13 19:54:47', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2967, '2026-04-13 19:55:06', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2968, '2026-04-13 19:55:13', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2969, '2026-04-13 19:55:18', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2970, '2026-04-13 19:55:28', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2971, '2026-04-13 20:04:16', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2972, '2026-04-13 20:04:58', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2973, '2026-04-13 20:06:55', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2974, '2026-04-13 20:08:19', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2975, '2026-04-13 20:08:24', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2976, '2026-04-13 20:08:28', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2977, '2026-04-13 20:08:44', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2978, '2026-04-13 20:11:51', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2979, '2026-04-13 20:12:21', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2980, '2026-04-13 20:13:10', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2981, '2026-04-13 20:13:57', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2982, '2026-04-13 20:15:17', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2983, '2026-04-13 20:23:21', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2984, '2026-04-13 20:24:09', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2985, '2026-04-13 20:24:37', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2986, '2026-04-13 20:24:45', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2987, '2026-04-13 20:24:58', 'CONSULTAR', 1, 1, '{}', '{}'),
+(2988, '2026-04-13 20:25:21', 'CONSULTAR', 1, 2, '{}', '{}'),
+(2989, '2026-04-13 20:27:58', 'CONSULTAR', 1, 2, '{}', '{}'),
+(2990, '2026-04-13 20:28:19', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2991, '2026-04-13 20:28:26', 'CONSULTAR', 1, 5, '{}', '{}'),
+(2992, '2026-04-13 20:28:31', 'CONSULTAR', 1, 6, '{}', '{}'),
+(2993, '2026-04-13 20:28:35', 'CONSULTAR', 1, 7, '{}', '{}'),
+(2994, '2026-04-13 20:28:43', 'CONSULTAR', 1, 9, '{}', '{}'),
+(2995, '2026-04-13 20:28:49', 'CONSULTAR', 1, 12, '{}', '{}'),
+(2996, '2026-04-13 20:29:01', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2997, '2026-04-13 20:29:57', 'CONSULTAR', 1, 3, '{}', '{}'),
+(2998, '2026-04-13 20:29:59', 'CONSULTAR', 1, 4, '{}', '{}'),
+(2999, '2026-04-13 20:30:01', 'CONSULTAR', 1, 5, '{}', '{}'),
+(3000, '2026-04-13 20:30:11', 'CONSULTAR', 1, 6, '{}', '{}'),
+(3001, '2026-04-13 20:30:17', 'CONSULTAR', 1, 7, '{}', '{}'),
+(3002, '2026-04-13 20:30:20', 'CONSULTAR', 1, 8, '{}', '{}'),
+(3003, '2026-04-13 20:33:31', 'CONSULTAR', 1, 2, '{}', '{}'),
+(3004, '2026-04-13 20:33:36', 'CONSULTAR', 1, 4, '{}', '{}'),
+(3005, '2026-04-13 20:35:36', 'CONSULTAR', 1, 4, '{}', '{}'),
+(3006, '2026-04-13 20:35:52', 'CONSULTAR', 1, 5, '{}', '{}'),
+(3007, '2026-04-13 20:36:19', 'CONSULTAR', 1, 9, '{}', '{}'),
+(3008, '2026-04-13 20:38:47', 'CONSULTAR', 1, 5, '{}', '{}'),
+(3009, '2026-04-13 20:38:50', 'CONSULTAR', 1, 5, '{}', '{}'),
+(3010, '2026-04-13 20:39:01', 'CONSULTAR', 1, 9, '{}', '{}'),
+(3011, '2026-04-13 20:40:50', 'CONSULTAR', 1, 9, '{}', '{}'),
+(3012, '2026-04-13 20:41:07', 'CONSULTAR', 1, 15, '{}', '{}'),
+(3013, '2026-04-13 20:41:12', 'CONSULTAR', 1, 15, '{}', '{}'),
+(3014, '2026-04-13 20:41:24', 'CONSULTAR', 1, 11, '{}', '{}'),
+(3015, '2026-04-13 20:41:30', 'CONSULTAR', 1, 12, '{}', '{}'),
+(3016, '2026-04-13 20:41:33', 'CONSULTAR', 1, 13, '{}', '{}'),
+(3017, '2026-04-13 20:41:37', 'CONSULTAR', 1, 14, '{}', '{}'),
+(3018, '2026-04-13 20:41:58', 'CONSULTAR', 1, 7, '{}', '{}'),
+(3019, '2026-04-13 20:46:00', 'CONSULTAR', 1, 7, '{}', '{}'),
+(3020, '2026-04-13 20:46:46', 'CONSULTAR', 1, 8, '{}', '{}'),
+(3021, '2026-04-13 20:57:55', 'CONSULTAR', 1, 14, '{}', '{}'),
+(3022, '2026-04-13 20:58:06', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(3023, '2026-04-13 20:58:13', 'INICIAR SESION', 2, 14, '{}', '{}'),
+(3024, '2026-04-13 21:02:15', 'CERRAR SESION', 2, 14, '{}', '{}'),
+(3025, '2026-04-13 21:02:18', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(3026, '2026-04-13 21:02:26', 'CONSULTAR', 1, 17, '{}', '{}'),
+(3027, '2026-04-13 21:02:40', 'MODIFICAR', 1, 17, '{}', '{\"nombre\":\"Contador\",\"permisos_asignados\":[{\"modulo_id\":1,\"permiso_id\":1},{\"modulo_id\":1,\"permiso_id\":2},{\"modulo_id\":1,\"permiso_id\":3},{\"modulo_id\":1,\"permiso_id\":4},{\"modulo_id\":2,\"permiso_id\":1},{\"modulo_id\":2,\"permiso_id\":2},{\"modulo_id\":2,\"permiso_id\":3},{\"modulo_id\":2,\"permiso_id\":4},{\"modulo_id\":3,\"permiso_id\":1},{\"modulo_id\":3,\"permiso_id\":2},{\"modulo_id\":3,\"permiso_id\":3},{\"modulo_id\":3,\"permiso_id\":4},{\"modulo_id\":4,\"permiso_id\":1},{\"modulo_id\":4,\"permiso_id\":2},{\"modulo_id\":4,\"permiso_id\":3},{\"modulo_id\":4,\"permiso_id\":4},{\"modulo_id\":15,\"permiso_id\":1},{\"modulo_id\":15,\"permiso_id\":2},{\"modulo_id\":15,\"permiso_id\":3},{\"modulo_id\":15,\"permiso_id\":4}]}'),
+(3028, '2026-04-13 21:03:09', 'CONSULTAR', 1, 12, '{}', '{}'),
+(3029, '2026-04-13 21:03:15', 'CONSULTAR', 1, 11, '{}', '{}'),
+(3030, '2026-04-13 21:03:21', 'CONSULTAR', 1, 1, '{}', '{}'),
+(3031, '2026-04-14 13:17:55', 'CONSULTAR', 1, 5, '{}', '{}'),
+(3032, '2026-04-14 13:21:53', 'CONSULTAR', 1, 1, '{}', '{}'),
+(3033, '2026-04-14 13:22:05', 'CONSULTAR', 1, 2, '{}', '{}'),
+(3034, '2026-04-14 13:22:11', 'CONSULTAR', 1, 4, '{}', '{}'),
+(3035, '2026-04-14 13:22:20', 'CONSULTAR', 1, 3, '{}', '{}'),
+(3036, '2026-04-14 13:22:25', 'CONSULTAR', 1, 5, '{}', '{}'),
+(3037, '2026-04-14 13:22:30', 'CONSULTAR', 1, 6, '{}', '{}'),
+(3038, '2026-04-14 13:22:36', 'CONSULTAR', 1, 7, '{}', '{}'),
+(3039, '2026-04-14 13:22:40', 'CONSULTAR', 1, 8, '{}', '{}'),
+(3040, '2026-04-14 13:22:47', 'CONSULTAR', 1, 9, '{}', '{}'),
+(3041, '2026-04-14 13:22:51', 'CONSULTAR', 1, 11, '{}', '{}'),
+(3042, '2026-04-14 13:22:56', 'CONSULTAR', 1, 12, '{}', '{}'),
+(3043, '2026-04-14 13:23:02', 'CONSULTAR', 1, 13, '{}', '{}'),
+(3044, '2026-04-14 13:23:09', 'CONSULTAR', 1, 14, '{}', '{}'),
+(3045, '2026-04-14 13:23:29', 'CONSULTAR', 1, 17, '{}', '{}'),
+(3046, '2026-04-14 13:23:58', 'CONSULTAR', 1, 17, '{}', '{}'),
+(3047, '2026-04-14 13:24:02', 'CONSULTAR', 1, 17, '{}', '{}'),
+(3048, '2026-04-14 13:24:17', 'CONSULTAR', 1, 22, '{}', '{}'),
+(3049, '2026-04-14 13:24:26', 'CONSULTAR', 1, 23, '{}', '{}'),
+(3050, '2026-04-14 13:25:40', 'CONSULTAR', 1, 19, '{}', '{}'),
+(3051, '2026-04-14 13:26:48', 'CONSULTAR', 1, 3, '{}', '{}'),
+(3052, '2026-04-14 13:26:56', 'CONSULTAR', 1, 1, '{}', '{}'),
+(3053, '2026-04-14 13:27:02', 'CONSULTAR', 1, 2, '{}', '{}'),
+(3054, '2026-04-14 13:27:10', 'CONSULTAR', 1, 6, '{}', '{}'),
+(3055, '2026-04-14 13:28:32', 'CONSULTAR', 1, 6, '{}', '{}'),
+(3056, '2026-04-14 13:29:54', 'CONSULTAR', 1, 1, '{}', '{}'),
+(3057, '2026-04-14 13:30:17', 'CONSULTAR', 1, 8, '{}', '{}'),
+(3058, '2026-04-14 13:30:46', 'CONSULTAR', 1, 15, '{}', '{}'),
+(3059, '2026-04-14 19:02:01', 'CONSULTAR', 1, 5, '{}', '{}'),
+(3060, '2026-04-14 19:15:08', 'CONSULTAR', 1, 5, '{}', '{}'),
+(3061, '2026-04-14 19:32:09', 'CONSULTAR', 1, 9, '{}', '{}'),
+(3062, '2026-04-14 19:43:39', 'CONSULTAR', 1, 5, '{}', '{}'),
+(3063, '2026-04-14 19:43:49', 'MODIFICAR', 1, 5, '{\"prioridad\":\"1\"}', '{\"prioridad\":\"3\"}'),
+(3064, '2026-04-14 19:47:50', 'CONSULTAR', 1, 5, '{}', '{}'),
+(3065, '2026-04-14 19:47:54', 'CONSULTAR', 1, 5, '{}', '{}'),
+(3066, '2026-04-14 19:54:50', 'CONSULTAR', 1, 5, '{}', '{}'),
+(3067, '2026-04-15 10:18:14', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(3068, '2026-04-15 10:31:12', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(3069, '2026-04-15 10:31:22', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(3070, '2026-04-15 10:46:36', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(3071, '2026-04-15 10:46:44', 'CONSULTAR', 1, 9, '{}', '{}'),
+(3072, '2026-04-15 10:46:58', 'CONSULTAR', 1, 14, '{}', '{}'),
+(3073, '2026-04-15 10:47:30', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(3074, '2026-04-15 11:42:55', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(3075, '2026-04-15 11:43:03', 'CONSULTAR', 1, 14, '{}', '{}'),
+(3076, '2026-04-15 11:43:12', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(3077, '2026-04-15 12:10:42', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(3078, '2026-04-15 12:10:47', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(3079, '2026-04-15 12:10:51', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(3080, '2026-04-15 12:10:54', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(3081, '2026-04-15 12:11:14', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(3082, '2026-04-15 12:12:13', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(3083, '2026-04-15 12:12:17', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(3084, '2026-04-15 12:12:20', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(3085, '2026-04-15 12:12:35', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(3086, '2026-04-15 12:12:38', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(3087, '2026-04-15 12:12:49', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(3088, '2026-04-15 12:13:20', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(3089, '2026-04-15 12:18:46', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(3090, '2026-04-15 12:19:56', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(3091, '2026-04-15 12:23:19', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(3092, '2026-04-15 12:26:14', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(3093, '2026-04-15 12:26:22', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(3094, '2026-04-15 12:26:28', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(3095, '2026-04-15 12:45:40', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(3096, '2026-04-15 12:51:53', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(3097, '2026-04-15 16:36:15', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(3098, '2026-04-15 16:36:42', 'CONSULTAR', 1, 4, '{}', '{}'),
+(3099, '2026-04-15 16:36:48', 'CONSULTAR', 1, 3, '{}', '{}'),
+(3100, '2026-04-15 16:36:51', 'CONSULTAR', 1, 5, '{}', '{}'),
+(3101, '2026-04-15 16:37:01', 'CONSULTAR', 1, 6, '{}', '{}'),
+(3102, '2026-04-15 16:37:04', 'CONSULTAR', 1, 7, '{}', '{}'),
+(3103, '2026-04-15 16:37:07', 'CONSULTAR', 1, 8, '{}', '{}'),
+(3104, '2026-04-15 16:37:11', 'CONSULTAR', 1, 9, '{}', '{}'),
+(3105, '2026-04-15 16:37:18', 'CONSULTAR', 1, 11, '{}', '{}'),
+(3106, '2026-04-15 16:37:21', 'CONSULTAR', 1, 12, '{}', '{}'),
+(3107, '2026-04-15 16:37:23', 'CONSULTAR', 1, 13, '{}', '{}'),
+(3108, '2026-04-15 16:37:26', 'CONSULTAR', 1, 12, '{}', '{}'),
+(3109, '2026-04-15 16:37:33', 'CONSULTAR', 1, 14, '{}', '{}'),
+(3110, '2026-04-15 16:37:43', 'CONSULTAR', 1, 17, '{}', '{}'),
+(3111, '2026-04-15 16:38:26', 'CONSULTAR', 1, 17, '{}', '{}'),
+(3112, '2026-04-15 16:39:14', 'CONSULTAR', 1, 19, '{}', '{}'),
+(3113, '2026-04-15 16:39:42', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(3114, '2026-04-15 16:39:47', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(3115, '2026-04-15 16:39:52', 'CONSULTAR', 1, 1, '{}', '{}'),
+(3116, '2026-04-15 16:40:00', 'CONSULTAR', 1, 3, '{}', '{}'),
+(3117, '2026-04-15 16:41:29', 'CONSULTAR', 1, 3, '{}', '{}'),
+(3118, '2026-04-15 16:43:35', 'CONSULTAR', 1, 3, '{}', '{}'),
+(3119, '2026-04-15 16:45:07', 'CONSULTAR', 1, 3, '{}', '{}'),
+(3120, '2026-04-15 16:46:24', 'CONSULTAR', 1, 14, '{}', '{}'),
+(3121, '2026-04-15 16:49:32', 'CONSULTAR', 1, 17, '{}', '{}'),
+(3122, '2026-04-15 16:54:15', 'CONSULTAR', 1, 17, '{}', '{}'),
+(3123, '2026-04-15 17:14:27', 'CONSULTAR', 1, 3, '{}', '{}'),
+(3124, '2026-04-15 17:14:37', 'CONSULTAR', 1, 2, '{}', '{}'),
+(3125, '2026-04-15 17:15:24', 'CONSULTAR', 1, 2, '{}', '{}'),
+(3126, '2026-04-15 17:16:23', 'CONSULTAR', 1, 2, '{}', '{}'),
+(3127, '2026-04-15 17:19:43', 'CONSULTAR', 1, 2, '{}', '{}'),
+(3128, '2026-04-15 17:20:18', 'CONSULTAR', 1, 2, '{}', '{}'),
+(3129, '2026-04-15 17:20:42', 'CONSULTAR', 1, 1, '{}', '{}'),
+(3130, '2026-04-15 17:49:36', 'CONSULTAR', 1, 14, '{}', '{}'),
+(3131, '2026-04-15 18:41:46', 'CONSULTAR', 1, 5, '{}', '{}'),
+(3132, '2026-04-15 18:41:52', 'CONSULTAR', 1, 6, '{}', '{}'),
+(3133, '2026-04-16 08:50:46', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(3134, '2026-04-16 08:50:58', 'CONSULTAR', 1, 1, '{}', '{}'),
+(3135, '2026-04-16 08:51:06', 'CONSULTAR', 1, 2, '{}', '{}'),
+(3136, '2026-04-16 08:51:15', 'CONSULTAR', 1, 4, '{}', '{}'),
+(3137, '2026-04-16 08:51:19', 'CONSULTAR', 1, 4, '{}', '{}'),
+(3138, '2026-04-16 08:51:21', 'CONSULTAR', 1, 4, '{}', '{}'),
+(3139, '2026-04-16 08:51:24', 'CONSULTAR', 1, 3, '{}', '{}'),
+(3140, '2026-04-16 08:51:31', 'CONSULTAR', 1, 5, '{}', '{}'),
+(3141, '2026-04-16 08:51:36', 'CONSULTAR', 1, 6, '{}', '{}'),
+(3142, '2026-04-16 08:51:43', 'CONSULTAR', 1, 7, '{}', '{}'),
+(3143, '2026-04-16 08:51:48', 'CONSULTAR', 1, 8, '{}', '{}'),
+(3144, '2026-04-16 08:51:54', 'CONSULTAR', 1, 9, '{}', '{}'),
+(3145, '2026-04-16 08:52:17', 'CONSULTAR', 1, 11, '{}', '{}'),
+(3146, '2026-04-16 08:52:20', 'CONSULTAR', 1, 12, '{}', '{}'),
+(3147, '2026-04-16 08:52:22', 'CONSULTAR', 1, 13, '{}', '{}'),
+(3148, '2026-04-16 08:52:25', 'CONSULTAR', 1, 14, '{}', '{}'),
+(3149, '2026-04-16 08:52:31', 'CONSULTAR', 1, 17, '{}', '{}'),
+(3150, '2026-04-16 08:52:43', 'CONSULTAR', 1, 22, '{}', '{}'),
+(3151, '2026-04-16 08:52:46', 'CONSULTAR', 1, 23, '{}', '{}'),
+(3152, '2026-04-16 08:53:01', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(3153, '2026-04-16 09:44:36', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(3154, '2026-04-16 09:44:41', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(3155, '2026-04-16 09:44:51', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(3156, '2026-04-16 09:44:55', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(3157, '2026-04-16 19:17:20', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(3158, '2026-04-16 19:31:15', 'CONSULTAR', 1, 14, '{}', '{}'),
+(3159, '2026-04-16 19:33:49', 'CONSULTAR', 1, 14, '{}', '{}'),
+(3160, '2026-04-16 19:34:07', 'CONSULTAR', 1, 14, '{}', '{}'),
+(3161, '2026-04-16 19:34:17', 'CONSULTAR', 1, 17, '{}', '{}'),
+(3162, '2026-04-16 19:34:30', 'CONSULTAR', 1, 22, '{}', '{}'),
+(3163, '2026-04-16 19:38:04', 'CONSULTAR', 1, 1, '{}', '{}'),
+(3164, '2026-04-16 19:38:21', 'CONSULTAR', 1, 2, '{}', '{}'),
+(3165, '2026-04-18 16:26:20', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(3166, '2026-04-18 16:27:47', 'CONSULTAR', 1, 9, '{}', '{}'),
+(3167, '2026-04-18 16:27:52', 'CONSULTAR', 1, 14, '{}', '{}'),
+(3168, '2026-04-18 16:28:19', 'CONSULTAR', 1, 14, '{}', '{}'),
+(3169, '2026-04-18 16:28:25', 'CONSULTAR', 1, 6, '{}', '{}'),
+(3170, '2026-04-18 16:28:59', 'CONSULTAR', 1, 5, '{}', '{}'),
+(3171, '2026-04-18 16:29:02', 'CONSULTAR', 1, 6, '{}', '{}'),
+(3172, '2026-04-18 16:29:23', 'CONSULTAR', 1, 7, '{}', '{}'),
+(3173, '2026-04-18 16:29:28', 'CONSULTAR', 1, 9, '{}', '{}'),
+(3174, '2026-04-18 16:29:31', 'CONSULTAR', 1, 17, '{}', '{}'),
+(3175, '2026-04-18 16:29:41', 'CONSULTAR', 1, 22, '{}', '{}'),
+(3176, '2026-04-18 16:30:39', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(3177, '2026-04-18 16:47:41', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(3178, '2026-04-18 16:47:49', 'CONSULTAR', 1, 19, '{}', '{}'),
+(3179, '2026-04-18 16:47:55', 'CONSULTAR', 1, 6, '{}', '{}'),
+(3180, '2026-04-18 16:47:55', 'CONSULTAR', 1, 19, '{}', '{}'),
+(3181, '2026-04-18 16:48:15', 'RESPALDAR', 1, 19, '{}', '{\"accion\":\"Generó copia de seguridad\",\"base_datos\":\"NEGOCIO\"}'),
+(3182, '2026-04-18 17:33:34', 'CONSULTAR', 1, 14, '{}', '{}'),
+(3183, '2026-04-18 17:37:29', 'CONSULTAR', 1, 1, '{}', '{}');
 
 -- --------------------------------------------------------
 
@@ -2762,26 +4814,40 @@ INSERT INTO `bitacora` (`id_bitacora`, `fecha_hora`, `accion`, `usuario_id`, `mo
 -- Estructura de tabla para la tabla `cartelera_virtual`
 --
 
-CREATE TABLE `cartelera_virtual` (
-  `id_cartelera` int(11) NOT NULL,
+DROP TABLE IF EXISTS `cartelera_virtual`;
+CREATE TABLE IF NOT EXISTS `cartelera_virtual` (
+  `id_cartelera` int(11) NOT NULL AUTO_INCREMENT,
   `titulo` varchar(100) NOT NULL,
   `descripcion` varchar(100) NOT NULL,
   `fecha` datetime NOT NULL DEFAULT current_timestamp(),
   `imagen` varchar(100) DEFAULT NULL,
   `prioridad` varchar(10) NOT NULL,
-  `usuario_id` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `usuario_id` int(11) NOT NULL,
+  PRIMARY KEY (`id_cartelera`),
+  KEY `cartelera_virtual_ibfk_1` (`usuario_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Truncar tablas antes de insertar `cartelera_virtual`
+--
+
+TRUNCATE TABLE `cartelera_virtual`;
 --
 -- Volcado de datos para la tabla `cartelera_virtual`
 --
 
 INSERT INTO `cartelera_virtual` (`id_cartelera`, `titulo`, `descripcion`, `fecha`, `imagen`, `prioridad`, `usuario_id`) VALUES
-(19, 'Bienvenidos', 'bienvenidos al 2026', '2100-10-10 00:00:00', 'err_1774720041_174.PNG', '1', 1),
+(19, 'Bienvenidos', 'bienvenidos al 2026', '2100-10-10 00:00:00', 'err_1774720041_174.PNG', '3', 1),
 (23, 'aaaaaa', 'asdasdasd', '2026-03-05 00:00:00', 'Captura__2__1774720054_938.PNG', '3', 1),
 (27, 'aaaaaaaaaaa', 'fbbbbbbbbbbbbbbbbbbbb', '2010-10-10 00:00:00', 'ref_tarjeta_1774719930_739.PNG', '2', 1),
 (28, 'pepe tapo el escusado', 'pepe tapo el escusado mis pana', '2026-03-28 12:48:36', 'meme_1774720065_811.PNG', '1', 1),
-(29, 'adasdasdas', 'adasdasdasd', '2026-03-28 13:42:59', 'fake_new_1774719779_771.PNG', '2', 1);
+(29, 'adasdasdas', 'adasdasdasd', '2026-03-28 13:42:59', 'fake_new_1774719779_771.PNG', '2', 1),
+(30, 'hola pana', 'nueva publicacione', '2026-04-07 19:16:57', 'Captura__2__1775603817_147.PNG', '1', 1),
+(31, 'hola', 'publicacion 2', '2026-04-07 19:22:54', 'ejemplo2_1775604174_147.PNG', '2', 1),
+(32, 'sfasdasd', 'sadasdas', '2026-04-07 19:25:16', 'ref_tarjeta_1775604316_210.PNG', '1', 1),
+(33, 'asdasd', 'asdasd', '2026-04-07 19:25:54', '', '2', 1),
+(34, 'adasdas', 'asdasd', '2026-04-07 19:26:08', '', '3', 1),
+(35, 'hola pepe ', 'hola pepe como estas', '2026-04-12 16:16:00', 'fake_new_1776024960_274.PNG', '2', 1);
 
 -- --------------------------------------------------------
 
@@ -2789,14 +4855,21 @@ INSERT INTO `cartelera_virtual` (`id_cartelera`, `titulo`, `descripcion`, `fecha
 -- Estructura de tabla para la tabla `eventos_sistema`
 --
 
-CREATE TABLE `eventos_sistema` (
-  `id_evento` int(11) NOT NULL,
+DROP TABLE IF EXISTS `eventos_sistema`;
+CREATE TABLE IF NOT EXISTS `eventos_sistema` (
+  `id_evento` int(11) NOT NULL AUTO_INCREMENT,
   `tipo_evento` varchar(50) NOT NULL,
   `tabla_origen` varchar(50) NOT NULL,
   `id_registro_origen` int(11) NOT NULL,
-  `fecha_evento` datetime DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `fecha_evento` datetime DEFAULT current_timestamp(),
+  PRIMARY KEY (`id_evento`)
+) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Truncar tablas antes de insertar `eventos_sistema`
+--
+
+TRUNCATE TABLE `eventos_sistema`;
 --
 -- Volcado de datos para la tabla `eventos_sistema`
 --
@@ -2818,7 +4891,16 @@ INSERT INTO `eventos_sistema` (`id_evento`, `tipo_evento`, `tabla_origen`, `id_r
 (19, 'SALDO_BAJO', 'caja_chica', 25, '2026-03-16 21:21:07'),
 (20, 'NUEVA_MENSUALIDAD', 'mensualidad', 584, '2026-03-16 21:48:32'),
 (21, 'NUEVA_MENSUALIDAD', 'mensualidad', 589, '2026-03-16 21:50:51'),
-(22, 'NUEVA_MENSUALIDAD', 'mensualidad', 648, '2026-03-23 19:37:22');
+(22, 'NUEVA_MENSUALIDAD', 'mensualidad', 648, '2026-03-23 19:37:22'),
+(23, 'CREACION_AVISO', 'cartelera_virtual', 30, '2026-04-07 19:16:57'),
+(24, 'CREACION_AVISO', 'cartelera_virtual', 31, '2026-04-07 19:22:55'),
+(25, 'CREACION_AVISO', 'cartelera_virtual', 32, '2026-04-07 19:25:16'),
+(26, 'CREACION_AVISO', 'cartelera_virtual', 33, '2026-04-07 19:25:54'),
+(27, 'CREACION_AVISO', 'cartelera_virtual', 34, '2026-04-07 19:26:08'),
+(28, 'SALDO_BAJO', 'caja_chica', 26, '2026-04-07 19:42:45'),
+(29, 'SALDO_BAJO', 'caja_chica', 26, '2026-04-07 19:45:02'),
+(30, 'NUEVA_MENSUALIDAD', 'mensualidad', 655, '2026-04-11 14:53:40'),
+(31, 'CREACION_AVISO', 'cartelera_virtual', 35, '2026-04-12 16:16:00');
 
 -- --------------------------------------------------------
 
@@ -2826,12 +4908,19 @@ INSERT INTO `eventos_sistema` (`id_evento`, `tipo_evento`, `tabla_origen`, `id_r
 -- Estructura de tabla para la tabla `modulos`
 --
 
-CREATE TABLE `modulos` (
-  `id_modulo` int(11) NOT NULL,
+DROP TABLE IF EXISTS `modulos`;
+CREATE TABLE IF NOT EXISTS `modulos` (
+  `id_modulo` int(11) NOT NULL AUTO_INCREMENT,
   `nombre` varchar(50) NOT NULL,
-  `activo` tinyint(1) NOT NULL DEFAULT 1
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `activo` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id_modulo`)
+) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Truncar tablas antes de insertar `modulos`
+--
+
+TRUNCATE TABLE `modulos`;
 --
 -- Volcado de datos para la tabla `modulos`
 --
@@ -2866,70 +4955,117 @@ INSERT INTO `modulos` (`id_modulo`, `nombre`, `activo`) VALUES
 -- Estructura de tabla para la tabla `notificaciones`
 --
 
-CREATE TABLE `notificaciones` (
-  `id_notificacion` int(11) NOT NULL,
+DROP TABLE IF EXISTS `notificaciones`;
+CREATE TABLE IF NOT EXISTS `notificaciones` (
+  `id_notificacion` int(11) NOT NULL AUTO_INCREMENT,
   `titulo` varchar(100) NOT NULL,
   `descripcion` text NOT NULL,
-  `fecha` date NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
   `leido` tinyint(1) NOT NULL,
-  `usuario_id` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `usuario_id` int(11) NOT NULL,
+  PRIMARY KEY (`id_notificacion`),
+  KEY `notificaciones_ibfk_1` (`usuario_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=239 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Truncar tablas antes de insertar `notificaciones`
+--
+
+TRUNCATE TABLE `notificaciones`;
 --
 -- Volcado de datos para la tabla `notificaciones`
 --
 
 INSERT INTO `notificaciones` (`id_notificacion`, `titulo`, `descripcion`, `fecha`, `leido`, `usuario_id`) VALUES
-(150, 'Mensualidad de Apartamentos', 'Ya se asginaron las mensualidades de este mes', '2026-02-13', 1, 1),
-(151, 'Mensualidad de Apartamentos', 'Ya se asginaron las mensualidades de este mes', '2026-02-13', 0, 39),
-(152, 'Mensualidad de Apartamentos', 'Ya se asginaron las mensualidades de este mes', '2026-02-14', 1, 1),
-(153, 'Mensualidad de Apartamentos', 'Ya se asginaron las mensualidades de este mes', '2026-02-14', 0, 39),
-(154, 'Saldo bajo en caja chica', 'La caja chica ID 23 tiene saldo de 90,00 Bs.', '2026-02-28', 1, 1),
-(155, 'Saldo bajo en caja chica', 'La caja chica ID 23 tiene saldo de 90,00 Bs.', '2026-02-28', 1, 39),
-(156, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 3 del año 2025.', '2026-03-02', 0, 27),
-(157, 'Saldo bajo en caja chica', 'La caja chica ID 23 tiene saldo de 80,00 Bs.', '2026-03-02', 1, 1),
-(158, 'Saldo bajo en caja chica', 'La caja chica ID 23 tiene saldo de 80,00 Bs.', '2026-03-02', 0, 39),
-(159, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 5 del año 2025.', '2026-03-10', 0, 27),
-(160, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 6 del año 2025.', '2026-03-12', 1, 1),
-(161, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 6 del año 2025.', '2026-03-12', 0, 2),
-(162, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 6 del año 2025.', '2026-03-12', 0, 27),
-(163, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 6 del año 2025.', '2026-03-12', 0, 39),
-(164, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 7 del año 2025.', '2026-03-15', 1, 1),
-(165, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 7 del año 2025.', '2026-03-15', 0, 2),
-(166, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 7 del año 2025.', '2026-03-15', 0, 27),
-(167, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 7 del año 2025.', '2026-03-15', 0, 39),
-(168, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 8 del año 2025.', '2026-03-15', 1, 1),
-(169, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 8 del año 2025.', '2026-03-15', 0, 2),
-(170, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 8 del año 2025.', '2026-03-15', 0, 27),
-(171, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 8 del año 2025.', '2026-03-15', 0, 39),
-(172, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 4 del año 2025.', '2026-03-15', 1, 1),
-(173, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 4 del año 2025.', '2026-03-15', 0, 2),
-(174, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 4 del año 2025.', '2026-03-15', 0, 27),
-(175, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 4 del año 2025.', '2026-03-15', 0, 39),
-(176, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 7 del año 2025.', '2026-03-15', 1, 1),
-(177, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 7 del año 2025.', '2026-03-15', 0, 2),
-(178, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 7 del año 2025.', '2026-03-15', 0, 27),
-(179, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 7 del año 2025.', '2026-03-15', 0, 39),
-(180, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 8 del año 2025.', '2026-03-15', 1, 1),
-(181, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 8 del año 2025.', '2026-03-15', 0, 2),
-(182, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 8 del año 2025.', '2026-03-15', 0, 27),
-(183, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 8 del año 2025.', '2026-03-15', 0, 39),
-(184, 'Saldo bajo en caja chica', 'La caja chica ID 25 tiene saldo de 90,00 Bs.', '2026-03-15', 1, 1),
-(185, 'Saldo bajo en caja chica', 'La caja chica ID 25 tiene saldo de 90,00 Bs.', '2026-03-15', 0, 39),
-(186, 'Saldo bajo en caja chica', 'La caja chica ID 25 tiene saldo de 80,00 Bs.', '2026-03-16', 0, 1),
-(187, 'Saldo bajo en caja chica', 'La caja chica ID 25 tiene saldo de 80,00 Bs.', '2026-03-16', 0, 39),
-(188, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 11 del año 2025.', '2026-03-17', 0, 1),
-(189, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 11 del año 2025.', '2026-03-17', 0, 2),
-(190, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 11 del año 2025.', '2026-03-17', 0, 27),
-(191, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 11 del año 2025.', '2026-03-17', 0, 39),
-(192, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 8 del año 2025.', '2026-03-17', 0, 1),
-(193, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 8 del año 2025.', '2026-03-17', 0, 2),
-(194, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 8 del año 2025.', '2026-03-17', 0, 27),
-(195, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 8 del año 2025.', '2026-03-17', 0, 39),
-(196, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 2 del año 2026.', '2026-03-24', 0, 1),
-(197, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 2 del año 2026.', '2026-03-24', 0, 2),
-(198, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 2 del año 2026.', '2026-03-24', 0, 27),
-(199, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 2 del año 2026.', '2026-03-24', 0, 39);
+(150, 'Mensualidad de Apartamentos', 'Ya se asginaron las mensualidades de este mes', '2026-02-13 00:00:00', 1, 1),
+(151, 'Mensualidad de Apartamentos', 'Ya se asginaron las mensualidades de este mes', '2026-02-13 00:00:00', 0, 39),
+(152, 'Mensualidad de Apartamentos', 'Ya se asginaron las mensualidades de este mes', '2026-02-14 00:00:00', 1, 1),
+(153, 'Mensualidad de Apartamentos', 'Ya se asginaron las mensualidades de este mes', '2026-02-14 00:00:00', 0, 39),
+(154, 'Saldo bajo en caja chica', 'La caja chica ID 23 tiene saldo de 90,00 Bs.', '2026-02-28 00:00:00', 1, 1),
+(155, 'Saldo bajo en caja chica', 'La caja chica ID 23 tiene saldo de 90,00 Bs.', '2026-02-28 00:00:00', 1, 39),
+(156, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 3 del año 2025.', '2026-03-02 00:00:00', 0, 27),
+(157, 'Saldo bajo en caja chica', 'La caja chica ID 23 tiene saldo de 80,00 Bs.', '2026-03-02 00:00:00', 1, 1),
+(158, 'Saldo bajo en caja chica', 'La caja chica ID 23 tiene saldo de 80,00 Bs.', '2026-03-02 00:00:00', 0, 39),
+(159, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 5 del año 2025.', '2026-03-10 00:00:00', 0, 27),
+(160, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 6 del año 2025.', '2026-03-12 00:00:00', 1, 1),
+(161, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 6 del año 2025.', '2026-03-12 00:00:00', 0, 2),
+(162, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 6 del año 2025.', '2026-03-12 00:00:00', 0, 27),
+(163, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 6 del año 2025.', '2026-03-12 00:00:00', 0, 39),
+(164, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 7 del año 2025.', '2026-03-15 00:00:00', 1, 1),
+(165, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 7 del año 2025.', '2026-03-15 00:00:00', 0, 2),
+(166, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 7 del año 2025.', '2026-03-15 00:00:00', 0, 27),
+(167, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 7 del año 2025.', '2026-03-15 00:00:00', 0, 39),
+(168, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 8 del año 2025.', '2026-03-15 00:00:00', 1, 1),
+(169, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 8 del año 2025.', '2026-03-15 00:00:00', 0, 2),
+(170, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 8 del año 2025.', '2026-03-15 00:00:00', 0, 27),
+(171, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 8 del año 2025.', '2026-03-15 00:00:00', 0, 39),
+(172, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 4 del año 2025.', '2026-03-15 00:00:00', 1, 1),
+(173, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 4 del año 2025.', '2026-03-15 00:00:00', 0, 2),
+(174, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 4 del año 2025.', '2026-03-15 00:00:00', 0, 27),
+(175, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 4 del año 2025.', '2026-03-15 00:00:00', 0, 39),
+(176, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 7 del año 2025.', '2026-03-15 00:00:00', 1, 1),
+(177, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 7 del año 2025.', '2026-03-15 00:00:00', 0, 2),
+(178, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 7 del año 2025.', '2026-03-15 00:00:00', 0, 27),
+(179, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 7 del año 2025.', '2026-03-15 00:00:00', 0, 39),
+(180, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 8 del año 2025.', '2026-03-15 00:00:00', 1, 1),
+(181, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 8 del año 2025.', '2026-03-15 00:00:00', 0, 2),
+(182, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 8 del año 2025.', '2026-03-15 00:00:00', 0, 27),
+(183, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 8 del año 2025.', '2026-03-15 00:00:00', 0, 39),
+(184, 'Saldo bajo en caja chica', 'La caja chica ID 25 tiene saldo de 90,00 Bs.', '2026-03-15 00:00:00', 1, 1),
+(185, 'Saldo bajo en caja chica', 'La caja chica ID 25 tiene saldo de 90,00 Bs.', '2026-03-15 00:00:00', 0, 39),
+(186, 'Saldo bajo en caja chica', 'La caja chica ID 25 tiene saldo de 80,00 Bs.', '2026-03-16 00:00:00', 1, 1),
+(187, 'Saldo bajo en caja chica', 'La caja chica ID 25 tiene saldo de 80,00 Bs.', '2026-03-16 00:00:00', 0, 39),
+(188, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 11 del año 2025.', '2026-03-17 00:00:00', 1, 1),
+(189, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 11 del año 2025.', '2026-03-17 00:00:00', 0, 2),
+(190, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 11 del año 2025.', '2026-03-17 00:00:00', 0, 27),
+(191, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 11 del año 2025.', '2026-03-17 00:00:00', 0, 39),
+(192, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 8 del año 2025.', '2026-03-17 00:00:00', 1, 1),
+(193, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 8 del año 2025.', '2026-03-17 00:00:00', 0, 2),
+(194, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 8 del año 2025.', '2026-03-17 00:00:00', 0, 27),
+(195, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 8 del año 2025.', '2026-03-17 00:00:00', 0, 39),
+(196, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 2 del año 2026.', '2026-03-24 00:00:00', 1, 1),
+(197, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 2 del año 2026.', '2026-03-24 00:00:00', 0, 2),
+(198, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 2 del año 2026.', '2026-03-24 00:00:00', 0, 27),
+(199, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 2 del año 2026.', '2026-03-24 00:00:00', 0, 39),
+(200, 'Nuevo aviso: hola pana', 'nueva publicacione', '2026-04-08 00:00:00', 1, 1),
+(201, 'Nuevo aviso: hola pana', 'nueva publicacione', '2026-04-08 00:00:00', 0, 2),
+(202, 'Nuevo aviso: hola pana', 'nueva publicacione', '2026-04-08 00:00:00', 0, 27),
+(203, 'Nuevo aviso: hola pana', 'nueva publicacione', '2026-04-08 00:00:00', 0, 39),
+(204, 'Nuevo aviso: hola pana', 'nueva publicacione', '2026-04-08 00:00:00', 0, 91),
+(205, 'Nuevo aviso: hola', 'publicacion 2', '2026-04-08 00:00:00', 1, 1),
+(206, 'Nuevo aviso: hola', 'publicacion 2', '2026-04-08 00:00:00', 0, 2),
+(207, 'Nuevo aviso: hola', 'publicacion 2', '2026-04-08 00:00:00', 0, 27),
+(208, 'Nuevo aviso: hola', 'publicacion 2', '2026-04-08 00:00:00', 0, 39),
+(209, 'Nuevo aviso: hola', 'publicacion 2', '2026-04-08 00:00:00', 0, 91),
+(210, 'Nuevo aviso: sfasdasd', 'sadasdas', '2026-04-08 00:00:00', 1, 1),
+(211, 'Nuevo aviso: sfasdasd', 'sadasdas', '2026-04-08 00:00:00', 0, 2),
+(212, 'Nuevo aviso: sfasdasd', 'sadasdas', '2026-04-08 00:00:00', 0, 27),
+(213, 'Nuevo aviso: sfasdasd', 'sadasdas', '2026-04-08 00:00:00', 0, 39),
+(214, 'Nuevo aviso: sfasdasd', 'sadasdas', '2026-04-08 00:00:00', 0, 91),
+(215, 'Nuevo aviso: asdasd', 'asdasd', '2026-04-08 00:00:00', 1, 1),
+(216, 'Nuevo aviso: asdasd', 'asdasd', '2026-04-08 00:00:00', 0, 2),
+(217, 'Nuevo aviso: asdasd', 'asdasd', '2026-04-08 00:00:00', 0, 27),
+(218, 'Nuevo aviso: asdasd', 'asdasd', '2026-04-08 00:00:00', 0, 39),
+(219, 'Nuevo aviso: asdasd', 'asdasd', '2026-04-08 00:00:00', 0, 91),
+(220, 'Nuevo aviso: adasdas', 'asdasd', '2026-04-08 00:00:00', 1, 1),
+(221, 'Nuevo aviso: adasdas', 'asdasd', '2026-04-08 00:00:00', 0, 2),
+(222, 'Nuevo aviso: adasdas', 'asdasd', '2026-04-08 00:00:00', 0, 27),
+(223, 'Nuevo aviso: adasdas', 'asdasd', '2026-04-08 00:00:00', 0, 39),
+(224, 'Nuevo aviso: adasdas', 'asdasd', '2026-04-08 00:00:00', 0, 91),
+(225, 'Saldo bajo en caja chica', 'La caja ID 26 tiene 100.00 Bs.', '2026-04-07 00:00:00', 1, 1),
+(226, 'Saldo bajo en caja chica', 'La caja ID 26 tiene 100.00 Bs.', '2026-04-07 00:00:00', 0, 39),
+(227, 'Saldo bajo en caja chica', 'La caja ID 26 tiene 100.00 Bs.', '2026-04-07 00:00:00', 0, 1),
+(228, 'Saldo bajo en caja chica', 'La caja ID 26 tiene 100.00 Bs.', '2026-04-07 00:00:00', 0, 39),
+(229, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 2 del año 2026.', '2026-04-11 14:53:40', 0, 1),
+(230, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 2 del año 2026.', '2026-04-11 14:53:40', 0, 2),
+(231, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 2 del año 2026.', '2026-04-11 14:53:40', 0, 27),
+(232, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 2 del año 2026.', '2026-04-11 14:53:40', 0, 39),
+(233, 'Nueva mensualidad disponible', 'Se han generado las mensualidades para el mes 2 del año 2026.', '2026-04-11 14:53:40', 0, 91),
+(234, 'Nuevo aviso: hola pepe ', 'hola pepe como estas', '2026-04-12 16:16:00', 0, 1),
+(235, 'Nuevo aviso: hola pepe ', 'hola pepe como estas', '2026-04-12 16:16:00', 0, 2),
+(236, 'Nuevo aviso: hola pepe ', 'hola pepe como estas', '2026-04-12 16:16:00', 0, 27),
+(237, 'Nuevo aviso: hola pepe ', 'hola pepe como estas', '2026-04-12 16:16:00', 0, 39),
+(238, 'Nuevo aviso: hola pepe ', 'hola pepe como estas', '2026-04-12 16:16:00', 0, 91);
 
 -- --------------------------------------------------------
 
@@ -2937,11 +5073,19 @@ INSERT INTO `notificaciones` (`id_notificacion`, `titulo`, `descripcion`, `fecha
 -- Estructura de tabla para la tabla `notificacion_evento`
 --
 
-CREATE TABLE `notificacion_evento` (
+DROP TABLE IF EXISTS `notificacion_evento`;
+CREATE TABLE IF NOT EXISTS `notificacion_evento` (
   `notificacion_id` int(11) NOT NULL,
-  `evento_id` int(11) NOT NULL
+  `evento_id` int(11) NOT NULL,
+  PRIMARY KEY (`notificacion_id`,`evento_id`),
+  KEY `evento_id` (`evento_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Truncar tablas antes de insertar `notificacion_evento`
+--
+
+TRUNCATE TABLE `notificacion_evento`;
 --
 -- Volcado de datos para la tabla `notificacion_evento`
 --
@@ -2996,7 +5140,46 @@ INSERT INTO `notificacion_evento` (`notificacion_id`, `evento_id`) VALUES
 (196, 22),
 (197, 22),
 (198, 22),
-(199, 22);
+(199, 22),
+(200, 23),
+(201, 23),
+(202, 23),
+(203, 23),
+(204, 23),
+(205, 24),
+(206, 24),
+(207, 24),
+(208, 24),
+(209, 24),
+(210, 25),
+(211, 25),
+(212, 25),
+(213, 25),
+(214, 25),
+(215, 26),
+(216, 26),
+(217, 26),
+(218, 26),
+(219, 26),
+(220, 27),
+(221, 27),
+(222, 27),
+(223, 27),
+(224, 27),
+(225, 28),
+(226, 28),
+(227, 29),
+(228, 29),
+(229, 30),
+(230, 30),
+(231, 30),
+(232, 30),
+(233, 30),
+(234, 31),
+(235, 31),
+(236, 31),
+(237, 31),
+(238, 31);
 
 -- --------------------------------------------------------
 
@@ -3004,12 +5187,19 @@ INSERT INTO `notificacion_evento` (`notificacion_id`, `evento_id`) VALUES
 -- Estructura de tabla para la tabla `permisos`
 --
 
-CREATE TABLE `permisos` (
-  `id_permiso` int(11) NOT NULL,
+DROP TABLE IF EXISTS `permisos`;
+CREATE TABLE IF NOT EXISTS `permisos` (
+  `id_permiso` int(11) NOT NULL AUTO_INCREMENT,
   `accion` varchar(50) NOT NULL,
-  `activo` tinyint(1) NOT NULL DEFAULT 1
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `activo` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id_permiso`)
+) ENGINE=InnoDB AUTO_INCREMENT=90 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Truncar tablas antes de insertar `permisos`
+--
+
+TRUNCATE TABLE `permisos`;
 --
 -- Volcado de datos para la tabla `permisos`
 --
@@ -3026,12 +5216,20 @@ INSERT INTO `permisos` (`id_permiso`, `accion`, `activo`) VALUES
 -- Estructura de tabla para la tabla `roles`
 --
 
-CREATE TABLE `roles` (
-  `id_rol` int(11) NOT NULL,
+DROP TABLE IF EXISTS `roles`;
+CREATE TABLE IF NOT EXISTS `roles` (
+  `id_rol` int(11) NOT NULL AUTO_INCREMENT,
   `nombre` varchar(50) NOT NULL,
-  `activo` tinyint(1) NOT NULL DEFAULT 1
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `activo` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id_rol`),
+  UNIQUE KEY `nombre` (`nombre`)
+) ENGINE=InnoDB AUTO_INCREMENT=73 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Truncar tablas antes de insertar `roles`
+--
+
+TRUNCATE TABLE `roles`;
 --
 -- Volcado de datos para la tabla `roles`
 --
@@ -3051,24 +5249,61 @@ INSERT INTO `roles` (`id_rol`, `nombre`, `activo`) VALUES
 -- --------------------------------------------------------
 
 --
+-- Estructura de tabla para la tabla `suscripciones_push`
+--
+
+DROP TABLE IF EXISTS `suscripciones_push`;
+CREATE TABLE IF NOT EXISTS `suscripciones_push` (
+  `id_suscripcion` int(11) NOT NULL AUTO_INCREMENT,
+  `usuario_id` int(11) NOT NULL,
+  `endpoint` text NOT NULL,
+  `p256dh` varchar(255) NOT NULL,
+  `auth` varchar(255) NOT NULL,
+  `fecha_registro` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id_suscripcion`),
+  KEY `suscripciones_push_ibfk_1` (`usuario_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Truncar tablas antes de insertar `suscripciones_push`
+--
+
+TRUNCATE TABLE `suscripciones_push`;
+--
+-- Volcado de datos para la tabla `suscripciones_push`
+--
+
+INSERT INTO `suscripciones_push` (`id_suscripcion`, `usuario_id`, `endpoint`, `p256dh`, `auth`, `fecha_registro`) VALUES
+(1, 1, 'https://updates.push.services.mozilla.com/wpush/v2/gAAAAABp1ZseTDQjnU5lI9AUO3eTuNHUP_qj8r1xvlJZs3h9TYmjAETOu3DuVzspQCdWsiH1pXGvZE-ofcigSRPYAYj1JhNSe2Dzmp4MSjmvDKvZQeYV00zfaXuyZ-WNy0madX2qSkqrBRjsB_UrzgsBcc-h7MAdL41G3cQrc5fY6i7HsVaJD7k', 'BPSoziQjJfxaG05/wBlvkgZ+XmfRZI/7Wnjw48WyE3qDOKayqeoGLQYihJM7KtCUDASM4Rv43HTvx7CSINbphkE=', 'dVIKY/GHisXcOM5xCM90ww==', '2026-04-07 22:45:44');
+
+-- --------------------------------------------------------
+
+--
 -- Estructura de tabla para la tabla `tokens_seguridad`
 --
 
-CREATE TABLE `tokens_seguridad` (
-  `id_token` int(11) NOT NULL,
+DROP TABLE IF EXISTS `tokens_seguridad`;
+CREATE TABLE IF NOT EXISTS `tokens_seguridad` (
+  `id_token` int(11) NOT NULL AUTO_INCREMENT,
   `usuario_id` int(11) NOT NULL,
   `token` varchar(255) NOT NULL,
   `fecha_expiracion` datetime NOT NULL,
-  `tipo` varchar(30) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `tipo` varchar(30) NOT NULL,
+  PRIMARY KEY (`id_token`),
+  KEY `usuario_id` (`usuario_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=107 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Truncar tablas antes de insertar `tokens_seguridad`
+--
+
+TRUNCATE TABLE `tokens_seguridad`;
 --
 -- Volcado de datos para la tabla `tokens_seguridad`
 --
 
 INSERT INTO `tokens_seguridad` (`id_token`, `usuario_id`, `token`, `fecha_expiracion`, `tipo`) VALUES
-(63, 39, '08b3f587204551170b5adbceb2cfce9afc09eabdd3920e83421ee3b618ba7583', '2026-03-01 06:13:56', 'RECUPERAR_CONTRASENIA'),
-(92, 1, 'ec662e48078082c0b74c231a7dfb0be9901c702c1d0544b592c68d792b9602a9', '2026-04-28 02:19:20', 'RECORDAR_CONTRASENIA');
+(103, 39, 'e15f6aff21b73ab42fc6482539e29d6fc05b7cd61044999e70760f1c44372acc', '2026-04-15 20:07:09', 'RECUPERAR_CONTRASENIA');
 
 -- --------------------------------------------------------
 
@@ -3076,16 +5311,25 @@ INSERT INTO `tokens_seguridad` (`id_token`, `usuario_id`, `token`, `fecha_expira
 -- Estructura de tabla para la tabla `usuarios`
 --
 
-CREATE TABLE `usuarios` (
-  `id_usuario` int(11) NOT NULL,
+DROP TABLE IF EXISTS `usuarios`;
+CREATE TABLE IF NOT EXISTS `usuarios` (
+  `id_usuario` int(11) NOT NULL AUTO_INCREMENT,
   `nombre` varchar(20) NOT NULL,
   `apellido` varchar(20) NOT NULL,
   `correo` varchar(50) NOT NULL,
   `contrasenia` varchar(255) NOT NULL,
   `rol_id` int(11) NOT NULL,
-  `activo` tinyint(1) NOT NULL DEFAULT 1
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `activo` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id_usuario`),
+  UNIQUE KEY `correo` (`correo`),
+  KEY `usuarios_ibfk_1` (`rol_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=93 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Truncar tablas antes de insertar `usuarios`
+--
+
+TRUNCATE TABLE `usuarios`;
 --
 -- Volcado de datos para la tabla `usuarios`
 --
@@ -3094,151 +5338,13 @@ INSERT INTO `usuarios` (`id_usuario`, `nombre`, `apellido`, `correo`, `contrasen
 (1, 'Jesus', 'Escalona', 'administrador@gmail.com', '$2y$10$DUaMi5Xk1iURAgqwcoHTc.OqMk43DTTz4DZp/gi.inaeB7XCkqkEm', 1, 1),
 (2, 'francisco', 'mendoza', 'franj@gmail.com', '$2y$10$0KoHFVefo2ZZPv/nh0ocaefcDxfbOKXxcVhnUj844WynuyGhWpaV.', 4, 1),
 (27, 'Pepes', 'Campos', 'pepe@gmail.com', '$2y$10$WWp8M1SADJzTWAg910K.mewfZFglQF77ENnqPYLmq1U9AKmmeruY2', 3, 1),
-(39, 'Yhsius', 'asdasd', 'jesusgescalonae@gmail.com', '$2y$10$43qehRdMdapmU3UPJgnAVuV.UX1WOxuWqSJuc2glxGZq7JRU3Z8Lu', 2, 1),
+(39, 'Yhsius', 'asdasd', 'jesusgescalonae@gmail.com', '$2y$10$NRSnjmozFiGc7GP7Hc61..Z9OazXjr8B3KvNhEmslcCk1zDeVmjRy', 2, 1),
 (53, 'perfil editado', 'perfil editado', 'UsuarioperfilEditada@gmail.com', '$2y$10$AzKv19h61AeAkEYPA/FSA.buvyhYKoRfHT/kUFgMDSWE11PKjpBLS', 4, 0),
 (54, 'usuario', 'cambiocontra', 'cambiocontrasenia@gmail.com', '$2y$10$soYFxka95IzptEPe5eA.IONdFJI/geOcpt0K/L7aAKNIsTyn.5Nd2', 23, 0),
 (89, 'pepe', 'puias', 'pepa@gmail.com', '$2y$10$GtV9.reiR/8A/NindSEEUOtCPjAs.lLxS67Qp9ZNtG6Ug3wzd5nXi', 1, 0),
 (90, 'asdasd', 'asdasd', 'asdas@ad.com', '$2y$10$tTc2q0y3G8sZ8glF3vyDiO.b3DqLtm/TJ/HTJl8QZM2pforDC0TdO', 1, 0),
-(91, 'test', 'test', 'test@gmail.com', '$2y$10$M/b/1lwlXVk7g0bHNfBiIOZ1XM0OQIB6SU5GPG2SL0JnhTQvD4Dqu', 69, 1);
-
---
--- Índices para tablas volcadas
---
-
---
--- Indices de la tabla `asignacion_permisos`
---
-ALTER TABLE `asignacion_permisos`
-  ADD PRIMARY KEY (`rol_id`,`permiso_id`,`modulo_id`) USING BTREE,
-  ADD KEY `asignacion_permisos_ibfk_1` (`modulo_id`),
-  ADD KEY `asignacion_permisos_ibfk_2` (`permiso_id`);
-
---
--- Indices de la tabla `bitacora`
---
-ALTER TABLE `bitacora`
-  ADD PRIMARY KEY (`id_bitacora`),
-  ADD KEY `bitacora_ibfk_1` (`usuario_id`),
-  ADD KEY `bitacora_ibfk_2` (`modulo_id`);
-
---
--- Indices de la tabla `cartelera_virtual`
---
-ALTER TABLE `cartelera_virtual`
-  ADD PRIMARY KEY (`id_cartelera`),
-  ADD KEY `cartelera_virtual_ibfk_1` (`usuario_id`);
-
---
--- Indices de la tabla `eventos_sistema`
---
-ALTER TABLE `eventos_sistema`
-  ADD PRIMARY KEY (`id_evento`);
-
---
--- Indices de la tabla `modulos`
---
-ALTER TABLE `modulos`
-  ADD PRIMARY KEY (`id_modulo`);
-
---
--- Indices de la tabla `notificaciones`
---
-ALTER TABLE `notificaciones`
-  ADD PRIMARY KEY (`id_notificacion`),
-  ADD KEY `notificaciones_ibfk_1` (`usuario_id`);
-
---
--- Indices de la tabla `notificacion_evento`
---
-ALTER TABLE `notificacion_evento`
-  ADD PRIMARY KEY (`notificacion_id`,`evento_id`),
-  ADD KEY `evento_id` (`evento_id`);
-
---
--- Indices de la tabla `permisos`
---
-ALTER TABLE `permisos`
-  ADD PRIMARY KEY (`id_permiso`);
-
---
--- Indices de la tabla `roles`
---
-ALTER TABLE `roles`
-  ADD PRIMARY KEY (`id_rol`),
-  ADD UNIQUE KEY `nombre` (`nombre`);
-
---
--- Indices de la tabla `tokens_seguridad`
---
-ALTER TABLE `tokens_seguridad`
-  ADD PRIMARY KEY (`id_token`),
-  ADD KEY `usuario_id` (`usuario_id`);
-
---
--- Indices de la tabla `usuarios`
---
-ALTER TABLE `usuarios`
-  ADD PRIMARY KEY (`id_usuario`),
-  ADD UNIQUE KEY `correo` (`correo`),
-  ADD KEY `usuarios_ibfk_1` (`rol_id`);
-
---
--- AUTO_INCREMENT de las tablas volcadas
---
-
---
--- AUTO_INCREMENT de la tabla `bitacora`
---
-ALTER TABLE `bitacora`
-  MODIFY `id_bitacora` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2410;
-
---
--- AUTO_INCREMENT de la tabla `cartelera_virtual`
---
-ALTER TABLE `cartelera_virtual`
-  MODIFY `id_cartelera` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
-
---
--- AUTO_INCREMENT de la tabla `eventos_sistema`
---
-ALTER TABLE `eventos_sistema`
-  MODIFY `id_evento` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
-
---
--- AUTO_INCREMENT de la tabla `modulos`
---
-ALTER TABLE `modulos`
-  MODIFY `id_modulo` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
-
---
--- AUTO_INCREMENT de la tabla `notificaciones`
---
-ALTER TABLE `notificaciones`
-  MODIFY `id_notificacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=200;
-
---
--- AUTO_INCREMENT de la tabla `permisos`
---
-ALTER TABLE `permisos`
-  MODIFY `id_permiso` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=90;
-
---
--- AUTO_INCREMENT de la tabla `roles`
---
-ALTER TABLE `roles`
-  MODIFY `id_rol` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=73;
-
---
--- AUTO_INCREMENT de la tabla `tokens_seguridad`
---
-ALTER TABLE `tokens_seguridad`
-  MODIFY `id_token` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=93;
-
---
--- AUTO_INCREMENT de la tabla `usuarios`
---
-ALTER TABLE `usuarios`
-  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=92;
+(91, 'test', 'test', 'test@gmail.com', '$2y$10$M/b/1lwlXVk7g0bHNfBiIOZ1XM0OQIB6SU5GPG2SL0JnhTQvD4Dqu', 69, 1),
+(92, 'presi', 'presi', 'presi@gmail.com', '$2y$10$mE8PllA/a3G4ecc.UIZi4u9771m5QBZ3vk/7jWRutkQooM5rD1ryG', 23, 1);
 
 --
 -- Restricciones para tablas volcadas
@@ -3279,6 +5385,12 @@ ALTER TABLE `notificacion_evento`
   ADD CONSTRAINT `notificacion_evento_ibfk_2` FOREIGN KEY (`evento_id`) REFERENCES `eventos_sistema` (`id_evento`) ON DELETE CASCADE;
 
 --
+-- Filtros para la tabla `suscripciones_push`
+--
+ALTER TABLE `suscripciones_push`
+  ADD CONSTRAINT `suscripciones_push_ibfk_1` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id_usuario`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
 -- Filtros para la tabla `tokens_seguridad`
 --
 ALTER TABLE `tokens_seguridad`
@@ -3289,6 +5401,7 @@ ALTER TABLE `tokens_seguridad`
 --
 ALTER TABLE `usuarios`
   ADD CONSTRAINT `usuarios_ibfk_1` FOREIGN KEY (`rol_id`) REFERENCES `roles` (`id_rol`) ON UPDATE CASCADE;
+SET FOREIGN_KEY_CHECKS=1;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

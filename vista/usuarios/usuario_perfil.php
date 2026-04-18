@@ -91,7 +91,7 @@
 
                         <div class="col-lg-8">
                             <div class="card shadow-sm h-100 border-0 rounded-4">
-                                <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4 d-flex justify-content-between align-items-center">
+                                <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4 d-flex justify-content-between align-items-center rounded-4">
                                     <h4 class="mb-0 fw-bold text-dark">
                                         <i class="bi bi-person-lines-fill text-primary me-2"></i> Información Personal
                                     </h4>

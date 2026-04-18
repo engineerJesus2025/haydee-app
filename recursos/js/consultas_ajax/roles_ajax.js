@@ -43,7 +43,7 @@ async function consultar() {
         // Protección especial para el Rol 1 (Administrador Global)
         if (id == 1) {
             return `<span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary px-3 py-2 shadow-sm text-nowrap">
-                        <i class="bi bi-lock-fill me-1"></i> Rol del Sistema
+                        <i class="bi bi-lock-fill me-1"></i> No Modificable
                     </span>`;
         }
 

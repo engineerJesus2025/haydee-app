@@ -78,20 +78,43 @@ if (isset($_POST["operacion"])) {
                 }
                 break;
 
-            case 'restaurar_copia_seguridad':
+            case 'importar_copia_seguridad':
+                // LÓGICA PARA RESTAURAR DESDE EL SERVIDOR
+                $db = $_POST['db'] ?? '';
+                $fichero = $_POST['fichero'] ?? '';
+
+                if (!in_array($db, ['negocio', 'seguridad']) || empty($fichero)) {
+                    $respuesta = ['estatus' => false, 'mensaje' => 'Datos inválidos para la restauración.'];
+                    break;
+                }
+
+                $respuesta = $mantenimiento->importarCopiaSeguridad($db, $fichero);
+                if ($respuesta['estatus']) {
+                    $detalles = [
+                        'accion' => 'Restauró base de datos desde el servidor',
+                        'base_datos' => strtoupper($db),
+                        'archivo' => $fichero
+                    ];
+                    Bitacora::registrar(RESTAURAR, GESTIONAR_MANTENIMIENTO, null, null, $detalles);
+                }
+                break;
+
+            case 'importar_archivo_sql':
+                // LÓGICA PARA RESTAURAR DESDE LA PC (ARCHIVO SUBIDO)
                 $db = $_POST['db'] ?? '';
                 if (!in_array($db, ['negocio', 'seguridad'])) {
                     $respuesta = ['estatus' => false, 'mensaje' => 'Base de datos no válida'];
                     break;
                 }
 
-                if (!isset($_FILES['backup_file']) || $_FILES['backup_file']['error'] !== UPLOAD_ERR_OK) {
+                // JS envía el archivo como 'fichero'
+                if (!isset($_FILES['fichero']) || $_FILES['fichero']['error'] !== UPLOAD_ERR_OK) {
                     $respuesta = ['estatus' => false, 'mensaje' => 'No se subió ningún archivo o hubo un error en la subida.'];
                     break;
                 }
 
-                $archivo_tmp = $_FILES['backup_file']['tmp_name'];
-                $nombre_archivo = $_FILES['backup_file']['name'];
+                $archivo_tmp = $_FILES['fichero']['tmp_name'];
+                $nombre_archivo = $_FILES['fichero']['name'];
                 
                 $extension = strtolower(pathinfo($nombre_archivo, PATHINFO_EXTENSION));
                 if ($extension !== 'sql') {
@@ -105,6 +128,7 @@ if (isset($_POST["operacion"])) {
                     break;
                 }
 
+                // Verificación de seguridad cruzada
                 $es_seguridad = stripos($contenido_sql, "Database: seguridad_haydee_db") !== false;
                 if (($db === 'seguridad' && !$es_seguridad) || ($db === 'negocio' && $es_seguridad)) {
                     $respuesta = ['estatus' => false, 'mensaje' => 'El archivo no corresponde a la base de datos destino.'];
@@ -113,15 +137,12 @@ if (isset($_POST["operacion"])) {
 
                 $respuesta = $mantenimiento->importarSQL($contenido_sql, $db);
                 if ($respuesta['estatus']) {
-                    
-                    // -> Registro manual <-
                     $detalles = [
                         'accion' => 'Restauró base de datos desde archivo local',
                         'base_datos' => strtoupper($db),
                         'archivo_subido' => $nombre_archivo
                     ];
                     Bitacora::registrar(RESTAURAR, GESTIONAR_MANTENIMIENTO, null, null, $detalles);
-
                 }
                 break;
 

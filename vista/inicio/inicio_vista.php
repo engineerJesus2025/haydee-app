@@ -206,7 +206,7 @@
                                             </a>
                                         </div>
 
-                                        <div id="contenedor-actividad">
+                                        <div id="contenedor-actividad" class="d-flex flex-column flex-grow-1 justify-content-around">
                                             <div class="d-flex align-items-start mb-3 pb-3 border-bottom">
                                                 <div class="skeleton skeleton-avatar me-3"></div>
                                                 <div class="w-100 mt-1">

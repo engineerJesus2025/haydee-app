@@ -7,6 +7,7 @@ let recuperacionContrasenia = { enviada: false, tiempo: null };
 let recaptchaToken = null;
 let recaptchaWidgetId = null;
 const recaptchaDesactivado = window.RECAPTCHA_DESACTIVADO === true; 
+const modal_carga = new bootstrap.Modal("#modal_carga", { focus: false });
 
 window.onRecaptchaSuccess = function(token) {
     recaptchaToken = token;
@@ -105,6 +106,20 @@ async function validarLogin() {
 }
 
 async function realizarLogin() {
+    // ---- ACTIVAR ESTADO DE CARGA ----
+    const btnEnviar = document.getElementById('enviar');
+    const textoBoton = document.getElementById('texto-boton');
+    const iconoBoton = document.getElementById('icono-boton');
+    const spinnerBoton = document.getElementById('spinner-boton');
+
+    if (btnEnviar) {
+        btnEnviar.disabled = true; 
+        textoBoton.textContent = 'Cargando...'; 
+        iconoBoton.classList.add('d-none');     
+        spinnerBoton.classList.remove('d-none');
+    }
+    // ----------------------------------------
+
     const formData = new FormData();
     formData.append('usuario', document.getElementById('correo_login').value);
     formData.append('contra', document.getElementById('contra').value);
@@ -120,17 +135,32 @@ async function realizarLogin() {
     if (resultado.estatus) {
         await obtenerTasaDolar();
         window.location = "?pagina=inicio&accion=inicio";
+        // Nota: No quitamos el loading aquí porque la página ya va a recargar y redireccionar
     } else {
         if (!recaptchaDesactivado && typeof grecaptcha !== 'undefined' && recaptchaWidgetId !== null) {
             grecaptcha.reset(recaptchaWidgetId);
             recaptchaToken = null;
         }
         Alertas.mostrar('error', resultado.mensaje || 'Error', 'Intente nuevamente');
+        
+        // ---- DESACTIVAR ESTADO DE CARGA SI HUBO ERROR ----
+        if (btnEnviar) {
+            btnEnviar.disabled = false; 
+            textoBoton.textContent = 'Ingresar';  
+            iconoBoton.classList.remove('d-none');
+            spinnerBoton.classList.add('d-none'); 
+        }
     }
 }
 
 async function realizarRecuperacion() {
     const correoInput = document.getElementById('correo_recuperar');
+    
+    // Capturamos los elementos del nuevo botón
+    const btnRecuperar = document.getElementById('boton_recuperar');
+    const textoBotonRec = document.getElementById('texto-boton-recuperar');
+    const iconoBotonRec = document.getElementById('icono-boton-recuperar');
+    const spinnerBotonRec = document.getElementById('spinner-boton-recuperar');
 
     if (!Validador.evaluarInput(correoInput, Patrones.correo, 'Correo inválido')) {
         Alertas.mostrar('error', 'Verifique el correo', 'El formato del correo no es válido');
@@ -140,6 +170,14 @@ async function realizarRecuperacion() {
     if (recuperacionContrasenia.enviada && (new Date() - recuperacionContrasenia.tiempo) < 60000) {
         Alertas.mostrar('warning', 'Espere', 'Ya se envió un correo recientemente, espere un minuto');
         return;
+    }
+
+    // ---- ACTIVAR ESTADO DE CARGA ----
+    if (btnRecuperar) {
+        btnRecuperar.disabled = true;
+        textoBotonRec.textContent = 'Enviando...';
+        iconoBotonRec.classList.add('d-none');
+        spinnerBotonRec.classList.remove('d-none');
     }
 
     const formData = new FormData();
@@ -152,6 +190,17 @@ async function realizarRecuperacion() {
 
     recuperacionContrasenia.enviada = true;
     recuperacionContrasenia.tiempo = new Date();
+
+    // ---- DESACTIVAR ESTADO DE CARGA ----
+    if (btnRecuperar) {
+        btnRecuperar.disabled = false;
+        textoBotonRec.textContent = 'Enviar Instrucciones';
+        iconoBotonRec.classList.remove('d-none');
+        spinnerBotonRec.classList.add('d-none');
+        
+        // Cerrar el modal
+        bootstrap.Modal.getInstance(document.getElementById('modal_recuperar_contrasenia')).hide();
+    }
 }
 
 async function obtenerTasaDolar() {
@@ -173,3 +222,26 @@ async function obtenerTasaDolar() {
         console.error('No se pudo actualizar la tasa de dólar');
     }
 }
+
+// ==========================================
+// VER/OCULTAR CONTRASEÑA
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    const btnVerContra = document.getElementById('btn-ver-contra');
+    const inputContra = document.getElementById('contra');
+
+    if (btnVerContra && inputContra) {
+        btnVerContra.addEventListener('click', function() {
+            // Verificamos el tipo actual del input
+            const esPassword = inputContra.getAttribute('type') === 'password';
+            
+            // Cambiamos el tipo de input (de password a text o viceversa)
+            inputContra.setAttribute('type', esPassword ? 'text' : 'password');
+            
+            // Cambiamos el ícono de Bootstrap (ojo abierto a ojo cerrado)
+            const icono = this.querySelector('i');
+            icono.classList.remove(esPassword ? 'bi-eye-fill' : 'bi-eye-slash-fill');
+            icono.classList.add(esPassword ? 'bi-eye-slash-fill' : 'bi-eye-fill');
+        });
+    }
+});

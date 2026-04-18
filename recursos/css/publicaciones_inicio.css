@@ -9,7 +9,8 @@
 .bg-indigo { background-color: #6610f2 !important; }
 .bg-teal { background-color: #20c997 !important; }
 .badge-consultar { background-color: #2d3436; color: white; }
-.badge-iniciar-sesion { background-color: #6559BA; color: white; }
+/*.badge-iniciar-sesion { background-color: #6559BA; color: white; }*/
+.bg-iniciar-sesion { background-color: #6559BA; color: white; }
 
 /* Estilo principal de la tarjeta */
 .post-card {

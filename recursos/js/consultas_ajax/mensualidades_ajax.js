@@ -371,6 +371,8 @@ function mostrarVistaPrevia(data, fecha) {
     // Removemos event listeners anteriores clonando el botón para evitar que se acumulen clics
     const nuevoBtnReporte = btnReporte.cloneNode(true);
     btnReporte.parentNode.replaceChild(nuevoBtnReporte, btnReporte);
+    // nuevoBtnReporte.setAttribute("title",");
+    Tooltips.actualizarDinamicamente(nuevoBtnReporte,"Descargar Reporte de Pagos");
     
     nuevoBtnReporte.addEventListener("click", () => {
         let mesFormateado = String(data.mes).padStart(2, '0');

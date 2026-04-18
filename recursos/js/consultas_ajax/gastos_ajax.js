@@ -92,7 +92,7 @@ async function consultar() {
     // 2. COLUMNAS
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
-        { title: "Tipo", field: "clasificacion", formatter: formatoClasificacion, minWidth: 130, responsive: 0 },
+        { title: "Tipo", field: "clasificacion", formatter: formatoClasificacion, minWidth: 140, responsive: 0 },
         { title: "Fecha", field: "ultima_fecha", formatter: formatoFecha, minWidth: 130 },
         { title: "Monto", field: "monto_total", formatter: formatoMonto, minWidth: 130 },
         { 
@@ -422,7 +422,7 @@ async function mostrarVistaPreviaDetalle(idDetalle) {
     Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
         const det = respuestaServidor.datos;
 
-        document.getElementById('vista_fecha_detalles').textContent = FormatoFechas.formatoUsuario(det.fecha, 'DD-MM-YYYY');
+        document.getElementById('vista_fecha_detalles').textContent = FormatoFechas.formatoUsuario(det.fecha);
         document.getElementById('vista_monto_detalles').textContent = formatearMontoConMoneda(det.monto, det.metodo_pago);
         document.getElementById('vista_metodo_pago_detalles').textContent = det.metodo_pago || '';
         document.getElementById('vista_nombre_banco_detalles').textContent = det.nombre_banco || 'No hay banco registrado';

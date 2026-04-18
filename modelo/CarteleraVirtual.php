@@ -255,17 +255,38 @@ class CarteleraVirtual extends Conexion
      * Consulta para la página de inicio (con paginación).
      // SE USA EN INICIO
      */
-    public function consultar_inicio($limite)
+    public function consultar_inicio($limite, $fecha_limite = null)
     {
         $limite_int = (int)$limite;
+        
+        // Si no se pasa una fecha límite, por defecto tomamos hace 7 días, por ejemplo.
+        if (!$fecha_limite) {
+            $fecha_limite = date('Y-m-d', strtotime('-7 days'));
+        }
+
+        /* * Lógica del ORDER BY:
+         * 1. Evalúa si la fecha es mayor o igual a la fecha límite.
+         * 2. Si lo es, usa el valor de 'prioridad' (asumiendo que 1 es Urgente, 2 Importante, etc.).
+         * 3. Si es más antigua, le asigna un valor alto (ej. 99) para que baje al fondo de las prioridades.
+         * 4. Luego, desempatamos ordenando por fecha de forma descendente.
+         */
         $sql = "SELECT id_cartelera, titulo, prioridad, fecha, imagen, descripcion, usuarios.nombre as nombre_usuario 
                 FROM cartelera_virtual
                 INNER JOIN usuarios ON usuarios.id_usuario = cartelera_virtual.usuario_id
-                ORDER BY prioridad ASC, fecha DESC LIMIT 2 OFFSET :offset";
+                ORDER BY 
+                    CASE 
+                        WHEN fecha >= :fecha_limite THEN prioridad 
+                        ELSE 99 
+                    END ASC, 
+                    fecha DESC 
+                LIMIT 4 OFFSET :offset";
+
         try {
             $stmt = $this->get_conex('seguridad')->prepare($sql);
             $stmt->bindParam(':offset', $limite_int, PDO::PARAM_INT);
+            $stmt->bindParam(':fecha_limite', $fecha_limite, PDO::PARAM_STR);
             $stmt->execute();
+            
             $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
             return ['estatus' => true, 'datos' => $datos];
         } catch (PDOException $e) {
@@ -275,7 +296,7 @@ class CarteleraVirtual extends Conexion
     }
 
     /**
-     * Consulta rápida de las últimas 5 publicaciones para el widget del Dashboard
+     * Consulta rápida de las últimas 7 publicaciones para el widget del Dashboard
      // SE USA EN INICIO
      */
     public function consultar_widget_dashboard()
@@ -283,7 +304,7 @@ class CarteleraVirtual extends Conexion
         $sql = "SELECT id_cartelera, titulo, prioridad, fecha, imagen, descripcion, usuarios.nombre as nombre_usuario
                 FROM cartelera_virtual
                 INNER JOIN usuarios ON usuarios.id_usuario = cartelera_virtual.usuario_id
-                ORDER BY prioridad ASC, fecha DESC LIMIT 5";
+                ORDER BY fecha DESC LIMIT 7";
         try {
             $stmt = $this->get_conex('seguridad')->prepare($sql);
             $stmt->execute();

@@ -280,7 +280,7 @@ function construirHTMLPublicacion(publicacion) {
             textoPrioridad.textContent = "Importante";
             break;
         case '3':
-            badgeContenedor.className = 'badge etiqueta-prioridad shadow-sm priority-badge d-flex align-items-center gap-1 bg-success text-white';
+            badgeContenedor.className = 'badge etiqueta-prioridad shadow-sm priority-badge d-flex align-items-center gap-1 bg-primary text-white';
             iconoPrioridad.classList.add('bi-info-circle-fill'); // Círculo de información
             textoPrioridad.textContent = "Informativo";
             break;
@@ -359,33 +359,44 @@ async function cargarWidgetPublicaciones() {
         respuesta.datos.forEach(pub => {
             let fechaFormateada = FormatoFechas.tiempoRelativo(pub.fecha) || pub.fecha;
 
-            // Configuramos los colores según la prioridad
-            let colorIcono, colorBorde;
+            // Configuramos los colores y nuevos íconos de Bootstrap según la prioridad
+            let icono, colorIcono, colorBorde;
             
-            if (pub.prioridad == 1) { // Alta
-                colorIcono = 'icon-box-red';
+            if (pub.prioridad == 1) { // Urgente
+                icono = "bell-fill"; // Campanita en lugar de advertencia de error
+                colorIcono = 'danger';
                 colorBorde = 'border-danger';
-            } else if (pub.prioridad == 2) { // Media
-                colorIcono = 'icon-box-yellow';
+            } else if (pub.prioridad == 2) { // Importante
+                icono = "star-fill";
+                colorIcono = 'warning';
                 colorBorde = 'border-warning';
-            } else { // Baja (3)
-                colorIcono = 'icon-box-blue';
+            } else { // Informativo / Normal
+                icono = "info-circle-fill"; // Documento de texto
+                colorIcono = 'primary'; // Cambiamos a azul para dar un aspecto neutral
                 colorBorde = 'border-primary';
             }
 
             let divItem = document.createElement('div');
-            // Le agregamos 'border-start border-4' y la clase dinámica del color
-            divItem.className = `card publi-item bg-light border-0 p-3 rounded-4 border-start border-4 ${colorBorde} animacion-aparecer`;
+            // Usamos bg-white en lugar de bg-light para que resalte más la sombra
+            divItem.className = `card publi-item bg-white shadow-sm border-0 p-3 rounded-4 border-start border-4 ${colorBorde} animacion-aparecer mb-2`;
             
+            // Reestructuramos el HTML interno aprovechando tus clases CSS existentes (.activity-icon)
             divItem.innerHTML = `
-                <div class="d-flex align-items-start">
-                    <div class="activity-icon ${colorIcono} me-3" style="width: 32px; height: 32px; font-size: 0.8rem;">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                <div class="d-flex align-items-center">
+                    <div class="activity-icon bg-${colorIcono} bg-opacity-10 text-${colorIcono} me-3">
+                        <i class="bi bi-${icono} fs-5"></i>
                     </div>
-                    <div>
-                        <h6 class="fw-bold mb-1 text-dark">${pub.titulo}</h6>
-                        <div class="text-muted-custom" style="font-size: 0.75rem;">
-                            ${pub.nombre_usuario} <br> ${fechaFormateada}
+                    
+                    <div class="flex-grow-1 overflow-hidden">
+                        <h6 class="fw-bold mb-1 text-dark text-truncate">${pub.titulo}</h6>
+                        
+                        <div class="d-flex flex-wrap align-items-center mt-1" style="row-gap: 2px; column-gap: 8px;">
+                            <span class="text-muted-custom" style="font-size: 0.75rem;">
+                                <i class="bi bi-person text-secondary me-1"></i>${pub.nombre_usuario}
+                            </span>
+                            <span class="text-muted-custom" style="font-size: 0.7rem;">
+                                ${fechaFormateada}
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -557,8 +568,8 @@ async function cargarActividadReciente() {
             let borderClass = index === actividades.length - 1 ? '' : 'mb-3 pb-3 border-bottom';
 
             // Hora del evento (ya no necesitamos la fecha completa aquí, solo la hora o 'Hace X')
-            let horaEvento = item.fecha_hora.split(' ')[1].substring(0, 5); // Ej: 14:30
-
+            // let horaEvento = item.fecha_hora.split(' ')[1].substring(0, 5); // Ej: 14:30
+            let horaEvento = FormatoFechas.tiempoRelativo(item.fecha_hora);
             // 4. Construcción del texto
             let textoActividad = '';
             if (item.accion === 'Inició sesión' || item.accion === 'Cerró sesión') {
@@ -659,7 +670,7 @@ function mostrarDetalleBitacoraRapido(rowData) {
     // Llenar datos generales
     document.getElementById('detalle_usuario').textContent = rowData.nombre_usuario;
     document.getElementById('detalle_rol').textContent = rowData.nombre_rol;
-    document.getElementById('detalle_fecha').textContent = FormatoFechas.formatear(rowData.fecha_hora, 'DD/MM/YYYY hh:mm:ss A');
+    document.getElementById('detalle_fecha').textContent = FormatoFechas.formatear(rowData.fecha_hora, 'hh:mm:ss A - DD/MM/YYYY');
     document.getElementById('detalle_modulo').textContent = rowData.nombre_modulo.split('_').join(' ');
 
     document.getElementById('detalle_accion').innerHTML = formatoAccion(rowData.accion);
@@ -859,11 +870,11 @@ function formatoAccion(cell) {
     // Asignación semántica de colores e íconos
     switch (accion) {
         case 'consultó':      color = "info";    icono = "bi-search"; break;
-        case 'eliminó':      color = "primary"; icono = "bi-plus-circle-fill"; break;
-        case 'registró':      color = "success"; icono = "bi-pencil-fill"; break;
-        case 'modificó':       color = "danger";  icono = "bi-trash-fill"; break;
-        case 'inició sesion': color = "iniciar-sesion"; icono = "bi-box-arrow-in-right"; break;
-        case 'cerró sesion':  color = "secondary"; icono = "bi-box-arrow-left"; break;
+        case 'eliminó':      color = "danger"; icono = "bi-plus-circle-fill"; break;
+        case 'registró':      color = "primary"; icono = "bi-pencil-fill"; break;
+        case 'modificó':       color = "success";  icono = "bi-trash-fill"; break;
+        case 'inició sesión': color = "iniciar-sesion"; icono = "bi-box-arrow-in-right"; break;
+        case 'cerró sesión':  color = "secondary"; icono = "bi-box-arrow-left"; break;
         case 'descargó':      color = "warning";    icono = "bi-download"; break;
         case 'respaldó':      color = "indigo"; icono = "bi-database-down"; break;
         case 'restauró':      color = "teal"; icono = "bi-database-up"; break;
@@ -893,21 +904,30 @@ function mostrarVistaPreviaPublicacion(pub) {
     // Llenar los textos básicos
     document.getElementById('vista_titulo').textContent = pub.titulo;
     document.getElementById('vista_autor').textContent = pub.nombre_usuario;
-    document.getElementById('vista_fecha').textContent = FormatoFechas.tiempoRelativo(pub.fecha) || pub.fecha;
+    document.getElementById('vista_fecha').textContent = FormatoFechas.formatear(pub.fecha, 'hh:mm:ss A - DD/MM/YYYY') || pub.fecha;
     document.getElementById('vista_descripcion').textContent = pub.descripcion;
     
     // Lógica de la etiqueta de prioridad
     const badge = document.getElementById('vista_prioridad');
     if (pub.prioridad == 1) {
-        badge.textContent = "Urgente";
         badge.className = "badge bg-danger mb-2";
+        icono = "bi-exclamation-triangle-fill";
+        texto = "Urgente";
     } else if (pub.prioridad == 2) {
-        badge.textContent = "Importante";
         badge.className = "badge bg-warning text-dark mb-2";
+        icono = "bi-star-fill";
+        texto = "Importante";
     } else {
-        badge.textContent = "Informativo";
-        badge.className = "badge bg-success mb-2";
+        badge.className = "badge bg-primary mb-2";
+        icono = "bi-info-circle-fill";
+        texto = "Informativo";
     }
+
+    badge.innerHTML = `
+        <i class="bi ${icono} me-1"></i>
+        ${texto}
+    `;
+
 
     // --- LÓGICA DE LA IMAGEN CORREGIDA ---
     const imgContainer = document.getElementById('contenedor_imagen');

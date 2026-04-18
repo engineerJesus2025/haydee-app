@@ -161,7 +161,7 @@ class Bitacora extends Conexion
                 INNER JOIN modulos ON modulos.id_modulo = bitacora.modulo_id
                 INNER JOIN roles ON roles.id_rol = usuarios.rol_id
                 ORDER BY bitacora.fecha_hora DESC
-                LIMIT 6 OFFSET 1";
+                LIMIT 7 OFFSET 1";
 
         try {
             $stmt = $this->get_conex('seguridad')->prepare($sql);

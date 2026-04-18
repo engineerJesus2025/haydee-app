@@ -16,14 +16,6 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Current Database: `haydee_db`
---
-
-CREATE DATABASE /*!32312 IF NOT EXISTS*/ `haydee_db` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci */;
-
-USE `haydee_db`;
-
---
 -- Table structure for table `anio_fiscal`
 --
 
@@ -38,7 +30,7 @@ CREATE TABLE `anio_fiscal` (
   `descripcion` varchar(255) NOT NULL DEFAULT 'Sin descripción',
   `activo` tinyint(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id_anio_fiscal`)
-) ENGINE=InnoDB AUTO_INCREMENT=54 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=60 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -47,7 +39,7 @@ CREATE TABLE `anio_fiscal` (
 
 LOCK TABLES `anio_fiscal` WRITE;
 /*!40000 ALTER TABLE `anio_fiscal` DISABLE KEYS */;
-INSERT INTO `anio_fiscal` VALUES (47,'Abierto','2026-02-07','2027-02-07','Año fiscal 2026',1),(52,'Cerrada','2026-03-12','2027-03-12','asdas',0),(53,'Cerrada','2026-03-05','2027-03-05','AAA',0);
+INSERT INTO `anio_fiscal` VALUES (47,'Abierto','2026-02-07','2027-02-07','Año fiscal 2026',1),(52,'Cerrada','2026-03-12','2027-03-12','asdas',0),(53,'Cerrada','2026-03-05','2027-03-05','AAA',0),(54,'Cerrada','2026-03-14','2027-03-14','nueva des',0),(55,'Cerrada','2026-03-13','2027-03-13','asda',0),(56,'Cerrada','2026-03-16','2027-03-16','',0),(57,'Cerrada','2026-03-02','2027-03-02','',0),(58,'Cerrada','2026-03-10','2027-03-10','asd',0),(59,'Cerrada','2026-04-07','2027-04-07','pepe',1);
 /*!40000 ALTER TABLE `anio_fiscal` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -67,7 +59,7 @@ CREATE TABLE `apartamentos` (
   `alquilado` tinyint(1) NOT NULL,
   `activo` tinyint(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id_apartamento`)
-) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=42 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -76,7 +68,7 @@ CREATE TABLE `apartamentos` (
 
 LOCK TABLES `apartamentos` WRITE;
 /*!40000 ALTER TABLE `apartamentos` DISABLE KEYS */;
-INSERT INTO `apartamentos` VALUES (30,'1-2',22,2,1,1,1),(31,'2-3',23,1,1,1,1),(32,'2-1',1,2,1,1,1),(33,'12',23,1,1,1,0),(34,'2-8',2,1,2,1,0),(35,'3-1',5,2,1,1,1),(36,'2-5',52,1,1,1,0);
+INSERT INTO `apartamentos` VALUES (30,'1-2',22,2,1,2,1),(31,'2-3',23,1,1,1,1),(32,'2-1',1,2,1,1,1),(33,'12',23,1,1,1,0),(34,'2-8',2,1,2,1,0),(35,'3-1',5,2,1,1,1),(36,'2-5',52,1,1,1,0),(37,'4-1',5,1,1,2,1),(38,'4-2',5,1,1,2,0),(39,'3-2',1,2,1,1,1),(40,'',0,0,0,0,0),(41,'5-1',5,1,1,1,1);
 /*!40000 ALTER TABLE `apartamentos` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -98,7 +90,7 @@ CREATE TABLE `bancos` (
   `activo` tinyint(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id_banco`),
   UNIQUE KEY `numero_cuenta` (`numero_cuenta`)
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -107,7 +99,7 @@ CREATE TABLE `bancos` (
 
 LOCK TABLES `bancos` WRITE;
 /*!40000 ALTER TABLE `bancos` DISABLE KEYS */;
-INSERT INTO `bancos` VALUES (1,'venezuela','0102','0102123412124232323','Ahorro','04152456842','J3232421',1),(6,'Banesco','0117','1242342342424121211','Corriente','04142584985','V5464565',1),(9,'Bancaribe','0114','01140300063000253595','Corriente','04114124142','J305785457',1),(11,'rasdas','1231','2342342342342342323','','21321253213','V2123132',0),(12,'tesoro','1231','425646456456456456','','24243245564','V12345678',0),(13,'Tesoros','0102','2423423423423234234','','23423423232','V123412321',1);
+INSERT INTO `bancos` VALUES (1,'venezuela','0102','0102123412124232323','Ahorro','04152456842','J3232421',1),(6,'Banesco','0117','1242342342424121211','Corriente','04142584985','V5464565',1),(9,'Bancaribe','0114','01140300063000253595','Corriente','04114124142','J305785457',1),(11,'rasdas','1231','2342342342342342323','','21321253213','V2123132',0),(12,'tesoro','1231','425646456456456456','','24243245564','V12345678',0),(13,'Tesoros','0102','2423423423423234234','Corriente','23423423232','V123412321',1),(14,'sdfsdfs','2342','2315646545645656564','','23123153545','V24653215',0),(15,'aASDASD','1234','1231312312312312123','Corriente','12312312323','V231231231',1);
 /*!40000 ALTER TABLE `bancos` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -129,7 +121,7 @@ CREATE TABLE `caja_chica` (
   PRIMARY KEY (`id_caja_chica`),
   KEY `anio_fiscal_id` (`anio_fiscal_id`),
   CONSTRAINT `caja_chica_ibfk_1` FOREIGN KEY (`anio_fiscal_id`) REFERENCES `anio_fiscal` (`id_anio_fiscal`)
-) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -138,7 +130,7 @@ CREATE TABLE `caja_chica` (
 
 LOCK TABLES `caja_chica` WRITE;
 /*!40000 ALTER TABLE `caja_chica` DISABLE KEYS */;
-INSERT INTO `caja_chica` VALUES (24,0.00,'Cerrada','Caja chicas del mes enero - 2026','2026-01-01',47,1),(25,1000.00,'Abierto','Caja chicas del mes Marzo - 2026','2026-03-09',47,1);
+INSERT INTO `caja_chica` VALUES (24,0.00,'Cerrada','Caja chicas del mes enero - 2026','2026-01-01',47,1),(25,1000.00,'Cerrada','Caja chicas del mes Marzo - 2026','2026-03-09',47,1),(26,1000.00,'Abierto','Caja chica - 2026','2026-04-02',47,1);
 /*!40000 ALTER TABLE `caja_chica` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -160,7 +152,7 @@ CREATE TABLE `detalles_gastos` (
   PRIMARY KEY (`id_detalle_gasto`),
   KEY `gasto_id` (`gasto_id`),
   CONSTRAINT `detalles_gastos_ibfk_1` FOREIGN KEY (`gasto_id`) REFERENCES `gastos` (`id_gasto`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=2013 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2027 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -169,7 +161,7 @@ CREATE TABLE `detalles_gastos` (
 
 LOCK TABLES `detalles_gastos` WRITE;
 /*!40000 ALTER TABLE `detalles_gastos` DISABLE KEYS */;
-INSERT INTO `detalles_gastos` VALUES (164,'2026-02-03',12.00,0.00,'Pago Movil',133,'asdasdasdasdasd'),(178,'2026-02-05',12.00,0.00,'Pago Movil',132,'adiossssssssssssssss'),(217,'2026-02-21',12.00,0.00,'Efectivo',136,'adasdas'),(218,'2026-02-21',900.00,0.00,'Efectivo',135,'Detalle de reposición por monto de: 900.00'),(2001,'2025-12-20',150.00,4.00,'Transferencia',201,'Mes diciembre'),(2002,'2026-01-15',700.00,20.00,'Transferencia',202,'Quincena 1'),(2003,'2026-01-25',1500.00,40.00,'Divisa',203,'Repuestos bomba'),(2004,'2026-02-15',720.00,20.00,'Pago Movil',204,'Quincena 1 feb'),(2005,'2026-03-02',300.00,8.00,'Efectivo',205,'Limpieza pasillos'),(2006,'2026-03-05',43.00,0.00,'Efectivo',206,'xxxxxxxxxxxxxxxxxxxx'),(2007,'2026-02-21',32.00,0.00,'Efectivo',134,'detalle 1 s'),(2008,'2026-02-06',12.00,0.00,'Pago Movil',134,'detalle 2s'),(2011,'2026-03-08',12312.00,0.00,'Efectivo',207,'prueba detalle 1'),(2012,'2026-03-07',21.00,0.00,'Pago Movil',207,'prueba detalle 2');
+INSERT INTO `detalles_gastos` VALUES (164,'2026-02-03',12.00,0.00,'Pago Movil',133,'asdasdasdasdasd'),(217,'2026-02-21',12.00,0.00,'Efectivo',136,'adasdas'),(218,'2026-02-21',900.00,0.00,'Efectivo',135,'Detalle de reposición por monto de: 900.00'),(2001,'2025-12-20',150.00,4.00,'Transferencia',201,'Mes diciembre'),(2002,'2026-01-15',700.00,20.00,'Transferencia',202,'Quincena 1'),(2003,'2026-01-25',1500.00,40.00,'Divisa',203,'Repuestos bomba'),(2004,'2026-02-15',720.00,20.00,'Pago Movil',204,'Quincena 1 feb'),(2005,'2026-03-02',300.00,8.00,'Efectivo',205,'Limpieza pasillos'),(2006,'2026-03-05',43.00,0.00,'Efectivo',206,'xxxxxxxxxxxxxxxxxxxx'),(2011,'2026-03-08',12312.00,0.00,'Efectivo',207,'prueba detalle 1'),(2012,'2026-03-07',21.00,0.00,'Pago Movil',207,'prueba detalle 2'),(2017,'2026-03-16',910.00,0.00,'Efectivo',208,'Detalle de reposición por monto de: 910.00'),(2018,'2026-02-21',32.00,0.00,'Efectivo',134,'detalle 1 s'),(2019,'2026-02-06',12.00,0.00,'Pago Movil',134,'detalle 2s'),(2020,'2026-03-17',0.00,0.00,'Efectivo',209,'Detalle de reposición por monto de: 0.00'),(2021,'2026-03-17',0.00,0.00,'Efectivo',210,'Detalle de reposición por monto de: 0.00'),(2022,'2026-02-05',12.00,0.00,'Pago Movil',132,'adiossssssssssssssss'),(2023,'2026-03-17',15.00,0.00,'Efectivo',211,'asdasd'),(2024,'2026-03-17',10.00,0.00,'Transferencia',211,'asddasdas'),(2026,'2026-03-11',123.00,0.00,'Pago Movil',212,'assas');
 /*!40000 ALTER TABLE `detalles_gastos` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -190,7 +182,7 @@ CREATE TABLE `detalles_pagos` (
   PRIMARY KEY (`id_detalle_pago`),
   KEY `detalles_pagos_ibfk_1` (`pago_id`),
   CONSTRAINT `detalles_pagos_ibfk_1` FOREIGN KEY (`pago_id`) REFERENCES `pagos` (`id_pago`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=1011 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1026 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -199,7 +191,7 @@ CREATE TABLE `detalles_pagos` (
 
 LOCK TABLES `detalles_pagos` WRITE;
 /*!40000 ALTER TABLE `detalles_pagos` DISABLE KEYS */;
-INSERT INTO `detalles_pagos` VALUES (362,'2026-02-01',10.00,0.03,'Pago Movil',116),(370,'2026-02-14',10.00,0.02,'Pago Movil',118),(371,'2026-02-21',100.00,0.25,'Efectivo',118),(381,'2026-02-25',0.10,0.00,'Efectivo',120),(382,'2026-02-22',12.00,0.03,'Pago Movil',119),(383,'2026-02-01',12.00,1.00,'Efectivo',119),(384,'2026-02-05',12.00,0.03,'Pago Movil',117),(385,'2026-02-04',100.00,0.25,'Transferencia',117),(386,'2026-02-20',100.00,0.25,'Efectivo',117),(1001,'2025-12-15',350.00,10.00,'Pago Movil',101),(1002,'2026-01-10',360.00,10.00,'Transferencia',102),(1003,'2026-02-05',180.00,5.00,'Efectivo',103),(1004,'2026-02-28',360.00,10.00,'Divisa',104),(1005,'2026-03-01',365.00,10.00,'Pago Movil',105),(1007,'2026-03-05',800.00,1.87,'Transferencia',121),(1008,'2026-03-05',4.00,0.01,'Efectivo',122),(1010,'2026-03-07',10.00,0.02,'Efectivo',123);
+INSERT INTO `detalles_pagos` VALUES (362,'2026-02-01',10.00,0.03,'Pago Movil',116),(370,'2026-02-14',10.00,0.02,'Pago Movil',118),(371,'2026-02-21',100.00,0.25,'Efectivo',118),(382,'2026-02-22',12.00,0.03,'Pago Movil',119),(383,'2026-02-01',12.00,1.00,'Efectivo',119),(384,'2026-02-05',12.00,0.03,'Pago Movil',117),(385,'2026-02-04',100.00,0.25,'Transferencia',117),(386,'2026-02-20',100.00,0.25,'Efectivo',117),(1001,'2025-12-15',350.00,10.00,'Pago Movil',101),(1002,'2026-01-10',360.00,10.00,'Transferencia',102),(1003,'2026-02-05',180.00,5.00,'Efectivo',103),(1004,'2026-02-28',360.00,10.00,'Divisa',104),(1005,'2026-03-01',365.00,10.00,'Pago Movil',105),(1007,'2026-03-05',800.00,1.87,'Transferencia',121),(1008,'2026-03-05',4.00,0.01,'Efectivo',122),(1010,'2026-03-07',10.00,0.02,'Efectivo',123),(1012,'2026-02-25',1.40,0.00,'Efectivo',120),(1014,'2026-03-04',10.00,0.02,'Efectivo',124),(1016,'2026-03-04',10.00,0.00,'Pago Movil',127),(1017,'2026-03-05',10.00,0.00,'Transferencia',128),(1018,'2026-03-18',23.00,0.00,'Pago Movil',129),(1020,'2026-03-18',23.00,0.00,'Pago Movil',131),(1022,'2026-03-04',50.00,0.00,'Efectivo',132),(1023,'2026-03-25',50.00,0.00,'Transferencia',132),(1024,'2026-04-04',224.33,0.00,'Pago Movil',133),(1025,'2026-04-04',100.00,0.00,'Efectivo',134);
 /*!40000 ALTER TABLE `detalles_pagos` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -222,7 +214,7 @@ CREATE TABLE `detalles_presupuesto` (
   KEY `tipo_gasto_id` (`tipo_gasto_id`),
   CONSTRAINT `detalles_presupuesto_ibfk_1` FOREIGN KEY (`presupuesto_id`) REFERENCES `presupuesto` (`id_presupuesto`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `detalles_presupuesto_ibfk_2` FOREIGN KEY (`tipo_gasto_id`) REFERENCES `tipo_gasto` (`id_tipo_gasto`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=1287 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1388 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -231,7 +223,7 @@ CREATE TABLE `detalles_presupuesto` (
 
 LOCK TABLES `detalles_presupuesto` WRITE;
 /*!40000 ALTER TABLE `detalles_presupuesto` DISABLE KEYS */;
-INSERT INTO `detalles_presupuesto` VALUES (660,42.00,0.00,'GAS LARA',70,5),(661,15.00,0.00,'CORPOELEC',70,2),(662,34.00,0.00,'HIDROLARA',70,2),(663,23.00,0.00,'Trabajadora Residencial',70,3),(664,5623.00,0.00,'Bono de alimentacion',70,3),(665,2.00,0.00,'Bono de ayuda',70,3),(666,123.00,0.00,'Seguridad Social',70,3),(667,21.00,0.00,'Mantenimiento ascensor',70,4),(668,23.00,0.00,'Bolsas de Basura',70,9),(669,21.00,0.00,'Productos de Limpieza',70,9),(670,124.00,0.00,'Comisiones Bancarias',70,10),(671,12.00,0.00,'Exencion cuota del administrador',70,10),(745,1.00,0.00,'GAS LARA',57,5),(746,2.00,0.00,'gato',57,5),(747,2.00,0.00,'CORPOELEC',57,2),(748,2.00,0.00,'HIDROLARA',57,2),(749,2.00,0.00,'pepe',57,2),(750,3.00,0.00,'Mantenimiento ascensor',57,4),(751,4.00,0.00,'Bolsas de Basura',57,9),(752,4.00,0.00,'Productos de Limpieza',57,9),(753,3.00,0.00,'Trabajadora Residencial',57,3),(754,3.00,0.00,'Bono de alimentacion',57,3),(755,3.00,0.00,'Bono de ayuda',57,3),(756,3.00,0.00,'Seguridad Social',57,3),(757,5.00,0.00,'Comisiones Bancarias',57,10),(758,5.00,0.00,'Exencion cuota del administrador',57,10),(759,179.43,0.00,'GAS LARA',67,5),(760,222.00,0.00,'CORPOELEC',67,2),(761,333.00,0.00,'HIDROLARA',67,2),(762,777.00,0.00,'Bolsas de Basura',67,9),(763,123.00,0.00,'Productos de Limpieza',67,9),(764,666.00,0.00,'Mantenimiento ascensor',67,4),(765,444.00,0.00,'Trabajadora Residencial',67,3),(766,555.00,0.00,'Bono de alimentacion',67,3),(767,555.00,0.00,'Bono de ayuda',67,3),(768,666.00,0.00,'Seguridad Social',67,3),(769,321.00,0.00,'Comisiones Bancarias',67,10),(770,234.00,0.00,'Exencion cuota del administrador',67,10),(771,23.00,0.00,'GAS LARA',68,5),(772,24.00,0.00,'CORPOELEC',68,2),(773,24.00,0.00,'HIDROLARA',68,2),(774,25.00,0.00,'Trabajadora Residencial',68,3),(775,52.00,0.00,'Bono de alimentacion',68,3),(776,12.00,0.00,'Bono de ayuda',68,3),(777,31.00,0.00,'Seguridad Social',68,3),(778,34.00,0.00,'Bolsas de Basura',68,9),(779,53.00,0.00,'Productos de Limpieza',68,9),(780,42.00,0.00,'Mantenimiento ascensor',68,4),(781,546.00,0.00,'Comisiones Bancarias',68,10),(782,34.00,0.00,'Exencion cuota del administrador',68,10),(819,20.00,0.00,'GAS LARA',76,5),(820,12.00,0.00,'Trabajadora Residencial',76,3),(821,10.00,0.00,'Bono de alimentacion',76,3),(822,15.00,0.00,'Bono de ayuda',76,3),(823,10.00,0.00,'Seguridad Social',76,3),(824,15.00,0.00,'Mantenimiento ascensor',76,4),(825,41.00,0.00,'Bolsas de Basura',76,9),(826,41.00,0.00,'Productos de Limpieza',76,9),(827,54.00,0.00,'Comisiones Bancarias',76,10),(828,42.00,0.00,'Exencion cuota del administrador',76,10),(829,15.00,0.00,'CORPOELEC',76,2),(830,10.00,0.00,'HIDROLARA',76,2),(1095,1000.00,0.00,'GAS LARA',98,5),(1096,0.00,0.00,'CORPOELEC',98,2),(1097,0.00,0.00,'HIDROLARA',98,2),(1098,0.00,0.00,'Trabajadora Residencial',98,3),(1099,0.00,0.00,'Bono de alimentacion',98,3),(1100,0.00,0.00,'Bono de ayuda',98,3),(1101,0.00,0.00,'Seguridad Social',98,3),(1102,0.00,0.00,'Mantenimiento ascensor',98,4),(1103,0.00,0.00,'Bolsas de Basura',98,9),(1104,0.00,0.00,'Productos de Limpieza',98,9),(1105,0.00,0.00,'Comisiones Bancarias',98,10),(1106,0.00,0.00,'Exencion cuota del administrador',98,10),(1179,3.00,0.00,'CORPOELEC',56,2),(1180,4.00,0.00,'HIDROLARA',56,2),(1181,2.00,0.00,'Bolsas de Basura',56,9),(1182,3.00,0.00,'Productos de Limpieza',56,9),(1183,2.00,0.00,'GAS LARA',56,5),(1184,1.00,0.00,'Mantenimiento ascensor',56,4),(1185,5.00,0.00,'Trabajadora Residencial',56,3),(1186,6.00,0.00,'Bono de alimentacion',56,3),(1187,7.00,0.00,'Bono de ayuda',56,3),(1188,8.00,0.00,'Seguridad Social',56,3),(1189,4.00,0.00,'Comisiones Bancarias',56,10),(1190,5.00,0.00,'Exencion cuota del administrador',56,10),(1251,14.00,0.00,'CORPOELEC',84,2),(1252,2.00,0.00,'HIDROLARA',84,2),(1253,52.00,0.00,'Trabajadora Residencial',84,3),(1254,32.00,0.00,'Bono de alimentacion',84,3),(1255,24.00,0.00,'Bono de ayuda',84,3),(1256,12.00,0.00,'Seguridad Social',84,3),(1257,41.00,0.00,'Mantenimiento ascensor',84,4),(1258,13.00,0.00,'GAS LARA',84,5),(1259,23.00,0.00,'Bolsas de Basura',84,9),(1260,24.00,0.00,'Productos de Limpieza',84,9),(1261,10.00,0.00,'Comisiones Bancarias',84,10),(1262,21.00,0.00,'Exencion cuota del administrador',84,10),(1263,1.50,0.00,'CORPOELEC',101,2),(1264,23.00,0.00,'HIDROLARA',101,2),(1265,231.00,0.00,'Trabajadora Residencial',101,3),(1266,232.00,0.00,'Bono de alimentacion',101,3),(1267,54.00,0.00,'Bono de ayuda',101,3),(1268,89.00,0.00,'Seguridad Social',101,3),(1269,245.00,0.00,'Mantenimiento ascensor',101,4),(1270,546.00,0.00,'GAS LARA',101,5),(1271,545.00,0.00,'Bolsas de Basura',101,9),(1272,564.00,0.00,'Productos de Limpieza',101,9),(1273,564.00,0.00,'Comisiones Bancarias',101,10),(1274,654.00,0.00,'Exencion cuota del administrador',101,10),(1275,14.00,0.00,'CORPOELEC',77,2),(1276,2.00,0.00,'HIDROLARA',77,2),(1277,23.00,0.00,'Trabajadora Residencial',77,3),(1278,23.00,0.00,'Bono de alimentacion',77,3),(1279,42.00,0.00,'Bono de ayuda',77,3),(1280,42.00,0.00,'Seguridad Social',77,3),(1281,12.00,0.00,'Mantenimiento ascensor',77,4),(1282,13.00,0.00,'GAS LARA',77,5),(1283,24.00,0.00,'Bolsas de Basura',77,9),(1284,12.00,0.00,'Productos de Limpieza',77,9),(1285,12.00,0.00,'Comisiones Bancarias',77,10),(1286,124.00,0.00,'Exencion cuota del administrador',77,10);
+INSERT INTO `detalles_presupuesto` VALUES (1327,15.00,0.00,'CORPOELEC',106,2),(1328,12.00,0.00,'HIDROLARA',106,2),(1329,100.00,0.00,'Trabajadora Residencial',106,3),(1330,100.00,0.00,'Bono de alimentacion',106,3),(1331,100.00,0.00,'Bono de ayuda',106,3),(1332,100.00,0.00,'Seguridad Social',106,3),(1333,100.00,0.00,'Mantenimiento ascensor',106,4),(1334,100.00,0.00,'GAS LARA',106,5),(1335,100.00,0.00,'Bolsas de Basura',106,9),(1336,100.00,0.00,'Productos de Limpieza',106,9),(1337,100.00,0.00,'Comisiones Bancarias',106,10),(1338,100.00,0.00,'Exencion cuota del administrador',106,10),(1351,23.00,0.00,'CORPOELEC',107,2),(1352,15.00,0.00,'HIDROLARA',107,2),(1353,233.00,0.00,'Trabajadora Residencial',107,3),(1354,12.00,0.00,'Bono de alimentacion',107,3),(1355,12.00,0.00,'Bono de ayuda',107,3),(1356,100.00,0.00,'Seguridad Social',107,3),(1357,12.00,0.00,'Mantenimiento ascensor',107,4),(1358,200.00,0.00,'GAS LARA',107,5),(1359,20.00,0.00,'Bolsas de Basura',107,9),(1360,200.00,0.00,'Productos de Limpieza',107,9),(1361,200.00,0.00,'Comisiones Bancarias',107,10),(1362,200.00,0.00,'Exencion cuota del administrador',107,10),(1387,12.00,0.00,'Exencion cuota del administrador',110,10);
 /*!40000 ALTER TABLE `detalles_presupuesto` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -261,7 +253,7 @@ CREATE TABLE `egresos_bancarios` (
 
 LOCK TABLES `egresos_bancarios` WRITE;
 /*!40000 ALTER TABLE `egresos_bancarios` DISABLE KEYS */;
-INSERT INTO `egresos_bancarios` VALUES ('31231','javascript-logo-javascript-icon-transparent-free-png_1771563760_144.png',1,164),('123123123','CSS-Logo_1771706140_757.jpg',1,178),('GASTO-001','',1,2001),('GASTO-002','',1,2002),('GASTO-003','',1,2004),('412123','mensualidad_1771710356_291.PNG',6,2008),('1235412','CSS-Logo_1773003460_864.jpg',6,2012);
+INSERT INTO `egresos_bancarios` VALUES ('31231','javascript-logo-javascript-icon-transparent-free-png_1771563760_144.png',1,164),('GASTO-001','',1,2001),('GASTO-002','',1,2002),('GASTO-003','',1,2004),('123123123','CSS-Logo_1771706140_757.jpg',1,2022),('1235412','CSS-Logo_1773003460_864.jpg',6,2012),('412123','mensualidad_1771710356_291.PNG',6,2019),('543524','images__2__1773805029_187.png',9,2024),('5435245','images__2__1774719607_329.png',9,2026);
 /*!40000 ALTER TABLE `egresos_bancarios` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -276,7 +268,7 @@ CREATE TABLE `gastos` (
   `id_gasto` int(11) NOT NULL AUTO_INCREMENT,
   `clasificacion` varchar(20) NOT NULL,
   `tipo_gasto_id` int(11) NOT NULL,
-  `solicitud_id` int(11) NOT NULL,
+  `solicitud_id` int(11) DEFAULT NULL,
   `proveedor_id` int(11) NOT NULL,
   `descripcion_gasto` text NOT NULL DEFAULT 'Sin descripción',
   `activo` tinyint(1) NOT NULL DEFAULT 1,
@@ -286,8 +278,8 @@ CREATE TABLE `gastos` (
   KEY `solicitud_id` (`solicitud_id`),
   CONSTRAINT `gastos_ibfk_1` FOREIGN KEY (`proveedor_id`) REFERENCES `proveedores` (`id_proveedor`) ON UPDATE CASCADE,
   CONSTRAINT `gastos_ibfk_2` FOREIGN KEY (`tipo_gasto_id`) REFERENCES `tipo_gasto` (`id_tipo_gasto`) ON UPDATE CASCADE,
-  CONSTRAINT `gastos_ibfk_3` FOREIGN KEY (`solicitud_id`) REFERENCES `solicitudes_gasto` (`id_solicitud`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=208 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  CONSTRAINT `gastos_ibfk_3` FOREIGN KEY (`solicitud_id`) REFERENCES `solicitudes_gasto` (`id_solicitud`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=213 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -296,7 +288,7 @@ CREATE TABLE `gastos` (
 
 LOCK TABLES `gastos` WRITE;
 /*!40000 ALTER TABLE `gastos` DISABLE KEYS */;
-INSERT INTO `gastos` VALUES (132,'fijo',2,12,2,'holasssssssssssssssaaa',1),(133,'fijo',2,8,3,'asdasdasasd',0),(134,'fijo',2,12,3,'222222222222224',1),(135,'Reposicion',1,12,1,'Reposición de Caja Chica - 22/02/2026',1),(136,'fijo',2,12,3,'wwwwwwwwwwwww',0),(201,'Fijo',1,12,1,'Pago de servicio de agua',0),(202,'Fijo',2,12,1,'Honorarios de vigilancia Enero',0),(203,'Variable',3,12,1,'Reparación de bomba de agua',1),(204,'Fijo',2,12,1,'Honorarios de vigilancia Febrero',1),(205,'Variable',4,12,1,'Compra de artículos de limpieza',1),(206,'fijo',1,12,2,'zzzzzzzzzzzzzzzzz',0),(207,'variable',2,12,3,'prueba de gasto 1',1);
+INSERT INTO `gastos` VALUES (132,'fijo',2,NULL,2,'holasssssssssssssssaaa',1),(133,'fijo',2,NULL,3,'asdasdasasd',0),(134,'fijo',2,NULL,3,'22222a2222222224',1),(135,'reposicion',1,NULL,1,'Reposición de Caja Chica - 22/02/2026',1),(136,'fijo',2,NULL,3,'wwwwwwwwwwwww',0),(201,'Fijo',1,NULL,1,'Pago de servicio de agua',0),(202,'Fijo',2,NULL,1,'Honorarios de vigilancia Enero',0),(203,'Variable',3,NULL,1,'Reparación de bomba de agua',1),(204,'Fijo',2,NULL,1,'Honorarios de vigilancia Febrero',1),(205,'Variable',4,NULL,1,'Compra de artículos de limpieza',1),(206,'fijo',1,NULL,2,'zzzzzzzzzzzzzzzzz',0),(207,'variable',2,NULL,3,'prueba de gasto 1',1),(208,'reposicion',1,NULL,1,'Reposición de Caja Chica - 16/03/2026',1),(209,'reposicion',1,NULL,1,'Reposición de Caja Chica - 17/03/2026',1),(210,'reposicion',1,NULL,1,'Reposición de Caja Chica - 17/03/2026',1),(211,'variable',2,NULL,3,'asdasdasdasd',1),(212,'fijo',1,NULL,3,'asdasdasdasd',1);
 /*!40000 ALTER TABLE `gastos` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -320,7 +312,7 @@ CREATE TABLE `habitantes` (
   PRIMARY KEY (`id_habitante`) USING BTREE,
   UNIQUE KEY `cedula` (`cedula`),
   UNIQUE KEY `correo` (`correo`)
-) ENGINE=InnoDB AUTO_INCREMENT=48 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=53 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -329,7 +321,7 @@ CREATE TABLE `habitantes` (
 
 LOCK TABLES `habitantes` WRITE;
 /*!40000 ALTER TABLE `habitantes` DISABLE KEYS */;
-INSERT INTO `habitantes` VALUES (43,'jesus','asdasda','E1105510','12312312123','aaa@gasd.com','2000-12-12','Masculino',1),(44,'jesa','asdasd','V15321212','21312312121','asda@asasd.ocm','2000-10-10','Masculino',1),(45,'asdasd','asdasdas','V12012120','23423423434','ASDASD@sfas.com','1980-10-10','Femenino',1),(46,'papap','lalala','V23424234','21312312312','lala@gasmic.com','1950-10-10','Masculino',1),(47,'ssdfsdf','asda','V23432423','23423423423','asdasda@asfas.com','1945-10-10','Femenino',1);
+INSERT INTO `habitantes` VALUES (43,'jesus','asdasda','E1105510','12312312123','aaa@gasd.com','2000-12-12','Masculino',1),(44,'jesa','asdasd','V15321212','21312312121','asda@asasd.ocm','2000-10-10','Masculino',1),(45,'asdasd','asdasdas','V12012120','23423423434','ASDASD@sfas.com','1980-10-10','Femenino',1),(46,'papap','lalala','V23424234','21312312312','lala@gasmic.com','1950-10-10','Masculino',1),(47,'ssdfsdf','asda','V23432423','23423423423','asdasda@asfas.com','1945-10-10','Femenino',1),(48,'boor','borra','V23423234','23654564321','asd@asd.com','1999-01-01','Masculino',0),(49,'asa','asdasd','V2343121','12313455648','asda@adsd.com','1999-10-10','Masculino',0),(50,'asa','asdasd','V23432121','12313455648','asda@adaassdsd.com','1999-10-10','Masculino',0),(51,'fhfgh','asdasd','V2342342','42342342342','asdasd@asd.com','1999-10-10','Masculino',1),(52,'dasdas','asdasd','E12312313','22342323232','ada@asd.com','2000-10-10','Femenino',0);
 /*!40000 ALTER TABLE `habitantes` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -357,7 +349,7 @@ CREATE TABLE `habitantes_apartamentos` (
 
 LOCK TABLES `habitantes_apartamentos` WRITE;
 /*!40000 ALTER TABLE `habitantes_apartamentos` DISABLE KEYS */;
-INSERT INTO `habitantes_apartamentos` VALUES (30,43,'Propietario'),(30,44,'Habitante'),(31,46,'Propietario'),(32,45,'Propietario'),(35,47,'Propietario');
+INSERT INTO `habitantes_apartamentos` VALUES (30,43,'Propietario'),(30,44,'Habitante'),(30,48,'Habitante'),(30,49,'Habitante'),(30,50,'Habitante'),(30,51,'Habitante'),(30,52,'Habitante'),(31,46,'Propietario'),(32,45,'Propietario'),(35,47,'Propietario');
 /*!40000 ALTER TABLE `habitantes_apartamentos` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -387,7 +379,7 @@ CREATE TABLE `ingresos_bancarios` (
 
 LOCK TABLES `ingresos_bancarios` WRITE;
 /*!40000 ALTER TABLE `ingresos_bancarios` DISABLE KEYS */;
-INSERT INTO `ingresos_bancarios` VALUES ('45342','cog_1770410107_961.PNG',1,362),('12312','fiabil_1771818751_885.PNG',1,382),('REF-123456','',1,1001),('REF-987654','',1,1002),('REF-555666','',1,1005),('2312','virustotla_1771651369_672.PNG',6,370),('4213123','lenguaje_comun_1771707846_116.PNG',6,384),('4213','CSS-Logo_1772718346_856.jpg',6,1007),('234sad2','colores_inicio_2_1771708881_962.PNG',9,385);
+INSERT INTO `ingresos_bancarios` VALUES ('45342','cog_1770410107_961.PNG',1,362),('12312','fiabil_1771818751_885.PNG',1,382),('REF-123456','',1,1001),('REF-987654','',1,1002),('REF-555666','',1,1005),('2312','virustotla_1771651369_672.PNG',6,370),('4213123','lenguaje_comun_1771707846_116.PNG',6,384),('4213','CSS-Logo_1772718346_856.jpg',6,1007),('678678','default.png',6,1016),('532423','default.png',6,1018),('532434345','colores_inicio_1_1773856062_104.PNG',6,1020),('234sad2','colores_inicio_2_1771708881_962.PNG',9,385),('45654','default.png',9,1017),('23423412','lenguaje_comun_1774402497_922.PNG',9,1023),('5231234','meme_1775350129_999.PNG',13,1024);
 /*!40000 ALTER TABLE `ingresos_bancarios` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -400,18 +392,18 @@ DROP TABLE IF EXISTS `mensualidad`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `mensualidad` (
   `id_mensualidad` int(11) NOT NULL AUTO_INCREMENT,
+  `periodo_id` int(11) NOT NULL,
   `monto` decimal(15,2) NOT NULL,
-  `tasa_dolar` decimal(15,2) NOT NULL,
-  `mes` varchar(2) NOT NULL,
-  `anio` varchar(4) NOT NULL,
   `apartamento_id` int(11) NOT NULL,
   `porcentaje_interes` int(11) NOT NULL DEFAULT 10,
   `limite_mensualidad` int(11) NOT NULL DEFAULT 15,
   `activo` tinyint(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id_mensualidad`),
   KEY `apartamento_id` (`apartamento_id`),
-  CONSTRAINT `mensualidad_ibfk_1` FOREIGN KEY (`apartamento_id`) REFERENCES `apartamentos` (`id_apartamento`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=556 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  KEY `mensualidad_ibfk_periodo` (`periodo_id`),
+  CONSTRAINT `mensualidad_ibfk_1` FOREIGN KEY (`apartamento_id`) REFERENCES `apartamentos` (`id_apartamento`) ON UPDATE CASCADE,
+  CONSTRAINT `mensualidad_ibfk_periodo` FOREIGN KEY (`periodo_id`) REFERENCES `periodos_mensualidad` (`id_periodo`) ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=656 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -420,7 +412,7 @@ CREATE TABLE `mensualidad` (
 
 LOCK TABLES `mensualidad` WRITE;
 /*!40000 ALTER TABLE `mensualidad` DISABLE KEYS */;
-INSERT INTO `mensualidad` VALUES (533,2.53,402.33,'1','2025',30,10,15,0),(534,0.11,402.33,'1','2025',32,10,15,0),(535,2.53,402.33,'1','2025',31,10,15,0),(536,890.33,402.33,'10','2025',30,10,15,1),(537,890.33,402.33,'10','2025',31,10,15,1),(538,38.71,402.33,'10','2025',32,10,15,1),(539,3.68,414.05,'2','2025',30,10,15,1),(540,0.10,414.05,'2','2025',32,10,15,1),(541,2.99,414.05,'2','2025',31,10,15,1),(542,138.69,405.35,'4','2025',30,10,15,0),(543,5.80,405.35,'4','2025',32,10,15,0),(544,138.69,405.35,'4','2025',31,10,15,0),(545,161.57,419.99,'3','2025',30,10,15,1),(546,5.55,419.99,'3','2025',32,10,15,1),(547,168.92,419.99,'3','2025',31,10,15,1),(548,4.62,433.17,'5','2025',30,10,15,1),(549,0.21,433.17,'5','2025',32,10,15,1),(550,14.49,433.17,'5','2025',31,10,15,1),(551,1.05,433.17,'5','2025',35,10,15,1),(552,3.30,438.20,'6','2025',30,10,15,1),(553,0.15,438.20,'6','2025',32,10,15,1),(554,8.05,438.20,'6','2025',31,10,15,1),(555,0.75,438.20,'6','2025',35,10,15,1);
+INSERT INTO `mensualidad` VALUES (610,1,203.94,30,10,15,1),(611,1,213.21,31,10,15,1),(612,1,46.35,35,10,15,1),(613,1,9.27,39,10,15,1),(614,1,46.35,37,10,15,1),(615,1,9.27,32,10,15,1),(616,2,2.64,30,10,15,0),(617,2,48.76,31,10,15,0),(618,2,0.12,32,10,15,0),(619,2,0.60,35,10,15,0),(620,2,10.60,37,10,15,0),(621,2,0.12,39,10,15,0),(622,3,5035.58,30,10,15,0),(623,3,5264.47,31,10,15,0),(624,3,228.89,32,10,15,0),(625,3,1144.45,35,10,15,0),(626,3,1144.45,37,10,15,0),(627,3,228.89,39,10,15,0),(628,3,29.04,30,10,15,0),(629,3,30.36,31,10,15,0),(630,3,1.32,32,10,15,0),(631,3,6.60,35,10,15,0),(632,3,6.60,37,10,15,0),(633,3,1.32,39,10,15,0),(634,3,2.64,30,10,15,0),(635,3,2.76,31,10,15,0),(636,3,0.12,32,10,15,0),(637,3,0.60,35,10,15,0),(638,3,0.60,37,10,15,0),(639,3,0.12,39,10,15,0),(640,3,0.60,41,10,15,0),(641,1,25.00,41,10,15,1),(642,2,169.18,30,10,15,1),(643,2,7.69,32,10,15,1),(644,2,222.87,31,10,15,1),(645,2,38.45,35,10,15,1),(646,2,9.69,39,10,15,1),(647,2,48.45,37,10,15,1),(648,2,48.45,41,10,15,1),(649,2,90.64,30,10,15,1),(650,2,4.12,32,10,15,1),(651,2,140.76,31,10,15,1),(652,2,20.60,35,10,15,1),(653,2,4.12,39,10,15,1),(654,2,30.60,37,10,15,1),(655,2,30.60,41,10,15,1);
 /*!40000 ALTER TABLE `mensualidad` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -482,7 +474,7 @@ CREATE TABLE `movimientos_caja` (
   PRIMARY KEY (`id_movimiento_caja`),
   KEY `caja_chica_id` (`caja_chica_id`),
   CONSTRAINT `movimientos_caja_ibfk_1` FOREIGN KEY (`caja_chica_id`) REFERENCES `caja_chica` (`id_caja_chica`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=43 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=51 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -491,7 +483,7 @@ CREATE TABLE `movimientos_caja` (
 
 LOCK TABLES `movimientos_caja` WRITE;
 /*!40000 ALTER TABLE `movimientos_caja` DISABLE KEYS */;
-INSERT INTO `movimientos_caja` VALUES (42,'cafe',10.00,'2026-03-09','Pendiente por reposicion',25,1);
+INSERT INTO `movimientos_caja` VALUES (42,'cafe',10.00,'2026-03-09','Repuesto',25,1),(43,'se pagaron 3 bombillos nuevos',900.00,'2026-03-15','Repuesto',25,1),(44,'aaaaa',10.00,'2026-03-16','Pendiente por reposicion',25,0),(45,'pago de transporte',900.00,'2026-04-07','Pendiente por reposicion',26,0),(46,'pago de trasnporte',900.00,'2026-04-07','Pendiente por reposicion',26,0),(47,'pago',900.00,'2026-04-07','Pendiente por reposicion',26,0),(48,'pago',900.00,'2026-04-07','Pendiente por reposicion',26,0),(49,'pago',900.00,'2026-04-07','Pendiente por reposicion',26,0),(50,'pago',900.00,'2026-04-07','Pendiente por reposicion',26,1);
 /*!40000 ALTER TABLE `movimientos_caja` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -508,7 +500,7 @@ CREATE TABLE `pagos` (
   `observacion` text NOT NULL DEFAULT 'Sin observación',
   `activo` tinyint(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id_pago`)
-) ENGINE=InnoDB AUTO_INCREMENT=124 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=135 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -517,7 +509,7 @@ CREATE TABLE `pagos` (
 
 LOCK TABLES `pagos` WRITE;
 /*!40000 ALTER TABLE `pagos` DISABLE KEYS */;
-INSERT INTO `pagos` VALUES (101,'ANULADO','Pago de mensualidad Diciembre',0),(102,'ANULADO','Pago de mensualidad Enero',0),(103,'ANULADO','Abono a deuda',0),(104,'ANULADO','Pago en revisión',0),(105,'PROCESADO','Pago mensualidad Marzo',1),(116,'Procesado','asdasd',0),(117,'RECHAZADO','sesss',1),(118,'ANULADO','si mi panax',0),(119,'PROCESADO','pago',1),(120,'No verificado','mitasd de pago',1),(121,'No verificado','Broder',1),(122,'PROCESADO','ssssssssssssssss',1),(123,'No verificado','',1);
+INSERT INTO `pagos` VALUES (101,'ANULADO','Pago de mensualidad Diciembre',0),(102,'ANULADO','Pago de mensualidad Enero',0),(103,'ANULADO','Abono a deuda',0),(104,'ANULADO','Pago en revisión',0),(105,'ANULADO','Pago mensualidad Marzo',0),(116,'Procesado','asdasd',0),(117,'RECHAZADO','sesss',1),(118,'ANULADO','si mi panax',0),(119,'PROCESADO','pago',1),(120,'ANULADO','mitasd de pagok',0),(121,'No verificado','Broder',1),(122,'PROCESADO','ssssssssssssssss',1),(123,'No verificado','',1),(124,'ANULADO','xxxxxxxxxxxxx',0),(127,'PROCESADO','',1),(128,'RECHAZADO','',1),(129,'PROCESADO','',1),(131,'PROCESADO','',1),(132,'PROCESADO','pago de ayer',1),(133,'PROCESADO','Pago completo enero',1),(134,'PROCESADO','pago completo febrero',1);
 /*!40000 ALTER TABLE `pagos` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -544,8 +536,36 @@ CREATE TABLE `pagos_mensualidad` (
 
 LOCK TABLES `pagos_mensualidad` WRITE;
 /*!40000 ALTER TABLE `pagos_mensualidad` DISABLE KEYS */;
-INSERT INTO `pagos_mensualidad` VALUES (370,536),(371,536),(381,534),(382,536),(383,536),(384,533),(385,533),(386,533),(1007,536),(1008,539),(1010,545);
+INSERT INTO `pagos_mensualidad` VALUES (1022,611),(1023,611),(1024,610),(1025,642);
 /*!40000 ALTER TABLE `pagos_mensualidad` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `periodos_mensualidad`
+--
+
+DROP TABLE IF EXISTS `periodos_mensualidad`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `periodos_mensualidad` (
+  `id_periodo` int(11) NOT NULL AUTO_INCREMENT,
+  `mes` varchar(2) NOT NULL,
+  `anio` varchar(4) NOT NULL,
+  `tasa_dolar` decimal(15,2) NOT NULL,
+  `activo` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id_periodo`),
+  UNIQUE KEY `periodo_unico` (`mes`,`anio`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `periodos_mensualidad`
+--
+
+LOCK TABLES `periodos_mensualidad` WRITE;
+/*!40000 ALTER TABLE `periodos_mensualidad` DISABLE KEYS */;
+INSERT INTO `periodos_mensualidad` VALUES (1,'1','2026',455.25,1),(2,'2','2026',476.43,0),(3,'3','2026',455.25,1);
+/*!40000 ALTER TABLE `periodos_mensualidad` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -562,7 +582,7 @@ CREATE TABLE `presupuesto` (
   `observacion` varchar(50) NOT NULL DEFAULT 'Sin observación',
   `activo` tinyint(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id_presupuesto`)
-) ENGINE=InnoDB AUTO_INCREMENT=102 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=111 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -571,7 +591,7 @@ CREATE TABLE `presupuesto` (
 
 LOCK TABLES `presupuesto` WRITE;
 /*!40000 ALTER TABLE `presupuesto` DISABLE KEYS */;
-INSERT INTO `presupuesto` VALUES (56,'2025-01-01',1,'presupuesto modificado 5864',0),(57,'2025-02-01',1,'Mes de Febrero',1),(67,'2025-03-01',122,'Mes de Marzo',1),(68,'2025-04-01',12,'Mes de abril',1),(70,'2025-05-01',12,'mayo',1),(76,'2025-06-01',10,'asdas',1),(77,'2025-07-01',12,'presupuesto',1),(84,'2025-08-01',12,'agosto',1),(98,'2025-09-01',1000,'presupuesto Varios Selenium 2024',0),(101,'2025-10-01',125,'Presupuesto obtubre',1);
+INSERT INTO `presupuesto` VALUES (106,'2026-01-01',10,'enero 2026',1),(107,'2026-02-01',230,'febrero 2026 editado',1),(110,'2026-03-01',234,'Sin observación',1);
 /*!40000 ALTER TABLE `presupuesto` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -598,7 +618,7 @@ CREATE TABLE `presupuesto_mensualidad` (
 
 LOCK TABLES `presupuesto_mensualidad` WRITE;
 /*!40000 ALTER TABLE `presupuesto_mensualidad` DISABLE KEYS */;
-INSERT INTO `presupuesto_mensualidad` VALUES (660,550),(667,548),(667,549),(667,550),(667,551),(745,539),(745,541),(746,539),(746,541),(750,539),(757,539),(757,540),(757,541),(758,539),(758,540),(758,541),(759,545),(759,547),(769,545),(769,546),(769,547),(770,545),(770,546),(770,547),(771,542),(771,544),(781,542),(781,543),(781,544),(782,542),(782,543),(782,544),(819,554),(824,552),(824,553),(824,554),(824,555),(1183,533),(1183,534),(1183,535),(1189,533),(1189,534),(1189,535),(1190,533),(1190,534),(1190,535);
+INSERT INTO `presupuesto_mensualidad` VALUES (1327,610),(1327,611),(1327,612),(1327,613),(1327,614),(1327,615),(1328,610),(1328,611),(1328,612),(1328,613),(1328,614),(1328,615),(1329,610),(1329,611),(1329,612),(1329,613),(1329,614),(1329,615),(1329,641),(1330,610),(1330,611),(1330,612),(1330,613),(1330,614),(1330,615),(1330,641),(1331,610),(1331,611),(1331,612),(1331,613),(1331,614),(1331,615),(1331,641),(1332,610),(1332,611),(1332,612),(1332,613),(1332,614),(1332,615),(1332,641),(1334,610),(1334,611),(1334,612),(1334,613),(1334,614),(1334,615),(1334,641),(1335,610),(1335,611),(1335,612),(1335,613),(1335,614),(1335,615),(1336,610),(1336,611),(1336,612),(1336,613),(1336,614),(1336,615),(1337,610),(1337,611),(1337,612),(1337,613),(1337,614),(1337,615),(1338,610),(1338,611),(1338,612),(1338,613),(1338,614),(1338,615),(1353,642),(1353,643),(1353,644),(1353,645),(1353,646),(1353,647),(1353,648),(1354,642),(1354,643),(1354,644),(1354,645),(1354,646),(1354,647),(1354,648),(1355,642),(1355,643),(1355,644),(1355,645),(1355,646),(1355,647),(1355,648),(1356,642),(1356,643),(1356,644),(1356,645),(1356,646),(1356,647),(1356,648),(1357,616),(1357,617),(1357,618),(1357,619),(1357,620),(1357,621),(1357,642),(1357,643),(1357,644),(1357,645),(1357,646),(1357,647),(1357,648),(1357,649),(1357,650),(1357,651),(1357,652),(1357,653),(1357,654),(1357,655),(1358,617),(1358,620),(1358,644),(1358,646),(1358,647),(1358,648),(1358,651),(1358,654),(1358,655),(1361,642),(1361,643),(1361,644),(1361,645),(1361,646),(1361,647),(1361,648),(1361,649),(1361,650),(1361,651),(1361,652),(1361,653),(1361,654),(1361,655),(1362,642),(1362,643),(1362,644),(1362,645),(1362,646),(1362,647),(1362,648),(1362,649),(1362,650),(1362,651),(1362,652),(1362,653),(1362,654),(1362,655),(1387,634),(1387,635),(1387,636),(1387,637),(1387,638),(1387,639),(1387,640);
 /*!40000 ALTER TABLE `presupuesto_mensualidad` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -653,6 +673,7 @@ CREATE TABLE `reposiciones` (
 
 LOCK TABLES `reposiciones` WRITE;
 /*!40000 ALTER TABLE `reposiciones` DISABLE KEYS */;
+INSERT INTO `reposiciones` VALUES (208,42),(208,43);
 /*!40000 ALTER TABLE `reposiciones` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -675,8 +696,8 @@ CREATE TABLE `solicitudes_gasto` (
   `activo` tinyint(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id_solicitud`),
   KEY `presupuesto_mensual_id` (`presupuesto_id`),
-  CONSTRAINT `solicitudes_gasto_ibfk_1` FOREIGN KEY (`presupuesto_id`) REFERENCES `presupuesto` (`id_presupuesto`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  CONSTRAINT `solicitudes_gasto_ibfk_1` FOREIGN KEY (`presupuesto_id`) REFERENCES `presupuesto` (`id_presupuesto`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -685,7 +706,7 @@ CREATE TABLE `solicitudes_gasto` (
 
 LOCK TABLES `solicitudes_gasto` WRITE;
 /*!40000 ALTER TABLE `solicitudes_gasto` DISABLE KEYS */;
-INSERT INTO `solicitudes_gasto` VALUES (8,'2025-09-01','Solicitud de consumo de Algo','Pablo',10,'Pendiente',56,'2',1),(10,'2010-10-10','Solicitud de gasto de ejemplo','Juan',15,'Pendiente',56,'1',0),(12,'2026-02-06','Sin Solicitud','Administracion',1,'Pendiente',56,'3',1),(13,'2026-02-12','seee','pepe',12,'Pendiente',56,'2',0);
+INSERT INTO `solicitudes_gasto` VALUES (15,'2026-03-18','asdasdasdas','aasasd',12,'Pendiente',106,'2',1),(16,'2026-04-12','ssssss','aaaaa',12,'Pendiente',106,'1',1),(17,'2026-04-11','asassss','miguel',10,'Pendiente',110,'3',1);
 /*!40000 ALTER TABLE `solicitudes_gasto` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -701,7 +722,7 @@ CREATE TABLE `tipo_gasto` (
   `nombre_tipo_gasto` varchar(50) NOT NULL,
   `activo` tinyint(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id_tipo_gasto`)
-) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -710,7 +731,7 @@ CREATE TABLE `tipo_gasto` (
 
 LOCK TABLES `tipo_gasto` WRITE;
 /*!40000 ALTER TABLE `tipo_gasto` DISABLE KEYS */;
-INSERT INTO `tipo_gasto` VALUES (1,'Reposición de Caja Chica',1),(2,'Servicios Públicos',1),(3,'Personal y Obligaciones Laborales',1),(4,'Mantenimientos y Reparaciones',1),(5,'Servicio de Gas',1),(9,'Suministros de Limpieza y Operacion',1),(10,'Gastos Administrativos y Financieros',1),(14,'random',0),(15,'hola',0);
+INSERT INTO `tipo_gasto` VALUES (1,'Reposición de Caja Chica',1),(2,'Servicios Públicos',1),(3,'Personal y Obligaciones Laborales',1),(4,'Mantenimientos y Reparaciones',1),(5,'Servicio de Gas',1),(9,'Suministros de Limpieza y Operacion',1),(10,'Gastos Administrativos y Financieros',1),(14,'random',0),(15,'hola',0),(16,'aaaa',0);
 /*!40000 ALTER TABLE `tipo_gasto` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -766,6 +787,10 @@ SET character_set_client = utf8;
   1 AS `total_gastado_pendiente`,
   1 AS `saldo_disponible` */;
 SET character_set_client = @saved_cs_client;
+
+--
+-- Dumping events for database 'haydee_db'
+--
 
 --
 -- Dumping routines for database 'haydee_db'
@@ -934,7 +959,7 @@ sp_block: BEGIN
     INSERT INTO gastos (descripcion_gasto, proveedor_id, tipo_gasto_id, solicitud_id, clasificacion, activo)
     VALUES (
         CONCAT('Reposición de Caja Chica - ', DATE_FORMAT(NOW(), '%d/%m/%Y')), 
-        v_proveedor_id, v_tipo_gasto_id, v_solicitud_gasto_id, 'Reposicion', 1
+        v_proveedor_id, v_tipo_gasto_id, v_solicitud_gasto_id, 'reposicion', 1
     );
     SET v_gasto_id = LAST_INSERT_ID(); 
 
@@ -959,7 +984,7 @@ sp_block: BEGIN
     CLOSE cur_movimientos;
 
     COMMIT;
-    SELECT CONCAT('Reposición exitosa. Gasto ID: ', v_gasto_id, '. Total Repuesto: ', v_saldo_acumulado) AS mensaje;
+    SELECT CONCAT('Reposición exitosa. Total Repuesto: ', v_saldo_acumulado) AS mensaje;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -1020,12 +1045,6 @@ DELIMITER ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
 
 --
--- Current Database: `haydee_db`
---
-
-USE `haydee_db`;
-
---
 -- Final view structure for view `vw_ejecucion_presupuesto`
 --
 
@@ -1053,10 +1072,10 @@ USE `haydee_db`;
 /*!50001 SET @saved_col_connection     = @@collation_connection */;
 /*!50001 SET character_set_client      = utf8mb4 */;
 /*!50001 SET character_set_results     = utf8mb4 */;
-/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 SET collation_connection      = utf8mb4_unicode_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 SQL SECURITY DEFINER */
-/*!50001 VIEW `vw_estado_cuentas_mensualidad` AS select `m`.`id_mensualidad` AS `id_mensualidad`,`a`.`nro_apartamento` AS `nro_apartamento`,`m`.`mes` AS `mes`,`m`.`anio` AS `anio`,`m`.`monto` AS `monto_cuota`,ifnull((select sum(`dp`.`monto`) from ((`pagos_mensualidad` `pm` join `detalles_pagos` `dp` on(`pm`.`detalle_pago_id` = `dp`.`id_detalle_pago`)) join `pagos` `p` on(`dp`.`pago_id` = `p`.`id_pago`)) where `pm`.`mensualidad_id` = `m`.`id_mensualidad` and `p`.`activo` = 1),0) AS `total_abonado`,`m`.`monto` - ifnull((select sum(`dp`.`monto`) from ((`pagos_mensualidad` `pm` join `detalles_pagos` `dp` on(`pm`.`detalle_pago_id` = `dp`.`id_detalle_pago`)) join `pagos` `p` on(`dp`.`pago_id` = `p`.`id_pago`)) where `pm`.`mensualidad_id` = `m`.`id_mensualidad` and `p`.`activo` = 1),0) AS `deuda_pendiente`,case when `m`.`monto` - ifnull((select sum(`dp`.`monto`) from ((`pagos_mensualidad` `pm` join `detalles_pagos` `dp` on(`pm`.`detalle_pago_id` = `dp`.`id_detalle_pago`)) join `pagos` `p` on(`dp`.`pago_id` = `p`.`id_pago`)) where `pm`.`mensualidad_id` = `m`.`id_mensualidad` and `p`.`activo` = 1),0) <= 0 then 'Solvente' else 'Pendiente' end AS `estado_pago` from (`mensualidad` `m` join `apartamentos` `a` on(`m`.`apartamento_id` = `a`.`id_apartamento`)) where `m`.`activo` = 1 and `a`.`activo` = 1 */;
+/*!50001 VIEW `vw_estado_cuentas_mensualidad` AS select `m`.`id_mensualidad` AS `id_mensualidad`,`a`.`nro_apartamento` AS `nro_apartamento`,`p`.`mes` AS `mes`,`p`.`anio` AS `anio`,`m`.`monto` AS `monto_cuota`,ifnull((select sum(`dp`.`monto`) from ((`pagos_mensualidad` `pm` join `detalles_pagos` `dp` on(`pm`.`detalle_pago_id` = `dp`.`id_detalle_pago`)) join `pagos` `pg` on(`dp`.`pago_id` = `pg`.`id_pago`)) where `pm`.`mensualidad_id` = `m`.`id_mensualidad` and `pg`.`activo` = 1),0) AS `total_abonado`,`m`.`monto` - ifnull((select sum(`dp`.`monto`) from ((`pagos_mensualidad` `pm` join `detalles_pagos` `dp` on(`pm`.`detalle_pago_id` = `dp`.`id_detalle_pago`)) join `pagos` `pg` on(`dp`.`pago_id` = `pg`.`id_pago`)) where `pm`.`mensualidad_id` = `m`.`id_mensualidad` and `pg`.`activo` = 1),0) AS `deuda_pendiente`,case when `m`.`monto` - ifnull((select sum(`dp`.`monto`) from ((`pagos_mensualidad` `pm` join `detalles_pagos` `dp` on(`pm`.`detalle_pago_id` = `dp`.`id_detalle_pago`)) join `pagos` `pg` on(`dp`.`pago_id` = `pg`.`id_pago`)) where `pm`.`mensualidad_id` = `m`.`id_mensualidad` and `pg`.`activo` = 1),0) <= 0 then 'Solvente' else 'Pendiente' end AS `estado_pago` from ((`mensualidad` `m` join `apartamentos` `a` on(`m`.`apartamento_id` = `a`.`id_apartamento`)) join `periodos_mensualidad` `p` on(`m`.`periodo_id` = `p`.`id_periodo`)) where `m`.`activo` = 1 and `a`.`activo` = 1 */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
@@ -1088,4 +1107,4 @@ USE `haydee_db`;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-03-14 17:50:56
+-- Dump completed on 2026-04-18 16:48:15

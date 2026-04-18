@@ -5,6 +5,8 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="shortcut icon" href="<?php echo URL_BASE; ?>recursos/img/utils/logo-haydee.ico" type="image/x-icon">
+    <link rel="preload" as="image" href="<?php echo URL_BASE; ?>recursos/img/utils/apartament.webp">
+    
     <link rel="stylesheet" href="<?php echo URL_BASE; ?>recursos/dependencias/bootstrap/bootstrap.min.css">
     <link rel="stylesheet" href="<?php echo URL_BASE; ?>recursos/dependencias/bootstrap-icons/bootstrap-icons.min.css">
     <title>Inicio de Sesión</title>
@@ -14,93 +16,175 @@
 <body>
     <main>
         <div class="container-fluid">
-            <div class="row p-5 justify-content-end">
+            <div class="row p-5 justify-content-between align-items-baseline">
+                <div class="col-md-6 col-lg-6 d-none d-md-block text-white animation-fade-right">
+                    <h1 class="display-4 fw-bold mb-3" style="text-shadow: 2px 2px 8px rgba(0,0,0,0.7);">
+                        Bienvenido a la gestión digital de Haydee.
+                    </h1>
+                    
+                    <p class="fs-5 mb-4" style="text-shadow: 1px 1px 4px rgba(0,0,0,0.8); line-height: 1.6; max-width: 90%;">
+                        Gestione sus pagos, revise los comunicados recientes y manténgase al día con la administración de su comunidad de forma rápida y segura.
+                    </p>
+                    
+                    <div class="d-flex gap-3">
+                        <span class="badge glass-badge p-2 px-3 rounded-pill text-white">
+                            <i class="bi bi-shield-lock text-success me-1"></i> Acceso Seguro
+                        </span>
+                        <span class="badge glass-badge p-2 px-3 rounded-pill text-white">
+                            <i class="bi bi-clock-history text-warning me-1"></i> Disponible 24/7
+                        </span>
+                    </div>
+                </div>
                 <div class="col-md-6 col-lg-4 col-sm-12">
-                    <div class="card mt-5 shadow-lg rounded p-2 px-3">
-                        <div class="card-body">
+                    
+                    <div class="card mt-5 shadow-lg rounded p-4 glass-card border-0">
+                        <div class="card-body p-0"> <div class="text-center mt-2 mb-4">
+                                <h1 class="text-logo">Edificio Haydee</h1>
+                                <p class="subtitle">Junta de Condominio</p>
+                            </div>
+
                             <form action="?pagina=login&accion=entrar" method="POST" id="form-login">
-                                <h5 class="card-title text-center p-3">Iniciar sesión</h5>
+                                <h5 class="text-center mb-4 text-secondary">Iniciar sesión</h5>
+                                
                                 <div class="row">
                                     <div class="col-12">
-                                        <div class="input-group mb-3">
-                                            <span class="input-group-text" id="basic-addon1"><i class="bi bi-person"></i></span>
-                                            <input type="email" name="usuario" class="form-control" placeholder="Correo" name="correo_login" id="correo_login" aria-label="Username" aria-describedby="basic-addon1">
-                                            <span class="w-100 invalid-feedback"></span>
+                                        <div class="mi-input-group mb-4 shadow-sm">
+                                            
+                                            <div class="d-flex align-items-center w-100">
+                                                <div class="px-3">
+                                                    <i class="bi bi-person text-primary mi-icono fs-5"></i>
+                                                </div>
+                                                
+                                                <div class="form-floating flex-grow-1">
+                                                    <input type="email" name="usuario" class="form-control mi-input" id="correo_login" placeholder="Correo" required>
+                                                    <label for="correo_login" class="text-muted">Correo electrónico</label>
+                                                </div>
+                                            </div>
+                                            
+                                            <span class="invalid-feedback w-100"></span>
                                         </div>
                                     </div>
+
                                     <div class="col-12">
-                                        <div class="input-group mb-2">
-                                            <span class="input-group-text" id="basic-addon1"><i class="bi bi-lock"></i></span>
-                                            <input type="password" name="contra" class="form-control" placeholder="Contraseña" id="contra" aria-label="Username" aria-describedby="basic-addon1">
-                                            <span class="w-100 invalid-feedback"></span>
+                                        <div class="mi-input-group mb-4 shadow-sm">
+                                            
+                                            <div class="d-flex align-items-center w-100 position-relative">
+                                                <div class="px-3">
+                                                    <i class="bi bi-lock text-primary mi-icono fs-5"></i>
+                                                </div>
+                                                
+                                                <div class="form-floating flex-grow-1">
+                                                    <input type="password" name="contra" class="form-control mi-input pe-5" id="contra" placeholder="Contraseña" required>
+                                                    <label for="contra" class="text-muted">Contraseña</label>
+                                                </div>
+                                                
+                                                <button type="button" class="btn btn-link text-decoration-none text-muted position-absolute end-0 top-50 translate-middle-y me-2 contra-btn" id="btn-ver-contra">
+                                                    <i class="bi bi-eye-fill fs-5"></i>
+                                                </button>
+                                            </div>
+                                            
+                                            <span class="invalid-feedback w-100"></span>
                                         </div>
                                     </div>
-                                    <div class="col-12">
-                                        <div class="form-check mb-2 text-muted">
-                                            <input type="checkbox" class="form-check-input" id="checkbox_mantener_sesion" name="mantener_sesion">
-                                            <label class="form-check-label" for="checkbox_mantener_sesion">Mantener sesión</label>
+                                    
+                                    <div class="col-12 d-flex justify-content-between align-items-center mb-3">
+                                        <div class="text-muted mb-0 d-flex align-items-center gap-2">
+                                            <input type="checkbox" class="mi-checkbox m-0" id="checkbox_mantener_sesion" name="mantener_sesion">
+                                            <label class="form-check-label" for="checkbox_mantener_sesion" style="cursor: pointer; padding-top: 1px;">Mantener sesión</label>
                                         </div>
-                                    </div>                                    
-                                    <div class="col-12">
-                                        <a data-bs-toggle="modal" data-bs-target="#modal_recuperar_contrasenia" type="button" class="link">Recuperar Contraseña</a>
+                                        <a data-bs-toggle="modal" data-bs-target="#modal_recuperar_contrasenia" type="button" class="text-decoration-none small text-primary" style="cursor: pointer;">Recuperar Contraseña</a>
                                     </div>
+
                                     <?php if (!$recaptchaDeshabilitado): ?>
-                                    <div class="g-recaptcha my-2 mt-4" 
-                                         data-sitekey="<?php echo(CLAVE_SITIO_RECAPTCHA); ?>" 
-                                         data-theme="light" 
-                                         data-size="normal"
-                                         data-tabindex="0"
-                                         data-callback="onRecaptchaSuccess"
-                                         data-expired-callback="onRecaptchaExpired"
-                                         data-error-callback="onRecaptchaError">
+                                    <div class="col-12 d-flex justify-content-center">
+                                        <div class="g-recaptcha my-2" 
+                                             data-sitekey="<?php echo(CLAVE_SITIO_RECAPTCHA); ?>" 
+                                             data-theme="light" 
+                                             data-size="normal"
+                                             data-tabindex="0"
+                                             data-callback="onRecaptchaSuccess"
+                                             data-expired-callback="onRecaptchaExpired"
+                                             data-error-callback="onRecaptchaError">
+                                        </div>
                                     </div>
                                     <?php endif; ?>
-                                    <div class="col-12 text-center p-3 pb-0">
-                                        <button type="submit" class="btn btn-primary rounded shadow" id="enviar" data-tooltip="true" title="Ingresar al sistema">Ingresar <i class="bi bi-send-fill"></i></button>
+
+                                    <div class="col-12 text-center mt-4">
+                                        <button type="submit" class="btn btn-primary w-100 rounded-pill shadow-sm py-2 text-uppercase fw-bold d-flex justify-content-center align-items-center gap-2" id="enviar" data-tooltip="true" title="Ingresar al sistema">
+                                            
+                                            <span id="texto-boton">Ingresar</span>
+                                            
+                                            <i class="bi bi-box-arrow-in-right" id="icono-boton" style="font-size: 1.2rem;"></i>
+                                            
+                                            <span id="spinner-boton" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                                            
+                                        </button>
                                     </div>
                                 </div>
                             </form>
                         </div>
                     </div>
-
-                    
                 </div>
             </div>
         </div>
     </main>
 
-    <?php 
-    require_once 'vista/componentes/modal_carga.php';
-     ?>
+    <?php require_once 'vista/componentes/modal_carga.php'; ?>
 
     <footer class="py-2 fixed-bottom" style="background-color: #0e121b;">
-        <div class="text-center text-white"><h5>Junta de Condominios Edificio Haydee C.A.</h5></div>
+        <div class="text-center text-white"><h6 class="mb-0 py-1">Junta de Condominios Edificio Haydee C.A.</h6></div>
     </footer>
 
     <div class="modal fade" id="modal_recuperar_contrasenia" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
         <div class="modal-dialog modal-md">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h1 class="modal-title fs-5" id="titulo_modal">Recuperar Contraseña</h1>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+                
+                <div class="modal-header border-0 pb-0 py-4 pe-4">
+                    <button type="button" class="btn-close btn-close-custom" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <form method="POST" action="?pagina=login&accion=recuperar_contrasenia" class="row" id="form_recuperar_contra">
-                        <div class="col mb-4">
-                            <h6>Ingrese aquí su correo para recuperar contraseña.</h6>
-                            <p>Se usará este correo para crear una nueva contraseña.</p>
+                
+                <div class="modal-body px-5 pb-5 pt-2">
+                    
+                    <div class="text-center mb-4">
+                        <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle mb-3" style="width: 65px; height: 65px;">
+                            <i class="bi bi-key fs-1"></i>
                         </div>
-                        <div class="col-md-11 mb-4">
-                            <label class="mb-2" for="correo">Correo electrónico:</label>
-                            <div class="input-group mb-3">
-                                <span class="input-group-text" id="basic-addon1"><i class="bi bi-envelope-at"></i></span>
-                                <input type="text" class="form-control" name="correo_recuperar" id="correo_recuperar" placeholder="Ingrese aquí su Correo electrónico" aria-label="correo" aria-describedby="basic-addon1" minlength="3" maxlength="60">
+                        <h4 class="fw-bold text-dark" id="titulo_modal">Recuperar Contraseña</h4>
+                        <p class="text-muted small mb-0 px-2">Ingrese el correo asociado a su cuenta y le enviaremos las instrucciones para restablecer el acceso.</p>
+                    </div>
+
+                    <form method="POST" action="?pagina=login&accion=recuperar_contrasenia" id="form_recuperar_contra">
+                        
+                        <div class="mb-4">
+                            <div class="mi-input-group shadow-sm">
+                                <div class="d-flex align-items-center w-100">
+                                    <div class="px-3">
+                                        <i class="bi bi-envelope-at text-primary mi-icono fs-5"></i>
+                                    </div>
+                                    <div class="form-floating flex-grow-1">
+                                        <input type="email" class="form-control mi-input" name="correo_recuperar" id="correo_recuperar" placeholder="Correo electrónico" required minlength="3" maxlength="60">
+                                        <label for="correo_recuperar" class="text-muted">Correo electrónico</label>
+                                    </div>
+                                </div>
                                 <span class="w-100 invalid-feedback"></span>
                             </div>
                         </div>
-                        <div class="col-2 mx-auto">
-                            <button class="btn btn-primary" type="submit" id="boton_recuperar">Enviar</button>
+
+                        <div class="d-flex flex-column gap-2 mt-4">
+    
+                            <button class="btn btn-primary w-100 rounded-pill shadow-sm py-2 text-uppercase fw-bold d-flex justify-content-center align-items-center gap-2" type="submit" id="boton_recuperar">
+                                <span id="texto-boton-recuperar">Restablecer contraseña</span>
+                                <i class="bi bi-send" id="icono-boton-recuperar" style="font-size: 1.1rem;"></i>
+                                <span id="spinner-boton-recuperar" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                            </button>
+                            
+                            <button type="button" class="btn btn-link text-decoration-none text-muted w-100 rounded-pill py-2 fw-semibold btn-volver" data-bs-dismiss="modal">
+                                Volver al inicio de sesión
+                            </button>
+                            
                         </div>
+                        
                     </form>
                 </div>
             </div>
@@ -119,5 +203,4 @@
     <?php endif; ?>
     <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/validaciones/login_validar.js"></script>
 </body>
-
 </html>

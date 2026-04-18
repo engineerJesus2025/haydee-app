@@ -21,6 +21,25 @@ document.addEventListener('DOMContentLoaded', () => {
 // Event Listeners (Interacción Usuario)
 // -------------------------------------------------------------------------
 
+// Referencias a las pestañas
+const tabServidor = document.getElementById('servidor-tab');
+const tabPC = document.getElementById('pc-tab');
+
+// Limpiar selecciones al cambiar de pestaña
+if (tabServidor && tabPC) {
+    tabServidor.addEventListener('shown.bs.tab', () => {
+        input_file.value = ''; // Limpia el input de la PC
+        document.getElementById('info_seleccion').innerHTML = '';
+        boton_importar.style.display = 'none';
+    });
+
+    tabPC.addEventListener('shown.bs.tab', () => {
+        select_copias.value = ''; // Limpia el select del servidor
+        document.getElementById('info_seleccion').innerHTML = '';
+        boton_importar.style.display = 'none';
+    });
+}
+
 // Seleccionar Base de Datos
 select_db.addEventListener("change", (e) => {
     const valor = e.target.value;
@@ -198,11 +217,11 @@ const iconoBoton = document.getElementById('icono_boton_importar');
 
 boton_importar.addEventListener('mouseenter', () => {
     iconoBoton.classList.remove('bi-arrow-repeat');
-    iconoBoton.classList.add('bi-exclamation-triangle', 'text-warning');
+    iconoBoton.classList.add('bi-exclamation-triangle');
 });
 
 boton_importar.addEventListener('mouseleave', () => {
-    iconoBoton.classList.remove('bi-exclamation-triangle', 'text-warning');
+    iconoBoton.classList.remove('bi-exclamation-triangle');
     iconoBoton.classList.add('bi-arrow-repeat');
 });
 
@@ -322,8 +341,14 @@ async function importarCopiaSeguridad() {
 
 async function importarSQL() {
     let datos = new FormData();
-    // Utilidades.query maneja FormData, así que soporta archivos perfectamente
-    datos.append("fichero", input_file.files[0]);
+    const archivo = input_file.files[0];
+    
+    // Detectamos a qué base de datos pertenece basándonos en el nombre del archivo
+    const db = (archivo.name.toLowerCase().includes("seguridad")) ? 'seguridad' : 'negocio';
+
+    // Agregamos el archivo y la base de datos a los datos a enviar
+    datos.append("fichero", archivo); 
+    datos.append("db", db);
     datos.append('operacion', 'importar_archivo_sql');
 
     const respuesta = await Peticiones.enviar(datos);
@@ -365,10 +390,8 @@ function validarSeleccionDB() {
 function validarInput(input, esValido, mensajeError = "") {
     if (esValido) {
         input.classList.remove('is-invalid');
-        input.classList.add('is-valid');
         if(input.nextElementSibling) input.nextElementSibling.textContent = "";
     } else {
-        input.classList.remove('is-valid');
         input.classList.add('is-invalid');
         if(input.nextElementSibling) input.nextElementSibling.textContent = mensajeError;
     }

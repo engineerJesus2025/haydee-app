@@ -216,16 +216,20 @@ function consultar() {
     const contenedor = document.querySelector(".tabla-sistema-haydee");
     if (!contenedor) return;
 
-    // 1. Formato de Usuario (Capitalizado + Ícono)
+    // Formato de Usuario 
     const formatoUsuario = (cell) => {
         let nombre = cell.getValue() || "";
         nombre = nombre.charAt(0).toUpperCase() + nombre.slice(1).toLowerCase();
+        
+        let rol = cell.getData().nombre_rol; 
+        const configRol = obtenerConfigRolBitacora(rol);
+
         return `<div class="d-flex align-items-center fw-bold text-dark">
-                    <i class="bi bi-person-circle text-primary me-2 fs-5"></i> ${nombre}
+                    <i class="bi ${configRol.icono} ${configRol.claseIcono} me-2 fs-5 opacity-75" data-tooltip="true" title="Rol: ${configRol.texto}"></i> ${nombre}
                 </div>`;
     };
 
-    // 2. Formato de Módulo (Limpieza de guiones bajos y Capitalización)
+    // Formato de Módulo 
     const formatoModulo = (cell) => {
         let modulo = cell.getValue() || "";
         // Convierte "GESTIONAR_ROLES" en "Gestionar Roles"
@@ -286,4 +290,31 @@ function objetoALista(obj) {
     }
     html += '</ul>';
     return html;
+}
+
+/**
+ * Procesa el Rol del usuario y devuelve su configuración visual para la Bitácora
+ */
+function obtenerConfigRolBitacora(rol) {
+    let color = "secondary";
+    let icono = "bi-person-circle";
+    let texto = rol || "Usuario";
+
+    const rolUpper = texto.toUpperCase();
+    if (rolUpper === 'ADMINISTRADOR GLOBAL') {
+        color = "warning"; icono = "bi-shield-lock-fill";
+    } else if (rolUpper === 'ADMINISTRADOR') {
+        color = "primary"; icono = "bi-shield-check";
+    } else if (rolUpper === 'PROPIETARIO') {
+        color = "success"; icono = "bi-house-door-fill";
+    } else if (rolUpper === 'CONTADOR') {
+        color = "danger"; icono = "bi-calculator-fill";
+    } else if (rolUpper === 'PRESIDENTE') {
+        color = "info"; icono = "bi-person-workspace";
+    }
+
+    // Ajuste de color para el ícono
+    let claseIcono = rolUpper === 'ADMINISTRADOR GLOBAL' ? "text-warning" : `text-${color}`;
+
+    return { icono, claseIcono, texto };
 }
