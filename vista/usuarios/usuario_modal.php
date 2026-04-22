@@ -12,7 +12,7 @@
                             <label for="nombre">Nombre del usuario <spam class="text-danger">*</spam></label>
                             <div class="input-group has-validation mb-3">
                                 <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
-                                <input type="text" class="border border-dark form-control" name="nombre" id="nombre" placeholder="Ejem: Robert" aria-label="nombre" aria-describedby="basic-addon1" minlength="3" maxlength="30" autocomplete="new-password">
+                                <input type="text" class="border border-dark form-control" name="nombre" id="nombre" placeholder="Ejem: Robert" aria-label="nombre" aria-describedby="basic-addon1" minlength="3" maxlength="30" autocomplete="new-password" autofocus>
                                 <span class="w-100 invalid-feedback"></span>
                             </div>
                         </div>

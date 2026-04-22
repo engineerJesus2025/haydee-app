@@ -15,7 +15,7 @@
                             <div class="input-group mb-3">
                                 <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
                                 <input type="text" class="border border-dark rounded-end form-control nombre_proveedor" name="nombre_proveedor" id="nombre_proveedor" placeholder="Ejem: Hidrolara"
-                                       aria-label="nombre_proveedor" aria-describedby="basic-addon1" minlength="3" maxlength="50">
+                                       aria-label="nombre_proveedor" aria-describedby="basic-addon1" minlength="3" maxlength="50" autofocus>
                                 <span class="w-100 invalid-feedback"></span>
                             </div>
                         </div>

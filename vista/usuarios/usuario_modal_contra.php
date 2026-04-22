@@ -12,7 +12,7 @@
                             <label for="contra">Nueva Contraseña <spam class="text-danger">*</spam></label>
                             <div class="input-group mb-3">
                                 <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-key"></i></span>
-                                <input type="password" class="border border-dark form-control contra-input" name="contra" id="contra" placeholder="Contraseña" aria-label="contra" aria-describedby="basic-addon1" minlength="5" maxlength="50">
+                                <input type="password" class="border border-dark form-control contra-input" name="contra" id="contra" placeholder="Contraseña" aria-label="contra" aria-describedby="basic-addon1" minlength="5" maxlength="50" autofocus>
                                 <button class="border border-dark rounded-end btn contra-btn" type="button" title="Mostrar Contraseña" tabindex="-1">
                                     <i class="bi bi-eye"></i>
                                 </button>

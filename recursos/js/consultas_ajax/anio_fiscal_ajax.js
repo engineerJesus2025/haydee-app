@@ -260,6 +260,10 @@ document.getElementById('modal_anio_fiscal').addEventListener('hide.bs.modal', (
     form.querySelector('#estado').setAttribute('disabled', '');
 });
 
+// document.getElementById('modal_anio_fiscal').addEventListener('show.bs.modal', () => {
+    
+// });
+
 // ============================================================
 // MÓDULO DE AYUDA INTERACTIVA
 // ============================================================

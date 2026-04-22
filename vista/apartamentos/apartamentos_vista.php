@@ -33,7 +33,7 @@
                                 <div class="row">
                                     <div class="col-12 col-sm-6 mb-4">
                                     <?php if ($permisosVista['apartamentos']['registrar']) : ?>
-                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-tooltip="true" title="Registrar Nuevo Apartamento" data-bs-target="#modal_apartamentos">
+                                        <button id="boton_nuevo_registro" type="button" class="btn btn-primary" data-bs-toggle="modal" data-tooltip="true" title="Registrar Nuevo Apartamento" data-bs-target="#modal_apartamentos">
                                             <i class="bi bi-plus-lg me-1"></i>
                                             Nuevo Apartamento
                                         </button>

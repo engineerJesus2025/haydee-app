@@ -14,7 +14,7 @@
                             <label for="nombre_banco">Nombre del Banco <spam class="text-danger">*</spam></label>
                             <div class="input-group has-validation mb-3">
                                 <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
-                                <input type="text" class="border border-dark form-control nombre_banco" name="nombre_banco" id="nombre_banco" placeholder="Ejem: Venezuela" aria-label="nombre_banco" aria-describedby="basic-addon1" minlength="3" maxlength="20">
+                                <input type="text" class="border border-dark form-control nombre_banco" name="nombre_banco" id="nombre_banco" placeholder="Ejem: Venezuela" aria-label="nombre_banco" aria-describedby="basic-addon1" minlength="3" maxlength="20" autofocus>
                                 <span class="w-100 invalid-feedback"></span>
                             </div>
                         </div>

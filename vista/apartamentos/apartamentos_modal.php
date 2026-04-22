@@ -14,7 +14,7 @@
                             <label for="nro_apartamento">Número del Apartamento <spam class="text-danger">*</spam></label>
                             <div class="input-group has-validation mb-3">
                                 <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-3-square-fill"></i></span>
-                                <input type="text" class="border border-dark form-control nro_apartamento" name="nro_apartamento" id="nro_apartamento" placeholder="Ejem: 2-6" aria-label="nro_apartamento" aria-describedby="basic-addon1" minlength="1" maxlength="3">
+                                <input type="text" class="border border-dark form-control nro_apartamento" name="nro_apartamento" id="nro_apartamento" placeholder="Ejem: 2-6" aria-label="nro_apartamento" aria-describedby="basic-addon1" minlength="1" maxlength="3" autofocus>
                                 <span class="w-100 invalid-feedback"></span>
                             </div>
                         </div>

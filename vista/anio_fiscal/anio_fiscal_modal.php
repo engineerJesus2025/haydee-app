@@ -12,7 +12,7 @@
                             <label for="fecha_inicio">Fecha Inicio <spam class="text-danger">*</spam></label>
                             <div class="input-group mb-3">
                                 <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
-                                <input type="date" class="border border-dark rounded-end form-control" name="fecha_inicio" id="fecha_inicio"  aria-label="fecha_inicio" aria-describedby="basic-addon1" minlength="3" maxlength="30">
+                                <input type="date" class="border border-dark rounded-end form-control" name="fecha_inicio" id="fecha_inicio"  aria-label="fecha_inicio" aria-describedby="basic-addon1" minlength="3" maxlength="30" autofocus>
                                 <span class="w-100 invalid-feedback"></span>
                             </div>
                         </div>

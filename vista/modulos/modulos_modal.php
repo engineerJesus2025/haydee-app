@@ -13,7 +13,7 @@
                             <label for="nombre">Nombre del Módulo <spam class="text-danger">*</spam></label>
                             <div class="input-group mb-3">
                                 <span class="border border-primary input-group-text"><i class="bi bi-grid"></i></span>
-                                <input type="text" class="border border-dark rounded-end form-control" name="nombre" id="nombre" placeholder="Ej: GESTIONAR_USUARIOS" aria-label="nombre" maxlength="50">
+                                <input type="text" class="border border-dark rounded-end form-control" name="nombre" id="nombre" placeholder="Ej: GESTIONAR_USUARIOS" aria-label="nombre" maxlength="50" autofocus>
                                 <span class="w-100 invalid-feedback"></span>
                             </div>
                         </div>

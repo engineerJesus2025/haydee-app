@@ -13,6 +13,7 @@
 <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/FormatoFechas.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/Notificaciones.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/AyudaInteractiva.js"></script>
+<script src="<?php echo URL_BASE; ?>recursos/js/ayuda/AtajosTeclado.js"></script>
 <!-- Script personalizados globales -->
 <script src="<?php echo URL_BASE; ?>recursos/js/header.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/js/notificaciones.js"></script>

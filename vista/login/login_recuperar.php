@@ -39,7 +39,7 @@
                                                     <i class="bi bi-key text-primary mi-icono fs-5"></i>
                                                 </div>
                                                 <div class="form-floating flex-grow-1">
-                                                    <input type="password" class="form-control mi-input pe-5" name="contra" id="contra" placeholder="Nueva Contraseña" minlength="5" maxlength="50" required>
+                                                    <input type="password" class="form-control mi-input pe-5" name="contra" id="contra" placeholder="Nueva Contraseña" minlength="5" maxlength="50" required autofocus>
                                                     <label for="contra" class="text-muted">Nueva Contraseña <span style="color: #e57373;">*</span></label>
                                                 </div>
                                                 <button type="button" class="btn btn-link text-decoration-none text-muted position-absolute end-0 top-50 translate-middle-y me-2 contra-btn" title="Mostrar Contraseña" tabindex="-1">

@@ -11,7 +11,7 @@
                        <label for="fecha">Fecha del gasto: <spam class="text-danger">*</spam></label>
                         <div class="input-group mb-3">
                             <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-calendar"></i></span>
-                            <input type="date" class="border border-dark rounded-end form-control" name="fecha" id="fecha"  aria-label="fecha" aria-describedby="basic-addon1">
+                            <input type="date" class="border border-dark rounded-end form-control" name="fecha" id="fecha"  aria-label="fecha" aria-describedby="basic-addon1" autofocus>
                             <span class="w-100 invalid-feedback"></span>
                         </div>
                     </div>    

@@ -15,7 +15,7 @@
                                 <div class="input-group">
                                     <span class="border border-primary input-group-text"><i class="bi bi-type"></i></span>
                                     <input type="text" class="border border-dark rounded-end form-control" name="titulo" id="titulo" placeholder="Ingrese un título..."
-                                        aria-label="titulo" minlength="3" maxlength="100" required>
+                                        aria-label="titulo" minlength="3" maxlength="100" required autofocus>
                                         <span class="w-100 invalid-feedback"></span>
                                 </div>
                             </div>

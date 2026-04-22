@@ -14,21 +14,35 @@ const Notificaciones = {
             document.body.appendChild(toastContainer);
         }
 
-        let bgClass = tipo === 'error' ? 'text-bg-danger' : (tipo === 'success' ? 'text-bg-success' : 'text-bg-primary');
-        let icon = tipo === 'error' ? 'bi-exclamation-octagon' : 'bi-info-circle';
+        // 1. Mapeo de configuración usando Bootstrap Icons (bi) y colores de Bootstrap
+        const config = {
+            'success': { icon: 'bi-check-circle-fill', color: 'success' },
+            'error':   { icon: 'bi-exclamation-octagon-fill', color: 'danger' },
+            'warning': { icon: 'bi-exclamation-triangle-fill', color: 'warning' },
+            'info':    { icon: 'bi-info-circle-fill', color: 'primary' }
+        };
+        // Si mandan un tipo raro, por defecto usamos info
+        const conf = config[tipo] || config['info'];
 
         let toastEl = document.createElement('div');
-        toastEl.className = `toast align-items-center border-0 ${bgClass}`;
+        
+        // 2. Estilo base del Toast: Fondo blanco, sombra suave y borde lateral de color
+        toastEl.className = `toast bg-white border-0 border-start border-4 border-${conf.color} shadow-sm`;
         toastEl.setAttribute('role', 'alert');
         toastEl.setAttribute('aria-live', 'assertive');
         toastEl.setAttribute('aria-atomic', 'true');
 
+        // 3. Estructura interna usando Flexbox para separar icono y texto (¡adiós texto desalineado!)
         toastEl.innerHTML = `
-            <div class="d-flex">
-                <div class="toast-body">
-                    <i class="bi ${icon} me-2"></i> <strong>${titulo}</strong>: ${mensaje}
+            <div class="toast-body d-flex align-items-start p-3">
+                <i class="bi ${conf.icon} text-${conf.color} fs-4 me-3" style="line-height: 1.2;"></i>
+                
+                <div class="flex-grow-1">
+                    <strong class="d-block text-dark mb-1" style="font-size: 1.05rem;">${titulo}</strong>
+                    <span class="text-secondary">${mensaje}</span>
                 </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Cerrar"></button>
+                
+                <button type="button" class="btn-close ms-2 mt-1" data-bs-dismiss="toast" aria-label="Cerrar"></button>
             </div>
         `;
 

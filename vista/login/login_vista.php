@@ -56,7 +56,7 @@
                                                 </div>
                                                 
                                                 <div class="form-floating flex-grow-1">
-                                                    <input type="email" name="usuario" class="form-control mi-input" id="correo_login" placeholder="Correo" required>
+                                                    <input type="email" name="usuario" class="form-control mi-input" id="correo_login" placeholder="Correo" required autofocus>
                                                     <label for="correo_login" class="text-muted">Correo electrónico</label>
                                                 </div>
                                             </div>

@@ -96,6 +96,10 @@ const Tablas = {
 
         let tabla = new Tabulator(contenedorHtml, config);
 
+        if (typeof AtajosTeclado !== 'undefined') {
+            AtajosTeclado.setTablaActual(tabla);
+        }
+
         tabla.on("renderComplete", function() {
             if (typeof Tooltips !== 'undefined') {
                 Tooltips.inicializarTodos(contenedorHtml); 
@@ -259,14 +263,6 @@ const Tablas = {
                 inputBusqueda.focus();
             });
         }
-
-        // Atajo de teclado global
-        document.addEventListener("keydown", function(e) {
-            if (e.key === "/" && e.target.tagName !== "INPUT" && e.target.tagName !== "TEXTAREA") {
-                e.preventDefault();
-                inputBusqueda.focus();
-            }
-        });
     }
 
 };

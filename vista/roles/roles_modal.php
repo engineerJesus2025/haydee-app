@@ -40,7 +40,7 @@ $iconos_modulos = [
                             <label for="nombre">Nombre del rol <spam class="text-danger">*</spam></label>
                             <div class="input-group mb-3">
                                 <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-person-gear"></i></span>
-                                <input type="text" class="border border-dark rounded-end form-control nombre_rol" name="nombre" id="nombre" placeholder="Ejem: Contador" aria-label="nombre" aria-describedby="basic-addon1" minlength="3" maxlength="30">
+                                <input type="text" class="border border-dark rounded-end form-control nombre_rol" name="nombre" id="nombre" placeholder="Ejem: Contador" aria-label="nombre" aria-describedby="basic-addon1" minlength="3" maxlength="30" autofocus>
                                 <span class="w-100 invalid-feedback"></span>
                             </div>
                         </div>
