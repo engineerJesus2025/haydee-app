@@ -9,10 +9,12 @@ use haydee\ayuda\ValidadorBD;
 use haydee\servicios\GestorAuditoria;
 use haydee\servicios\GestorNotificaciones;
 
+Sesiones::validarMetodoHTTP(['GET', 'POST']);
 Sesiones::verificarSesion();
 Sesiones::verificarPermiso(GESTIONAR_MENSUALIDAD, CONSULTAR);
 
 if (isset($_POST["operacion"])) {
+    header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
 
     Sesiones::verificarPermisoAccion(GESTIONAR_MENSUALIDAD, $operacion);
@@ -27,6 +29,8 @@ if (isset($_POST["operacion"])) {
         $validador->validarConjunto($_POST, $reglasCabecera);
 
         if ($validador->tieneErrores()) {
+            $codigoHttp = $validador->tieneError404() ? 404 : 400;
+            http_response_code($codigoHttp);
             echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
             exit;
         }
@@ -119,10 +123,13 @@ if (isset($_POST["operacion"])) {
         switch ($operacion) {
             case 'verificar_meses':
                 $respuesta = $mensualidad->realizar_consulta('verificarMeses');
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 break;
 
             case 'consultarPorMeses':
                 $respuesta = $mensualidad->realizar_consulta('consultarPorMeses');
+
+                http_response_code($respuesta['estatus'] ? 200 : 404);
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria('consultar');
                 }
@@ -130,29 +137,37 @@ if (isset($_POST["operacion"])) {
 
             case 'consultar_mensualidades_apartamentos':
                 $respuesta = $mensualidad->realizar_consulta('consultar_mensualidad_apartamentos');
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 break;
 
             case 'consultar_presupuestos_asociados':
                 $mensualidad->set_ids_mensualidades($_POST['ids_mensualidades'] ?? '');
                 $respuesta = $mensualidad->realizar_consulta('consultar_presupuestos_asociados');
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 break;
 
             case 'consultar_presupuestos_mensualidades':
                 $presupuesto = new Presupuesto();
                 $presupuesto->set_fecha($_POST["fecha"] ?? '');
                 $respuesta = $presupuesto->realizar_consulta('consultar_presupuestos_mensualidades');
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 break;
 
             case 'consultar_meses_mensualidad':
                 $respuesta = $mensualidad->realizar_consulta('consultar_meses_mensualidad');
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 break;
 
             case 'consultar_tasa_dolar':
-                $respuesta = $mensualidad->realizar_consulta('consultar_tasa_dolar_mensualidades');
+                $respuesta = $mensualidad->realizar_consulta('
+                    consultar_tasa_dolar_mensualidades');
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 break;
 
             case 'registrar_mensualidad':
                 $respuesta = $mensualidad->realizar_consulta('registrar');
+
+                http_response_code($respuesta['estatus'] ? 201 : 400);
                 if ($respuesta['estatus']) {
                     $mensualidad->set_datos_apartamentos(null); // Ocultar datos masivos para auditoría
                     $auditor->registrarAuditoria('registrar');
@@ -170,6 +185,8 @@ if (isset($_POST["operacion"])) {
             case 'modificar_mensualidad':
                 $auditor->capturarDatosAnteriores('consultar_cabecera_mensualidad');
                 $respuesta = $mensualidad->realizar_consulta('modificar');
+
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
                     $mensualidad->set_datos_apartamentos(null); 
                     $auditor->registrarAuditoria('modificar');
@@ -179,15 +196,19 @@ if (isset($_POST["operacion"])) {
             case 'eliminar_mensualidad':
                 $auditor->capturarDatosAnteriores('consultar_cabecera_mensualidad');
                 $respuesta = $mensualidad->realizar_consulta('eliminar');
+
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria('eliminar');
                 }
                 break;
 
             default:
+                http_response_code(400);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
     } catch (Exception $e) {
+        http_response_code(500);
         error_log("Error en controlador mensualidad: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
@@ -198,7 +219,6 @@ if (isset($_POST["operacion"])) {
             
             Bitacora::cerrarConexionBitacora();
 
-            header('Content-Type: application/json');
             echo json_encode($respuesta);
             exit;
         }
@@ -211,15 +231,38 @@ if (isset($_POST["operacion"])) {
 if (isset($_POST["validar"])) {
     header('Content-Type: application/json');
     $validar = $_POST["validar"];
-    if ($validar === 'validar_fecha_presupuesto') {
-        $fecha = $_POST['fecha'] ?? '';
-        $presupuesto = new Presupuesto();
-        $presupuesto->set_fecha($fecha);
-        $res = $presupuesto->realizar_consulta('consultar_presupuestos_mensualidades');
-        $existe = $res['estatus'] && !empty($res['datos']);
-        echo json_encode(['estatus' => $existe]);
-        exit;
+    $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
+
+    $validadorBD = new ValidadorBD();
+
+    try {
+        switch ($validar) {
+            case 'validar_fecha_presupuesto':
+                $fecha = $_POST['fecha'] ?? '';
+                $presupuesto = new Presupuesto();
+                $presupuesto->set_fecha($fecha);
+                $res = $presupuesto->realizar_consulta('consultar_presupuestos_mensualidades');
+                $existe = $res['estatus'] && !empty($res['datos']);
+
+                $respuesta = ['estatus' => $existe];
+                break;
+
+            default:
+                http_response_code(400);
+                $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
+        }
+    } catch (Exception $e) {
+        http_response_code(500);
+        error_log("Error en validación AJAX Bancos: " . $e->getMessage());
+        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
     }
+
+    if ($respuesta['estatus'] === true || isset($respuesta['existe'])) {
+        http_response_code(200);
+    }
+
+    echo json_encode($respuesta);
+    exit;
 }
 
 // Cargar vista con datos de apartamentos

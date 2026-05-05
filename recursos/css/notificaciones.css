@@ -5,18 +5,18 @@
     width: 380px;
     max-width: 95vw;
     border-radius: 0.5rem !important;
-    border: none; /* Quitamos el borde sólido */
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important; /* Sombra elegante */
+    border: none;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
     list-style: none;
     padding: 0;
-    margin-top: 10px !important; /* Lo separa un poco de la barra superior */
+    margin-top: 10px !important;
 }
 
 /* Contenedor con scroll estilizado */
 #lista-notificaciones-items {
     max-height: 380px;
     overflow-y: auto;
-    scrollbar-width: thin; /* Firefox */
+    scrollbar-width: thin;
     scrollbar-color: #cbd5e1 transparent;
 }
 #lista-notificaciones-items::-webkit-scrollbar {
@@ -27,12 +27,12 @@
     border-radius: 10px;
 }
 
-/* Cada ítem de la lista */
+/* Cada ítem de la lista (unificado, con variables) */
 .notif-item {
     display: flex;
     align-items: flex-start;
     padding: 0.8rem 1rem;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--ch-notif-border);
     transition: background-color 0.2s ease;
     position: relative;
 }
@@ -42,20 +42,20 @@
 }
 
 .notif-item:hover {
-    background-color: #f8fafc;
+    background-color: var(--ch-notif-hover-bg);
 }
 
-/* INDICADOR: Notificación No Leída */
+/* Indicador de no leída */
 .notif-unread {
-    background-color: #eff6ff; /* Fondo azul muy pálido */
-    border-left: 3px solid #3b82f6; /* Franja azul a la izquierda */
-    padding-left: calc(1rem - 3px); /* Ajuste para que el texto no brinque */
+    background-color: var(--ch-notif-unread-bg);
+    border-left: 3px solid #3b82f6;
+    padding-left: calc(1rem - 3px);
 }
 .notif-unread:hover {
-    background-color: #e0f2fe;
+    background-color: var(--ch-notif-hover-bg);
 }
 
-/* Enlace principal de la notificación */
+/* Enlace principal */
 .notif-link {
     display: flex;
     align-items: flex-start;
@@ -66,7 +66,7 @@
     overflow: hidden;
 }
 
-/* Círculo del Icono */
+/* Círculo del icono */
 .notif-icon-circle {
     flex-shrink: 0;
     width: 40px;
@@ -74,29 +74,28 @@
     border-radius: 50%;
     display: flex;
     align-items: center;
-    justify-content: center;  
-    background-color: #e0e7ff !important; /* Azul tenue */
-    color: #3b82f6 !important; /* Azul vibrante */
+    justify-content: center;
+    background-color: #e0e7ff !important;
+    color: #3b82f6 !important;
     font-size: 1.2rem;
 }
 
 /* Título */
 .notif-title {
     font-weight: 700;
-    color: #1e293b;
+    color: var(--ch-notif-title);
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis; 
+    text-overflow: ellipsis;
     max-width: 100%;
     font-size: 0.9rem;
     margin-bottom: 0.1rem;
 }
 
-/* Descripción (Ajuste a máximo 2 líneas) */
+/* Descripción */
 .notif-description {
     font-size: 0.8rem;
-    color: #64748b;
-    /* Técnica moderna para truncar a 2 líneas si es muy largo */
+    color: var(--ch-notif-desc);
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -105,18 +104,19 @@
     margin-bottom: 0.2rem;
 }
 
-/* Fecha */
-.notif-date {
-    font-size: 0.7rem;
-    color: #94a3b8;
+/* Fecha y botón de cerrar comparten color secundario */
+:is(.notif-date, .notif-remove-btn) {
+    color: var(--ch-notif-desc);
     flex-shrink: 0;
 }
+.notif-date {
+    font-size: 0.7rem;
+}
 
-/* Botón de cerrar "X" */
+/* Botón de cerrar */
 .notif-remove-btn {
     background: transparent;
     border: none;
-    color: #94a3b8;
     padding: 0;
     margin-left: 0.5rem;
     width: 25px;
@@ -126,17 +126,14 @@
     justify-content: center;
     align-items: center;
     transition: all 0.2s ease;
-    opacity: 0; /* Lo ocultamos por defecto para limpiar la vista */
+    opacity: 0;
 }
-
 .notif-item:hover .notif-remove-btn {
-    opacity: 1; /* Aparece mágicamente al pasar el mouse */
+    opacity: 1;
 }
-
 .notif-remove-btn i {
     font-size: 0.8rem;
 }
-
 .notif-remove-btn:hover {
     color: #ef4444;
     background-color: #fee2e2;
@@ -149,23 +146,22 @@
     color: #94a3b8;
 }
 
+/* Footer del dropdown */
 .dropdown-footer {
     background-color: #f8fafc;
     border-bottom-right-radius: 0.5rem;
     border-bottom-left-radius: 0.5rem;
 }
-
 .dropdown-footer a {
     transition: background-color 0.2s ease;
 }
-
 .dropdown-footer a:hover {
-    background-color: #f1f5f9;
+    background-color: var(--ch-notif-hover-bg);
+    border-bottom-right-radius: 0.5rem;
+    border-bottom-left-radius: 0.5rem;
 }
 
-/* =========================================
-   ANIMACIÓN CENTRALIZADA DE RESALTADO 
-   ========================================= */
+/* Animación de resaltado */
 @keyframes pulso-notificacion-azul {
     0% { box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.5); }
     50% { box-shadow: 0 0 0 8px rgba(13, 110, 253, 0); }
@@ -178,12 +174,10 @@
     transition: background-color 0.3s ease;
 }
 
-/* Adaptación para la fila de Tabulator */
 .tabulator-row.resaltar-pulso-azul {
     border-left: 4px solid #3b82f6 !important;
 }
 
-/* Adaptación para Selects */
 select.resaltar-pulso-azul {
     border: 2px solid #3b82f6 !important;
 }

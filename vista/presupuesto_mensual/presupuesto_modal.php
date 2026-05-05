@@ -1,18 +1,21 @@
 <div class="modal fade" id="modal_presupuesto" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
     <div class="modal-dialog modal-xl">
-        <div class="modal-content">
+        <div class="modal-content border-0 shadow-lg">
             <div class="modal-header bg-primary text-white">
-                <h1 class="modal-title fs-5" id="titulo_modal">Registrar presupuesto mensual</h1>
+                <h1 class="modal-title fs-5">
+                    <i class="bi bi-journal-plus" id="icono_titulo_modal"></i>
+                    <span class="ms-2" id="titulo_modal">Registrar Presupuesto Mensual</span>
+                </h1>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body rounded-bottom">
                 <form id="form_presupuesto" name="form_presupuesto">
                     <div class="row m-3">
                         <div class="col-lg-5">
-                            <label for="fecha">Fecha del presupuesto <spam class="text-danger">*</spam></label>
+                            <label for="fecha">Fecha del presupuesto <span class="text-danger">*</span></label>
                             <div class="input-group mb-3">
-                                <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-calendar"></i></span>
-                                <select class="border border-dark rounded-end form-select" aria-label="Default select example" name="fecha" id="fecha" form="form_presupuesto">
+                                <span class="input-group-text" id="basic-addon1"><i class="bi bi-calendar"></i></span>
+                                <select class=" rounded-end form-select" aria-label="Default select example" name="fecha" id="fecha" form="form_presupuesto">
                                     <option selected hidden value="">Seleccione la fecha del presupuesto</option>                    
                                 </select>
                                 <span class="w-100 invalid-feedback"></span>
@@ -21,13 +24,13 @@
                         <div class="col-lg-3">
                             <label for="cuota_reserva">Cuota de Reserva:</label>
                             <div class="input-group mb-3">
-                                <input type="number" name="cuota_reserva" id="cuota_reserva" class="border border-dark form-control" maxlength="15" minlength="0" value="0" title="Monto de la cuota de reserva en bolivares" monto="bs" placeholder="Ingrese un monto">
-                                <span class="border border-primary rounded-end input-group-text icono_moneda" id="spam_icono_moneda_cuota">Bs.</span>
+                                <input type="number" name="cuota_reserva" id="cuota_reserva" class="form-control" maxlength="15" minlength="0" value="0" title="Monto de la cuota de reserva en bolivares" monto="bs" placeholder="Ingrese un monto">
                                 <span class="w-100 invalid-feedback"></span>
+                                <span class="input-group-text icono_moneda" id="spam_icono_moneda_cuota">Bs.</span>
                             </div>
                         </div>
-                        <div class="col-lg-1 col-2 d-flex justify-content-center align-items-center mt-2">
-                            <button class="btn btn-outline-info boton_intercambio_cuota" title="Presione para cambiar el tipo de moneda" tabindex="-1">
+                        <div class="col-lg-1 col-2 d-flex justify-content-center align-items-end mt-2">
+                            <button class="btn btn-soft-info boton_intercambio_cuota" title="Presione para cambiar el tipo de moneda" tabindex="-1">
                                 <span><i class="bi bi-arrow-left-right"></i></span>
                             </button>            
                         </div>
@@ -49,15 +52,21 @@
                         <div class="col-md-12">
                             <label for="observacion">Observación</label>
                             <div class="input-group mb-3">
-                                <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-key"></i></span>
-                                <input type="text" class="border border-dark rounded-end form-control" name="observacion" id="observacion" placeholder="Puede agregar una observación o comentario del presupuesto de este mes" aria-label="observacion" aria-describedby="basic-addon1" minlength="0" maxlength="100">
+                                <span class=" input-group-text" id="basic-addon1"><i class="bi bi-key"></i></span>
+                                <input type="text" class=" rounded-end form-control" name="observacion" id="observacion" placeholder="Puede agregar una observación o comentario del presupuesto de este mes" aria-label="observacion" aria-describedby="basic-addon1" minlength="0" maxlength="100">
                                 <span class="w-100 invalid-feedback"></span>
                             </div>
                         </div>
                     </div>
-                    <div class="row m-3">
-                        <div class="col-md-12 text-center">
-                            <button class="btn btn-primary" type="submit" id="boton_formulario">Guardar</button>
+                    <div class="row mt-5 mb-2">
+                        <div class="col-md-12 text-end"> 
+                            <button type="button" class="btn btn-soft-secondary me-3" data-bs-dismiss="modal">
+                                <i class="bi bi-x-circle me-2"></i> Cancelar
+                            </button>
+                            <button class="btn btn-primary px-3 shadow-sm" type="submit" id="boton_formulario">
+                                <i class="bi bi-check2-circle me-2"></i>
+                                <span id="texto_boton_formulario">Guardar Presupuesto</span>
+                            </button>
                         </div>
                     </div>
                 </form>

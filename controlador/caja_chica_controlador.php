@@ -7,10 +7,12 @@ use haydee\ayuda\ValidadorBD;
 use haydee\servicios\GestorAuditoria;
 use haydee\servicios\GestorNotificaciones;
 
+Sesiones::validarMetodoHTTP(['GET', 'POST']);
 Sesiones::verificarSesion();
 Sesiones::verificarPermiso(GESTIONAR_CAJA_CHICA, CONSULTAR);
 
 if (isset($_POST["operacion"])) {
+    header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
 
     // Mapeamos las operaciones que no contengan las palabras clave estándar
@@ -28,6 +30,8 @@ if (isset($_POST["operacion"])) {
         $validador->validarConjunto($_POST, $reglas);
 
         if ($validador->tieneErrores()) {
+            $codigoHttp = $validador->tieneError404() ? 404 : 400;
+            http_response_code($codigoHttp);
             echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
             exit;
         }
@@ -54,6 +58,8 @@ if (isset($_POST["operacion"])) {
         switch ($operacion) {
             case 'consultar_cajas_chicas':
                 $respuesta = $caja->realizar_consulta('consultar');
+
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria('consultar');
                 }
@@ -64,6 +70,7 @@ if (isset($_POST["operacion"])) {
                 // $auditor->capturarDatosAnteriores('consulta_caja_chica');
 
                 $respuesta = $caja->realizar_consulta('modificar_descripcion');
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 // if ($respuesta['estatus']) { 
                 //     $auditor->registrarAuditoria('modificar'); 
                 // }
@@ -71,6 +78,8 @@ if (isset($_POST["operacion"])) {
 
             case 'verificar_caja_mes':
                 $respuesta = $caja->realizar_consulta('verificar_caja_mes');
+
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
                     Bitacora::registrar(REGISTRAR, GESTIONAR_CAJA_CHICA);
                 }
@@ -78,6 +87,8 @@ if (isset($_POST["operacion"])) {
 
             case 'reponer_caja':
                 $respuesta = $caja->realizar_consulta('reponer_caja');
+
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria('registrar');
                 }
@@ -86,16 +97,18 @@ if (isset($_POST["operacion"])) {
             // === OPERACIONES MOVIMIENTOS ===
             case 'consultar_movimientos_caja':
                 $respuesta = $caja->realizar_consulta('consultar_movimientos');
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 break;
 
             case 'consultar_movimiento':
                 $respuesta = $caja->realizar_consulta('consultar_movimiento_unico');
-                // Se devuelve con estatus/datos (para el formulario de edición)
+                http_response_code($respuesta['estatus'] ? 200 : 404);
                 break;
 
             case 'registrar_movimiento':
                 $respuesta = $caja->realizar_consulta('registrar_movimiento');
 
+                http_response_code($respuesta['estatus'] ? 201 : 400);
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria('registrar');
 
@@ -118,6 +131,8 @@ if (isset($_POST["operacion"])) {
                 $auditor->capturarDatosAnteriores('consultar_movimiento_unico');
 
                 $respuesta = $caja->realizar_consulta('modificar_movimiento');
+
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) { 
                     $auditor->registrarAuditoria('modificar'); 
 
@@ -140,6 +155,8 @@ if (isset($_POST["operacion"])) {
                 $auditor->capturarDatosAnteriores('consultar_movimiento_unico');
 
                 $respuesta = $caja->realizar_consulta('eliminar_movimiento');
+
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) { 
                     $auditor->registrarAuditoria('eliminar'); 
 
@@ -158,9 +175,11 @@ if (isset($_POST["operacion"])) {
                 break;
 
             default:
+                http_response_code(400);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no reconocida'];
         }
     } catch (Exception $e) {
+        http_response_code(500);
         error_log("Error en controlador: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
@@ -171,7 +190,6 @@ if (isset($_POST["operacion"])) {
             }
             Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexión de seguridad
 
-            header('Content-Type: application/json');
             echo json_encode($respuesta);
             exit;
         }
@@ -182,18 +200,41 @@ if (isset($_POST["operacion"])) {
 if (isset($_POST["validar"])) {
     header('Content-Type: application/json');
     $validar = $_POST["validar"];
+    $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
 
-    if ($validar == "validar_clave_foranea") {
-        if (isset($_POST['tabla'], $_POST['nombre_clave'], $_POST['valor'])) {
-            $validadorBD = new ValidadorBD();
-            $existe = $validadorBD->existe($_POST['tabla'], $_POST['nombre_clave'], $_POST['valor']);
-            echo json_encode(['estatus' => $existe, 'mensaje' => 'OK']);
-        } else {
-            echo json_encode(['estatus' => false, 'mensaje' => 'Faltan parámetros']);
+    $validadorBD = new ValidadorBD();
+
+    try {
+        switch ($validar) {
+            case 'validar_clave_foranea':
+                $tabla = $_POST['tabla'] ?? '';
+                $campo = $_POST['nombre_clave'] ?? '';
+                $valor = $_POST['valor'] ?? '';
+
+                if (empty($tabla) || empty($campo) || empty($valor)) {
+                    $respuesta = ['estatus' => false, 'mensaje' => 'Faltan parámetros de validación'];
+                    break;
+                }
+
+                $existe = $validadorBD->existe($tabla, $campo, $valor);
+                $respuesta = ['estatus' => $existe, 'mensaje' => $existe ? 'OK' : 'No existe'];
+                break;
+
+            default:
+                http_response_code(400);
+                $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
         }
-    } else {
-        echo json_encode(['estatus' => false, 'mensaje' => 'Validación AJAX no reconocida']);
+    } catch (Exception $e) {
+        http_response_code(500);
+        error_log("Error en validación AJAX Bancos: " . $e->getMessage());
+        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
     }
+
+    if ($respuesta['estatus'] === true || isset($respuesta['existe'])) {
+        http_response_code(200);
+    }
+
+    echo json_encode($respuesta);
     exit;
 }
 

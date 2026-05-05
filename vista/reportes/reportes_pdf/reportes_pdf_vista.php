@@ -6,6 +6,7 @@
     <?php
     require_once ROOT_PATH . "/vista/componentes/estilos.php";
     ?>
+    <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/reportes.css">
 </head>
 
 <body id="body-pd" class="body-pd">
@@ -28,62 +29,63 @@
                     </div>
                     <p class="lead"></p>
                     <hr>
-                    <div class="row">
+                    <div class="row g-4">
                         <div class="col-lg-3 col-md-6">
-                            <div class="card mb-3 shadow" title="Click para ver opciones para constacias de residencias">
+                            <div class="card tarjeta-reporte h-100 shadow-sm" title="Click para ver opciones para constancias de residencia">
                                 <button data-bs-toggle="modal" data-bs-target="#modal_reporte_persona" type="button"
-                                    class="btn text-decoration-none text-black" id="boton_residencia" disabled>
-                                    <div class="card-header text-center bg-white border-bottom-0 ">
-                                        <div class="spinner-grow text-dark" role="status" style="width: 5rem; height: 5rem; z-index: 1000">
+                                    class="btn text-decoration-none text-reset w-100 h-100 p-4" id="boton_residencia" disabled>
+                                    <div class="text-center mb-3">
+                                        <div class="spinner-grow text-primary" role="status" style="width: 4rem; height: 4rem;">
                                             <span class="visually-hidden">Loading...</span>
                                         </div>
                                     </div>
-                                    <div class="card-body text-center p-0 mb-3">
-                                        <p class="card-title fw-bold">Constancias de Residencia</p>
+                                    <div class="text-center p-0">
+                                        <p class="card-title fw-bold mb-0">Constancias de Residencia</p>
                                     </div>
                                 </button>
                             </div>
                         </div>
                         <div class="col-lg-3 col-md-6">
-                            <div class="card mb-3 shadow" title="Click para ver opciones para solicitudes de solvencia">
+                            <div class="card tarjeta-reporte h-100 shadow-sm" title="Click para ver opciones para solicitudes de solvencia">
                                 <button data-bs-toggle="modal" data-bs-target="#modal_reporte_persona" type="button"
-                                    class="btn text-decoration-none text-black" id="boton_solvencia" disabled>
-                                    <div class="card-header text-center bg-white border-bottom-0">
-                                        <div class="spinner-grow text-dark" role="status" style="width: 5rem; height: 5rem; z-index: 1000">
+                                    class="btn text-decoration-none text-reset w-100 h-100 p-4" id="boton_solvencia" disabled>
+                                    <div class="text-center mb-3">
+                                        <div class="spinner-grow text-primary" role="status" style="width: 4rem; height: 4rem;">
                                             <span class="visually-hidden">Loading...</span>
                                         </div>
                                     </div>
-                                    <div class="card-body text-center p-0 mb-3">
-                                        <p class="card-title fw-bold">Solicitud de Solvencia</p>
+                                    <div class="text-center p-0">
+                                        <p class="card-title fw-bold mb-0">Solicitud de Solvencia</p>
                                     </div>
                                 </button>
                             </div>
                         </div>
                         <div class="col-lg-3 col-md-6">
-                            <div class="card mb-3 shadow" title="Click para ver opciones para el cuadro de pagos">
-                                <button data-bs-toggle="modal" data-bs-target="#modal_reporte_persona" type="button" class="btn text-decoration-none text-black" id="boton_cuadro_pagos" disabled>
-                                    <div class="card-header text-center bg-white border-bottom-0">
-                                        <div class="spinner-grow text-dark" role="status" style="width: 5rem; height: 5rem; z-index: 1000">
+                            <div class="card tarjeta-reporte h-100 shadow-sm" title="Click para ver opciones para el cuadro de pagos">
+                                <button data-bs-toggle="modal" data-bs-target="#modal_reporte_persona" type="button" 
+                                    class="btn text-decoration-none text-reset w-100 h-100 p-4" id="boton_cuadro_pagos" disabled>
+                                    <div class="text-center mb-3">
+                                        <div class="spinner-grow text-primary" role="status" style="width: 4rem; height: 4rem;">
                                             <span class="visually-hidden">Loading...</span>
                                         </div>                                        
                                     </div>
-                                    <div class="card-body text-center p-0 mb-3">
-                                        <p class="card-title fw-bold">Cuadro de Pagos</p>
+                                    <div class="text-center p-0">
+                                        <p class="card-title fw-bold mb-0">Cuadro de Pagos</p>
                                     </div>
                                 </button>
                             </div>
                         </div>
                         <div class="col-lg-3 col-md-6">
-                            <div class="card mb-3 shadow" title="Click para ver opciones para el cuadro de gastos">
-                                <button type="button" class="btn text-decoration-none text-black" data-bs-toggle="modal"
+                            <div class="card tarjeta-reporte h-100 shadow-sm" title="Click para ver opciones para el cuadro de gastos">
+                                <button type="button" class="btn text-decoration-none text-reset w-100 h-100 p-4" data-bs-toggle="modal"
                                     data-bs-target="#modalGastosMensual" id="boton_cuadro_gastos" disabled>
-                                    <div class="card-header text-center bg-white border-bottom-0">
-                                        <div class="spinner-grow text-dark" role="status" style="width: 5rem; height: 5rem; z-index: 1000">
+                                    <div class="text-center mb-3">
+                                        <div class="spinner-grow text-primary" role="status" style="width: 4rem; height: 4rem;">
                                             <span class="visually-hidden">Loading...</span>
                                         </div>  
                                     </div>
-                                    <div class="card-body text-center p-0 mb-3">
-                                        <p class="card-title fw-bold">Relación de Gastos</p>
+                                    <div class="text-center p-0">
+                                        <p class="card-title fw-bold mb-0">Relación de Gastos</p>
                                     </div>
                                 </button>
                             </div>

@@ -593,7 +593,6 @@ return array(
     'PHPUnit\\Metadata\\Exception' => $vendorDir . '/phpunit/phpunit/src/Metadata/Exception/Exception.php',
     'PHPUnit\\Metadata\\ExcludeGlobalVariableFromBackup' => $vendorDir . '/phpunit/phpunit/src/Metadata/ExcludeGlobalVariableFromBackup.php',
     'PHPUnit\\Metadata\\ExcludeStaticPropertyFromBackup' => $vendorDir . '/phpunit/phpunit/src/Metadata/ExcludeStaticPropertyFromBackup.php',
-    'PHPUnit\\Metadata\\Group' => $vendorDir . '/phpunit/phpunit/src/Metadata/Group.php',
     'PHPUnit\\Metadata\\IgnoreDeprecations' => $vendorDir . '/phpunit/phpunit/src/Metadata/IgnoreDeprecations.php',
     'PHPUnit\\Metadata\\IgnorePhpunitDeprecations' => $vendorDir . '/phpunit/phpunit/src/Metadata/IgnorePhpunitDeprecations.php',
     'PHPUnit\\Metadata\\InvalidAttributeException' => $vendorDir . '/phpunit/phpunit/src/Metadata/Exception/InvalidAttributeException.php',

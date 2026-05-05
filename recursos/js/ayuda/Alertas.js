@@ -25,5 +25,31 @@ const Alertas = {
             confirmButtonText: 'Aceptar',
             confirmButtonColor: "#e01d22",
         });
+    },
+
+    /**
+     * Muestra una alerta bloqueante y ejecuta una acción al confirmarla.
+     * Ideal para redirecciones forzadas (como sesión expirada).
+     */
+    mostrarConAccion(tipo, titulo, mensaje, textoBoton, funcionAccion) {
+        if (typeof Swal === 'undefined') {
+            alert(`${titulo}: ${mensaje}`);
+            if (typeof funcionAccion === 'function') funcionAccion();
+            return;
+        }
+
+        Swal.fire({
+            icon: tipo,
+            title: titulo,
+            text: mensaje,
+            allowOutsideClick: false,   // No permite cerrar haciendo clic afuera
+            allowEscapeKey: false,      // No permite cerrar con la tecla Esc
+            confirmButtonText: textoBoton,
+            confirmButtonColor: "#e01d22"
+        }).then((result) => {
+            if (result.isConfirmed && typeof funcionAccion === 'function') {
+                funcionAccion();
+            }
+        });
     }
 };

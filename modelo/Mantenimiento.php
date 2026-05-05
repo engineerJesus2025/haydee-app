@@ -148,24 +148,54 @@ class Mantenimiento extends Conexion
         }
     }
 
-    public function importarSQL($sql, $db = 'negocio')
+    /**
+     * Importa un contenido SQL directamente a la base de datos especificada.
+     * @param string $contenido_sql El texto del archivo .sql
+     * @param string $db 'negocio' o 'seguridad'
+     * @return array Respuesta con estatus y mensaje
+     */
+    public function importarSQL($contenido_sql, $db)
     {
-        // Guardar SQL temporalmente en un archivo
-        $tmpFile = tempnam(sys_get_temp_dir(), 'sql_import_');
-        file_put_contents($tmpFile, $sql);
-
-        $dbname = ($db === 'negocio') ? DB_NAME : DB_SECURITY;
+        $nombre_db = ($db === 'negocio') ? DB_NAME : DB_SECURITY;
         $mysql_path = $this->getMysqlPath();
-
-        $comando = $mysql_path . " --host=" . DB_HOST . " --user=" . DB_USER . " --password=" . DB_PASS . " " . $dbname . " < " . escapeshellarg($tmpFile) . " 2>&1";
         
-        system($comando, $resultado);
-        unlink($tmpFile); // Limpiar archivo temporal
+        // Creamos un archivo temporal para el contenido SQL
+        $temp_file = tempnam(sys_get_temp_dir(), 'restore_');
+        file_put_contents($temp_file, $contenido_sql);
 
-        if ($resultado === 0) {
-            return ['estatus' => true, 'mensaje' => 'Importación exitosa'];
+        // Limpiamos DEFINERs para evitar errores de permisos
+        $this->removeDefinerFromSql($temp_file);
+
+        // Construcción del comando (usando credenciales de tus constantes)
+        // -f obliga a continuar incluso si hay errores menores
+        $comando = sprintf(
+            "%s --host=%s --user=%s --password=%s %s < %s 2>&1",
+            $mysql_path,
+            DB_HOST,
+            DB_USER,
+            DB_PASS,
+            escapeshellarg($nombre_db),
+            escapeshellarg($temp_file)
+        );
+
+        exec($comando, $output, $return_var);
+        
+        // Borramos el archivo temporal
+        if (file_exists($temp_file)) {
+            unlink($temp_file);
+        }
+
+        if ($return_var === 0) {
+            return [
+                'estatus' => true, 
+                'mensaje' => "Base de datos " . strtoupper($db) . " restaurada con éxito."
+            ];
         } else {
-            return ['estatus' => false, 'mensaje' => 'Error al ejecutar el comando mysql'];
+            error_log("Error restaurando SQL: " . implode("\n", $output));
+            return [
+                'estatus' => false, 
+                'mensaje' => "Error al procesar el archivo SQL. Verifique el formato."
+            ];
         }
     }
 

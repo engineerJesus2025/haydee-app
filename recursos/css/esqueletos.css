@@ -1,12 +1,11 @@
-/* ========================================================================== */
-/* ======================== ESQUELETOS DE CARGA ============================= */
-/* ========================================================================== */
-
+/* ========================================================================= */
+/* ESQUELETOS DE CARGA                                                       */
+/* ========================================================================= */
 .skeleton {
-    background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+    background: linear-gradient(90deg, var(--ch-skeleton-base) 25%, var(--ch-skeleton-shine) 50%, var(--ch-skeleton-base) 75%);
     background-size: 200% 100%;
-    animation: skeleton-loading 1.5s infinite;
-    border-radius: 4px;
+    animation: skeleton-loading 1.5s infinite ease-in-out;
+    border-radius: 8px;
     cursor: progress;
 }
 
@@ -15,16 +14,14 @@
     100% { background-position: -200% 0; }
 }
 
-.skeleton-text {
+/* Variantes */
+:is(.skeleton-text, .skeleton-text.short) {
     height: 14px;
     width: 100%;
     margin-bottom: 8px;
     border-radius: 4px;
 }
-
-.skeleton-text.short {
-    width: 60%;
-}
+.skeleton-text.short { width: 60%; }
 
 .skeleton-avatar {
     width: 36px;
@@ -39,22 +36,15 @@
     border-radius: 10px;
 }
 
-/* ========================================================================== */
-/* ===================== ANIMACIÓN DE ENTRADA (FADE IN) ===================== */
-/* ========================================================================== */
-
+/* ========================================================================= */
+/* ANIMACIÓN DE ENTRADA                                                      */
+/* ========================================================================= */
 .animacion-aparecer {
     animation: aparecerSuave 0.5s ease-out forwards;
-    opacity: 0; /* Comienza invisible */
+    opacity: 0;
 }
 
 @keyframes aparecerSuave {
-    0% {
-        opacity: 0;
-        transform: translateY(15px); /* Empieza un poco más abajo */
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0); /* Sube a su posición original */
-    }
+    0% { opacity: 0; transform: translateY(15px); }
+    100% { opacity: 1; transform: translateY(0); }
 }

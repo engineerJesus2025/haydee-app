@@ -1,0 +1,160 @@
+/* Estilos Adaptativos para Ayuda */
+.hero-section {
+    background: linear-gradient(135deg, var(--bs-primary) 0%, rgba(var(--bs-primary-rgb), 0.7) 100%);
+    color: #ffffff;
+    padding: 4rem 1rem;
+    border-radius: 0 0 30px 30px;
+    margin-bottom: 3rem;
+    text-align: center;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.search-container {
+    max-width: 700px;
+    margin: 0 auto;
+    position: relative;
+}
+
+.search-icon {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--bs-primary);
+    font-size: 1.2rem;
+    z-index: 5;
+}
+
+#buscador {
+    padding-left: 50px;
+    height: 60px;
+    border-radius: 30px;
+    font-size: 1.1rem;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1) !important;
+    background-color: #fff;
+    color: #222;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+#buscador::placeholder {
+    color: #222a;
+}
+
+#buscador:focus {
+    border-color: var(--bs-primary);
+    box-shadow: 0 8px 20px rgba(var(--bs-primary-rgb), 0.2) !important;
+}
+
+.section-title {
+    border-left: 5px solid var(--bs-primary);
+    padding-left: 15px;
+    margin-bottom: 25px;
+    color: var(--ch-color-titulos);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+}
+
+/* Tarjeta de descarga */
+.download-card {
+    background-color: var(--ch-card-bg);
+    border: 1px solid var(--ch-table-border);
+    border-left: 5px solid var(--ch-badge-danger-border);
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.download-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+
+/* Acordeones (FAQ y Manuales) */
+:is(.faq-item, .manual-card) {
+    background-color: var(--ch-card-bg) !important;
+    border: 1px solid var(--ch-table-border) !important;
+    border-radius: 12px !important;
+    margin-bottom: 15px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.manual-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.05);
+}
+
+/* Botones del acordeón */
+:is(.faq-button, .manual-header button) {
+    background-color: var(--ch-card-bg) !important;
+    color: var(--bs-body-color) !important;
+    font-weight: 600;
+    padding: 1.2rem;
+    box-shadow: none !important;
+}
+
+/* Estado abierto */
+:is(.faq-button:not(.collapsed), .manual-header button:not(.collapsed)) {
+    background-color: var(--ch-badge-primary-bg) !important;
+    color: var(--bs-primary) !important;
+    border-bottom: 1px solid var(--ch-table-border);
+}
+
+/* Quitar borde feo de Bootstrap al hacer clic */
+.accordion-button:focus {
+    border-color: transparent !important;
+    box-shadow: none !important;
+}
+
+/* Cuerpos del acordeón */
+:is(.manual-body, .accordion-body) {
+    background-color: transparent;
+    line-height: 1.6;
+    color: var(--text-muted-color);
+}
+
+.manual-body ul {
+    padding-left: 20px;
+    margin-top: 10px;
+}
+
+/* Colapsos transparentes (evita fondo blanco en submenús) */
+.collapse.show,
+.collapsing {
+    background-color: transparent !important;
+}
+
+.contact-box {
+    background-color: var(--ch-input-bg);
+    border: 2px dashed var(--ch-table-border);
+    border-radius: 15px;
+    padding: 30px;
+    text-align: center;
+    margin-top: 50px;
+}
+
+/* Mensaje "No hay resultados" */
+.hero-section .alert {
+    background-color: rgba(255, 193, 7, 0.15) !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: #fff3cd !important;
+    border: 1px solid rgba(255, 193, 7, 0.4) !important;
+    border-radius: 20px !important;
+    margin-top: 1.5rem;
+    font-weight: 500;
+    padding: 1rem;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1) !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    animation: fadeIn 0.4s ease-in-out;
+}
+
+.hero-section .alert i {
+    color: #ffc107 !important;
+    font-size: 1.2rem;
+    margin-right: 0.5rem;
+}

@@ -3,11 +3,13 @@ use haydee\servicios\Sesiones;
 use haydee\modelo\Bitacora;
 
 // Verificaciones de seguridad
+Sesiones::validarMetodoHTTP(['GET', 'POST']);
 Sesiones::verificarSesion();
 Sesiones::verificarPermiso(GESTIONAR_SEGURIDAD, CONSULTAR);
 
 // Validamos si es una petición AJAX (POST)
 if (isset($_POST["operacion"])) {
+    header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
     
     // Respuesta por defecto
@@ -20,13 +22,16 @@ if (isset($_POST["operacion"])) {
         switch ($operacion) {
             case 'consulta':
                 $respuesta = $bitacora->realizar_consulta('consultar');
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 break;
 
             default:
-                $respuesta['mensaje'] = 'Operación no implementada';
+                http_response_code(400);
+                $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
                 break;
         }
     } catch (Exception $e) {
+        http_response_code(500);
         error_log("Error en controlador Bitacora: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
@@ -36,7 +41,6 @@ if (isset($_POST["operacion"])) {
                 $bitacora->cerrar();
             }
 
-            header('Content-Type: application/json');
             echo json_encode($respuesta);
             exit;
         }

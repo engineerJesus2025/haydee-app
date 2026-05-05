@@ -22,14 +22,14 @@
                 ?>
                 <main class="col ps-md-2 pt-2 mb-5">
                     <div class="page-header pt-3">
-                        <h2>GESTIONAR APARTAMENTOS Y HABITANTES</h2>
+                        <h2 id="titulo_pagina">GESTIONAR APARTAMENTOS Y HABITANTES</h2>
                     </div>
                     <p class="lead"></p>
                     <hr>
 
                     <div class="row mb-3">
                         <div class="col-12">
-                            <div class="card p-4">
+                            <div class="card p-4 shadow-lg">
                                 <div class="row">
                                     <div class="col-12 col-sm-6 mb-4">
                                     <?php if ($permisosVista['apartamentos']['registrar']) : ?>
@@ -66,13 +66,13 @@
     <!-- Modales -->
     <div class="modal fade" id="modal_vista_previa" tabindex="-1" aria-labelledby="modal_vista_previa_label" aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable modal-xl">
-            <div class="modal-content">
+            <div class="modal-content border-0 shadow-lg">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title">Habitantes en el Apartamento</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                         aria-label="Cerrar"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body rounded-bottom ">
                     <!-- INFO DEL APARTAMENTO ACTUAL -->
                     <div id="info_apartamento_actual" class="card mb-4 shadow border-0 overflow-hidden">
                         <div class="row g-0">
@@ -84,21 +84,21 @@
                                 </span>
                             </div>
                             
-                            <div class="col-md-7 p-4 bg-white d-flex justify-content-around align-items-center flex-wrap gap-3">
+                            <div class="col-md-7 p-4 card-item d-flex justify-content-around align-items-center flex-wrap gap-3">
                                 <div class="text-center">
-                                    <i class="bi bi-fuel-pump fs-2 text-secondary mb-1"></i>
+                                    <i class="bi bi-fuel-pump fs-2 text-muted mb-1"></i>
                                     <span class="d-block text-muted small fw-bold mb-2">GAS</span>
                                     <div id="apt_gas"></div>
                                 </div>
                                 
                                 <div class="text-center">
-                                    <i class="bi bi-droplet fs-2 text-secondary mb-1"></i>
+                                    <i class="bi bi-droplet fs-2 text-muted mb-1"></i>
                                     <span class="d-block text-muted small fw-bold mb-2">AGUA</span>
                                     <div id="apt_agua"></div>
                                 </div>
                                 
                                 <div class="text-center">
-                                    <i class="bi bi-house fs-2 text-secondary mb-1"></i>
+                                    <i class="bi bi-house fs-2 text-muted mb-1"></i>
                                     <span class="d-block text-muted small fw-bold mb-2">ESTADO</span>
                                     <div id="apt_alquilado"></div>
                                 </div>
@@ -114,10 +114,12 @@
                             </button>
                         </div><br>
                     <?php endif; ?>
-                    <div id="tabla_habitantes" class="tabla-sistema-haydee"></div>
+                    <div id="tabla_habitantes" class="tabla-vista-previa"></div>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-soft-secondary me-3" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-2"></i> Cerrar
+                    </button>
                 </div>
             </div>
         </div>
@@ -125,12 +127,12 @@
     <div class="modal fade" id="modal_vista_previa_habitantes" tabindex="-1" aria-labelledby="modal_vista_previa_label"
         aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content">
+            <div class="modal-content border-0 shadow-lg">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title">Detalles del Habitante y su Apartamento</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body rounded-bottom ">
                     <h6>Datos del Habitante</h6>
                     <p><strong>Nombre:</strong> <span id="vista_nombre"></span></p>
                     <p><strong>Apellido:</strong> <span id="vista_apellido"></span></p>
@@ -150,21 +152,21 @@
                                 </span>
                             </div>
                             
-                            <div class="col-md-7 p-4 bg-white d-flex justify-content-around align-items-center flex-wrap gap-3">
+                            <div class="col-md-7 p-4 card-item d-flex justify-content-around align-items-center flex-wrap gap-3">
                                 <div class="text-center">
-                                    <i class="bi bi-fuel-pump fs-2 text-secondary mb-1"></i>
+                                    <i class="bi bi-fuel-pump fs-2 text-muted mb-1"></i>
                                     <span class="d-block text-muted small fw-bold mb-2">GAS</span>
                                     <div id="vista_apartamento_gas"></div>
                                 </div>
                                 
                                 <div class="text-center">
-                                    <i class="bi bi-droplet fs-2 text-secondary mb-1"></i>
+                                    <i class="bi bi-droplet fs-2 text-muted mb-1"></i>
                                     <span class="d-block text-muted small fw-bold mb-2">AGUA</span>
                                     <div id="vista_apartamento_agua"></div>
                                 </div>
                                 
                                 <div class="text-center">
-                                    <i class="bi bi-house fs-2 text-secondary mb-1"></i>
+                                    <i class="bi bi-house fs-2 text-muted mb-1"></i>
                                     <span class="d-block text-muted small fw-bold mb-2">ESTADO</span>
                                     <div id="vista_apartamento_alquilado"></div>
                                 </div>
@@ -175,7 +177,9 @@
 
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button class="btn btn-soft-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-2"></i> Cerrar
+                    </button>
                 </div>
             </div>
         </div>

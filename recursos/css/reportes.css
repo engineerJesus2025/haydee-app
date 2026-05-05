@@ -1,0 +1,103 @@
+/* =========================================================
+   TARJETAS DE MÓDULOS Y REPORTES (DISEÑO UNIVERSAL)
+   ========================================================= */
+.tarjeta-reporte {
+    background-color: var(--ch-card-bg);
+    border: 1px solid var(--ch-table-border);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    overflow: hidden;
+    cursor: pointer;
+}
+
+/* Hover cuando hay botones activos O enlaces internos */
+.tarjeta-reporte:is(:has(button:not(:disabled)), :has(a)):hover {
+    transform: translateY(-5px);
+    background-color: var(--ch-header-hover) !important;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+    border-color: var(--ch-badge-primary-border) !important;
+}
+
+/* Limpiar fondos de botones en hover */
+.tarjeta-reporte:has(button:not(:disabled)):hover button.btn {
+    background-color: transparent !important;
+}
+
+/* Limpiar estilos de enlaces internos */
+.tarjeta-reporte a {
+    color: inherit !important;
+    text-decoration: none !important;
+}
+
+/* Estado deshabilitado */
+.tarjeta-reporte:has(button:disabled) {
+    opacity: 0.6;
+    cursor: not-allowed;
+    filter: grayscale(0.2);
+}
+.tarjeta-reporte:has(button:disabled) button {
+    cursor: not-allowed;
+}
+
+/* =========================================================
+   TARJETAS DE RESUMEN ESTADÍSTICO (MODAL INGRESOS/EGRESOS)
+   ========================================================= */
+.card-estadistica {
+    background-color: var(--ch-table-row-bg) !important;
+    border: 1px solid var(--ch-table-border) !important;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.card-estadistica .card-header,
+.card-estadistica .card-footer {
+    background-color: var(--ch-header-hover) !important;
+    border-color: var(--ch-table-border) !important;
+}
+
+.card-estadistica .list-group-item {
+    background-color: transparent !important;
+    border-color: var(--ch-table-border) !important;
+    color: var(--bs-body-color) !important;
+    transition: background-color 0.2s ease;
+}
+
+/* Hover modo claro */
+.card-estadistica .list-group-item:hover {
+    background-color: var(--ch-header-hover) !important;
+}
+
+/* Hover modo oscuro */
+[data-bs-theme="dark"] .card-estadistica .list-group-item:hover {
+    background-color: var(--ch-input-bg) !important;
+}
+
+/* =========================================================
+   FUSIÓN DE ÍCONOS UNIVERSAL (MODALES Y TARJETAS)
+   ========================================================= */
+/* Agrupamos con :is() para evitar repetición */
+:is(.modal-body, .tarjeta-modulo) .input-group-text {
+    border-color: var(--ch-input-border);
+    background-color: var(--ch-input-bg);
+    color: var(--bs-primary);
+    border-right: none;
+    transition: all 0.2s ease-in-out;
+}
+
+:is(.modal-body, .tarjeta-modulo) :is(.form-control, .form-select) {
+    border-color: var(--ch-input-border);
+    background-color: var(--ch-input-bg) !important;
+    color: var(--bs-body-color);
+    border-left: none;
+    box-shadow: none !important;
+}
+
+/* Sombra al foco del grupo completo */
+:is(.modal-body, .tarjeta-modulo) .input-group:focus-within {
+    box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.15);
+    border-radius: var(--bs-border-radius);
+}
+
+/* Borde azul al foco en todos los elementos del grupo */
+:is(.modal-body, .tarjeta-modulo) .input-group:focus-within :is(.input-group-text, .form-control, .form-select) {
+    border-color: var(--bs-primary);
+}

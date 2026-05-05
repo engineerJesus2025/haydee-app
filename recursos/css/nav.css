@@ -4,10 +4,10 @@
 :root {
     --header-height: 60px;
     --nav-width: 68px;
-    --nav-width-expanded: 250px; 
-    --sidebar-bg: #0e121b;       
-    --sidebar-text: #9ca3af;     
-    --active-bg: #2563eb;        
+    --nav-width-expanded: 250px;
+    --sidebar-bg: #0e121b;
+    --sidebar-text: #9ca3af;
+    --active-bg: #2563eb;
     --active-text: #ffffff;
 }
 
@@ -18,28 +18,28 @@
     position: fixed;
     top: 0;
     left: 0;
-    width: var(--nav-width-expanded); 
+    width: var(--nav-width-expanded);
     height: 100vh;
     background-color: var(--sidebar-bg) !important;
-    z-index: 1050; 
+    z-index: 1050;
     transition: .5s;
-    overflow: hidden; 
+    overflow: hidden;
 }
 
 #header {
     position: fixed;
     top: 0;
-    left: var(--nav-width-expanded) !important; 
-    width: calc(100% - var(--nav-width-expanded)) !important; 
+    left: var(--nav-width-expanded) !important;
+    width: calc(100% - var(--nav-width-expanded)) !important;
     height: var(--header-height);
-    background-color: #ffffff;
+    background-color: var(--ch-header-bg);
     z-index: 1040;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--ch-header-border);
     transition: .5s;
-    padding-left: 1rem !important; 
+    padding-left: 1rem !important;
     padding-right: 1.5rem;
 }
 
@@ -49,14 +49,14 @@
 }
 
 .nav_scrollable_content {
-    height: calc(100vh - 120px); 
-    overflow-y: scroll; 
+    height: calc(100vh - 120px);
+    overflow-y: scroll;
     overflow-x: hidden;
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none;  /* IE/Edge */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
 .nav_scrollable_content::-webkit-scrollbar {
-    display: none; /* Chrome/Safari */
+    display: none;
 }
 
 /* ==========================================
@@ -76,7 +76,7 @@
     display: flex;
     align-items: center;
     transition: .5s;
-    padding: .5rem
+    padding: .5rem;
 }
 
 .logo_box {
@@ -84,30 +84,26 @@
     margin: 0 auto;
 }
 
-.nav_logo_container:hover{
+.nav_logo_container:hover {
     background-color: rgba(37, 99, 235, 0.2);
     border-radius: 12px;
 }
 
-.nav_logo_container:hover .logo_text .text-secondary{
+.nav_logo_container:hover .logo_text .text-secondary {
     color: #ddd !important;
 }
 
-/* --- ANIMACIONES PARA EL LOGO --- */
-/* Animación del icono (edificio) */
+/* Animaciones del logo */
 .nav_logo i {
     transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
 }
-
 .nav_logo:hover i {
     transform: scale(1.2);
 }
 
-/* Animación del texto (CondoHaydee) */
 .logo_text {
     transition: transform 0.3s ease;
 }
-
 .l-navbar.show .nav_logo:hover .logo_text {
     transform: translateX(3px);
 }
@@ -119,7 +115,7 @@
     display: flex;
     align-items: center;
     column-gap: 1rem;
-    padding: 0.8rem 1rem; 
+    padding: 0.8rem 1rem;
     color: var(--sidebar-text);
     text-decoration: none;
     margin-bottom: 0.5rem;
@@ -147,7 +143,6 @@
     align-items: center;
     transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
 }
-
 .nav_link:hover i {
     transform: scale(1.2);
 }
@@ -155,28 +150,25 @@
 /* Textos */
 .nav_name {
     white-space: nowrap;
-    text-overflow: ellipsis;  
-    flex-grow: 1;             
+    text-overflow: ellipsis;
+    flex-grow: 1;
     transition: transform 0.3s ease;
 }
-
 .l-navbar.show .nav_link:hover .nav_name {
     transform: translateX(4px);
 }
 
 /* Flechas de submenú */
 .arrow-icon {
-    flex-shrink: 0;           
+    flex-shrink: 0;
     font-size: 0.8rem;
     transition: transform 0.3s;
     display: flex;
     align-items: center;
 }
-
 .nav_link:hover .arrow-icon {
     transform: scale(1) !important;
 }
-
 .nav_link:not(.collapsed) .arrow-icon {
     transform: rotate(90deg) scale(1) !important;
 }
@@ -184,7 +176,8 @@
 /* ==========================================
    5. SUBMENÚS (EXPANDIDOS)
    ========================================== */
-.collapse.show, .collapsing {
+.collapse.show,
+.collapsing {
     background-color: #ffffff !important;
     border-radius: 12px;
     margin: 0 10px 0.5rem 10px;
@@ -199,7 +192,7 @@
     justify-content: flex-start !important;
 }
 
-.collapse .nav_link.active{
+.collapse .nav_link.active {
     color: var(--active-text) !important;
 }
 
@@ -208,6 +201,11 @@
    ========================================== */
 .l-navbar:not(.show) {
     width: var(--nav-width);
+}
+
+/* Ocultar textos y flechas en colapso */
+.l-navbar:not(.show) :is(.logo_text, .nav_name, .nav_logo-name, .text-secondary, .arrow-icon) {
+    display: none !important;
 }
 
 .l-navbar:not(.show) .nav_logo_container {
@@ -224,14 +222,6 @@
 .l-navbar:not(.show) .logo_box {
     width: 45px !important;
     height: 45px !important;
-}
-
-.l-navbar:not(.show) .logo_text,
-.l-navbar:not(.show) .nav_name, 
-.l-navbar:not(.show) .nav_logo-name,
-.l-navbar:not(.show) .text-secondary,
-.l-navbar:not(.show) .arrow-icon {
-    display: none !important;
 }
 
 .l-navbar:not(.show) .nav_list {
@@ -254,40 +244,38 @@
 .l-navbar:not(.show) .nav_link i {
     margin: 0 !important;
     min-width: auto;
-    font-size: 1.4rem; 
+    font-size: 1.4rem;
 }
 
-/* Submenús en estado colapsado */
-.l-navbar:not(.show) .collapse.show, 
-.l-navbar:not(.show) .collapsing {
-    width: 48px; 
-    background-color: rgba(255, 255, 255, 0.05) !important; 
+/* Submenús colapsados */
+.l-navbar:not(.show) :is(.collapse.show, .collapsing) {
+    width: 48px;
+    background-color: rgba(255, 255, 255, 0.05) !important;
     border-radius: 12px;
     margin: 0 auto 0.5rem auto !important;
     padding: 5px 0;
     display: flex;
     flex-direction: column;
-    align-items: center; 
+    align-items: center;
 }
 
 .l-navbar:not(.show) .collapse .nav_link {
     width: 40px;
     height: 40px;
-    margin: 2px 0 !important; 
+    margin: 2px 0 !important;
     padding: 0 !important;
     justify-content: center !important;
     border-radius: 10px;
-    color: var(--sidebar-text) !important; 
+    color: var(--sidebar-text) !important;
 }
 
-.l-navbar:not(.show) .collapse .nav_link:hover,
-.l-navbar:not(.show) .collapse .nav_link.active {
+.l-navbar:not(.show) .collapse .nav_link:is(:hover, .active) {
     background-color: rgba(37, 99, 235, 0.2) !important;
     color: var(--active-text) !important;
 }
 
 .l-navbar:not(.show) .collapse .nav_link i {
-    font-size: 1.2rem; 
+    font-size: 1.2rem;
 }
 
 /* ==========================================
@@ -295,15 +283,14 @@
    ========================================== */
 @media screen and (max-width: 768px) {
     .l-navbar {
-        left: -100%; 
-        width: var(--nav-width-expanded) !important; 
+        left: -100%;
+        width: var(--nav-width-expanded) !important;
     }
-    
     .l-navbar.show {
-        left: 0; 
+        left: 0;
     }
-
-    #header, #header.body-pd {
+    #header,
+    #header.body-pd {
         left: 0 !important;
         width: 100% !important;
         padding-left: 1rem !important;

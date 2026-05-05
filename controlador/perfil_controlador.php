@@ -9,6 +9,7 @@ use haydee\ayuda\ValidadorBD;
 use haydee\servicios\GestorAuditoria;
 
 // Verificación de sesión (sin permiso específico porque es el perfil del propio usuario)
+Sesiones::validarMetodoHTTP(['GET', 'POST']);
 Sesiones::verificarSesion();
 
 // Obtener lista de roles para la vista (recordar borrar)
@@ -16,6 +17,7 @@ $rol_obj = new Rol();
 $roles = $rol_obj->realizar_consulta('consultar_roles');
 
 if (isset($_POST["operacion"])) {
+    header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
     
     // Obtenemos las reglas
@@ -34,6 +36,8 @@ if (isset($_POST["operacion"])) {
         $validador->validarConjunto($_POST, $reglas, $contexto);
 
         if ($validador->tieneErrores()) {
+            $codigoHttp = $validador->tieneError404() ? 404 : 400;
+            http_response_code($codigoHttp);
             echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
             exit;
         }
@@ -58,12 +62,15 @@ if (isset($_POST["operacion"])) {
         switch ($operacion) {
             case 'consultar_perfil_usuario':
                 $respuesta = $usuario->realizar_consulta('consultar_perfil_usuario');
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 break;
 
             case 'consultar_mis_notificaciones':
                 $notificaciones = new Notificaciones();
                 $notificaciones->set_usuario_id($_SESSION["id_usuario"]);
+
                 $respuesta = $notificaciones->realizar_consulta('consultar_mis_notificaciones');
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 break;
 
             case 'modificar_perfil':
@@ -71,6 +78,8 @@ if (isset($_POST["operacion"])) {
                 $auditor->capturarDatosAnteriores('consultar_usuario');
 
                 $respuesta = $usuario->realizar_consulta('modificar_perfil');
+
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) { 
                     $_SESSION["nombre_completo"] = $usuario->get_nombre() . " " . $usuario->get_apellido();
                     $auditor->registrarAuditoria('modificar'); 
@@ -79,6 +88,8 @@ if (isset($_POST["operacion"])) {
 
             case 'cambiar_contrasenia':
                 $respuesta = $usuario->realizar_consulta('cambiar_contrasenia');
+
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
                     // Solo registramos la acción, sin datos sensibles
                     // Bitacora::registrar(MODIFICAR, GESTIONAR_USUARIOS, null, null, null);
@@ -86,9 +97,11 @@ if (isset($_POST["operacion"])) {
                 break;
 
             default:
+                http_response_code(400);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
     } catch (Exception $e) {
+        http_response_code(500);
         error_log("Error en controlador: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
@@ -105,7 +118,6 @@ if (isset($_POST["operacion"])) {
             }
             Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexión de seguridad
 
-            header('Content-Type: application/json');
             echo json_encode($respuesta);
             exit;
         }
@@ -164,10 +176,19 @@ if (isset($_POST["validar"])) {
                 $existe = $validadorBD->existe($tabla, $campo, $valor);
                 $respuesta = ['estatus' => $existe, 'mensaje' => $existe ? 'OK' : 'El valor no existe en la base de datos'];
                 break;
+
+            default:
+                http_response_code(400);
+                $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
         }
     } catch (Exception $e) {
+        http_response_code(500);
         error_log("Error en validación AJAX Usuario: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
+    }
+
+    if ($respuesta['estatus'] === true || isset($respuesta['existe'])) {
+        http_response_code(200);
     }
 
     echo json_encode($respuesta);

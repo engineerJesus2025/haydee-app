@@ -3,11 +3,13 @@ use haydee\servicios\Sesiones;
 use haydee\modelo\SuscripcionPush;
 use haydee\ayuda\Validador;
 
+Sesiones::validarMetodoHTTP(['GET', 'POST']);
 Sesiones::verificarSesion();
 
 if (isset($_POST["operacion"])) {
+    header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
-    $respuesta = null; // Inicializamos nulo para el bloque finally
+    $respuesta = null; 
 
     try {
         // Validación de reglas
@@ -18,9 +20,11 @@ if (isset($_POST["operacion"])) {
             $validador->validarConjunto($_POST, $reglas);
 
             if ($validador->tieneErrores()) {
-                $respuesta = ['estatus' => false, 'errores' => $validador->obtenerErrores()];
-                throw new Exception("Errores de validación");
-            }
+            $codigoHttp = $validador->tieneError404() ? 404 : 400;
+            http_response_code($codigoHttp);
+            echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
+            exit;
+        }
         }
 
         // Instancia del modelo y asignación de datos
@@ -34,20 +38,22 @@ if (isset($_POST["operacion"])) {
         switch ($operacion) {
             case 'registrar_suscripcion':
                 $respuesta = $suscripcion->realizar_consulta($operacion);
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 break;
             default:
+                http_response_code(400);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
 
     } catch (Exception $e) {
         if (!isset($respuesta['errores'])) { // Si no fue un error de validación
+            http_response_code(500);
             error_log("Error en controlador suscripcion_push: " . $e->getMessage());
             $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
         }
     } finally {
         if ($respuesta !== null) {
             if (isset($suscripcion)) { $suscripcion->cerrar(); }
-            header('Content-Type: application/json');
             echo json_encode($respuesta);
             exit;
         }

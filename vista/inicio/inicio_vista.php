@@ -19,7 +19,7 @@
 			<div class="col d-flex flex-column gris">
 
 				<?php require_once ROOT_PATH . "/vista/componentes/header.php"; ?>
-				<main class="col ps-md-2 pt-2" style="background-color: #f4f7f9;">
+				<main class="col ps-md-2 pt-2">
 
 					<div class="row justify-content-center px-2" id="contenido">
 					<?php if ($_SESSION["rol"] != "Propietario") { ?>
@@ -89,7 +89,7 @@
                                     <div class="card dashboard-card p-4 h-100">
                                         <div class="d-flex justify-content-between align-items-center mb-4">
                                             <div class="d-flex align-items-center">
-                                                <svg class="text-primary me-2" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#3b82f6;"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                                                <svg class=" me-2" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
                                                 <h5 class="fw-bold mb-0">Ingresos vs Gastos</h5>
                                             </div>
                                             <span class="text-muted-custom">Últimos 6 meses</span>
@@ -109,13 +109,13 @@
                                             <ul class="list-unstyled text-muted-custom m-0 p-0" style="font-size: 0.9rem;">
                                                 <li class="d-flex justify-content-between mb-2">
                                                     <span><i class="bi bi-arrow-up text-success me-2"></i> Ingreso Mes Actual</span>
-                                                    <span class="fw-bold text-dark" id="esqueleto_dato_1_2">
+                                                    <span class="fw-bold " id="esqueleto_dato_1_2">
                                                         <div class="skeleton skeleton-text short mb-0" style="width: 8rem;"></div>
                                                     </span>
                                                 </li>
                                                 <li class="d-flex justify-content-between">
                                                     <span><i class="bi bi-arrow-down text-danger me-2"></i> Egreso Mes Actual</span>
-                                                    <span class="fw-bold text-dark" id="esqueleto_dato_2_2">
+                                                    <span class="fw-bold " id="esqueleto_dato_2_2">
                                                         <div class="skeleton skeleton-text short mb-0" style="width: 8rem;"></div>
                                                     </span>
                                                 </li>
@@ -128,7 +128,7 @@
                                     <div class="card dashboard-card p-4 h-100">
                                         <div class="d-flex justify-content-between align-items-center mb-4">
                                             <div class="d-flex align-items-center">
-                                                <svg class="text-danger me-2" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#ef4444;"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+                                                <svg class=" me-2" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
                                                 <h5 class="fw-bold mb-0">Estado de Deudas</h5>
                                             </div>
                                         </div>
@@ -147,13 +147,13 @@
                                             <ul class="list-unstyled text-muted-custom m-0 p-0" style="font-size: 0.9rem;">
                                                 <li class="d-flex justify-content-between mb-2">
                                                     <span><i class="bi bi-patch-check-fill  text-success me-2"></i> Deuda Solvente</span>
-                                                    <span class="fw-bold text-dark" id="esqueleto_dato_1_1">
+                                                    <span class="fw-bold " id="esqueleto_dato_1_1">
                                                         <div class="skeleton skeleton-text short mb-0" style="width: 4rem;"></div>
                                                     </span>
                                                 </li>
                                                 <li class="d-flex justify-content-between">
-                                                    <span><i class="bi bi-exclamation-circle-fill text-danger me-2"></i> Deuda Pendiente</span>
-                                                    <span class="fw-bold text-dark" id="esqueleto_dato_2_1">
+                                                    <span><i class="bi bi-exclamation-circle-fill text-danger me-2"></i>Deuda Pendiente</span>
+                                                    <span class="fw-bold " id="esqueleto_dato_2_1">
                                                         <div class="skeleton skeleton-text short mb-0" style="width: 4rem;"></div>
                                                     </span>
                                                 </li>
@@ -168,14 +168,14 @@
                             <div class="card dashboard-card p-4">
                                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
                                     <div class="d-flex align-items-center mb-2 mb-md-0">
-                                        <svg class="text-primary me-2" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#3b82f6;"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><path d="M9 22v-4h6v4"></path></svg>
-                                        <h5 class="fw-bold mb-0 text-dark">Apartamentos</h5>
+                                        <svg class=" me-2" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><path d="M9 22v-4h6v4"></path></svg>
+                                        <h5 class="fw-bold mb-0 ">Apartamentos</h5>
                                     </div>
                                     
                                     <div class="d-flex flex-wrap gap-3 text-muted-custom" style="font-size: 0.85rem;">
-                                        <div class="d-flex align-items-center"><span class="d-inline-block rounded-circle me-2" style="width:10px; height:10px; background-color:#bfdbfe;"></span> Ocupado</div>
-                                        <div class="d-flex align-items-center"><span class="d-inline-block rounded-circle me-2" style="width:10px; height:10px; background-color:#bbf7d0;"></span> Disponible</div>
-                                        <div class="d-flex align-items-center"><span class="d-inline-block rounded-circle me-2" style="width:10px; height:10px; background-color:#fef08a;"></span> Mantenimiento</div>
+                                        <div class="d-flex align-items-center"><span class="d-inline-block rounded-circle me-2" style="width:10px; height:10px; background-color: var(--ch-badge-primary-border);"></span> Ocupado</div>
+                                        <div class="d-flex align-items-center"><span class="d-inline-block rounded-circle me-2" style="width:10px; height:10px; background-color: var(--ch-badge-success-border);"></span> Disponible</div>
+                                        <div class="d-flex align-items-center"><span class="d-inline-block rounded-circle me-2" style="width:10px; height:10px; background-color: var(--ch-badge-warning-border);"></span> Mantenimiento</div>
                                     </div>
                                 </div>
 
@@ -198,30 +198,32 @@
                                     <div class="card dashboard-card p-4 h-100">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div class="d-flex align-items-center">
-                                                <svg class="text-primary me-2" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#3b82f6;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                                <svg class=" me-2" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                                                 <h5 class="fw-bold mb-0">Actividad Reciente</h5>
                                             </div>
                                             <a href="?pagina=bitacora&accion=inicio">
-                                                <button class="btn btn-outline-secondary btn-sm rounded-pill px-3" >Ver todo</button>
+                                                <button class="btn btn-outline-secondary btn-sm rounded-pill px-3" >
+                                                    <i class="bi bi-box-arrow-in-right me-2"></i> Ver todo
+                                                </button>
                                             </a>
                                         </div>
 
                                         <div id="contenedor-actividad" class="d-flex flex-column flex-grow-1 justify-content-around">
-                                            <div class="d-flex align-items-start mb-3 pb-3 border-bottom">
+                                            <div class="d-flex align-items-start mb-3 pb-3 border-bottom vp-border-color">
                                                 <div class="skeleton skeleton-avatar me-3"></div>
                                                 <div class="w-100 mt-1">
                                                     <div class="skeleton skeleton-text"></div>
                                                     <div class="skeleton skeleton-text short"></div>
                                                 </div>
                                             </div>
-                                            <div class="d-flex align-items-start mb-3 pb-3 border-bottom">
+                                            <div class="d-flex align-items-start mb-3 pb-3 border-bottom vp-border-color">
                                                 <div class="skeleton skeleton-avatar me-3"></div>
                                                 <div class="w-100 mt-1">
                                                     <div class="skeleton skeleton-text"></div>
                                                     <div class="skeleton skeleton-text short"></div>
                                                 </div>
                                             </div>
-                                            <div class="d-flex align-items-start mb-3 pb-3 border-bottom">
+                                            <div class="d-flex align-items-start mb-3 pb-3 border-bottom vp-border-color">
                                                 <div class="skeleton skeleton-avatar me-3"></div>
                                                 <div class="w-100 mt-1">
                                                     <div class="skeleton skeleton-text"></div>
@@ -236,14 +238,14 @@
                                     <div class="card dashboard-card p-4 h-100">
                                         <div class="d-flex justify-content-between align-items-center mb-4">
                                             <div class="d-flex align-items-center">
-                                                <svg class="text-primary me-2" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#3b82f6;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                                                <svg class=" me-2" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                                                 <h5 class="fw-bold mb-0">Últimas Publicaciones</h5>
                                             </div>
                                         </div>
 
                                         <div class="d-flex flex-column gap-3" id="contenedor-widget-publicaciones">
                                             <?php for($i=0; $i<3; $i++) { ?>
-                                            <div class="card publi-item bg-light border-0 p-3 rounded-4">
+                                            <div class="card publi-item  border-0 p-3 rounded-4">
                                                 <div class="d-flex align-items-start">
                                                     <div class="skeleton skeleton-avatar me-3" style="width: 32px; height: 32px;"></div>
                                                     <div class="w-100 mt-1">
@@ -281,15 +283,15 @@
                 </div>
                 
                 <div class="card-body d-flex flex-column">
-                    <h5 class="card-title fw-bold text-primary post-title"></h5>
+                    <h5 class="card-title fw-bold  post-title"></h5>
                     <p class="card-text text-muted mb-4 flex-grow-1 texto-limitado post-description"></p>
                     
                     <div class="mt-auto border-top pt-3 d-flex justify-content-between align-items-center">
-                        <small class="text-secondary d-flex align-items-center">
-                            <i class="bi bi-person-fill text-primary me-2"></i> 
+                        <small class="d-flex align-items-center">
+                            <i class="bi bi-person-fill  me-2"></i> 
                             <strong class="author-name"></strong>
                         </small>
-                        <small class="text-secondary d-flex align-items-center">
+                        <small class="d-flex align-items-center">
                             <i class="bi bi-clock text-muted me-2"></i> 
                             <span class="post-date"></span>
                         </small>
@@ -319,58 +321,58 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 
-                <div class="modal-body p-0 bg-light">
+                <div class="modal-body rounded-bottom p-0 vp-body">
                     
-                    <div class="bg-white p-4 border-bottom shadow-sm">
+                    <div class=" p-4 border-bottom shadow-sm vp-border-color">
                         <div class="d-flex justify-content-between align-items-start gap-3">
                             <div>
                                 <span class="text-muted text-uppercase fw-bold d-block mb-1" style="font-size: 0.75rem; letter-spacing: 1px;">Título</span>
-                                <h4 id="vista_titulo" class="text-primary mb-0 fw-bold text-wrap" style="word-break: break-word;">---</h4>
+                                <h4 id="vista_titulo" class=" mb-0 fw-bold text-wrap" style="word-break: break-word;">---</h4>
                             </div>
                             <span id="vista_prioridad" class="badge fs-6 px-3 py-2 shadow-sm text-nowrap">---</span>
                         </div>
                     </div>
 
-                    <div class="px-4 py-3 bg-white border-bottom">
+                    <div class="px-4 py-3 border-bottom vp-border-color">
                         <div class="row text-center text-md-start">
                             <div class="col-md-6 mb-2 mb-md-0 border-md-end">
                                 <div class="d-flex align-items-center justify-content-center justify-content-md-start text-muted">
-                                    <i class="bi bi-person-fill me-2 text-primary"></i>
+                                    <i class="bi bi-person-fill me-2 "></i>
                                     <span class="fw-semibold me-1">Autor:</span>
-                                    <span id="vista_autor" class="fw-bold text-dark">---</span>
+                                    <span id="vista_autor" class="fw-bold ">---</span>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="d-flex align-items-center justify-content-center justify-content-md-start text-muted ms-md-3">
-                                    <i class="bi bi-calendar-event me-2 text-primary"></i>
+                                    <i class="bi bi-calendar-event me-2 "></i>
                                     <span class="fw-semibold me-1">Fecha:</span>
-                                    <span id="vista_fecha" class="fw-bold text-dark">---</span>
+                                    <span id="vista_fecha" class="fw-bold ">---</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div id="contenedor_imagen" class="text-center bg-white border-bottom p-4" style="display: none;">
+                    <div id="contenedor_imagen" class="text-center border-bottom p-4 vp-border-color" style="display: none;">
                         <img id="vista_imagen" src="" class="img-fluid border rounded shadow-sm" style="max-height: 400px; object-fit: contain;" alt="Vista previa de la imagen" onerror="this.style.display='none'; document.getElementById('mensaje_error_imagen').classList.remove('d-none');">
-                        <p id="mensaje_error_imagen" class="text-danger d-none mt-2 mb-0">
+                        <p id="mensaje_error_imagen" class=" d-none mt-2 mb-0">
                             <i class="bi bi-exclamation-triangle-fill me-1"></i> No se pudo cargar la imagen.
                         </p>
                     </div>
 
-                    <div class="p-4 bg-light">
+                    <div class="p-4 ">
                         <h6 class="fw-bold text-secondary mb-3">
                             <i class="bi bi-justify-left me-2"></i>Descripción
                         </h6>
                         <div class="card border-0 shadow-sm">
-                            <div class="card-body p-4 bg-white rounded">
-                                <div id="vista_descripcion" class="text-dark card-content-text text-wrap" style="font-size: 1rem; line-height: 1.7; word-break: break-word; white-space: pre-wrap;">---</div>
+                            <div class="card-body p-4  rounded">
+                                <div id="vista_descripcion" class=" card-content-text text-wrap" style="font-size: 1rem; line-height: 1.7; word-break: break-word; white-space: pre-wrap;">---</div>
                             </div>
                         </div>
                     </div>
 
                 </div>
                 
-                <div class="modal-footer bg-white border-top-0 justify-content-center">
+                <div class="modal-footer  border-top-0 justify-content-center">
                     <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cerrar</button>
                 </div>
                 
@@ -389,7 +391,7 @@
                     </div>
                 </div>
                 
-                <div class="modal-body text-center pt-4 pb-4 px-4 bg-white position-relative">
+                <div class="modal-body rounded-bottom text-center pt-4 pb-4 px-4  position-relative vp-body">
                     
                     <div class="position-absolute top-0 start-50 translate-middle">
                         <span id="info-apt-estado" class="badge rounded-pill shadow-sm px-4 py-2 fs-6 text-uppercase border border-2 border-white" style="letter-spacing: 1px;"></span>
@@ -397,7 +399,7 @@
                     
                     <div class="mt-3 mb-4">
                         <p class="text-muted mb-1 fw-bold" style="font-size: 0.7rem; letter-spacing: 1px;">RESIDENTE PRINCIPAL</p>
-                        <div class="d-flex align-items-center justify-content-center text-dark">
+                        <div class="d-flex align-items-center justify-content-center ">
                             <i class="bi bi-user-circle fs-4 me-2 text-secondary"></i>
                             <h6 class="fw-bold mb-0 fs-5 text-wrap" id="info-apt-residente" style="text-transform: capitalize;">---</h6>
                         </div>

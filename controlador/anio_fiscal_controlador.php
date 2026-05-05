@@ -5,10 +5,12 @@ use haydee\modelo\Bitacora;
 use haydee\ayuda\Validador;
 use haydee\servicios\GestorAuditoria; 
 // Verificaciones de seguridad
+Sesiones::validarMetodoHTTP(['GET', 'POST']);
 Sesiones::verificarSesion();
 Sesiones::verificarPermiso(GESTIONAR_ANIO_FISCAL, CONSULTAR);
 
 if (isset($_POST["operacion"])) {
+    header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
 
     Sesiones::verificarPermisoAccion(GESTIONAR_ANIO_FISCAL, $operacion);
@@ -21,6 +23,8 @@ if (isset($_POST["operacion"])) {
         $validador->validarConjunto($_POST, $reglas);
 
         if ($validador->tieneErrores()) {
+            $codigoHttp = $validador->tieneError404() ? 404 : 400;
+            http_response_code($codigoHttp);
             echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
             exit;
         }
@@ -43,6 +47,8 @@ if (isset($_POST["operacion"])) {
         switch ($operacion) {
             case 'consultar_anios_fiscales':
                 $respuesta = $anioFiscal->realizar_consulta('consultar');
+
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria('consultar');
                 }
@@ -50,6 +56,8 @@ if (isset($_POST["operacion"])) {
 
             case 'registrar':
                 $respuesta = $anioFiscal->realizar_consulta('registrar');
+
+                http_response_code($respuesta['estatus'] ? 201 : 400);
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria('registrar');
                 }
@@ -57,54 +65,48 @@ if (isset($_POST["operacion"])) {
 
             case 'consulta_especifica':
                 $respuesta = $anioFiscal->realizar_consulta('consultar_anio_fiscal');
+
+                http_response_code($respuesta['estatus'] ? 200 : 404);
                 break;
 
             case 'modificar':
-                // 1. El auditor toma una foto de cómo está el registro antes de tocarlo
                 $auditor->capturarDatosAnteriores('consultar_anio_fiscal');
-                
-                // 2. El controlador manda a modificar
                 $respuesta = $anioFiscal->realizar_consulta('modificar');
                 
-                // 3. Si todo salió bien, el auditor registra el cambio
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria('modificar');
                 }
                 break;
             case 'eliminar':
-                // 1. Tomamos foto previa
                 $auditor->capturarDatosAnteriores('consultar_anio_fiscal');
-
-                // 2. Ejecutamos eliminación lógica
                 $respuesta = $anioFiscal->realizar_consulta('eliminar');
                 
-                // 3. Registramos en bitácora
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria('eliminar');
                 }
                 break;
 
             default:
+                http_response_code(400);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
     } catch (Exception $e) {
+        http_response_code(500);
         error_log("Error en controlador: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
         if ($respuesta !== null) {
             $anioFiscal->cerrar();
-            Bitacora::cerrarConexionBitacora(); 
-            
-            header('Content-Type: application/json');
+            Bitacora::cerrarConexionBitacora();
             echo json_encode($respuesta);
             exit;
         }
     }
 }
 
-// Si la petición NO es por POST (es decir, el usuario entró al módulo desde el menú o presionó F5)
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    // Le avisamos al gestor que permita auditar la próxima consulta de este módulo
     GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_ANIO_FISCAL);
 }
 $permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_ANIO_FISCAL);

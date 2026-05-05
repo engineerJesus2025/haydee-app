@@ -26,6 +26,7 @@ class ComposerStaticInitcbe1707b410f2f343a82925692838e3a
         '5f6ea70646faeb1e98e0fc6d80552182' => __DIR__ . '/../..' . '/config/modulos.php',
         '42e3dc2cf7383276e8c418f14b63f194' => __DIR__ . '/../..' . '/config/config.php',
         '9bbd65f5b9ae3163acdb7bc7779b0c0a' => __DIR__ . '/../..' . '/config/rutas.php',
+        '7aa9a3fb0622a4afb1cb3f4481e69913' => __DIR__ . '/../..' . '/config/rutas_api.php',
         '67b75133d2937837a64ca4997df6eb0e' => __DIR__ . '/../..' . '/config/config_menu.php',
         '5c23ce352d0b05ed532428adc6697491' => __DIR__ . '/../..' . '/config/config_titulos.php',
     );
@@ -960,7 +961,6 @@ class ComposerStaticInitcbe1707b410f2f343a82925692838e3a
         'PHPUnit\\Metadata\\Exception' => __DIR__ . '/..' . '/phpunit/phpunit/src/Metadata/Exception/Exception.php',
         'PHPUnit\\Metadata\\ExcludeGlobalVariableFromBackup' => __DIR__ . '/..' . '/phpunit/phpunit/src/Metadata/ExcludeGlobalVariableFromBackup.php',
         'PHPUnit\\Metadata\\ExcludeStaticPropertyFromBackup' => __DIR__ . '/..' . '/phpunit/phpunit/src/Metadata/ExcludeStaticPropertyFromBackup.php',
-        'PHPUnit\\Metadata\\Group' => __DIR__ . '/..' . '/phpunit/phpunit/src/Metadata/Group.php',
         'PHPUnit\\Metadata\\IgnoreDeprecations' => __DIR__ . '/..' . '/phpunit/phpunit/src/Metadata/IgnoreDeprecations.php',
         'PHPUnit\\Metadata\\IgnorePhpunitDeprecations' => __DIR__ . '/..' . '/phpunit/phpunit/src/Metadata/IgnorePhpunitDeprecations.php',
         'PHPUnit\\Metadata\\InvalidAttributeException' => __DIR__ . '/..' . '/phpunit/phpunit/src/Metadata/Exception/InvalidAttributeException.php',

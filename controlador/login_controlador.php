@@ -6,6 +6,8 @@ use haydee\ayuda\Validador;
 use haydee\servicios\Autenticacion;
 use haydee\servicios\Recuperacion;
 
+Sesiones::validarMetodoHTTP(['GET', 'POST']);
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -13,6 +15,7 @@ if (session_status() === PHP_SESSION_NONE) {
 $recaptchaDeshabilitado = defined('ENTORNO') && ENTORNO === 'local';
 
 if (isset($_POST["operacion"])) {
+    header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación desconocida'];
 
@@ -34,6 +37,8 @@ if (isset($_POST["operacion"])) {
         $validador->validarConjunto($_POST, $reglas, ['skip_unique' => true]);
 
         if ($validador->tieneErrores()) {
+            $codigoHttp = $validador->tieneError404() ? 404 : 400;
+            http_response_code($codigoHttp);
             echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
             exit;
         }
@@ -45,7 +50,7 @@ if (isset($_POST["operacion"])) {
     $mantenerSesion = ($_POST['mantener_sesion'] ?? 'false') === 'true';
     $correoRecuperar = $_POST['correo_recuperar'] ?? '';
 
-    try {
+        try {
         switch ($operacion) {
             case 'entrar':
                 $recaptchaResponse = $_POST['g-recaptcha-response'] ?? '';
@@ -53,8 +58,12 @@ if (isset($_POST["operacion"])) {
                 // Validar reCAPTCHA
                 $recaptcha = new Recaptcha(null, $recaptchaDeshabilitado);
                 $validacion = $recaptcha->verificar($recaptchaResponse);
+                
+                // Si falla el reCAPTCHA, devolvemos 400 (Bad Request)
                 if (!$validacion['estatus']) {
-                    throw new Exception($validacion['error']);
+                    http_response_code(400); 
+                    $respuesta = ['estatus' => false, 'mensaje' => $validacion['error']];
+                    break;
                 }
 
                 $auth = new Autenticacion();
@@ -65,12 +74,16 @@ if (isset($_POST["operacion"])) {
                 }
 
                 if ($resultado['estatus']) {
+                    http_response_code(200); // Login exitoso
                     if (isset($resultado['token'])) {
                         Sesiones::recordar($usuario, $resultado['token']);
                     }
                     Sesiones::iniciar($resultado['datos']);
                     session_regenerate_id(true);
+                } else {
+                    http_response_code(401); // 401 Unauthorized (Credenciales incorrectas)
                 }
+                
                 $respuesta = $resultado;
                 break;
 
@@ -78,20 +91,27 @@ if (isset($_POST["operacion"])) {
                 $recuperacion = new Recuperacion();
                 try {
                     $respuesta = $recuperacion->enviarCorreoRecuperacion($correoRecuperar);
+
+                    if (strpos($respuesta['mensaje'], 'Error') !== false) {
+                        http_response_code(500); 
+                    } else {
+                        http_response_code(200); 
+                    }
                 } finally {
                     $recuperacion->cerrar();
                 }
                 break;
 
             default:
-                throw new Exception('Operación no válida');
+                http_response_code(400);
+                $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
         }
     } catch (Exception $e) {
+        http_response_code(500);
         error_log("Error en controlador: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
         if ($respuesta !== null) {
-            header('Content-Type: application/json');
             echo json_encode($respuesta);
             exit;
         }
@@ -158,6 +178,7 @@ switch ($accion) {
 
     case 'inicio':
     default:
+                http_response_code(400);
         if (isset($_SESSION['id_usuario'])) {
             header("Location: ?pagina=inicio&accion=inicio");
             exit;

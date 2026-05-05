@@ -53,17 +53,15 @@ document.addEventListener('DOMContentLoaded', () => {
 // ============================================================
 
 async function consultar() {
-    // 1. FORMATOS VISUALES
+    // FORMATOS VISUALES
     const formatoFecha = (cell) => FormatoFechas.formatoUsuario(cell.getValue());
     const formatoMonto = (cell) => formatearMontoConMoneda(cell.getValue(), cell.getData().metodo_pago);
 
     const formatoClasificacion = (cell) => {
         const config = obtenerConfigClasificacionGasto(cell.getValue());
         
-        return `<span class="badge bg-${config.color} bg-opacity-10 ${config.claseTextoBorder} px-3 py-2 shadow-sm text-nowrap" style="font-size: .85rem;">
-                    <i class="bi ${config.icono} me-1"></i>
-                    ${config.texto}
-                </span>`;
+        // Usamos nuestro Helper Global
+        return ComponentesUI.crearSoftBadge(config.color, config.icono, config.texto);
     };
 
     const formatoBotones = (cell) => {
@@ -89,7 +87,7 @@ async function consultar() {
         return html;
     };
 
-    // 2. COLUMNAS
+    // COLUMNAS
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
         { title: "Tipo", field: "clasificacion", formatter: formatoClasificacion, minWidth: 140, responsive: 0 },
@@ -275,7 +273,7 @@ async function prepararFormularioEdicion(e) {
                 if (idx > 0) {
                     const btnEliminar = document.createElement('button');
                     btnEliminar.type = 'button';
-                    btnEliminar.className = 'btn btn-sm btn-outline-danger mb-3';
+                    btnEliminar.className = 'btn btn-sm btn-soft-danger mb-3';
                     btnEliminar.innerHTML = '<i class="bi bi-x-circle"></i> Eliminar este Detalle';
                     btnEliminar.onclick = () => nuevoBloque.remove();
                     nuevoBloque.querySelector('.card-body').prepend(btnEliminar);
@@ -291,8 +289,10 @@ async function prepararFormularioEdicion(e) {
         // Configurar botón para edición
         botonFormulario.setAttribute('modificar', 'true');
         botonFormulario.setAttribute('id_modificar', id);
-        botonFormulario.textContent = 'Guardar Cambios';
+        // botonFormulario.textContent = 'Guardar Cambios';
+        document.getElementById('texto_boton_formulario').textContent = 'Guardar Cambios';
         document.getElementById('titulo_modal').textContent = 'Modificar Gasto';
+        document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-cart-dash");
         id_modificar = id;
 
         modalGasto.show();
@@ -336,13 +336,7 @@ async function mostrarVistaPrevia(e) {
         const clasificacionEl = document.getElementById("vp_clasificacion");
         
         // Inyectamos el Soft Badge
-        clasificacionEl.className = ""; // Limpiamos clases previas
-        clasificacionEl.innerHTML = `
-            <span class="badge bg-${config.color} bg-opacity-10 ${config.claseTextoBorder} fs-6 px-3 py-2 shadow-sm text-nowrap">
-                <i class="bi ${config.icono} me-1"></i>
-                ${config.texto}
-            </span>
-        `;
+        clasificacionEl.innerHTML = ComponentesUI.crearSoftBadge(config.color, config.icono, config.texto);
 
         // Tipo de Gasto / Categoría
         document.getElementById("vp_tipo_gasto").textContent = data.nombre_tipo_gasto || 'No especificada';
@@ -485,7 +479,7 @@ function agregarDetalle() {
     // Agregar botón eliminar
     const btnEliminar = document.createElement('button');
     btnEliminar.type = 'button';
-    btnEliminar.className = 'btn btn-sm btn-outline-danger mb-3';
+    btnEliminar.className = 'btn btn-sm btn-soft-danger mb-3';
     btnEliminar.innerHTML = '<i class="bi bi-x-circle"></i> Eliminar este Detalle';
     btnEliminar.onclick = () => nuevoDetalle.remove();
     nuevoDetalle.querySelector('.card-body').prepend(btnEliminar);
@@ -565,7 +559,6 @@ function actualizarVisibilidadCampos(selectMetodo) {
 function resetModalGasto() {
     formulario.reset();
     
-    // --- NUEVO: Rehabilitar campos y limpiar opción dinámica ---
     const selectClasificacion = formulario.querySelector('#clasificacion');
     selectClasificacion.disabled = false;
     formulario.querySelector('#tipo_gasto_id').disabled = false;
@@ -574,12 +567,13 @@ function resetModalGasto() {
 
     const opcionExistente = selectClasificacion.querySelector('option[value="Reposicion"], option[value="Reposición"]');
     if (opcionExistente) opcionExistente.remove();
-    // -----------------------------------------------------------
 
     botonFormulario.removeAttribute('modificar');
     botonFormulario.removeAttribute('id_modificar');
-    botonFormulario.textContent = 'Registrar';
+    // botonFormulario.textContent = 'Registrar';
+    document.getElementById('texto_boton_formulario').textContent = 'Guardar Gasto';
     document.getElementById('titulo_modal').textContent = 'Registrar Gasto';
+    document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-cart-check");
 
     // Eliminar bloques de detalle extras, dejando solo uno
     const bloques = contenedorDetalles.querySelectorAll('.detalle-gasto');
@@ -625,34 +619,29 @@ function formatearMontoConMoneda(monto, metodoPago) {
 
 
 /**
- * Procesa la clasificación de un gasto y devuelve su configuración visual (Soft Badge)
+ * Procesa la clasificación de un gasto y devuelve su configuración visual
  * @param {string} valor - La clasificación (fijo, variable, reposicion)
- * @returns {object} Configuración visual: { color, claseTextoBorder, icono, texto }
+ * @returns {object} { color, icono, texto }
  */
 function obtenerConfigClasificacionGasto(valor) {
     let val = (valor || "").toLowerCase();
     
     let color = "secondary";
     let icono = "bi-tag-fill";
-    let claseTextoBorder = "text-secondary border border-secondary";
 
     if (val === "fijo") {
         color = "primary";
         icono = "bi-calendar-event";
-        claseTextoBorder = "text-primary border border-primary";
     } else if (val === "variable") {
         color = "warning";
         icono = "bi-lightning-charge-fill";
-        claseTextoBorder = "text-dark border border-warning"; // Texto oscuro por legibilidad
     } else if (val === "reposicion" || val === "reposición") {
         color = "success";
         icono = "bi-wallet2";
-        claseTextoBorder = "text-success border border-success";
     }
 
     return {
         color: color,
-        claseTextoBorder: claseTextoBorder,
         icono: icono,
         texto: val.charAt(0).toUpperCase() + val.slice(1)
     };

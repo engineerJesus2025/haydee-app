@@ -12,6 +12,7 @@
             "config/modulos.php",
             "config/config.php",
             "config/rutas.php",
+            "config/rutas_api.php",
             "config/config_menu.php",
             "config/config_titulos.php"
         ]

@@ -14,9 +14,11 @@
 <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/Notificaciones.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/AyudaInteractiva.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/AtajosTeclado.js"></script>
+<script src="<?php echo URL_BASE; ?>recursos/js/ayuda/ComponentesUI.js"></script>
 <!-- Script personalizados globales -->
 <script src="<?php echo URL_BASE; ?>recursos/js/header.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/js/notificaciones.js"></script>
+<script src="<?php echo URL_BASE; ?>recursos/js/tema_global.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/js/driver.js"></script>
 
 <!-- Variables VAPID: -->

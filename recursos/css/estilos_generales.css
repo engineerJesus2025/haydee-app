@@ -1,37 +1,436 @@
 @import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap");
 
-body{
-	background-color: rgb(245, 245, 245);
-	position: relative;
-	min-height: 100vh;
+/* =========================================================
+   VARIABLES PERSONALIZADAS (LIGHT)
+   ========================================================= */
+:root {
+    --body-bg: rgb(245, 245, 245);
+
+    --ch-color-titulos: #334155;
+
+    /* Header */
+    --ch-header-bg: #ffffff;
+    --ch-header-border: #e5e7eb;
+    --ch-header-icon: #1f2937;
+    --ch-header-hover: #f3f4f6;
+
+    /* Notificaciones */
+    --ch-notif-title: #1e293b;
+    --ch-notif-desc: #64748b;
+    --ch-notif-border: #f1f5f9;
+    --ch-notif-hover-bg: #f8fafc;
+    --ch-notif-unread-bg: #eff6ff;
+
+    /* Dashboard / Cards */
+    --ch-card-bg: #ffffff;
+    --ch-card-gradient: linear-gradient(135deg, #ffffff 90%, #e0f7fa 100%);
+    --ch-post-title: #0d47a1;
+    --ch-post-desc: #455a64;
+    --ch-timeline-border: #e2e8f0;
+    --ch-publi-hover: #eef2ff;
+
+    /* Inputs */
+    --ch-glass-bg: rgba(255, 255, 255, 0.85);
+    --ch-input-border: #cbd5e1;
+    --ch-input-bg: #f8fafc;
+    --ch-input-icon-bg: #f1f5f9;
+    --ch-label-float-bg: rgba(255, 255, 255, 0.7);
+
+    /* Texto / botones Bootstrap */
+    --warning-text: #000;
+    --text-muted-color: rgba(33, 37, 41, 0.75);
+    --text-link-notif-color: rgba(13, 110, 253, 0.98);
+
+    /* Perfil */
+    --item-card-bg: rgb(243, 245, 246);
+
+    /* Tablas */
+    --ch-table-header-bg: #0b1320;
+    --ch-table-header-text: #ffffff;
+    --ch-table-row-bg: #f8fafc;
+    --ch-table-row-hover: #f1f5f9;
+    --ch-table-border: #e2e8f0;
+    --ch-table-text: #1f2937;
+    --ch-table-vp-header-bg: #0b1320;
+    --ch-table-vp-header-text: #ffffff;
+
+    /* Badges suaves */
+    --ch-badge-primary-bg: rgba(13, 110, 253, 0.1);
+    --ch-badge-primary-text: #004fc4;
+    --ch-badge-primary-border: #0d6efd;
+    --ch-badge-success-bg: rgba(25, 135, 84, 0.1);
+    --ch-badge-success-text: #024023;
+    --ch-badge-success-border: #198754;
+    --ch-badge-danger-bg: rgba(220, 53, 69, 0.1);
+    --ch-badge-danger-text: #be1f2e;
+    --ch-badge-danger-border: #dc3545;
+    --ch-badge-info-bg: rgba(13, 202, 240, 0.1);
+    --ch-badge-info-text: #02262d;
+    --ch-badge-info-border: #0dcaf0;
+    --ch-badge-warning-bg: rgba(255, 193, 7, 0.15);
+    --ch-badge-warning-text: #2b2209;
+    --ch-badge-warning-border: #ffc107;
+    --ch-badge-secondary-bg: rgba(108, 117, 125, 0.1);
+    --ch-badge-secondary-text: #191d20;
+    --ch-badge-secondary-border: #6c757d;
+    --ch-badge-iniciarsesion-bg: rgba(101, 89, 186, 0.1);
+    --ch-badge-iniciarsesion-text: #170597;
+    --ch-badge-iniciarsesion-border: #6559BA;
+    --ch-badge-indigo-bg: rgba(102, 16, 242, 0.1);
+    --ch-badge-indigo-text: #18013e;
+    --ch-badge-indigo-border: #6610f2;
+    --ch-badge-teal-bg: rgba(32, 201, 151, 0.1);
+    --ch-badge-teal-text: #016144;
+    --ch-badge-teal-border: #20c997;
+
+    /* Skeleton */
+    --ch-skeleton-base: #e2e8f0;
+    --ch-skeleton-shine: #f8fafc;
+
+    /* Modal carga*/
+    --ch-loader-track: #222;
 }
 
-button:disabled { cursor: not-allowed;}
+/* =========================================================
+   VARIABLES MODO OSCURO
+   ========================================================= */
+[data-bs-theme="dark"] {
+    --body-bg: #151b28f7;
+
+    --ch-color-titulos: #f8f9fa;
+
+    --ch-header-bg: #1e293b;
+    --ch-header-border: #334155;
+    --ch-header-icon: #f8fafc;
+    --ch-header-hover: #334155;
+
+    --ch-notif-title: #f8fafc;
+    --ch-notif-desc: #cbd5e1;
+    --ch-notif-border: #334155;
+    --ch-notif-hover-bg: #0f172a;
+    --ch-notif-unread-bg: #1e293b;
+
+    --ch-card-bg: #1e293b;
+    --ch-card-gradient: linear-gradient(135deg, #1e293b 90%, #0f172a 100%);
+    --ch-post-title: #60a5fa;
+    --ch-post-desc: #cbd5e1;
+    --ch-timeline-border: #334155;
+    --ch-publi-hover: #334155;
+
+    --ch-glass-bg: rgba(30, 41, 59, 0.85);
+    --ch-input-border: #334155;
+    --ch-input-bg: #0f172a;
+    --ch-input-icon-bg: #1e293b;
+    --ch-label-float-bg: rgba(30, 41, 59, 0.9);
+
+    --warning-text: #ffffffd6;
+    --text-muted-color: rgba(250, 252, 255, 0.8);
+    --text-link-notif-color: rgb(195, 198, 255);
+
+    --item-card-bg: rgba(25, 25, 26, 0.55);
+
+    --ch-table-header-bg: #0f172a;
+    --ch-table-header-text: #e2e8f0;
+    --ch-table-row-bg: #253347;
+    --ch-table-row-hover: #2d3f58;
+    --ch-table-border: #334155;
+    --ch-table-text: #cbd5e1;
+    --ch-table-vp-header-bg: #1e293b;
+    --ch-table-vp-header-text: #cbd5e1;
+
+    /* Badges suaves oscuros */
+    --ch-badge-primary-bg: rgba(59, 130, 246, 0.15);
+    --ch-badge-primary-text: #60a5fa;
+    --ch-badge-primary-border: rgba(96, 165, 250, 0.5);
+    --ch-badge-success-bg: rgba(52, 211, 153, 0.15);
+    --ch-badge-success-text: #34d399;
+    --ch-badge-success-border: rgba(52, 211, 153, 0.5);
+    --ch-badge-danger-bg: rgba(248, 113, 113, 0.15);
+    --ch-badge-danger-text: #f87171;
+    --ch-badge-danger-border: rgba(248, 113, 113, 0.5);
+    --ch-badge-info-bg: rgba(56, 189, 248, 0.15);
+    --ch-badge-info-text: #38bdf8;
+    --ch-badge-info-border: rgba(56, 189, 248, 0.5);
+    --ch-badge-warning-bg: rgba(251, 191, 36, 0.15);
+    --ch-badge-warning-text: #fbbf24;
+    --ch-badge-warning-border: rgba(251, 191, 36, 0.5);
+    --ch-badge-secondary-bg: rgba(148, 163, 184, 0.15);
+    --ch-badge-secondary-text: #cbd5e1;
+    --ch-badge-secondary-border: rgba(148, 163, 184, 0.5);
+    --ch-badge-iniciarsesion-bg: rgba(139, 92, 246, 0.15);
+    --ch-badge-iniciarsesion-text: #a78bfa;
+    --ch-badge-iniciarsesion-border: rgba(167, 139, 250, 0.5);
+    --ch-badge-indigo-bg: rgba(99, 102, 241, 0.15);
+    --ch-badge-indigo-text: #818cf8;
+    --ch-badge-indigo-border: rgba(129, 140, 248, 0.5);
+    --ch-badge-teal-bg: rgba(45, 212, 191, 0.15);
+    --ch-badge-teal-text: #2dd4bf;
+    --ch-badge-teal-border: rgba(45, 212, 191, 0.5);
+
+    --ch-skeleton-base: #0f172a;
+    --ch-skeleton-shine: #1e293b;
+
+    /* Modal carga*/
+    --ch-loader-track: #EEE;
+}
+
+/* =========================================================
+   BADGES Y BOTONES SOFT
+   ========================================================= */
+[class*="badge-soft-"] { border: 1px solid transparent !important; }
+.badge-soft-primary    { background-color: var(--ch-badge-primary-bg) !important; color: var(--ch-badge-primary-text) !important; border-color: var(--ch-badge-primary-border) !important; }
+.badge-soft-success    { background-color: var(--ch-badge-success-bg) !important; color: var(--ch-badge-success-text) !important; border-color: var(--ch-badge-success-border) !important; }
+.badge-soft-danger     { background-color: var(--ch-badge-danger-bg) !important; color: var(--ch-badge-danger-text) !important; border-color: var(--ch-badge-danger-border) !important; }
+.badge-soft-info       { background-color: var(--ch-badge-info-bg) !important; color: var(--ch-badge-info-text) !important; border-color: var(--ch-badge-info-border) !important; }
+.badge-soft-warning    { background-color: var(--ch-badge-warning-bg) !important; color: var(--ch-badge-warning-text) !important; border-color: var(--ch-badge-warning-border) !important; }
+.badge-soft-secondary  { background-color: var(--ch-badge-secondary-bg) !important; color: var(--ch-badge-secondary-text) !important; border-color: var(--ch-badge-secondary-border) !important; }
+.badge-soft-iniciar-sesion { background-color: var(--ch-badge-iniciarsesion-bg) !important; color: var(--ch-badge-iniciarsesion-text) !important; border-color: var(--ch-badge-iniciarsesion-border) !important; }
+.badge-soft-indigo     { background-color: var(--ch-badge-indigo-bg) !important; color: var(--ch-badge-indigo-text) !important; border-color: var(--ch-badge-indigo-border) !important; }
+.badge-soft-teal       { background-color: var(--ch-badge-teal-bg) !important; color: var(--ch-badge-teal-text) !important; border-color: var(--ch-badge-teal-border) !important; }
+
+.btn-soft-success,
+.btn-soft-danger,
+.btn-soft-secondary,
+.btn-soft-info {
+    border: 1px solid transparent;
+    transition: all 0.3s ease;
+    font-weight: 600;
+}
+.btn-soft-success   { background-color: var(--ch-badge-success-bg) !important; color: var(--ch-badge-success-text) !important; border-color: var(--ch-badge-success-border) !important; }
+.btn-soft-success:hover { background-color: var(--ch-badge-success-text) !important; color: #fff !important; }
+.btn-soft-danger    { background-color: var(--ch-badge-danger-bg) !important; color: var(--ch-badge-danger-text) !important; border-color: var(--ch-badge-danger-border) !important; }
+.btn-soft-danger:hover  { background-color: var(--ch-badge-danger-text) !important; color: #fff !important; }
+.btn-soft-secondary { background-color: var(--ch-badge-secondary-bg) !important; color: var(--ch-badge-secondary-text) !important; border-color: var(--ch-badge-secondary-border) !important; }
+.btn-soft-secondary:hover { background-color: #333c45 !important; color: #fff !important; }
+.btn-soft-info      { background-color: var(--ch-badge-info-bg) !important; color: var(--ch-badge-info-text) !important; border-color: var(--ch-badge-info-border) !important; }
+.btn-soft-info:hover { background-color: var(--ch-badge-info-text) !important; color: #fff !important; }
+
+/* =========================================================
+   ESTILOS GLOBALES
+   ========================================================= */
+body {
+    background-color: var(--body-bg);
+    color: var(--bs-body-color);
+    position: relative;
+    min-height: 100vh;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+button:disabled { cursor: not-allowed; }
 
 .img_svg {
-  filter: invert(30%) sepia(10%) saturate(200%) hue-rotate(-21deg) brightness(1000%) contrast(200%);
+    filter: invert(30%) sepia(10%) saturate(200%) hue-rotate(-21deg) brightness(1000%) contrast(200%);
 }
 
-#footer_global{
-	position: absolute;
-  	right: 0;  	
-  	left: 0;
-  	bottom: 0;
-  	z-index: 1030;
-  	background-color: #3939a9;
+.form-select.is-invalid,
+.was-validated .form-select:invalid,
+.form-control.is-invalid,
+.was-validated .form-control:invalid {
+    border-color: var(--bs-form-invalid-border-color) !important;
+}
+.form-select.is-valid,
+.was-validated .form-select:valid,
+.form-control.is-valid,
+.was-validated .form-control:valid {
+    border-color: var(--bs-form-valid-border-color) !important;
 }
 
-.form-select.is-invalid, .was-validated .form-select:invalid{
-  border-color: var(--bs-form-invalid-border-color) !important;
+#titulo_pagina, .transicion_entrada {
+    animation: fadeIn .6s ease-in-out;
 }
-.form-select.is-valid, .was-validated .form-select:valid {
-  border-color: var(--bs-form-valid-border-color) !important;
-}
-
-.form-control.is-invalid, .was-validated .form-control:invalid{
-  border-color: var(--bs-form-invalid-border-color) !important;
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
-.form-control.is-valid, .was-validated .form-control:valid {
-  border-color: var(--bs-form-valid-border-color) !important;
+.card-item           { background-color: var(--item-card-bg) !important; }
+.bg-warning          { background-color: rgba(var(--bs-warning-rgb),var(--bs-bg-opacity)) !important; color: var(--warning-text); }
+.text-muted          { color: var(--text-muted-color) !important; }
+.enlace-notf         { color: var(--text-link-notif-color) !important; }
+.tabulator-cell .text-muted { color: var(--text-muted-color) !important; }
+
+/* =========================================================
+   TABLAS Tabulator
+   ========================================================= */
+.tabla-sistema-haydee .tabulator-row {
+    background-color: var(--ch-table-row-bg) !important;
+}
+.tabla-sistema-haydee .tabulator-row:hover {
+    background-color: var(--ch-table-row-hover) !important;
+}
+.tabla-vista-previa .tabulator-row {
+    background-color: transparent !important;
+}
+.tabla-vista-previa .tabulator-row:hover {
+    background-color: var(--ch-header-hover) !important;
+}
+
+/* =========================================================
+   MODALES Y VISTAS PREVIAS (INPUTS & VALIDACIÓN)
+   ========================================================= */
+/* Fondos base */
+.modal-body { background-color: var(--ch-card-bg, var(--bs-body-bg)); color: var(--bs-body-color); }
+.vp-body    { background-color: var(--ch-card-bg, var(--bs-body-bg)); color: var(--bs-body-color); }
+.vp-card    { background-color: var(--ch-header-bg); border-color: var(--ch-header-border) !important; }
+.vp-card-header { background-color: transparent; }
+.vp-border-color { border-color: var(--ch-header-border) !important; }
+
+/* Inputs y grupos: reset común */
+.modal-body .form-control,
+.modal-body .form-select,
+.modal-body .input-group-text,
+.vp-card .form-control,
+.vp-card .form-select,
+.vp-card .input-group-text {
+    border: 1px solid var(--ch-input-border);
+    background-color: var(--ch-input-bg) !important;
+    color: var(--bs-body-color);
+    transition: all 0.2s ease-in-out;
+}
+.modal-body .input-group-text,
+.vp-card .input-group-text { color: var(--bs-primary); }
+
+/* Fusión de bordes dentro de input groups */
+.modal-body .input-group,
+.vp-card .input-group {
+    transition: all 0.2s ease-in-out;
+    border-radius: var(--bs-border-radius);
+}
+/* Icono a la izquierda */
+.modal-body .input-group > .input-group-text:first-child,
+.vp-card .input-group > .input-group-text:first-child {
+    border-right: none;
+}
+.modal-body .input-group > .input-group-text:first-child + .form-control,
+.modal-body .input-group > .input-group-text:first-child + .form-select,
+.vp-card .input-group > .input-group-text:first-child + .form-control,
+.vp-card .input-group > .input-group-text:first-child + .form-select {
+    border-left: none;
+}
+/* Icono a la derecha */
+.modal-body .input-group > .form-control:first-child,
+.modal-body .input-group > .form-select:first-child,
+.vp-card .input-group > .form-control:first-child,
+.vp-card .input-group > .form-select:first-child {
+    border-right: none;
+}
+.modal-body .input-group > .form-control:first-child + .input-group-text,
+.modal-body .input-group > .form-select:first-child + .input-group-text,
+.vp-card .input-group > .form-control:first-child + .input-group-text,
+.vp-card .input-group > .form-select:first-child + .input-group-text {
+    border-left: none;
+}
+/* Botón extra (ojo contraseña) */
+.modal-body .input-group > .contra-btn,
+.vp-card .input-group > .contra-btn {
+    border-color: var(--ch-input-border);
+    background-color: var(--ch-input-bg) !important;
+    color: var(--bs-body-color);
+    border-left: none;
+    box-shadow: none !important;
+}
+
+/* =========================================================
+   ESTADOS: FOCUS, ERROR Y ÉXITO (OPTIMIZADOS)
+   ========================================================= */
+
+/* 1. Limpieza de sombra interna en inputs dentro de grupos */
+:is(.modal-body, .vp-card) .input-group > :is(.form-control, .form-select):focus {
+    box-shadow: none !important;
+}
+
+/* 2. Manejo de Sombras (Box Shadow) del grupo completo */
+:is(.modal-body, .vp-card) .input-group:focus-within {
+    box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.15);
+}
+:is(.modal-body, .vp-card) .input-group:is(:has(.is-invalid), :focus-within:has(.is-invalid)) {
+    box-shadow: 0 0 0 0.2rem rgba(var(--bs-danger-rgb), 0.15) !important;
+}
+:is(.modal-body, .vp-card) .input-group:is(:has(.is-valid), :focus-within:has(.is-valid)) {
+    box-shadow: 0 0 0 0.2rem rgba(var(--bs-success-rgb), 0.15) !important;
+}
+
+/* 3. Manejo de Bordes (Border Color) de todos los elementos internos */
+:is(.modal-body, .vp-card) .input-group:focus-within > :is(.input-group-text, .form-control, .form-select, .contra-btn) {
+    border-color: var(--bs-primary) !important;
+}
+:is(.modal-body, .vp-card) .input-group:is(:has(.is-invalid), :focus-within:has(.is-invalid)) > :is(.input-group-text, .form-control, .form-select, .contra-btn) {
+    border-color: var(--bs-danger) !important;
+}
+:is(.modal-body, .vp-card) .input-group:is(:has(.is-valid), :focus-within:has(.is-valid)) > :is(.input-group-text, .form-control, .form-select, .contra-btn) {
+    border-color: var(--bs-success) !important;
+}
+
+/* 4. Coloreado de Íconos */
+:is(.modal-body, .vp-card) .input-group:has(.is-invalid) > .input-group-text i {
+    color: var(--bs-danger) !important;
+}
+:is(.modal-body, .vp-card) .input-group:has(.is-valid) > .input-group-text i {
+    color: var(--bs-success) !important;
+}
+
+/* 5. Inputs sueltos (fuera de un .input-group) */
+:is(.modal-body, .vp-card) :is(.form-control, .form-select):focus:not(.input-group > *) {
+    border-color: var(--bs-primary) !important;
+    box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.15) !important;
+}
+:is(.modal-body, .vp-card) :is(.form-control, .form-select).is-invalid:focus:not(.input-group > *) {
+    border-color: var(--bs-danger) !important;
+    box-shadow: 0 0 0 0.2rem rgba(var(--bs-danger-rgb), 0.15) !important;
+}
+:is(.modal-body, .vp-card) :is(.form-control, .form-select).is-valid:focus:not(.input-group > *) {
+    border-color: var(--bs-success) !important;
+    box-shadow: 0 0 0 0.2rem rgba(var(--bs-success-rgb), 0.15) !important;
+}
+
+/* Deshabilitados / Readonly */
+.modal-body .input-group:has(.form-control:disabled) .input-group-text,
+.modal-body .input-group:has(.form-control[readonly]) .input-group-text,
+.vp-card .input-group:has(.form-control:disabled) .input-group-text,
+.vp-card .input-group:has(.form-control[readonly]) .input-group-text {
+    background-color: var(--ch-header-hover) !important;
+    color: var(--text-muted-color) !important;
+    border-color: var(--ch-input-border) !important;
+    opacity: 1;
+}
+.modal-body .form-control:read-only,
+.modal-body .form-select:disabled,
+.modal-body .form-control:disabled,
+.vp-card .form-control:read-only,
+.vp-card .form-select:disabled,
+.vp-card .form-control:disabled {
+    background-color: var(--ch-header-hover) !important;
+    color: var(--text-muted-color) !important;
+    opacity: 1;
+    cursor: not-allowed;
+}
+
+/* Mensajes de validación (animación y posición) */
+.modal-body .input-group {
+    position: relative;
+    margin-bottom: 1.5rem !important;
+}
+@keyframes slideOutFromInput {
+    0%   { opacity: 0; transform: translateY(-12px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+.modal-body .invalid-feedback,
+.modal-body .valid-feedback {
+    position: absolute;
+    top: 100%;
+    left: 0.2rem;
+    margin-top: 0.35rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    line-height: 1.2;
+    padding: 0;
+    z-index: 0;
+    animation: slideOutFromInput 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+[data-bs-theme="dark"] .invalid-feedback { color: var(--ch-badge-danger-text) !important; }
+[data-bs-theme="dark"] .valid-feedback   { color: var(--ch-badge-success-text) !important; }
+
+/* Ajustes extra para botones dentro de modales */
+.modal-body .boton_intercambio,
+.modal-body .boton_intercambio_cuota {
+    margin-bottom: 1.5rem !important;
 }

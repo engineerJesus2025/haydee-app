@@ -584,5 +584,60 @@ class Mensualidad extends Conexion
             return ['estatus' => false, 'mensaje' => 'Error al consultar los KPIs del inicio'];
         }
     }
+
+    /**
+     * Consulta los indicadores clave (KPIs) para el resumen financiero de la App.
+     */
+    private function _consultar_kpis()
+    {
+        $sql = "SELECT 
+                    (SELECT COALESCE(SUM(deuda_pendiente), 0) 
+                     FROM vw_estado_cuentas_mensualidad 
+                     WHERE CAST(estado_pago AS CHAR) = 'Pendiente') AS deuda_total,
+                     
+                    (SELECT COALESCE(SUM(dp.monto), 0) 
+                     FROM detalles_pagos dp 
+                     JOIN pagos p ON dp.pago_id = p.id_pago 
+                     WHERE p.activo = 1 
+                       AND MONTH(dp.fecha) = MONTH(CURDATE()) 
+                       AND YEAR(dp.fecha) = YEAR(CURDATE())) AS recaudado_mes";
+                       
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->execute();
+            $datos = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            return ['estatus' => true, 'datos' => $datos];
+        } catch (PDOException $e) {
+            error_log("Error en _consultar_kpis: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al calcular indicadores financieros'];
+        }
+    }
+
+    private function _consultar_desglose()
+    {
+        if (empty($this->id_mensualidad)) {
+            return ['estatus' => false, 'mensaje' => 'ID de mensualidad no proporcionado.'];
+        }
+        $sql = "SELECT 
+                    dp.id_detalle_presupuesto, 
+                    dp.nombre_detalle AS concepto, 
+                    dp.monto, 
+                    dp.monto_dolar 
+                FROM presupuesto_mensualidad pm
+                INNER JOIN detalles_presupuesto dp ON pm.detalle_presupuesto_id = dp.id_detalle_presupuesto
+                WHERE pm.mensualidad_id = :id_mensualidad";
+        try {
+            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt->execute([':id_mensualidad' => $this->id_mensualidad]);
+            $datos = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            
+            return ['estatus' => true, 'datos' => $datos];
+        } catch (\PDOException $e) {
+            error_log("Error en _consultar_desglose: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al consultar el desglose de la mensualidad.'];
+        }
+    }
+
 }
 ?>

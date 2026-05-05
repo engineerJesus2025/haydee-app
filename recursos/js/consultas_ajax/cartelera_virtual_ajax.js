@@ -23,8 +23,10 @@ document.querySelector("#modal_cartelera").addEventListener("hide.bs.modal", () 
     formulario_usar.reset();
     boton_formulario.removeAttribute("modificar");
     boton_formulario.removeAttribute("id_modificar");
-    boton_formulario.textContent = "Guardar";
+    // boton_formulario.textContent = "Guardar";
+    document.getElementById('texto_boton_formulario').textContent = 'Guardar Publicación';
     document.getElementById("titulo_modal").textContent = "Registrar Publicación";
+    document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-megaphone");
     
     // Limpiar mensajes de error
     formulario_usar.querySelectorAll(".w-100").forEach(el => el.textContent = "");
@@ -61,10 +63,7 @@ function consultar() {
     const formatoPrioridad = (cell) => {
         const config = obtenerConfigPrioridad(cell.getValue());
         
-        return `<span class="badge bg-${config.color} bg-opacity-10 ${config.claseTextoBorder} px-3 py-2 shadow-sm text-nowrap" style="font-size: .85rem;">
-                    <i class="bi ${config.icono} me-1"></i>
-                    ${config.texto}
-                </span>`;
+        return ComponentesUI.crearSoftBadge(config.color, config.icono, config.texto);
     };
 
     const formatoBotones = (cell) => {
@@ -164,8 +163,10 @@ async function modificar_formulario(e) {
 
         boton_formulario.setAttribute("modificar", true);
         boton_formulario.setAttribute("id_modificar", data.id_cartelera);
-        boton_formulario.textContent = "Guardar Cambios";
-        document.getElementById("titulo_modal").textContent = "Modificar Publicación";
+        // boton_formulario.textContent = "Guardar Cambios";
+        document.getElementById('texto_boton_formulario').textContent = 'Guardar Cambios';
+        document.getElementById("titulo_modal").textContent = "Guardar Cambios";
+        document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-megaphone-fill");
         id_modificar = id;
 
         modal.show();
@@ -186,13 +187,7 @@ function mostrarVistaPrevia(data) {
     let vista_prioridad = document.getElementById("vista_prioridad");
     
     // Limpiamos clases previas e inyectamos el HTML del Soft Badge
-    vista_prioridad.className = ""; 
-    vista_prioridad.innerHTML = `
-        <span class="badge bg-${config.color} bg-opacity-10 ${config.claseTextoBorder} fs-6 px-3 py-2 shadow-sm text-nowrap">
-            <i class="bi ${config.icono} me-1"></i>
-            ${config.texto}
-        </span>
-    `;
+    vista_prioridad.innerHTML = ComponentesUI.crearSoftBadge(config.color, config.icono, config.texto);
 
     // Lógica de la Imagen (Basada en tus archivos)
     let imagen = document.getElementById("vista_imagen");
@@ -264,35 +259,31 @@ async function eliminar(id) {
 // DELEGACIÓN DE EVENTOS EN LA TABLA
 // ============================================
 /**
- * Procesa la prioridad de un aviso y devuelve su configuración visual (Soft Badge)
+ * Procesa la prioridad de un aviso y devuelve su configuración visual
  * @param {string|number} prioridad - Nivel de prioridad (1, 2, 3)
- * @returns {object} Configuración visual
+ * @returns {object} { color, icono, texto }
  */
 function obtenerConfigPrioridad(prioridad) {
     const p = String(prioridad);
     let color = "secondary";
     let icono = "bi-bookmark-fill";
     let texto = "Desconocida";
-    let claseTextoBorder = "text-secondary border border-secondary";
 
     if (p === "1") {
         color = "danger";
         icono = "bi-exclamation-triangle-fill";
         texto = "Urgente";
-        claseTextoBorder = "text-danger border border-danger";
     } else if (p === "2") {
         color = "warning";
         icono = "bi-star-fill";
         texto = "Importante";
-        claseTextoBorder = "text-dark border border-warning"; // Texto oscuro para el amarillo
     } else if (p === "3") {
         color = "primary";
         icono = "bi-info-circle-fill";
         texto = "Informativo";
-        claseTextoBorder = "text-primary border border-primary";
     }
 
-    return { color, claseTextoBorder, icono, texto };
+    return { color, icono, texto };
 }
 
 // ============================================

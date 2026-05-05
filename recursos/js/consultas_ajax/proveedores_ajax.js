@@ -26,7 +26,7 @@ async function consultar() {
     const formatoProveedor = (cell) => {
         let nombre = cell.getValue() || "";
         nombre = nombre.charAt(0).toUpperCase() + nombre.slice(1);
-        return `<div class="d-flex align-items-center fw-bold text-dark">
+        return `<div class="d-flex align-items-center fw-bold">
                     <i class="bi bi-truck text-primary me-3 fs-5 opacity-75"></i> ${nombre}
                 </div>`;
     };
@@ -149,7 +149,9 @@ async function prepararFormulario(e) {
         form.querySelector('#direccion').value = data.direccion;
 
         document.getElementById('titulo_modal').textContent = 'Modificar Proveedor';
-        form.querySelector('#boton_formulario').textContent = 'Guardar Cambios';
+        document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-bag-dash");
+        // form.querySelector('#boton_formulario').textContent = 'Guardar Cambios';
+        document.getElementById('texto_boton_formulario').textContent = 'Guardar Cambios';
         form.querySelector('#boton_formulario').dataset.id = id;
 
         modal.show();
@@ -190,7 +192,8 @@ document.getElementById('modal_proveedores').addEventListener('hide.bs.modal', (
     form.reset();
     document.querySelectorAll('.is-valid, .is-invalid').forEach(el => el.classList.remove('is-valid', 'is-invalid'));
     document.getElementById('titulo_modal').textContent = 'Registrar Proveedor';
-    form.querySelector('#boton_formulario').textContent = 'Registrar';
+    document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-bag-plus");
+    document.getElementById('texto_boton_formulario').textContent = 'Guardar Proveedor';
     form.querySelector('#rif').setAttribute('disabled','');
     delete form.querySelector('#boton_formulario').dataset.id;
 });

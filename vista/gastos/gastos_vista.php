@@ -26,14 +26,14 @@
                 <main class="col ps-md-2 pt-2 mb-5">
 
                     <div class="page-header pt-3">
-                        <h2>GESTIONAR GASTOS</h2>
+                        <h2 id="titulo_pagina">GESTIONAR GASTOS</h2>
                     </div>
                     <p class="lead"></p>
                     <hr>
 
                     <div class="row mb-3">
                         <div class="col-12">
-                            <div class="card p-4">
+                            <div class="card p-4 shadow-lg">
                                 <div class="row">
                                     <div class="col-12 col-sm-6 mb-4">
                                         <?php require ROOT_PATH . "/vista/componentes/boton_nuevo.php"; ?>
@@ -43,7 +43,7 @@
                                     </div>
                                 </div>
 
-                                <div id="tabla_gastos"></div>
+                                <div id="tabla_gastos" class="tabla-sistema-haydee"></div>
                             </div>
                             
                         </div>
@@ -75,9 +75,9 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 
-                <div class="modal-body bg-light p-4">
+                <div class="modal-body rounded-bottom p-4">
                     
-                    <div class="bg-white p-3 mb-4 rounded border shadow-sm">
+                    <div class="p-3 mb-4 rounded border shadow-sm card-item">
                         <div class="row text-center g-3 align-items-center">
                             
                             <div class="col-md-4 border-end">
@@ -89,7 +89,7 @@
 
                             <div class="col-md-4 border-end">
                                 <span class="text-muted text-uppercase fw-bold d-block mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Categoría</span>
-                                <h6 id="vp_tipo_gasto" class="text-dark mb-0 fw-bold">---</h6>
+                                <h6 id="vp_tipo_gasto" class="mb-0 fw-bold">---</h6>
                             </div>
 
                             <div class="col-md-4">
@@ -100,24 +100,26 @@
                         </div>
                     </div>
 
-                    <div class="px-4 py-3 bg-white border rounded shadow-sm mb-4">
+                    <div class="px-4 py-3 border rounded shadow-sm mb-4 card-item">
                         <span class="text-muted text-uppercase fw-bold d-block mb-1" style="font-size: 0.75rem;"><i class="bi bi-card-text me-1"></i> Descripción General</span>
-                        <p id="vp_descripcion" class="mb-0 text-dark fst-italic" style="font-size: 0.9rem;">---</p>
+                        <p id="vp_descripcion" class="mb-0 fst-italic" style="font-size: 0.9rem;">---</p>
                     </div>
 
                     <div class="card border-0 shadow-sm">
-                        <div class="card-header bg-white border-bottom py-3">
-                            <h6 class="mb-0 fw-bold text-secondary"><i class="bi bi-list-check me-2"></i>Desglose de Pagos / Facturas</h6>
+                        <div class="card-header border-bottom py-3">
+                            <h6 class="mb-0 fw-bold"><i class="bi bi-list-check me-2"></i>Desglose de Pagos / Facturas</h6>
                         </div>
                         <div class="card-body p-0">
-                            <div id="tabla_detalles_gastos" class="tabla-sistema-haydee m-0 border-0 rounded-bottom"></div>
+                            <div id="tabla_detalles_gastos" class="tabla-vista-previa m-0 border-0 rounded-bottom"></div>
                         </div>
                     </div>
 
                 </div>
                 
-                <div class="modal-footer bg-white border-top justify-content-center">
-                    <button class="btn btn-secondary px-4" data-bs-dismiss="modal">Cerrar</button>
+                <div class="modal-footer border-top justify-content-center">
+                    <button type="button" class="btn btn-soft-secondary px-4" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-2"></i> Cerrar
+                    </button>
                 </div>
                 
             </div>
@@ -125,13 +127,13 @@
     </div>
     <div class="modal fade" id="modal_vista_previa_detalles" tabindex="-1" aria-labelledby="modal_vista_previa_label" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content">
+            <div class="modal-content border-0 shadow-lg">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title">Información del Detalle de Gasto</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"
                         aria-label="Cerrar"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body rounded-bottom">
                     <p><strong>Fecha:</strong> <span id="vista_fecha_detalles"></span></p>
                     <p><strong>Monto:</strong> <span id="vista_monto_detalles"></span></p>
                     <p><strong>Metodo de Pago:</strong> <span id="vista_metodo_pago_detalles"></span></p>

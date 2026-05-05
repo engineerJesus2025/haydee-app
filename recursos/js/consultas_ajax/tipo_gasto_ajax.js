@@ -18,8 +18,10 @@ document.querySelector(`#modal_tipo_gasto`).addEventListener("hide.bs.modal", ()
 	formulario_usar.reset();
 	boton_formulario.removeAttribute("modificar");
 	boton_formulario.removeAttribute("id_modificar");	
-	boton_formulario.textContent = "Registrar";
+	// boton_formulario.textContent = "Registrar";
+    document.getElementById('texto_boton_formulario').textContent = 'Guardar Tipo Gasto';
 	document.getElementById('titulo_modal').textContent = "Registrar Tipo de Gasto";	
+    document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-clipboard-plus");
 	
 	document.querySelectorAll('.is-valid').forEach(input => input.classList.remove('is-valid'));
 	document.querySelectorAll('.is-invalid').forEach(input => input.classList.remove('is-invalid'));
@@ -75,7 +77,7 @@ async function consultar() {
         
         const icono = obtenerIconoTipoGasto(nombre);
 
-        return `<div class="d-flex align-items-center text-dark">
+        return `<div class="d-flex align-items-center">
                     <i class="bi bi-${icono} text-primary me-3 opacity-75 fs-5"></i> 
                     <span class="fw-semibold">${nombre}</span>
                 </div>`;
@@ -161,8 +163,11 @@ async function prepararFormulario(e) {
 
     	boton_formulario.setAttribute("modificar", true);
     	boton_formulario.setAttribute("id_modificar", data.id_tipo_gasto);
-    	boton_formulario.textContent = "Guardar Cambios";
+    	// boton_formulario.textContent = "Guardar Cambios";
+        document.getElementById('texto_boton_formulario').textContent = 'Guardar Cambios';
     	document.getElementById('titulo_modal').textContent = "Modificar Tipo de Gasto";
+        document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-clipboard-pulse");
+
     	id_modificar = id;
 
         modal.show();

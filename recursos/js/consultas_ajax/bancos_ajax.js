@@ -23,8 +23,10 @@ document.querySelector("#modal_banco").addEventListener("hide.bs.modal", () => {
     formulario_usar.reset();
     boton_formulario.removeAttribute("modificar");
     boton_formulario.removeAttribute("id_modificar");
-    boton_formulario.textContent = "Guardar";
+    // boton_formulario.textContent = "Guardar";
+    document.getElementById('texto_boton_formulario').textContent = 'Guardar Banco';
     document.getElementById('titulo_modal').textContent = "Registrar Banco";
+    document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-bank");
     
     // Limpiar clases de validación
     formulario_usar.querySelectorAll('.is-valid').forEach(input => input.classList.remove('is-valid'));
@@ -57,7 +59,7 @@ async function consultar() {
         let nombre = cell.getValue() || "";
         // Forzamos primera letra mayúscula y el resto minúscula para estandarizar
         nombre = nombre.charAt(0).toUpperCase() + nombre.slice(1).toLowerCase();
-        return `<div class="d-flex align-items-center fw-bold text-dark">
+        return `<div class="d-flex align-items-center fw-bold">
                     <i class="bi bi-bank2 text-primary me-2 fs-5"></i> ${nombre}
                 </div>`;
     };
@@ -72,21 +74,9 @@ async function consultar() {
 
     // Formato para Tipo de Cuenta
     const formatoTipo = (cell) => {
-        let tipo = cell.getValue() || "";
-        let color = "secondary";
-        let icono = "bi-wallet2";
-
-        if (tipo.toLowerCase() === "corriente") {
-            color = "info"; // Azul claro
-            icono = "bi-briefcase-fill";
-        } else if (tipo.toLowerCase() === "ahorro") {
-            color = "success"; // Verde
-            icono = "bi-safe2-fill";
-        }
-
-        return `<span class="badge bg-${color} bg-opacity-10 text-${color} border border-${color} px-3 py-2 shadow-sm" style="font-size: .85rem;">
-                    <i class="bi ${icono} me-1"></i> ${tipo}
-                </span>`;
+        const config = obtenerConfigTipoCuenta(cell.getValue());
+        // Llamamos al helper y le pasamos los parámetros
+        return ComponentesUI.crearSoftBadge(config.color, config.icono, config.texto);
     };
 
     // Formato de Botones
@@ -165,7 +155,7 @@ async function consultar() {
 
 // Función que lee la memoria de Tabulator
 function mostrarVistaPrevia(data) {
-    // Formatear Nombre del Banco (Capitalizamos la primera letra)
+    // Formatear Nombre del Banco
     let nombreBanco = data.nombre_banco || 'N/A';
     if (nombreBanco !== 'N/A') {
         nombreBanco = nombreBanco.charAt(0).toUpperCase() + nombreBanco.slice(1).toLowerCase();
@@ -175,27 +165,14 @@ function mostrarVistaPrevia(data) {
     // Agregar el Código Bancario
     document.getElementById("vp_codigo").textContent = data.codigo || '---';
 
-    // Formatear Tipo de Cuenta
-    let tipo = data.tipo_cuenta || 'N/A';
-    let color = "secondary";
-    let icono = "bi-wallet2";
+    // Formatear Tipo de Cuenta usando el Helper
+    const config = obtenerConfigTipoCuenta(data.tipo_cuenta);
 
-    if (tipo.toLowerCase() === "corriente") {
-        color = "info";
-        icono = "bi-briefcase-fill";
-    } else if (tipo.toLowerCase() === "ahorro") {
-        color = "success";
-        icono = "bi-safe2-fill";
-    }
-
-    if (tipo !== 'N/A') {
-        // Usamos innerHTML para inyectar la etiqueta
-        document.getElementById("vp_tipo_cuenta").innerHTML = `
-            <span class="badge bg-${color} bg-opacity-10 text-${color} border border-${color} px-3 py-2 shadow-sm" style="font-size: 0.85rem;">
-                <i class="bi ${icono} me-1"></i> ${tipo}
-            </span>`;
+    if (config.texto !== 'N/A') {
+        // Inyectamos el componente limpio
+        document.getElementById("vp_tipo_cuenta").innerHTML = ComponentesUI.crearSoftBadge(config.color, config.icono, config.texto);
     } else {
-        document.getElementById("vp_tipo_cuenta").textContent = tipo;
+        document.getElementById("vp_tipo_cuenta").textContent = config.texto;
     }
 
     // Rellenar el resto de campos normalmente
@@ -242,8 +219,10 @@ async function prepararFormulario(e) {
 
         boton_formulario.setAttribute("modificar", true);
         boton_formulario.setAttribute("id_modificar", data.id_banco);
-        boton_formulario.textContent = "Guardar Cambios";
+        // boton_formulario.textContent = "Guardar Cambios";
+        document.getElementById('texto_boton_formulario').textContent = 'Guardar Cambios';
         document.getElementById('titulo_modal').textContent = "Modificar Banco";
+        document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-bank2");
 
         id_modificar = id;
         numero_cuenta_an = data.numero_cuenta;
@@ -324,29 +303,27 @@ async function eliminar(id) {
     });
 }
 
-// ============================================================
-// MÓDULO DE AYUDA - BANCOS
-// ============================================================
-// document.addEventListener('DOMContentLoaded', () => {
-//     // Usamos el Helper tal como usamos Tablas.cargarTabulador()
-//     AyudaInteractiva.inicializar({
-//         idModal: 'modal_banco',
-//         pasosPrincipal: [
-//             { element: '.page-header', popover: { title: 'Cuentas Bancarias', description: 'Aquí gestionas los bancos receptores donde el condominio recibe los pagos.', side: "bottom", align: 'center' } },
-//             { element: 'button[data-bs-target="#modal_banco"]', popover: { title: 'Registrar Banco', description: 'Agrega una nueva cuenta bancaria o billetera digital.', side: "bottom", align: 'start' } },
-//             { element: '#tabla_banco', popover: { title: 'Cuentas Activas', description: 'Listado de cuentas registradas.', side: "top", align: 'center' } }
-//         ],
-//         pasosModal: [
-//         { element: '#nombre_banco', popover: { title: 'Entidad Bancaria', description: 'Nombre del banco o plataforma (ej: Banco de Venezuela, Banesco, Binance).', side: 'bottom', align: 'start' } },
-//         { element: '#codigo', popover: { title: 'Código Bancario', description: 'Los primeros 4 dígitos que identifican al banco (ej: 0102).', side: 'bottom', align: 'start' } },
-//         { element: '#numero_cuenta', popover: { title: 'Número de Cuenta', description: 'El número completo de la cuenta o la dirección de la billetera/correo (si es Zelle/Paypal).', side: 'top', align: 'start' } },
-//         { element: '#tipo_cuenta', popover: { title: 'Tipo de Cuenta', description: 'El tipo de cuenta utilizado (si es Ahorro o Corriente).', side: 'top', align: 'start' } },
-//         { element: '#telefono_afiliado', popover: { title: 'Teléfono Afiliado', description: 'Número de teléfono asociado a la cuenta para validaciones de Pago Móvil.', side: 'top', align: 'start' } },
-//         { element: '#rif', popover: { title: 'Titular', description: 'Cédula o RIF del titular de la cuenta bancaria.', side: 'top', align: 'start' } },
-//         { element: '#boton_formulario', popover: { title: 'Guardar', description: 'Registra la cuenta para empezar a recibir operaciones.', side: 'top', align: 'center' } }
-//         ]
-//     });
-// });
+function obtenerConfigTipoCuenta(tipo) {
+    let texto = tipo || "N/A";
+    let color = "secondary";
+    let icono = "bi-wallet2";
+
+    const tipoLower = texto.toLowerCase();
+
+    if (tipoLower === "corriente") {
+        color = "info";
+        icono = "bi-briefcase-fill";
+    } else if (tipoLower === "ahorro") {
+        color = "success";
+        icono = "bi-safe2-fill";
+    } else if (tipoLower.includes("libre convertibilidad")) {
+        // para cuentas en divisas como Libre Convertibilidad USD/EUR (por si aplica en un futuro loco)
+        color = "warning"; 
+        icono = "bi-currency-exchange";
+    }
+
+    return { color, icono, texto };
+}
 
 
 // ============================================================

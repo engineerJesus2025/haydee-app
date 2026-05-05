@@ -44,14 +44,28 @@ class Sesiones
      */
     public static function verificarSesion()
     {
-        if (isset($_SESSION["usuario"])) {
+        if (self::estaLogueado()) {
             return true;
         }
 
+        // Si hay cookies de "recuérdame", intentamos recuperar la sesión
         if (isset($_COOKIE['token']) && isset($_COOKIE['correo_usuario'])) {
             return self::procesarTokenRecuerdame();
         }
 
+        // Si llegamos aquí, no hay sesión.
+        // Si es una petición POST (asumimos AJAX), devolvemos 401.
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            http_response_code(401);
+            header('Content-Type: application/json');
+            echo json_encode([
+                'estatus' => false, 
+                'mensaje' => 'Su sesión ha expirado. Por favor, inicie sesión de nuevo.'
+            ]);
+            exit;
+        }
+
+        // Si es una petición normal (GET), redirigimos al login
         self::redirigirALogin();
         return false;
     }
@@ -195,11 +209,9 @@ class Sesiones
         $permisoRequerido = null;
         $operacionNormalizada = strtolower($operacion);
 
-        // Verificamos si está en el mapa de operaciones especiales (tiene prioridad)
         if (array_key_exists($operacionNormalizada, $mapaExtra)) {
             $permisoRequerido = $mapaExtra[$operacionNormalizada];
         } else {
-            // Búsqueda por coincidencia de palabras clave
             if (strpos($operacionNormalizada, 'registrar') !== false) {
                 $permisoRequerido = REGISTRAR;
             } elseif (strpos($operacionNormalizada, 'modificar') !== false) {
@@ -209,16 +221,31 @@ class Sesiones
             }
         }
 
-        // Si se requiere un permiso, lo validamos internamente
         if ($permisoRequerido !== null) {
             if (!self::tienePermiso($moduloId, $permisoRequerido)) {
+                http_response_code(403); 
                 header('Content-Type: application/json');
                 echo json_encode([
                     'estatus' => false, 
-                    'mensaje' => 'No tienes permisos suficientes para realizar esta acción.'
+                    'mensaje' => 'No tiene permisos suficientes para realizar esta acción.'
                 ]);
-                exit; // Detenemos la ejecución inmediatamente para proteger el backend
+                exit;
             }
+        }
+    }
+
+    public static function validarMetodoHTTP($metodosPermitidos = ['GET', 'POST'])
+    {
+        $metodoActual = $_SERVER['REQUEST_METHOD'];
+        if (!in_array($metodoActual, $metodosPermitidos)) {
+            http_response_code(405);
+            header('Allow: ' . implode(', ', $metodosPermitidos));
+            header('Content-Type: application/json');
+            echo json_encode([
+                'estatus' => false, 
+                'mensaje' => "El método $metodoActual no está permitido para este recurso."
+            ]);
+            exit;
         }
     }
 }

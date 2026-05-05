@@ -25,6 +25,7 @@ return array(
     '5f6ea70646faeb1e98e0fc6d80552182' => $baseDir . '/config/modulos.php',
     '42e3dc2cf7383276e8c418f14b63f194' => $baseDir . '/config/config.php',
     '9bbd65f5b9ae3163acdb7bc7779b0c0a' => $baseDir . '/config/rutas.php',
+    '7aa9a3fb0622a4afb1cb3f4481e69913' => $baseDir . '/config/rutas_api.php',
     '67b75133d2937837a64ca4997df6eb0e' => $baseDir . '/config/config_menu.php',
     '5c23ce352d0b05ed532428adc6697491' => $baseDir . '/config/config_titulos.php',
 );

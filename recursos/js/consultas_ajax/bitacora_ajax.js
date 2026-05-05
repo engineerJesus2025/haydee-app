@@ -27,45 +27,35 @@ function formatoAccion(cell) {
     let accion;
     if (typeof cell.getValue === "function") {
         accion = (cell.getValue()).toLowerCase();
-    }
-    else {
-     accion = (cell).toLowerCase();
+    } else {
+        accion = (cell).toLowerCase();
     }
     
-    let color = "secondary";
+    // Por defecto
+    let colorClase = "badge-soft-secondary";
     let icono = "bi-activity";
 
-    // Asignación semántica de colores e íconos
+    // Asignación de nuestra nueva clase CSS y el ícono
     switch (accion) {
-        case 'consultar':      color = "info";    icono = "bi-search"; break;
-        case 'registrar':      color = "primary"; icono = "bi-plus-circle-fill"; break;
-        case 'modificar':      color = "success"; icono = "bi-pencil-fill"; break;
-        case 'eliminar':       color = "danger";  icono = "bi-trash-fill"; break;
-        case 'iniciar sesion': color = "iniciar-sesion"; icono = "bi-box-arrow-in-right"; break;
-        case 'cerrar sesion':  color = "secondary"; icono = "bi-box-arrow-left"; break;
-        case 'descargar':      color = "warning";    icono = "bi-download"; break;
-        case 'respaldar':      color = "indigo"; icono = "bi-database-down"; break;
-        case 'restaurar':      color = "teal"; icono = "bi-database-up"; break;
+        case 'consultar':      colorClase = "badge-soft-info";           icono = "bi-search"; break;
+        case 'registrar':      colorClase = "badge-soft-primary";        icono = "bi-plus-circle-fill"; break;
+        case 'modificar':      colorClase = "badge-soft-success";        icono = "bi-pencil-fill"; break;
+        case 'eliminar':       colorClase = "badge-soft-danger";         icono = "bi-trash-fill"; break;
+        case 'iniciar sesion': colorClase = "badge-soft-iniciar-sesion"; icono = "bi-box-arrow-in-right"; break;
+        case 'cerrar sesion':  colorClase = "badge-soft-secondary";      icono = "bi-box-arrow-left"; break;
+        case 'descargar':      colorClase = "badge-soft-warning";        icono = "bi-download"; break;
+        case 'respaldar':      colorClase = "badge-soft-indigo";         icono = "bi-database-down"; break;
+        case 'restaurar':      colorClase = "badge-soft-teal";           icono = "bi-database-up"; break;
     }
 
     // Capitalizar la primera letra ("Iniciar sesion", "Registrar")
     const texto = accion.charAt(0).toUpperCase() + accion.slice(1);
 
-    let claseTextoBorder;
-    if (["primary", "success", "danger", "teal"].includes(color)) {
-        claseTextoBorder = `text-${color} border border-${color}`;
-    }
-    else if (["warning", "info", "secondary"].includes(color)) {
-        claseTextoBorder = `text-dark border border-${color}`;
-    }
-    else if (["iniciar-sesion", "indigo"].includes(color)) {
-        claseTextoBorder = `border border-dark`;
-    }
-
-    return `<span class="badge bg-${color} bg-opacity-10 ${claseTextoBorder} px-3 py-2 shadow-sm text-nowrap" style="font-size: .85rem;">
+    // Retornamos el HTML súper limpio consumiendo nuestra clase
+    return `<span class="badge ${colorClase} px-3 py-2 shadow-sm text-nowrap" style="font-size: .85rem;">
                 <i class="bi ${icono} me-1"></i> ${texto}
             </span>`;
-};
+}
 
 // Función para mostrar el detalle en el modal
 function mostrarDetalle(rowData) {
@@ -140,9 +130,9 @@ function mostrarDetalle(rowData) {
             try { detalles = JSON.parse(rowData.valores_nuevos || '{}'); } catch(e) {}
 
             let contenidoHtml = `
-                <div class="border rounded-3 p-4 bg-light shadow-sm">
+                <div class="border rounded-3 p-4 shadow-sm card-item">
                     <div class="d-flex align-items-center mb-4 border-bottom pb-3">
-                        <div class="bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 45px; height: 45px;">
+                        <div class="bg-warning rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 45px; height: 45px;">
                             <i class="bi bi-file-earmark-text-fill fs-4"></i>
                         </div>
                         <div>
@@ -158,7 +148,7 @@ function mostrarDetalle(rowData) {
                 contenidoHtml += `
                     <div class="col-sm-6">
                         <p class="mb-0 text-muted" style="font-size: 0.75rem;">${etiqueta}</p>
-                        <p class="mb-0 fw-bold text-dark">${valor || 'N/A'}</p>
+                        <p class="mb-0 fw-bold">${valor || 'N/A'}</p>
                     </div>
                 `;
             }
@@ -224,7 +214,7 @@ function consultar() {
         let rol = cell.getData().nombre_rol; 
         const configRol = obtenerConfigRolBitacora(rol);
 
-        return `<div class="d-flex align-items-center fw-bold text-dark">
+        return `<div class="d-flex align-items-center fw-bold">
                     <i class="bi ${configRol.icono} ${configRol.claseIcono} me-2 fs-5 opacity-75" data-tooltip="true" title="Rol: ${configRol.texto}"></i> ${nombre}
                 </div>`;
     };

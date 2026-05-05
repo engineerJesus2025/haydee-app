@@ -3,9 +3,11 @@ use haydee\servicios\Sesiones;
 use haydee\modelo\Notificaciones;
 use haydee\ayuda\Validador;
 
+Sesiones::validarMetodoHTTP(['GET', 'POST']);
 Sesiones::verificarSesion();
 
 if (isset($_POST["operacion"])) {
+    header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
 
     Sesiones::verificarPermisoAccion(GESTIONAR_ANIO_FISCAL, $operacion);
@@ -22,6 +24,8 @@ if (isset($_POST["operacion"])) {
         $validador->validarConjunto($_POST, $reglas);
 
         if ($validador->tieneErrores()) {
+            $codigoHttp = $validador->tieneError404() ? 404 : 400;
+            http_response_code($codigoHttp);
             echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
             exit;
         }
@@ -39,10 +43,13 @@ if (isset($_POST["operacion"])) {
         switch ($operacion) {
             case 'consultar':
                 $respuesta = $notificaciones->realizar_consulta('consultar_mis_notificaciones');
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 break;
 
             case 'marcar_como_leido':
                 $respuesta = $notificaciones->realizar_consulta('marcar_leida');
+
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
                     // Eliminar la notificación de la sesión
                     if (isset($_SESSION['notificaciones']) && is_array($_SESSION['notificaciones'])) {
@@ -61,22 +68,25 @@ if (isset($_POST["operacion"])) {
 
             case 'marcar_todas_leidas':
                 $respuesta = $notificaciones->realizar_consulta('marcar_todas_leidas');
+
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
                     $_SESSION['notificaciones'] = [];
                 }
                 break;
 
             default:
+                http_response_code(400);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
     } catch (Exception $e) {
+        http_response_code(500);
         error_log("Error en controlador notificaciones: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
         if ($respuesta !== null) {
             if (isset($notificaciones)) { $notificaciones->cerrar(); }
 
-            header('Content-Type: application/json');
             echo json_encode($respuesta);
             exit;
         }

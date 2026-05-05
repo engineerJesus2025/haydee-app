@@ -1,29 +1,31 @@
 <div class="modal fade" id="modal_solicitud_gasto" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content">
+        <div class="modal-content border-0 shadow-lg">
             <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="titulo_modal">Registrar
-                    Solicitud de
-                    Gasto</h5>
+                <h1 class="modal-title fs-5">
+                    <i class="bi bi-send-plus" id="icono_titulo_modal"></i>
+                    <span class="ms-2" id="titulo_modal">Registrar Solicitud de
+                    Gasto</span>
+                </h1>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                     aria-label="Close"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body rounded-bottom">
                 <form id="form_solicitud_gasto" enctype="multipart/form-data">
                     <div class="container mt-4">
 
                         <!-- Fila 0: Selector de Mes y Año -->
                         <div class="row mb-3">
                             <div class="col-md-6 mb-3">
-                                <label for="selector_mes">Mes del presupuesto <spam class="text-danger">*</spam></label>
-                                <select class="border border-dark form-select" id="selector_mes" required>
+                                <label for="selector_mes">Mes del presupuesto <span class="text-danger">*</span></label>
+                                <select class="form-select" id="selector_mes" required>
                                     <option selected="" hidden value="">Seleccione mes</option>
                                 </select>
                                 <span class="w-100 invalid-feedback"></span>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="selector_anio">Año del presupuesto <spam class="text-danger">*</spam></label>
-                                <select class="border border-dark form-select" id="selector_anio" required>
+                                <label for="selector_anio">Año del presupuesto <span class="text-danger">*</span></label>
+                                <select class="form-select" id="selector_anio" required>
                                     <option selected="" hidden value="">Seleccione año</option>
                                 </select>
                                 <span class="w-100 invalid-feedback"></span>
@@ -50,18 +52,18 @@
                             <!-- Fecha + Nombre -->
                             <div class="row mb-3">
                                 <div class="col-md-6 mb-3">
-                                    <label for="fecha_reporte">Fecha de la solicitud <spam class="text-danger">*</spam></label>
+                                    <label for="fecha_reporte">Fecha de la solicitud <span class="text-danger">*</span></label>
                                     <div class="input-group">
-                                        <span class="border border-primary input-group-text"><i class="bi bi-calendar-event"></i></span>
-                                        <input type="date" class="border border-dark rounded-end form-control" name="fecha_reporte" id="fecha_reporte" required>
+                                        <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
+                                        <input type="date" class="rounded-end form-control" name="fecha_reporte" id="fecha_reporte" required>
                                         <span class="w-100 invalid-feedback"></span>
                                     </div>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label for="nombre_solicitante">Nombre del Solicitante <spam class="text-danger">*</spam></label>
+                                    <label for="nombre_solicitante">Nombre del Solicitante <span class="text-danger">*</span></label>
                                     <div class="input-group">
-                                        <span class="border border-primary input-group-text"><i class="bi bi-person"></i></span>
-                                        <input type="text" class="border border-dark rounded-end form-control" name="nombre_solicitante" id="nombre_solicitante" placeholder="Ejem: Raul" minlength="3" maxlength="40" required>
+                                        <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                        <input type="text" class="rounded-end form-control" name="nombre_solicitante" id="nombre_solicitante" placeholder="Ejem: Raul" minlength="3" maxlength="40" required>
                                         <span class="w-100 invalid-feedback"></span>
                                     </div>
                                 </div>
@@ -70,18 +72,18 @@
                             <!-- Monto + Prioridad -->
                             <div class="row mb-3">
                                 <div class="col-md-6 mb-3">
-                                    <label for="monto_estimado">Monto Estimado <spam class="text-danger">*</spam></label>
+                                    <label for="monto_estimado">Monto Estimado <span class="text-danger">*</span></label>
                                     <div class="input-group">
-                                        <span class="border border-primary input-group-text"><i class="bi bi-currency-dollar"></i></span>
-                                        <input type="number" step="0.01" min="0" class="border border-dark rounded-end form-control" name="monto_estimado" id="monto_estimado" maxlength="12" placeholder="0" required>
+                                        <span class="input-group-text"><i class="bi bi-currency-dollar"></i></span>
+                                        <input type="number" step="0.01" min="0" class="rounded-end form-control" name="monto_estimado" id="monto_estimado" maxlength="12" placeholder="0" required>
                                         <span class="w-100 invalid-feedback"></span>
                                     </div>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label for="prioridad">Prioridad <spam class="text-danger">*</spam></label>
+                                    <label for="prioridad">Prioridad <span class="text-danger">*</span></label>
                                     <div class="input-group">
-                                        <span class="border border-primary input-group-text"><i class="bi bi-exclamation-triangle"></i></span>
-                                        <select class="border border-dark rounded-end form-select" name="prioridad" id="prioridad" required>
+                                        <span class="input-group-text"><i class="bi bi-exclamation-triangle"></i></span>
+                                        <select class="rounded-end form-select" name="prioridad" id="prioridad" required>
                                             <option value="" disabled selected>Seleccione prioridad</option>
                                             <option value="1">Alta</option>
                                             <option value="2">Media</option>
@@ -95,19 +97,25 @@
                             <!-- Descripción -->
                             <div class="row mb-3">
                                 <div class="col-md-12 mb-3">
-                                    <label for="descripcion_necesidad">Descripción <spam class="text-danger">*</spam></label>
+                                    <label for="descripcion_necesidad">Descripción <span class="text-danger">*</span></label>
                                     <div class="input-group">
-                                        <span class="border border-primary input-group-text"><i class="bi bi-card-text"></i></span>
-                                        <textarea name="descripcion_necesidad" id="descripcion_necesidad" class="border border-dark rounded-end form-control" rows="3" placeholder="Describa la solicitud..." minlength="3" maxlength="60" required></textarea>
+                                        <span class="input-group-text"><i class="bi bi-card-text"></i></span>
+                                        <textarea name="descripcion_necesidad" id="descripcion_necesidad" class="rounded-end form-control" rows="3" placeholder="Describa la solicitud..." minlength="3" maxlength="60" required></textarea>
                                         <span class="w-100 invalid-feedback"></span>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Botón -->
-                            <div class="row mt-4">
-                                <div class="col-md-12 text-center">
-                                    <button class="btn btn-primary" type="submit" id="boton_formulario">Guardar</button>
+                            <div class="row mt-5 mb-2">
+                                <div class="col-md-12 text-end"> 
+                                    <button type="button" class="btn btn-soft-secondary me-3" data-bs-dismiss="modal">
+                                        <i class="bi bi-x-circle me-2"></i> Cancelar
+                                    </button>
+                                    <button class="btn btn-primary px-3 shadow-sm" type="submit" id="boton_formulario">
+                                        <i class="bi bi-check2-circle me-2"></i>
+                                        <span id="texto_boton_formulario">Guardar Solicitud</span>
+                                    </button>
                                 </div>
                             </div>
                         </div>

@@ -7,6 +7,7 @@
     <?php
     require_once ROOT_PATH . "/vista/componentes/estilos.php";
     ?>
+    <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/reportes.css">
 </head>
 
 <body id="body-pd" class="body-pd">
@@ -29,27 +30,27 @@
                     </div>
                     <p class="lead"></p>
                     <hr>
-                    <div class="row">
+                    <div class="row g-4">
                         <div class="col-lg-3 col-md-6">
-                            <div class="card mb-3 shadow contenedor_reportes" title="Reportes de Ingresos y Egresos">
-                                <a href="?pagina=reportes&accion=ingreso_egreso" class="text-decoration-none text-black">
-                                    <div class="card-header text-center bg-white border-bottom-0 p-0">
-                                        <i class="bi-graph-up" style="font-size: 5rem !important;"></i>
+                            <div class="card tarjeta-reporte h-100 shadow-sm contenedor_reportes" title="Reportes de Ingresos y Egresos">
+                                <a href="?pagina=reportes&accion=ingreso_egreso" class="text-decoration-none text-reset w-100 h-100 p-4">
+                                    <div class="text-center mb-3">
+                                        <i class="bi bi-graph-up" style="font-size: 4rem !important;"></i>
                                     </div>
-                                    <div class="card-body text-center p-0 mb-3">
-                                        <p class="card-title fw-bold">Reportes De Ingresos y Egresos</p>
+                                    <div class="text-center p-0">
+                                        <p class="card-title fw-bold mb-0">Ingresos y Egresos</p>
                                     </div>
                                 </a>
                             </div>
                         </div>
                         <div class="col-lg-3 col-md-6">
-                            <div class="card mb-3 shadow contenedor_reportes" title="Reportes de Habitantes">
-                                <a href="?pagina=reportes&accion=habitantes" class="text-decoration-none text-black">
-                                    <div class="card-header text-center bg-white border-bottom-0 p-0">
-                                        <i class="bi-people-fill" style="font-size: 5rem !important;"></i>
+                            <div class="card tarjeta-reporte h-100 shadow-sm contenedor_reportes" title="Reportes de Habitantes">
+                                <a href="?pagina=reportes&accion=habitantes" class="text-decoration-none text-reset w-100 h-100 p-4">
+                                    <div class="text-center mb-3">
+                                        <i class="bi bi-people-fill" style="font-size: 4rem !important;"></i>
                                     </div>
-                                    <div class="card-body text-center p-0 mb-3">
-                                        <p class="card-title fw-bold">Reportes De Habitantes</p>
+                                    <div class="text-center p-0">
+                                        <p class="card-title fw-bold mb-0">Reportes de Habitantes</p>
                                     </div>
                                 </a>
                             </div>

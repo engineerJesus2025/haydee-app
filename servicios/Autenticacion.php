@@ -141,7 +141,6 @@ class Autenticacion
 
     /**
      * Normaliza los datos del usuario para la sesión.
-     * MEJORA: Ya no hace consultas a la BD. Es una simple función de mapeo.
      */
     private function normalizarDatosUsuario($usuario, $permisos = [], $notificaciones = [])
     {

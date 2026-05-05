@@ -1,55 +1,64 @@
+/* =========================================================
+   INPUT GROUP DE CONTRASEÑA (Adaptable a Dark Mode)
+   ========================================================= */
+
 .contra-input {
-    border-right: none;
+    border-right: none !important;
 }
 
 .contra-btn {
-    border: var(--bs-border-width) solid var(--bs-border-color);
+    border: var(--bs-border-width) solid var(--ch-input-border);
     border-left: none;
-    background-color: white;
-    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    background-color: var(--ch-card-bg, var(--bs-body-bg));
+    color: var(--bs-body-color);
+    transition: all 0.2s ease-in-out;
 }
 
 .contra-btn:hover {
     cursor: pointer;
-    background-color: #f8f9fa;
+    background-color: var(--ch-header-hover);
+    color: var(--bs-primary);
 }
 
-/* Estados de validación */
+/* --- Validación normal --- */
 .contra-input.is-valid ~ .contra-btn {
     border-color: var(--bs-success);
     color: var(--bs-success);
 }
-
 .contra-input.is-invalid ~ .contra-btn {
     border-color: var(--bs-danger);
     color: var(--bs-danger);
 }
 
-/* Efecto de foco combinado */
+/* --- Foco combinado (comportamiento unificado) --- */
 .contra-input:focus {
-    box-shadow: -0.2rem 0 0 0.18rem rgba(13,110,253,.25);
+    box-shadow: none;
+    border-color: var(--bs-primary);
     z-index: 3;
 }
-
 .contra-input:focus ~ .contra-btn {
-    box-shadow: 0.22rem 0 0 0.18rem rgba(13,110,253,.25);
-    border-color: #86b7fe;
+    border-color: var(--bs-primary);
+    box-shadow: 0.15rem 0 0 0.15rem rgba(var(--bs-primary-rgb), 0.25);
     z-index: 3;
 }
 
-/* Colores según validación en foco */
+/* Validación + Foco (quitamos sombra izquierda, borde correcto) */
+:is(.contra-input.is-valid:focus, .contra-input.is-invalid:focus) {
+    box-shadow: none;
+}
+
 .contra-input.is-valid:focus {
-    box-shadow: -0.2rem 0 0 0.18rem rgba(var(--bs-success-rgb),.25);
+    border-color: var(--bs-success);
 }
 .contra-input.is-valid:focus ~ .contra-btn {
-    box-shadow: 0.22rem 0 0 0.18rem rgba(var(--bs-success-rgb),.25);
     border-color: var(--bs-success);
+    box-shadow: 0.15rem 0 0 0.15rem rgba(var(--bs-success-rgb), 0.25);
 }
 
 .contra-input.is-invalid:focus {
-    box-shadow: -0.2rem 0 0 0.18rem rgba(var(--bs-danger-rgb),.25);
+    border-color: var(--bs-danger);
 }
 .contra-input.is-invalid:focus ~ .contra-btn {
-    box-shadow: 0.22rem 0 0 0.18rem rgba(var(--bs-danger-rgb),.25);
     border-color: var(--bs-danger);
+    box-shadow: 0.15rem 0 0 0.15rem rgba(var(--bs-danger-rgb), 0.25);
 }

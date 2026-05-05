@@ -16,14 +16,14 @@
                 <?php require_once ROOT_PATH . "/vista/componentes/header.php"; ?>
                 <main class="col ps-md-2 pt-2 mb-5">
                     <div class="page-header pt-3">
-                        <h2>GESTIONAR MÓDULOS</h2>
+                        <h2 id="titulo_pagina">GESTIONAR MÓDULOS</h2>
                     </div>
                     <p class="lead"></p>
                     <hr>
 
                     <div class="row mb-3">
                         <div class="col-12">
-                            <div class="card p-4">
+                            <div class="card p-4 shadow-lg">
                                 <div class="row">
                                     <div class="col-12 col-sm-6 mb-4">
                                         <?php require ROOT_PATH . "/vista/componentes/boton_nuevo.php"; ?>

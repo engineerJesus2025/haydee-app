@@ -2,43 +2,34 @@ let tabla_apartamentos;
 let data_table_habitantes;
 let id_apartamento_seleccionado;
 
-// ============================================
-// FORMATOS VISUALES GLOBALES
-// ============================================
-// ============================================
-// FORMATOS VISUALES GLOBALES
-// ============================================
 const FormatosVisuales = {
-    // 1. Número de apartamento más limpio y con ícono
-    nro: (valor) => `<div class="d-flex align-items-center fw-bold text-dark">
+    // Número de apartamento más limpio y con ícono
+    nro: (valor) => `<div class="d-flex align-items-center fw-bold">
                         <i class="bi bi-door-closed text-primary me-2 fs-5"></i> ${valor}
                      </div>`,
 
-    // 2. Participación con contexto visual
+    // Participación con contexto visual
     porcentaje: (valor) => `<span class="text-muted fw-semibold">
                                 <i class="bi bi-pie-chart-fill me-1 opacity-50"></i> ${valor}%
                             </span>`,
 
+    // Servicios (Gas, Agua, etc.)
     tiene: (valor) => {
         if (valor == 1) {
-            return `<span class="badge bg-success"><i class="bi bi-check-circle"></i> TIENE</span>`;
+            return ComponentesUI.crearSoftBadge('success', 'bi-check-circle', 'TIENE');
         } else {
-            return `<span class="badge bg-danger"><i class="bi bi-x-circle"></i> NO TIENE</span>`;
+            return ComponentesUI.crearSoftBadge('danger', 'bi-x-circle', 'NO TIENE');
         }
     },
 
-    // 3. Badges de estado de ocupación semánticos
+    // Estado de ocupación (Alquilado/Propietario)
     siNo: (valor) => {
         if (valor == 1) {
             // Alquilado: Azul suave (Primary)
-            return `<span class="badge bg-primary bg-opacity-10 text-primary border border-primary px-3 py-2 shadow-sm" style="font-size: .85rem;">
-                        <i class="bi bi-key-fill me-1"></i> Alquilado
-                    </span>`;
+            return ComponentesUI.crearSoftBadge('primary', 'bi-key-fill', 'Alquilado');
         } else {
-            // Propietario: Gris suave (Secondary) o un tono oscuro sutil
-            return `<span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary px-3 py-2 shadow-sm" style="font-size: .85rem;">
-                        <i class="bi bi-house-door-fill me-1"></i> Propietario
-                    </span>`;
+            // Propietario: Gris suave (Secondary)
+            return ComponentesUI.crearSoftBadge('secondary', 'bi-house-door-fill', 'Propietario');
         }
     }
 };
@@ -186,7 +177,9 @@ async function prepararEdicion(e) {
         nro_apartamento_an = apto.nro_apartamento;
 
         document.getElementById('titulo_modal').textContent = 'Modificar Apartamento';
-        btnFormulario.textContent = 'Guardar Cambios';
+        document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-building-gear");
+        // btnFormulario.textContent = 'Guardar Cambios';
+        document.getElementById('texto_boton_formulario').textContent = 'Guardar Cambios';
         btnFormulario.dataset.id = id;
 
         modalApartamento.show();
@@ -221,7 +214,8 @@ document.getElementById('modal_apartamentos').addEventListener('hide.bs.modal', 
     formApartamento.reset();
     delete btnFormulario.dataset.id;
     document.getElementById('titulo_modal').textContent = 'Registrar Apartamento';
-    btnFormulario.textContent = 'Guardar';
+    document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-building-add");
+    document.getElementById('texto_boton_formulario').textContent = 'Guardar Apartamento';
     document.querySelectorAll('.is-valid, .is-invalid').forEach(el => el.classList.remove('is-valid', 'is-invalid'));
 });
 
@@ -378,7 +372,8 @@ async function prepararEdicionHabitante(e) {
         tipo_vinculo_an = data.tipo_vinculo;
 
         document.getElementById('titulo_modal_habitantes').textContent = 'Modificar Habitante';
-        btnFormularioHabitante.textContent = 'Guardar Cambios';
+        document.getElementById("icono_titulo_modal_habitantes").setAttribute("class","bi bi-person-gear");
+        document.getElementById("texto_boton_formulario_habitantes").textContent = 'Guardar Cambios';
         btnFormularioHabitante.dataset.id = id;
         formHabitantes.querySelector('#cedula').removeAttribute('disabled');
     });
@@ -445,7 +440,8 @@ document.getElementById('modal_habitantes').addEventListener('hide.bs.modal', ()
     formHabitantes.querySelector('#cedula').setAttribute('disabled', '');
     delete btnFormularioHabitante.dataset.id;
     document.getElementById('titulo_modal_habitantes').textContent = 'Registrar Habitante';
-    btnFormularioHabitante.textContent = 'Guardar';
+    document.getElementById("icono_titulo_modal_habitantes").setAttribute("class","bi bi-person-plus");
+    document.getElementById("texto_boton_formulario_habitantes").textContent = 'Guardar Habitante';
     document.querySelectorAll('.is-valid, .is-invalid').forEach(el => el.classList.remove('is-valid', 'is-invalid'));
 
     // Resetear variables globales

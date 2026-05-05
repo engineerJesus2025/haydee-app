@@ -53,9 +53,7 @@ async function consultar() {
     const formatoNombre = (cell) =>{
         const config = obtenerConfigPermiso(cell.getValue());
 
-        return `<span class="badge bg-${config.color} bg-opacity-10 ${config.claseTextoBorder} px-3 py-2 shadow-sm text-nowrap" style="font-size: 0.9rem;">
-                    <i class="bi bi-${config.icono} me-1"></i> ${config.nombreLimpio}
-                </span>`;
+        return ComponentesUI.crearSoftBadge(config.colorClase, config.icono, config.nombreLimpio);
     }
 
     const columnas = [
@@ -121,8 +119,9 @@ async function prepararFormulario(e) {
 
         botonFormulario.setAttribute('modificar', true);
         botonFormulario.setAttribute('id_modificar', permiso.id_permiso);
-        botonFormulario.textContent = 'Guardar Cambios';
+        document.getElementById('texto_boton_formulario').textContent = 'Guardar Cambios';
         document.getElementById('titulo_modal').textContent = 'Modificar Permiso';
+        document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-shield-lock");
         id_modificar = permiso.id_permiso;
 
         modalPermiso.show();
@@ -181,36 +180,31 @@ function resetModal() {
     formulario.reset();
     botonFormulario.removeAttribute('modificar');
     botonFormulario.removeAttribute('id_modificar');
-    botonFormulario.textContent = 'Guardar';
+    document.getElementById('texto_boton_formulario').textContent = 'Guardar Permiso';
     document.getElementById('titulo_modal').textContent = 'Registrar Permiso';
+    document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-shield-plus");
     id_modificar = null;
     document.getElementById('id_permiso').value = '';
 }
 
-// Función centralizada para la identidad visual de las acciones
 function obtenerConfigPermiso(nombre) {
     const permiso = (nombre || "").toLowerCase().trim();
-    let color = "secondary";
-    let icono = "key-fill"; // Ícono por defecto
+    
+    // Por defecto
+    let colorClase = "badge-soft-secondary";
+    let icono = "bi-key-fill"; 
 
     // Mapeo idéntico al de la Bitácora
     switch (permiso) {
-        case 'consultar': color = "info";    icono = "search"; break;
-        case 'registrar': color = "primary"; icono = "plus-circle-fill"; break;
-        case 'modificar': color = "success"; icono = "pencil-fill"; break;
-        case 'eliminar':  color = "danger";  icono = "trash-fill"; break;
+        case 'consultar': colorClase = "info";    icono = "bi-search"; break;
+        case 'registrar': colorClase = "primary"; icono = "bi-plus-circle-fill"; break;
+        case 'modificar': colorClase = "success"; icono = "bi-pencil-fill"; break;
+        case 'eliminar':  colorClase = "danger";  icono = "bi-trash-fill"; break;
     }
     
-    // Ajuste de legibilidad para el amarillo
-    let claseTextoBorder = (color === 'warning') 
-    ? "text-dark border border-warning" 
-    : (color === 'info') ? "text-dark border border-info" 
-    : `text-${color} border border-${color}`;
-    
     return { 
-        color, 
+        colorClase, 
         icono, 
-        claseTextoBorder, 
         nombreLimpio: permiso.charAt(0).toUpperCase() + permiso.slice(1) 
     };
 }

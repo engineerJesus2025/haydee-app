@@ -1,6 +1,5 @@
 /**
  * Script AJAX para el perfil de usuario
- * Dependencias: utilidades.js (objeto Utilidades), validaciones.js (objeto Validaciones)
  */
 
 let correo_an; // Para comparar en edición
@@ -104,10 +103,10 @@ async function llenarCardUsuario() {
     Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
         const usuario = respuestaServidor.datos;
         
-        // 1. Obtenemos toda la configuración visual de una sola vez
+        // Obtenemos toda la configuración visual de una sola vez
         const configRol = obtenerConfigRol(usuario.nombre_rol);
 
-        // --- 2. LÓGICA DE AVATAR VISUAL (Sincronizado con el Rol) ---
+        // --- AVATAR VISUAL ---
         const inicialNombre = usuario.nombre_usuario.charAt(0).toUpperCase();
         const inicialApellido = usuario.apellido.charAt(0).toUpperCase();
         const iniciales = `${inicialNombre}${inicialApellido}`;
@@ -119,7 +118,7 @@ async function llenarCardUsuario() {
         // Le aplicamos el color base del rol al fondo del avatar
         contenedorAvatar.classList.add(`bg-${configRol.color}`);
         
-        // Ajustamos el texto del avatar para que no se pierda en colores claros (amarillo/info)
+        // Ajustamos el texto del avatar para que no se pierda en colores claro
         contenedorAvatar.classList.remove('text-white', 'text-dark');
         if(configRol.color === 'warning' || configRol.color === 'info') {
             contenedorAvatar.classList.add('text-dark');
@@ -127,7 +126,7 @@ async function llenarCardUsuario() {
             contenedorAvatar.classList.add('text-white');
         }
 
-        // --- 3. INYECCIÓN DE DATOS TEXTUALES ---
+        // --- INYECCIÓN DE DATOS TEXTUALES ---
         document.getElementById('titulo_nombre').textContent = `${usuario.nombre_usuario} ${usuario.apellido}`;
         document.getElementById('p_nombre').textContent = usuario.nombre_usuario;
         document.getElementById('p_apellido').textContent = usuario.apellido;
@@ -136,19 +135,16 @@ async function llenarCardUsuario() {
 
         correo_an = usuario.correo;
 
-        // --- 4. INYECCIÓN DEL SOFT BADGE (Etiqueta del Rol) ---
+        // --- INYECCIÓN DEL SOFT BADGE (Etiqueta del Rol) ---
         const rolContainer = document.getElementById('rol_container');
         rolContainer.className = "mb-4"; // Limpiar clases viejas
-        rolContainer.innerHTML = `
-            <span class="badge bg-${configRol.color} bg-opacity-10 ${configRol.claseTextoBorder} px-3 py-2 shadow-sm" style="font-size: 0.95rem;">
-                <i class="bi ${configRol.icono} ${configRol.claseIcono} me-1"></i> ${configRol.texto}
-            </span>`;
+        rolContainer.innerHTML = ComponentesUI.crearSoftBadge(configRol.color, configRol.icono, configRol.texto);
 
         // Habilitar botón de modificar
         document.getElementById('boton_modificar').removeAttribute('disabled');
         document.getElementById('boton_modificar').innerHTML = '<i class="bi bi-pencil me-1"></i> Modificar';
 
-        // --- 5. ANIMACIÓN DE ENTRADA (FADE IN) ---
+        // --- ANIMACIÓN DE ENTRADA (FADE IN) ---
         const elementosAAnimar = [
             'contenedor_avatar', 'titulo_nombre', 'rol_container', 
             'ultimo_acceso', 'p_nombre', 'p_apellido', 'p_correo'
@@ -158,7 +154,7 @@ async function llenarCardUsuario() {
             let el = document.getElementById(id);
             if(el) {
                 el.classList.remove('animacion-aparecer');
-                void el.offsetWidth; // Truco de JS para forzar reinicio de la animación
+                void el.offsetWidth; // Truco malandro de JS para forzar reinicio de la animación
                 el.classList.add('animacion-aparecer');
             }
         });
@@ -178,7 +174,7 @@ function llenarTablaNotificaciones() {
         
         if (row.leido == 0) {
             // No leída: Texto oscuro, negrita y puntito rojo
-            return `<div class="d-flex align-items-center fw-bold text-dark">
+            return `<div class="d-flex align-items-center fw-bold">
                         <span class="bg-danger rounded-circle d-inline-block me-3 shadow-sm" style="width: 8px; height: 8px;"></span>
                         ${titulo}
                     </div>`;
@@ -195,13 +191,9 @@ function llenarTablaNotificaciones() {
     const formatoLeido = (cell) => {
         const leido = cell.getValue();
         if (leido == 1) {
-            return `<span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary px-3 py-2 shadow-sm">
-                        <i class="bi bi-check2-all me-1"></i> Leída
-                    </span>`;
+            return ComponentesUI.crearSoftBadge('secondary', 'bi-check2-all', 'Leída');
         } else {
-            return `<span class="badge bg-primary bg-opacity-10 text-primary border border-primary px-3 py-2 shadow-sm">
-                        <i class="bi bi-envelope-exclamation-fill me-1"></i> Nueva
-                    </span>`;
+            return ComponentesUI.crearSoftBadge('primary', 'bi-envelope-exclamation-fill', 'Nueva');
         }
     };
 
@@ -214,10 +206,10 @@ function llenarTablaNotificaciones() {
     // Definición de Columnas
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center" },
-        { title: "Título", field: "titulo", formatter: formatoTitulo, minWidth: 150, responsive: 0 },
-        { title: "Descripción", field: "descripcion", minWidth: 300 },
-        { title: "Fecha", field: "fecha", formatter: (cell) => FormatoFechas.formatoUsuario(cell.getValue()), minWidth: 50 },
-        { title: "Leído", field: "leido", formatter: formatoLeido, minWidth: 50, hozAlign: "center", headerHozAlign: "center" },
+        { title: "Título", field: "titulo", formatter: formatoTitulo, minWidth: 190, responsive: 0, widthGrow: 2 },
+        { title: "Descripción", field: "descripcion", minWidth: 280, widthGrow: 2 },
+        { title: "Fecha", field: "fecha", formatter: (cell) => FormatoFechas.formatoUsuario(cell.getValue()), minWidth: 140 },
+        { title: "Leído", field: "leido", formatter: formatoLeido, minWidth: 120, hozAlign: "center", headerHozAlign: "center" },
         {
             title: "Acciones", 
             formatter: formatoBotones, 
@@ -254,48 +246,6 @@ function llenarTablaNotificaciones() {
     Tablas.inicializarBuscadorGlobal(tabla_notificaciones, "busqueda_global", columnas);
 }
 
-function definirColorBadge(nombreRol) {
-    const map = {
-        'Administrador Global': ['badge bg-warning text-dark', 'bi bi-globe me-3'],
-        'Administrador': ['badge bg-primary', 'bi bi-person-fill-gear me-3'],
-        'Propietario': ['badge bg-success', 'bi bi-key-fill me-3'],
-        'Contador': ['badge bg-danger', 'bi bi-calculator-fill me-3'],
-        'Presidente': ['badge bg-info text-dark', 'bi bi-award-fill me-3']
-    };
-    return map[nombreRol] || ['badge bg-secondary', 'bi bi-person-circle me-3'];
-}
-
-/**
- * Aplica el estilo Soft Badge al Rol del usuario en su tarjeta de perfil
- */
-function aplicarEstiloRolPerfil(rolTexto, elementoDestino) {
-    let color = "secondary";
-    let icono = "bi-person-badge";
-
-    // Mismos colores y jerarquías que en el módulo de Usuarios/Roles
-    if (rolTexto === 'Administrador Global') {
-        color = "warning"; icono = "bi-shield-lock-fill";
-    } else if (rolTexto === 'Administrador') {
-        color = "primary"; icono = "bi-shield-check";
-    } else if (rolTexto === 'Propietario') {
-        color = "success"; icono = "bi-house-door-fill";
-    } else if (rolTexto === 'Contador') {
-        color = "danger"; icono = "bi-calculator-fill";
-    } else if (rolTexto === 'Presidente') {
-        color = "info"; icono = "bi-person-workspace";
-    }
-
-    let claseTextoBorder = rolTexto === 'Administrador Global' ? "text-dark border border-warning" : `text-${color} border border-${color}`;
-    let claseIcono = rolTexto === 'Administrador Global' ? "text-warning" : "";
-
-    // Inyectamos el badge en el elemento (asegúrate de pasar el elemento del DOM correcto, ej: document.getElementById('perfil_rol'))
-    elementoDestino.className = "mb-4"; // Limpiar clases viejas
-    elementoDestino.innerHTML = `
-        <span class="badge bg-${color} bg-opacity-10 ${claseTextoBorder} px-3 py-2 shadow-sm" style="font-size: 0.95rem;">
-            <i class="bi ${icono} ${claseIcono} me-1"></i> ${rolTexto}
-        </span>`;
-}
-
 /**
  * Procesa el Rol del usuario y devuelve su configuración visual unificada
  */
@@ -317,11 +267,7 @@ function obtenerConfigRol(rol) {
         color = "info"; icono = "bi-person-workspace";
     }
 
-    // Ajustes de legibilidad para los Soft Badges
-    let claseTextoBorder = texto === 'Administrador Global' ? "text-dark border border-warning" : `text-${color} border border-${color}`;
-    let claseIcono = texto === 'Administrador Global' ? "text-warning" : "";
-
-    return { color, icono, claseTextoBorder, claseIcono, texto };
+    return { color, icono, texto };
 }
 
 // ============================================

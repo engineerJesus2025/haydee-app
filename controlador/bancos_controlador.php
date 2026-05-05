@@ -7,10 +7,12 @@ use haydee\ayuda\ValidadorBD;
 use haydee\servicios\GestorAuditoria;
 
 // Verificaciones de seguridad
+Sesiones::validarMetodoHTTP(['GET', 'POST']);
 Sesiones::verificarSesion();
 Sesiones::verificarPermiso(GESTIONAR_BANCOS, CONSULTAR);
 
 if (isset($_POST["operacion"])) {
+    header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
 
     Sesiones::verificarPermisoAccion(GESTIONAR_BANCOS, $operacion);
@@ -31,13 +33,12 @@ if (isset($_POST["operacion"])) {
         $validador->validarConjunto($_POST, $reglas, $contexto);
 
         if ($validador->tieneErrores()) {
+            $codigoHttp = $validador->tieneError404() ? 404 : 400;
+            http_response_code($codigoHttp);
             echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
             exit;
         }
     }
-
-    // --- DATOS PUROS Y SEGUROS ---
-
     // Instancia del modelo
     $banco = new Banco();
 
@@ -57,6 +58,8 @@ if (isset($_POST["operacion"])) {
         switch ($operacion) {
             case 'consulta':
                 $respuesta = $banco->realizar_consulta('consultar');
+
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria('consultar');
                 }
@@ -64,6 +67,8 @@ if (isset($_POST["operacion"])) {
 
             case 'registrar_banco':
                 $respuesta = $banco->realizar_consulta('registrar_banco');
+
+                http_response_code($respuesta['estatus'] ? 201 : 400);
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria('registrar');
                 }
@@ -71,22 +76,23 @@ if (isset($_POST["operacion"])) {
 
             case 'consultar_banco':
                 $respuesta = $banco->realizar_consulta('consultar_banco');
+                http_response_code($respuesta['estatus'] ? 200 : 404);
                 break;
 
             case 'modificar_banco':
-                // Obtener datos anteriores
                 $auditor->capturarDatosAnteriores('consultar_banco');
-
                 $respuesta = $banco->realizar_consulta('modificar_banco');
+
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) { 
                     $auditor->registrarAuditoria('modificar'); 
                 }
                 break;
 
             case 'eliminar_banco':
-                // Obtener datos anteriores
                 $auditor->capturarDatosAnteriores('consultar_banco');
 
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 $respuesta = $banco->realizar_consulta('eliminar_banco');
                 if ($respuesta['estatus']) { 
                     $auditor->registrarAuditoria('eliminar'); 
@@ -94,9 +100,11 @@ if (isset($_POST["operacion"])) {
                 break;
 
             default:
+                http_response_code(400);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
     } catch (Exception $e) {
+        http_response_code(500);
         error_log("Error en controlador: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
@@ -107,7 +115,6 @@ if (isset($_POST["operacion"])) {
             }
             Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexión de seguridad
 
-            header('Content-Type: application/json');
             echo json_encode($respuesta);
             exit;
         }
@@ -150,10 +157,19 @@ if (isset($_POST["validar"])) {
                 $existe = $validadorBD->existe($tabla, $campo, $valor);
                 $respuesta = ['estatus' => $existe, 'mensaje' => $existe ? 'OK' : 'No existe'];
                 break;
+
+            default:
+                http_response_code(400);
+                $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
         }
     } catch (Exception $e) {
+        http_response_code(500);
         error_log("Error en validación AJAX Bancos: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
+    }
+
+    if ($respuesta['estatus'] === true || isset($respuesta['existe'])) {
+        http_response_code(200);
     }
 
     echo json_encode($respuesta);

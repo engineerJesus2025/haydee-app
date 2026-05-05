@@ -7,10 +7,12 @@ use haydee\ayuda\ValidadorBD;
 use haydee\servicios\GestorAuditoria;
 
 // Verificaciones de seguridad
+Sesiones::validarMetodoHTTP(['GET', 'POST']);
 Sesiones::verificarSesion();
 Sesiones::verificarPermiso(GESTIONAR_PROVEEDORES, CONSULTAR);
 
 if (isset($_POST["operacion"])) {
+    header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
 
     Sesiones::verificarPermisoAccion(GESTIONAR_PROVEEDORES, $operacion);
@@ -27,6 +29,8 @@ if (isset($_POST["operacion"])) {
         $validador->validarConjunto($_POST, $reglas, $contexto);
 
         if ($validador->tieneErrores()) {
+            $codigoHttp = $validador->tieneError404() ? 404 : 400;
+            http_response_code($codigoHttp);
             echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
             exit;
         }
@@ -47,34 +51,44 @@ if (isset($_POST["operacion"])) {
         switch ($operacion) {
             case 'consultar':
                 $respuesta = $proveedor->realizar_consulta('consultar');
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) { $auditor->registrarAuditoria('consultar'); }
                 break;
 
             case 'consultar_proveedor':
                 $respuesta = $proveedor->realizar_consulta('consultar_proveedor');
+                http_response_code($respuesta['estatus'] ? 200 : 404);
                 break;
 
             case 'registrar_proveedor':
                 $respuesta = $proveedor->realizar_consulta('registrar_proveedor');
+
+                http_response_code($respuesta['estatus'] ? 201 : 400);
                 if ($respuesta['estatus']) { $auditor->registrarAuditoria('registrar'); }
                 break;
 
             case 'modificar_proveedor':
                 $auditor->capturarDatosAnteriores('consultar_proveedor');
                 $respuesta = $proveedor->realizar_consulta('modificar_proveedor');
+
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) { $auditor->registrarAuditoria('modificar'); }
                 break;
 
             case 'eliminar_proveedor':
                 $auditor->capturarDatosAnteriores('consultar_proveedor');
                 $respuesta = $proveedor->realizar_consulta('eliminar_proveedor');
+
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) { $auditor->registrarAuditoria('eliminar'); }
                 break;
 
             default:
+                http_response_code(400);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
     } catch (Exception $e) {
+        http_response_code(500);
         error_log("Error en controlador proveedores: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
@@ -82,7 +96,6 @@ if (isset($_POST["operacion"])) {
             if (isset($proveedor)) { $proveedor->cerrar(); }
             Bitacora::cerrarConexionBitacora();
 
-            header('Content-Type: application/json');
             echo json_encode($respuesta);
             exit;
         }

@@ -156,7 +156,7 @@ const Validador = {
                 let input = null;
                 let esErrorDetalle = false;
 
-                // 1. Verificamos si es un error de los detalles usando Regex
+                // Verificamos si es un error de los detalles usando Regex
                 // Busca el patrón: "detalle_" seguido de un número, "_" y el nombre del campo
                 const coincidenciaDetalle = campo.match(/^detalle_(\d+)_(.+)$/);
 
@@ -177,11 +177,11 @@ const Validador = {
                         }
                     }
                 } else {
-                    // 2. Si NO es un detalle, lo buscamos normalmente por su ID (Cabecera)
+                    // Si NO es un detalle, lo buscamos normalmente por su ID (Cabecera)
                     input = document.getElementById(campo);
                 }
 
-                // 3. Evaluamos si encontramos el input en el HTML y si está visible
+                // Evaluamos si encontramos el input en el HTML y si está visible
                 const esInputValido = input && input.nodeName !== 'SELECT' && input.type !== 'hidden';
                 const esSelectValido = input && input.nodeName === 'SELECT' && !input.hidden;
 

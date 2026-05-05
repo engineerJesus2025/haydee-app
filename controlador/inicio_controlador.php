@@ -7,9 +7,11 @@ use haydee\servicios\Autenticacion;
 use haydee\modelo\Bitacora;
 use haydee\servicios\GestorAuditoria;
 
+Sesiones::validarMetodoHTTP(['GET', 'POST']);
 Sesiones::verificarSesion();
 
 if (isset($_POST["operacion"])) {
+    header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
@@ -20,37 +22,45 @@ if (isset($_POST["operacion"])) {
                 $limite = $_POST["limite"] ?? 0;
 
                 $respuesta = $cartelera->consultar_inicio($limite);
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 break;
 
             case 'consulta_inicio_grafico':
                 $mensualidad = new Mensualidad();
                 $respuesta = $mensualidad->realizar_consulta('consultar_estadisticas_inicio');
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 break;
 
             case 'consultar_tarjetas_resumen':
                 $mensualidad = new Mensualidad();
                 $respuesta = $mensualidad->realizar_consulta('consultar_tarjetas_resumen');
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 break;
 
             case 'consulta_apartamentos':
                 $apartamento = new Apartamento();
                 $respuesta = $apartamento->realizar_consulta('consultar_estado_inicio');
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 break;
 
             case 'consulta_actividad':
                 $bitacora = new Bitacora();
                 $respuesta = $bitacora->realizar_consulta('consultar_actividad_dashboard');
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 break;
 
             case 'consulta_widget_publicaciones':
                 $cartelera = new CarteleraVirtual();
                 $respuesta = $cartelera->consultar_widget_dashboard();
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 break;
 
             default:
+                http_response_code(400);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
     } catch (Exception $e) {
+        http_response_code(500);
         error_log("Error en controlador: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
@@ -61,7 +71,6 @@ if (isset($_POST["operacion"])) {
             if (isset($apartamento)) { $apartamento->cerrar(); }
             if (isset($bitacora)) { $bitacora->cerrar(); }
 
-            header('Content-Type: application/json');
             echo json_encode($respuesta);
             exit;
         }

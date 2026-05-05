@@ -35,8 +35,10 @@ function resetModal() {
     formulario_usar.reset();
     boton_formulario.removeAttribute("modificar");
     boton_formulario.removeAttribute("id_modificar");
-    boton_formulario.textContent = "Guardar";
+    // boton_formulario.textContent = "Guardar";
+    document.getElementById('texto_boton_formulario').textContent = 'Guardar Presupuesto';
     document.getElementById('titulo_modal').textContent = "Registrar presupuesto";
+    document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-journal-plus");
 
     // Eliminar fecha extra si existe
     let fechaExtra = document.getElementById('fecha_editada');
@@ -77,7 +79,7 @@ function agregar_fila_presupuesto(e) {
     div_nombre.setAttribute("class","col-sm-5");
 
     let input_nombre = document.createElement("input");
-    input_nombre.setAttribute('class','border border-dark form-control');
+    input_nombre.setAttribute('class','form-control');
     input_nombre.setAttribute('type','text');
     input_nombre.setAttribute('placeholder','nombre del gasto');
 
@@ -97,7 +99,7 @@ function agregar_fila_presupuesto(e) {
     div_input_group.setAttribute("class","input-group");
 
     let input_monto = document.createElement("input");
-    input_monto.setAttribute('class','border border-dark form-control');
+    input_monto.setAttribute('class','form-control');
     input_monto.setAttribute('type','number');
     input_monto.setAttribute('title','Valor del monto en bolivares');
     input_monto.setAttribute('placeholder','Ingrese un monto');
@@ -105,7 +107,7 @@ function agregar_fila_presupuesto(e) {
     input_monto.setAttribute('monto','bs');
 
     let spam_moneda = document.createElement("spam");
-    spam_moneda.setAttribute('class','border border-primary rounded-end input-group-text icono_moneda');
+    spam_moneda.setAttribute('class','input-group-text icono_moneda');
     spam_moneda.textContent = "Bs.";
 
     let spam_monto = document.createElement("spam");
@@ -121,7 +123,7 @@ function agregar_fila_presupuesto(e) {
 
     let boton_intercambio = document.createElement("button");
     boton_intercambio.setAttribute('tabindex','-1');
-    boton_intercambio.setAttribute("class","btn btn-outline-info boton_intercambio");
+    boton_intercambio.setAttribute("class","btn btn-soft-info boton_intercambio");
 
     let spam_intercambio = document.createElement("spam");
 
@@ -167,7 +169,7 @@ function agregar_fila_presupuesto(e) {
 
     let boton_agregar = document.createElement("button");
     boton_agregar.setAttribute('title','presione aquí para añadir otro monto');
-    boton_agregar.setAttribute('class','btn btn-success');
+    boton_agregar.setAttribute('class','btn btn-soft-success');
     boton_agregar.setAttribute('tabindex','-1');
     boton_agregar.setAttribute('accion',`agregar`);
 
@@ -179,7 +181,7 @@ function agregar_fila_presupuesto(e) {
     let boton_eliminar = document.createElement("button");
     boton_eliminar.setAttribute('title','eliminar monto');
     boton_eliminar.setAttribute('tabindex','-1');
-    boton_eliminar.setAttribute('class','btn btn-danger');  
+    boton_eliminar.setAttribute('class','btn btn-soft-danger');  
 
     let icono_eliminar = document.createElement('i');
     icono_eliminar.setAttribute("class",'bi bi-x-lg');
@@ -314,7 +316,7 @@ function eliminar_fila_presupuesto(e) {
     if (boton_eliminar.previousElementSibling != null) {
         let boton_agregar = document.createElement("button");
         boton_agregar.setAttribute('title','presione aquí para añadir otro monto');
-        boton_agregar.setAttribute('class','btn btn-success');
+        boton_agregar.setAttribute('class','btn btn-soft-success');
         boton_agregar.setAttribute('tabindex','-1');
         boton_agregar.setAttribute('accion',`agregar`);
 
@@ -364,7 +366,7 @@ function agregarGastoFijo(nombre_gasto,ultimo = false) {
     div_input_group.setAttribute("class","input-group");
 
     let input_monto = document.createElement("input");
-    input_monto.setAttribute('class','border border-dark form-control');
+    input_monto.setAttribute('class','  form-control');
     input_monto.setAttribute('type','number');
     input_monto.setAttribute('value',0);
     input_monto.setAttribute('title','Valor del monto en bolivares');
@@ -372,7 +374,7 @@ function agregarGastoFijo(nombre_gasto,ultimo = false) {
     input_monto.setAttribute('monto','bs');
 
     let spam_moneda = document.createElement("spam");
-    spam_moneda.setAttribute('class','border border-primary rounded-end input-group-text icono_moneda');
+    spam_moneda.setAttribute('class','input-group-text icono_moneda');
     spam_moneda.textContent = "Bs.";
 
     let spam_monto = document.createElement("spam");
@@ -389,7 +391,7 @@ function agregarGastoFijo(nombre_gasto,ultimo = false) {
 
     let boton_intercambio = document.createElement("button");
     boton_intercambio.setAttribute('tabindex','-1');
-    boton_intercambio.setAttribute("class","btn btn-outline-info boton_intercambio");   
+    boton_intercambio.setAttribute("class","btn btn-soft-info boton_intercambio");   
 
     let spam_intercambio = document.createElement("spam");
 
@@ -436,7 +438,7 @@ function agregarGastoFijo(nombre_gasto,ultimo = false) {
     if (ultimo) {
         let boton_agregar = document.createElement("button");
         boton_agregar.setAttribute('title','presione aquí para añadir otro monto');
-        boton_agregar.setAttribute('class','btn btn-success');
+        boton_agregar.setAttribute('class','btn btn-soft-success');
         boton_agregar.setAttribute('tabindex','-1');
         boton_agregar.setAttribute('accion',`agregar`);
 
@@ -617,7 +619,7 @@ async function consultar() {
         let [anio, mes] = cell.getValue().split('-');
         let textoFecha = `${FormatoFechas.nombreMes(parseInt(mes).toString().padStart(2,0))} del ${anio}`.toUpperCase();
         
-        return `<div class="fw-bold text-dark">${textoFecha}</div>`;
+        return `<div class="fw-bold">${textoFecha}</div>`;
     };
 
     const formatoMonto = (cell) => `${parseFloat(cell.getValue()).toFixed(2)} Bs. / ${(cell.getValue() / tasa_dolar).toFixed(2)} $`;
@@ -681,7 +683,7 @@ async function consultar() {
 
 // Función asíncrona para Vista Previa
 async function mostrarVistaPrevia(data) {
-    // 1. Formateo rápido de los datos base (memoria de Tabulator)
+    // Formateo rápido de los datos base (memoria de Tabulator)
     let [anio, mes] = data.fecha.split('-');
     document.getElementById("vp_periodo").textContent = `${FormatoFechas.nombreMes(parseInt(mes).toString().padStart(2,0))} ${anio}`.toUpperCase();
     
@@ -694,7 +696,7 @@ async function mostrarVistaPrevia(data) {
 
     // Preparamos el contenedor y mostramos el modal con loader
     const contenedor = document.getElementById("vp_contenedor_detalles_presupuesto");
-    contenedor.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><div class="text-muted mt-2 small">Cargando desglose...</div></div>';
+    contenedor.innerHTML = '<div class="text-center py-4"><div class="spinner- text-primary" role="status"></div><div class="text-muted mt-2 small">Cargando desglose...</div></div>';
     
     // Limpiamos la reserva hasta que llegue la petición (Tabulator no la trae por defecto en la consulta general)
     document.getElementById("vp_reserva_bs").textContent = "...";
@@ -702,14 +704,14 @@ async function mostrarVistaPrevia(data) {
     
     modalDetalles.show();
 
-    // 2. Solicitamos los detalles al servidor
+    // Solicitamos los detalles al servidor
     const formData = new FormData();
     formData.append('operacion', 'consultar_presupuesto');
     formData.append('id_presupuesto', data.id_presupuesto);
 
     const respuesta = await Peticiones.enviar(formData, "", true);
 
-    // 3. Renderizamos la respuesta
+    // Renderizamos la respuesta
     if (respuesta.estatus && respuesta.datos) {
         const pres = respuesta.datos;
 
@@ -735,30 +737,31 @@ async function mostrarVistaPrevia(data) {
                 
                 // Sumamos el subtotal de esta categoría
                 const subtotal = items.reduce((sum, item) => sum + parseFloat(item.monto), 0);
+                const subtotalBadge = ComponentesUI.crearSoftBadge('primary', null, `Subtotal: ${subtotal.toFixed(2)} Bs.`);
 
                 // Creamos las filas de la tabla
                 const filas = items.map(item => `
                     <tr>
-                        <td class="text-dark align-middle border-0 border-bottom border-light">
-                            <i class="bi bi-caret-right text-primary me-1" style="font-size: 0.8rem;"></i> ${item.nombre_detalle}
+                        <td class="text-dark align-middle -0 -bottom vp--color">
+                            <i class="bi bi-caret-right text-primary me-1" style="font-size: 0.8rem;"></i> 
+                            <span style="color: var(--bs-body-color);">${item.nombre_detalle}</span>
                         </td>
-                        <td class="text-end fw-semibold text-dark align-middle border-0 border-bottom border-light">
-                            ${parseFloat(item.monto).toFixed(2)} Bs.
+                        <td class="text-end fw-semibold text-dark align-middle -0 -bottom vp--color">
+                            <span style="color: var(--bs-body-color);">${parseFloat(item.monto).toFixed(2)} Bs.</span>
                         </td>
                     </tr>
                 `).join('');
                 
-                // Tarjeta por categoría
                 html += `
-                    <div class="card border-0 shadow-sm mb-2">
-                        <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center py-2">
-                            <span class="fw-bold text-uppercase text-secondary" style="font-size: 0.8rem; letter-spacing: 0.5px;">
+                    <div class="card -0 shadow-sm mb-2 card-item pb-3">
+                        <div class="vp-card-header -bottom d-flex justify-content-between align-items-center p-2 vp--color">
+                            <span class="fw-bold text-uppercase" style="font-size: 0.8rem; letter-spacing: 0.5px; color: var(--bs-body-color);">
                                 <i class="bi bi-folder2-open me-2 text-primary"></i>${categoria}
                             </span>
-                            <span class="badge bg-primary rounded-pill">Subtotal: ${subtotal.toFixed(2)} Bs.</span>
+                            ${subtotalBadge}
                         </div>
-                        <div class="card-body p-0">
-                            <table class="table table-sm table-borderless mb-0">
+                        <div class="card-body">
+                            <table class="table table-sm table-less mb-0">
                                 <tbody>
                                     ${filas}
                                 </tbody>
@@ -845,6 +848,7 @@ async function llenarDetallesPresupuestos() {
 
             let cuerpo = document.createElement("div");
             cuerpo.className = "align-items-center my-3 accordion-collapse collapse show";
+            cuerpo.setAttribute("style","background-color: transparent !important;");
             cuerpo.id = `${nombreFormat}-body`;
 
             // Agregar filas según el tipo (similar al código original)
@@ -1079,8 +1083,10 @@ async function modificar_formulario(e) {
 
         boton_formulario.setAttribute("modificar", true);
         boton_formulario.setAttribute("id_modificar", id);
-        boton_formulario.textContent = "Guardar Cambios";
+        // boton_formulario.textContent = "Guardar Cambios";
+        document.getElementById('texto_boton_formulario').textContent = 'Guardar Cambios';
         document.getElementById('titulo_modal').textContent = "Modificar presupuesto";
+        document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-journal-minus");
 
         modal.show();
     });

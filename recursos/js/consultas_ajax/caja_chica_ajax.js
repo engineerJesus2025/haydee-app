@@ -9,7 +9,6 @@ let tasa_dolar = localStorage.getItem("tasa_dolar") || 0;
 let diferencia = 0;
 
 let modal_carga = new bootstrap.Modal("#modal_carga", { focus: false });
-let modal_observacion = new bootstrap.Modal("#modal_descripciones", { focus: false });
 let modal_registro_gastos = new bootstrap.Modal("#modal_registro_gastos", { focus: false });
 let modal_reposicion_caja = new bootstrap.Modal("#modal_reponer_caja");
 const modalDetalles = new bootstrap.Modal(document.getElementById("modal_detalles"), { focus: false });
@@ -26,15 +25,24 @@ let descripciones = {};
 consultarCajasChicas();
 
 // Evento cambio de caja en el select
+// Evento cambio de caja en el select
 document.getElementById("mes_select").addEventListener("change", (e) => {
     e.target.classList.remove('caja-highlight');
 
     let id_caja = e.target.value;
     let option = e.target.options[e.target.selectedIndex];
 
-    // (Dentro de tu evento change del mes_select)
+    // --- FONDO ACTUAL ---
+    let saldoActual = option.getAttribute("saldo_actual") || 0;
+    let spanFondo = document.getElementById("span_fondo_fijo");
+    spanFondo.classList.remove("placeholder-glow"); // Apagamos la animación
+    spanFondo.textContent = `${saldoActual} Bs. / ${(saldoActual / tasa_dolar).toFixed(2)} $`;
+
+    // --- OBSERVACIONES ---
     let descripcionActual = descripciones[id_caja] || '';
     let pDescripciones = document.getElementById("descripciones");
+    
+    pDescripciones.classList.remove('placeholder-glow'); // Apagamos la animación
     
     if (descripcionActual.trim() === '') {
         pDescripciones.innerHTML = '<span class="text-muted fst-italic">Sin observaciones registradas para este mes.</span>';
@@ -42,29 +50,26 @@ document.getElementById("mes_select").addEventListener("change", (e) => {
         pDescripciones.textContent = descripcionActual;
     }
     
-    // Mostrar la tarjeta de nota
-    document.getElementById("contenedor_tarjeta_nota").removeAttribute("hidden");
+    // Mostramos el botón de editar que estaba oculto durante el skeleton
+    document.getElementById("btn_activar_edicion").classList.remove("d-none");
     
     // Asegurarnos de que siempre empiece en modo lectura al cambiar de mes
     document.getElementById("modo_edicion_nota").classList.add("d-none");
     document.getElementById("modo_lectura_nota").classList.remove("d-none");
-    document.getElementById("btn_activar_edicion").classList.remove("d-none");
-
-    // Actualizar fondo fijo mostrado
-    let saldoActual = option.getAttribute("saldo_actual") || 0;
-    document.getElementById("span_fondo_fijo").textContent = 
-        `Fondo actual de caja: ${saldoActual} Bs. / ${(saldoActual / tasa_dolar).toFixed(2)} $`;
 
     actualizarSaldos();
-    // Estado de la caja
+    
+    // --- ESTADO DE LA CAJA ---
     const spanCajaActiva = document.getElementById("span_caja_activa");
+    spanCajaActiva.classList.remove("d-flex", "align-items-center"); // Quitamos las clases del spinner
+    
     if (option.getAttribute("activa") === "Cerrada") {
         document.getElementById("botones_movimientos")?.setAttribute("hidden", "");
-        spanCajaActiva.className = "badge rounded-pill bg-danger bg-opacity-10 text-danger border border-danger fs-6 px-3 py-2 shadow-sm";
+        spanCajaActiva.className = "badge badge-soft-danger rounded-pill fs-6 px-3 py-2 shadow-sm";
         spanCajaActiva.innerHTML = "<i class='bi bi-lock-fill me-1'></i> Caja Cerrada";
     } else {
         document.getElementById("botones_movimientos")?.removeAttribute("hidden");
-        spanCajaActiva.className = "badge rounded-pill bg-success bg-opacity-10 text-success border border-success fs-6 px-3 py-2 shadow-sm";
+        spanCajaActiva.className = "badge badge-soft-success rounded-pill fs-6 px-3 py-2 shadow-sm";
         spanCajaActiva.innerHTML = "<i class='bi bi-unlock-fill me-1'></i> Caja Activa";
     }
 
@@ -72,11 +77,9 @@ document.getElementById("mes_select").addEventListener("change", (e) => {
     if (tabla_movimientos) {
         const parametrosExtra = { 
             operacion: 'consultar_movimientos_caja',
-            caja_chica_id: document.getElementById("mes_select").value 
+            caja_chica_id: id_caja 
         }
-        tabla_movimientos.setData("",parametrosExtra);
-
-        // tabla_movimientos.replaceData();
+        tabla_movimientos.setData("", parametrosExtra);
     } else {
         inicializarTablaMovimientos();
     }
@@ -102,9 +105,11 @@ document.getElementById("boton_modificar_observacion")?.addEventListener('click'
 // Limpiar modal al cerrar
 document.getElementById("modal_registro_gastos")?.addEventListener("hide.bs.modal", () => {
     document.getElementById('titulo_modal_registro_gasto').textContent = "Registrar Gasto de Caja";
+    document.getElementById("icono_titulo_modal_gasto").setAttribute("class","bi bi-cart-check");
     boton_formulario.removeAttribute("modificar");
     boton_formulario.removeAttribute("id_modificar");
-    boton_formulario.textContent = "Registrar";
+    // boton_formulario.textContent = "Registrar";
+    document.getElementById('texto_boton_formulario').textContent = 'Guardar Gasto';
     document.getElementById("form_registro_gasto").reset();
     document.getElementById("fondos_restante").textContent = document.getElementById("fondos_caja")?.textContent || '';
     document.querySelectorAll('.is-valid, .is-invalid').forEach(el => el.classList.remove('is-valid', 'is-invalid'));
@@ -234,13 +239,8 @@ function mostrarVistaPrevia(data) {
     const estadoEl = document.getElementById("vp_estado");
     
     // Limpiamos las clases viejas de texto y le inyectamos el Soft Badge flotando a la derecha
-    estadoEl.className = "text-end"; 
-    estadoEl.innerHTML = `
-        <span class="badge bg-${config.color} bg-opacity-10 ${config.claseTextoBorder} fs-6 px-3 py-2 shadow-sm text-nowrap">
-            <i class="bi ${config.icono} me-1"></i>
-            ${config.texto}
-        </span>
-    `;
+    // estadoEl.className = "text-end mt-2"; 
+    estadoEl.innerHTML = ComponentesUI.crearSoftBadge(config.color, config.icono, config.texto);
     
     if (data.estado === 'Repuesto') {
         estadoEl.className = "fw-bold text-end text-success";
@@ -268,10 +268,7 @@ function inicializarTablaMovimientos() {
     const formatoEstado = (cell) => {
         const config = obtenerConfigEstadoCaja(cell.getValue());
 
-        return `<span class="badge bg-${config.color} bg-opacity-10 ${config.claseTextoBorder} px-3 py-2 shadow-sm text-nowrap" style="font-size: .85rem;">
-                    <i class="bi ${config.icono} me-1"></i>
-                    ${config.texto}
-                </span>`;
+        return ComponentesUI.crearSoftBadge(config.color, config.icono, config.texto);
     }
     
     const formatoBotones = (cell) => {
@@ -376,8 +373,10 @@ async function prepararFormulario(e) {
 
         boton_formulario.setAttribute("modificar", true);
         boton_formulario.setAttribute("id_modificar", mov.id_movimiento_caja);
-        boton_formulario.textContent = "Guardar Cambios";
+        // boton_formulario.textContent = "Guardar Cambios";
+        document.getElementById('texto_boton_formulario').textContent = 'Guardar Cambios';
         document.getElementById('titulo_modal_registro_gasto').textContent = "Modificar Gasto de Caja";
+        document.getElementById("icono_titulo_modal_gasto").setAttribute("class","bi bi-cart-dash");
 
         diferencia = parseFloat(mov.monto);
 
@@ -517,35 +516,24 @@ function envio(operacion) {
 
 
 /**
- * Procesa el estado de un movimiento de caja y devuelve su configuración visual (Soft Badge)
- * @param {string} valor - El estado (Repuesto, Pendiente por reposicion, Por Reponer)
- * @returns {object} Configuración visual
+ * Procesa el estado de un movimiento de caja y devuelve su configuración visual
  */
 function obtenerConfigEstadoCaja(valor) {
     let est = valor || "";
-    // Normalizamos por si viene con el nombre viejo de la BD
     if (est === 'Pendiente por reposicion') est = 'Por Reponer';
 
     let color = "secondary";
     let icono = "bi-circle";
-    let claseTextoBorder = "text-secondary border border-secondary";
 
     if (est === "Por Reponer") {
         color = "warning";
         icono = "bi-arrow-clockwise";
-        claseTextoBorder = "text-dark border border-warning"; // Texto oscuro por legibilidad
     } else if (est === "Repuesto") {
         color = "success";
         icono = "bi-check-circle-fill";
-        claseTextoBorder = "text-success border border-success";
     }
 
-    return {
-        color: color,
-        claseTextoBorder: claseTextoBorder,
-        icono: icono,
-        texto: est
-    };
+    return { color, icono, texto: est };
 }
 
 // ============================================================

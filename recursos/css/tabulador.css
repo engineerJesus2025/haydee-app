@@ -1,95 +1,105 @@
 /* =========================================================
-   ESTILOS PERSONALIZADOS PARA TABULATOR
+   ESTILOS PERSONALIZADOS PARA TABULATOR (UNIFICADOS)
    ========================================================= */
 
-/* --- 1. CABECERAS --- */
-/* Principal (Oscura): Agrupamos el fondo del header y las columnas */
-.tabulator .tabulator-header,
-.tabulator .tabulator-header .tabulator-col {
-    background-color: #0b1320 !important; 
+/* --- BASE DE LA TABLA --- */
+.tabulator {
+    background-color: var(--ch-table-row-bg) !important;
+    color: var(--ch-table-text) !important;
+    border: 1px solid var(--ch-table-border) !important;
+}
+
+/* --- CABECERAS (PRINCIPAL Y DE COLUMNAS) --- */
+:is(.tabulator .tabulator-header,
+    .tabulator .tabulator-header .tabulator-col) {
+    background-color: var(--ch-table-header-bg) !important;
 }
 .tabulator .tabulator-header {
-    color: #ffffff !important;
+    color: var(--ch-table-header-text) !important;
     border-bottom: none !important;
 }
 
-/* Secundaria - Vistas Previas (Blanca) */
-.tabulator.tabla-vista-previa .tabulator-header,
-.tabulator.tabla-vista-previa .tabulator-header .tabulator-col {
-    background-color: #fafaff  !important;
-}
-.tabulator.tabla-vista-previa .tabulator-header {
-    color: #4b5563 !important; 
-    border-bottom: 2px solid #dfe1e4  !important;
+/* Títulos de columna */
+.tabulator .tabulator-header .tabulator-col-title {
+    text-transform: uppercase !important;
+    font-size: 0.75rem !important;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    color: var(--ch-table-header-text) !important; /* Por defecto para fondo oscuro */
 }
 
-/* --- 2. FILAS Y HOVER --- */
-.tabulator-row {
-    border-bottom: 1px solid #e2e8f0 !important;
-    cursor: default !important; /* Quitamos la manito de la fila */
+/* ---  FILAS Y HOVER --- */
+.tabulator-row,
+.tabulator-row.tabulator-row-even {
+    background-color: var(--ch-table-row-bg) !important;
+    border-bottom: 1px solid var(--ch-table-border) !important;
+    color: var(--ch-table-text) !important;
+    cursor: default !important;
 }
 .tabulator-row:hover {
-    background-color: #f1f5f9 !important; 
+    background-color: var(--ch-table-row-hover) !important;
     transition: background-color 0.2s ease;
 }
-/* Agrupamos todo lo que sí debe tener cursor de manito */
-.tabulator-row button,
+
+/* Icono de colapso responsivo */
 .tabulator-responsive-collapse-toggle {
-    cursor: pointer !important; 
-}
-.tabulator-responsive-collapse-toggle {
-    color: #0b1320; 
+    color: var(--ch-table-text) !important;
+    cursor: pointer !important;
 }
 
-/* --- 3. DISEÑO RESPONSIVO (COLAPSO) --- */
-/* Contenedor padre invisible por defecto */
+/* --- DISEÑO RESPONSIVO (COLAPSO) --- */
+/* Ocultar la tabla nativa de colapso y el contenedor vacío */
+:is(.tabulator-row .tabulator-responsive-collapse:empty,
+    .tabulator-row .tabulator-responsive-collapse table) {
+    display: none !important;
+}
 .tabulator-row .tabulator-responsive-collapse {
-    padding: 0 !important; 
+    padding: 0 !important;
     background-color: transparent !important;
     border: none !important;
 }
-/* Agrupamos el ocultamiento de la tabla fea nativa y el contenedor vacío */
-.tabulator-row .tabulator-responsive-collapse:empty,
-.tabulator-row .tabulator-responsive-collapse table {
-    display: none !important;
-}
-/* Estilos solo para nuestra lista de Bootstrap */
 .tabulator-row .tabulator-responsive-collapse ul {
-    background-color: #f8fafc; 
+    background-color: var(--ch-table-row-hover) !important;
     padding: 10px 15px;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid var(--ch-table-border) !important;
     margin: 0 !important;
+    color: var(--ch-table-text) !important;
 }
 
-/* --- 4. PIE DE PÁGINA Y PAGINACIÓN --- */
+/* --- 5. PIE DE PÁGINA Y PAGINACIÓN --- */
+.tabulator-footer {
+    background-color: var(--ch-table-row-bg) !important;
+    border-top: 1px solid var(--ch-table-border) !important;
+    color: var(--ch-table-text) !important;
+}
+
 .tabulator .tabulator-footer .tabulator-footer-contents {
     display: flex !important;
     flex-wrap: wrap !important;
-    justify-content: space-between !important; /* Selector a la izquierda, botones a la derecha */
+    justify-content: space-between !important;
     align-items: center !important;
     padding: 10px;
 }
 
-/* Tu idea: Enviar el texto del contador a una nueva línea en la parte inferior */
+/* Contador de páginas */
 .tabulator .tabulator-footer .tabulator-page-counter {
-    flex-basis: 100% !important; /* Obliga a ocupar todo el ancho */
+    flex-basis: 100% !important;
     text-align: center !important;
-    margin-top: 12px !important; /* Separación con los botones */
-    order: 99 !important; /* Lo envía al final de todo */
-    color: #6b7280; /* Un gris sutil */
+    margin-top: 12px !important;
+    order: 99 !important;
+    color: var(--text-muted-color) !important;
     font-size: 0.9em;
 }
 
-/* Mantener los botones centrados si la pantalla es de celular */
+/* Paginador (botones) */
 .tabulator .tabulator-footer .tabulator-paginator {
     display: flex;
     flex-wrap: wrap;
-    justify-content: flex-end; /* Pegar botones a la derecha en escritorio */
-    align-items: center; 
-    flex-grow: 1; /* Permite que tome el espacio sobrante */
+    justify-content: flex-end;
+    align-items: center;
+    flex-grow: 1;
 }
 
-/* En celulares muy pequeños, centrar todo */
 @media (max-width: 576px) {
     .tabulator .tabulator-footer .tabulator-footer-contents {
         justify-content: center !important;
@@ -100,100 +110,157 @@
     }
 }
 
-/* --- 5. ALINEACIÓN DEL SELECTOR "MOSTRAR" --- */
+/* Selector "Mostrar" */
 .tabulator .tabulator-footer .tabulator-page-size-label {
     display: inline-flex !important;
     align-items: center !important;
     margin: 0 5px 0 0 !important;
     vertical-align: middle !important;
-    transform: translateY(2px); 
+    transform: translateY(2px);
+    color: var(--ch-table-text) !important;
+    font-weight: 500;
 }
 .tabulator .tabulator-footer .tabulator-page-size {
     display: inline-block !important;
     vertical-align: middle !important;
     margin-bottom: 0 !important;
     padding: 4px;
+    background-color: var(--ch-card-bg) !important;
+    color: var(--ch-table-text) !important;
+    border: 1px solid var(--ch-table-border) !important;
+    border-radius: 4px;
 }
 
-/* Obligar a que el título de la cabecera respete la alineación de la columna */
-.tabulator .tabulator-header .tabulator-col .tabulator-col-content {
-    justify-content: inherit !important;
+/* Botones de paginación */
+.tabulator .tabulator-footer .tabulator-paginator .tabulator-page {
+    background-color: var(--ch-badge-secondary-bg) !important;
+    color: var(--ch-table-text) !important;
+    border: 1px solid var(--ch-table-border) !important;
+    border-radius: 6px !important;
+    margin: 0 2px;
+    padding: 5px 10px !important;
+    transition: all 0.2s ease;
+}
+.tabulator .tabulator-footer .tabulator-paginator .tabulator-page.active {
+    background-color: var(--ch-badge-primary-text) !important;
+    color: #ffffff !important;
+    border-color: var(--ch-badge-primary-text) !important;
+}
+.tabulator .tabulator-footer .tabulator-paginator .tabulator-page:not(.disabled):hover {
+    background-color: var(--ch-header-hover) !important;
+    color: var(--ch-badge-primary-text) !important;
+}
+.tabulator .tabulator-footer .tabulator-paginator .tabulator-page.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    color: var(--text-muted-color) !important;
+}
+.tabulator .tabulator-footer .tabulator-paginator label {
+    color: var(--ch-table-text);
 }
 
-/* Alinear a la izquierda por defecto si no se especifica otra cosa */
-.tabulator .tabulator-header .tabulator-col .tabulator-col-title {
-    text-align: inherit;
-}
-
-/* =========================================================
-   6. ALINEACIÓN PRECISA DE CABECERAS (TH)
-========================================================= */
-
-/* 1. Por defecto, todo el contenido de la cabecera a la izquierda */
+/* --- ALINEACIÓN DE CABECERAS --- */
 .tabulator .tabulator-header .tabulator-col .tabulator-col-content {
     justify-content: flex-start !important;
     text-align: left !important;
 }
-
-/* 2. Si la columna en JS tiene hozAlign: "center", centramos la cabecera */
 .tabulator .tabulator-header .tabulator-col[tabulator-align="center"] .tabulator-col-content {
     justify-content: center !important;
     text-align: center !important;
 }
-
-/* 3. Si la columna en JS tiene hozAlign: "right", enviamos la cabecera a la derecha */
 .tabulator .tabulator-header .tabulator-col[tabulator-align="right"] .tabulator-col-content {
     justify-content: flex-end !important;
     text-align: right !important;
 }
 
-/* Unificar todas las cabeceras al estándar moderno (Mayúsculas pequeñas) */
-.tabulator .tabulator-header .tabulator-col-title {
-    text-transform: uppercase !important; /* Fuerza todo a mayúsculas sin importar cómo esté en JS */
-    font-size: 0.75rem !important; /* Letra más pequeña */
-    letter-spacing: 0.5px; /* Separación elegante entre letras */
-    font-weight: 600; /* Un poco de negrita */
-    color: #cbd5e1 !important; /* Color claro por defecto (para fondo oscuro) */
-}
-
-.tabulator.tabla-vista-previa .tabulator-header .tabulator-col-title {
-    color: #000 !important; /* Gris oscuro para que resalte en el fondo blanco */
-}
-
-/* =========================================================
-   7. ESTILIZACIÓN DE BOTONES DE ACCIÓN (RESPONSIVOS Y ADAPTABLES)
-========================================================= */
+/* --- BOTONES DE ACCIÓN DENTRO DE FILAS --- */
 .tabulator-row .btn-sm {
     height: 32px !important;
     min-width: 32px !important;
-    max-width: 100% !important; /* <-- 1. El botón NUNCA se saldrá de su celda */
-    width: auto !important; 
-    padding: 0 8px !important; 
+    max-width: 100% !important;
+    width: auto !important;
+    padding: 0 8px !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    border-radius: 8px; 
-    transition: all 0.2s ease-in-out !important; 
-    /* Quitamos el white-space de aquí para dárselo solo al texto */
+    border-radius: 8px;
+    transition: all 0.2s ease-in-out !important;
 }
-
-/* Efecto levitación al pasar el ratón */
 .tabulator-row .btn-sm:hover {
-    transform: translateY(-2px); 
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15); 
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
 }
-
-/* 2. Proteger el ícono para que NUNCA se aplaste o deforme */
 .tabulator-row .btn-sm i {
     font-size: 1rem;
     line-height: 1;
-    flex-shrink: 0; /* Obliga al ícono a mantener su tamaño original */
+    flex-shrink: 0;
 }
-
-/* 3. Hacer que el texto sea adaptable (Puntos suspensivos si no cabe) */
 .tabulator-row .btn-sm span {
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     white-space: nowrap !important;
-    flex-grow: 1; /* Permite que el texto tome el espacio disponible */
+    flex-grow: 1;
+}
+
+/* ---TABLA DE VISTA PREVIA (MODAL) --- */
+.tabulator.tabla-vista-previa {
+    background-color: var(--ch-table-header-bg) !important;
+    border: none !important;
+}
+
+/* Cabeceras en vista previa */
+:is(.tabulator.tabla-vista-previa .tabulator-header,
+    .tabulator.tabla-vista-previa .tabulator-header .tabulator-col) {
+    background-color: var(--ch-table-header-bg) !important;
+}
+.tabulator.tabla-vista-previa .tabulator-header {
+    color: var(--ch-table-vp-header-text) !important;
+    border-bottom: 2px solid var(--ch-table-border) !important;
+}
+.tabulator.tabla-vista-previa .tabulator-header .tabulator-col-title {
+    color: var(--ch-table-vp-header-text) !important;
+}
+
+/* Filas en vista previa */
+.tabulator.tabla-vista-previa .tabulator-row {
+    background-color: var(--ch-table-row-bg) !important;
+    border-bottom: 1px solid var(--ch-table-border) !important;
+    border-top: none !important;
+    color: var(--ch-table-text) !important;
+    margin-bottom: 0 !important;
+}
+.tabulator.tabla-vista-previa .tabulator-row:hover {
+    background-color: var(--ch-table-row-hover) !important;
+}
+.tabulator.tabla-vista-previa .tabulator-cell {
+    border: none !important;
+}
+
+/* Footer en vista previa */
+.tabulator.tabla-vista-previa .tabulator-footer {
+    background-color: var(--ch-header-hover) !important;
+    border-top: 1px solid var(--ch-table-border) !important;
+}
+.tabulator.tabla-vista-previa .tabulator-footer .tabulator-page-size,
+.tabulator.tabla-vista-previa .tabulator-footer .tabulator-page {
+    background-color: var(--ch-card-bg) !important;
+    border-color: var(--ch-table-border) !important;
+    color: var(--ch-table-text) !important;
+}
+
+/* --- TABLA PRINCIPAL DEL SISTEMA (FOOTER DIFERENCIADO) --- */
+.tabla-sistema-haydee .tabulator-footer {
+    background-color: var(--ch-header-hover) !important;
+    border: 1px solid var(--ch-table-border) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* ---  CORRECCIONES MODO OSCURO --- */
+[data-bs-theme="dark"] .tabla-sistema-haydee .tabulator-cell {
+    background-color: transparent !important;
+}
+/* Eliminamos las reglas fijas de #212529 y las unificamos con variables, 
+   pero si necesitas forzar un color específico en oscuro para vista previa, lo hacemos con variable */
+[data-bs-theme="dark"] .tabla-vista-previa :is(.tabulator-table, .tabulator-row) {
+    background-color: var(--ch-table-row-bg) !important; /* Ya es oscuro gracias a las variables */
 }

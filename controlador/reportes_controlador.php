@@ -13,6 +13,7 @@ use Dompdf\Dompdf;
 // ====================================================================
 // Seguridad y sesión
 // ====================================================================
+Sesiones::validarMetodoHTTP(['GET', 'POST']);
 Sesiones::verificarSesion();
 Sesiones::verificarPermiso(GESTIONAR_REPORTES, CONSULTAR);
 
@@ -28,6 +29,7 @@ $gastosModel = new Gastos();
 // Manejo de peticiones AJAX (POST)
 // ====================================================================
 if (isset($_POST["operacion"])) {
+    header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
 
     // 1. OBTENER REGLAS Y VALIDAR (Solo para operaciones del servicio Reportes)
@@ -38,6 +40,8 @@ if (isset($_POST["operacion"])) {
         $validador->validarConjunto($_POST, $reglas);
 
         if ($validador->tieneErrores()) {
+            $codigoHttp = $validador->tieneError404() ? 404 : 400;
+            http_response_code($codigoHttp);
             echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
             exit;
         }
@@ -71,37 +75,46 @@ if (isset($_POST["operacion"])) {
             // ---- Operaciones Complejas (Delegadas al Servicio Reportes) ----
             case 'reporte_ingresos_egresos_completo':
                 $respuesta = $reportesServicio->realizar_consulta('reporte_ingresos_egresos_completo');
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 break;
 
             case 'obtener_datos_reporte_mensual':
                 $respuesta = $reportesServicio->realizar_consulta('obtener_datos_reporte_mensual');
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 break;
 
             case 'listar_meses_con_gastos':
                 $respuesta = $reportesServicio->realizar_consulta('listar_meses_con_gastos');
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 break;
 
             case 'consultar_personas_solvencia':
                 $respuesta = $reportesServicio->realizar_consulta('consultar_personas_solvencia');
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 break;
 
             case 'consultar_personas_residencia':
                 $respuesta = $reportesServicio->realizar_consulta('consultar_propietarios');
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 break;
 
             case 'consultar_habitantes':
                 $respuesta = $reportesServicio->realizar_consulta('obtener_datos_habitantes');
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 break;
 
             // ---- Operaciones Utilitarias Simples ----
             case 'consultar_meses_mensualidad':
                 $respuesta = $mensualidadModel->realizar_consulta('consultar_meses_mensualidad');
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 break;
 
             default:
+                http_response_code(400);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
     } catch (Exception $e) {
+        http_response_code(500);
         error_log("Error en controlador reportes (POST): " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
@@ -112,7 +125,6 @@ if (isset($_POST["operacion"])) {
             $gastosModel->cerrar();
             $habitantesModel->cerrar();
 
-            header('Content-Type: application/json');
             echo json_encode($respuesta);
             exit;
         }
@@ -141,6 +153,7 @@ if (isset($_POST["validar"])) {
             }
             break;
         default:
+                http_response_code(400);
             echo json_encode(['estatus' => false, 'mensaje' => 'Validación no reconocida']);
     }
     exit;
@@ -300,6 +313,7 @@ switch ($accion) {
         break;
 
     default:
+                http_response_code(400);
         header("Location: ?pagina=reportes&accion=reportes_pdf");
         break;
 }

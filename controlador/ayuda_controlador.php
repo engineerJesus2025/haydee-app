@@ -1,5 +1,6 @@
 <?php 
 use haydee\servicios\Sesiones;
+Sesiones::validarMetodoHTTP(['GET', 'POST']);
 Sesiones::verificarSesion();
 
 if($accion == "inicio"){

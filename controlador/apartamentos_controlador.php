@@ -8,10 +8,12 @@ use haydee\ayuda\ValidadorBD;
 use haydee\servicios\GestorAuditoria;
 
 // Verificaciones de seguridad
+Sesiones::validarMetodoHTTP(['GET', 'POST']);
 Sesiones::verificarSesion();
 Sesiones::verificarPermiso(GESTIONAR_APARTAMENTOS, CONSULTAR);
 
 if (isset($_POST["operacion"])) {
+    header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
 
     // Si la cadena tiene "habitante" (ej: registrar_habitantes, eliminar_habitantes), asignamos ese módulo
@@ -43,6 +45,8 @@ if (isset($_POST["operacion"])) {
         $validador->validarConjunto($_POST, $reglasCompletas, $contexto);
 
         if ($validador->tieneErrores()) {
+            $codigoHttp = $validador->tieneError404() ? 404 : 400;
+            http_response_code($codigoHttp);
             echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
             exit;
         }
@@ -83,6 +87,8 @@ if (isset($_POST["operacion"])) {
             // ================= APARTAMENTOS =================
             case 'consulta':
                 $respuesta = $apartamento->realizar_consulta('consultar_listado');
+
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
                     $auditorApartamento->registrarAuditoria('consultar');
                 }
@@ -90,6 +96,8 @@ if (isset($_POST["operacion"])) {
 
             case 'registrar_apartamento':
                 $respuesta = $apartamento->realizar_consulta('registrar_apartamento');
+
+                http_response_code($respuesta['estatus'] ? 201 : 400);
                 if ($respuesta['estatus']) {
                     $auditorApartamento->registrarAuditoria('registrar');
                 }
@@ -97,6 +105,8 @@ if (isset($_POST["operacion"])) {
 
             case 'consulta_especifica':
                 $respuesta = $apartamento->realizar_consulta('consultar_detalle_completo');
+
+                http_response_code($respuesta['estatus'] ? 200 : 404);
                 if ($respuesta['estatus']) {
                     $datos = $respuesta['datos'];
                     $respuesta = [
@@ -110,6 +120,8 @@ if (isset($_POST["operacion"])) {
             case 'modificar_apartamento':
                 $auditorApartamento->capturarDatosAnteriores('consultar_detalle_completo');
                 $respuesta = $apartamento->realizar_consulta('modificar_apartamento');
+
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) { 
                     $auditorApartamento->registrarAuditoria('modificar'); 
                 }
@@ -118,6 +130,8 @@ if (isset($_POST["operacion"])) {
             case 'eliminar':
                 $auditorApartamento->capturarDatosAnteriores('consultar_detalle_completo');
                 $respuesta = $apartamento->realizar_consulta('eliminar_apartamento');
+
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) { 
                     $auditorApartamento->registrarAuditoria('eliminar'); 
                 }
@@ -125,16 +139,18 @@ if (isset($_POST["operacion"])) {
 
             // ================= HABITANTES =================
             case 'consultar_habitantes':
-                $result = $apartamento->realizar_consulta('consultar_detalle_completo');
-                if ($result['estatus']) {
-                    $respuesta = ['estatus' => true, 'datos' => $result['datos']['habitantes'] ?? []];
-                } else {
-                    $respuesta = $result;
+                $respuesta = $apartamento->realizar_consulta('consultar_detalle_completo');
+
+                http_response_code($respuesta['estatus'] ? 200 : 400);
+                if ($respuesta['estatus']) {
+                    $respuesta = ['estatus' => true, 'datos' => $respuesta['datos']['habitantes'] ?? []];
                 }
                 break;
 
             case 'registrar_habitantes':
                 $respuesta = $habitante->realizar_consulta('registrar_habitantes');
+
+                http_response_code($respuesta['estatus'] ? 201 : 400);
                 if ($respuesta['estatus']) {
                     $auditorHabitante->registrarAuditoria('registrar');
                 }
@@ -142,6 +158,7 @@ if (isset($_POST["operacion"])) {
 
             case 'consulta_especifica_habitante':
                 $respuesta = $habitante->realizar_consulta('consultar_habitante');
+                http_response_code($respuesta['estatus'] ? 200 : 404);
                 break;
 
             case 'modificar_habitantes':
@@ -149,6 +166,7 @@ if (isset($_POST["operacion"])) {
                 $auditorHabitante->capturarDatosAnteriores('consultar_habitante');
                 $respuesta = $habitante->realizar_consulta('modificar_habitantes');
                 
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
                     $auditorHabitante->registrarAuditoria('modificar');
                 }
@@ -158,15 +176,18 @@ if (isset($_POST["operacion"])) {
                 $auditorHabitante->capturarDatosAnteriores('consultar_habitante');
                 $respuesta = $habitante->realizar_consulta('eliminar_habitantes');
                 
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
                     $auditorHabitante->registrarAuditoria('eliminar');
                 }
                 break;
 
             default:
+                http_response_code(400);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
     } catch (Exception $e) {
+        http_response_code(500);
         error_log("Error en controlador apartamentos: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
@@ -176,7 +197,6 @@ if (isset($_POST["operacion"])) {
             
             Bitacora::cerrarConexionBitacora(); 
             
-            header('Content-Type: application/json');
             echo json_encode($respuesta);
             exit;
         }
@@ -260,11 +280,17 @@ if (isset($_POST["validar"])) {
                 break;
 
             default:
+                http_response_code(400);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
         }
     } catch (Exception $e) {
+        http_response_code(500);
         error_log("Error en validación AJAX: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
+    }
+
+    if ($respuesta['estatus'] === true || isset($respuesta['existe'])) {
+        http_response_code(200);
     }
 
     echo json_encode($respuesta);

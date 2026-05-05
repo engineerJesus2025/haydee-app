@@ -10,6 +10,7 @@ RewriteCond %{REQUEST_URI} ^/haydee-app/index\.php$ [OR]
 RewriteCond %{REQUEST_URI} ^/haydee-app/sw\.js$ [OR] 
 RewriteCond %{REQUEST_URI} ^/haydee-app/recursos/ [OR]
 RewriteCond %{REQUEST_URI} ^/haydee-app/vendor/ [OR]
+RewriteCond %{REQUEST_URI} ^/haydee-app/api/ [OR]
 RewriteCond %{REQUEST_URI} ^/haydee-app/vista/
 RewriteRule .* - [L]
 

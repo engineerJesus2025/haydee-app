@@ -1,18 +1,25 @@
-/* Unifica el borde normal (sin focus) para que el botón sea igual al input */
+.grupo-buscador-unificado .buscador-bg {
+    background-color: var(--ch-card-bg, var(--bs-body-bg));
+    border-color: var(--ch-input-border);
+    color: var(--bs-body-color);
+}
+
+/* Borde normal del botón  */
 .grupo-buscador-unificado .btn {
-    border-color: var(--bs-border-color);
+    border-color: var(--ch-input-border);
 }
 
-/* (Aquí va el código que ya tenías para el focus) */
-.grupo-buscador-unificado:focus-within .input-group-text,
-.grupo-buscador-unificado:focus-within .form-control,
-.grupo-buscador-unificado:focus-within .btn {
-    border-color: #86b7fe; /* Color azul de Bootstrap */
-    z-index: 5; /* Asegura que los bordes se superpongan correctamente */
+/* Foco unificado del grupo */
+.grupo-buscador-unificado:focus-within :is(.input-group-text, .form-control, .btn) {
+    border-color: var(--bs-primary);
 }
 
-/* Efecto hover suave para el botón de limpiar */
 .hover-limpiar:hover {
     color: #dc3545 !important;
-    background-color: transparent !important;
+    background-color: #dc35452f !important;
+}
+
+[data-bs-theme="dark"] .grupo-buscador-unificado ::placeholder {
+    color: #64748b;
+    opacity: 1;
 }

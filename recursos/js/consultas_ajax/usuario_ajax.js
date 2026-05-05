@@ -18,8 +18,9 @@ document.querySelector(`#modal_usuario`).addEventListener("hide.bs.modal", () =>
     formulario_usar.reset();
     boton_formulario.removeAttribute("modificar");
     boton_formulario.removeAttribute("id_modificar");
-    boton_formulario.textContent = "Guardar";
-    document.getElementById('titulo_modal').textContent = "Registrar Usuario";      
+    document.getElementById("texto_boton_formulario").textContent = "Guardar Usuario";
+    document.getElementById('titulo_modal').textContent = "Registrar Usuario";
+    document.getElementById('icono_titulo_modal').setAttribute("class","bi bi-person-plus");
     
     formulario_usar.querySelector("#confir_contra").parentElement.previousElementSibling.textContent = "Confirmar Contraseña";
     formulario_usar.querySelector("#confir_contra").placeholder = "Confirmar Contraseña";
@@ -82,7 +83,7 @@ async function consultar() {
     const formatoNombre = (cell) => {
         let nombre = cell.getValue() || "";
         nombre = nombre.charAt(0).toUpperCase() + nombre.slice(1).toLowerCase();
-        return `<div class="d-flex align-items-center fw-bold text-dark">
+        return `<div class="d-flex align-items-center fw-bold">
                     <i class="bi bi-person-circle text-primary me-2 fs-5"></i> ${nombre}
                 </div>`;
     };
@@ -96,12 +97,9 @@ async function consultar() {
     // Formato Rol (Soft Badges + Íconos)
     const formatoRol = (cell) => {
         const rol = cell.getValue() || "Desconocido";
+        const config = obtenerConfigRol(rol);
 
-        const [icono,color,claseTextoBorder,claseIcono] = obtenerIconoRol(rol);
-
-        return `<span class="badge bg-${color} bg-opacity-10 ${claseTextoBorder} px-3 py-2 shadow-sm" style="font-size: .85rem;">
-                    <i class="bi bi-${icono} ${claseIcono} me-1"></i> ${rol}
-                </span>`;
+        return ComponentesUI.crearSoftBadge(config.color, config.icono, config.texto);
     };
     
     const formatoBotones = (cell) => {
@@ -177,14 +175,11 @@ function mostrarVistaPrevia(data) {
     const rolEl = document.getElementById("vp_rol_badge");
     const rol = data.nombre_rol || "Desconocido";
 
-    const [icono,color,claseTextoBorder,claseIcono] = obtenerIconoRol(rol);
+    const config = obtenerConfigRol(rol);
     
-    // Como estamos inyectando HTML, le quitamos cualquier clase previa que tuviera el <span> en tu PHP
+    // Inyectamos el HTML del helper limpio
     rolEl.className = ""; 
-    rolEl.innerHTML = `
-        <span class="badge bg-${color} bg-opacity-10 ${claseTextoBorder} px-3 py-2 shadow-sm" style="font-size: 0.9rem;">
-            <i class="bi bi-${icono} ${claseIcono} me-1"></i> ${rol}
-        </span>`;
+    rolEl.innerHTML = ComponentesUI.crearSoftBadge(config.color, config.icono, config.texto);
 
     // Mostramos el modal
     modalDetalles.show();
@@ -219,8 +214,9 @@ async function preparar_formulario(e) {
         
         boton_formulario.setAttribute("modificar", true);
         boton_formulario.setAttribute("id_modificar", data.id_usuario);
-        boton_formulario.textContent = "Guardar Cambios";
+        document.getElementById("texto_boton_formulario").textContent = "Guardar Cambios";
         document.getElementById('titulo_modal').textContent = "Modificar Usuario";
+        document.getElementById('icono_titulo_modal').setAttribute("class","bi bi-person-gear");
         
         formulario_usar.querySelector("#confir_contra").parentElement.previousElementSibling.textContent = "Nueva Contraseña" ;
         formulario_usar.querySelector("#confir_contra").placeholder = "Escriba su Nueva Contraseña" ;
@@ -285,52 +281,35 @@ async function eliminar(id) {
     });
 }
 
-function obtenerIconoRol(nombre){
-    let icono = "person-badge";
-    let colorIcono = "secondary";
+function obtenerConfigRol(nombre) {
+    let color = "secondary";
+    let icono = "bi-person-badge";
+    let nombreUpper = (nombre || "Desconocido").toUpperCase();
 
-    switch (nombre.toUpperCase()) {
+    switch (nombreUpper) {
         case 'ADMINISTRADOR GLOBAL': 
-            icono = 'shield-lock-fill'; 
-            colorIcono = "warning text-dark border-warning";
+            icono = 'bi-shield-lock-fill'; 
+            color = "warning";
             break;
         case 'ADMINISTRADOR': 
-            icono = 'shield-check';
-            colorIcono = "primary";
+            icono = 'bi-shield-check';
+            color = "primary";
             break;
         case 'PROPIETARIO': 
-            icono = 'house-door-fill';
-            colorIcono = "success";
+            icono = 'bi-house-door-fill';
+            color = "success";
             break;
         case 'CONTADOR':  
-            icono = 'calculator-fill';
-            colorIcono = "danger";
+            icono = 'bi-calculator-fill';
+            color = "danger";
             break;
         case 'PRESIDENTE':  
-            icono = 'person-workspace';
-            colorIcono = "info text-dark";
+            icono = 'bi-person-workspace';
+            color = "info";
             break;
     }
 
-    // Si es el warning (Global) necesitamos ajustar el color del texto para que no sea amarillo sobre blanco
-    let claseTextoBorder = nombre.toUpperCase() === 'ADMINISTRADOR GLOBAL' ? "text-dark border border-warning" : `text-${colorIcono} border border-${colorIcono}`;
-    let claseIcono = nombre.toUpperCase() === 'ADMINISTRADOR GLOBAL' ? "text-warning" : "";
-
-    return [icono,colorIcono,claseTextoBorder,claseIcono];
-
-        if (rol === 'Administrador Global') {
-            color = "warning text-dark border-warning"; 
-            icono = "bi-shield-lock-fill text-warning";
-        } else if (rol === 'Administrador') {
-            color = "primary"; 
-            icono = "bi-shield-check";
-        } else if (rol === 'Propietario') {
-            color = "success"; 
-            icono = "bi-house-door-fill";
-        } else if (rol === 'Contador') {
-            color = "info"; 
-            icono = "bi-calculator-fill";
-        }         
+    return { color, icono, texto: nombre };
 }
 
 // ============================================================

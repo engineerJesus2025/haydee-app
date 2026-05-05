@@ -6,10 +6,12 @@ use haydee\ayuda\Validador;
 use haydee\ayuda\ValidadorBD;
 use haydee\servicios\GestorAuditoria;
 
+Sesiones::validarMetodoHTTP(['GET', 'POST']);
 Sesiones::verificarSesion();
 Sesiones::verificarPermiso(GESTIONAR_ROLES, CONSULTAR);
 
 if (isset($_POST["operacion"])) {
+    header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
 
     Sesiones::verificarPermisoAccion(GESTIONAR_ROLES, $operacion);
@@ -23,6 +25,8 @@ if (isset($_POST["operacion"])) {
         $validador->validarConjunto($_POST, $reglas, $contexto);
 
         if ($validador->tieneErrores()) {
+            $codigoHttp = $validador->tieneError404() ? 404 : 400;
+            http_response_code($codigoHttp);
             echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
             exit;
         }
@@ -43,37 +47,49 @@ if (isset($_POST["operacion"])) {
         switch ($operacion) {
             case 'consultar':
                 $respuesta = $rol->realizar_consulta('consultar');
+
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) { $auditor->registrarAuditoria('consultar'); }
                 break;
 
             case 'consultar_rol':
                 $respuesta = $rol->realizar_consulta('consultar_rol');
+                http_response_code($respuesta['estatus'] ? 200 : 404);
                 break;
 
             case 'registrar_rol':
                 $respuesta = $rol->realizar_consulta('registrar_rol');
+
+                http_response_code($respuesta['estatus'] ? 201 : 400);
                 if ($respuesta['estatus']) { $auditor->registrarAuditoria('registrar'); }
                 break;
 
             case 'modificar_rol':
                 $auditor->capturarDatosAnteriores('consultar_rol');
                 $respuesta = $rol->realizar_consulta('modificar_rol');
+
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) { $auditor->registrarAuditoria('modificar'); }
                 break;
 
             case 'eliminar_rol':
                 $auditor->capturarDatosAnteriores('consultar_rol');
                 $respuesta = $rol->realizar_consulta('eliminar_rol');
+
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) { $auditor->registrarAuditoria('eliminar'); }
                 break;
             case 'consultar_permisos_rol':
                 $respuesta = $rol->realizar_consulta('consultar_permisos_asignados');
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 break;
 
             default:
+                http_response_code(400);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
     } catch (Exception $e) {
+        http_response_code(500);
         error_log("Error en controlador roles: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
@@ -81,7 +97,6 @@ if (isset($_POST["operacion"])) {
             if (isset($rol)) { $rol->cerrar(); }
             Bitacora::cerrarConexionBitacora();
 
-            header('Content-Type: application/json');
             echo json_encode($respuesta);
             exit;
         }
@@ -94,25 +109,37 @@ if (isset($_POST["operacion"])) {
 if (isset($_POST["validar"])) {
     header('Content-Type: application/json');
     $validar = $_POST["validar"];
+    $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
+
+    $validadorBD = new ValidadorBD();
 
     try {
-        $validadorBD = new ValidadorBD();
-        
-        if ($validar === 'nombre') {
-            $nombre = $_POST["nombre"] ?? '';
-            $id_rol = $_POST["id_rol"] ?? null;
-            
-            // Verificamos si el nombre existe, ignorando el rol actual
-            $existe = !$validadorBD->esUnico('roles', 'nombre', $nombre, 'id_rol', $id_rol);
-            echo json_encode(['estatus' => true, 'existe' => $existe]);
-            exit;
-        } 
+        switch ($validar) {
+            case 'nombre':
+                $nombre = $_POST["nombre"] ?? '';
+                $id_rol = $_POST["id_rol"] ?? null;
+                
+                // Verificamos si el nombre existe, ignorando el rol actual
+                $existe = !$validadorBD->esUnico('roles', 'nombre', $nombre, 'id_rol', $id_rol);
+                $respuesta = ['estatus' => true, 'existe' => $existe];
+                break;
 
+            default:
+                http_response_code(400);
+                $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
+        }
     } catch (Exception $e) {
-        error_log("Error en validación AJAX Roles: " . $e->getMessage());
-        echo json_encode(['estatus' => false, 'mensaje' => 'Error interno']);
-        exit;
+        http_response_code(500);
+        error_log("Error en validación AJAX Bancos: " . $e->getMessage());
+        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
     }
+
+    if ($respuesta['estatus'] === true || isset($respuesta['existe'])) {
+        http_response_code(200);
+    }
+
+    echo json_encode($respuesta);
+    exit;
 }
 
 // =========================================================

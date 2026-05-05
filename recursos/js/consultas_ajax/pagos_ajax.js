@@ -50,8 +50,10 @@ function resetModalPagos() {
     formulario_usar.reset();
     boton_formulario.removeAttribute("modificar");
     boton_formulario.removeAttribute("id_modificar");
-    boton_formulario.textContent = "Registrar";
+    // boton_formulario.textContent = "Registrar";
+    document.getElementById('texto_boton_formulario').textContent = 'Guardar Pago';
     document.getElementById("titulo_modal").textContent = "Registrar Pago";
+    document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-cash-stack");
     document.getElementById("mensualidad_id").setAttribute("disabled", "true");
     document.getElementById("mensualidad_id").innerHTML = "<option selected hidden value=''>Escoja primero un Apartamento</option>";
 
@@ -82,7 +84,7 @@ function agregarDetallePago() {
 
     // Botón de eliminar detalle
     const eliminarBtn = document.createElement('button');
-    eliminarBtn.className = 'btn btn-sm btn-outline-danger mb-3';
+    eliminarBtn.className = 'btn btn-sm btn-soft-danger mb-3';
     eliminarBtn.type = 'button';
     eliminarBtn.innerHTML = '<i class="bi bi-x-circle"></i> Eliminar este Detalle';
     eliminarBtn.onclick = () => {
@@ -143,36 +145,27 @@ function actualizarVisibilidadMetodo(selectElement) {
 }
 
 /**
- * Procesa el estado de un pago y devuelve su configuración visual (Soft Badge)
- * @param {string} estado - El estado del pago (PROCESADO, PENDIENTE, RECHAZADO, etc.)
- * @returns {object} Configuración visual: { color, claseTextoBorder, icono, texto }
+ * Procesa el estado de un pago y devuelve su configuración visual
+ * @param {string} estado 
+ * @returns {object} { color, icono, texto }
  */
 function obtenerConfigEstadoPago(estado) {
     const est = (estado || "No verificado").toUpperCase();
     let color = "secondary";
     let icono = "bi-question-circle";
-    let claseTextoBorder = "text-secondary border border-secondary";
 
     if (est === "PROCESADO") {
         color = "success";
         icono = "bi-check-all";
-        claseTextoBorder = "text-success border border-success";
     } else if (est === "PENDIENTE" || est === "NO VERIFICADO") {
         color = "warning";
         icono = "bi-clock-history";
-        claseTextoBorder = "text-dark border border-warning"; // Texto oscuro por legibilidad
     } else if (est === "ANULADO" || est === "RECHAZADO") {
         color = "danger";
         icono = "bi-x-circle-fill";
-        claseTextoBorder = "text-danger border border-danger";
     }
 
-    return {
-        color: color,
-        claseTextoBorder: claseTextoBorder,
-        icono: icono,
-        texto: est
-    };
+    return { color, icono, texto: est };
 }
 
 // ============================================================
@@ -229,14 +222,14 @@ async function consultar() {
         const monto = cell.getValue();
         const estado = cell.getData().estado;
         
-        let colorClass = "text-dark"; 
+        let colorClass = ""; 
 
         if (estado === "PROCESADO") {
             colorClass = "text-success fw-bold"; // Verde y negrita para pagos confirmados
         } else if (estado === "ANULADO" || estado === "RECHAZADO") {
             colorClass = "text-danger"; // Rojo para problemas
         } else if (estado === "PENDIENTE" || estado === "No verificado") {
-            colorClass = "text-muted italic"; // Gris o cursiva para lo que aún no es "dinero real"
+            colorClass = "text-muted fst-italic"; // Gris o cursiva para lo que aún no es "dinero real"
         }
 
         return `<span class="${colorClass}">${monto} Bs.</span>`;
@@ -250,10 +243,7 @@ async function consultar() {
 
     const formatoEstado = (cell) => {
         const config = obtenerConfigEstadoPago(cell.getValue());
-        
-        return `<span class="badge bg-${config.color} bg-opacity-10 ${config.claseTextoBorder} px-3 py-2 shadow-sm text-nowrap" style="font-size: .70rem;">
-                    <i class="bi ${config.icono} me-1"></i> ${config.texto}
-                </span>`;
+        return ComponentesUI.crearSoftBadge(config.color, config.icono, config.texto);
     };
 
     const formatoBotones = (cell) => {
@@ -460,8 +450,10 @@ async function prepararEdicion(id) {
 
         boton_formulario.setAttribute("modificar", "true");
         boton_formulario.setAttribute("id_modificar", id);
-        boton_formulario.textContent = "Guardar Cambios";
+        // boton_formulario.textContent = "Guardar Cambios";
+        document.getElementById('texto_boton_formulario').textContent = 'Guardar Cambios';
         document.getElementById("titulo_modal").textContent = "Modificar Pago";
+        document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-currency-exchange");
         
         modal.show();
     });
@@ -526,17 +518,13 @@ async function mostrarVistaPrevia(id) {
         const monto = parseFloat(data.monto_mensualidad) || 0;
         document.getElementById("vp_monto").textContent = `${monto.toFixed(2)} Bs.`;
 
-        // Estado con Colores Dinámicos (Usando la función centralizada)
+        // Estado con Colores Dinámicos
         const config = obtenerConfigEstadoPago(data.estado);
         const estadoEl = document.getElementById("vp_estado");
         
-        // Inyectamos el Soft Badge
-        estadoEl.className = ""; // Limpiamos clases previas
-        estadoEl.innerHTML = `
-            <span class="badge bg-${config.color} bg-opacity-10 ${config.claseTextoBorder} fs-6 px-3 py-2 shadow-sm text-nowrap">
-                <i class="bi ${config.icono} me-1"></i> ${config.texto}
-            </span>
-        `;
+        // Inyectamos el Soft Badge simplificado
+        estadoEl.className = ""; 
+        estadoEl.innerHTML = ComponentesUI.crearSoftBadge(config.color, config.icono, config.texto);
 
         // Observación
         document.getElementById("vp_observacion").textContent = data.observacion || 'Sin observaciones adicionales.';

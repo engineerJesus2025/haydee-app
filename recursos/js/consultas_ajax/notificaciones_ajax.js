@@ -18,7 +18,7 @@ async function consultar() {
         
         if (row.leido == 0) {
             // No leída: Texto oscuro, negrita y un indicador rojo vibrante
-            return `<div class="d-flex align-items-center fw-bold text-dark">
+            return `<div class="d-flex align-items-center fw-bold">
                         <span class="bg-danger rounded-circle d-inline-block me-3 shadow-sm" style="width: 8px; height: 8px;"></span>
                         ${titulo}
                     </div>`;
@@ -35,14 +35,11 @@ async function consultar() {
     const formatoLeido = (cell) => {
         const leido = cell.getValue();
         if (leido == 1) {
-            return `<span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary px-3 py-2 shadow-sm" style="font-size: 0.9rem;">
-                        <i class="bi bi-check2-all me-1"></i> Leída
-                    </span>`;
+            // Leída -> Gris (Secondary)
+            return ComponentesUI.crearSoftBadge('secondary', 'bi-check2-all', 'Leída');
         } else {
-            // Usamos Primary (Azul) para las nuevas, indica "Acción Requerida" sin ser una alerta de error (Rojo)
-            return `<span class="badge bg-primary bg-opacity-10 text-primary border border-primary px-3 py-2 shadow-sm" style="font-size: 0.9rem;">
-                        <i class="bi bi-envelope-exclamation-fill me-1"></i> Nueva
-                    </span>`;
+            // Nueva -> Azul (Primary)
+            return ComponentesUI.crearSoftBadge('primary', 'bi-envelope-exclamation-fill', 'Nueva');
         }
     };
 
@@ -142,26 +139,20 @@ async function consultar() {
         }
     });
 }
+
 function mostrarVistaPrevia(data) {
     // Título (Capitalizado)
     let titulo = data.titulo || 'Sin Título';
     document.getElementById("vp_titulo").textContent = titulo.charAt(0).toUpperCase() + titulo.slice(1);
 
-    // Estado (Soft Badges inyectados con innerHTML)
+    // Estado (Usando Helper)
     const estadoEl = document.getElementById("vp_estado");
-    // Limpiamos las clases que le asignabas antes para que no choquen con el Soft Badge
-    estadoEl.className = ""; 
+    estadoEl.className = "mt-2 d-inline-block fs-6"; // Agregamos el tamaño y margen como contenedor
     
     if (data.leido == 1) {
-        estadoEl.innerHTML = `
-            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary px-3 py-2 shadow-sm fs-6 mt-2">
-                <i class="bi bi-check2-all me-1"></i> Notificación Leída
-            </span>`;
+        estadoEl.innerHTML = ComponentesUI.crearSoftBadge('secondary', 'bi-check2-all', 'Notificación Leída');
     } else {
-        estadoEl.innerHTML = `
-            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary px-3 py-2 shadow-sm fs-6 mt-2">
-                <i class="bi bi-envelope-exclamation-fill me-1"></i> Nueva (No Leída)
-            </span>`;
+        estadoEl.innerHTML = ComponentesUI.crearSoftBadge('primary', 'bi-envelope-exclamation-fill', 'Nueva (No Leída)');
     }
 
     // Tipo de Evento (Normalizamos y le damos un toque visual)

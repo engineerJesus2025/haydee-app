@@ -23,9 +23,6 @@ document.addEventListener('DOMContentLoaded', () => {
 // ============================================
 // CONSULTA Y DATATABLE
 // ============================================
-// ============================================
-// CONSULTA Y DATATABLE
-// ============================================
 async function consultar() {
     const contenedor = document.querySelector(".tabla-sistema-haydee");
     if (!contenedor) return;
@@ -35,16 +32,13 @@ async function consultar() {
     // Formato para el Estado con Íconos
     const formatoEstado = (cell) => {
         const config = obtenerConfigEstadoSolicitud(cell.getValue());
-        return `<span class="badge bg-${config.color} bg-opacity-10 ${config.claseTextoBorder} px-3 py-2 shadow-sm text-nowrap" style="font-size: .85rem;">
-                    <i class="bi ${config.icono} me-1"></i> ${config.texto}
-                </span>`;
+        return ComponentesUI.crearSoftBadge(config.color, config.icono, config.texto);
     };
 
+    // Formato para la Prioridad
     const formatoPrioridad = (cell) => {
         const config = obtenerConfigPrioridadSolicitud(cell.getValue());
-        return `<span class="badge bg-${config.color} bg-opacity-10 ${config.claseTextoBorder} px-3 py-2 shadow-sm text-nowrap" style="font-size: .85rem;">
-                    <i class="bi ${config.icono} me-1"></i> ${config.texto}
-                </span>`;
+        return ComponentesUI.crearSoftBadge(config.color, config.icono, config.texto);
     };
 
     const formatoBotones = (cell) => {
@@ -123,25 +117,15 @@ function mostrarVistaPrevia(data) {
 
     // Estado
     const configEstado = obtenerConfigEstadoSolicitud(data.estado);
-    estadoEl.className = "text-end"; // Solo mantenemos la alineación
-    estadoEl.innerHTML = `
-        <span class="badge bg-${configEstado.color} bg-opacity-10 ${configEstado.claseTextoBorder} fs-6 px-3 py-2 shadow-sm text-nowrap">
-            <i class="bi ${configEstado.icono} me-1"></i> ${configEstado.texto}
-        </span>
-    `;
+    estadoEl.innerHTML = ComponentesUI.crearSoftBadge(configEstado.color, configEstado.icono, configEstado.texto);
 
     // Prioridad
     const configPrioridad = obtenerConfigPrioridadSolicitud(data.prioridad);
     const prioEl = document.getElementById("vp_prioridad");
-    prioEl.className = "text-end"; // Solo mantenemos la alineación
-    prioEl.innerHTML = `
-        <span class="badge bg-${configPrioridad.color} bg-opacity-10 ${configPrioridad.claseTextoBorder} fs-6 px-3 py-2 shadow-sm text-nowrap">
-            <i class="bi ${configPrioridad.icono} me-1"></i> ${configPrioridad.texto}
-        </span>
-    `;
+    prioEl.innerHTML = ComponentesUI.crearSoftBadge(configPrioridad.color, configPrioridad.icono, configPrioridad.texto);
 
-    // Fecha (Mismo formato estándar)
-    // Asumiendo que FormatoFechas está disponible globalmente como en otros módulos
+    // Fecha
+    // FormatoFechas está disponible
     if (window.FormatoFechas && typeof FormatoFechas.formatoUsuario === "function") {
         document.getElementById("vp_fecha").textContent = FormatoFechas.formatoUsuario(data.fecha_reporte);
     } else {
@@ -150,7 +134,7 @@ function mostrarVistaPrevia(data) {
         document.getElementById("vp_fecha").textContent = `${partes[2]}-${partes[1]}-${partes[0]}`;
     }
 
-    // 6. Justificación
+    // Justificación
     document.getElementById("vp_descripcion").textContent = data.descripcion_necesidad || 'Sin justificación provista.';
 
     // Mostramos el modal
@@ -209,7 +193,9 @@ async function prepararFormulario(e) {
         form.querySelector('#presupuesto_id').value = data.presupuesto_id;
 
         document.getElementById('titulo_modal').textContent = 'Modificar Solicitud';
-        form.querySelector('#boton_formulario').textContent = 'Guardar Cambios';
+        document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-send-exclamation");
+        // form.querySelector('#boton_formulario').textContent = 'Guardar Cambios';
+        document.getElementById('texto_boton_formulario').textContent = 'Guardar Cambios';
         form.querySelector('#boton_formulario').dataset.id = id;
 
         modal.show();
@@ -322,19 +308,16 @@ function obtenerConfigEstadoSolicitud(estado) {
     let est = estado || "Pendiente";
     let color = "warning";
     let icono = "bi-clock-history";
-    let claseTextoBorder = "text-dark border border-warning";
 
     if (est === "Aprobada") {
         color = "success";
         icono = "bi-check-circle-fill";
-        claseTextoBorder = "text-success border border-success";
     } else if (est === "Rechazada") {
         color = "danger";
         icono = "bi-x-circle-fill";
-        claseTextoBorder = "text-danger border border-danger";
     }
 
-    return { color, claseTextoBorder, icono, texto: est };
+    return { color, icono, texto: est };
 }
 
 /**
@@ -345,27 +328,22 @@ function obtenerConfigPrioridadSolicitud(prioridad) {
     let color = "secondary";
     let icono = "bi-bookmark";
     let texto = "Desconocida";
-    let claseTextoBorder = "text-secondary border border-secondary";
 
-    // Validamos por número o por texto por seguridad
     if (p === "1" || p === "alta") {
         color = "danger";
         icono = "bi-arrow-up-circle-fill";
         texto = "Alta";
-        claseTextoBorder = "text-danger border border-danger";
     } else if (p === "2" || p === "media") {
         color = "warning";
         icono = "bi-dash-circle-fill";
         texto = "Media";
-        claseTextoBorder = "text-dark border border-warning";
     } else if (p === "3" || p === "baja") {
         color = "info";
         icono = "bi-arrow-down-circle-fill";
         texto = "Baja";
-        claseTextoBorder = "text-info border border-info";
     }
 
-    return { color, claseTextoBorder, icono, texto };
+    return { color, icono, texto };
 }
 
 // ============================================
@@ -378,7 +356,10 @@ document.getElementById('modal_solicitud_gasto').addEventListener('hide.bs.modal
     document.getElementById('campos_formulario_completo').style.display = 'none';
     document.getElementById('presupuesto_id').value = '';
     document.getElementById('titulo_modal').textContent = 'Registrar Solicitud';
-    form.querySelector('#boton_formulario').textContent = 'Registrar';
+    document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-send-plus");
+
+    // form.querySelector('#boton_formulario').textContent = 'Registrar';
+    document.getElementById('texto_boton_formulario').textContent = 'Guardar Solicitud';
     delete form.querySelector('#boton_formulario').dataset.id;
 });
 

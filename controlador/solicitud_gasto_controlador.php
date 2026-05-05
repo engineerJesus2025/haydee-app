@@ -8,10 +8,12 @@ use haydee\ayuda\ValidadorBD;
 use haydee\servicios\GestorAuditoria;
 
 // Verificaciones de seguridad
+Sesiones::validarMetodoHTTP(['GET', 'POST']);
 Sesiones::verificarSesion();
 Sesiones::verificarPermiso(GESTIONAR_SOLICITUD_GASTO, CONSULTAR);
 
 if (isset($_POST["operacion"])) {
+    header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
 
     Sesiones::verificarPermisoAccion(GESTIONAR_SOLICITUD_GASTO, $operacion);
@@ -34,6 +36,8 @@ if (isset($_POST["operacion"])) {
         $validador->validarConjunto($_POST, $reglas);
 
         if ($validador->tieneErrores()) {
+            $codigoHttp = $validador->tieneError404() ? 404 : 400;
+            http_response_code($codigoHttp);
             echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
             exit;
         }
@@ -61,6 +65,8 @@ if (isset($_POST["operacion"])) {
         switch ($operacion) {
             case 'consulta':
                 $respuesta = $solicitud->realizar_consulta('consultar');
+
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria('consultar');
                 }
@@ -68,16 +74,19 @@ if (isset($_POST["operacion"])) {
 
             case 'consultar_solicitud':
                 $respuesta = $solicitud->realizar_consulta('consultar_solicitud');
+                http_response_code($respuesta['estatus'] ? 200 : 404);
                 break;
 
             case 'consultar_presupuesto':
-                // Este método es público y no usa realizar_consulta, pero igual podemos manejarlo
+                // Este método es público y no usa realizar_consulta... PELIGRO
                 $respuesta = $solicitud->consultar_presupuesto_disponible();
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 break;
 
             case 'meses_anios_con_presupuesto':
                 $respuesta = $solicitud->listar_meses_anios_con_presupuesto();
-                // Adaptamos la respuesta al formato esperado por el frontend
+                
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
                     $respuesta = ['estatus' => true, 'data' => $respuesta['datos']];
                 }
@@ -88,10 +97,13 @@ if (isset($_POST["operacion"])) {
                 $anio = $_POST["anio"] ?? '';
                 $fecha = "$anio-$mes";
                 $respuesta = $solicitud->consultar_presupuesto($fecha);
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 break;
 
             case 'registrar_solicitud':
                 $respuesta = $solicitud->realizar_consulta('registrar_solicitud');
+
+                http_response_code($respuesta['estatus'] ? 201 : 400);
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria('registrar');
                 }
@@ -102,6 +114,8 @@ if (isset($_POST["operacion"])) {
                 $auditor->capturarDatosAnteriores('consultar_solicitud');
 
                 $respuesta = $solicitud->realizar_consulta('modificar_solicitud');
+
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) { 
                     $auditor->registrarAuditoria('modificar'); 
                 }
@@ -112,15 +126,19 @@ if (isset($_POST["operacion"])) {
                 $auditor->capturarDatosAnteriores('consultar_solicitud');
 
                 $respuesta = $solicitud->realizar_consulta('eliminar_solicitud');
+
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) { 
                     $auditor->registrarAuditoria('eliminar'); 
                 }
                 break;
 
             default:
+                http_response_code(400);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
     } catch (Exception $e) {
+        http_response_code(500);
         error_log("Error en controlador solicitud_gasto: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
@@ -134,7 +152,6 @@ if (isset($_POST["operacion"])) {
             }
             Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexión de seguridad
 
-            header('Content-Type: application/json');
             echo json_encode($respuesta);
             exit;
         }
@@ -161,12 +178,20 @@ if (isset($_POST["validar"])) {
                 $presupuesto->set_fecha($_POST["fecha"] ?? null);
                 $respuesta = $presupuesto->realizar_consulta('consultar_anio_presupuesto');
                 break;
+            default:
+                http_response_code(400);
+                $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
         }
     } catch (Exception $e) {
+        http_response_code(500);
         error_log("Error en validación AJAX Solicitud: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
     } finally {
         $presupuesto->cerrar();
+    }
+
+    if ($respuesta['estatus'] === true || isset($respuesta['existe'])) {
+        http_response_code(200);
     }
 
     echo json_encode($respuesta);

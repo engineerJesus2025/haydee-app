@@ -1,42 +1,43 @@
-@font-face{
+@font-face {
     font-family: "Inter";
     src: url("fonts/Inter_18pt-Light.ttf") format('truetype');
     font-weight: normal;
     font-style: normal;
 }
 
-/* Colores personalizados para los badges que no trae Bootstrap */
+/* Colores personalizados para badges que no existen en Bootstrap */
 .bg-indigo { background-color: #6610f2 !important; }
-.bg-teal { background-color: #20c997 !important; }
+.bg-teal   { background-color: #20c997 !important; }
 .badge-consultar { background-color: #2d3436; color: white; }
-/*.badge-iniciar-sesion { background-color: #6559BA; color: white; }*/
 .bg-iniciar-sesion { background-color: #6559BA; color: white; }
 
-/* Estilo principal de la tarjeta */
+/* =========================================================
+   TARJETA DE PUBLICACIÓN PRINCIPAL
+   ========================================================= */
 .post-card {
     font-family: 'Inter', sans-serif;
     border: none;
-    border-radius: 1.5rem; 
+    border-radius: 1.5rem;
     overflow: hidden;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;    
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05);
-    background: linear-gradient(135deg, #ffffff 90%, #e0f7fa 100%);
+    background: var(--ch-card-gradient, linear-gradient(135deg, #ffffff 90%, #e0f7fa 100%));
 }
 
 .post-card:hover {
-    transform: translateY(-5px); 
+    transform: translateY(-5px);
     box-shadow: 0 15px 45px rgba(0, 71, 133, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
 }
 
 .image-container {
-    height: 100%; 
+    height: 100%;
     overflow: hidden;
-    border-radius: 0 1.2rem 1.2rem 0; 
+    border-radius: 0 1.2rem 1.2rem 0;
     position: relative;
 }
 
 .post-card:hover .post-image {
-    transform: scale(1.05); 
+    transform: scale(1.05);
 }
 
 .content-area {
@@ -44,26 +45,26 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    height: 100%; 
+    height: 100%;
 }
 
 .post-title {
-    color: #0d47a1; 
+    color: var(--ch-post-title, #0d47a1);
     font-weight: 700;
     margin-bottom: 0.5rem;
     line-height: 1.2;
 }
 
-.post-image {    
+.post-image {
     max-height: 50vh;
-    width: inherit; 
+    width: inherit;
     object-fit: fill;
     transition: transform 0.5s ease;
 }
 
 .post-meta {
     font-size: 0.85rem;
-    color: #78909c; 
+    color: #78909c;
     margin-bottom: 1rem;
     display: flex;
     justify-content: space-between;
@@ -71,82 +72,111 @@
 }
 
 .author-badge {
-    background-color: #42a5f5; 
+    background-color: #42a5f5;
     color: white;
     padding: 0.4rem 0.8rem;
-    border-radius: 50rem; 
+    border-radius: 50rem;
     font-weight: 600;
     font-size: 0.8rem;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     transition: background-color 0.3s ease;
 }
-
 .author-badge:hover {
     background-color: #1e88e5;
 }
 
 .post-description {
-    color: #455a64; 
+    color: var(--ch-post-desc, #455a64);
 }
 
 @media (max-width: 767px) {
     .post-card { margin: 10px 0; }
     .image-container { height: 180px; border-radius: 0 0 1.5rem 1.5rem !important; }
     .content-area { padding: 1rem; }
-    .post-meta { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
-    .post-image { width: 100%; height: 100%; max-height: 100%; object-fit: cover; transition: transform 0.5s ease; }    
+    .post-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    .post-image {
+        width: 100%;
+        height: 100%;
+        max-height: 100%;
+        object-fit: cover;
+    }
 }
 
-.loader_publicaciones { width: 48px; height: 48px; display: block; margin:15px auto; position: relative; color: #FFF; box-sizing: border-box; animation: rotation 1s linear infinite; }
-.loader_publicaciones::after, .loader_publicaciones::before { content: ''; box-sizing: border-box; position: absolute; width: 24px; height: 24px; top: 50%; left: 50%; transform: scale(0.5) translate(0, 0); background-color: #222; border-radius: 50%; animation: animloader 1s infinite backwards; }
-.loader_publicaciones::before { background-color: #2A1CD1; transform: scale(0.5) translate(-48px, -48px); }
-@keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } 
-@keyframes animloader { 50% { transform: scale(1) translate(-50%, -50%); } }
-
-/* =============== NUEVOS ESTILOS DEL DASHBOARD ================== */
-
-/* --- EFECTOS HOVER PARA TARJETAS DASHBOARD Y KPIs --- */
-.dashboard-card { 
-    border: none; 
-    border-radius: 1.2rem; 
-    box-shadow: 0 4px 15px rgba(0,0,0,0.03); 
-    background-color: #ffffff; 
-    /* Agregamos una transición suave para la sombra y el movimiento */
-    transition: transform 0.3s ease, box-shadow 0.3s ease; 
+/* Loader */
+.loader_publicaciones {
+    width: 48px; height: 48px; display: block; margin: 15px auto;
+    position: relative; color: #FFF; box-sizing: border-box;
+    animation: rotation 1s linear infinite;
+}
+.loader_publicaciones::after, .loader_publicaciones::before {
+    content: ''; box-sizing: border-box; position: absolute;
+    width: 24px; height: 24px; top: 50%; left: 50%;
+    transform: scale(0.5) translate(0, 0); background-color: #222;
+    border-radius: 50%; animation: animloader 1s infinite backwards;
+}
+.loader_publicaciones::before {
+    background-color: #2A1CD1;
+    transform: scale(0.5) translate(-48px, -48px);
+}
+@keyframes rotation {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+@keyframes animloader {
+    50% { transform: scale(1) translate(-50%, -50%); }
 }
 
-/* Al pasar el ratón: elevamos la tarjeta y hacemos la sombra más pronunciada */
+/* =========================================================
+   TARJETAS DEL DASHBOARD (KPIs)
+   ========================================================= */
+.dashboard-card {
+    border: none;
+    border-radius: 1.2rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    background-color: var(--ch-card-bg);
+    color: var(--bs-body-color);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
 .dashboard-card:hover {
     transform: translateY(-4px);
     box-shadow: 0 12px 25px rgba(0,0,0,0.08);
 }
 
-/* Animamos los iconos para que reaccionen cuando el cursor está sobre la tarjeta */
-.icon-box { 
-    width: 48px; 
-    height: 48px; 
-    border-radius: 12px; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Efecto rebote */
+.icon-box {
+    width: 48px; height: 48px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
-
 .dashboard-card:hover .icon-box {
-    transform: scale(1.15) rotate(3deg); /* Crece y gira muy ligeramente */
+    transform: scale(1.15) rotate(3deg);
+}
+.icon-box-blue   { background-color: #e6f0ff; color: #3b82f6; }
+.icon-box-green  { background-color: #dcfce7; color: #22c55e; }
+.icon-box-yellow { background-color: #fef3c7; color: #f59e0b; }
+.icon-box-red    { background-color: #fee2e2; color: #ef4444; }
+
+.badge-up {
+    background-color: var(--ch-badge-success-bg);
+    color: var(--ch-badge-success-text);
+    border-radius: 20px; padding: 0.25rem 0.6rem;
+    font-size: 0.85rem; font-weight: 600;
+}
+.badge-down {
+    background-color: var(--ch-badge-danger-bg);
+    color: var(--ch-badge-danger-text);
+    border-radius: 20px; padding: 0.25rem 0.6rem;
+    font-size: 0.85rem; font-weight: 600;
 }
 
-.icon-box-blue { background-color: #e6f0ff; color: #3b82f6; }
-.icon-box-green { background-color: #dcfce7; color: #22c55e; }
-.icon-box-yellow { background-color: #fef3c7; color: #f59e0b; }
-.icon-box-red { background-color: #fee2e2; color: #ef4444; }
+.text-muted-custom {
+    color: var(--text-muted-color) !important;
+    font-size: 0.85rem;
+}
 
-.badge-up { background-color: #dcfce7; color: #166534; border-radius: 20px; padding: 0.25rem 0.6rem; font-size: 0.85rem; font-weight: 600; }
-.badge-down { background-color: #fee2e2; color: #991b1b; border-radius: 20px; padding: 0.25rem 0.6rem; font-size: 0.85rem; font-weight: 600; }
-
-.text-muted-custom { color: #64748b; font-size: 0.85rem; }
-
-/* Contenedor fijo para igualar gráficos */
 .chart-container {
     position: relative;
     height: 250px;
@@ -156,83 +186,70 @@
     justify-content: center;
 }
 
-/* Cuadricula de Apartamentos */
+/* Apartamentos */
 .apartamentos-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
     gap: 12px;
     width: 100%;
 }
-/* --- EFECTOS HOVER PARA BADGES DE APARTAMENTOS --- */
-.apt-badge { 
-    height: 60px; 
-    border-radius: 10px; 
-    display: flex; 
-    flex-direction: column; 
-    align-items: center; 
-    justify-content: center; 
-    font-size: 0.9rem; 
-    font-weight: bold; 
-    margin: 0; 
-    border: 1px solid transparent; 
-    /* Añadimos transición y cursor tipo mano para incitar interacción */
+
+.apt-badge {
+    height: 60px; border-radius: 10px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    font-size: 0.9rem; font-weight: bold;
+    margin: 0;
+    border: 1px solid transparent;
     transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
     cursor: pointer;
 }
-
-/* Al pasar el ratón sobre un apartamento */
 .apt-badge:hover {
-    transform: scale(1.08); /* Crece un 8% */
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1); /* Sombra suave */
-    filter: brightness(0.95); /* Se oscurece un poquitito para dar contraste */
-    z-index: 2; /* Asegura que se superponga a los vecinos al crecer */
+    transform: scale(1.08);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    filter: brightness(0.95);
+    z-index: 2;
 }
-.apt-ocupado { background-color: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
-.apt-libre { background-color: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
-.apt-mantenimiento { background-color: #fefce8; color: #a16207; border-color: #fef08a; }
-.apt-text-small { font-size: 0.55rem; font-weight: 600; margin-top: 2px; }
+.apt-ocupado       { background-color: var(--ch-badge-primary-bg); color: var(--ch-badge-primary-text); border-color: var(--ch-badge-primary-border); }
+.apt-libre         { background-color: var(--ch-badge-success-bg); color: var(--ch-badge-success-text); border-color: var(--ch-badge-success-border); }
+.apt-mantenimiento { background-color: var(--ch-badge-warning-bg); color: var(--ch-badge-warning-text); border-color: var(--ch-badge-warning-border); }
+.apt-text-small {
+    font-size: 0.55rem; font-weight: 600; margin-top: 2px;
+}
 
-/* Iconos de Listas */
-.activity-icon { 
-    width: 36px; 
-    height: 36px; 
-    border-radius: 50%; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    margin-right: 15px; 
-    flex-shrink: 0;
+/* Actividad reciente */
+.activity-icon {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin-right: 15px; flex-shrink: 0;
 }
-/* --- EFECTOS HOVER PARA ÚLTIMAS PUBLICACIONES --- */
+
 .publi-item {
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important; 
-    border: 1px solid transparent; 
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+    border: 1px solid transparent;
 }
-
 .publi-item:hover {
     margin-left: 8px !important;
     margin-right: -8px !important;
-    background-color: #eef2ff !important; 
+    background-color: var(--ch-header-hover) !important;
     box-shadow: 0 4px 15px rgba(0,0,0,0.06) !important;
-    cursor: pointer; 
+    cursor: pointer;
 }
-
 .publi-item .activity-icon {
     transition: transform 0.3s ease !important;
 }
-
 .publi-item:hover .activity-icon {
-    transform: scale(1.15) rotate(-5deg) !important; /* El ícono crece un poquito y se inclina */
-} 
+    transform: scale(1.15) rotate(-5deg) !important;
+}
 
-/* --- ESTILOS PARA TARJETAS DE PUBLICACIONES --- */
+/* Tarjetas de publicaciones */
 .tarjeta-publicacion {
+    background-color: var(--ch-card-bg);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
-    border: none;
+    border: 1px solid var(--ch-header-border);
     border-radius: 12px;
     overflow: hidden;
 }
-
 .tarjeta-publicacion:hover {
     transform: translateY(-5px);
     box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
@@ -241,114 +258,83 @@
 
 .imagen-tarjeta {
     height: 200px;
-    object-fit: cover; /* Recorta sin deformar */
+    object-fit: cover;
     background-color: #e9ecef;
     width: 100%;
 }
 
 .etiqueta-prioridad {
     position: absolute;
-    top: 15px;
-    right: 15px;
+    top: 15px; right: 15px;
     font-size: 0.85rem;
     padding: 0.5em 0.8em;
     border-radius: 8px;
     z-index: 2;
 }
 
-/* Evita que descripciones muy largas rompan el tamaño de la tarjeta */
 .texto-limitado {
     display: -webkit-box;
-    -webkit-line-clamp: 3; /* Máximo 3 líneas, luego muestra "..." */
+    -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
 
-/* --- EFECTOS HOVER PARA ACTIVIDAD RECIENTE --- */
+/* Actividad reciente */
 #contenedor-actividad > div {
     transition: background-color 0.2s ease, transform 0.2s ease, padding 0.2s ease;
     border-radius: 8px;
-    /* Agregamos padding transparente base para que el movimiento sea fluido */
-    padding: 0.5rem; 
-    margin-left: -0.5rem; /* Compensamos el padding visualmente */
+    padding: 0.5rem;
+    margin-left: -0.5rem;
     margin-right: -0.5rem;
 }
-
 #contenedor-actividad > div:hover {
-    background-color: #f8fafc; /* Un gris-azulado extremadamente claro */
-    transform: translateX(6px); /* Se mueve a la derecha */
+    background-color: var(--ch-header-hover);
+    transform: translateX(6px);
 }
-
-/* Evitamos que el borde inferior se vea feo al hacer hover cambiando su opacidad */
 #contenedor-actividad > div.border-bottom {
-    border-bottom-color: #e2e8f0 !important;
+    border-bottom-color: var(--ch-header-border) !important;
 }
 
-
-/* --- ESTILOS PARA AVATARES Y TIMELINE DE ACTIVIDAD --- */
-
-/* Contenedor del Avatar + Insignia */
-.avatar-container {
-    position: relative;
-    width: 42px;
-    height: 42px;
-    margin-right: 15px;
-    flex-shrink: 0;
-}
-
-/* El círculo con las iniciales */
-.user-avatar {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: bold;
-    font-size: 0.9rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-/* La insignia pequeñita de la acción */
-.action-badge {
-    position: absolute;
-    bottom: -2px;
-    right: -2px;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px solid white; /* Borde blanco para separarlo del avatar */
-    background-color: white; /* Fondo por si el SVG es transparente */
-}
-
-/* Separadores de fecha (Timeline) */
+/* Timeline */
 .timeline-date-separator {
     display: flex;
     align-items: center;
     text-align: center;
     margin: 1.5rem 0 1rem 0;
-    color: #64748b;
-    font-size: 0.75rem;
-    font-weight: bold;
+    color: var(--text-muted-color);
+    font-size: 0.75rem; font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
-
 .timeline-date-separator::before,
 .timeline-date-separator::after {
     content: '';
     flex: 1;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid var(--ch-header-border);
 }
+.timeline-date-separator:not(:empty)::before { margin-right: .5em; }
+.timeline-date-separator:not(:empty)::after  { margin-left: .5em; }
 
-.timeline-date-separator:not(:empty)::before {
-    margin-right: .5em;
+/* Avatar */
+.avatar-container {
+    position: relative;
+    width: 42px; height: 42px;
+    margin-right: 15px;
+    flex-shrink: 0;
 }
-
-.timeline-date-separator:not(:empty)::after {
-    margin-left: .5em;
+.user-avatar {
+    width: 100%; height: 100%;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-weight: bold; font-size: 0.9rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.action-badge {
+    position: absolute;
+    bottom: -2px; right: -2px;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid white;
+    background-color: white;
 }

@@ -53,7 +53,7 @@ async function consultar() {
         const nombreLimpio = valor.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
         const icono = obtenerIconoModulo(valor);
 
-        return `<div class="d-flex align-items-center text-dark">
+        return `<div class="d-flex align-items-center">
                     <i class="bi bi-${icono} text-primary me-2 opacity-75"></i> 
                     <span class="fw-semibold">${nombreLimpio}</span>
                 </div>`;
@@ -133,8 +133,9 @@ async function prepararFormulario(e) {
 
         botonFormulario.setAttribute('modificar', true);
         botonFormulario.setAttribute('id_modificar', modulo.id_modulo);
-        botonFormulario.textContent = 'Guardar Cambios';
+        document.getElementById('texto_boton_formulario').textContent = 'Guardar Cambios';
         document.getElementById('titulo_modal').textContent = 'Modificar Módulo';
+        document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-inboxes-fill");
         id_modificar = modulo.id_modulo;
 
         modalModulo.show();
@@ -193,8 +194,9 @@ function resetModal() {
     formulario.reset();
     botonFormulario.removeAttribute('modificar');
     botonFormulario.removeAttribute('id_modificar');
-    botonFormulario.textContent = 'Guardar';
+    document.getElementById('texto_boton_formulario').textContent = 'Guardar Módulo';
     document.getElementById('titulo_modal').textContent = 'Registrar Módulo';
+    document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-inboxes");
     id_modificar = null;
     document.getElementById('id_modulo').value = '';
 }

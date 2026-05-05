@@ -27,13 +27,11 @@ async function consultar() {
 
     const formatoNombre = (cell) => {
         let rol = cell.getValue() || "";
-        
         rol = rol.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
-        
-        const [icono, colorIcono] = obtenerIconoRol(rol);
+        const config = obtenerConfigRol(rol);
 
-        return `<div class="d-flex align-items-center fw-bold text-dark">
-                    <i class="bi bi-${icono} ${colorIcono} me-3 fs-5 opacity-75"></i> ${rol}
+        return `<div class="d-flex align-items-center fw-bold">
+                    <i class="${config.icono} text-${config.color} me-3 fs-5 opacity-75"></i> ${rol}
                 </div>`;
     };
 
@@ -42,9 +40,7 @@ async function consultar() {
         
         // Protección especial para el Rol 1 (Administrador Global)
         if (id == 1) {
-            return `<span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary px-3 py-2 shadow-sm text-nowrap">
-                        <i class="bi bi-lock-fill me-1"></i> No Modificable
-                    </span>`;
+            return ComponentesUI.crearSoftBadge('secondary', 'bi-lock-fill', 'No Modificable');
         }
 
         let html = `<div class="d-flex justify-content-center flex-wrap gap-2">
@@ -107,7 +103,7 @@ async function mostrarVistaPrevia(data) {
     // Asignamos el nombre y mostramos el modal rápidamente con el estado de "Cargando"
     document.getElementById("vp_nombre_rol").textContent = nombre || 'N/A';
 
-    const [icono] = obtenerIconoRol(nombre);
+    const {icono} = obtenerConfigRol(nombre);
     document.getElementById("vp_icono").className = `bi bi-${icono} me-2`;
 
     const contenedor = document.getElementById("vp_contenedor_permisos");
@@ -135,10 +131,10 @@ async function mostrarVistaPrevia(data) {
         }, {});
 
         const coloresPermisos = {
-            REGISTRAR:'bg-primary',
-            CONSULTAR:'bg-info text-dark',
-            MODIFICAR:'bg-success',
-            ELIMINAR:'bg-danger',
+            REGISTRAR: 'primary',
+            CONSULTAR: 'info',
+            MODIFICAR: 'success',
+            ELIMINAR: 'danger',
         };
 
         // Construimos el HTML
@@ -173,7 +169,11 @@ async function mostrarVistaPrevia(data) {
         let html = '';
         for (const [modulo, permisos] of Object.entries(agrupados)) {
             // Badges para los permisos
-            const badges = permisos.map(p => `<span class="badge ${coloresPermisos[p]} fw-normal px-2 py-1 shadow-sm">${p[0] + p.slice(1).toLowerCase()}</span>`).join(' ');
+            const badges = permisos.map(p => {
+                const nombreColor = coloresPermisos[p] || 'secondary';
+                const textoPermiso = p[0] + p.slice(1).toLowerCase();
+                return ComponentesUI.crearSoftBadge(nombreColor, null, textoPermiso);
+            }).join(' ');
 
             // Limpiamos el nombre del módulo (ej: GESTIONAR_GASTOS -> gastos)
             let nombre_limpio = modulo.replace("GESTIONAR_", "").toLowerCase();
@@ -187,8 +187,8 @@ async function mostrarVistaPrevia(data) {
 
             // Creamos la tarjeta por módulo, inyectando el icono dinámico
             html += `
-                <div class="border rounded p-3 bg-light bg-opacity-50">
-                    <div class="fw-bold text-dark mb-2 d-flex align-items-center" style="font-size: 1rem; letter-spacing: 0.5px;">
+                <div class="border rounded p-3 card-item ">
+                    <div class="fw-bold mb-2 d-flex align-items-center" style="font-size: 1rem; letter-spacing: 0.5px;">
                         <i class="bi ${icono} me-2 text-primary fs-5"></i>
                         ${titulo_capitalizado}
                     </div>
@@ -317,7 +317,9 @@ async function prepararFormulario(e) {
         }
 
         document.querySelector("#titulo_modal").textContent = "Modificar Rol";
-        document.querySelector("#boton_formulario").innerHTML = `<i class="bi bi-floppy me-1"></i> Guardar Cambios`;
+        document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-house-door-fill");
+        // document.querySelector("#boton_formulario").innerHTML = `<i class="bi bi-floppy me-1"></i> Guardar Cambios`;
+        document.getElementById('texto_boton_formulario').textContent = 'Guardar Cambios';
         document.querySelector("#boton_formulario").setAttribute("modificar", "true");
         EstadoInputs.limpiar(inputNombre);
 
@@ -325,18 +327,19 @@ async function prepararFormulario(e) {
     });
 }
 
-function obtenerIconoRol(nombre){
-    let icono = "person-badge";
-    let colorIcono = "text-secondary";
+function obtenerConfigRol(nombre) {
+    let color = "secondary";
+    let icono = "bi-person-badge";
+    let nombreUpper = (nombre || "Desconocido").toUpperCase();
 
-    switch (nombre.toUpperCase()) {
-        case 'ADMINISTRADOR GLOBAL': icono = 'shield-lock-fill'; colorIcono = "text-warning"; break;
-        case 'ADMINISTRADOR': icono = 'shield-check'; colorIcono = "text-primary"; break;
-        case 'PROPIETARIO': icono = 'house-door-fill'; colorIcono = "text-success"; break;
-        case 'CONTADOR':  icono = 'calculator-fill'; colorIcono = "text-danger"; break;
-        case 'PRESIDENTE':  icono = 'person-workspace'; colorIcono = "text-info"; break;
+    switch (nombreUpper) {
+        case 'ADMINISTRADOR GLOBAL': icono = 'bi-shield-lock-fill'; color = "warning"; break;
+        case 'ADMINISTRADOR': icono = 'bi-shield-check'; color = "primary"; break;
+        case 'PROPIETARIO': icono = 'bi-house-door-fill'; color = "success"; break;
+        case 'CONTADOR':  icono = 'bi-calculator-fill'; color = "danger"; break;
+        case 'PRESIDENTE':  icono = 'bi-person-workspace'; color = "info"; break;
     }
-    return [icono,colorIcono];
+    return { icono, color, texto: nombre };
 }
 
 // ============================================
@@ -358,7 +361,9 @@ document.getElementById('modal_roles').addEventListener('hide.bs.modal', () => {
     form.reset();
     document.querySelectorAll('.is-valid, .is-invalid').forEach(el => el.classList.remove('is-valid', 'is-invalid'));
     document.getElementById('titulo_modal').textContent = 'Registrar Rol';
-    form.querySelector('#boton_formulario').textContent = 'Guardar';
+    document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-house-door");
+    // form.querySelector('#boton_formulario').textContent = 'Guardar';
+    document.getElementById('texto_boton_formulario').textContent = 'Guardar Rol';
     document.querySelector("#boton_formulario").removeAttribute('modificar'); // Limpiamos el atributo modificar
     
     // --- Cerrar todos los acordeones abiertos ---

@@ -47,13 +47,123 @@
 
         .permiso-item:hover .form-check-input:not(:checked) {
             border-color: var(--bs-primary);
-            background-color: white;
+            background-color: var(--text-link-notif-color);
         }
 
         /* Ajuste para la tabla y alineación superior */
         #tabla_permisos td {
             vertical-align: top;
         }
+
+        /* =========================================================
+   TABLA DE PERMISOS (MÓDULO DE ROLES)
+   ========================================================= */
+
+/* 1. Cabecera destacada (Mismo color que las tablas principales) */
+.tabla-permisos thead th {
+    background-color: var(--ch-table-header-bg) !important;
+    color: var(--ch-table-header-text) !important;
+    border-bottom: 2px solid var(--ch-table-border) !important;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+}
+
+/* 2. Celdas adaptativas */
+.tabla-permisos tbody td {
+    border-bottom: 1px solid var(--ch-table-border) !important;
+    color: var(--bs-body-color);
+}
+
+/* 3. Acordeones (Botón principal) */
+.tabla-permisos .accordion-button {
+    background-color: var(--ch-header-hover) !important; /* Un gris/azul sutil */
+    color: var(--bs-body-color) !important;
+    border-radius: 6px !important;
+    border: 1px solid var(--ch-table-border);
+}
+
+.tabla-permisos .accordion-button:not(.collapsed) {
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
+/* 4. Cuerpo del acordeón (Donde están los checkboxes) */
+.tabla-permisos .accordion-body {
+    border-top: none;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+    color: var(--bs-body-color);
+}
+
+/* Para que los íconos de la cabecera también hereden el color blanco/claro */
+.tabla-permisos thead th i {
+    color: inherit !important; 
+}
+
+#tabla_permisos .accordion-collapse.collapse.show, #tabla_permisos .accordion-collapse.collapsing {
+    background-color: transparent  !important;
+}
+
+/* =========================================================
+   TABLA DE PERMISOS (MÓDULO DE ROLES)
+   ========================================================= */
+
+/* 1. Cabecera distintiva (Gris claro de día, Pizarra de noche) */
+.tabla-permisos thead th {
+    background-color: var(--ch-header-hover) !important;
+    color: var(--ch-color-titulos) !important;
+    border-bottom: 2px solid var(--ch-table-border) !important;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+/* 2. Celdas adaptativas (Para dar profundidad respecto al modal) */
+.tabla-permisos tbody td {
+    border-bottom: 1px solid var(--ch-table-border) !important;
+    color: var(--bs-body-color);
+}
+
+/* 3. Acordeones (Botón principal) */
+.tabla-permisos .accordion-button {
+    background-color: var(--ch-card-bg) !important; /* Resalta como un elemento elevado sobre el td */
+    color: var(--bs-body-color) !important;
+    border-radius: 6px !important;
+    border: 1px solid var(--ch-table-border);
+}
+
+.tabla-permisos .accordion-button:not(.collapsed) {
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
+/* 4. Cuerpo del acordeón (Donde están los checkboxes) */
+.tabla-permisos .accordion-body {
+    background-color: var(--ch-input-bg) !important; /* Efecto hundido para los checkboxes */
+    border-top: none;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+    color: var(--bs-body-color);
+}
+
+/* 5. Nombres de Módulos más legibles */
+.tabla-permisos .nombre-modulo {
+    /* Usamos nuestra variable pastel que brilla en oscuro y es visible en claro */
+    color: var(--ch-badge-primary-text) !important; 
+}
+
+/* Para que los íconos de la cabecera también hereden el color */
+.tabla-permisos thead th i {
+    color: inherit !important; 
+}
+
+#tabla_permisos .accordion-collapse.collapse.show, 
+#tabla_permisos .accordion-collapse.collapsing {
+    background-color: var(--ch-input-bg) !important;
+    margin: 0;
+}
+
     </style>
 </head>
 <body id="body-pd" class="body-pd">
@@ -70,14 +180,14 @@
                 <main class="col ps-md-2 pt-2">
 
                     <div class="page-header pt-3">
-                        <h2>GESTIONAR ROLES</h2>
+                        <h2 id="titulo_pagina">GESTIONAR ROLES</h2>
                     </div>
                     <p class="lead"></p>
                     <hr>
 
                     <div class="row mb-3 justify-content-center">
                         <div class="col-12">
-                            <div class="card p-4">
+                            <div class="card p-4 shadow-lg">
                                 <div class="row">
                                     <div class="col-12 col-sm-6 mb-4">
                                         <?php require ROOT_PATH . "/vista/componentes/boton_nuevo.php"; ?>

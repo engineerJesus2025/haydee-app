@@ -26,10 +26,7 @@ async function consultar() {
     const formatoEstado = (cell) => {
         const config = obtenerConfigEstadoAnio(cell.getValue());
         
-        return `<span class="badge bg-${config.color} bg-opacity-10 ${config.claseTextoBorder} px-3 py-2 shadow-sm text-nowrap" style="font-size: .85rem;">
-                    <i class="bi ${config.icono} me-1"></i>
-                    ${config.texto}
-                </span>`;
+        return ComponentesUI.crearSoftBadge(config.color, config.icono, config.texto);
     };
 
     const formatoFecha = (cell) => FormatoFechas.formatoUsuario(cell.getValue());
@@ -119,23 +116,17 @@ async function consultar() {
 
 // Función que lee la memoria de Tabulator (Sin AJAX extra)
 function mostrarVistaPrevia(data) {
-    // 1. Estado con Soft Badges
+    // Estado con Soft Badges
     const config = obtenerConfigEstadoAnio(data.estado);
     const estadoEl = document.getElementById("vp_estado");
     
-    // Limpiamos las clases de texto plano e inyectamos el Badge
-    estadoEl.className = "mt-2 mb-0"; 
-    estadoEl.innerHTML = `
-        <span class="badge bg-${config.color} bg-opacity-10 ${config.claseTextoBorder} fs-6 px-3 py-2 shadow-sm text-nowrap">
-            <i class="bi ${config.icono} me-1"></i>
-            ${config.texto}
-        </span>
-    `;
+    // Limpiamos clases de texto plano e inyectamos el Badge con contenedor
+    estadoEl.innerHTML = ComponentesUI.crearSoftBadge(config.color, config.icono, config.texto);
 
-    // 2. Descripción
+    // Descripción
     document.getElementById("vp_descripcion").textContent = data.descripcion || 'Sin descripción';
 
-    // 3. Fechas (Reutilizamos la clase FormatoFechas que ya usas en la tabla)
+    // Fechas
     document.getElementById("vp_fecha_inicio").textContent = FormatoFechas.formatoUsuario(data.fecha_inicio);
     
     // Mismo criterio de la tabla: si no está cerrada, mostramos un aviso
@@ -182,7 +173,8 @@ async function prepararFormulario(e) {
         form.querySelector('#descripcion').value = data.descripcion;
 
         document.getElementById('titulo_modal').textContent = 'Modificar Año Fiscal';
-        form.querySelector('#boton_formulario').textContent = 'Guardar Cambios';
+        document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-calendar4-week");
+        document.getElementById('texto_boton_formulario').textContent = 'Guardar Cambios';
         form.querySelector('#boton_formulario').dataset.id = id;
 
         // Habilitar campos deshabilitados en registro
@@ -221,28 +213,20 @@ async function eliminar(id) {
 
 
 /**
- * Procesa el estado del año fiscal y devuelve su configuración visual (Soft Badge)
+ * Procesa el estado del año fiscal y devuelve su configuración visual
  * @param {string} estado - El estado (Ej: 'Abierta', 'Cerrada')
- * @returns {object} Configuración visual
  */
 function obtenerConfigEstadoAnio(estado) {
     const est = estado || 'Abierta';
     let color = "success";
     let icono = "bi-check-circle-fill";
-    let claseTextoBorder = "text-success border border-success";
 
     if (est === 'Cerrada') {
         color = "secondary";
         icono = "bi-lock-fill";
-        claseTextoBorder = "text-secondary border border-secondary";
     }
 
-    return { 
-        color: color, 
-        claseTextoBorder: claseTextoBorder, 
-        icono: icono, 
-        texto: est 
-    };
+    return { color, icono, texto: est };
 }
 
 // ============================================
@@ -252,7 +236,9 @@ document.getElementById('modal_anio_fiscal').addEventListener('hide.bs.modal', (
     form.reset();
     document.querySelectorAll('.is-valid, .is-invalid').forEach(el => el.classList.remove('is-valid', 'is-invalid'));
     document.getElementById('titulo_modal').textContent = 'Registrar Año Fiscal';
-    form.querySelector('#boton_formulario').textContent = 'Guardar';
+    document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-calendar3");
+    // form.querySelector('#boton_formulario').textContent = 'Guardar';
+    document.getElementById('texto_boton_formulario').textContent = 'Guardar Año Fiscal'
     delete form.querySelector('#boton_formulario').dataset.id;
 
     // Deshabilitar campos de cierre y estado en registro

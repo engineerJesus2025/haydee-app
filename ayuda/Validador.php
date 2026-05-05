@@ -11,9 +11,12 @@ use haydee\ayuda\ValidadorBD;
 class Validador {
     
     private $errores = [];
-    
-    /** @var ValidadorBD|null */
+    private $error_404 = false;
     private $validadorBD = null;
+
+    public function tieneError404() {
+        return $this->error_404;
+    }
 
     /**
      * PATRÓN LAZY INITIALIZATION (Carga Perezosa)
@@ -114,6 +117,10 @@ class Validador {
                 
                 if (!$this->obtenerValidadorBD()->existe($tabla, $campoBd, $valor)) {
                     $this->agregarError($campo, "El valor indicado en '$campo' no existe en el sistema.");
+                    
+                    if (strpos($campo, 'id_') === 0) {
+                        $this->error_404 = true;
+                    }
                 }
             }
 

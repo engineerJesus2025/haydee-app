@@ -12,10 +12,12 @@ use haydee\ayuda\ValidadorBD;
 use haydee\servicios\GestorAuditoria;
 
 // Verificaciones de seguridad
+Sesiones::validarMetodoHTTP(['GET', 'POST']);
 Sesiones::verificarSesion();
 Sesiones::verificarPermiso(GESTIONAR_GASTOS, CONSULTAR);
 
 if (isset($_POST["operacion"])) {
+    header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
 
     Sesiones::verificarPermisoAccion(GESTIONAR_GASTOS, $operacion);
@@ -30,6 +32,8 @@ if (isset($_POST["operacion"])) {
         $validador->validarConjunto($_POST, $reglasCabecera);
 
         if ($validador->tieneErrores()) {
+            $codigoHttp = $validador->tieneError404() ? 404 : 400;
+            http_response_code($codigoHttp);
             echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
             exit;
         }
@@ -110,6 +114,8 @@ if (isset($_POST["operacion"])) {
             // =========================================================
             case 'consulta':
                 $respuesta = $gastos->realizar_consulta('consultar');
+
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria('consultar');
                 }
@@ -117,10 +123,12 @@ if (isset($_POST["operacion"])) {
 
             case 'consultar_gasto':
                 $respuesta = $gastos->realizar_consulta('consultar_gasto');
+                http_response_code($respuesta['estatus'] ? 200 : 404);
                 break;
 
             case 'consultar_detalles':
                 $respuesta = $gastos->realizar_consulta('consultar_detalles_por_gasto');
+                http_response_code($respuesta['estatus'] ? 200 : 404);
                 break;
 
             case 'consulta_especifica_detalles':
@@ -132,6 +140,8 @@ if (isset($_POST["operacion"])) {
             // =========================================================
             case 'registrar_gasto':
                 $respuesta = $gastos->realizar_consulta('registrar_gasto');
+
+                http_response_code($respuesta['estatus'] ? 201 : 400);
                 if ($respuesta['estatus']) {
                     // Ocultamos el arreglo masivo al auditor
                     $gastos->set_detalles(null);
@@ -144,6 +154,8 @@ if (isset($_POST["operacion"])) {
                 $auditor->capturarDatosAnteriores('consultar_cabecera_gasto');
 
                 $respuesta = $gastos->realizar_consulta('modificar_gasto');
+
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) { 
                     // Ocultamos el arreglo masivo al auditor
                     $gastos->set_detalles(null);
@@ -159,6 +171,8 @@ if (isset($_POST["operacion"])) {
                 $auditor->capturarDatosAnteriores('consultar_cabecera_gasto');
 
                 $respuesta = $gastos->realizar_consulta('eliminar_gasto');
+
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) { 
                     $auditor->registrarAuditoria('eliminar'); 
                 }
@@ -169,20 +183,25 @@ if (isset($_POST["operacion"])) {
             // =========================================================
             case 'listar_gastos_mes':
                 $respuesta = $gastos->realizar_consulta('listar_gastos_mes');
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 break;
 
             case 'filtrar_gastos_mes':
                 $respuesta = $gastos->realizar_consulta('filtrar_por_mes');
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 break;
 
             case 'totales_metodo_pago':
                 $respuesta = $gastos->realizar_consulta('total_por_metodo_pago');
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 break;
 
             default:
+                http_response_code(400);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
     } catch (Exception $e) {
+        http_response_code(500);
         error_log("Error en controlador gastos: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
@@ -190,7 +209,6 @@ if (isset($_POST["operacion"])) {
             if (isset($gastos)) { $gastos->cerrar(); }
             Bitacora::cerrarConexionBitacora();
 
-            header('Content-Type: application/json');
             echo json_encode($respuesta);
             exit;
         }
@@ -203,36 +221,53 @@ if (isset($_POST["operacion"])) {
 if (isset($_POST["validar"])) {
     header('Content-Type: application/json');
     $validar = $_POST["validar"];
+    $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
+
+    $validadorBD = new ValidadorBD();
 
     try {
-        if ($validar === 'referencia') {
-            $referencia = $_POST["referencia"] ?? '';
-            $id_gasto = $_POST["id_gasto"] ?? null; 
+        switch ($validar) {
+            case 'referencia':
+                $referencia = $_POST["referencia"] ?? '';
+                $id_gasto = $_POST["id_gasto"] ?? null; 
             
-            $gastosTemp = new Gastos();
-            $existe = $gastosTemp->verificarReferenciaDisponible($referencia, $id_gasto);
-            
-            echo json_encode(['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'La referencia ya está registrada en otro gasto' : 'Disponible']);
-            exit;
+                $gastosTemp = new Gastos();
+                $existe = $gastosTemp->verificarReferenciaDisponible($referencia, $id_gasto);
 
-        } elseif ($validar === 'validar_clave_foranea') {
-            if (isset($_POST['tabla'], $_POST['nombre_clave'], $_POST['valor'])) {
-                $validadorBD = new ValidadorBD();
-                $existe = $validadorBD->existe($_POST['tabla'], $_POST['nombre_clave'], $_POST['valor']);
-                echo json_encode(['estatus' => $existe, 'mensaje' => 'OK']);
-            } else {
-                echo json_encode(['estatus' => false, 'mensaje' => 'Faltan parámetros']);
-            }
-            exit;
-        } else {
-            echo json_encode(['estatus' => false, 'mensaje' => 'Validación no implementada']);
-            exit;
+                $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'La referencia ya está registrada en otro gasto' : 'Disponible'];
+                break;
+
+            case 'validar_clave_foranea':
+                $tabla = $_POST['tabla'] ?? '';
+                $campo = $_POST['nombre_clave'] ?? '';
+                $valor = $_POST['valor'] ?? '';
+
+                if (empty($tabla) || empty($campo) || empty($valor)) {
+                    $respuesta = ['estatus' => false, 'mensaje' => 'Faltan parámetros de validación'];
+                    break;
+                }
+
+
+                $existe = $validadorBD->existe($tabla, $campo, $valor);
+                $respuesta = ['estatus' => $existe, 'mensaje' => $existe ? 'OK' : 'No existe'];
+                break;
+
+            default:
+                http_response_code(400);
+                $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
         }
     } catch (Exception $e) {
-        error_log("Error en validación AJAX Gastos: " . $e->getMessage());
-        echo json_encode(['estatus' => false, 'mensaje' => 'Error interno del servidor']);
-        exit;
+        http_response_code(500);
+        error_log("Error en validación AJAX Bancos: " . $e->getMessage());
+        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
     }
+
+    if ($respuesta['estatus'] === true || isset($respuesta['existe'])) {
+        http_response_code(200);
+    }
+
+    echo json_encode($respuesta);
+    exit;
 }
 
 // =========================================================

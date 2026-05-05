@@ -9,9 +9,9 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             
-            <div class="modal-body p-0">
+            <div class="modal-body rounded-bottom p-0">
                 
-                <div class="bg-light p-4 border-bottom">
+                <div class=" p-4 border-bottom">
                     <div class="row text-center">
                         <div class="col-md-4 mb-3 mb-md-0 border-end">
                             <span class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 1px;">Período</span>
@@ -30,12 +30,12 @@
                     </div>
                 </div>
 
-                <div class="px-4 py-3 bg-white border-bottom" id="vp_contenedor_observacion">
+                <div class="px-4 py-3  border-bottom" id="vp_contenedor_observacion">
                     <span class="text-muted text-uppercase fw-bold d-block mb-1" style="font-size: 0.75rem;"><i class="bi bi-chat-text me-1"></i> Observación</span>
-                    <p id="vp_observacion" class="mb-0 text-dark fst-italic" style="font-size: 0.9rem;">---</p>
+                    <p id="vp_observacion" class="mb-0  fst-italic" style="font-size: 0.9rem;">---</p>
                 </div>
 
-                <div class="p-4 bg-light">
+                <div class="p-4 ">
                     <h6 class="fw-bold text-secondary mb-3">
                         <i class="bi bi-list-check me-2"></i>Desglose de Gastos
                     </h6>
@@ -51,8 +51,10 @@
 
             </div>
             
-            <div class="modal-footer bg-white border-top justify-content-center">
-                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cerrar</button>
+            <div class="modal-footer  border-top justify-content-center">
+                <button type="button" class="btn btn-soft-secondary px-4" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-2"></i> Cerrar
+                </button>
             </div>
             
         </div>

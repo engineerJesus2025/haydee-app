@@ -104,7 +104,6 @@ async function cargarGraficos() {
                             legend: { position: 'bottom' }
                         },
                         cutout: '70%',
-                        // --- NUEVA ANIMACIÓN NATIVA DE CHART.JS ---
                         animation: {
                             animateScale: true,   // Crece desde el centro
                             animateRotate: true,  // Gira mientras aparece
@@ -161,13 +160,13 @@ async function cargarGraficos() {
                         {
                             label: 'Ingresos',
                             data: datosIngresos,
-                            backgroundColor: '#3b82f6',
+                            backgroundColor: ['#3b82f6'],
                             borderRadius: 4
                         },
                         {
                             label: 'Egresos',
                             data: datosGastos,
-                            backgroundColor: '#f43f5e',
+                            backgroundColor: ['#f43f5e'],
                             borderRadius: 4
                         }
                     ]
@@ -180,7 +179,6 @@ async function cargarGraficos() {
                         y: { beginAtZero: true, grid: { borderDash: [2, 4] } },
                         x: { grid: { display: false } }
                     },
-                    // --- NUEVA ANIMACIÓN NATIVA DE CHART.JS ---
                     animation: {
                         duration: 1500,
                         easing: 'easeOutBack', // Da un pequeñísimo "rebote" al terminar de subir
@@ -275,7 +273,7 @@ function construirHTMLPublicacion(publicacion) {
             textoPrioridad.textContent = "Urgente";
             break;
         case '2':
-            badgeContenedor.className = 'badge etiqueta-prioridad shadow-sm priority-badge d-flex align-items-center gap-1 bg-warning text-dark';
+            badgeContenedor.className = 'badge etiqueta-prioridad shadow-sm priority-badge d-flex align-items-center gap-1 bg-warning';
             iconoPrioridad.classList.add('bi-star-fill'); // Estrella
             textoPrioridad.textContent = "Importante";
             break;
@@ -363,36 +361,36 @@ async function cargarWidgetPublicaciones() {
             let icono, colorIcono, colorBorde;
             
             if (pub.prioridad == 1) { // Urgente
-                icono = "bell-fill"; // Campanita en lugar de advertencia de error
-                colorIcono = 'danger';
+                icono = "bell-fill"; 
                 colorBorde = 'border-danger';
+                claseIcono = 'badge-soft-danger'; 
             } else if (pub.prioridad == 2) { // Importante
                 icono = "star-fill";
-                colorIcono = 'warning';
                 colorBorde = 'border-warning';
+                claseIcono = 'badge-soft-warning'; 
             } else { // Informativo / Normal
-                icono = "info-circle-fill"; // Documento de texto
-                colorIcono = 'primary'; // Cambiamos a azul para dar un aspecto neutral
+                icono = "info-circle-fill"; 
                 colorBorde = 'border-primary';
+                claseIcono = 'badge-soft-primary';
             }
 
             let divItem = document.createElement('div');
             // Usamos bg-white en lugar de bg-light para que resalte más la sombra
-            divItem.className = `card publi-item bg-white shadow-sm border-0 p-3 rounded-4 border-start border-4 ${colorBorde} animacion-aparecer mb-2`;
+            divItem.className = `card publi-item shadow-sm border-0 p-3 rounded-4 border-start border-4 ${colorBorde} animacion-aparecer mb-2`;
             
-            // Reestructuramos el HTML interno aprovechando tus clases CSS existentes (.activity-icon)
             divItem.innerHTML = `
                 <div class="d-flex align-items-center">
-                    <div class="activity-icon bg-${colorIcono} bg-opacity-10 text-${colorIcono} me-3">
+                    <!-- Usamos nuestra clase claseIcono -->
+                    <div class="activity-icon ${claseIcono} me-3">
                         <i class="bi bi-${icono} fs-5"></i>
                     </div>
                     
                     <div class="flex-grow-1 overflow-hidden">
-                        <h6 class="fw-bold mb-1 text-dark text-truncate">${pub.titulo}</h6>
-                        
+                        <h6 class="fw-bold mb-1 text-truncate">${pub.titulo}</h6>
                         <div class="d-flex flex-wrap align-items-center mt-1" style="row-gap: 2px; column-gap: 8px;">
                             <span class="text-muted-custom" style="font-size: 0.75rem;">
-                                <i class="bi bi-person text-secondary me-1"></i>${pub.nombre_usuario}
+                                <!-- Quitamos text-secondary para que herede -->
+                                <i class="bi bi-person me-1"></i>${pub.nombre_usuario}
                             </span>
                             <span class="text-muted-custom" style="font-size: 0.7rem;">
                                 ${fechaFormateada}
@@ -494,22 +492,23 @@ function mostrarInfoApartamento(apt) {
 
     h3Deuda.textContent = `${montoDeuda.toFixed(2)} Bs.`;
 
+    cajaDeuda.style.backgroundColor = '';
+    cajaDeuda.style.color = '';
+
     if (montoDeuda > 0) {
-        // Estado: Con Deuda (Tonos Rojos)
-        cajaDeuda.style.backgroundColor = '#fef2f2'; // Fondo rojo muy suave pastel
-        cajaDeuda.style.color = '#dc2626'; // Texto rojo oscuro
-        h3Deuda.className = 'fw-bolder mb-0 text-danger';
-        iconoDeuda.className = 'fas fa-exclamation-triangle me-1 text-danger';
+        // Estado: Con Deuda (Usa nuestras variables dinámicas rojas)
+        cajaDeuda.className = 'p-3 rounded-4 mt-2 mb-1 transition-all badge-soft-danger border-0';
+        h3Deuda.className = 'fw-bolder mb-0';
+        iconoDeuda.className = 'fas fa-exclamation-triangle me-1';
         msgDeuda.textContent = 'Posee deuda pendiente';
-        msgDeuda.className = 'fw-bold text-danger';
+        msgDeuda.className = 'fw-bold';
     } else {
-        // Estado: Solvente (Tonos Verdes)
-        cajaDeuda.style.backgroundColor = '#f0fdf4'; // Fondo verde muy suave pastel
-        cajaDeuda.style.color = '#16a34a'; // Texto verde oscuro
-        h3Deuda.className = 'fw-bolder mb-0 text-success';
-        iconoDeuda.className = 'fas fa-check-circle me-1 text-success';
+        // Estado: Solvente (Usa nuestras variables dinámicas verdes)
+        cajaDeuda.className = 'p-3 rounded-4 mt-2 mb-1 transition-all badge-soft-success border-0';
+        h3Deuda.className = 'fw-bolder mb-0';
+        iconoDeuda.className = 'fas fa-check-circle me-1';
         msgDeuda.textContent = 'Solvente';
-        msgDeuda.className = 'fw-bold text-success';
+        msgDeuda.className = 'fw-bold';
     }
 
     // 3. Mostrar Modal
@@ -576,7 +575,7 @@ async function cargarActividadReciente() {
                 textoActividad = `<span class="text-muted">${item.accion.toLowerCase()} en el sistema.</span>`;
             } else {
                 textoActividad = `<span class="text-muted">${item.accion.toLowerCase()} en ${item.nombre_modulo}:</span>
-                                  <span class="text-dark"> ${item.descripcion}</span>`;
+                                  <span > ${item.descripcion}</span>`;
             }
 
             let divItem = document.createElement('div');
@@ -593,7 +592,7 @@ async function cargarActividadReciente() {
                 </div>
                 <div>
                     <div class="mb-1">
-                        <span class="fw-bold text-dark">${item.nombre_usuario}</span> 
+                        <span class="fw-bold">${item.nombre_usuario}</span> 
                         ${textoActividad}
                     </div>
                     <div class="text-muted-custom" style="font-size: 0.75rem;">
@@ -690,14 +689,15 @@ function mostrarDetalleBitacoraRapido(rowData) {
             try { detalles = JSON.parse(rowData.valores_nuevos || '{}'); } catch(e) {}
 
             let contenidoHtml = `
-                <div class="border rounded-3 p-4 bg-light shadow-sm">
-                    <div class="d-flex align-items-center mb-4 border-bottom pb-3">
-                        <div class="bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 45px; height: 45px;">
+                <div class="border rounded-3 p-4 vp-card shadow-sm vp-border-color">
+                    <div class="d-flex align-items-center mb-4 border-bottom pb-3 vp-border-color">
+                        <!-- Usamos badge-soft-warning en lugar de bg-warning text-dark -->
+                        <div class="badge-soft-warning rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 45px; height: 45px;">
                             <i class="bi bi-file-earmark-text-fill fs-4"></i>
                         </div>
                         <div>
                             <h6 class="mb-0 fw-bold">DETALLES DEL DOCUMENTO</h6>
-                            <small class="text-muted">Información del reporte generado</small>
+                            <small class="text-muted-custom">Información del reporte generado</small>
                         </div>
                     </div>
                     <div class="row g-4">
@@ -707,8 +707,9 @@ function mostrarDetalleBitacoraRapido(rowData) {
                 let etiqueta = llave.replace(/_/g, ' ').toUpperCase();
                 contenidoHtml += `
                     <div class="col-sm-6">
-                        <p class="mb-0 text-muted" style="font-size: 0.75rem;">${etiqueta}</p>
-                        <p class="mb-0 fw-bold text-dark">${valor || 'N/A'}</p>
+                        <p class="mb-0 text-muted-custom" style="font-size: 0.75rem;">${etiqueta}</p>
+                        <!-- Quitamos el text-dark de aquí -->
+                        <p class="mb-0 fw-bold">${valor || 'N/A'}</p>
                     </div>
                 `;
             }
@@ -894,7 +895,7 @@ function formatoAccion(cell) {
         claseTextoBorder = `border border-dark`;
     }
 
-    return `<span class="badge bg-${color} bg-opacity-10 ${claseTextoBorder} px-3 py-2 shadow-sm text-nowrap" style="font-size: .85rem;">
+    return `<span class="badge badge-soft-${color} px-3 py-2 shadow-sm text-nowrap" style="font-size: .85rem;">
                 <i class="bi ${icono} me-1"></i> ${texto}
             </span>`;
 };

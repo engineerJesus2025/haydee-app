@@ -19,6 +19,7 @@ class Conexion extends PDO {
             $this->conexNegocio->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
             
         } catch (PDOException $e) {
+            http_response_code(503);
             throw new \Exception("Error de conexión a " . DB_NAME . ": ". $e->getMessage());
         }
     }

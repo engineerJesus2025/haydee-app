@@ -6,130 +6,10 @@
     <title>Centro de Ayuda</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php require_once "vista/componentes/estilos.php"; ?>
-    
-    <style>
-        /* Estilos para Ayuda */
-        .hero-section {
-            background: linear-gradient(135deg, #0d6efd 0%, #0043a8 100%);
-            color: white;
-            padding: 4rem 1rem;
-            border-radius: 0 0 30px 30px;
-            margin-bottom: 3rem;
-            text-align: center;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-        }
-        
-        .search-container {
-            max-width: 700px;
-            margin: 0 auto;
-            position: relative;
-        }
-
-        .search-icon {
-            position: absolute;
-            left: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #0d6efd;
-            font-size: 1.2rem;
-        }
-
-        #buscador {
-            padding-left: 50px;
-            height: 60px;
-            border-radius: 30px;
-            border: none;
-            font-size: 1.1rem;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-
-        .section-title {
-            border-left: 5px solid #0d6efd;
-            padding-left: 15px;
-            margin-bottom: 25px;
-            color: #2c3e50;
-            font-weight: 700;
-            text-transform: uppercase;
-            font-size: 1.1rem;
-            letter-spacing: 1px;
-        }
-
-        /* Estilo para la tarjeta de descarga del Manual */
-        .download-card {
-            background: #fff;
-            border-left: 5px solid #dc3545; /* Rojo PDF */
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            transition: transform 0.2s ease;
-        }
-        
-        .download-card:hover {
-            transform: scale(1.01);
-            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
-        }
-
-        .faq-item {
-            border: 1px solid #e9ecef;
-            margin-bottom: 12px;
-            border-radius: 10px !important;
-            overflow: hidden;
-            background: white;
-        }
-
-        .faq-button {
-            background-color: #ffffff;
-            color: #495057;
-            font-weight: 600;
-            padding: 1.2rem;
-        }
-        
-        .faq-button:not(.collapsed) {
-            background-color: #e7f1ff;
-            color: #0d6efd;
-            box-shadow: inset 0 -1px 0 rgba(0,0,0,.125);
-        }
-
-        .manual-card {
-            border: none;
-            border-radius: 12px;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            transition: all 0.3s ease;
-        }
-
-        .manual-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
-        }
-
-        .manual-header button {
-            font-weight: 700;
-            font-size: 1.05rem;
-        }
-
-        .manual-body {
-            background-color: #fcfcfc;
-            line-height: 1.6;
-            color: #555;
-        }
-
-        .manual-body ul {
-            padding-left: 20px;
-            margin-top: 10px;
-        }
-
-        .contact-box {
-            background-color: #f8f9fa;
-            border: 2px dashed #dee2e6;
-            border-radius: 15px;
-            padding: 30px;
-            text-align: center;
-            margin-top: 50px;
-        }
-    </style>
+    <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/ayuda.css">
 </head>
 
-<body id="body-pd" class="body-pd">
+<body id="body-pd" class="body-pd d-flex flex-column">
     <div class="container-fluid">
         <div class="row flex-nowrap">
             <?php require_once "vista/componentes/navbar.php"; ?>
@@ -141,7 +21,7 @@
                     
                     <div class="hero-section">
                         <h1 class="display-5 fw-bold mb-3"><i class="bi bi-life-preserver me-3"></i>Centro de Soporte</h1>
-                        <p class="fs-5 mb-4 text-light opacity-90">Escribe tu duda y encuentra la respuesta al instante.</p>
+                        <p class="fs-5 mb-4 text-white opacity-75">Escribe tu duda y encuentra la respuesta al instante.</p>
                         
                         <div class="search-container">
                             <i class="bi bi-search search-icon"></i>
@@ -156,13 +36,15 @@
                                 <div class="card download-card p-4">
                                     <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
                                         <div class="d-flex align-items-center">
-                                            <i class="bi bi-file-earmark-pdf-fill text-danger display-3 me-3"></i>
+                                            <div class="badge-soft-danger rounded-circle p-3 me-3 d-flex align-items-center justify-content-center">
+                                                <i class="bi bi-file-earmark-pdf-fill fs-2"></i>
+                                            </div>
                                             <div>
-                                                <h4 class="mb-1 text-dark fw-bold">Manual de Usuario Completo</h4>
-                                                <p class="mb-0 text-muted">Descarga la guía oficial en formato PDF para consultarla sin conexión.</p>
+                                                <h4 class="mb-1 fw-bold text-body">Manual de Usuario Completo</h4>
+                                                <p class="mb-0 text-muted-custom">Descarga la guía oficial en formato PDF para consultarla sin conexión.</p>
                                             </div>
                                         </div>
-                                        <a href="<?php echo URL_BASE; ?>recursos/documentos/manual_usuario.pdf" target="_blank" class="btn btn-outline-danger btn-lg px-4 shadow-sm">
+                                        <a href="<?php echo URL_BASE; ?>recursos/documentos/manual_usuario.pdf" target="_blank" class="btn btn-danger btn-lg px-4 shadow-sm rounded-pill fw-semibold">
                                             <i class="bi bi-cloud-arrow-down-fill me-2"></i> Descargar PDF
                                         </a>
                                     </div>
@@ -172,7 +54,7 @@
 
                         <div class="row mb-5">
                             <div class="col-12">
-                                <h3 class="section-title"><i class="bi bi-patch-question me-2"></i>Preguntas Frecuentes</h3>
+                                <h3 class="section-title py-2"><i class="bi bi-patch-question me-2"></i>Preguntas Frecuentes</h3>
                                 <div class="accordion" id="faqAccordion">
                                     
                                     <div class="accordion-item faq-item">
@@ -196,7 +78,7 @@
                                         </h2>
                                         <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                                             <div class="accordion-body">
-                                                Si no puedes ver un módulo (como Bancos o Usuarios), significa que tu <strong>Rol de Usuario</strong> no tiene los permisos necesarios. Contacta al Administrador del sistema para que edite tu Rol en el módulo de <strong>Roles y Permisos</strong>.
+                                                Si no puedes ver un módulo (como Bancos o Usuarios), significa que tu <strong>Rol de Usuario</strong> no tiene los permisos necesarios. Contacta al Administrador del sistema para que edite tu Rol en el módulo de <strong>Seguridad</strong>.
                                             </div>
                                         </div>
                                     </div>
@@ -232,10 +114,10 @@
                         </div>
 
                         <div class="row">
-                            <h3 class="section-title"><i class="bi bi-book-half me-2"></i>Documentación por Módulos</h3>
+                            <h3 class="section-title py-2"><i class="bi bi-book-half me-2"></i>Documentación por Módulos</h3>
 
                             <div class="col-lg-6">
-                                <h5 class="text-primary mb-3 ms-2">💰 Finanzas y Tesorería</h5>
+                                <h5 class="text-primary fw-bold mb-3 ms-2"><i class="bi bi-cash-stack me-2"></i>Finanzas y Tesorería</h5>
                                 <div class="accordion" id="accordionFinanzas">
                                     
                                     <div class="accordion-item manual-card">
@@ -250,7 +132,7 @@
                                                 <ul>
                                                     <li><strong>Registrar:</strong> Ingresa fecha, monto, referencia y selecciona el apartamento.</li>
                                                     <li><strong>Divisas:</strong> Soporta pagos en Bs y USD.</li>
-                                                    <li><strong>Recibos:</strong> Genera PDF automáticos para enviar por correo.</li>
+                                                    <li><strong>Recibos:</strong> Genera PDF automáticos para descargar o imprimir.</li>
                                                 </ul>
                                             </div>
                                         </div>
@@ -330,7 +212,7 @@
                                     <div class="accordion-item manual-card">
                                         <h2 class="accordion-header manual-header">
                                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#manFiscal">
-                                                <i class="bi bi-calendar-check me-2 text-dark"></i> Año Fiscal
+                                                <i class="bi bi-calendar-check me-2 text-info"></i> Año Fiscal
                                             </button>
                                         </h2>
                                         <div id="manFiscal" class="accordion-collapse collapse" data-bs-parent="#accordionFinanzas">
@@ -348,7 +230,7 @@
                             </div>
 
                             <div class="col-lg-6">
-                                <h5 class="text-danger mb-3 ms-2">⚙️ Gestión y Operaciones</h5>
+                                <h5 class="text-danger fw-bold mb-3 ms-2"><i class="bi bi-gear me-2"></i>Gestión y Operaciones</h5>
                                 <div class="accordion" id="accordionOperaciones">
 
                                     <div class="accordion-item manual-card">
@@ -389,14 +271,14 @@
                                     <div class="accordion-item manual-card">
                                         <h2 class="accordion-header manual-header">
                                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#manProveedores">
-                                                <i class="bi bi-truck me-2 text-dark"></i> Proveedores
+                                                <i class="bi bi-truck me-2 text-body"></i> Proveedores
                                             </button>
                                         </h2>
                                         <div id="manProveedores" class="accordion-collapse collapse" data-bs-parent="#accordionOperaciones">
                                             <div class="manual-body accordion-body">
                                                 Directorio de servicios externos.
                                                 <ul>
-                                                    <li>Registra empresas de limpieza, vigilancia, o servicios públicos (Corpoelec, Hidrolara).</li>
+                                                    <li>Registra empresas de limpieza, vigilancia, o servicios públicos.</li>
                                                     <li>Es obligatorio tener el proveedor registrado para asignarle un gasto.</li>
                                                 </ul>
                                             </div>
@@ -413,9 +295,9 @@
                                             <div class="manual-body accordion-body">
                                                 Comunicación con los vecinos.
                                                 <ul>
-                                                    <li>Publica noticias, avisos de cobro o convocatorias.</li>
-                                                    <li><strong>Imágenes:</strong> Puedes subir afiches o fotos.</li>
-                                                    <li><strong>Prioridad:</strong> Destaca avisos urgentes en rojo.</li>
+                                                    <li>Publica noticias, avisos de cobro o convocatorias en el dashboard principal.</li>
+                                                    <li><strong>Imágenes:</strong> Puedes subir afiches o fotos ilustrativas.</li>
+                                                    <li><strong>Prioridad:</strong> Destaca avisos urgentes con diferentes niveles de alerta.</li>
                                                 </ul>
                                             </div>
                                         </div>
@@ -431,8 +313,8 @@
                                             <div class="manual-body accordion-body">
                                                 Categorización contable.
                                                 <ul>
-                                                    <li>Crea categorías como "Mantenimiento", "Servicios", "Nómina".</li>
-                                                    <li>Ayuda a organizar los reportes de egresos.</li>
+                                                    <li>Crea categorías dinámicas como "Mantenimiento", "Servicios" o "Nómina".</li>
+                                                    <li>Ayuda a organizar de forma precisa los reportes estadísticos.</li>
                                                 </ul>
                                             </div>
                                         </div>
@@ -441,16 +323,16 @@
                                     <div class="accordion-item manual-card">
                                         <h2 class="accordion-header manual-header">
                                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#manSeguridad">
-                                                <i class="bi bi-shield-lock me-2 text-dark"></i> Usuarios y Seguridad
+                                                <i class="bi bi-shield-lock me-2 text-success"></i> Usuarios y Seguridad
                                             </button>
                                         </h2>
                                         <div id="manSeguridad" class="accordion-collapse collapse" data-bs-parent="#accordionOperaciones">
                                             <div class="manual-body accordion-body">
-                                                Control de acceso al sistema.
+                                                Control estricto de acceso al sistema.
                                                 <ul>
-                                                    <li><strong>Usuarios:</strong> Crea cuentas para administradores o propietarios.</li>
-                                                    <li><strong>Roles:</strong> Define perfiles (Admin, Contadora, Propietario).</li>
-                                                    <li><strong>Permisos:</strong> Otorga o revoca el acceso a módulos específicos.</li>
+                                                    <li><strong>Usuarios:</strong> Crea cuentas con credenciales seguras.</li>
+                                                    <li><strong>Roles:</strong> Define perfiles administrativos.</li>
+                                                    <li><strong>Permisos:</strong> Decide exactamente a qué módulo puede entrar cada rol.</li>
                                                 </ul>
                                             </div>
                                         </div>
@@ -461,32 +343,54 @@
                         </div>
 
                         <div class="contact-box mb-5">
-                            <h4><i class="bi bi-headset me-2"></i>¿Aún necesitas ayuda?</h4>
-                            <p class="text-muted mb-4">Si tienes un problema técnico que no aparece aquí, contacta al desarrollador o al administrador principal.</p>
-                            <button id="btn-soporte" class="btn btn-outline-primary btn-lg px-5">
-                                Contactar Soporte
+                            <h4 class="text-body fw-bold"><i class="bi bi-headset text-primary me-2"></i>¿Aún necesitas ayuda?</h4>
+                            <p class="text-muted-custom mb-4">Si tienes un problema técnico que no logras resolver con esta guía, contacta al desarrollador de la plataforma.</p>
+                            <button id="btn-soporte" class="btn btn-outline-primary btn-lg px-5 rounded-pill fw-semibold">
+                                <i class="bi bi-envelope-paper me-2"></i>Contactar Soporte
                             </button>
                         </div>
 
                     </div>
                 </main>
+                
                 <?php require_once "vista/componentes/script.php"; ?>
                 
                 <script>
                     document.getElementById('btn-soporte').addEventListener('click', () => {
+                        // Detectamos el tema actual para que el SWAL también contraste
+                        const isDarkMode = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+                        
                         Swal.fire({
                             title: 'Contacto de Soporte',
-                            html: `<div class="text-start">
-                                     <p>Para asistencia técnica avanzada, comunícate con:</p>
-                                     <ul class="list-unstyled">
-                                        <li class="mb-2"><i class="bi bi-envelope-at text-primary me-2"></i> jesusgescalonae@gmail.com</li>
-                                        <li class="mb-2"><i class="bi bi-whatsapp text-success me-2"></i> +58 424-5528892</li>
+                            html: `<div class="text-start mt-3">
+                                     <p style="color: ${isDarkMode ? '#cbd5e1' : '#475569'};">Para asistencia técnica avanzada sobre el funcionamiento del sistema, comunícate a través de los siguientes canales:</p>
+                                     <ul class="list-unstyled mt-4">
+                                        <li class="mb-3 d-flex align-items-center">
+                                            <div class="badge-soft-primary p-2 rounded-circle me-3">
+                                                <i class="bi bi-envelope-at fs-5"></i>
+                                            </div>
+                                            <span style="color: ${isDarkMode ? '#f8fafc' : '#1e293b'}; font-weight: 500;">jesusgescalonae@gmail.com</span>
+                                        </li>
+                                        <li class="mb-3 d-flex align-items-center">
+                                            <div class="badge-soft-success p-2 rounded-circle me-3">
+                                                <i class="bi bi-whatsapp fs-5"></i>
+                                            </div>
+                                            <span style="color: ${isDarkMode ? '#f8fafc' : '#1e293b'}; font-weight: 500;">+58 424-5528892</span>
+                                        </li>
                                      </ul>
-                                     <small class="text-muted">Horario de atención: 8:00 AM - 5:00 PM</small>
+                                     <hr class="opacity-25 mt-4">
+                                     <div class="text-center">
+                                        <small style="color: ${isDarkMode ? '#94a3b8' : '#64748b'};"><i class="bi bi-clock me-1"></i> Horario de atención: 8:00 AM - 5:00 PM</small>
+                                     </div>
                                    </div>`,
-                            icon: 'info',
-                            confirmButtonText: 'Entendido',
+                            background: isDarkMode ? '#1e293b' : '#ffffff',
+                            color: isDarkMode ? '#f8fafc' : '#1e293b',
+                            confirmButtonText: '<i class="bi bi-check2 me-1"></i> Entendido',
                             confirmButtonColor: '#0d6efd',
+                            buttonsStyling: false,
+                            customClass: {
+                                confirmButton: 'btn btn-primary rounded-pill px-4 shadow-sm'
+                            },
                             showCloseButton: true
                         });
                     });

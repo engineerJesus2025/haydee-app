@@ -1,24 +1,21 @@
 *, ::before, ::after { box-sizing: border-box; }
 
-body {  
+body {
     font-family: 'Nunito', sans-serif;
     margin: 0;
-    background-color: #f3f4f6;
     padding-top: var(--header-height);
-    /* ESTADO INICIAL: Menú contraído (68px + espacio) */
-    padding-left: calc(var(--nav-width) + 1.5rem); 
+    padding-left: calc(var(--nav-width) + 1.5rem);
     padding-right: 1.5rem;
     transition: .5s;
 }
 
-/* ESTADO EXPANDIDO: Cuando el JS activa 'body-pd' (250px + espacio) */
 body.body-pd {
     padding-left: calc(var(--nav-width-expanded) + 1.5rem);
 }
 
 /* Contenedor del botón toggle */
 .header_toggle {
-    z-index: 1100 !important; 
+    z-index: 1100 !important;
     display: flex;
     align-items: center;
     visibility: visible !important;
@@ -27,42 +24,35 @@ body.body-pd {
 
 /* Icono de las tres rayitas */
 #header-toggle {
-    color: #1f2937 !important; 
+    color: #1f2937 !important;
     font-size: 1.5rem;
     cursor: pointer;
 }
 
+/* Ajustes para móviles */
 @media screen and (max-width: 768px) {
-    body, body.body-pd { 
-        padding-left: 1rem; 
+    body, body.body-pd {
+        padding-left: 1rem;
         padding-right: 1rem;
     }
 }
 
-/* === AJUSTE DINÁMICO PARA EL FOOTER === */
+/* ==========================================
+   AJUSTE DINÁMICO PARA EL FOOTER
+   ========================================== */
 .footer-ajustado {
-    /* El fondo oscuro se estira al 100% ignorando el padding del body */
     margin-right: -1.5rem !important;
     margin-left: calc((var(--nav-width) + 1.5rem) * -1) !important;
-    
-    /* ESTA ES LA CLAVE: El contenido interno recupera el espacio del menú 
-       para que el texto se centre respecto a la zona blanca */
     padding-left: calc(var(--nav-width) + 1.5rem) !important;
     padding-right: 1.5rem !important;
-    
     transition: .5s;
 }
 
-/* Cuando el menú se expande (body-pd) */
 body.body-pd .footer-ajustado {
-    /* Ajustamos el fondo negro */
     margin-left: calc((var(--nav-width-expanded) + 1.5rem) * -1) !important;
-    
-    /* Ajustamos el padding del texto para que siga centrado en la zona blanca */
     padding-left: calc(var(--nav-width-expanded) + 1.5rem) !important;
 }
 
-/* Ajuste para móviles */
 @media screen and (max-width: 768px) {
     .footer-ajustado {
         margin-left: -1rem !important;
@@ -72,6 +62,9 @@ body.body-pd .footer-ajustado {
     }
 }
 
+/* ==========================================
+   TÍTULOS DEL HEADER
+   ========================================== */
 .header_title h5 {
     letter-spacing: -0.5px;
 }
@@ -85,27 +78,79 @@ body.body-pd .footer-ajustado {
    ESTILOS DE LA BARRA SUPERIOR (HEADER)
    ========================================== */
 
-/* Efecto hover para el botón de las 3 rayitas */
+/* Hover del botón toggle */
 .transition-icon {
     transition: transform 0.2s ease, color 0.2s ease;
 }
 .header_toggle:hover .transition-icon {
     transform: scale(1.1);
-    color: var(--active-bg) !important; /* Usa el color azul nav.css */
+    color: var(--active-bg) !important;
 }
 
-/* Efecto hover para los botones derechos (Campana y Perfil) */
+/* Hover para botones de acciones de usuario (campana y perfil) */
+:is(.user-action-btn, .user-profile-btn) {
+    transition: background-color 0.2s;
+}
+:is(.user-action-btn, .user-profile-btn):hover {
+    background-color: #f3f4f6;
+}
 .user-action-btn {
     border-radius: 50%;
-    transition: background-color 0.2s;
-}
-.user-action-btn:hover {
-    background-color: #f3f4f6;
 }
 
-.user-profile-btn {
-    transition: background-color 0.2s;
+/* ==========================================
+   APLICACIÓN DE VARIABLES GLOBALES (Modo Oscuro/Claro)
+   ========================================== */
+
+/* Fondo de la barra principal y bordes */
+#header {
+    background-color: var(--ch-header-bg) !important;
+    border-bottom: 1px solid var(--ch-header-border);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
-.user-profile-btn:hover {
-    background-color: #f3f4f6;
+
+/* Color de íconos principales */
+:is(#header-toggle, .header-icon-btn) {
+    color: var(--ch-header-icon) !important;
+    transition: color 0.3s ease;
+}
+
+/* Color de textos (título y nombre de usuario) */
+:is(.header-title-text, .header-user-text) {
+    color: var(--ch-header-icon) !important;
+}
+
+/* Hover sobre botones de acción (Perfil y Campana) */
+:is(.user-action-btn, .user-profile-btn):hover {
+    background-color: var(--ch-header-hover) !important;
+}
+
+/* Estilos para menús desplegables (Dropdowns) */
+.drop-body-bg {
+    background-color: var(--ch-header-bg) !important;
+}
+
+.drop-header-bg, .drop-footer-bg {
+    background-color: var(--ch-header-hover) !important;
+}
+.drop-header-text {
+    color: var(--ch-header-icon) !important;
+}
+
+/* Items del dropdown */
+.dropdown-item {
+    color: var(--ch-header-icon);
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Hover y foco del dropdown */
+.dropdown-item:is(:hover, :focus) {
+    background-color: var(--ch-header-hover) !important;
+    color: var(--ch-header-icon) !important;
+}
+
+/* Botón de cerrar sesión con color rojo adaptable */
+.hover-danger:hover {
+    background-color: rgba(220, 53, 69, 0.15) !important;
+    color: #ef4444 !important;
 }

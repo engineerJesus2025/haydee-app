@@ -34,16 +34,15 @@ function inicializarFiltros() {
     // Mostrar/Ocultar campos de fechas personalizadas
     document.getElementById('filtro_tiempo')?.addEventListener('change', function() {
         const esPersonalizado = this.value === 'personalizado';
-        document.getElementById('label_fechas_habitantes').hidden = !esPersonalizado;
-        document.getElementById('div_fecha_inicio_habitantes').hidden = !esPersonalizado;
-        document.getElementById('div_fecha_cierre_habitantes').hidden = !esPersonalizado;
+        // Ahora solo mostramos/ocultamos el contenedor padre
+        document.getElementById('contenedor_fechas_habitantes').hidden = !esPersonalizado;
     });
 
     // Mostrar/Ocultar campos de edades personalizadas
     document.getElementById('rango_edades')?.addEventListener('change', function() {
         const esPersonalizado = this.value === 'personalizado';
-        document.getElementById('div_edad_minima').hidden = !esPersonalizado;
-        document.getElementById('div_edad_maxima').hidden = !esPersonalizado;
+        // Ahora solo mostramos/ocultamos el contenedor padre
+        document.getElementById('contenedor_edades_personalizadas').hidden = !esPersonalizado;
     });
 }
 
@@ -179,41 +178,85 @@ function calcularEdad(fechaNacimiento) {
 }
 
 function renderizarGraficos(stats) {
-    // Definir opciones comunes para mantener el aspecto
-    const opcionesComunes = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { position: 'bottom' } }
+    // 1. Extraemos las variables de colores de tu CSS en tiempo real
+    const rootStyles = getComputedStyle(document.documentElement);
+    const colorTexto = rootStyles.getPropertyValue('--bs-body-color').trim() || '#cbd5e1';
+    const colorGrid = rootStyles.getPropertyValue('--ch-table-border').trim() || '#334155';
+
+    // Colores dinámicos para los gráficos (Soft Badges)
+    const colorPrimario = rootStyles.getPropertyValue('--ch-badge-primary-border').trim() || '#3b82f6';
+    const bgPrimario = rootStyles.getPropertyValue('--ch-badge-primary-bg').trim() || 'rgba(59, 130, 246, 0.2)';
+
+    const colorPeligro = rootStyles.getPropertyValue('--ch-badge-danger-border').trim() || '#ef4444';
+    const bgPeligro = rootStyles.getPropertyValue('--ch-badge-danger-bg').trim() || 'rgba(248, 113, 113, 0.2)';
+
+    const colorExito = rootStyles.getPropertyValue('--ch-badge-success-border').trim() || '#10b981';
+    const bgExito = rootStyles.getPropertyValue('--ch-badge-success-bg').trim() || 'rgba(16, 185, 129, 0.2)';
+
+    const colorAdvertencia = rootStyles.getPropertyValue('--ch-badge-warning-border').trim() || '#f59e0b';
+    const bgAdvertencia = rootStyles.getPropertyValue('--ch-badge-warning-bg').trim() || 'rgba(245, 158, 11, 0.2)';
+
+    const colorIndigo = rootStyles.getPropertyValue('--ch-badge-indigo-border').trim() || '#6366f1';
+    const bgIndigo = rootStyles.getPropertyValue('--ch-badge-indigo-bg').trim() || 'rgba(99, 102, 241, 0.2)';
+
+    // Opciones comunes para tooltips elegantes
+    const opcionesTooltip = {
+        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+        titleColor: '#fff',
+        bodyColor: '#cbd5e1',
+        borderColor: colorGrid,
+        borderWidth: 1
     };
 
     // 1. Gráfico de Sexo
     const ctxSexo = document.getElementById('grafico_sexo').getContext('2d');
-    if (graficoSexo) graficoSexo.destroy(); // Destruir instancia previa para evitar superposición
+    if (graficoSexo) graficoSexo.destroy();
     graficoSexo = new Chart(ctxSexo, {
         type: 'pie',
         data: {
             labels: ['Hombres', 'Mujeres'],
             datasets: [{
                 data: [stats.total_hombres, stats.total_mujeres],
-                backgroundColor: ['#0d6efd', '#dc3545']
+                backgroundColor: [bgPrimario, bgPeligro],
+                borderColor: [colorPrimario, colorPeligro],
+                borderWidth: 2
             }]
         },
-        options: { ...opcionesComunes, plugins: { ...opcionesComunes.plugins, title: { display: true, text: 'Distribución por Sexo' } } }
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false,
+            color: colorTexto,
+            plugins: { 
+                legend: { position: 'bottom', labels: { color: colorTexto } },
+                tooltip: opcionesTooltip
+            } 
+        }
     });
 
-    // 2. Gráfico de Tipo de Vivienda
+    // 2. Gráfico de Tipo de Habitantes
     const ctxVivienda = document.getElementById('grafico_vivienda').getContext('2d');
     if (graficoVivienda) graficoVivienda.destroy();
     graficoVivienda = new Chart(ctxVivienda, {
         type: 'doughnut',
         data: {
-            labels: ['Vivienda Propia', 'Vivienda Alquilada'],
+            labels: ['Propietarios', 'Arrendatarios'],
             datasets: [{
                 data: [stats.total_propietarios, stats.total_habitantes], 
-                backgroundColor: ['#198754', '#ffc107'] // Verde y Amarillo Bootstrap
+                backgroundColor: [bgExito, bgAdvertencia],
+                borderColor: [colorExito, colorAdvertencia],
+                borderWidth: 2
             }]
         },
-        options: { ...opcionesComunes, plugins: { ...opcionesComunes.plugins, title: { display: true, text: 'Tenencia de Vivienda' } } }
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false,
+            color: colorTexto,
+            cutout: '65%', // Hace la dona más delgada y elegante
+            plugins: { 
+                legend: { position: 'bottom', labels: { color: colorTexto } },
+                tooltip: opcionesTooltip
+            } 
+        }
     });
 
     // 3. Gráfico de Edades
@@ -224,16 +267,34 @@ function renderizarGraficos(stats) {
         data: {
             labels: ['0-17', '18-35', '36-59', '60+'],
             datasets: [{
-                label: 'Cantidad de Habitantes',
+                label: 'Habitantes',
                 data: [stats.menores_edad, stats.adultos_jovenes, stats.adultos, stats.adultos_mayores],
-                backgroundColor: '#6f42c1' // Morado Bootstrap
+                backgroundColor: bgIndigo,
+                borderColor: colorIndigo,
+                borderWidth: 2,
+                borderRadius: 6, // Bordes redondeados
+                borderSkipped: false
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { display: false }, title: { display: true, text: 'Rango de Edades' } },
-            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } // precision:0 evita decimales en personas
+            color: colorTexto,
+            plugins: { 
+                legend: { display: false },
+                tooltip: opcionesTooltip
+            },
+            scales: { 
+                x: {
+                    ticks: { color: colorTexto },
+                    grid: { display: false } // Oculta lineas verticales
+                },
+                y: { 
+                    beginAtZero: true, 
+                    ticks: { precision: 0, color: colorTexto },
+                    grid: { color: colorGrid, borderDash: [5, 5] } // Lineas horizontales punteadas
+                } 
+            }
         }
     });
 }

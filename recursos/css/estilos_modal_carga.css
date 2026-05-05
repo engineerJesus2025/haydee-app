@@ -1,56 +1,37 @@
+/* Unificación de Loader: Un solo código para ambos modos */
 .loader {
-  caret-color: transparent !important;
-  width: 6rem;
-  height: 6rem;
-  border-radius: 50%;  
-  /*position: relative;*/
-  animation: rotate 1s linear infinite
-}
-.loader::before , .loader::after {
-  content: "";
-  box-sizing: border-box;
-  position: absolute;
-  inset: 0px;
-  border-radius: 50%;
-  border: 7px #EEE groove;
-  animation: prixClipFix 2s linear infinite ;
-}
-.loader::after{
-  inset: 8px;
-  transform: rotate3d(90, 90, 0, 180deg );
-  border-color: #3939A9;
+    caret-color: transparent !important;
+    width: 6rem;
+    height: 6rem;
+    border-radius: 50%;
+    position: relative; /* Activado para que before/after funcionen correctamente */
+    animation: rotate 1s linear infinite;
 }
 
-.loader_dark {
-  caret-color: transparent !important;
-  width: 6rem;
-  height: 6rem;
-  border-radius: 50%;
-  /*position: relative;*/
-  animation: rotate 1s linear infinite
+.loader::before, 
+.loader::after {
+    content: "";
+    box-sizing: border-box;
+    position: absolute;
+    inset: 0px;
+    border-radius: 50%;
+    border: 7px groove var(--ch-loader-track, #EEE); /* Variable dinámica */
+    animation: prixClipFix 2s linear infinite;
 }
-.loader_dark::before , .loader_dark::after {
-  content: "";
-  box-sizing: border-box;
-  position: absolute;
-  inset: 0px;
-  border-radius: 50%;
-  border: 7px #222 groove;
-  animation: prixClipFix 2s linear infinite ;
-}
-.loader_dark::after{
-  inset: 8px;
-  transform: rotate3d(90, 90, 0, 180deg );
-  border-color: #3939A9;
+
+.loader::after {
+    inset: 8px;
+    transform: rotate3d(90, 90, 0, 180deg);
+    border-color: #3939A9; /* Color principal de la marca */
 }
 
 @keyframes rotate {
-  0%   {transform: rotate(0deg)}
-  100%   {transform: rotate(360deg)}
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 @keyframes prixClipFix {
-    0%   {clip-path:polygon(50% 50%,0 0,0 0,0 0,0 0,0 0)}
-    50%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 0,100% 0,100% 0)}
-    75%, 100%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,100% 100%,100% 100%)}
+    0%   { clip-path: polygon(50% 50%, 0 0, 0 0, 0 0, 0 0, 0 0); }
+    50%  { clip-path: polygon(50% 50%, 0 0, 100% 0, 100% 0, 100% 0, 100% 0); }
+    75%, 100% { clip-path: polygon(50% 50%, 0 0, 100% 0, 100% 100%, 100% 100%, 100% 100%); }
 }

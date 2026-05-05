@@ -10,6 +10,7 @@ use haydee\ayuda\ValidadorBD;
 use haydee\servicios\GestorAuditoria;
 
 // Verificar sesión
+Sesiones::validarMetodoHTTP(['GET', 'POST']);
 Sesiones::verificarSesion();
 
 // Determinar rol
@@ -21,6 +22,7 @@ if (!$esPropietario) {
 }
 
 if (isset($_POST["operacion"])) {
+    header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
 
     Sesiones::verificarPermisoAccion(GESTIONAR_PAGOS, $operacion);
@@ -35,6 +37,8 @@ if (isset($_POST["operacion"])) {
         $validador->validarConjunto($_POST, $reglasCabecera);
 
         if ($validador->tieneErrores()) {
+            $codigoHttp = $validador->tieneError404() ? 404 : 400;
+            http_response_code($codigoHttp);
             echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
             exit;
         }
@@ -109,6 +113,8 @@ if (isset($_POST["operacion"])) {
                 } else {
                     $respuesta = $pagos->realizar_consulta('consultar');
                 }
+
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria('consultar');
                 }
@@ -116,10 +122,12 @@ if (isset($_POST["operacion"])) {
 
             case 'consultar_mensualidades':
                 $respuesta = $pagos->realizar_consulta('consultarMensualidadPendiente');
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 break;
 
             case 'consultar_pago':
                 $respuesta = $pagos->realizar_consulta('consultar_pago');
+                http_response_code($respuesta['estatus'] ? 200 : 404);
                 break;
 
             // ==================== REGISTRO ====================
@@ -129,6 +137,8 @@ if (isset($_POST["operacion"])) {
                 }
 
                 $respuesta = $pagos->realizar_consulta('registrar_pago');
+
+                http_response_code($respuesta['estatus'] ? 201 : 400);
                 if ($respuesta['estatus']) {
                     // Ocultamos los detalles al auditor para evitar colapsos
                     $pagos->set_detalles(null);
@@ -158,6 +168,8 @@ if (isset($_POST["operacion"])) {
                 ];
 
                 $respuesta = $pagos->realizar_consulta('modificar_pago');
+
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
                     // Ocultamos los detalles al auditor
                     $pagos->set_detalles(null);
@@ -176,15 +188,19 @@ if (isset($_POST["operacion"])) {
                 $auditor->capturarDatosAnteriores('consultar_cabecera_pago');
 
                 $respuesta = $pagos->realizar_consulta('eliminar_pago');
+
+                http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria('eliminar');
                 }
                 break;
 
             default:
+                http_response_code(400);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
     } catch (Exception $e) {
+        http_response_code(500);
         error_log("Error en controlador pagos: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
@@ -195,7 +211,6 @@ if (isset($_POST["operacion"])) {
             
             Bitacora::cerrarConexionBitacora();
 
-            header('Content-Type: application/json');
             echo json_encode($respuesta);
             exit;
         }
@@ -233,10 +248,19 @@ if (isset($_POST["validar"])) {
                     $respuesta = ['estatus' => false, 'mensaje' => 'Faltan parámetros'];
                 }
                 break;
+
+            default:
+                http_response_code(400);
+                $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
         }
     } catch (Exception $e) {
+        http_response_code(500);
         error_log("Error en validación AJAX Pagos: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
+    }
+
+    if ($respuesta['estatus'] === true || isset($respuesta['existe'])) {
+        http_response_code(200);
     }
     
     echo json_encode($respuesta);

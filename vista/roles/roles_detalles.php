@@ -9,14 +9,14 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             
-            <div class="modal-body p-0">
-                <div class="bg-light p-4 text-center border-bottom">
+            <div class="modal-body rounded-bottom p-0">
+                <div class=" p-4 text-center border-bottom">
                     <span class="text-muted text-uppercase fw-bold" style="font-size: 0.75rem; letter-spacing: 1px;">Nombre del Perfil</span>
                     <h4 id="vp_nombre_rol" class="text-primary mt-2 mb-0 fw-bold" style="letter-spacing: 1px;">---</h4>
                 </div>
 
-                <div class="p-4 bg-white">
-                    <h5 class="fw-bold text-secondary mb-3">
+                <div class="p-4">
+                    <h5 class="fw-bold mb-3">
                         <i class="bi bi-shield-check me-2"></i>Permisos Asignados
                     </h5>
                     
@@ -30,8 +30,10 @@
                 </div>
             </div>
             
-            <div class="modal-footer bg-light border-top-0 justify-content-center">
-                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cerrar</button>
+            <div class="modal-footer  border-top-0 justify-content-center">
+                <button type="button" class="btn btn-soft-secondary px-4" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-2"></i> Cerrar
+                </button>
             </div>
             
         </div>

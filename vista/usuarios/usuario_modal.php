@@ -1,44 +1,50 @@
 <div class="modal fade" id="modal_usuario" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h1 class="modal-title fs-5" id="titulo_modal">Registrar usuario</h1>
+        <div class="modal-content border-0 shadow-lg"> 
+            <div class="modal-header bg-primary text-white border-bottom-0">
+                <h5 class="modal-title fw-bold">
+                    <i class="bi bi-person-plus me-2" id="icono_titulo_modal"></i>
+                    <span id="titulo_modal">Registrar Usuario</span>
+                </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
+            
+            <div class="modal-body rounded-bottom vp-body p-4">
                 <form id="form_usuario" name="form_usuario">
-                    <div class="row m-3">
-                        <div class="col-md-6">
-                            <label for="nombre">Nombre del usuario <spam class="text-danger">*</spam></label>
-                            <div class="input-group has-validation mb-3">
-                                <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
-                                <input type="text" class="border border-dark form-control" name="nombre" id="nombre" placeholder="Ejem: Robert" aria-label="nombre" aria-describedby="basic-addon1" minlength="3" maxlength="30" autocomplete="new-password" autofocus>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <label for="nombre" class="form-label fw-semibold">Nombre del usuario <span class="text-danger">*</span></label>
+                            <div class="input-group has-validation">
+                                <span class="input-group-text" id="basic-addon1"><i class="bi bi-person"></i></span>
+                                <input type="text" class="form-control" name="nombre" id="nombre" placeholder="Ejem: Robert" aria-label="nombre" aria-describedby="basic-addon1" minlength="3" maxlength="30" autocomplete="new-password" autofocus>
                                 <span class="w-100 invalid-feedback"></span>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <label for="apellido">Apellido del usuario <spam class="text-danger">*</spam></label>
-                            <div class="input-group has-validation mb-3">
-                                <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
-                                <input type="text" class="border border-dark form-control apellido" name="apellido" id="apellido" placeholder="Ejem: Salazar" aria-label="apellido" aria-describedby="basic-addon1" minlength="3" maxlength="30">
+                            <label for="apellido" class="form-label fw-semibold">Apellido del usuario <span class="text-danger">*</span></label>
+                            <div class="input-group has-validation">
+                                <span class="input-group-text" id="basic-addon2"><i class="bi bi-person-badge"></i></span>
+                                <input type="text" class="form-control apellido" name="apellido" id="apellido" placeholder="Ejem: Salazar" aria-label="apellido" aria-describedby="basic-addon2" minlength="3" maxlength="30">
                                 <span class="w-100 invalid-feedback"></span>
                             </div>
                         </div>
                     </div>
-                    <div class="row m-3">
-                        <div class="col-md-6">
-                            <label for="correo">Correo electrónico <spam class="text-danger">*</spam></label>
-                            <div class="input-group has-validation mb-3">
-                                <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-envelope-at"></i></span>
-                                <input type="text" class="border border-dark form-control" name="correo" id="correo" placeholder="Ejem: usuario@gmail.com" aria-label="correo" aria-describedby="basic-addon1" minlength="3" maxlength="60" autocomplete="new-password">
+                    
+                    <div class="row my-3">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <label for="correo" class="form-label fw-semibold">Correo electrónico <span class="text-danger">*</span></label>
+                            <div class="input-group has-validation">
+                                <span class="input-group-text" id="basic-addon3"><i class="bi bi-envelope-at"></i></span>
+                                <input type="text" class="form-control" name="correo" id="correo" placeholder="Ejem: usuario@gmail.com" aria-label="correo" aria-describedby="basic-addon3" minlength="3" maxlength="60" autocomplete="new-password">
                                 <span class="w-100 invalid-feedback"></span>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <label for="rol_id">Rol <spam class="text-danger">*</spam></label>
-                            <div class="input-group has-validation mb-3">
-                                <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-person-gear"></i></span>
-                                <select class="border border-dark form-select rol" aria-label="Default select example" name="rol_id" id="rol_id" form="form_usuario">
+                            <label for="rol_id" class="form-label fw-semibold">Rol <span class="text-danger">*</span></label>
+                            <div class="input-group has-validation">
+                                <span class="input-group-text" id="basic-addon4"><i class="bi bi-person-gear"></i></span>
+                                <select class="form-select rol" aria-label="Default select example" name="rol_id" id="rol_id" form="form_usuario">
                                     <option selected hidden value="">Seleccione un Rol</option>
                                     <?php foreach ($roles['datos'] as $rol) : ?>
                                         <option value="<?php echo $rol["id_rol"] ?>"><?php echo $rol["nombre"] ?></option>
@@ -48,38 +54,48 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row m-3">
-                        <div class="col-md-6">
-                            <label for="contra">Contraseña <spam class="text-danger">*</spam></label>
-                            <div class="input-group has-validation mb-3">
-                                <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-key"></i></span>
-                                <input type="password" class="border border-dark form-control contra-input" name="contra" id="contra" placeholder="Contraseña" aria-label="contra" aria-describedby="basic-addon1" minlength="5" maxlength="50" autocomplete="new-password">
-                                <button class="border border-dark btn contra-btn" type="button" title="Mostrar Contraseña" tabindex="-1">
+                    
+                    <div class="row my-4">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <label for="contra" class="form-label fw-semibold">Contraseña <span class="text-danger">*</span></label>
+                            <div class="input-group has-validation">
+                                <span class="input-group-text" id="basic-addon5"><i class="bi bi-key"></i></span>
+                                <input type="password" class="form-control contra-input" name="contra" id="contra" placeholder="Contraseña" aria-label="contra" aria-describedby="basic-addon5" minlength="5" maxlength="50" autocomplete="new-password">
+                                <button class="btn contra-btn" type="button" title="Mostrar Contraseña" tabindex="-1">
                                     <i class="bi bi-eye"></i>
                                 </button>
                                 <div class="progress mt-2 mb-1 w-100" style="height: 6px; border-radius: 10px;">
                                     <div id="barra_seguridad" class="progress-bar bg-danger transition-all" role="progressbar" style="width: 0%; transition: width 0.4s ease;"></div>
                                 </div>
                             </div>
-                                <small id="texto_seguridad" class="fw-medium text-danger d-block mb-3 w-100 invalid-feedback" style="font-size: 0.75rem;">Nivel de seguridad: Vacío</small>
+                            <small id="texto_seguridad" class="fw-medium text-danger d-block w-100 invalid-feedback" style="font-size: 0.75rem;">Nivel de seguridad: Vacío</small>
                         </div>
+                        
                         <div class="col-md-6">
-                            <label for="confir_contra">Confirmar contraseña <spam class="text-danger">*</spam></label>
-                            <div class="input-group has-validation mb-3">
-                                <span class="border border-primary input-group-text" id="basic-addon1"><i class="bi bi-key"></i></span>
-                                <input type="password" class="border border-dark form-control contra-input" name="confir_contra" id="confir_contra" placeholder="Confirmar contraseña" aria-label="confir_contra" aria-describedby="basic-addon1" minlength="5" maxlength="50">
-                                <button class="border border-dark btn contra-btn" type="button" title="Mostrar Contraseña" tabindex="-1">
+                            <label for="confir_contra" class="form-label fw-semibold">Confirmar contraseña <span class="text-danger">*</span></label>
+                            <div class="input-group has-validation">
+                                <span class="input-group-text" id="basic-addon6"><i class="bi bi-key-fill"></i></span>
+                                <input type="password" class="form-control contra-input" name="confir_contra" id="confir_contra" placeholder="Confirmar contraseña" aria-label="confir_contra" aria-describedby="basic-addon6" minlength="5" maxlength="50">
+                                <button class="btn contra-btn" type="button" title="Mostrar Contraseña" tabindex="-1">
                                     <i class="bi bi-eye"></i>
                                 </button>
                                 <span class="w-100 invalid-feedback"></span>
                             </div>
                         </div>
                     </div>
-                    <div class="row m-3">
-                        <div class="col-md-12 text-center">
-                            <button class="btn btn-primary" type="submit" id="boton_formulario">Guardar</button>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-12 text-end"> 
+                            <button type="button" class="btn btn-soft-secondary px-4 me-2" data-bs-dismiss="modal">
+                                <i class="bi bi-x-circle me-2"></i> Cancelar
+                            </button>
+                            <button class="btn btn-primary px-4 shadow-sm" type="submit" id="boton_formulario">
+                                <i class="bi bi-check2-circle me-2"></i>
+                                <span id="texto_boton_formulario">Guardar Usuario</span>
+                            </button>
                         </div>
                     </div>
+                    
                 </form>
             </div>
         </div>

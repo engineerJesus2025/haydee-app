@@ -14,7 +14,7 @@ const Notificaciones = {
             document.body.appendChild(toastContainer);
         }
 
-        // 1. Mapeo de configuración usando Bootstrap Icons (bi) y colores de Bootstrap
+        // Mapeo de configuración usando Bootstrap Icons (bi) y colores de Bootstrap
         const config = {
             'success': { icon: 'bi-check-circle-fill', color: 'success' },
             'error':   { icon: 'bi-exclamation-octagon-fill', color: 'danger' },
@@ -26,13 +26,13 @@ const Notificaciones = {
 
         let toastEl = document.createElement('div');
         
-        // 2. Estilo base del Toast: Fondo blanco, sombra suave y borde lateral de color
+        // Estilo base del Toast: Fondo blanco, sombra suave y borde lateral de color
         toastEl.className = `toast bg-white border-0 border-start border-4 border-${conf.color} shadow-sm`;
         toastEl.setAttribute('role', 'alert');
         toastEl.setAttribute('aria-live', 'assertive');
         toastEl.setAttribute('aria-atomic', 'true');
 
-        // 3. Estructura interna usando Flexbox para separar icono y texto (¡adiós texto desalineado!)
+        // Estructura interna usando Flexbox para separar icono y texto (¡adiós texto desalineado!)
         toastEl.innerHTML = `
             <div class="toast-body d-flex align-items-start p-3">
                 <i class="bi ${conf.icon} text-${conf.color} fs-4 me-3" style="line-height: 1.2;"></i>

@@ -55,7 +55,7 @@ async function consultarMensualidades() {
         let fecha = new Date(row.anio, row.mes - 1, 1);
         let textoFecha = `${fecha.toLocaleString("es-ES", { month: 'long' })} del ${row.anio}`.toUpperCase();
         
-        return `<div class="fw-bold text-dark">
+        return `<div class="fw-bold">
                     <i class="bi bi-calendar2-month text-primary me-2 opacity-75 fs-5"></i> 
                     ${textoFecha}
                 </div>`;
@@ -66,27 +66,20 @@ async function consultarMensualidades() {
         const row = cell.getData();
         let deuda = row.monto - row.pagado;
         
-        //  Si ya la deuda es cero o menor
+        // Si ya la deuda es cero o menor
         if (deuda <= 0) {
-            return `<span class="badge bg-success bg-opacity-10 text-success border border-success px-3 py-2 shadow-sm">
-                        <i class="bi bi-check-circle-fill me-1"></i> Completada
-                    </span>`;
+            return ComponentesUI.crearSoftBadge('success', 'bi-check-circle-fill', 'Completada');
         }
 
-        //  Si hay deuda, verificamos si pasó la fecha límite
+        // Si hay deuda, verificamos si pasó la fecha límite
         let hoy = new Date();
-        // Creamos la fecha límite exacta usando el día (limite_mensualidad)
-        let diaLimite = row.limite_mensualidad || 31; // Por si viene vacío
+        let diaLimite = row.limite_mensualidad || 31;
         let fechaLim = new Date(row.anio, row.mes - 1, diaLimite, 23, 59, 59);
 
         if (hoy > fechaLim) {
-            return `<span class="badge bg-danger bg-opacity-10 text-danger border border-danger px-3 py-2 shadow-sm text-nowrap">
-                        <i class="bi bi-exclamation-octagon-fill me-1"></i> En Mora
-                    </span>`;
+            return ComponentesUI.crearSoftBadge('danger', 'bi-exclamation-octagon-fill', 'En Mora');
         } else {
-            return `<span class="badge bg-primary bg-opacity-10 text-primary border border-primary px-3 py-2 shadow-sm text-nowrap">
-                        <i class="bi bi-clock-fill me-1"></i> Vigente
-                    </span>`;
+            return ComponentesUI.crearSoftBadge('primary', 'bi-clock-fill', 'Vigente');
         }
     };
 
@@ -396,12 +389,12 @@ function mostrarVistaPrevia(data, fecha) {
 
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
-        { title: "Apartamento", field: "nro_apartamento", formatter: (cell) => `<div class="fw-bold text-dark"><i class="bi bi-door-closed text-primary me-2 opacity-75"></i>Apt. ${cell.getValue()}</div>`, minWidth: 150, responsive: 0 },
+        { title: "Apartamento", field: "nro_apartamento", formatter: (cell) => `<div class="fw-bold"><i class="bi bi-door-closed text-primary me-2 opacity-75"></i>Apt. ${cell.getValue()}</div>`, minWidth: 150, responsive: 0 },
         { title: "Propietario", field: "nombre", formatter: (cell) => `${cell.getValue()} ${cell.getData().apellido}`, minWidth: 150 },
         { 
             title: "Monto A Pagar", 
             field: "monto", 
-            formatter: (cell) => `<span class="fw-semibold text-dark">${parseFloat(cell.getValue()).toFixed(2)} Bs.</span> <span class="text-muted small">/ ${(cell.getValue() / cell.getData().tasa_dolar).toFixed(2)} $</span>`, 
+            formatter: (cell) => `<span class="fw-semibold">${parseFloat(cell.getValue()).toFixed(2)} Bs.</span> <span class="text-muted small">/ ${(cell.getValue() / cell.getData().tasa_dolar).toFixed(2)} $</span>`, 
             minWidth: 180 
         },
         { 
@@ -413,19 +406,18 @@ function mostrarVistaPrevia(data, fecha) {
                 let deuda = row.monto - row.pagado;
                 
                 if (deuda <= 0) {
-                    // Contenedor flex con align-items-start evita que el badge se expanda a lo ancho
+                    const badgeSolvente = ComponentesUI.crearSoftBadge('success', 'bi-check2-all', 'Solvente');
+                    
                     return `<div class="d-flex align-items-start">
-                                <span class="badge bg-success bg-opacity-10 text-success border border-success px-3 py-2 shadow-sm text-nowrap">
-                                    <i class="bi bi-check2-all me-1"></i> Solvente
-                                </span>
+                                ${badgeSolvente}
                             </div>`;
                 }
                 
-                // align-items-start mantiene el badge y el texto compactos a la izquierda
+                // Invocamos el Helper para el badge de Deuda
+                const badgeDeuda = ComponentesUI.crearSoftBadge('danger', 'bi-exclamation-circle', 'Deuda');
+                
                 return `<div class="d-flex flex-column align-items-start justify-content-center">
-                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger px-3 py-1 shadow-sm text-nowrap mb-1">
-                                <i class="bi bi-exclamation-circle me-1"></i> Deuda
-                            </span>
+                            <div class="mb-1">${badgeDeuda}</div>
                             <span class="fw-bold text-danger" style="font-size: 0.85rem;">${deuda.toFixed(2)} Bs.</span>
                         </div>`;
             }, 
@@ -532,9 +524,11 @@ async function prepararModificarcion(fila, fecha, ids, idsApartamentos) {
     document.getElementById("dia_limite").value = fila.dataset.limite || '';
 
     // ===== Configurar botón =====
-    botonFormulario.textContent = "Guardar Cambios";
+    // botonFormulario.textContent = "Guardar Cambios";
+    document.getElementById('texto_boton_formulario').textContent = 'Guardar Cambios';
     botonFormulario.dataset.op = "modificar";
     document.getElementById('titulo_modal').textContent = "Modificar Mensualidad";
+    document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-calendar-minus");
     botonFormulario.dataset.fecha = fecha;
     
     // La línea que faltaba: Abrir el modal automáticamente al terminar
@@ -676,9 +670,11 @@ function resetModalMensualidad() {
     select.value = "";
     selectMesAsignar.parentElement?.removeAttribute("hidden");
 
-    botonFormulario.textContent = "Guardar";
+    // botonFormulario.textContent = "Guardar";
+    document.getElementById('texto_boton_formulario').textContent = 'Guardar Mensualidad';
     botonFormulario.dataset.op = "Registrar";
     document.getElementById('titulo_modal').textContent = "Registrar Mensualidad";
+    document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-calendar-plus");
 }
 
 function marcarCheckboxesSegunDatos(nombreTh, datasetKey) {
@@ -739,12 +735,6 @@ function marcarTodosCheckboxes(boton) {
     boton.classList.toggle('btn-outline-danger', marcar);
     boton.innerHTML = marcar ? '✕ Quitar' : '✓ Todos';
     boton.title = marcar ? 'Desmarcar todos los checkboxes' : 'Marcar todos los checkboxes';
-}
-
-async function validarFormulario() {
-    // Usar Validaciones para fecha, porcentaje, límite, y al menos un checkbox marcado
-    // Por simplicidad, retornamos true; se implementará en mensualidad_validar.js
-    return true;
 }
 
 // Función para resaltar fila desde notificación

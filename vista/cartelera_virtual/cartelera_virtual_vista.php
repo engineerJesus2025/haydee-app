@@ -26,14 +26,14 @@
                 <main class="col ps-md-2 pt-2 mb-5">
 
                     <div class="page-header pt-3">
-                        <h2>GESTIONAR CARTELERA VIRTUAL</h2>
+                        <h2 id="titulo_pagina">GESTIONAR CARTELERA VIRTUAL</h2>
                     </div>
                     <p class="lead"></p>
                     <hr>
 
                     <div class="row mb-3">
                         <div class="col-12">
-                            <div class="card p-4">
+                            <div class="card p-4 shadow-lg">
                                 <div class="row">
                                     <div class="col-12 col-sm-6 mb-4">
                                         <?php require ROOT_PATH . "/vista/componentes/boton_nuevo.php"; ?>
@@ -72,10 +72,10 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 
-                <div class="modal-body p-0 bg-light">
+                <div class="modal-body rounded-bottom p-0">
                     
-                    <div class="bg-white p-4 border-bottom shadow-sm">
-                        <div class="d-flex justify-content-between align-items-start gap-3">
+                    <div class="p-4 border-bottom shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center gap-3 card-item p-3 rounded">
                             <div>
                                 <span class="text-muted text-uppercase fw-bold d-block mb-1" style="font-size: 0.75rem; letter-spacing: 1px;">Título</span>
                                 <h4 id="vista_titulo" class="text-primary mb-0 fw-bold text-wrap" style="word-break: break-word;">---</h4>
@@ -84,46 +84,46 @@
                         </div>
                     </div>
 
-                    <div class="px-4 py-3 bg-white border-bottom">
-                        <div class="row text-center text-md-start">
-                            <div class="col-md-6 mb-2 mb-md-0 border-md-end">
+                    <div class="px-4 py-3 border-bottom">
+                        <div class="row text-center text-md-start justify-content-around">
+                            <div class="col-md-5 mb-2 mb-md-0 border-md-end py-2 card-item rounded">
                                 <div class="d-flex align-items-center justify-content-center justify-content-md-start text-muted">
                                     <i class="bi bi-person-fill me-2 text-primary"></i>
                                     <span class="fw-semibold me-1">Autor:</span>
-                                    <span id="vista_autor" class="fw-bold text-dark">---</span>
+                                    <span id="vista_autor" class="fw-bold">---</span>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-5 mb-2 mb-md-0 border-md-end py-2 card-item rounded">
                                 <div class="d-flex align-items-center justify-content-center justify-content-md-start text-muted ms-md-3">
                                     <i class="bi bi-calendar-event me-2 text-primary"></i>
                                     <span class="fw-semibold me-1">Fecha:</span>
-                                    <span id="vista_fecha" class="fw-bold text-dark">---</span>
+                                    <span id="vista_fecha" class="fw-bold">---</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div id="contenedor_imagen" class="text-center bg-white border-bottom p-4" style="display: none;">
+                    <div id="contenedor_imagen" class="text-center border-bottom p-4" style="display: none;">
                         <img id="vista_imagen" src="" class="img-fluid border rounded shadow-sm" style="max-height: 400px; object-fit: contain;" alt="Vista previa de la imagen" onerror="this.style.display='none'; document.getElementById('mensaje_error_imagen').classList.remove('d-none');">
                         <p id="mensaje_error_imagen" class="text-danger d-none mt-2 mb-0">
                             <i class="bi bi-exclamation-triangle-fill me-1"></i> ⚠ No se pudo cargar la imagen.
                         </p>
                     </div>
 
-                    <div class="p-4 bg-light">
+                    <div class="p-4">
                         <h6 class="fw-bold text-secondary mb-3">
                             <i class="bi bi-justify-left me-2"></i>Descripción
                         </h6>
                         <div class="card border-0 shadow-sm">
-                            <div class="card-body p-4 bg-white rounded">
-                                <div id="vista_descripcion" class="text-dark card-content-text text-wrap" style="font-size: 1rem; line-height: 1.7; word-break: break-word; white-space: pre-wrap;">---</div>
+                            <div class="card-body p-4 rounded card-item">
+                                <div id="vista_descripcion" class="card-content-text text-wrap" style="font-size: 1rem; line-height: 1.7; word-break: break-word; white-space: pre-wrap;">---</div>
                             </div>
                         </div>
                     </div>
 
                 </div>
                 
-                <div class="modal-footer bg-white border-top-0 justify-content-center">
+                <div class="modal-footer border-top-0 justify-content-center">
                     <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cerrar</button>
                 </div>
                 
