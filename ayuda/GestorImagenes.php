@@ -68,8 +68,9 @@ class GestorImagenes
                 return false;
             }
         }
-
-        if (move_uploaded_file($archivo['tmp_name'], $rutaDestino)) {
+        // rename($archivo['tmp_name'], $rutaDestino);
+        // if (move_uploaded_file($archivo['tmp_name'], $rutaDestino)) {
+        if (rename($archivo['tmp_name'], $rutaDestino)) {
             return $nombreUnico;
         } else {
             error_log("GestorImagenes: Error al mover el archivo a $rutaDestino");

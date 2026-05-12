@@ -81,7 +81,8 @@ if (isset($_POST["operacion"])) {
                     Sesiones::iniciar($resultado['datos']);
                     session_regenerate_id(true);
                 } else {
-                    http_response_code(401); // 401 Unauthorized (Credenciales incorrectas)
+                    $codigoError = $resultado['codigo_http'] ?? 401;// 401 Unauthorized (Credenciales incorrectas)
+                    http_response_code($codigoError);
                 }
                 
                 $respuesta = $resultado;
@@ -178,7 +179,6 @@ switch ($accion) {
 
     case 'inicio':
     default:
-                http_response_code(400);
         if (isset($_SESSION['id_usuario'])) {
             header("Location: ?pagina=inicio&accion=inicio");
             exit;

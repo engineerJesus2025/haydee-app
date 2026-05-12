@@ -9,6 +9,7 @@ define('RUTAS_API', [
     'apartamentos'      => 'apartamentos_api.php',
     'gastos'            => 'gastos_api.php',
     'perfil'            => 'perfil_api.php',
+    'handshake'            => 'handshake.php',
 ]);
 
 ?>

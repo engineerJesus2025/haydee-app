@@ -1,6 +1,6 @@
 <?php
 use haydee\servicios\Autenticacion;
-
+use haydee\servicios\Criptografia;
 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
 try {
@@ -23,7 +23,7 @@ try {
         $auth = new Autenticacion();
         try {
             // El tercer parámetro 'true' fuerza la generación y guardado del Token en tokens_seguridad
-            $resultado = $auth->login($correo, $contra, true);
+            $resultado = $auth->login($correo, $contra, false, true);
             
             if ($resultado['estatus']) {
                 http_response_code(200);
@@ -36,8 +36,12 @@ try {
                         'rol' => $resultado['datos']['rol'] ?? '',
                         'correo' => $resultado['datos']['correo'] ?? ''
                     ],
-                    'token' => $resultado['token'] 
+                    'token' => $resultado['token_jwt']
                 ];
+
+                if (isset($_POST['_temp_disp']) && isset($_POST['_temp_aes'])) {
+                    Criptografia::vincularDispositivoUsuario($_POST['_temp_disp'], $resultado['datos']['id_usuario'], $_POST['_temp_aes']);
+                }
             } else {
                 // Credenciales incorrectas, usuario inactivo, etc.
                 http_response_code(401); 

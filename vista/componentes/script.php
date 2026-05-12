@@ -18,7 +18,6 @@
 <!-- Script personalizados globales -->
 <script src="<?php echo URL_BASE; ?>recursos/js/header.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/js/notificaciones.js"></script>
-<script src="<?php echo URL_BASE; ?>recursos/js/tema_global.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/js/driver.js"></script>
 
 <!-- Variables VAPID: -->

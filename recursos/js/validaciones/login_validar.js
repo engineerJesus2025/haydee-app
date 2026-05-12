@@ -141,7 +141,8 @@ async function realizarLogin() {
             grecaptcha.reset(recaptchaWidgetId);
             recaptchaToken = null;
         }
-        Alertas.mostrar('error', resultado.mensaje || 'Error', 'Intente nuevamente');
+
+        Alertas.mostrar('error', 'Error', resultado.mensaje || 'Datos incorrectos');
         
         // ---- DESACTIVAR ESTADO DE CARGA SI HUBO ERROR ----
         if (btnEnviar) {

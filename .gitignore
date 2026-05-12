@@ -1,1 +1,15 @@
+# Ignorar el .env (contiene las credenciales)
 .env
+
+# Ignorar archivos .pem (contienen claves de cifrado del servidor)
+config/*.pem
+
+# Ignorar todo el contenido de la carpeta de subidas de la cartelera
+recursos/img/cartelera_virtual/*
+recursos/img/gastos/*
+recursos/img/pagos/*
+
+# para que no borre la carpeta
+!recursos/img/cartelera_virtual/.gitkeep
+!recursos/img/gastos/.gitkeep
+!recursos/img/pagos/.gitkeep

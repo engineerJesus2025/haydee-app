@@ -16,3 +16,22 @@ RewriteRule .* - [L]
 
 # Bloquear todo lo demás
 RewriteRule ^ - [F]
+
+<IfModule mod_headers.c>
+    # Previene ataques de Clickjacking (evita que pongan tu sistema en un <iframe> oculto)
+    Header always append X-Frame-Options SAMEORIGIN
+    
+    # Bloquea la carga de archivos si el tipo MIME no coincide (evita que un .jpg se ejecute como .js)
+    Header set X-Content-Type-Options nosniff
+    
+    # Activa el filtro XSS nativo del navegador
+    Header set X-XSS-Protection "1; mode=block"
+    
+    # Fuerza el uso de HTTPS
+    # Header set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+</IfModule>
+
+# Bloquear acceso a archivos sensibles
+<FilesMatch "\.(env|sql|ini|log|sh)$">
+    Require all denied
+</FilesMatch>

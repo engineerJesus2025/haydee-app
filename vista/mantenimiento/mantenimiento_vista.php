@@ -8,9 +8,27 @@
     require_once ROOT_PATH . "/vista/componentes/estilos.php";
     ?>
     <style type="text/css">
-        [hidden] {
-            display: none !important;
-        }
+    [hidden] {
+        display: none !important;
+    }
+
+    .vp-status-card {
+        background-color: var(--item-card-bg); 
+        border: 1px solid var(--ch-header-border);
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .vp-status-card:hover {
+        border-color: rgba(13, 110, 253, 0.4);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); 
+        transform: translateY(-2px);
+    }
+
+    .vp-icon-box {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+    }
     </style>
 </head>
 

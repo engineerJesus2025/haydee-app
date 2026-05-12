@@ -373,9 +373,10 @@
                 </div>
                 
                 <div class="modal-footer  border-top-0 justify-content-center">
-                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-soft-secondary px-4" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-2"></i> Cerrar
+                    </button>
                 </div>
-                
             </div>
         </div>
     </div>
@@ -413,7 +414,11 @@
                             <small id="info-apt-mensaje-deuda" class="fw-bold">Al día</small>
                         </div>
                     </div>
-
+                </div>
+                <div class="modal-footer  border-top-0 justify-content-center">
+                    <button type="button" class="btn btn-soft-secondary px-4" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-2"></i> Cerrar
+                    </button>
                 </div>
             </div>
         </div>

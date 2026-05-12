@@ -1,5 +1,13 @@
 <!-- Utils -->
 <link rel="shortcut icon" href="<?php echo URL_BASE; ?>recursos/img/utils/logo-haydee.ico" type="image/x-icon">
+
+<!-- Modo Dark -->
+<script>
+    if (localStorage.getItem('temaSistemaHaydee') === 'dark') {
+        document.documentElement.setAttribute('data-bs-theme', 'dark');
+    }
+</script>
+
 <!-- Dependencias -->
 <link rel="stylesheet" href="<?php echo URL_BASE; ?>recursos/dependencias/bootstrap/bootstrap.min.css">
 <link rel="stylesheet" href="<?php echo URL_BASE; ?>recursos/dependencias/bootstrap-icons/bootstrap-icons.min.css">

@@ -20,6 +20,7 @@ class ComposerStaticInitcbe1707b410f2f343a82925692838e3a
         '320cde22f66dd4f5d3fd621d3e88b98f' => __DIR__ . '/..' . '/symfony/polyfill-ctype/bootstrap.php',
         '662a729f963d39afe703c9d9b7ab4a8c' => __DIR__ . '/..' . '/symfony/polyfill-php83/bootstrap.php',
         '2a3c2110e8e0295330dc3d11a4cbc4cb' => __DIR__ . '/..' . '/php-webdriver/webdriver/lib/Exception/TimeoutException.php',
+        'decc78cc4436b1292c6c0d151b19445c' => __DIR__ . '/..' . '/phpseclib/phpseclib/phpseclib/bootstrap.php',
         'ec07570ca5a812141189b1fa81503674' => __DIR__ . '/..' . '/phpunit/phpunit/src/Framework/Assert/Functions.php',
         '0754989a10baadda533479884b399278' => __DIR__ . '/..' . '/resend/resend-php/src/Resend.php',
         '45444b0beefb92a98f8cd71d64878146' => __DIR__ . '/../..' . '/config/acciones.php',
@@ -32,6 +33,10 @@ class ComposerStaticInitcbe1707b410f2f343a82925692838e3a
     );
 
     public static $prefixLengthsPsr4 = array (
+        'p' =>
+        array (
+            'phpseclib3\\' => 11,
+        ),
         'h' =>
         array (
             'haydee\\vista\\' => 13,
@@ -76,6 +81,7 @@ class ComposerStaticInitcbe1707b410f2f343a82925692838e3a
             'PhpParser\\' => 10,
             'PhpOption\\' => 10,
             'PhpOffice\\PhpSpreadsheet\\' => 25,
+            'ParagonIE\\ConstantTime\\' => 23,
             'PHPMailer\\PHPMailer\\' => 20,
         ),
         'N' =>
@@ -112,6 +118,7 @@ class ComposerStaticInitcbe1707b410f2f343a82925692838e3a
         'F' =>
         array (
             'FontLib\\' => 8,
+            'Firebase\\JWT\\' => 13,
             'Facebook\\WebDriver\\' => 19,
         ),
         'D' =>
@@ -138,6 +145,10 @@ class ComposerStaticInitcbe1707b410f2f343a82925692838e3a
     );
 
     public static $prefixDirsPsr4 = array (
+        'phpseclib3\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/phpseclib/phpseclib/phpseclib',
+        ),
         'haydee\\vista\\' =>
         array (
             0 => __DIR__ . '/../..' . '/vista',
@@ -259,6 +270,10 @@ class ComposerStaticInitcbe1707b410f2f343a82925692838e3a
         array (
             0 => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet',
         ),
+        'ParagonIE\\ConstantTime\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/paragonie/constant_time_encoding/src',
+        ),
         'PHPMailer\\PHPMailer\\' =>
         array (
             0 => __DIR__ . '/..' . '/phpmailer/phpmailer/src',
@@ -330,6 +345,10 @@ class ComposerStaticInitcbe1707b410f2f343a82925692838e3a
         'FontLib\\' =>
         array (
             0 => __DIR__ . '/..' . '/phenx/php-font-lib/src/FontLib',
+        ),
+        'Firebase\\JWT\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/firebase/php-jwt/src',
         ),
         'Facebook\\WebDriver\\' =>
         array (

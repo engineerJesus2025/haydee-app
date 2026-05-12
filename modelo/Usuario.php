@@ -130,32 +130,96 @@ class Usuario extends Conexion
     // LÓGICA DE USUARIOS (CRUD y Auth)
     // ====================================================================
 
+    
     // SE USA EN EL SERVICIO AUTENTICACION
     private function _validar_usuario()
     {
-        $sql = "SELECT u.id_usuario, u.correo, u.nombre, u.apellido, u.contrasenia, 
-                       r.id_rol, r.nombre as nombre_rol
-                FROM usuarios u 
-                INNER JOIN roles r ON u.rol_id = r.id_rol 
-                WHERE u.correo = :correo AND u.activo = 1";
+        // Nota para mi: Se podria mover a una constante de config. 
+        $limite_intentos = 3;
+        $tiempo_bloqueo = 15; 
+
         try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
-            $stmt->execute([':correo' => $this->correo]);
-            $datos = $stmt->fetch(PDO::FETCH_ASSOC);
+            $db = $this->get_conex('seguridad');
+            $db->beginTransaction();
 
-            if (!$datos) return ['estatus' => false, 'mensaje' => 'Usuario no encontrado'];
+            // datos básicos del usuario
+            $sqlUsuario = "SELECT u.id_usuario, u.correo, u.nombre, u.apellido, u.contrasenia, 
+                           r.id_rol, r.nombre as nombre_rol
+                    FROM usuarios u 
+                    INNER JOIN roles r ON u.rol_id = r.id_rol 
+                    WHERE u.correo = :correo AND u.activo = 1";
+            
+            $stmtU = $db->prepare($sqlUsuario);
+            $stmtU->execute([':correo' => $this->correo]);
+            $datos = $stmtU->fetch(PDO::FETCH_ASSOC);
 
-            if (password_verify($this->contra, $datos['contrasenia'])) {
-                unset($datos['contrasenia']); // Eliminamos el hash por seguridad
-                return ['estatus' => true, 'datos' => $datos];
-            } else {
-                return ['estatus' => false, 'mensaje' => 'Contraseña incorrecta'];
+            if (!$datos) {
+                $db->rollBack(); // cerrar transacción antes de salir
+                return ['estatus' => false, 'mensaje' => 'Credenciales incorrectas'];
             }
+
+            $id_usuario = $datos['id_usuario'];
+
+            // Verificar bloqueos con FOR UPDATE
+            // Esto bloquea la fila en intentos_login para este usuario específico.
+            $sqlIntentos = "SELECT intentos, TIMESTAMPDIFF(MINUTE, ultimo_intento, NOW()) as minutos_transcurridos 
+                            FROM intentos_login WHERE usuario_id = :id FOR UPDATE";
+            $stmtI = $db->prepare($sqlIntentos);
+            $stmtI->execute([':id' => $id_usuario]);
+            $registroIntento = $stmtI->fetch(PDO::FETCH_ASSOC);
+
+            if ($registroIntento) {
+                $intentos = (int)$registroIntento['intentos'];
+                $minutos_transcurridos = (int)$registroIntento['minutos_transcurridos'];
+
+                if ($intentos >= $limite_intentos && $minutos_transcurridos < $tiempo_bloqueo) {
+                    $tiempo_restante = $tiempo_bloqueo - $minutos_transcurridos;
+                    $db->rollBack();
+                    return ['estatus' => false, 'mensaje' => "Cuenta bloqueada. Intente en $tiempo_restante min.", 'codigo_http' => 429];
+                }
+
+                // Si ya pasó el tiempo de castigo, limpiamos para el nuevo intento
+                if ($intentos >= $limite_intentos && $minutos_transcurridos >= $tiempo_bloqueo) {
+                    $db->prepare("DELETE FROM intentos_login WHERE usuario_id = :id")
+                       ->execute([':id' => $id_usuario]);
+                }
+            }
+
+            // Validar la contraseña
+            if (password_verify($this->contra, $datos['contrasenia'])) {
+                
+                // Éxito: Limpiamos intentos y confirmamos cambios
+                $db->prepare("DELETE FROM intentos_login WHERE usuario_id = :id")
+                   ->execute([':id' => $id_usuario]);
+
+                $db->commit(); 
+
+                unset($datos['contrasenia']);
+                return ['estatus' => true, 'datos' => $datos];
+                
+            } else {
+                
+                // Fallo: Registramos el intento fallido
+                $sqlFallo = "INSERT INTO intentos_login (usuario_id, intentos, ultimo_intento) 
+                             VALUES (:id, 1, NOW()) 
+                             ON DUPLICATE KEY UPDATE intentos = intentos + 1, ultimo_intento = NOW()";
+                $db->prepare($sqlFallo)->execute([':id' => $id_usuario]);
+
+                $db->commit(); 
+                return ['estatus' => false, 'mensaje' => 'Credenciales incorrectas', 'codigo_http' => 401];
+            }
+
         } catch (PDOException $e) {
-            error_log("Error en _validar_usuario: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al validar usuario'];
+            // Si algo falla en cualquier punto, revertimos todo para evitar datos inconsistentes
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
+            error_log("Error en _validar_usuario con transacción: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error de seguridad en el sistema'];
         }
     }
+
+
 
     // SE USA EN EL MODULO
     private function _consultar()

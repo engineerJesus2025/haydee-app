@@ -20,7 +20,7 @@
                 
                 <div class="col-md-6 col-lg-6 d-none d-md-block text-white animation-fade-right">
                     <h1 class="display-4 fw-bold mb-3" style="text-shadow: 2px 2px 8px rgba(0,0,0,0.7);">
-                        Bienvenido a la gestión digital de Haydee.
+                        Bienvenido a la gestión digital de Haydee
                     </h1>
                     
                     <p class="fs-5 mb-4" style="text-shadow: 1px 1px 4px rgba(0,0,0,0.8); line-height: 1.6; max-width: 90%;">

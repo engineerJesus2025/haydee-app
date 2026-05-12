@@ -1,8 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const temaActual = localStorage.getItem('temaSistemaHaydee');
-    if (temaActual === 'dark') {
-        aplicarTema('dark');
-    }
     inicializarSwitchModoOscuro();
 });
 

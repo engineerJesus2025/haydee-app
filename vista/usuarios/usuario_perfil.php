@@ -244,6 +244,11 @@
                     </div>
                     <div id="tabla_notificaciones" class="tabla-sistema-haydee"></div>
                 </div>
+                <div class="modal-footer border-top-0 justify-content-center">
+                    <button type="button" class="btn btn-soft-secondary px-4" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-2"></i> Cerrar
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -251,7 +256,7 @@
     <!-- Scripts personalizado -->
     <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/validaciones/usuario_perfil_validar.js"></script>
     <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/consultas_ajax/usuario_perfiles.js"></script>
-
+    <script src="<?php echo URL_BASE; ?>recursos/js/tema_global.js"></script>
 </body>
 
 </html>

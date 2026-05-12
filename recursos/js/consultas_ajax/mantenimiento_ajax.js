@@ -85,22 +85,13 @@ select_copias.addEventListener("change", (e) => {
     
     if (valido) {
         const textoDB = esSeguridad ? 'Seguridad' : 'Negocio';
-        const icono = esSeguridad ? 'bi-shield-check' : 'bi-building';
         const tipoRespaldo = esAutomatico ? 'Automática 🤖' : 'Manual 👤';
 
-        infoDiv.innerHTML = `
-            <div class="alert alert-info border-0 shadow-sm py-2 mb-0 d-flex align-items-center">
-                <i class="bi ${icono} fs-4 me-3"></i>
-                <div>
-                    <strong>Archivo listo (${tipoRespaldo}):</strong><br>
-                    <small>Se restaurará en la base de datos de <u>${textoDB}</u>.</small>
-                </div>
-            </div>`;
+        // Ahora solo pasamos 2 argumentos (la BD y el tipo)
+        renderizarTarjetaDestino(textoDB, tipoRespaldo);
 
-        // Actualizar el span dentro del botón (preservando tu icono de advertencia)
         if(textoBoton) textoBoton.textContent = `Restaurar ${textoDB}`;
-        btn.style.display = 'inline-block';
-        
+    
         input_file.value = ''; 
     } else {
         btn.style.display = 'none';
@@ -109,37 +100,38 @@ select_copias.addEventListener("change", (e) => {
 
 // Subir archivo manual
 input_file.addEventListener("change", (e) => {
-    const infoDiv = document.getElementById('info_seleccion');
     const btn = document.getElementById('boton_importar');
     const textoBoton = document.getElementById('texto_boton_importar');
     const archivo = e.target.files[0];
 
     if (!archivo) {
         btn.style.display = 'none';
-        infoDiv.innerHTML = '';
+        document.getElementById('info_seleccion').innerHTML = '';
         return;
     }
 
     const nombre = archivo.name.toLowerCase();
-    const esSeguridad = nombre.includes("seguridad");
-    const esAutomatico = nombre.includes("AUTOMATICO") || nombre.includes("auto");
-    const textoDestino = esSeguridad ? "Seguridad" : "Negocio";
-    const icono = esSeguridad ? "bi-shield-check" : "bi-building";
+    let dbDetectada = "Desconocido";
+
+    // Lógica de detección mejorada
+    if (nombre.includes("seguridad")) {
+        dbDetectada = "Seguridad";
+    } else if (nombre.includes("negocio") || nombre.includes("haydee")) {
+        dbDetectada = "Negocio";
+    }
+
+    const esAutomatico = nombre.includes("automatico") || nombre.includes("auto");
     const tipoRespaldo = esAutomatico ? 'Automática' : 'Manual o Externa';
 
     select_copias.value = ''; 
 
-    infoDiv.innerHTML = `
-        <div class="alert alert-secondary border-0 shadow-sm py-2 mb-0 d-flex align-items-center">
-            <i class="bi bi-file-earmark-arrow-up fs-4 me-3"></i>
-            <div>
-                <strong>Archivo local (${tipoRespaldo}):</strong> ${archivo.name}<br>
-                <small><i class="bi ${icono} me-1"></i> Destino detectado: <b>${textoDestino}</b></small>
-            </div>
-        </div>`;
+    // Renderizamos la tarjeta
+    renderizarTarjetaDestino(dbDetectada, tipoRespaldo, archivo.name);
 
-    if(textoBoton) textoBoton.textContent = `Importar en ${textoDestino}`;
-    btn.style.display = 'inline-block';
+    // Ajustamos el texto del botón SOLO si conocemos el destino
+    if (dbDetectada !== "Desconocido") {
+        if(textoBoton) textoBoton.textContent = `Importar en ${dbDetectada}`;
+    }
 });
 
 // Botón Exportar (Generar Backup)
@@ -328,8 +320,9 @@ async function generarCopiaSeguridad() {
 async function importarCopiaSeguridad() {
     let datos = new FormData();
     const fichero = select_copias.value;
-    // Inferencia simple de la DB basada en el nombre del archivo
-    const db = (fichero.includes("seguridad")) ? 'seguridad' : 'negocio';
+    
+    // Usamos nuestra nueva función validadora
+    const db = determinarDBDestino(fichero);
 
     datos.append("fichero", fichero);
     datos.append("db", db);
@@ -343,10 +336,9 @@ async function importarSQL() {
     let datos = new FormData();
     const archivo = input_file.files[0];
     
-    // Detectamos a qué base de datos pertenece basándonos en el nombre del archivo
-    const db = (archivo.name.toLowerCase().includes("seguridad")) ? 'seguridad' : 'negocio';
+    // Usamos nuestra nueva función validadora
+    const db = determinarDBDestino(archivo.name);
 
-    // Agregamos el archivo y la base de datos a los datos a enviar
     datos.append("fichero", archivo); 
     datos.append("db", db);
     datos.append('operacion', 'importar_archivo_sql');
@@ -422,5 +414,84 @@ function verificarErroresURL() {
         currentURL.searchParams.delete('e');
         currentURL.searchParams.delete('msg');
         window.history.replaceState({}, '', currentURL);
+    }
+}
+
+/**
+ * Determina a qué base de datos se debe importar.
+ * Prioriza el Select de Emergencia si existe y tiene un valor.
+ */
+function determinarDBDestino(nombreArchivo) {
+    const selectEmergencia = document.getElementById('select_db_emergencia');
+    
+    // Si el select existe y el usuario eligió una opción, usamos esa
+    if (selectEmergencia && selectEmergencia.value) {
+        return selectEmergencia.value;
+    }
+    
+    // Si no (porque se detectó automáticamente), usamos la lógica del nombre
+    return nombreArchivo.toLowerCase().includes("seguridad") ? 'seguridad' : 'negocio';
+}
+
+/**
+ * Renderiza la tarjeta con lógica de selección de emergencia si el destino es desconocido
+ */
+function renderizarTarjetaDestino(dbDetectada, tipoRespaldo, nombreArchivo = null) {
+    const infoDiv = document.getElementById('info_seleccion');
+    const btn = document.getElementById('boton_importar');
+    const esDesconocido = dbDetectada === "Desconocido";
+    
+    let claseColorSoft = esDesconocido ? 'badge-soft-warning' : (dbDetectada === 'Seguridad' ? 'badge-soft-info' : 'badge-soft-success');
+    let icono = esDesconocido ? 'bi-question-circle-fill' : (dbDetectada === 'Seguridad' ? 'bi-shield-check' : 'bi-building');
+
+    infoDiv.innerHTML = `
+        <div class="vp-status-card p-3 rounded-4 d-flex flex-column gap-3 mb-0 transicion_entrada">
+            <div class="d-flex flex-column flex-sm-row align-items-center gap-3">
+                <div class="vp-icon-box ${claseColorSoft} d-flex align-items-center justify-content-center flex-shrink-0 shadow-sm border-0">
+                    <i class="bi ${icono} fs-4"></i>
+                </div>
+                
+                <div class="flex-grow-1 text-center text-sm-start w-100">
+                    <h6 class="mb-1 fw-bold text-body">${nombreArchivo ? 'Archivo local' : 'Archivo del servidor'}</h6>
+                    <span class="text-muted small text-break">${nombreArchivo || tipoRespaldo}</span>
+                </div>
+                
+                <div class="flex-shrink-0">
+                    <span id="badge_destino_final" class="${claseColorSoft} rounded-pill fw-bold shadow-sm d-inline-flex align-items-center px-3 py-2" style="font-size: 0.85rem;">
+                        <i class="bi bi-database-down me-2"></i> Destino: ${dbDetectada}
+                    </span>
+                </div>
+            </div>
+
+            ${esDesconocido ? `
+                <div class="mt-2 p-3 bg-white bg-opacity-10 border border-warning border-opacity-25 rounded-3">
+                    <label class="form-label small fw-bold text-warning"><i class="bi bi-exclamation-triangle me-1"></i> El sistema no reconoce el destino. Por favor, selecciónelo manualmente:</label>
+                    <select class="form-select form-select-sm" id="select_db_emergencia">
+                        <option value="" selected hidden disabled>-- Seleccionar base de datos --</option>
+                        <option value="negocio">Edificio Haydee (Negocio)</option>
+                        <option value="seguridad">Módulo de Seguridad</option>
+                    </select>
+                </div>
+            ` : ''}
+        </div>`;
+
+    // Lógica de habilitación de botón
+    if (esDesconocido) {
+        btn.style.display = 'none'; // Oculto hasta que elija en el select de emergencia
+        
+        // Listener para el select de emergencia
+        const selectEmergencia = document.getElementById('select_db_emergencia');
+        selectEmergencia.addEventListener('change', (e) => {
+            const dbManual = e.target.value;
+            const textoBoton = document.getElementById('texto_boton_importar');
+            
+            // Actualizar interfaz visual
+            document.getElementById('badge_destino_final').className = dbManual === 'seguridad' ? 'badge-soft-info rounded-pill fw-bold px-3 py-2' : 'badge-soft-success rounded-pill fw-bold px-3 py-2';
+            
+            if(textoBoton) textoBoton.textContent = `Importar en ${dbManual.charAt(0).toUpperCase() + dbManual.slice(1)}`;
+            btn.style.display = 'inline-block';
+        });
+    } else {
+        btn.style.display = 'inline-block';
     }
 }

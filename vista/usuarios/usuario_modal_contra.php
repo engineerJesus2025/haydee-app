@@ -38,8 +38,17 @@
                         </div>
                     </div>
                     <div class="row m-3">
-                        <div class="col-md-12 text-center">
+                        <!-- <div class="col-md-12 text-center">
                             <button class="btn btn-primary" type="submit" id="boton_guardar_contra">Guardar nueva contraseña</button>
+                        </div> -->
+                        <div class="col-md-12 text-end"> 
+                            <button type="button" class="btn btn-soft-secondary px-4 me-2" data-bs-dismiss="modal">
+                                <i class="bi bi-x-circle me-2"></i> Cancelar
+                            </button>
+                            <button class="btn btn-primary px-4 shadow-sm" type="submit" id="boton_guardar_contra">
+                                <i class="bi bi-check2-circle me-2"></i>
+                                <span id="texto_boton_formulario">Guardar Contraseña</span>
+                            </button>
                         </div>
                     </div>
                 </form>

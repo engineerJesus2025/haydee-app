@@ -23,8 +23,8 @@ if (isset($_POST["operacion"])) {
     // Obtenemos las reglas
     $reglas = Usuario::obtenerReglas($operacion);
     
-    if (!isset($_POST['usuario_id'])) {
-        $_POST['usuario_id'] = $_SESSION['id_usuario'] ?? null;
+    if (!isset($_POST['id_usuario'])) {
+        $_POST['id_usuario'] = $_SESSION['id_usuario'] ?? null;
     }
 
     if (!empty($reglas)) {
@@ -47,7 +47,7 @@ if (isset($_POST["operacion"])) {
     $usuario = new Usuario();
 
     // Asignación masiva (El ID siempre es el de sesión para perfil)
-    $usuario->set_id_usuario($_POST['usuario_id']); 
+    $usuario->set_id_usuario($_POST['id_usuario']); 
     $usuario->set_apellido($_POST['apellido'] ?? null);
     $usuario->set_nombre($_POST['nombre'] ?? null);
     $usuario->set_correo($_POST['correo'] ?? null);

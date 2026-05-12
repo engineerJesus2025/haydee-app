@@ -5,6 +5,7 @@ use haydee\modelo\Usuario;
 use haydee\modelo\Rol;
 use haydee\modelo\Notificaciones;
 use haydee\modelo\Bitacora;
+use Firebase\JWT\JWT;
 
 class Autenticacion
 {
@@ -19,7 +20,7 @@ class Autenticacion
     /**
      * Intenta autenticar un usuario.
      */
-    public function login($correo, $password, $recordar = false)
+    public function login($correo, $password, $recordar = false, $generarJWT = false)
     {
         $this->usuarioModel->set_correo($correo);
         $this->usuarioModel->set_contra($password);
@@ -50,6 +51,26 @@ class Autenticacion
             $this->eliminarTokenRecordar($usuario['id_usuario']);
         }
 
+        $jwt = null;
+        
+        // SOLO generamos el JWT si el endpoint (la App Móvil) lo pide explícitamente
+        if ($generarJWT) {
+            $tiempoEmision = time();
+            $tiempoExpiracion = $tiempoEmision + JWT_TIEMPO_EXPIRACION; // Expira en 2 horas
+
+            $payloadJWT = [
+                'iat' => $tiempoEmision,
+                'exp' => $tiempoExpiracion,
+                'data' => [
+                    'id_usuario' => $usuario['id_usuario'],
+                    'correo' => $usuario['correo'],
+                    'rol_id' => $usuario['id_rol']
+                ]
+            ];
+
+            $jwt = JWT::encode($payloadJWT, JWT_SECRET, 'HS256');
+        }
+
         // Cargar permisos y notificaciones
         $permisos = $this->obtenerPermisos($usuario['id_rol']);
         $notificaciones = $this->obtenerNotificaciones($usuario['id_usuario']);
@@ -61,7 +82,8 @@ class Autenticacion
             'estatus' => true, 
             'mensaje' => 'Login exitoso', 
             'datos' => $datosSesion, 
-            'token' => $usuario['token_recordar'] ?? null
+            'token' => $usuario['token_recordar'] ?? null, 
+            'token_jwt' => $jwt // para el sistema Móvil
         ];
     }
 
