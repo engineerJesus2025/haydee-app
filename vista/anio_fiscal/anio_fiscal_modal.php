@@ -34,8 +34,8 @@
                             <div class="input-group mb-3">
                                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
                                 <select class="rounded-end form-select" aria-label="Default select example" name="estado" id="estado" form="form_anio_fiscal" style="pointer-events: none; background-color: #eee;">
-                                    <option value="Abierto">Abierta</option>
-                                    <option value="Cerrada">Cerrada</option>
+                                    <option value="ABIERTO">Abierto</option>
+                                    <option value="CERRADO">Cerrado</option>
                                 </select>
                                 <span class="w-100 invalid-feedback"></span>
                             </div>                

@@ -3,6 +3,9 @@ namespace haydee\modelo;
 
 use PDO;
 use PDOException;
+use haydee\enums\Sexo;
+use haydee\enums\TipoVinculo;
+use haydee\enums\TipoBaseDatos;
 
 class Habitantes extends Conexion
 {
@@ -25,6 +28,9 @@ class Habitantes extends Conexion
      * Devuelve las reglas de validación según la operación solicitada.
      */
     public static function obtenerReglas($operacion) {
+        $sexosValidos = implode('|', array_column(Sexo::cases(), 'value'));
+        $vinculosValidos = implode('|', array_column(TipoVinculo::cases(), 'value'));
+        
         $reglasGenerales = [
             'id_habitante' => [
                 'regex' => '/^\d+$/',
@@ -51,17 +57,19 @@ class Habitantes extends Conexion
                 'regex' => '/^\d{4}-\d{2}-\d{2}$/'
             ],
             'sexo' => [
-                'regex' => '/^(Masculino|Femenino)$/'
+                'regex' => "/^($sexosValidos)$/"
             ],
             'nuevo_tipo_vinculo' => [
-                'regex' => '/^(Propietario|Inquilino|Habitante|Otro)$/'
+                'regex' => "/^($vinculosValidos)$/",
+                'opcional' => true
             ],
             'apartamento_id' => [
                 'regex' => '/^\d+$/',
                 'exists' => ['tabla' => 'apartamentos', 'campo' => 'id_apartamento']
             ],
-            'tipo_vinculo' => [
-                'regex' => '/^(Propietario|Inquilino|Habitante|Otro)$/'
+            'nuevo_tipo_vinculo' => [
+                'regex' => "/^($vinculosValidos)$/",
+                'opcional' => true
             ]
         ];
 
@@ -157,7 +165,7 @@ class Habitantes extends Conexion
             LEFT JOIN apartamentos a ON ha.apartamento_id = a.id_apartamento
             WHERE h.id_habitante = :id_habitante AND h.activo = 1";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->bindParam(':id_habitante', $this->id_habitante);
             $stmt->execute();
             $datos = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -177,7 +185,7 @@ class Habitantes extends Conexion
      */
     private function _registrar_habitantes()
     {
-        $pdo = $this->get_conex('negocio');
+        $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
         try {
             // Validar regla de negocio estricta (Evitar 2 propietarios por error de concurrencia)
             if (!empty($this->nuevo_apartamento_id) && $this->nuevo_tipo_vinculo === 'Propietario') {
@@ -233,7 +241,7 @@ class Habitantes extends Conexion
      */
     private function _modificar_habitantes()
     {
-        $pdo = $this->get_conex('negocio');
+        $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
         try {
             // Validar regla de negocio estricta (Ignorando a sí mismo)
             if (!empty($this->nuevo_apartamento_id) && $this->nuevo_tipo_vinculo === 'Propietario') {
@@ -299,7 +307,7 @@ class Habitantes extends Conexion
     {
         $sql = "UPDATE habitantes SET activo = 0 WHERE id_habitante = :id_habitante";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->bindParam(':id_habitante', $this->id_habitante);
             $stmt->execute();
             return ['estatus' => true, 'mensaje' => 'Habitante eliminado correctamente'];
@@ -323,7 +331,7 @@ class Habitantes extends Conexion
     {
         $sql = "SELECT COUNT(*) FROM habitantes WHERE id_habitante = :id_habitante AND activo = 1";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->bindParam(':id_habitante', $this->id_habitante);
             $stmt->execute();
             $conteo = $stmt->fetchColumn();

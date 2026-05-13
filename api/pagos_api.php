@@ -1,5 +1,7 @@
 <?php
 use haydee\modelo\Pagos;
+use haydee\enums\HttpCodigo;
+use haydee\enums\EstadoPago;
 use haydee\ayuda\ConstructorDetalles;
 
 // ======================================================================
@@ -14,9 +16,7 @@ $pagos = new Pagos();
 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida en API'];
 
 try {
-    // ======================================================================
-    // 1. PETICIONES GET: CONSULTAS (Lectura)
-    // ======================================================================
+    // PETICIONES GET: CONSULTAS (Lectura)
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         
         $operacion = $_GET["operacion"] ?? 'consulta'; 
@@ -44,20 +44,18 @@ try {
                 break;
 
             default:
-                http_response_code(400); 
+                http_response_code(HttpCodigo::BAD_REQUEST->value);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación GET no permitida'];
                 break;
         }
     } 
-    // ======================================================================
-    // 2. PETICIONES POST: REGISTRO Y MODIFICACIÓN (Escritura)
-    // ======================================================================
+    // PETICIONES POST: REGISTRO Y MODIFICACIÓN (Escritura)
     elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         $operacion = $_POST["operacion"] ?? '';
 
         if (empty($operacion)) {
-            http_response_code(400);
+            http_response_code(HttpCodigo::BAD_REQUEST->value);
             echo json_encode(['estatus' => false, 'mensaje' => 'No se especificó la operación']);
             exit;
         }
@@ -78,48 +76,44 @@ try {
 
         switch ($operacion) {
             case 'registrar_pago':
-                // 1. Usamos el Helper específico para pagos
                 $detalles = ConstructorDetalles::ConstruirDetallesPagos($_POST, $_FILES, false);
                 
                 if (empty($detalles)) {
-                    http_response_code(400);
+                    http_response_code(HttpCodigo::BAD_REQUEST->value);
                     echo json_encode(['estatus' => false, 'mensaje' => 'Debe proporcionar al menos un detalle de pago.']);
                     exit;
                 }
 
-                // 2. Pasamos los detalles al modelo
+                // Pasamos los detalles al modelo
                 $pagos->set_detalles($detalles);
                 
-                // 3. Ejecutamos la inserción
+                // Ejecutamos la inserción
                 $respuesta = $pagos->realizar_consulta('registrar_pago');
                 break;
 
             case 'modificar_pago':
                 if ($esPropietario) {
-                    http_response_code(403); // Prohibido
+                    http_response_code(HttpCodigo::PROHIBIDO->value); // Prohibido
                     echo json_encode(['estatus' => false, 'mensaje' => 'No autorizado para modificar pagos']);
                     exit;
                 }
-                // Lógica de modificación similar...
                 break;
 
             default:
-                http_response_code(400);
+                http_response_code(HttpCodigo::BAD_REQUEST->value);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación POST no permitida'];
                 break;
         }
     } 
-    // ======================================================================
-    // 3. MÉTODOS NO SOPORTADOS
-    // ======================================================================
+    // MÉTODOS NO SOPORTADOS
     else {
-        http_response_code(405); 
+        http_response_code(HttpCodigo::METODO_NO_PERMITIDO->value);
         $respuesta = ['estatus' => false, 'mensaje' => 'Método HTTP no soportado'];
     }
 
 } catch (Exception $e) {
     error_log("Error en API Pagos: " . $e->getMessage());
-    http_response_code(500);
+    http_response_code(HttpCodigo::ERROR_INTERNO->value);
     $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor API'];
 } finally {
     $pagos->cerrar();

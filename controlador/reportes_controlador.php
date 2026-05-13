@@ -1,38 +1,31 @@
-<?php
-use haydee\servicios\Sesiones;
+﻿<?php
 use haydee\ayuda\Validador;
 use haydee\ayuda\GestorPDF;
+use haydee\enums\Modulo;
+use haydee\enums\Accion;
+use haydee\servicios\Sesiones;
+use haydee\servicios\Reportes; 
 use haydee\modelo\Habitantes;
 use haydee\modelo\Gastos;
 use haydee\modelo\Mensualidad;
 use haydee\modelo\Apartamento;
 use haydee\modelo\Bitacora;
-use haydee\servicios\Reportes; 
 use Dompdf\Dompdf;
 
-// ====================================================================
-// Seguridad y sesión
-// ====================================================================
-Sesiones::validarMetodoHTTP(['GET', 'POST']);
-Sesiones::verificarSesion();
-Sesiones::verificarPermiso(GESTIONAR_REPORTES, CONSULTAR);
 
-// ====================================================================
-// Instancias de Modelos Utilitarios
-// (Solo para llenar combos o verificaciones atómicas)
-// ====================================================================
+// Verificaciones de seguridad
+Sesiones::autorizarAcceso(Modulo::GESTIONAR_REPORTES, Accion::CONSULTAR);
+
 $habitantesModel = new Habitantes();
 $mensualidadModel = new Mensualidad();
 $gastosModel = new Gastos();
 
-// ====================================================================
 // Manejo de peticiones AJAX (POST)
-// ====================================================================
 if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
 
-    // 1. OBTENER REGLAS Y VALIDAR (Solo para operaciones del servicio Reportes)
+    // (Solo para operaciones del servicio Reportes)
     $reglas = Reportes::obtenerReglas($operacion);
 
     if (!empty($reglas)) {
@@ -49,10 +42,10 @@ if (isset($_POST["operacion"])) {
 
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
     
-    // 2. INSTANCIAR SERVICIO DE REPORTES
+    // INSTANCIAR SERVICIO DE REPORTES
     $reportesServicio = new Reportes();
     
-    // 3. ASIGNACIÓN MASIVA MEDIANTE SETTERS
+    // 3. ASIGNACIÃ“N MASIVA MEDIANTE SETTERS
     $reportesServicio->set_balance($_POST['balance'] ?? 'todos');
     $reportesServicio->set_metodo_pago($_POST['metodo_pago'] ?? 'todos');
     $reportesServicio->set_tipo_gasto($_POST['tipo_gasto'] ?? 'todos');
@@ -160,13 +153,13 @@ if (isset($_POST["validar"])) {
 }
 
 // ====================================================================
-// Manejo de acciones GET (vistas y generación de PDF)
+// Manejo de acciones GET (vistas y generaciÃ³n de PDF)
 // ====================================================================
 $accion = $_GET['accion'] ?? 'reportes_pdf'; 
 
 switch ($accion) {
     case 'reportes_pdf':
-        Bitacora::registrar(CONSULTAR, GESTIONAR_REPORTES);
+        Bitacora::registrar(Accion::CONSULTAR, Modulo::GESTIONAR_REPORTES);
         require_once "vista/reportes/reportes_pdf/reportes_pdf_vista.php";
         break;
 
@@ -202,7 +195,7 @@ switch ($accion) {
         $dompdf->render();
 
         $detallesReporte = ['tipo_reporte' => 'Constancia de Residencia', 'habitante' => $registro_propietario["nombre"] . " " . $registro_propietario["apellido"]];
-        Bitacora::registrar(DESCARGAR, GESTIONAR_REPORTES, null, null, $detallesReporte);
+        Bitacora::registrar(Accion::DESCARGAR, Modulo::GESTIONAR_REPORTES, null, null, $detallesReporte);
         $dompdf->stream("constancia_residencia_" . $registro_propietario["nombre"] . "_" . $registro_propietario["apellido"]);
         break;
 
@@ -234,7 +227,7 @@ switch ($accion) {
         break;
 
     case 'generar_reporte_gastos_mensual':
-        $formato = $_POST['formato'] ?? 'pdf'; // Recuperamos la lógica del formato
+        $formato = $_POST['formato'] ?? 'pdf'; // Recuperamos la lÃ³gica del formato
         
         $reportesServicio = new Reportes();
         $reportesServicio->set_mes($_POST['mes'] ?? '');
@@ -257,7 +250,7 @@ switch ($accion) {
         ];
 
         if ($formato === 'excel') {
-            // Si el botón presionado fue el de Excel, extraemos las variables y cargamos el script de PhpSpreadsheet
+            // Si el botÃ³n presionado fue el de Excel, extraemos las variables y cargamos el script de PhpSpreadsheet
             extract($datosVista);
             require_once "vista/reportes/reportes_excel/reporte_gastos_mensual_excel.php";
         } else {
@@ -280,7 +273,7 @@ switch ($accion) {
         break;
 
     case 'reportes_estadisticos':
-        Bitacora::registrar(CONSULTAR, GESTIONAR_REPORTES);
+        Bitacora::registrar(Accion::CONSULTAR, Modulo::GESTIONAR_REPORTES);
         require_once "vista/reportes/reportes_estadisticos/reportes_estadisticos_vista.php";
         break;
 

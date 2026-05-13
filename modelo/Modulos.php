@@ -3,6 +3,7 @@ namespace haydee\modelo;
 
 use PDO;
 use PDOException;
+use haydee\enums\TipoBaseDatos;
 
 class Modulos extends Conexion
 {
@@ -76,7 +77,7 @@ class Modulos extends Conexion
     {
         $sql = "SELECT * FROM modulos WHERE activo = 1";
         try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute();
             $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
             return ['estatus' => true, 'datos' => $datos];
@@ -93,9 +94,9 @@ class Modulos extends Conexion
     {
         $sql = "INSERT INTO modulos (nombre, activo) VALUES (:nombre, 1)";
         try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute([':nombre' => $this->nombre]);
-            $lastId = $this->get_conex('seguridad')->lastInsertId();
+            $lastId = $this->get_conex(TipoBaseDatos::SEGURIDAD)->lastInsertId();
             return ['estatus' => true, 'mensaje' => 'Módulo registrado correctamente', 'id' => $lastId];
         } catch (PDOException $e) {
             error_log("Error en _registrar (Modulos): " . $e->getMessage());
@@ -111,7 +112,7 @@ class Modulos extends Conexion
     {
         $sql = "UPDATE modulos SET nombre = :nombre WHERE id_modulo = :id";
         try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute([
                 ':nombre' => $this->nombre,
                 ':id'     => $this->id_modulo
@@ -131,7 +132,7 @@ class Modulos extends Conexion
     {
         $sql = "UPDATE modulos SET activo = 0 WHERE id_modulo = :id";
         try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute([':id' => $this->id_modulo]);
             return ['estatus' => true, 'mensaje' => 'Módulo eliminado correctamente'];
         } catch (PDOException $e) {
@@ -148,7 +149,7 @@ class Modulos extends Conexion
     {
         $sql = "SELECT * FROM modulos WHERE id_modulo = :id AND activo = 1";
         try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute([':id' => $this->id_modulo]);
             $dato = $stmt->fetch(PDO::FETCH_ASSOC);
             if (!$dato) {

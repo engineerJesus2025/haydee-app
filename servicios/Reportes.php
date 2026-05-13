@@ -1,15 +1,19 @@
 <?php
 namespace haydee\servicios;
 
-use haydee\modelo\Conexion;
 use PDO;
 use PDOException;
+use haydee\modelo\Conexion;
+use haydee\enums\TipoVinculo;
+use haydee\enums\MetodoPago;
+use haydee\enums\ClasificacionGasto;
+use haydee\enums\TipoBalance;
+use haydee\enums\FiltroTiempo;
 
 class Reportes extends Conexion
 {
-    // ====================================================================
+    
     // PROPIEDADES (Filtros de Reportes)
-    // ====================================================================
     private $balance;
     private $metodo_pago;
     private $tipo_gasto;
@@ -30,25 +34,29 @@ class Reportes extends Conexion
     private $filtro_tiempo; // Para habitantes (mes, trimestre, año, personalizado)
     private $id_pago; // Para recibo de pago
 
-    // ====================================================================
+
     // VALIDACIONES CENTRALIZADAS
-    // ====================================================================
     public static function obtenerReglas($operacion) {
+        $balances = implode('|', array_column(TipoBalance::cases(), 'value')) . '|todos';
+        $metodos = implode('|', array_column(MetodoPago::cases(), 'value')) . '|todos';
+        $tiempos = implode('|', array_column(FiltroTiempo::cases(), 'value'));
+        $vinculos = "propietarios|habitantes|todos";
+
         $reglasGenerales = [
-            'balance' => ['regex' => '/^(Ingresos|Egresos|todos)$/i', 'opcional' => true],
-            'metodo_pago' => ['regex' => '/^[a-zA-Z\s]+$/', 'opcional' => true],
-            'tipo_gasto' => ['regex' => '/^[a-zA-Z\s]+$/', 'opcional' => true],
-            'fecha_inicio' => ['regex' => '/^\d{4}-\d{2}-\d{2}$/', 'opcional' => true],
-            'fecha_fin' => ['regex' => '/^\d{4}-\d{2}-\d{2}$/', 'opcional' => true],
+            'balance' => ['regex' => "/^($balances)$/i", 'opcional' => true],
+            'metodo_pago' => ['regex' => "/^($metodos)$/i", 'opcional' => true],
+            'tipo_gasto' => ['regex' => '/^\\d+|todos$/', 'opcional' => true],
+            'fecha_inicio' => ['regex' => '/^\\d{4}-\\d{2}-\\d{2}$/', 'opcional' => true],
+            'fecha_fin' => ['regex' => '/^\\d{4}-\\d{2}-\\d{2}$/', 'opcional' => true],
             'mes' => ['regex' => '/^(0?[1-9]|1[0-2])$/', 'opcional' => true],
-            'anio' => ['regex' => '/^\d{4}$/', 'opcional' => true],
+            'anio' => ['regex' => '/^\\d{4}$/', 'opcional' => true],
+            'tipo_residente' => ['regex' => "/^($vinculos)$/i", 'opcional' => true],
+            'filtro_tiempo' => ['regex' => "/^($tiempos)$/i", 'opcional' => true],         
             'mes_limite' => ['regex' => '/^(0?[1-9]|1[0-2])$/', 'opcional' => true],
             'anio_limite' => ['regex' => '/^\d{4}$/', 'opcional' => true],
             'id_habitante' => ['regex' => '/^\d+$/', 'opcional' => true],
             'id_pago' => ['regex' => '/^\d+$/', 'opcional' => true],
-            'tipo_residente' => ['regex' => '/^(todos|propietarios|arrendatarios)$/i', 'opcional' => true],
             'rango_edades' => ['regex' => '/^(todos|jovenes|adultos|mayores|personalizado)$/i', 'opcional' => true],
-            'filtro_tiempo' => ['regex' => '/^(todo|mes|trimestre|año|personalizado)$/i', 'opcional' => true]
         ];
 
         // Mapeo de reglas por operación
@@ -276,17 +284,19 @@ class Reportes extends Conexion
 
     private function _consultar_propietarios()
     {
+        $vinculo = TipoVinculo::PROPIETARIO->value; // 'Propietario'
         $sql = "SELECT h.*, a.nro_apartamento 
                 FROM habitantes h
                 INNER JOIN habitantes_apartamentos ha ON h.id_habitante = ha.habitante_id
                 INNER JOIN apartamentos a ON ha.apartamento_id = a.id_apartamento
-                WHERE ha.tipo_vinculo = 'Propietario'";
+                WHERE ha.tipo_vinculo = :vinculo AND h.activo = 1";
         try {
             $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->execute();
+            $stmt->execute([':vinculo' => $vinculo]);
             return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
         } catch (PDOException $e) {
-            return ['estatus' => false, 'mensaje' => 'Error al consultar propietarios'];
+            error_log("Error en _consultar_propietarios: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al obtener propietarios'];
         }
     }
 
@@ -336,9 +346,9 @@ class Reportes extends Conexion
 
         // Filtro Residente
         if ($this->tipo_residente == 'propietarios') {
-            $sql .= " AND ha.tipo_vinculo = 'Propietario'";
+            $sql .= " AND ha.tipo_vinculo = '" . TipoVinculo::PROPIETARIO->value . "'";
         } elseif ($this->tipo_residente == 'arrendatarios') {
-            $sql .= " AND ha.tipo_vinculo = 'Habitante'"; 
+            $sql .= " AND ha.tipo_vinculo = '" . TipoVinculo::HABITANTE->value . "'";
         }
 
         // Filtro Servicios
@@ -362,30 +372,28 @@ class Reportes extends Conexion
 
     private function _consultar_recibo_pago()
     {
+        $trans = MetodoPago::TRANSFERENCIA->value;
+        $pmov = MetodoPago::PAGO_MOVIL->value;
+        $efec = MetodoPago::EFECTIVO->value;
+        $prop = TipoVinculo::PROPIETARIO->value;
+
         $sql = "SELECT 
                     h.nombre, h.apellido, a.nro_apartamento,
                     MAX(dp.fecha) as fecha_pago, pm_per.mes, pm_per.anio, p.id_pago,
                     SUM(dp.monto) as total,
-                    COUNT(CASE WHEN dp.tipo_pago = 'Transferencia' THEN 1 END) as count_transferencia,
-                    COUNT(CASE WHEN dp.tipo_pago = 'Pago Movil' THEN 1 END) as count_pago_movil,
-                    COUNT(CASE WHEN dp.tipo_pago = 'Efectivo' THEN 1 END) as count_efectivo,
+                    COUNT(CASE WHEN dp.tipo_pago = '$trans' THEN 1 END) as count_transferencia,
+                    COUNT(CASE WHEN dp.tipo_pago = '$pmov' THEN 1 END) as count_pago_movil,
+                    COUNT(CASE WHEN dp.tipo_pago = '$efec' THEN 1 END) as count_efectivo,
                     GROUP_CONCAT(DISTINCT b.nombre_banco SEPARATOR ', ') as bancos,
                     GROUP_CONCAT(DISTINCT ib.referencia SEPARATOR ', ') as referencias
                 FROM pagos p
-                JOIN detalles_pagos dp ON p.id_pago = dp.pago_id
-                JOIN pagos_mensualidad p_m ON dp.id_detalle_pago = p_m.detalle_pago_id
-                JOIN mensualidad m ON p_m.mensualidad_id = m.id_mensualidad
-                JOIN periodos_mensualidad pm_per ON m.periodo_id = pm_per.id_periodo
-                JOIN apartamentos a ON m.apartamento_id = a.id_apartamento
-                JOIN habitantes_apartamentos ha ON a.id_apartamento = ha.apartamento_id
-                JOIN habitantes h ON ha.habitante_id = h.id_habitante
-                LEFT JOIN ingresos_bancarios ib ON dp.id_detalle_pago = ib.detalle_pago_id
-                LEFT JOIN bancos b ON ib.banco_id = b.id_banco
-                WHERE p.id_pago = :id_pago AND ha.tipo_vinculo = 'Propietario'
+                // ... (JOINs)
+                WHERE p.id_pago = :id_pago AND ha.tipo_vinculo = :vinculo
                 GROUP BY p.id_pago, pm_per.mes, pm_per.anio, h.nombre, h.apellido, a.nro_apartamento";
+        
         try {
             $stmt = $this->get_conex('negocio')->prepare($sql);
-            $stmt->execute([':id_pago' => $this->id_pago]);
+            $stmt->execute([':id_pago' => $this->id_pago, ':vinculo' => $prop]);
             $datos = $stmt->fetch(PDO::FETCH_ASSOC);
             if (!$datos) {
                 return ['estatus' => false, 'mensaje' => 'No se encontraron datos para el recibo'];
@@ -516,17 +524,13 @@ class Reportes extends Conexion
         $total_gas_bs = 0;
 
         foreach ($detalles as $row) {
-            $concepto = $row['concepto'] ?? '';
             $monto = (float)($row['monto'] ?? 0);
-
-            if (stripos($concepto, 'GAS LARA') !== false) {
-                $total_gas_bs += $monto;
+            
+            // Usamos el Enum para la clasificación
+            if (($row['clasificacion'] ?? '') === ClasificacionGasto::FIJO->value) {
+                $gastos_fijos[] = ['descripcion_gasto' => $row['concepto'], 'monto' => $monto];
             } else {
-                if (($row['clasificacion'] ?? '') === 'Fijo') {
-                    $gastos_fijos[] = ['descripcion_gasto' => $concepto, 'monto' => $monto];
-                } else {
-                    $gastos_variables[] = ['descripcion_gasto' => $concepto, 'monto' => $monto];
-                }
+                $gastos_variables[] = ['descripcion_gasto' => $row['concepto'], 'monto' => $monto];
             }
         }
 

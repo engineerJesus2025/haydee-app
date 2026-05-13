@@ -3,12 +3,15 @@ namespace haydee\modelo;
 
 use PDO;
 use PDOException;
+use haydee\enums\TipoBaseDatos;
 
 class Mensualidad extends Conexion
 {
-    // ====================================================================
+    // REGLAS DE NEGOCIO (LÍMITES DE TIEMPO)
+    private const ANIO_MINIMO_PERMITIDO = 2000;
+    private const ANIO_MAXIMO_PERMITIDO = 2100;
+
     // PROPIEDADES
-    // ====================================================================
     private $id_mensualidad;
     private $monto;
     private $tasa_dolar;
@@ -23,9 +26,7 @@ class Mensualidad extends Conexion
     private $datos_apartamentos = [];
     private $ids_mensualidades;
 
-    // ====================================================================
     // REGLAS DE VALIDACIÓN (Para el Helper Validador)
-    // ====================================================================
     public static function obtenerReglas($operacion) {
         $reglasGenerales = [
             'fecha' => [
@@ -36,8 +37,8 @@ class Mensualidad extends Conexion
             ],
             'anio' => [
                 'regex' => '/^\d{4}$/',
-                'min' => 2000,
-                'max' => 2100
+                'min' => self::ANIO_MINIMO_PERMITIDO,
+                'max' => self::ANIO_MAXIMO_PERMITIDO
             ],
             'tasa_dolar' => [
                 'regex' => '/^\d+(\.\d{1,4})?$/',
@@ -151,7 +152,7 @@ class Mensualidad extends Conexion
                 ) AND p.activo = 1
                 ORDER BY anio_presupuesto ASC, mes_presupuesto ASC";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute();
             $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
             return ['estatus' => true, 'datos' => $datos];
@@ -185,7 +186,7 @@ class Mensualidad extends Conexion
                 WHERE m.activo = 1 AND pm.activo = 1
                 GROUP BY pm.id_periodo, pm.mes, pm.anio, pm.tasa_dolar, m.porcentaje_interes, m.limite_mensualidad";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute();
             $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
             return ['estatus' => true, 'datos' => $datos];
@@ -220,7 +221,7 @@ class Mensualidad extends Conexion
                   AND ha.tipo_vinculo = 'Propietario'
                   AND m.activo = 1";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->bindParam(':mes', $mesInt, PDO::PARAM_INT);
             $stmt->bindParam(':anio', $anioInt, PDO::PARAM_INT);
             $stmt->execute();
@@ -247,7 +248,7 @@ class Mensualidad extends Conexion
                 $sql = "SELECT detalle_presupuesto_id 
                         FROM presupuesto_mensualidad 
                         WHERE mensualidad_id = :id";
-                $stmt = $this->get_conex('negocio')->prepare($sql);
+                $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
                 $stmt->execute([':id' => $id]);
                 $filas = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 $resultados[] = array_column($filas, 'detalle_presupuesto_id');
@@ -268,7 +269,7 @@ class Mensualidad extends Conexion
                 WHERE pm.mes = :mes AND pm.anio = :anio AND m.activo = 1 
                 LIMIT 1";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->bindParam(':mes', $this->mes, PDO::PARAM_INT);
             $stmt->bindParam(':anio', $this->anio, PDO::PARAM_INT);
             $stmt->execute();
@@ -288,9 +289,9 @@ class Mensualidad extends Conexion
     private function _registrar()
     {
         $id_mensualidad = null;
-        $con = $this->get_conex('negocio');
         
         try {
+            $con = $this->get_conex(TipoBaseDatos::NEGOCIO);
             $con->beginTransaction();
 
             $sqlBuscaPeriodo = "SELECT id_periodo FROM periodos_mensualidad WHERE mes = :mes AND anio = :anio LIMIT 1";
@@ -346,7 +347,7 @@ class Mensualidad extends Conexion
     // SE USA EN EL MODULO
     private function _modificar()
     {
-        $con = $this->get_conex('negocio');
+        $con = $this->get_conex(TipoBaseDatos::NEGOCIO);
         try {
             $con->beginTransaction();
 
@@ -426,7 +427,7 @@ class Mensualidad extends Conexion
                 SET pm.activo = 0 
                 WHERE pm.mes = :mes AND pm.anio = :anio";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->bindParam(':mes', $this->mes, PDO::PARAM_INT);
             $stmt->bindParam(':anio', $this->anio, PDO::PARAM_INT);
             $stmt->execute();
@@ -447,7 +448,7 @@ class Mensualidad extends Conexion
                 GROUP BY pm.anio, pm.mes 
                 ORDER BY pm.anio DESC, pm.mes DESC";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute();
             $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
             return ['estatus' => true, 'datos' => $datos];
@@ -464,7 +465,7 @@ class Mensualidad extends Conexion
                 FROM periodos_mensualidad 
                 WHERE anio = :anio AND mes = TRIM(LEADING '0' FROM :mes)";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->bindParam(':mes', $this->mes);
             $stmt->bindParam(':anio', $this->anio);
             $stmt->execute();
@@ -480,7 +481,7 @@ class Mensualidad extends Conexion
     private function _consultar_estadisticas_inicio()
     {
         try {
-            $pdo = $this->get_conex('negocio');
+            $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
             $sql = "
                 SELECT 
                     SUM(CASE WHEN deuda_pendiente > 0 THEN 1 ELSE 0 END) as aptos_morosos,
@@ -575,7 +576,7 @@ class Mensualidad extends Conexion
                      FROM vw_estado_cuentas_mensualidad 
                      WHERE CAST(estado_pago AS CHAR) = 'Pendiente') AS deuda_total";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute();
             $datos = $stmt->fetch(PDO::FETCH_ASSOC);
             return ['estatus' => true, 'datos' => $datos];
@@ -603,7 +604,7 @@ class Mensualidad extends Conexion
                        AND YEAR(dp.fecha) = YEAR(CURDATE())) AS recaudado_mes";
                        
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute();
             $datos = $stmt->fetch(PDO::FETCH_ASSOC);
             
@@ -628,7 +629,7 @@ class Mensualidad extends Conexion
                 INNER JOIN detalles_presupuesto dp ON pm.detalle_presupuesto_id = dp.id_detalle_presupuesto
                 WHERE pm.mensualidad_id = :id_mensualidad";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute([':id_mensualidad' => $this->id_mensualidad]);
             $datos = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             

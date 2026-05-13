@@ -3,6 +3,7 @@ namespace haydee\modelo;
 
 use PDO;
 use PDOException;
+use haydee\enums\TipoBaseDatos;
 
 class TipoGasto extends Conexion
 {
@@ -73,7 +74,7 @@ class TipoGasto extends Conexion
     {
         $sql = "SELECT * FROM tipo_gasto WHERE activo = 1 ORDER BY id_tipo_gasto";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute();
             $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
             return ['estatus' => true, 'datos' => $datos];
@@ -87,7 +88,7 @@ class TipoGasto extends Conexion
     {
         $sql = "SELECT * FROM tipo_gasto WHERE id_tipo_gasto = :id_tipo_gasto AND activo = 1";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->bindParam(':id_tipo_gasto', $this->id_tipo_gasto);
             $stmt->execute();
             $datos = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -105,10 +106,10 @@ class TipoGasto extends Conexion
     {
         $sql = "INSERT INTO tipo_gasto (nombre_tipo_gasto) VALUES (:nombre_tipo_gasto)";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->bindParam(':nombre_tipo_gasto', $this->nombre_tipo_gasto);
             $stmt->execute();
-            $lastId = $this->get_conex('negocio')->lastInsertId();
+            $lastId = $this->get_conex(TipoBaseDatos::NEGOCIO)->lastInsertId();
             return ['estatus' => true, 'mensaje' => 'Tipo de gasto registrado correctamente', 'lastId' => $lastId];
         } catch (PDOException $e) {
             error_log("Error en _registrar: " . $e->getMessage());
@@ -120,7 +121,7 @@ class TipoGasto extends Conexion
     {
         $sql = "UPDATE tipo_gasto SET nombre_tipo_gasto = :nombre_tipo_gasto WHERE id_tipo_gasto = :id_tipo_gasto";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->bindParam(':id_tipo_gasto', $this->id_tipo_gasto);
             $stmt->bindParam(':nombre_tipo_gasto', $this->nombre_tipo_gasto);
             $stmt->execute();
@@ -135,7 +136,7 @@ class TipoGasto extends Conexion
     {
         $sql = "UPDATE tipo_gasto SET activo = 0 WHERE id_tipo_gasto = :id_tipo_gasto";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->bindParam(':id_tipo_gasto', $this->id_tipo_gasto);
             $stmt->execute();
             return ['estatus' => true, 'mensaje' => 'Tipo de gasto eliminado correctamente'];

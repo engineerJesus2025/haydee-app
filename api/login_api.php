@@ -1,6 +1,8 @@
 <?php
 use haydee\servicios\Autenticacion;
 use haydee\servicios\Criptografia;
+use haydee\modelo\SeguridadIP;
+
 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
 try {
@@ -20,12 +22,26 @@ try {
             exit;
         }
 
+        // ANTI-FUERZA BRUTA (Rate Limit)
+        $seguridadIP = new SeguridadIP();
+        $seguridadIP->set_ip($_SERVER['REMOTE_ADDR']);
+
+        $rateLimit = $seguridadIP->verificarRateLimit();
+        if (!$rateLimit['estatus']) {
+            $seguridadIP->registrarFallo(); // Castigar insistencia
+            http_response_code($rateLimit['codigo_http']);
+            echo json_encode(['estatus' => false, 'mensaje' => $rateLimit['mensaje']]);
+            exit;
+        }
+
         $auth = new Autenticacion();
         try {
             // El tercer parámetro 'true' fuerza la generación y guardado del Token en tokens_seguridad
             $resultado = $auth->login($correo, $contra, false, true);
             
             if ($resultado['estatus']) {
+                $seguridadIP->limpiarFallo(); // Limpiamos IP
+
                 http_response_code(200);
                 $respuesta = [
                     'estatus' => true,
@@ -43,6 +59,8 @@ try {
                     Criptografia::vincularDispositivoUsuario($_POST['_temp_disp'], $resultado['datos']['id_usuario'], $_POST['_temp_aes']);
                 }
             } else {
+                $seguridadIP->registrarFallo(); // Castigamos a la IP
+
                 // Credenciales incorrectas, usuario inactivo, etc.
                 http_response_code(401); 
                 $respuesta = ['estatus' => false, 'mensaje' => $resultado['mensaje'] ?? 'Credenciales incorrectas.'];

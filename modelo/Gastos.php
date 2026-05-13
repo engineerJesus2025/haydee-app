@@ -4,13 +4,12 @@ namespace haydee\modelo;
 use PDO;
 use PDOException;
 use haydee\ayuda\GestorImagenes;
+use haydee\enums\ClasificacionGasto;
+use haydee\enums\MetodoPago;
+use haydee\enums\TipoBaseDatos;
 
 class Gastos extends Conexion
 {
-    // ====================================================================
-    // PROPIEDADES (Mapeo de 4 tablas)
-    // ====================================================================
-
     // Tabla: gastos (Cabecera)
     private $id_gasto;
     private $clasificacion;     // 'Fijo' o 'Variable'
@@ -35,21 +34,19 @@ class Gastos extends Conexion
     private $imagen;
     private $banco_id;
 
-    // ====================================================================
-    // VALIDACIONES CENTRALIZADAS
-    // ====================================================================
-    
     /**
      * Reglas para la tabla principal (Cabecera)
      */
     public static function obtenerReglas($operacion) {
+        $clasificacionesValidas = implode('|', array_column(ClasificacionGasto::cases(), 'value'));
+
         $reglasGenerales = [
             'id_gasto' => [
                 'regex' => '/^\d+$/',
                 'exists' => ['tabla' => 'gastos', 'campo' => 'id_gasto']
             ],
             'clasificacion' => [
-                'regex' => '/^(Fijo|Variable|Reposicion)$/i'
+                'regex' => "/^($clasificacionesValidas)$/"
             ],
             'descripcion_gasto' => [
                 'regex' => '/^[a-zA-Z0-9áéíóúñÁÉÍÓÚÑ\s.,:\/-]{3,255}$/'
@@ -86,6 +83,8 @@ class Gastos extends Conexion
      * Reglas para cada fila de la tabla de detalles (Detalles Gastos)
      */
     public static function obtenerReglasDetalles() {
+        $metodosValidos = implode('|', array_column(MetodoPago::cases(), 'value'));
+
         return [
             'fecha_detalle' => [
                 'regex' => '/^\d{4}-\d{2}-\d{2}$/'
@@ -99,7 +98,7 @@ class Gastos extends Conexion
                 'opcional' => true
             ],
             'metodo_pago' => [
-                'regex' => '/^(Efectivo|Pago Movil|Transferencia|Divisa)$/'
+                'regex' => "/^($metodosValidos)$/"
             ],
             'descripcion_detalle_gasto' => [
                 'regex' => '/^[a-zA-Z0-9áéíóúñÁÉÍÓÚÑ\s.,:\/-]{0,255}$/',
@@ -193,7 +192,7 @@ class Gastos extends Conexion
      * en el mismo formulario ni en otros gastos.
      */
     private function _validar_referencias_unicas() {
-        $pdo = $this->get_conex('negocio');
+        $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
         $refsUsadas = [];
         
         foreach ($this->detalles as $idx => $det) {
@@ -233,7 +232,7 @@ class Gastos extends Conexion
                 JOIN detalles_gastos dg ON eb.detalle_gasto_id = dg.id_detalle_gasto 
                 WHERE eb.referencia = :ref LIMIT 1";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute([':ref' => $referencia]);
             $gasto_id_bd = $stmt->fetchColumn();
 
@@ -264,7 +263,7 @@ class Gastos extends Conexion
         $valRef = $this->_validar_referencias_unicas();
         if (!$valRef['estatus']) return $valRef;
 
-        $pdo = $this->get_conex('negocio');
+        $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
         try {
             $pdo->beginTransaction();
 
@@ -337,7 +336,7 @@ class Gastos extends Conexion
         $valRef = $this->_validar_referencias_unicas();
         if (!$valRef['estatus']) return $valRef;
 
-        $pdo = $this->get_conex('negocio');
+        $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
         try {
             $pdo->beginTransaction();
 
@@ -433,7 +432,7 @@ class Gastos extends Conexion
     {
         $sql = "UPDATE gastos SET activo = 0 WHERE id_gasto = :id";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->bindParam(':id', $this->id_gasto);
             $stmt->execute();
             return ['estatus' => true, 'mensaje' => 'Gasto eliminado correctamente'];
@@ -473,7 +472,7 @@ class Gastos extends Conexion
                 ORDER BY ultima_fecha DESC";
 
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute();
             $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
             return ['estatus' => true, 'datos' => $datos];
@@ -506,7 +505,7 @@ class Gastos extends Conexion
                             LEFT JOIN tipo_gasto tg ON g.tipo_gasto_id = tg.id_tipo_gasto
                             WHERE g.id_gasto = :id_gasto AND g.activo = 1";
             
-            $stmtCab = $this->get_conex('negocio')->prepare($sqlCabecera);
+            $stmtCab = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlCabecera);
             $stmtCab->execute([':id_gasto' => $this->id_gasto]);
             $cabecera = $stmtCab->fetch(PDO::FETCH_ASSOC);
             
@@ -532,7 +531,7 @@ class Gastos extends Conexion
                             WHERE dg.gasto_id = :id_gasto
                             ORDER BY dg.fecha DESC";
             
-            $stmtDet = $this->get_conex('negocio')->prepare($sqlDetalles);
+            $stmtDet = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlDetalles);
             $stmtDet->execute([':id_gasto' => $this->id_gasto]);
             $detalles = $stmtDet->fetchAll(PDO::FETCH_ASSOC);
 
@@ -560,7 +559,7 @@ class Gastos extends Conexion
                 FROM gastos WHERE id_gasto = :id_gasto AND activo = 1";
         
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute([':id_gasto' => $this->id_gasto]);
             $datos = $stmt->fetch(PDO::FETCH_ASSOC);
             return ['estatus' => true, 'datos' => $datos];
@@ -594,7 +593,7 @@ class Gastos extends Conexion
                 ORDER BY dg.fecha DESC";
 
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute([':id_gasto' => $this->id_gasto]);
             $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
             return ['estatus' => true, 'datos' => $datos];
@@ -628,7 +627,7 @@ class Gastos extends Conexion
                 WHERE dg.id_detalle_gasto = :id_detalle";
 
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute([':id_detalle' => $this->id_detalle_gasto]);
             $dato = $stmt->fetch(PDO::FETCH_ASSOC);
             
@@ -653,7 +652,7 @@ class Gastos extends Conexion
     {
         $sql = "SELECT imagen FROM egresos_bancarios WHERE detalle_gasto_id = :id";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->bindParam(':id', $idDetalle);
             $stmt->execute();
             return $stmt->fetchColumn();

@@ -1,20 +1,21 @@
-<?php
+﻿<?php
+use haydee\enums\Modulo;
+use haydee\enums\Accion;
+
 use haydee\servicios\Sesiones;
 use haydee\modelo\Mantenimiento;
 use haydee\modelo\Bitacora;
 use haydee\ayuda\Validador;
 
-// Seguridad de entrada
-Sesiones::validarMetodoHTTP(['GET', 'POST']);
-Sesiones::verificarSesion();
-Sesiones::verificarPermiso(GESTIONAR_MANTENIMIENTO, CONSULTAR);
+// Verificaciones de seguridad
+Sesiones::autorizarAcceso(Modulo::GESTIONAR_MANTENIMIENTO, Accion::CONSULTAR);
 
 if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
 
     // Verificar permiso específico por acción (403 si falla)
-    Sesiones::verificarPermisoAccion(GESTIONAR_MANTENIMIENTO, $operacion);
+    Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_MANTENIMIENTO, $operacion);
 
     // Validación de reglas (400 si falla)
     $reglas = Mantenimiento::obtenerReglas($operacion);
@@ -48,8 +49,8 @@ if (isset($_POST["operacion"])) {
                 http_response_code($respuesta['estatus'] ? 201 : 500);
                 
                 if ($respuesta['estatus']) {
-                    $detalles = ['accion' => 'Generó copia de seguridad', 'base_datos' => strtoupper($db)];
-                    Bitacora::registrar(RESPALDAR, GESTIONAR_MANTENIMIENTO, null, null, $detalles);
+                    $detalles = ['accion' => 'GenerÃ³ copia de seguridad', 'base_datos' => strtoupper($db)];
+                    Bitacora::registrar(Accion::RESPALDAR, Modulo::GESTIONAR_MANTENIMIENTO, null, null, $detalles);
                 }
                 break;
 
@@ -68,8 +69,8 @@ if (isset($_POST["operacion"])) {
                 http_response_code($respuesta['estatus'] ? 200 : 500);
                 
                 if ($respuesta['estatus']) {
-                    $detalles = ['accion' => 'Restauró desde servidor', 'base_datos' => strtoupper($db), 'archivo' => $fichero];
-                    Bitacora::registrar(RESTAURAR, GESTIONAR_MANTENIMIENTO, null, null, $detalles);
+                    $detalles = ['accion' => 'RestaurÃ³ desde servidor', 'base_datos' => strtoupper($db), 'archivo' => $fichero];
+                    Bitacora::registrar(Accion::RESTAURAR, Modulo::GESTIONAR_MANTENIMIENTO, null, null, $detalles);
                 }
                 break;
 
@@ -97,8 +98,8 @@ if (isset($_POST["operacion"])) {
                 http_response_code($respuesta['estatus'] ? 200 : 500);
                 
                 if ($respuesta['estatus']) {
-                    $detalles = ['accion' => 'Restauró desde PC', 'base_datos' => strtoupper($db)];
-                    Bitacora::registrar(RESTAURAR, GESTIONAR_MANTENIMIENTO, null, null, $detalles);
+                    $detalles = ['accion' => 'RestaurÃ³ desde PC', 'base_datos' => strtoupper($db)];
+                    Bitacora::registrar(Accion::RESTAURAR, Modulo::GESTIONAR_MANTENIMIENTO, null, null, $detalles);
                 }
                 break;
 
@@ -121,5 +122,5 @@ if (isset($_POST["operacion"])) {
 }
 
 // Carga normal de la vista (GET)
-Bitacora::registrar(CONSULTAR, GESTIONAR_MANTENIMIENTO);
+Bitacora::registrar(Accion::CONSULTAR, Modulo::GESTIONAR_MANTENIMIENTO);
 require_once "vista/mantenimiento/mantenimiento_vista.php";

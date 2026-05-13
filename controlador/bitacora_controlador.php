@@ -1,11 +1,12 @@
-<?php 
+﻿<?php
+use haydee\enums\Modulo;
+use haydee\enums\Accion;
+ 
 use haydee\servicios\Sesiones;
 use haydee\modelo\Bitacora;
 
 // Verificaciones de seguridad
-Sesiones::validarMetodoHTTP(['GET', 'POST']);
-Sesiones::verificarSesion();
-Sesiones::verificarPermiso(GESTIONAR_SEGURIDAD, CONSULTAR);
+Sesiones::autorizarAcceso(Modulo::GESTIONAR_SEGURIDAD, Accion::CONSULTAR);
 
 // Validamos si es una petición AJAX (POST)
 if (isset($_POST["operacion"])) {
@@ -36,7 +37,7 @@ if (isset($_POST["operacion"])) {
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
         if ($respuesta !== null) {
-            // Cerrar conexiones explícitamente
+            // Cerrar conexiones explÃ­citamente
             if (isset($bitacora)) {
                 $bitacora->cerrar();
             }
@@ -49,5 +50,5 @@ if (isset($_POST["operacion"])) {
 
 $placeholder_buscar = "Buscar registro en bitácora...";
 
-// Si no es una petición POST, cargamos la vista
+// Si no es una peticiÃ³n POST, cargamos la vista
 require_once "vista/bitacora/bitacora_vista.php";

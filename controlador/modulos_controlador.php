@@ -1,4 +1,7 @@
-<?php
+﻿<?php
+use haydee\enums\Modulo;
+use haydee\enums\Accion;
+
 use haydee\servicios\Sesiones;
 use haydee\modelo\Modulos;
 use haydee\modelo\Bitacora;
@@ -6,15 +9,14 @@ use haydee\ayuda\Validador;
 use haydee\ayuda\ValidadorBD;
 use haydee\servicios\GestorAuditoria;
 
-Sesiones::validarMetodoHTTP(['GET', 'POST']);
-Sesiones::verificarSesion();
-Sesiones::verificarPermiso(GESTIONAR_MODULOS, CONSULTAR);
+// Verificaciones de seguridad
+Sesiones::autorizarAcceso(Modulo::GESTIONAR_MODULOS, Accion::CONSULTAR);
 
 if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
 
-    Sesiones::verificarPermisoAccion(GESTIONAR_MODULOS, $operacion);
+    Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_MODULOS, $operacion);
     
     $reglas = Modulos::obtenerReglas($operacion);
 
@@ -35,7 +37,7 @@ if (isset($_POST["operacion"])) {
     $obj_modulo->set_nombre($_POST['nombre'] ?? null);
 
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
-    $auditor = new GestorAuditoria($obj_modulo, GESTIONAR_MODULOS);
+    $auditor = new GestorAuditoria($obj_modulo, Modulo::GESTIONAR_MODULOS);
     
     try {
         switch ($operacion) {
@@ -43,7 +45,7 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $obj_modulo->realizar_consulta('consultar');
 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
-                if ($respuesta['estatus']) { $auditor->registrarAuditoria('consultar'); }
+                if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::CONSULTAR); }
                 break;
 
             case 'consultar_modulo':
@@ -56,7 +58,7 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $obj_modulo->realizar_consulta('registrar_modulo');
 
                 http_response_code($respuesta['estatus'] ? 201 : 400);
-                if ($respuesta['estatus']) { $auditor->registrarAuditoria('registrar'); }
+                if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::REGISTRAR); }
                 break;
 
             case 'modificar_modulo':
@@ -64,7 +66,7 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $obj_modulo->realizar_consulta('modificar_modulo');
 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
-                if ($respuesta['estatus']) { $auditor->registrarAuditoria('modificar'); }
+                if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::MODIFICAR); }
                 break;
 
             case 'eliminar_modulo':
@@ -72,7 +74,7 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $obj_modulo->realizar_consulta('eliminar_modulo');
 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
-                if ($respuesta['estatus']) { $auditor->registrarAuditoria('eliminar'); }
+                if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::ELIMINAR); }
                 break;
 
             default:
@@ -96,14 +98,14 @@ if (isset($_POST["operacion"])) {
 
 // Bloque de vista...
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_MODULOS);
+    GestorAuditoria::inicializarBanderaConsulta(Modulo::GESTIONAR_MODULOS);
 }
-$permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_MODULOS);
+$permisosVista = Sesiones::obtenerPermisosVista(Modulo::GESTIONAR_MODULOS);
 $btn_nuevo = [
     'target'  => '#modal_modulo',
-    'texto'   => 'Nuevo Módulo',
-    'tooltip' => 'Registrar Nuevo Módulo'
+    'texto'   => 'Nuevo MÃ³dulo',
+    'tooltip' => 'Registrar Nuevo MÃ³dulo'
 ];
-$placeholder_buscar = "Buscar módulo...";
+$placeholder_buscar = "Buscar mÃ³dulo...";
 
 require_once "vista/modulos/modulos_vista.php";

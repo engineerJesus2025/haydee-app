@@ -2,26 +2,32 @@
 namespace haydee\servicios;
 
 use haydee\modelo\Bitacora;
+use haydee\enums\Accion;
+use haydee\enums\Modulo; 
 
 class GestorAuditoria
 {
+    private const PREFIJO_SESION = 'auditar_';
+    private const SUFIJO_ID = 'id_';
+    private const SUFIJO_FK = '_id';
+
     private $modelo;
-    private $moduloId;
+    private Modulo $modulo; // Tipamos fuertemente la propiedad
     private $datosAnteriores = null;
 
-    public function __construct($modelo, $moduloId)
+    // Exigimos la instancia del Enum Modulo
+    public function __construct($modelo, Modulo $modulo)
     {
         $this->modelo = $modelo;
-        $this->moduloId = $moduloId;
+        $this->modulo = $modulo;
     }
 
     /**
      * Prepara la sesión para auditar la próxima vez que se consulte la tabla.
-     * Ideal para llamarse cuando se carga la página web (GET).
      */
-    public static function inicializarBanderaConsulta($moduloId)
+    public static function inicializarBanderaConsulta(Modulo $modulo)
     {
-        $_SESSION['auditar_' . $moduloId] = true;
+        $_SESSION[self::PREFIJO_SESION . $modulo->value] = true;
     }
 
     public function capturarDatosAnteriores($metodoConsultaPrevia)
@@ -32,39 +38,31 @@ class GestorAuditoria
         }
     }
 
-    public function registrarAuditoria($operacion)
+    public function registrarAuditoria(Accion $accion)
     {
-        // Si la operación es consultar, verificamos si debemos registrarla
-        if ($operacion === 'consultar') {
-            $llaveSesion = 'auditar_' . $this->moduloId;
+        if ($accion === Accion::CONSULTAR) {
+            $llaveSesion = self::PREFIJO_SESION . $this->modulo->value;
             $debeAuditar = $_SESSION[$llaveSesion] ?? true;
 
-            // Si la bandera está apagada, salimos sin hacer nada
-            if (!$debeAuditar) {
-                return; 
-            }
+            if (!$debeAuditar) return; 
             
-            // Apagamos la bandera para que las recargas automáticas de AJAX no hagan spam
             $_SESSION[$llaveSesion] = false;
         }
-        // -------------------------------
 
         $nuevo = null;
         $anterior = $this->datosAnteriores;
 
-        if (in_array($operacion, ['registrar', 'modificar'])) {
+        if (in_array($accion, [Accion::REGISTRAR, Accion::MODIFICAR], true)) {
             $nuevo = $this->extraerDatosDelModelo();
         }
 
-        if ($operacion === 'modificar' && is_array($anterior) && is_array($nuevo)) {
+        if ($accion === Accion::MODIFICAR && is_array($anterior) && is_array($nuevo)) {
             $this->calcularDiferencias($anterior, $nuevo);
         }
 
-        $partesOperacion = explode('_', $operacion);
-        $accionBitacora = strtoupper($partesOperacion[0]); 
-
-        if ($operacion !== 'modificar' || ($anterior !== null || $nuevo !== null)) {
-            Bitacora::registrar($accionBitacora, $this->moduloId, null, $anterior, $nuevo);
+        // AHORA: Pasamos las instancias puras
+        if ($accion !== Accion::MODIFICAR || ($anterior !== null || $nuevo !== null)) {
+            Bitacora::registrar($accion, $this->modulo, null, $anterior, $nuevo);
         }
     }
 
@@ -99,15 +97,12 @@ class GestorAuditoria
             if (strpos($metodo, 'get_') === 0) {
                 $propiedad = substr($metodo, 4);
 
-                if ($propiedad === 'activo' || strpos($propiedad, 'id_') === 0 || substr($propiedad, -3) === '_id') {
+                if ($propiedad === 'activo' || strpos($propiedad, self::SUFIJO_ID) === 0 || substr($propiedad, -strlen(self::SUFIJO_FK)) === self::SUFIJO_FK) {
                     continue; 
                 }
 
                 $valor = $this->modelo->$metodo();
-
-                if ($valor !== null) {
-                    $datos[$propiedad] = $valor;
-                }
+                if ($valor !== null) $datos[$propiedad] = $valor;
             }
         }
         return $datos;
@@ -117,13 +112,11 @@ class GestorAuditoria
     {
         $limpios = [];
         foreach ($datosBd as $clave => $valor) {
-            if ($clave === 'activo' || strpos($clave, 'id_') === 0 || substr($clave, -3) === '_id') {
+            if ($clave === 'activo' || strpos($clave, self::SUFIJO_ID) === 0 || substr($clave, -strlen(self::SUFIJO_FK)) === self::SUFIJO_FK) {
                 continue;
             }
             $limpios[$clave] = $valor;
         }
         return $limpios;
     }
-
-
 }

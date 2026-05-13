@@ -4,9 +4,16 @@ namespace haydee\modelo;
 use PDO;
 use PDOException;
 use DateTime;
+use haydee\enums\EstadoPeriodo;
+use haydee\enums\EstadoMovimientoCaja;
+use haydee\enums\TipoBaseDatos;
 
 class CajaChica extends Conexion
 {
+    // CONSTANTES DE NEGOCIO
+    private const UMBRAL_ALERTA_SALDO = 200;
+    private const ALERTA_SALDO_BAJO = 'SALDO_BAJO';
+
     // Propiedades de la Caja
     private $id_caja_chica;
     private $fondo_fijo;
@@ -46,7 +53,7 @@ class CajaChica extends Conexion
                 'min' => 1
             ],
             'estado' => [
-                'regex' => '/^(Abierta|Cerrada)$/',
+                'regex' => '/^(ABIERTO|CERRADO)$/',
                 'opcional' => true
             ],
 
@@ -150,7 +157,7 @@ class CajaChica extends Conexion
                 ORDER BY cc.fecha_creacion DESC";
         
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute();
             return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
         } catch (PDOException $e) {
@@ -166,7 +173,7 @@ class CajaChica extends Conexion
             $sql = "SELECT id_movimiento_caja, concepto, monto, fecha, estado 
                     FROM movimientos_caja 
                     WHERE id_movimiento_caja = :id AND activo = 1";
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute([':id' => $this->id_movimiento_caja]);
             $dato = $stmt->fetch(PDO::FETCH_ASSOC);
             if (!$dato) {
@@ -186,7 +193,7 @@ class CajaChica extends Conexion
     private function _registrar_movimiento()
     {        
         try {
-            $pdo = $this->get_conex('negocio');
+            $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
             $pdo->beginTransaction();
 
             // Consultar saldo disponible desde la vista
@@ -215,13 +222,16 @@ class CajaChica extends Conexion
             }
 
             // Insertar movimiento
+            $estadoPendiente = EstadoMovimientoCaja::PENDIENTE_REPOSICION->value;
+
             $sqlIns = "INSERT INTO movimientos_caja (concepto, monto, fecha, estado, caja_chica_id, activo) 
-                       VALUES (:con, :monto, :fecha, 'Pendiente por reposicion', :id_caja, 1)";
+                       VALUES (:con, :monto, :fecha, :estado, :id_caja, 1)";
             $stmt = $pdo->prepare($sqlIns);
             $stmt->execute([
                 ':con' => $this->concepto,
                 ':monto' => $this->monto_movimiento,
                 ':fecha' => $this->fecha_movimiento,
+                ':estado' => $estadoPendiente,
                 ':id_caja' => $this->id_caja_chica
             ]);
             
@@ -254,7 +264,7 @@ class CajaChica extends Conexion
     private function _eliminar_movimiento()
     {
         try {
-            $pdo = $this->get_conex('negocio');
+            $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
             $pdo->beginTransaction();
 
             $sql = "UPDATE movimientos_caja SET activo = 0 WHERE id_movimiento_caja = :id";
@@ -285,7 +295,7 @@ class CajaChica extends Conexion
     {
         try {
             $sql = "UPDATE caja_chica SET descripcion = :desc WHERE id_caja_chica = :id";
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute([
                 ':desc' => $this->descripcion,
                 ':id'   => $this->id_caja_chica
@@ -305,7 +315,7 @@ class CajaChica extends Conexion
     {
         try {
             $sql = "CALL sp_registrar_reposicion_caja(:monto, :id_caja)";
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute([
                 ':monto' => $this->monto_movimiento,
                 ':id_caja' => $this->id_caja_chica
@@ -330,7 +340,7 @@ class CajaChica extends Conexion
         try {
             $sql = "UPDATE movimientos_caja SET concepto = :con, fecha = :fecha 
                     WHERE id_movimiento_caja = :id";
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute([
                 ':con' => $this->concepto,
                 ':fecha' => $this->fecha_movimiento,
@@ -357,7 +367,7 @@ class CajaChica extends Conexion
     private function _verificar_caja_mes()
     {
         try {
-            $stmt = $this->get_conex('negocio')->prepare("CALL sp_gestion_caja_chica_mensual()");
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare("CALL sp_gestion_caja_chica_mensual()");
             $stmt->execute();
             return ['estatus' => true, 'mensaje' => 'Verificación completada.'];
         } catch (PDOException $e) {
@@ -374,7 +384,7 @@ class CajaChica extends Conexion
     {
         try {
             $sql = "SELECT * FROM movimientos_caja WHERE caja_chica_id = :id AND activo = 1 ORDER BY fecha DESC";
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute([':id' => $this->id_caja_chica]);
             return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
         } catch (PDOException $e) {
@@ -395,20 +405,17 @@ class CajaChica extends Conexion
         // Consultar saldo actual desde la vista
         $sqlSaldo = "SELECT saldo_disponible FROM vw_saldo_caja_chica WHERE id_caja_chica = :id";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sqlSaldo);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlSaldo);
             $stmt->execute([':id' => $this->id_caja_chica]);
             $saldo = $stmt->fetchColumn();
 
-            if ($saldo === false) {
-                return false; // No se pudo obtener saldo
-            }
+            if ($saldo === false) return false; 
 
-            $umbral = 200; // Jesus del futuro: hacerlo configurable (ej. en constantes)
-
+            // USAMOS LAS CONSTANTES
             if ($saldo <= 0) {
-                return ['tipo' => 'SALDO_BAJO', 'titulo' => 'Caja chica sin saldo', 'desc' => "La caja ID {$this->id_caja_chica} quedó en 0."];
-            } elseif ($saldo < $umbral) {
-                return ['tipo' => 'SALDO_BAJO', 'titulo' => 'Saldo bajo en caja chica', 'desc' => "La caja ID {$this->id_caja_chica} tiene $saldo Bs."];
+                return ['tipo' => self::ALERTA_SALDO_BAJO, 'titulo' => 'Caja chica sin saldo', 'desc' => "La caja ID {$this->id_caja_chica} quedó en 0."];
+            } elseif ($saldo < self::UMBRAL_ALERTA_SALDO) {
+                return ['tipo' => self::ALERTA_SALDO_BAJO, 'titulo' => 'Saldo bajo en caja chica', 'desc' => "La caja ID {$this->id_caja_chica} tiene $saldo Bs."];
             }
             return null;
         } catch (\Exception $e) {

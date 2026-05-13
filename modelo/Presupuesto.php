@@ -3,12 +3,12 @@ namespace haydee\modelo;
 
 use PDO;
 use PDOException;
+use haydee\enums\TipoBaseDatos;
 
 class Presupuesto extends Conexion
 {
-    // ====================================================================
-    // PROPIEDADES (Mapeo de 3 tablas)
-    // ====================================================================
+    private const ANIO_MINIMO_PERMITIDO = 2000;
+    private const ANIO_MAXIMO_PERMITIDO = 2100;    
 
     // Tabla: presupuesto (Cabecera)
     private $id_presupuesto;
@@ -160,8 +160,8 @@ class Presupuesto extends Conexion
             return ['estatus' => false, 'mensaje' => 'No hay detalles para el presupuesto'];
         }
 
-        $con = $this->get_conex('negocio');
         try {
+            $con = $this->get_conex(TipoBaseDatos::NEGOCIO);
             $con->beginTransaction();
 
             // 1. Insertar cabecera presupuesto
@@ -256,7 +256,7 @@ class Presupuesto extends Conexion
      */
     private function _modificar_presupuesto()
     {
-        $con = $this->get_conex('negocio');
+        $con = $this->get_conex(TipoBaseDatos::NEGOCIO);
         try {
             $con->beginTransaction();
 
@@ -307,7 +307,7 @@ class Presupuesto extends Conexion
     {
         try {
             $sql = "UPDATE presupuesto SET activo = 0 WHERE id_presupuesto = :id";
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute([':id' => $this->id_presupuesto]);
             return ['estatus' => true, 'mensaje' => 'Presupuesto eliminado'];
         } catch (PDOException $e) {
@@ -346,7 +346,7 @@ class Presupuesto extends Conexion
                 GROUP BY tg.nombre_tipo_gasto";
 
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             
             // Pasamos ambos parámetros al execute
             $stmt->execute([
@@ -378,7 +378,7 @@ class Presupuesto extends Conexion
                     WHERE p.activo = 1
                     GROUP BY p.id_presupuesto
                     ORDER BY p.fecha DESC";
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute();
             return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
         } catch (PDOException $e) {
@@ -425,7 +425,7 @@ class Presupuesto extends Conexion
         ";
 
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute();
             $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
             return ['estatus' => true, 'datos' => $datos];
@@ -441,7 +441,7 @@ class Presupuesto extends Conexion
         try {
             // Cabecera
             $sqlHead = "SELECT * FROM presupuesto WHERE id_presupuesto = :id AND activo = 1";
-            $stmt = $this->get_conex('negocio')->prepare($sqlHead);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlHead);
             $stmt->execute([':id' => $this->id_presupuesto]);
             $data = $stmt->fetch(PDO::FETCH_ASSOC);
             if (!$data) {
@@ -453,7 +453,7 @@ class Presupuesto extends Conexion
                        FROM detalles_presupuesto dp 
                        LEFT JOIN tipo_gasto tg ON dp.tipo_gasto_id = tg.id_tipo_gasto
                        WHERE dp.presupuesto_id = :id";
-            $stmtD = $this->get_conex('negocio')->prepare($sqlDet);
+            $stmtD = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlDet);
             $stmtD->execute([':id' => $this->id_presupuesto]);
             $data['detalles'] = $stmtD->fetchAll(PDO::FETCH_ASSOC);
 
@@ -472,7 +472,7 @@ class Presupuesto extends Conexion
     {
         try {
             $sql = "SELECT fecha, cuota_reserva, observacion FROM presupuesto WHERE id_presupuesto = :id AND activo = 1";
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute([':id' => $this->id_presupuesto]);
             $datos = $stmt->fetch(PDO::FETCH_ASSOC);
             
@@ -501,7 +501,7 @@ class Presupuesto extends Conexion
         }
         $sql = "SELECT 1 FROM presupuesto WHERE MONTH(fecha) = :mes AND activo = 1 LIMIT 1";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->bindParam(':mes', $mes, PDO::PARAM_INT);
             $stmt->execute();
             $existe = $stmt->fetch(PDO::FETCH_ASSOC) ? true : false;
@@ -521,12 +521,15 @@ class Presupuesto extends Conexion
     private function _consultar_anio_presupuesto()
     {
         $anio = (int)$this->fecha;
-        if ($anio < 2000 || $anio > 2100) {
+
+        // USAMOS LAS CONSTANTES DE CLASE
+        if ($anio < self::ANIO_MINIMO_PERMITIDO || $anio > self::ANIO_MAXIMO_PERMITIDO) {
             return ['estatus' => false, 'mensaje' => 'Año inválido'];
         }
+
         $sql = "SELECT 1 FROM presupuesto WHERE YEAR(fecha) = :anio AND activo = 1 LIMIT 1";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->bindParam(':anio', $anio, PDO::PARAM_INT);
             $stmt->execute();
             $existe = $stmt->fetch(PDO::FETCH_ASSOC) ? true : false;

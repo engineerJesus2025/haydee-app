@@ -3,6 +3,9 @@ namespace haydee\modelo;
 
 use PDO;
 use PDOException;
+use haydee\enums\TipoVinculo;
+use haydee\enums\EstadoOcupacion;
+use haydee\enums\TipoBaseDatos;
 
 class Apartamento extends Conexion
 {
@@ -117,7 +120,7 @@ class Apartamento extends Conexion
         try {
             $sql = "INSERT INTO apartamentos (nro_apartamento, porcentaje_participacion, gas, agua, alquilado, activo) 
                     VALUES (:nro, :porc, :gas, :agua, :alq, 1)";
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute([
                 ':nro'  => $this->nro_apartamento,
                 ':porc' => $this->porcentaje_participacion,
@@ -125,7 +128,7 @@ class Apartamento extends Conexion
                 ':agua' => $agua,
                 ':alq'  => $alquilado
             ]);
-            $lastId = $this->get_conex('negocio')->lastInsertId();
+            $lastId = $this->get_conex(TipoBaseDatos::NEGOCIO)->lastInsertId();
             return ['estatus' => true, 'mensaje' => 'Apartamento registrado correctamente', 'id' => $lastId];
         } catch (PDOException $e) {
             error_log("Error en _registrar_apartamento: " . $e->getMessage());
@@ -148,7 +151,7 @@ class Apartamento extends Conexion
                         agua = :agua,
                         alquilado = :alq
                     WHERE id_apartamento = :id";
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute([
                 ':nro'  => $this->nro_apartamento,
                 ':porc' => $this->porcentaje_participacion,
@@ -169,7 +172,7 @@ class Apartamento extends Conexion
     {
         try {
             $sql = "UPDATE apartamentos SET activo = 0 WHERE id_apartamento = :id";
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute([':id' => $this->id_apartamento]);
             return ['estatus' => true, 'mensaje' => 'Apartamento eliminado correctamente'];
         } catch (PDOException $e) {
@@ -196,7 +199,7 @@ class Apartamento extends Conexion
                     FROM apartamentos a 
                     WHERE a.activo = 1 
                     ORDER BY a.nro_apartamento";
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute();
             return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
         } catch (PDOException $e) {
@@ -211,7 +214,7 @@ class Apartamento extends Conexion
         try {
             // Datos del apartamento
             $sqlApto = "SELECT * FROM apartamentos WHERE id_apartamento = :id AND activo = 1";
-            $stmtA = $this->get_conex('negocio')->prepare($sqlApto);
+            $stmtA = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlApto);
             $stmtA->execute([':id' => $this->id_apartamento]);
             $apto = $stmtA->fetch(PDO::FETCH_ASSOC);
             if (!$apto) {
@@ -224,7 +227,7 @@ class Apartamento extends Conexion
                        JOIN habitantes_apartamentos ha ON h.id_habitante = ha.habitante_id
                        JOIN apartamentos a ON a.id_apartamento = ha.apartamento_id
                        WHERE ha.apartamento_id = :id AND h.activo = 1";
-            $stmtH = $this->get_conex('negocio')->prepare($sqlHab);
+            $stmtH = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlHab);
             $stmtH->execute([':id' => $this->id_apartamento]);
             $apto['habitantes'] = $stmtH->fetchAll(PDO::FETCH_ASSOC);
 
@@ -244,7 +247,7 @@ class Apartamento extends Conexion
                 WHERE activo = 1 
                 ORDER BY nro_apartamento";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
@@ -257,7 +260,7 @@ class Apartamento extends Conexion
     private function _contar_activos()
     {
         try {
-            $stmt = $this->get_conex('negocio')->query("SELECT COUNT(*) FROM apartamentos WHERE activo = 1");
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->query("SELECT COUNT(*) FROM apartamentos WHERE activo = 1");
             return ['estatus' => true, 'datos' => $stmt->fetchColumn()];
         } catch (PDOException $e) {
             error_log("Error en _contar_activos: " . $e->getMessage());
@@ -279,7 +282,7 @@ class Apartamento extends Conexion
                       AND h.activo = 1
                       AND a.activo = 1";
 
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute([':correo' => $this->correo]);
             $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -309,6 +312,10 @@ class Apartamento extends Conexion
      */
     private function _consultar_estado_inicio()
     {
+        $vinculoPropietario = TipoVinculo::PROPIETARIO->value;
+        $estadoOcupado = EstadoOcupacion::OCUPADO->value;
+        $estadoLibre = EstadoOcupacion::LIBRE->value;
+        
         $sql = "SELECT 
                     a.nro_apartamento,
                     CASE 
@@ -316,8 +323,8 @@ class Apartamento extends Conexion
                               FROM habitantes_apartamentos ha 
                               JOIN habitantes h ON ha.habitante_id = h.id_habitante 
                               WHERE ha.apartamento_id = a.id_apartamento AND h.activo = 1) > 0 
-                        THEN 'Ocupado'
-                        ELSE 'Libre'
+                        THEN '$estadoOcupado'
+                        ELSE '$estadoLibre'
                     END as estado,
                     COALESCE(
                         (SELECT CONCAT(h.nombre, ' ', h.apellido) 
@@ -325,7 +332,7 @@ class Apartamento extends Conexion
                          JOIN habitantes_apartamentos ha ON h.id_habitante = ha.habitante_id 
                          WHERE ha.apartamento_id = a.id_apartamento 
                            AND h.activo = 1 
-                         ORDER BY CASE WHEN ha.tipo_vinculo = 'Propietario' THEN 1 ELSE 2 END 
+                         ORDER BY CASE WHEN ha.tipo_vinculo = '$vinculoPropietario' THEN 1 ELSE 2 END 
                          LIMIT 1), 
                     'Sin habitante registrado') as residente_principal,
                     COALESCE(
@@ -339,7 +346,7 @@ class Apartamento extends Conexion
                 WHERE a.activo = 1
                 ORDER BY a.nro_apartamento ASC";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute();
             $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
             return ['estatus' => true, 'datos' => $datos];

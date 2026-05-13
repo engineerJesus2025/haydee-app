@@ -1,4 +1,7 @@
-<?php
+﻿<?php
+use haydee\enums\Modulo;
+use haydee\enums\Accion;
+
 use haydee\servicios\Sesiones;
 use haydee\modelo\Proveedores;
 use haydee\modelo\Bitacora;
@@ -7,18 +10,16 @@ use haydee\ayuda\ValidadorBD;
 use haydee\servicios\GestorAuditoria;
 
 // Verificaciones de seguridad
-Sesiones::validarMetodoHTTP(['GET', 'POST']);
-Sesiones::verificarSesion();
-Sesiones::verificarPermiso(GESTIONAR_PROVEEDORES, CONSULTAR);
+Sesiones::autorizarAcceso(Modulo::GESTIONAR_PROVEEDORES, Accion::CONSULTAR);
 
 if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
 
-    Sesiones::verificarPermisoAccion(GESTIONAR_PROVEEDORES, $operacion);
+    Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_PROVEEDORES, $operacion);
     
     // =========================================================
-    // 1. VALIDACIÓN CENTRALIZADA
+    // 1. VALIDACIÃ“N CENTRALIZADA
     // =========================================================
     $reglas = Proveedores::obtenerReglas($operacion);
 
@@ -45,14 +46,14 @@ if (isset($_POST["operacion"])) {
     $proveedor->set_direccion($_POST['direccion'] ?? null);
 
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
-    $auditor = new GestorAuditoria($proveedor, GESTIONAR_PROVEEDORES);
+    $auditor = new GestorAuditoria($proveedor, Modulo::GESTIONAR_PROVEEDORES);
 
     try {
         switch ($operacion) {
             case 'consultar':
                 $respuesta = $proveedor->realizar_consulta('consultar');
                 http_response_code($respuesta['estatus'] ? 200 : 400);
-                if ($respuesta['estatus']) { $auditor->registrarAuditoria('consultar'); }
+                if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::CONSULTAR); }
                 break;
 
             case 'consultar_proveedor':
@@ -64,7 +65,7 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $proveedor->realizar_consulta('registrar_proveedor');
 
                 http_response_code($respuesta['estatus'] ? 201 : 400);
-                if ($respuesta['estatus']) { $auditor->registrarAuditoria('registrar'); }
+                if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::REGISTRAR); }
                 break;
 
             case 'modificar_proveedor':
@@ -72,7 +73,7 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $proveedor->realizar_consulta('modificar_proveedor');
 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
-                if ($respuesta['estatus']) { $auditor->registrarAuditoria('modificar'); }
+                if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::MODIFICAR); }
                 break;
 
             case 'eliminar_proveedor':
@@ -80,7 +81,7 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $proveedor->realizar_consulta('eliminar_proveedor');
 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
-                if ($respuesta['estatus']) { $auditor->registrarAuditoria('eliminar'); }
+                if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::ELIMINAR); }
                 break;
 
             default:
@@ -106,9 +107,9 @@ if (isset($_POST["operacion"])) {
 // ...
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_PROVEEDORES);
+    GestorAuditoria::inicializarBanderaConsulta(Modulo::GESTIONAR_PROVEEDORES);
 }
-$permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_PROVEEDORES);
+$permisosVista = Sesiones::obtenerPermisosVista(Modulo::GESTIONAR_PROVEEDORES);
 $btn_nuevo = [
     'target'  => '#modal_proveedores',
     'texto'   => 'Nuevo Proveedor',

@@ -3,16 +3,21 @@
 namespace haydee\servicios;
 
 use haydee\servicios\Autenticacion;
+use haydee\modelo\SeguridadIP;
 use haydee\modelo\Rol;
 use haydee\modelo\Notificaciones;
 use haydee\modelo\AnioFiscal;
 use haydee\modelo\CajaChica;
+use haydee\enums\Accion;
+use haydee\enums\Modulo;
 
 class Sesiones
 {
+    private const MAX_PETICIONES_MINUTO = 60;
+    private const VENTANA_TIEMPO_SEGUNDOS = 60;
+
     /**
      * Inicia la sesión con los datos del usuario.
-     * @param array $datosUsuario Debe contener id_usuario, correo, nombre_completo, rol, permisos, notificaciones.
      */
     public static function iniciar($datosUsuario)
     {
@@ -35,6 +40,31 @@ class Sesiones
             $caja->realizar_consulta('verificar_caja_mes');
         } finally {
             $anioFiscalModel->cerrar();
+        }
+    }
+
+    /**
+     * Método centralizado para autorizar el acceso a un controlador.
+     * Ejecuta secuencialmente: IP -> Método HTTP -> Sesión -> Permisos.
+     */
+    public static function autorizarAcceso(?Modulo $modulo = null, ?Accion $permiso = null, $metodos = ['GET', 'POST'])
+    {
+        // Capa de Red (Firewall IP)
+        self::verificarAccesoRed();
+
+        // Capa de Protocolo (Metodos permitidos)
+        self::validarMetodoHTTP($metodos);
+
+        // Capa de Identidad (Quien es)
+        self::verificarSesion();
+
+        // Capa de Comportamiento (Anti-Flood)
+        self::verificarInundacion();
+
+        // Capa de Autorización (Que puede hacer)
+        // Solo verifica permisos si el controlador se los exigió explícitamente
+        if ($modulo !== null && $permiso !== null) {
+            self::verificarPermiso($modulo, $permiso);
         }
     }
 
@@ -152,14 +182,14 @@ class Sesiones
      * @param int $permisoId  ID del permiso (constante definida globalmente)
      * @return bool
      */
-    public static function tienePermiso($moduloId, $permisoId)
+    public static function tienePermiso(Modulo $modulo, Accion $permiso)
     {
         if (!isset($_SESSION["permisos"]) || !is_array($_SESSION["permisos"])) {
             return false;
         }
 
-        foreach ($_SESSION["permisos"] as $permiso) {
-            if ($permiso["modulo_id"] == $moduloId && $permiso["permiso"] == $permisoId) {
+        foreach ($_SESSION["permisos"] as $p) {
+            if ($p["modulo_id"] == $modulo->value && $p["permiso"] == $permiso->value) {
                 return true;
             }
         }
@@ -169,11 +199,11 @@ class Sesiones
     /**
      * Verifica permiso y si no lo tiene, muestra error 403 y detiene la ejecución.
      */
-    public static function verificarPermiso($moduloId, $permisoId)
+    public static function verificarPermiso(Modulo $modulo, Accion $permiso)
     {
         self::verificarSesion();
 
-        if (!self::tienePermiso($moduloId, $permisoId)) {
+        if (!self::tienePermiso($modulo, $permiso)) {
             http_response_code(403);
             require_once "vista/error/403_vista.php";
             exit;
@@ -186,13 +216,13 @@ class Sesiones
      * * @param int $moduloId ID del módulo a consultar
      * @return array Arreglo asociativo con los permisos booleanos
      */
-    public static function obtenerPermisosVista($moduloId)
+    public static function obtenerPermisosVista(Modulo $modulo)
     {
         return [
-            'consultar' => self::tienePermiso($moduloId, CONSULTAR),
-            'registrar' => self::tienePermiso($moduloId, REGISTRAR),
-            'modificar' => self::tienePermiso($moduloId, MODIFICAR),
-            'eliminar'  => self::tienePermiso($moduloId, ELIMINAR)
+            'consultar' => self::tienePermiso($modulo, Accion::CONSULTAR),
+            'registrar' => self::tienePermiso($modulo, Accion::REGISTRAR),
+            'modificar' => self::tienePermiso($modulo, Accion::MODIFICAR),
+            'eliminar'  => self::tienePermiso($modulo, Accion::ELIMINAR)
         ];
     }
 
@@ -200,29 +230,27 @@ class Sesiones
      * Verifica los permisos para operaciones que se ejecutan vía AJAX.
      * Evalúa el nombre de la operación para requerir el permiso adecuado automáticamente.
      * Si no tiene permisos, devuelve un JSON con estatus false y termina la ejecución.
-     * * @param int $moduloId ID del módulo actual.
-     * @param string $operacion Nombre de la operación (ej. 'registrar_pago', 'modificar').
-     * @param array $mapaExtra Mapeo opcional para operaciones especiales ['cambiar_estado' => MODIFICAR].
      */
-    public static function verificarPermisoAccion($moduloId, $operacion, $mapaExtra = [])
+    public static function verificarPermisoAccion(Modulo $modulo, $operacion, $mapaExtra = [])
     {
         $permisoRequerido = null;
         $operacionNormalizada = strtolower($operacion);
 
         if (array_key_exists($operacionNormalizada, $mapaExtra)) {
-            $permisoRequerido = $mapaExtra[$operacionNormalizada];
+            $permisoRequerido = $mapaExtra[$operacionNormalizada]; 
         } else {
+            // Asignamos las instancias del Enum, no sus valores
             if (strpos($operacionNormalizada, 'registrar') !== false) {
-                $permisoRequerido = REGISTRAR;
+                $permisoRequerido = Accion::REGISTRAR;
             } elseif (strpos($operacionNormalizada, 'modificar') !== false) {
-                $permisoRequerido = MODIFICAR;
+                $permisoRequerido = Accion::MODIFICAR;
             } elseif (strpos($operacionNormalizada, 'eliminar') !== false) {
-                $permisoRequerido = ELIMINAR;
+                $permisoRequerido = Accion::ELIMINAR;
             }
         }
 
         if ($permisoRequerido !== null) {
-            if (!self::tienePermiso($moduloId, $permisoRequerido)) {
+            if (!self::tienePermiso($modulo, $permisoRequerido)) {
                 http_response_code(403); 
                 header('Content-Type: application/json');
                 echo json_encode([
@@ -233,6 +261,7 @@ class Sesiones
             }
         }
     }
+
 
     public static function validarMetodoHTTP($metodosPermitidos = ['GET', 'POST'])
     {
@@ -246,6 +275,72 @@ class Sesiones
                 'mensaje' => "El método $metodoActual no está permitido para este recurso."
             ]);
             exit;
+        }
+    }
+
+    /**
+     * Verifica que la IP del cliente no esté bloqueada en la Lista Negra.
+     * Actúa como Firewall (WAF) a nivel de aplicación.
+     */
+    public static function verificarAccesoRed()
+    {
+        $ipCliente = $_SERVER['REMOTE_ADDR'];
+        
+        $seguridad = new SeguridadIP();
+        $seguridad->set_ip($ipCliente); // Usando el setter exigido
+        
+        $acceso = $seguridad->verificarListaAcceso();
+
+        if (!$acceso['estatus']) {
+            // Si es una petición AJAX/POST
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                http_response_code($acceso['codigo_http']);
+                header('Content-Type: application/json');
+                echo json_encode([
+                    'estatus' => false, 
+                    'mensaje' => $acceso['mensaje']
+                ]);
+                exit;
+            } else {
+                // Si es navegación normal GET
+                http_response_code($acceso['codigo_http']);
+                require_once "vista/error/403_vista.php"; 
+                exit;
+            }
+        }
+    }
+
+    /**
+     * Previene que un usuario autenticado sature el sistema con peticiones masivas (Anti-DoS).
+     * Permite un máximo de 60 peticiones por minuto por usuario.
+     */
+    public static function verificarInundacion()
+    {
+        if (!isset($_SESSION["id_usuario"])) return; 
+
+        $idUsuario = $_SESSION["id_usuario"];
+
+        if (!isset($_SESSION['flood_control'])) {
+            $_SESSION['flood_control'] = [];
+        }
+
+        if (!isset($_SESSION['flood_control'][$idUsuario])) {
+            $_SESSION['flood_control'][$idUsuario] = ['peticiones' => 1, 'inicio' => time()];
+        } else {
+            $_SESSION['flood_control'][$idUsuario]['peticiones']++;
+            $tiempoTranscurrido = time() - $_SESSION['flood_control'][$idUsuario]['inicio'];
+
+            // USAMOS LAS CONSTANTES DE CLASE
+            if ($tiempoTranscurrido < self::VENTANA_TIEMPO_SEGUNDOS) {
+                if ($_SESSION['flood_control'][$idUsuario]['peticiones'] > self::MAX_PETICIONES_MINUTO) {
+                    http_response_code(429); 
+                    header('Content-Type: application/json');
+                    echo json_encode(['estatus' => false, 'mensaje' => 'Se ha detectado actividad inusual. Ha superado el límite de operaciones por minuto. Por favor, espere.']);
+                    exit;
+                }
+            } else {
+                $_SESSION['flood_control'][$idUsuario] = ['peticiones' => 1, 'inicio' => time()];
+            }
         }
     }
 }

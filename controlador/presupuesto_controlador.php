@@ -1,4 +1,7 @@
-<?php
+﻿<?php
+use haydee\enums\Modulo;
+use haydee\enums\Accion;
+
 use haydee\servicios\Sesiones;
 use haydee\modelo\Presupuesto;
 use haydee\modelo\TipoGasto;
@@ -8,18 +11,17 @@ use haydee\ayuda\ValidadorBD;
 use haydee\ayuda\ConstructorDetalles;
 use haydee\servicios\GestorAuditoria;
 
-Sesiones::validarMetodoHTTP(['GET', 'POST']);
-Sesiones::verificarSesion();
-Sesiones::verificarPermiso(GESTIONAR_PRESUPUESTO, CONSULTAR);
+// Verificaciones de seguridad
+Sesiones::autorizarAcceso(Modulo::GESTIONAR_PRESUPUESTO, Accion::CONSULTAR);
 
 if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
 
-    Sesiones::verificarPermisoAccion(GESTIONAR_PRESUPUESTO, $operacion);
+    Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_PRESUPUESTO, $operacion);
 
     // =========================================================
-    // 1. VALIDACIÓN DE LA CABECERA
+    // 1. VALIDACIÃ“N DE LA CABECERA
     // =========================================================
     $reglasCabecera = Presupuesto::obtenerReglas($operacion);
 
@@ -36,11 +38,11 @@ if (isset($_POST["operacion"])) {
     }
 
     // =========================================================
-    // 2. CONSTRUCCIÓN Y VALIDACIÓN DE DETALLES
+    // 2. CONSTRUCCIÃ“N Y VALIDACIÃ“N DE DETALLES
     // =========================================================
     if ($operacion === 'registrar_presupuesto' || $operacion === 'modificar_presupuesto') {
         
-        // Configuramos el constructor para extraer solo los campos de presupuesto (Sin bancos ni imágenes)
+        // Configuramos el constructor para extraer solo los campos de presupuesto (Sin bancos ni imÃ¡genes)
         $configPresupuesto = [
             'campos' => ['nombre', 'monto', 'tipo_gasto_id']
         ];
@@ -48,7 +50,7 @@ if (isset($_POST["operacion"])) {
         $detalles = ConstructorDetalles::construirDetalles($_POST, [], $configPresupuesto);
 
         if (empty($detalles)) {
-            echo json_encode(['estatus' => false, 'mensaje' => 'Debe proporcionar al menos un renglón en el presupuesto.']);
+            echo json_encode(['estatus' => false, 'mensaje' => 'Debe proporcionar al menos un renglÃ³n en el presupuesto.']);
             exit;
         }
 
@@ -80,20 +82,20 @@ if (isset($_POST["operacion"])) {
 
     $presupuesto = new Presupuesto();
 
-    // Asignación de detalles si existen
+    // Asignacion de detalles si existen
     if (isset($detalles)) {
         $presupuesto->setDetallesTemp($detalles); 
     }
 
-    // Asignación masiva de la cabecera
+    // Asignacion masiva de la cabecera
     $presupuesto->set_id_presupuesto($_POST['id_presupuesto'] ?? null);
     $presupuesto->set_fecha($_POST['fecha'] ?? null);
     $presupuesto->set_cuota_reserva($_POST['cuota_reserva'] ?? null);
-    $presupuesto->set_observacion($_POST['observacion'] ?? "Sin observación");
+    $presupuesto->set_observacion($_POST['observacion'] ?? "Sin observaciÃ³n");
     $presupuesto->set_tasa_dolar($_POST['tasa_dolar'] ?? 1); 
 
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
-    $auditor = new GestorAuditoria($presupuesto, GESTIONAR_PRESUPUESTO);
+    $auditor = new GestorAuditoria($presupuesto, Modulo::GESTIONAR_PRESUPUESTO);
 
     try {
         switch ($operacion) {
@@ -102,7 +104,7 @@ if (isset($_POST["operacion"])) {
 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
-                    $auditor->registrarAuditoria('consultar');
+                    $auditor->registrarAuditoria(Accion::CONSULTAR);
                 }
                 break;
 
@@ -128,7 +130,7 @@ if (isset($_POST["operacion"])) {
 
                 http_response_code($respuesta['estatus'] ? 201 : 400);
                 if ($respuesta['estatus']) {
-                    $auditor->registrarAuditoria('registrar');
+                    $auditor->registrarAuditoria(Accion::REGISTRAR);
                 }
                 break;
 
@@ -141,7 +143,7 @@ if (isset($_POST["operacion"])) {
 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) { 
-                    $auditor->registrarAuditoria('modificar'); 
+                    $auditor->registrarAuditoria(Accion::MODIFICAR); 
                 }
                 break;
 
@@ -153,7 +155,7 @@ if (isset($_POST["operacion"])) {
 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) { 
-                    $auditor->registrarAuditoria('eliminar'); 
+                    $auditor->registrarAuditoria(Accion::ELIMINAR); 
                 }
                 break;
 
@@ -204,7 +206,7 @@ if (isset($_POST["validar"])) {
                 $valor = $_POST['valor'] ?? '';
 
                 if (empty($tabla) || empty($campo) || empty($valor)) {
-                    $respuesta = ['estatus' => false, 'mensaje' => 'Faltan parámetros de validación'];
+                    $respuesta = ['estatus' => false, 'mensaje' => 'Faltan parÃ¡metros de Validación'];
                     break;
                 }
 
@@ -218,7 +220,7 @@ if (isset($_POST["validar"])) {
         }
     } catch (Exception $e) {
         http_response_code(500);
-        error_log("Error en validación AJAX Bancos: " . $e->getMessage());
+        error_log("Error en Validación AJAX Bancos: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
     }
 
@@ -231,16 +233,16 @@ if (isset($_POST["validar"])) {
 }
 
 // =========================================================
-// CARGA DE DATOS PARA LA VISTA (Solo al cargar la página)
+// CARGA DE DATOS PARA LA VISTA (Solo al cargar la pÃ¡gina)
 // =========================================================
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_PRESUPUESTO);
+    GestorAuditoria::inicializarBanderaConsulta(Modulo::GESTIONAR_PRESUPUESTO);
 
     // Instanciamos solo cuando vamos a renderizar el HTML
     $tipoGasto = new TipoGasto();
     $tipos_gasto = $tipoGasto->realizar_consulta('consultar');
 }
-$permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_PRESUPUESTO);
+$permisosVista = Sesiones::obtenerPermisosVista(Modulo::GESTIONAR_PRESUPUESTO);
 $btn_nuevo = [
     'target'  => '#modal_presupuesto',
     'texto'   => 'Nuevo Presupuesto',

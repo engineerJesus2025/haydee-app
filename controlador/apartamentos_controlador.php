@@ -1,4 +1,7 @@
-<?php
+﻿<?php
+use haydee\enums\Modulo;
+use haydee\enums\Accion;
+
 use haydee\servicios\Sesiones;
 use haydee\modelo\Apartamento;
 use haydee\modelo\Habitantes;
@@ -8,24 +11,22 @@ use haydee\ayuda\ValidadorBD;
 use haydee\servicios\GestorAuditoria;
 
 // Verificaciones de seguridad
-Sesiones::validarMetodoHTTP(['GET', 'POST']);
-Sesiones::verificarSesion();
-Sesiones::verificarPermiso(GESTIONAR_APARTAMENTOS, CONSULTAR);
+Sesiones::autorizarAcceso(Modulo::GESTIONAR_APARTAMENTOS, Accion::CONSULTAR);
 
 if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
 
-    // Si la cadena tiene "habitante" (ej: registrar_habitantes, eliminar_habitantes), asignamos ese módulo
-    $moduloAfectado = strpos($operacion, 'habitante') !== false ? GESTIONAR_HABITANTES : GESTIONAR_APARTAMENTOS;
+    // Si la cadena tiene "habitante" (ej: registrar_habitantes, eliminar_habitantes), asignamos ese mÃ³dulo
+    $moduloAfectado = strpos($operacion, 'habitante') !== false ? Modulo::GESTIONAR_HABITANTES->value : Modulo::GESTIONAR_APARTAMENTOS->value;
 
     Sesiones::verificarPermisoAccion($moduloAfectado, $operacion);
 
-    // Obtenemos las reglas de ambos modelos para la operación actual
+    // Obtenemos las reglas de ambos modelos para la Operación actual
     $reglasApartamento = Apartamento::obtenerReglas($operacion);
     $reglasHabitante = Habitantes::obtenerReglas($operacion);
     
-    // Unimos el tipo y el número ANTES de validar para que el regex '/^[VE][0-9]+$/' funcione
+    // Unimos el tipo y el nÃºmero ANTES de validar para que el regex '/^[VE][0-9]+$/' funcione
     if (isset($_POST['tipo_cedula']) && isset($_POST['cedula'])) {
         $_POST['cedula'] = $_POST['tipo_cedula'] . $_POST['cedula'];
     }
@@ -56,7 +57,7 @@ if (isset($_POST["operacion"])) {
     $apartamento = new Apartamento();
     $habitante = new Habitantes();
 
-    // Asignación masiva para Apartamento
+    // Asignacion masiva para Apartamento
     $apartamento->set_id_apartamento($_POST['id_apartamento'] ?? null);
     $apartamento->set_nro_apartamento($_POST['nro_apartamento'] ?? null);
     $apartamento->set_porcentaje_participacion($_POST['porcentaje_participacion'] ?? null);
@@ -64,7 +65,7 @@ if (isset($_POST["operacion"])) {
     $apartamento->set_agua($_POST['agua'] ?? null);
     $apartamento->set_alquilado($_POST['alquilado'] ?? null);
 
-    // Asignación masiva para Habitantes
+    // Asignacion masiva para Habitantes
     $habitante->set_id_habitante($_POST['id_habitante'] ?? null);
     $habitante->set_nombre($_POST['nombre'] ?? null);
     $habitante->set_apellido($_POST['apellido'] ?? null);
@@ -79,8 +80,8 @@ if (isset($_POST["operacion"])) {
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
     // INSTANCIAMOS DOS AUDITORES (Uno para cada modelo)
-    $auditorApartamento = new GestorAuditoria($apartamento, GESTIONAR_APARTAMENTOS);
-    $auditorHabitante = new GestorAuditoria($habitante, GESTIONAR_HABITANTES);
+    $auditorApartamento = new GestorAuditoria($apartamento, Modulo::GESTIONAR_APARTAMENTOS);
+    $auditorHabitante = new GestorAuditoria($habitante, Modulo::GESTIONAR_HABITANTES);
 
     try {
         switch ($operacion) {
@@ -218,21 +219,21 @@ if (isset($_POST["validar"])) {
                 $nro = $_POST["nro_apartamento"] ?? '';
                 $id = !empty($_POST["id_apartamento"]) ? $_POST["id_apartamento"] : null;
                 
-                // Si NO es único, significa que YA EXISTE
+                // Si NO es Ãºnico, significa que YA EXISTE
                 $existe = !$validadorBD->esUnico('apartamentos', 'nro_apartamento', $nro, 'id_apartamento', $id);
-                $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'El número ya existe' : 'Disponible'];
+                $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'El nÃºmero ya existe' : 'Disponible'];
                 break;
 
             case 'cedula':
                 $cedula = $_POST["cedula"] ?? '';
-                // Unión de la cédula para la validación AJAX
+                // UniÃ³n de la cÃ©dula para la Validación AJAX
                 if (isset($_POST['tipo_cedula']) && isset($_POST['cedula'])) {
                     $cedula = $_POST['tipo_cedula'] . $_POST['cedula'];
                 }
                 $id = !empty($_POST["id_habitante"]) ? $_POST["id_habitante"] : null;
                 
                 $existe = !$validadorBD->esUnico('habitantes', 'cedula', $cedula, 'id_habitante', $id);
-                $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'La cédula ya está registrada' : 'Disponible'];
+                $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'La cÃ©dula ya estÃ¡ registrada' : 'Disponible'];
                 break;
 
             case 'correo':
@@ -240,7 +241,7 @@ if (isset($_POST["validar"])) {
                 $id = !empty($_POST["id_habitante"]) ? $_POST["id_habitante"] : null;
                 
                 $existe = !$validadorBD->esUnico('habitantes', 'correo', $correo, 'id_habitante', $id);
-                $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'El correo ya está en uso' : 'Disponible'];
+                $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'El correo ya estÃ¡ en uso' : 'Disponible'];
                 break;
 
             case 'tipo_vinculo':
@@ -250,7 +251,7 @@ if (isset($_POST["validar"])) {
                 
                 // Solo nos importa si intentan asignar un Propietario nuevo
                 if ($tipo_vinculo === 'Propietario' && !empty($apartamento_id)) {
-                    // Usamos nuestro nuevo método multi-condicional
+                    // Usamos nuestro nuevo mÃ©todo multi-condicional
                     $existe = $validadorBD->existeConCondicion('habitantes_apartamentos', [
                         'apartamento_id' => $apartamento_id,
                         'tipo_vinculo' => 'Propietario'
@@ -265,7 +266,7 @@ if (isset($_POST["validar"])) {
                 $valor = $_POST["valor"] ?? '';
 
                 if (empty($tabla) || empty($campo) || empty($valor)) {
-                    echo json_encode(['estatus' => false, 'mensaje' => 'Faltan parámetros']);
+                    echo json_encode(['estatus' => false, 'mensaje' => 'Faltan parÃ¡metros']);
                     break;
                 }
 
@@ -285,7 +286,7 @@ if (isset($_POST["validar"])) {
         }
     } catch (Exception $e) {
         http_response_code(500);
-        error_log("Error en validación AJAX: " . $e->getMessage());
+        error_log("Error en Validación AJAX: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
     }
 
@@ -298,11 +299,11 @@ if (isset($_POST["validar"])) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_APARTAMENTOS);
+    GestorAuditoria::inicializarBanderaConsulta(Modulo::GESTIONAR_APARTAMENTOS);
 }
 $permisosVista = [
-    'apartamentos' => Sesiones::obtenerPermisosVista(GESTIONAR_APARTAMENTOS),
-    'habitantes'   => Sesiones::obtenerPermisosVista(GESTIONAR_HABITANTES)
+    'apartamentos' => Sesiones::obtenerPermisosVista(Modulo::GESTIONAR_APARTAMENTOS),
+    'habitantes'   => Sesiones::obtenerPermisosVista(Modulo::GESTIONAR_HABITANTES)
 ];
 
 $placeholder_buscar = "Buscar apartamento...";

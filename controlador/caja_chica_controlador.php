@@ -1,4 +1,7 @@
-<?php
+﻿<?php
+use haydee\enums\Modulo;
+use haydee\enums\Accion;
+
 use haydee\servicios\Sesiones;
 use haydee\modelo\CajaChica;
 use haydee\modelo\Bitacora;
@@ -7,22 +10,21 @@ use haydee\ayuda\ValidadorBD;
 use haydee\servicios\GestorAuditoria;
 use haydee\servicios\GestorNotificaciones;
 
-Sesiones::validarMetodoHTTP(['GET', 'POST']);
-Sesiones::verificarSesion();
-Sesiones::verificarPermiso(GESTIONAR_CAJA_CHICA, CONSULTAR);
+// Verificaciones de seguridad
+Sesiones::autorizarAcceso(Modulo::GESTIONAR_CAJA_CHICA, Accion::CONSULTAR);
 
 if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
 
-    // Mapeamos las operaciones que no contengan las palabras clave estándar
+    // Mapeamos las operaciones que no contengan las palabras clave estÃ¡ndar
     $operacionesEspeciales = [
-        'reponer_caja' => REGISTRAR
+        'reponer_caja' => Accion::REGISTRAR->value
     ];
 
-    Sesiones::verificarPermisoAccion(GESTIONAR_CAJA_CHICA, $operacion, $operacionesEspeciales);
+    Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_CAJA_CHICA, $operacion, $operacionesEspeciales);
 
-    // 1. Validamos según la operación
+    // 1. Validamos segÃºn la Operación
     $reglas = CajaChica::obtenerReglas($operacion);
 
     if (!empty($reglas)) {
@@ -39,7 +41,7 @@ if (isset($_POST["operacion"])) {
 
     $caja = new CajaChica();
 
-    // Asignación masiva (Manejando tanto el id primario como el foráneo)
+    // Asignacion masiva (Manejando tanto el id primario como el forÃ¡neo)
     $caja->set_id_caja_chica($_POST['id_caja_chica'] ?? $_POST['caja_chica_id'] ?? null);
     $caja->set_descripcion($_POST['descripcion'] ?? null);
     $caja->set_fondo_fijo($_POST['fondo_fijo'] ?? null);
@@ -52,7 +54,7 @@ if (isset($_POST["operacion"])) {
     $caja->set_fecha_movimiento($_POST['fecha'] ?? null);
 
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
-    $auditor = new GestorAuditoria($caja, GESTIONAR_CAJA_CHICA);
+    $auditor = new GestorAuditoria($caja, Modulo::GESTIONAR_CAJA_CHICA);
 
     try {
         switch ($operacion) {
@@ -61,7 +63,7 @@ if (isset($_POST["operacion"])) {
 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
-                    $auditor->registrarAuditoria('consultar');
+                    $auditor->registrarAuditoria(Accion::CONSULTAR);
                 }
                 break;
 
@@ -72,7 +74,7 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $caja->realizar_consulta('modificar_descripcion');
                 http_response_code($respuesta['estatus'] ? 200 : 400);
                 // if ($respuesta['estatus']) { 
-                //     $auditor->registrarAuditoria('modificar'); 
+                //     $auditor->registrarAuditoria(Accion::MODIFICAR); 
                 // }
                 break;
 
@@ -81,7 +83,7 @@ if (isset($_POST["operacion"])) {
 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
-                    Bitacora::registrar(REGISTRAR, GESTIONAR_CAJA_CHICA);
+                    Bitacora::registrar(Accion::REGISTRAR, Modulo::GESTIONAR_CAJA_CHICA);
                 }
                 break;
 
@@ -90,7 +92,7 @@ if (isset($_POST["operacion"])) {
 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
-                    $auditor->registrarAuditoria('registrar');
+                    $auditor->registrarAuditoria(Accion::REGISTRAR);
                 }
                 break;
 
@@ -110,9 +112,9 @@ if (isset($_POST["operacion"])) {
 
                 http_response_code($respuesta['estatus'] ? 201 : 400);
                 if ($respuesta['estatus']) {
-                    $auditor->registrarAuditoria('registrar');
+                    $auditor->registrarAuditoria(Accion::REGISTRAR);
 
-                    // Verificamos si el modelo nos mandó un aviso sobre el saldo
+                    // Verificamos si el modelo nos mandÃ³ un aviso sobre el saldo
                     if (isset($respuesta['alerta_saldo']) && $respuesta['alerta_saldo'] !== null) {
                         $alerta = $respuesta['alerta_saldo'];
                         GestorNotificaciones::notificarAdmins(
@@ -134,9 +136,9 @@ if (isset($_POST["operacion"])) {
 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) { 
-                    $auditor->registrarAuditoria('modificar'); 
+                    $auditor->registrarAuditoria(Accion::MODIFICAR); 
 
-                    // Verificamos si el modelo nos mandó un aviso sobre el saldo
+                    // Verificamos si el modelo nos mandÃ³ un aviso sobre el saldo
                     if (isset($respuesta['alerta_saldo']) && $respuesta['alerta_saldo'] !== null) {
                         $alerta = $respuesta['alerta_saldo'];
                         GestorNotificaciones::notificarAdmins(
@@ -158,9 +160,9 @@ if (isset($_POST["operacion"])) {
 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) { 
-                    $auditor->registrarAuditoria('eliminar'); 
+                    $auditor->registrarAuditoria(Accion::ELIMINAR); 
 
-                    // Verificamos si el modelo nos mandó un aviso sobre el saldo
+                    // Verificamos si el modelo nos mandÃ³ un aviso sobre el saldo
                     if (isset($respuesta['alerta_saldo']) && $respuesta['alerta_saldo'] !== null) {
                         $alerta = $respuesta['alerta_saldo'];
                         GestorNotificaciones::notificarAdmins(
@@ -184,11 +186,11 @@ if (isset($_POST["operacion"])) {
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
         if ($respuesta !== null) {
-            // Cerrar conexiones explícitamente
+            // Cerrar conexiones explÃ­citamente
             if (isset($caja)) {
                 $caja->cerrar();
             }
-            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexión de seguridad
+            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexiÃ³n de seguridad
 
             echo json_encode($respuesta);
             exit;
@@ -212,7 +214,7 @@ if (isset($_POST["validar"])) {
                 $valor = $_POST['valor'] ?? '';
 
                 if (empty($tabla) || empty($campo) || empty($valor)) {
-                    $respuesta = ['estatus' => false, 'mensaje' => 'Faltan parámetros de validación'];
+                    $respuesta = ['estatus' => false, 'mensaje' => 'Faltan parÃ¡metros de Validación'];
                     break;
                 }
 
@@ -226,7 +228,7 @@ if (isset($_POST["validar"])) {
         }
     } catch (Exception $e) {
         http_response_code(500);
-        error_log("Error en validación AJAX Bancos: " . $e->getMessage());
+        error_log("Error en Validación AJAX Bancos: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
     }
 
@@ -239,9 +241,9 @@ if (isset($_POST["validar"])) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_CAJA_CHICA);
+    GestorAuditoria::inicializarBanderaConsulta(Modulo::GESTIONAR_CAJA_CHICA);
 }
-$permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_CAJA_CHICA);
+$permisosVista = Sesiones::obtenerPermisosVista(Modulo::GESTIONAR_CAJA_CHICA);
 $btn_nuevo = [
     'target'  => '#modal_registro_gastos',
     'texto'   => 'Nuevo Gasto',

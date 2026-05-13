@@ -9,6 +9,7 @@ use haydee\ayuda\ValidadorBD;
  * Centraliza la validación de datos del Backend leyendo las reglas de los modelos.
  */
 class Validador {
+    private const FORMATO_FECHA_HORA = 'Y-m-d H:i:s';
     
     private $errores = [];
     private $error_404 = false;
@@ -71,8 +72,8 @@ class Validador {
 
             // 3. Validación DateTime
             if (isset($regla['type']) && $regla['type'] === 'datetime') {
-                $d = DateTime::createFromFormat('Y-m-d H:i:s', $valor);
-                if (!($d && $d->format('Y-m-d H:i:s') === $valor)) {
+                $d = DateTime::createFromFormat(self::FORMATO_FECHA_HORA, $valor);
+                if (!($d && $d->format(self::FORMATO_FECHA_HORA) === $valor)) {
                     $this->agregarError($campo, "El campo '$campo' debe ser una fecha/hora válida.");
                     $tieneErrorDeFormato = true;
                 }

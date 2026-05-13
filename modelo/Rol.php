@@ -3,12 +3,10 @@ namespace haydee\modelo;
 
 use PDO;
 use PDOException;
+use haydee\enums\TipoBaseDatos;
 
 class Rol extends Conexion
 {
-    // ====================================================================
-    // PROPIEDADES
-    // ====================================================================
     private $id_rol;
     private $nombre;
     private $activo;
@@ -99,7 +97,7 @@ class Rol extends Conexion
 
         $sql = "SELECT id_rol FROM roles WHERE nombre = :nombre AND activo = 1 LIMIT 1";
         try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute([':nombre' => $this->nombre]);
             $existe = $stmt->fetch(PDO::FETCH_ASSOC) ? true : false;
             return ['estatus' => true, 'existe' => $existe];
@@ -113,7 +111,7 @@ class Rol extends Conexion
     {
         $sql = "SELECT * FROM roles WHERE activo = 1 ORDER BY id_rol";
         try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute();
             return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
         } catch (PDOException $e) {
@@ -130,7 +128,7 @@ class Rol extends Conexion
         try {
             // Buscamos los datos básicos del rol
             $sqlRol = "SELECT * FROM roles WHERE id_rol = :id AND activo = 1";
-            $stmtRol = $this->get_conex('seguridad')->prepare($sqlRol);
+            $stmtRol = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sqlRol);
             $stmtRol->execute([':id' => $this->id_rol]);
             $rol = $stmtRol->fetch(PDO::FETCH_ASSOC);
 
@@ -140,7 +138,7 @@ class Rol extends Conexion
 
             // Buscamos los permisos asociados a este rol
             $sqlPermisos = "SELECT modulo_id, permiso_id FROM asignacion_permisos WHERE rol_id = :id";
-            $stmtPermisos = $this->get_conex('seguridad')->prepare($sqlPermisos);
+            $stmtPermisos = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sqlPermisos);
             $stmtPermisos->execute([':id' => $this->id_rol]);
             $permisos = $stmtPermisos->fetchAll(PDO::FETCH_ASSOC);
 
@@ -164,7 +162,7 @@ class Rol extends Conexion
 
     private function _registrar_rol()
     {
-        $pdo = $this->get_conex('seguridad');
+        $pdo = $this->get_conex(TipoBaseDatos::SEGURIDAD);
         
         try {
             $pdo->beginTransaction();
@@ -192,7 +190,7 @@ class Rol extends Conexion
 
     private function _modificar_rol()
     {
-        $pdo = $this->get_conex('seguridad');
+        $pdo = $this->get_conex(TipoBaseDatos::SEGURIDAD);
         
         try {
             $pdo->beginTransaction();
@@ -222,7 +220,7 @@ class Rol extends Conexion
     {
         $sql = "UPDATE roles SET activo = 0 WHERE id_rol = :id";
         try {
-            $this->get_conex('seguridad')->prepare($sql)->execute([':id' => $this->id_rol]);
+            $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql)->execute([':id' => $this->id_rol]);
             return ['estatus' => true, 'mensaje' => 'Rol eliminado'];
         } catch (PDOException $e) {
             error_log("Error en _eliminar: " . $e->getMessage());
@@ -240,7 +238,7 @@ class Rol extends Conexion
      */
     private function _sincronizar_permisos($pdo)
     {
-        // 1. Limpiamos cualquier permiso anterior (Útil tanto para modificar como para evitar basura)
+        //  Limpiamos cualquier permiso anterior (Útil tanto para modificar como para evitar basura)
         $sqlDelete = "DELETE FROM asignacion_permisos WHERE rol_id = :id";
         $stmtDelete = $pdo->prepare($sqlDelete);
         $stmtDelete->execute([':id' => $this->id_rol]);
@@ -282,10 +280,10 @@ class Rol extends Conexion
 
         // Obtener todos los módulos y permisos existentes (activos) de una vez para optimizar
         try {
-            $modulosExistentes = $this->get_conex('seguridad')
+            $modulosExistentes = $this->get_conex(TipoBaseDatos::SEGURIDAD)
                 ->query("SELECT id_modulo FROM modulos WHERE activo = 1")
                 ->fetchAll(PDO::FETCH_COLUMN);
-            $permisosExistentes = $this->get_conex('seguridad')
+            $permisosExistentes = $this->get_conex(TipoBaseDatos::SEGURIDAD)
                 ->query("SELECT id_permiso FROM permisos WHERE activo = 1")
                 ->fetchAll(PDO::FETCH_COLUMN);
         } catch (PDOException $e) {
@@ -331,7 +329,7 @@ class Rol extends Conexion
                 WHERE ap.rol_id = :id";
         
         try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute([':id' => $this->id_rol]);
             return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
         } catch (PDOException $e) {
@@ -346,10 +344,10 @@ class Rol extends Conexion
     private function _consultar_matriz_permisos()
     {
         try {
-            $modulos = $this->get_conex('seguridad')
+            $modulos = $this->get_conex(TipoBaseDatos::SEGURIDAD)
                 ->query("SELECT * FROM modulos WHERE activo = 1")
                 ->fetchAll(PDO::FETCH_ASSOC);
-            $permisos = $this->get_conex('seguridad')
+            $permisos = $this->get_conex(TipoBaseDatos::SEGURIDAD)
                 ->query("SELECT * FROM permisos WHERE activo = 1")
                 ->fetchAll(PDO::FETCH_ASSOC);
 

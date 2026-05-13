@@ -1,12 +1,21 @@
 <?php
 namespace haydee\modelo;
 
+
 use PDO;
 use PDOException;
 use haydee\ayuda\GestorImagenes;
+use haydee\enums\NivelPrioridad;
+use haydee\enums\TipoBaseDatos;
 
 class CarteleraVirtual extends Conexion
 {
+    // CONSTANTES DE COMPORTAMIENTO DASHBOARD
+    private const DIAS_RECIENTES_DEFECTO = '-7 days';
+    private const PRIORIDAD_DESPLAZADA = 99;
+    private const LIMITE_INICIO = 4;
+    private const LIMITE_WIDGET = 7;
+    
     private $id_cartelera;
     private $titulo;
     private $descripcion;
@@ -19,6 +28,8 @@ class CarteleraVirtual extends Conexion
     // VALIDACIONES CENTRALIZADAS
     // ====================================================================
     public static function obtenerReglas($operacion) {
+        $prioridadesValidas = implode('|', array_column(NivelPrioridad::cases(), 'value'));
+
         $reglasGenerales = [
             'id_cartelera' => [
                 'regex' => '/^\d+$/',
@@ -31,12 +42,12 @@ class CarteleraVirtual extends Conexion
                 'regex' => '/^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()\'"!?¡¿%°\- ]{3,200}$/'
             ],
             'imagen' => [
-                // La validamos como opcional, ya que a veces no se sube imagen nueva al modificar
+                // opcional, ya que a veces no se sube imagen nueva al modificar
                 'regex' => '/^[a-zA-Z0-9_.\- ]+\.(jpg|jpeg|png|gif)$/i',
                 'opcional' => true
             ],
             'prioridad' => [
-                'regex' => '/^(1|2|3)$/'
+                'regex' => "/^($prioridadesValidas)$/"
             ],
             'usuario_id' => [
                 'regex' => '/^\d+$/',
@@ -106,7 +117,7 @@ class CarteleraVirtual extends Conexion
                 INNER JOIN usuarios ON usuarios.id_usuario = cartelera_virtual.usuario_id
                 ORDER BY fecha ASC";
         try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute();
             $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
             return ['estatus' => true, 'datos' => $datos];
@@ -127,7 +138,7 @@ class CarteleraVirtual extends Conexion
                 INNER JOIN usuarios u ON cv.usuario_id = u.id_usuario
                 WHERE cv.id_cartelera = :id_cartelera";
         try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->bindParam(':id_cartelera', $this->id_cartelera);
             $stmt->execute();
             $datos = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -150,14 +161,14 @@ class CarteleraVirtual extends Conexion
         $sql = "INSERT INTO cartelera_virtual (titulo, descripcion, imagen, prioridad, usuario_id)
                 VALUES (:titulo, :descripcion, :imagen, :prioridad, :usuario_id)";
         try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->bindParam(':titulo', $this->titulo);
             $stmt->bindParam(':descripcion', $this->descripcion);
             $stmt->bindParam(':imagen', $this->imagen);
             $stmt->bindParam(':prioridad', $this->prioridad);
             $stmt->bindParam(':usuario_id', $this->usuario_id);
             $stmt->execute();
-            $lastId = $this->get_conex('seguridad')->lastInsertId();
+            $lastId = $this->get_conex(TipoBaseDatos::SEGURIDAD)->lastInsertId();
             return ['estatus' => true, 'mensaje' => 'Publicación registrada correctamente', 'lastId' => $lastId];
         } catch (PDOException $e) {
             error_log("Error en _registrar: " . $e->getMessage());
@@ -179,7 +190,7 @@ class CarteleraVirtual extends Conexion
                     usuario_id = :usuario_id
                 WHERE id_cartelera = :id_cartelera";
         try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->bindParam(':id_cartelera', $this->id_cartelera);
             $stmt->bindParam(':titulo', $this->titulo);
             $stmt->bindParam(':descripcion', $this->descripcion);
@@ -205,7 +216,7 @@ class CarteleraVirtual extends Conexion
 
         $sql = "DELETE FROM cartelera_virtual WHERE id_cartelera = :id_cartelera";
         try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->bindParam(':id_cartelera', $this->id_cartelera);
             $stmt->execute();
             $filas = $stmt->rowCount();
@@ -240,7 +251,7 @@ class CarteleraVirtual extends Conexion
         }
         $sql = "SELECT imagen FROM cartelera_virtual WHERE id_cartelera = :id_cartelera";
         try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->bindParam(':id_cartelera', $this->id_cartelera);
             $stmt->execute();
             $res = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -259,30 +270,26 @@ class CarteleraVirtual extends Conexion
     {
         $limite_int = (int)$limite;
         
-        // Si no se pasa una fecha límite, por defecto tomamos hace 7 días, por ejemplo.
         if (!$fecha_limite) {
-            $fecha_limite = date('Y-m-d', strtotime('-7 days'));
+            $fecha_limite = date('Y-m-d', strtotime(self::DIAS_RECIENTES_DEFECTO));
         }
 
-        /* * Lógica del ORDER BY:
-         * 1. Evalúa si la fecha es mayor o igual a la fecha límite.
-         * 2. Si lo es, usa el valor de 'prioridad' (asumiendo que 1 es Urgente, 2 Importante, etc.).
-         * 3. Si es más antigua, le asigna un valor alto (ej. 99) para que baje al fondo de las prioridades.
-         * 4. Luego, desempatamos ordenando por fecha de forma descendente.
-         */
+        $prioridadBaja = self::PRIORIDAD_DESPLAZADA;
+        $limiteConsulta = self::LIMITE_INICIO;
+
         $sql = "SELECT id_cartelera, titulo, prioridad, fecha, imagen, descripcion, usuarios.nombre as nombre_usuario 
                 FROM cartelera_virtual
                 INNER JOIN usuarios ON usuarios.id_usuario = cartelera_virtual.usuario_id
                 ORDER BY 
                     CASE 
                         WHEN fecha >= :fecha_limite THEN prioridad 
-                        ELSE 99 
+                        ELSE $prioridadBaja 
                     END ASC, 
                     fecha DESC 
-                LIMIT 4 OFFSET :offset";
+                LIMIT $limiteConsulta OFFSET :offset";
 
         try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->bindParam(':offset', $limite_int, PDO::PARAM_INT);
             $stmt->bindParam(':fecha_limite', $fecha_limite, PDO::PARAM_STR);
             $stmt->execute();
@@ -301,12 +308,14 @@ class CarteleraVirtual extends Conexion
      */
     public function consultar_widget_dashboard()
     {
+        $limite = self::LIMITE_WIDGET;
+
         $sql = "SELECT id_cartelera, titulo, prioridad, fecha, imagen, descripcion, usuarios.nombre as nombre_usuario
                 FROM cartelera_virtual
                 INNER JOIN usuarios ON usuarios.id_usuario = cartelera_virtual.usuario_id
-                ORDER BY fecha DESC LIMIT 7";
+                ORDER BY fecha DESC LIMIT $limite";
         try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute();
             $datos = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             return ['estatus' => true, 'datos' => $datos];

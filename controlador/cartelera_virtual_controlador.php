@@ -1,4 +1,6 @@
-<?php
+﻿<?php
+use haydee\enums\Modulo;
+use haydee\enums\Accion;
 use haydee\servicios\Sesiones;
 use haydee\modelo\CarteleraVirtual;
 use haydee\modelo\Usuario;
@@ -10,17 +12,15 @@ use haydee\servicios\GestorAuditoria;
 use haydee\servicios\GestorNotificaciones;
 
 // Verificaciones de seguridad
-Sesiones::validarMetodoHTTP(['GET', 'POST']);
-Sesiones::verificarSesion();
-Sesiones::verificarPermiso(GESTIONAR_CARTELERA_VIRTUAL, CONSULTAR);
+Sesiones::autorizarAcceso(Modulo::GESTIONAR_CARTELERA_VIRTUAL, Accion::CONSULTAR);
 
 if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
 
-    Sesiones::verificarPermisoAccion(GESTIONAR_CARTELERA_VIRTUAL, $operacion);
+    Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_CARTELERA_VIRTUAL, $operacion);
 
-    // 1. Validamos según la operación
+    // 1. Validamos segÃºn la Operación
     $reglas = CarteleraVirtual::obtenerReglas($operacion);
 
     if (!isset($_POST['usuario_id'])) {
@@ -40,7 +40,7 @@ if (isset($_POST["operacion"])) {
     }
 
     $cartelera = new CarteleraVirtual();
-    // Asignación masiva
+    // Asignacion masiva
     $cartelera->set_id_cartelera($_POST['id_cartelera'] ?? null);
     $cartelera->set_titulo($_POST['titulo'] ?? null);
     $cartelera->set_descripcion($_POST['descripcion'] ?? null);
@@ -50,7 +50,7 @@ if (isset($_POST["operacion"])) {
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
     // Instanciamos el auditor
-    $auditor = new GestorAuditoria($cartelera, GESTIONAR_CARTELERA_VIRTUAL);
+    $auditor = new GestorAuditoria($cartelera, Modulo::GESTIONAR_CARTELERA_VIRTUAL);
 
     try {
         switch ($operacion) {
@@ -59,7 +59,7 @@ if (isset($_POST["operacion"])) {
 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
-                    $auditor->registrarAuditoria('consultar');
+                    $auditor->registrarAuditoria(Accion::CONSULTAR);
                 }
                 break;
 
@@ -76,10 +76,10 @@ if (isset($_POST["operacion"])) {
 
                 http_response_code($respuesta['estatus'] ? 201 : 400);
                 if ($respuesta['estatus']) {
-                    $auditor->registrarAuditoria('registrar');
+                    $auditor->registrarAuditoria(Accion::REGISTRAR);
 
                     $tituloNotif = "Nuevo aviso: " . $_POST['titulo'];
-                    // acortar la descripción si es muy larga, o pasarla completa
+                    // acortar la descripciÃ³n si es muy larga, o pasarla completa
                     $descNotif = $_POST['descripcion']; 
                     
                     GestorNotificaciones::notificarTodos(
@@ -105,7 +105,7 @@ if (isset($_POST["operacion"])) {
                 $eliminarImagen = isset($_POST["eliminar_imagen"]) && $_POST["eliminar_imagen"] == 1;
                 $nuevaImagen = '';
 
-                // (lógica de imagen igual)
+                // (lÃ³gica de imagen igual)
                 if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
                     $nuevaImagen = GestorImagenes::subir($_FILES['imagen'], 'cartelera_virtual');
                     if ($nuevaImagen === false) {
@@ -128,7 +128,7 @@ if (isset($_POST["operacion"])) {
 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) { 
-                    $auditor->registrarAuditoria('modificar'); 
+                    $auditor->registrarAuditoria(Accion::MODIFICAR); 
                 }
                 break;
 
@@ -140,7 +140,7 @@ if (isset($_POST["operacion"])) {
                 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) { 
-                    $auditor->registrarAuditoria('eliminar'); 
+                    $auditor->registrarAuditoria(Accion::ELIMINAR); 
                 }
                 break;
 
@@ -154,11 +154,11 @@ if (isset($_POST["operacion"])) {
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
         if ($respuesta !== null) {
-            // Cerrar conexiones explícitamente
+            // Cerrar conexiones explÃ­citamente
             if (isset($cartelera)) {
                 $cartelera->cerrar();
             }
-            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexión de seguridad
+            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexiÃ³n de seguridad
 
             echo json_encode($respuesta);
             exit;
@@ -167,18 +167,18 @@ if (isset($_POST["operacion"])) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_CARTELERA_VIRTUAL);
+    GestorAuditoria::inicializarBanderaConsulta(Modulo::GESTIONAR_CARTELERA_VIRTUAL);
 
     $usuario = new Usuario();
     $usuarios = $usuario->realizar_consulta('consultar')['datos'] ?? [];
 }
-$permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_CARTELERA_VIRTUAL);
+$permisosVista = Sesiones::obtenerPermisosVista(Modulo::GESTIONAR_CARTELERA_VIRTUAL);
 $btn_nuevo = [
     'target'  => '#modal_cartelera',
     'texto'   => 'Nueva Publicación',
     'tooltip' => 'Registrar Nueva Publicación'
 ];
-$placeholder_buscar = "Buscar publicación...";
+$placeholder_buscar = "Buscar Publicación...";
 
 require_once "vista/cartelera_virtual/cartelera_virtual_vista.php";
 ?>

@@ -1,4 +1,7 @@
-<?php
+﻿<?php
+use haydee\enums\Modulo;
+use haydee\enums\Accion;
+
 use haydee\servicios\Sesiones;
 use haydee\modelo\Rol;
 use haydee\modelo\Usuario;
@@ -8,9 +11,8 @@ use haydee\ayuda\Validador;
 use haydee\ayuda\ValidadorBD;
 use haydee\servicios\GestorAuditoria;
 
-// Verificación de sesión (sin permiso específico porque es el perfil del propio usuario)
-Sesiones::validarMetodoHTTP(['GET', 'POST']);
-Sesiones::verificarSesion();
+// Proteccion basica
+Sesiones::autorizarAcceso();
 
 // Obtener lista de roles para la vista (recordar borrar)
 $rol_obj = new Rol();
@@ -30,7 +32,7 @@ if (isset($_POST["operacion"])) {
     if (!empty($reglas)) {
         $validador = new Validador();
         
-        // Ignoramos el ID del usuario en sesión para que pueda conservar su propio correo
+        // Ignoramos el ID del usuario en sesion para que pueda conservar su propio correo
         $contexto = ['exclude_id' => $_SESSION['id_usuario']];
 
         $validador->validarConjunto($_POST, $reglas, $contexto);
@@ -46,7 +48,7 @@ if (isset($_POST["operacion"])) {
     // Instancia del modelo Usuario
     $usuario = new Usuario();
 
-    // Asignación masiva (El ID siempre es el de sesión para perfil)
+    // Asignacion masiva (El ID siempre es el de sesiÃ³n para perfil)
     $usuario->set_id_usuario($_POST['id_usuario']); 
     $usuario->set_apellido($_POST['apellido'] ?? null);
     $usuario->set_nombre($_POST['nombre'] ?? null);
@@ -56,7 +58,7 @@ if (isset($_POST["operacion"])) {
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
     // Instanciamos el auditor
-    $auditor = new GestorAuditoria($usuario, GESTIONAR_USUARIOS);
+    $auditor = new GestorAuditoria($usuario, Modulo::GESTIONAR_USUARIOS);
 
     try{
         switch ($operacion) {
@@ -82,7 +84,7 @@ if (isset($_POST["operacion"])) {
                 http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) { 
                     $_SESSION["nombre_completo"] = $usuario->get_nombre() . " " . $usuario->get_apellido();
-                    $auditor->registrarAuditoria('modificar'); 
+                    $auditor->registrarAuditoria(Accion::MODIFICAR); 
                 }
                 break;
 
@@ -91,8 +93,8 @@ if (isset($_POST["operacion"])) {
 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
-                    // Solo registramos la acción, sin datos sensibles
-                    // Bitacora::registrar(MODIFICAR, GESTIONAR_USUARIOS, null, null, null);
+                    // Solo registramos la acciÃ³n, sin datos sensibles
+                    // Bitacora::registrar(Accion::MODIFICAR, Modulo::GESTIONAR_USUARIOS, null, null, null);
                 }
                 break;
 
@@ -106,7 +108,7 @@ if (isset($_POST["operacion"])) {
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
         if ($respuesta !== null) {
-            // Cerrar conexiones explícitamente
+            // Cerrar conexiones explÃ­citamente
             if (isset($usuario)) {
                 $usuario->cerrar('seguridad');
             }
@@ -116,7 +118,7 @@ if (isset($_POST["operacion"])) {
             if (isset($notificaciones)) {
                 $notificaciones->cerrar('seguridad');
             }
-            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexión de seguridad
+            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexion de seguridad
 
             echo json_encode($respuesta);
             exit;
@@ -138,13 +140,13 @@ if (isset($_POST["validar"])) {
                 $correo = $_POST["correo"] ?? '';
                 $id = !empty($_SESSION["id_usuario"]) ? $_SESSION["id_usuario"] : null;
                 
-                // Si NO es único, significa que YA EXISTE
+                // Si NO es Ãºnico, significa que YA EXISTE
                 $existe = !$validadorBD->esUnico('usuarios', 'correo', $correo, 'id_usuario', $id);
-                $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'El correo ya está en uso' : 'Disponible'];
+                $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'El correo ya estÃ¡ en uso' : 'Disponible'];
                 break;
 
             case 'contrasenia_actual':
-                // Esta lógica de negocio pura sí la dejamos delegada al modelo
+                // Esta lÃ³gica de negocio pura sÃ­ la dejamos delegada al modelo
                 $usuario = new Usuario();
                 $usuario->set_id_usuario($_SESSION['id_usuario']);
                 $datosUsuario = $usuario->realizar_consulta('consultar_usuario');
@@ -154,7 +156,7 @@ if (isset($_POST["validar"])) {
                 if ($datosUsuario['estatus'] && isset($datosUsuario['datos']['contrasenia'])) {
                     $coincide = password_verify($contraIngresada, $datosUsuario['datos']['contrasenia']);
                 }
-                echo json_encode($coincide); // Tu JS espera un booleano directo aquí
+                echo json_encode($coincide); // Tu JS espera un booleano directo aquÃ­
                 exit;
 
             case 'validar_clave_foranea':
@@ -163,7 +165,7 @@ if (isset($_POST["validar"])) {
                 $valor = $_POST['valor'] ?? '';
 
                 if (empty($tabla) || empty($campo) || empty($valor)) {
-                    $respuesta = ['estatus' => false, 'mensaje' => 'Faltan parámetros de validación'];
+                    $respuesta = ['estatus' => false, 'mensaje' => 'Faltan parÃ¡metros de Validación'];
                     break;
                 }
 
@@ -183,7 +185,7 @@ if (isset($_POST["validar"])) {
         }
     } catch (Exception $e) {
         http_response_code(500);
-        error_log("Error en validación AJAX Usuario: " . $e->getMessage());
+        error_log("Error en Validación AJAX Usuario: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
     }
 
@@ -195,12 +197,12 @@ if (isset($_POST["validar"])) {
     exit;
 }
 
-// Carga de vistas según acción
+// Carga de vistas segÃºn acciÃ³n
 if ($accion == "perfil") {
     $usuario = new Usuario();
     $usuario->set_id_usuario($_SESSION["id_usuario"]);
     $usuarioData = $usuario->realizar_consulta('consultar_usuario');
     $usuario = $usuarioData['estatus'] ? $usuarioData['datos'] : [];
-    $placeholder_buscar = "Buscar notificación...";
+    $placeholder_buscar = "Buscar notificaciÃ³n...";
     require_once "vista/usuarios/usuario_perfil.php";
 }

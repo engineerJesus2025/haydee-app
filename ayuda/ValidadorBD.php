@@ -1,22 +1,22 @@
 <?php
 namespace haydee\ayuda;
 
-use haydee\modelo\Conexion;
 use PDO;
 use PDOException;
-
+use haydee\modelo\Conexion;
+use haydee\enums\TipoBaseDatos;
 /**
  * Clase ValidadorBD
  * Su única responsabilidad es ejecutar consultas de validación en la Base de Datos.
  */
 class ValidadorBD extends Conexion {
-
+    private const TABLAS_SEGURIDAD = ['usuarios', 'roles', 'tokens_seguridad', 'cartelera_virtual', 'notificaciones', 'modulos', 'permisos', 'asignacion_permisos', 'bitacora'];
+    private const TABLAS_CON_ACTIVO = ['presupuesto', 'tipo_gasto', 'mensualidad', 'apartamentos', 'habitantes', 'usuarios'];
     /**
      * Detecta qué base de datos usar según la tabla.
      */
     private function obtenerConexionPorTabla($tabla) {
-        $tablasSeguridad = ['usuarios', 'roles', 'tokens_seguridad', 'cartelera_virtual', 'notificaciones', 'modulos', 'permisos', 'asignacion_permisos', 'bitacora'];
-        $tipo = in_array($tabla, $tablasSeguridad) ? 'seguridad' : 'negocio';
+        $tipo = in_array($tabla, self::TABLAS_SEGURIDAD) ? TipoBaseDatos::SEGURIDAD : TipoBaseDatos::NEGOCIO;
         return $this->get_conex($tipo);
     }
 
@@ -24,10 +24,9 @@ class ValidadorBD extends Conexion {
      * Verifica si un valor existe en una tabla específica.
      */
     public function existe($tabla, $campo, $valor) {
-        $tablasConActivo = ['presupuesto', 'tipo_gasto', 'mensualidad', 'apartamentos', 'habitantes'];
-        
         $sql = "SELECT COUNT(*) FROM $tabla WHERE $campo = :valor";
-        if (in_array($tabla, $tablasConActivo)) {
+        
+        if (in_array($tabla, self::TABLAS_CON_ACTIVO)) {
             $sql .= " AND activo = 1";
         }
 
@@ -46,23 +45,20 @@ class ValidadorBD extends Conexion {
      */
     public function esUnico($tabla, $campo, $valor, $excludeField = null, $excludeValue = null) {
         $sql = "SELECT COUNT(*) FROM $tabla WHERE $campo = :valor";
-        
-        $tablasConActivo = ['apartamentos', 'usuarios']; 
-        if (in_array($tabla, $tablasConActivo)) {
-            $sql .= " AND activo = 1";
-        }
+        $params = [':valor' => $valor];
 
         if ($excludeField && $excludeValue !== null) {
-            $sql .= " AND $excludeField != :exclude_val";
+            $sql .= " AND $excludeField != :exclude_value";
+            $params[':exclude_value'] = $excludeValue;
+        }
+
+        if (in_array($tabla, self::TABLAS_CON_ACTIVO)) {
+            $sql .= " AND activo = 1";
         }
 
         try {
             $stmt = $this->obtenerConexionPorTabla($tabla)->prepare($sql);
-            $stmt->bindParam(':valor', $valor);
-            if ($excludeField && $excludeValue !== null) {
-                $stmt->bindParam(':exclude_val', $excludeValue);
-            }
-            $stmt->execute();
+            $stmt->execute($params);
             return $stmt->fetchColumn() == 0; // Es único si el conteo es 0
         } catch (PDOException $e) {
             error_log("Error ValidadorBD -> esUnico: " . $e->getMessage());
@@ -72,10 +68,6 @@ class ValidadorBD extends Conexion {
 
     /**
      * Verifica la existencia de un registro basándose en múltiples condiciones.
-     * Ideal para tablas puente o validaciones complejas en AJAX.
-     * @param string $tabla Nombre de la tabla.
-     * @param array $condiciones Arreglo asociativo ['campo' => 'valor', 'campo2' => 'valor2'].
-     * @return bool True si existe al menos un registro que cumpla todas las condiciones.
      */
     public function existeConCondicion($tabla, $condiciones) {
         $sql = "SELECT COUNT(*) FROM $tabla WHERE 1=1";
@@ -86,9 +78,7 @@ class ValidadorBD extends Conexion {
             $params[":$campo"] = $valor;
         }
 
-        // Agregar lógica de activo = 1 si la tabla lo maneja
-        $tablasConActivo = ['apartamentos', 'usuarios', 'habitantes', 'presupuesto', 'tipo_gasto', 'mensualidad']; 
-        if (in_array($tabla, $tablasConActivo)) {
+        if (in_array($tabla, self::TABLAS_CON_ACTIVO)) {
             $sql .= " AND activo = 1";
         }
 
@@ -96,7 +86,7 @@ class ValidadorBD extends Conexion {
             $stmt = $this->obtenerConexionPorTabla($tabla)->prepare($sql);
             $stmt->execute($params);
             return $stmt->fetchColumn() > 0;
-        } catch (\PDOException $e) {
+        } catch (PDOException $e) {
             error_log("Error ValidadorBD -> existeConCondicion: " . $e->getMessage());
             return false;
         }

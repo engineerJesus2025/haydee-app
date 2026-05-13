@@ -1,19 +1,20 @@
-<?php
+﻿<?php
+use haydee\enums\Modulo;
+use haydee\enums\Accion;
 use haydee\servicios\Sesiones;
 use haydee\modelo\AnioFiscal;
 use haydee\modelo\Bitacora;
 use haydee\ayuda\Validador;
 use haydee\servicios\GestorAuditoria; 
+
 // Verificaciones de seguridad
-Sesiones::validarMetodoHTTP(['GET', 'POST']);
-Sesiones::verificarSesion();
-Sesiones::verificarPermiso(GESTIONAR_ANIO_FISCAL, CONSULTAR);
+Sesiones::autorizarAcceso(Modulo::GESTIONAR_ANIO_FISCAL, Accion::CONSULTAR);
 
 if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
 
-    Sesiones::verificarPermisoAccion(GESTIONAR_ANIO_FISCAL, $operacion);
+    Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_ANIO_FISCAL, $operacion);
 
     $reglas = AnioFiscal::obtenerReglas($operacion);
 
@@ -33,7 +34,7 @@ if (isset($_POST["operacion"])) {
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
     // Instancia del modelo
     $anioFiscal = new AnioFiscal();
-    // Asignación masiva
+    // Asignacion masiva
     $anioFiscal->set_id_anio_fiscal($_POST['id_anio_fiscal'] ?? null);
     $anioFiscal->set_fecha_inicio($_POST['fecha_inicio'] ?? null);
     $anioFiscal->set_fecha_cierre($_POST['fecha_cierre'] ?? null);
@@ -41,7 +42,7 @@ if (isset($_POST["operacion"])) {
     $anioFiscal->set_descripcion($_POST['descripcion'] ?? null);
 
     // Instanciamos el auditor
-    $auditor = new GestorAuditoria($anioFiscal, GESTIONAR_ANIO_FISCAL);
+    $auditor = new GestorAuditoria($anioFiscal, Modulo::GESTIONAR_ANIO_FISCAL);
 
     try {
         switch ($operacion) {
@@ -50,16 +51,17 @@ if (isset($_POST["operacion"])) {
 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
-                    $auditor->registrarAuditoria('consultar');
+                    $auditor->registrarAuditoria(Accion::CONSULTAR);
                 }
                 break;
 
             case 'registrar':
+                $auditor->capturarDatosAnteriores('consultar_anio_fiscal');
                 $respuesta = $anioFiscal->realizar_consulta('registrar');
 
                 http_response_code($respuesta['estatus'] ? 201 : 400);
                 if ($respuesta['estatus']) {
-                    $auditor->registrarAuditoria('registrar');
+                    $auditor->registrarAuditoria(Accion::REGISTRAR);
                 }
                 break;
 
@@ -75,7 +77,7 @@ if (isset($_POST["operacion"])) {
                 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
-                    $auditor->registrarAuditoria('modificar');
+                    $auditor->registrarAuditoria(Accion::MODIFICAR);
                 }
                 break;
             case 'eliminar':
@@ -84,7 +86,7 @@ if (isset($_POST["operacion"])) {
                 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
-                    $auditor->registrarAuditoria('eliminar');
+                    $auditor->registrarAuditoria(Accion::ELIMINAR);
                 }
                 break;
 
@@ -107,9 +109,9 @@ if (isset($_POST["operacion"])) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_ANIO_FISCAL);
+    GestorAuditoria::inicializarBanderaConsulta(Modulo::GESTIONAR_ANIO_FISCAL);
 }
-$permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_ANIO_FISCAL);
+$permisosVista = Sesiones::obtenerPermisosVista(Modulo::GESTIONAR_ANIO_FISCAL);
 
 $btn_nuevo = [
     'target'  => '#modal_anio_fiscal',

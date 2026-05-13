@@ -3,6 +3,7 @@ namespace haydee\modelo;
 
 use PDO;
 use PDOException;
+use haydee\enums\TipoBaseDatos;
 
 class Proveedores extends Conexion
 {
@@ -94,7 +95,7 @@ class Proveedores extends Conexion
                 FROM proveedores 
                 WHERE activo = 1";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute();
             $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
             return ['estatus' => true, 'datos' => $datos];
@@ -111,7 +112,7 @@ class Proveedores extends Conexion
                 FROM proveedores 
                 WHERE id_proveedor = :id_proveedor AND activo = 1";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->bindParam(':id_proveedor', $this->id_proveedor);
             $stmt->execute();
             $datos = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -131,13 +132,13 @@ class Proveedores extends Conexion
         $sql = "INSERT INTO proveedores (nombre_proveedor, servicio, rif, direccion) 
                 VALUES (:nombre_proveedor, :servicio, :rif, :direccion)";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->bindParam(':nombre_proveedor', $this->nombre_proveedor);
             $stmt->bindParam(':servicio', $this->servicio);
             $stmt->bindParam(':rif', $this->rif);
             $stmt->bindParam(':direccion', $this->direccion);
             $stmt->execute();
-            $lastId = $this->get_conex('negocio')->lastInsertId();
+            $lastId = $this->get_conex(TipoBaseDatos::NEGOCIO)->lastInsertId();
             return ['estatus' => true, 'mensaje' => 'Proveedor registrado correctamente', 'lastId' => $lastId];
         } catch (PDOException $e) {
             error_log("Error en _registrar: " . $e->getMessage());
@@ -155,7 +156,7 @@ class Proveedores extends Conexion
                     direccion = :direccion
                 WHERE id_proveedor = :id_proveedor";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->bindParam(':id_proveedor', $this->id_proveedor);
             $stmt->bindParam(':nombre_proveedor', $this->nombre_proveedor);
             $stmt->bindParam(':servicio', $this->servicio);
@@ -174,7 +175,7 @@ class Proveedores extends Conexion
     {
         $sql = "UPDATE proveedores SET activo = 0 WHERE id_proveedor = :id_proveedor";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->bindParam(':id_proveedor', $this->id_proveedor);
             $stmt->execute();
             return ['estatus' => true, 'mensaje' => 'Proveedor eliminado correctamente'];

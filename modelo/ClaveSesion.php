@@ -1,8 +1,10 @@
 <?php
 namespace haydee\modelo;
 
+
 use PDO;
 use PDOException;
+use haydee\enums\TipoBaseDatos;
 
 class ClaveSesion extends Conexion {
     
@@ -13,7 +15,7 @@ class ClaveSesion extends Conexion {
                 VALUES (:disp, :usu, :clave)
                 ON DUPLICATE KEY UPDATE usuario_id = :usu2, clave_aes = :clave2, ultima_actividad = NOW()";
         try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             
             // Pasamos los 5 parámetros explícitamente
             return $stmt->execute([
@@ -34,7 +36,7 @@ class ClaveSesion extends Conexion {
     public function obtenerClave($dispositivo_id) {
         $sql = "SELECT clave_aes FROM claves_sesion WHERE dispositivo_id = :disp";
         try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute([':disp' => $dispositivo_id]);
             $fila = $stmt->fetch(PDO::FETCH_ASSOC);
             return $fila ? $fila['clave_aes'] : null;

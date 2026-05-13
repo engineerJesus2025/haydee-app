@@ -7,8 +7,8 @@ use haydee\servicios\Autenticacion;
 use haydee\modelo\Bitacora;
 use haydee\servicios\GestorAuditoria;
 
-Sesiones::validarMetodoHTTP(['GET', 'POST']);
-Sesiones::verificarSesion();
+// Protección básica (Red, HTTP, Sesión iniciada)
+Sesiones::autorizarAcceso();
 
 if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');

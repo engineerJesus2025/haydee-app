@@ -1,4 +1,7 @@
-<?php
+﻿<?php
+use haydee\enums\Modulo;
+use haydee\enums\Accion;
+
 use haydee\servicios\Sesiones;
 use haydee\modelo\Pagos;
 use haydee\modelo\Banco;
@@ -9,26 +12,21 @@ use haydee\ayuda\Validador;
 use haydee\ayuda\ValidadorBD;
 use haydee\servicios\GestorAuditoria;
 
-// Verificar sesión
-Sesiones::validarMetodoHTTP(['GET', 'POST']);
-Sesiones::verificarSesion();
+// Verificaciones de seguridad
+Sesiones::autorizarAcceso(Modulo::GESTIONAR_PAGOS, Accion::CONSULTAR);
 
 // Determinar rol
 $esPropietario = (isset($_SESSION["rol"]) && $_SESSION["rol"] == "Propietario");
 
-// Si no es propietario, verificar permiso
-if (!$esPropietario) {
-    Sesiones::verificarPermiso(GESTIONAR_PAGOS, CONSULTAR);
-}
 
 if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
 
-    Sesiones::verificarPermisoAccion(GESTIONAR_PAGOS, $operacion);
+    Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_PAGOS, $operacion);
 
     // =========================================================
-    // VALIDACIÓN DE LA CABECERA
+    // VALIDACIÃ“N DE LA CABECERA
     // =========================================================
     $reglasCabecera = Pagos::obtenerReglas($operacion);
 
@@ -45,7 +43,7 @@ if (isset($_POST["operacion"])) {
     }
 
     // =========================================================
-    // CONSTRUCCIÓN Y VALIDACIÓN DE DETALLES
+    // CONSTRUCCIÃ“N Y VALIDACIÃ“N DE DETALLES
     // =========================================================
     if ($operacion === 'registrar_pago' || $operacion === 'modificar_pago') {
         $esModificacion = ($operacion === 'modificar_pago');
@@ -76,7 +74,7 @@ if (isset($_POST["operacion"])) {
             echo json_encode([
                 'estatus' => false, 
                 'errores' => $erroresDetalles, 
-                'mensaje' => 'Hay errores en los renglones del pago. Por favor, revíselos.'
+                'mensaje' => 'Hay errores en los renglones del pago. Por favor, revÃ­selos.'
             ]);
             exit;
         }
@@ -88,7 +86,7 @@ if (isset($_POST["operacion"])) {
         $pagos->set_detalles($detalles);
     }
 
-    // Asignación masiva de propiedades esenciales
+    // Asignacion masiva de propiedades esenciales
     $pagos->set_id_pago($_POST['id_pago'] ?? null);
     $pagos->set_id_detalle_pago($_POST['id_detalle_pago'] ?? null);
     $pagos->set_estado($_POST['estado'] ?? null);
@@ -102,7 +100,7 @@ if (isset($_POST["operacion"])) {
     }
 
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
-    $auditor = new GestorAuditoria($pagos, GESTIONAR_PAGOS);
+    $auditor = new GestorAuditoria($pagos, Modulo::GESTIONAR_PAGOS);
 
     try {
         switch ($operacion) {
@@ -116,7 +114,7 @@ if (isset($_POST["operacion"])) {
 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
-                    $auditor->registrarAuditoria('consultar');
+                    $auditor->registrarAuditoria(Accion::CONSULTAR);
                 }
                 break;
 
@@ -142,7 +140,7 @@ if (isset($_POST["operacion"])) {
                 if ($respuesta['estatus']) {
                     // Ocultamos los detalles al auditor para evitar colapsos
                     $pagos->set_detalles(null);
-                    $auditor->registrarAuditoria('registrar');
+                    $auditor->registrarAuditoria(Accion::REGISTRAR);
                 }
                 break;
 
@@ -153,7 +151,7 @@ if (isset($_POST["operacion"])) {
                     break;
                 }
 
-                // Usamos la consulta plana para la bitácora
+                // Usamos la consulta plana para la bitÃ¡cora
                 $auditor->capturarDatosAnteriores('consultar_cabecera_pago');
 
                 $configPagos = [
@@ -173,7 +171,7 @@ if (isset($_POST["operacion"])) {
                 if ($respuesta['estatus']) {
                     // Ocultamos los detalles al auditor
                     $pagos->set_detalles(null);
-                    $auditor->registrarAuditoria('modificar');
+                    $auditor->registrarAuditoria(Accion::MODIFICAR);
                 }
                 break;
 
@@ -184,14 +182,14 @@ if (isset($_POST["operacion"])) {
                     break;
                 }
 
-                // Usamos la consulta plana para la bitácora
+                // Usamos la consulta plana para la bitÃ¡cora
                 $auditor->capturarDatosAnteriores('consultar_cabecera_pago');
 
                 $respuesta = $pagos->realizar_consulta('eliminar_pago');
 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
-                    $auditor->registrarAuditoria('eliminar');
+                    $auditor->registrarAuditoria(Accion::ELIMINAR);
                 }
                 break;
 
@@ -231,12 +229,12 @@ if (isset($_POST["validar"])) {
                 $referencia = $_POST["referencia"] ?? '';
                 $id_pago = $_POST["id_pago"] ?? null; // Recibimos el ID si estamos modificando
                 
-                // Instanciamos el modelo y usamos la nueva función experta
+                // Instanciamos el modelo y usamos la nueva funciÃ³n experta
                 $pagosTemp = new Pagos();
                 $existe = $pagosTemp->verificarReferenciaDisponible($referencia, $id_pago);
                 
-                // Respondemos estatus TRUE (la petición fue exitosa) y enviamos si existe o no
-                $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'La referencia ya está registrada en otro pago' : 'Disponible'];
+                // Respondemos estatus TRUE (la peticiÃ³n fue exitosa) y enviamos si existe o no
+                $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'La referencia ya estÃ¡ registrada en otro pago' : 'Disponible'];
                 break;
 
             case 'validar_clave_foranea':
@@ -245,7 +243,7 @@ if (isset($_POST["validar"])) {
                     $existe = $validadorBD->existe($_POST['tabla'], $_POST['nombre_clave'], $_POST['valor']);
                     $respuesta = ['estatus' => $existe, 'mensaje' => 'OK'];
                 } else {
-                    $respuesta = ['estatus' => false, 'mensaje' => 'Faltan parámetros'];
+                    $respuesta = ['estatus' => false, 'mensaje' => 'Faltan parÃ¡metros'];
                 }
                 break;
 
@@ -255,7 +253,7 @@ if (isset($_POST["validar"])) {
         }
     } catch (Exception $e) {
         http_response_code(500);
-        error_log("Error en validación AJAX Pagos: " . $e->getMessage());
+        error_log("Error en Validación AJAX Pagos: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
     }
 
@@ -268,10 +266,10 @@ if (isset($_POST["validar"])) {
 }
 
 // =========================================================
-// CARGA DE DATOS PARA LA VISTA (Solo al cargar la página)
+// CARGA DE DATOS PARA LA VISTA (Solo al cargar la pÃ¡gina)
 // =========================================================
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_PAGOS);
+    GestorAuditoria::inicializarBanderaConsulta(Modulo::GESTIONAR_PAGOS);
 
     // Modelos auxiliares para selects
     $banco = new Banco();
@@ -287,7 +285,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         $registro_apartamento = $apartamento->realizar_consulta('consultar_por_propietario')['datos'] ?? [];
     }
 }
-$permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_PAGOS);
+$permisosVista = Sesiones::obtenerPermisosVista(Modulo::GESTIONAR_PAGOS);
 $btn_nuevo = [
     'target'  => '#modal_pagos',
     'texto'   => 'Nuevo Pago',

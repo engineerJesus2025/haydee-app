@@ -23,8 +23,6 @@ class ComposerStaticInitcbe1707b410f2f343a82925692838e3a
         'decc78cc4436b1292c6c0d151b19445c' => __DIR__ . '/..' . '/phpseclib/phpseclib/phpseclib/bootstrap.php',
         'ec07570ca5a812141189b1fa81503674' => __DIR__ . '/..' . '/phpunit/phpunit/src/Framework/Assert/Functions.php',
         '0754989a10baadda533479884b399278' => __DIR__ . '/..' . '/resend/resend-php/src/Resend.php',
-        '45444b0beefb92a98f8cd71d64878146' => __DIR__ . '/../..' . '/config/acciones.php',
-        '5f6ea70646faeb1e98e0fc6d80552182' => __DIR__ . '/../..' . '/config/modulos.php',
         '42e3dc2cf7383276e8c418f14b63f194' => __DIR__ . '/../..' . '/config/config.php',
         '9bbd65f5b9ae3163acdb7bc7779b0c0a' => __DIR__ . '/../..' . '/config/rutas.php',
         '7aa9a3fb0622a4afb1cb3f4481e69913' => __DIR__ . '/../..' . '/config/rutas_api.php',
@@ -42,7 +40,9 @@ class ComposerStaticInitcbe1707b410f2f343a82925692838e3a
             'haydee\\vista\\' => 13,
             'haydee\\servicios\\' => 17,
             'haydee\\modelo\\' => 14,
+            'haydee\\enums\\' => 13,
             'haydee\\controlador\\' => 19,
+            'haydee\\config\\' => 14,
             'haydee\\ayuda\\' => 13,
         ),
         'Z' =>
@@ -161,9 +161,17 @@ class ComposerStaticInitcbe1707b410f2f343a82925692838e3a
         array (
             0 => __DIR__ . '/../..' . '/modelo',
         ),
+        'haydee\\enums\\' =>
+        array (
+            0 => __DIR__ . '/../..' . '/enums',
+        ),
         'haydee\\controlador\\' =>
         array (
             0 => __DIR__ . '/../..' . '/controlador',
+        ),
+        'haydee\\config\\' =>
+        array (
+            0 => __DIR__ . '/../..' . '/config',
         ),
         'haydee\\ayuda\\' =>
         array (

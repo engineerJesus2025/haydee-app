@@ -3,14 +3,14 @@ namespace haydee\ayuda;
 
 class GestorImagenes
 {
+    // CONSTANTES DE SISTEMA DE ARCHIVOS
+    private const TAMANO_MAXIMO_BYTES = 5242880; // 5MB
+    private const PERMISOS_DIRECTORIO = 0777;
+    private const IMAGEN_POR_DEFECTO = 'default.png';
+    private const DIRECTORIO_BASE = 'recursos' . DIRECTORY_SEPARATOR . 'img';
+
     /**
      * Sube una imagen desde un archivo subido.
-     *
-     * @param array $archivo Un elemento de $_FILES (debe contener 'tmp_name', 'name', 'size', 'error')
-     * @param string $carpeta Subcarpeta dentro de recursos/img/ (ej. 'pagos', 'gastos', 'cartelera')
-     * @param int $maxSize Tamaño máximo en bytes (por defecto 5MB)
-     * @param array $allowedTypes Tipos MIME permitidos (por defecto imágenes comunes)
-     * @return string|false Nombre del archivo guardado o false en error
      */
     public static function subir($archivo, $carpeta, $maxSize = 5242880, $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
     {
@@ -63,7 +63,7 @@ class GestorImagenes
         // Crear directorio si no existe
         $directorio = dirname($rutaDestino);
         if (!is_dir($directorio)) {
-            if (!mkdir($directorio, 0777, true)) {
+            if (!mkdir($directorio, self::PERMISOS_DIRECTORIO, true)) {
                 error_log("GestorImagenes: No se pudo crear el directorio $directorio");
                 return false;
             }
@@ -80,14 +80,10 @@ class GestorImagenes
 
     /**
      * Elimina una imagen del servidor.
-     *
-     * @param string $nombreArchivo Nombre del archivo (ej. 'imagen_123456789.jpg')
-     * @param string $carpeta Subcarpeta dentro de recursos/img/
-     * @return bool True si se eliminó correctamente, false si no existe o error
      */
     public static function eliminar($nombreArchivo, $carpeta)
     {
-        if (empty($nombreArchivo) || $nombreArchivo === 'default.png') {
+        if (empty($nombreArchivo) || $nombreArchivo === self::IMAGEN_POR_DEFECTO) {
             return false;
         }
         $ruta = self::getRutaCompleta($nombreArchivo, $carpeta);
@@ -99,15 +95,11 @@ class GestorImagenes
 
     /**
      * Obtiene la ruta absoluta de una imagen.
-     *
-     * @param string $nombreArchivo
-     * @param string $carpeta
-     * @return string Ruta completa
      */
     public static function getRutaCompleta($nombreArchivo, $carpeta)
     {
         // Se asume que la estructura es: raíz del proyecto / recursos / img / $carpeta / $nombreArchivo
-        $base = dirname(__DIR__); // Sube dos niveles desde 'ayuda' hasta la raíz
-        return $base . DIRECTORY_SEPARATOR . 'recursos' . DIRECTORY_SEPARATOR . 'img' . DIRECTORY_SEPARATOR . $carpeta . DIRECTORY_SEPARATOR . $nombreArchivo;
+        $base = dirname(__DIR__); 
+        return $base . DIRECTORY_SEPARATOR . self::DIRECTORIO_BASE . DIRECTORY_SEPARATOR . $carpeta . DIRECTORY_SEPARATOR . $nombreArchivo;
     }
 }

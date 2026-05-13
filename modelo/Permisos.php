@@ -3,6 +3,8 @@ namespace haydee\modelo;
 
 use PDO;
 use PDOException;
+use haydee\enums\TipoBaseDatos;
+use haydee\enums\Accion;
 
 class Permisos extends Conexion
 {
@@ -75,7 +77,7 @@ class Permisos extends Conexion
     {
         $sql = "SELECT * FROM permisos WHERE activo = 1";
         try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute();
             $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
             return ['estatus' => true, 'datos' => $datos];
@@ -107,7 +109,7 @@ class Permisos extends Conexion
         $sql = "SELECT id_permiso FROM permisos WHERE id_permiso IN ($placeholders)";
 
         try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute($ids);
             $encontrados = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
@@ -143,9 +145,9 @@ class Permisos extends Conexion
     {
         $sql = "INSERT INTO permisos (accion, activo) VALUES (:accion, 1)";
         try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute([':accion' => $this->accion]);
-            $lastId = $this->get_conex('seguridad')->lastInsertId();
+            $lastId = $this->get_conex(TipoBaseDatos::SEGURIDAD)->lastInsertId();
             return ['estatus' => true, 'mensaje' => 'Permiso registrado correctamente', 'id' => $lastId];
         } catch (PDOException $e) {
             error_log("Error en _registrar (Permisos): " . $e->getMessage());
@@ -162,7 +164,7 @@ class Permisos extends Conexion
 
         $sql = "UPDATE permisos SET accion = :accion WHERE id_permiso = :id";
         try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute([
                 ':accion' => $this->accion,
                 ':id'     => $this->id_permiso
@@ -183,7 +185,7 @@ class Permisos extends Conexion
 
         $sql = "UPDATE permisos SET activo = 0 WHERE id_permiso = :id";
         try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute([':id' => $this->id_permiso]);
             return ['estatus' => true, 'mensaje' => 'Permiso eliminado correctamente'];
         } catch (PDOException $e) {
@@ -200,7 +202,7 @@ class Permisos extends Conexion
     {
         $sql = "SELECT * FROM permisos WHERE id_permiso = :id AND activo = 1";
         try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute([':id' => $this->id_permiso]);
             $dato = $stmt->fetch(PDO::FETCH_ASSOC);
             if (!$dato) {

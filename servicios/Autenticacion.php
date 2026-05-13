@@ -5,10 +5,17 @@ use haydee\modelo\Usuario;
 use haydee\modelo\Rol;
 use haydee\modelo\Notificaciones;
 use haydee\modelo\Bitacora;
+use haydee\enums\TipoToken;
+use haydee\enums\Accion;
+use haydee\enums\Modulo;
 use Firebase\JWT\JWT;
 
 class Autenticacion
 {
+    private const TIEMPO_RECORDAR_DIAS = 30;
+    private const JWT_ALGORITMO = 'HS256';
+    private const JWT_TIEMPO_EXPIRACION = 7200; // dos horas
+
     private $usuarioModel;
 
     public function __construct()
@@ -33,7 +40,7 @@ class Autenticacion
         $usuario = $resultado['datos']; // Ya incluye 'nombre_rol' gracias al JOIN en Usuario.php
 
         // Registrar bitácora
-        Bitacora::registrar(INICIAR_SESION, GESTIONAR_USUARIOS, $usuario['id_usuario']);
+        Bitacora::registrar(Accion::INICIAR_SESION, Modulo::GESTIONAR_USUARIOS, $usuario['id_usuario']);
 
         // Gestión del token "Recuérdame"
         if ($recordar) {
@@ -41,7 +48,7 @@ class Autenticacion
             $this->usuarioModel->set_id_usuario($usuario['id_usuario']);
             $this->usuarioModel->set_token($token);
             $this->usuarioModel->set_token_expiracion(date('Y-m-d H:i:s', time() + (30 * 24 * 60 * 60)));
-            $this->usuarioModel->set_token_tipo('RECORDAR_CONTRASENIA');
+            $this->usuarioModel->set_token_tipo(TipoToken::RECUERDAME->value);
 
             $resToken = $this->usuarioModel->realizar_consulta('registrar_token');
             if ($resToken['estatus']) {
@@ -56,7 +63,7 @@ class Autenticacion
         // SOLO generamos el JWT si el endpoint (la App Móvil) lo pide explícitamente
         if ($generarJWT) {
             $tiempoEmision = time();
-            $tiempoExpiracion = $tiempoEmision + JWT_TIEMPO_EXPIRACION; // Expira en 2 horas
+            $tiempoExpiracion = $tiempoEmision + self::JWT_TIEMPO_EXPIRACION; // Expira en 2 horas
 
             $payloadJWT = [
                 'iat' => $tiempoEmision,
@@ -68,7 +75,7 @@ class Autenticacion
                 ]
             ];
 
-            $jwt = JWT::encode($payloadJWT, JWT_SECRET, 'HS256');
+            $jwt = JWT::encode($payloadJWT, JWT_SECRET, self::JWT_ALGORITMO);
         }
 
         // Cargar permisos y notificaciones
@@ -103,7 +110,7 @@ class Autenticacion
 
         $this->usuarioModel->set_id_usuario($usuarioDatos['id_usuario']);
         $this->usuarioModel->set_token($token);
-        $this->usuarioModel->set_token_tipo('RECORDAR_CONTRASENIA');
+        $this->usuarioModel->set_token_tipo(TipoToken::RECUERDAME->value);
         
         $tokenValido = $this->usuarioModel->realizar_consulta('validar_token');
         if (!$tokenValido['estatus']) {
@@ -124,7 +131,7 @@ class Autenticacion
     public function logout($usuarioId)
     {
         $this->eliminarTokenRecordar($usuarioId);
-        Bitacora::registrar(CERRAR_SESION, GESTIONAR_USUARIOS, $usuarioId);
+        Bitacora::registrar(Accion::CERRAR_SESION, Modulo::GESTIONAR_USUARIOS, $usuarioId);
     }
 
     /**
@@ -133,7 +140,7 @@ class Autenticacion
     private function eliminarTokenRecordar($usuarioId)
     {
         $this->usuarioModel->set_id_usuario($usuarioId);
-        $this->usuarioModel->set_token_tipo('RECORDAR_CONTRASENIA');
+        $this->usuarioModel->set_token_tipo(TipoToken::RECUERDAME->value);
         $this->usuarioModel->realizar_consulta('eliminar_token');
     }
 

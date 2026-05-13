@@ -1,6 +1,8 @@
 <?php
 use haydee\servicios\Sesiones;
-
+use haydee\enums\Modulo;
+use haydee\enums\Accion;
+// Tremenda fumada lance cuando pense esto
 /**
  * Función que genera y devuelve la estructura del menú de navegación.
  */
@@ -21,7 +23,7 @@ function obtenerElementosMenu($modulo, $accion) {
 	        'icono'   => 'bi-cash-coin',
 	        'url'     => '?pagina=pagos&accion=inicio',
 	        'activo'  => ($modulo === 'pagos'),
-	        'mostrar' => Sesiones::tienePermiso(GESTIONAR_PAGOS, CONSULTAR)
+	        'mostrar' => Sesiones::tienePermiso(Modulo::GESTIONAR_PAGOS, Accion::CONSULTAR)
 	    ],
 	    [
 	        'tipo'    => 'enlace',
@@ -29,7 +31,7 @@ function obtenerElementosMenu($modulo, $accion) {
 	        'icono'   => 'bi-cart-plus',
 	        'url'     => '?pagina=gastos&accion=inicio',
 	        'activo'  => ($modulo === 'gastos'),
-	        'mostrar' => Sesiones::tienePermiso(GESTIONAR_GASTOS, CONSULTAR)
+	        'mostrar' => Sesiones::tienePermiso(Modulo::GESTIONAR_GASTOS, Accion::CONSULTAR)
 	    ],
 	    [
 	        'tipo'    => 'enlace',
@@ -37,7 +39,7 @@ function obtenerElementosMenu($modulo, $accion) {
 	        'icono'   => 'bi-bank2',
 	        'url'     => '?pagina=caja_chica&accion=inicio',
 	        'activo'  => ($modulo === 'caja_chica'),
-	        'mostrar' => Sesiones::tienePermiso(GESTIONAR_CAJA_CHICA, CONSULTAR)
+	        'mostrar' => Sesiones::tienePermiso(Modulo::GESTIONAR_CAJA_CHICA, Accion::CONSULTAR)
 	    ],
 	    [
 	        'tipo'    => 'enlace',
@@ -45,7 +47,7 @@ function obtenerElementosMenu($modulo, $accion) {
 	        'icono'   => 'bi-piggy-bank-fill',
 	        'url'     => '?pagina=mensualidad&accion=inicio',
 	        'activo'  => ($modulo === 'mensualidad'),
-	        'mostrar' => Sesiones::tienePermiso(GESTIONAR_MENSUALIDAD, CONSULTAR)
+	        'mostrar' => Sesiones::tienePermiso(Modulo::GESTIONAR_MENSUALIDAD, Accion::CONSULTAR)
 	    ],
 	    [
 	        'tipo'    => 'enlace',
@@ -53,7 +55,7 @@ function obtenerElementosMenu($modulo, $accion) {
 	        'icono'   => 'bi-tv',
 	        'url'     => '?pagina=cartelera_virtual&accion=inicio',
 	        'activo'  => ($modulo === 'cartelera_virtual'),
-	        'mostrar' => Sesiones::tienePermiso(GESTIONAR_CARTELERA_VIRTUAL, CONSULTAR)
+	        'mostrar' => Sesiones::tienePermiso(Modulo::GESTIONAR_CARTELERA_VIRTUAL, Accion::CONSULTAR)
 	    ],
 	    [
 	        'tipo'    => 'enlace',
@@ -61,7 +63,7 @@ function obtenerElementosMenu($modulo, $accion) {
 	        'icono'   => 'bi-door-open',
 	        'url'     => '?pagina=apartamentos&accion=inicio',
 	        'activo'  => ($modulo === 'apartamentos'),
-	        'mostrar' => Sesiones::tienePermiso(GESTIONAR_APARTAMENTOS, CONSULTAR)
+	        'mostrar' => Sesiones::tienePermiso(Modulo::GESTIONAR_APARTAMENTOS, Accion::CONSULTAR)
 	    ],
 	    [
 	        'tipo'    => 'enlace',
@@ -69,7 +71,7 @@ function obtenerElementosMenu($modulo, $accion) {
 	        'icono'   => 'bi-clipboard-check',
 	        'url'     => '?pagina=solicitud_gasto&accion=inicio',
 	        'activo'  => ($modulo === 'solicitud_gasto'),
-	        'mostrar' => Sesiones::tienePermiso(GESTIONAR_SOLICITUD_GASTO, CONSULTAR)
+	        'mostrar' => Sesiones::tienePermiso(Modulo::GESTIONAR_SOLICITUD_GASTO, Accion::CONSULTAR)
 	    ],
 	    [
 	        'tipo'    => 'enlace',
@@ -77,7 +79,7 @@ function obtenerElementosMenu($modulo, $accion) {
 	        'icono'   => 'bi-calculator',
 	        'url'     => '?pagina=presupuesto&accion=inicio',
 	        'activo'  => ($modulo === 'presupuesto'),
-	        'mostrar' => Sesiones::tienePermiso(GESTIONAR_PRESUPUESTO, CONSULTAR)
+	        'mostrar' => Sesiones::tienePermiso(Modulo::GESTIONAR_PRESUPUESTO, Accion::CONSULTAR)
 	    ],
 	    [
 	        'tipo'    => 'enlace',
@@ -85,7 +87,7 @@ function obtenerElementosMenu($modulo, $accion) {
 	        'icono'   => 'bi-calendar-range',
 	        'url'     => '?pagina=anio_fiscal&accion=inicio',
 	        'activo'  => ($modulo === 'anio_fiscal'),
-	        'mostrar' => Sesiones::tienePermiso(GESTIONAR_ANIO_FISCAL, CONSULTAR)
+	        'mostrar' => Sesiones::tienePermiso(Modulo::GESTIONAR_ANIO_FISCAL, Accion::CONSULTAR)
 	    ],
 	    // --- GRUPO REPORTES ---
 	    [
@@ -94,7 +96,7 @@ function obtenerElementosMenu($modulo, $accion) {
 	        'icono'       => 'bi-card-checklist',
 	        'id_collapse' => 'collapse_reporte',
 	        'abierto'     => $es_reporte,
-	        'mostrar'     => Sesiones::tienePermiso(GESTIONAR_REPORTES, CONSULTAR),
+	        'mostrar'     => Sesiones::tienePermiso(Modulo::GESTIONAR_REPORTES, Accion::CONSULTAR),
 	        'submenus'    => [
 	            [
 	                'titulo'  => 'Reportes PDF',
@@ -119,28 +121,28 @@ function obtenerElementosMenu($modulo, $accion) {
 	        'icono'       => 'bi-gear-wide-connected',
 	        'id_collapse' => 'collapse_configuracion',
 	        'abierto'     => $es_configuracion,
-	        'mostrar'     => Sesiones::tienePermiso(GESTIONAR_CONFIGURACION, CONSULTAR),
+	        'mostrar'     => Sesiones::tienePermiso(Modulo::GESTIONAR_CONFIGURACION, Accion::CONSULTAR),
 	        'submenus'    => [
 	            [
 	                'titulo'  => 'Proveedores',
 	                'icono'   => 'bi-truck',
 	                'url'     => '?pagina=proveedores&accion=inicio',
 	                'activo'  => ($modulo === 'proveedores'),
-	                'mostrar' => Sesiones::tienePermiso(GESTIONAR_PROVEEDORES, CONSULTAR)
+	                'mostrar' => Sesiones::tienePermiso(Modulo::GESTIONAR_PROVEEDORES, Accion::CONSULTAR)
 	            ],
 	            [
 	                'titulo'  => 'Bancos',
 	                'icono'   => 'bi-bank',
 	                'url'     => '?pagina=bancos&accion=inicio',
 	                'activo'  => ($modulo === 'bancos'),
-	                'mostrar' => Sesiones::tienePermiso(GESTIONAR_BANCOS, CONSULTAR)
+	                'mostrar' => Sesiones::tienePermiso(Modulo::GESTIONAR_BANCOS, Accion::CONSULTAR)
 	            ],
 	            [
 	                'titulo'  => 'Tipo de Gastos',
 	                'icono'   => 'bi-columns-gap',
 	                'url'     => '?pagina=tipo_gasto&accion=inicio',
 	                'activo'  => ($modulo === 'tipo_gasto'),
-	                'mostrar' => Sesiones::tienePermiso(GESTIONAR_TIPO_GASTO, CONSULTAR)
+	                'mostrar' => Sesiones::tienePermiso(Modulo::GESTIONAR_TIPO_GASTO, Accion::CONSULTAR)
 	            ]
 	        ]
 	    ],
@@ -150,7 +152,7 @@ function obtenerElementosMenu($modulo, $accion) {
 	        'icono'   => 'bi-person-badge-fill',
 	        'url'     => '?pagina=usuario&accion=inicio',
 	        'activo'  => ($modulo === 'usuario'),
-	        'mostrar' => Sesiones::tienePermiso(GESTIONAR_USUARIOS, CONSULTAR)
+	        'mostrar' => Sesiones::tienePermiso(Modulo::GESTIONAR_USUARIOS, Accion::CONSULTAR)
 	    ],
 	    // --- GRUPO SEGURIDAD ---
 	    [
@@ -159,35 +161,35 @@ function obtenerElementosMenu($modulo, $accion) {
 	        'icono'       => 'bi-shield-fill-check',
 	        'id_collapse' => 'collapse_seguridad',
 	        'abierto'     => $es_seguridad,
-	        'mostrar'     => Sesiones::tienePermiso(GESTIONAR_SEGURIDAD, CONSULTAR),
+	        'mostrar'     => Sesiones::tienePermiso(Modulo::GESTIONAR_SEGURIDAD, Accion::CONSULTAR),
 	        'submenus'    => [
 	            [
 	                'titulo'  => 'Roles',
 	                'icono'   => 'bi-person-gear',
 	                'url'     => '?pagina=rol&accion=inicio',
 	                'activo'  => ($modulo === 'rol'),
-	                'mostrar' => Sesiones::tienePermiso(GESTIONAR_ROLES, CONSULTAR)
+	                'mostrar' => Sesiones::tienePermiso(Modulo::GESTIONAR_ROLES, Accion::CONSULTAR)
 	            ],
 	            [
 	                'titulo'  => 'Bitácora',
 	                'icono'   => 'bi-journal-text',
 	                'url'     => '?pagina=bitacora&accion=inicio',
 	                'activo'  => ($modulo === 'bitacora'),
-	                'mostrar' => Sesiones::tienePermiso(GESTIONAR_BITACORA, CONSULTAR)
+	                'mostrar' => Sesiones::tienePermiso(Modulo::GESTIONAR_BITACORA, Accion::CONSULTAR)
 	            ],
 	            [
 	                'titulo'  => 'Permisos',
 	                'icono'   => 'bi-key-fill',
 	                'url'     => '?pagina=permisos&accion=inicio',
 	                'activo'  => ($modulo === 'permisos'),
-	                'mostrar' => Sesiones::tienePermiso(GESTIONAR_PERMISOS, CONSULTAR)
+	                'mostrar' => Sesiones::tienePermiso(Modulo::GESTIONAR_PERMISOS, Accion::CONSULTAR)
 	            ],
 	            [
 	                'titulo'  => 'Módulos',
 	                'icono'   => 'bi-stack',
 	                'url'     => '?pagina=modulos&accion=inicio',
 	                'activo'  => ($modulo === 'modulos'),
-	                'mostrar' => Sesiones::tienePermiso(GESTIONAR_MODULOS, CONSULTAR)
+	                'mostrar' => Sesiones::tienePermiso(Modulo::GESTIONAR_MODULOS, Accion::CONSULTAR)
 	            ]
 	        ]
 	    ],
@@ -205,7 +207,7 @@ function obtenerElementosMenu($modulo, $accion) {
 	        'icono'   => 'bi-tools',
 	        'url'     => '?pagina=mantenimiento&accion=inicio',
 	        'activo'  => ($modulo === 'mantenimiento'),
-	        'mostrar' => Sesiones::tienePermiso(GESTIONAR_MANTENIMIENTO, CONSULTAR)
+	        'mostrar' => Sesiones::tienePermiso(Modulo::GESTIONAR_MANTENIMIENTO, Accion::CONSULTAR)
 	    ]
 	];
 }

@@ -1,15 +1,15 @@
 {
-    "autoload": {
+   "autoload": {
         "psr-4": {
           "haydee\\controlador\\": "controlador/",
           "haydee\\modelo\\": "modelo/",
           "haydee\\vista\\": "vista/",
           "haydee\\ayuda\\": "ayuda/",
-          "haydee\\servicios\\": "servicios/"
+          "haydee\\servicios\\": "servicios/",
+          "haydee\\config\\": "config/",
+          "haydee\\enums\\": "enums/" 
         },
         "files": [
-            "config/acciones.php",
-            "config/modulos.php",
             "config/config.php",
             "config/rutas.php",
             "config/rutas_api.php",

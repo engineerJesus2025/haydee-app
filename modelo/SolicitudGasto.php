@@ -1,8 +1,12 @@
 <?php
 namespace haydee\modelo;
 
+
 use PDO;
 use PDOException;
+use haydee\enums\EstadoSolicitud;
+use haydee\enums\NivelPrioridad;
+use haydee\enums\TipoBaseDatos;
 
 class SolicitudGasto extends Conexion
 {
@@ -20,6 +24,9 @@ class SolicitudGasto extends Conexion
     // VALIDACIONES CENTRALIZADAS
     // ====================================================================
     public static function obtenerReglas($operacion) {
+        $estadosValidos = implode('|', array_column(EstadoSolicitud::cases(), 'value'));
+        $prioridadesValidas = implode('|', array_column(NivelPrioridad::cases(), 'value'));
+        
         $reglasGenerales = [
             'id_solicitud' => [
                 'regex' => '/^\d+$/',
@@ -39,19 +46,17 @@ class SolicitudGasto extends Conexion
                 'min' => 0.01
             ],
             'estado' => [
-                'regex' => '/^(Pendiente|Aprobada|Rechazada)$/',
+                'regex' => "/^($estadosValidos)$/",
             ],
             'presupuesto_id' => [
                 'regex' => '/^\d+$/',
                 'exists' => ['tabla' => 'presupuesto', 'campo' => 'id_presupuesto'],
             ],
             'prioridad' => [
-                'regex' => '/^(1|2|3)$/'
+                'regex' => "/^($prioridadesValidas)$/"
             ]
         ];
 
-        // Asegúrate de que los nombres aquí coincidan con los que envías desde el JS
-        // (ej. 'registrar_solicitud' o simplemente 'registrar')
         $camposPorOperacion = [
             'registrar_solicitud' => ['fecha_reporte', 'descripcion_necesidad', 'nombre_solicitante', 'monto_estimado', 'prioridad'],
             'modificar_solicitud' => ['id_solicitud', 'fecha_reporte', 'descripcion_necesidad', 'nombre_solicitante', 'monto_estimado', 'prioridad'],
@@ -112,19 +117,24 @@ class SolicitudGasto extends Conexion
      */
     private function calcularDisponiblePresupuesto($contexto = [])
     {
+        $estadoPendiente = EstadoSolicitud::PENDIENTE->value;
+        $estadoAprobada = EstadoSolicitud::APROBADA->value;
+
         $sql = "SELECT 
                     (SELECT SUM(dp.monto) FROM detalles_presupuesto dp WHERE dp.presupuesto_id = p.id_presupuesto) AS total_presupuesto,
                     COALESCE((
                         SELECT SUM(sg.monto_estimado) 
                         FROM solicitudes_gasto sg 
                         WHERE sg.presupuesto_id = p.id_presupuesto 
-                          AND sg.estado IN ('pendiente', 'aprobado')
+                          AND sg.estado IN (:estado_pen, :estado_apr)
                     ), 0) AS total_solicitado
                 FROM presupuesto p
                 WHERE p.id_presupuesto = :id_presupuesto";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->bindParam(':id_presupuesto', $this->presupuesto_id);
+            $stmt->bindValue(':estado_pen', $estadoPendiente);
+            $stmt->bindValue(':estado_apr', $estadoAprobada);
             $stmt->execute();
             $datos = $stmt->fetch(PDO::FETCH_ASSOC);
             if (!$datos || $datos['total_presupuesto'] === null) {
@@ -134,7 +144,7 @@ class SolicitudGasto extends Conexion
             // Si estamos editando, hay que sumar el monto original de esta solicitud (porque ya está incluido en total_solicitado)
             if (isset($contexto['id_solicitud']) && $contexto['id_solicitud']) {
                 $sql_original = "SELECT monto_estimado FROM solicitudes_gasto WHERE id_solicitud = :id_solicitud";
-                $stmt_orig = $this->get_conex('negocio')->prepare($sql_original);
+                $stmt_orig = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql_original);
                 $stmt_orig->bindParam(':id_solicitud', $contexto['id_solicitud']);
                 $stmt_orig->execute();
                 $monto_original = $stmt_orig->fetchColumn();
@@ -158,7 +168,7 @@ class SolicitudGasto extends Conexion
     {
         $sql = "SELECT * FROM solicitudes_gasto WHERE activo = 1";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute();
             $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
             return ['estatus' => true, 'datos' => $datos];
@@ -182,7 +192,7 @@ class SolicitudGasto extends Conexion
                 JOIN presupuesto p ON sg.presupuesto_id = p.id_presupuesto
                 WHERE sg.id_solicitud = :id_solicitud AND sg.activo = 1";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->bindParam(':id_solicitud', $this->id_solicitud);
             $stmt->execute();
             $datos = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -202,7 +212,7 @@ class SolicitudGasto extends Conexion
         $sql = "INSERT INTO solicitudes_gasto (fecha_reporte, descripcion_necesidad, nombre_solicitante, monto_estimado, estado, presupuesto_id, prioridad)
                 VALUES (:fecha_reporte, :descripcion_necesidad, :nombre_solicitante, :monto_estimado, :estado, :presupuesto_id, :prioridad)";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->bindParam(':fecha_reporte', $this->fecha_reporte);
             $stmt->bindParam(':descripcion_necesidad', $this->descripcion_necesidad);
             $stmt->bindParam(':nombre_solicitante', $this->nombre_solicitante);
@@ -211,7 +221,7 @@ class SolicitudGasto extends Conexion
             $stmt->bindParam(':presupuesto_id', $this->presupuesto_id);
             $stmt->bindParam(':prioridad', $this->prioridad);
             $stmt->execute();
-            $lastId = $this->get_conex('negocio')->lastInsertId();
+            $lastId = $this->get_conex(TipoBaseDatos::NEGOCIO)->lastInsertId();
             return ['estatus' => true, 'mensaje' => 'Solicitud registrada correctamente', 'lastId' => $lastId];
         } catch (PDOException $e) {
             error_log("Error en _registrar: " . $e->getMessage());
@@ -232,7 +242,7 @@ class SolicitudGasto extends Conexion
                     prioridad = :prioridad
                 WHERE id_solicitud = :id_solicitud";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->bindParam(':id_solicitud', $this->id_solicitud);
             $stmt->bindParam(':fecha_reporte', $this->fecha_reporte);
             $stmt->bindParam(':descripcion_necesidad', $this->descripcion_necesidad);
@@ -254,7 +264,7 @@ class SolicitudGasto extends Conexion
     {
         $sql = "UPDATE solicitudes_gasto SET activo = 0 WHERE id_solicitud = :id_solicitud";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->bindParam(':id_solicitud', $this->id_solicitud);
             $stmt->execute();
             return ['estatus' => true, 'mensaje' => 'Solicitud eliminada correctamente'];
@@ -279,6 +289,9 @@ class SolicitudGasto extends Conexion
         $anio = $partes[0];
         $mes = $partes[1];
 
+        $estadoPendiente = EstadoSolicitud::PENDIENTE->value;
+        $estadoAprobada = EstadoSolicitud::APROBADA->value;
+
         $sql = "SELECT 
                     p.id_presupuesto, 
                     p.observacion,
@@ -287,15 +300,17 @@ class SolicitudGasto extends Conexion
                         SELECT IFNULL(SUM(sg.monto_estimado), 0)
                         FROM solicitudes_gasto sg 
                         WHERE sg.presupuesto_id = p.id_presupuesto 
-                        AND sg.estado IN ('pendiente', 'aprobado')
+                        AND sg.estado IN (:estado_pen, :estado_apr)
                     )) AS disponible
                 FROM presupuesto p
                 WHERE YEAR(p.fecha) = :anio AND MONTH(p.fecha) = :mes
                 LIMIT 1";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->bindParam(':mes', $mes, PDO::PARAM_INT);
             $stmt->bindParam(':anio', $anio, PDO::PARAM_INT);
+            $stmt->bindValue(':estado_pen', $estadoPendiente);
+            $stmt->bindValue(':estado_apr', $estadoAprobada);
             $stmt->execute();
             $datos = $stmt->fetch(PDO::FETCH_ASSOC);
             if (!$datos) {
@@ -325,7 +340,7 @@ class SolicitudGasto extends Conexion
                 FROM presupuesto
                 ORDER BY anio DESC, mes DESC";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute();
             $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
             return ['estatus' => true, 'datos' => $datos];

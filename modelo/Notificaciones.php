@@ -3,13 +3,12 @@ namespace haydee\modelo;
 
 use PDO;
 use PDOException;
+use haydee\enums\TipoEventoNotificacion;
+use haydee\enums\TablaOrigen;
+use haydee\enums\TipoBaseDatos;
 
 class Notificaciones extends Conexion
 {
-    // ====================================================================
-    // PROPIEDADES
-    // ====================================================================
-
     // Tabla: notificaciones
     private $id_notificacion;
     private $titulo;
@@ -29,22 +28,10 @@ class Notificaciones extends Conexion
     // ====================================================================
     // VALIDACIONES CENTRALIZADAS
     // ====================================================================
-    private $reglas = [
-        'id_notificacion' => [
-            'regex' => '/^\d+$/'
-        ],
-        'titulo' => [
-            'regex' => '/^[A-Za-z0-9 áéíóúÁÉÍÓÚñÑ\.,-]{3,100}$/'
-        ],
-        'descripcion' => [
-            'regex' => '/^.{3,255}$/'
-        ]
-    ];
-
-    // ====================================================================
-    // VALIDACIONES CENTRALIZADAS
-    // ====================================================================
     public static function obtenerReglas($operacion) {
+        $eventosValidos = implode('|', array_column(TipoEventoNotificacion::cases(), 'value'));
+        $tablasValidas = implode('|', array_column(TablaOrigen::cases(), 'value'));
+
         $reglasGenerales = [
             'id_notificacion' => [
                 'regex' => '/^\d+$/',
@@ -63,23 +50,21 @@ class Notificaciones extends Conexion
                 'regex' => '/^\d{4}-\d{2}-\d{2}$/',
                 'opcional' => true
             ],
-            'tabla_origen' => [
-                'regex' => '/^[a-z_]+$/',
-                'opcional' => true
-            ],
             'id_registro_origen' => [
                 'regex' => '/^\d+$/',
                 'opcional' => true
             ],
             'tipo_evento' => [
-                'regex' => '/^[A-Za-z0-9_]{3,30}$/',
-                'opcional' => true
+                'regex' => "/^($eventosValidos)$/"
+            ],
+            'tabla_origen' => [
+                'regex' => "/^($tablasValidas)$/"
             ]
         ];
 
         $camposPorOperacion = [
-            // El frontend envía la operación como 'marcar_como_leido'
-            'marcar_como_leido' => ['id_notificacion']
+            'marcar_leida' => ['id_notificacion'],
+            'registrar_notificacion' => ['titulo', 'descripcion', 'tipo_evento', 'tabla_origen']
         ];
 
         if (isset($camposPorOperacion[$operacion])) {
@@ -157,14 +142,14 @@ class Notificaciones extends Conexion
         try {
             $sql = "INSERT INTO notificaciones (titulo, descripcion, fecha, usuario_id, leido) 
                     VALUES (:tit, :desc, :fecha, :uid, 0)";
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute([
                 ':tit'   => $this->titulo,
                 ':desc'  => $this->descripcion,
                 ':fecha' => $this->fecha,
                 ':uid'   => $this->usuario_id
             ]);
-            $lastId = $this->get_conex('seguridad')->lastInsertId();
+            $lastId = $this->get_conex(TipoBaseDatos::SEGURIDAD)->lastInsertId();
             return ['estatus' => true, 'mensaje' => 'Notificación enviada', 'lastId' => $lastId];
         } catch (PDOException $e) {
             error_log("Error en _registrar_simple: " . $e->getMessage());
@@ -186,7 +171,7 @@ class Notificaciones extends Conexion
         // Determinar si se incluirá evento (deben estar los tres campos)
         $incluirEvento = !empty($this->tabla_origen) && !empty($this->id_registro_origen) && !empty($this->tipo_evento);
 
-        $con = $this->get_conex('seguridad');
+        $con = $this->get_conex(TipoBaseDatos::SEGURIDAD);
 
         try {
             // Si hay evento, trabajamos con transacción
@@ -282,7 +267,7 @@ class Notificaciones extends Conexion
                     SELECT :tit, :desc, NOW(), 0, id_usuario
                     FROM usuarios 
                     WHERE rol_id IN (1, 2) AND activo = 1";
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute([
                 ':tit'   => $this->titulo,
                 ':desc'  => $this->descripcion
@@ -301,7 +286,7 @@ class Notificaciones extends Conexion
     {
         try {
             $sql = "CALL sp_notificar_administradores(:tit, :desc, :tabla, :id_reg, :tipo)";
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute([
                 ':tit'    => $this->titulo,
                 ':desc'   => $this->descripcion,
@@ -324,11 +309,11 @@ class Notificaciones extends Conexion
      */
     private function _notificar_por_rol()
     {
-        $con = $this->get_conex('seguridad');
+        $con = $this->get_conex(TipoBaseDatos::SEGURIDAD);
         try {
             $con->beginTransaction();
 
-            // 1. Insertar evento
+            // Insertar evento
             $sqlEvento = "INSERT INTO eventos_sistema (tipo_evento, tabla_origen, id_registro_origen, fecha_evento) 
                           VALUES (:tipo, :tabla, :id_reg, NOW())";
             $stmtEvento = $con->prepare($sqlEvento);
@@ -339,7 +324,7 @@ class Notificaciones extends Conexion
             ]);
             $idEvento = $con->lastInsertId();
 
-            // 2. Obtener usuarios del rol
+            // Obtener usuarios del rol
             $sqlUsuarios = "SELECT id_usuario FROM usuarios 
                             WHERE rol_id IN (SELECT id_rol FROM roles WHERE nombre = :rol) 
                             AND activo = 1";
@@ -359,7 +344,7 @@ class Notificaciones extends Conexion
                 return ['estatus' => true, 'mensaje' => 'No hay usuarios de ese rol para notificar'];
             }
 
-            // 3. Insertar notificaciones
+            // Insertar notificaciones
             $sqlNotif = "INSERT INTO notificaciones (titulo, descripcion, fecha, usuario_id, leido) 
                          VALUES (:tit, :desc, NOW(), :uid, 0)";
             $stmtNotif = $con->prepare($sqlNotif);
@@ -405,7 +390,7 @@ class Notificaciones extends Conexion
                 ORDER BY n.leido ASC, n.fecha DESC
                 LIMIT 50";
         try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute([':uid' => $this->usuario_id]);
             return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
         } catch (PDOException $e) {
@@ -421,7 +406,7 @@ class Notificaciones extends Conexion
     {
         try {
             $sql = "UPDATE notificaciones SET leido = 1 WHERE id_notificacion = :id";
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute([':id' => $this->id_notificacion]);
             return ['estatus' => true, 'mensaje' => 'Notificación marcada como leída'];
         } catch (PDOException $e) {
@@ -437,7 +422,7 @@ class Notificaciones extends Conexion
     {
         try {
             $sql = "UPDATE notificaciones SET leido = 1 WHERE usuario_id = :uid AND leido = 0";
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute([':uid' => $this->usuario_id]);
             return ['estatus' => true, 'mensaje' => 'Todas las notificaciones marcadas como leídas'];
         } catch (PDOException $e) {

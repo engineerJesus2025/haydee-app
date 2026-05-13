@@ -1,4 +1,7 @@
-<?php
+﻿<?php
+use haydee\enums\Modulo;
+use haydee\enums\Accion;
+
 use haydee\servicios\Sesiones;
 use haydee\modelo\Banco;
 use haydee\modelo\Bitacora;
@@ -7,20 +10,18 @@ use haydee\ayuda\ValidadorBD;
 use haydee\servicios\GestorAuditoria;
 
 // Verificaciones de seguridad
-Sesiones::validarMetodoHTTP(['GET', 'POST']);
-Sesiones::verificarSesion();
-Sesiones::verificarPermiso(GESTIONAR_BANCOS, CONSULTAR);
+Sesiones::autorizarAcceso(Modulo::GESTIONAR_BANCOS, Accion::CONSULTAR);
 
 if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
 
-    Sesiones::verificarPermisoAccion(GESTIONAR_BANCOS, $operacion);
+    Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_BANCOS, $operacion);
     
     // 1. Obtenemos las reglas centralizadas
     $reglas = Banco::obtenerReglas($operacion);
 
-    // 2. Ejecutamos la validación si aplica
+    // 2. Ejecutamos la Validación si aplica
     if (!empty($reglas)) {
         $validador = new Validador();
         
@@ -52,7 +53,7 @@ if (isset($_POST["operacion"])) {
     $banco->set_rif($_POST['rif'] ?? null);
 
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
-    $auditor = new GestorAuditoria($banco, GESTIONAR_BANCOS);
+    $auditor = new GestorAuditoria($banco, Modulo::GESTIONAR_BANCOS);
 
     try{
         switch ($operacion) {
@@ -61,7 +62,7 @@ if (isset($_POST["operacion"])) {
 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
-                    $auditor->registrarAuditoria('consultar');
+                    $auditor->registrarAuditoria(Accion::CONSULTAR);
                 }
                 break;
 
@@ -70,7 +71,7 @@ if (isset($_POST["operacion"])) {
 
                 http_response_code($respuesta['estatus'] ? 201 : 400);
                 if ($respuesta['estatus']) {
-                    $auditor->registrarAuditoria('registrar');
+                    $auditor->registrarAuditoria(Accion::REGISTRAR);
                 }
                 break;
 
@@ -85,7 +86,7 @@ if (isset($_POST["operacion"])) {
 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) { 
-                    $auditor->registrarAuditoria('modificar'); 
+                    $auditor->registrarAuditoria(Accion::MODIFICAR); 
                 }
                 break;
 
@@ -95,7 +96,7 @@ if (isset($_POST["operacion"])) {
                 http_response_code($respuesta['estatus'] ? 200 : 400);
                 $respuesta = $banco->realizar_consulta('eliminar_banco');
                 if ($respuesta['estatus']) { 
-                    $auditor->registrarAuditoria('eliminar'); 
+                    $auditor->registrarAuditoria(Accion::ELIMINAR); 
                 }
                 break;
 
@@ -109,11 +110,11 @@ if (isset($_POST["operacion"])) {
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
         if ($respuesta !== null) {
-            // Cerrar conexiones explícitamente
+            // Cerrar conexiones explÃ­citamente
             if (isset($banco)) {
                 $banco->cerrar();
             }
-            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexión de seguridad
+            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexiÃ³n de seguridad
 
             echo json_encode($respuesta);
             exit;
@@ -136,7 +137,7 @@ if (isset($_POST["validar"])) {
                 $id = !empty($_POST["id_banco"]) ? $_POST["id_banco"] : null;
                 
                 $existe = !$validadorBD->esUnico('bancos', 'numero_cuenta', $numero_cuenta, 'id_banco', $id);
-                $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'El número de cuenta ya está registrado' : 'Disponible'];
+                $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'El nÃºmero de cuenta ya estÃ¡ registrado' : 'Disponible'];
                 break;
 
             case 'validar_clave_foranea':
@@ -145,7 +146,7 @@ if (isset($_POST["validar"])) {
                 $valor = $_POST['valor'] ?? '';
 
                 if (empty($tabla) || empty($campo) || empty($valor)) {
-                    $respuesta = ['estatus' => false, 'mensaje' => 'Faltan parámetros de validación'];
+                    $respuesta = ['estatus' => false, 'mensaje' => 'Faltan parÃ¡metros de Validación'];
                     break;
                 }
 
@@ -164,7 +165,7 @@ if (isset($_POST["validar"])) {
         }
     } catch (Exception $e) {
         http_response_code(500);
-        error_log("Error en validación AJAX Bancos: " . $e->getMessage());
+        error_log("Error en Validación AJAX Bancos: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
     }
 
@@ -177,9 +178,9 @@ if (isset($_POST["validar"])) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_BANCOS);
+    GestorAuditoria::inicializarBanderaConsulta(Modulo::GESTIONAR_BANCOS);
 }
-$permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_BANCOS);
+$permisosVista = Sesiones::obtenerPermisosVista(Modulo::GESTIONAR_BANCOS);
 $btn_nuevo = [
     'target'  => '#modal_banco',
     'texto'   => 'Nuevo Banco',

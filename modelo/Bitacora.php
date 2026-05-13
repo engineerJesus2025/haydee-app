@@ -3,9 +3,16 @@ namespace haydee\modelo;
 
 use PDO;
 use PDOException;
+use haydee\enums\TipoBaseDatos;
+use haydee\enums\Accion;
+use haydee\enums\Modulo;
 
 class Bitacora extends Conexion
 {
+    // REGLAS DE VISUALIZACIÓN DASHBOARD
+    private const LIMITE_WIDGET_DASHBOARD = 7;
+    private const OFFSET_WIDGET_DASHBOARD = 1;
+
     private static $instancia = null;
     
     private $id_bitacora;
@@ -69,7 +76,7 @@ class Bitacora extends Conexion
                 DESC";
 
         try {
-            $conexion = $this->get_conex('seguridad')->prepare($sql);
+            $conexion = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
 
             $conexion->execute();
             $datos = $conexion->fetchAll(PDO::FETCH_ASSOC);
@@ -98,10 +105,10 @@ class Bitacora extends Conexion
     }
 
     // En la clase Bitacora registrar para usarlo en cualquier modulo
-    public static function registrar($accion, $moduloId, $usuarioId = null, $valores_anteriores = null, $valores_nuevos = null)
+    public static function registrar(Accion $accionElemento, Modulo $moduloElemento, $usuarioId = null, $valores_anteriores = null, $valores_nuevos = null)
     {
         $instancia = self::getInstancia();
-        $pdo = $instancia->get_conex('seguridad');
+        $pdo = $instancia->get_conex(TipoBaseDatos::SEGURIDAD);
 
         if ($usuarioId === null && isset($_SESSION['id_usuario'])) {
             $usuarioId = $_SESSION['id_usuario'];
@@ -112,7 +119,10 @@ class Bitacora extends Conexion
             return false;
         }
 
-        // Convertir arrays a JSON, si no se proporcionan, usar '{}'
+        $accion = $accionElemento->value;
+        $moduloId = $moduloElemento->value;
+
+        // Convertir arrays a JSON...
         $anteriores_json = is_array($valores_anteriores) ? json_encode($valores_anteriores, JSON_UNESCAPED_UNICODE) : '{}';
         $nuevos_json = is_array($valores_nuevos) ? json_encode($valores_nuevos, JSON_UNESCAPED_UNICODE) : '{}';
 
@@ -147,6 +157,9 @@ class Bitacora extends Conexion
      */
     private function _consultar_actividad_dashboard()
     {
+        $limite = self::LIMITE_WIDGET_DASHBOARD;
+        $offset = self::OFFSET_WIDGET_DASHBOARD;
+        
         $sql = "SELECT
                     bitacora.id_bitacora,
                     bitacora.fecha_hora,
@@ -161,10 +174,10 @@ class Bitacora extends Conexion
                 INNER JOIN modulos ON modulos.id_modulo = bitacora.modulo_id
                 INNER JOIN roles ON roles.id_rol = usuarios.rol_id
                 ORDER BY bitacora.fecha_hora DESC
-                LIMIT 7 OFFSET 1";
+                LIMIT $limite OFFSET $offset";
 
         try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute();
             $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

@@ -1,11 +1,13 @@
 <?php
 use haydee\ayuda\Recaptcha;
-use haydee\modelo\Usuario;
-use haydee\servicios\Sesiones;
 use haydee\ayuda\Validador;
+use haydee\modelo\Usuario;
+use haydee\modelo\SeguridadIP;
+use haydee\servicios\Sesiones;
 use haydee\servicios\Autenticacion;
 use haydee\servicios\Recuperacion;
 
+Sesiones::verificarAccesoRed();
 Sesiones::validarMetodoHTTP(['GET', 'POST']);
 
 if (session_status() === PHP_SESSION_NONE) {
@@ -19,8 +21,6 @@ if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación desconocida'];
 
-    // --- NORMALIZACIÓN PARA EL VALIDADOR ---
-    // Copiamos los inputs del frontend al nombre estándar ('correo') para poder validarlos
     if (isset($_POST['usuario'])) {
         $_POST['correo'] = $_POST['usuario'];
     }
@@ -28,12 +28,12 @@ if (isset($_POST["operacion"])) {
         $_POST['correo'] = $_POST['correo_recuperar'];
     }
 
-    // --- VALIDACIÓN CENTRALIZADA ---
+    // --- VALIDACIÓN ---
     $reglas = Usuario::obtenerReglas($operacion);
     if (!empty($reglas)) {
         $validador = new Validador();
         
-        // Usamos skip_unique para evitar que nos rebote por tener el correo registrado
+        // skip_unique para evitar que rebote por tener el correo registrado
         $validador->validarConjunto($_POST, $reglas, ['skip_unique' => true]);
 
         if ($validador->tieneErrores()) {
@@ -44,7 +44,7 @@ if (isset($_POST["operacion"])) {
         }
     }
 
-    // Extraer datos comunes (Ya validados y seguros)
+    // Extraer datos comunes
     $usuario = $_POST['usuario'] ?? '';
     $contra = $_POST['contra'] ?? '';
     $mantenerSesion = ($_POST['mantener_sesion'] ?? 'false') === 'true';
@@ -53,6 +53,18 @@ if (isset($_POST["operacion"])) {
         try {
         switch ($operacion) {
             case 'entrar':
+                $seguridadIP = new SeguridadIP();
+                $seguridadIP->set_ip($_SERVER['REMOTE_ADDR']);
+
+                // Verificar Rate Limit temporal ANTES de evaluar claves o captchas
+                $rateLimit = $seguridadIP->verificarRateLimit();
+                if (!$rateLimit['estatus']) {
+                    $seguridadIP->registrarFallo();
+                    http_response_code($rateLimit['codigo_http']); // 429 Too Many Requests
+                    $respuesta = ['estatus' => false, 'mensaje' => $rateLimit['mensaje']];
+                    break; 
+                }
+
                 $recaptchaResponse = $_POST['g-recaptcha-response'] ?? '';
 
                 // Validar reCAPTCHA
@@ -61,6 +73,7 @@ if (isset($_POST["operacion"])) {
                 
                 // Si falla el reCAPTCHA, devolvemos 400 (Bad Request)
                 if (!$validacion['estatus']) {
+                    $seguridadIP->registrarFallo(); // Para la ip sospechosa
                     http_response_code(400); 
                     $respuesta = ['estatus' => false, 'mensaje' => $validacion['error']];
                     break;
@@ -74,6 +87,8 @@ if (isset($_POST["operacion"])) {
                 }
 
                 if ($resultado['estatus']) {
+                    $seguridadIP->limpiarFallo(); // Limpiamos el historial de fallos de esta IP
+
                     http_response_code(200); // Login exitoso
                     if (isset($resultado['token'])) {
                         Sesiones::recordar($usuario, $resultado['token']);
@@ -81,6 +96,7 @@ if (isset($_POST["operacion"])) {
                     Sesiones::iniciar($resultado['datos']);
                     session_regenerate_id(true);
                 } else {
+                    $seguridadIP->registrarFallo(); // CUALQUIER FALLO: Sumamos un intento a la IP
                     $codigoError = $resultado['codigo_http'] ?? 401;// 401 Unauthorized (Credenciales incorrectas)
                     http_response_code($codigoError);
                 }
@@ -89,13 +105,27 @@ if (isset($_POST["operacion"])) {
                 break;
 
             case 'enviar_notificacion':
+                // Proteger contra Email Bombing
+                $seguridadIP = new SeguridadIP();
+                $seguridadIP->set_ip($_SERVER['REMOTE_ADDR']);
+                $rateLimit = $seguridadIP->verificarRateLimit();
+                
+                if (!$rateLimit['estatus']) {
+                    $seguridadIP->registrarFallo();
+                    http_response_code($rateLimit['codigo_http']);
+                    $respuesta = ['estatus' => false, 'mensaje' => 'Ha superado el límite de intentos. Intente mañana.'];
+                    break;
+                }
+
                 $recuperacion = new Recuperacion();
                 try {
                     $respuesta = $recuperacion->enviarCorreoRecuperacion($correoRecuperar);
 
                     if (strpos($respuesta['mensaje'], 'Error') !== false) {
+                        $seguridadIP->registrarFallo();
                         http_response_code(500); 
                     } else {
+                        $seguridadIP->limpiarFallo();
                         http_response_code(200); 
                     }
                 } finally {

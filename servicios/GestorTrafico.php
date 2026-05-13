@@ -3,8 +3,11 @@ namespace haydee\servicios;
 
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use haydee\enums\HttpCodigo;
 
 class GestorTrafico {
+    private const JWT_ALGORITMO = 'HS256';
+    private const BYTES_IV_NUEVO = 12;
     
     public static $claveActiva = null;
     public static $esCifrado = false;
@@ -35,18 +38,18 @@ class GestorTrafico {
             $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? $headers['Authorization'] ?? $headers['authorization'] ?? '';
 
             if (empty($authHeader) || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
-                http_response_code(401);
-                echo json_encode(["estatus" => false, "mensaje" => "Falta el token de sesión (JWT) o formato inválido."]);
+                http_response_code(HttpCodigo::NO_AUTORIZADO->value);
+                echo json_encode(["estatus" => false, "mensaje" => "Falta el token..."]);
                 exit;
             }
 
             $jwt = $matches[1];
             try {
                 // Si la firma fue alterada o el tiempo expiró, lanza excepción
-                $decoded = JWT::decode($jwt, new Key(JWT_SECRET, 'HS256'));
+                $decoded = JWT::decode($jwt, new Key(JWT_SECRET, self::JWT_ALGORITMO));
                 self::$usuarioLogueado = (array) $decoded->data;
             } catch (\Exception $e) {
-                http_response_code(401);
+                http_response_code(HttpCodigo::NO_AUTORIZADO->value);
                 echo json_encode(["estatus" => false, "mensaje" => "Sesión inválida o expirada. Vuelva a ingresar."]);
                 exit;
             }
@@ -64,7 +67,7 @@ class GestorTrafico {
         $clave_aes_rsa = $inputData['clave_aes_rsa'] ?? $_POST['clave_aes_rsa'] ?? null;
 
         if (!$payload || !$iv) {
-            http_response_code(403);
+            http_response_code(HttpCodigo::PROHIBIDO->value);
             echo json_encode(["estatus" => false, "mensaje" => "Acceso denegado. Se requiere canal seguro."]);
             exit;
         }
@@ -120,7 +123,7 @@ class GestorTrafico {
             }
 
         } catch (\Exception $e) {
-            http_response_code(401);
+            http_response_code(HttpCodigo::NO_AUTORIZADO->value);
             echo json_encode(["estatus" => false, "mensaje" => "Bloqueo de seguridad. Intente mas tarde"]);
             error_log("Error al interceptar Entrada " . $e->getMessage());
             exit;
@@ -129,7 +132,7 @@ class GestorTrafico {
 
     public static function interceptarSalida($respuestaJsonOriginal) {
         if (self::$esCifrado && self::$claveActiva) {
-            $ivNuevo = random_bytes(12);
+            $ivNuevo = random_bytes(self::BYTES_IV_NUEVO);
             $tagNuevo = '';
 
             $payloadCifrado = Criptografia::cifrarPayload($respuestaJsonOriginal, self::$claveActiva, $ivNuevo, $tagNuevo);

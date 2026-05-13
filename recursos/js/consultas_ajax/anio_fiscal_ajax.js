@@ -33,7 +33,7 @@ async function consultar() {
 
     const formatoFechaCierre = (cell) => {
         const row = cell.getData();
-        return row.estado === 'Cerrada' ? FormatoFechas.formatoUsuario(row.fecha_cierre) : '<span class="text-muted fst-italic">Aún sin cerrar</span>';
+        return row.estado === 'CERRADO' ? FormatoFechas.formatoUsuario(row.fecha_cierre) : '<span class="text-muted fst-italic">Aún sin cerrar</span>';
     };
 
     const formatoBotones = (cell) => {
@@ -116,27 +116,19 @@ async function consultar() {
 
 // Función que lee la memoria de Tabulator (Sin AJAX extra)
 function mostrarVistaPrevia(data) {
-    // Estado con Soft Badges
     const config = obtenerConfigEstadoAnio(data.estado);
     const estadoEl = document.getElementById("vp_estado");
     
-    // Limpiamos clases de texto plano e inyectamos el Badge con contenedor
     estadoEl.innerHTML = ComponentesUI.crearSoftBadge(config.color, config.icono, config.texto);
-
-    // Descripción
     document.getElementById("vp_descripcion").textContent = data.descripcion || 'Sin descripción';
-
-    // Fechas
     document.getElementById("vp_fecha_inicio").textContent = FormatoFechas.formatoUsuario(data.fecha_inicio);
     
-    // Mismo criterio de la tabla: si no está cerrada, mostramos un aviso
-    document.getElementById("vp_fecha_cierre").textContent = data.estado === 'Cerrada' 
+    document.getElementById("vp_fecha_cierre").textContent = data.estado === 'CERRADO' 
         ? FormatoFechas.formatoUsuario(data.fecha_cierre) 
         : 'Aún sin cerrar';
 
-    // Mostramos el modal
     modalDetalles.show();
-}   
+} 
 
 // ============================================
 // OPERACIONES CRUD
@@ -214,24 +206,23 @@ async function eliminar(id) {
 
 /**
  * Procesa el estado del año fiscal y devuelve su configuración visual
- * @param {string} estado - El estado (Ej: 'Abierta', 'Cerrada')
  */
 function obtenerConfigEstadoAnio(estado) {
-    const est = estado || 'Abierta';
+    const est = estado || 'ABIERTO';
     let color = "success";
     let icono = "bi-check-circle-fill";
+    let textoVisual = "Abierto"; 
 
-    if (est === 'Cerrada') {
+    if (est === 'CERRADO') {
         color = "secondary";
         icono = "bi-lock-fill";
+        textoVisual = "Cerrado"; 
     }
 
-    return { color, icono, texto: est };
+    return { color, icono, texto: textoVisual };
 }
 
-// ============================================
 // EVENTOS DEL MODAL
-// ============================================
 document.getElementById('modal_anio_fiscal').addEventListener('hide.bs.modal', () => {
     form.reset();
     document.querySelectorAll('.is-valid, .is-invalid').forEach(el => el.classList.remove('is-valid', 'is-invalid'));

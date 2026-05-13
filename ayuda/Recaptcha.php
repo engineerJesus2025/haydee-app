@@ -3,6 +3,11 @@ namespace haydee\ayuda;
 
 class Recaptcha
 {
+    // CONSTANTES DE SERVICIO
+    private const URL_VERIFICACION = 'https://www.google.com/recaptcha/api/siteverify';
+    private const TIMEOUT_SEGUNDOS = 10;
+    private const ERROR_TIMEOUT = 'timeout-or-duplicate';
+
     private $claveSecreta;
     private $deshabilitado;
 
@@ -26,7 +31,6 @@ class Recaptcha
             return ['estatus' => false, 'error' => 'El reCAPTCHA es obligatorio.'];
         }
 
-        $url = 'https://www.google.com/recaptcha/api/siteverify';
         $datos = [
             'secret' => $this->claveSecreta,
             'response' => $respuesta,
@@ -38,14 +42,14 @@ class Recaptcha
                 'header' => "Content-type: application/x-www-form-urlencoded\r\n",
                 'method' => 'POST',
                 'content' => http_build_query($datos),
-                'timeout' => 10
+                'timeout' => self::TIMEOUT_SEGUNDOS
             ]
         ];
 
         $contexto = stream_context_create($opciones);
-        $resultado = file_get_contents($url, false, $contexto);
+        $resultado = file_get_contents(self::URL_VERIFICACION, false, $contexto);
         if ($resultado === false) {
-            error_log("Error en Recaptcha::verificar - No se pudo conectar a Google reCAPTCHA. URL: $url");
+            error_log("Error en Recaptcha::verificar - No se pudo conectar a Google reCAPTCHA. URL: " . self::URL_VERIFICACION);
             return ['estatus' => false, 'error' => 'No se pudo conectar con el servicio de reCAPTCHA.'];
         }
 
@@ -56,7 +60,7 @@ class Recaptcha
 
         if (!$json['success']) {
             $errores = $json['error-codes'] ?? [];
-            $mensaje = in_array('timeout-or-duplicate', $errores)
+            $mensaje = in_array(self::ERROR_TIMEOUT, $errores)
                 ? 'El reCAPTCHA ha expirado. Intente nuevamente.'
                 : 'Error de validación del reCAPTCHA.';
             return ['estatus' => false, 'error' => $mensaje, 'detalles' => $errores];

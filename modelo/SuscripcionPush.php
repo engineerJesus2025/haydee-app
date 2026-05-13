@@ -3,12 +3,11 @@ namespace haydee\modelo;
 
 use PDO;
 use PDOException;
+use haydee\enums\RolSistema;
+use haydee\enums\TipoBaseDatos;
 
 class SuscripcionPush extends Conexion
 {
-    // ====================================================================
-    // PROPIEDADES
-    // ====================================================================
     private $id_suscripcion;
     private $usuario_id;
     private $endpoint;
@@ -76,7 +75,7 @@ class SuscripcionPush extends Conexion
     private function _registrar_suscripcion()
     {
         try {
-            $conexion = $this->get_conex('seguridad');
+            $conexion = $this->get_conex(TipoBaseDatos::SEGURIDAD);
             $conexion->beginTransaction();
 
             $sql_check = "SELECT id_suscripcion FROM suscripciones_push WHERE endpoint = :endpoint";
@@ -112,7 +111,7 @@ class SuscripcionPush extends Conexion
     private function _obtener_todos()
     {
         try {
-            $conexion = $this->get_conex('seguridad');
+            $conexion = $this->get_conex(TipoBaseDatos::SEGURIDAD);
             $sql = "SELECT endpoint, p256dh, auth FROM suscripciones_push";
             $stmt = $conexion->prepare($sql);
             $stmt->execute();
@@ -129,13 +128,19 @@ class SuscripcionPush extends Conexion
     private function _obtener_admins()
     {
         try {
-            $conexion = $this->get_conex('seguridad');
-            // Asegúrate de que el 'rol_id = 1' corresponda a tus administradores
+            $conexion = $this->get_conex(TipoBaseDatos::SEGURIDAD);
+            
+            $admin = RolSistema::ADMINISTRADOR->value;
+            $superAdmin = RolSistema::SUPER_ADMIN->value;
+
             $sql = "SELECT sp.endpoint, sp.p256dh, sp.auth 
                     FROM suscripciones_push sp
                     INNER JOIN usuarios u ON sp.usuario_id = u.id_usuario
-                    WHERE u.rol_id = 1 AND u.rol_id = 2 ";
+                    WHERE u.rol_id IN (:admin, :superadmin)";
+            
             $stmt = $conexion->prepare($sql);
+            $stmt->bindValue(':admin', $admin, PDO::PARAM_INT);
+            $stmt->bindValue(':superadmin', $superAdmin, PDO::PARAM_INT);
             $stmt->execute();
             
             $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);

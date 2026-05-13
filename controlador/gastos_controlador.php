@@ -1,4 +1,7 @@
-<?php
+﻿<?php
+use haydee\enums\Modulo;
+use haydee\enums\Accion;
+
 use haydee\servicios\Sesiones;
 use haydee\modelo\Gastos;
 use haydee\modelo\Banco;
@@ -12,18 +15,16 @@ use haydee\ayuda\ValidadorBD;
 use haydee\servicios\GestorAuditoria;
 
 // Verificaciones de seguridad
-Sesiones::validarMetodoHTTP(['GET', 'POST']);
-Sesiones::verificarSesion();
-Sesiones::verificarPermiso(GESTIONAR_GASTOS, CONSULTAR);
+Sesiones::autorizarAcceso(Modulo::GESTIONAR_GASTOS, Accion::CONSULTAR);
 
 if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
 
-    Sesiones::verificarPermisoAccion(GESTIONAR_GASTOS, $operacion);
+    Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_GASTOS, $operacion);
 
     // =========================================================
-    // 1. VALIDACIÓN DE LA CABECERA
+    // 1. VALIDACIÃ“N DE LA CABECERA
     // =========================================================
     $reglasCabecera = Gastos::obtenerReglas($operacion);
 
@@ -40,7 +41,7 @@ if (isset($_POST["operacion"])) {
     }
 
     // =========================================================
-    // 2. CONSTRUCCIÓN Y VALIDACIÓN DE DETALLES (Renglones)
+    // 2. CONSTRUCCIÃ“N Y VALIDACIÃ“N DE DETALLES (Renglones)
     // =========================================================
     if ($operacion === 'registrar_gasto' || $operacion === 'modificar_gasto') {
         $esModificacion = ($operacion === 'modificar_gasto');
@@ -63,19 +64,19 @@ if (isset($_POST["operacion"])) {
             
             if ($validadorTemp->tieneErrores()) {
                 $erroresFila = $validadorTemp->obtenerErrores();
-                // Adjuntamos el número de fila (ej: "Fila 1 - monto") para que el Frontend sepa dónde marcar el rojo
+                // Adjuntamos el nÃºmero de fila (ej: "Fila 1 - monto") para que el Frontend sepa dÃ³nde marcar el rojo
                 foreach($erroresFila as $campo => $mensajes) {
                     $erroresDetalles["detalle_" . $index . "_" . $campo] = $mensajes; 
                 }
             }
         }
 
-        // Si alguna fila falló, rebotamos la petición entera
+        // Si alguna fila fallÃ³, rebotamos la peticiÃ³n entera
         if (!empty($erroresDetalles)) {
             echo json_encode([
                 'estatus' => false, 
                 'errores' => $erroresDetalles, 
-                'mensaje' => 'Hay errores en los renglones del gasto. Por favor, revíselos.'
+                'mensaje' => 'Hay errores en los renglones del gasto. Por favor, revÃ­selos.'
             ]);
             exit;
         }
@@ -84,13 +85,13 @@ if (isset($_POST["operacion"])) {
     // Instancia del modelo principal
     $gastos = new Gastos();
 
-    // Si pasamos por registro/modificación, le pasamos los detalles limpios
+    // Si pasamos por registro/modificaciÃ³n, le pasamos los detalles limpios
     if (isset($detalles)) {
         $gastos->set_detalles($detalles);
     }
 
     // =========================================================
-    // ASIGNACIÓN MASIVA DE CAMPOS ESCALARES
+    // ASIGNACIÃ“N MASIVA DE CAMPOS ESCALARES
     // =========================================================
     $gastos->set_id_gasto($_POST['id_gasto'] ?? null);
     $gastos->set_clasificacion($_POST['clasificacion'] ?? null);
@@ -105,7 +106,7 @@ if (isset($_POST["operacion"])) {
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
     // Instanciamos el auditor
-    $auditor = new GestorAuditoria($gastos, GESTIONAR_GASTOS);
+    $auditor = new GestorAuditoria($gastos, Modulo::GESTIONAR_GASTOS);
 
     try {
         switch ($operacion) {
@@ -117,7 +118,7 @@ if (isset($_POST["operacion"])) {
 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
-                    $auditor->registrarAuditoria('consultar');
+                    $auditor->registrarAuditoria(Accion::CONSULTAR);
                 }
                 break;
 
@@ -136,7 +137,7 @@ if (isset($_POST["operacion"])) {
                 break;
 
             // =========================================================
-            // REGISTRO Y EDICIÓN UNIFICADOS
+            // REGISTRO Y EDICIÃ“N UNIFICADOS
             // =========================================================
             case 'registrar_gasto':
                 $respuesta = $gastos->realizar_consulta('registrar_gasto');
@@ -145,7 +146,7 @@ if (isset($_POST["operacion"])) {
                 if ($respuesta['estatus']) {
                     // Ocultamos el arreglo masivo al auditor
                     $gastos->set_detalles(null);
-                    $auditor->registrarAuditoria('registrar');
+                    $auditor->registrarAuditoria(Accion::REGISTRAR);
                 }
                 break;
 
@@ -159,12 +160,12 @@ if (isset($_POST["operacion"])) {
                 if ($respuesta['estatus']) { 
                     // Ocultamos el arreglo masivo al auditor
                     $gastos->set_detalles(null);
-                    $auditor->registrarAuditoria('modificar'); 
+                    $auditor->registrarAuditoria(Accion::MODIFICAR); 
                 }
                 break;
 
             // =========================================================
-            // ELIMINACIÓN
+            // ELIMINACIÃ“N
             // =========================================================
             case 'eliminar_gasto':
                 // Utilizamos la nueva consulta plana para la foto previa
@@ -174,7 +175,7 @@ if (isset($_POST["operacion"])) {
 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) { 
-                    $auditor->registrarAuditoria('eliminar'); 
+                    $auditor->registrarAuditoria(Accion::ELIMINAR); 
                 }
                 break;
 
@@ -234,7 +235,7 @@ if (isset($_POST["validar"])) {
                 $gastosTemp = new Gastos();
                 $existe = $gastosTemp->verificarReferenciaDisponible($referencia, $id_gasto);
 
-                $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'La referencia ya está registrada en otro gasto' : 'Disponible'];
+                $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'La referencia ya estÃ¡ registrada en otro gasto' : 'Disponible'];
                 break;
 
             case 'validar_clave_foranea':
@@ -243,7 +244,7 @@ if (isset($_POST["validar"])) {
                 $valor = $_POST['valor'] ?? '';
 
                 if (empty($tabla) || empty($campo) || empty($valor)) {
-                    $respuesta = ['estatus' => false, 'mensaje' => 'Faltan parámetros de validación'];
+                    $respuesta = ['estatus' => false, 'mensaje' => 'Faltan parÃ¡metros de Validación'];
                     break;
                 }
 
@@ -258,7 +259,7 @@ if (isset($_POST["validar"])) {
         }
     } catch (Exception $e) {
         http_response_code(500);
-        error_log("Error en validación AJAX Bancos: " . $e->getMessage());
+        error_log("Error en Validación AJAX Bancos: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
     }
 
@@ -274,7 +275,7 @@ if (isset($_POST["validar"])) {
 // CARGA DE DATOS PARA LA VISTA
 // =========================================================
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_GASTOS);
+    GestorAuditoria::inicializarBanderaConsulta(Modulo::GESTIONAR_GASTOS);
 
     // Instanciamos solo cuando vamos a renderizar el HTML
     $banco = new Banco();
@@ -287,7 +288,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     $solicitudes_gasto = $solicitudGasto->realizar_consulta('consultar');
     $tipos_gasto = $tipoGasto->realizar_consulta('consultar');
 }
-$permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_GASTOS);
+$permisosVista = Sesiones::obtenerPermisosVista(Modulo::GESTIONAR_GASTOS);
 $btn_nuevo = [
     'target'  => '#modal_gastos',
     'texto'   => 'Nuevo Gasto',

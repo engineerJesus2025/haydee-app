@@ -3,6 +3,9 @@ namespace haydee\modelo;
 
 use PDO;
 use PDOException;
+use haydee\enums\EstadoPago; 
+use haydee\enums\MetodoPago;
+use haydee\enums\TipoBaseDatos;
 
 class Pagos extends Conexion
 {
@@ -37,6 +40,8 @@ class Pagos extends Conexion
      * Reglas para la tabla principal (Cabecera del Pago)
      */
     public static function obtenerReglas($operacion) {
+        $estadosValidos = implode('|', array_column(EstadoPago::cases(), 'value'));
+
         $reglasGenerales = [
             'id_pago' => [
                 'regex' => '/^\d+$/',
@@ -51,7 +56,7 @@ class Pagos extends Conexion
                 'opcional' => true
             ],
             'estado' => [
-                'regex' => '/^(PENDIENTE|PROCESADO|RECHAZADO|ANULADO)$/',
+                'regex' => "/^($estadosValidos)$/",
             ],
             'mensualidad_id' => [
                 'regex' => '/^\d+$/',
@@ -78,6 +83,8 @@ class Pagos extends Conexion
      * Reglas para cada fila de la tabla de detalles (Detalles Pagos)
      */
     public static function obtenerReglasDetalles() {
+        $metodosValidos = implode('|', array_column(MetodoPago::cases(), 'value'));
+
         return [
             'fecha_pago' => [ 
                 'regex' => '/^\d{4}-\d{2}-\d{2}$/'
@@ -91,7 +98,7 @@ class Pagos extends Conexion
                 'opcional' => true
             ],
             'tipo_pago' => [
-                'regex' => '/^(Efectivo|Pago Movil|Transferencia|Divisa)$/'
+                'regex' => "/^($metodosValidos)$/"
             ],
             'referencia' => [
                 'regex' => '/^[a-zA-Z0-9-]{4,20}$/',
@@ -178,7 +185,7 @@ class Pagos extends Conexion
      * en el mismo formulario ni registradas en otros pagos.
      */
     private function _validar_referencias_unicas() {
-        $pdo = $this->get_conex('negocio');
+        $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
         $refsUsadas = [];
         
         foreach ($this->detalles as $idx => $det) {
@@ -219,7 +226,7 @@ class Pagos extends Conexion
                 JOIN detalles_pagos dp ON ib.detalle_pago_id = dp.id_detalle_pago 
                 WHERE ib.referencia = :ref LIMIT 1";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute([':ref' => $referencia]);
             $pago_id_bd = $stmt->fetchColumn();
 
@@ -264,7 +271,7 @@ class Pagos extends Conexion
                 HAVING pendiente > 0
                 ORDER BY pm_per.anio, pm_per.mes";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->bindParam(':id_apartamento', $this->apartamento_id, PDO::PARAM_INT);
             $stmt->execute();
             $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -302,7 +309,7 @@ class Pagos extends Conexion
             GROUP BY p.id_pago
             ORDER BY ultima_fecha DESC;";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute();
             $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
             return ['estatus' => true, 'datos' => $datos];
@@ -351,7 +358,7 @@ class Pagos extends Conexion
                 ORDER BY ultima_fecha DESC";
 
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute([':correo' => $this->correo]);
             $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
             return ['estatus' => true, 'datos' => $datos];
@@ -382,7 +389,7 @@ class Pagos extends Conexion
                     pm.mensualidad_id = m.id_mensualidad
                 LEFT JOIN apartamentos a ON a.id_apartamento = m.apartamento_id
                         WHERE p.id_pago = :id AND p.activo = 1 LIMIT 1";
-            $stmtH = $this->get_conex('negocio')->prepare($sqlHead);
+            $stmtH = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlHead);
             $stmtH->execute([':id' => $this->id_pago]);
             $cabecera = $stmtH->fetch(PDO::FETCH_ASSOC);
 
@@ -394,7 +401,7 @@ class Pagos extends Conexion
                        LEFT JOIN ingresos_bancarios ib ON dp.id_detalle_pago = ib.detalle_pago_id
                        LEFT JOIN bancos b ON ib.banco_id = b.id_banco
                        WHERE dp.pago_id = :id";
-            $stmtD = $this->get_conex('negocio')->prepare($sqlDet);
+            $stmtD = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlDet);
             $stmtD->execute([':id' => $this->id_pago]);
             $detalles = $stmtD->fetchAll(PDO::FETCH_ASSOC);
 
@@ -429,7 +436,7 @@ class Pagos extends Conexion
                 LIMIT 1";
         
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute([':id_pago' => $this->id_pago]);
             $datos = $stmt->fetch(PDO::FETCH_ASSOC);
             
@@ -457,7 +464,7 @@ class Pagos extends Conexion
         $valRef = $this->_validar_referencias_unicas();
         if (!$valRef['estatus']) return $valRef;
 
-        $pdo = $this->get_conex('negocio');
+        $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
         try {
             $pdo->beginTransaction();
 
@@ -533,7 +540,7 @@ class Pagos extends Conexion
         $valRef = $this->_validar_referencias_unicas();
         if (!$valRef['estatus']) return $valRef;
 
-        $pdo = $this->get_conex('negocio');
+        $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
         try {
             $pdo->beginTransaction();
 
@@ -618,7 +625,7 @@ class Pagos extends Conexion
     {
         $sql = "UPDATE pagos SET activo = 0, estado = 'ANULADO' WHERE id_pago = :id";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute([':id' => $this->id_pago]);
             return ['estatus' => true, 'mensaje' => 'Pago anulado correctamente'];
         } catch (PDOException $e) {
@@ -635,7 +642,7 @@ class Pagos extends Conexion
     {
         $sql = "SELECT imagen FROM ingresos_bancarios WHERE detalle_pago_id = :id";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute([':id' => $idDetalle]);
             return $stmt->fetchColumn();
         } catch (PDOException $e) {

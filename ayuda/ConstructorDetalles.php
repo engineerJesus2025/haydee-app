@@ -2,24 +2,14 @@
 namespace haydee\ayuda;
 
 use haydee\ayuda\GestorImagenes;
-
+use haydee\enums\MetodoPago;
+    
 class ConstructorDetalles
 {
+    private const IMAGEN_POR_DEFECTO = 'default.png';
+    private const FORMATO_REGEX_IMAGEN = '/^imagen_(\d+)$/';
     /**
      * Construye un array de detalles a partir de los datos POST y FILES.
-     * 
-     * @param array $post Datos $_POST
-     * @param array $files Datos $_FILES
-     * @param array $config Configuración de campos y mapeo (opcional)
-     *        - 'campos': lista de campos escalares a extraer (ej. ['fecha', 'monto', 'metodo_pago'])
-     *        - 'bancarios': campos que solo se incluyen si el método de pago lo requiere (ej. ['banco_id', 'referencia'])
-     *        - 'imagenes': nombre del campo de archivo (por defecto 'imagen')
-     *        - 'metodo_pago_campo': nombre del campo que indica el método de pago (por defecto 'metodo_pago')
-     *        - 'metodos_con_archivo': array de métodos de pago que requieren archivo (por defecto ['Transferencia', 'Pago Movil'])
-     *        - 'imagen_default': nombre de imagen por defecto (por defecto 'default.png')
-     *        - 'indice_archivo_formato': patrón de los nombres de archivo en $_FILES (por defecto '/^imagen_(\d+)$/')
-     * @param bool $esEdicion Si es true, se consideran imágenes existentes (campo 'imagen_existente')
-     * @return array Array de detalles, cada uno con los campos configurados
     */
     public static function construirDetalles($post, $files, $config = [], $esEdicion = false)
     {
@@ -28,9 +18,9 @@ class ConstructorDetalles
             'bancarios' => ['banco_id', 'referencia'],
             'imagenes' => 'imagen',
             'metodo_pago_campo' => 'metodo_pago',
-            'metodos_con_archivo' => ['Transferencia', 'Pago Movil'],
-            'imagen_default' => 'default.png',
-            'indice_archivo_formato' => '/^imagen_(\d+)$/',
+            'metodos_con_archivo' => [MetodoPago::TRANSFERENCIA->value, MetodoPago::PAGO_MOVIL->value],
+            'imagen_default' => self::IMAGEN_POR_DEFECTO,
+            'indice_archivo_formato' => self::FORMATO_REGEX_IMAGEN,
             'campo_existente' => 'imagen_existente'
         ], $config);
 
@@ -100,10 +90,10 @@ class ConstructorDetalles
             'bancarios' => ['banco_id', 'referencia'],
             'imagenes' => 'imagen',
             'metodo_pago_campo' => 'metodo_pago',
-            'metodos_con_archivo' => ['Transferencia', 'Pago Movil'],
+            'metodos_con_archivo' => [MetodoPago::TRANSFERENCIA->value, MetodoPago::PAGO_MOVIL->value],
             'carpeta_imagenes' => 'gastos',
             'campo_existente' => 'imagen_existente',
-            'indice_archivo_formato' => '/^imagen_(\d+)$/'
+            'indice_archivo_formato' => self::FORMATO_REGEX_IMAGEN
         ];
         return self::construirDetalles($post, $files, $config, $esEdicion);
     }
@@ -119,10 +109,10 @@ class ConstructorDetalles
             'bancarios' => ['banco_id', 'referencia'],
             'imagenes' => 'imagen',
             'metodo_pago_campo' => 'tipo_pago',
-            'metodos_con_archivo' => ['Transferencia', 'Pago Movil'],
+            'metodos_con_archivo' => [MetodoPago::TRANSFERENCIA->value, MetodoPago::PAGO_MOVIL->value],
             'carpeta_imagenes' => 'pagos',
             'campo_existente' => 'imagen_existente',
-            'indice_archivo_formato' => '/^imagen_(\d+)$/'
+            'indice_archivo_formato' => self::FORMATO_REGEX_IMAGEN
         ];
         return self::construirDetalles($post, $files, $config, $esEdicion);
     }

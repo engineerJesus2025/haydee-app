@@ -3,17 +3,24 @@ namespace haydee\modelo;
 
 use PDO;
 use PDOException;
+use haydee\enums\TipoBaseDatos;
 
 class Mantenimiento extends Conexion
 {
-    // ====================================================================
+    // CONSTANTES DE ENTORNO Y RUTAS
+    private const MYSQLDUMP_WIN = '"C:\xampp\mysql\bin\mysqldump.exe"';
+    private const MYSQLDUMP_LINUX = 'mysqldump';
+    private const MYSQL_WIN = '"C:\xampp\mysql\bin\mysql.exe"';
+    private const MYSQL_LINUX = 'mysql';
+    private const DIR_BACKUPS = 'Backups';
+
     // VALIDACIONES CENTRALIZADAS
-    // ====================================================================
     public static function obtenerReglas($operacion) {
+        $tiposCuentaValidos = implode('|', array_column(TipoBaseDatos::cases(), 'value'));
+
         $reglasGenerales = [
             'db' => [
-                // Solo permitimos exactamente la palabra 'negocio' o 'seguridad'
-                'regex' => '/^(negocio|seguridad)$/'
+                'regex' => "/^($tiposCuentaValidos)$/"
             ]
         ];
 
@@ -33,7 +40,7 @@ class Mantenimiento extends Conexion
 
     public function generarCopiaSeguridad($db)
     {
-        $db_copiar = ($db === 'negocio') ? DB_NAME : DB_SECURITY;
+        $db_copiar = ($db === TipoBaseDatos::NEGOCIO) ? DB_NAME : DB_SECURITY;
         $mysqldump_path = $this->getMysqldumpPath();
         $backup_dir = $this->getBackupDir();
         if (!is_dir($backup_dir)) {
@@ -206,22 +213,14 @@ class Mantenimiento extends Conexion
     /**
      * Obtiene la ruta del ejecutable mysqldump según el entorno.
      */
-    private function getMysqldumpPath()
+   private function getMysqldumpPath()
     {
-        // Para entorno local (XAMPP en Windows)
-        if (DIRECTORY_SEPARATOR === '\\') {
-            return '"C:\xampp\mysql\bin\mysqldump.exe"';
-        }
-        // Para Linux/Unix (hosting)
-        return 'mysqldump';
+        return (DIRECTORY_SEPARATOR === '\\') ? self::MYSQLDUMP_WIN : self::MYSQLDUMP_LINUX;
     }
 
     private function getMysqlPath()
     {
-        if (DIRECTORY_SEPARATOR === '\\') {
-            return '"C:\xampp\mysql\bin\mysql.exe"';
-        }
-        return 'mysql';
+        return (DIRECTORY_SEPARATOR === '\\') ? self::MYSQL_WIN : self::MYSQL_LINUX;
     }
 
     /**
@@ -229,17 +228,16 @@ class Mantenimiento extends Conexion
      */
     private function getBackupDir()
     {
-        $base = dirname(__DIR__); // Sube un nivel desde modelo/ a la raíz
-        return $base . DIRECTORY_SEPARATOR . 'Backups' . DIRECTORY_SEPARATOR;
+        $base = dirname(__DIR__); 
+        return $base . DIRECTORY_SEPARATOR . self::DIR_BACKUPS . DIRECTORY_SEPARATOR;
     }
 
     public function detectarBaseDesdeSQL($contenido_sql)
     {
-        if (strpos($contenido_sql, "Database: seguridad_haydee_db") !== false) {
-            return 'seguridad';
+        if (strpos($contenido_sql, "Database: " . DB_SECURITY) !== false) {
+            return TipoBaseDatos::SEGURIDAD;
         }
-        // Por defecto, asumimos negocio
-        return 'negocio';
+        return TipoBaseDatos::NEGOCIO;
     }
 
     /**

@@ -9,9 +9,8 @@ RewriteCond %{REQUEST_URI} ^/haydee-app/?$ [OR]
 RewriteCond %{REQUEST_URI} ^/haydee-app/index\.php$ [OR]
 RewriteCond %{REQUEST_URI} ^/haydee-app/sw\.js$ [OR] 
 RewriteCond %{REQUEST_URI} ^/haydee-app/recursos/ [OR]
-RewriteCond %{REQUEST_URI} ^/haydee-app/vendor/ [OR]
-RewriteCond %{REQUEST_URI} ^/haydee-app/api/ [OR]
-RewriteCond %{REQUEST_URI} ^/haydee-app/vista/
+RewriteCond %{REQUEST_URI} ^/haydee-app/api/index\.php$ [OR]
+RewriteCond %{REQUEST_URI} ^/haydee-app/vista/error/
 RewriteRule .* - [L]
 
 # Bloquear todo lo demás

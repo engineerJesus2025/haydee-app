@@ -1,4 +1,7 @@
-<?php
+﻿<?php
+use haydee\enums\Modulo;
+use haydee\enums\Accion;
+
 use haydee\servicios\Sesiones;
 use haydee\modelo\Rol;
 use haydee\modelo\Bitacora;
@@ -6,15 +9,14 @@ use haydee\ayuda\Validador;
 use haydee\ayuda\ValidadorBD;
 use haydee\servicios\GestorAuditoria;
 
-Sesiones::validarMetodoHTTP(['GET', 'POST']);
-Sesiones::verificarSesion();
-Sesiones::verificarPermiso(GESTIONAR_ROLES, CONSULTAR);
+// Verificaciones de seguridad
+Sesiones::autorizarAcceso(Modulo::GESTIONAR_ROLES, Accion::CONSULTAR);
 
 if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
 
-    Sesiones::verificarPermisoAccion(GESTIONAR_ROLES, $operacion);
+    Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_ROLES, $operacion);
     
     $reglas = Rol::obtenerReglas($operacion);
 
@@ -41,7 +43,7 @@ if (isset($_POST["operacion"])) {
     $rol->set_permisos_asignados(json_decode($permisosJson, true) ?: []);
 
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
-    $auditor = new GestorAuditoria($rol, GESTIONAR_ROLES);
+    $auditor = new GestorAuditoria($rol, Modulo::GESTIONAR_ROLES);
 
     try {
         switch ($operacion) {
@@ -49,7 +51,7 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $rol->realizar_consulta('consultar');
 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
-                if ($respuesta['estatus']) { $auditor->registrarAuditoria('consultar'); }
+                if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::CONSULTAR); }
                 break;
 
             case 'consultar_rol':
@@ -61,7 +63,7 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $rol->realizar_consulta('registrar_rol');
 
                 http_response_code($respuesta['estatus'] ? 201 : 400);
-                if ($respuesta['estatus']) { $auditor->registrarAuditoria('registrar'); }
+                if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::REGISTRAR); }
                 break;
 
             case 'modificar_rol':
@@ -69,7 +71,7 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $rol->realizar_consulta('modificar_rol');
 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
-                if ($respuesta['estatus']) { $auditor->registrarAuditoria('modificar'); }
+                if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::MODIFICAR); }
                 break;
 
             case 'eliminar_rol':
@@ -77,7 +79,7 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $rol->realizar_consulta('eliminar_rol');
 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
-                if ($respuesta['estatus']) { $auditor->registrarAuditoria('eliminar'); }
+                if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::ELIMINAR); }
                 break;
             case 'consultar_permisos_rol':
                 $respuesta = $rol->realizar_consulta('consultar_permisos_asignados');
@@ -130,7 +132,7 @@ if (isset($_POST["validar"])) {
         }
     } catch (Exception $e) {
         http_response_code(500);
-        error_log("Error en validación AJAX Bancos: " . $e->getMessage());
+        error_log("Error en Validación AJAX Bancos: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
     }
 
@@ -149,7 +151,7 @@ $registros_modulos = [];
 $registros_permisos_usuarios = [];
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_ROLES);
+    GestorAuditoria::inicializarBanderaConsulta(Modulo::GESTIONAR_ROLES);
     
     $rol = new Rol();
     $matriz = $rol->realizar_consulta('consultar_matriz_permisos');
@@ -159,7 +161,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     }
     $rol->cerrar();
 }
-$permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_ROLES);
+$permisosVista = Sesiones::obtenerPermisosVista(Modulo::GESTIONAR_ROLES);
 $btn_nuevo = [
     'target'  => '#modal_roles',
     'texto'   => 'Nuevo Rol',

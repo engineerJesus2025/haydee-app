@@ -4,9 +4,13 @@ namespace haydee\servicios;
 use haydee\modelo\Usuario;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+use haydee\enums\TipoToken;
 
 class Recuperacion
 {
+    private const LONGITUD_TOKEN_BYTES = 32;
+    private const TIEMPO_EXPIRACION = '+1 hour';
+    
     private $usuarioModel;
 
     public function __construct()
@@ -29,13 +33,13 @@ class Recuperacion
         $usuario = $resultado['datos'];
 
         // Generar token
-        $token = bin2hex(random_bytes(32));
-        $expiracion = date('Y-m-d H:i:s', strtotime('+1 hour'));
+        $token = bin2hex(random_bytes(self::LONGITUD_TOKEN_BYTES));
+        $expiracion = date('Y-m-d H:i:s', strtotime(self::TIEMPO_EXPIRACION));
 
         $this->usuarioModel->set_id_usuario($usuario['id_usuario']);
         $this->usuarioModel->set_token($token);
         $this->usuarioModel->set_token_expiracion($expiracion);
-        $this->usuarioModel->set_token_tipo('RECUPERAR_CONTRASENIA');
+        $this->usuarioModel->set_token_tipo(TipoToken::RECUPERACION->value);
 
         $resToken = $this->usuarioModel->realizar_consulta('registrar_token');
         if (!$resToken['estatus']) {
@@ -60,7 +64,7 @@ class Recuperacion
     public function validarTokenRecuperacion($token)
     {
         $this->usuarioModel->set_token($token);
-        $this->usuarioModel->set_token_tipo('RECUPERAR_CONTRASENIA');
+        $this->usuarioModel->set_token_tipo(TipoToken::RECUPERACION->value);
         $resultado = $this->usuarioModel->realizar_consulta('validar_token');
         if (!$resultado['estatus']) {
             return ['estatus' => false, 'mensaje' => 'Token inválido o expirado.'];
@@ -86,7 +90,7 @@ class Recuperacion
         }
 
         // Eliminar token usado
-        $this->usuarioModel->set_token_tipo('RECUPERAR_CONTRASENIA');
+        $this->usuarioModel->set_token_tipo(TipoToken::RECUPERACION->value);
         $this->usuarioModel->realizar_consulta('eliminar_token');
 
         return ['estatus' => true, 'mensaje' => 'Contraseña actualizada.'];

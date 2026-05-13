@@ -14,9 +14,13 @@ AES significa Advanced Encryption Standard (Estándar de Cifrado Avanzado). Es u
 */
 
 class Criptografia {
+    private const RSA_KEY_SIZE = 4096;
+    private const AES_MODE = 'gcm';
+    private const HASH_ALGO = 'sha256';
+    
     // Genera un par de llaves RSA para el Handshake ----- Ya no se usa
     public static function generarLlavesRSA() {
-        $private = RSA::createKey(4096);
+        $private = RSA::createKey(self::RSA_KEY_SIZE);
         $public = $private->getPublicKey();
         
         return [
@@ -35,7 +39,7 @@ class Criptografia {
 
     // Descifra los datos (payload) usando AES-256-GCM
     public static function descifrarPayload($payloadBase64, $claveAES, $ivBase64, $tagBase64) {
-        $aes = new AES('gcm');
+        $aes = new AES(self::AES_MODE);
         $aes->setKey($claveAES);
         $aes->setNonce(base64_decode($ivBase64));
         $aes->setTag(base64_decode($tagBase64));
@@ -50,8 +54,8 @@ class Criptografia {
         // OBLIGAMOS a PHP a usar SHA-256 para que coincida exactamente con la App
         $privateKey = RSA::load($llavePrivadaPem)
             ->withPadding(RSA::ENCRYPTION_OAEP)
-            ->withHash('sha256')
-            ->withMGFHash('sha256'); 
+            ->withHash(self::HASH_ALGO)
+            ->withMGFHash(self::HASH_ALGO);
             
         return $privateKey->decrypt(base64_decode($claveRsaBase64));
     }
@@ -72,14 +76,11 @@ class Criptografia {
 
     // Cifra los datos (payload) de salida usando AES-256-GCM
     public static function cifrarPayload($datosJSON, $claveAESRaw, $ivRaw, &$tagRaw) {
-        $aes = new AES('gcm');
+        $aes = new AES(self::AES_MODE);
         $aes->setKey($claveAESRaw);
-        $aes->setNonce($ivRaw); // El Vector de Inicialización aleatorio
+        $aes->setNonce($ivRaw);
         
         $textoCifrado = $aes->encrypt($datosJSON);
-        
-        // El modo GCM genera una firma (Tag) obligatoria para validar que 
-        // nadie modifique el JSON en el camino hacia el teléfono.
         $tagRaw = $aes->getTag(); 
         
         return $textoCifrado;

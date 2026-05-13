@@ -1,4 +1,7 @@
-<?php
+﻿<?php
+use haydee\enums\Modulo;
+use haydee\enums\Accion;
+
 use haydee\servicios\Sesiones;
 use haydee\modelo\TipoGasto;
 use haydee\modelo\Bitacora;
@@ -7,15 +10,13 @@ use haydee\ayuda\ValidadorBD;
 use haydee\servicios\GestorAuditoria;
 
 // Verificaciones de seguridad
-Sesiones::validarMetodoHTTP(['GET', 'POST']);
-Sesiones::verificarSesion();
-Sesiones::verificarPermiso(GESTIONAR_TIPO_GASTO, CONSULTAR);
+Sesiones::autorizarAcceso(Modulo::GESTIONAR_TIPO_GASTO, Accion::CONSULTAR);
 
 if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
 
-    Sesiones::verificarPermisoAccion(GESTIONAR_TIPO_GASTO, $operacion);
+    Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_TIPO_GASTO, $operacion);
     
     $reglas = TipoGasto::obtenerReglas($operacion);
 
@@ -38,7 +39,7 @@ if (isset($_POST["operacion"])) {
     $tipoGasto->set_nombre_tipo_gasto($_POST['nombre_tipo_gasto'] ?? null);
 
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
-    $auditor = new GestorAuditoria($tipoGasto, GESTIONAR_TIPO_GASTO);
+    $auditor = new GestorAuditoria($tipoGasto, Modulo::GESTIONAR_TIPO_GASTO);
     
     try {
         switch ($operacion) {
@@ -46,7 +47,7 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $tipoGasto->realizar_consulta('consultar');
 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
-                if ($respuesta['estatus']) { $auditor->registrarAuditoria('consultar'); }
+                if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::CONSULTAR); }
                 break;
 
             case 'consultar_tipo_gasto':
@@ -58,7 +59,7 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $tipoGasto->realizar_consulta('registrar_tipo_gasto');
 
                 http_response_code($respuesta['estatus'] ? 201 : 400);
-                if ($respuesta['estatus']) { $auditor->registrarAuditoria('registrar'); }
+                if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::REGISTRAR); }
                 break;
 
             case 'modificar_tipo_gasto':
@@ -66,7 +67,7 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $tipoGasto->realizar_consulta('modificar_tipo_gasto');
 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
-                if ($respuesta['estatus']) { $auditor->registrarAuditoria('modificar'); }
+                if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::MODIFICAR); }
                 break;
 
             case 'eliminar_tipo_gasto':
@@ -74,7 +75,7 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $tipoGasto->realizar_consulta('eliminar_tipo_gasto');
 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
-                if ($respuesta['estatus']) { $auditor->registrarAuditoria('eliminar'); }
+                if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::ELIMINAR); }
                 break;
 
             default:
@@ -97,9 +98,9 @@ if (isset($_POST["operacion"])) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_TIPO_GASTO);
+    GestorAuditoria::inicializarBanderaConsulta(Modulo::GESTIONAR_TIPO_GASTO);
 }
-$permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_TIPO_GASTO);
+$permisosVista = Sesiones::obtenerPermisosVista(Modulo::GESTIONAR_TIPO_GASTO);
 $btn_nuevo = [
     'target'  => '#modal_tipo_gasto',
     'texto'   => 'Nuevo Tipo de Gasto',

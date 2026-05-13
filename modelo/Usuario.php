@@ -3,9 +3,15 @@ namespace haydee\modelo;
 
 use PDO;
 use PDOException;
+use haydee\enums\Accion;
+use haydee\enums\TipoToken;
+use haydee\enums\TipoBaseDatos;
 
 class Usuario extends Conexion
 {
+    private const MAX_INTENTOS_LOGIN = 3;
+    private const TIEMPO_BLOQUEO_MINUTOS = 15;
+    private const MARGEN_EXPIRACION_TOKEN_MINUTOS = 10;
     // ====================================================================
     // PROPIEDADES (Usuario)
     // ====================================================================
@@ -125,24 +131,14 @@ class Usuario extends Conexion
             return ['estatus' => false, 'mensaje' => 'Error interno: ' . $e->getMessage()];
         }
     }
-
-    // ====================================================================
-    // LÓGICA DE USUARIOS (CRUD y Auth)
-    // ====================================================================
-
     
     // SE USA EN EL SERVICIO AUTENTICACION
     private function _validar_usuario()
     {
-        // Nota para mi: Se podria mover a una constante de config. 
-        $limite_intentos = 3;
-        $tiempo_bloqueo = 15; 
-
         try {
-            $db = $this->get_conex('seguridad');
+            $db = $this->get_conex(TipoBaseDatos::SEGURIDAD);
             $db->beginTransaction();
 
-            // datos básicos del usuario
             $sqlUsuario = "SELECT u.id_usuario, u.correo, u.nombre, u.apellido, u.contrasenia, 
                            r.id_rol, r.nombre as nombre_rol
                     FROM usuarios u 
@@ -154,14 +150,12 @@ class Usuario extends Conexion
             $datos = $stmtU->fetch(PDO::FETCH_ASSOC);
 
             if (!$datos) {
-                $db->rollBack(); // cerrar transacción antes de salir
+                $db->rollBack();
                 return ['estatus' => false, 'mensaje' => 'Credenciales incorrectas'];
             }
 
             $id_usuario = $datos['id_usuario'];
 
-            // Verificar bloqueos con FOR UPDATE
-            // Esto bloquea la fila en intentos_login para este usuario específico.
             $sqlIntentos = "SELECT intentos, TIMESTAMPDIFF(MINUTE, ultimo_intento, NOW()) as minutos_transcurridos 
                             FROM intentos_login WHERE usuario_id = :id FOR UPDATE";
             $stmtI = $db->prepare($sqlIntentos);
@@ -172,14 +166,18 @@ class Usuario extends Conexion
                 $intentos = (int)$registroIntento['intentos'];
                 $minutos_transcurridos = (int)$registroIntento['minutos_transcurridos'];
 
-                if ($intentos >= $limite_intentos && $minutos_transcurridos < $tiempo_bloqueo) {
-                    $tiempo_restante = $tiempo_bloqueo - $minutos_transcurridos;
+                // USAMOS LAS CONSTANTES DE CLASE AQUÍ
+                if ($intentos >= self::MAX_INTENTOS_LOGIN && $minutos_transcurridos < self::TIEMPO_BLOQUEO_MINUTOS) {
+                    $tiempo_restante = self::TIEMPO_BLOQUEO_MINUTOS - $minutos_transcurridos;
                     $db->rollBack();
-                    return ['estatus' => false, 'mensaje' => "Cuenta bloqueada. Intente en $tiempo_restante min.", 'codigo_http' => 429];
+                    return [
+                        'estatus' => false, 
+                        'mensaje' => "Cuenta bloqueada temporalmente por seguridad. Intente en $tiempo_restante min.", 
+                        'codigo_http' => 429
+                    ];
                 }
 
-                // Si ya pasó el tiempo de castigo, limpiamos para el nuevo intento
-                if ($intentos >= $limite_intentos && $minutos_transcurridos >= $tiempo_bloqueo) {
+                if ($intentos >= self::MAX_INTENTOS_LOGIN && $minutos_transcurridos >= self::TIEMPO_BLOQUEO_MINUTOS) {
                     $db->prepare("DELETE FROM intentos_login WHERE usuario_id = :id")
                        ->execute([':id' => $id_usuario]);
                 }
@@ -230,7 +228,7 @@ class Usuario extends Conexion
                 WHERE u.activo = 1 
                 ORDER BY u.id_usuario";
         try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute();
             return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
         } catch (PDOException $e) {
@@ -247,7 +245,7 @@ class Usuario extends Conexion
                 INNER JOIN roles r ON u.rol_id = r.id_rol 
                 WHERE u.id_usuario = :id AND u.activo = 1";
         try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute([':id' => $this->id_usuario]);
             $dato = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -261,6 +259,8 @@ class Usuario extends Conexion
     // SE USA EN EL MODULO (perfil)
     private function _consultar_perfil_usuario()
     {
+        $accionLogin = Accion::INICIAR_SESION->value;
+
         $sql = "SELECT 
                     u.nombre as nombre_usuario, 
                     u.apellido, 
@@ -270,13 +270,13 @@ class Usuario extends Conexion
                         (SELECT b.fecha_hora 
                          FROM bitacora b 
                          WHERE b.usuario_id = u.id_usuario 
-                         AND b.accion = 'iniciar sesion' 
+                         AND b.accion = :accion 
                          ORDER BY b.fecha_hora DESC 
                          LIMIT 1 OFFSET 1),
                         (SELECT b.fecha_hora 
                          FROM bitacora b 
                          WHERE b.usuario_id = u.id_usuario 
-                         AND b.accion = 'iniciar sesion' 
+                         AND b.accion = :accion2 
                          ORDER BY b.fecha_hora DESC 
                          LIMIT 1)
                     ) as ultima_vez
@@ -285,8 +285,12 @@ class Usuario extends Conexion
                 WHERE u.id_usuario = :usuario";
 
         try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
-            $stmt->execute([':usuario' => $this->id_usuario]);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
+            $stmt->execute([
+                ':accion' => $accionLogin,
+                ':accion2' => $accionLogin,
+                ':usuario' => $this->id_usuario
+            ]);
             $datos = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$datos) {
@@ -308,7 +312,7 @@ class Usuario extends Conexion
                 INNER JOIN roles r ON u.rol_id = r.id_rol 
                 WHERE u.correo = :correo AND u.activo = 1";
         try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute([':correo' => $this->correo]);
             $datos = $stmt->fetch(PDO::FETCH_ASSOC);
             if (!$datos) {
@@ -329,7 +333,7 @@ class Usuario extends Conexion
         try {
             $sql = "INSERT INTO usuarios (apellido, nombre, correo, contrasenia, rol_id) 
                     VALUES (:ape, :nom, :cor, :con, :rol)";
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute([
                 ':ape' => $this->apellido,
                 ':nom' => $this->nombre,
@@ -337,7 +341,7 @@ class Usuario extends Conexion
                 ':con' => $hash,
                 ':rol' => $this->rol_id
             ]);
-            $lastId = $this->get_conex('seguridad')->lastInsertId();
+            $lastId = $this->get_conex(TipoBaseDatos::SEGURIDAD)->lastInsertId();
             return ['estatus' => true, 'mensaje' => 'Usuario registrado', 'lastId' => $lastId];
         } catch (PDOException $e) {
             error_log("Error en _registrar: " . $e->getMessage());
@@ -364,7 +368,7 @@ class Usuario extends Conexion
         }
 
         try {
-            $this->get_conex('seguridad')->prepare($sql)->execute($params);
+            $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql)->execute($params);
             return ['estatus' => true, 'mensaje' => 'Usuario actualizado'];
         } catch (PDOException $e) {
             error_log("Error en _modificar_usuario: " . $e->getMessage());
@@ -379,7 +383,7 @@ class Usuario extends Conexion
                 WHERE id_usuario = :id";
 
         try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $resultado = $stmt->execute([
                 ':ape' => $this->apellido,
                 ':nom' => $this->nombre,
@@ -402,7 +406,7 @@ class Usuario extends Conexion
     {
         try {
             $sql = "UPDATE usuarios SET activo = 0 WHERE id_usuario = :id";
-            $this->get_conex('seguridad')->prepare($sql)->execute([':id' => $this->id_usuario]);
+            $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql)->execute([':id' => $this->id_usuario]);
             return ['estatus' => true, 'mensaje' => 'Usuario eliminado'];
         } catch (PDOException $e) {
             error_log("Error en _eliminar_usuario: " . $e->getMessage());
@@ -417,7 +421,7 @@ class Usuario extends Conexion
         $sql = "UPDATE usuarios SET contrasenia = :con WHERE correo = :cor AND activo = 1";
 
         try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute([':con' => $hash, ':cor' => $this->correo]);
             if ($stmt->rowCount() == 0) return ['estatus' => false, 'mensaje' => 'Correo no encontrado o inactivo'];
             return ['estatus' => true, 'mensaje' => 'Contraseña actualizada'];
@@ -436,7 +440,7 @@ class Usuario extends Conexion
     {
         try {
             $sql = "CALL sp_insertar_token(:uid, :tipo, :token, :exp)";
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute([
                 ':uid' => $this->id_usuario,
                 ':tipo' => $this->token_tipo,
@@ -453,22 +457,32 @@ class Usuario extends Conexion
     // SE USA EN EL SERVICIO AUTENTICACION
     private function _validar_token()
     {
-        $sql = "SELECT u.id_usuario, u.correo 
+        if (empty($this->token) || empty($this->token_tipo)) {
+            return ['estatus' => false, 'mensaje' => 'Datos de validación incompletos'];
+        }
+
+        $margen = self::MARGEN_EXPIRACION_TOKEN_MINUTOS;
+
+        $sql = "SELECT u.id_usuario, u.correo, u.nombre 
                 FROM tokens_seguridad t
-                JOIN usuarios u ON t.usuario_id = u.id_usuario
-                WHERE t.token = :token AND t.tipo = :tipo 
-                AND DATE_ADD(t.fecha_expiracion, INTERVAL 10 MINUTE) > NOW()";
+                INNER JOIN usuarios u ON t.usuario_id = u.id_usuario
+                WHERE t.token = :token 
+                AND t.tipo = :tipo 
+                AND DATE_ADD(t.fecha_expiracion, INTERVAL $margen MINUTE) > NOW()";
 
         try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
-            $stmt->execute([':token' => $this->token, ':tipo' => $this->token_tipo]);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
+            $stmt->execute([
+                ':token' => $this->token, 
+                ':tipo' => $this->token_tipo 
+            ]);
             $datos = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if (!$datos) return ['estatus' => false, 'mensaje' => 'Token inválido o expirado'];
+            if (!$datos) return ['estatus' => false, 'mensaje' => 'El enlace ha expirado o es inválido'];
             return ['estatus' => true, 'datos' => $datos];
         } catch (PDOException $e) {
             error_log("Error en _validar_token: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al validar token'];
+            return ['estatus' => false, 'mensaje' => 'Error de seguridad al validar acceso'];
         }
     }
 
@@ -481,7 +495,7 @@ class Usuario extends Conexion
 
         $sql = "DELETE FROM tokens_seguridad WHERE usuario_id = :uid AND tipo = :tipo";
         try {
-            $stmt = $this->get_conex('seguridad')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute([':uid' => $this->id_usuario, ':tipo' => $this->token_tipo]);
             return ['estatus' => true, 'mensaje' => 'Token eliminado'];
         } catch (PDOException $e) {

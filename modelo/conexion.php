@@ -3,6 +3,7 @@ namespace haydee\modelo;
 
 use \PDO;
 use \PDOException;
+use haydee\enums\TipoBaseDatos;
 
 class Conexion extends PDO {
     // Guardamos las conexiones independientemente para no estar desconectando y conectando
@@ -24,14 +25,14 @@ class Conexion extends PDO {
         }
     }
 
-    protected function get_conex($base = 'negocio') {
-        if ($base === 'seguridad') {
+    protected function get_conex(TipoBaseDatos $base = TipoBaseDatos::NEGOCIO) {
+        if ($base === TipoBaseDatos::SEGURIDAD) {
             if ($this->conexSeguridad === null) {
                 $this->conexSeguridad = $this->crearConexion(DB_SECURITY);
             }
             return $this->conexSeguridad;
         }
-        // negocio
+        
         if ($this->conexNegocio === null) {
             $this->conexNegocio = $this->crearConexion(DB_NAME);
         }

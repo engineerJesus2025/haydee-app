@@ -3,6 +3,8 @@ namespace haydee\modelo;
 
 use PDO;
 use PDOException;
+use haydee\enums\TipoCuenta;
+use haydee\enums\TipoBaseDatos;
 
 class Banco extends Conexion
 {
@@ -19,6 +21,8 @@ class Banco extends Conexion
     // VALIDACIONES CENTRALIZADAS
     // ====================================================================
     public static function obtenerReglas($operacion) {
+        $tiposCuentaValidos = implode('|', array_column(TipoCuenta::cases(), 'value'));
+        
         $reglasGenerales = [
             'id_banco' => [
                 'regex' => '/^\d+$/',
@@ -35,7 +39,7 @@ class Banco extends Conexion
                 'unique' => ['tabla' => 'bancos', 'campo' => 'numero_cuenta', 'exclude_field' => 'id_banco']
             ],
             'tipo_cuenta' => [
-                'regex' => '/^(Ahorro|Corriente)$/'
+                'regex' => "/^($tiposCuentaValidos)$/"
             ],
             'telefono_afiliado' => [
                 'regex' => '/^\d{11}$/'
@@ -108,7 +112,7 @@ class Banco extends Conexion
     {
         $sql = "SELECT * FROM bancos WHERE activo = 1 ORDER BY id_banco";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute();
             $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
             return ['estatus' => true, 'datos' => $datos];
@@ -126,7 +130,7 @@ class Banco extends Conexion
     {
         $sql = "SELECT * FROM bancos WHERE id_banco = :id_banco AND activo = 1";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->bindParam(':id_banco', $this->id_banco);
             $stmt->execute();
             $datos = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -149,7 +153,7 @@ class Banco extends Conexion
         $sql = "INSERT INTO bancos (nombre_banco, codigo, numero_cuenta, tipo_cuenta, telefono_afiliado, rif)
                 VALUES (:nombre_banco, :codigo, :numero_cuenta, :tipo_cuenta, :telefono_afiliado, :rif)";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->bindParam(':nombre_banco', $this->nombre_banco);
             $stmt->bindParam(':codigo', $this->codigo);
             $stmt->bindParam(':numero_cuenta', $this->numero_cuenta);
@@ -157,7 +161,7 @@ class Banco extends Conexion
             $stmt->bindParam(':telefono_afiliado', $this->telefono_afiliado);
             $stmt->bindParam(':rif', $this->rif);
             $stmt->execute();
-            $lastId = $this->get_conex('negocio')->lastInsertId();
+            $lastId = $this->get_conex(TipoBaseDatos::NEGOCIO)->lastInsertId();
             return ['estatus' => true, 'mensaje' => 'Banco registrado correctamente', 'lastId' => $lastId];
         } catch (PDOException $e) {
             error_log("Error en _registrar: " . $e->getMessage());
@@ -180,7 +184,7 @@ class Banco extends Conexion
                     rif = :rif
                 WHERE id_banco = :id_banco";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->bindParam(':id_banco', $this->id_banco);
             $stmt->bindParam(':nombre_banco', $this->nombre_banco);
             $stmt->bindParam(':codigo', $this->codigo);
@@ -204,7 +208,7 @@ class Banco extends Conexion
     {
         $sql = "UPDATE bancos SET activo = 0 WHERE id_banco = :id_banco";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->bindParam(':id_banco', $this->id_banco);
             $stmt->execute();
             return ['estatus' => true, 'mensaje' => 'Banco eliminado correctamente'];

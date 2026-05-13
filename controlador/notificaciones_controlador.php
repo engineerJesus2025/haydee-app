@@ -1,4 +1,6 @@
-<?php
+﻿<?php
+use haydee\enums\Modulo;
+
 use haydee\servicios\Sesiones;
 use haydee\modelo\Notificaciones;
 use haydee\ayuda\Validador;
@@ -10,9 +12,9 @@ if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
 
-    Sesiones::verificarPermisoAccion(GESTIONAR_ANIO_FISCAL, $operacion);
+    Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_ANIO_FISCAL, $operacion);
 
-    // El frontend envía 'id', a 'id_notificacion' para que coincida con la regla
+    // El frontend envia 'id', a 'id_notificacion' para que coincida con la regla
     if (isset($_POST['id'])) {
         $_POST['id_notificacion'] = $_POST['id'];
     }
@@ -33,7 +35,7 @@ if (isset($_POST["operacion"])) {
 
     $notificaciones = new Notificaciones();
 
-    // Asignación de campos seguros
+    // Asignacion de campos seguros
     $notificaciones->set_id_notificacion($_POST['id_notificacion'] ?? null); 
     $notificaciones->set_usuario_id($_SESSION['id_usuario'] ?? null);
 
@@ -51,7 +53,7 @@ if (isset($_POST["operacion"])) {
 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
-                    // Eliminar la notificación de la sesión
+                    // Eliminar la notificación de la sesion
                     if (isset($_SESSION['notificaciones']) && is_array($_SESSION['notificaciones'])) {
                         $id_marcado = $notificaciones->get_id_notificacion();
                         foreach ($_SESSION['notificaciones'] as $index => $notif) {

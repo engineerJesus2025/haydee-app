@@ -30,7 +30,6 @@ if (!defined('VAPID_PUBLIC_KEY')) define('VAPID_PUBLIC_KEY', $_ENV['VAPID_PUBLIC
 if (!defined('VAPID_PRIVATE_KEY')) define('VAPID_PRIVATE_KEY', $_ENV['VAPID_PRIVATE_KEY'] ?? '');
 
 if (!defined('JWT_SECRET')) define('JWT_SECRET', $_ENV['JWT_SECRET'] ?? '');
-if (!defined('JWT_TIEMPO_EXPIRACION')) define('JWT_TIEMPO_EXPIRACION', $_ENV['JWT_TIEMPO_EXPIRACION'] ?? 7200); // Dos horas
 
 if (!defined('URL_BASE')) define('URL_BASE', $_ENV['URL_BASE'] ?? '/haydee-app/');
 if (!defined('ENTORNO')) define('ENTORNO', $_ENV['ENTORNO'] ?? '');

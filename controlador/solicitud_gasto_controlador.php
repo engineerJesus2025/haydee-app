@@ -1,4 +1,7 @@
-<?php
+﻿<?php
+use haydee\enums\Modulo;
+use haydee\enums\Accion;
+
 use haydee\servicios\Sesiones;
 use haydee\modelo\SolicitudGasto;
 use haydee\modelo\Presupuesto;
@@ -8,27 +11,21 @@ use haydee\ayuda\ValidadorBD;
 use haydee\servicios\GestorAuditoria;
 
 // Verificaciones de seguridad
-Sesiones::validarMetodoHTTP(['GET', 'POST']);
-Sesiones::verificarSesion();
-Sesiones::verificarPermiso(GESTIONAR_SOLICITUD_GASTO, CONSULTAR);
+Sesiones::autorizarAcceso(Modulo::GESTIONAR_SOLICITUD_GASTO, Accion::CONSULTAR);
 
 if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
 
-    Sesiones::verificarPermisoAccion(GESTIONAR_SOLICITUD_GASTO, $operacion);
+    Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_SOLICITUD_GASTO, $operacion);
 
-    // =========================================================
-    // 0. NORMALIZACIÓN DE VARIABLES (Frontend -> Backend)
-    // =========================================================
+    // NORMALIZACIÓN DE VARIABLES (Frontend -> Backend)
     if (isset($_POST['fecha'])) $_POST['fecha_reporte']  = $_POST['fecha'];
     if (isset($_POST['descripcion'])) $_POST['descripcion_necesidad'] = $_POST['descripcion'];
     if (isset($_POST['nombre'])) $_POST['nombre_solicitante'] = $_POST['nombre'];
     if (isset($_POST['monto'])) $_POST['monto_estimado'] = $_POST['monto'];
 
-    // =========================================================
-    // 1. VALIDACIÓN CENTRALIZADA
-    // =========================================================
+    // VALIDACIÓN CENTRALIZADA
     $reglas = SolicitudGasto::obtenerReglas($operacion);
 
     if (!empty($reglas)) {
@@ -45,7 +42,7 @@ if (isset($_POST["operacion"])) {
 
     // Instancia del modelo principal
     $solicitud = new SolicitudGasto();
-    // Asignación masiva de campos que pueden llegar
+    // Asignacion masiva de campos que pueden llegar
     $solicitud->set_id_solicitud($_POST['id_solicitud'] ?? null);
     $solicitud->set_fecha_reporte($_POST['fecha_reporte'] ?? null);      // El name en el form es "fecha"
     $solicitud->set_descripcion_necesidad($_POST['descripcion_necesidad'] ?? null);
@@ -59,7 +56,7 @@ if (isset($_POST["operacion"])) {
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
     // Instanciamos el auditor
-    $auditor = new GestorAuditoria($solicitud, GESTIONAR_SOLICITUD_GASTO);
+    $auditor = new GestorAuditoria($solicitud, Modulo::GESTIONAR_SOLICITUD_GASTO);
 
     try {
         switch ($operacion) {
@@ -68,7 +65,7 @@ if (isset($_POST["operacion"])) {
 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) {
-                    $auditor->registrarAuditoria('consultar');
+                    $auditor->registrarAuditoria(Accion::CONSULTAR);
                 }
                 break;
 
@@ -78,7 +75,7 @@ if (isset($_POST["operacion"])) {
                 break;
 
             case 'consultar_presupuesto':
-                // Este método es público y no usa realizar_consulta... PELIGRO
+                // Este mÃ©todo es pÃºblico y no usa realizar_consulta... PELIGRO
                 $respuesta = $solicitud->consultar_presupuesto_disponible();
                 http_response_code($respuesta['estatus'] ? 200 : 400);
                 break;
@@ -105,7 +102,7 @@ if (isset($_POST["operacion"])) {
 
                 http_response_code($respuesta['estatus'] ? 201 : 400);
                 if ($respuesta['estatus']) {
-                    $auditor->registrarAuditoria('registrar');
+                    $auditor->registrarAuditoria(Accion::REGISTRAR);
                 }
                 break;
 
@@ -117,7 +114,7 @@ if (isset($_POST["operacion"])) {
 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) { 
-                    $auditor->registrarAuditoria('modificar'); 
+                    $auditor->registrarAuditoria(Accion::MODIFICAR); 
                 }
                 break;
 
@@ -129,7 +126,7 @@ if (isset($_POST["operacion"])) {
 
                 http_response_code($respuesta['estatus'] ? 200 : 400);
                 if ($respuesta['estatus']) { 
-                    $auditor->registrarAuditoria('eliminar'); 
+                    $auditor->registrarAuditoria(Accion::ELIMINAR); 
                 }
                 break;
 
@@ -143,14 +140,14 @@ if (isset($_POST["operacion"])) {
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
         if ($respuesta !== null) {
-            // Cerrar conexiones explícitamente
+            // Cerrar conexiones explÃ­citamente
             if (isset($notificaciones)) {
                 $notificaciones->cerrar();
             }
             if (isset($presupuesto)) {
                 $presupuesto->cerrar();
             }
-            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexión de seguridad
+            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexiÃ³n de seguridad
 
             echo json_encode($respuesta);
             exit;
@@ -184,7 +181,7 @@ if (isset($_POST["validar"])) {
         }
     } catch (Exception $e) {
         http_response_code(500);
-        error_log("Error en validación AJAX Solicitud: " . $e->getMessage());
+        error_log("Error en Validación AJAX Solicitud: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
     } finally {
         $presupuesto->cerrar();
@@ -205,12 +202,12 @@ $fecha_actual = date("Y-m");
 $presupuestos = [];
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    GestorAuditoria::inicializarBanderaConsulta(GESTIONAR_SOLICITUD_GASTO);
+    GestorAuditoria::inicializarBanderaConsulta(Modulo::GESTIONAR_SOLICITUD_GASTO);
 
     $solicitud = new SolicitudGasto();
     $presupuestos = $solicitud->consultar_presupuesto($fecha_actual);
 }
-$permisosVista = Sesiones::obtenerPermisosVista(GESTIONAR_SOLICITUD_GASTO);
+$permisosVista = Sesiones::obtenerPermisosVista(Modulo::GESTIONAR_SOLICITUD_GASTO);
 $btn_nuevo = [
     'target'  => '#modal_solicitud_gasto',
     'texto'   => 'Nueva Solicitud',
