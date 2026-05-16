@@ -431,4 +431,3 @@ class Notificaciones extends Conexion
         }
     }
 }
-?>

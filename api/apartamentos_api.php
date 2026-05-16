@@ -1,4 +1,5 @@
 <?php
+use haydee\enums\HttpCodigo;
 use haydee\modelo\Apartamento;
 
 $apartamento = new Apartamento();
@@ -19,18 +20,17 @@ try {
                 $respuesta = $apartamento->realizar_consulta('consultar_listado');
             }
         } else {
-            http_response_code(400); 
+            http_response_code(HttpCodigo::BAD_REQUEST->value); 
             $respuesta = ['estatus' => false, 'mensaje' => 'Operación GET no permitida'];
         }
     } else {
-        http_response_code(405); 
-        $respuesta = ['estatus' => false, 'mensaje' => 'Método HTTP no soportado'];
+        http_response_code(HttpCodigo::METODO_NO_PERMITIDO->value); 
+        $respuesta = ['estatus' => false, 'mensaje' => 'metodo HTTP no soportado'];
     }
 } catch (Exception $e) {
-    http_response_code(500);
+    http_response_code(HttpCodigo::ERROR_INTERNO->value);
     $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
 } finally {
     $apartamento->cerrar();
     echo json_encode($respuesta);
 }
-?>

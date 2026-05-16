@@ -1,4 +1,5 @@
-﻿<?php
+<?php
+use haydee\enums\HttpCodigo;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
 
@@ -17,14 +18,14 @@ if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
 
-    // Mapeamos las operaciones que no contengan las palabras clave estÃ¡ndar
+    // Mapeamos las operaciones que no contengan las palabras clave estándar
     $operacionesEspeciales = [
         'reponer_caja' => Accion::REGISTRAR->value
     ];
 
     Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_CAJA_CHICA, $operacion, $operacionesEspeciales);
 
-    // 1. Validamos segÃºn la Operación
+    // 1. Validamos segun la Operación
     $reglas = CajaChica::obtenerReglas($operacion);
 
     if (!empty($reglas)) {
@@ -32,7 +33,7 @@ if (isset($_POST["operacion"])) {
         $validador->validarConjunto($_POST, $reglas);
 
         if ($validador->tieneErrores()) {
-            $codigoHttp = $validador->tieneError404() ? 404 : 400;
+            $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::BAD_REQUEST->value;
             http_response_code($codigoHttp);
             echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
             exit;
@@ -41,7 +42,7 @@ if (isset($_POST["operacion"])) {
 
     $caja = new CajaChica();
 
-    // Asignacion masiva (Manejando tanto el id primario como el forÃ¡neo)
+    // Asignacion masiva (Manejando tanto el id primario como el foráneo)
     $caja->set_id_caja_chica($_POST['id_caja_chica'] ?? $_POST['caja_chica_id'] ?? null);
     $caja->set_descripcion($_POST['descripcion'] ?? null);
     $caja->set_fondo_fijo($_POST['fondo_fijo'] ?? null);
@@ -61,7 +62,7 @@ if (isset($_POST["operacion"])) {
             case 'consultar_cajas_chicas':
                 $respuesta = $caja->realizar_consulta('consultar');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria(Accion::CONSULTAR);
                 }
@@ -72,7 +73,7 @@ if (isset($_POST["operacion"])) {
                 // $auditor->capturarDatosAnteriores('consulta_caja_chica');
 
                 $respuesta = $caja->realizar_consulta('modificar_descripcion');
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 // if ($respuesta['estatus']) { 
                 //     $auditor->registrarAuditoria(Accion::MODIFICAR); 
                 // }
@@ -81,7 +82,7 @@ if (isset($_POST["operacion"])) {
             case 'verificar_caja_mes':
                 $respuesta = $caja->realizar_consulta('verificar_caja_mes');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) {
                     Bitacora::registrar(Accion::REGISTRAR, Modulo::GESTIONAR_CAJA_CHICA);
                 }
@@ -90,7 +91,7 @@ if (isset($_POST["operacion"])) {
             case 'reponer_caja':
                 $respuesta = $caja->realizar_consulta('reponer_caja');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria(Accion::REGISTRAR);
                 }
@@ -99,22 +100,22 @@ if (isset($_POST["operacion"])) {
             // === OPERACIONES MOVIMIENTOS ===
             case 'consultar_movimientos_caja':
                 $respuesta = $caja->realizar_consulta('consultar_movimientos');
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 break;
 
             case 'consultar_movimiento':
                 $respuesta = $caja->realizar_consulta('consultar_movimiento_unico');
-                http_response_code($respuesta['estatus'] ? 200 : 404);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
                 break;
 
             case 'registrar_movimiento':
                 $respuesta = $caja->realizar_consulta('registrar_movimiento');
 
-                http_response_code($respuesta['estatus'] ? 201 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::CREADO->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria(Accion::REGISTRAR);
 
-                    // Verificamos si el modelo nos mandÃ³ un aviso sobre el saldo
+                    // Verificamos si el modelo nos mandó un aviso sobre el saldo
                     if (isset($respuesta['alerta_saldo']) && $respuesta['alerta_saldo'] !== null) {
                         $alerta = $respuesta['alerta_saldo'];
                         GestorNotificaciones::notificarAdmins(
@@ -134,11 +135,11 @@ if (isset($_POST["operacion"])) {
 
                 $respuesta = $caja->realizar_consulta('modificar_movimiento');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) { 
                     $auditor->registrarAuditoria(Accion::MODIFICAR); 
 
-                    // Verificamos si el modelo nos mandÃ³ un aviso sobre el saldo
+                    // Verificamos si el modelo nos mandó un aviso sobre el saldo
                     if (isset($respuesta['alerta_saldo']) && $respuesta['alerta_saldo'] !== null) {
                         $alerta = $respuesta['alerta_saldo'];
                         GestorNotificaciones::notificarAdmins(
@@ -158,11 +159,11 @@ if (isset($_POST["operacion"])) {
 
                 $respuesta = $caja->realizar_consulta('eliminar_movimiento');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) { 
                     $auditor->registrarAuditoria(Accion::ELIMINAR); 
 
-                    // Verificamos si el modelo nos mandÃ³ un aviso sobre el saldo
+                    // Verificamos si el modelo nos mandó un aviso sobre el saldo
                     if (isset($respuesta['alerta_saldo']) && $respuesta['alerta_saldo'] !== null) {
                         $alerta = $respuesta['alerta_saldo'];
                         GestorNotificaciones::notificarAdmins(
@@ -177,20 +178,20 @@ if (isset($_POST["operacion"])) {
                 break;
 
             default:
-                http_response_code(400);
+                http_response_code(HttpCodigo::BAD_REQUEST->value);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no reconocida'];
         }
     } catch (Exception $e) {
-        http_response_code(500);
+        http_response_code(HttpCodigo::ERROR_INTERNO->value);
         error_log("Error en controlador: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
         if ($respuesta !== null) {
-            // Cerrar conexiones explÃ­citamente
+            // Cerrar conexiones explicitamente
             if (isset($caja)) {
                 $caja->cerrar();
             }
-            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexiÃ³n de seguridad
+            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexion de seguridad
 
             echo json_encode($respuesta);
             exit;
@@ -214,7 +215,7 @@ if (isset($_POST["validar"])) {
                 $valor = $_POST['valor'] ?? '';
 
                 if (empty($tabla) || empty($campo) || empty($valor)) {
-                    $respuesta = ['estatus' => false, 'mensaje' => 'Faltan parÃ¡metros de Validación'];
+                    $respuesta = ['estatus' => false, 'mensaje' => 'Faltan parámetros de Validación'];
                     break;
                 }
 
@@ -223,17 +224,17 @@ if (isset($_POST["validar"])) {
                 break;
 
             default:
-                http_response_code(400);
+                http_response_code(HttpCodigo::BAD_REQUEST->value);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
         }
     } catch (Exception $e) {
-        http_response_code(500);
+        http_response_code(HttpCodigo::ERROR_INTERNO->value);
         error_log("Error en Validación AJAX Bancos: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
     }
 
     if ($respuesta['estatus'] === true || isset($respuesta['existe'])) {
-        http_response_code(200);
+        http_response_code(HttpCodigo::OK->value);
     }
 
     echo json_encode($respuesta);
@@ -252,4 +253,3 @@ $btn_nuevo = [
 $placeholder_buscar = "Buscar movimiento...";
 
 require_once "vista/caja_chica/caja_chica_vista.php";
-?>

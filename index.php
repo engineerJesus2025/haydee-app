@@ -1,4 +1,5 @@
 <?php
+use haydee\enums\HttpCodigo;
     require_once "vendor/autoload.php";
     
     session_start();
@@ -13,11 +14,10 @@
         if(is_file($archivo_controlador)) {
             require_once $archivo_controlador;
         } else {
-            http_response_code(404);
+            http_response_code(HttpCodigo::NO_ENCONTRADO->value);
             require_once ROOT_PATH . "/vista/error/404_vista.php";
         }
     } else {
-        http_response_code(404);
+        http_response_code(HttpCodigo::NO_ENCONTRADO->value);
         require_once ROOT_PATH . "/vista/error/404_vista.php";
     }
-?>

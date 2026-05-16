@@ -1,4 +1,5 @@
 <?php
+use haydee\enums\HttpCodigo;
 $respuesta = ['estatus' => false, 'mensaje' => 'No se pudo obtener la llave pública'];
 
 try {
@@ -12,7 +13,7 @@ try {
         
         $llavePublica = file_get_contents($rutaLlave);
 
-        http_response_code(200);
+        http_response_code(HttpCodigo::OK->value);
         $respuesta = [
             'estatus' => true,
             'mensaje' => 'Llave pública lista',
@@ -20,13 +21,12 @@ try {
         ];
         
     } else {
-        http_response_code(405);
-        $respuesta = ['estatus' => false, 'mensaje' => 'Método no permitido. Use GET.'];
+        http_response_code(HttpCodigo::METODO_NO_PERMITIDO->value);
+        $respuesta = ['estatus' => false, 'mensaje' => 'metodo no permitido. Use GET.'];
     }
 } catch (Exception $e) {
-    http_response_code(500);
+    http_response_code(HttpCodigo::ERROR_INTERNO->value);
     $respuesta = ['estatus' => false, 'mensaje' => $e->getMessage()];
 }
 
 echo json_encode($respuesta);
-?>

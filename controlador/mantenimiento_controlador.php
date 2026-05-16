@@ -1,4 +1,5 @@
-﻿<?php
+<?php
+use haydee\enums\HttpCodigo;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
 
@@ -24,7 +25,7 @@ if (isset($_POST["operacion"])) {
         $validador->validarConjunto($_POST, $reglas);
 
         if ($validador->tieneErrores()) {
-            $codigoHttp = $validador->tieneError404() ? 404 : 400;
+            $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::BAD_REQUEST->value;
             http_response_code($codigoHttp);
             echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
             exit;
@@ -38,7 +39,7 @@ if (isset($_POST["operacion"])) {
         switch ($operacion) {
             case 'obtener_copias':
                 $respuesta = $mantenimiento->obtenerCopias();
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 break;
 
             case 'generar_copia_seguridad':
@@ -46,10 +47,10 @@ if (isset($_POST["operacion"])) {
                 $respuesta = $mantenimiento->generarCopiaSeguridad($db);
                 
                 // 201 porque creamos un recurso nuevo (un archivo de backup)
-                http_response_code($respuesta['estatus'] ? 201 : 500);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::CREADO->value : HttpCodigo::ERROR_INTERNO->value);
                 
                 if ($respuesta['estatus']) {
-                    $detalles = ['accion' => 'GenerÃ³ copia de seguridad', 'base_datos' => strtoupper($db)];
+                    $detalles = ['accion' => 'Generó copia de seguridad', 'base_datos' => strtoupper($db)];
                     Bitacora::registrar(Accion::RESPALDAR, Modulo::GESTIONAR_MANTENIMIENTO, null, null, $detalles);
                 }
                 break;
@@ -66,10 +67,10 @@ if (isset($_POST["operacion"])) {
                 $fichero = $_POST['fichero'] ?? '';
                 $respuesta = $mantenimiento->importarCopiaSeguridad($db, $fichero);
                 
-                http_response_code($respuesta['estatus'] ? 200 : 500);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::ERROR_INTERNO->value);
                 
                 if ($respuesta['estatus']) {
-                    $detalles = ['accion' => 'RestaurÃ³ desde servidor', 'base_datos' => strtoupper($db), 'archivo' => $fichero];
+                    $detalles = ['accion' => 'Restauró desde servidor', 'base_datos' => strtoupper($db), 'archivo' => $fichero];
                     Bitacora::registrar(Accion::RESTAURAR, Modulo::GESTIONAR_MANTENIMIENTO, null, null, $detalles);
                 }
                 break;
@@ -79,7 +80,7 @@ if (isset($_POST["operacion"])) {
                 
                 // Validaciones previas de archivo (400 Bad Request)
                 if (!isset($_FILES['fichero']) || $_FILES['fichero']['error'] !== UPLOAD_ERR_OK) {
-                    http_response_code(400);
+                    http_response_code(HttpCodigo::BAD_REQUEST->value);
                     $respuesta = ['estatus' => false, 'mensaje' => 'Error al subir el archivo.'];
                     break;
                 }
@@ -89,26 +90,26 @@ if (isset($_POST["operacion"])) {
                 // Validación de seguridad cruzada
                 $es_seguridad = stripos($contenido_sql, "Database: seguridad_haydee_db") !== false;
                 if (($db === 'seguridad' && !$es_seguridad) || ($db === 'negocio' && $es_seguridad)) {
-                    http_response_code(400);
+                    http_response_code(HttpCodigo::BAD_REQUEST->value);
                     $respuesta = ['estatus' => false, 'mensaje' => 'El archivo no corresponde a la base de datos destino.'];
                     break;
                 }
 
                 $respuesta = $mantenimiento->importarSQL($contenido_sql, $db);
-                http_response_code($respuesta['estatus'] ? 200 : 500);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::ERROR_INTERNO->value);
                 
                 if ($respuesta['estatus']) {
-                    $detalles = ['accion' => 'RestaurÃ³ desde PC', 'base_datos' => strtoupper($db)];
+                    $detalles = ['accion' => 'Restauró desde PC', 'base_datos' => strtoupper($db)];
                     Bitacora::registrar(Accion::RESTAURAR, Modulo::GESTIONAR_MANTENIMIENTO, null, null, $detalles);
                 }
                 break;
 
             default:
-                http_response_code(400);
+                http_response_code(HttpCodigo::BAD_REQUEST->value);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
     } catch (Exception $e) {
-        http_response_code(500);
+        http_response_code(HttpCodigo::ERROR_INTERNO->value);
         error_log("Error en Mantenimiento: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
@@ -124,3 +125,4 @@ if (isset($_POST["operacion"])) {
 // Carga normal de la vista (GET)
 Bitacora::registrar(Accion::CONSULTAR, Modulo::GESTIONAR_MANTENIMIENTO);
 require_once "vista/mantenimiento/mantenimiento_vista.php";
+

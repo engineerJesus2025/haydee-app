@@ -13,8 +13,9 @@ use Firebase\JWT\JWT;
 class Autenticacion
 {
     private const TIEMPO_RECORDAR_DIAS = 30;
+    private const SEGUNDOS_POR_DIA = 86400; // 24 * 60 * 60
     private const JWT_ALGORITMO = 'HS256';
-    private const JWT_TIEMPO_EXPIRACION = 7200; // dos horas
+    private const JWT_TIEMPO_EXPIRACION = 7200;
 
     private $usuarioModel;
 
@@ -45,9 +46,11 @@ class Autenticacion
         // Gestión del token "Recuérdame"
         if ($recordar) {
             $token = bin2hex(random_bytes(32));
+            $segundosExpiracion = self::TIEMPO_RECORDAR_DIAS * self::SEGUNDOS_POR_DIA;
+            
             $this->usuarioModel->set_id_usuario($usuario['id_usuario']);
             $this->usuarioModel->set_token($token);
-            $this->usuarioModel->set_token_expiracion(date('Y-m-d H:i:s', time() + (30 * 24 * 60 * 60)));
+            $this->usuarioModel->set_token_expiracion(date('Y-m-d H:i:s', time() + $segundosExpiracion));
             $this->usuarioModel->set_token_tipo(TipoToken::RECUERDAME->value);
 
             $resToken = $this->usuarioModel->realizar_consulta('registrar_token');

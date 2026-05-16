@@ -190,7 +190,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('pagos_transferencia_input').value = document.getElementById('pagos_transferencia').textContent;
         document.getElementById('pagos_pago_movil_input').value = document.getElementById('pagos_pago_movil').textContent;
         
-        // CORRECCIÓN: Usar innerHTML para conservar las etiquetas <p> de las listas de fechas
         document.getElementById('fecha_pagos_input').value = document.getElementById('fecha_pagos').innerHTML;
         document.getElementById('fecha_gastos_input').value = document.getElementById('fecha_gastos').innerHTML;
         

@@ -1,4 +1,5 @@
-﻿<?php
+<?php
+use haydee\enums\HttpCodigo;
 use haydee\ayuda\Validador;
 use haydee\ayuda\GestorPDF;
 use haydee\enums\Modulo;
@@ -33,7 +34,7 @@ if (isset($_POST["operacion"])) {
         $validador->validarConjunto($_POST, $reglas);
 
         if ($validador->tieneErrores()) {
-            $codigoHttp = $validador->tieneError404() ? 404 : 400;
+            $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::BAD_REQUEST->value;
             http_response_code($codigoHttp);
             echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
             exit;
@@ -45,7 +46,7 @@ if (isset($_POST["operacion"])) {
     // INSTANCIAR SERVICIO DE REPORTES
     $reportesServicio = new Reportes();
     
-    // 3. ASIGNACIÃ“N MASIVA MEDIANTE SETTERS
+    // ASIGNACIÓN MASIVA MEDIANTE SETTERS
     $reportesServicio->set_balance($_POST['balance'] ?? 'todos');
     $reportesServicio->set_metodo_pago($_POST['metodo_pago'] ?? 'todos');
     $reportesServicio->set_tipo_gasto($_POST['tipo_gasto'] ?? 'todos');
@@ -65,49 +66,49 @@ if (isset($_POST["operacion"])) {
     
     try {
         switch ($operacion) {
-            // ---- Operaciones Complejas (Delegadas al Servicio Reportes) ----
+            // ---- Operaciones Delegadas al Servicio Reportes ----
             case 'reporte_ingresos_egresos_completo':
                 $respuesta = $reportesServicio->realizar_consulta('reporte_ingresos_egresos_completo');
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 break;
 
             case 'obtener_datos_reporte_mensual':
                 $respuesta = $reportesServicio->realizar_consulta('obtener_datos_reporte_mensual');
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 break;
 
             case 'listar_meses_con_gastos':
                 $respuesta = $reportesServicio->realizar_consulta('listar_meses_con_gastos');
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 break;
 
             case 'consultar_personas_solvencia':
                 $respuesta = $reportesServicio->realizar_consulta('consultar_personas_solvencia');
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 break;
 
             case 'consultar_personas_residencia':
                 $respuesta = $reportesServicio->realizar_consulta('consultar_propietarios');
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 break;
 
             case 'consultar_habitantes':
                 $respuesta = $reportesServicio->realizar_consulta('obtener_datos_habitantes');
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 break;
 
             // ---- Operaciones Utilitarias Simples ----
             case 'consultar_meses_mensualidad':
                 $respuesta = $mensualidadModel->realizar_consulta('consultar_meses_mensualidad');
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 break;
 
             default:
-                http_response_code(400);
+                http_response_code(HttpCodigo::BAD_REQUEST->value);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
     } catch (Exception $e) {
-        http_response_code(500);
+        http_response_code(HttpCodigo::ERROR_INTERNO->value);
         error_log("Error en controlador reportes (POST): " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
@@ -146,14 +147,14 @@ if (isset($_POST["validar"])) {
             }
             break;
         default:
-                http_response_code(400);
+                http_response_code(HttpCodigo::BAD_REQUEST->value);
             echo json_encode(['estatus' => false, 'mensaje' => 'Validación no reconocida']);
     }
     exit;
 }
 
 // ====================================================================
-// Manejo de acciones GET (vistas y generaciÃ³n de PDF)
+// Manejo de acciones GET (vistas y generación de PDF)
 // ====================================================================
 $accion = $_GET['accion'] ?? 'reportes_pdf'; 
 
@@ -227,7 +228,7 @@ switch ($accion) {
         break;
 
     case 'generar_reporte_gastos_mensual':
-        $formato = $_POST['formato'] ?? 'pdf'; // Recuperamos la lÃ³gica del formato
+        $formato = $_POST['formato'] ?? 'pdf'; // Recuperamos la lógica del formato
         
         $reportesServicio = new Reportes();
         $reportesServicio->set_mes($_POST['mes'] ?? '');
@@ -250,7 +251,7 @@ switch ($accion) {
         ];
 
         if ($formato === 'excel') {
-            // Si el botÃ³n presionado fue el de Excel, extraemos las variables y cargamos el script de PhpSpreadsheet
+            // Si el botón presionado fue el de Excel, extraemos las variables y cargamos el script de PhpSpreadsheet
             extract($datosVista);
             require_once "vista/reportes/reportes_excel/reporte_gastos_mensual_excel.php";
         } else {
@@ -306,7 +307,8 @@ switch ($accion) {
         break;
 
     default:
-                http_response_code(400);
+                http_response_code(HttpCodigo::BAD_REQUEST->value);
         header("Location: ?pagina=reportes&accion=reportes_pdf");
         break;
 }
+

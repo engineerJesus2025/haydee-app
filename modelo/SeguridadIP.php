@@ -5,6 +5,7 @@ use PDO;
 use PDOException;
 use haydee\config\TipoListaIP;
 use haydee\enums\TipoBaseDatos;
+use haydee\enums\HttpCodigo;
 
 class SeguridadIP extends Conexion
 {
@@ -30,8 +31,9 @@ class SeguridadIP extends Conexion
 
             if ($lista) {
                 if ($lista['tipo_lista'] === TipoListaIP::NEGRA->value) {
-                    return ['estatus' => false, 'mensaje' => 'Acceso denegado desde esta red. IP Bloqueada.', 'codigo_http' => 403];
+                    return ['estatus' => false, 'mensaje' => 'Acceso denegado desde esta red. IP Bloqueada.', 'codigo_http' => HttpCodigo::PROHIBIDO->value];
                 }
+
                 // Si es BLANCA, tiene pase libre
             }
             return ['estatus' => true];
@@ -54,8 +56,9 @@ class SeguridadIP extends Conexion
             $registro = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($registro && $registro['intentos'] >= self::LIMITE_TEMPORAL && $registro['horas'] < 24) {
-                return ['estatus' => false, 'mensaje' => 'Demasiadas peticiones. Intente más tarde.', 'codigo_http' => 429];
+                return ['estatus' => false, 'mensaje' => 'Demasiadas peticiones. Intente más tarde.', 'codigo_http' => HttpCodigo::DEMASIADAS_PETICIONES->value];
             }
+            
             return ['estatus' => true];
         } catch (PDOException $e) {
             error_log("Error en verificarRateLimit: " . $e->getMessage());

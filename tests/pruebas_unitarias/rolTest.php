@@ -356,4 +356,3 @@ class RolTest extends TestCase
         $this->assertStringContainsString("El ID del Rol se envio vacio", $resultado["mensaje"]);
     }
 }
-?>

@@ -13,7 +13,7 @@
                 </div>
 
                 <!-- Gráfico -->
-                <div class="chart-container mx-auto mb-4" style="position: relative; height: 300px; width: 100%;">
+                <div class="chart-container mb-4 d-flex justify-content-center" style="position: relative; height: 300px; width: 100%;">
                     <canvas id="canva"></canvas>
                 </div>
 
@@ -131,7 +131,7 @@
                         <input type="hidden" name="fecha_pagos_input" id="fecha_pagos_input">
                         <input type="hidden" name="fecha_gastos_input" id="fecha_gastos_input">
                         <input type="hidden" name="mostrar_datos_input" id="mostrar_datos_input">
-                        <input type="hidden" name="tasa_dolar_input" id="tasa_dolar_input" value="<?php echo $tasa_dolar; ?>">
+                        <input type="hidden" name="tasa_dolar_input" id="tasa_dolar_input">
 
                         <button type="submit" class="btn btn-danger px-4 rounded-pill fw-semibold shadow-sm" id="boton_generar" title="Generar PDF" disabled>
                             <i class="bi bi-file-earmark-pdf-fill me-2"></i> Descargar Documento

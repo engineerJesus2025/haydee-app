@@ -111,4 +111,3 @@ class CajaChicaTest extends TestCase
         $this->assertStringContainsString("Uno o varios de los campos requeridos estan vacios", $resultado["mensaje"]);
     }
 }
-?>

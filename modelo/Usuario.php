@@ -6,15 +6,15 @@ use PDOException;
 use haydee\enums\Accion;
 use haydee\enums\TipoToken;
 use haydee\enums\TipoBaseDatos;
+use haydee\enums\HttpCodigo;
 
 class Usuario extends Conexion
 {
     private const MAX_INTENTOS_LOGIN = 3;
     private const TIEMPO_BLOQUEO_MINUTOS = 15;
     private const MARGEN_EXPIRACION_TOKEN_MINUTOS = 10;
-    // ====================================================================
+    
     // PROPIEDADES (Usuario)
-    // ====================================================================
     private $id_usuario;
     private $apellido;
     private $nombre;
@@ -23,16 +23,12 @@ class Usuario extends Conexion
     private $rol_id;
     private $activo;
 
-    // ====================================================================
     // PROPIEDADES (Token de Seguridad)
-    // ====================================================================
     private $token;
     private $token_expiracion;
     private $token_tipo; // 'Recuperacion', 'Recuerdame', etc.
 
-    // ====================================================================
     // VALIDACIONES CENTRALIZADAS
-    // ====================================================================
     public static function obtenerReglas($operacion) {
         $reglasGenerales = [
             'id_usuario' => [
@@ -173,7 +169,7 @@ class Usuario extends Conexion
                     return [
                         'estatus' => false, 
                         'mensaje' => "Cuenta bloqueada temporalmente por seguridad. Intente en $tiempo_restante min.", 
-                        'codigo_http' => 429
+                        'codigo_http' => HttpCodigo::DEMASIADAS_PETICIONES->value
                     ];
                 }
 
@@ -204,7 +200,8 @@ class Usuario extends Conexion
                 $db->prepare($sqlFallo)->execute([':id' => $id_usuario]);
 
                 $db->commit(); 
-                return ['estatus' => false, 'mensaje' => 'Credenciales incorrectas', 'codigo_http' => 401];
+                return ['estatus' => false, 'mensaje' => 'Credenciales incorrectas', 'codigo_http' => HttpCodigo::BAD_REQUEST->value];
+
             }
 
         } catch (PDOException $e) {
@@ -504,4 +501,3 @@ class Usuario extends Conexion
         }
     }
 }
-?>

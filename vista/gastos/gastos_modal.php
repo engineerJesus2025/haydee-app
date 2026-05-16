@@ -19,8 +19,8 @@
                                     <span class="input-group-text"><i class="bi bi-tags"></i></span>
                                     <select class="form-select" name="clasificacion" id="clasificacion" required>
                                         <option value="" disabled selected>Seleccione un tipo</option>
-                                        <option value="fijo">Fijo</option>
-                                        <option value="variable">Variable</option>
+                                        <option value="FIJO">Fijo</option>
+                                        <option value="VARIABLE">Variable</option>
                                     </select>
                                     <span class="w-100 invalid-feedback"></span>
                                 </div>

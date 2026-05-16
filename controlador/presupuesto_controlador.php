@@ -1,4 +1,5 @@
-﻿<?php
+<?php
+use haydee\enums\HttpCodigo;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
 
@@ -21,7 +22,7 @@ if (isset($_POST["operacion"])) {
     Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_PRESUPUESTO, $operacion);
 
     // =========================================================
-    // 1. VALIDACIÃ“N DE LA CABECERA
+    // 1. VALIDACION DE LA CABECERA
     // =========================================================
     $reglasCabecera = Presupuesto::obtenerReglas($operacion);
 
@@ -30,7 +31,7 @@ if (isset($_POST["operacion"])) {
         $validador->validarConjunto($_POST, $reglasCabecera);
 
         if ($validador->tieneErrores()) {
-            $codigoHttp = $validador->tieneError404() ? 404 : 400;
+            $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::BAD_REQUEST->value;
             http_response_code($codigoHttp);
             echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
             exit;
@@ -38,11 +39,11 @@ if (isset($_POST["operacion"])) {
     }
 
     // =========================================================
-    // 2. CONSTRUCCIÃ“N Y VALIDACIÃ“N DE DETALLES
+    // 2. CONSTRUCCIÓN Y VALIDACION DE DETALLES
     // =========================================================
     if ($operacion === 'registrar_presupuesto' || $operacion === 'modificar_presupuesto') {
         
-        // Configuramos el constructor para extraer solo los campos de presupuesto (Sin bancos ni imÃ¡genes)
+        // Configuramos el constructor para extraer solo los campos de presupuesto (Sin bancos ni imágenes)
         $configPresupuesto = [
             'campos' => ['nombre', 'monto', 'tipo_gasto_id']
         ];
@@ -50,7 +51,7 @@ if (isset($_POST["operacion"])) {
         $detalles = ConstructorDetalles::construirDetalles($_POST, [], $configPresupuesto);
 
         if (empty($detalles)) {
-            echo json_encode(['estatus' => false, 'mensaje' => 'Debe proporcionar al menos un renglÃ³n en el presupuesto.']);
+            echo json_encode(['estatus' => false, 'mensaje' => 'Debe proporcionar al menos un renglón en el presupuesto.']);
             exit;
         }
 
@@ -91,7 +92,7 @@ if (isset($_POST["operacion"])) {
     $presupuesto->set_id_presupuesto($_POST['id_presupuesto'] ?? null);
     $presupuesto->set_fecha($_POST['fecha'] ?? null);
     $presupuesto->set_cuota_reserva($_POST['cuota_reserva'] ?? null);
-    $presupuesto->set_observacion($_POST['observacion'] ?? "Sin observaciÃ³n");
+    $presupuesto->set_observacion($_POST['observacion'] ?? "Sin observación");
     $presupuesto->set_tasa_dolar($_POST['tasa_dolar'] ?? 1); 
 
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
@@ -102,7 +103,7 @@ if (isset($_POST["operacion"])) {
             case 'consultar':
                 $respuesta = $presupuesto->realizar_consulta('consultar');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria(Accion::CONSULTAR);
                 }
@@ -110,25 +111,25 @@ if (isset($_POST["operacion"])) {
 
             case 'consultar_meses_faltantes':
                 $respuesta = $presupuesto->realizar_consulta('consultar_meses_faltantes');
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 break;
 
             case 'consultar_tipo_gastos':
                 $tipoGasto = new TipoGasto();
                 $respuesta = $tipoGasto->realizar_consulta('consultar');
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 $tipoGasto->cerrar(); 
                 break;
 
             case 'consultar_presupuesto':
                 $respuesta = $presupuesto->realizar_consulta('consultar_presupuesto');
-                http_response_code($respuesta['estatus'] ? 200 : 404);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
                 break;
 
             case 'registrar_presupuesto':
                 $respuesta = $presupuesto->realizar_consulta('registrar_presupuesto');
 
-                http_response_code($respuesta['estatus'] ? 201 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::CREADO->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria(Accion::REGISTRAR);
                 }
@@ -141,7 +142,7 @@ if (isset($_POST["operacion"])) {
                 //  Ejecutar y auditar
                 $respuesta = $presupuesto->realizar_consulta('modificar_presupuesto');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) { 
                     $auditor->registrarAuditoria(Accion::MODIFICAR); 
                 }
@@ -153,18 +154,18 @@ if (isset($_POST["operacion"])) {
 
                 $respuesta = $presupuesto->realizar_consulta('eliminar_presupuesto');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) { 
                     $auditor->registrarAuditoria(Accion::ELIMINAR); 
                 }
                 break;
 
             default:
-                http_response_code(400);
+                http_response_code(HttpCodigo::BAD_REQUEST->value);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
     } catch (Exception $e) {
-        http_response_code(500);
+        http_response_code(HttpCodigo::ERROR_INTERNO->value);
         error_log("Error en controlador presupuesto: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
@@ -206,7 +207,7 @@ if (isset($_POST["validar"])) {
                 $valor = $_POST['valor'] ?? '';
 
                 if (empty($tabla) || empty($campo) || empty($valor)) {
-                    $respuesta = ['estatus' => false, 'mensaje' => 'Faltan parÃ¡metros de Validación'];
+                    $respuesta = ['estatus' => false, 'mensaje' => 'Faltan parámetros de Validación'];
                     break;
                 }
 
@@ -215,17 +216,17 @@ if (isset($_POST["validar"])) {
                 break;
 
             default:
-                http_response_code(400);
+                http_response_code(HttpCodigo::BAD_REQUEST->value);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
         }
     } catch (Exception $e) {
-        http_response_code(500);
+        http_response_code(HttpCodigo::ERROR_INTERNO->value);
         error_log("Error en Validación AJAX Bancos: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
     }
 
     if ($respuesta['estatus'] === true || isset($respuesta['existe'])) {
-        http_response_code(200);
+        http_response_code(HttpCodigo::OK->value);
     }
 
     echo json_encode($respuesta);
@@ -233,7 +234,7 @@ if (isset($_POST["validar"])) {
 }
 
 // =========================================================
-// CARGA DE DATOS PARA LA VISTA (Solo al cargar la pÃ¡gina)
+// CARGA DE DATOS PARA LA VISTA (Solo al cargar la página)
 // =========================================================
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     GestorAuditoria::inicializarBanderaConsulta(Modulo::GESTIONAR_PRESUPUESTO);
@@ -252,3 +253,4 @@ $placeholder_buscar = "Buscar presupuesto...";
 
 // Cargar vista
 require_once "vista/presupuesto_mensual/presupuesto_vista.php";
+

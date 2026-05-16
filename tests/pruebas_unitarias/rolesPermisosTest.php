@@ -295,4 +295,3 @@ class RolesPermisosTest extends TestCase
         $this->assertStringContainsString("El ID del Rol para modificar los permisos se envio vacio", $resultado["mensaje"]);
     }
 }
-?>

@@ -50,7 +50,7 @@
                                 <div class="row align-items-stretch mb-2" id="cabecera_caja">
                                     <div class="col-lg-4 border-end-lg d-flex flex-column justify-content-center">
                                         <p class="text-muted small text-uppercase fw-bold mb-2">Seleccione el mes</p>
-                                        <select class="form-select shadow" id="mes_select">
+                                        <select class="form-select shadow-sm" id="mes_select">
                                             <option selected disabled>Cargando registros...</option>
                                         </select>
                                         <div class="d-flex gap-2 mt-3" id="botones_movimientos" hidden>
@@ -90,7 +90,7 @@
                                                 <button type="button" class="btn btn-sm btn-soft-secondary me-3" id="btn_cancelar_edicion">
                                                     <i class="bi bi-x-circle me-2"></i> Cancelar
                                                 </button>
-                                                <button class="btn btn-sm btn-primary px-3 shadow-sm" type="submit" id="boton_gasto_caja" id="btn_guardar_edicion">
+                                                <button class="btn btn-sm btn-primary px-3 shadow-sm" type="submit" id="btn_guardar_edicion">
                                                     <i class="bi bi-check2-circle me-2"></i>
                                                     <span>Guardar</span>
                                                 </button>

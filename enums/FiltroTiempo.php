@@ -6,4 +6,5 @@ enum FiltroTiempo: string {
     case TRIMESTRE = 'trimestre';
     case ANIO = 'anio';
     case PERSONALIZADO = 'personalizado';
+    case TODO = 'todo';
 }

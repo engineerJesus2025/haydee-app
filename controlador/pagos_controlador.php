@@ -1,4 +1,5 @@
-﻿<?php
+<?php
+use haydee\enums\HttpCodigo;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
 
@@ -26,7 +27,7 @@ if (isset($_POST["operacion"])) {
     Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_PAGOS, $operacion);
 
     // =========================================================
-    // VALIDACIÃ“N DE LA CABECERA
+    // VALIDACION DE LA CABECERA
     // =========================================================
     $reglasCabecera = Pagos::obtenerReglas($operacion);
 
@@ -35,7 +36,7 @@ if (isset($_POST["operacion"])) {
         $validador->validarConjunto($_POST, $reglasCabecera);
 
         if ($validador->tieneErrores()) {
-            $codigoHttp = $validador->tieneError404() ? 404 : 400;
+            $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::BAD_REQUEST->value;
             http_response_code($codigoHttp);
             echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
             exit;
@@ -43,7 +44,7 @@ if (isset($_POST["operacion"])) {
     }
 
     // =========================================================
-    // CONSTRUCCIÃ“N Y VALIDACIÃ“N DE DETALLES
+    // CONSTRUCCIÓN Y VALIDACION DE DETALLES
     // =========================================================
     if ($operacion === 'registrar_pago' || $operacion === 'modificar_pago') {
         $esModificacion = ($operacion === 'modificar_pago');
@@ -54,6 +55,9 @@ if (isset($_POST["operacion"])) {
             echo json_encode(['estatus' => false, 'mensaje' => 'Debe proporcionar al menos un detalle de pago.']);
             exit;
         }
+
+        echo json_encode(['estatus' => true, 'res' => $_POST, 'res2'=>$detalles]);
+        exit;
 
         $reglasDetalle = Pagos::obtenerReglasDetalles();
         $erroresDetalles = [];
@@ -74,7 +78,7 @@ if (isset($_POST["operacion"])) {
             echo json_encode([
                 'estatus' => false, 
                 'errores' => $erroresDetalles, 
-                'mensaje' => 'Hay errores en los renglones del pago. Por favor, revÃ­selos.'
+                'mensaje' => 'Hay errores en los renglones del pago. Por favor, revíselos.'
             ]);
             exit;
         }
@@ -112,7 +116,7 @@ if (isset($_POST["operacion"])) {
                     $respuesta = $pagos->realizar_consulta('consultar');
                 }
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria(Accion::CONSULTAR);
                 }
@@ -120,12 +124,12 @@ if (isset($_POST["operacion"])) {
 
             case 'consultar_mensualidades':
                 $respuesta = $pagos->realizar_consulta('consultarMensualidadPendiente');
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 break;
 
             case 'consultar_pago':
                 $respuesta = $pagos->realizar_consulta('consultar_pago');
-                http_response_code($respuesta['estatus'] ? 200 : 404);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
                 break;
 
             // ==================== REGISTRO ====================
@@ -136,7 +140,7 @@ if (isset($_POST["operacion"])) {
 
                 $respuesta = $pagos->realizar_consulta('registrar_pago');
 
-                http_response_code($respuesta['estatus'] ? 201 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::CREADO->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) {
                     // Ocultamos los detalles al auditor para evitar colapsos
                     $pagos->set_detalles(null);
@@ -151,7 +155,7 @@ if (isset($_POST["operacion"])) {
                     break;
                 }
 
-                // Usamos la consulta plana para la bitÃ¡cora
+                // Usamos la consulta plana para la bitácora
                 $auditor->capturarDatosAnteriores('consultar_cabecera_pago');
 
                 $configPagos = [
@@ -167,7 +171,7 @@ if (isset($_POST["operacion"])) {
 
                 $respuesta = $pagos->realizar_consulta('modificar_pago');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) {
                     // Ocultamos los detalles al auditor
                     $pagos->set_detalles(null);
@@ -182,23 +186,23 @@ if (isset($_POST["operacion"])) {
                     break;
                 }
 
-                // Usamos la consulta plana para la bitÃ¡cora
+                // Usamos la consulta plana para la bitácora
                 $auditor->capturarDatosAnteriores('consultar_cabecera_pago');
 
                 $respuesta = $pagos->realizar_consulta('eliminar_pago');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria(Accion::ELIMINAR);
                 }
                 break;
 
             default:
-                http_response_code(400);
+                http_response_code(HttpCodigo::BAD_REQUEST->value);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
     } catch (Exception $e) {
-        http_response_code(500);
+        http_response_code(HttpCodigo::ERROR_INTERNO->value);
         error_log("Error en controlador pagos: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
@@ -229,12 +233,12 @@ if (isset($_POST["validar"])) {
                 $referencia = $_POST["referencia"] ?? '';
                 $id_pago = $_POST["id_pago"] ?? null; // Recibimos el ID si estamos modificando
                 
-                // Instanciamos el modelo y usamos la nueva funciÃ³n experta
+                // Instanciamos el modelo y usamos la nueva función experta
                 $pagosTemp = new Pagos();
                 $existe = $pagosTemp->verificarReferenciaDisponible($referencia, $id_pago);
                 
-                // Respondemos estatus TRUE (la peticiÃ³n fue exitosa) y enviamos si existe o no
-                $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'La referencia ya estÃ¡ registrada en otro pago' : 'Disponible'];
+                // Respondemos estatus TRUE (la petición fue exitosa) y enviamos si existe o no
+                $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'La referencia ya está registrada en otro pago' : 'Disponible'];
                 break;
 
             case 'validar_clave_foranea':
@@ -243,22 +247,22 @@ if (isset($_POST["validar"])) {
                     $existe = $validadorBD->existe($_POST['tabla'], $_POST['nombre_clave'], $_POST['valor']);
                     $respuesta = ['estatus' => $existe, 'mensaje' => 'OK'];
                 } else {
-                    $respuesta = ['estatus' => false, 'mensaje' => 'Faltan parÃ¡metros'];
+                    $respuesta = ['estatus' => false, 'mensaje' => 'Faltan parámetros'];
                 }
                 break;
 
             default:
-                http_response_code(400);
+                http_response_code(HttpCodigo::BAD_REQUEST->value);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
         }
     } catch (Exception $e) {
-        http_response_code(500);
+        http_response_code(HttpCodigo::ERROR_INTERNO->value);
         error_log("Error en Validación AJAX Pagos: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
     }
 
     if ($respuesta['estatus'] === true || isset($respuesta['existe'])) {
-        http_response_code(200);
+        http_response_code(HttpCodigo::OK->value);
     }
     
     echo json_encode($respuesta);
@@ -266,7 +270,7 @@ if (isset($_POST["validar"])) {
 }
 
 // =========================================================
-// CARGA DE DATOS PARA LA VISTA (Solo al cargar la pÃ¡gina)
+// CARGA DE DATOS PARA LA VISTA (Solo al cargar la página)
 // =========================================================
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     GestorAuditoria::inicializarBanderaConsulta(Modulo::GESTIONAR_PAGOS);
@@ -295,3 +299,4 @@ $placeholder_buscar = "Buscar pago...";
 
 // Renderizamos el HTML
 require_once "vista/pagos/pagos_vista.php";
+

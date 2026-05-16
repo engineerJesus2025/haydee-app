@@ -44,4 +44,3 @@ class PermisosUsuariosTest extends TestCase
         $this->assertArrayHasKey('modulo_id', $resultado[0]);
     }
 }
-?>

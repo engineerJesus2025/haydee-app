@@ -13,4 +13,4 @@ file_put_contents(ROOT_PATH . '/config/llave_servidor_publica.pem', $public->toS
 
 echo "Llaves maestras generadas con éxito en la carpeta config";
 ?>
-<?php // echo base64_encode(random_bytes(32)); ?>
+<?php // echo base64_encode(random_bytes(32)); 

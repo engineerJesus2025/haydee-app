@@ -1,4 +1,5 @@
-﻿<?php
+<?php
+use haydee\enums\HttpCodigo;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
 
@@ -19,7 +20,7 @@ if (isset($_POST["operacion"])) {
     Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_PROVEEDORES, $operacion);
     
     // =========================================================
-    // 1. VALIDACIÃ“N CENTRALIZADA
+    // 1. VALIDACION CENTRALIZADA
     // =========================================================
     $reglas = Proveedores::obtenerReglas($operacion);
 
@@ -30,7 +31,7 @@ if (isset($_POST["operacion"])) {
         $validador->validarConjunto($_POST, $reglas, $contexto);
 
         if ($validador->tieneErrores()) {
-            $codigoHttp = $validador->tieneError404() ? 404 : 400;
+            $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::BAD_REQUEST->value;
             http_response_code($codigoHttp);
             echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
             exit;
@@ -52,19 +53,19 @@ if (isset($_POST["operacion"])) {
         switch ($operacion) {
             case 'consultar':
                 $respuesta = $proveedor->realizar_consulta('consultar');
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::CONSULTAR); }
                 break;
 
             case 'consultar_proveedor':
                 $respuesta = $proveedor->realizar_consulta('consultar_proveedor');
-                http_response_code($respuesta['estatus'] ? 200 : 404);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
                 break;
 
             case 'registrar_proveedor':
                 $respuesta = $proveedor->realizar_consulta('registrar_proveedor');
 
-                http_response_code($respuesta['estatus'] ? 201 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::CREADO->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::REGISTRAR); }
                 break;
 
@@ -72,7 +73,7 @@ if (isset($_POST["operacion"])) {
                 $auditor->capturarDatosAnteriores('consultar_proveedor');
                 $respuesta = $proveedor->realizar_consulta('modificar_proveedor');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::MODIFICAR); }
                 break;
 
@@ -80,16 +81,16 @@ if (isset($_POST["operacion"])) {
                 $auditor->capturarDatosAnteriores('consultar_proveedor');
                 $respuesta = $proveedor->realizar_consulta('eliminar_proveedor');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::ELIMINAR); }
                 break;
 
             default:
-                http_response_code(400);
+                http_response_code(HttpCodigo::BAD_REQUEST->value);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
     } catch (Exception $e) {
-        http_response_code(500);
+        http_response_code(HttpCodigo::ERROR_INTERNO->value);
         error_log("Error en controlador proveedores: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
@@ -118,3 +119,4 @@ $btn_nuevo = [
 $placeholder_buscar = "Buscar proveedor...";
 
 require_once "vista/proveedores/proveedores_vista.php";
+

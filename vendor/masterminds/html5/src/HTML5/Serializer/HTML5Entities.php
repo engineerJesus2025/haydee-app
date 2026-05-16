@@ -443,7 +443,7 @@ class HTML5Entities
         ' ' => '&puncsp;',
         ' ' => '&ThinSpace;',
         ' ' => '&hairsp;',
-        '​' => '&ZeroWidthSpace;',
+        '' => '&ZeroWidthSpace;',
         '‌' => '&zwnj;',
         '‍' => '&zwj;',
         '‎' => '&lrm;',

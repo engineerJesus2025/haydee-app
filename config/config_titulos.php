@@ -32,4 +32,3 @@ function obtenerInfoEncabezado($pagina) {
     // Si la página existe en el diccionario, la devuelve. Si no, devuelve "inicio" por defecto.
     return $directorio_titulos[$pagina] ?? $directorio_titulos['inicio'];
 }
-?>

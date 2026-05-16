@@ -1,4 +1,5 @@
-﻿<?php
+<?php
+use haydee\enums\HttpCodigo;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
 
@@ -22,7 +23,7 @@ if (isset($_POST["operacion"])) {
     Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_MENSUALIDAD, $operacion);
 
     // =========================================================
-    // VALIDACIÃ“N CENTRALIZADA DE CABECERA
+    // VALIDACION CENTRALIZADA DE CABECERA
     // =========================================================
     $reglasCabecera = Mensualidad::obtenerReglas($operacion);
 
@@ -31,7 +32,7 @@ if (isset($_POST["operacion"])) {
         $validador->validarConjunto($_POST, $reglasCabecera);
 
         if ($validador->tieneErrores()) {
-            $codigoHttp = $validador->tieneError404() ? 404 : 400;
+            $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::BAD_REQUEST->value;
             http_response_code($codigoHttp);
             echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
             exit;
@@ -39,7 +40,7 @@ if (isset($_POST["operacion"])) {
     }
 
     // =========================================================
-    // VALIDACIÃ“N DE DETALLES (APARTAMENTOS Y PRESUPUESTOS)
+    // VALIDACION DE DETALLES (APARTAMENTOS Y PRESUPUESTOS)
     // =========================================================
     if (in_array($operacion, ['registrar_mensualidad', 'modificar_mensualidad'])) {
         $datos_apartamentos = json_decode($_POST['datos_apartamentos'], true);
@@ -71,7 +72,7 @@ if (isset($_POST["operacion"])) {
             } else {
                 foreach ($detalle['id_presupuestos'] as $id_p) {
                     if (!$validadorBD->existe('detalles_presupuesto', 'id_detalle_presupuesto', $id_p)) {
-                        $erroresDetalles["detalle_" . $index . "_id_presupuestos"][] = "Uno o mÃ¡s presupuestos seleccionados son invÃ¡lidos.";
+                        $erroresDetalles["detalle_" . $index . "_id_presupuestos"][] = "Uno o más presupuestos seleccionados son inválidos.";
                         break; 
                     }
                 }
@@ -83,7 +84,7 @@ if (isset($_POST["operacion"])) {
             echo json_encode([
                 'estatus' => false, 
                 'errores' => $erroresDetalles, 
-                'mensaje' => 'Existen errores en las cuotas de los apartamentos. Por favor, revÃ­selos.'
+                'mensaje' => 'Existen errores en las cuotas de los apartamentos. Por favor, revíselos.'
             ]);
             exit;
         }
@@ -97,7 +98,7 @@ if (isset($_POST["operacion"])) {
     }
 
     // =========================================================
-    // ASIGNACIÃ“N DE PROPIEDADES AL MODELO
+    // ASIGNACIÓN DE PROPIEDADES AL MODELO
     // =========================================================
     $mensualidad->set_id_mensualidad($_POST['id_mensualidad'] ?? null);
     $mensualidad->set_monto($_POST['monto'] ?? null);
@@ -108,7 +109,7 @@ if (isset($_POST["operacion"])) {
     $mensualidad->set_porcentaje_interes($_POST['porcentaje_interes'] ?? null);
     $mensualidad->set_limite_mensualidad($_POST['limite_mensualidad'] ?? null);
 
-    // Desglosar la fecha si viene en operaciones de consulta o eliminaciÃ³n
+    // Desglosar la fecha si viene en operaciones de consulta o eliminación
     if (isset($_POST['fecha']) && strpos($_POST['fecha'], '-') !== false) {
         list($anio, $mes, $dia) = explode('-', $_POST['fecha']);
         $mensualidad->set_mes(intval($mes));
@@ -119,19 +120,19 @@ if (isset($_POST["operacion"])) {
     $auditor = new GestorAuditoria($mensualidad, Modulo::GESTIONAR_MENSUALIDAD);
 
     // =========================================================
-    // EJECUCIÃ“N
+    // EJECUCIÓN
     // =========================================================
     try {
         switch ($operacion) {
             case 'verificar_meses':
                 $respuesta = $mensualidad->realizar_consulta('verificarMeses');
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 break;
 
             case 'consultarPorMeses':
                 $respuesta = $mensualidad->realizar_consulta('consultarPorMeses');
 
-                http_response_code($respuesta['estatus'] ? 200 : 404);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria(Accion::CONSULTAR);
                 }
@@ -139,44 +140,44 @@ if (isset($_POST["operacion"])) {
 
             case 'consultar_mensualidades_apartamentos':
                 $respuesta = $mensualidad->realizar_consulta('consultar_mensualidad_apartamentos');
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 break;
 
             case 'consultar_presupuestos_asociados':
                 $mensualidad->set_ids_mensualidades($_POST['ids_mensualidades'] ?? '');
                 $respuesta = $mensualidad->realizar_consulta('consultar_presupuestos_asociados');
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 break;
 
             case 'consultar_presupuestos_mensualidades':
                 $presupuesto = new Presupuesto();
                 $presupuesto->set_fecha($_POST["fecha"] ?? '');
                 $respuesta = $presupuesto->realizar_consulta('consultar_presupuestos_mensualidades');
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 break;
 
             case 'consultar_meses_mensualidad':
                 $respuesta = $mensualidad->realizar_consulta('consultar_meses_mensualidad');
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 break;
 
             case 'consultar_tasa_dolar':
                 $respuesta = $mensualidad->realizar_consulta('
                     consultar_tasa_dolar_mensualidades');
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 break;
 
             case 'registrar_mensualidad':
                 $respuesta = $mensualidad->realizar_consulta('registrar');
 
-                http_response_code($respuesta['estatus'] ? 201 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::CREADO->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) {
-                    $mensualidad->set_datos_apartamentos(null); // Ocultar datos masivos para auditorÃ­a
+                    $mensualidad->set_datos_apartamentos(null); // Ocultar datos masivos para auditoría
                     $auditor->registrarAuditoria(Accion::REGISTRAR);
 
                     GestorNotificaciones::notificarTodos(
                         "Nueva mensualidad disponible",
-                        "Se han generado las mensualidades para el mes {$mensualidad->get_mes()} del aÃ±o {$mensualidad->get_anio()}.",
+                        "Se han generado las mensualidades para el mes {$mensualidad->get_mes()} del año {$mensualidad->get_anio()}.",
                         'mensualidad',
                         $respuesta['lastId'],
                         'NUEVA_MENSUALIDAD'
@@ -188,7 +189,7 @@ if (isset($_POST["operacion"])) {
                 $auditor->capturarDatosAnteriores('consultar_cabecera_mensualidad');
                 $respuesta = $mensualidad->realizar_consulta('modificar');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) {
                     $mensualidad->set_datos_apartamentos(null); 
                     $auditor->registrarAuditoria(Accion::MODIFICAR);
@@ -199,18 +200,18 @@ if (isset($_POST["operacion"])) {
                 $auditor->capturarDatosAnteriores('consultar_cabecera_mensualidad');
                 $respuesta = $mensualidad->realizar_consulta('eliminar');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria(Accion::ELIMINAR);
                 }
                 break;
 
             default:
-                http_response_code(400);
+                http_response_code(HttpCodigo::BAD_REQUEST->value);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
     } catch (Exception $e) {
-        http_response_code(500);
+        http_response_code(HttpCodigo::ERROR_INTERNO->value);
         error_log("Error en controlador mensualidad: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
@@ -250,17 +251,17 @@ if (isset($_POST["validar"])) {
                 break;
 
             default:
-                http_response_code(400);
+                http_response_code(HttpCodigo::BAD_REQUEST->value);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
         }
     } catch (Exception $e) {
-        http_response_code(500);
+        http_response_code(HttpCodigo::ERROR_INTERNO->value);
         error_log("Error en Validación AJAX Bancos: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
     }
 
     if ($respuesta['estatus'] === true || isset($respuesta['existe'])) {
-        http_response_code(200);
+        http_response_code(HttpCodigo::OK->value);
     }
 
     echo json_encode($respuesta);
@@ -283,3 +284,4 @@ $btn_nuevo = [
 $placeholder_buscar = "Buscar mensualidad...";
 
 require_once 'vista/mensualidad/mensualidad_vista.php';
+

@@ -1,4 +1,5 @@
-﻿<?php
+<?php
+use haydee\enums\HttpCodigo;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
 
@@ -40,7 +41,7 @@ if (isset($_POST["operacion"])) {
         $validador->validarConjunto($_POST, $reglas, $contexto);
 
         if ($validador->tieneErrores()) {
-            $codigoHttp = $validador->tieneError404() ? 404 : 400;
+            $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::BAD_REQUEST->value;
             http_response_code($codigoHttp);
             echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
             exit;
@@ -66,7 +67,7 @@ if (isset($_POST["operacion"])) {
             case 'consulta':
                 $respuesta = $usuario->realizar_consulta('consultar');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria(Accion::CONSULTAR);
                 }
@@ -74,13 +75,13 @@ if (isset($_POST["operacion"])) {
 
             case 'consultar_usuario':
                 $respuesta = $usuario->realizar_consulta('consultar_usuario');
-                http_response_code($respuesta['estatus'] ? 200 : 404);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
                 break;
 
             case 'registrar_usuario':
                 $respuesta = $usuario->realizar_consulta('registrar_usuario');
 
-                http_response_code($respuesta['estatus'] ? 201 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::CREADO->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria(Accion::REGISTRAR);
                 }
@@ -92,7 +93,7 @@ if (isset($_POST["operacion"])) {
 
                 $respuesta = $usuario->realizar_consulta('modificar_usuario');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) {
                     if ($usuario->get_id_usuario() == $_SESSION["id_usuario"]) {
                         $_SESSION["nombre_completo"] = $usuario->get_nombre() . " " . $usuario->get_apellido();
@@ -108,23 +109,23 @@ if (isset($_POST["operacion"])) {
 
                 $respuesta = $usuario->realizar_consulta('eliminar_usuario');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) { 
                     $auditor->registrarAuditoria(Accion::ELIMINAR); 
                 }
                 break;
 
             default:
-                http_response_code(400);
+                http_response_code(HttpCodigo::BAD_REQUEST->value);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
     } catch (Exception $e) {
-        http_response_code(500);
+        http_response_code(HttpCodigo::ERROR_INTERNO->value);
         error_log("Error en controlador: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
         if ($respuesta !== null) {
-            // Cerrar conexiones explÃ­citamente
+            // Cerrar conexiones explicitamente
             if (isset($usuario)) {
                 $usuario->cerrar();
             }
@@ -134,7 +135,7 @@ if (isset($_POST["operacion"])) {
             if (isset($usuario)) {
                 $usuario->cerrar();
             }
-            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexiÃ³n de seguridad
+            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexion de seguridad
 
             echo json_encode($respuesta);
             exit;
@@ -156,13 +157,13 @@ if (isset($_POST["validar"])) {
                 $correo = $_POST["correo"] ?? '';
                 $id = !empty($_POST["id_usuario"]) ? $_POST["id_usuario"] : null;
                 
-                // Si NO es Ãºnico, significa que YA EXISTE
+                // Si NO es único, significa que YA EXISTE
                 $existe = !$validadorBD->esUnico('usuarios', 'correo', $correo, 'id_usuario', $id);
-                $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'El correo ya estÃ¡ en uso' : 'Disponible'];
+                $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'El correo ya está en uso' : 'Disponible'];
                 break;
 
             case 'contrasenia_actual':
-                // Esta lÃ³gica de negocio pura sÃ­ la dejamos delegada al modelo
+                // Esta lógica de negocio pura sí la dejamos delegada al modelo
                 $usuario = new Usuario();
                 $usuario->set_id_usuario($_POST['id_usuario']);
                 $datosUsuario = $usuario->realizar_consulta('consultar_usuario');
@@ -172,7 +173,7 @@ if (isset($_POST["validar"])) {
                 if ($datosUsuario['estatus'] && isset($datosUsuario['datos']['contrasenia'])) {
                     $coincide = password_verify($contraIngresada, $datosUsuario['datos']['contrasenia']);
                 }
-                echo json_encode($coincide); // Tu JS espera un booleano directo aquÃ­
+                echo json_encode($coincide); // Tu JS espera un booleano directo aquí
                 exit;
 
             case 'validar_clave_foranea':
@@ -181,7 +182,7 @@ if (isset($_POST["validar"])) {
                 $valor = $_POST['valor'] ?? '';
 
                 if (empty($tabla) || empty($campo) || empty($valor)) {
-                    $respuesta = ['estatus' => false, 'mensaje' => 'Faltan parÃ¡metros de Validación'];
+                    $respuesta = ['estatus' => false, 'mensaje' => 'Faltan parámetros de Validación'];
                     break;
                 }
 
@@ -196,17 +197,17 @@ if (isset($_POST["validar"])) {
                 break;
 
             default:
-            http_response_code(400);
+            http_response_code(HttpCodigo::BAD_REQUEST->value);
             $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
         }
     } catch (Exception $e) {
-        http_response_code(500);
+        http_response_code(HttpCodigo::ERROR_INTERNO->value);
         error_log("Error en Validación AJAX Usuario: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
     }
 
     if ($respuesta['estatus'] === true || isset($respuesta['existe'])) {
-        http_response_code(200);
+        http_response_code(HttpCodigo::OK->value);
     }
 
     echo json_encode($respuesta);
@@ -225,3 +226,4 @@ $btn_nuevo = [
 $placeholder_buscar = "Buscar usuario...";
 
 require_once "vista/usuarios/usuario_vista.php";
+

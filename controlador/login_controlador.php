@@ -1,4 +1,5 @@
 <?php
+use haydee\enums\HttpCodigo;
 use haydee\ayuda\Recaptcha;
 use haydee\ayuda\Validador;
 use haydee\modelo\Usuario;
@@ -28,7 +29,7 @@ if (isset($_POST["operacion"])) {
         $_POST['correo'] = $_POST['correo_recuperar'];
     }
 
-    // --- VALIDACIÓN ---
+    // --- VALIDACION ---
     $reglas = Usuario::obtenerReglas($operacion);
     if (!empty($reglas)) {
         $validador = new Validador();
@@ -37,7 +38,7 @@ if (isset($_POST["operacion"])) {
         $validador->validarConjunto($_POST, $reglas, ['skip_unique' => true]);
 
         if ($validador->tieneErrores()) {
-            $codigoHttp = $validador->tieneError404() ? 404 : 400;
+            $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::BAD_REQUEST->value;
             http_response_code($codigoHttp);
             echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
             exit;
@@ -74,7 +75,7 @@ if (isset($_POST["operacion"])) {
                 // Si falla el reCAPTCHA, devolvemos 400 (Bad Request)
                 if (!$validacion['estatus']) {
                     $seguridadIP->registrarFallo(); // Para la ip sospechosa
-                    http_response_code(400); 
+                    http_response_code(HttpCodigo::BAD_REQUEST->value); 
                     $respuesta = ['estatus' => false, 'mensaje' => $validacion['error']];
                     break;
                 }
@@ -89,7 +90,7 @@ if (isset($_POST["operacion"])) {
                 if ($resultado['estatus']) {
                     $seguridadIP->limpiarFallo(); // Limpiamos el historial de fallos de esta IP
 
-                    http_response_code(200); // Login exitoso
+                    http_response_code(HttpCodigo::OK->value); // Login exitoso
                     if (isset($resultado['token'])) {
                         Sesiones::recordar($usuario, $resultado['token']);
                     }
@@ -123,10 +124,10 @@ if (isset($_POST["operacion"])) {
 
                     if (strpos($respuesta['mensaje'], 'Error') !== false) {
                         $seguridadIP->registrarFallo();
-                        http_response_code(500); 
+                        http_response_code(HttpCodigo::ERROR_INTERNO->value); 
                     } else {
                         $seguridadIP->limpiarFallo();
-                        http_response_code(200); 
+                        http_response_code(HttpCodigo::OK->value); 
                     }
                 } finally {
                     $recuperacion->cerrar();
@@ -134,11 +135,11 @@ if (isset($_POST["operacion"])) {
                 break;
 
             default:
-                http_response_code(400);
+                http_response_code(HttpCodigo::BAD_REQUEST->value);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
         }
     } catch (Exception $e) {
-        http_response_code(500);
+        http_response_code(HttpCodigo::ERROR_INTERNO->value);
         error_log("Error en controlador: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {

@@ -45,4 +45,3 @@ class BitacoraTest extends TestCase
         $this->assertArrayHasKey('nombre_rol', $resultado[0]);
     }
 }
-?>

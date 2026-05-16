@@ -1,4 +1,5 @@
-﻿<?php
+<?php
+use haydee\enums\HttpCodigo;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
 
@@ -25,7 +26,7 @@ if (isset($_POST["operacion"])) {
         $validador->validarConjunto($_POST, $reglas);
 
         if ($validador->tieneErrores()) {
-            $codigoHttp = $validador->tieneError404() ? 404 : 400;
+            $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::BAD_REQUEST->value;
             http_response_code($codigoHttp);
             echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
             exit;
@@ -44,20 +45,20 @@ if (isset($_POST["operacion"])) {
             case 'consultar':
                 $respuesta = $obj_modulo->realizar_consulta('consultar');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::CONSULTAR); }
                 break;
 
             case 'consultar_modulo':
                 $respuesta = $obj_modulo->realizar_consulta('consultar_modulo');
 
-                http_response_code($respuesta['estatus'] ? 200 : 404);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
                 break;
 
             case 'registrar_modulo':
                 $respuesta = $obj_modulo->realizar_consulta('registrar_modulo');
 
-                http_response_code($respuesta['estatus'] ? 201 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::CREADO->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::REGISTRAR); }
                 break;
 
@@ -65,7 +66,7 @@ if (isset($_POST["operacion"])) {
                 $auditor->capturarDatosAnteriores('consultar_modulo');
                 $respuesta = $obj_modulo->realizar_consulta('modificar_modulo');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::MODIFICAR); }
                 break;
 
@@ -73,16 +74,16 @@ if (isset($_POST["operacion"])) {
                 $auditor->capturarDatosAnteriores('consultar_modulo');
                 $respuesta = $obj_modulo->realizar_consulta('eliminar_modulo');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::ELIMINAR); }
                 break;
 
             default:
-                http_response_code(400);
+                http_response_code(HttpCodigo::BAD_REQUEST->value);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
     } catch (Exception $e) {
-        http_response_code(500);
+        http_response_code(HttpCodigo::ERROR_INTERNO->value);
         error_log("Error en controlador modulos: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
@@ -103,9 +104,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $permisosVista = Sesiones::obtenerPermisosVista(Modulo::GESTIONAR_MODULOS);
 $btn_nuevo = [
     'target'  => '#modal_modulo',
-    'texto'   => 'Nuevo MÃ³dulo',
-    'tooltip' => 'Registrar Nuevo MÃ³dulo'
+    'texto'   => 'Nuevo Módulo',
+    'tooltip' => 'Registrar Nuevo Módulo'
 ];
-$placeholder_buscar = "Buscar mÃ³dulo...";
+$placeholder_buscar = "Buscar módulo...";
 
 require_once "vista/modulos/modulos_vista.php";
+

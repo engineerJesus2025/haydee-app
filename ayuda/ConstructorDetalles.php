@@ -105,7 +105,7 @@ class ConstructorDetalles
     {
         // Configuración específica para pagos
         $config = [
-            'campos' => ['fecha_pago', 'monto', 'tipo_pago', 'referencia'],
+            'campos' => ['fecha_pago', 'monto', 'monto_dolar', 'tipo_pago', 'referencia'],
             'bancarios' => ['banco_id', 'referencia'],
             'imagenes' => 'imagen',
             'metodo_pago_campo' => 'tipo_pago',
@@ -117,5 +117,5 @@ class ConstructorDetalles
         return self::construirDetalles($post, $files, $config, $esEdicion);
     }
 
-    // Se pueden agregar más métodos específicos para Presupuesto, etc.
+    // Se pueden agregar más métodos específicos para Presupuesto o mensualidad
 }

@@ -29,4 +29,3 @@ define('RUTAS', [
     'suscripcion_push'  => 'suscripcion_push_controlador.php'
 ]);
 
-?>

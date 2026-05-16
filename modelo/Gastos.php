@@ -662,4 +662,3 @@ class Gastos extends Conexion
         }
     }
 }
-?>

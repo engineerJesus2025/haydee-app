@@ -215,4 +215,3 @@ class Permisos extends Conexion
         }
     }
 }
-?>

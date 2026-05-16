@@ -1,10 +1,4 @@
-/**
- * caja_chica_ajax.js
- * Gestión de Caja Chica - Peticiones AJAX
- * Dependencias: utilidades.js, validaciones.js
- */
-
-let peticionesActivas = 0; // Se mantiene solo para el control manual de modales (opcional)
+let peticionesActivas = 0; // Se mantiene para el control manual de modales
 let tasa_dolar = localStorage.getItem("tasa_dolar") || 0;
 let diferencia = 0;
 
@@ -24,7 +18,6 @@ let descripciones = {};
 // Inicializar
 consultarCajasChicas();
 
-// Evento cambio de caja en el select
 // Evento cambio de caja en el select
 document.getElementById("mes_select").addEventListener("change", (e) => {
     e.target.classList.remove('caja-highlight');
@@ -97,11 +90,6 @@ document.getElementById("boton_intercambio_monto_reponer")?.addEventListener('cl
     intercambiarMoneda('monto_reponer', 'monto_cambio_reponer');
 });
 
-// Botón Para modificar observacion
-document.getElementById("boton_modificar_observacion")?.addEventListener('click', (e) => {
-    document.getElementById("descripcion_input").value = document.getElementById("descripciones").textContent;
-});
-
 // Limpiar modal al cerrar
 document.getElementById("modal_registro_gastos")?.addEventListener("hide.bs.modal", () => {
     document.getElementById('titulo_modal_registro_gasto').textContent = "Registrar Gasto de Caja";
@@ -139,6 +127,8 @@ document.getElementById("btn_cancelar_edicion")?.addEventListener('click', () =>
     document.getElementById("modo_lectura_nota").classList.remove("d-none");
     document.getElementById("btn_activar_edicion").classList.remove("d-none");
 });
+
+document.getElementById("btn_guardar_edicion")?.addEventListener('click', modificarObservacionInline);
 
 // ========== FUNCIONES AUXILIARES ==========
 function intercambiarMoneda(idMonto, idCambio) {
@@ -392,6 +382,8 @@ async function modificar(id) {
     datos.append("id_movimiento_caja", id);
 
     let montoInput = document.getElementById("monto");
+    let monto = (montoInput.getAttribute("monto") === "bs") ? montoInput.value : document.getElementById("monto_cambio").value;
+    datos.append("monto", monto);
 
     datos.append("operacion", "modificar_movimiento"); 
 
@@ -455,7 +447,7 @@ async function modificarObservacionInline() {
 
     // Deshabilitar botón y mostrar un pequeño spinner de carga nativo de Bootstrap
     let btnGuardar = document.getElementById("btn_guardar_edicion");
-    let textoOriginal = btnGuardar.textContent;
+    let textoOriginal = btnGuardar.innerHTML;
     btnGuardar.disabled = true;
     btnGuardar.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
 
@@ -485,7 +477,7 @@ async function modificarObservacionInline() {
     
     // Restaurar el botón a su estado original
     btnGuardar.disabled = false;
-    btnGuardar.textContent = textoOriginal;
+    btnGuardar.innerHTML = textoOriginal;
 }
 
 // ========== ACTUALIZAR SALDOS MOSTRADOS ==========

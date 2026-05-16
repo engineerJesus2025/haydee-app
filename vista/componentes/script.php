@@ -39,4 +39,3 @@ if (isset($permisosVista) && is_array($permisosVista)) {
     // Si no hay permisos (ej. módulo de inicio), creamos un objeto vacío
     echo "<script> window.PermisosModulo = {}; </script>";
 }
-?>

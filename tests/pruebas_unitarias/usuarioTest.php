@@ -1079,4 +1079,3 @@ class UsuarioTest extends TestCase
         $this->assertArrayHasKey('id_usuario', $resultado); // Ajustado a la aserción
     }
 }
-?>

@@ -92,4 +92,3 @@ class ValidadorBD extends Conexion {
         }
     }
 }
-?>

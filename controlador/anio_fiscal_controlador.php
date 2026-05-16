@@ -1,4 +1,5 @@
-﻿<?php
+<?php
+use haydee\enums\HttpCodigo;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
 use haydee\servicios\Sesiones;
@@ -24,7 +25,7 @@ if (isset($_POST["operacion"])) {
         $validador->validarConjunto($_POST, $reglas);
 
         if ($validador->tieneErrores()) {
-            $codigoHttp = $validador->tieneError404() ? 404 : 400;
+            $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::BAD_REQUEST->value;
             http_response_code($codigoHttp);
             echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
             exit;
@@ -49,7 +50,7 @@ if (isset($_POST["operacion"])) {
             case 'consultar_anios_fiscales':
                 $respuesta = $anioFiscal->realizar_consulta('consultar');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria(Accion::CONSULTAR);
                 }
@@ -59,7 +60,7 @@ if (isset($_POST["operacion"])) {
                 $auditor->capturarDatosAnteriores('consultar_anio_fiscal');
                 $respuesta = $anioFiscal->realizar_consulta('registrar');
 
-                http_response_code($respuesta['estatus'] ? 201 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::CREADO->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria(Accion::REGISTRAR);
                 }
@@ -68,14 +69,14 @@ if (isset($_POST["operacion"])) {
             case 'consulta_especifica':
                 $respuesta = $anioFiscal->realizar_consulta('consultar_anio_fiscal');
 
-                http_response_code($respuesta['estatus'] ? 200 : 404);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
                 break;
 
             case 'modificar':
                 $auditor->capturarDatosAnteriores('consultar_anio_fiscal');
                 $respuesta = $anioFiscal->realizar_consulta('modificar');
                 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria(Accion::MODIFICAR);
                 }
@@ -84,18 +85,18 @@ if (isset($_POST["operacion"])) {
                 $auditor->capturarDatosAnteriores('consultar_anio_fiscal');
                 $respuesta = $anioFiscal->realizar_consulta('eliminar');
                 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria(Accion::ELIMINAR);
                 }
                 break;
 
             default:
-                http_response_code(400);
+                http_response_code(HttpCodigo::BAD_REQUEST->value);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
     } catch (Exception $e) {
-        http_response_code(500);
+        http_response_code(HttpCodigo::ERROR_INTERNO->value);
         error_log("Error en controlador: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
@@ -122,3 +123,4 @@ $placeholder_buscar = "Buscar año fiscal...";
 
 // Cargar la vista
 require_once "vista/anio_fiscal/anio_fiscal_vista.php";
+

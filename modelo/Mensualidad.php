@@ -641,4 +641,3 @@ class Mensualidad extends Conexion
     }
 
 }
-?>

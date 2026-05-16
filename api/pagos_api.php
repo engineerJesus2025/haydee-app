@@ -57,7 +57,7 @@ try {
         if (empty($operacion)) {
             http_response_code(HttpCodigo::BAD_REQUEST->value);
             echo json_encode(['estatus' => false, 'mensaje' => 'No se especificó la operación']);
-            exit;
+            return;
         }
 
         // Asignación de la cabecera del pago
@@ -81,7 +81,7 @@ try {
                 if (empty($detalles)) {
                     http_response_code(HttpCodigo::BAD_REQUEST->value);
                     echo json_encode(['estatus' => false, 'mensaje' => 'Debe proporcionar al menos un detalle de pago.']);
-                    exit;
+                    return;
                 }
 
                 // Pasamos los detalles al modelo
@@ -95,7 +95,7 @@ try {
                 if ($esPropietario) {
                     http_response_code(HttpCodigo::PROHIBIDO->value); // Prohibido
                     echo json_encode(['estatus' => false, 'mensaje' => 'No autorizado para modificar pagos']);
-                    exit;
+                    return;
                 }
                 break;
 
@@ -119,4 +119,3 @@ try {
     $pagos->cerrar();
     echo json_encode($respuesta);
 }
-?>

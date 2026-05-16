@@ -1,4 +1,5 @@
-﻿<?php
+<?php
+use haydee\enums\HttpCodigo;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
  
@@ -23,21 +24,21 @@ if (isset($_POST["operacion"])) {
         switch ($operacion) {
             case 'consulta':
                 $respuesta = $bitacora->realizar_consulta('consultar');
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 break;
 
             default:
-                http_response_code(400);
+                http_response_code(HttpCodigo::BAD_REQUEST->value);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
                 break;
         }
     } catch (Exception $e) {
-        http_response_code(500);
+        http_response_code(HttpCodigo::ERROR_INTERNO->value);
         error_log("Error en controlador Bitacora: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
         if ($respuesta !== null) {
-            // Cerrar conexiones explÃ­citamente
+            // Cerrar conexiones explicitamente
             if (isset($bitacora)) {
                 $bitacora->cerrar();
             }
@@ -50,5 +51,6 @@ if (isset($_POST["operacion"])) {
 
 $placeholder_buscar = "Buscar registro en bitácora...";
 
-// Si no es una peticiÃ³n POST, cargamos la vista
+// Si no es una petición POST, cargamos la vista
 require_once "vista/bitacora/bitacora_vista.php";
+

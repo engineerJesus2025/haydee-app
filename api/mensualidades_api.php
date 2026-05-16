@@ -1,19 +1,18 @@
 <?php
+use haydee\enums\HttpCodigo;
 use haydee\modelo\Mensualidad;
 
 $mensualidad = new Mensualidad();
 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida en API'];
 
 try {
-    // ======================================================================
-    // 1. PETICIONES GET: CONSULTAS (Lectura)
-    // ======================================================================
+    // PETICIONES GET: CONSULTAS (Lectura)
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         
         $operacion = $_GET["operacion"] ?? 'consulta'; 
 
-        // por mi dislexia a veces envío 'fecha', 
-        // o envio 'mes' y 'anio' directamente. Cubrimos ambos casos aquí.
+        // por mi dislexia a veces envio 'fecha', 
+        // o envio 'mes' y 'anio' directamente. Cubrimos ambos casos aqui.
         if (isset($_GET['fecha']) && strpos($_GET['fecha'], '-') !== false) {
             list($anio, $mes, $dia) = explode('-', $_GET['fecha']);
             $mensualidad->set_mes((int)$mes);
@@ -57,25 +56,24 @@ try {
                 break;
 
             default:
-                http_response_code(400); 
+                http_response_code(HttpCodigo::BAD_REQUEST->value); 
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación GET no permitida'];
                 break;
         }
     } 
-    // ======================================================================
-    // 2. PETICIONES POST: REGISTRO Y MODIFICACIÓN (Escritura Admin)
-    // ======================================================================
+    
+    // PETICIONES POST: REGISTRO Y MODIFICACIoN (Escritura Admin)
     elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         $operacion = $_POST["operacion"] ?? '';
 
         if (empty($operacion)) {
-            http_response_code(400);
-            echo json_encode(['estatus' => false, 'mensaje' => 'No se especificó la operación']);
-            exit;
+            http_response_code(HttpCodigo::BAD_REQUEST->value);
+            echo json_encode(['estatus' => false, 'mensaje' => 'No se especificó la Operación']);
+            return;
         }
 
-        // Asignación de cabecera general
+        // Asignacion de cabecera general
         $mensualidad->set_id_mensualidad($_POST['id_mensualidad'] ?? null);
         $mensualidad->set_monto($_POST['monto'] ?? null);
         $mensualidad->set_tasa_dolar($_POST['tasa_dolar'] ?? null);
@@ -95,13 +93,13 @@ try {
         switch ($operacion) {
             case 'registrar_mensualidad':
             case 'modificar_mensualidad':
-                // Extraemos y decodificamos el JSON masivo de apartamentos que envía tu JS
+                // Extraemos y decodificamos el JSON masivo de apartamentos que envia JS
                 $datos_apartamentos = json_decode($_POST['datos_apartamentos'] ?? '[]', true);
                 
                 if (json_last_error() !== JSON_ERROR_NONE || empty($datos_apartamentos)) {
-                    http_response_code(400);
+                    http_response_code(HttpCodigo::BAD_REQUEST->value);
                     echo json_encode(['estatus' => false, 'mensaje' => 'Formato de datos de apartamentos inválido o vacío.']);
-                    exit;
+                    return;
                 }
                 
                 $mensualidad->set_datos_apartamentos($datos_apartamentos);
@@ -115,25 +113,24 @@ try {
                 break;
 
             default:
-                http_response_code(400);
+                http_response_code(HttpCodigo::BAD_REQUEST->value);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación POST no permitida'];
                 break;
         }
     } 
     // ======================================================================
-    // 3. MÉTODOS NO SOPORTADOS
+    //  METODOS NO SOPORTADOS
     // ======================================================================
     else {
-        http_response_code(405); 
-        $respuesta = ['estatus' => false, 'mensaje' => 'Método HTTP no soportado'];
+        http_response_code(HttpCodigo::METODO_NO_PERMITIDO->value); 
+        $respuesta = ['estatus' => false, 'mensaje' => 'metodo HTTP no soportado'];
     }
 
 } catch (Exception $e) {
     error_log("Error en API Mensualidad: " . $e->getMessage());
-    http_response_code(500);
+    http_response_code(HttpCodigo::ERROR_INTERNO->value);
     $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor API'];
 } finally {
     $mensualidad->cerrar();
     echo json_encode($respuesta);
 }
-?>

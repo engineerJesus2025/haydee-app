@@ -1,28 +1,29 @@
 <?php
+use haydee\enums\HttpCodigo;
 use haydee\modelo\Usuario;
 
 $usuario = new Usuario();
 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
 try {
-    // 1. Extracción del Token del Header (Estándar Bearer)
+    // Extraccion del Token del Header
     $headers = apache_request_headers();
     $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? '';
     $token = str_replace('Bearer ', '', $authHeader);
 
     if (empty($token)) {
-        http_response_code(401);
+        http_response_code(HttpCodigo::NO_AUTORIZADO->value);
         echo json_encode(['estatus' => false, 'mensaje' => 'Token de seguridad requerido']);
-        exit;
+        return;
     }
 
-    // 2. Configuración del modelo
+    // Configuración del modelo
     $usuario->set_token($token);
 
-    // 3. Enrutamiento de operaciones (GET para consulta, POST para cambios)
+    // Enrutamiento de operaciones (GET para consulta, POST para cambios)
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        // Al llamar a realizar_consulta, el enrutador dinámico de tu modelo
-        // llamará automáticamente a _consultar_por_token()
+        // Al llamar a realizar_consulta, el enrutador dinamico de tu modelo
+        // llamara automaticamente a _consultar_por_token()
         $respuesta = $usuario->realizar_consulta('consultar_por_token');
     } 
     else if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -31,7 +32,7 @@ try {
         $operacion = $datos['operacion'] ?? '';
 
         if ($operacion === 'actualizar_perfil') {
-            // Primero validamos el token para saber qué ID de usuario cargar
+            // Primero validamos el token para saber que ID de usuario cargar
             $validacion = $usuario->realizar_consulta('consultar_por_token');
             if ($validacion['estatus']) {
                 $usuario->set_id_usuario($validacion['datos']['id_usuario']);
@@ -46,7 +47,7 @@ try {
 
 } catch (Exception $e) {
     error_log("Error en Perfil API: " . $e->getMessage());
-    http_response_code(500);
+    http_response_code(HttpCodigo::ERROR_INTERNO->value);
     $respuesta = ['estatus' => false, 'mensaje' => 'Error en el servidor de perfil'];
 }
 

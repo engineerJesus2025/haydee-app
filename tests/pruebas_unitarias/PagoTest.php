@@ -229,4 +229,3 @@ final class PagoTest extends TestCase
         ];
     }
 }
-?>

@@ -67,4 +67,3 @@ if (!defined('ROOT_PATH')) define('ROOT_PATH', dirname(__DIR__));
 
 // condominiohaydee2025   ---   Haydee.2025.
     //  haydee-app.pages.dev    
-?>

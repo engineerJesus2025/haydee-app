@@ -35,4 +35,3 @@ class ModulosTest extends TestCase
         $this->assertArrayHasKey('nombre', $resultado[0]);
     }
 }
-?>

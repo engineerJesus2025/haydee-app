@@ -1,7 +1,8 @@
 <?php
-// api/gastos_api.php
+
+use haydee\enums\HttpCodigo;
 use haydee\modelo\Gastos;
-use haydee\ayuda\ConstructorDetalles; // Necesario si a futuro vas a registrar gastos desde la app
+use haydee\ayuda\ConstructorDetalles; 
 
 // (Futuro) Validación del Token JWT
 
@@ -9,9 +10,7 @@ $gastos = new Gastos();
 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida en API'];
 
 try {
-    // ======================================================================
-    // 1. PETICIONES GET: Solo para CONSULTAR datos (Lectura)
-    // ======================================================================
+    //  PETICIONES GET: Solo para CONSULTAR datos (Lectura)
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         
         $operacion = $_GET["operacion"] ?? 'consulta'; 
@@ -23,13 +22,13 @@ try {
                 break;
 
             case 'consultar_gasto':
-                // Trae la cabecera y TODOS los detalles de un gasto específico
+                // Trae la cabecera y TODOS los detalles de un gasto 
                 // Requiere: ?endpoint=gastos&operacion=consultar_gasto&id_gasto=X
                 $gastos->set_id_gasto($_GET['id_gasto'] ?? null);
                 $respuesta = $gastos->realizar_consulta('consultar_gasto');
                 break;
 
-            // (Opcional) endpoints estadísticos que vi en tu controlador web
+            // endpoints estadisticos que porsia...
             case 'listar_gastos_mes':
                 $respuesta = $gastos->realizar_consulta('listar_gastos_mes');
                 break;
@@ -39,25 +38,24 @@ try {
                 break;
 
             default:
-                http_response_code(400); 
+                http_response_code(HttpCodigo::BAD_REQUEST->value); 
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación GET no permitida'];
                 break;
         }
     } 
-    // ======================================================================
-    // 2. PETICIONES POST: Para CREAR o MODIFICAR (Escritura)
-    // ======================================================================
+
+    // PETICIONES POST: Para CREAR o MODIFICAR (Escritura)
     elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         $operacion = $_POST["operacion"] ?? '';
 
         if (empty($operacion)) {
-            http_response_code(400);
-            echo json_encode(['estatus' => false, 'mensaje' => 'No se especificó la operación']);
-            exit;
+            http_response_code(HttpCodigo::BAD_REQUEST->value);
+            echo json_encode(['estatus' => false, 'mensaje' => 'No se especificó la Operación']);
+            return;
         }
 
-        // Asignación de la cabecera (Datos generales del gasto)
+        // Asignacion de la cabecera (Datos generales del gasto)
         $gastos->set_id_gasto($_POST['id_gasto'] ?? null);
         $gastos->set_clasificacion($_POST['clasificacion'] ?? null);
         $gastos->set_descripcion_gasto($_POST['descripcion_gasto'] ?? null);
@@ -71,9 +69,9 @@ try {
                 $detalles = ConstructorDetalles::ConstruirDetallesGastos($_POST, $_FILES, false);
                 
                 if (empty($detalles)) {
-                    http_response_code(400);
+                    http_response_code(HttpCodigo::BAD_REQUEST->value);
                     echo json_encode(['estatus' => false, 'mensaje' => 'Debe proporcionar al menos un detalle.']);
-                    exit;
+                    return;
                 }
 
                 // 2. Pasamos los detalles al modelo
@@ -88,25 +86,22 @@ try {
                 break;
 
             default:
-                http_response_code(400);
+                http_response_code(HttpCodigo::BAD_REQUEST->value);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación POST no permitida'];
                 break;
         }
     } 
-    // ======================================================================
-    // 3. MÉTODOS NO SOPORTADOS
-    // ======================================================================
+    // METODOS NO SOPORTADOS
     else {
-        http_response_code(405); 
-        $respuesta = ['estatus' => false, 'mensaje' => 'Método HTTP no soportado'];
+        http_response_code(HttpCodigo::METODO_NO_PERMITIDO->value); 
+        $respuesta = ['estatus' => false, 'mensaje' => 'metodo HTTP no soportado'];
     }
 
 } catch (Exception $e) {
     error_log("Error en API Gastos: " . $e->getMessage());
-    http_response_code(500);
+    http_response_code(HttpCodigo::ERROR_INTERNO->value);
     $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor API'];
 } finally {
     $gastos->cerrar();
     echo json_encode($respuesta);
 }
-?>

@@ -1,6 +1,7 @@
 <?php
 
 namespace haydee\servicios;
+use haydee\enums\HttpCodigo;
 
 use haydee\servicios\Autenticacion;
 use haydee\modelo\SeguridadIP;
@@ -15,9 +16,12 @@ class Sesiones
 {
     private const MAX_PETICIONES_MINUTO = 60;
     private const VENTANA_TIEMPO_SEGUNDOS = 60;
+    private const DIAS_RECORDAR_SESION = 30;
+    private const SEGUNDOS_POR_DIA = 86400;
+    private const EXPIRACION_PASADO = 3600; // Segundos a restar para destruir cookies
 
     /**
-     * Inicia la sesión con los datos del usuario.
+     * Inicia la sesion con los datos del usuario.
      */
     public static function iniciar($datosUsuario)
     {
@@ -31,7 +35,7 @@ class Sesiones
         $_SESSION["permisos"] = $datosUsuario['permisos'];
         $_SESSION["notificaciones"] = array_filter($datosUsuario["notificaciones"],function($n){return $n['leido'] == 0;});
 
-        // Verificar año fiscal y caja (proximamente proceso automático -_-)
+        // Verificar año fiscal y caja (proximamente proceso automatico -_-)
         try {
             $anioFiscalModel = new AnioFiscal();
             $anioFiscalModel->realizar_consulta('verificar_anio_fiscal');
@@ -44,8 +48,8 @@ class Sesiones
     }
 
     /**
-     * Método centralizado para autorizar el acceso a un controlador.
-     * Ejecuta secuencialmente: IP -> Método HTTP -> Sesión -> Permisos.
+     * metodo centralizado para autorizar el acceso a un controlador.
+     * Ejecuta secuencialmente: IP -> metodo HTTP -> sesion -> Permisos.
      */
     public static function autorizarAcceso(?Modulo $modulo = null, ?Accion $permiso = null, $metodos = ['GET', 'POST'])
     {
@@ -62,15 +66,15 @@ class Sesiones
         self::verificarInundacion();
 
         // Capa de Autorización (Que puede hacer)
-        // Solo verifica permisos si el controlador se los exigió explícitamente
+        // Solo verifica permisos si el controlador se los exige
         if ($modulo !== null && $permiso !== null) {
             self::verificarPermiso($modulo, $permiso);
         }
     }
 
     /**
-     * Verifica si la sesión está iniciada; si no, intenta con cookies de recordar.
-     * Redirige al login si no hay sesión ni cookies válidas.
+     * Verifica si la sesion esta iniciada; si no, intenta con cookies de recordar.
+     * Redirige al login si no hay sesion ni cookies validas.
      */
     public static function verificarSesion()
     {
@@ -78,30 +82,30 @@ class Sesiones
             return true;
         }
 
-        // Si hay cookies de "recuérdame", intentamos recuperar la sesión
+        // Si hay cookies de "recuerdame", intentamos recuperar la sesion
         if (isset($_COOKIE['token']) && isset($_COOKIE['correo_usuario'])) {
             return self::procesarTokenRecuerdame();
         }
 
-        // Si llegamos aquí, no hay sesión.
+        // Si llegamos aqui, no hay sesion.
         // Si es una petición POST (asumimos AJAX), devolvemos 401.
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            http_response_code(401);
+            http_response_code(HttpCodigo::NO_AUTORIZADO->value);
             header('Content-Type: application/json');
             echo json_encode([
                 'estatus' => false, 
-                'mensaje' => 'Su sesión ha expirado. Por favor, inicie sesión de nuevo.'
+                'mensaje' => 'Su sesion ha expirado. Por favor, inicie sesion de nuevo.'
             ]);
             exit;
         }
 
-        // Si es una petición normal (GET), redirigimos al login
+        // Si es una peticion normal (GET), redirigimos al login
         self::redirigirALogin();
         return false;
     }
 
     /**
-     * Procesa el token de "recordar sesión" usando el servicio Autenticacion.
+     * Procesa el token de "recordar sesion" usando el servicio Autenticacion.
      */
     private static function procesarTokenRecuerdame()
     {
@@ -116,9 +120,9 @@ class Sesiones
                 self::iniciar($resultado['datos']);
                 return true;
             } else {
-                // Token inválido, eliminar cookies
-                setcookie('token', '', time() - 3600, '/');
-                setcookie('correo_usuario', '', time() - 3600, '/');
+                // Token invalido, eliminar cookies
+                setcookie('token', '', time() - self::EXPIRACION_PASADO, '/');
+                setcookie('correo_usuario', '', time() - self::EXPIRACION_PASADO, '/');
                 self::redirigirALogin();
                 return false;
             }
@@ -130,22 +134,19 @@ class Sesiones
     }
 
     /**
-     * Establece las cookies para recordar la sesión.
-     * @param string $correo
-     * @param string $token Token sin hashear
-     * @param int $dias Duración en días (por defecto 30)
+     * Establece las cookies para recordar la sesion.
      */
-    public static function recordar($correo, $token, $dias = 30)
+    public static function recordar($correo, $token, $dias = self::DIAS_RECORDAR_SESION)
     {
-        $expiracion = time() + ($dias * 24 * 60 * 60);
+        $expiracion = time() + ($dias * self::SEGUNDOS_POR_DIA);
         // Usar cookies seguras (HttpOnly, Secure en producción)
-        $secure = defined('ENTORNO') && ENTORNO === 'produccion'; // Ajusta según tu entorno
+        $secure = defined('ENTORNO') && ENTORNO === 'produccion';
         setcookie('token', $token, $expiracion, '/', '', $secure, true);
         setcookie('correo_usuario', $correo, $expiracion, '/', '', $secure, true);
     }
 
     /**
-     * Cierra la sesión actual (destruye sesión y elimina cookies).
+     * Cierra la sesion actual (destruye sesion y elimina cookies).
      */
     public static function cerrarSesion()
     {
@@ -153,14 +154,14 @@ class Sesiones
             session_destroy();
         }
 
-        setcookie('token', '', time() - 3600, '/');
-        setcookie('correo_usuario', '', time() - 3600, '/');
+        setcookie('token', '', time() - self::EXPIRACION_PASADO, '/');
+        setcookie('correo_usuario', '', time() - self::EXPIRACION_PASADO, '/');
 
         self::redirigirALogin();
     }
 
     /**
-     * Redirige al login y termina la ejecución.
+     * Redirige al login y termina la ejecucion.
      */
     private static function redirigirALogin()
     {
@@ -169,7 +170,7 @@ class Sesiones
     }
 
     /**
-     * Verifica si el usuario está logueado.
+     * Verifica si el usuario esta logueado.
      */
     public static function estaLogueado()
     {
@@ -177,10 +178,8 @@ class Sesiones
     }
 
     /**
-     * Verifica si el usuario tiene permiso para un módulo y acción.
-     * @param int $moduloId   ID del módulo (constante definida globalmente)
-     * @param int $permisoId  ID del permiso (constante definida globalmente)
-     * @return bool
+     * Verifica si el usuario tiene permiso para un modulo y accion.
+
      */
     public static function tienePermiso(Modulo $modulo, Accion $permiso)
     {
@@ -204,17 +203,15 @@ class Sesiones
         self::verificarSesion();
 
         if (!self::tienePermiso($modulo, $permiso)) {
-            http_response_code(403);
+            http_response_code(HttpCodigo::PROHIBIDO->value);
             require_once "vista/error/403_vista.php";
             exit;
         }
     }
 
     /**
-     * Obtiene todos los permisos de un módulo estructurados en un arreglo para la vista.
-     * Asume que las constantes CONSULTAR, REGISTRAR, MODIFICAR y ELIMINAR son globales.
-     * * @param int $moduloId ID del módulo a consultar
-     * @return array Arreglo asociativo con los permisos booleanos
+     * Obtiene todos los permisos de un modulo estructurados en un arreglo para la vista.
+
      */
     public static function obtenerPermisosVista(Modulo $modulo)
     {
@@ -227,9 +224,9 @@ class Sesiones
     }
 
     /**
-     * Verifica los permisos para operaciones que se ejecutan vía AJAX.
-     * Evalúa el nombre de la operación para requerir el permiso adecuado automáticamente.
-     * Si no tiene permisos, devuelve un JSON con estatus false y termina la ejecución.
+     * Verifica los permisos para operaciones que se ejecutan via AJAX.
+     * Evalua el nombre de la operacion para requerir el permiso adecuado automaticamente.
+     * Si no tiene permisos, devuelve un JSON con estatus false y termina la ejecuciin.
      */
     public static function verificarPermisoAccion(Modulo $modulo, $operacion, $mapaExtra = [])
     {
@@ -239,7 +236,6 @@ class Sesiones
         if (array_key_exists($operacionNormalizada, $mapaExtra)) {
             $permisoRequerido = $mapaExtra[$operacionNormalizada]; 
         } else {
-            // Asignamos las instancias del Enum, no sus valores
             if (strpos($operacionNormalizada, 'registrar') !== false) {
                 $permisoRequerido = Accion::REGISTRAR;
             } elseif (strpos($operacionNormalizada, 'modificar') !== false) {
@@ -251,7 +247,7 @@ class Sesiones
 
         if ($permisoRequerido !== null) {
             if (!self::tienePermiso($modulo, $permisoRequerido)) {
-                http_response_code(403); 
+                http_response_code(HttpCodigo::PROHIBIDO->value); 
                 header('Content-Type: application/json');
                 echo json_encode([
                     'estatus' => false, 
@@ -267,12 +263,12 @@ class Sesiones
     {
         $metodoActual = $_SERVER['REQUEST_METHOD'];
         if (!in_array($metodoActual, $metodosPermitidos)) {
-            http_response_code(405);
+            http_response_code(HttpCodigo::METODO_NO_PERMITIDO->value);
             header('Allow: ' . implode(', ', $metodosPermitidos));
             header('Content-Type: application/json');
             echo json_encode([
                 'estatus' => false, 
-                'mensaje' => "El método $metodoActual no está permitido para este recurso."
+                'mensaje' => "El metodo $metodoActual no esta permitido para este recurso."
             ]);
             exit;
         }
@@ -292,7 +288,7 @@ class Sesiones
         $acceso = $seguridad->verificarListaAcceso();
 
         if (!$acceso['estatus']) {
-            // Si es una petición AJAX/POST
+            // Si es una peticion AJAX/POST
             if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 http_response_code($acceso['codigo_http']);
                 header('Content-Type: application/json');
@@ -302,7 +298,7 @@ class Sesiones
                 ]);
                 exit;
             } else {
-                // Si es navegación normal GET
+                // Si es navegacion normal GET
                 http_response_code($acceso['codigo_http']);
                 require_once "vista/error/403_vista.php"; 
                 exit;
@@ -333,9 +329,9 @@ class Sesiones
             // USAMOS LAS CONSTANTES DE CLASE
             if ($tiempoTranscurrido < self::VENTANA_TIEMPO_SEGUNDOS) {
                 if ($_SESSION['flood_control'][$idUsuario]['peticiones'] > self::MAX_PETICIONES_MINUTO) {
-                    http_response_code(429); 
+                    http_response_code(HttpCodigo::DEMASIADAS_PETICIONES->value); 
                     header('Content-Type: application/json');
-                    echo json_encode(['estatus' => false, 'mensaje' => 'Se ha detectado actividad inusual. Ha superado el límite de operaciones por minuto. Por favor, espere.']);
+                    echo json_encode(['estatus' => false, 'mensaje' => 'Se ha detectado actividad inusual. Ha superado el limite de operaciones por minuto. Por favor, espere.']);
                     exit;
                 }
             } else {

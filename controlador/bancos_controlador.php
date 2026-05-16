@@ -1,4 +1,5 @@
-﻿<?php
+<?php
+use haydee\enums\HttpCodigo;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
 
@@ -34,7 +35,7 @@ if (isset($_POST["operacion"])) {
         $validador->validarConjunto($_POST, $reglas, $contexto);
 
         if ($validador->tieneErrores()) {
-            $codigoHttp = $validador->tieneError404() ? 404 : 400;
+            $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::BAD_REQUEST->value;
             http_response_code($codigoHttp);
             echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
             exit;
@@ -60,7 +61,7 @@ if (isset($_POST["operacion"])) {
             case 'consulta':
                 $respuesta = $banco->realizar_consulta('consultar');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria(Accion::CONSULTAR);
                 }
@@ -69,7 +70,7 @@ if (isset($_POST["operacion"])) {
             case 'registrar_banco':
                 $respuesta = $banco->realizar_consulta('registrar_banco');
 
-                http_response_code($respuesta['estatus'] ? 201 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::CREADO->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria(Accion::REGISTRAR);
                 }
@@ -77,14 +78,14 @@ if (isset($_POST["operacion"])) {
 
             case 'consultar_banco':
                 $respuesta = $banco->realizar_consulta('consultar_banco');
-                http_response_code($respuesta['estatus'] ? 200 : 404);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
                 break;
 
             case 'modificar_banco':
                 $auditor->capturarDatosAnteriores('consultar_banco');
                 $respuesta = $banco->realizar_consulta('modificar_banco');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) { 
                     $auditor->registrarAuditoria(Accion::MODIFICAR); 
                 }
@@ -93,7 +94,7 @@ if (isset($_POST["operacion"])) {
             case 'eliminar_banco':
                 $auditor->capturarDatosAnteriores('consultar_banco');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 $respuesta = $banco->realizar_consulta('eliminar_banco');
                 if ($respuesta['estatus']) { 
                     $auditor->registrarAuditoria(Accion::ELIMINAR); 
@@ -101,20 +102,20 @@ if (isset($_POST["operacion"])) {
                 break;
 
             default:
-                http_response_code(400);
+                http_response_code(HttpCodigo::BAD_REQUEST->value);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
     } catch (Exception $e) {
-        http_response_code(500);
+        http_response_code(HttpCodigo::ERROR_INTERNO->value);
         error_log("Error en controlador: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
         if ($respuesta !== null) {
-            // Cerrar conexiones explÃ­citamente
+            // Cerrar conexiones explicitamente
             if (isset($banco)) {
                 $banco->cerrar();
             }
-            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexiÃ³n de seguridad
+            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexion de seguridad
 
             echo json_encode($respuesta);
             exit;
@@ -137,7 +138,7 @@ if (isset($_POST["validar"])) {
                 $id = !empty($_POST["id_banco"]) ? $_POST["id_banco"] : null;
                 
                 $existe = !$validadorBD->esUnico('bancos', 'numero_cuenta', $numero_cuenta, 'id_banco', $id);
-                $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'El nÃºmero de cuenta ya estÃ¡ registrado' : 'Disponible'];
+                $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'El número de cuenta ya está registrado' : 'Disponible'];
                 break;
 
             case 'validar_clave_foranea':
@@ -146,7 +147,7 @@ if (isset($_POST["validar"])) {
                 $valor = $_POST['valor'] ?? '';
 
                 if (empty($tabla) || empty($campo) || empty($valor)) {
-                    $respuesta = ['estatus' => false, 'mensaje' => 'Faltan parÃ¡metros de Validación'];
+                    $respuesta = ['estatus' => false, 'mensaje' => 'Faltan parámetros de Validación'];
                     break;
                 }
 
@@ -160,17 +161,17 @@ if (isset($_POST["validar"])) {
                 break;
 
             default:
-                http_response_code(400);
+                http_response_code(HttpCodigo::BAD_REQUEST->value);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
         }
     } catch (Exception $e) {
-        http_response_code(500);
+        http_response_code(HttpCodigo::ERROR_INTERNO->value);
         error_log("Error en Validación AJAX Bancos: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
     }
 
     if ($respuesta['estatus'] === true || isset($respuesta['existe'])) {
-        http_response_code(200);
+        http_response_code(HttpCodigo::OK->value);
     }
 
     echo json_encode($respuesta);
@@ -190,3 +191,4 @@ $placeholder_buscar = "Buscar banco...";
 
 // Cargar la vista
 require_once "vista/bancos/bancos_vista.php";
+

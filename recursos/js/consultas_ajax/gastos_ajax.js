@@ -1,12 +1,4 @@
-/**
- * gastos_ajax.js
- * Gestión de Gastos - Peticiones AJAX
- * Dependencias: utilidades.js, validaciones.js, formatoFechas.js
- */
-
-// ============================================================
 // VARIABLES GLOBALES DEL MÓDULO
-// ============================================================
 let tabla_gastos;
 let id_modificar = null;
 const permisoModificar = window.PermisosModulo?.modificar || false;
@@ -22,9 +14,7 @@ const botonFormulario = document.getElementById("boton_formulario");
 const contenedorDetalles = document.getElementById("detalles-container");
 const plantillaDetalle = document.getElementById("plantilla-detalle-gasto");
 
-// ============================================================
 // INICIALIZACIÓN
-// ============================================================
 document.addEventListener('DOMContentLoaded', () => {
     consultar();
 
@@ -60,7 +50,6 @@ async function consultar() {
     const formatoClasificacion = (cell) => {
         const config = obtenerConfigClasificacionGasto(cell.getValue());
         
-        // Usamos nuestro Helper Global
         return ComponentesUI.crearSoftBadge(config.color, config.icono, config.texto);
     };
 

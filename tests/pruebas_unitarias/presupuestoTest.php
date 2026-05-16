@@ -413,4 +413,3 @@ class PresupuestoTest extends TestCase
         $this->assertEquals($ultimo_id_simulado, $resultado); // Aserción añadida
     }
 }
-?>

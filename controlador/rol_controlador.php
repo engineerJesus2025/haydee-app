@@ -1,4 +1,5 @@
-﻿<?php
+<?php
+use haydee\enums\HttpCodigo;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
 
@@ -27,7 +28,7 @@ if (isset($_POST["operacion"])) {
         $validador->validarConjunto($_POST, $reglas, $contexto);
 
         if ($validador->tieneErrores()) {
-            $codigoHttp = $validador->tieneError404() ? 404 : 400;
+            $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::BAD_REQUEST->value;
             http_response_code($codigoHttp);
             echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
             exit;
@@ -50,19 +51,19 @@ if (isset($_POST["operacion"])) {
             case 'consultar':
                 $respuesta = $rol->realizar_consulta('consultar');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::CONSULTAR); }
                 break;
 
             case 'consultar_rol':
                 $respuesta = $rol->realizar_consulta('consultar_rol');
-                http_response_code($respuesta['estatus'] ? 200 : 404);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
                 break;
 
             case 'registrar_rol':
                 $respuesta = $rol->realizar_consulta('registrar_rol');
 
-                http_response_code($respuesta['estatus'] ? 201 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::CREADO->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::REGISTRAR); }
                 break;
 
@@ -70,7 +71,7 @@ if (isset($_POST["operacion"])) {
                 $auditor->capturarDatosAnteriores('consultar_rol');
                 $respuesta = $rol->realizar_consulta('modificar_rol');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::MODIFICAR); }
                 break;
 
@@ -78,20 +79,20 @@ if (isset($_POST["operacion"])) {
                 $auditor->capturarDatosAnteriores('consultar_rol');
                 $respuesta = $rol->realizar_consulta('eliminar_rol');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::ELIMINAR); }
                 break;
             case 'consultar_permisos_rol':
                 $respuesta = $rol->realizar_consulta('consultar_permisos_asignados');
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 break;
 
             default:
-                http_response_code(400);
+                http_response_code(HttpCodigo::BAD_REQUEST->value);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
     } catch (Exception $e) {
-        http_response_code(500);
+        http_response_code(HttpCodigo::ERROR_INTERNO->value);
         error_log("Error en controlador roles: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
@@ -127,17 +128,17 @@ if (isset($_POST["validar"])) {
                 break;
 
             default:
-                http_response_code(400);
+                http_response_code(HttpCodigo::BAD_REQUEST->value);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
         }
     } catch (Exception $e) {
-        http_response_code(500);
+        http_response_code(HttpCodigo::ERROR_INTERNO->value);
         error_log("Error en Validación AJAX Bancos: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
     }
 
     if ($respuesta['estatus'] === true || isset($respuesta['existe'])) {
-        http_response_code(200);
+        http_response_code(HttpCodigo::OK->value);
     }
 
     echo json_encode($respuesta);
@@ -170,3 +171,4 @@ $btn_nuevo = [
 $placeholder_buscar = "Buscar rol...";
 
 require_once "vista/roles/roles_vista.php";
+

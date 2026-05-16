@@ -24,4 +24,3 @@ enum Accion: string
     case CERRAR_SESION = 'CERRAR SESION';
 }
 
-?>

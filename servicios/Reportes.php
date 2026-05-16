@@ -9,6 +9,7 @@ use haydee\enums\MetodoPago;
 use haydee\enums\ClasificacionGasto;
 use haydee\enums\TipoBalance;
 use haydee\enums\FiltroTiempo;
+use haydee\enums\TipoBaseDatos;
 
 class Reportes extends Conexion
 {
@@ -68,7 +69,6 @@ class Reportes extends Conexion
             'consultar_habitantes' => ['rango_edades', 'tipo_residente', 'filtro_tiempo', 'fecha_inicio', 'fecha_fin'],
             'recibo_pago' => ['id_pago']
         ];
-
         if (isset($camposPorOperacion[$operacion])) {
             return array_intersect_key($reglasGenerales, array_flip($camposPorOperacion[$operacion]));
         }
@@ -127,7 +127,7 @@ class Reportes extends Conexion
                 INNER JOIN gastos g ON dg.gasto_id = g.id_gasto
                 WHERE g.activo = 1 ORDER BY anio DESC, mes DESC";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute();
             return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
         } catch (PDOException $e) {
@@ -142,7 +142,7 @@ class Reportes extends Conexion
                 INNER JOIN gastos g ON dg.gasto_id = g.id_gasto
                 WHERE g.activo = 1 AND YEAR(dg.fecha) = :anio AND MONTH(dg.fecha) = :mes";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute([':anio' => $this->anio, ':mes' => $this->mes]);
             return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
         } catch (PDOException $e) {
@@ -201,7 +201,7 @@ class Reportes extends Conexion
         }
 
         try {
-            $con = $this->get_conex('negocio');
+            $con = $this->get_conex(TipoBaseDatos::NEGOCIO);
             $stmt = $con->prepare($sqlGrafico);
             $stmt->execute($paramsGrafico);
             $datosGrafico = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -274,7 +274,7 @@ class Reportes extends Conexion
                               WHERE mensualidad.apartamento_id = apartamentos.id_apartamento)
                 )";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute();
             return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
         } catch (PDOException $e) {
@@ -291,7 +291,7 @@ class Reportes extends Conexion
                 INNER JOIN apartamentos a ON ha.apartamento_id = a.id_apartamento
                 WHERE ha.tipo_vinculo = :vinculo AND h.activo = 1";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute([':vinculo' => $vinculo]);
             return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
         } catch (PDOException $e) {
@@ -358,7 +358,7 @@ class Reportes extends Conexion
         }
 
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute($params);
             return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
         } catch (PDOException $e) {
@@ -392,7 +392,7 @@ class Reportes extends Conexion
                 GROUP BY p.id_pago, pm_per.mes, pm_per.anio, h.nombre, h.apellido, a.nro_apartamento";
         
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute([':id_pago' => $this->id_pago, ':vinculo' => $prop]);
             $datos = $stmt->fetch(PDO::FETCH_ASSOC);
             if (!$datos) {
@@ -434,7 +434,7 @@ class Reportes extends Conexion
                 FROM BalanceDelMes b JOIN apartamentos a ON b.apartamento_id = a.id_apartamento
                 ORDER BY a.nro_apartamento, b.anio, b.mes";
         try {
-            $stmt = $this->get_conex('negocio')->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute();
             return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
         } catch (PDOException $e) {
@@ -544,4 +544,3 @@ class Reportes extends Conexion
         ];
     }
 }
-?>

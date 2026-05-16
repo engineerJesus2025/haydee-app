@@ -15,7 +15,6 @@ class GestorAuditoria
     private Modulo $modulo; // Tipamos fuertemente la propiedad
     private $datosAnteriores = null;
 
-    // Exigimos la instancia del Enum Modulo
     public function __construct($modelo, Modulo $modulo)
     {
         $this->modelo = $modelo;

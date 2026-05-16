@@ -1,4 +1,5 @@
 <?php
+use haydee\enums\HttpCodigo;
 use haydee\modelo\CarteleraVirtual;
 use haydee\ayuda\GestorImagenes;
 
@@ -27,7 +28,7 @@ try {
                 break;
 
             default:
-                http_response_code(400); // Bad Request
+                http_response_code(HttpCodigo::BAD_REQUEST->value); // Bad Request
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación GET no permitida en la API'];
                 break;
         }
@@ -40,12 +41,12 @@ try {
         $operacion = $_POST["operacion"] ?? '';
 
         if (empty($operacion)) {
-            http_response_code(400);
-            echo json_encode(['estatus' => false, 'mensaje' => 'No se especificó la operación POST']);
-            exit; // Cortamos ejecución
+            http_response_code(HttpCodigo::BAD_REQUEST->value);
+            echo json_encode(['estatus' => false, 'mensaje' => 'No se especificó la Operación POST']);
+            return; // Cortamos ejecución
         }
 
-        // Asignación masiva (Solo necesaria para registrar/modificar)
+        // Asignacion masiva (Solo necesaria para registrar/modificar)
         $cartelera->set_id_cartelera($_POST['id_cartelera'] ?? null);
         $cartelera->set_titulo($_POST['titulo'] ?? null);
         $cartelera->set_descripcion($_POST['descripcion'] ?? null);
@@ -80,25 +81,24 @@ try {
                 break;
 
             default:
-                http_response_code(400);
+                http_response_code(HttpCodigo::BAD_REQUEST->value);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación POST no permitida en la API'];
                 break;
         }
     } 
     // ======================================================================
-    // MÉTODOS NO SOPORTADOS
+    // METODOS NO SOPORTADOS
     // ======================================================================
     else {
-        http_response_code(405); // Method Not Allowed
-        $respuesta = ['estatus' => false, 'mensaje' => 'Método HTTP no soportado'];
+        http_response_code(HttpCodigo::METODO_NO_PERMITIDO->value); // Method Not Allowed
+        $respuesta = ['estatus' => false, 'mensaje' => 'metodo HTTP no soportado'];
     }
 
 } catch (Exception $e) {
     error_log("Error en API Cartelera: " . $e->getMessage());
-    http_response_code(500);
+    http_response_code(HttpCodigo::ERROR_INTERNO->value);
     $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor API'];
 } finally {
     $cartelera->cerrar();
     echo json_encode($respuesta);
 }
-?>

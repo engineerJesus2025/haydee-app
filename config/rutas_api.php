@@ -12,4 +12,3 @@ define('RUTAS_API', [
     'handshake'            => 'handshake.php',
 ]);
 
-?>

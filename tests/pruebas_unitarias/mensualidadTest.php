@@ -484,4 +484,3 @@ class MensualidadTest extends TestCase
         $this->assertArrayHasKey('deuda_acumulada', $resultado[0]);        
     }   
 }
-?>

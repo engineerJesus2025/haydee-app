@@ -338,12 +338,13 @@ class CajaChica extends Conexion
     private function _modificar_movimiento()
     {
         try {
-            $sql = "UPDATE movimientos_caja SET concepto = :con, fecha = :fecha 
+            $sql = "UPDATE movimientos_caja SET concepto = :con, fecha = :fecha, monto = :monto 
                     WHERE id_movimiento_caja = :id";
             $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute([
                 ':con' => $this->concepto,
                 ':fecha' => $this->fecha_movimiento,
+                ':monto' => $this->monto_movimiento,
                 ':id' => $this->id_movimiento_caja
             ]);
 
@@ -351,12 +352,12 @@ class CajaChica extends Conexion
             
             return [
                 'estatus' => true, 
-                'mensaje' => 'Movimiento actualizado (solo concepto y fecha).',
+                'mensaje' => 'Movimiento actualizado.',
                 'alerta_saldo' => $alertaSaldo 
             ];
         } catch (PDOException $e) {
             error_log("Error en _modificar_movimiento: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al modificar movimiento: ' . $e->getMessage()];
+            return ['estatus' => false, 'mensaje' => 'Error del servidor al modificar movimiento'];
         }
     }
 
@@ -424,4 +425,3 @@ class CajaChica extends Conexion
         }
     }
 }
-?>

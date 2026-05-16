@@ -1,4 +1,5 @@
-﻿<?php
+<?php
+use haydee\enums\HttpCodigo;
 use haydee\enums\Modulo;
 
 use haydee\servicios\Sesiones;
@@ -26,7 +27,7 @@ if (isset($_POST["operacion"])) {
         $validador->validarConjunto($_POST, $reglas);
 
         if ($validador->tieneErrores()) {
-            $codigoHttp = $validador->tieneError404() ? 404 : 400;
+            $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::BAD_REQUEST->value;
             http_response_code($codigoHttp);
             echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
             exit;
@@ -45,13 +46,13 @@ if (isset($_POST["operacion"])) {
         switch ($operacion) {
             case 'consultar':
                 $respuesta = $notificaciones->realizar_consulta('consultar_mis_notificaciones');
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 break;
 
             case 'marcar_como_leido':
                 $respuesta = $notificaciones->realizar_consulta('marcar_leida');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) {
                     // Eliminar la notificación de la sesion
                     if (isset($_SESSION['notificaciones']) && is_array($_SESSION['notificaciones'])) {
@@ -71,18 +72,18 @@ if (isset($_POST["operacion"])) {
             case 'marcar_todas_leidas':
                 $respuesta = $notificaciones->realizar_consulta('marcar_todas_leidas');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) {
                     $_SESSION['notificaciones'] = [];
                 }
                 break;
 
             default:
-                http_response_code(400);
+                http_response_code(HttpCodigo::BAD_REQUEST->value);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
     } catch (Exception $e) {
-        http_response_code(500);
+        http_response_code(HttpCodigo::ERROR_INTERNO->value);
         error_log("Error en controlador notificaciones: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
@@ -101,3 +102,4 @@ $placeholder_buscar = "Buscar notificación...";
 if (isset($accion) && $accion == "inicio") {
     require_once "vista/notificaciones/notificaciones_vista.php";
 }
+

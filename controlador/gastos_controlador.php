@@ -1,4 +1,5 @@
-﻿<?php
+<?php
+use haydee\enums\HttpCodigo;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
 
@@ -24,7 +25,7 @@ if (isset($_POST["operacion"])) {
     Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_GASTOS, $operacion);
 
     // =========================================================
-    // 1. VALIDACIÃ“N DE LA CABECERA
+    // 1. VALIDACION DE LA CABECERA
     // =========================================================
     $reglasCabecera = Gastos::obtenerReglas($operacion);
 
@@ -33,7 +34,7 @@ if (isset($_POST["operacion"])) {
         $validador->validarConjunto($_POST, $reglasCabecera);
 
         if ($validador->tieneErrores()) {
-            $codigoHttp = $validador->tieneError404() ? 404 : 400;
+            $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::BAD_REQUEST->value;
             http_response_code($codigoHttp);
             echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
             exit;
@@ -41,7 +42,7 @@ if (isset($_POST["operacion"])) {
     }
 
     // =========================================================
-    // 2. CONSTRUCCIÃ“N Y VALIDACIÃ“N DE DETALLES (Renglones)
+    // 2. CONSTRUCCIÓN Y VALIDACION DE DETALLES (Renglones)
     // =========================================================
     if ($operacion === 'registrar_gasto' || $operacion === 'modificar_gasto') {
         $esModificacion = ($operacion === 'modificar_gasto');
@@ -64,19 +65,19 @@ if (isset($_POST["operacion"])) {
             
             if ($validadorTemp->tieneErrores()) {
                 $erroresFila = $validadorTemp->obtenerErrores();
-                // Adjuntamos el nÃºmero de fila (ej: "Fila 1 - monto") para que el Frontend sepa dÃ³nde marcar el rojo
+                // Adjuntamos el número de fila (ej: "Fila 1 - monto") para que el Frontend sepa dónde marcar el rojo
                 foreach($erroresFila as $campo => $mensajes) {
                     $erroresDetalles["detalle_" . $index . "_" . $campo] = $mensajes; 
                 }
             }
         }
 
-        // Si alguna fila fallÃ³, rebotamos la peticiÃ³n entera
+        // Si alguna fila falló, rebotamos la petición entera
         if (!empty($erroresDetalles)) {
             echo json_encode([
                 'estatus' => false, 
                 'errores' => $erroresDetalles, 
-                'mensaje' => 'Hay errores en los renglones del gasto. Por favor, revÃ­selos.'
+                'mensaje' => 'Hay errores en los renglones del gasto. Por favor, revíselos.'
             ]);
             exit;
         }
@@ -85,13 +86,13 @@ if (isset($_POST["operacion"])) {
     // Instancia del modelo principal
     $gastos = new Gastos();
 
-    // Si pasamos por registro/modificaciÃ³n, le pasamos los detalles limpios
+    // Si pasamos por registro/modificación, le pasamos los detalles limpios
     if (isset($detalles)) {
         $gastos->set_detalles($detalles);
     }
 
     // =========================================================
-    // ASIGNACIÃ“N MASIVA DE CAMPOS ESCALARES
+    // ASIGNACIÓN MASIVA DE CAMPOS ESCALARES
     // =========================================================
     $gastos->set_id_gasto($_POST['id_gasto'] ?? null);
     $gastos->set_clasificacion($_POST['clasificacion'] ?? null);
@@ -116,7 +117,7 @@ if (isset($_POST["operacion"])) {
             case 'consulta':
                 $respuesta = $gastos->realizar_consulta('consultar');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria(Accion::CONSULTAR);
                 }
@@ -124,12 +125,12 @@ if (isset($_POST["operacion"])) {
 
             case 'consultar_gasto':
                 $respuesta = $gastos->realizar_consulta('consultar_gasto');
-                http_response_code($respuesta['estatus'] ? 200 : 404);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
                 break;
 
             case 'consultar_detalles':
                 $respuesta = $gastos->realizar_consulta('consultar_detalles_por_gasto');
-                http_response_code($respuesta['estatus'] ? 200 : 404);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
                 break;
 
             case 'consulta_especifica_detalles':
@@ -137,12 +138,12 @@ if (isset($_POST["operacion"])) {
                 break;
 
             // =========================================================
-            // REGISTRO Y EDICIÃ“N UNIFICADOS
+            // REGISTRO Y EDICIÓN UNIFICADOS
             // =========================================================
             case 'registrar_gasto':
                 $respuesta = $gastos->realizar_consulta('registrar_gasto');
 
-                http_response_code($respuesta['estatus'] ? 201 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::CREADO->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) {
                     // Ocultamos el arreglo masivo al auditor
                     $gastos->set_detalles(null);
@@ -156,7 +157,7 @@ if (isset($_POST["operacion"])) {
 
                 $respuesta = $gastos->realizar_consulta('modificar_gasto');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) { 
                     // Ocultamos el arreglo masivo al auditor
                     $gastos->set_detalles(null);
@@ -165,7 +166,7 @@ if (isset($_POST["operacion"])) {
                 break;
 
             // =========================================================
-            // ELIMINACIÃ“N
+            // ELIMINACIÓN
             // =========================================================
             case 'eliminar_gasto':
                 // Utilizamos la nueva consulta plana para la foto previa
@@ -173,7 +174,7 @@ if (isset($_POST["operacion"])) {
 
                 $respuesta = $gastos->realizar_consulta('eliminar_gasto');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) { 
                     $auditor->registrarAuditoria(Accion::ELIMINAR); 
                 }
@@ -184,25 +185,25 @@ if (isset($_POST["operacion"])) {
             // =========================================================
             case 'listar_gastos_mes':
                 $respuesta = $gastos->realizar_consulta('listar_gastos_mes');
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 break;
 
             case 'filtrar_gastos_mes':
                 $respuesta = $gastos->realizar_consulta('filtrar_por_mes');
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 break;
 
             case 'totales_metodo_pago':
                 $respuesta = $gastos->realizar_consulta('total_por_metodo_pago');
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 break;
 
             default:
-                http_response_code(400);
+                http_response_code(HttpCodigo::BAD_REQUEST->value);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
     } catch (Exception $e) {
-        http_response_code(500);
+        http_response_code(HttpCodigo::ERROR_INTERNO->value);
         error_log("Error en controlador gastos: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
@@ -235,7 +236,7 @@ if (isset($_POST["validar"])) {
                 $gastosTemp = new Gastos();
                 $existe = $gastosTemp->verificarReferenciaDisponible($referencia, $id_gasto);
 
-                $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'La referencia ya estÃ¡ registrada en otro gasto' : 'Disponible'];
+                $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'La referencia ya está registrada en otro gasto' : 'Disponible'];
                 break;
 
             case 'validar_clave_foranea':
@@ -244,7 +245,7 @@ if (isset($_POST["validar"])) {
                 $valor = $_POST['valor'] ?? '';
 
                 if (empty($tabla) || empty($campo) || empty($valor)) {
-                    $respuesta = ['estatus' => false, 'mensaje' => 'Faltan parÃ¡metros de Validación'];
+                    $respuesta = ['estatus' => false, 'mensaje' => 'Faltan parámetros de Validación'];
                     break;
                 }
 
@@ -254,17 +255,17 @@ if (isset($_POST["validar"])) {
                 break;
 
             default:
-                http_response_code(400);
+                http_response_code(HttpCodigo::BAD_REQUEST->value);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
         }
     } catch (Exception $e) {
-        http_response_code(500);
+        http_response_code(HttpCodigo::ERROR_INTERNO->value);
         error_log("Error en Validación AJAX Bancos: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
     }
 
     if ($respuesta['estatus'] === true || isset($respuesta['existe'])) {
-        http_response_code(200);
+        http_response_code(HttpCodigo::OK->value);
     }
 
     echo json_encode($respuesta);
@@ -297,4 +298,3 @@ $btn_nuevo = [
 $placeholder_buscar = "Buscar gasto...";
 
 require_once "vista/gastos/gastos_vista.php";
-?>

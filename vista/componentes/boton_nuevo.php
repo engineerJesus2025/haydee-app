@@ -7,4 +7,4 @@ if ($permisosVista['registrar']) :
         <i class="bi bi-plus-lg me-1"></i>
         <?php echo $btn_nuevo['texto'] ?? 'Nuevo Registro'; ?>
     </button>
-<?php endif; ?>
+<?php endif; 

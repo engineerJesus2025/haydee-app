@@ -145,13 +145,13 @@
                     <div class="row m-3">
                         <?php if (!$esPropietario): ?>
                             <div class="col-lg-4 mb-3">
-                                <label class="form-label fw-bold" for="estado">Estado de Verificación <span class="text-danger">*</span></label>
+                                <label class="form-label fw-bold" for="estado">Estado del Pago <span class="text-danger">*</span></label>
                                 <div class="input-group has-validation">
                                     <span class="  input-group-text"><i class="bi bi-check-circle-fill"></i></span>
                                     <select class="  form-select" id="estado" name="estado">
-                                        <option value="No verificado">NO VERIFICADO</option>
-                                        <option value="Procesado">PROCESADO (Aprobado)</option>
-                                        <option value="Rechazado">RECHAZADO</option>
+                                        <option value="PENDIENTE">Pendiente</option>
+                                        <option value="PROCESADO">PROCESADO (Aprobado)</option>
+                                        <option value="RECHAZADO">RECHAZADO</option>
                                     </select>
                                     <span class="w-100 invalid-feedback"></span>
                                 </div>

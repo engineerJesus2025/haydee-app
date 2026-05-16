@@ -1,4 +1,5 @@
 <?php
+use haydee\enums\HttpCodigo;
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
@@ -11,9 +12,9 @@ $endpoint = $_GET['endpoint'] ?? '';
 $rutas = RUTAS_API; 
 
 if (!array_key_exists($endpoint, $rutas) || !is_file(ROOT_PATH . "/api/" . $rutas[$endpoint])) {
-    http_response_code(404);
+    http_response_code(HttpCodigo::NO_ENCONTRADO->value);
     echo json_encode(["estatus" => false, "mensaje" => "Endpoint no encontrado"]);
-    exit;
+    return;
 }
 
 // LISTA NEGRA (Aplica para todas las APIs)
@@ -25,7 +26,7 @@ $acceso = $seguridad->verificarListaAcceso();
 if (!$acceso['estatus']) {
     http_response_code($acceso['codigo_http']);
     echo json_encode(["estatus" => false, "mensaje" => $acceso['mensaje']]);
-    exit;
+    return;
 }
 
 
@@ -39,4 +40,4 @@ $respuestaLimpia = ob_get_clean();
 
 // EL ESCUDO CIFRA LA SALIDA
 echo GestorTrafico::interceptarSalida($respuestaLimpia);
-exit;
+return;

@@ -186,4 +186,3 @@ class Proveedores extends Conexion
     }
 
 }
-?>

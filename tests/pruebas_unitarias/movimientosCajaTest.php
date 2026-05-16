@@ -466,4 +466,3 @@ class MovimientosCajaTest extends TestCase
         $this->assertStringContainsString("El campo 'monto' no posee un valor valido", $resultado["mensaje"]);
     }
 }
-?>

@@ -1,4 +1,5 @@
 <?php
+use haydee\enums\HttpCodigo;
 use haydee\servicios\Autenticacion;
 use haydee\servicios\Criptografia;
 use haydee\modelo\SeguridadIP;
@@ -17,9 +18,9 @@ try {
         $contra = $datosJSON['contra'] ?? $_POST['contra'] ?? '';
 
         if (empty($correo) || empty($contra)) {
-            http_response_code(400);
+            http_response_code(HttpCodigo::BAD_REQUEST->value);
             echo json_encode(['estatus' => false, 'mensaje' => 'El correo y la contraseña son obligatorios.']);
-            exit;
+            return;
         }
 
         // ANTI-FUERZA BRUTA (Rate Limit)
@@ -31,28 +32,29 @@ try {
             $seguridadIP->registrarFallo(); // Castigar insistencia
             http_response_code($rateLimit['codigo_http']);
             echo json_encode(['estatus' => false, 'mensaje' => $rateLimit['mensaje']]);
-            exit;
+            return;
         }
 
         $auth = new Autenticacion();
         try {
             // El tercer parámetro 'true' fuerza la generación y guardado del Token en tokens_seguridad
-            $resultado = $auth->login($correo, $contra, false, true);
+            $resultado = $auth->login($correo, $contra, true, true);
             
             if ($resultado['estatus']) {
                 $seguridadIP->limpiarFallo(); // Limpiamos IP
 
-                http_response_code(200);
+                http_response_code(HttpCodigo::OK->value);
                 $respuesta = [
                     'estatus' => true,
-                    'mensaje' => 'Inicio de sesión exitoso',
+                    'mensaje' => 'Inicio de sesion returnoso',
                     'datos' => [
                         'id_usuario' => $resultado['datos']['id_usuario'] ?? '',
                         'usuario' => $resultado['datos']['nombre_completo'] ?? '',
                         'rol' => $resultado['datos']['rol'] ?? '',
                         'correo' => $resultado['datos']['correo'] ?? ''
                     ],
-                    'token' => $resultado['token_jwt']
+                    'token_jwt' => $resultado['token_jwt'],
+                    'refresh_token' => $resultado['token']
                 ];
 
                 if (isset($_POST['_temp_disp']) && isset($_POST['_temp_aes'])) {
@@ -62,7 +64,9 @@ try {
                 $seguridadIP->registrarFallo(); // Castigamos a la IP
 
                 // Credenciales incorrectas, usuario inactivo, etc.
-                http_response_code(401); 
+                $codigoError = $resultado['codigo_http'] ?? HttpCodigo::BAD_REQUEST->value;
+                http_response_code($codigoError);
+
                 $respuesta = ['estatus' => false, 'mensaje' => $resultado['mensaje'] ?? 'Credenciales incorrectas.'];
             }
         } finally {
@@ -70,13 +74,13 @@ try {
         }
 
     } else {
-        http_response_code(405);
-        $respuesta = ['estatus' => false, 'mensaje' => 'Método HTTP no soportado. Use POST.'];
+        http_response_code(HttpCodigo::METODO_NO_PERMITIDO->value);
+        $respuesta = ['estatus' => false, 'mensaje' => 'metodo HTTP no soportado. Use POST.'];
     }
 
 } catch (Exception $e) {
     error_log("Error en API Login: " . $e->getMessage());
-    http_response_code(500);
+    http_response_code(HttpCodigo::ERROR_INTERNO->value);
     $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
 }
 

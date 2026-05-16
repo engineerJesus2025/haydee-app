@@ -250,4 +250,3 @@ class AnioFiscalTest extends TestCase
         $this->assertStringContainsString('OK', $resultado["mensaje"]);
     }
 }
-?>

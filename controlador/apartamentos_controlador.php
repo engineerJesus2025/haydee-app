@@ -1,4 +1,5 @@
-﻿<?php
+<?php
+use haydee\enums\HttpCodigo;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
 
@@ -17,8 +18,8 @@ if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
 
-    // Si la cadena tiene "habitante" (ej: registrar_habitantes, eliminar_habitantes), asignamos ese mÃ³dulo
-    $moduloAfectado = strpos($operacion, 'habitante') !== false ? Modulo::GESTIONAR_HABITANTES->value : Modulo::GESTIONAR_APARTAMENTOS->value;
+    // Si la cadena tiene "habitante" (ej: registrar_habitantes, eliminar_habitantes), asignamos ese módulo
+    $moduloAfectado = strpos($operacion, 'habitante') !== false ? Modulo::GESTIONAR_HABITANTES : Modulo::GESTIONAR_APARTAMENTOS;
 
     Sesiones::verificarPermisoAccion($moduloAfectado, $operacion);
 
@@ -26,7 +27,7 @@ if (isset($_POST["operacion"])) {
     $reglasApartamento = Apartamento::obtenerReglas($operacion);
     $reglasHabitante = Habitantes::obtenerReglas($operacion);
     
-    // Unimos el tipo y el nÃºmero ANTES de validar para que el regex '/^[VE][0-9]+$/' funcione
+    // Unimos el tipo y el numero ANTES de validar para que el regex '/^[VE][0-9]+$/' funcione
     if (isset($_POST['tipo_cedula']) && isset($_POST['cedula'])) {
         $_POST['cedula'] = $_POST['tipo_cedula'] . $_POST['cedula'];
     }
@@ -46,7 +47,7 @@ if (isset($_POST["operacion"])) {
         $validador->validarConjunto($_POST, $reglasCompletas, $contexto);
 
         if ($validador->tieneErrores()) {
-            $codigoHttp = $validador->tieneError404() ? 404 : 400;
+            $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::BAD_REQUEST->value;
             http_response_code($codigoHttp);
             echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
             exit;
@@ -89,7 +90,7 @@ if (isset($_POST["operacion"])) {
             case 'consulta':
                 $respuesta = $apartamento->realizar_consulta('consultar_listado');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) {
                     $auditorApartamento->registrarAuditoria('consultar');
                 }
@@ -98,7 +99,7 @@ if (isset($_POST["operacion"])) {
             case 'registrar_apartamento':
                 $respuesta = $apartamento->realizar_consulta('registrar_apartamento');
 
-                http_response_code($respuesta['estatus'] ? 201 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::CREADO->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) {
                     $auditorApartamento->registrarAuditoria('registrar');
                 }
@@ -107,7 +108,7 @@ if (isset($_POST["operacion"])) {
             case 'consulta_especifica':
                 $respuesta = $apartamento->realizar_consulta('consultar_detalle_completo');
 
-                http_response_code($respuesta['estatus'] ? 200 : 404);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
                 if ($respuesta['estatus']) {
                     $datos = $respuesta['datos'];
                     $respuesta = [
@@ -122,7 +123,7 @@ if (isset($_POST["operacion"])) {
                 $auditorApartamento->capturarDatosAnteriores('consultar_detalle_completo');
                 $respuesta = $apartamento->realizar_consulta('modificar_apartamento');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) { 
                     $auditorApartamento->registrarAuditoria('modificar'); 
                 }
@@ -132,7 +133,7 @@ if (isset($_POST["operacion"])) {
                 $auditorApartamento->capturarDatosAnteriores('consultar_detalle_completo');
                 $respuesta = $apartamento->realizar_consulta('eliminar_apartamento');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) { 
                     $auditorApartamento->registrarAuditoria('eliminar'); 
                 }
@@ -142,7 +143,7 @@ if (isset($_POST["operacion"])) {
             case 'consultar_habitantes':
                 $respuesta = $apartamento->realizar_consulta('consultar_detalle_completo');
 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) {
                     $respuesta = ['estatus' => true, 'datos' => $respuesta['datos']['habitantes'] ?? []];
                 }
@@ -151,7 +152,7 @@ if (isset($_POST["operacion"])) {
             case 'registrar_habitantes':
                 $respuesta = $habitante->realizar_consulta('registrar_habitantes');
 
-                http_response_code($respuesta['estatus'] ? 201 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::CREADO->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) {
                     $auditorHabitante->registrarAuditoria('registrar');
                 }
@@ -159,7 +160,7 @@ if (isset($_POST["operacion"])) {
 
             case 'consulta_especifica_habitante':
                 $respuesta = $habitante->realizar_consulta('consultar_habitante');
-                http_response_code($respuesta['estatus'] ? 200 : 404);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
                 break;
 
             case 'modificar_habitantes':
@@ -167,7 +168,7 @@ if (isset($_POST["operacion"])) {
                 $auditorHabitante->capturarDatosAnteriores('consultar_habitante');
                 $respuesta = $habitante->realizar_consulta('modificar_habitantes');
                 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) {
                     $auditorHabitante->registrarAuditoria('modificar');
                 }
@@ -177,18 +178,18 @@ if (isset($_POST["operacion"])) {
                 $auditorHabitante->capturarDatosAnteriores('consultar_habitante');
                 $respuesta = $habitante->realizar_consulta('eliminar_habitantes');
                 
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) {
                     $auditorHabitante->registrarAuditoria('eliminar');
                 }
                 break;
 
             default:
-                http_response_code(400);
+                http_response_code(HttpCodigo::BAD_REQUEST->value);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
     } catch (Exception $e) {
-        http_response_code(500);
+        http_response_code(HttpCodigo::ERROR_INTERNO->value);
         error_log("Error en controlador apartamentos: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
@@ -219,21 +220,21 @@ if (isset($_POST["validar"])) {
                 $nro = $_POST["nro_apartamento"] ?? '';
                 $id = !empty($_POST["id_apartamento"]) ? $_POST["id_apartamento"] : null;
                 
-                // Si NO es Ãºnico, significa que YA EXISTE
+                // Si NO es unico, significa que YA EXISTE
                 $existe = !$validadorBD->esUnico('apartamentos', 'nro_apartamento', $nro, 'id_apartamento', $id);
-                $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'El nÃºmero ya existe' : 'Disponible'];
+                $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'El número ya existe' : 'Disponible'];
                 break;
 
             case 'cedula':
                 $cedula = $_POST["cedula"] ?? '';
-                // UniÃ³n de la cÃ©dula para la Validación AJAX
+                // Union de la ceula para la Validación AJAX
                 if (isset($_POST['tipo_cedula']) && isset($_POST['cedula'])) {
                     $cedula = $_POST['tipo_cedula'] . $_POST['cedula'];
                 }
                 $id = !empty($_POST["id_habitante"]) ? $_POST["id_habitante"] : null;
                 
                 $existe = !$validadorBD->esUnico('habitantes', 'cedula', $cedula, 'id_habitante', $id);
-                $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'La cÃ©dula ya estÃ¡ registrada' : 'Disponible'];
+                $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'La cédula ya está registrada' : 'Disponible'];
                 break;
 
             case 'correo':
@@ -241,7 +242,7 @@ if (isset($_POST["validar"])) {
                 $id = !empty($_POST["id_habitante"]) ? $_POST["id_habitante"] : null;
                 
                 $existe = !$validadorBD->esUnico('habitantes', 'correo', $correo, 'id_habitante', $id);
-                $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'El correo ya estÃ¡ en uso' : 'Disponible'];
+                $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'El correo ya está en uso' : 'Disponible'];
                 break;
 
             case 'tipo_vinculo':
@@ -251,7 +252,7 @@ if (isset($_POST["validar"])) {
                 
                 // Solo nos importa si intentan asignar un Propietario nuevo
                 if ($tipo_vinculo === 'Propietario' && !empty($apartamento_id)) {
-                    // Usamos nuestro nuevo mÃ©todo multi-condicional
+                    // Usamos nuestro nuevo metodo multi-condicional
                     $existe = $validadorBD->existeConCondicion('habitantes_apartamentos', [
                         'apartamento_id' => $apartamento_id,
                         'tipo_vinculo' => 'Propietario'
@@ -266,7 +267,7 @@ if (isset($_POST["validar"])) {
                 $valor = $_POST["valor"] ?? '';
 
                 if (empty($tabla) || empty($campo) || empty($valor)) {
-                    echo json_encode(['estatus' => false, 'mensaje' => 'Faltan parÃ¡metros']);
+                    echo json_encode(['estatus' => false, 'mensaje' => 'Faltan parámetros']);
                     break;
                 }
 
@@ -281,17 +282,17 @@ if (isset($_POST["validar"])) {
                 break;
 
             default:
-                http_response_code(400);
+                http_response_code(HttpCodigo::BAD_REQUEST->value);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
         }
     } catch (Exception $e) {
-        http_response_code(500);
+        http_response_code(HttpCodigo::ERROR_INTERNO->value);
         error_log("Error en Validación AJAX: " . $e->getMessage());
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
     }
 
     if ($respuesta['estatus'] === true || isset($respuesta['existe'])) {
-        http_response_code(200);
+        http_response_code(HttpCodigo::OK->value);
     }
 
     echo json_encode($respuesta);
@@ -310,3 +311,4 @@ $placeholder_buscar = "Buscar apartamento...";
 
 // Cargar la vista
 require_once "vista/apartamentos/apartamentos_vista.php";
+

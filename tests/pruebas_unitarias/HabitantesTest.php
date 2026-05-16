@@ -302,4 +302,3 @@ final class HabitantesTest extends TestCase
         ];
     }
 }
-?>

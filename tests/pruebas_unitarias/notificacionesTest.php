@@ -378,4 +378,3 @@ class NotificacionesTest extends TestCase
         $this->assertStringContainsString("El id del usuario se envio vacío", $resultado["mensaje"]);
     }
 }
-?>

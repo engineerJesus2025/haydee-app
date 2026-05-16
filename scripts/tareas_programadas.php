@@ -4,12 +4,13 @@
 // 1. Cargar autoloader subiendo un nivel desde la carpeta 'scripts'
 require_once __DIR__ . '/../vendor/autoload.php'; 
 
+use haydee\enums\HttpCodigo;
 use haydee\modelo\CajaChica;
 use haydee\modelo\AnioFiscal;
 
 // 2. Seguridad en consola
 if (php_sapi_name() !== 'cli') {
-    http_response_code(403);
+    http_response_code(HttpCodigo::PROHIBIDO->value);
     die("Este script solo puede ser ejecutado por el sistema.");
 }
 

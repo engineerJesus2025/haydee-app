@@ -1,4 +1,5 @@
 <?php
+use haydee\enums\HttpCodigo;
 use haydee\servicios\Sesiones;
 use haydee\modelo\SuscripcionPush;
 use haydee\ayuda\Validador;
@@ -20,34 +21,34 @@ if (isset($_POST["operacion"])) {
             $validador->validarConjunto($_POST, $reglas);
 
             if ($validador->tieneErrores()) {
-            $codigoHttp = $validador->tieneError404() ? 404 : 400;
+            $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::BAD_REQUEST->value;
             http_response_code($codigoHttp);
             echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
             exit;
         }
         }
 
-        // Instancia del modelo y asignación de datos
+        // Instancia del modelo y Asignacion de datos
         $suscripcion = new SuscripcionPush();
         $suscripcion->set_usuario_id($_SESSION['id_usuario'] ?? null);
         $suscripcion->set_endpoint($_POST['endpoint'] ?? '');
         $suscripcion->set_p256dh($_POST['p256dh'] ?? '');
         $suscripcion->set_auth($_POST['auth'] ?? '');
 
-        // Ejecutar operación
+        // Ejecutar Operación
         switch ($operacion) {
             case 'registrar_suscripcion':
                 $respuesta = $suscripcion->realizar_consulta($operacion);
-                http_response_code($respuesta['estatus'] ? 200 : 400);
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 break;
             default:
-                http_response_code(400);
+                http_response_code(HttpCodigo::BAD_REQUEST->value);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
         }
 
     } catch (Exception $e) {
         if (!isset($respuesta['errores'])) { // Si no fue un error de validación
-            http_response_code(500);
+            http_response_code(HttpCodigo::ERROR_INTERNO->value);
             error_log("Error en controlador suscripcion_push: " . $e->getMessage());
             $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
         }

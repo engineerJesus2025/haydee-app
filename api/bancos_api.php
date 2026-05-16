@@ -1,4 +1,5 @@
 <?php
+use haydee\enums\HttpCodigo;
 use haydee\modelo\Banco;
 
 $banco = new Banco();
@@ -11,18 +12,17 @@ try {
         if ($operacion === 'consulta') {
             $respuesta = $banco->realizar_consulta('consultar');
         } else {
-            http_response_code(400); 
+            http_response_code(HttpCodigo::BAD_REQUEST->value); 
             $respuesta = ['estatus' => false, 'mensaje' => 'Operación GET no permitida'];
         }
     } else {
-        http_response_code(405); 
-        $respuesta = ['estatus' => false, 'mensaje' => 'Método HTTP no soportado'];
+        http_response_code(HttpCodigo::METODO_NO_PERMITIDO->value); 
+        $respuesta = ['estatus' => false, 'mensaje' => 'metodo HTTP no soportado'];
     }
 } catch (Exception $e) {
-    http_response_code(500);
+    http_response_code(HttpCodigo::ERROR_INTERNO->value);
     $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
 } finally {
     $banco->cerrar();
     echo json_encode($respuesta);
 }
-?>
