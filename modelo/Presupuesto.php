@@ -164,7 +164,7 @@ class Presupuesto extends Conexion
             $con = $this->get_conex(TipoBaseDatos::NEGOCIO);
             $con->beginTransaction();
 
-            // 1. Insertar cabecera presupuesto
+            // Insertar cabecera presupuesto
             $sqlHead = "INSERT INTO presupuesto (fecha, cuota_reserva, observacion, activo) 
                         VALUES (:fecha, :cuota, :obs, 1)";
             $stmtH = $con->prepare($sqlHead);
@@ -175,7 +175,7 @@ class Presupuesto extends Conexion
             ]);
             $id_presupuesto = $con->lastInsertId();
 
-            // 2. Insertar detalles y acumular monto total
+            // Insertar detalles y acumular monto total
             $total_monto = floatval($this->cuota_reserva);
             $ids_detalles = [];
             $sqlDet = "INSERT INTO detalles_presupuesto (monto, nombre_detalle, presupuesto_id, tipo_gasto_id) 
@@ -196,45 +196,55 @@ class Presupuesto extends Conexion
                 $total_monto += floatval($det['monto']);
             }
 
-            // 3. Obtener apartamentos activos
+            // Obtener apartamentos activos
             $stmtApt = $con->query("SELECT id_apartamento, porcentaje_participacion FROM apartamentos WHERE activo = 1");
             $apartamentos = $stmtApt->fetchAll(PDO::FETCH_ASSOC);
             if (empty($apartamentos)) {
                 throw new \Exception('No hay apartamentos activos para generar mensualidades');
             }
 
-            // 4. Gestionar el Periodo de Mensualidad
+            // Gestionar el Periodo de Mensualidad
             list($anio, $mes) = explode('-', $this->fecha);
             
-            // Buscar si ya existe el periodo
             $stmtBuscaPer = $con->prepare("SELECT id_periodo FROM periodos_mensualidad WHERE mes = :mes AND anio = :anio LIMIT 1");
             $stmtBuscaPer->execute([':mes' => $mes, ':anio' => $anio]);
             $periodo_id = $stmtBuscaPer->fetchColumn();
 
-            // Si no existe, crearlo
             if (!$periodo_id) {
                 $stmtInsertaPer = $con->prepare("INSERT INTO periodos_mensualidad (mes, anio, tasa_dolar, activo) VALUES (:mes, :anio, :tasa, 1)");
                 $stmtInsertaPer->execute([':mes' => $mes, ':anio' => $anio, ':tasa' => $this->tasa_dolar]);
                 $periodo_id = $con->lastInsertId();
             }
 
-            // 5. Generar mensualidades y asociar detalles
+            // Generar mensualidades con UPSERT para respetar el índice único
             $sqlMens = "INSERT INTO mensualidad (monto, periodo_id, apartamento_id, porcentaje_interes, limite_mensualidad, activo) 
-                        VALUES (:monto, :periodo_id, :apt_id, 10, 15, 1)";
+                        VALUES (:monto, :periodo_id, :apt_id, 10, 15, 1)
+                        ON DUPLICATE KEY UPDATE 
+                            monto = VALUES(monto), 
+                            activo = 1";
             $stmtMens = $con->prepare($sqlMens);
 
+            // Preparar limpieza y re-inserción de tabla puente
+            $stmtGetId = $con->prepare("SELECT id_mensualidad FROM mensualidad WHERE periodo_id = :periodo_id AND apartamento_id = :apt_id");
+            $stmtDelPuente = $con->prepare("DELETE FROM presupuesto_mensualidad WHERE mensualidad_id = :m_id");
             $sqlPuente = "INSERT INTO presupuesto_mensualidad (mensualidad_id, detalle_presupuesto_id) VALUES (:m_id, :dp_id)";
             $stmtPuente = $con->prepare($sqlPuente);
 
             foreach ($apartamentos as $apt) {
                 $monto_apt = round(($total_monto * $apt['porcentaje_participacion']) / 100, 2);
+                
                 $stmtMens->execute([
                     ':monto'  => $monto_apt,
                     ':periodo_id' => $periodo_id,
                     ':apt_id' => $apt['id_apartamento']
                 ]);
-                $id_mensualidad = $con->lastInsertId();
+                
+                // Obtener ID real tras el UPSERT
+                $stmtGetId->execute([':periodo_id' => $periodo_id, ':apt_id' => $apt['id_apartamento']]);
+                $id_mensualidad = $stmtGetId->fetchColumn();
 
+                // Limpiar posibles vínculos viejos de esa mensualidad y agregar los nuevos
+                $stmtDelPuente->execute([':m_id' => $id_mensualidad]);
                 foreach ($ids_detalles as $id_det) {
                     $stmtPuente->execute([':m_id' => $id_mensualidad, ':dp_id' => $id_det]);
                 }
@@ -260,7 +270,7 @@ class Presupuesto extends Conexion
         try {
             $con->beginTransaction();
 
-            // 1. Actualizar cabecera
+            // Actualizar cabecera
             $sqlHead = "UPDATE presupuesto SET fecha = :fecha, cuota_reserva = :cuota, observacion = :obs WHERE id_presupuesto = :id";
             $stmtH = $con->prepare($sqlHead);
             $stmtH->execute([
@@ -270,12 +280,15 @@ class Presupuesto extends Conexion
                 ':id'    => $this->id_presupuesto
             ]);
 
-            // 2. Eliminar detalles antiguos y sus relaciones en tabla puente
+            // Eliminar detalles antiguos y sus relaciones en tabla puente
             $con->prepare("DELETE FROM presupuesto_mensualidad WHERE detalle_presupuesto_id IN (SELECT id_detalle_presupuesto FROM detalles_presupuesto WHERE presupuesto_id = ?)")
                  ->execute([$this->id_presupuesto]);
             $con->prepare("DELETE FROM detalles_presupuesto WHERE presupuesto_id = ?")->execute([$this->id_presupuesto]);
 
-            // 3. Insertar nuevos detalles
+            // Insertar nuevos detalles y acumular el nuevo total
+            $total_monto = floatval($this->cuota_reserva);
+            $ids_detalles = [];
+            
             if (!empty($this->detalles_temp) && is_array($this->detalles_temp)) {
                 $sqlDet = "INSERT INTO detalles_presupuesto (monto, nombre_detalle, presupuesto_id, tipo_gasto_id) 
                            VALUES (:monto, :nombre, :id_pre, :id_tipo)";
@@ -287,6 +300,46 @@ class Presupuesto extends Conexion
                         ':id_pre'  => $this->id_presupuesto,
                         ':id_tipo' => $det['tipo_gasto_id']
                     ]);
+                    $ids_detalles[] = $con->lastInsertId();
+                    $total_monto += floatval($det['monto']);
+                }
+            }
+
+            // Sincronizar el nuevo presupuesto con los recibos de los residentes
+            list($anio, $mes) = explode('-', $this->fecha);
+            $stmtBuscaPer = $con->prepare("SELECT id_periodo FROM periodos_mensualidad WHERE mes = :mes AND anio = :anio LIMIT 1");
+            $stmtBuscaPer->execute([':mes' => $mes, ':anio' => $anio]);
+            $periodo_id = $stmtBuscaPer->fetchColumn();
+
+            if ($periodo_id) {
+                // Obtener apartamentos y preparar sentencias
+                $stmtApt = $con->query("SELECT id_apartamento, porcentaje_participacion FROM apartamentos WHERE activo = 1");
+                $apartamentos = $stmtApt->fetchAll(PDO::FETCH_ASSOC);
+                
+                $sqlMens = "INSERT INTO mensualidad (monto, periodo_id, apartamento_id, porcentaje_interes, limite_mensualidad, activo) VALUES (:monto, :periodo_id, :apt_id, 10, 15, 1) ON DUPLICATE KEY UPDATE monto = VALUES(monto), activo = 1";
+                $stmtUpdateMens = $con->prepare($sqlMens);
+                $stmtGetId = $con->prepare("SELECT id_mensualidad FROM mensualidad WHERE periodo_id = :periodo_id AND apartamento_id = :apt_id");
+                $stmtPuente = $con->prepare("INSERT INTO presupuesto_mensualidad (mensualidad_id, detalle_presupuesto_id) VALUES (:m_id, :dp_id)");
+                
+                foreach ($apartamentos as $apt) {
+                    // Recalcular la nueva deuda para este apartamento
+                    $monto_apt = round(($total_monto * $apt['porcentaje_participacion']) / 100, 2);
+                    
+                    $stmtUpdateMens->execute([
+                        ':monto' => $monto_apt,
+                        ':periodo_id' => $periodo_id,
+                        ':apt_id' => $apt['id_apartamento']
+                    ]);
+                    
+                    // Volver a vincular los detalles del presupuesto al recibo del apartamento
+                    $stmtGetId->execute([':periodo_id' => $periodo_id, ':apt_id' => $apt['id_apartamento']]);
+                    $id_mensualidad = $stmtGetId->fetchColumn();
+                    
+                    if ($id_mensualidad) {
+                        foreach ($ids_detalles as $id_det) {
+                            $stmtPuente->execute([':m_id' => $id_mensualidad, ':dp_id' => $id_det]);
+                        }
+                    }
                 }
             }
 
@@ -305,21 +358,55 @@ class Presupuesto extends Conexion
      */
     private function _eliminar_presupuesto()
     {
+        $con = $this->get_conex(TipoBaseDatos::NEGOCIO);
         try {
+            $con->beginTransaction();
+
+            // Obtener el periodo asociado a este presupuesto
+            $stmtBusca = $con->prepare("SELECT MONTH(fecha) as mes, YEAR(fecha) as anio FROM presupuesto WHERE id_presupuesto = :id");
+            $stmtBusca->execute([':id' => $this->id_presupuesto]);
+            $fechaPre = $stmtBusca->fetch(PDO::FETCH_ASSOC);
+
+            if ($fechaPre) {
+                $stmtPer = $con->prepare("SELECT id_periodo FROM periodos_mensualidad WHERE mes = :mes AND anio = :anio");
+                $stmtPer->execute([':mes' => $fechaPre['mes'], ':anio' => $fechaPre['anio']]);
+                $id_periodo = $stmtPer->fetchColumn();
+
+                if ($id_periodo) {
+                    // Verificar si ya hay pagos registrados para este periodo
+                    $sqlPagos = "SELECT COUNT(*) FROM pagos_mensualidad pm 
+                                 JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad 
+                                 JOIN pagos p ON pm.pago_id = p.id_pago
+                                 WHERE m.periodo_id = :periodo_id AND p.activo = 1";
+                    $stmtCheck = $con->prepare($sqlPagos);
+                    $stmtCheck->execute([':periodo_id' => $id_periodo]);
+                    $tiene_pagos = $stmtCheck->fetchColumn();
+
+                    if ($tiene_pagos > 0) {
+                        throw new \Exception("No se puede eliminar el presupuesto porque ya existen pagos procesados para este mes.");
+                    }
+
+                    // Borrado lógico de las mensualidades (ya que nadie ha pagado :-)
+                    $stmtDesactivarMens = $con->prepare("UPDATE mensualidad SET activo = 0 WHERE periodo_id = :periodo_id");
+                    $stmtDesactivarMens->execute([':periodo_id' => $id_periodo]);
+                }
+            }
+
+            // Borrado lógico del presupuesto
             $sql = "UPDATE presupuesto SET activo = 0 WHERE id_presupuesto = :id";
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+            $stmt = $con->prepare($sql);
             $stmt->execute([':id' => $this->id_presupuesto]);
-            return ['estatus' => true, 'mensaje' => 'Presupuesto eliminado'];
-        } catch (PDOException $e) {
+
+            $con->commit();
+            return ['estatus' => true, 'mensaje' => 'Presupuesto y recibos pendientes eliminados correctamente.'];
+        } catch (\Exception $e) {
+            $con->rollBack();
             error_log("Error en _eliminar_presupuesto: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al eliminar presupuesto: ' . $e->getMessage()];
+            return ['estatus' => false, 'mensaje' => $e->getMessage()];
         }
     }
 
-    // ====================================================================
     // GESTIÓN DE RELACIÓN CON MENSUALIDAD
-    // ====================================================================
-
 
     /**
      * Consulta los presupuestos agrupados por tipo de gasto para una fecha específica.

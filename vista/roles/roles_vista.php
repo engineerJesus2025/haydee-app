@@ -55,6 +55,11 @@
             vertical-align: top;
         }
 
+        #tabla_permisos .collapse.show, #tabla_permisos .collapsing{
+            border-top-left-radius:initial;
+            border-top-right-radius:initial
+        }
+
         /* =========================================================
    TABLA DE PERMISOS (MÓDULO DE ROLES)
    ========================================================= */

@@ -7,8 +7,8 @@
 	<?php
 		require_once ROOT_PATH . "/vista/componentes/estilos.php";
 	?>
-	<link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/publicaciones_inicio.css">
-    <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/esqueletos.css">
+	<link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/src/publicaciones_inicio.css">
+    <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/src/esqueletos.css">
 </head>
 <body id="body-pd" class="body-pd d-flex flex-column">
 	<div class="container-fluid">

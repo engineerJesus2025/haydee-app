@@ -264,8 +264,8 @@ class Pagos extends Conexion
                     (m.monto - COALESCE(SUM(dp.monto), 0)) AS pendiente
                 FROM mensualidad m
                 INNER JOIN periodos_mensualidad pm_per ON m.periodo_id = pm_per.id_periodo
-                LEFT JOIN pagos_mensualidad p_m ON m.id_mensualidad = p_m.mensualidad_id
-                LEFT JOIN detalles_pagos dp ON p_m.detalle_pago_id = dp.id_detalle_pago
+                LEFT JOIN pagos_mensualidad pm ON m.id_mensualidad = pm.mensualidad_id
+                LEFT JOIN detalles_pagos dp ON pm.pago_id = dp.id_detalle_pago
                 WHERE m.apartamento_id = :id_apartamento AND m.activo = 1
                 GROUP BY m.id_mensualidad
                 HAVING pendiente > 0
@@ -282,10 +282,6 @@ class Pagos extends Conexion
         }
     }
 
-    // ====================================================================
-    // MÉTODOS PRIVADOS (acciones)
-    // ====================================================================
-
     // -------------------- CONSULTAS --------------------
     // SE USA EN EL MODULO
     private function _consultar()
@@ -301,7 +297,7 @@ class Pagos extends Conexion
             FROM pagos p
             JOIN detalles_pagos dp ON p.id_pago = dp.pago_id
             LEFT JOIN ingresos_bancarios ib ON dp.id_detalle_pago = ib.detalle_pago_id
-            LEFT JOIN pagos_mensualidad pm ON dp.id_detalle_pago = pm.detalle_pago_id
+            LEFT JOIN pagos_mensualidad pm ON dp.id_detalle_pago = pm.pago_id
             LEFT JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
             LEFT JOIN periodos_mensualidad pm_per ON m.periodo_id = pm_per.id_periodo
             LEFT JOIN apartamentos a ON m.apartamento_id = a.id_apartamento
@@ -339,7 +335,7 @@ class Pagos extends Conexion
                 FROM pagos p
                 JOIN detalles_pagos dp ON p.id_pago = dp.pago_id
                 LEFT JOIN ingresos_bancarios ib ON dp.id_detalle_pago = ib.detalle_pago_id
-                LEFT JOIN pagos_mensualidad pm ON dp.id_detalle_pago = pm.detalle_pago_id
+                LEFT JOIN pagos_mensualidad pm ON dp.id_detalle_pago = pm.pago_id
                 LEFT JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
                 LEFT JOIN periodos_mensualidad pm_per ON m.periodo_id = pm_per.id_periodo
                 LEFT JOIN apartamentos a ON m.apartamento_id = a.id_apartamento
@@ -351,7 +347,7 @@ class Pagos extends Conexion
                       JOIN apartamentos a2 ON m2.apartamento_id = a2.id_apartamento
                       JOIN habitantes_apartamentos ha2 ON a2.id_apartamento = ha2.apartamento_id
                       JOIN habitantes h2 ON ha2.habitante_id = h2.id_habitante
-                      WHERE pm2.detalle_pago_id IN (SELECT id_detalle_pago FROM detalles_pagos WHERE pago_id = p.id_pago)
+                      WHERE pm2.pago_id IN (SELECT id_detalle_pago FROM detalles_pagos WHERE pago_id = p.id_pago)
                         AND h2.correo = :correo
                   )
                 GROUP BY p.id_pago
@@ -372,30 +368,27 @@ class Pagos extends Conexion
     private function _consultar_pago()
     {
         try {
-            // 1. Cabecera del pago
+            // Cabecera del pago
             $sqlHead = "SELECT
                     p.*,
                     pm.mensualidad_id,
+                    pm.monto_abonado,
                     m.apartamento_id,
                     m.monto AS monto_mensualidad,
                     a.nro_apartamento
-                FROM
-                    pagos p
-                LEFT JOIN detalles_pagos dp ON
-                    p.id_pago = dp.pago_id
-                LEFT JOIN pagos_mensualidad pm ON
-                    dp.id_detalle_pago = pm.detalle_pago_id
-                LEFT JOIN mensualidad m ON
-                    pm.mensualidad_id = m.id_mensualidad
+                FROM pagos p
+                LEFT JOIN pagos_mensualidad pm ON p.id_pago = pm.pago_id
+                LEFT JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
                 LEFT JOIN apartamentos a ON a.id_apartamento = m.apartamento_id
-                        WHERE p.id_pago = :id AND p.activo = 1 LIMIT 1";
+                WHERE p.id_pago = :id AND p.activo = 1 LIMIT 1";
+            
             $stmtH = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlHead);
             $stmtH->execute([':id' => $this->id_pago]);
             $cabecera = $stmtH->fetch(PDO::FETCH_ASSOC);
 
             if (!$cabecera) return ['estatus' => false, 'mensaje' => 'Pago no encontrado'];
 
-            // 2. Detalles del pago
+            // Detalles del pago
             $sqlDet = "SELECT dp.*, ib.referencia, ib.banco_id, ib.imagen, b.nombre_banco
                        FROM detalles_pagos dp
                        LEFT JOIN ingresos_bancarios ib ON dp.id_detalle_pago = ib.detalle_pago_id
@@ -409,7 +402,7 @@ class Pagos extends Conexion
 
             return ['estatus' => true, 'datos' => $cabecera];
         } catch (PDOException $e) {
-            error_log("Error en _consultar_pago_unico: " . $e->getMessage());
+            error_log("Error en _consultar_pago: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al consultar el pago'];
         }
     }
@@ -422,15 +415,13 @@ class Pagos extends Conexion
      */
     private function _consultar_cabecera_pago()
     {
-        // Añadimos mensualidad_id y apartamento_id a la consulta plana
         $sql = "SELECT 
                     p.estado, 
                     p.observacion,
                     pm.mensualidad_id,
                     m.apartamento_id
                 FROM pagos p
-                LEFT JOIN detalles_pagos dp ON p.id_pago = dp.pago_id
-                LEFT JOIN pagos_mensualidad pm ON dp.id_detalle_pago = pm.detalle_pago_id
+                LEFT JOIN pagos_mensualidad pm ON p.id_pago = pm.pago_id
                 LEFT JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
                 WHERE p.id_pago = :id_pago AND p.activo = 1
                 LIMIT 1";
@@ -468,7 +459,7 @@ class Pagos extends Conexion
         try {
             $pdo->beginTransaction();
 
-            // 1. Insertar Cabecera
+            // Insertar Cabecera
             $sqlHead = "INSERT INTO pagos (estado, observacion, activo) VALUES (:est, :obs, 1)";
             $stmtHead = $pdo->prepare($sqlHead);
             $estado = $this->estado ?? 'PENDIENTE';
@@ -476,7 +467,7 @@ class Pagos extends Conexion
             $stmtHead->execute([':est' => $estado, ':obs' => $obs]);
             $id_pago = $pdo->lastInsertId();
 
-            // 2. Preparar consultas para los detalles
+            // Preparar consultas para los detalles físicos
             $sqlDet = "INSERT INTO detalles_pagos (fecha, monto, monto_dolar, tipo_pago, pago_id) 
                        VALUES (:fecha, :monto, :md, :tipo, :pago_id)";
             $stmtDet = $pdo->prepare($sqlDet);
@@ -485,10 +476,10 @@ class Pagos extends Conexion
                          VALUES (:ref, :img, :det_id, :banco)";
             $stmtBanco = $pdo->prepare($sqlBanco);
 
-            $sqlRel = "INSERT INTO pagos_mensualidad (detalle_pago_id, mensualidad_id) VALUES (:det_id, :mens_id)";
-            $stmtRel = $pdo->prepare($sqlRel);
+            // Calcular el total del dinero físico ingresado para distribuirlo
+            $total_abonado = 0;
 
-            // 3. Iterar e insertar
+            // Iterar e insertar los detalles físicos
             foreach ($this->detalles as $det) {
                 $stmtDet->execute([
                     ':fecha' => $det['fecha_pago'],
@@ -498,6 +489,9 @@ class Pagos extends Conexion
                     ':pago_id' => $id_pago
                 ]);
                 $id_detalle = $pdo->lastInsertId();
+
+                // Sumamos al total que el residente está abonando en este pago maestro
+                $total_abonado += (float)$det['monto'];
 
                 // Si requiere comprobante bancario
                 $tipo = strtolower(trim($det['tipo_pago']));
@@ -509,20 +503,78 @@ class Pagos extends Conexion
                         ':banco' => $det['banco_id'] ?? null
                     ]);
                 }
-
-                // Relacionar con la mensualidad
-                $stmtRel->execute([
-                    ':det_id'  => $id_detalle,
-                    ':mens_id' => $this->mensualidad_id
-                ]);
             }
 
+            // Distribución en Cascada (Waterfall)
+            $remanente = $total_abonado;
+
+            // Buscar la mensualidad seleccionada y los meses posteriores pendientes del mismo apartamento
+            $sqlDeudas = "SELECT m.id_mensualidad, 
+                                 (m.monto - COALESCE((
+                                     SELECT SUM(pm.monto_abonado) 
+                                     FROM pagos_mensualidad pm 
+                                     JOIN pagos p ON pm.pago_id = p.id_pago 
+                                     WHERE pm.mensualidad_id = m.id_mensualidad AND p.activo = 1
+                                 ), 0)) as deuda_actual
+                          FROM mensualidad m
+                          JOIN periodos_mensualidad per ON m.periodo_id = per.id_periodo
+                          WHERE m.apartamento_id = :apt_id 
+                            AND m.activo = 1
+                            AND per.id_periodo >= (SELECT periodo_id FROM mensualidad WHERE id_mensualidad = :mens_id_inicio)
+                          ORDER BY per.id_periodo ASC";
+            
+            $stmtDeudas = $pdo->prepare($sqlDeudas);
+            $stmtDeudas->execute([
+                ':apt_id' => $this->apartamento_id,
+                ':mens_id_inicio' => $this->mensualidad_id
+            ]);
+            $meses_pendientes = $stmtDeudas->fetchAll(PDO::FETCH_ASSOC);
+
+            $sqlRel = "INSERT INTO pagos_mensualidad (pago_id, mensualidad_id, monto_abonado) VALUES (:pago_id, :mens_id, :monto_abonado)";
+            $stmtRel = $pdo->prepare($sqlRel);
+
+            foreach ($meses_pendientes as $mes) {
+                if ($remanente <= 0) break; // Si se acabó el dinero, detenemos la cascada
+
+                $deuda = (float)$mes['deuda_actual'];
+                
+                // Si este mes ya está solvente, pasamos al siguiente
+                if ($deuda <= 0) continue;
+
+                // Definir cuánto le inyectamos a este mes
+                $abono_aplicar = ($remanente >= $deuda) ? $deuda : $remanente;
+
+                // Insertar en la tabla puente
+                $stmtRel->execute([
+                    ':pago_id' => $id_pago, 
+                    ':mens_id' => $mes['id_mensualidad'],
+                    ':monto_abonado' => $abono_aplicar
+                ]);
+
+                // Descontar del dinero disponible
+                $remanente -= $abono_aplicar;
+            }
+
+            // Si el residente adelantó dinero de meses que aún no han sido creados por el administrador
+            // Guardamos el remanente en el mes original mediante UPSERT para que le quede como "Saldo a Favor"
+            if ($remanente > 0) {
+                $sqlRemanente = "INSERT INTO pagos_mensualidad (pago_id, mensualidad_id, monto_abonado) 
+                                 VALUES (:pago_id, :mens_id, :monto)
+                                 ON DUPLICATE KEY UPDATE monto_abonado = monto_abonado + VALUES(monto_abonado)";
+                
+                $stmtRemanente = $pdo->prepare($sqlRemanente);
+                $stmtRemanente->execute([
+                    ':pago_id' => isset($id_pago) ? $id_pago : $this->id_pago, 
+                    ':mens_id' => $this->mensualidad_id,
+                    ':monto' => $remanente
+                ]);
+            }
             $pdo->commit();
             return ['estatus' => true, 'mensaje' => 'Pago registrado con éxito', 'id' => $id_pago];
         } catch (\Exception $e) {
             $pdo->rollBack();
             error_log("Error en _registrar pago: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error del servidor'];
+            return ['estatus' => false, 'mensaje' => 'Error del servidor. Intente mas tarde'];
         }
     }
 
@@ -544,7 +596,7 @@ class Pagos extends Conexion
         try {
             $pdo->beginTransaction();
 
-            // 1. Actualizar Cabecera
+            // Actualizar Cabecera
             $sqlHead = "UPDATE pagos SET estado = :estado, observacion = :obs WHERE id_pago = :id";
             $stmtHead = $pdo->prepare($sqlHead);
             $stmtHead->execute([
@@ -553,9 +605,8 @@ class Pagos extends Conexion
                 ':id'     => $this->id_pago
             ]);
 
-            // 2. Gestionar las imágenes para no borrar las que aún se usan
+            // Gestionar las imágenes
             $imagenesAConservar = array_column($this->detalles, 'imagen');
-
             $sqlGetDet = "SELECT id_detalle_pago FROM detalles_pagos WHERE pago_id = :id";
             $stmtGet = $pdo->prepare($sqlGetDet);
             $stmtGet->execute([':id' => $this->id_pago]);
@@ -570,20 +621,19 @@ class Pagos extends Conexion
                 }
             }
 
-            // 3. Eliminar relaciones y detalles viejos de la BD
+            // Eliminar relaciones y detalles viejos de la BD
             $pdo->prepare("DELETE FROM ingresos_bancarios WHERE detalle_pago_id IN (SELECT id_detalle_pago FROM detalles_pagos WHERE pago_id = ?)")->execute([$this->id_pago]);
-            $pdo->prepare("DELETE FROM pagos_mensualidad WHERE detalle_pago_id IN (SELECT id_detalle_pago FROM detalles_pagos WHERE pago_id = ?)")->execute([$this->id_pago]);
+            $pdo->prepare("DELETE FROM pagos_mensualidad WHERE pago_id = ?")->execute([$this->id_pago]); // <-- NUEVA LÓGICA DE BORRADO
             $pdo->prepare("DELETE FROM detalles_pagos WHERE pago_id = ?")->execute([$this->id_pago]);
 
-            // 4. Insertar nuevos detalles (igual que en registrar)
+            // Insertar nuevos detalles
             $sqlDet = "INSERT INTO detalles_pagos (fecha, monto, monto_dolar, tipo_pago, pago_id) VALUES (:fecha, :monto, :md, :tipo, :pago_id)";
             $stmtDet = $pdo->prepare($sqlDet);
 
             $sqlBanco = "INSERT INTO ingresos_bancarios (referencia, imagen, detalle_pago_id, banco_id) VALUES (:ref, :img, :det_id, :banco)";
             $stmtBanco = $pdo->prepare($sqlBanco);
 
-            $sqlRel = "INSERT INTO pagos_mensualidad (detalle_pago_id, mensualidad_id) VALUES (:det_id, :mens_id)";
-            $stmtRel = $pdo->prepare($sqlRel);
+            $total_abonado = 0; // ACUMULADOR
 
             foreach ($this->detalles as $det) {
                 $stmtDet->execute([
@@ -595,6 +645,8 @@ class Pagos extends Conexion
                 ]);
                 $id_detalle = $pdo->lastInsertId();
 
+                $total_abonado += (float)$det['monto'];
+
                 $tipo = strtolower(trim($det['tipo_pago']));
                 if (in_array($tipo, ['transferencia', 'pago movil', 'pago_movil'])) {
                     $stmtBanco->execute([
@@ -604,10 +656,70 @@ class Pagos extends Conexion
                         ':banco' => $det['banco_id'] ?? null
                     ]);
                 }
+            }
 
+            // Distribución en Cascada (Waterfall)
+            $remanente = $total_abonado;
+
+            // Buscar la mensualidad seleccionada y los meses posteriores pendientes del mismo apartamento
+            $sqlDeudas = "SELECT m.id_mensualidad, 
+                                 (m.monto - COALESCE((
+                                     SELECT SUM(pm.monto_abonado) 
+                                     FROM pagos_mensualidad pm 
+                                     JOIN pagos p ON pm.pago_id = p.id_pago 
+                                     WHERE pm.mensualidad_id = m.id_mensualidad AND p.activo = 1
+                                 ), 0)) as deuda_actual
+                          FROM mensualidad m
+                          JOIN periodos_mensualidad per ON m.periodo_id = per.id_periodo
+                          WHERE m.apartamento_id = :apt_id 
+                            AND m.activo = 1
+                            AND per.id_periodo >= (SELECT periodo_id FROM mensualidad WHERE id_mensualidad = :mens_id_inicio)
+                          ORDER BY per.id_periodo ASC";
+            
+            $stmtDeudas = $pdo->prepare($sqlDeudas);
+            $stmtDeudas->execute([
+                ':apt_id' => $this->apartamento_id,
+                ':mens_id_inicio' => $this->mensualidad_id
+            ]);
+            $meses_pendientes = $stmtDeudas->fetchAll(PDO::FETCH_ASSOC);
+
+            $sqlRel = "INSERT INTO pagos_mensualidad (pago_id, mensualidad_id, monto_abonado) VALUES (:pago_id, :mens_id, :monto_abonado)";
+            $stmtRel = $pdo->prepare($sqlRel);
+
+            foreach ($meses_pendientes as $mes) {
+                if ($remanente <= 0) break; // Si se acabó el dinero, detenemos la cascada
+
+                $deuda = (float)$mes['deuda_actual'];
+                
+                // Si este mes ya está solvente, pasamos al siguiente
+                if ($deuda <= 0) continue;
+
+                // Definir cuánto le inyectamos a este mes
+                $abono_aplicar = ($remanente >= $deuda) ? $deuda : $remanente;
+
+                // Insertar en la tabla puente
                 $stmtRel->execute([
-                    ':det_id'  => $id_detalle,
-                    ':mens_id' => $this->mensualidad_id
+                    ':pago_id' => $this->id_pago,
+                    ':mens_id' => $mes['id_mensualidad'],
+                    ':monto_abonado' => $abono_aplicar
+                ]);
+
+                // Descontar del dinero disponible
+                $remanente -= $abono_aplicar;
+            }
+
+            // Si el residente adelantó dinero de meses que aún no han sido creados por el administrador
+            // Guardamos el remanente en el mes original mediante UPSERT para que le quede como "Saldo a Favor"
+            if ($remanente > 0) {
+                $sqlRemanente = "INSERT INTO pagos_mensualidad (pago_id, mensualidad_id, monto_abonado) 
+                                 VALUES (:pago_id, :mens_id, :monto)
+                                 ON DUPLICATE KEY UPDATE monto_abonado = monto_abonado + VALUES(monto_abonado)";
+                
+                $stmtRemanente = $pdo->prepare($sqlRemanente);
+                $stmtRemanente->execute([
+                    ':pago_id' => isset($id_pago) ? $id_pago : $this->id_pago, 
+                    ':mens_id' => $this->mensualidad_id,
+                    ':monto' => $remanente
                 ]);
             }
 

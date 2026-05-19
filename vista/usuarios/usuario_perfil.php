@@ -7,9 +7,9 @@
     require_once ROOT_PATH . "/vista/componentes/estilos.php";
     ?>
 
-    <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/contrasenias.css">
-    <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/esqueletos.css">
-    <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/estilos_switch_dark.css">
+    <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/src/contrasenias.css">
+    <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/src/esqueletos.css">
+    <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/src/estilos_switch_dark.css">
 </head>
 
 <body id="body-pd" class="body-pd">
@@ -53,14 +53,14 @@
                                     
                                     <div class="text-muted small mb-4 card-item p-3 rounded-3 text-start">
                                         <div class="d-flex align-items-center mb-2">
-                                            <i class="bi bi-calendar-check text-success me-2 fs-5"></i>
+                                            <i class="bi bi-calendar-check text-success me-2 fs-5" data-tooltip="true" title="Estado actual de la cuenta"></i>
                                             <div>
                                                 <span class="fw-bold d-block">Estado de Cuenta</span>
                                                 <span>Activo</span>
                                             </div>
                                         </div>
                                         <div class="d-flex align-items-center">
-                                            <i class="bi bi-clock text-info me-2 fs-5"></i>
+                                            <i class="bi bi-clock text-info me-2 fs-5" data-tooltip="true" title="Registro de tu última conexión"></i>
                                             <div class="w-100">
                                                 <span class="fw-bold d-block">Último Acceso</span>
                                                 <span id="ultimo_acceso">
@@ -96,7 +96,7 @@
                                     <h4 class="mb-0 fw-bold transicion_entrada">
                                         <i class="bi bi-person-lines-fill text-primary me-2"></i> Información Personal
                                     </h4>
-                                    <button class="btn btn-outline-primary rounded-pill px-3 shadow-sm" title="Modificar Información" id="boton_modificar" disabled>
+                                    <button class="btn btn-outline-primary rounded-pill px-3 shadow-sm" title="Modificar Información" data-tooltip="true" id="boton_modificar" disabled>
                                         <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
                                         <span>Cargando...</span>
                                     </button>
@@ -164,10 +164,10 @@
                                             </div>
                                         </div>
                                         <div class="d-flex gap-2 mt-4 pt-3 border-top">
-                                            <button type="button" class="btn btn-success px-4 rounded-pill shadow-sm" title="Guardar cambios" id="boton_guardar">
+                                            <button type="button" class="btn btn-success px-4 rounded-pill shadow-sm" title="Guardar cambios" data-tooltip="true" id="boton_guardar">
                                                 <i class="bi bi-check-lg me-1"></i> Guardar Cambios
                                             </button>
-                                            <button type="button" class="btn btn-secondary px-4 rounded-pill shadow-sm" title="Cancelar" id="boton_cancelar">
+                                            <button type="button" class="btn btn-secondary px-4 rounded-pill shadow-sm" title="Cancelar" data-tooltip="true" id="boton_cancelar">
                                                 <i class="bi bi-x-lg me-1"></i> Cancelar
                                             </button>
                                         </div>
@@ -239,7 +239,7 @@
                     <div class="d-flex justify-content-between align-items-center mb-4">                                 
                         <div class="input-group" style="max-width: 300px;">
                             <span class="input-group-text"><i class="bi bi-search"></i></span>
-                            <input type="text" id="busqueda_global" data-tooltip="true" title="Buscar Registro" class="form-control" placeholder="Buscar notificacion...">
+                            <input type="text" id="busqueda_global" data-tooltip="true" title="Buscar Registro" data-tooltip="true" class="form-control" placeholder="Buscar notificacion...">
                         </div>
                     </div>
                     <div id="tabla_notificaciones" class="tabla-sistema-haydee"></div>

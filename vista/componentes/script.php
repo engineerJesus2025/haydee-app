@@ -2,8 +2,8 @@
 <script src="<?php echo URL_BASE; ?>recursos/dependencias/bootstrap/bootstrap.bundle.min.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/dependencias/sweetalert2/sweetalert2.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/dependencias/tabulator/tabulator.min.js"></script>
-<!-- Helpers -->
-<script src="<?php echo URL_BASE; ?>recursos/js/ayuda/Patrones.js"></script>
+
+<!-- <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/Patrones.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/Alertas.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/Peticiones.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/EstadoInputs.js"></script>
@@ -15,10 +15,13 @@
 <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/AyudaInteractiva.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/AtajosTeclado.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/ComponentesUI.js"></script>
-<!-- Script personalizados globales -->
+
 <script src="<?php echo URL_BASE; ?>recursos/js/header.js"></script>
-<script src="<?php echo URL_BASE; ?>recursos/js/notificaciones.js"></script>
-<script src="<?php echo URL_BASE; ?>recursos/js/driver.js"></script>
+<script src="<?php echo URL_BASE; ?>recursos/js/notificaciones.js"></script> -->
+<!-- <script src="<?php echo URL_BASE; ?>recursos/js/src/driver.js"></script> -->
+
+<!-- Scripts globales -->
+<script src="<?php echo URL_BASE; ?>recursos/js/dist/app-core.min.js"></script>
 
 <!-- Variables VAPID: -->
 <script>

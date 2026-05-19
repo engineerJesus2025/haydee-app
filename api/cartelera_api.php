@@ -9,16 +9,29 @@ $cartelera = new CarteleraVirtual();
 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida en API'];
 
 try {
-    // ======================================================================
-    // PETICIONES GET: Solo para CONSULTAR datos (Lectura)
-    // ======================================================================
+    // PETICIONES GET:
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         
         $operacion = $_GET["operacion"] ?? 'consulta'; // Por defecto consulta general
 
         switch ($operacion) {
             case 'consulta':
-                $respuesta = $cartelera->realizar_consulta('consultar');
+                // Verificamos si la petición solicita paginación (App Móvil)
+                if (isset($_GET['pagina']) && isset($_GET['limite'])) {
+                    $pagina = (int)$_GET['pagina'];
+                    $limite = (int)$_GET['limite'];
+                    
+                    // Calculamos desde dónde empezar a traer registros
+                    $offset = ($pagina - 1) * $limite;
+                    
+                    $cartelera->set_limite_paginacion($limite);
+                    $cartelera->set_offset_paginacion($offset);
+                    
+                    $respuesta = $cartelera->realizar_consulta('consultar_paginada');
+                } else {
+                    // Fallback para consultas completas normales
+                    $respuesta = $cartelera->realizar_consulta('consultar');
+                }
                 break;
 
             case 'consultar_cartelera':
@@ -34,7 +47,7 @@ try {
         }
     } 
     // ======================================================================
-    // PETICIONES POST: Para CREAR o MODIFICAR datos (Escritura)
+    // PETICIONES POST
     // ======================================================================
     elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
@@ -76,19 +89,13 @@ try {
                 
                 break;
 
-            case 'modificar_cartelera':
-                // ... lógica de modificación
-                break;
-
             default:
                 http_response_code(HttpCodigo::BAD_REQUEST->value);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Operación POST no permitida en la API'];
                 break;
         }
     } 
-    // ======================================================================
     // METODOS NO SOPORTADOS
-    // ======================================================================
     else {
         http_response_code(HttpCodigo::METODO_NO_PERMITIDO->value); // Method Not Allowed
         $respuesta = ['estatus' => false, 'mensaje' => 'metodo HTTP no soportado'];

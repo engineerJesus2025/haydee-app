@@ -56,9 +56,6 @@ if (isset($_POST["operacion"])) {
             exit;
         }
 
-        echo json_encode(['estatus' => true, 'res' => $_POST, 'res2'=>$detalles]);
-        exit;
-
         $reglasDetalle = Pagos::obtenerReglasDetalles();
         $erroresDetalles = [];
 

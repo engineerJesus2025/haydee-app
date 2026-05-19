@@ -6,7 +6,7 @@
     <?php
     require_once ROOT_PATH . "/vista/componentes/estilos.php";
     ?>
-    <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/contrasenias.css">
+    <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/src/contrasenias.css">
 </head>
 <body id="body-pd" class="body-pd">
     <div class="container-fluid">

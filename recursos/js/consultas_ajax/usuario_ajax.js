@@ -273,7 +273,7 @@ function eventoEliminar(e){
 async function eliminar(id) {
     let datos = new FormData();
     datos.append("id_usuario", id);
-    datos.append('operacion', 'eliminar');
+    datos.append('operacion', 'eliminar_usuario');
 
     let respuesta = await Peticiones.enviar(datos);
     Validador.procesarRespuesta(respuesta, () => {

@@ -225,7 +225,7 @@ async function consultarPublicaciones() {
                 fragment.appendChild(construirHTMLPublicacion(publicacion));
             });
 
-            limite += 2;
+            limite += 4;
             contenido_principal.appendChild(fragment);
         });
 
@@ -256,7 +256,6 @@ function construirHTMLPublicacion(publicacion) {
     } else {
         // imgElement.src = `recursos/img/utils/imagen_default.png`;
         imgElement.src = `data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22400%22%20height%3D%22200%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20200%22%20preserveAspectRatio%3D%22none%22%3E%3Crect%20width%3D%22400%22%20height%3D%22200%22%20fill%3D%22%23f8f9fa%22%2F%3E%3Cpath%20d%3D%22M140%2080%20h35%20v90%20h-35%20z%22%20fill%3D%22%23dee2e6%22%2F%3E%3Cpath%20d%3D%22M147%2090%20h8%20v8%20h-8%20z%20M160%2090%20h8%20v8%20h-8%20z%20M147%20105%20h8%20v8%20h-8%20z%20M160%20105%20h8%20v8%20h-8%20z%20M147%20120%20h8%20v8%20h-8%20z%20M160%20120%20h8%20v8%20h-8%20z%20M147%20135%20h8%20v8%20h-8%20z%20M160%20135%20h8%20v8%20h-8%20z%20M147%20150%20h8%20v8%20h-8%20z%20M160%20150%20h8%20v8%20h-8%20z%22%20fill%3D%22%23f8f9fa%22%2F%3E%3Cpath%20d%3D%22M185%2050%20h45%20v120%20h-45%20z%22%20fill%3D%22%23ced4da%22%2F%3E%3Cpath%20d%3D%22M195%2065%20h10%20v10%20h-10%20z%20M210%2065%20h10%20v10%20h-10%20z%20M195%2085%20h10%20v10%20h-10%20z%20M210%2085%20h10%20v10%20h-10%20z%20M195%20105%20h10%20v10%20h-10%20z%20M210%20105%20h10%20v10%20h-10%20z%20M195%20125%20h10%20v10%20h-10%20z%20M210%20125%20h10%20v10%20h-10%20z%20M195%20145%20h10%20v10%20h-10%20z%20M210%20145%20h10%20v10%20h-10%20z%22%20fill%3D%22%23f8f9fa%22%2F%3E%3Cpath%20d%3D%22M220%2070%20h30%20v100%20h-30%20z%22%20fill%3D%22%23e9ecef%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%22190%22%20fill%3D%22%23adb5bd%22%20font-size%3D%2212%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-weight%3D%22bold%22%20letter-spacing%3D%222%22%20text-anchor%3D%22middle%22%3ECOMUNICADO%3C%2Ftext%3E%3C%2Fsvg%3E`;
-
     }
 
     const iconoPrioridad = card.querySelector('.icono-prioridad');
@@ -265,7 +264,7 @@ function construirHTMLPublicacion(publicacion) {
 
     iconoPrioridad.className = 'icono-prioridad bi'; 
 
-    // 3. Asignas colores e íconos según el caso
+    // Asignas colores e íconos según el caso
     switch(publicacion.prioridad.toLowerCase()) {
         case '1':
             badgeContenedor.className = 'badge etiqueta-prioridad shadow-sm priority-badge d-flex align-items-center gap-1 bg-danger text-white';

@@ -6,7 +6,7 @@
     <title>Centro de Ayuda</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php require_once "vista/componentes/estilos.php"; ?>
-    <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/ayuda.css">
+    <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/src/ayuda.css">
 </head>
 
 <body id="body-pd" class="body-pd d-flex flex-column">
@@ -400,6 +400,6 @@
         </div>
     </div>
     <?php require_once "vista/componentes/footer.php"; ?>
-    <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/ayuda.js"></script>
+    <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/src/ayuda.js"></script>
 </body>
-</html>
+</html> 

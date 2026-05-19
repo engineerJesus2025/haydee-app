@@ -11,8 +11,8 @@
     <link rel="stylesheet" href="<?php echo URL_BASE; ?>recursos/dependencias/bootstrap/bootstrap.min.css">
     <link rel="stylesheet" href="<?php echo URL_BASE; ?>recursos/dependencias/bootstrap-icons/bootstrap-icons.min.css">
     
-    <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/contrasenias.css">
-    <link rel="stylesheet" href="<?php echo URL_BASE; ?>recursos/css/estilos_login.css">
+    <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/src/contrasenias.css">
+    <link rel="stylesheet" href="<?php echo URL_BASE; ?>recursos/css/src/estilos_login.css">
 </head>
 <body>
     <main>

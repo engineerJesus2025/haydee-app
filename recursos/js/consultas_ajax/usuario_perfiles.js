@@ -133,6 +133,8 @@ async function llenarCardUsuario() {
         document.getElementById('p_correo').textContent = usuario.correo;
         document.getElementById('ultimo_acceso').textContent = FormatoFechas.formatoUltimoAcceso(usuario.ultima_vez);
 
+        Tooltips.actualizarDinamicamente(document.getElementById('p_correo').parentElement, usuario.correo, 'bottom');
+
         correo_an = usuario.correo;
 
         // --- INYECCIÓN DEL SOFT BADGE (Etiqueta del Rol) ---

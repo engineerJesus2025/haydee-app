@@ -7,7 +7,7 @@
     <?php
     require_once ROOT_PATH . "/vista/componentes/estilos.php";
     ?>
-    <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/reportes.css">
+    <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/src/reportes.css">
 </head>
 
 <body id="body-pd" class="body-pd">

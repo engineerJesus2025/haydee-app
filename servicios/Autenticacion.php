@@ -180,7 +180,7 @@ class Autenticacion
             'id_usuario'      => $usuario['id_usuario'],
             'correo'          => $usuario['correo'],
             'nombre_completo' => trim(($usuario['nombre'] ?? '') . ' ' . ($usuario['apellido'] ?? '')),
-            'rol'             => $usuario['nombre_rol'] ?? '', // Lo tomamos directo del arreglo
+            'rol'             => $usuario['nombre_rol'] ?? '', 
             'permisos'        => $permisos,
             'notificaciones'  => $notificaciones
         ];

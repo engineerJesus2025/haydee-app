@@ -2,6 +2,10 @@
 
 use haydee\enums\HttpCodigo;
 use haydee\modelo\Gastos;
+use haydee\modelo\Banco;
+use haydee\modelo\Proveedores;
+use haydee\modelo\SolicitudGasto;
+use haydee\modelo\TipoGasto;
 use haydee\ayuda\ConstructorDetalles; 
 
 // (Futuro) Validación del Token JWT
@@ -10,7 +14,7 @@ $gastos = new Gastos();
 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida en API'];
 
 try {
-    //  PETICIONES GET: Solo para CONSULTAR datos (Lectura)
+    // PETICIONES GET
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         
         $operacion = $_GET["operacion"] ?? 'consulta'; 
@@ -28,7 +32,24 @@ try {
                 $respuesta = $gastos->realizar_consulta('consultar_gasto');
                 break;
 
-            // endpoints estadisticos que porsia...
+            // Carga masiva de catálogos para el formulario móvil
+            case 'obtener_catalogos':
+                $banco = new Banco();
+                $proveedor = new Proveedores();
+                $solicitudGasto = new SolicitudGasto();
+                $tipoGasto = new TipoGasto();
+
+                $respuesta = [
+                    'estatus' => true,
+                    'datos' => [
+                        'proveedores' => $proveedor->realizar_consulta('consultar')['datos'] ?? [],
+                        'bancos'      => $banco->realizar_consulta('consultar')['datos'] ?? [],
+                        'solicitudes' => $solicitudGasto->realizar_consulta('consultar')['datos'] ?? [],
+                        'tipos_gasto' => $tipoGasto->realizar_consulta('consultar')['datos'] ?? []
+                    ]
+                ];
+                break;
+
             case 'listar_gastos_mes':
                 $respuesta = $gastos->realizar_consulta('listar_gastos_mes');
                 break;
@@ -44,15 +65,14 @@ try {
         }
     } 
 
-    // PETICIONES POST: Para CREAR o MODIFICAR (Escritura)
+    // PETICIONES POST
     elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         $operacion = $_POST["operacion"] ?? '';
 
         if (empty($operacion)) {
             http_response_code(HttpCodigo::BAD_REQUEST->value);
-            echo json_encode(['estatus' => false, 'mensaje' => 'No se especificó la Operación']);
-            return;
+            $respuesta = ['estatus' => false, 'mensaje' => 'No se especificó la Operación'];
         }
 
         // Asignacion de la cabecera (Datos generales del gasto)
@@ -65,24 +85,28 @@ try {
 
         switch ($operacion) {
             case 'registrar_gasto':
-                // 1. Usamos tu helper web para armar los renglones desde el FormData de la app
                 $detalles = ConstructorDetalles::ConstruirDetallesGastos($_POST, $_FILES, false);
                 
                 if (empty($detalles)) {
                     http_response_code(HttpCodigo::BAD_REQUEST->value);
-                    echo json_encode(['estatus' => false, 'mensaje' => 'Debe proporcionar al menos un detalle.']);
-                    return;
+                    $respuesta = ['estatus' => false, 'mensaje' => 'Debe proporcionar al menos un detalle.'];
+                    break;
                 }
 
-                // 2. Pasamos los detalles al modelo
                 $gastos->set_detalles($detalles);
                 
-                // 3. Ejecutamos la inserción
                 $respuesta = $gastos->realizar_consulta('registrar_gasto');
                 break;
 
             case 'modificar_gasto':
-                // Lógica similar de modificación...
+                $detalles = ConstructorDetalles::ConstruirDetallesGastos($_POST, $_FILES, true);
+                if (empty($detalles)) {
+                    http_response_code(HttpCodigo::BAD_REQUEST->value);
+                    $respuesta = ['estatus' => false, 'mensaje' => 'Debe proporcionar al menos un detalle.'];
+                    break;
+                }
+                $gastos->set_detalles($detalles);
+                $respuesta = $gastos->realizar_consulta('modificar_gasto');
                 break;
 
             default:
@@ -91,7 +115,6 @@ try {
                 break;
         }
     } 
-    // METODOS NO SOPORTADOS
     else {
         http_response_code(HttpCodigo::METODO_NO_PERMITIDO->value); 
         $respuesta = ['estatus' => false, 'mensaje' => 'metodo HTTP no soportado'];
@@ -102,6 +125,11 @@ try {
     http_response_code(HttpCodigo::ERROR_INTERNO->value);
     $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor API'];
 } finally {
-    $gastos->cerrar();
+    if (isset($gastos)) { $gastos->cerrar(); }
+    if (isset($banco)) { $banco->cerrar(); }
+    if (isset($proveedor)) { $proveedor->cerrar(); }
+    if (isset($solicitudGasto)) { $solicitudGasto->cerrar(); }
+    if (isset($tipoGasto)) { $tipoGasto->cerrar(); }
+    
     echo json_encode($respuesta);
 }

@@ -80,7 +80,6 @@ class GestorTrafico {
             
             $arregloDescifrado = json_decode($jsonDescifrado, true);
             if (is_array($arregloDescifrado)) {
-                // (Mantenemos tu lógica de archivos intacta)
                 if (isset($arregloDescifrado['_archivos_adjuntos'])) {
                     foreach ($arregloDescifrado['_archivos_adjuntos'] as $campo => $archivo) {
                         $nombreLimpio = preg_replace('/[^a-zA-Z0-9.\-_]/', '', $archivo['name']);

@@ -10,7 +10,6 @@ use haydee\enums\TipoBaseDatos;
 
 class CarteleraVirtual extends Conexion
 {
-    // CONSTANTES DE COMPORTAMIENTO DASHBOARD
     private const DIAS_RECIENTES_DEFECTO = '-7 days';
     private const PRIORIDAD_DESPLAZADA = 99;
     private const LIMITE_INICIO = 4;
@@ -23,6 +22,9 @@ class CarteleraVirtual extends Conexion
     private $imagen;
     private $prioridad;
     private $usuario_id;
+
+    private $limite_paginacion;
+    private $offset_paginacion;
 
     // ====================================================================
     // VALIDACIONES CENTRALIZADAS
@@ -83,6 +85,8 @@ class CarteleraVirtual extends Conexion
     public function get_prioridad() { return $this->prioridad; }
     public function set_usuario_id($id) { $this->usuario_id = $id; }
     public function get_usuario_id() { return $this->usuario_id; }
+    public function set_limite_paginacion($l) { $this->limite_paginacion = (int)$l; }
+    public function set_offset_paginacion($o) { $this->offset_paginacion = (int)$o; }
 
     /**
      * Enruta la acción al método privado correspondiente.
@@ -325,4 +329,33 @@ class CarteleraVirtual extends Conexion
         }
     }
 
+    /**
+     * Consulta cronológica limpia para el Infinite Scroll de la App Móvil
+     */
+    private function _consultar_paginada()
+    {
+        // Valores por defecto como mecanismo de seguridad
+        $limite = $this->limite_paginacion ?: 10;
+        $offset = $this->offset_paginacion ?: 0;
+
+        $sql = "SELECT id_cartelera, titulo, prioridad, fecha, imagen, descripcion, usuarios.nombre as nombre_usuario 
+                FROM cartelera_virtual
+                INNER JOIN usuarios ON usuarios.id_usuario = cartelera_virtual.usuario_id
+                ORDER BY fecha DESC 
+                LIMIT :limite OFFSET :offset";
+                
+        try {
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
+            $stmt->bindParam(':limite', $limite, PDO::PARAM_INT);
+            $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+            $stmt->execute();
+            
+            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return ['estatus' => true, 'datos' => $datos];
+        } catch (PDOException $e) {
+            error_log("Error en _consultar_paginada: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al consultar cartelera paginada'];
+        }
+    }
+    
 }

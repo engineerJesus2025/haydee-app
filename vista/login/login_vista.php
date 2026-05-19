@@ -10,8 +10,8 @@
     <link rel="stylesheet" href="<?php echo URL_BASE; ?>recursos/dependencias/bootstrap/bootstrap.min.css">
     <link rel="stylesheet" href="<?php echo URL_BASE; ?>recursos/dependencias/bootstrap-icons/bootstrap-icons.min.css">
     <title>Inicio de Sesión</title>
-    <link rel="stylesheet" href="<?php echo URL_BASE; ?>recursos/css/estilos_login.css">
-    <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/estilos_modal_carga.css">
+    <link rel="stylesheet" href="<?php echo URL_BASE; ?>recursos/css/src/estilos_login.css">
+    <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/src/estilos_modal_carga.css">
 </head>
 <body>
     <main>

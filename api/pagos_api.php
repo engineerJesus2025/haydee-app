@@ -1,14 +1,12 @@
 <?php
 use haydee\modelo\Pagos;
+use haydee\modelo\Apartamento; // Importamos el modelo
+use haydee\modelo\Banco;       // Importamos el modelo
 use haydee\enums\HttpCodigo;
 use haydee\enums\EstadoPago;
 use haydee\ayuda\ConstructorDetalles;
 
-// ======================================================================
 // (Futuro) Validación de Token JWT y extracción de datos del usuario
-// ======================================================================
-// Por ahora, simularemos los datos del usuario leyendo un parámetro opcional.
-// Si la app móvil envía es_propietario=1, actuaremos como un residente.
 $esPropietario = isset($_REQUEST['es_propietario']) && $_REQUEST['es_propietario'] == '1';
 $correoUsuario = $_REQUEST['correo'] ?? ''; 
 
@@ -16,14 +14,13 @@ $pagos = new Pagos();
 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida en API'];
 
 try {
-    // PETICIONES GET: CONSULTAS (Lectura)
+    // PETICIONES GET
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         
         $operacion = $_GET["operacion"] ?? 'consulta'; 
 
         switch ($operacion) {
             case 'consulta':
-                // Si es propietario, ve solo sus pagos. Si es admin, ve todos.
                 if ($esPropietario) {
                     $pagos->set_correo($correoUsuario);
                     $respuesta = $pagos->realizar_consulta('consultar_por_correo');
@@ -32,8 +29,34 @@ try {
                 }
                 break;
 
+            // Carga Inicial del Formulario
+            case 'obtener_catalogos_base':
+                $apartamento = new Apartamento();
+                $banco = new Banco();
+
+                // Lógica condicional para los apartamentos
+                if ($esPropietario) {
+                    $apartamento->set_correo($correoUsuario);
+                    $resApartamentos = $apartamento->realizar_consulta('obtener_apartamentos_por_correo');
+                } else {
+                    $resApartamentos = $apartamento->realizar_consulta('consultar_listado');
+                }
+
+                $respuesta = [
+                    'estatus' => true,
+                    'datos' => [
+                        'apartamentos' => $resApartamentos['datos'] ?? [],
+                        'bancos'       => $banco->realizar_consulta('consultar')['datos'] ?? []
+                    ]
+                ];
+                
+                // Cerramos conexiones auxiliares inmediatamente
+                $apartamento->cerrar();
+                $banco->cerrar();
+                break;
+
+            // Carga Dinámica de mensualidades
             case 'consultar_mensualidades':
-                // Requiere: ?endpoint=pagos&operacion=consultar_mensualidades&apartamento_id=5
                 $pagos->set_apartamento_id($_GET['apartamento_id'] ?? null);
                 $respuesta = $pagos->realizar_consulta('consultarMensualidadPendiente');
                 break;
@@ -49,63 +72,58 @@ try {
                 break;
         }
     } 
-    // PETICIONES POST: REGISTRO Y MODIFICACIÓN (Escritura)
+    // PETICIONES POST
     elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         $operacion = $_POST["operacion"] ?? '';
 
         if (empty($operacion)) {
             http_response_code(HttpCodigo::BAD_REQUEST->value);
-            echo json_encode(['estatus' => false, 'mensaje' => 'No se especificó la operación']);
-            return;
-        }
+            $respuesta = ['estatus' => false, 'mensaje' => 'No se especificó la operación'];
+        } else {
+            // Asignación de la cabecera del pago
+            $pagos->set_id_pago($_POST['id_pago'] ?? null);
+            $pagos->set_observacion($_POST['observacion'] ?? null);
+            $pagos->set_apartamento_id($_POST['apartamento_id'] ?? null);
+            $pagos->set_mensualidad_id($_POST['mensualidad_id'] ?? null);
+            
+            $estadoPorDefecto = $esPropietario ? 'PENDIENTE' : 'PROCESADO';
+            $pagos->set_estado($_POST['estado'] ?? $estadoPorDefecto);
 
-        // Asignación de la cabecera del pago
-        $pagos->set_id_pago($_POST['id_pago'] ?? null);
-        $pagos->set_observacion($_POST['observacion'] ?? null);
-        $pagos->set_apartamento_id($_POST['apartamento_id'] ?? null);
-        $pagos->set_mensualidad_id($_POST['mensualidad_id'] ?? null);
-        
-        // Si el admin registra, el pago ya nace PROCESADO. Si es el residente, nace PENDIENTE.
-        $estadoPorDefecto = $esPropietario ? 'PENDIENTE' : 'PROCESADO';
-        $pagos->set_estado($_POST['estado'] ?? $estadoPorDefecto);
+            if ($esPropietario) {
+                $pagos->set_correo($correoUsuario);
+            }
 
-        if ($esPropietario) {
-            $pagos->set_correo($correoUsuario);
-        }
+            switch ($operacion) {
+                case 'registrar_pago':
+                    $detalles = ConstructorDetalles::ConstruirDetallesPagos($_POST, $_FILES, false);
+                    
+                    if (empty($detalles)) {
+                        http_response_code(HttpCodigo::BAD_REQUEST->value);
+                        $respuesta = ['estatus' => false, 'mensaje' => 'Debe proporcionar al menos un detalle de pago.'];
+                        break; 
+                    }
 
-        switch ($operacion) {
-            case 'registrar_pago':
-                $detalles = ConstructorDetalles::ConstruirDetallesPagos($_POST, $_FILES, false);
-                
-                if (empty($detalles)) {
+                    $pagos->set_detalles($detalles);
+                    $respuesta = $pagos->realizar_consulta('registrar_pago');
+                    break;
+
+                case 'modificar_pago':
+                    if ($esPropietario) {
+                        http_response_code(HttpCodigo::PROHIBIDO->value);
+                        $respuesta = ['estatus' => false, 'mensaje' => 'No autorizado para modificar pagos'];
+                        break;
+                    }
+                    // lógica de modificación si el admin la ejecuta... tal vez, no se 
+                    break;
+
+                default:
                     http_response_code(HttpCodigo::BAD_REQUEST->value);
-                    echo json_encode(['estatus' => false, 'mensaje' => 'Debe proporcionar al menos un detalle de pago.']);
-                    return;
-                }
-
-                // Pasamos los detalles al modelo
-                $pagos->set_detalles($detalles);
-                
-                // Ejecutamos la inserción
-                $respuesta = $pagos->realizar_consulta('registrar_pago');
-                break;
-
-            case 'modificar_pago':
-                if ($esPropietario) {
-                    http_response_code(HttpCodigo::PROHIBIDO->value); // Prohibido
-                    echo json_encode(['estatus' => false, 'mensaje' => 'No autorizado para modificar pagos']);
-                    return;
-                }
-                break;
-
-            default:
-                http_response_code(HttpCodigo::BAD_REQUEST->value);
-                $respuesta = ['estatus' => false, 'mensaje' => 'Operación POST no permitida'];
-                break;
+                    $respuesta = ['estatus' => false, 'mensaje' => 'Operación POST no permitida'];
+                    break;
+            }
         }
     } 
-    // MÉTODOS NO SOPORTADOS
     else {
         http_response_code(HttpCodigo::METODO_NO_PERMITIDO->value);
         $respuesta = ['estatus' => false, 'mensaje' => 'Método HTTP no soportado'];

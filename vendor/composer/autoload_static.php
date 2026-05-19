@@ -91,6 +91,8 @@ class ComposerStaticInitcbe1707b410f2f343a82925692838e3a
         'M' =>
         array (
             'Minishlink\\WebPush\\' => 19,
+            'MatthiasMullie\\PathConverter\\' => 29,
+            'MatthiasMullie\\Minify\\' => 22,
             'Matrix\\' => 7,
             'Masterminds\\' => 12,
             'MailerSend\\' => 11,
@@ -293,6 +295,14 @@ class ComposerStaticInitcbe1707b410f2f343a82925692838e3a
         'Minishlink\\WebPush\\' =>
         array (
             0 => __DIR__ . '/..' . '/minishlink/web-push/src',
+        ),
+        'MatthiasMullie\\PathConverter\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/matthiasmullie/path-converter/src',
+        ),
+        'MatthiasMullie\\Minify\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/matthiasmullie/minify/src',
         ),
         'Matrix\\' =>
         array (
