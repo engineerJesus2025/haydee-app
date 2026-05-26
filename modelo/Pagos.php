@@ -18,7 +18,7 @@ class Pagos extends Conexion
     private $id_detalle_pago;
     private $fecha;
     private $monto;
-    private $monto_dolar;
+    private $tasa_dolar;
     private $tipo_pago;   // Transferencia, Pago Movil, Efectivo, Divisa
 
     private $referencia;
@@ -58,6 +58,9 @@ class Pagos extends Conexion
             'estado' => [
                 'regex' => "/^($estadosValidos)$/",
             ],
+            'tasa_dolar' => [
+                'regex' => '/^\d+(\.\d{1,2})?$/'
+            ],
             'mensualidad_id' => [
                 'regex' => '/^\d+$/',
                 'exists' => ['tabla' => 'mensualidad', 'campo' => 'id_mensualidad']
@@ -66,9 +69,10 @@ class Pagos extends Conexion
 
         // Estandarización de nombres aplicada (registrar_pago, modificar_pago...)
         $camposPorOperacion = [
-            'registrar_pago'           => ['apartamento_id', 'observacion','mensualidad_id','estado'],
-            'modificar_pago'           => ['id_pago', 'apartamento_id', 'observacion','mensualidad_id','estado'],
+            'registrar_pago'           => ['apartamento_id', 'observacion','mensualidad_id','estado','tasa_dolar'],
+            'modificar_pago'           => ['id_pago', 'apartamento_id', 'observacion','mensualidad_id','estado','tasa_dolar'],
             'eliminar_pago'            => ['id_pago'],
+            'cambiar_estado_pago'           => ['id_pago', 'estado'],
             'actualizar_estado_pago'   => ['id_pago', 'estado', 'observacion'], // Usado por los admins (ya no)
             'consultar_pago' => ['id_pago']
         ];
@@ -92,10 +96,6 @@ class Pagos extends Conexion
             'monto' => [
                 'regex' => '/^\d+(\.\d{1,2})?$/',
                 'min' => 0.01
-            ],
-            'monto_dolar' => [
-                'regex' => '/^\d+(\.\d{1,2})?$/',
-                'opcional' => true
             ],
             'tipo_pago' => [
                 'regex' => "/^($metodosValidos)$/"
@@ -133,8 +133,8 @@ class Pagos extends Conexion
     public function get_fecha() { return $this->fecha; }
     public function set_monto($m) { $this->monto = $m; }
     public function get_monto() { return $this->monto; }
-    public function set_monto_dolar($md) { $this->monto_dolar = $md; }
-    public function get_monto_dolar() { return $this->monto_dolar; }
+    public function set_tasa_dolar($md) { $this->tasa_dolar = $md; }
+    public function get_tasa_dolar() { return $this->tasa_dolar; }
     public function set_tipo_pago($t) { $this->tipo_pago = $t; }
     public function get_tipo_pago() { return $this->tipo_pago; }
     public function set_referencia($r) { $this->referencia = $r; }
@@ -163,13 +163,8 @@ class Pagos extends Conexion
         if (!method_exists($this, $metodo)) {
             return ['estatus' => false, 'mensaje' => "La acción '$accion' no está implementada."];
         }
-
         try {
-            if ($param !== null) {
-                return $this->$metodo($param);
-            } else {
-                return $this->$metodo();
-            }
+            return $param !== null ? $this->$metodo($param) : $this->$metodo();
         } catch (\Exception $e) {
             error_log("Error en realizar_consulta ($accion): " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Ocurrió un error interno en el servidor.'];
@@ -389,8 +384,9 @@ class Pagos extends Conexion
             if (!$cabecera) return ['estatus' => false, 'mensaje' => 'Pago no encontrado'];
 
             // Detalles del pago
-            $sqlDet = "SELECT dp.*, ib.referencia, ib.banco_id, ib.imagen, b.nombre_banco
+            $sqlDet = "SELECT dp.*, p.tasa_dolar, ib.referencia, ib.banco_id, ib.imagen, b.nombre_banco
                        FROM detalles_pagos dp
+                       JOIN pagos p ON dp.pago_id = p.id_pago
                        LEFT JOIN ingresos_bancarios ib ON dp.id_detalle_pago = ib.detalle_pago_id
                        LEFT JOIN bancos b ON ib.banco_id = b.id_banco
                        WHERE dp.pago_id = :id";
@@ -459,17 +455,18 @@ class Pagos extends Conexion
         try {
             $pdo->beginTransaction();
 
+            $tasa_transaccion = $this->tasa_dolar ?? 1;
             // Insertar Cabecera
-            $sqlHead = "INSERT INTO pagos (estado, observacion, activo) VALUES (:est, :obs, 1)";
+            $sqlHead = "INSERT INTO pagos (estado, observacion, tasa_dolar, activo) VALUES (:est, :obs, :tasa, 1)";
             $stmtHead = $pdo->prepare($sqlHead);
             $estado = $this->estado ?? 'PENDIENTE';
             $obs = $this->observacion ?? 'Pago registrado por sistema';
-            $stmtHead->execute([':est' => $estado, ':obs' => $obs]);
+            $stmtHead->execute([':est' => $estado, ':obs' => $obs, ':tasa' => $tasa_transaccion]);
             $id_pago = $pdo->lastInsertId();
 
             // Preparar consultas para los detalles físicos
-            $sqlDet = "INSERT INTO detalles_pagos (fecha, monto, monto_dolar, tipo_pago, pago_id) 
-                       VALUES (:fecha, :monto, :md, :tipo, :pago_id)";
+            $sqlDet = "INSERT INTO detalles_pagos (fecha, monto, tipo_pago, pago_id) 
+                       VALUES (:fecha, :monto, :tipo, :pago_id)";
             $stmtDet = $pdo->prepare($sqlDet);
 
             $sqlBanco = "INSERT INTO ingresos_bancarios (referencia, imagen, detalle_pago_id, banco_id) 
@@ -484,7 +481,6 @@ class Pagos extends Conexion
                 $stmtDet->execute([
                     ':fecha' => $det['fecha_pago'],
                     ':monto' => $det['monto'],
-                    ':md'    => $det['monto_dolar'] ?? 0,
                     ':tipo'  => $det['tipo_pago'],
                     ':pago_id' => $id_pago
                 ]);
@@ -596,12 +592,14 @@ class Pagos extends Conexion
         try {
             $pdo->beginTransaction();
 
+            $tasa_transaccion = $this->tasa_dolar ?? 1;
             // Actualizar Cabecera
-            $sqlHead = "UPDATE pagos SET estado = :estado, observacion = :obs WHERE id_pago = :id";
+            $sqlHead = "UPDATE pagos SET estado = :estado, observacion = :obs, tasa_dolar = :tasa WHERE id_pago = :id";
             $stmtHead = $pdo->prepare($sqlHead);
             $stmtHead->execute([
                 ':estado' => $this->estado,
                 ':obs'    => $this->observacion,
+                ':tasa'   => $tasa_transaccion,
                 ':id'     => $this->id_pago
             ]);
 
@@ -627,7 +625,7 @@ class Pagos extends Conexion
             $pdo->prepare("DELETE FROM detalles_pagos WHERE pago_id = ?")->execute([$this->id_pago]);
 
             // Insertar nuevos detalles
-            $sqlDet = "INSERT INTO detalles_pagos (fecha, monto, monto_dolar, tipo_pago, pago_id) VALUES (:fecha, :monto, :md, :tipo, :pago_id)";
+            $sqlDet = "INSERT INTO detalles_pagos (fecha, monto, tipo_pago, pago_id) VALUES (:fecha, :monto, :tipo, :pago_id)";
             $stmtDet = $pdo->prepare($sqlDet);
 
             $sqlBanco = "INSERT INTO ingresos_bancarios (referencia, imagen, detalle_pago_id, banco_id) VALUES (:ref, :img, :det_id, :banco)";
@@ -639,7 +637,6 @@ class Pagos extends Conexion
                 $stmtDet->execute([
                     ':fecha' => $det['fecha_pago'],
                     ':monto' => $det['monto'],
-                    ':md'    => $det['monto_dolar'] ?? 0,
                     ':tipo'  => $det['tipo_pago'],
                     ':pago_id' => $this->id_pago
                 ]);
@@ -743,6 +740,132 @@ class Pagos extends Conexion
         } catch (PDOException $e) {
             error_log("Error en _eliminar_pago: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al anular: ' . $e->getMessage()];
+        }
+    }
+
+    // EXCLUSIVO PARA LA APP:
+    private function _consultar_por_mes_anio($params)
+    {
+        // params trae ['mes' => X, 'anio' => Y, 'correo' => Z (opcional)]
+        $condicionCorreo = "";
+        if (!empty($params['correo'])) {
+            $condicionCorreo = " AND EXISTS (
+                SELECT 1 FROM pagos_mensualidad pm2
+                JOIN mensualidad m2 ON pm2.mensualidad_id = m2.id_mensualidad
+                JOIN apartamentos a2 ON m2.apartamento_id = a2.id_apartamento
+                JOIN habitantes_apartamentos ha2 ON a2.id_apartamento = ha2.apartamento_id
+                JOIN habitantes h2 ON ha2.habitante_id = h2.id_habitante
+                WHERE pm2.pago_id = p.id_pago AND h2.correo = :correo
+            )";
+        }
+
+        $sql = "SELECT 
+                    p.id_pago, p.estado,
+                    MAX(dp.fecha) AS ultima_fecha,
+                    SUM(dp.monto) AS monto_total,
+                    (SELECT tipo_pago FROM detalles_pagos WHERE pago_id = p.id_pago ORDER BY fecha DESC LIMIT 1) AS tipo_pago_predominante,
+                    CASE WHEN COUNT(DISTINCT a.nro_apartamento) = 1 THEN MAX(a.nro_apartamento) ELSE 'Varios' END AS apartamento
+                FROM pagos p
+                JOIN detalles_pagos dp ON p.id_pago = dp.pago_id
+                LEFT JOIN pagos_mensualidad pm ON dp.id_detalle_pago = pm.pago_id
+                LEFT JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
+                LEFT JOIN apartamentos a ON m.apartamento_id = a.id_apartamento
+                WHERE p.activo = 1 
+                  AND MONTH(dp.fecha) = :mes 
+                  AND YEAR(dp.fecha) = :anio
+                  $condicionCorreo
+                GROUP BY p.id_pago
+                ORDER BY ultima_fecha DESC";
+
+        try {
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+            $ejecucion = [':mes' => $params['mes'], ':anio' => $params['anio']];
+            if (!empty($params['correo'])) $ejecucion[':correo'] = $params['correo'];
+            
+            $stmt->execute($ejecucion);
+            return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
+        } catch (PDOException $e) {
+            error_log("Error en _consultar_por_mes_anio: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al filtrar pagos'];
+        }
+    }
+
+    private function _obtener_periodos_activos()
+    {
+        // Agrupamos para obtener solo combinaciones únicas, ordenadas del más reciente al más antiguo
+        $sql = "SELECT DISTINCT MONTH(dp.fecha) AS mes, YEAR(dp.fecha) AS anio
+                FROM detalles_pagos dp
+                INNER JOIN pagos p ON dp.pago_id = p.id_pago
+                WHERE p.activo = 1
+                ORDER BY anio DESC, mes DESC";
+        try {
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+            $stmt->execute();
+            $datos = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            return ['estatus' => true, 'datos' => $datos];
+        } catch (\PDOException $e) {
+            error_log("Error en _obtener_periodos_activos (Gastos): " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al consultar períodos'];
+        }
+    }
+
+    // EXCLUSIVO PARA LA APP:
+    private function _consultar_estado_cuenta()
+    {
+        $sql = "SELECT 
+                    vw.id_mensualidad,
+                    vw.monto_cuota AS monto_original,
+                    vw.mes,
+                    vw.anio,
+                    CONCAT('Mensualidad ', vw.mes, '/', vw.anio) as concepto,
+                    vw.deuda_pendiente AS pendiente
+                FROM vw_estado_cuentas_mensualidad vw
+                INNER JOIN mensualidad m ON vw.id_mensualidad = m.id_mensualidad
+                INNER JOIN apartamentos a ON m.apartamento_id = a.id_apartamento
+                INNER JOIN habitantes_apartamentos ha ON a.id_apartamento = ha.apartamento_id
+                INNER JOIN habitantes h ON ha.habitante_id = h.id_habitante
+                WHERE h.correo = :correo 
+                  AND vw.estado_pago = 'Pendiente'
+                ORDER BY vw.anio ASC, vw.mes ASC";
+                
+        try {
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+            $stmt->execute([':correo' => $this->correo]);
+            $datos = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            return ['estatus' => true, 'datos' => $datos];
+        } catch (\PDOException $e) {
+            error_log("Error en _consultar_estado_cuenta: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al calcular el estado de cuenta.'];
+        }
+    }
+
+    // EXCLUSIVO PARA LA APP
+    private function _cambiar_estado_pago()
+    {
+        if (empty($this->id_pago) || empty($this->estado)) {
+            return ['estatus' => false, 'mensaje' => 'Faltan datos obligatorios (ID o Estado).'];
+        }
+
+        $sql = "UPDATE pagos 
+                SET estado = :estado, 
+                    observacion = :observacion 
+                WHERE id_pago = :id_pago AND activo = 1";
+
+        try {
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+            $stmt->execute([
+                ':estado'      => $this->estado, // 'PROCESADO' o 'RECHAZADO'
+                ':observacion' => $this->observacion ?? 'Estado actualizado desde la App Móvil',
+                ':id_pago'     => $this->id_pago
+            ]);
+
+            return [
+                'estatus' => true, 
+                'mensaje' => "El pago ha sido marcado como " . strtolower($this->estado) . " con éxito."
+            ];
+        } catch (\PDOException $e) {
+            error_log("Error en _cambiar_estado_pago: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error interno al actualizar el estado del pago.'];
         }
     }
 

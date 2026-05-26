@@ -74,7 +74,10 @@ class Usuario extends Conexion
             'cambiar_contrasenia' => ['id_usuario', 'contra'],
             'entrar' => ['correo', 'contra'],
             'recuperar_contrasenia' => ['correo'],
-            'guardar_contrasenia' => ['contra']
+            'guardar_contrasenia' => ['contra'],
+            'registrar_token' => ['id_usuario', 'token', 'token_tipo', 'token_expiracion'],
+            'obtener_token'   => ['id_usuario', 'token_tipo'],
+            'eliminar_token'  => ['id_usuario', 'token_tipo']
         ];
 
 
@@ -500,4 +503,36 @@ class Usuario extends Conexion
             return ['estatus' => false, 'mensaje' => 'Error al eliminar token'];
         }
     }
+
+    // SE USA PARA VERIFICAR HASHES DE OTP (En Recuperacion.php)
+    private function _obtener_token()
+    {
+        if (empty($this->id_usuario) || empty($this->token_tipo)) {
+            return ['estatus' => false, 'mensaje' => 'Datos incompletos para buscar token'];
+        }
+
+        // Buscamos el token más reciente que aún no haya superado su fecha de expiración
+        $sql = "SELECT token, fecha_expiracion 
+                FROM tokens_seguridad 
+                WHERE usuario_id = :uid 
+                AND tipo = :tipo 
+                AND fecha_expiracion > NOW()
+                ORDER BY fecha_expiracion DESC LIMIT 1";
+
+        try {
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
+            $stmt->execute([
+                ':uid' => $this->id_usuario, 
+                ':tipo' => $this->token_tipo
+            ]);
+            $datos = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$datos) return ['estatus' => false, 'mensaje' => 'No hay códigos válidos o han expirado'];
+            return ['estatus' => true, 'datos' => $datos];
+        } catch (PDOException $e) {
+            error_log("Error en _obtener_token: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al obtener el código de seguridad'];
+        }
+    }
+    
 }

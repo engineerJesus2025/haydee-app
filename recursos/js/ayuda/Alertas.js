@@ -1,14 +1,7 @@
-/**
- * Alertas.js
- * Propósito: Centralizar el uso de notificaciones (SweetAlert2).
- */
 const Alertas = {
     /**
      * Muestra una alerta en pantalla.
-     * @param {string} tipo - 'success', 'error', 'warning', 'info'
-     * @param {string} titulo - Título de la alerta
-     * @param {string} mensaje - Texto detallado
-     * @param {number} tiempo - Tiempo en milisegundos antes de cerrarse
+     * tipo - 'success', 'error', 'warning', 'info'
      */
     mostrar(tipo, titulo, mensaje, tiempo = 4000) {
         if (typeof Swal === 'undefined') {

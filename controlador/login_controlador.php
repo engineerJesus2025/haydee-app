@@ -8,6 +8,8 @@ use haydee\servicios\Sesiones;
 use haydee\servicios\Autenticacion;
 use haydee\servicios\Recuperacion;
 
+use haydee\servicios\ServicioCifradoWeb;
+
 Sesiones::verificarAccesoRed();
 Sesiones::validarMetodoHTTP(['GET', 'POST']);
 

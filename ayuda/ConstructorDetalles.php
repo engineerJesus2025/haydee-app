@@ -86,7 +86,7 @@ class ConstructorDetalles
     public static function ConstruirDetallesGastos($post, $files, $esEdicion = false)
     {
         $config = [
-            'campos' => ['fecha_detalle', 'monto', 'metodo_pago', 'descripcion_detalle_gasto'],
+            'campos' => ['fecha_detalle', 'monto', 'metodo_pago'],
             'bancarios' => ['banco_id', 'referencia'],
             'imagenes' => 'imagen',
             'metodo_pago_campo' => 'metodo_pago',
@@ -105,7 +105,7 @@ class ConstructorDetalles
     {
         // Configuración específica para pagos
         $config = [
-            'campos' => ['fecha_pago', 'monto', 'monto_dolar', 'tipo_pago', 'referencia'],
+            'campos' => ['fecha_pago', 'monto', 'tipo_pago'], 
             'bancarios' => ['banco_id', 'referencia'],
             'imagenes' => 'imagen',
             'metodo_pago_campo' => 'tipo_pago',

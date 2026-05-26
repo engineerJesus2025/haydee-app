@@ -12,29 +12,28 @@ use haydee\ayuda\Validador;
 use haydee\ayuda\ValidadorBD;
 use haydee\servicios\GestorAuditoria;
 
-// Proteccion basica
 Sesiones::autorizarAcceso();
 
-// Obtener lista de roles para la vista (recordar borrar)
 $rol_obj = new Rol();
 $roles = $rol_obj->realizar_consulta('consultar_roles');
+
+$idUsuarioSesion = $_SESSION["id_usuario"];
 
 if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
     
-    // Obtenemos las reglas
+    // FORZAMOS el ID del usuario en $_POST antes de validar y procesar.
+    // Con esto destruimos cualquier intento de manipulación o inyección desde el HTML.
+    $_POST['id_usuario'] = $idUsuarioSesion;
+
+    // Obtenemos las reglas centralizadas dictadas por el modelo
     $reglas = Usuario::obtenerReglas($operacion);
-    
-    if (!isset($_POST['id_usuario'])) {
-        $_POST['id_usuario'] = $_SESSION['id_usuario'] ?? null;
-    }
 
     if (!empty($reglas)) {
         $validador = new Validador();
         
-        // Ignoramos el ID del usuario en sesion para que pueda conservar su propio correo
-        $contexto = ['exclude_id' => $_SESSION['id_usuario']];
+        $contexto = ['exclude_id' => $idUsuarioSesion];
 
         $validador->validarConjunto($_POST, $reglas, $contexto);
 
@@ -46,11 +45,9 @@ if (isset($_POST["operacion"])) {
         }
     }
 
-    // Instancia del modelo Usuario
     $usuario = new Usuario();
 
-    // Asignacion masiva (El ID siempre es el de sesion para perfil)
-    $usuario->set_id_usuario($_POST['id_usuario']); 
+    $usuario->set_id_usuario($idUsuarioSesion); 
     $usuario->set_apellido($_POST['apellido'] ?? null);
     $usuario->set_nombre($_POST['nombre'] ?? null);
     $usuario->set_correo($_POST['correo'] ?? null);
@@ -58,10 +55,9 @@ if (isset($_POST["operacion"])) {
 
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
 
-    // Instanciamos el auditor
     $auditor = new GestorAuditoria($usuario, Modulo::GESTIONAR_USUARIOS);
 
-    try{
+    try {
         switch ($operacion) {
             case 'consultar_perfil_usuario':
                 $respuesta = $usuario->realizar_consulta('consultar_perfil_usuario');
@@ -70,33 +66,29 @@ if (isset($_POST["operacion"])) {
 
             case 'consultar_mis_notificaciones':
                 $notificaciones = new Notificaciones();
-                $notificaciones->set_usuario_id($_SESSION["id_usuario"]);
+                $notificaciones->set_usuario_id($idUsuarioSesion);
 
                 $respuesta = $notificaciones->realizar_consulta('consultar_mis_notificaciones');
                 http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 break;
 
             case 'modificar_perfil':
-                // Obtener datos anteriores
                 $auditor->capturarDatosAnteriores('consultar_usuario');
 
                 $respuesta = $usuario->realizar_consulta('modificar_perfil');
 
                 http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) { 
+                    // Si el cambio en la BD tuvo éxito, actualizamos los datos de la sesión web en caliente
                     $_SESSION["nombre_completo"] = $usuario->get_nombre() . " " . $usuario->get_apellido();
-                    $auditor->registrarAuditoria(Accion::MODIFICAR); 
+                    $usuario->set_contra(null); // Limpieza por seguridad antes de auditar
+                    $auditor->registrarAuditoria(Accion::MODIFICAR);
                 }
                 break;
 
             case 'cambiar_contrasenia':
                 $respuesta = $usuario->realizar_consulta('cambiar_contrasenia');
-
                 http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) {
-                    // Solo registramos la acción, sin datos sensibles
-                    // Bitacora::registrar(Accion::MODIFICAR, Modulo::GESTIONAR_USUARIOS, null, null, null);
-                }
                 break;
 
             default:
@@ -109,17 +101,10 @@ if (isset($_POST["operacion"])) {
         $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
     } finally {
         if ($respuesta !== null) {
-            // Cerrar conexiones explicitamente
-            if (isset($usuario)) {
-                $usuario->cerrar('seguridad');
-            }
-            if (isset($rol_obj)) {
-                $rol_obj->cerrar('seguridad');
-            }
-            if (isset($notificaciones)) {
-                $notificaciones->cerrar('seguridad');
-            }
-            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexion de seguridad
+            if (isset($usuario)) { $usuario->cerrar('seguridad'); }
+            if (isset($rol_obj)) { $rol_obj->cerrar('seguridad'); }
+            if (isset($notificaciones)) { $notificaciones->cerrar('seguridad'); }
+            Bitacora::cerrarConexionBitacora();
 
             echo json_encode($respuesta);
             exit;
@@ -127,7 +112,7 @@ if (isset($_POST["operacion"])) {
     }
 }
 
-// Validaciones AJAX
+// VALIDACIONES AJAX
 if (isset($_POST["validar"])) {
     header('Content-Type: application/json');
     $validar = $_POST["validar"];
@@ -139,17 +124,13 @@ if (isset($_POST["validar"])) {
         switch ($validar) {
             case 'correo':
                 $correo = $_POST["correo"] ?? '';
-                $id = !empty($_SESSION["id_usuario"]) ? $_SESSION["id_usuario"] : null;
-                
-                // Si NO es único, significa que YA EXISTE
-                $existe = !$validadorBD->esUnico('usuarios', 'correo', $correo, 'id_usuario', $id);
+                $existe = !$validadorBD->esUnico('usuarios', 'correo', $correo, 'id_usuario', $idUsuarioSesion);
                 $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'El correo ya está en uso' : 'Disponible'];
                 break;
 
             case 'contrasenia_actual':
-                // Esta lógica de negocio pura sí la dejamos delegada al modelo
                 $usuario = new Usuario();
-                $usuario->set_id_usuario($_SESSION['id_usuario']);
+                $usuario->set_id_usuario($idUsuarioSesion);
                 $datosUsuario = $usuario->realizar_consulta('consultar_usuario');
                 $contraIngresada = $_POST['contra'] ?? '';
                 
@@ -157,7 +138,7 @@ if (isset($_POST["validar"])) {
                 if ($datosUsuario['estatus'] && isset($datosUsuario['datos']['contrasenia'])) {
                     $coincide = password_verify($contraIngresada, $datosUsuario['datos']['contrasenia']);
                 }
-                echo json_encode($coincide); // Tu JS espera un booleano directo aquí
+                echo json_encode($coincide);
                 exit;
 
             case 'validar_clave_foranea':
@@ -198,13 +179,12 @@ if (isset($_POST["validar"])) {
     exit;
 }
 
-// Carga de vistas segun acción
+// CARGA DE VISTAS
 if ($accion == "perfil") {
     $usuario = new Usuario();
-    $usuario->set_id_usuario($_SESSION["id_usuario"]);
+    $usuario->set_id_usuario($idUsuarioSesion);
     $usuarioData = $usuario->realizar_consulta('consultar_usuario');
     $usuario = $usuarioData['estatus'] ? $usuarioData['datos'] : [];
     $placeholder_buscar = "Buscar notificación...";
     require_once "vista/usuarios/usuario_perfil.php";
 }
-

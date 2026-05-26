@@ -1,16 +1,8 @@
-/**
- * Peticiones.js
- * Propósito: Manejar la comunicación asíncrona (AJAX/Fetch) con el servidor.
- */
 const Peticiones = {
     /**
      * Envía datos al servidor mediante POST.
-     * @param {string} url - Ruta del servidor (vacío = misma página)
-     * @param {FormData|Object} datos - La información a enviar
-     * @param {boolean} mostrarCarga - Si debe mostrar el modal del spinner
-     * @returns {Promise<Object>} - Respuesta del servidor en JSON
      */
-    async enviar(datos, url = "", mostrarCarga = true) {
+    async enviar(datos, url = "", mostrarCarga = true, encriptar = false) {
         let modalCarga = null;
         let tiempoCarga;
         let modalVisible = false;
@@ -29,10 +21,17 @@ const Peticiones = {
         try {
             const tiempoInicio = performance.now();
 
-            const respuesta = await fetch(url, {
-                method: "POST",
-                body: datos
-            });
+            let fetchOptions = {
+                method: "POST"
+            };
+
+            if (datos instanceof FormData) {
+                fetchOptions.body = datos;
+            }
+
+            // Realizar la petición con las opciones preparadas
+            const respuesta = await fetch(url, fetchOptions);
+
             // Revisamos qué tipo de contenido nos devolvió el servidor
             const contentType = respuesta.headers.get("content-type");
             let json = null;
@@ -50,7 +49,6 @@ const Peticiones = {
                 if (tiempoCarga) clearTimeout(tiempoCarga);
                 if (modalVisible && modalCarga) modalCarga.hide();
 
-                // Usamos la nueva función de Alertas.js
                 Alertas.mostrarConAccion(
                     'warning', 
                     'Sesión Expirada', 
@@ -79,7 +77,7 @@ const Peticiones = {
             if (window.estaSaliendoDeLaPagina) {
                 return {
                     estatus: false,
-                    silencioso: true // Flag opcional por si tu Validador necesita saberlo
+                    silencioso: true // por si Validador necesita saberlo
                 };
             }
             console.error("Error en Peticiones.enviar:", error);

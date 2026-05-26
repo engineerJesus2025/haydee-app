@@ -152,7 +152,7 @@ CREATE DEFINER=`app_condominio`@`localhost` PROCEDURE `sp_registrar_reposicion_c
     );
     SET v_gasto_id = LAST_INSERT_ID(); 
 
-    INSERT INTO detalles_gastos (fecha, monto, monto_dolar, metodo_pago, gasto_id, descripcion_detalle_gasto)
+    INSERT INTO detalles_gastos (fecha, monto, tasa_dolar, metodo_pago, gasto_id, descripcion_detalle_gasto)
     VALUES (CURDATE(), p_monto_reposicion, 0.00, 'Efectivo', v_gasto_id, CONCAT('Detalle de reposición por monto de: ', p_monto_reposicion));
 
     OPEN cur_movimientos;

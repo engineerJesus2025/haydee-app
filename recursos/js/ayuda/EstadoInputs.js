@@ -8,15 +8,13 @@ const EstadoInputs = {
         input.classList.remove('is-valid');
         input.classList.add('is-invalid');
         
-        // MAGIA AQUÍ: Busca el contenedor padre, ya sea el clásico de Bootstrap o el nuevo del Login
         const contenedor = input.closest('.input-group, .mi-input-group') || input.parentElement;
         
-        // Ahora buscamos el feedback dentro de ese contenedor general
         const feedback = contenedor.querySelector('.invalid-feedback');
         if (feedback) {
             feedback.textContent = mensaje;
             
-            // Lógica para colorear el ícono del ojo si existe
+            // colorear el ícono del ojo si existe (para contraseñas)
             const iconoOjo = contenedor.querySelector('.contra-btn i');
             if (iconoOjo) {
                 iconoOjo.classList.remove('text-success');

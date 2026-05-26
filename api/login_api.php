@@ -3,85 +3,106 @@ use haydee\enums\HttpCodigo;
 use haydee\servicios\Autenticacion;
 use haydee\servicios\Criptografia;
 use haydee\modelo\SeguridadIP;
+use haydee\ayuda\Validador;
+use haydee\modelo\Usuario;
 
+$metodoHttp = $_SERVER['REQUEST_METHOD'];
+
+if ($metodoHttp !== 'POST') {
+    http_response_code(HttpCodigo::METODO_NO_PERMITIDO->value);
+    echo json_encode(['estatus' => false, 'mensaje' => 'Método HTTP no soportado. Use POST.']);
+    exit;
+}
+
+$datosPeticion = $_POST;
+
+// Mapeamos 'correo' a 'usuario' para que coincida con las reglas del modelo web
+if (isset($datosPeticion['correo'])) {
+    $datosPeticion['usuario'] = $datosPeticion['correo'];
+}
+$operacion = $datosPeticion['operacion'] ?? 'entrar';
+
+$reglas = Usuario::obtenerReglas($operacion);
+if (!empty($reglas)) {
+    $validador = new Validador();
+    // Usamos skip_unique porque en el login no queremos validar si el correo ya existe en BD para rebotarlo
+    $validador->validarConjunto($datosPeticion, $reglas, ['skip_unique' => true]);
+
+    if ($validador->tieneErrores()) {
+        http_response_code(HttpCodigo::BAD_REQUEST->value);
+        echo json_encode([
+            'estatus' => false, 
+            'errores' => $validador->obtenerErrores(),
+            'mensaje' => 'Formato de credenciales inválido.'
+        ]);
+        exit;
+    }
+}
+
+$correo = $datosPeticion['correo'] ?? '';
+$contra = $datosPeticion['contra'] ?? '';
+
+// Rate Limit
+$seguridadIP = new SeguridadIP();
+$seguridadIP->set_ip($_SERVER['REMOTE_ADDR']);
+
+$rateLimit = $seguridadIP->verificarRateLimit();
+if (!$rateLimit['estatus']) {
+    $seguridadIP->registrarFallo(); // Castigar insistencia
+    http_response_code($rateLimit['codigo_http']);
+    echo json_encode(['estatus' => false, 'mensaje' => $rateLimit['mensaje']]);
+    exit;
+}
+
+// PROCESO DE AUTENTICACIÓN
 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
+$auth = new Autenticacion();
 
 try {
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Forzamos la generación y guardado del Token en tokens_seguridad
+    $resultado = $auth->login($correo, $contra, true, true);
+    
+    if ($resultado['estatus']) {
+        $seguridadIP->limpiarFallo(); 
+
+        // Filtramos los permisos exclusivamente para los módulos móviles
+        $modulosApp = ['GESTIONAR_PAGOS', 'GESTIONAR_GASTOS', 'GESTIONAR_MENSUALIDAD', 'GESTIONAR_CARTELERA_VIRTUAL'];
+        $permisosFiltrados = array_values(array_filter($resultado['datos']['permisos'], function($p) use ($modulosApp) {
+            return in_array($p['modulo'], $modulosApp);
+        }));
+
+        $respuesta = [
+            'estatus' => true,
+            'mensaje' => 'Inicio de sesión exitoso',
+            'datos' => [
+                'id_usuario' => $resultado['datos']['id_usuario'] ?? '',
+                'usuario'    => $resultado['datos']['nombre_completo'] ?? '',
+                'rol'        => $resultado['datos']['rol'] ?? '',
+                'correo'     => $resultado['datos']['correo'] ?? '',
+                'permisos'   => $permisosFiltrados
+            ],
+            'token_jwt'     => $resultado['token_jwt'],
+            'refresh_token' => $resultado['token']
+        ];
+
+        // Vinculación del túnel criptográfico
+        if (isset($_POST['_temp_disp']) && isset($_POST['_temp_aes'])) {
+            Criptografia::vincularDispositivoUsuario($_POST['_temp_disp'], $resultado['datos']['id_usuario'], $_POST['_temp_aes']);
+        }
         
-        // React Native (Axios) suele enviar los datos en formato JSON crudo
-        // Intentamos leer JSON primero, y si no, caemos en el $_POST tradicional
-        $inputJSON = file_get_contents('php://input');
-        $datosJSON = json_decode($inputJSON, true);
-        
-        $correo = $datosJSON['correo'] ?? $_POST['correo'] ?? '';
-        $contra = $datosJSON['contra'] ?? $_POST['contra'] ?? '';
-
-        if (empty($correo) || empty($contra)) {
-            http_response_code(HttpCodigo::BAD_REQUEST->value);
-            echo json_encode(['estatus' => false, 'mensaje' => 'El correo y la contraseña son obligatorios.']);
-            return;
-        }
-
-        // ANTI-FUERZA BRUTA (Rate Limit)
-        $seguridadIP = new SeguridadIP();
-        $seguridadIP->set_ip($_SERVER['REMOTE_ADDR']);
-
-        $rateLimit = $seguridadIP->verificarRateLimit();
-        if (!$rateLimit['estatus']) {
-            $seguridadIP->registrarFallo(); // Castigar insistencia
-            http_response_code($rateLimit['codigo_http']);
-            echo json_encode(['estatus' => false, 'mensaje' => $rateLimit['mensaje']]);
-            return;
-        }
-
-        $auth = new Autenticacion();
-        try {
-            // El tercer parámetro 'true' fuerza la generación y guardado del Token en tokens_seguridad
-            $resultado = $auth->login($correo, $contra, true, true);
-            
-            if ($resultado['estatus']) {
-                $seguridadIP->limpiarFallo(); // Limpiamos IP
-
-                http_response_code(HttpCodigo::OK->value);
-                $respuesta = [
-                    'estatus' => true,
-                    'mensaje' => 'Inicio de sesion returnoso',
-                    'datos' => [
-                        'id_usuario' => $resultado['datos']['id_usuario'] ?? '',
-                        'usuario' => $resultado['datos']['nombre_completo'] ?? '',
-                        'rol' => $resultado['datos']['rol'] ?? '',
-                        'correo' => $resultado['datos']['correo'] ?? ''
-                    ],
-                    'token_jwt' => $resultado['token_jwt'],
-                    'refresh_token' => $resultado['token']
-                ];
-
-                if (isset($_POST['_temp_disp']) && isset($_POST['_temp_aes'])) {
-                    Criptografia::vincularDispositivoUsuario($_POST['_temp_disp'], $resultado['datos']['id_usuario'], $_POST['_temp_aes']);
-                }
-            } else {
-                $seguridadIP->registrarFallo(); // Castigamos a la IP
-
-                // Credenciales incorrectas, usuario inactivo, etc.
-                $codigoError = $resultado['codigo_http'] ?? HttpCodigo::BAD_REQUEST->value;
-                http_response_code($codigoError);
-
-                $respuesta = ['estatus' => false, 'mensaje' => $resultado['mensaje'] ?? 'Credenciales incorrectas.'];
-            }
-        } finally {
-            $auth->cerrar();
-        }
+        http_response_code(HttpCodigo::OK->value);
 
     } else {
-        http_response_code(HttpCodigo::METODO_NO_PERMITIDO->value);
-        $respuesta = ['estatus' => false, 'mensaje' => 'metodo HTTP no soportado. Use POST.'];
+        $seguridadIP->registrarFallo(); 
+        http_response_code($resultado['codigo_http'] ?? HttpCodigo::NO_AUTORIZADO->value);
+        $respuesta = ['estatus' => false, 'mensaje' => $resultado['mensaje'] ?? 'Credenciales incorrectas.'];
     }
-
 } catch (Exception $e) {
     error_log("Error en API Login: " . $e->getMessage());
     http_response_code(HttpCodigo::ERROR_INTERNO->value);
     $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
+} finally {
+    $auth->cerrar();
 }
 
 echo json_encode($respuesta);

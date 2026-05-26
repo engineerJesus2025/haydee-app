@@ -130,7 +130,7 @@ class pagosEliminarTest extends TestCase
         $tasaField->clear();
         $tasaField->sendKeys($TASA_A_REGISTRAR);
 
-        $dolarField = $this->driver->findElement(WebDriverBy::className('monto_dolar'));
+        $dolarField = $this->driver->findElement(WebDriverBy::className('tasa_dolar'));
         $dolarField->clear();
         $dolarField->sendKeys($DOLAR_A_REGISTRAR);
         

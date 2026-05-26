@@ -51,7 +51,6 @@
                         <h2 id="titulo_pagina" class="fw-bold">MANTENIMIENTO</h2>
                     </div>
                     <hr class="vp-border-color mb-4">
-
                     <div class="row g-4">
                         <!-- TARJETA DE EXPORTACIÓN -->
                         <div class="col-12">

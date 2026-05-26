@@ -207,8 +207,6 @@ switch ($accion) {
         $reportesServicio->set_anio_limite($limite[1] ?? '');
         $res = $reportesServicio->realizar_consulta('cuadro_pagos');
 
-        if (!$res['estatus']) die('Error en datos');
-
         $mensualidadModel->set_mes($limite[0]);
         $mensualidadModel->set_anio($limite[1]);
         $tasa = $mensualidadModel->realizar_consulta('consultar_tasa_dolar_mensualidades');

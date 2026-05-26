@@ -24,9 +24,7 @@ if (isset($_POST["operacion"])) {
 
     Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_GASTOS, $operacion);
 
-    // =========================================================
-    // 1. VALIDACION DE LA CABECERA
-    // =========================================================
+    // VALIDACION DE LA CABECERA
     $reglasCabecera = Gastos::obtenerReglas($operacion);
 
     if (!empty($reglasCabecera)) {
@@ -41,9 +39,7 @@ if (isset($_POST["operacion"])) {
         }
     }
 
-    // =========================================================
-    // 2. CONSTRUCCIÓN Y VALIDACION DE DETALLES (Renglones)
-    // =========================================================
+    // CONSTRUCCIÓN Y VALIDACION DE DETALLES (Renglones)
     if ($operacion === 'registrar_gasto' || $operacion === 'modificar_gasto') {
         $esModificacion = ($operacion === 'modificar_gasto');
         
@@ -97,6 +93,7 @@ if (isset($_POST["operacion"])) {
     $gastos->set_id_gasto($_POST['id_gasto'] ?? null);
     $gastos->set_clasificacion($_POST['clasificacion'] ?? null);
     $gastos->set_descripcion_gasto($_POST['descripcion_gasto'] ?? null);
+    $gastos->set_tasa_dolar($_POST['tasa_dolar'] ?? null);
     $gastos->set_solicitud_id($_POST['solicitud'] ?? null);
     $gastos->set_tipo_gasto_id($_POST['tipo_gasto_id'] ?? null);
     $gastos->set_proveedor_id($_POST['proveedor_id'] ?? null);
@@ -111,9 +108,7 @@ if (isset($_POST["operacion"])) {
 
     try {
         switch ($operacion) {
-            // =========================================================
             // CONSULTAS
-            // =========================================================
             case 'consulta':
                 $respuesta = $gastos->realizar_consulta('consultar');
 

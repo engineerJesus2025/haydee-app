@@ -151,16 +151,6 @@
                                                 <span class="w-100 invalid-feedback"></span>
                                             </div>
                                         </div>
-                                        <div class="col-12">
-                                            <label for="descripcion_detalle_gasto" class="form-label fw-semibold">Descripción del
-                                                Detalle <span class="text-danger">*</span></label>
-                                            <div class="input-group has-validation">
-                                                <span class="input-group-text"><i class="bi bi-card-text"></i></span>
-                                                <textarea name="descripcion_detalle_gasto[]" class="form-control  descripcion_detalle_gasto" rows="3"
-                                                    placeholder="Describa el detalle específico del pago..." minlength="10" required></textarea>
-                                                <span class="w-100 invalid-feedback"></span>
-                                            </div>
-                                        </div>
                                         <div class="col-12 grupo_imagen d-none">
                                             <label for="imagen" class="form-label fw-semibold">Comprobante (Imagen) <span class="text-danger">*</span></label>
                                             <div class="input-group has-validation">
@@ -264,16 +254,6 @@
                                 <option value="<?= $banco["id_banco"] ?>"><?= $banco["nombre_banco"] ?></option>
                             <?php endforeach; ?>
                         </select>
-                        <span class="w-100 invalid-feedback"></span>
-                    </div>
-                </div>
-
-                <div class="col-12">
-                    <label class="form-label fw-semibold" for="descripcion_detalle_gasto">Descripción del Detalle <span class="text-danger">*</span></label>
-                    <div class="input-group has-validation">
-                        <span class="input-group-text"><i class="bi bi-card-text"></i></span>
-                        <textarea name="descripcion_detalle_gasto[]" class="form-control  descripcion_detalle_gasto" rows="3"
-                            placeholder="Describa el detalle específico del pago..." required></textarea>
                         <span class="w-100 invalid-feedback"></span>
                     </div>
                 </div>

@@ -102,15 +102,30 @@ $subtitulo_header = $info_header['subtitulo'];
             <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2 rounded-3 drop-body-bg">
                 <li>
                     <a class="dropdown-item py-2 d-flex align-items-center <?php echo (isset($modulo) && $modulo == 'perfil') ? 'active' : '' ?>" href="?pagina=perfil&accion=perfil" title="Ir a Mi Perfil" data-tooltip="true">
-                        <i class="bi bi-person me-2 fs-5"></i> Mi perfil
+                        <i class="bi bi-person me-2 fs-5 icono_menu_usuario" style="color: #2563EB;"></i> Mi perfil
                     </a>
                 </li>
                 <li>
                     <a class="dropdown-item py-2 d-flex align-items-center <?php echo (isset($modulo) && $modulo == 'ayuda') ? 'active' : '' ?>" href="?pagina=ayuda&accion=inicio" title="Ir a Ayuda" data-tooltip="true">
-                        <i class="bi bi-question-circle me-2 fs-5"></i> Ayuda
+                        <i class="bi bi-question-circle me-2 fs-5 icono_menu_usuario" style="color: #059669;"></i> Ayuda
                     </a>
                 </li>
+                
                 <li><hr class="dropdown-divider my-1"></li>
+                
+                <li>
+                    <div class="dropdown-item py-2 d-flex align-items-center justify-content-between theme-switch-wrapper fila-switch-header" style="cursor: pointer;">
+                        <div class="d-flex align-items-center no-mouse">
+                            <i class="bi bi-moon me-2 fs-5 thumb-icon-global" style="color: #4F46E5;"></i> Tema
+                        </div>
+                        
+                        <div class="form-check form-switch m-0 d-flex align-items-center ps-0">
+                            <input class="form-check-input toggle-tema-global m-0 shadow-none float-none ms-2" type="checkbox" role="switch" id="checkbox_tema_header" style="cursor: pointer; width: 2.5em; height: 1.25em;" onclick="event.stopPropagation();">
+                        </div>
+                    </div>
+                </li>
+                <li><hr class="dropdown-divider my-1"></li>
+                
                 <li>
                     <a class="dropdown-item py-2 d-flex align-items-center text-danger hover-danger" href="?pagina=login&accion=cerrar" title="Cerrar Sesión" data-tooltip="true">
                         <i class="bi bi-box-arrow-right me-2 fs-5"></i> Salir

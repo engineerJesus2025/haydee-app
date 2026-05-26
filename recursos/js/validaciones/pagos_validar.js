@@ -71,7 +71,7 @@ document.addEventListener("DOMContentLoaded", function() {
         contenedor.addEventListener("keypress", function(e) {
             const target = e.target;
 
-            if (target.matches(".monto, .monto_dolar, .tasa_dolar")) {
+            if (target.matches(".monto, .tasa_dolar, .tasa_dolar")) {
                 Validador.bloquearTeclasInvalidas(e, Patrones.teclasMonto);
             }
             else if (target.classList.contains("referencia")) {
@@ -85,7 +85,7 @@ document.addEventListener("DOMContentLoaded", function() {
         contenedor.addEventListener("keyup", function(e) {
             const target = e.target;
 
-            if (target.matches(".monto, .monto_dolar, .tasa_dolar")) {
+            if (target.matches(".monto, .tasa_dolar, .tasa_dolar")) {
                 Validador.evaluarInput(target, Patrones.monto, "Formato inválido (Ej: 150.50)");
             }
             else if (target.classList.contains("referencia")) {

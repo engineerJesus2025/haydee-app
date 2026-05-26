@@ -131,13 +131,14 @@ class Reportes extends Conexion
             $stmt->execute();
             return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
         } catch (PDOException $e) {
+            error_log("Error en _listar_meses_con_gastos: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al listar meses con gastos'];
         }
     }
 
     private function _obtener_datos_reporte_mensual()
     {
-        $sql = "SELECT g.clasificacion, dg.descripcion_detalle_gasto as concepto, dg.monto
+        $sql = "SELECT g.clasificacion, g.descripcion_gasto as concepto, dg.monto
                 FROM detalles_gastos dg
                 INNER JOIN gastos g ON dg.gasto_id = g.id_gasto
                 WHERE g.activo = 1 AND YEAR(dg.fecha) = :anio AND MONTH(dg.fecha) = :mes";
@@ -146,6 +147,7 @@ class Reportes extends Conexion
             $stmt->execute([':anio' => $this->anio, ':mes' => $this->mes]);
             return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
         } catch (PDOException $e) {
+            error_log("Error en _obtener_datos_reporte_mensual: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al obtener datos del reporte mensual'];
         }
     }
@@ -160,7 +162,7 @@ class Reportes extends Conexion
         $fecha_fin = $this->fecha_fin ?? '';
 
         $condicionesEgresos = ["g.activo = 1"];
-        $condicionesIngresos = ["p.activo = 1"];
+        $condicionesIngresos = ["p.activo = 1", "p.estado = 'PROCESADO'"];
         $paramsEgresos = [];
         $paramsIngresos = [];
 
@@ -188,8 +190,23 @@ class Reportes extends Conexion
         $whereEgresos = !empty($condicionesEgresos) ? " WHERE " . implode(" AND ", $condicionesEgresos) : "";
         $whereIngresos = !empty($condicionesIngresos) ? " WHERE " . implode(" AND ", $condicionesIngresos) : "";
 
+
         $sqlEgresosDetalle = "SELECT 'Egreso' as balance, dg.fecha, dg.monto, dg.metodo_pago, g.descripcion_gasto as concepto, tg.nombre_tipo_gasto as tipo FROM detalles_gastos dg INNER JOIN gastos g ON dg.gasto_id = g.id_gasto LEFT JOIN tipo_gasto tg ON g.tipo_gasto_id = tg.id_tipo_gasto $whereEgresos";
-        $sqlIngresosDetalle = "SELECT 'Ingreso' as balance, dp.fecha, dp.monto, dp.tipo_pago as metodo_pago, CONCAT('Pago mes ', pm_per.mes, '/', pm_per.anio, ' - Apto ', a.nro_apartamento) as concepto, NULL as tipo FROM detalles_pagos dp INNER JOIN pagos_mensualidad pm_rel ON dp.id_detalle_pago = pm_rel.detalle_pago_id INNER JOIN mensualidad m ON pm_rel.mensualidad_id = m.id_mensualidad INNER JOIN periodos_mensualidad pm_per ON m.periodo_id = pm_per.id_periodo INNER JOIN apartamentos a ON m.apartamento_id = a.id_apartamento INNER JOIN pagos p ON dp.pago_id = p.id_pago $whereIngresos";
+        $sqlIngresosDetalle = "SELECT 'Ingreso' as balance, 
+                                      dp.fecha, 
+                                      dp.monto, 
+                                      dp.tipo_pago as metodo_pago, 
+                                      (SELECT CONCAT('Pago a Apto ', a.nro_apartamento, ' (', GROUP_CONCAT(CONCAT(pm_per.mes, '/', pm_per.anio) SEPARATOR ', '), ')')
+                                       FROM pagos_mensualidad pm_rel
+                                       INNER JOIN mensualidad m ON pm_rel.mensualidad_id = m.id_mensualidad
+                                       INNER JOIN periodos_mensualidad pm_per ON m.periodo_id = pm_per.id_periodo
+                                       INNER JOIN apartamentos a ON m.apartamento_id = a.id_apartamento
+                                       WHERE pm_rel.pago_id = p.id_pago
+                                       GROUP BY p.id_pago, a.nro_apartamento LIMIT 1) as concepto, 
+                                      NULL as tipo 
+                               FROM detalles_pagos dp 
+                               INNER JOIN pagos p ON dp.pago_id = p.id_pago 
+                               $whereIngresos";
 
         if ($balance === 'Ingresos') {
             $sqlGrafico = $sqlIngresosDetalle; $paramsGrafico = $paramsIngresos;
@@ -206,6 +223,7 @@ class Reportes extends Conexion
             $stmt->execute($paramsGrafico);
             $datosGrafico = $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
+            error_log("Error en _reporte_ingresos_egresos_completo: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al obtener datos del gráfico'];
         }
 
@@ -225,6 +243,7 @@ class Reportes extends Conexion
                 $stmt->execute($paramsEgresos);
                 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) $resultadosEstadisticas[] = $row;
             } catch (PDOException $e) {
+                error_log("Error en _reporte_ingresos_egresos_completo: " . $e->getMessage());
                 return ['estatus' => false, 'mensaje' => 'Error al obtener estadísticas de egresos'];
             }
         }
@@ -243,6 +262,7 @@ class Reportes extends Conexion
                 $stmt->execute($paramsIngresos);
                 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) $resultadosEstadisticas[] = $row;
             } catch (PDOException $e) {
+                error_log("Error en _reporte_ingresos_egresos_completo: " . $e->getMessage());
                 return ['estatus' => false, 'mensaje' => 'Error al obtener estadísticas de ingresos'];
             }
         }
@@ -256,28 +276,32 @@ class Reportes extends Conexion
 
     private function _consultar_personas_solvencia()
     {
+        // Un apartamento es solvente si la suma de todas sus mensualidades <= suma de todos sus abonos aprobados -_-
         $sql = "SELECT h.*, a.nro_apartamento 
                 FROM habitantes h
                 INNER JOIN habitantes_apartamentos ha ON h.id_habitante = ha.habitante_id
                 INNER JOIN apartamentos a ON ha.apartamento_id = a.id_apartamento
                 WHERE a.id_apartamento IN (
-                    SELECT apartamentos.id_apartamento 
-                    FROM mensualidad 
-                    INNER JOIN apartamentos ON mensualidad.apartamento_id = apartamentos.id_apartamento
-                    WHERE (SELECT SUM(mensualidad.monto) 
-                           FROM mensualidad 
-                           WHERE mensualidad.apartamento_id = apartamentos.id_apartamento) 
-                          <= (SELECT SUM(detalles_pagos.monto) 
-                              FROM detalles_pagos 
-                              INNER JOIN pagos_mensualidad ON pagos_mensualidad.detalle_pago_id = detalles_pagos.id_detalle_pago 
-                              INNER JOIN mensualidad ON mensualidad.id_mensualidad = pagos_mensualidad.mensualidad_id 
-                              WHERE mensualidad.apartamento_id = apartamentos.id_apartamento)
+                    SELECT m.apartamento_id
+                    FROM mensualidad m
+                    WHERE m.activo = 1
+                    GROUP BY m.apartamento_id
+                    HAVING SUM(m.monto) <= (
+                        SELECT COALESCE(SUM(pm.monto_abonado), 0)
+                        FROM pagos_mensualidad pm
+                        INNER JOIN mensualidad m2 ON pm.mensualidad_id = m2.id_mensualidad
+                        INNER JOIN pagos p ON pm.pago_id = p.id_pago
+                        WHERE m2.apartamento_id = m.apartamento_id 
+                          AND p.activo = 1 
+                          AND p.estado = 'PROCESADO'
+                    )
                 )";
         try {
             $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute();
             return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
         } catch (PDOException $e) {
+            error_log("Error en _consultar_personas_solvencia: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al consultar personas solventes'];
         }
     }
@@ -362,6 +386,7 @@ class Reportes extends Conexion
             $stmt->execute($params);
             return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
         } catch (PDOException $e) {
+            error_log("Error en _obtener_datos_habitantes: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al obtener datos de habitantes'];
         }
     }
@@ -377,19 +402,30 @@ class Reportes extends Conexion
         $efec = MetodoPago::EFECTIVO->value;
         $prop = TipoVinculo::PROPIETARIO->value;
 
+        // Se usa GROUP_CONCAT para los meses/años y subconsulta para el total del pago sin duplicar
         $sql = "SELECT 
-                    h.nombre, h.apellido, a.nro_apartamento,
-                    MAX(dp.fecha) as fecha_pago, pm_per.mes, pm_per.anio, p.id_pago,
-                    SUM(dp.monto) as total,
+                    h.nombre, h.apellido, a.nro_apartamento, p.id_pago,
+                    MAX(dp.fecha) as fecha_pago, 
+                    MAX(pm_per.mes) as mes, MAX(pm_per.anio) as anio,
+                    GROUP_CONCAT(DISTINCT CONCAT(pm_per.mes, '/', pm_per.anio) ORDER BY pm_per.anio, pm_per.mes SEPARATOR ', ') as periodos,
+                    (SELECT SUM(monto) FROM detalles_pagos WHERE pago_id = p.id_pago) as total,
                     COUNT(CASE WHEN dp.tipo_pago = '$trans' THEN 1 END) as count_transferencia,
                     COUNT(CASE WHEN dp.tipo_pago = '$pmov' THEN 1 END) as count_pago_movil,
                     COUNT(CASE WHEN dp.tipo_pago = '$efec' THEN 1 END) as count_efectivo,
                     GROUP_CONCAT(DISTINCT b.nombre_banco SEPARATOR ', ') as bancos,
                     GROUP_CONCAT(DISTINCT ib.referencia SEPARATOR ', ') as referencias
                 FROM pagos p
-                // ... (JOINs)
+                JOIN detalles_pagos dp ON p.id_pago = dp.pago_id
+                LEFT JOIN ingresos_bancarios ib ON dp.id_detalle_pago = ib.detalle_pago_id
+                LEFT JOIN bancos b ON ib.banco_id = b.id_banco
+                LEFT JOIN pagos_mensualidad pm_rel ON p.id_pago = pm_rel.pago_id
+                LEFT JOIN mensualidad m ON pm_rel.mensualidad_id = m.id_mensualidad
+                LEFT JOIN periodos_mensualidad pm_per ON m.periodo_id = pm_per.id_periodo
+                LEFT JOIN apartamentos a ON m.apartamento_id = a.id_apartamento
+                LEFT JOIN habitantes_apartamentos ha ON a.id_apartamento = ha.apartamento_id
+                LEFT JOIN habitantes h ON ha.habitante_id = h.id_habitante
                 WHERE p.id_pago = :id_pago AND ha.tipo_vinculo = :vinculo
-                GROUP BY p.id_pago, pm_per.mes, pm_per.anio, h.nombre, h.apellido, a.nro_apartamento";
+                GROUP BY p.id_pago, h.nombre, h.apellido, a.nro_apartamento";
         
         try {
             $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
@@ -400,26 +436,31 @@ class Reportes extends Conexion
             }
             return ['estatus' => true, 'datos' => $datos];
         } catch (PDOException $e) {
+            error_log("Error en _consultar_recibo_pago: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al consultar recibo'];
         }
     }
 
-    // ====================================================================
     // MÉTODOS MIGRADOS DESDE MENSUALIDAD (Cuadro de Pagos)
-    // ====================================================================
 
     // Helper interno para el cuadro de pagos (antes en Mensualidad.php)
     private function consultarMensualidadesPendientes()
     {
         $sql = "WITH FacturacionMensual AS (
                     SELECT m.apartamento_id, pm.anio, pm.mes, SUM(m.monto) AS total_facturado
-                    FROM mensualidad m JOIN periodos_mensualidad pm ON m.periodo_id = pm.id_periodo
-                    WHERE m.activo = 1 GROUP BY m.apartamento_id, pm.anio, pm.mes
+                    FROM mensualidad m 
+                    JOIN periodos_mensualidad pm ON m.periodo_id = pm.id_periodo
+                    WHERE m.activo = 1 
+                    GROUP BY m.apartamento_id, pm.anio, pm.mes
                 ),
                 PagosMensuales AS (
-                    SELECT m.apartamento_id, pm.anio, pm.mes, SUM(dp.monto) AS total_pagado
-                    FROM detalles_pagos dp JOIN pagos_mensualidad p_m ON dp.id_detalle_pago = p_m.detalle_pago_id
-                    JOIN mensualidad m ON p_m.mensualidad_id = m.id_mensualidad JOIN periodos_mensualidad pm ON m.periodo_id = pm.id_periodo
+                    -- AHORA USAMOS monto_abonado Y ENLAZAMOS POR pago_id
+                    SELECT m.apartamento_id, pm.anio, pm.mes, SUM(p_m.monto_abonado) AS total_pagado
+                    FROM pagos_mensualidad p_m
+                    JOIN pagos p ON p_m.pago_id = p.id_pago
+                    JOIN mensualidad m ON p_m.mensualidad_id = m.id_mensualidad 
+                    JOIN periodos_mensualidad pm ON m.periodo_id = pm.id_periodo
+                    WHERE p.activo = 1 AND p.estado = 'PROCESADO'
                     GROUP BY m.apartamento_id, pm.anio, pm.mes
                 ),
                 BalanceDelMes AS (
@@ -431,13 +472,15 @@ class Reportes extends Conexion
                     WHERE f.apartamento_id IS NULL
                 )
                 SELECT a.nro_apartamento, b.anio, b.mes, b.cambio_neto_mes, SUM(b.cambio_neto_mes) OVER (PARTITION BY b.apartamento_id ORDER BY b.anio, b.mes) AS deuda_acumulada
-                FROM BalanceDelMes b JOIN apartamentos a ON b.apartamento_id = a.id_apartamento
+                FROM BalanceDelMes b 
+                JOIN apartamentos a ON b.apartamento_id = a.id_apartamento
                 ORDER BY a.nro_apartamento, b.anio, b.mes";
         try {
             $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute();
             return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
         } catch (PDOException $e) {
+            error_log("Error en consultarMensualidadesPendientes: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al consultar pendientes'];
         }
     }

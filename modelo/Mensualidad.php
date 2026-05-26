@@ -672,7 +672,7 @@ class Mensualidad extends Conexion
                     dp.id_detalle_presupuesto, 
                     dp.nombre_detalle AS concepto, 
                     dp.monto, 
-                    dp.monto_dolar 
+                    dp.tasa_dolar 
                 FROM presupuesto_mensualidad pm
                 INNER JOIN detalles_presupuesto dp ON pm.detalle_presupuesto_id = dp.id_detalle_presupuesto
                 WHERE pm.mensualidad_id = :id_mensualidad";

@@ -14,6 +14,8 @@ const botonFormulario = document.getElementById("boton_formulario");
 const contenedorDetalles = document.getElementById("detalles-container");
 const plantillaDetalle = document.getElementById("plantilla-detalle-gasto");
 
+let tasa_dolar_activa = parseFloat(localStorage.getItem("tasa_dolar") || 1).toFixed(2);
+
 // INICIALIZACIÓN
 document.addEventListener('DOMContentLoaded', () => {
     consultar();
@@ -113,50 +115,42 @@ async function consultar() {
  * Recoge los datos del formulario (cabecera + detalles) y los empaqueta en FormData
  */
 function recolectarDatosFormulario() {
-    const formData = new FormData(); // Vacío, lo llenamos manualmente
+    const formData = new FormData();
 
-    // Campos de cabecera (siempre presentes)
     formData.append('clasificacion', document.getElementById('clasificacion').value);
     formData.append('tipo_gasto_id', document.getElementById('tipo_gasto_id').value);
     formData.append('descripcion_gasto', document.getElementById('descripcion_gasto').value);
     formData.append('proveedor_id', document.getElementById('proveedor_id').value);
+    
     const solicitud = document.getElementById('solicitud').value;
     if (solicitud) formData.append('solicitud', solicitud);
 
-    // Detalles
+    formData.append('tasa_dolar', tasa_dolar_activa);
+
     const bloques = contenedorDetalles.querySelectorAll('.detalle-gasto');
     bloques.forEach((bloque, index) => {
-        // Campos obligatorios del detalle (siempre se envían)
         formData.append('fecha_detalle[]', bloque.querySelector('.fecha_detalle').value);
         formData.append('monto[]', bloque.querySelector('.monto').value);
         formData.append('metodo_pago[]', bloque.querySelector('.metodo_pago').value);
-        formData.append('descripcion_detalle_gasto[]', bloque.querySelector('.descripcion_detalle_gasto').value);
+        
 
-        // Campos bancarios: se envían siempre (con valor vacío si no aplica)
         const refInput = bloque.querySelector('.referencia');
         formData.append('referencia[]', refInput ? refInput.value : '');
 
         const bancoInput = bloque.querySelector('.banco');
         formData.append('banco_id[]', bancoInput ? bancoInput.value : '');
 
-        // Imagen existente (siempre añadimos un valor, vacío si no hay input)
         const imgExistente = bloque.querySelector('input[name="imagen_existente[]"]');
         formData.append('imagen_existente[]', imgExistente ? imgExistente.value : '');
 
-        // Imagen nueva (archivo)
         const inputImagen = bloque.querySelector('.imagen');
         if (inputImagen && inputImagen.files.length > 0) {
             formData.append(`imagen_${index}`, inputImagen.files[0]);
         }
     });
 
-    // ID del gasto si es edición
     const idGasto = document.getElementById('boton_formulario').getAttribute('id_modificar');
-    if (idGasto) {
-        formData.append('id_gasto', idGasto);
-    }
-
-    // Operación
+    if (idGasto) formData.append('id_gasto', idGasto);
     formData.append('operacion', idGasto ? 'modificar' : 'registrar');
 
     return formData;
@@ -191,7 +185,9 @@ async function prepararFormularioEdicion(e) {
         const detalles = respuestaServidor.datos.detalles;
 
         const selectClasificacion = formulario.querySelector('#clasificacion');
-        
+
+        tasa_dolar_activa = parseFloat(gasto.tasa_dolar) || 1;
+
         // Limpiamos por si quedó una opción de "Reposición" de una edición anterior
         const opcionExistente = selectClasificacion.querySelector('option[value="Reposicion"]');
         if (opcionExistente) opcionExistente.remove();
@@ -237,7 +233,6 @@ async function prepararFormularioEdicion(e) {
                 nuevoBloque.querySelector('.fecha_detalle').value = det.fecha || '';
                 nuevoBloque.querySelector('.metodo_pago').value = det.metodo_pago || '';
                 nuevoBloque.querySelector('.monto').value = det.monto || '';
-                nuevoBloque.querySelector('.descripcion_detalle_gasto').value = det.descripcion_detalle_gasto || '';
 
                 // Campos bancarios si aplica
                 if (det.metodo_pago === 'Transferencia' || det.metodo_pago === 'Pago Movil') {
@@ -410,7 +405,6 @@ async function mostrarVistaPreviaDetalle(idDetalle) {
         document.getElementById('vista_metodo_pago_detalles').textContent = det.metodo_pago || '';
         document.getElementById('vista_nombre_banco_detalles').textContent = det.nombre_banco || 'No hay banco registrado';
         document.getElementById('vista_referencia_detalles').textContent = det.referencia || 'No hay referencia';
-        document.getElementById('vista_descripcion_detalles').textContent = det.descripcion_detalle_gasto || '';
 
         const img = det.imagen ? `recursos/img/gastos/${det.imagen}` : '';
         document.getElementById('vista_imagen_detalles').src = img;
@@ -592,6 +586,8 @@ function resetModalGasto() {
         const selectMetodo = primerBloque.querySelector('.metodo_pago');
         actualizarVisibilidadCampos(selectMetodo);
     }
+
+    tasa_dolar_activa = parseFloat(localStorage.getItem("tasa_dolar") || 1).toFixed(2);
 
     id_modificar = null;
 }

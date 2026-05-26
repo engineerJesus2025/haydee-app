@@ -1,6 +1,45 @@
 <?php
-use haydee\enums\HttpCodigo;
 use haydee\modelo\Mensualidad;
+use haydee\servicios\Sesiones;
+use haydee\ayuda\Validador;
+use haydee\enums\HttpCodigo;
+use haydee\enums\Modulo;
+use haydee\enums\Accion;
+
+// IDENTIDAD Y PERMISOS
+$identidad = Sesiones::autorizarAccesoAPI(Modulo::GESTIONAR_MENSUALIDAD, Accion::CONSULTAR, ['GET', 'POST', 'PUT']);
+
+// UNIFICACIÓN DEL PAYLOAD
+$metodoHttp = $_SERVER['REQUEST_METHOD'];
+$datosPeticion = ($metodoHttp === 'GET') ? $_GET : $_POST;
+$operacion = $datosPeticion['operacion'] ?? '';
+
+if (empty($operacion)) {
+    http_response_code(HttpCodigo::BAD_REQUEST->value);
+    echo json_encode(['estatus' => false, 'mensaje' => 'No se especificó la operación.']);
+    exit;
+}
+
+Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_MENSUALIDAD, $operacion);
+
+// VALIDACIÓN 
+$reglas = Mensualidad::obtenerReglas($operacion); 
+
+if (!empty($reglas)) {
+    $validador = new Validador();
+    $validador->validarConjunto($datosPeticion, $reglas);
+
+    if ($validador->tieneErrores()) {
+        $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::BAD_REQUEST->value;
+        http_response_code($codigoHttp);
+        echo json_encode([
+            'estatus' => false, 
+            'errores' => $validador->obtenerErrores(),
+            'mensaje' => 'Datos inválidos o manipulados. La petición ha sido bloqueada.'
+        ]);
+        exit;
+    }
+}
 
 $mensualidad = new Mensualidad();
 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida en API'];

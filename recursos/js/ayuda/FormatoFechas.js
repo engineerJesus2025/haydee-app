@@ -1,7 +1,5 @@
 const FormatoFechas = (function() {
-    // ============================================================
-    // CONSTANTES PRIVADAS (inmutables)
-    // ============================================================
+    // CONSTANTES PRIVADAS
     const mesesAbreviados = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
     const mesesCompletos = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
     const diasAbreviados = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -12,15 +10,9 @@ const FormatoFechas = (function() {
     Object.freeze(diasAbreviados);
     Object.freeze(diasCompletos);
 
-    // ============================================================
-    // PARSEADOR PRIVADO (convierte cualquier entrada a Date local)
-    // ============================================================
-
     /**
      * Analiza una entrada y devuelve un objeto Date válido en hora local.
      * Soporta: Date, timestamp numérico, strings en formato ISO, MySQL, latinoamericano, etc.
-     * @param {Date|string|number} entrada - Fecha en cualquier formato soportado.
-     * @returns {Date|null} - Objeto Date en hora local, o null si es inválido.
      */
     function parsearFecha(entrada) {
         // Casos especiales: null, undefined, 0 (timestamp válido)
@@ -38,27 +30,27 @@ const FormatoFechas = (function() {
         const str = String(entrada).trim();
         if (str === '') return null;
 
-        // 1. Formato ISO completo con zona horaria (YYYY-MM-DDTHH:mm:ss.sssZ o ±hh:mm)
+        // Formato ISO completo con zona horaria (YYYY-MM-DDTHH:mm:ss.sssZ o ±hh:mm)
         if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?$/i.test(str)) {
             const d = new Date(str);
             return isNaN(d.getTime()) ? null : d;
         }
 
-        // 2. Fecha con hora separada por espacio (YYYY-MM-DD HH:mm:ss o DD/MM/YYYY HH:mm)
+        // Fecha con hora separada por espacio (YYYY-MM-DD HH:mm:ss o DD/MM/YYYY HH:mm)
         let match = str.match(/^(\d{1,4})[-/](\d{1,2})[-/](\d{1,4})\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
         if (match) {
             const [_, parte1, parte2, parte3, hora, min, seg] = match;
             return crearFechaLocal(parte1, parte2, parte3, hora, min, seg || 0);
         }
 
-        // 3. Solo fecha (sin hora)
+        // Solo fecha (sin hora)
         match = str.match(/^(\d{1,4})[-/](\d{1,2})[-/](\d{1,4})$/);
         if (match) {
             const [_, parte1, parte2, parte3] = match;
             return crearFechaLocal(parte1, parte2, parte3);
         }
 
-        // 4. Último recurso: dejar que el constructor Date nativo lo intente (poco fiable, pero cubre casos raros)
+        // Último recurso: dejar que el constructor Date nativo lo intente (poco fiable, pero cubre casos raros)
         const d = new Date(str);
         return isNaN(d.getTime()) ? null : d;
     }
@@ -66,13 +58,12 @@ const FormatoFechas = (function() {
     /**
      * Construye un objeto Date en hora local a partir de componentes numéricos.
      * Determina automáticamente si el formato es YYYY-MM-DD o DD-MM-YYYY.
-     * @param {string} comp1 - Primer componente (día o año)
-     * @param {string} comp2 - Segundo componente (mes)
-     * @param {string} comp3 - Tercer componente (año o día)
-     * @param {number|string} [hora=0] - Hora (0-23)
-     * @param {number|string} [min=0] - Minutos
-     * @param {number|string} [seg=0] - Segundos
-     * @returns {Date|null} - Fecha local o null si los componentes son inválidos.
+     * comp1 - Primer componente (día o año)
+     * comp2 - Segundo componente (mes)
+     * comp3 - Tercer componente (año o día)
+     *  [hora=0] - Hora (0-23)
+     *  [min=0] - Minutos
+     *  [seg=0] - Segundos
      */
     function crearFechaLocal(comp1, comp2, comp3, hora = 0, min = 0, seg = 0) {
         let año, mes, dia;
@@ -105,22 +96,10 @@ const FormatoFechas = (function() {
         return new Date(año, mes, dia, h, m, s);
     }
 
-    // ============================================================
-    // API PÚBLICA
-    // ============================================================
     return {
-        // --------------------------------------------------------
-        // FORMATEO GENÉRICO
-        // --------------------------------------------------------
         /**
-         * Formatea una fecha según una máscara personalizada.
-         * @param {Date|string|number} fechaEntrada - Fecha en cualquier formato soportado.
-         * @param {string} patron - Patrón de formato. Tokens disponibles:
-         *   YYYY, YY, MMMM, MMM, MM, M, DD, D, dddd, ddd, HH, H, hh, h, mm, ss, A, a.
-         *   Los textos literales deben ir entre corchetes: [texto]
-         * @returns {string} - Fecha formateada, o cadena vacía si la entrada es inválida.
-         * @example
-         *   FormatoFechas.formatear('2025-03-01', 'DD [de] MMMM [del] YYYY'); // "01 de Marzo del 2025"
+         Formatea una fecha según una máscara personalizada.
+         FormatoFechas.formatear('2025-03-01', 'DD [de] MMMM [del] YYYY'); // "01 de Marzo del 2025"
          */
         formatear(fechaEntrada, patron) {
             const fecha = parsearFecha(fechaEntrada);
@@ -176,16 +155,9 @@ const FormatoFechas = (function() {
             return resultado;
         },
 
-        // --------------------------------------------------------
-        // FORMATEOS PREDEFINIDOS (Representan intenciones, no solo formatos)
-        // --------------------------------------------------------
         /**
-         * Formato corto: DD/MM/YYYY (por defecto). Permite cambiar el separador.
-         * @param {Date|string|number} fechaEntrada
-         * @param {string} [separador='/'] - Carácter separador (ej. '-', '.')
-         * @returns {string}
-         * @example
-         *   FormatoFechas.formatoCorto('2025-03-01', '-'); // "01-03-2025"
+         Formato corto: DD/MM/YYYY (por defecto). Permite cambiar el separador.
+         FormatoFechas.formatoCorto('2025-03-01', '-'); // "01-03-2025"
          */
         formatoUsuario(fechaEntrada, separador = '/') {
             return this.formatear(fechaEntrada, `DD${separador}MM${separador}YYYY`);
@@ -193,21 +165,14 @@ const FormatoFechas = (function() {
 
         /**
          * Convierte cualquier fecha soportada al formato MySQL: YYYY-MM-DD.
-         * @param {Date|string|number} fechaEntrada
-         * @returns {string}
          */
         formatoFechaBD(fechaEntrada) {
             return this.formatear(fechaEntrada, 'YYYY-MM-DD');
         },
 
-        // --------------------------------------------------------
-        // TIEMPO RELATIVO Y AMIGABLE (LÓGICA ESPECIAL)
-        // --------------------------------------------------------
         /**
-         * Devuelve una descripción amigable del tiempo transcurrido desde la fecha dada.
-         * Ej: "Hace 5 minutos", "Hace 2 horas", "Hace 3 días", etc.
-         * @param {Date|string|number} fechaEntrada
-         * @returns {string} - Texto relativo, o cadena vacía si la fecha es inválida.
+         Devuelve una descripción amigable del tiempo transcurrido desde la fecha dada.
+         Ej: "Hace 5 minutos", "Hace 2 horas", "Hace 3 días", etc.
          */
         tiempoRelativo(fechaEntrada) {
             const fecha = parsearFecha(fechaEntrada);
@@ -230,9 +195,8 @@ const FormatoFechas = (function() {
         },
 
         /**
-         * Formato especial para "último acceso": Hoy/Ayer/día de la semana o fecha completa.
-         * @param {Date|string|number} fechaEntrada
-         * @returns {string} - Ej: "Hoy a las 3:30 pm", "Ayer a las 10:15 am", "El Miércoles a las 8:00 pm", o "01/03/2025 a las 12:00 am".
+         Formato especial para "último acceso": Hoy/Ayer/día de la semana o fecha completa.
+         Ej: "Hoy a las 3:30 pm", "Ayer a las 10:15 am", "El Miércoles a las 8:00 pm", o "01/03/2025 a las 12:00 am".
          */
         formatoUltimoAcceso(fechaEntrada) {
             const fecha = parsearFecha(fechaEntrada);
@@ -254,14 +218,9 @@ const FormatoFechas = (function() {
             return this.formatear(fecha, 'DD/MM/YYYY') + ` a las ${horaFormateada}`;
         },
 
-        // --------------------------------------------------------
         // OPERACIONES CON FECHAS
-        // --------------------------------------------------------
         /**
          * Suma (o resta, si el valor es negativo) días a una fecha.
-         * @param {Date|string|number} fechaEntrada - Fecha base.
-         * @param {number} dias - Número de días a agregar (puede ser negativo).
-         * @returns {Date|null} - Nueva fecha resultante, o null si la entrada es inválida.
          */
         sumarDias(fechaEntrada, dias) {
             const fecha = parsearFecha(fechaEntrada);
@@ -270,14 +229,9 @@ const FormatoFechas = (function() {
             return fecha;
         },
 
-        // --------------------------------------------------------
         // COMPARACIONES
-        // --------------------------------------------------------
         /**
          * Compara si dos fechas corresponden al mismo día (ignorando hora).
-         * @param {Date|string|number} fecha1
-         * @param {Date|string|number} fecha2
-         * @returns {boolean} - true si son el mismo día, mes y año.
          */
         esMismoDia(fecha1, fecha2) {
             const f1 = parsearFecha(fecha1);
@@ -290,15 +244,12 @@ const FormatoFechas = (function() {
 
         /**
          * Retorna el nombre completo del mes (ej. "Marzo") dado su número (1-12).
-         * @param {number} mesNumero - Número del mes (1 = Enero, 12 = Diciembre).
-         * @returns {string}
          */
         nombreMes(mesNumero) {
             return mesesCompletos[mesNumero - 1] || '';
         },
-        // --------------------------------------------------------
+
         // VALIDACIÓN Y UTILIDADES EXTRA
-        // --------------------------------------------------------
         
         /**
          * Verifica si una entrada puede convertirse en una fecha real.

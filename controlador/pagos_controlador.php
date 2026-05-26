@@ -91,6 +91,7 @@ if (isset($_POST["operacion"])) {
     $pagos->set_id_pago($_POST['id_pago'] ?? null);
     $pagos->set_id_detalle_pago($_POST['id_detalle_pago'] ?? null);
     $pagos->set_estado($_POST['estado'] ?? null);
+    $pagos->set_tasa_dolar($_POST['tasa_dolar'] ?? null);
     $pagos->set_observacion($_POST['observacion'] ?? null);
     $pagos->set_apartamento_id($_POST['apartamento_id'] ?? null);
     $pagos->set_mensualidad_id($_POST['mensualidad_id'] ?? null);
@@ -156,7 +157,7 @@ if (isset($_POST["operacion"])) {
                 $auditor->capturarDatosAnteriores('consultar_cabecera_pago');
 
                 $configPagos = [
-                    'campos' => ['fecha', 'monto', 'tipo_pago', 'monto_dolar'],
+                    'campos' => ['fecha', 'monto', 'tipo_pago', 'tasa_dolar'],
                     'bancarios' => ['banco_id', 'referencia'],
                     'imagenes' => 'imagen',
                     'metodo_pago_campo' => 'tipo_pago',

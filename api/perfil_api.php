@@ -1,6 +1,45 @@
 <?php
-use haydee\enums\HttpCodigo;
 use haydee\modelo\Usuario;
+use haydee\servicios\Sesiones;
+use haydee\ayuda\Validador;
+use haydee\enums\HttpCodigo;
+use haydee\enums\Modulo;
+use haydee\enums\Accion;
+
+// IDENTIDAD Y PERMISOS
+$identidad = Sesiones::autorizarAccesoAPI(null, null, ['GET', 'POST', 'PUT']);
+
+// UNIFICACIÓN DEL PAYLOAD
+$metodoHttp = $_SERVER['REQUEST_METHOD'];
+$datosPeticion = ($metodoHttp === 'GET') ? $_GET : $_POST;
+$operacion = $datosPeticion['operacion'] ?? '';
+
+if (empty($operacion)) {
+    http_response_code(HttpCodigo::BAD_REQUEST->value);
+    echo json_encode(['estatus' => false, 'mensaje' => 'No se especificó la operación.']);
+    exit;
+}
+
+Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_PAGOS, $operacion);
+
+// VALIDACIÓN
+$reglas = Usuario::obtenerReglas($operacion);
+
+if (!empty($reglas)) {
+    $validador = new Validador();
+    $validador->validarConjunto($datosPeticion, $reglas);
+
+    if ($validador->tieneErrores()) {
+        $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::BAD_REQUEST->value;
+        http_response_code($codigoHttp);
+        echo json_encode([
+            'estatus' => false, 
+            'errores' => $validador->obtenerErrores(),
+            'mensaje' => 'Datos inválidos o manipulados. La petición ha sido bloqueada.'
+        ]);
+        exit;
+    }
+}
 
 $usuario = new Usuario();
 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
@@ -22,8 +61,6 @@ try {
 
     // Enrutamiento de operaciones (GET para consulta, POST para cambios)
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        // Al llamar a realizar_consulta, el enrutador dinamico de tu modelo
-        // llamara automaticamente a _consultar_por_token()
         $respuesta = $usuario->realizar_consulta('consultar_por_token');
     } 
     else if ($_SERVER['REQUEST_METHOD'] === 'POST') {

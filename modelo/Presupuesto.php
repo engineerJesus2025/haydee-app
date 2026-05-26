@@ -165,13 +165,14 @@ class Presupuesto extends Conexion
             $con->beginTransaction();
 
             // Insertar cabecera presupuesto
-            $sqlHead = "INSERT INTO presupuesto (fecha, cuota_reserva, observacion, activo) 
-                        VALUES (:fecha, :cuota, :obs, 1)";
+            $sqlHead = "INSERT INTO presupuesto (fecha, cuota_reserva, observacion, tasa_dolar, activo) 
+                        VALUES (:fecha, :cuota, :obs, :tasa, 1)";
             $stmtH = $con->prepare($sqlHead);
             $stmtH->execute([
                 ':fecha' => $this->fecha,
                 ':cuota' => $this->cuota_reserva ?? 0,
-                ':obs'   => $this->observacion
+                ':obs'   => $this->observacion,
+                ':tasa'  => $this->tasa_dolar
             ]);
             $id_presupuesto = $con->lastInsertId();
 
@@ -271,12 +272,13 @@ class Presupuesto extends Conexion
             $con->beginTransaction();
 
             // Actualizar cabecera
-            $sqlHead = "UPDATE presupuesto SET fecha = :fecha, cuota_reserva = :cuota, observacion = :obs WHERE id_presupuesto = :id";
+            $sqlHead = "UPDATE presupuesto SET fecha = :fecha, cuota_reserva = :cuota, observacion = :obs, tasa_dolar = :tasa WHERE id_presupuesto = :id";
             $stmtH = $con->prepare($sqlHead);
             $stmtH->execute([
                 ':fecha' => $this->fecha,
                 ':cuota' => $this->cuota_reserva ?? 0,
                 ':obs'   => $this->observacion,
+                ':tasa'  => $this->tasa_dolar,
                 ':id'    => $this->id_presupuesto
             ]);
 

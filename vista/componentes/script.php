@@ -16,9 +16,10 @@
 <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/AtajosTeclado.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/ComponentesUI.js"></script>
 
-<script src="<?php echo URL_BASE; ?>recursos/js/header.js"></script>
-<script src="<?php echo URL_BASE; ?>recursos/js/notificaciones.js"></script> -->
-<!-- <script src="<?php echo URL_BASE; ?>recursos/js/src/driver.js"></script> -->
+<script src="<?php echo URL_BASE; ?>recursos/js/src/header.js"></script>
+<script src="<?php echo URL_BASE; ?>recursos/js/src/notificaciones.js"></script>
+<script src="<?php echo URL_BASE; ?>recursos/js/src/driver.js"></script>
+<script src="<?php echo URL_BASE; ?>recursos/js/src/tema_global.js"></script> -->
 
 <!-- Scripts globales -->
 <script src="<?php echo URL_BASE; ?>recursos/js/dist/app-core.min.js"></script>

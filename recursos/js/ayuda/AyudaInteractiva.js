@@ -7,10 +7,6 @@ const AyudaInteractiva = {
 
     /**
      * Inicializa los eventos para lanzar la ayuda interactiva.
-     * @param {Object} opciones 
-     * @param {string} opciones.idModal - El ID del modal del módulo (ej. 'modal_banco')
-     * @param {Array} opciones.pasosPrincipal - Pasos a mostrar en la vista general
-     * @param {Array} opciones.pasosModal - Pasos a mostrar cuando el modal está abierto
      */
     inicializar(opciones) {
         // Asegurarnos de que Driver.js esté cargado

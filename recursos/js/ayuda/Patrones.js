@@ -1,15 +1,5 @@
-/**
- * Patrones.js
- * Propósito: Centralizar las expresiones regulares para validaciones en todo el sistema Haydee.
- * Uso: 
- * - Validaciones completas (keyup / blur / submit)
- * - Bloqueo de teclas en tiempo real (keypress)
- */
 const Patrones = {
-
-    // ============================================================
-    // 1. VALIDADORES GLOBALES Y TEXTOS GENÉRICOS
-    // ============================================================
+    // VALIDADORES GLOBALES Y TEXTOS GENÉRICOS
     correo: /^[a-zA-Z0-9._+-]{3,35}@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/,
     contrasena: /^[A-Za-z0-9_.+*$#%&@-]{5,100}$/,
     
@@ -22,27 +12,21 @@ const Patrones = {
     textoModulo: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ _\s]{3,30}$/,
     digitos: /^\d+$/,                                 // Solo números enteros (útil para IDs)
 
-    // ============================================================
-    // 2. FINANZAS, PAGOS Y BANCOS
-    // ============================================================
+    // FINANZAS, PAGOS Y BANCOS
     monto: /^\d{1,12}([.,]\d{1,2})?$/,                // Hasta 12 enteros y 2 decimales
     porcentaje: /^\d{1,2}(\.\d{0,2})?$/,              // Ejemplo: 12 o 12.50
     referenciaBancaria: /^[0-9A-Za-z]{4,20}$/,        // 4 a 20 caracteres alfanuméricos
     codigoBanco: /^\d{4}$/,                           // Exactamente 4 dígitos
     numeroCuenta: /^\d{18,30}$/,                      // 18 a 30 dígitos numéricos
     
-    // ============================================================
-    // 3. IDENTIFICACIÓN, CONTACTO Y UBICACIÓN
-    // ============================================================
+    // IDENTIFICACIÓN, CONTACTO Y UBICACIÓN
     tipoDocumento: /^[VEJG]$/,                        // Iniciales de documentos (V, E, J, G)
     cedula: /^[0-9]{7,8}$/,                           // 7 a 8 dígitos numéricos
     rif: /^[0-9]{7,9}$/,                              // 7 a 9 dígitos numéricos
     telefono: /^\d{11}$/,                             // Exactamente 11 dígitos numéricos
     direccion: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9,.\-#°\s]{3,100}$/, // Permite caracteres de dirección física
 
-    // ============================================================
-    // 4. MÓDULOS ESPECÍFICOS (Condominio, Cartelera, Caja, etc.)
-    // ============================================================
+    // MÓDULOS ESPECÍFICOS (Condominio, Cartelera, Caja, etc.)
     
     // Condominio / Apartamentos
     nroApartamento: /^[0-9-]{1,3}$/,                  // 1 a 3 caracteres (Números y guiones)
@@ -70,10 +54,7 @@ const Patrones = {
     mesAnio: /^\d{1,2}-\d{4}$/,                       // Formato MM-YYYY o M-YYYY
     estadoAnio: /^(ABIERTO|CERRADO)$/,                   // Estado del año fiscal (Abierta, Cerrada)
 
-
-    // ============================================================
-    // 5. RESTRICCIONES EN TIEMPO REAL (Para el evento 'keypress')
-    // ============================================================
+    // RESTRICCIONES EN TIEMPO REAL (Para el evento 'keypress')
     
     // Teclas puras y alfanuméricas
     teclasLetras: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s()]+$/,

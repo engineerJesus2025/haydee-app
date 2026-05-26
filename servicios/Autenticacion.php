@@ -74,7 +74,8 @@ class Autenticacion
                 'data' => [
                     'id_usuario' => $usuario['id_usuario'],
                     'correo' => $usuario['correo'],
-                    'rol_id' => $usuario['id_rol']
+                    'rol_id' => $usuario['id_rol'],
+                    'rol'        => $usuario['nombre_rol']
                 ]
             ];
 

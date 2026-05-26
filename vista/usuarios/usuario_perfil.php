@@ -196,11 +196,11 @@
                                             </div>
 
                                             <div class="theme-switch-wrapper">
-                                                <label class="theme-switch" for="checkbox_tema">
-                                                    <input type="checkbox" id="checkbox_tema" />
+                                                <label class="theme-switch" for="checkbox_tema_perfil">
+                                                    <input type="checkbox" id="checkbox_tema_perfil" class="toggle-tema-global" />
                                                     <div class="slider round">
                                                         <div class="thumb">
-                                                            <i class="bi bi-moon text-info" id="thumb_icon"></i>
+                                                            <i class="bi bi-moon text-info thumb-icon-global" id="icono_tema"></i>
                                                         </div>
                                                     </div>
                                                 </label>
@@ -256,7 +256,7 @@
     <!-- Scripts personalizado -->
     <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/validaciones/usuario_perfil_validar.js"></script>
     <script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/js/consultas_ajax/usuario_perfiles.js"></script>
-    <script src="<?php echo URL_BASE; ?>recursos/js/tema_global.js"></script>
+    <script src="<?php echo URL_BASE; ?>recursos/js/src/tema_global.js"></script>
 </body>
 
 </html>

@@ -1,8 +1,3 @@
-/**
- * AtajosTeclado.js
- * Propósito: Centralizar la gestión de atajos de teclado globales para CondoHaydee.
- */
-
 const AtajosTeclado = {
     tablaActual: null,
 
@@ -103,7 +98,11 @@ const AtajosTeclado = {
                 return; 
             }
 
-            // Convertimos la tecla a minúscula (Ej: 'B' se vuelve 'b', 'Escape' se vuelve 'escape')
+            if (event.ctrlKey || event.altKey || event.shiftKey || event.metaKey) {
+                return; 
+            }
+
+            // Convertimos la tecla a minúscula
             const teclaNormalizada = event.key.toLowerCase();
 
             // Verificar si tenemos una acción definida

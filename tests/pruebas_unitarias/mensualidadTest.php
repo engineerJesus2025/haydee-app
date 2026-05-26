@@ -439,7 +439,7 @@ class MensualidadTest extends TestCase
         $this->assertArrayHasKey('anio', $resultado[0]);        
     }
     
-    //Metodo consultar_monto_dolar_mensualidades
+    //Metodo consultar_tasa_dolar_mensualidades
     public function testConsultarMontoEnDolares(){
         $datos_simulados = [
             'mes' => '4',

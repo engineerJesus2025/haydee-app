@@ -19,7 +19,8 @@ class Sesiones
     private const DIAS_RECORDAR_SESION = 30;
     private const SEGUNDOS_POR_DIA = 86400;
     private const EXPIRACION_PASADO = 3600; // Segundos a restar para destruir cookies
-
+    // Memoria temporal para los permisos cuando la petición viene por JWT (API)
+    public static $permisosAPI = null;
     /**
      * Inicia la sesion con los datos del usuario.
      */
@@ -70,6 +71,60 @@ class Sesiones
         if ($modulo !== null && $permiso !== null) {
             self::verificarPermiso($modulo, $permiso);
         }
+    }
+
+    /**
+     * Valida permisos, inundación y devuelve la identidad estructurada para las APIs REST (JWT).
+     */
+    public static function autorizarAccesoAPI(?Modulo $modulo = null, ?Accion $permiso = null, $metodos = ['GET', 'POST', 'PUT', 'DELETE'])
+    {
+        // Capa de Protocolo (Verifica si es GET, POST, etc.)
+        self::validarMetodoHTTP($metodos);
+
+        // Capa de Identidad (Ya lo hace GestorTrafico, pero lo dejo porsia...)
+        $usuario = GestorTrafico::$usuarioLogueado;
+        if (!$usuario) {
+            http_response_code(HttpCodigo::NO_AUTORIZADO->value);
+            echo json_encode(['estatus' => false, 'mensaje' => 'Identidad no verificada.']);
+            exit;
+        }
+
+        // Capa de Autorización (Permisos)
+        if ($modulo !== null && $permiso !== null) {
+            if (!self::tienePermiso($modulo, $permiso)) {
+                http_response_code(HttpCodigo::PROHIBIDO->value);
+                echo json_encode(['estatus' => false, 'mensaje' => 'Acceso denegado: No tienes permisos para este módulo.']);
+                exit;
+            }
+        }
+
+        // Capa Anti-Inundación (Flood Control)
+        // Como las APIs REST no usan cookies de sesión por defecto, iniciamos sesión 
+        // temporalmente en PHP para que verificarInundacion() tenga dónde guardar su contador.
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        
+        // Temporizamos el ID del usuario en la sesión global para que verificarInundacion lo lea
+        $idTemporal = $_SESSION["id_usuario"] ?? null;
+        $_SESSION["id_usuario"] = $usuario['id_usuario'];
+        
+        self::verificarInundacion();
+        
+        // Restauramos el estado original para mantener la limpieza de la memoria
+        if ($idTemporal === null) {
+            unset($_SESSION["id_usuario"]);
+        } else {
+            $_SESSION["id_usuario"] = $idTemporal;
+        }
+
+        // Devolvemos el usuario que la API la use directamente
+        return [
+            'id_usuario'    => $usuario['id_usuario'],
+            'correo'        => $usuario['correo'],
+            'rol'           => strtolower($usuario['rol'] ?? ''),
+            'esPropietario' => (strtolower($usuario['rol'] ?? '') === 'propietario')
+        ];
     }
 
     /**
@@ -183,11 +238,14 @@ class Sesiones
      */
     public static function tienePermiso(Modulo $modulo, Accion $permiso)
     {
-        if (!isset($_SESSION["permisos"]) || !is_array($_SESSION["permisos"])) {
+        // Buscamos de dónde sacar los permisos (Prioridad: API -> Web)
+        $listaPermisos = self::$permisosAPI ?? $_SESSION["permisos"] ?? null;
+
+        if (!$listaPermisos || !is_array($listaPermisos)) {
             return false;
         }
 
-        foreach ($_SESSION["permisos"] as $p) {
+        foreach ($listaPermisos as $p) {
             if ($p["modulo_id"] == $modulo->value && $p["permiso"] == $permiso->value) {
                 return true;
             }

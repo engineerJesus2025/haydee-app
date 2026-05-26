@@ -36,7 +36,7 @@
 					<hr>
 					<div class="row mb-5">
                         <div class="col-12 mt-2">
-                          <div class="card p-0 overflow-hidden shadow border-0">
+                          <div class="card p-0 overflow-hidden shadow">
                             <div class="border-bottom px-4 py-3 d-flex justify-content-between align-items-center card-item">
                                 <h5 class="mb-0 fw-bold">
                                     <i class="bi bi-calendar2-date text-primary me-2"></i> Período de Evaluación

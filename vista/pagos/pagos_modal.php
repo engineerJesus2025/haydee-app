@@ -93,7 +93,7 @@
                                         <label class="form-label">Equivalente ($) <span class="text-danger">*</span></label>
                                         <div class="input-group has-validation">
                                             <span class="  input-group-text">$</span>
-                                            <input type="text" class="  form-control monto_dolar " placeholder="0.00" readonly>
+                                            <input type="text" class="  form-control monto_usd_visual" placeholder="0.00" readonly>
                                             <span class="w-100 invalid-feedback"></span>
                                         </div>
                                     </div>
@@ -232,7 +232,7 @@
                     <label class="form-label">Equivalente ($) <span class="text-danger">*</span></label>
                     <div class="input-group has-validation">
                         <span class="  input-group-text">$</span>
-                        <input type="text" class="  form-control monto_dolar " placeholder="0.00" readonly>
+                        <input type="text" class="  form-control monto_usd_visual" placeholder="0.00" readonly>
                         <span class="w-100 invalid-feedback"></span>
                     </div>
                 </div>

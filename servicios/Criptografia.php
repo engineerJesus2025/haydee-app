@@ -86,4 +86,17 @@ class Criptografia {
         return $textoCifrado;
     }
 
+    /**
+     * Genera un código numérico criptográficamente seguro (OTP) Para los correos de recuperacion de la app
+     */
+    public static function generarOTP(int $longitud = 6): string 
+    {
+        // Calculamos los límites matemáticos según la longitud
+        // Ej: para 6 dígitos -> min = 100000, max = 999999
+        $min = 10 ** ($longitud - 1);
+        $max = (10 ** $longitud) - 1;
+        
+        return (string) random_int($min, $max);
+    }
+
 }

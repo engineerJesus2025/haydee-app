@@ -1,9 +1,46 @@
 <?php
-use haydee\enums\HttpCodigo;
 use haydee\modelo\CarteleraVirtual;
+use haydee\servicios\Sesiones;
+use haydee\ayuda\Validador;
 use haydee\ayuda\GestorImagenes;
+use haydee\enums\HttpCodigo;
+use haydee\enums\Modulo;
+use haydee\enums\Accion;
 
-// (Futuro) Aquí validaremos el Token de seguridad de la app móvil.
+// IDENTIDAD Y PERMISOS
+$identidad = Sesiones::autorizarAccesoAPI(Modulo::GESTIONAR_CARTELERA_VIRTUAL, Accion::CONSULTAR, ['GET', 'POST', 'PUT']);
+
+// UNIFICACIÓN DEL PAYLOAD
+$metodoHttp = $_SERVER['REQUEST_METHOD'];
+$datosPeticion = ($metodoHttp === 'GET') ? $_GET : $_POST;
+$operacion = $datosPeticion['operacion'] ?? '';
+
+if (empty($operacion)) {
+    http_response_code(HttpCodigo::BAD_REQUEST->value);
+    echo json_encode(['estatus' => false, 'mensaje' => 'No se especificó la operación.']);
+    exit;
+}
+
+Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_CARTELERA_VIRTUAL, $operacion);
+
+// VALIDACIÓN 
+$reglas = CarteleraVirtual::obtenerReglas($operacion);
+
+if (!empty($reglas)) {
+    $validador = new Validador();
+    $validador->validarConjunto($datosPeticion, $reglas);
+
+    if ($validador->tieneErrores()) {
+        $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::BAD_REQUEST->value;
+        http_response_code($codigoHttp);
+        echo json_encode([
+            'estatus' => false, 
+            'errores' => $validador->obtenerErrores(),
+            'mensaje' => 'Datos inválidos o manipulados. La petición ha sido bloqueada.'
+        ]);
+        exit;
+    }
+}
 
 $cartelera = new CarteleraVirtual();
 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida en API'];

@@ -19,7 +19,6 @@ const Tooltips = {
             if (!bootstrap.Tooltip.getInstance(elemento)) {
                 const instancia = new bootstrap.Tooltip(elemento, configuracion);
 
-                // --- SOLUCIÓN DEFINITIVA: Exclusividad Mutua ---
                 elemento.addEventListener('show.bs.tooltip', () => {
                     // Buscamos TODOS los elementos que tengan tooltips en la página
                     const todos = document.querySelectorAll('[data-bs-toggle="tooltip"], [data-tooltip="true"]');

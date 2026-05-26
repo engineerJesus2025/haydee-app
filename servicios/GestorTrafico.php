@@ -4,6 +4,7 @@ namespace haydee\servicios;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use haydee\enums\HttpCodigo;
+use haydee\modelo\Rol;
 
 class GestorTrafico {
     private const JWT_ALGORITMO = 'HS256';
@@ -35,14 +36,19 @@ class GestorTrafico {
             if (empty($authHeader) || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
                 http_response_code(HttpCodigo::NO_AUTORIZADO->value);
                 echo json_encode(["estatus" => false, "mensaje" => "Falta el token de seguridad."]);
-                exit; 
+                exit;
             }
 
             try {
                 $decoded = JWT::decode($matches[1], new Key(JWT_SECRET, self::JWT_ALGORITMO));
                 self::$usuarioLogueado = (array) $decoded->data;
+
+                $rolModel = new Rol();
+                $rolModel->set_id_rol(self::$usuarioLogueado['rol_id']);
+                $resPermisos = $rolModel->realizar_consulta('consultar_permisos_asignados');
+                Sesiones::$permisosAPI = $resPermisos['datos'] ?? [];
             } catch (\Exception $e) {
-                // ESTE ES EL 401 QUE REACT NATIVE DEBE CAPTURAR PARA RENOVAR SESIÓN
+                // ESTE ES EL 401 QUE REACT NATIVE DEBE CAPTURAR PARA RENOVAR SESIÓN. RECORDARRRRR
                 http_response_code(HttpCodigo::NO_AUTORIZADO->value);
                 echo json_encode(["estatus" => false, "mensaje" => "Sesión inválida o expirada."]);
                 exit; 

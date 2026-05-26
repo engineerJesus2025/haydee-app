@@ -22,12 +22,9 @@ let tabla_presupuesto;
 let modal_carga = new bootstrap.Modal("#modal_carga");
 let tasa_dolar = parseFloat(localStorage.getItem("tasa_dolar") || 1).toFixed(2);
 
-// ============================================================
 // INICIALIZACIÓN
-// ============================================================
 document.addEventListener('DOMContentLoaded', () => {
     consultar();
-
     document.querySelector("#modal_presupuesto")?.addEventListener("hide.bs.modal", resetModal);
 });
 
@@ -59,12 +56,11 @@ function resetModal() {
     document.querySelectorAll("[type='checkbox']").forEach(chk => chk.checked = false);
     document.querySelectorAll('.is-valid, .is-invalid').forEach(el => el.classList.remove('is-valid', 'is-invalid'));
 
+    tasa_dolar = parseFloat(localStorage.getItem("tasa_dolar") || 1).toFixed(2);
     asignarEventosCambioMoneda();
 }
 
-// ============================================================
 // FUNCIONES AUXILIARES DE UI (agregar/eliminar filas, etc.)
-// ============================================================
 function agregar_fila_presupuesto(e) {
     if (typeof e.preventDefault === 'function') {
         e.preventDefault();
@@ -610,9 +606,7 @@ function asignarEventosCambioMoneda(){
     });
 }
 
-// ============================================================
 // CONSULTAS
-// ============================================================
 async function consultar() {
     const formatoPeriodo = (cell) => {
         const row = cell.getData();
@@ -622,7 +616,11 @@ async function consultar() {
         return `<div class="fw-bold">${textoFecha}</div>`;
     };
 
-    const formatoMonto = (cell) => `${parseFloat(cell.getValue()).toFixed(2)} Bs. / ${(cell.getValue() / tasa_dolar).toFixed(2)} $`;
+    const formatoMonto = (cell) => {
+        const data = cell.getData();
+        const tasaHistorica = parseFloat(data.tasa_dolar) || 1; // Tasa de la BD
+        return `${parseFloat(data.total_estimado).toFixed(2)} Bs. / ${(data.total_estimado / tasaHistorica).toFixed(2)} $`;
+    };
 
     const formatoBotones = (cell) => {
         const id = cell.getData().id_presupuesto;
@@ -683,14 +681,15 @@ async function consultar() {
 
 // Función asíncrona para Vista Previa
 async function mostrarVistaPrevia(data) {
-    // Formateo rápido de los datos base (memoria de Tabulator)
     let [anio, mes] = data.fecha.split('-');
     document.getElementById("vp_periodo").textContent = `${FormatoFechas.nombreMes(parseInt(mes).toString().padStart(2,0))} ${anio}`.toUpperCase();
     
     // Totales (Usando la variable global tasa_dolar)
+    const tasaHistorica = parseFloat(data.tasa_dolar) || 1;
     let totalBs = parseFloat(data.total_estimado) || 0;
+
     document.getElementById("vp_total_bs").textContent = `${totalBs.toFixed(2)} Bs.`;
-    document.getElementById("vp_total_usd").textContent = `Ref: ${(totalBs / tasa_dolar).toFixed(2)} $`;
+    document.getElementById("vp_total_usd").textContent = `Ref: ${(totalBs / tasaHistorica).toFixed(2)} $`;
 
     document.getElementById("vp_observacion").textContent = data.observacion || 'Sin observaciones.';
 
@@ -718,7 +717,7 @@ async function mostrarVistaPrevia(data) {
         // Actualizamos la cuota de reserva real
         let reservaBs = parseFloat(pres.cuota_reserva) || 0;
         document.getElementById("vp_reserva_bs").textContent = `${reservaBs.toFixed(2)} Bs.`;
-        document.getElementById("vp_reserva_usd").textContent = `Ref: ${(reservaBs / tasa_dolar).toFixed(2)} $`;
+        document.getElementById("vp_reserva_usd").textContent = `Ref: ${(reservaBs / tasaHistorica).toFixed(2)} $`;
 
         // Renderizado de detalles
         if (pres.detalles && pres.detalles.length > 0) {
@@ -788,14 +787,21 @@ async function consultarInformacionFormulario() {
     const formData = new FormData();
     formData.append('operacion', 'consultar_meses_faltantes');
     const respuesta = await Peticiones.enviar(formData);
+
+
+
     Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
         const meses = respuestaServidor.datos || [];
+            let boton_registrar = document.getElementById('boton_nuevo_registro');
         if (meses.length === 0) {
-            let boton_registrar = document.getElementById('boton_registrar');
             if (!boton_registrar) return;
             boton_registrar.nextElementSibling.textContent = "No hay meses para definir presupuesto";
             boton_registrar.setAttribute('style', 'display:none');
             return;
+        }
+        else if(boton_registrar.getAttribute('style').includes("display:none")){
+            boton_registrar.removeAttribute('style');
+            boton_registrar.nextElementSibling.textContent = "";
         }
 
         select_mes.innerHTML = '';
@@ -1018,6 +1024,7 @@ async function modificar_formulario(e) {
     Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
         let presupuesto = respuestaServidor.datos;
 
+        tasa_dolar = parseFloat(presupuesto.tasa_dolar) || 1;
         // Mostrar la fecha en el select (puede que no esté en la lista, así que la creamos)
         let [anio, mes] = presupuesto.fecha.split('-');
         mes = parseInt(mes);
@@ -1129,7 +1136,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const stepsPrincipal = [
         { element: '.page-header', popover: { title: 'Gestión de Presupuestos', description: 'Aquí planificas los gastos del mes siguiente para calcular cuánto deberá pagar cada apartamento.', side: "bottom", align: 'center' } },
         // Usamos una lógica segura para encontrar el botón, incluso si está oculto por validaciones PHP
-        { element: document.querySelector('#boton_registrar') || '.card', popover: { title: 'Nuevo Presupuesto', description: 'Si hay meses pendientes por planificar, usa este botón para iniciar la carga de gastos estimados.', side: "bottom", align: 'start' } },
+        { element: document.querySelector('#boton_nuevo_registro') || '.card', popover: { title: 'Nuevo Presupuesto', description: 'Si hay meses pendientes por planificar, usa este botón para iniciar la carga de gastos estimados.', side: "bottom", align: 'start' } },
         { element: '#tabla_presupuesto', popover: { title: 'Historial', description: 'Lista de presupuestos registrados. Puedes ver el monto total esperado y la cuota de reserva asignada.', side: 'top', align: 'center' } }
     ];
 

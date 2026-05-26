@@ -78,7 +78,7 @@ const Notificaciones = {
                 let filaEncontrada = filas.find(fila => {
                     let data = fila.getData();
                     
-                    // 1. SI HAY COLUMNA EXPLÍCITA:
+                    // SI HAY COLUMNA EXPLÍCITA:
                     if (campoBusqueda) {
                         let valor = data[campoBusqueda];
                         if (typeof valor === 'string' && valor.includes(',')) {
@@ -86,7 +86,6 @@ const Notificaciones = {
                         }
                         return String(valor) === String(idBuscar);
                     } 
-                    // 2. AUTO-DETECCIÓN INTELIGENTE:
                     else {
                         let clavePrimaria = Object.keys(data).find(key => key.startsWith('id_'));
                         if (clavePrimaria) {

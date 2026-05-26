@@ -1,15 +1,15 @@
 document.addEventListener("DOMContentLoaded", function () {
-    // 1. CAPTURAMOS LOS ELEMENTOS DEL DOM
+    // CAPTURAMOS LOS ELEMENTOS DEL DOM
     const toggle = document.getElementById('header-toggle');
     const nav = document.getElementById('nav-bar');
     const bodypd = document.getElementById('body-pd') || document.body;
     const headerpd = document.getElementById('header');
     const enlaces = document.querySelectorAll(".collapse a");
+    const iconoMenuUsuario = document.querySelectorAll('.icono_menu_usuario');
 
-    // --- NUEVO: ALMACÉN DE TOOLTIPS DEL MENÚ ---
     let tooltipsMenu = [];
 
-    // 2. INICIALIZAR TOOLTIPS DE BOOTSTRAP (Lo subimos para usarlo globalmente aquí)
+    // INICIALIZAR TOOLTIPS DE BOOTSTRAP (Lo subimos para usarlo globalmente aquí)
     if (typeof bootstrap !== 'undefined') {
         const navLinks = document.querySelectorAll('.nav_link, .nav_logo');
         const tooltipConfig = { placement: 'right', animation: true, trigger: 'hover' };
@@ -23,7 +23,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // --- NUEVO: Función para prender/apagar SOLO los tooltips del menú ---
+    // Función para prender/apagar SOLO los tooltips del menú ---
     const manejarTooltipsMenu = (menuExpandido) => {
         tooltipsMenu.forEach(t => {
             if (menuExpandido) t.disable();  // Los apaga si el menú está abierto
@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     };
 
-    // 3. INICIALIZACIÓN MÓVIL
+    // INICIALIZACIÓN MÓVIL
     if (window.innerWidth < 769 && nav) {
         nav.classList.remove('show');
         if (toggle) toggle.classList.remove('bi-x-lg');
@@ -47,7 +47,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // Ajustamos los tooltips del menú en la carga inicial
     if (nav) manejarTooltipsMenu(nav.classList.contains('show'));
 
-    // 4. LÓGICA DE APERTURA Y CIERRE (TOGGLE)
+    // TOGGLE
     if (toggle && nav) {
         toggle.addEventListener('click', () => {
             nav.classList.toggle('show');
@@ -60,7 +60,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // 5. CERRAR AL HACER CLIC AFUERA (Solo móviles)
+    // CERRAR AL HACER CLIC AFUERA (Solo móviles)
     document.addEventListener('click', (e) => {
         if (window.innerWidth < 769 && nav && nav.classList.contains('show')) {
             if (!nav.contains(e.target) && toggle && !toggle.contains(e.target)) {
@@ -75,10 +75,10 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    // 6. AUTO-SCROLL AL MÓDULO ACTIVO
+    // AUTO-SCROLL AL MÓDULO ACTIVO
     const activeLink = document.querySelector('.nav_link.active');
     if (activeLink) {
-        // Usamos un pequeño timeout de 100ms para esperar a que 
+        // timeout de 100ms para esperar a que 
         // las transiciones de CSS del menú terminen de acomodarse.
         setTimeout(() => {
             activeLink.scrollIntoView({ 
@@ -87,4 +87,8 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         }, 100);
     }
+
+    iconoMenuUsuario?.forEach(i=> {
+        if (i.closest("a").classList.contains("active")) i.setAttribute("style","#ddd")
+    });
 });

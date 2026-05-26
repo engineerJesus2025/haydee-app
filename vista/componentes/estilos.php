@@ -15,11 +15,11 @@
 <!-- Estilos personalizados globales -->
 <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/dist/app-core.min.css">
 
-<!-- <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/src/driver.css"> -->
-<!-- <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/estilos_generales.css">
-<link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/nav.css">
-<link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/header.css">
-<link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/tabulador.css">
-<link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/notificaciones.css">
-<link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/estilos_modal_carga.css">
-<link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/busqueda_tabla.css"> -->
+<!-- <link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/src/driver.css">
+<link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/src/estilos_generales.css">
+<link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/src/nav.css">
+<link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/src/header.css">
+<link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/src/tabulador.css">
+<link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/src/notificaciones.css">
+<link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/src/estilos_modal_carga.css">
+<link rel="stylesheet" type="text/css" href="<?php echo URL_BASE; ?>recursos/css/src/busqueda_tabla.css"> -->

@@ -130,7 +130,7 @@ async function realizarLogin() {
         formData.append('g-recaptcha-response', recaptchaToken);
     }
 
-    const resultado = await Peticiones.enviar(formData, "", true);
+    const resultado = await Peticiones.enviar(formData, "", true, true);
 
     if (resultado.estatus) {
         await obtenerTasaDolar();

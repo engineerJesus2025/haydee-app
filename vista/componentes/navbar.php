@@ -27,7 +27,7 @@ $elementos_menu = obtenerElementosMenu($modulo, $accion);
             </a>
         </div>
         <div id="nav-accordion" class="w-100 nav_scrollable_content">
-            <div class="nav_list mt-3 ps-2 pe-2">
+            <div class="nav_list mt-1 ps-2 pe-2">
                 
                 <?php foreach ($elementos_menu as $item): ?>
                     

@@ -89,6 +89,10 @@
 
     /* Modal carga*/
     --ch-loader-track: #222;
+
+    --ch-shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    --ch-shadow: 0 0.5rem 1rem rgba(33, 43, 54, 0.15); /* Un tono ligeramente azulado para armonizar con tus títulos */
+    --ch-shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
 }
 
 /* =========================================================
@@ -172,6 +176,10 @@
 
     /* Modal carga*/
     --ch-loader-track: #EEE;
+
+    --ch-shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.4);
+    --ch-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.6);
+    --ch-shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.85);
 }
 
 /* =========================================================
@@ -433,4 +441,17 @@ button:disabled { cursor: not-allowed; }
 .modal-body .boton_intercambio,
 .modal-body .boton_intercambio_cuota {
     margin-bottom: 1.5rem !important;
+}
+
+/* =========================================================
+   SOBRESCRIBIR SOMBRAS BOOTSTRAP (LIGHT & DARK)
+   ========================================================= */
+.shadow-sm { 
+    box-shadow: var(--ch-shadow-sm) !important; 
+}
+.shadow { 
+    box-shadow: var(--ch-shadow) !important; 
+}
+.shadow-lg { 
+    box-shadow: var(--ch-shadow-lg) !important; 
 }

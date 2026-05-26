@@ -34,6 +34,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.querySelectorAll(".tasa_dolar").forEach(input => input.value = tasa_dolar);
 
+    formulario_usar.addEventListener("input", (e) => {
+        if (e.target.matches(".tasa_dolar")) {
+            document.querySelectorAll(".tasa_dolar").forEach(input => input.value = e.target.value);
+        }
+    });
+
     // Delegación de eventos para calcular Dólares dinámicamente
     formulario_usar.addEventListener("input", calcularDolares);
 
@@ -41,7 +47,6 @@ document.addEventListener("DOMContentLoaded", () => {
     formulario_usar.addEventListener("change", mostrarCamposMetodoPago);
 
 });
-
 
 // ============================================================
 // FUNCIONES AUXILIARES DE UI
@@ -110,7 +115,7 @@ function calcularDolares(e) {
         const tarjeta = e.target.closest(".detalle-pago");
         const inputBs = tarjeta.querySelector(".monto");
         const inputTasa = tarjeta.querySelector(".tasa_dolar");
-        const inputDolar = tarjeta.querySelector(".monto_dolar");
+        const inputDolar = tarjeta.querySelector(".monto_usd_visual");
 
         let bolivares = parseFloat(inputBs.value) || 0;
         let tasa = parseFloat(inputTasa.value) || 0;
@@ -320,28 +325,28 @@ async function consultar() {
     Tablas.inicializarBuscadorGlobal(tabla_pagos, "busqueda_global", columnas);
 }
 
-// ============================================================
 // RECOLECTOR DTO (Prepara el FormData unificado)
-// ============================================================
 function recolectarDatosFormData(operacion, id_pago = null) {
     let formData = new FormData();
     formData.append("operacion", operacion);
     if (id_pago) formData.append("id_pago", id_pago);
 
-    // Cabecera
+    // Cabecera (Maestro)
     formData.append("apartamento_id", document.getElementById("apartamento_id").value);
     formData.append("mensualidad_id", document.getElementById("mensualidad_id").value);
-    // formData.append("monto_mensualidad", document.getElementById("monto_mensualidad").value);
     formData.append("estado", document.getElementById("estado")?.value);
     formData.append("observacion", document.getElementById("observacion").value);
+    
+    // Capturamos la tasa maestro del primer input disponible
+    let tasaMaestro = document.querySelector(".tasa_dolar").value;
+    formData.append("tasa_dolar", tasaMaestro);
 
-    // Detalles (ConstructorDetalles PHP espera arrays paralelos para escalar, y archivos mapeados por índice)
+    // Detalles
     const bloques = document.querySelectorAll("#detalles_container .detalle-pago");
     
     bloques.forEach((bloque, index) => {
         formData.append("fecha_pago[]", bloque.querySelector(".fecha_pago").value);
         formData.append("monto[]", bloque.querySelector(".monto").value);
-        formData.append("monto_dolar[]", bloque.querySelector(".monto_dolar").value);
         
         let tipo = bloque.querySelector(".tipo_pago").value;
         formData.append("tipo_pago[]", tipo);
@@ -350,17 +355,14 @@ function recolectarDatosFormData(operacion, id_pago = null) {
             formData.append("referencia[]", bloque.querySelector(".referencia").value);
             formData.append("banco_id[]", bloque.querySelector(".banco_id").value);
             
-            // Adjuntar archivo físico al índice correspondiente
             let inputImagen = bloque.querySelector(".imagen");
             if (inputImagen && inputImagen.files.length > 0) {
                 formData.append(`imagen_${index}`, inputImagen.files[0]);
             }
             
-            // Adjuntar imagen existente (si aplica, para edición)
             let inputExistente = bloque.querySelector("input[name='imagen_existente[]']");
             formData.append("imagen_existente[]", inputExistente ? inputExistente.value : "");
         } else {
-            // Rellenar vacíos para mantener alineación de arrays en PHP
             formData.append("referencia[]", "");
             formData.append("banco_id[]", "");
             formData.append("imagen_existente[]", "");
@@ -420,8 +422,12 @@ async function prepararEdicion(id) {
 
             nuevoBloque.querySelector(".fecha_pago").value = det.fecha;
             nuevoBloque.querySelector(".monto").value = det.monto;
-            nuevoBloque.querySelector(".monto_dolar").value = det.monto_dolar;
-            nuevoBloque.querySelector(".tasa_dolar").value = tasa_dolar;
+            nuevoBloque.querySelector(".tasa_dolar").value = det.tasa_dolar || tasa_dolar;
+            
+            let inputDolar = nuevoBloque.querySelector(".monto_usd_visual");
+            if (inputDolar) {
+                inputDolar.value = (det.monto / (det.tasa_dolar || tasa_dolar)).toFixed(2);
+            }
             
             let selectTipo = nuevoBloque.querySelector(".tipo_pago");
             selectTipo.value = det.tipo_pago;
@@ -497,9 +503,7 @@ async function eliminar(id) {
     });
 }
 
-// ============================================================
 // VISTA PREVIA
-// ============================================================
 async function mostrarVistaPrevia(id) {
     let formData = new FormData();
     formData.append("operacion", "consultar_pago");
@@ -521,7 +525,7 @@ async function mostrarVistaPrevia(id) {
         // Estado con Colores Dinámicos
         const config = obtenerConfigEstadoPago(data.estado);
         const estadoEl = document.getElementById("vp_estado");
-        
+
         // Inyectamos el Soft Badge simplificado
         estadoEl.className = ""; 
         estadoEl.innerHTML = ComponentesUI.crearSoftBadge(config.color, config.icono, config.texto);
@@ -529,12 +533,19 @@ async function mostrarVistaPrevia(id) {
         // Observación
         document.getElementById("vp_observacion").textContent = data.observacion || 'Sin observaciones adicionales.';
 
+        function formadoMontoDolar(cell) {
+            const data = cell.getData();
+            const montoBs = parseFloat(data.monto) || 0;
+            const tasa = parseFloat(data.tasa_dolar) || 1;
+            return `${(montoBs / tasa).toFixed(2)} $`;
+        }
+
         // Definir columnas de Tabulator
         const columnas = [
             { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
             { title: "Fecha", field: "fecha", formatter: (cell) => FormatoFechas.formatoUsuario(cell.getValue()), minWidth: 100, responsive: 0 },
             { title: "Monto BS", field: "monto", formatter: (cell) => `${cell.getValue()} Bs`, minWidth: 100 },
-            { title: "Monto $", field: "monto_dolar", formatter: (cell) => `${cell.getValue()} $`, minWidth: 100 },
+            { title: "Monto $", field: "tasa_dolar", formatter: formadoMontoDolar, minWidth: 100 },
             { title: "Método", field: "tipo_pago", minWidth: 120 },
             { title: "Banco", field: "nombre_banco", formatter: (cell) => cell.getValue() || '<span class="text-muted">N/A</span>', minWidth: 120 },
             { title: "Referencia", field: "referencia", formatter: (cell) => cell.getValue() || '<span class="text-muted">N/A</span>', minWidth: 120 },
