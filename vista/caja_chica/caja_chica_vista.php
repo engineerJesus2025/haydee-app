@@ -7,15 +7,13 @@
 		require_once ROOT_PATH . "/vista/componentes/estilos.php";
 	?>
   <style>
-  /*@media (min-width: 992px) {
-    .border-end-lg {
-        border-right: 1px solid #dee2e6 !important;
+  /* Solo aplica el borde derecho en pantallas grandes (992px o más) */
+  @media (min-width: 992px) {
+    #cabecera_caja > .border-end-lg {
+      border-right: 1px solid #dee2e6 !important;
     }
-  }*/
-  #cabecera_caja >  .border-end-lg{
-    border-right: 1px solid #dee2e6 !important;
   }
-  </style>
+</style>
 </head>
 
 <body id="body-pd" class="body-pd">  
@@ -37,23 +35,25 @@
 					<div class="row mb-5">
                         <div class="col-12 mt-2">
                           <div class="card p-0 overflow-hidden shadow">
-                            <div class="border-bottom px-4 py-3 d-flex justify-content-between align-items-center card-item">
+                            <div class="border-bottom px-4 py-3 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 card-item">
                                 <h5 class="mb-0 fw-bold">
                                     <i class="bi bi-calendar2-date text-primary me-2"></i> Período de Evaluación
                                 </h5>
-                                <span id="span_caja_activa" class="badge badge-soft-secondary rounded-pill  fs-6 px-3 py-2 shadow-sm d-flex align-items-center">
+                                <span id="span_caja_activa" class="badge badge-soft-secondary rounded-pill fs-6 px-3 py-2 shadow-sm d-flex align-items-center">
                                     <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                                     Cargando estado...
                                 </span>
                             </div>
                             <div class="card-body p-4">
-                                <div class="row align-items-stretch mb-2" id="cabecera_caja">
+                                <div class="row align-items-stretch mb-2 gy-4" id="cabecera_caja">
+    
                                     <div class="col-lg-4 border-end-lg d-flex flex-column justify-content-center">
                                         <p class="text-muted small text-uppercase fw-bold mb-2">Seleccione el mes</p>
                                         <select class="form-select shadow-sm" id="mes_select">
                                             <option selected disabled>Cargando registros...</option>
                                         </select>
-                                        <div class="d-flex gap-2 mt-3" id="botones_movimientos" hidden>
+                                        
+                                        <div class="d-flex flex-wrap gap-2 mt-3" id="botones_movimientos" hidden>
                                             <button class="btn btn-primary btn-sm px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#modal_registro_gastos">
                                                 <i class="bi bi-plus-lg me-1"></i> Nuevo Gasto
                                             </button>
@@ -62,12 +62,14 @@
                                             </button>
                                         </div>
                                     </div>
+                                    
                                     <div class="col-lg-4 border-end-lg px-lg-4 d-flex flex-column justify-content-center align-self-start">
                                         <p class="text-muted small text-uppercase fw-bold mb-2">Fondo Actual de Caja</p>
                                         <h5 id="span_fondo_fijo" class="fw-bolder mb-0 placeholder-glow">
                                             <span class="placeholder col-8 rounded "></span>
                                         </h5>
                                     </div>
+
                                     <div class="col-lg-4 ps-lg-4 d-flex flex-column justify-content-center" id="contenedor_tarjeta_nota">
                                         <div class="d-flex justify-content-between align-items-center mb-2">
                                             <p class="text-muted small text-uppercase fw-bold mb-0">
@@ -97,6 +99,7 @@
                                             </div>
                                         </div>
                                     </div>
+
                                 </div>
                             </div> 
                           </div> 

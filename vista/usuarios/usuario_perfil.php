@@ -233,7 +233,9 @@
                     <h5 class="modal-title fw-bold">
                         <i class="bi bi-bell-fill me-2"></i>Notificaciones
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div class="d-flex align-items-center">
+                        <button type="button" class="btn-close btn-close-white m-0" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
                 </div>
                 <div class="modal-body rounded-bottom">
                     <div class="d-flex justify-content-between align-items-center mb-4">                                 
@@ -244,7 +246,7 @@
                     </div>
                     <div id="tabla_notificaciones" class="tabla-sistema-haydee"></div>
                 </div>
-                <div class="modal-footer border-top-0 justify-content-center">
+                <div class="modal-footer justify-content-end">
                     <button type="button" class="btn btn-soft-secondary px-4" data-bs-dismiss="modal">
                         <i class="bi bi-x-circle me-2"></i> Cerrar
                     </button>

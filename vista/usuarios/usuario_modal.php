@@ -6,12 +6,13 @@
                     <i class="bi bi-person-plus me-2" id="icono_titulo_modal"></i>
                     <span id="titulo_modal">Registrar Usuario</span>
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="d-flex align-items-center">
+                    <button type="button" class="btn-close btn-close-white m-0" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
             </div>
             
             <div class="modal-body rounded-bottom vp-body p-4">
                 <form id="form_usuario" name="form_usuario">
-                    
                     <div class="row mb-3">
                         <div class="col-md-6 mb-3 mb-md-0">
                             <label for="nombre" class="form-label fw-semibold">Nombre del usuario <span class="text-danger">*</span></label>
@@ -67,8 +68,8 @@
                                 <div class="progress mt-2 mb-1 w-100" style="height: 6px; border-radius: 10px;">
                                     <div id="barra_seguridad" class="progress-bar bg-danger transition-all" role="progressbar" style="width: 0%; transition: width 0.4s ease;"></div>
                                 </div>
+                                <small id="texto_seguridad" class="fw-medium text-danger d-block w-100 invalid-feedback" style="font-size: 0.75rem;">Nivel de seguridad: Vacío</small>
                             </div>
-                            <small id="texto_seguridad" class="fw-medium text-danger d-block w-100 invalid-feedback" style="font-size: 0.75rem;">Nivel de seguridad: Vacío</small>
                         </div>
                         
                         <div class="col-md-6">
@@ -83,20 +84,18 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="row mt-4">
-                        <div class="col-md-12 text-end"> 
-                            <button type="button" class="btn btn-soft-secondary px-4 me-2" data-bs-dismiss="modal">
-                                <i class="bi bi-x-circle me-2"></i> Cancelar
-                            </button>
-                            <button class="btn btn-primary px-4 shadow-sm" type="submit" id="boton_formulario">
-                                <i class="bi bi-check2-circle me-2"></i>
-                                <span id="texto_boton_formulario">Guardar Usuario</span>
-                            </button>
-                        </div>
-                    </div>
-                    
                 </form>
+            </div>
+            <div class="modal-footer">
+                <div class="col-md-12 text-end"> 
+                    <button type="button" class="btn btn-soft-secondary px-4 me-2 mb-2" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-2"></i> Cancelar
+                    </button>
+                    <button class="btn btn-primary px-4 shadow-sm mb-2" type="submit" id="boton_formulario">
+                        <i class="bi bi-check2-circle me-2"></i>
+                        <span id="texto_boton_formulario">Guardar Usuario</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>

@@ -14,7 +14,7 @@
                 <h4 id="vp_valor" class="text-primary mb-0 fw-bold text-wrap" style="word-break: break-word;">---</h4>
             </div>
             
-            <div class="modal-footer border-top-0 justify-content-center">
+            <div class="modal-footer justify-content-end">
                 <button type="button" class="btn btn-soft-secondary px-4" data-bs-dismiss="modal">
                     <i class="bi bi-x-circle me-2"></i> Cerrar
                 </button>

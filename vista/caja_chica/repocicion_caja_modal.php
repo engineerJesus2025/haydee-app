@@ -6,7 +6,13 @@
                     <i class="bi bi-arrow-repeat" id="icono_titulo_modal_repocicion"></i>
                     <span class="ms-2" id="titulo_modal_reponer_caja">Reponer Caja</span>
                 </h1>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="d-flex align-items-center">
+                    <button type="button" class="btn btn-link text-white p-1 me-3 lh-1 d-md-none" id="btn_ayuda_modal" title="Ayuda de este formulario" data-tooltip="true">
+                        <i class="bi bi-question-circle-fill fs-4"></i>
+                    </button>
+                    
+                    <button type="button" class="btn-close btn-close-white m-0" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
             </div>
             <div class="modal-body rounded-bottom">
                 <form class="m-3" id="form_registro_gasto">
@@ -38,18 +44,18 @@
                            <p class="text-muted">Total del Fondos Gastados: <b id="fondos_gastados"></b></p>    
                         </div>
                     </div>
-                    <div class="row mt-5 mb-2">
-                        <div class="col-md-12 text-end"> 
-                           <button type="button" class="btn btn-soft-secondary me-3" data-bs-dismiss="modal">
-                              <i class="bi bi-x-circle me-2"></i> Cancelar
-                           </button>
-                           <button class="btn btn-primary px-3 shadow-sm" type="submit" id="boton_formulario">
-                               <i class="bi bi-check2-circle me-2"></i>
-                               <span id="texto_boton_formulario">Guardar Repocición</span>
-                           </button>
-                        </div>
-                    </div>
                 </form>
+            </div>
+            <div class="modal-footer">
+                <div class="col-md-12 text-end">
+                   <button type="button" class="btn btn-soft-secondary me-3 mb-2" data-bs-dismiss="modal">
+                      <i class="bi bi-x-circle me-2"></i> Cancelar
+                   </button>
+                   <button class="btn btn-primary px-3 shadow-sm mb-2" type="submit" id="boton_formulario">
+                       <i class="bi bi-check2-circle me-2"></i>
+                       <span id="texto_boton_formulario">Guardar Repocición</span>
+                   </button>
+                </div>
             </div>
         </div>
     </div>

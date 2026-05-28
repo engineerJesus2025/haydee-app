@@ -1,12 +1,18 @@
 <div class="modal fade" id="modal_pagos" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
     <div class="modal-dialog modal-dialog-scrollable modal-xl">
         <div class="modal-content card shadow-sm  mt-4 mb-4">
-            <div class="modal-header card-header bg-primary text-white fw-bold">
-                <h1 class="modal-title fs-5">
+            <div class="modal-header card-header bg-primary text-white fw-bold d-flex align-items-center justify-content-between">
+                <h1 class="modal-title fs-5 mb-0 d-flex align-items-center">
                     <i class="bi bi-cash-stack" id="icono_titulo_modal"></i>
                     <span class="ms-2" id="titulo_modal"><?php echo $esPropietario ? 'Reportar Pago' : 'Registrar Pago'; ?></span>
                 </h1>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="d-flex align-items-center">
+                    <button type="button" class="btn btn-link text-white p-1 me-3 lh-1 d-md-none" id="btn_ayuda_modal" title="Ayuda de este formulario" data-tooltip="true">
+                        <i class="bi bi-question-circle-fill fs-4"></i>
+                    </button>
+                    
+                    <button type="button" class="btn-close btn-close-white m-0" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
             </div>
             <div class="modal-body rounded-bottom">
                 <form id="form_pagos" name="form_pagos">
@@ -167,19 +173,18 @@
                             </div>
                         </div>
                     </div>
-
-                    <div class="row mt-5 mb-2">
-                        <div class="col-md-12 text-end"> 
-                            <button type="button" class="btn btn-soft-secondary me-3" data-bs-dismiss="modal">
-                                <i class="bi bi-x-circle me-2"></i> Cancelar
-                            </button>
-                            <button class="btn btn-primary px-3 shadow-sm" type="submit" id="boton_formulario">
-                                <i class="bi bi-check2-circle me-2"></i>
-                                <span id="texto_boton_formulario">Guardar Pago</span>
-                            </button>
-                        </div>
-                    </div>
                 </form>
+            </div>
+            <div class="modal-footer">
+             <div class="col-md-12 text-end">
+                 <button type="button" class="btn btn-soft-secondary me-3 mb-2" data-bs-dismiss="modal">
+                     <i class="bi bi-x-circle me-2"></i> Cancelar
+                 </button>
+                 <button class="btn btn-primary px-3 shadow-sm mb-2" type="submit" id="boton_formulario">
+                     <i class="bi bi-check2-circle me-2"></i>
+                     <span id="texto_boton_formulario">Guardar Pago</span>
+                 </button>
+             </div>
             </div>
         </div>
     </div>

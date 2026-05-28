@@ -50,17 +50,18 @@
                         </div>
                     </div>
                     
-                    <div class="row mt-5 mb-2">
-                        <div class="col-md-12 text-end"> 
-                            <button type="button" class="btn btn-soft-secondary me-2 px-4" data-bs-dismiss="modal">Cancelar</button>
-                            
-                            <button type="submit" name="formato" value="pdf" class="btn btn-danger px-4 shadow-sm" id="btn_generar_reporte_pdf" disabled>
-                                <i class="bi bi-file-earmark-pdf me-2"></i>Generar PDF
-                            </button>
-                            <button type="submit" name="formato" hidden value="excel" class="btn btn-success px-4 shadow-sm" disabled>
-                                <i class="bi bi-file-earmark-excel me-2"></i>Excel
-                            </button>
-                        </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="col-md-12 text-end">
+                        <button type="button" class="btn btn-soft-secondary me-3 mb-2" data-bs-dismiss="modal">
+                            <i class="bi bi-x-circle me-2"></i> Cancelar
+                        </button>
+                        <button type="submit" name="formato" hidden value="excel" class="btn btn-success px-4 shadow-sm mb-2" disabled>
+                            <i class="bi bi-file-earmark-excel me-2"></i>Excel
+                        </button>
+                        <button type="submit" name="formato" value="pdf" class="btn btn-danger px-4 shadow-sm mb-2" id="btn_generar_reporte_pdf" disabled>
+                            <i class="bi bi-file-earmark-pdf me-2"></i>Generar PDF
+                        </button>
                     </div>
                 </div>
             </form>

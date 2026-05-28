@@ -18,7 +18,6 @@
                     
                     <span id="vp_rol_badge" class="badge badge-soft-secondary fs-6 px-3 py-2 shadow-sm">---</span>
                 </div>
-
                 <div class="p-3">
                     <ul class="list-group list-group-flush">
                         
@@ -29,17 +28,14 @@
                             </div>
                             <span id="vp_correo" class="fw-bold text-wrap">---</span>
                         </li>
-                        
                     </ul>
                 </div>
             </div>
-            
-            <div class="modal-footer border-top-0 justify-content-center">
+            <div class="modal-footer justify-content-end">
                 <button type="button" class="btn btn-soft-secondary px-4" data-bs-dismiss="modal">
                     <i class="bi bi-x-circle me-2"></i> Cerrar
                 </button>
             </div>
-            
         </div>
     </div>
 </div>

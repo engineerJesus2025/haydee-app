@@ -1,10 +1,6 @@
 const Peticiones = {
     /**
      * Envía datos al servidor soportando reescritura de métodos HTTP (POST, PUT, DELETE).
-     * @param {FormData|Object} datos - El payload a enviar.
-     * @param {string} url - URL del endpoint.
-     * @param {string} metodoHttp - Verbo REST semántico ('POST', 'PUT', 'DELETE').
-     * @param {boolean} mostrarCarga - Si se muestra el spinner.
      */
     async enviar(datos, url = "", mostrarCarga = true, metodoHttp = "POST") {
         let modalCarga = null;

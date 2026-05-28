@@ -455,3 +455,10 @@ button:disabled { cursor: not-allowed; }
 .shadow-lg { 
     box-shadow: var(--ch-shadow-lg) !important; 
 }
+
+/* Oculta el botón flotante al abrir modales, ÚNICAMENTE en pantallas de teléfonos */
+@media (max-width: 767.98px) {
+    body.modal-open #btn-ayuda-tour {
+        display: none !important;
+    }
+}

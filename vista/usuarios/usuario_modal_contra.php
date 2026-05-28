@@ -6,7 +6,9 @@
                     <i class="bi bi-key-fill" id="icono_titulo_modal"></i>
                     <span class="ms-2" id="titulo_modal">Cambiar Contraseña</span>
                 </h1>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="d-flex align-items-center">
+                    <button type="button" class="btn-close btn-close-white m-0" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
             </div>
             <div class="modal-body rounded-bottom">
                 <form id="form_usuario" name="form_usuario">

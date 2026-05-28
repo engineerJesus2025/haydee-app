@@ -19,15 +19,15 @@
                             <span class="w-100 invalid-feedback"></span>
                         </div>
                     </div>
-                    <div class="col-12 mt-2 text-end">
-                        <button type="button" class="btn btn-soft-secondary me-2 px-4" data-bs-dismiss="modal">
-                            <i class="bi bi-x-circle me-2"></i> Cancelar
-                        </button>
-                        <button class="btn btn-primary px-4 shadow-sm" id="boton_generar">
-                            <i class="bi bi-printer me-2"></i>Generar
-                        </button>
-                    </div>
                 </form>
+            </div>
+            <div class="modal-footer justify-content-end">
+                <button type="button" class="btn btn-soft-secondary me-3 mb-2" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-2"></i> Cancelar
+                </button>
+                <button class="btn btn-primary px-4 shadow-sm mb-2" id="boton_generar">
+                    <i class="bi bi-printer me-2"></i>Generar
+                </button>
             </div>
         </div>
     </div>

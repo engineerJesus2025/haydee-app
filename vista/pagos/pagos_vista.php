@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php require_once ROOT_PATH . "/vista/componentes/estilos.php"; ?>
 </head>
-
 <body id="body-pd" class="body-pd">   
     <div class="container-fluid">
         <div class="row flex-nowrap ">
