@@ -47,6 +47,9 @@ class Validador {
      */
     public function validarConjunto($datos, $reglas, $contexto = []) {
         foreach ($reglas as $campo => $regla) {
+
+            if ($campo === '__metodo_http_permitido__') continue;
+            
             $valor = $datos[$campo] ?? null;
             $tieneErrorDeFormato = false;
 
@@ -111,7 +114,7 @@ class Validador {
                 continue; 
             }
 
-            // 5. Validación EXISTS
+            // Validación EXISTS
             if (isset($regla['exists'])) {
                 $tabla = $regla['exists']['tabla'];
                 $campoBd = $regla['exists']['campo'] ?? $campo;
@@ -156,4 +159,20 @@ class Validador {
         }
         return $requerido;
     }
+
+    /**
+     * Valida de manera estricta que el método HTTP actual sea permitido por el modelo
+     */
+    public function validarMetodoHTTP($metodoActual, $reglas) {
+        if (isset($reglas['__metodo_http_permitido__'])) {
+            $permitidos = $reglas['__metodo_http_permitido__'];
+            
+            if (!in_array(strtoupper($metodoActual), $permitidos)) {
+                $this->agregarError('http_protocol', "El método {$metodoActual} no está permitido para esta operación.");
+                return false;
+            }
+        }
+        return true;
+    }
+
 }

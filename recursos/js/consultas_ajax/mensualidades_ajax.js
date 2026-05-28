@@ -427,7 +427,7 @@ function mostrarVistaPrevia(data, fecha) {
 
     setTimeout(() => {
         tablaApartamentos = Tablas.cargarTabulador("mensualidades_apartamentos", "", columnas, {
-            parametrosExtra: { operacion: "consultar_mensualidades_apartamentos", fecha: fecha },
+            parametrosExtra: { operacion: "consultar_mensualidad_apartamentos", fecha: fecha },
             cssClass: "tabla-vista-previa",
             paginaSize: 10
         });
@@ -643,7 +643,13 @@ function confirmarEliminar(fecha) {
 async function eliminarMensualidad(fecha) {
     const formData = new FormData();
     formData.append("operacion", "eliminar_mensualidad");
-    formData.append("fecha", fecha);
+
+    const partes = fecha.split('-');
+    const mes = parseInt(partes[1]);
+    const anio = parseInt(partes[0]);
+
+    formData.append("mes", mes);
+    formData.append("anio", anio);
 
     const respuesta = await Peticiones.enviar(formData);
     Validador.procesarRespuesta(respuesta, () => {

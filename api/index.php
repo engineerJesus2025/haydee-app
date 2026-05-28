@@ -1,10 +1,19 @@
 <?php
-use haydee\enums\HttpCodigo;
+// ==================== CONFIGURACIÓN DE CORS Y PROTOCOLO INTERNACIONAL ====================
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
+header("Access-Control-Allow-Methods: POST, GET, PUT, DELETE, OPTIONS");
+// Declaramos las cabeceras requeridas para el túnel JWT y el Method Override del JS
+header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With, X-HTTP-Method-Override");
+
+// FIREWALL PREFLIGHT
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
 
 require_once "../vendor/autoload.php";
+use haydee\enums\HttpCodigo;
 use haydee\servicios\GestorTrafico;
 use haydee\modelo\SeguridadIP;
 
@@ -14,30 +23,51 @@ $rutas = RUTAS_API;
 if (!array_key_exists($endpoint, $rutas) || !is_file(ROOT_PATH . "/api/" . $rutas[$endpoint])) {
     http_response_code(HttpCodigo::NO_ENCONTRADO->value);
     echo json_encode(["estatus" => false, "mensaje" => "Endpoint no encontrado"]);
-    return;
+    exit;
 }
 
-// LISTA NEGRA (Aplica para todas las APIs)
-$ipCliente = $_SERVER['REMOTE_ADDR'];
-$seguridad = new SeguridadIP();
-$seguridad->set_ip($ipCliente);
-$acceso = $seguridad->verificarListaAcceso();
+$seguridad = null;
 
-if (!$acceso['estatus']) {
-    http_response_code($acceso['codigo_http']);
-    echo json_encode(["estatus" => false, "mensaje" => $acceso['mensaje']]);
-    return;
+try {
+    // ==================== ESCUDO DE LISTA NEGRA PERIMETRAL ====================
+    $ipCliente = $_SERVER['REMOTE_ADDR'];
+    $seguridad = new SeguridadIP();
+    $seguridad->set_ip($ipCliente);
+    $acceso = $seguridad->verificarListaAcceso();
+
+    if (!$acceso['estatus']) {
+        http_response_code($acceso['codigo_http']);
+        echo json_encode(["estatus" => false, "mensaje" => $acceso['mensaje']]);
+        exit;
+    }
+
+    // INTERCEPTA Y DESCIFRA LA ENTRADA
+    GestorTrafico::interceptarEntrada($endpoint);
+
+    // ==================== SALIDA ====================
+    ob_start();
+    require_once ROOT_PATH . "/api/" . $rutas[$endpoint];
+    $respuestaLimpia = ob_get_clean();
+
+    // EL ESCUDO INTERCEPTA Y CIFRA LA SALIDA EXITOSA
+    echo GestorTrafico::interceptarSalida($respuestaLimpia);
+
+} catch (Exception $e) {
+    if (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+    
+    error_log("Colapso Crítico en API Gateway: " . $e->getMessage());
+    http_response_code(HttpCodigo::ERROR_INTERNO->value);
+    
+    // dejamos que pase por el cifrador de salida por seguridad
+    $errorJson = json_encode(["estatus" => false, "mensaje" => "Ocurrió un error crítico en el Gateway de la API."]);
+    echo GestorTrafico::interceptarSalida($errorJson);
+
+} finally {
+    if ($seguridad) {
+        $seguridad->cerrar();
+    }
+    GestorTrafico::limpiarArchivosTemporales();
+    exit;
 }
-
-
-// EL ESCUDO INTERCEPTA LA ENTRADA 
-GestorTrafico::interceptarEntrada($endpoint);
-
-// SECUESTRO DE SALIDA
-ob_start();
-require_once ROOT_PATH . "/api/" . $rutas[$endpoint];
-$respuestaLimpia = ob_get_clean();
-
-// EL ESCUDO CIFRA LA SALIDA
-echo GestorTrafico::interceptarSalida($respuestaLimpia);
-return;

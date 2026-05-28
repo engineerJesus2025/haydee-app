@@ -1,8 +1,3 @@
-/**
- * login_validar.js
- * Dependencias: Validador.js, Patrones.js, EstadoInputs.js, Peticiones.js, Alertas.js
- */
-
 let recuperacionContrasenia = { enviada: false, tiempo: null };
 let recaptchaToken = null;
 let recaptchaWidgetId = null;
@@ -130,7 +125,7 @@ async function realizarLogin() {
         formData.append('g-recaptcha-response', recaptchaToken);
     }
 
-    const resultado = await Peticiones.enviar(formData, "", true, true);
+    const resultado = await Peticiones.enviar(formData, "", true);
 
     if (resultado.estatus) {
         await obtenerTasaDolar();

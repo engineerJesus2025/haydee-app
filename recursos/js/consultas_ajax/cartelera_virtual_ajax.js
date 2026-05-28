@@ -255,13 +255,8 @@ async function eliminar(id) {
     });
 }
 
-// ============================================
-// DELEGACIÓN DE EVENTOS EN LA TABLA
-// ============================================
 /**
  * Procesa la prioridad de un aviso y devuelve su configuración visual
- * @param {string|number} prioridad - Nivel de prioridad (1, 2, 3)
- * @returns {object} { color, icono, texto }
  */
 function obtenerConfigPrioridad(prioridad) {
     const p = String(prioridad);
@@ -286,9 +281,7 @@ function obtenerConfigPrioridad(prioridad) {
     return { color, icono, texto };
 }
 
-// ============================================
 // BOTÓN ELIMINAR IMAGEN EN EL FORMULARIO DE EDICIÓN
-// ============================================
 document.querySelector("#boton_eliminar_imagen").addEventListener("click", function () {
     Swal.fire({
         title: "¿Eliminar imagen?",

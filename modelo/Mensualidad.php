@@ -7,7 +7,7 @@ use haydee\enums\TipoBaseDatos;
 
 class Mensualidad extends Conexion
 {
-    // REGLAS DE NEGOCIO (LÍMITES DE TIEMPO)
+    // LÍMITES DE TIEMPO
     private const ANIO_MINIMO_PERMITIDO = 2000;
     private const ANIO_MAXIMO_PERMITIDO = 2100;
 
@@ -25,12 +25,15 @@ class Mensualidad extends Conexion
 
     private $datos_apartamentos = [];
     private $ids_mensualidades;
+    private $correo;
 
     // REGLAS DE VALIDACIÓN (Para el Helper Validador)
     public static function obtenerReglas($operacion) {
-        $reglasGenerales = [
-            'fecha' => [
-                'regex' => '/^\d{4}-\d{2}-\d{2}$/'
+        // Reglas base de cada campo (cabecera y campos comunes)
+        $reglasCampos = [
+            'id_mensualidad' => [
+                'regex' => '/^\d+$/',
+                'exists' => ['tabla' => 'mensualidad', 'campo' => 'id_mensualidad']
             ],
             'mes' => [
                 'regex' => '/^(0?[1-9]|1[0-2])$/'
@@ -53,22 +56,93 @@ class Mensualidad extends Conexion
                 'regex' => '/^\d+$/',
                 'min' => 0,
                 'opcional' => true
+            ],
+            'apartamento_id' => [
+                'regex' => '/^\d+$/',
+                'exists' => ['tabla' => 'apartamentos', 'campo' => 'id_apartamento']
             ]
         ];
 
-        $camposPorOperacion = [
-            'registrar_mensualidad' => ['mes', 'anio', 'tasa_dolar', 'porcentaje_interes', 'limite_mensualidad'],
-            'modificar_mensualidad' => ['mes', 'anio', 'tasa_dolar', 'porcentaje_interes', 'limite_mensualidad'],
-            'eliminar_mensualidad'  => ['fecha'],
-            'consultar_mensualidades_apartamentos' => ['fecha'],
-            'consultar_tasa_dolar'  => ['mes', 'anio']
+        $configPorOperacion = [
+            // ==================== CONSULTAS (GET) ====================
+            'consultarPorMeses' => [
+                'metodo_http' => ['GET'],
+                'campos' => []   // sin campos específicos, solo consulta general
+            ],
+            'verificarMeses' => [
+                'metodo_http' => ['GET'],
+                'campos' => []
+            ],
+            'consultar_mensualidad_apartamentos' => [
+                'metodo_http' => ['GET'],
+                'campos' => ['mes', 'anio']
+            ],
+            'consultar_meses_mensualidad' => [
+                'metodo_http' => ['GET'],
+                'campos' => []
+            ],
+            'consultar_tasa_dolar_mensualidades' => [
+                'metodo_http' => ['GET'],
+                'campos' => ['mes', 'anio']
+            ],
+            'consultar_kpis' => [
+                'metodo_http' => ['GET'],
+                'campos' => []
+            ],
+            'consultar_desglose' => [
+                'metodo_http' => ['GET'],
+                'campos' => ['id_mensualidad']
+            ],
+            'consultar_presupuestos_asociados' => [
+                'metodo_http' => ['GET'],
+                'campos' => ['ids_mensualidades']   // campo especial, se valida manualmente
+            ],
+            'consultar_cabecera_mensualidad' => [
+                'metodo_http' => ['GET'],
+                'campos' => ['mes', 'anio']
+            ],
+            'consultar_estadisticas_inicio' => [
+                'metodo_http' => ['GET'],
+                'campos' => []
+            ],
+            'consultar_tarjetas_resumen' => [
+                'metodo_http' => ['GET'],
+                'campos' => []
+            ],
+
+            // ==================== ESCRITURA (POST / PUT / DELETE) ====================
+            'registrar' => [
+                'metodo_http' => ['POST'],
+                'campos' => ['mes', 'anio', 'tasa_dolar', 'porcentaje_interes', 'limite_mensualidad']
+            ],
+            'modificar' => [
+                'metodo_http' => ['PUT', 'POST'],
+                'campos' => ['mes', 'anio', 'tasa_dolar', 'porcentaje_interes', 'limite_mensualidad']
+            ],
+            'eliminar' => [
+                'metodo_http' => ['DELETE', 'POST'],
+                'campos' => ['mes', 'anio']
+            ]
         ];
 
-        if (isset($camposPorOperacion[$operacion])) {
-            return array_intersect_key($reglasGenerales, array_flip($camposPorOperacion[$operacion]));
+        if (isset($configPorOperacion[$operacion])) {
+            $config = $configPorOperacion[$operacion];
+            // Filtrar solo los campos que necesita la operación
+            $reglasFiltradas = array_intersect_key($reglasCampos, array_flip($config['campos']));
+            // Si el campo 'ids_mensualidades' no está en reglasCampos, lo añadimos ad-hoc
+        if (in_array('ids_mensualidades', $config['campos'])) {
+            $reglasFiltradas['ids_mensualidades'] = [
+                'regex' => '/^[\d,]+$/'
+            ];
         }
-        return [];
+        // Agregar la validación del método HTTP
+        $reglasFiltradas['__metodo_http_permitido__'] = $config['metodo_http'];
+        return $reglasFiltradas;
     }
+
+    // Si la operación no está definida, se devuelve array vacío (sin reglas)
+    return [];
+}
 
     public static function obtenerReglasDetalles() {
         return [
@@ -88,9 +162,7 @@ class Mensualidad extends Conexion
         ];
     }
 
-    // ====================================================================
     // GETTERS Y SETTERS
-    // ====================================================================
     public function set_id_mensualidad($id) { $this->id_mensualidad = $id; }
     public function get_id_mensualidad() { return $this->id_mensualidad; }
     public function set_monto($m) { $this->monto = $m; }
@@ -115,10 +187,10 @@ class Mensualidad extends Conexion
     public function get_datos_apartamentos() { return $this->datos_apartamentos; }
     public function set_ids_mensualidades($ids) { $this->ids_mensualidades = $ids; }
     public function get_ids_mensualidades() { return $this->ids_mensualidades; }
+    public function set_correo($correo) { $this->correo = $correo; }
+    public function get_correo() { return $this->correo; }
 
-    // ====================================================================
-    // ENRUTADOR CON MANEJO DE EXCEPCIONES
-    // ====================================================================
+    // ENRUTADOR
     public function realizar_consulta($accion)
     {
         $metodo = '_' . $accion;
@@ -133,10 +205,6 @@ class Mensualidad extends Conexion
             return ['estatus' => false, 'mensaje' => 'Ocurrió un error interno en el servidor.'];
         }
     }
-
-    // ====================================================================
-    // MÉTODOS PRIVADOS (ACCIONES)
-    // ====================================================================
 
     // SE USA EN EL MODULO
     private function _verificarMeses()
@@ -639,21 +707,55 @@ class Mensualidad extends Conexion
      */
     private function _consultar_kpis()
     {
+        $condicionDeuda = "";
+        $condicionPago = "";
+        $params = [];
+
+        if (!empty($this->correo)) {
+            $condicionDeuda = " AND nro_apartamento IN (
+                SELECT a.nro_apartamento FROM apartamentos a
+                JOIN habitantes_apartamentos ha ON a.id_apartamento = ha.apartamento_id
+                JOIN habitantes h ON ha.habitante_id = h.id_habitante
+                WHERE h.correo = :correo
+            )";
+            
+            $condicionPago = " AND p.id_pago IN (
+                SELECT pm2.pago_id FROM pagos_mensualidad pm2
+                JOIN mensualidad m2 ON pm2.mensualidad_id = m2.id_mensualidad
+                JOIN apartamentos a2 ON m2.apartamento_id = a2.id_apartamento
+                JOIN habitantes_apartamentos ha2 ON a2.id_apartamento = ha2.apartamento_id
+                JOIN habitantes h2 ON ha2.habitante_id = h2.id_habitante
+                WHERE h2.correo = :correo2
+            )";
+            
+            $params[':correo'] = $this->correo;
+            $params[':correo2'] = $this->correo;
+        }
+
         $sql = "SELECT 
                     (SELECT COALESCE(SUM(deuda_pendiente), 0) 
                      FROM vw_estado_cuentas_mensualidad 
-                     WHERE CAST(estado_pago AS CHAR) = 'Pendiente') AS deuda_total,
+                     WHERE estado_pago = 'Pendiente' $condicionDeuda) AS deuda_total,
                      
                     (SELECT COALESCE(SUM(dp.monto), 0) 
                      FROM detalles_pagos dp 
                      JOIN pagos p ON dp.pago_id = p.id_pago 
                      WHERE p.activo = 1 
+                       AND p.estado = 'PROCESADO'
                        AND MONTH(dp.fecha) = MONTH(CURDATE()) 
-                       AND YEAR(dp.fecha) = YEAR(CURDATE())) AS recaudado_mes";
+                       AND YEAR(dp.fecha) = YEAR(CURDATE())
+                       $condicionPago) AS recaudado_mes,
+                       
+                    (SELECT COALESCE(SUM(dg.monto), 0) 
+                     FROM detalles_gastos dg 
+                     JOIN gastos g ON dg.gasto_id = g.id_gasto 
+                     WHERE g.activo = 1 
+                       AND MONTH(dg.fecha) = MONTH(CURDATE()) 
+                       AND YEAR(dg.fecha) = YEAR(CURDATE())) AS gastado_mes";
                        
         try {
             $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->execute();
+            $stmt->execute($params);
             $datos = $stmt->fetch(PDO::FETCH_ASSOC);
             
             return ['estatus' => true, 'datos' => $datos];

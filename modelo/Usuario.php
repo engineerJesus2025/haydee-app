@@ -30,66 +30,123 @@ class Usuario extends Conexion
 
     // VALIDACIONES CENTRALIZADAS
     public static function obtenerReglas($operacion) {
-        $reglasGenerales = [
-            'id_usuario' => [
-                'regex' => '/^\d+$/',
-                'exists' => ['tabla' => 'usuarios', 'campo' => 'id_usuario']
-            ],
-            'apellido' => [
-                'regex' => '/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,20}$/'
-            ],
-            'nombre' => [
-                'regex' => '/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,20}$/'
-            ],
-            'correo' => [
-                'regex' => '/^[-A-Za-z0-9_.]{3,35}@[A-Za-z0-9]{3,10}\.[A-Za-z]{2,3}$/',
-                'unique' => ['tabla' => 'usuarios', 'campo' => 'correo', 'exclude_field' => 'id_usuario']
-            ],
-            'contra' => [
-                'regex' => '/^[A-Za-z0-9_.+*$#%&@-]{5,100}$/'
-            ],
-            'rol_id' => [
-                'regex' => '/^\d+$/',
-                'exists' => ['tabla' => 'roles', 'campo' => 'id_rol']
-            ],
-            'token' => [
-                'regex' => '/^[a-f0-9]{64}$/'
-            ],
-            'token_expiracion' => [
-                'regex' => '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/'
-            ],
-            'token_tipo' => [
-                'regex' => '/^[A-Za-z]+$/'
-            ]
-        ];
+    // Reglas base de cada campo
+    $reglasCampos = [
+        'id_usuario' => [
+            'regex' => '/^\d+$/',
+            'exists' => ['tabla' => 'usuarios', 'campo' => 'id_usuario']
+        ],
+        'apellido' => [
+            'regex' => '/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,20}$/'
+        ],
+        'nombre' => [
+            'regex' => '/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,20}$/'
+        ],
+        'correo' => [
+            'regex' => '/^[-A-Za-z0-9_.]{3,35}@[A-Za-z0-9]{3,10}\.[A-Za-z]{2,3}$/',
+            'unique' => ['tabla' => 'usuarios', 'campo' => 'correo', 'exclude_field' => 'id_usuario']
+        ],
+        'contra' => [
+            'regex' => '/^[A-Za-z0-9_.+*$#%&@-]{5,100}$/'
+        ],
+        'rol_id' => [
+            'regex' => '/^\d+$/',
+            'exists' => ['tabla' => 'roles', 'campo' => 'id_rol']
+        ],
+        'token' => [
+            'regex' => '/^[a-f0-9]{64}$/'
+        ],
+        'token_expiracion' => [
+            'regex' => '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/'
+        ],
+        'token_tipo' => [
+            'regex' => '/^[A-Za-z]+$/'
+        ]
+    ];
 
-        // Definimos los campos exactos requeridos por cada operación (tanto de usuario como de perfil)
-        $camposPorOperacion = [
-            'registrar_usuario' => ['nombre', 'apellido', 'correo', 'contra', 'rol_id'],
-            'modificar_usuario' => ['id_usuario', 'nombre', 'apellido', 'correo', 'rol_id'],
-            'eliminar_usuario' => ['id_usuario'],
-            'consultar_usuario' => ['id_usuario'],
-            'restablecer_contrasenia' => ['id_usuario'],
-            'modificar_perfil' => ['id_usuario', 'nombre', 'apellido', 'correo'],
-            'cambiar_contrasenia' => ['id_usuario', 'contra'],
-            'entrar' => ['correo', 'contra'],
-            'recuperar_contrasenia' => ['correo'],
-            'guardar_contrasenia' => ['contra'],
-            'registrar_token' => ['id_usuario', 'token', 'token_tipo', 'token_expiracion'],
-            'obtener_token'   => ['id_usuario', 'token_tipo'],
-            'eliminar_token'  => ['id_usuario', 'token_tipo']
-        ];
+    $configPorOperacion = [
+        'entrar' => [
+            'metodo_http' => ['POST'],
+            'campos' => ['correo', 'contra']
+        ],
+        'recuperar_contrasenia' => [
+            'metodo_http' => ['POST'],
+            'campos' => ['correo']
+        ],
+        'guardar_contrasenia' => [
+            'metodo_http' => ['POST'],
+            'campos' => ['contra']
+        ],
+        'registrar_usuario' => [
+            'metodo_http' => ['POST'],
+            'campos' => ['nombre', 'apellido', 'correo', 'contra', 'rol_id']
+        ],
+        'modificar_usuario' => [
+            'metodo_http' => ['PUT', 'POST'],
+            'campos' => ['id_usuario', 'nombre', 'apellido', 'correo', 'rol_id']
+        ],
+        'eliminar_usuario' => [
+            'metodo_http' => ['DELETE', 'POST'],
+            'campos' => ['id_usuario']
+        ],
+        'consultar' => [
+            'metodo_http' => ['GET'],
+            'campos' => []   
+        ],
+        'consultar_usuario' => [
+            'metodo_http' => ['GET'],
+            'campos' => ['id_usuario']
+        ],
+        'consultar_perfil_usuario' => [
+            'metodo_http' => ['GET'],
+            'campos' => []   
+        ],
+        'modificar_perfil' => [
+            'metodo_http' => ['POST', 'PUT'],
+            'campos' => ['id_usuario', 'nombre', 'apellido', 'correo']
+        ],
+        'cambiar_contrasenia' => [
+            'metodo_http' => ['POST'],
+            'campos' => ['id_usuario', 'contra']
+        ],
+        'restablecer_contrasenia' => [
+            'metodo_http' => ['POST'],
+            'campos' => ['id_usuario']
+        ],
+        'existe_correo' => [
+            'metodo_http' => ['GET', 'POST'],
+            'campos' => ['correo']
+        ],
+        'registrar_token' => [
+            'metodo_http' => ['POST'],
+            'campos' => ['id_usuario', 'token', 'token_tipo', 'token_expiracion']
+        ],
+        'validar_token' => [
+            'metodo_http' => ['POST'],
+            'campos' => ['token', 'token_tipo']
+        ],
+        'obtener_token' => [
+            'metodo_http' => ['GET', 'POST'],
+            'campos' => ['id_usuario', 'token_tipo']
+        ],
+        'eliminar_token' => [
+            'metodo_http' => ['DELETE', 'POST'],
+            'campos' => ['id_usuario', 'token_tipo']
+        ]
+    ];
 
-
-        if (isset($camposPorOperacion[$operacion])) {
-            return array_intersect_key($reglasGenerales, array_flip($camposPorOperacion[$operacion]));
-        }
-        return [];
+    if (isset($configPorOperacion[$operacion])) {
+        $config = $configPorOperacion[$operacion];
+        $reglasFiltradas = array_intersect_key($reglasCampos, array_flip($config['campos']));
+        $reglasFiltradas['__metodo_http_permitido__'] = $config['metodo_http'];
+        return $reglasFiltradas;
     }
 
-    // ====================================================================
+    // Si la operación no está definida, se devuelve array vacío (sin reglas)
+    return [];
+}
+
     // GETTERS Y SETTERS
-    // ====================================================================
     public function set_id_usuario($id) { $this->id_usuario = $id; }
     public function get_id_usuario() { return $this->id_usuario; }
     public function set_apellido($a) { $this->apellido = $a; }
@@ -113,9 +170,7 @@ class Usuario extends Conexion
     public function set_token_tipo($t) { $this->token_tipo = $t; }
     public function get_token_tipo() { return $this->token_tipo; }
 
-    // ====================================================================
     // ENRUTADOR
-    // ====================================================================
     public function realizar_consulta($accion)
     {
         $metodo = '_' . $accion;
@@ -185,7 +240,7 @@ class Usuario extends Conexion
             // Validar la contraseña
             if (password_verify($this->contra, $datos['contrasenia'])) {
                 
-                // Éxito: Limpiamos intentos y confirmamos cambios
+                // Limpiamos intentos y confirmamos cambios
                 $db->prepare("DELETE FROM intentos_login WHERE usuario_id = :id")
                    ->execute([':id' => $id_usuario]);
 

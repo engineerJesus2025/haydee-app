@@ -1,13 +1,16 @@
 const Peticiones = {
     /**
-     * Envía datos al servidor mediante POST.
+     * Envía datos al servidor soportando reescritura de métodos HTTP (POST, PUT, DELETE).
+     * @param {FormData|Object} datos - El payload a enviar.
+     * @param {string} url - URL del endpoint.
+     * @param {string} metodoHttp - Verbo REST semántico ('POST', 'PUT', 'DELETE').
+     * @param {boolean} mostrarCarga - Si se muestra el spinner.
      */
-    async enviar(datos, url = "", mostrarCarga = true, encriptar = false) {
+    async enviar(datos, url = "", mostrarCarga = true, metodoHttp = "POST") {
         let modalCarga = null;
         let tiempoCarga;
         let modalVisible = false;
 
-        // Mostrar spinner de carga si es requerido
         if (mostrarCarga) {
             const elementoModal = document.getElementById("modal_carga");
             if (elementoModal) {
@@ -15,37 +18,49 @@ const Peticiones = {
                 tiempoCarga = setTimeout(() => {
                     modalVisible = true;
                     modalCarga.show();
-                }, 600); // Esperar un poco antes de mostrarlo para evitar parpadeos
+                }, 600);
             }
         }
         try {
             const tiempoInicio = performance.now();
+            metodoHttp = metodoHttp.toUpperCase();
 
+            // Físicamente viaja por POST para soportar $_POST y $_FILES en PHP
             let fetchOptions = {
-                method: "POST"
+                method: "POST",
+                headers: {}
             };
+
+            if (metodoHttp !== "POST") {
+                fetchOptions.headers["X-HTTP-Method-Override"] = metodoHttp;
+
+                // Si son datos de formulario (FormData), inyectamos el campo oculto
+                if (datos instanceof FormData) {
+                    datos.append("_method", metodoHttp);
+                } else if (typeof datos === "object" && datos !== null) {
+                    // Si es un objeto plano, le metemos la propiedad
+                    datos["_method"] = metodoHttp;
+                }
+            }
 
             if (datos instanceof FormData) {
                 fetchOptions.body = datos;
+            } else if (typeof datos === "object" && datos !== null) {
+                fetchOptions.headers["Content-Type"] = "application/json";
+                fetchOptions.body = JSON.stringify(datos);
             }
 
-            // Realizar la petición con las opciones preparadas
             const respuesta = await fetch(url, fetchOptions);
-
-            // Revisamos qué tipo de contenido nos devolvió el servidor
             const contentType = respuesta.headers.get("content-type");
             let json = null;
-            // Si es JSON (incluso si es un error 400 o 403), lo parseamos
+
             if (contentType && contentType.includes("application/json")) {
                 json = await respuesta.json();
             } else {
-                // Si NO es JSON (ej. un error fatal 500 que devuelve una pantalla HTML)
                 throw new Error(`Error HTTP ${respuesta.status}: Respuesta no válida del servidor.`);
             }
 
-            // INTERCEPTOR DE SESIÓN EXPIRADA (CÓDIGO 401)
             if (respuesta.status === 401) {
-                // Escondemos el spinner de carga
                 if (tiempoCarga) clearTimeout(tiempoCarga);
                 if (modalVisible && modalCarga) modalCarga.hide();
 
@@ -56,12 +71,9 @@ const Peticiones = {
                     'Ir al Login',
                     () => { window.location.href = '?pagina=login&accion=inicio'; }
                 );
-                
-                // Devuelve silencioso para que Validador.js no intente procesar el error
                 return { estatus: false, silencioso: true };
             }
 
-            // Evitar que el modal parpadee muy rápido
             if (mostrarCarga) {
                 const tiempoTranscurrido = performance.now() - tiempoInicio;
                 if (modalVisible && tiempoTranscurrido < 700) {
@@ -69,19 +81,13 @@ const Peticiones = {
                 }
             }
 
-            // Devolvemos el JSON (sea exitoso o con errores de validación)
             return json;
 
         } catch (error) {
-            // Si el usuario está cambiando de módulo, no mostramos ni reportamos el error
             if (window.estaSaliendoDeLaPagina) {
-                return {
-                    estatus: false,
-                    silencioso: true // por si Validador necesita saberlo
-                };
+                return { estatus: false, silencioso: true };
             }
             console.error("Error en Peticiones.enviar:", error);
-
             return {
                 estatus: false,
                 mensaje: "Error de conexión con el servidor.",
@@ -96,9 +102,7 @@ const Peticiones = {
     }
 };
 
-// Variable global para detectar si el usuario está abandonando la página
 window.estaSaliendoDeLaPagina = false;
-
 window.addEventListener('beforeunload', () => {
     window.estaSaliendoDeLaPagina = true;
 });

@@ -32,10 +32,6 @@ class Pagos extends Conexion
     private $detalles = [];
     private $monto_mensualidad; // Añadido para mantener registro si es necesario
 
-    // ====================================================================
-    // VALIDACIONES CENTRALIZADAS
-    // ====================================================================
-    
     /**
      * Reglas para la tabla principal (Cabecera del Pago)
      */
@@ -67,18 +63,32 @@ class Pagos extends Conexion
             ],
         ];
 
-        // Estandarización de nombres aplicada (registrar_pago, modificar_pago...)
-        $camposPorOperacion = [
-            'registrar_pago'           => ['apartamento_id', 'observacion','mensualidad_id','estado','tasa_dolar'],
-            'modificar_pago'           => ['id_pago', 'apartamento_id', 'observacion','mensualidad_id','estado','tasa_dolar'],
-            'eliminar_pago'            => ['id_pago'],
-            'cambiar_estado_pago'           => ['id_pago', 'estado'],
-            'actualizar_estado_pago'   => ['id_pago', 'estado', 'observacion'], // Usado por los admins (ya no)
-            'consultar_pago' => ['id_pago']
+        // Mapeo unificado de operaciones y verbos HTTP correspondientes
+        $configPorOperacion = [
+            'consulta'                => ['metodo_http' => ['GET'],  'campos' => []],
+            'obtener_catalogos_base'  => ['metodo_http' => ['GET'],  'campos' => []],
+            'consultar_mensualidades' => ['metodo_http' => ['GET'],  'campos' => ['apartamento_id']],
+            'consultar_pago'          => ['metodo_http' => ['GET'],  'campos' => ['id_pago']],
+            'listar_pagos_mes'        => ['metodo_http' => ['GET'],  'campos' => []],
+            'obtener_periodos'        => ['metodo_http' => ['GET'],  'campos' => []],
+            'consultar_estado_cuenta' => ['metodo_http' => ['GET'],  'campos' => []],
+            
+            'registrar_pago'          => ['metodo_http' => ['POST'], 'campos' => ['apartamento_id', 'observacion', 'mensualidad_id', 'estado', 'tasa_dolar']],
+            'cambiar_estado_pago'     => ['metodo_http' => ['PUT'],  'campos' => ['id_pago', 'estado', 'observacion']],
+            'eliminar_pago'           => ['metodo_http' => ['DELETE'], 'campos' => ['id_pago']],
+
+            'modificar_pago'          => ['metodo_http' => ['POST'], 'campos' => ['id_pago', 'apartamento_id', 'observacion', 'mensualidad_id', 'estado', 'tasa_dolar']]
         ];
 
-        if (isset($camposPorOperacion[$operacion])) {
-            return array_intersect_key($reglasGenerales, array_flip($camposPorOperacion[$operacion]));
+        if (isset($configPorOperacion[$operacion])) {
+            $config = $configPorOperacion[$operacion];
+            $reglasFiltradas = array_intersect_key($reglasGenerales, array_flip($config['campos']));
+            
+            if (isset($config['metodo_http'])) {
+                $reglasFiltradas['__metodo_http_permitido__'] = $config['metodo_http'];
+            }
+            
+            return $reglasFiltradas;
         }
         return [];
     }
@@ -292,7 +302,7 @@ class Pagos extends Conexion
             FROM pagos p
             JOIN detalles_pagos dp ON p.id_pago = dp.pago_id
             LEFT JOIN ingresos_bancarios ib ON dp.id_detalle_pago = ib.detalle_pago_id
-            LEFT JOIN pagos_mensualidad pm ON dp.id_detalle_pago = pm.pago_id
+            LEFT JOIN pagos_mensualidad pm ON p.id_pago = pm.pago_id -- CORRECCIÓN: Se enlaza al ID del pago maestro
             LEFT JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
             LEFT JOIN periodos_mensualidad pm_per ON m.periodo_id = pm_per.id_periodo
             LEFT JOIN apartamentos a ON m.apartamento_id = a.id_apartamento
@@ -330,7 +340,7 @@ class Pagos extends Conexion
                 FROM pagos p
                 JOIN detalles_pagos dp ON p.id_pago = dp.pago_id
                 LEFT JOIN ingresos_bancarios ib ON dp.id_detalle_pago = ib.detalle_pago_id
-                LEFT JOIN pagos_mensualidad pm ON dp.id_detalle_pago = pm.pago_id
+                LEFT JOIN pagos_mensualidad pm ON p.id_pago = pm.pago_id -- CORRECCIÓN
                 LEFT JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
                 LEFT JOIN periodos_mensualidad pm_per ON m.periodo_id = pm_per.id_periodo
                 LEFT JOIN apartamentos a ON m.apartamento_id = a.id_apartamento
@@ -342,7 +352,7 @@ class Pagos extends Conexion
                       JOIN apartamentos a2 ON m2.apartamento_id = a2.id_apartamento
                       JOIN habitantes_apartamentos ha2 ON a2.id_apartamento = ha2.apartamento_id
                       JOIN habitantes h2 ON ha2.habitante_id = h2.id_habitante
-                      WHERE pm2.pago_id IN (SELECT id_detalle_pago FROM detalles_pagos WHERE pago_id = p.id_pago)
+                      WHERE pm2.pago_id = p.id_pago -- CORRECCIÓN de la subconsulta
                         AND h2.correo = :correo
                   )
                 GROUP BY p.id_pago
@@ -764,11 +774,13 @@ class Pagos extends Conexion
                     MAX(dp.fecha) AS ultima_fecha,
                     SUM(dp.monto) AS monto_total,
                     (SELECT tipo_pago FROM detalles_pagos WHERE pago_id = p.id_pago ORDER BY fecha DESC LIMIT 1) AS tipo_pago_predominante,
-                    CASE WHEN COUNT(DISTINCT a.nro_apartamento) = 1 THEN MAX(a.nro_apartamento) ELSE 'Varios' END AS apartamento
+                    CASE WHEN COUNT(DISTINCT a.nro_apartamento) = 1 THEN MAX(a.nro_apartamento) ELSE 'Varios' END AS apartamento,
+                    GROUP_CONCAT(DISTINCT CONCAT(pm_per.mes, '/', pm_per.anio) ORDER BY pm_per.anio, pm_per.mes SEPARATOR ', ') AS periodos -- CORRECCIÓN: Faltaba esta columna por completo
                 FROM pagos p
                 JOIN detalles_pagos dp ON p.id_pago = dp.pago_id
-                LEFT JOIN pagos_mensualidad pm ON dp.id_detalle_pago = pm.pago_id
+                LEFT JOIN pagos_mensualidad pm ON p.id_pago = pm.pago_id -- CORRECCIÓN
                 LEFT JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
+                LEFT JOIN periodos_mensualidad pm_per ON m.periodo_id = pm_per.id_periodo -- CORRECCIÓN: Faltaba incluir la tabla de periodos
                 LEFT JOIN apartamentos a ON m.apartamento_id = a.id_apartamento
                 WHERE p.activo = 1 
                   AND MONTH(dp.fecha) = :mes 
@@ -812,25 +824,44 @@ class Pagos extends Conexion
     // EXCLUSIVO PARA LA APP:
     private function _consultar_estado_cuenta()
     {
-        $sql = "SELECT 
-                    vw.id_mensualidad,
-                    vw.monto_cuota AS monto_original,
-                    vw.mes,
-                    vw.anio,
-                    CONCAT('Mensualidad ', vw.mes, '/', vw.anio) as concepto,
-                    vw.deuda_pendiente AS pendiente
-                FROM vw_estado_cuentas_mensualidad vw
-                INNER JOIN mensualidad m ON vw.id_mensualidad = m.id_mensualidad
-                INNER JOIN apartamentos a ON m.apartamento_id = a.id_apartamento
-                INNER JOIN habitantes_apartamentos ha ON a.id_apartamento = ha.apartamento_id
-                INNER JOIN habitantes h ON ha.habitante_id = h.id_habitante
-                WHERE h.correo = :correo 
-                  AND vw.estado_pago = 'Pendiente'
-                ORDER BY vw.anio ASC, vw.mes ASC";
+        $params = [];
+        
+        // Si hay un correo configurado (Propietario), filtramos su deuda personal con JOINs
+        if (!empty($this->correo)) {
+            $sql = "SELECT 
+                        vw.id_mensualidad,
+                        vw.monto_cuota AS monto_original,
+                        vw.mes,
+                        vw.anio,
+                        vw.deuda_pendiente AS pendiente,
+                        a.nro_apartamento
+                    FROM vw_estado_cuentas_mensualidad vw
+                    INNER JOIN mensualidad m ON vw.id_mensualidad = m.id_mensualidad
+                    INNER JOIN apartamentos a ON m.apartamento_id = a.id_apartamento
+                    INNER JOIN habitantes_apartamentos ha ON a.id_apartamento = ha.apartamento_id
+                    INNER JOIN habitantes h ON ha.habitante_id = h.id_habitante
+                    WHERE vw.estado_pago = 'PENDIENTE' 
+                      AND h.correo = :correo
+                    GROUP BY vw.id_mensualidad
+                    ORDER BY vw.anio ASC, vw.mes ASC";
+            $params[':correo'] = $this->correo;
+        } else {
+            // Si es Administrador/Presidente, traemos la deuda global de forma plana y limpia
+            $sql = "SELECT 
+                        vw.id_mensualidad,
+                        vw.monto_cuota AS monto_original,
+                        vw.mes,
+                        vw.anio,
+                        vw.nro_apartamento,
+                        vw.deuda_pendiente AS pendiente
+                    FROM vw_estado_cuentas_mensualidad vw
+                    WHERE vw.estado_pago = 'Pendiente'
+                    ORDER BY vw.anio ASC, vw.mes ASC";
+        }
                 
         try {
             $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->execute([':correo' => $this->correo]);
+            $stmt->execute($params);
             $datos = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             return ['estatus' => true, 'datos' => $datos];
         } catch (\PDOException $e) {

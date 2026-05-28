@@ -13,6 +13,9 @@ class GestorTrafico {
     public static $claveActiva = null;
     public static $esCifrado = false;
     public static $usuarioLogueado = null;
+    
+    // Rastreador estático para la limpieza segura de archivos temporales
+    private static array $archivosTemporales = [];
 
     // Lista de endpoints que escapan del túnel criptográfico
     private static $rutasSinCifrado = [
@@ -22,15 +25,17 @@ class GestorTrafico {
     // Lista de endpoints que no requieren identidad (JWT)
     private static $rutasSinJWT = [
         'handshake',
-        'login'
+        'login',
+        'recuperar'
     ];
 
     public static function interceptarEntrada($endpoint) {
         if (in_array($endpoint, self::$rutasSinCifrado)) return;
 
-        // EVALUACIÓN DE JWT (Identidad)
+        // ==================== EVALUACIÓN DE JWT (IDENTIDAD) ====================
         if (!in_array($endpoint, self::$rutasSinJWT)) {
-            $headers = apache_request_headers();
+            // Protección multiplataforma para extracción de cabeceras (Apache/Nginx)
+            $headers = function_exists('apache_request_headers') ? apache_request_headers() : [];
             $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? $headers['Authorization'] ?? $headers['authorization'] ?? '';
 
             if (empty($authHeader) || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
@@ -43,19 +48,19 @@ class GestorTrafico {
                 $decoded = JWT::decode($matches[1], new Key(JWT_SECRET, self::JWT_ALGORITMO));
                 self::$usuarioLogueado = (array) $decoded->data;
 
+                // Carga dinámica de permisos del rol en la API
                 $rolModel = new Rol();
                 $rolModel->set_id_rol(self::$usuarioLogueado['rol_id']);
                 $resPermisos = $rolModel->realizar_consulta('consultar_permisos_asignados');
                 Sesiones::$permisosAPI = $resPermisos['datos'] ?? [];
             } catch (\Exception $e) {
-                // ESTE ES EL 401 QUE REACT NATIVE DEBE CAPTURAR PARA RENOVAR SESIÓN. RECORDARRRRR
                 http_response_code(HttpCodigo::NO_AUTORIZADO->value);
                 echo json_encode(["estatus" => false, "mensaje" => "Sesión inválida o expirada."]);
                 exit; 
             }
         }
 
-        // PROCESAMIENTO CRIPTOGRÁFICO
+        // ==================== PROCESAMIENTO CRIPTOGRÁFICO ====================
         $inputRaw = file_get_contents('php://input');
         $inputData = json_decode($inputRaw, true) ?: []; 
 
@@ -66,7 +71,7 @@ class GestorTrafico {
         if (!$payload || !$iv) {
             http_response_code(HttpCodigo::PROHIBIDO->value);
             echo json_encode(["estatus" => false, "mensaje" => "Acceso denegado. Se requiere canal seguro."]);
-            exit; // Texto plano, porque no tenemos llave aún
+            exit;
         }
 
         self::$esCifrado = true;
@@ -86,11 +91,18 @@ class GestorTrafico {
             
             $arregloDescifrado = json_decode($jsonDescifrado, true);
             if (is_array($arregloDescifrado)) {
+                
+                // Reconstrucción controlada de archivos adjuntos (Móvil)
                 if (isset($arregloDescifrado['_archivos_adjuntos'])) {
                     foreach ($arregloDescifrado['_archivos_adjuntos'] as $campo => $archivo) {
                         $nombreLimpio = preg_replace('/[^a-zA-Z0-9.\-_]/', '', $archivo['name']);
                         $tmpPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . uniqid('enc_') . '_' . $nombreLimpio;
+                        
                         file_put_contents($tmpPath, base64_decode($archivo['base64']));
+                        
+                        // Guardamos la ruta para eliminarla al finalizar la petición
+                        self::$archivosTemporales[] = $tmpPath;
+
                         $_FILES[$campo] = [
                             'name'     => $archivo['name'],
                             'type'     => $archivo['type'],
@@ -102,6 +114,7 @@ class GestorTrafico {
                     unset($arregloDescifrado['_archivos_adjuntos']); 
                 }
 
+                // Inyección unificada en superglobales: Los endpoints leerán de aquí directamente limpia el payload
                 $_POST = array_merge($_POST, $arregloDescifrado);
                 $_GET = array_merge($_GET, $arregloDescifrado);
             } else {
@@ -109,7 +122,7 @@ class GestorTrafico {
             }
 
         } catch (\Exception $e) {
-            http_response_code(HttpCodigo::PROHIBIDO->value); // 403 para no confundir con JWT
+            http_response_code(HttpCodigo::PROHIBIDO->value);
             echo json_encode(["estatus" => false, "mensaje" => "Bloqueo criptográfico."]);
             exit;
         }
@@ -130,5 +143,17 @@ class GestorTrafico {
             ]);
         }
         return $respuestaJsonOriginal;
+    }
+
+    /**
+     * Recorre y destruye todos los archivos temporales creados manualmente en la petición.
+     * Previene ataques DoS de llenado de almacenamiento en disco duro.
+     */
+    public static function limpiarArchivosTemporales() {
+        foreach (self::$archivosTemporales as $rutaArchivo) {
+            if (file_exists($rutaArchivo)) {
+                @unlink($rutaArchivo);
+            }
+        }
     }
 }

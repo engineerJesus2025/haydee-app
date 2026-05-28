@@ -19,16 +19,13 @@ Sesiones::autorizarAcceso(Modulo::GESTIONAR_PAGOS, Accion::CONSULTAR);
 // Determinar rol
 $esPropietario = (isset($_SESSION["rol"]) && $_SESSION["rol"] == "Propietario");
 
-
 if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
 
     Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_PAGOS, $operacion);
 
-    // =========================================================
     // VALIDACION DE LA CABECERA
-    // =========================================================
     $reglasCabecera = Pagos::obtenerReglas($operacion);
 
     if (!empty($reglasCabecera)) {
@@ -43,9 +40,7 @@ if (isset($_POST["operacion"])) {
         }
     }
 
-    // =========================================================
-    // CONSTRUCCIÓN Y VALIDACION DE DETALLES
-    // =========================================================
+    // VALIDACION DE DETALLES
     if ($operacion === 'registrar_pago' || $operacion === 'modificar_pago') {
         $esModificacion = ($operacion === 'modificar_pago');
         

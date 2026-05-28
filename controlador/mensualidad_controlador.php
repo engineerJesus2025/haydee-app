@@ -22,9 +22,7 @@ if (isset($_POST["operacion"])) {
 
     Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_MENSUALIDAD, $operacion);
 
-    // =========================================================
-    // VALIDACION CENTRALIZADA DE CABECERA
-    // =========================================================
+    // VALIDACION DE CABECERA
     $reglasCabecera = Mensualidad::obtenerReglas($operacion);
 
     if (!empty($reglasCabecera)) {
@@ -39,9 +37,7 @@ if (isset($_POST["operacion"])) {
         }
     }
 
-    // =========================================================
     // VALIDACION DE DETALLES (APARTAMENTOS Y PRESUPUESTOS)
-    // =========================================================
     if (in_array($operacion, ['registrar_mensualidad', 'modificar_mensualidad'])) {
         $datos_apartamentos = json_decode($_POST['datos_apartamentos'], true);
         
@@ -97,9 +93,7 @@ if (isset($_POST["operacion"])) {
         $mensualidad->set_datos_apartamentos($datos_apartamentos);
     }
 
-    // =========================================================
-    // ASIGNACIÓN DE PROPIEDADES AL MODELO
-    // =========================================================
+    // ASIGNACIÓN DE PROPIEDADES
     $mensualidad->set_id_mensualidad($_POST['id_mensualidad'] ?? null);
     $mensualidad->set_monto($_POST['monto'] ?? null);
     $mensualidad->set_tasa_dolar($_POST['tasa_dolar'] ?? null);
@@ -119,9 +113,6 @@ if (isset($_POST["operacion"])) {
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
     $auditor = new GestorAuditoria($mensualidad, Modulo::GESTIONAR_MENSUALIDAD);
 
-    // =========================================================
-    // EJECUCIÓN
-    // =========================================================
     try {
         switch ($operacion) {
             case 'verificar_meses':
@@ -138,7 +129,7 @@ if (isset($_POST["operacion"])) {
                 }
                 break;
 
-            case 'consultar_mensualidades_apartamentos':
+            case 'consultar_mensualidad_apartamentos':
                 $respuesta = $mensualidad->realizar_consulta('consultar_mensualidad_apartamentos');
                 http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 break;
@@ -228,9 +219,7 @@ if (isset($_POST["operacion"])) {
     }
 }
 
-// =========================================================
 // VALIDACIONES AJAX 
-// =========================================================
 if (isset($_POST["validar"])) {
     header('Content-Type: application/json');
     $validar = $_POST["validar"];

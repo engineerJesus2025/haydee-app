@@ -8,8 +8,6 @@ use haydee\servicios\Sesiones;
 use haydee\servicios\Autenticacion;
 use haydee\servicios\Recuperacion;
 
-use haydee\servicios\ServicioCifradoWeb;
-
 Sesiones::verificarAccesoRed();
 Sesiones::validarMetodoHTTP(['GET', 'POST']);
 
@@ -53,7 +51,7 @@ if (isset($_POST["operacion"])) {
     $mantenerSesion = ($_POST['mantener_sesion'] ?? 'false') === 'true';
     $correoRecuperar = $_POST['correo_recuperar'] ?? '';
 
-        try {
+    try {
         switch ($operacion) {
             case 'entrar':
                 $seguridadIP = new SeguridadIP();

@@ -37,15 +37,15 @@ class Gastos extends Conexion
      * Reglas para la tabla principal (Cabecera)
      */
     public static function obtenerReglas($operacion) {
-        $clasificacionesValidas = implode('|', array_column(ClasificacionGasto::cases(), 'value'));
-
-        $reglasGenerales = [
+        $ClasificacionesValidas = implode('|', array_column(ClasificacionGasto::cases(), 'value'));
+        // Reglas base de cada campo (cabecera)
+        $reglasCampos = [
             'id_gasto' => [
                 'regex' => '/^\d+$/',
                 'exists' => ['tabla' => 'gastos', 'campo' => 'id_gasto']
             ],
             'clasificacion' => [
-                'regex' => "/^($clasificacionesValidas)$/"
+                'regex' => "/^($ClasificacionesValidas)$/"
             ],
             'descripcion_gasto' => [
                 'regex' => '/^[a-zA-Z0-9áéíóúñÁÉÍÓÚÑ\s.,:\/-]{3,255}$/'
@@ -64,20 +64,72 @@ class Gastos extends Conexion
             ],
             'proveedor_id' => [
                 'regex' => '/^\d+$/',
-                'exists' => ['tabla' => 'proveedores', 'campo' => 'id_proveedor'],
+                'exists' => ['tabla' => 'proveedores', 'campo' => 'id_proveedor']
+            ],
+            'id_detalle_gasto' => [
+                'regex' => '/^\d+$/',
+                'exists' => ['tabla' => 'detalles_gastos', 'campo' => 'id_detalle_gasto']
             ]
         ];
 
-        $camposPorOperacion = [
-            'registrar_gasto'           => ['clasificacion', 'descripcion_gasto', 'solicitud_id', 'tipo_gasto_id', 'proveedor_id'],
-            'modificar_gasto'           => ['id_gasto', 'clasificacion', 'descripcion_gasto', 'solicitud_id', 'tipo_gasto_id', 'proveedor_id'],
-            'eliminar_gasto'            => ['id_gasto'],
-            'consulta_especifica_gasto' => ['id_gasto']
+        // Configuración de cada operación: método HTTP permitido y campos requeridos
+        $configPorOperacion = [
+            'consultar' => [
+                'metodo_http' => ['GET'],
+                'campos' => []
+            ],
+            'consultar_gasto' => [
+                'metodo_http' => ['GET'],
+                'campos' => ['id_gasto']
+            ],
+            'consultar_cabecera_gasto' => [
+                'metodo_http' => ['GET'],
+                'campos' => ['id_gasto']
+            ],
+            'consultar_detalles_por_gasto' => [
+                'metodo_http' => ['GET'],
+                'campos' => ['id_gasto']
+            ],
+            'consultar_detalle_unico' => [
+                'metodo_http' => ['GET'],
+                'campos' => ['id_detalle_gasto']  
+            ],
+            'listar_gastos_mes' => [
+                'metodo_http' => ['GET'],
+                'campos' => []  
+            ],
+            'obtener_periodos_activos' => [
+                'metodo_http' => ['GET'],
+                'campos' => []
+            ],
+            'total_por_metodo_pago' => [
+                'metodo_http' => ['GET'],
+                'campos' => []
+            ],
+            'registrar_gasto' => [
+                'metodo_http' => ['POST'],
+                'campos' => ['clasificacion', 'descripcion_gasto', 'solicitud_id', 'tipo_gasto_id', 'proveedor_id', 'tasa_dolar']
+            ],
+            'modificar_gasto' => [
+                'metodo_http' => ['PUT', 'POST'],
+                'campos' => ['id_gasto', 'clasificacion', 'descripcion_gasto', 'solicitud_id', 'tipo_gasto_id', 'proveedor_id', 'tasa_dolar']
+            ],
+            'eliminar_gasto' => [
+                'metodo_http' => ['DELETE', 'POST'],
+                'campos' => ['id_gasto']
+            ]
         ];
 
-        if (isset($camposPorOperacion[$operacion])) {
-            return array_intersect_key($reglasGenerales, array_flip($camposPorOperacion[$operacion]));
+        if (isset($configPorOperacion[$operacion])) {
+            $config = $configPorOperacion[$operacion];
+            // Filtrar solo los campos que necesita la operación
+            $reglasFiltradas = array_intersect_key($reglasCampos, array_flip($config['campos']));
+            // Agregar la validación del método HTTP
+            $reglasFiltradas['__metodo_http_permitido__'] = $config['metodo_http'];
+            return $reglasFiltradas;
         }
+
+        // Si la operación no está definida, se devuelve array vacío (sin reglas)
         return [];
     }
 
@@ -117,9 +169,7 @@ class Gastos extends Conexion
         ];
     }
 
-    // ====================================================================
     // GETTERS Y SETTERS
-    // ====================================================================
     public function set_id_gasto($id) { $this->id_gasto = $id; }
     public function get_id_gasto() { return $this->id_gasto; }
     public function set_clasificacion($c) { $this->clasificacion = $c; }

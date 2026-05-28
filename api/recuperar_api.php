@@ -1,77 +1,141 @@
 <?php
 use haydee\enums\HttpCodigo;
-use haydee\servicios\Sesiones;
-use haydee\servicios\GestorTrafico;
+use haydee\ayuda\Validador;
+use haydee\servicios\Recuperacion;
+use haydee\modelo\Usuario;
+use haydee\modelo\SeguridadIP;
 
+// ==================== DETECCIÓN DE PROTOCOLO Y PAYLOAD ====================
+$metodoHttp = $_SERVER['REQUEST_METHOD'];
+$headers = getallheaders();
+$metodoSobreescrito = $headers['X-HTTP-Method-Override'] ?? $_POST['_method'] ?? $_GET['_method'] ?? null;
+
+if (!empty($metodoSobreescrito)) {
+    $metodoHttp = strtoupper($metodoSobreescrito);
+}
+
+$datosPeticion = ($metodoHttp === 'GET') ? $_GET : $_POST;
+
+$operacion = $datosPeticion['operacion'] ?? '';
+
+if (empty($operacion)) {
+    http_response_code(HttpCodigo::BAD_REQUEST->value);
+    echo json_encode(['estatus' => false, 'mensaje' => 'No se especificó la operación.']);
+    exit;
+}
+
+// ==================== REGLAS Y FIREWALL DE PROTOCOLO HTTP ====================
+$reglas = Usuario::obtenerReglas($operacion);
+$validador = new Validador();
+
+if (!$validador->validarMetodoHTTP($metodoHttp, $reglas)) {
+    http_response_code(HttpCodigo::METODO_NO_PERMITIDO->value);
+    echo json_encode(['estatus' => false, 'mensaje' => 'Método HTTP no soportado para esta operación.']);
+    exit;
+}
+
+// ==================== VALIDACIÓN DE DATOS ====================
+if (!empty($reglas)) {
+    $validador->validarConjunto($datosPeticion, $reglas, ['skip_unique' => true, 'skip_exists' => true]);
+
+    if ($validador->tieneErrores()) {
+        http_response_code(HttpCodigo::BAD_REQUEST->value);
+        echo json_encode([
+            'estatus' => false,
+            'errores' => $validador->obtenerErrores(),
+            'mensaje' => 'Datos de solicitud inválidos.'
+        ]);
+        exit;
+    }
+}
+
+// ==================== PROCESAR OPERACIÓN ====================
 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida en API'];
+$serviceRecuperar = null;
+$seguridadIP = null; 
 
 try {
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // ==================== RATE LIMITING PROTEGIDO ====================
+    $seguridadIP = new SeguridadIP();
+    $seguridadIP->set_ip($_SERVER['REMOTE_ADDR']);
+
+    $rateLimit = $seguridadIP->verificarRateLimit();
+    if (!$rateLimit['estatus']) {
+        $seguridadIP->registrarFallo();
+        http_response_code($rateLimit['codigo_http'] ?? HttpCodigo::DEMASIADAS_SOLICITUDES->value);
+        $respuesta = ['estatus' => false, 'mensaje' => $rateLimit['mensaje']];
+    } else {
         
-        $operacion = $_POST["operacion"] ?? '';
-
-        if (empty($operacion)) {
-            http_response_code(HttpCodigo::BAD_REQUEST->value);
-            $respuesta = ['estatus' => false, 'mensaje' => 'No se especificó la Operación'];
-        }
-
-        // Asignacion de la cabecera (Datos generales del gasto)
-        $gastos->set_id_gasto($_POST['id_gasto'] ?? null);
-        $gastos->set_clasificacion($_POST['clasificacion'] ?? null);
-        $gastos->set_descripcion_gasto($_POST['descripcion_gasto'] ?? null);
-        $gastos->set_solicitud_id($_POST['solicitud_id'] ?? null);
-        $gastos->set_tipo_gasto_id($_POST['tipo_gasto_id'] ?? null);
-        $gastos->set_proveedor_id($_POST['proveedor_id'] ?? null);
+        // El perímetro está limpio, instanciamos el servicio de negocio
+        $serviceRecuperar = new Recuperacion();
 
         switch ($operacion) {
-            // Dentro del bloque POST de tu API de autenticación (ej: login_api.php o recuperar_api.php)
             case 'solicitar_otp':
-                $correo = $datosJSON['correo'] ?? '';
+                $correo = $datosPeticion['correo'] ?? '';
                 if (empty($correo)) {
                     http_response_code(HttpCodigo::BAD_REQUEST->value);
-                    echo json_encode(['estatus' => false, 'mensaje' => 'El correo es obligatorio.']);
-                    exit;
+                    $respuesta = ['estatus' => false, 'mensaje' => 'El correo es obligatorio.'];
+                    break;
                 }
-
-                $serviceRecuperar = new \haydee\servicios\Recuperacion();
-                $resultado = $serviceRecuperar->enviarCorreoOTP($correo);
-
-                echo json_encode($resultado);
+                $respuesta = $serviceRecuperar->enviarCorreoOTP($correo);
+                
+                // Si el correo no existe o el envío falla, sumamos penalización de IP
+                if ($respuesta['estatus']) {
+                    $seguridadIP->limpiarFallo();
+                } else {
+                    $seguridadIP->registrarFallo();
+                }
                 break;
 
             case 'restablecer_con_otp':
-                $correo = $datosJSON['correo'] ?? '';
-                $otp = $datosJSON['codigo'] ?? '';
-                $contra = $datosJSON['contra'] ?? '';
+                $correo = $datosPeticion['correo'] ?? '';
+                $otp = $datosPeticion['codigo'] ?? '';
+                $contra = $datosPeticion['contra'] ?? '';
 
                 if (empty($correo) || empty($otp) || empty($contra)) {
                     http_response_code(HttpCodigo::BAD_REQUEST->value);
-                    echo json_encode(['estatus' => false, 'mensaje' => 'Todos los campos son requeridos.']);
-                    exit;
+                    $respuesta = ['estatus' => false, 'mensaje' => 'Todos los campos son requeridos para el restablecimiento.'];
+                    break;
                 }
-
-                $serviceRecuperar = new \haydee\servicios\Recuperacion();
-                $resultado = $serviceRecuperar->restablecerConOTP($correo, $otp, $contra);
-
-                if (!$resultado['estatus']) http_response_code(HttpCodigo::BAD_REQUEST->value);
-                echo json_encode($resultado);
+                $respuesta = $serviceRecuperar->restablecerConOTP($correo, $otp, $contra);
+                
+                // Si el OTP es incorrecto, penalizamos de inmediato para mitigar fuerza bruta
+                if ($respuesta['estatus']) {
+                    $seguridadIP->limpiarFallo();
+                } else {
+                    $seguridadIP->registrarFallo();
+                }
                 break;
 
             default:
                 http_response_code(HttpCodigo::BAD_REQUEST->value);
-                $respuesta = ['estatus' => false, 'mensaje' => 'Operación POST no permitida'];
+                $respuesta = ['estatus' => false, 'mensaje' => 'Operación no reconocida o implementada.'];
                 break;
         }
-    } 
-    else {
-        http_response_code(HttpCodigo::METODO_NO_PERMITIDO->value); 
-        $respuesta = ['estatus' => false, 'mensaje' => 'metodo HTTP no soportado'];
+    }
+
+    // ==================== ASIGNACIÓN DE CÓDIGOS HTTP (MATCH) ====================
+    if ($respuesta['estatus']) {
+        http_response_code(HttpCodigo::OK->value);
+    } else {
+        if (http_response_code() === 200) {
+            http_response_code(HttpCodigo::BAD_REQUEST->value);
+        }
     }
 
 } catch (Exception $e) {
-    error_log("Error en API Gastos: " . $e->getMessage());
+    error_log("Error en API Recuperar: " . $e->getMessage());
     http_response_code(HttpCodigo::ERROR_INTERNO->value);
     $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor API'];
 } finally {
+    // Cierre y liberación estricta de conexiones en memoria
+    if ($serviceRecuperar && method_exists($serviceRecuperar, 'cerrar')) {
+        $serviceRecuperar->cerrar();
+    }
+    if ($seguridadIP) {
+        $seguridadIP->cerrar();
+    }
+    
     echo json_encode($respuesta);
+    exit;
 }

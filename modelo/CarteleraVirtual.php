@@ -26,13 +26,12 @@ class CarteleraVirtual extends Conexion
     private $limite_paginacion;
     private $offset_paginacion;
 
-    // ====================================================================
     // VALIDACIONES CENTRALIZADAS
-    // ====================================================================
     public static function obtenerReglas($operacion) {
         $prioridadesValidas = implode('|', array_column(NivelPrioridad::cases(), 'value'));
 
-        $reglasGenerales = [
+        // Reglas base de cada campo
+        $reglasCampos = [
             'id_cartelera' => [
                 'regex' => '/^\d+$/',
                 'exists' => ['tabla' => 'cartelera_virtual', 'campo' => 'id_cartelera']
@@ -44,7 +43,6 @@ class CarteleraVirtual extends Conexion
                 'regex' => '/^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()\'"!?¡¿%°\- ]{3,200}$/'
             ],
             'imagen' => [
-                // opcional, ya que a veces no se sube imagen nueva al modificar
                 'regex' => '/^[a-zA-Z0-9_.\- ]+\.(jpg|jpeg|png|gif)$/i',
                 'opcional' => true
             ],
@@ -57,16 +55,47 @@ class CarteleraVirtual extends Conexion
             ]
         ];
 
-        $camposPorOperacion = [
-            'registrar_cartelera' => ['titulo', 'descripcion', 'prioridad', 'usuario_id'],
-            'modificar_cartelera' => ['id_cartelera', 'titulo', 'descripcion', 'prioridad', 'usuario_id'],
-            'eliminar_cartelera'  => ['id_cartelera'],
-            'consultar_cartelera' => ['id_cartelera']
+        // Configuración de cada operación: método HTTP permitido y campos requeridos
+        $configPorOperacion = [
+            // ==================== CONSULTAS (GET) ====================
+            'consulta' => [
+                'metodo_http' => ['GET'],
+                'campos' => []   // sin campos, solo lista
+            ],
+            'consultar_cartelera' => [
+                'metodo_http' => ['GET'],
+                'campos' => ['id_cartelera']
+            ],
+            'consultar_paginada' => [
+                'metodo_http' => ['GET'],
+                'campos' => []   // paginación se maneja internamente
+            ],
+
+            // ==================== ESCRITURA (POST / PUT / DELETE) ====================
+            'registrar_cartelera' => [
+                'metodo_http' => ['POST'],
+                'campos' => ['titulo', 'descripcion', 'prioridad', 'usuario_id']
+            ],
+            'modificar_cartelera' => [
+                'metodo_http' => ['PUT', 'POST'],
+                'campos' => ['id_cartelera', 'titulo', 'descripcion', 'prioridad', 'usuario_id']
+            ],
+            'eliminar_cartelera' => [
+                'metodo_http' => ['DELETE', 'POST'],
+                'campos' => ['id_cartelera']
+            ]
         ];
 
-        if (isset($camposPorOperacion[$operacion])) {
-            return array_intersect_key($reglasGenerales, array_flip($camposPorOperacion[$operacion]));
+        if (isset($configPorOperacion[$operacion])) {
+            $config = $configPorOperacion[$operacion];
+            // Filtrar solo los campos que necesita la operación
+            $reglasFiltradas = array_intersect_key($reglasCampos, array_flip($config['campos']));
+            // Agregar la validación del método HTTP
+            $reglasFiltradas['__metodo_http_permitido__'] = $config['metodo_http'];
+            return $reglasFiltradas;
         }
+
+        // Si la operación no está definida, se devuelve array vacío (sin reglas)
         return [];
     }
 
