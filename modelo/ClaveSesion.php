@@ -44,4 +44,18 @@ class ClaveSesion extends Conexion {
             return null;
         }
     }
+
+    /**
+     Hace lo que se imaginan -_-
+     */
+    public function eliminarClave($dispositivo_id) {
+        $sql = "DELETE FROM claves_sesion WHERE dispositivo_id = :disp";
+        try {
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
+            return $stmt->execute([':disp' => $dispositivo_id]);
+        } catch (PDOException $e) {
+            error_log("Error eliminando clave de sesión: " . $e->getMessage());
+            return false;
+        }
+    }
 }

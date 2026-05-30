@@ -116,17 +116,17 @@
                                     <p class="text-muted-custom mb-4">Restaure una copia previa. Tenga en cuenta que esta acción <strong class="text-danger">sobrescribirá los datos actuales</strong>.</p>
                                     
                                     <ul class="nav nav-pills mb-4 p-2 bg-light bg-opacity-10 border vp-border-color rounded-4 d-flex flex-column flex-md-row d-md-inline-flex gap-2" id="importarTabs" role="tablist">
-    <li class="nav-item" role="presentation">
-        <button class="nav-link active fw-bold rounded-pill px-4 w-100 text-start text-md-center" id="servidor-tab" data-bs-toggle="tab" data-bs-target="#servidor" type="button" role="tab" aria-controls="servidor" aria-selected="true">
-            <i class="bi bi-hdd-network me-2"></i>Desde el Servidor
-        </button>
-    </li>
-    <li class="nav-item" role="presentation">
-        <button class="nav-link fw-bold rounded-pill px-4 w-100 text-start text-md-center" id="pc-tab" data-bs-toggle="tab" data-bs-target="#pc" type="button" role="tab" aria-controls="pc" aria-selected="false">
-            <i class="bi bi-laptop me-2"></i>Desde su PC
-        </button>
-    </li>
-</ul>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link active fw-bold rounded-pill px-4 w-100 text-start text-md-center" id="servidor-tab" data-bs-toggle="tab" data-bs-target="#servidor" type="button" role="tab" aria-controls="servidor" aria-selected="true">
+                                                <i class="bi bi-hdd-network me-2"></i>Desde el Servidor
+                                            </button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link fw-bold rounded-pill px-4 w-100 text-start text-md-center" id="pc-tab" data-bs-toggle="tab" data-bs-target="#pc" type="button" role="tab" aria-controls="pc" aria-selected="false">
+                                                <i class="bi bi-laptop me-2"></i>Desde su PC
+                                            </button>
+                                        </li>
+                                    </ul>
 
                                     <div class="tab-content" id="importarTabsContent">
                                         

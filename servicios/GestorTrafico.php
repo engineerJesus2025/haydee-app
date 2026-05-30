@@ -5,6 +5,7 @@ use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use haydee\enums\HttpCodigo;
 use haydee\modelo\Rol;
+use haydee\servicios\Sesiones;
 
 class GestorTrafico {
     private const JWT_ALGORITMO = 'HS256';
@@ -26,7 +27,8 @@ class GestorTrafico {
     private static $rutasSinJWT = [
         'handshake',
         'login',
-        'recuperar'
+        'recuperar',
+        'refrescar'
     ];
 
     public static function interceptarEntrada($endpoint) {
@@ -34,30 +36,8 @@ class GestorTrafico {
 
         // ==================== EVALUACIÓN DE JWT (IDENTIDAD) ====================
         if (!in_array($endpoint, self::$rutasSinJWT)) {
-            // Protección multiplataforma para extracción de cabeceras (Apache/Nginx)
-            $headers = function_exists('apache_request_headers') ? apache_request_headers() : [];
-            $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? $headers['Authorization'] ?? $headers['authorization'] ?? '';
-
-            if (empty($authHeader) || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
-                http_response_code(HttpCodigo::NO_AUTORIZADO->value);
-                echo json_encode(["estatus" => false, "mensaje" => "Falta el token de seguridad."]);
-                exit;
-            }
-
-            try {
-                $decoded = JWT::decode($matches[1], new Key(JWT_SECRET, self::JWT_ALGORITMO));
-                self::$usuarioLogueado = (array) $decoded->data;
-
-                // Carga dinámica de permisos del rol en la API
-                $rolModel = new Rol();
-                $rolModel->set_id_rol(self::$usuarioLogueado['rol_id']);
-                $resPermisos = $rolModel->realizar_consulta('consultar_permisos_asignados');
-                Sesiones::$permisosAPI = $resPermisos['datos'] ?? [];
-            } catch (\Exception $e) {
-                http_response_code(HttpCodigo::NO_AUTORIZADO->value);
-                echo json_encode(["estatus" => false, "mensaje" => "Sesión inválida o expirada."]);
-                exit; 
-            }
+            
+            self::$usuarioLogueado = Sesiones::validarAutenticacionJWT();
         }
 
         // ==================== PROCESAMIENTO CRIPTOGRÁFICO ====================

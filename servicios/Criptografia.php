@@ -99,4 +99,15 @@ class Criptografia {
         return (string) random_int($min, $max);
     }
 
+    /**
+     * Rompe la vinculación criptográfica eliminando el registro del dispositivo.
+     */
+    public static function desvincularDispositivo($dispositivo_id) {
+        $modelo = new ClaveSesion();
+        $resultado = $modelo->eliminarClave($dispositivo_id);
+        $modelo->cerrar(); 
+        
+        return $resultado;
+    }
+
 }

@@ -93,7 +93,7 @@ try {
                     'permisos'   => $permisosFiltrados
                 ],
                 'token_jwt'     => $resultado['token_jwt'] ?? '',
-                'refresh_token' => $resultado['token'] ?? ''
+                'refresh_token' => $resultado['refresh_token'] ?? ''
             ];
 
             // Vinculación de dispositivo criptográfico (App Móvil)

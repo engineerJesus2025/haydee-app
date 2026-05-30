@@ -132,6 +132,10 @@ class Usuario extends Conexion
         'eliminar_token' => [
             'metodo_http' => ['DELETE', 'POST'],
             'campos' => ['id_usuario', 'token_tipo']
+        ],
+        'refrescar_token' => [
+            'metodo_http' => ['POST'],
+            'campos' => ['id_usuario', 'token']
         ]
     ];
 
@@ -587,6 +591,74 @@ class Usuario extends Conexion
         } catch (PDOException $e) {
             error_log("Error en _obtener_token: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al obtener el código de seguridad'];
+        }
+    }
+
+    /**
+     * Valida el token de refresco y extrae los datos del usuario en un solo flujo transaccional. SE USA EN AUTENTICACION
+     */
+    private function _validar_token_jwt()
+    {
+        $usuarioId = $this->id_usuario;
+        $token = $this->token;
+        $tipoToken = $this->token_tipo;
+
+        if (empty($usuarioId) || empty($token) || empty($tipoToken)) {
+            return ['estatus' => false, 'mensaje' => 'Datos insuficientes para la validación.'];
+        }
+
+        try {
+            $conexSeguridad = $this->get_conex(TipoBaseDatos::SEGURIDAD);
+            $conexSeguridad->beginTransaction();
+
+            // Buscar el token activo y válido en tokens_seguridad
+            $sqlToken = "SELECT token, fecha_expiracion 
+                         FROM tokens_seguridad 
+                         WHERE usuario_id = :uid 
+                         AND tipo = :tipo 
+                         AND fecha_expiracion > NOW()
+                         ORDER BY fecha_expiracion DESC LIMIT 1";
+
+            $stmtToken = $conexSeguridad->prepare($sqlToken);
+            $stmtToken->execute([
+                ':uid'  => $usuarioId,
+                ':tipo' => $tipoToken
+            ]);
+            $datosToken = $stmtToken->fetch(PDO::FETCH_ASSOC);
+
+            if (!$datosToken || $datosToken['token'] !== $token) {
+                $conexSeguridad->rollBack();
+                return ['estatus' => false, 'mensaje' => 'Token de refresco inválido o expirado.'];
+            }
+
+            // Obtener los datos del perfil del usuario y su respectivo rol
+            $sqlUsuario = "SELECT u.id_usuario, u.correo, u.nombre, u.apellido, u.rol_id, r.nombre as nombre_rol 
+                           FROM usuarios u
+                           LEFT JOIN roles r ON u.rol_id = r.id_rol
+                           WHERE u.id_usuario = :uid AND u.activo = 1 LIMIT 1";
+
+            $stmtUser = $conexSeguridad->prepare($sqlUsuario);
+            $stmtUser->execute([':uid' => $usuarioId]);
+            $usuario = $stmtUser->fetch(PDO::FETCH_ASSOC);
+
+            if (!$usuario) {
+                $conexSeguridad->rollBack();
+                return ['estatus' => false, 'mensaje' => 'Usuario no encontrado o inactivo.'];
+            }
+
+            $conexSeguridad->commit();
+
+            return [
+                'estatus' => true,
+                'datos' => $usuario
+            ];
+
+        } catch (PDOException $e) {
+            if ($conexSeguridad->inTransaction()) {
+                $conexSeguridad->rollBack();
+            }
+            error_log("Error en validarTokenYObtenerUsuario: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error interno al validar credenciales de sesión.'];
         }
     }
     

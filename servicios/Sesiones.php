@@ -11,6 +11,7 @@ use haydee\modelo\AnioFiscal;
 use haydee\modelo\CajaChica;
 use haydee\enums\Accion;
 use haydee\enums\Modulo;
+use Firebase\JWT\JWT;
 
 class Sesiones
 {
@@ -78,10 +79,11 @@ class Sesiones
      */
     public static function autorizarAccesoAPI(?Modulo $modulo = null, ?Accion $permiso = null, $metodos = ['GET', 'POST', 'PUT', 'DELETE'])
     {
-        // Capa de Protocolo (Verifica si es GET, POST, etc.)
+        // Capa de Protocolo
         self::validarMetodoHTTP($metodos);
 
-        // Capa de Identidad (Ya lo hace GestorTrafico, pero lo dejo porsia...)
+        // Capa de Identidad
+        // Obtenemos el usuario desde el GestorTrafico (que a su vez llamó a validarAutenticacionJWT)
         $usuario = GestorTrafico::$usuarioLogueado;
         if (!$usuario) {
             http_response_code(HttpCodigo::NO_AUTORIZADO->value);
@@ -99,26 +101,21 @@ class Sesiones
         }
 
         // Capa Anti-Inundación (Flood Control)
-        // Como las APIs REST no usan cookies de sesión por defecto, iniciamos sesión 
-        // temporalmente en PHP para que verificarInundacion() tenga dónde guardar su contador.
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
         
-        // Temporizamos el ID del usuario en la sesión global para que verificarInundacion lo lea
         $idTemporal = $_SESSION["id_usuario"] ?? null;
         $_SESSION["id_usuario"] = $usuario['id_usuario'];
         
         self::verificarInundacion();
         
-        // Restauramos el estado original para mantener la limpieza de la memoria
         if ($idTemporal === null) {
             unset($_SESSION["id_usuario"]);
         } else {
             $_SESSION["id_usuario"] = $idTemporal;
         }
 
-        // Devolvemos el usuario que la API la use directamente
         return [
             'id_usuario'    => $usuario['id_usuario'],
             'correo'        => $usuario['correo'],
@@ -397,4 +394,42 @@ class Sesiones
             }
         }
     }
+
+    /**
+     * Extrae, decodifica y valida el token JWT de las cabeceras HTTP.
+     * Si es válido, retorna los datos del usuario y carga sus permisos en memoria.
+     */
+    public static function validarAutenticacionJWT()
+    {
+        // Protección multiplataforma para extracción de cabeceras (Apache/Nginx)
+        $headers = function_exists('apache_request_headers') ? apache_request_headers() : [];
+        $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? $headers['Authorization'] ?? $headers['authorization'] ?? '';
+
+        if (empty($authHeader) || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+            http_response_code(HttpCodigo::NO_AUTORIZADO->value);
+            echo json_encode(["estatus" => false, "mensaje" => "Falta el token de seguridad."]);
+            exit;
+        }
+
+        try {
+            // Decodificamos el JWT
+            $decoded = JWT::decode($matches[1], new \Firebase\JWT\Key(JWT_SECRET, 'HS256'));
+            $usuario = (array) $decoded->data;
+
+            // Carga dinámica de permisos del rol en la API
+            $rolModel = new \haydee\modelo\Rol();
+            $rolModel->set_id_rol($usuario['rol_id']);
+            $resPermisos = $rolModel->realizar_consulta('consultar_permisos_asignados');
+            self::$permisosAPI = $resPermisos['datos'] ?? [];
+
+            return $usuario;
+
+        } catch (\Exception $e) {
+            // Si el token expiró o es inválido, reventamos aquí.
+            http_response_code(HttpCodigo::NO_AUTORIZADO->value);
+            echo json_encode(["estatus" => false, "mensaje" => "Sesión inválida o expirada."]);
+            exit; 
+        }
+    }
+
 }

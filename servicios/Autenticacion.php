@@ -15,13 +15,17 @@ class Autenticacion
     private const TIEMPO_RECORDAR_DIAS = 30;
     private const SEGUNDOS_POR_DIA = 86400; // 24 * 60 * 60
     private const JWT_ALGORITMO = 'HS256';
-    private const JWT_TIEMPO_EXPIRACION = 7200;
+    private const JWT_TIEMPO_EXPIRACION = 3600;
+
+    // ==================== CONSTANTES DE CONFIGURACIÓN ====================
+    private const LONGITUD_BYTES_TOKEN = 32;
+    private const JWT_ISSUER = 'haydee_api';
+    private const JWT_AUDIENCE = 'haydee_app';
 
     private $usuarioModel;
 
     public function __construct()
     {
-        // Solo instanciamos lo estrictamente necesario para arrancar
         $this->usuarioModel = new Usuario();
     }
 
@@ -38,43 +42,47 @@ class Autenticacion
             return $resultado;
         }
 
-        $usuario = $resultado['datos']; // Ya incluye 'nombre_rol' gracias al JOIN en Usuario.php
+        $usuario = $resultado['datos'];
 
-        // Registrar bitácora
         Bitacora::registrar(Accion::INICIAR_SESION, Modulo::GESTIONAR_USUARIOS, $usuario['id_usuario']);
 
-        // Gestión del token "Recuérdame"
-        if ($recordar) {
-            $token = bin2hex(random_bytes(32));
+        // Gestión del token persistente (Web o Móvil)
+        if ($recordar || $generarJWT) {
+            $token = bin2hex(random_bytes(self::LONGITUD_BYTES_TOKEN));
             $segundosExpiracion = self::TIEMPO_RECORDAR_DIAS * self::SEGUNDOS_POR_DIA;
+            
+            $tipoToken = $generarJWT ? TipoToken::REFRESH_MOVIL->value : TipoToken::RECUERDAME->value;
             
             $this->usuarioModel->set_id_usuario($usuario['id_usuario']);
             $this->usuarioModel->set_token($token);
             $this->usuarioModel->set_token_expiracion(date('Y-m-d H:i:s', time() + $segundosExpiracion));
-            $this->usuarioModel->set_token_tipo(TipoToken::RECUERDAME->value);
+            $this->usuarioModel->set_token_tipo($tipoToken);
 
             $resToken = $this->usuarioModel->realizar_consulta('registrar_token');
             if ($resToken['estatus']) {
-                $usuario['token_recordar'] = $token;
+                $usuario['token_persistente'] = $token;
             }
         } else {
-            $this->eliminarTokenRecordar($usuario['id_usuario']);
+            // Si es un login web sin recordar, borramos solo la sesión web anterior, 
+            // protegiendo la sesión móvil.
+            $this->eliminarTokenPorTipo($usuario['id_usuario'], TipoToken::RECUERDAME->value);
         }
 
         $jwt = null;
         
-        // SOLO generamos el JWT si el endpoint (la App Móvil) lo pide explícitamente
         if ($generarJWT) {
             $tiempoEmision = time();
-            $tiempoExpiracion = $tiempoEmision + self::JWT_TIEMPO_EXPIRACION; // Expira en 2 horas
+            $tiempoExpiracion = $tiempoEmision + self::JWT_TIEMPO_EXPIRACION;
 
             $payloadJWT = [
-                'iat' => $tiempoEmision,
-                'exp' => $tiempoExpiracion,
+                'iss'  => self::JWT_ISSUER,
+                'aud'  => self::JWT_AUDIENCE,
+                'iat'  => $tiempoEmision,
+                'exp'  => $tiempoExpiracion,
                 'data' => [
                     'id_usuario' => $usuario['id_usuario'],
-                    'correo' => $usuario['correo'],
-                    'rol_id' => $usuario['id_rol'],
+                    'correo'     => $usuario['correo'],
+                    'rol_id'     => $usuario['id_rol'],
                     'rol'        => $usuario['nombre_rol']
                 ]
             ];
@@ -82,24 +90,22 @@ class Autenticacion
             $jwt = JWT::encode($payloadJWT, JWT_SECRET, self::JWT_ALGORITMO);
         }
 
-        // Cargar permisos y notificaciones
         $permisos = $this->obtenerPermisos($usuario['id_rol']);
         $notificaciones = $this->obtenerNotificaciones($usuario['id_usuario']);
 
-        // Normalizamos los datos (ahora es súper rápido, sin BD)
         $datosSesion = $this->normalizarDatosUsuario($usuario, $permisos, $notificaciones);
 
         return [
             'estatus' => true, 
             'mensaje' => 'Login exitoso', 
             'datos' => $datosSesion, 
-            'token' => $usuario['token_recordar'] ?? null, 
-            'token_jwt' => $jwt // para el sistema Móvil
+            'refresh_token' => $usuario['token_persistente'] ?? null, 
+            'token_jwt' => $jwt 
         ];
     }
 
     /**
-     * Valida un token de recordar sesión.
+     * Valida un token de recordar sesión (Exclusivo WEB).
      */
     public function validarTokenRecuerdame($correo, $token)
     {
@@ -110,10 +116,12 @@ class Autenticacion
             return $usuarioRes;
         }
 
-        $usuarioDatos = $usuarioRes['datos']; // Ya incluye 'nombre_rol' por la mejora en _existe_correo
+        $usuarioDatos = $usuarioRes['datos'];
 
         $this->usuarioModel->set_id_usuario($usuarioDatos['id_usuario']);
         $this->usuarioModel->set_token($token);
+        
+        // Bloqueado estrictamente a formato WEB
         $this->usuarioModel->set_token_tipo(TipoToken::RECUERDAME->value);
         
         $tokenValido = $this->usuarioModel->realizar_consulta('validar_token');
@@ -130,51 +138,86 @@ class Autenticacion
     }
 
     /**
+     * Verifica un refresh token válido y genera un nuevo JWT. Usado para la app
+     */
+    public function renovarTokenJWT($idUsuario, $refreshToken)
+    {
+        $this->usuarioModel->set_id_usuario($idUsuario);
+        $this->usuarioModel->set_token($refreshToken);
+        $this->usuarioModel->set_token_tipo(TipoToken::REFRESH_MOVIL->value); 
+
+        $resultado = $this->usuarioModel->realizar_consulta('validar_token_jwt');
+
+        if (!$resultado['estatus']) {
+            return $resultado;
+        }
+
+        $usuario = $resultado['datos'];
+
+        $tiempoEmision = time();
+        $tiempoExpiracion = $tiempoEmision + self::JWT_TIEMPO_EXPIRACION;
+
+        $payload = [
+            'iss'  => self::JWT_ISSUER,
+            'aud'  => self::JWT_AUDIENCE,
+            'iat'  => $tiempoEmision,
+            'exp'  => $tiempoExpiracion,
+            'data' => [
+                'id_usuario' => $usuario['id_usuario'],
+                'correo'     => $usuario['correo'],
+                'rol_id'     => $usuario['rol_id'],
+                'rol'        => $usuario['nombre_rol']
+            ]
+        ];
+
+        $nuevoJwt = JWT::encode($payload, JWT_SECRET, self::JWT_ALGORITMO);
+
+        return [
+            'estatus' => true,
+            'nuevo_token_jwt' => $nuevoJwt
+        ];
+    }
+
+    /**
      * Cierra la sesión: elimina token y registra en bitácora.
      */
-    public function logout($usuarioId)
+    public function logout($usuarioId, $esMovil = false)
     {
-        $this->eliminarTokenRecordar($usuarioId);
+        // Se selecciona dinámicamente qué token destruir
+        $tipoToken = $esMovil ? TipoToken::REFRESH_MOVIL->value : TipoToken::RECUERDAME->value;
+        
+        $this->eliminarTokenPorTipo($usuarioId, $tipoToken);
         Bitacora::registrar(Accion::CERRAR_SESION, Modulo::GESTIONAR_USUARIOS, $usuarioId);
     }
 
     /**
      * Centraliza la eliminación del token.
      */
-    private function eliminarTokenRecordar($usuarioId)
+    private function eliminarTokenPorTipo($usuarioId, $tipoToken)
     {
         $this->usuarioModel->set_id_usuario($usuarioId);
-        $this->usuarioModel->set_token_tipo(TipoToken::RECUERDAME->value);
+        $this->usuarioModel->set_token_tipo($tipoToken);
         $this->usuarioModel->realizar_consulta('eliminar_token');
     }
 
-    /**
-     * Instancia el modelo Rol solo cuando se necesita y obtiene los permisos.
-     */
     private function obtenerPermisos($rolId)
     {
         $rolModel = new Rol();
         $rolModel->set_id_rol($rolId);
         $resultado = $rolModel->realizar_consulta('consultar_permisos_asignados');
-        $rolModel->cerrar(); // Cerramos conexión inmediatamente
+        $rolModel->cerrar();
         return $resultado['datos'] ?? [];
     }
 
-    /**
-     * Instancia el modelo Notificaciones solo cuando se necesita y obtiene las alertas.
-     */
     private function obtenerNotificaciones($usuarioId)
     {
         $notificacionesModel = new Notificaciones();
         $notificacionesModel->set_usuario_id($usuarioId);
         $resultado = $notificacionesModel->realizar_consulta('consultar_mis_notificaciones');
-        $notificacionesModel->cerrar(); // Cerramos conexión inmediatamente
+        $notificacionesModel->cerrar(); 
         return $resultado['datos'] ?? [];
     }
 
-    /**
-     * Normaliza los datos del usuario para la sesión.
-     */
     private function normalizarDatosUsuario($usuario, $permisos = [], $notificaciones = [])
     {
         return [
@@ -187,9 +230,6 @@ class Autenticacion
         ];
     }
 
-    /**
-     * Cierra explícitamente las conexiones internas.
-     */
     public function cerrar()
     {
         if ($this->usuarioModel !== null) {
