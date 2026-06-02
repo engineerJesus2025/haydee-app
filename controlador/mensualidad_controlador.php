@@ -22,6 +22,12 @@ if (isset($_POST["operacion"])) {
 
     Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_MENSUALIDAD, $operacion);
 
+    if (isset($_POST['fecha']) && strpos($_POST['fecha'], '-') !== false) {
+        list($anio, $mes, $dia) = explode('-', $_POST['fecha']);
+        $_POST['mes'] = (intval($mes));
+        $_POST['anio'] = (intval($anio));
+    }
+
     // VALIDACION DE CABECERA
     $reglasCabecera = Mensualidad::obtenerReglas($operacion);
 

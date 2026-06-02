@@ -96,7 +96,7 @@
                                                 <input type="hidden" name="db" id="db_input">
                                                 <input type="hidden" name="operacion" value="descargar_copia_seguridad">
                                                 <button class="btn btn-primary w-100 py-2 rounded-pill fw-semibold shadow-sm" id="boton_descargar">
-                                                    <i class="bi bi-download me-2"></i>Descargar Archivo .SQL
+                                                    <i class="bi bi-file-earmark-zip me-2"></i>Descargar Respaldo (.gz)
                                                 </button>
                                             </form>
                                         </div>
@@ -147,10 +147,10 @@
                                         <div class="tab-pane fade" id="pc" role="tabpanel" aria-labelledby="pc-tab">
                                             <div class="row">
                                                 <div class="col-xl-10">
-                                                    <label class="form-label fw-bold mb-3" for="input_file_importar">Suba un archivo local (.sql):</label>
+                                                    <label class="form-label fw-bold mb-3" for="input_file_importar">Suba un archivo local (.sql o .gz):</label>
                                                     <div class="input-group input-group-lg">
                                                         <span class="input-group-text"><i class="bi bi-folder2-open"></i></span>
-                                                        <input id="input_file_importar" type="file" class="form-control shadow-none" accept=".sql">
+                                                        <input id="input_file_importar" type="file" class="form-control shadow-none" accept=".sql, .sql.gz, .gz">
                                                     </div>
                                                 </div>
                                             </div>

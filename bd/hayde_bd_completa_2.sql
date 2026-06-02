@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 25-05-2026 a las 04:58:43
+-- Tiempo de generación: 30-05-2026 a las 21:48:00
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -28,302 +28,130 @@ DELIMITER $$
 -- Procedimientos
 --
 CREATE DEFINER=`root`@`localhost` PROCEDURE `gestionar_anio_fiscal` ()   BEGIN
+    DECLARE v_abiertos INT;
 
-    DECLARE existe_anio_actual BOOLEAN;
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+    END;
 
-    
+    START TRANSACTION;
 
-    SELECT COUNT(*) > 0 INTO existe_anio_actual 
+    -- 1. Cerrar los años fiscales cuya fecha de cierre ya fue superada
+    UPDATE anio_fiscal 
+    SET estado = 'Cerrada', activo = 0 
+    WHERE estado = 'Abierto' AND fecha_cierre < CURDATE() AND activo = 1;
 
+    -- 2. Validar si existe algún año fiscal activo en curso
+    SELECT COUNT(*) INTO v_abiertos 
     FROM anio_fiscal 
+    WHERE estado = 'Abierto' AND activo = 1;
 
-    WHERE YEAR(fecha_inicio) = YEAR(NOW()) 
-
-    AND estado = 'Abierto'
-
-    AND activo = 1; 
-
-    
-
-    IF NOT existe_anio_actual THEN
-
-        UPDATE anio_fiscal SET estado = 'Cerrada', fecha_cierre = NOW() 
-
-        WHERE estado = 'Abierto' AND activo = 1;
-
-        
-
-        INSERT INTO anio_fiscal(fecha_inicio, fecha_cierre, estado, descripcion)
-
-        VALUES (NOW(), DATE_ADD(NOW(), INTERVAL 1 YEAR), 'Abierto', CONCAT('Año fiscal ', YEAR(NOW())));
-
+    -- 3. Creación automática del nuevo año fiscal si no hay ninguno abierto
+    IF v_abiertos = 0 THEN
+        INSERT INTO anio_fiscal (estado, fecha_inicio, fecha_cierre, descripcion, activo)
+        VALUES (
+            'Abierto', 
+            CURDATE(), 
+            DATE_ADD(CURDATE(), INTERVAL 1 YEAR), 
+            CONCAT('Año fiscal automático ', YEAR(CURDATE())), 
+            1
+        );
     END IF;
 
+    COMMIT;
 END$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_gestion_caja_chica_mensual` ()   sp_block: BEGIN 
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_gestion_caja_chica_mensual` ()   BEGIN
+    DECLARE v_ultimo_fondo DECIMAL(15,2) DEFAULT 0;
+    DECLARE v_id_anio_activo INT DEFAULT NULL;
+    DECLARE v_cajas_abiertas INT;
 
-    DECLARE v_mes_actual VARCHAR(7);
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+    END;
 
-    DECLARE v_existe_caja_abierta INT;
+    START TRANSACTION;
 
-    DECLARE v_fecha_actual DATE;
+    -- 1. Cerrar cajas abiertas de meses anteriores
+    UPDATE caja_chica
+    SET estado = 'Cerrada'
+    WHERE estado = 'Abierto'
+      AND (
+          YEAR(fecha_creacion) < YEAR(CURDATE()) 
+          OR 
+          (YEAR(fecha_creacion) = YEAR(CURDATE()) AND MONTH(fecha_creacion) < MONTH(CURDATE()))
+      );
 
-    DECLARE v_id_anio_fiscal INT;
-
-    DECLARE v_nombre_mes_espanol VARCHAR(20);
-
-    DECLARE v_id_caja_anterior INT;
-
-    
-
-    DECLARE v_monto_fondo_fijo DECIMAL(15,2) DEFAULT 1000.00; 
-
-    
-
-    SET v_fecha_actual = CURDATE();
-
-    SET v_mes_actual = DATE_FORMAT(v_fecha_actual, '%Y-%m');    
-
-    
-
-    SELECT id_anio_fiscal INTO v_id_anio_fiscal
-
-    FROM anio_fiscal
-
-    WHERE v_fecha_actual BETWEEN fecha_inicio AND fecha_cierre
-
-    AND estado = 'Abierto'
-
-    LIMIT 1;
-
-    
-
-    IF v_id_anio_fiscal IS NULL THEN
-
-        LEAVE sp_block; 
-
-    END IF;
-
-    
-
-    SELECT COUNT(*) INTO v_existe_caja_abierta 
-
+    -- 2. Verificar si ya existe una caja abierta para el mes actual
+    SELECT COUNT(*) INTO v_cajas_abiertas 
     FROM caja_chica 
+    WHERE estado = 'Abierto' AND activo = 1;
 
-    WHERE DATE_FORMAT(fecha_creacion, '%Y-%m') = v_mes_actual 
-
-    AND anio_fiscal_id = v_id_anio_fiscal; 
-
-    
-
-    IF v_existe_caja_abierta = 0 THEN
-
-    
-
-        SELECT id_caja_chica INTO v_id_caja_anterior
-
-        FROM caja_chica
-
-        WHERE estado = 'Abierto'
-
-        AND anio_fiscal_id = v_id_anio_fiscal
-
-        ORDER BY fecha_creacion DESC
-
+    -- 3. Creación de la nueva caja chica
+    IF v_cajas_abiertas = 0 THEN
+        
+        -- Obtener el ID del año fiscal activo actual
+        SELECT id_anio_fiscal INTO v_id_anio_activo 
+        FROM anio_fiscal 
+        WHERE estado = 'Abierto' AND activo = 1 
         LIMIT 1;
 
+        -- Es vital asegurarse de que exista un año fiscal antes de insertar la caja
+        IF v_id_anio_activo IS NOT NULL THEN
+            
+            -- Clonar el fondo fijo de la última caja chica registrada
+            SELECT fondo_fijo INTO v_ultimo_fondo 
+            FROM caja_chica 
+            ORDER BY id_caja_chica DESC 
+            LIMIT 1;
 
-
-        UPDATE caja_chica 
-
-        SET estado = 'Cerrada'
-
-        WHERE estado = 'Abierto'
-
-        AND anio_fiscal_id = v_id_anio_fiscal;
-
-        
-
-        SET v_nombre_mes_espanol = 
-
-            CASE MONTH(v_fecha_actual)
-
-                WHEN 1 THEN 'Enero' WHEN 2 THEN 'Febrero' WHEN 3 THEN 'Marzo'
-
-                WHEN 4 THEN 'Abril' WHEN 5 THEN 'Mayo' WHEN 6 THEN 'Junio'
-
-                WHEN 7 THEN 'Julio' WHEN 8 THEN 'Agosto' WHEN 9 THEN 'Septiembre'
-
-                WHEN 10 THEN 'Octubre' WHEN 11 THEN 'Noviembre' WHEN 12 THEN 'Diciembre'
-
-                ELSE 'Desconocido'
-
-            END;
-
-        
-
-        INSERT INTO caja_chica 
-
-            (fecha_creacion, fondo_fijo, estado, descripcion, anio_fiscal_id) 
-
-        VALUES 
-
-            (v_fecha_actual, v_monto_fondo_fijo, 'Abierto', 
-
-             CONCAT('Caja chicas del mes ', v_nombre_mes_espanol, ' - ', YEAR(v_fecha_actual)), 
-
-             v_id_anio_fiscal);
-
-       
-
-    END IF;
-
-END$$
-
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_registrar_reposicion_caja` (IN `p_monto_reposicion` DECIMAL(15,2), IN `p_caja_id` INT, IN `p_tasa_dolar` DECIMAL(15,2))   sp_block: BEGIN
-    DECLARE v_mensaje VARCHAR(500);
-    DECLARE v_codigo_error INT DEFAULT 0;
-    DECLARE v_proveedor_id INT;
-    DECLARE v_tipo_gasto_id INT;
-    DECLARE v_solicitud_gasto_id INT;
-    DECLARE v_gasto_id INT;
-    DECLARE v_saldo_acumulado DECIMAL(15,2) DEFAULT 0.00;
-    DECLARE done INT DEFAULT FALSE;
-    DECLARE v_mov_id INT;
-    DECLARE v_mov_monto DECIMAL(15,2);
-    
-    DECLARE cur_movimientos CURSOR FOR 
-        SELECT id_movimiento_caja, monto 
-        FROM movimientos_caja 
-        WHERE caja_chica_id = p_caja_id 
-        AND estado = 'Pendiente por reposicion'
-        AND activo = 1 
-        ORDER BY fecha ASC;
-        
-    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
-
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        GET DIAGNOSTICS CONDITION 1 v_mensaje = MESSAGE_TEXT, v_codigo_error = MYSQL_ERRNO;
-        SELECT CONCAT('Error ', v_codigo_error, ': ', v_mensaje) AS mensaje;
-    END;
-
-    START TRANSACTION;
-
-    SELECT id_proveedor INTO v_proveedor_id FROM proveedores WHERE nombre_proveedor LIKE '%Administración (Caja Chica)%' LIMIT 1;
-    SELECT id_tipo_gasto INTO v_tipo_gasto_id FROM tipo_gasto WHERE nombre_tipo_gasto LIKE '%Reposición%' LIMIT 1;
-    SELECT id_solicitud INTO v_solicitud_gasto_id FROM solicitudes_gasto WHERE nombre_solicitante LIKE '%Administracion%' LIMIT 1;
-
-    IF v_proveedor_id IS NULL OR v_tipo_gasto_id IS NULL OR v_solicitud_gasto_id IS NULL THEN
-        SELECT 'Error: Faltan datos semilla (Proveedor, Tipo Gasto o Solicitud).' AS mensaje;
-        ROLLBACK;
-        LEAVE sp_block;
-    END IF;
-
-    INSERT INTO gastos (descripcion_gasto, proveedor_id, tipo_gasto_id, solicitud_id, clasificacion, tasa_dolar, activo)
-    VALUES (
-        CONCAT('Reposición de Caja Chica - ', DATE_FORMAT(NOW(), '%d/%m/%Y')), 
-        v_proveedor_id, v_tipo_gasto_id, v_solicitud_gasto_id, 'reposicion', p_tasa_dolar, 1
-    );
-    SET v_gasto_id = LAST_INSERT_ID(); 
-
-    INSERT INTO detalles_gastos (fecha, monto, metodo_pago, gasto_id, descripcion_detalle_gasto)
-    VALUES (
-        CURDATE(), p_monto_reposicion, 'Efectivo', v_gasto_id, 
-        CONCAT('Detalle de reposición por monto de: ', p_monto_reposicion)
-    );
-
-    OPEN cur_movimientos;
-    read_loop: LOOP
-        FETCH cur_movimientos INTO v_mov_id, v_mov_monto;
-        IF done THEN LEAVE read_loop; END IF;
-
-        IF (v_saldo_acumulado + v_mov_monto) <= p_monto_reposicion THEN
-            INSERT INTO reposiciones (gasto_id, movimiento_caja_id) VALUES (v_gasto_id, v_mov_id);
-            UPDATE movimientos_caja SET estado = 'Repuesto' WHERE id_movimiento_caja = v_mov_id;
-            SET v_saldo_acumulado = v_saldo_acumulado + v_mov_monto;
-        ELSE
-            LEAVE read_loop;
+            -- Insertar la nueva caja para el mes en curso
+            INSERT INTO caja_chica (fondo_fijo, estado, descripcion, fecha_creacion, anio_fiscal_id, activo)
+            VALUES (
+                v_ultimo_fondo, 
+                'Abierto', 
+                CONCAT('Caja chica automática - Mes ', MONTH(CURDATE()), '/', YEAR(CURDATE())), 
+                CURDATE(), 
+                v_id_anio_activo, 
+                1
+            );
         END IF;
-    END LOOP;
-    CLOSE cur_movimientos;
+    END IF;
 
     COMMIT;
-    SELECT CONCAT('Reposición exitosa. Total Repuesto: ', v_saldo_acumulado) AS mensaje;
 END$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_sincronizar_presupuestos_mensualidad` (IN `p_mensualidad_id` INT, IN `p_nuevos_presupuestos_ids` TEXT)   BEGIN
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_registrar_reposicion_caja` (IN `p_monto` DECIMAL(15,2), IN `p_id_caja` INT)   BEGIN
+    DECLARE v_total_pendiente DECIMAL(15,2);
 
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
-
     BEGIN
-
         ROLLBACK;
-
-        RESIGNAL; 
-
+        SELECT 'Error crítico al procesar la reposición en la base de datos.' AS mensaje;
     END;
-
-
-
-    CREATE TEMPORARY TABLE IF NOT EXISTS TempNuevosGastos (detalle_presupuesto_id INT PRIMARY KEY);
-
-    TRUNCATE TABLE TempNuevosGastos;
-
-
-
-    SET @sql = CONCAT('INSERT INTO TempNuevosGastos (detalle_presupuesto_id) VALUES (', REPLACE(p_nuevos_presupuestos_ids, ',', '),('), ');');
-
-    PREPARE stmt FROM @sql;
-
-    EXECUTE stmt;
-
-    DEALLOCATE PREPARE stmt;
-
-    
 
     START TRANSACTION;
 
+    -- Validamos cuánto dinero hay pendiente por reponer bloqueando las filas por seguridad
+    SELECT IFNULL(SUM(monto), 0) INTO v_total_pendiente
+    FROM movimientos_caja
+    WHERE caja_chica_id = p_id_caja AND estado = 'Pendiente por reposicion' AND activo = 1
+    FOR UPDATE;
 
+    IF v_total_pendiente = 0 THEN
+        ROLLBACK;
+        SELECT 'No hay movimientos pendientes por reponer en esta caja.' AS mensaje;
+    ELSE
+        -- Cambiamos el estado de los movimientos a 'Repuesto'
+        UPDATE movimientos_caja
+        SET estado = 'Repuesto'
+        WHERE caja_chica_id = p_id_caja AND estado = 'Pendiente por reposicion' AND activo = 1;
 
-        DELETE FROM presupuesto_mensualidad
-
-        WHERE
-
-            mensualidad_id = p_mensualidad_id
-
-            AND detalle_presupuesto_id NOT IN (SELECT detalle_presupuesto_id FROM TempNuevosGastos);
-
-
-
-        INSERT INTO presupuesto_mensualidad (mensualidad_id, detalle_presupuesto_id)
-
-        SELECT p_mensualidad_id, nuevos.detalle_presupuesto_id
-
-        FROM TempNuevosGastos AS nuevos
-
-        WHERE NOT EXISTS (
-
-            SELECT 1
-
-            FROM presupuesto_mensualidad AS existentes
-
-            WHERE existentes.mensualidad_id = p_mensualidad_id AND existentes.detalle_presupuesto_id = nuevos.detalle_presupuesto_id
-
-        );
-
-
-
-    COMMIT;
-
-
-
-    DROP TEMPORARY TABLE TempNuevosGastos;
-
-
-
+        COMMIT;
+        SELECT CONCAT('Reposición procesada exitosamente por ', v_total_pendiente, ' Bs.') AS mensaje;
+    END IF;
 END$$
 
 DELIMITER ;
@@ -489,7 +317,11 @@ INSERT INTO `detalles_gastos` (`id_detalle_gasto`, `fecha`, `monto`, `metodo_pag
 (2024, '2026-03-17', 10.00, 'Transferencia', 211),
 (2027, '2026-05-21', 10.00, 'Efectivo', 213),
 (2028, '2026-05-21', 10.00, 'Transferencia', 213),
-(2047, '2026-05-23', 10.00, 'Transferencia', 212);
+(2047, '2026-05-23', 10.00, 'Transferencia', 212),
+(2048, '2026-05-26', 55.00, 'Efectivo', 214),
+(2049, '2026-05-27', 30.00, 'Transferencia', 215),
+(2050, '2026-05-27', 60.00, 'Efectivo', 216),
+(2051, '2026-05-28', 50.00, 'Pago Movil', 217);
 
 -- --------------------------------------------------------
 
@@ -519,7 +351,9 @@ INSERT INTO `detalles_pagos` (`id_detalle_pago`, `fecha`, `monto`, `tipo_pago`, 
 (1035, '2026-05-20', 25.00, 'Pago Movil', 143),
 (1036, '2026-05-01', 20.00, 'Divisa', 143),
 (1041, '2026-05-23', 12.00, 'Divisa', 143),
-(1055, '2026-05-23', 8.00, 'Transferencia', 143);
+(1055, '2026-05-23', 8.00, 'Transferencia', 143),
+(1056, '2026-05-26', 505.00, 'Transferencia', 147),
+(1057, '2026-05-27', 20.00, 'Transferencia', 148);
 
 -- --------------------------------------------------------
 
@@ -616,6 +450,8 @@ INSERT INTO `egresos_bancarios` (`referencia`, `imagen`, `banco_id`, `detalle_ga
 ('42321', 'mensualidad_1779395597_500.PNG', 1, 2028),
 ('1235412', 'CSS-Logo_1773003460_864.jpg', 6, 2012),
 ('412123', 'mensualidad_1771710356_291.PNG', 6, 2019),
+('5858822', '955ad5d5-ef40-44a7-8b1a-e3213090e54d_1779922826_345.jpeg', 6, 2049),
+('508538466', '74df44ed-237d-4196-84eb-ab585842a1ac_1779972265_875.jpeg', 6, 2051),
 ('543524', 'images__2__1773805029_187.png', 9, 2024);
 
 -- --------------------------------------------------------
@@ -657,7 +493,11 @@ INSERT INTO `gastos` (`id_gasto`, `clasificacion`, `tasa_dolar`, `tipo_gasto_id`
 (210, 'reposicion', 1.00, 1, NULL, 1, 'Reposición de Caja Chica - 17/03/2026', 1),
 (211, 'variable', 1.00, 2, NULL, 3, 'asdasdasdasd', 1),
 (212, 'fijo', 1.00, 1, NULL, 3, 'asdasdasdasd', 1),
-(213, 'FIJO', 523.67, 2, 15, 2, 'sssssssssss', 1);
+(213, 'FIJO', 523.67, 2, 15, 2, 'sssssssssss', 1),
+(214, 'FIJO', 1.00, 2, NULL, 4, 'Zbsvss', 1),
+(215, 'VARIABLE', 1.00, 2, NULL, 2, 'Tvybyb', 1),
+(216, 'VARIABLE', 1.00, 2, NULL, 2, 'Hola', 1),
+(217, 'FIJO', 1.00, 4, NULL, 4, 'Hola ', 1);
 
 -- --------------------------------------------------------
 
@@ -743,7 +583,9 @@ CREATE TABLE `ingresos_bancarios` (
 INSERT INTO `ingresos_bancarios` (`referencia`, `imagen`, `banco_id`, `detalle_pago_id`) VALUES
 ('53246', 'fiabil_1779159711_524.PNG', 1, 1030),
 ('5865659', '43c0a065-a53e-4115-bd8c-004838072d63_1779235146_170.jpeg', 1, 1031),
-('1345312', 'cog_1779299571_171.PNG', 6, 1035);
+('4686286', '10367e49-f030-4e26-8ac1-c8342ae380b1_1779920771_991.jpeg', 1, 1057),
+('1345312', 'cog_1779299571_171.PNG', 6, 1035),
+('4686858', 'ff3aa0e1-7886-43ac-b0bc-18e73d4fc263_1779820535_428.jpeg', 6, 1056);
 
 -- --------------------------------------------------------
 
@@ -837,7 +679,7 @@ INSERT INTO `movimientos_caja` (`id_movimiento_caja`, `concepto`, `monto`, `fech
 (42, 'cafe', 10.00, '2026-03-09', 'Repuesto', 25, 1),
 (43, 'se pagaron 3 bombillos nuevos', 900.00, '2026-03-15', 'Repuesto', 25, 1),
 (44, 'aaaaa', 10.00, '2026-03-16', 'Pendiente por reposicion', 25, 0),
-(53, 'Compra de bombillos seguros', 50.00, '2026-05-23', 'Pendiente por reposicion', 26, 1);
+(55, 'Compra de bombillos seguros', 50.00, '2026-05-25', 'Pendiente por reposicion', 26, 1);
 
 -- --------------------------------------------------------
 
@@ -861,12 +703,14 @@ INSERT INTO `pagos` (`id_pago`, `estado`, `tasa_dolar`, `observacion`, `activo`)
 (135, 'PROCESADO', 530.00, 'pago', 1),
 (138, 'PROCESADO', 1.00, 'pago', 1),
 (139, 'PROCESADO', 1.00, 'Pago registrado desde la App', 1),
-(140, 'PENDIENTE', 0.00, 'pago', 1),
-(141, 'PENDIENTE', 0.00, 'pago', 1),
+(140, 'PROCESADO', 0.00, 'Estado actualizado desde la App Móvil', 1),
+(141, 'PROCESADO', 0.00, 'Estado actualizado desde la App Móvil', 1),
 (142, 'RECHAZADO', 520.91, 'pago', 1),
 (143, 'PROCESADO', 535.00, 'Doble revisi?n ejecutada por T2', 1),
 (144, 'PENDIENTE', 535.00, 'Abono registrado por Transacci?n 2', 1),
-(146, 'PENDIENTE', 535.00, 'Abono registrado por Transacci?n 2', 1);
+(146, 'PENDIENTE', 535.00, 'Abono registrado por Transacci?n 2', 1),
+(147, 'PROCESADO', 1.00, 'Estado actualizado desde la App Móvil', 1),
+(148, 'PROCESADO', 1.00, 'Estado actualizado desde la App Móvil', 1);
 
 -- --------------------------------------------------------
 
@@ -894,7 +738,9 @@ INSERT INTO `pagos_mensualidad` (`pago_id`, `mensualidad_id`, `monto_abonado`) V
 (142, 684, 10.00),
 (143, 686, 8.50),
 (144, 688, 18.65),
-(146, 688, 18.65);
+(146, 688, 18.65),
+(147, 690, 505.00),
+(148, 684, 20.00);
 
 -- --------------------------------------------------------
 
@@ -1432,13 +1278,13 @@ ALTER TABLE `caja_chica`
 -- AUTO_INCREMENT de la tabla `detalles_gastos`
 --
 ALTER TABLE `detalles_gastos`
-  MODIFY `id_detalle_gasto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2048;
+  MODIFY `id_detalle_gasto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2052;
 
 --
 -- AUTO_INCREMENT de la tabla `detalles_pagos`
 --
 ALTER TABLE `detalles_pagos`
-  MODIFY `id_detalle_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1056;
+  MODIFY `id_detalle_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1058;
 
 --
 -- AUTO_INCREMENT de la tabla `detalles_presupuesto`
@@ -1450,7 +1296,7 @@ ALTER TABLE `detalles_presupuesto`
 -- AUTO_INCREMENT de la tabla `gastos`
 --
 ALTER TABLE `gastos`
-  MODIFY `id_gasto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=214;
+  MODIFY `id_gasto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=218;
 
 --
 -- AUTO_INCREMENT de la tabla `habitantes`
@@ -1468,13 +1314,13 @@ ALTER TABLE `mensualidad`
 -- AUTO_INCREMENT de la tabla `movimientos_caja`
 --
 ALTER TABLE `movimientos_caja`
-  MODIFY `id_movimiento_caja` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=54;
+  MODIFY `id_movimiento_caja` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=56;
 
 --
 -- AUTO_INCREMENT de la tabla `pagos`
 --
 ALTER TABLE `pagos`
-  MODIFY `id_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=147;
+  MODIFY `id_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=149;
 
 --
 -- AUTO_INCREMENT de la tabla `periodos_mensualidad`
@@ -1613,50 +1459,95 @@ DELIMITER $$
 --
 -- Procedimientos
 --
-CREATE DEFINER=`app_condominio`@`localhost` PROCEDURE `sp_insertar_token` (IN `p_usuario_id` INT, IN `p_tipo` VARCHAR(50), IN `p_token` VARCHAR(255), IN `p_fecha_expiracion` DATETIME)   BEGIN
-    DELETE FROM tokens_seguridad 
-    WHERE usuario_id = p_usuario_id 
-      AND tipo = p_tipo;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_insertar_token` (IN `p_usuario_id` INT(11), IN `p_tipo` VARCHAR(30), IN `p_token` TEXT, IN `p_fecha_expiracion` DATETIME)   BEGIN
+    -- 1. Declarar el manejador de errores
+    -- Si ocurre cualquier error de SQL, deshace los cambios (ROLLBACK) y propaga el error
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL; 
+    END;
 
-    INSERT INTO tokens_seguridad (usuario_id, tipo, token, fecha_expiracion)
-    VALUES (p_usuario_id, p_tipo, p_token, p_fecha_expiracion);
+    -- Iniciar transacción para garantizar que la limpieza y la inserción ocurran en bloque
+    START TRANSACTION;
+
+    -- 2. Limpieza general de mantenimiento (Opcional pero recomendada)
+    -- Elimina cualquier token de este usuario que ya haya expirado en el tiempo
+    DELETE FROM tokens_seguridad 
+    WHERE usuario_id = p_usuario_id AND fecha_expiracion < NOW();
+
+    -- 3. Limpieza de conflicto (Rotación)
+    -- Si se está generando un nuevo token de un tipo específico (ej. 'REFRESH_TOKEN' o 'RECUPERACION'), 
+    -- eliminamos el anterior para que solo exista uno válido activo por tipo y usuario.
+    DELETE FROM tokens_seguridad 
+    WHERE usuario_id = p_usuario_id AND tipo = p_tipo;
+
+    -- 4. Inserción del nuevo token
+    INSERT INTO tokens_seguridad (
+        usuario_id, 
+        tipo, 
+        token, 
+        fecha_expiracion
+    ) VALUES (
+        p_usuario_id, 
+        p_tipo, 
+        p_token, 
+        p_fecha_expiracion
+    );
+
+    -- Confirmar los cambios si todo salió bien
+    COMMIT;
 END$$
 
-CREATE DEFINER=`app_condominio`@`localhost` PROCEDURE `sp_notificar_administradores` (IN `p_titulo` VARCHAR(100), IN `p_descripcion` TEXT, IN `p_tabla_origen` VARCHAR(50), IN `p_id_registro_origen` INT, IN `p_tipo_evento` VARCHAR(50))   BEGIN
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_notificar_administradores` (IN `p_tit` VARCHAR(100), IN `p_desc` TEXT, IN `p_tabla` VARCHAR(50), IN `p_id_reg` INT, IN `p_tipo` VARCHAR(50))   BEGIN
     DECLARE v_evento_id INT;
-    DECLARE v_usuario_id INT;
-    DECLARE v_notificacion_id INT;
-    DECLARE done INT DEFAULT FALSE;
+    DECLARE v_admin_id INT;
+    DECLARE v_notif_id INT;
+    DECLARE v_done INT DEFAULT FALSE;
     
+    -- Cursor para seleccionar solo a los administradores globales (1) y administradores (2) activos
     DECLARE cur_admins CURSOR FOR 
         SELECT id_usuario FROM usuarios WHERE rol_id IN (1, 2) AND activo = 1;
+        
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_done = TRUE;
     
-    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+    END;
 
+    START TRANSACTION;
+
+    -- 1. Registrar el evento general
     INSERT INTO eventos_sistema (tipo_evento, tabla_origen, id_registro_origen, fecha_evento)
-    VALUES (p_tipo_evento, p_tabla_origen, p_id_registro_origen, NOW());
+    VALUES (p_tipo, p_tabla, p_id_reg, NOW());
     
     SET v_evento_id = LAST_INSERT_ID();
 
+    -- 2. Recorrer la lista de administradores y asignarles su notificación
     OPEN cur_admins;
-
+    
     read_loop: LOOP
-        FETCH cur_admins INTO v_usuario_id;
-        IF done THEN
+        FETCH cur_admins INTO v_admin_id;
+        IF v_done THEN
             LEAVE read_loop;
         END IF;
 
+        -- Insertar notificación personalizada
         INSERT INTO notificaciones (titulo, descripcion, fecha, leido, usuario_id)
-        VALUES (p_titulo, p_descripcion, CURDATE(), 0, v_usuario_id);
+        VALUES (p_tit, p_desc, NOW(), 0, v_admin_id);
         
-        SET v_notificacion_id = LAST_INSERT_ID();
-        
+        SET v_notif_id = LAST_INSERT_ID();
+
+        -- Relacionar notificación con el evento (Tabla pivote)
         INSERT INTO notificacion_evento (notificacion_id, evento_id)
-        VALUES (v_notificacion_id, v_evento_id);
-
+        VALUES (v_notif_id, v_evento_id);
+        
     END LOOP;
-
+    
     CLOSE cur_admins;
+
+    COMMIT;
 END$$
 
 DELIMITER ;
@@ -2349,7 +2240,190 @@ INSERT INTO `bitacora` (`id_bitacora`, `fecha_hora`, `accion`, `usuario_id`, `mo
 (4437, '2026-05-22 23:32:05', 'CONSULTAR', 1, 8, '{}', '{}'),
 (4438, '2026-05-22 23:32:42', 'ELIMINAR', 1, 8, '{\"fecha\":\"2026-02-01\",\"cuota_reserva\":230,\"observacion\":\"febrero 2026 editado\"}', '{}'),
 (4439, '2026-05-22 23:32:47', 'CONSULTAR', 1, 8, '{}', '{}'),
-(4440, '2026-05-24 16:49:19', 'INICIAR SESION', 1, 14, '{}', '{}');
+(4440, '2026-05-24 16:49:19', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4441, '2026-05-24 23:31:26', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4442, '2026-05-24 23:31:32', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4443, '2026-05-25 00:00:24', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4444, '2026-05-25 18:31:41', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4445, '2026-05-25 18:33:12', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4446, '2026-05-25 18:39:34', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4447, '2026-05-25 18:45:05', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4448, '2026-05-25 18:51:33', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4449, '2026-05-25 20:52:42', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4450, '2026-05-25 21:39:17', 'CONSULTAR', 1, 14, '{}', '{}'),
+(4451, '2026-05-25 21:44:51', 'CONSULTAR', 1, 7, '{}', '{}'),
+(4452, '2026-05-25 21:45:27', 'CONSULTAR', 1, 5, '{}', '{}'),
+(4453, '2026-05-25 21:46:44', 'CONSULTAR', 1, 1, '{}', '{}'),
+(4454, '2026-05-25 21:47:17', 'CONSULTAR', 1, 2, '{}', '{}'),
+(4455, '2026-05-25 21:47:24', 'CONSULTAR', 1, 4, '{}', '{}'),
+(4456, '2026-05-25 21:47:40', 'CONSULTAR', 1, 3, '{}', '{}'),
+(4457, '2026-05-25 21:47:53', 'CONSULTAR', 1, 5, '{}', '{}'),
+(4458, '2026-05-25 21:48:07', 'CONSULTAR', 1, 7, '{}', '{}'),
+(4459, '2026-05-25 21:48:13', 'CONSULTAR', 1, 8, '{}', '{}'),
+(4460, '2026-05-25 21:48:24', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4461, '2026-05-25 21:48:58', 'CONSULTAR', 1, 2, '{}', '{}'),
+(4462, '2026-05-25 21:54:11', 'CONSULTAR', 1, 7, '{}', '{}'),
+(4463, '2026-05-25 21:54:51', 'CONSULTAR', 1, 8, '{}', '{}'),
+(4464, '2026-05-25 21:54:59', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4465, '2026-05-25 21:55:11', 'CONSULTAR', 1, 14, '{}', '{}'),
+(4466, '2026-05-25 21:55:19', 'CONSULTAR', 1, 17, '{}', '{}'),
+(4467, '2026-05-25 21:56:54', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4468, '2026-05-25 21:58:01', 'CONSULTAR', 1, 4, '{}', '{}'),
+(4469, '2026-05-25 21:58:37', 'CONSULTAR', 1, 14, '{}', '{}'),
+(4470, '2026-05-25 21:58:44', 'CONSULTAR', 1, 19, '{}', '{}'),
+(4471, '2026-05-25 22:00:16', 'CONSULTAR', 1, 1, '{}', '{}'),
+(4472, '2026-05-25 22:00:39', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(4473, '2026-05-25 22:40:09', 'CONSULTAR', 1, 1, '{}', '{}'),
+(4474, '2026-05-26 10:07:42', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4475, '2026-05-26 14:27:19', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4476, '2026-05-26 14:34:36', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4477, '2026-05-26 14:54:39', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4478, '2026-05-27 18:19:28', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4479, '2026-05-27 18:47:01', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4480, '2026-05-27 19:07:48', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4481, '2026-05-27 19:09:30', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4482, '2026-05-27 19:24:42', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4483, '2026-05-27 19:35:01', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4484, '2026-05-27 19:40:44', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4485, '2026-05-27 19:41:14', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4486, '2026-05-27 19:41:48', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4487, '2026-05-27 19:44:15', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4488, '2026-05-27 19:49:30', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4489, '2026-05-27 20:05:35', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4490, '2026-05-27 20:08:05', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4491, '2026-05-27 20:08:42', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4492, '2026-05-27 20:10:29', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4493, '2026-05-27 23:08:05', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4494, '2026-05-27 23:22:16', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4495, '2026-05-27 23:29:04', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4496, '2026-05-27 23:34:30', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4497, '2026-05-28 00:15:45', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4498, '2026-05-28 00:22:47', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4499, '2026-05-28 01:36:35', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4500, '2026-05-28 01:43:16', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4501, '2026-05-28 01:43:27', 'CONSULTAR', 1, 1, '{}', '{}'),
+(4502, '2026-05-28 01:50:07', 'CONSULTAR', 1, 8, '{}', '{}'),
+(4503, '2026-05-28 08:40:50', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4504, '2026-05-28 09:06:41', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4505, '2026-05-28 09:09:37', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4506, '2026-05-28 09:21:05', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4507, '2026-05-28 09:27:55', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4508, '2026-05-28 09:28:08', 'CONSULTAR', 1, 14, '{}', '{}'),
+(4509, '2026-05-28 09:34:08', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4510, '2026-05-28 09:44:30', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4511, '2026-05-28 10:26:29', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4512, '2026-05-28 10:42:42', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4513, '2026-05-28 10:49:10', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4514, '2026-05-28 11:02:02', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4515, '2026-05-28 11:06:35', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4516, '2026-05-28 11:11:46', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4517, '2026-05-28 11:24:51', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4518, '2026-05-28 11:27:44', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4519, '2026-05-28 11:57:05', 'CONSULTAR', 1, 1, '{}', '{}'),
+(4520, '2026-05-28 17:27:51', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4521, '2026-05-28 17:28:31', 'CONSULTAR', 1, 1, '{}', '{}'),
+(4522, '2026-05-28 17:29:17', 'CONSULTAR', 1, 2, '{}', '{}'),
+(4523, '2026-05-28 17:29:32', 'CONSULTAR', 1, 1, '{}', '{}'),
+(4524, '2026-05-28 17:29:47', 'CONSULTAR', 1, 4, '{}', '{}'),
+(4525, '2026-05-28 17:31:28', 'CONSULTAR', 1, 1, '{}', '{}'),
+(4526, '2026-05-28 17:38:13', 'CONSULTAR', 1, 1, '{}', '{}'),
+(4527, '2026-05-28 17:41:16', 'CONSULTAR', 1, 1, '{}', '{}'),
+(4528, '2026-05-28 17:42:35', 'CONSULTAR', 1, 1, '{}', '{}'),
+(4529, '2026-05-28 17:44:44', 'CONSULTAR', 1, 1, '{}', '{}'),
+(4530, '2026-05-28 17:45:18', 'CONSULTAR', 1, 1, '{}', '{}'),
+(4531, '2026-05-28 17:46:44', 'CONSULTAR', 1, 1, '{}', '{}'),
+(4532, '2026-05-28 17:56:40', 'CONSULTAR', 1, 1, '{}', '{}'),
+(4533, '2026-05-28 17:57:30', 'CONSULTAR', 1, 1, '{}', '{}'),
+(4534, '2026-05-28 17:57:55', 'CONSULTAR', 1, 1, '{}', '{}'),
+(4535, '2026-05-28 17:59:09', 'CONSULTAR', 1, 1, '{}', '{}'),
+(4536, '2026-05-28 17:59:24', 'CONSULTAR', 1, 1, '{}', '{}'),
+(4537, '2026-05-28 17:59:43', 'CONSULTAR', 1, 1, '{}', '{}'),
+(4538, '2026-05-28 18:00:17', 'CONSULTAR', 1, 1, '{}', '{}'),
+(4539, '2026-05-28 18:01:58', 'CONSULTAR', 1, 1, '{}', '{}'),
+(4540, '2026-05-28 18:02:06', 'CONSULTAR', 1, 2, '{}', '{}'),
+(4541, '2026-05-28 18:03:01', 'CONSULTAR', 1, 14, '{}', '{}'),
+(4542, '2026-05-28 18:03:25', 'CONSULTAR', 1, 14, '{}', '{}'),
+(4543, '2026-05-28 18:06:33', 'CONSULTAR', 1, 5, '{}', '{}'),
+(4544, '2026-05-28 18:08:17', 'CONSULTAR', 1, 1, '{}', '{}'),
+(4545, '2026-05-28 18:21:29', 'CONSULTAR', 1, 14, '{}', '{}'),
+(4546, '2026-05-28 18:22:55', 'CONSULTAR', 1, 14, '{}', '{}'),
+(4547, '2026-05-28 18:24:47', 'CONSULTAR', 1, 14, '{}', '{}'),
+(4548, '2026-05-28 18:25:30', 'CONSULTAR', 1, 14, '{}', '{}'),
+(4549, '2026-05-28 18:25:46', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4550, '2026-05-28 18:33:00', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4551, '2026-05-28 18:35:16', 'CONSULTAR', 1, 14, '{}', '{}'),
+(4552, '2026-05-28 18:35:41', 'CONSULTAR', 1, 14, '{}', '{}'),
+(4553, '2026-05-28 18:36:08', 'CONSULTAR', 1, 14, '{}', '{}'),
+(4554, '2026-05-28 18:45:01', 'CONSULTAR', 1, 14, '{}', '{}'),
+(4555, '2026-05-28 18:45:36', 'CONSULTAR', 1, 14, '{}', '{}'),
+(4556, '2026-05-28 18:47:22', 'CONSULTAR', 1, 14, '{}', '{}'),
+(4557, '2026-05-28 18:50:19', 'CONSULTAR', 1, 14, '{}', '{}'),
+(4558, '2026-05-28 18:50:33', 'CONSULTAR', 1, 17, '{}', '{}'),
+(4559, '2026-05-28 18:51:10', 'CONSULTAR', 1, 4, '{}', '{}'),
+(4560, '2026-05-28 18:51:31', 'CONSULTAR', 1, 4, '{}', '{}'),
+(4561, '2026-05-28 18:57:12', 'CONSULTAR', 1, 4, '{}', '{}'),
+(4562, '2026-05-28 18:59:25', 'CONSULTAR', 1, 4, '{}', '{}'),
+(4563, '2026-05-28 19:02:41', 'CONSULTAR', 1, 4, '{}', '{}'),
+(4564, '2026-05-28 19:03:10', 'CONSULTAR', 1, 4, '{}', '{}'),
+(4565, '2026-05-28 19:03:40', 'CONSULTAR', 1, 5, '{}', '{}'),
+(4566, '2026-05-28 19:05:44', 'CONSULTAR', 1, 5, '{}', '{}'),
+(4567, '2026-05-28 19:06:26', 'CONSULTAR', 1, 5, '{}', '{}'),
+(4568, '2026-05-28 19:07:10', 'CONSULTAR', 1, 19, '{}', '{}'),
+(4569, '2026-05-28 19:10:00', 'CONSULTAR', 1, 15, '{}', '{}'),
+(4570, '2026-05-28 19:10:15', 'CONSULTAR', 1, 15, '{}', '{}'),
+(4571, '2026-05-28 19:10:38', 'CONSULTAR', 1, 19, '{}', '{}'),
+(4572, '2026-05-28 19:13:44', 'CONSULTAR', 1, 19, '{}', '{}'),
+(4573, '2026-05-28 19:14:12', 'CONSULTAR', 1, 15, '{}', '{}'),
+(4574, '2026-05-28 19:15:25', 'CONSULTAR', 1, 15, '{}', '{}'),
+(4575, '2026-05-28 19:16:16', 'CONSULTAR', 1, 15, '{}', '{}'),
+(4576, '2026-05-28 19:17:04', 'CONSULTAR', 1, 15, '{}', '{}'),
+(4577, '2026-05-28 19:19:32', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4578, '2026-05-28 19:20:00', 'CONSULTAR', 1, 1, '{}', '{}'),
+(4579, '2026-05-28 19:20:44', 'CONSULTAR', 1, 2, '{}', '{}'),
+(4580, '2026-05-28 19:20:54', 'CONSULTAR', 1, 15, '{}', '{}'),
+(4581, '2026-05-28 19:21:08', 'CONSULTAR', 1, 17, '{}', '{}'),
+(4582, '2026-05-28 19:22:03', 'CONSULTAR', 1, 19, '{}', '{}'),
+(4583, '2026-05-28 19:22:26', 'CONSULTAR', 1, 4, '{}', '{}'),
+(4584, '2026-05-28 19:22:33', 'CONSULTAR', 1, 4, '{}', '{}'),
+(4585, '2026-05-28 19:23:10', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(4586, '2026-05-29 16:42:37', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4587, '2026-05-30 09:42:25', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4588, '2026-05-30 09:43:19', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(4589, '2026-05-30 09:44:51', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4590, '2026-05-30 09:47:39', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4591, '2026-05-30 09:48:04', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(4592, '2026-05-30 09:53:19', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4593, '2026-05-30 09:57:20', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4594, '2026-05-30 09:59:18', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4595, '2026-05-30 10:00:21', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4596, '2026-05-30 10:03:54', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4597, '2026-05-30 10:04:32', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4598, '2026-05-30 10:05:32', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4599, '2026-05-30 10:08:41', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4600, '2026-05-30 10:10:52', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4601, '2026-05-30 10:10:59', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4602, '2026-05-30 10:12:02', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4603, '2026-05-30 10:13:21', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4604, '2026-05-30 10:14:04', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4605, '2026-05-30 10:15:05', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4606, '2026-05-30 10:16:48', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4607, '2026-05-30 10:18:10', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4608, '2026-05-30 10:20:27', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4609, '2026-05-30 10:29:14', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4610, '2026-05-30 10:31:11', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4611, '2026-05-30 10:31:50', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4612, '2026-05-30 10:35:50', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4613, '2026-05-30 10:37:54', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4614, '2026-05-30 10:38:45', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4615, '2026-05-30 10:49:20', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4616, '2026-05-30 10:50:10', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(4617, '2026-05-30 11:08:53', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4618, '2026-05-30 11:11:10', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4619, '2026-05-30 11:12:11', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4620, '2026-05-30 11:18:47', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4621, '2026-05-30 11:20:48', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(4622, '2026-05-30 12:15:15', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4623, '2026-05-30 15:17:06', 'INICIAR SESION', 1, 14, '{}', '{}');
 
 -- --------------------------------------------------------
 
@@ -2394,7 +2468,10 @@ INSERT INTO `cartelera_virtual` (`id_cartelera`, `titulo`, `descripcion`, `fecha
 (44, 'Hola', 'Soy un mensaje encriptado ', '2026-05-12 11:01:12', '459de706-6428-4814-91cc-ad224bb37a03_1778598072_120.jpeg', '2', 1),
 (45, 'Publicacion', 'Publicacion genérica ', '2026-05-12 11:30:42', '9ba0bd5b-db27-4a64-84ca-0ed4b0c8db60_1778599842_730.png', '3', 1),
 (46, 'Hola ', 'Hola ora vez ', '2026-05-14 12:53:10', '88b272cc-4918-466a-ac05-a16893278e10_1778777590_510.jpeg', '3', 1),
-(47, 'Hola ', 'Hola chamo', '2026-05-14 13:03:54', 'aadd8944-bbab-4b0a-bccb-1c29e86ac835_1778778234_743.jpeg', '2', 1);
+(47, 'Hola ', 'Hola chamo', '2026-05-14 13:03:54', 'aadd8944-bbab-4b0a-bccb-1c29e86ac835_1778778234_743.jpeg', '2', 1),
+(48, 'Nuevo aviso', 'Hay un nuevo avuso', '2026-05-26 10:12:38', 'e3af546b-803d-4d3d-8492-55828c7a6cd3_1779804758_629.jpeg', '2', 1),
+(49, 'Publicacion 2', 'Publicacion número dos', '2026-05-26 14:41:28', '988a6b55-8142-4741-bca9-ba0d6cff8123_1779820888_675.jpeg', '3', 1),
+(50, 'Hola', 'Hola mano como estas', '2026-05-27 18:30:58', '959833da-8fb5-4cb7-89da-9e3c8b16d323_1779921058_442.jpeg', '2', 1);
 
 -- --------------------------------------------------------
 
@@ -2415,7 +2492,7 @@ CREATE TABLE `claves_sesion` (
 --
 
 INSERT INTO `claves_sesion` (`dispositivo_id`, `usuario_id`, `clave_aes`, `fecha_creacion`, `ultima_actividad`) VALUES
-('3bb214f0-fa54-4ddb-8fdb-556b5ebfb7c1', 1, 'uoYFLr8PvsL9HiBH7iH2+WV/wX3lNthKTMqRN4iuWjM=', '2026-05-09 22:33:15', '2026-05-22 22:16:28');
+('3bb214f0-fa54-4ddb-8fdb-556b5ebfb7c1', 1, 'AYVcQkwpKB90Gikiby4ZKJMVJlkWXUdubxjPvwvCi30=', '2026-05-30 12:15:16', '2026-05-30 12:46:17');
 
 -- --------------------------------------------------------
 
@@ -2670,9 +2747,7 @@ CREATE TABLE `tokens_seguridad` (
 --
 
 INSERT INTO `tokens_seguridad` (`id_token`, `usuario_id`, `token`, `fecha_expiracion`, `tipo`) VALUES
-(103, 39, 'e15f6aff21b73ab42fc6482539e29d6fc05b7cd61044999e70760f1c44372acc', '2026-04-15 20:07:09', 'RECUPERAR_CONTRASENIA'),
-(169, 91, 'c9ee3d16a1187da58a62cd893b1941d01559cfa6ed0197431010a49fce306f07', '2026-06-19 01:31:06', 'RECORDAR_CONTRASENIA'),
-(179, 39, '2e21999f9271fdc05288adb9acaca0051d9fbb264e42a51e4eb9fbc9da1373a6', '2026-06-22 02:06:28', 'RECORDAR_CONTRASENIA');
+(262, 1, 'af73e69436ff72beaa6e878abfb9dbe8e77c40c5e18529d019f2735fcdc559e4', '2026-06-29 18:15:15', 'REFRESH_TOKEN_MOVIL');
 
 -- --------------------------------------------------------
 
@@ -2698,7 +2773,7 @@ INSERT INTO `usuarios` (`id_usuario`, `nombre`, `apellido`, `correo`, `contrasen
 (1, 'Jesus', 'Escalona', 'administrador@gmail.com', '$2y$10$PSQuQ6JSX.UcGDlV8w4oauDJkL9o7d06f7AFZc4QCH9xAd2VSHA/G', 1, 1),
 (2, 'francisco', 'mendoza', 'franj@gmail.com', '$2y$10$0KoHFVefo2ZZPv/nh0ocaefcDxfbOKXxcVhnUj844WynuyGhWpaV.', 4, 1),
 (27, 'Pepes', 'Campos', 'pepe@gmail.com', '$2y$10$WWp8M1SADJzTWAg910K.mewfZFglQF77ENnqPYLmq1U9AKmmeruY2', 3, 1),
-(39, 'Yhsius', 'asdasd', 'jesusgescalonae@gmail.com', '$2y$10$NRSnjmozFiGc7GP7Hc61..Z9OazXjr8B3KvNhEmslcCk1zDeVmjRy', 2, 1),
+(39, 'Yhsius', 'asdasd', 'jesusgescalonae@gmail.com', '$2y$10$oaBgmzfPtYCZsMqfkLeiP.YVCeMS6C1tSPDKIKeDKuFSdDLiWU1p6', 2, 1),
 (53, 'perfil editado', 'perfil editado', 'UsuarioperfilEditada@gmail.com', '$2y$10$AzKv19h61AeAkEYPA/FSA.buvyhYKoRfHT/kUFgMDSWE11PKjpBLS', 4, 0),
 (54, 'usuario', 'cambiocontra', 'cambiocontrasenia@gmail.com', '$2y$10$soYFxka95IzptEPe5eA.IONdFJI/geOcpt0K/L7aAKNIsTyn.5Nd2', 23, 0),
 (89, 'pepe', 'puias', 'pepa@gmail.com', '$2y$10$GtV9.reiR/8A/NindSEEUOtCPjAs.lLxS67Qp9ZNtG6Ug3wzd5nXi', 1, 0),
@@ -2829,13 +2904,13 @@ ALTER TABLE `usuarios`
 -- AUTO_INCREMENT de la tabla `bitacora`
 --
 ALTER TABLE `bitacora`
-  MODIFY `id_bitacora` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4441;
+  MODIFY `id_bitacora` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4624;
 
 --
 -- AUTO_INCREMENT de la tabla `cartelera_virtual`
 --
 ALTER TABLE `cartelera_virtual`
-  MODIFY `id_cartelera` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=48;
+  MODIFY `id_cartelera` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=51;
 
 --
 -- AUTO_INCREMENT de la tabla `eventos_sistema`
@@ -2883,7 +2958,7 @@ ALTER TABLE `suscripciones_push`
 -- AUTO_INCREMENT de la tabla `tokens_seguridad`
 --
 ALTER TABLE `tokens_seguridad`
-  MODIFY `id_token` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=186;
+  MODIFY `id_token` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=263;
 
 --
 -- AUTO_INCREMENT de la tabla `usuarios`

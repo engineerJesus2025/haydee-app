@@ -69,51 +69,69 @@ select_copias.addEventListener("change", (e) => {
     const btn = document.getElementById('boton_importar');
     const textoBoton = document.getElementById('texto_boton_importar');
     
+    // Si no hay valor o selecciona la opción por defecto, limpiamos todo
     if (!valor) {
         infoDiv.innerHTML = '';
         btn.style.display = 'none';
+        validarInput(e.target, true); // Quitamos la clase de error si había
         return;
     }
 
     const valorMin = valor.toLowerCase();
+    
     const esSeguridad = valorMin.includes("seguridad");
     const esAutomatico = valorMin.includes("automatico") || valorMin.includes("auto");
     
-    const valido = /^backup_.*_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}_(MANUAL|AUTOMATICO)\.sql$/i.test(valorMin);
+    const valido = /^backup_.*_(MANUAL|AUTOMATICO)\.sql(\.gz)?$/i.test(valorMin);
     
-    validarInput(e.target, valido, "Archivo no válido");
+    validarInput(e.target, valido, "Archivo no válido o corrupto");
     
     if (valido) {
         const textoDB = esSeguridad ? 'Seguridad' : 'Negocio';
         const tipoRespaldo = esAutomatico ? 'Automática 🤖' : 'Manual 👤';
 
-        // Ahora solo pasamos 2 argumentos (la BD y el tipo)
         renderizarTarjetaDestino(textoDB, tipoRespaldo);
 
         if(textoBoton) textoBoton.textContent = `Restaurar ${textoDB}`;
-    
-        input_file.value = ''; 
+        input_file.value = ''; // Limpiamos la pestaña contraria (PC)
     } else {
+        // Si es inválido, borramos la tarjeta visual y ocultamos el botón
+        infoDiv.innerHTML = '';
         btn.style.display = 'none';
     }
 });
 
-// Subir archivo manual
+// Subir archivo manual (PC)
 input_file.addEventListener("change", (e) => {
     const btn = document.getElementById('boton_importar');
     const textoBoton = document.getElementById('texto_boton_importar');
+    const infoDiv = document.getElementById('info_seleccion');
     const archivo = e.target.files[0];
 
+    // Si el usuario cancela la selección
     if (!archivo) {
         btn.style.display = 'none';
-        document.getElementById('info_seleccion').innerHTML = '';
+        infoDiv.innerHTML = '';
+        validarInput(e.target, true);
         return;
     }
 
     const nombre = archivo.name.toLowerCase();
-    let dbDetectada = "Desconocido";
+    
+    // Validación de seguridad Frontend:
+    const extensionValida = /(\.sql|\.sql\.gz|\.gz)$/i.test(nombre);
+    
+    validarInput(e.target, extensionValida, "Solo se admiten archivos .sql o .gz");
 
-    // Lógica de detección mejorada
+    if (!extensionValida) {
+        // Si no es válido, destruimos la tarjeta visual y ocultamos el botón
+        infoDiv.innerHTML = '';
+        btn.style.display = 'none';
+        return;
+    }
+
+    // Si pasó la prueba de extensión, continuamos con la lógica normal
+    let dbDetectada = "Desconocido";
     if (nombre.includes("seguridad")) {
         dbDetectada = "Seguridad";
     } else if (nombre.includes("negocio") || nombre.includes("haydee")) {
@@ -123,12 +141,10 @@ input_file.addEventListener("change", (e) => {
     const esAutomatico = nombre.includes("automatico") || nombre.includes("auto");
     const tipoRespaldo = esAutomatico ? 'Automática' : 'Manual o Externa';
 
-    select_copias.value = ''; 
+    select_copias.value = ''; // Limpiamos la pestaña contraria (Servidor)
 
-    // Renderizamos la tarjeta
     renderizarTarjetaDestino(dbDetectada, tipoRespaldo, archivo.name);
 
-    // Ajustamos el texto del botón SOLO si conocemos el destino
     if (dbDetectada !== "Desconocido") {
         if(textoBoton) textoBoton.textContent = `Importar en ${dbDetectada}`;
     }
@@ -160,7 +176,7 @@ boton_descargar.addEventListener("click", (e) => {
 
     Swal.fire({
         title: "¿Estás seguro?",
-        text: "¿Está seguro que desea descargar el archivo SQL?",
+        text: "¿Está seguro que desea descargar el archivo de respaldo a su equipo?",
         showCancelButton: true,
         confirmButtonText: "Sí, Descargar",
         confirmButtonColor: "#1b8a40",
@@ -168,7 +184,6 @@ boton_descargar.addEventListener("click", (e) => {
         icon: "info"
     }).then((result) => {
         if (result.isConfirmed) {
-            // Asignar valor al input oculto y enviar form
             document.getElementById('db_input').value = select_db.value;
             e.target.closest("form").submit();
         }
@@ -278,13 +293,12 @@ async function obtenerCopiasGuardadas() {
 
 /**
  * Transforma el nombre técnico del archivo en un formato legible
- * Ejemplo: backup_haydee_db_2026-02-21-07-23-31.sql 
- * Resultado: 📦 Negocio | 📅 21/02/2026 | 🕒 07:23:31
  */
 function formatearNombreArchivo(fichero) {
     const nombreMin = fichero.toLowerCase();
     const esSeguridad = nombreMin.includes("seguridad");
     const esAuto = nombreMin.includes("automatico");
+    const esComprimido = nombreMin.endsWith(".gz");
 
     // Extraer fecha y hora: Busca YYYY-MM-DD_HH-mm-ss
     const match = fichero.match(/(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2}-\d{2})/);
@@ -296,8 +310,11 @@ function formatearNombreArchivo(fichero) {
         const iconoDB = esSeguridad ? "🛡️" : "🏢";
         const etiquetaDB = esSeguridad ? "SEGURIDAD" : "NEGOCIO";
         const origen = esAuto ? "🤖 AUTO" : "👤 MANUAL";
+        
+        // etiqueta visual indicando si está comprimido para ahorrar espacio
+        const etiquetaCompresion = esComprimido ? "🗜️ GZ" : "📄 SQL";
 
-        return `🔹 ${iconoDB} ${etiquetaDB} [${origen}] | 📅 ${fecha} | 🕒 ${hora}`;
+        return `🔹 ${iconoDB} ${etiquetaDB} [${origen}] | 📅 ${fecha} | 🕒 ${hora} | ${etiquetaCompresion}`;
     }
     return fichero;
 }

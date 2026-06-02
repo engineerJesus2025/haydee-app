@@ -163,7 +163,7 @@ if (isset($_POST["operacion"])) {
             // =========================================================
             // ELIMINACIÓN
             // =========================================================
-            case 'eliminar_gasto':
+            case 'eliminar':
                 // Utilizamos la nueva consulta plana para la foto previa
                 $auditor->capturarDatosAnteriores('consultar_cabecera_gasto');
 

@@ -193,26 +193,25 @@ class Pagos extends Conexion
         $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
         $refsUsadas = [];
         
+        $sql = "SELECT dp.pago_id FROM ingresos_bancarios ib 
+                JOIN detalles_pagos dp ON ib.detalle_pago_id = dp.id_detalle_pago 
+                WHERE ib.referencia = :ref LIMIT 1";
+        $stmt = $pdo->prepare($sql); 
+
         foreach ($this->detalles as $idx => $det) {
             if (!empty($det['referencia'])) {
                 $ref = trim($det['referencia']);
                 
-                // 1. Evitar duplicados en los renglones del mismo formulario
                 if (in_array($ref, $refsUsadas)) {
                     return ['estatus' => false, 'mensaje' => "La referencia '$ref' está repetida en el renglón " . ($idx + 1) . "."];
                 }
                 $refsUsadas[] = $ref;
 
-                // 2. Verificar contra la base de datos mediante un JOIN
-                $sql = "SELECT dp.pago_id FROM ingresos_bancarios ib 
-                        JOIN detalles_pagos dp ON ib.detalle_pago_id = dp.id_detalle_pago 
-                        WHERE ib.referencia = :ref LIMIT 1";
-                $stmt = $pdo->prepare($sql);
-                $stmt->execute([':ref' => $ref]);
+                // 2. Dentro del ciclo SOLO ejecutas con el nuevo valor
+                $stmt->execute([':ref' => $ref]); // <--- Reutiliza el plan de ejecución precompilado
                 $pago_id_bd = $stmt->fetchColumn();
 
                 if ($pago_id_bd) {
-                    // Si existe, comprobamos si pertenece a otro pago distinto al actual
                     if (empty($this->id_pago) || $pago_id_bd != $this->id_pago) {
                         return ['estatus' => false, 'mensaje' => "La referencia bancaria '$ref' (Renglón " . ($idx + 1) . ") ya se encuentra registrada en otro pago."];
                     }
@@ -247,9 +246,7 @@ class Pagos extends Conexion
         }
     }
 
-    // ====================================================================
     // MÉTODOS PÚBLICOS AUXILIARES (mantener compatibilidad)
-    // ====================================================================
 
     /**
      * Consulta mensualidades pendientes de un apartamento (original)
@@ -258,23 +255,23 @@ class Pagos extends Conexion
     public function _consultarMensualidadPendiente()
     {
         $sql = "SELECT 
-                    m.id_mensualidad,
-                    m.monto,
-                    pm_per.tasa_dolar,
-                    pm_per.mes,
-                    pm_per.anio,
-                    m.porcentaje_interes,
-                    m.limite_mensualidad,
-                    COALESCE(SUM(dp.monto), 0) AS total_pagado,
-                    (m.monto - COALESCE(SUM(dp.monto), 0)) AS pendiente
-                FROM mensualidad m
-                INNER JOIN periodos_mensualidad pm_per ON m.periodo_id = pm_per.id_periodo
-                LEFT JOIN pagos_mensualidad pm ON m.id_mensualidad = pm.mensualidad_id
-                LEFT JOIN detalles_pagos dp ON pm.pago_id = dp.id_detalle_pago
-                WHERE m.apartamento_id = :id_apartamento AND m.activo = 1
-                GROUP BY m.id_mensualidad
-                HAVING pendiente > 0
-                ORDER BY pm_per.anio, pm_per.mes";
+            m.id_mensualidad,
+            m.monto,
+            pm_per.tasa_dolar,
+            pm_per.mes,
+            pm_per.anio,
+            m.porcentaje_interes,
+            m.limite_mensualidad,
+            COALESCE(SUM(dp.monto), 0) AS total_pagado,
+            (m.monto - COALESCE(SUM(dp.monto), 0)) AS pendiente
+        FROM mensualidad m 
+        INNER JOIN periodos_mensualidad pm_per ON m.periodo_id = pm_per.id_periodo
+        LEFT JOIN pagos_mensualidad pm ON m.id_mensualidad = pm.mensualidad_id
+        LEFT JOIN detalles_pagos dp ON pm.pago_id = dp.id_detalle_pago
+        WHERE m.apartamento_id = 30 AND m.activo = 1origen
+        GROUP BY m.id_mensualidad
+        HAVING pendiente > 0
+        ORDER BY pm_per.anio ASC, pm_per.mes ASC;";
         try {
             $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->bindParam(':id_apartamento', $this->apartamento_id, PDO::PARAM_INT);
@@ -291,24 +288,7 @@ class Pagos extends Conexion
     // SE USA EN EL MODULO
     private function _consultar()
     {
-        $sql = "SELECT 
-                p.id_pago,
-                p.estado,
-                MAX(dp.fecha) AS ultima_fecha,
-                SUM(dp.monto) AS monto_total,
-                (SELECT tipo_pago FROM detalles_pagos WHERE pago_id = p.id_pago ORDER BY fecha DESC LIMIT 1) AS tipo_pago_predominante,
-                CASE WHEN COUNT(DISTINCT a.nro_apartamento) = 1 THEN MAX(a.nro_apartamento) ELSE 'Varios' END AS apartamento,
-                GROUP_CONCAT(DISTINCT CONCAT(pm_per.mes, '/', pm_per.anio) ORDER BY pm_per.anio, pm_per.mes SEPARATOR ', ') AS periodos
-            FROM pagos p
-            JOIN detalles_pagos dp ON p.id_pago = dp.pago_id
-            LEFT JOIN ingresos_bancarios ib ON dp.id_detalle_pago = ib.detalle_pago_id
-            LEFT JOIN pagos_mensualidad pm ON p.id_pago = pm.pago_id -- CORRECCIÓN: Se enlaza al ID del pago maestro
-            LEFT JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
-            LEFT JOIN periodos_mensualidad pm_per ON m.periodo_id = pm_per.id_periodo
-            LEFT JOIN apartamentos a ON m.apartamento_id = a.id_apartamento
-            WHERE p.activo = 1
-            GROUP BY p.id_pago
-            ORDER BY ultima_fecha DESC;";
+        $sql = "SELECT * FROM vw_historial_pagos ORDER BY ultima_fecha DESC";
         try {
             $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute();
@@ -329,34 +309,15 @@ class Pagos extends Conexion
             return ['estatus' => false, 'mensaje' => 'Correo no disponible en sesión'];
         }
 
-        $sql = "SELECT 
-                    p.id_pago,
-                    p.estado,
-                    MAX(dp.fecha) AS ultima_fecha,
-                    SUM(dp.monto) AS monto_total,
-                    (SELECT tipo_pago FROM detalles_pagos WHERE pago_id = p.id_pago ORDER BY fecha DESC LIMIT 1) AS tipo_pago_predominante,
-                    CASE WHEN COUNT(DISTINCT a.nro_apartamento) = 1 THEN MAX(a.nro_apartamento) ELSE 'Varios' END AS apartamento,
-                    GROUP_CONCAT(DISTINCT CONCAT(pm_per.mes, '/', pm_per.anio) ORDER BY pm_per.anio, pm_per.mes SEPARATOR ', ') AS periodos
-                FROM pagos p
-                JOIN detalles_pagos dp ON p.id_pago = dp.pago_id
-                LEFT JOIN ingresos_bancarios ib ON dp.id_detalle_pago = ib.detalle_pago_id
-                LEFT JOIN pagos_mensualidad pm ON p.id_pago = pm.pago_id -- CORRECCIÓN
-                LEFT JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
-                LEFT JOIN periodos_mensualidad pm_per ON m.periodo_id = pm_per.id_periodo
-                LEFT JOIN apartamentos a ON m.apartamento_id = a.id_apartamento
-                WHERE p.activo = 1
-                  AND EXISTS (
-                      SELECT 1
-                      FROM pagos_mensualidad pm2
-                      JOIN mensualidad m2 ON pm2.mensualidad_id = m2.id_mensualidad
-                      JOIN apartamentos a2 ON m2.apartamento_id = a2.id_apartamento
-                      JOIN habitantes_apartamentos ha2 ON a2.id_apartamento = ha2.apartamento_id
-                      JOIN habitantes h2 ON ha2.habitante_id = h2.id_habitante
-                      WHERE pm2.pago_id = p.id_pago -- CORRECCIÓN de la subconsulta
-                        AND h2.correo = :correo
-                  )
-                GROUP BY p.id_pago
-                ORDER BY ultima_fecha DESC";
+        $sql = "SELECT v.* FROM vw_historial_pagos v
+            WHERE v.id_pago IN (
+                SELECT pm2.pago_id FROM pagos_mensualidad pm2
+                JOIN mensualidad m2 ON pm2.mensualidad_id = m2.id_mensualidad
+                JOIN habitantes_apartamentos ha2 ON m2.apartamento_id = ha2.apartamento_id
+                JOIN habitantes h2 ON ha2.habitante_id = h2.id_habitante
+                WHERE h2.correo = :correo
+            )
+            ORDER BY v.ultima_fecha DESC";
 
         try {
             $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
@@ -515,19 +476,19 @@ class Pagos extends Conexion
             $remanente = $total_abonado;
 
             // Buscar la mensualidad seleccionada y los meses posteriores pendientes del mismo apartamento
-            $sqlDeudas = "SELECT m.id_mensualidad, 
-                                 (m.monto - COALESCE((
-                                     SELECT SUM(pm.monto_abonado) 
-                                     FROM pagos_mensualidad pm 
-                                     JOIN pagos p ON pm.pago_id = p.id_pago 
-                                     WHERE pm.mensualidad_id = m.id_mensualidad AND p.activo = 1
-                                 ), 0)) as deuda_actual
-                          FROM mensualidad m
-                          JOIN periodos_mensualidad per ON m.periodo_id = per.id_periodo
-                          WHERE m.apartamento_id = :apt_id 
-                            AND m.activo = 1
-                            AND per.id_periodo >= (SELECT periodo_id FROM mensualidad WHERE id_mensualidad = :mens_id_inicio)
-                          ORDER BY per.id_periodo ASC";
+            $sqlDeudas = "SELECT 
+                            m.id_mensualidad, 
+                            (m.monto - COALESCE(SUM(pm.monto_abonado), 0)) as deuda_actual
+                        FROM mensualidad m
+                        JOIN periodos_mensualidad per ON m.periodo_id = per.id_periodo
+                        LEFT JOIN pagos_mensualidad pm ON m.id_mensualidad = pm.mensualidad_id
+                        LEFT JOIN pagos p ON pm.pago_id = p.id_pago AND p.activo = 1
+                        WHERE m.apartamento_id = :apt_id 
+                          AND m.activo = 1
+                          AND per.id_periodo >= (SELECT periodo_id FROM mensualidad WHERE id_mensualidad = :mens_id_inicio)
+                        GROUP BY m.id_mensualidad
+                        ORDER BY per.id_periodo ASC
+                        FOR UPDATE;";
             
             $stmtDeudas = $pdo->prepare($sqlDeudas);
             $stmtDeudas->execute([
@@ -681,7 +642,8 @@ class Pagos extends Conexion
                           WHERE m.apartamento_id = :apt_id 
                             AND m.activo = 1
                             AND per.id_periodo >= (SELECT periodo_id FROM mensualidad WHERE id_mensualidad = :mens_id_inicio)
-                          ORDER BY per.id_periodo ASC";
+                          ORDER BY per.id_periodo ASC
+                          FOR UPDATE;";
             
             $stmtDeudas = $pdo->prepare($sqlDeudas);
             $stmtDeudas->execute([
@@ -757,37 +719,21 @@ class Pagos extends Conexion
     private function _consultar_por_mes_anio($params)
     {
         // params trae ['mes' => X, 'anio' => Y, 'correo' => Z (opcional)]
-        $condicionCorreo = "";
+        $sql = "SELECT * FROM vw_historial_pagos 
+                WHERE MONTH(ultima_fecha) = :mes AND YEAR(ultima_fecha) = :anio ";
+        
+        // Si envían correo, agregamos la validación de acceso
         if (!empty($params['correo'])) {
-            $condicionCorreo = " AND EXISTS (
-                SELECT 1 FROM pagos_mensualidad pm2
-                JOIN mensualidad m2 ON pm2.mensualidad_id = m2.id_mensualidad
-                JOIN apartamentos a2 ON m2.apartamento_id = a2.id_apartamento
-                JOIN habitantes_apartamentos ha2 ON a2.id_apartamento = ha2.apartamento_id
-                JOIN habitantes h2 ON ha2.habitante_id = h2.id_habitante
-                WHERE pm2.pago_id = p.id_pago AND h2.correo = :correo
-            )";
+            $sql .= " AND id_pago IN (
+                        SELECT pm2.pago_id FROM pagos_mensualidad pm2
+                        JOIN mensualidad m2 ON pm2.mensualidad_id = m2.id_mensualidad
+                        JOIN habitantes_apartamentos ha2 ON m2.apartamento_id = ha2.apartamento_id
+                        JOIN habitantes h2 ON ha2.habitante_id = h2.id_habitante
+                        WHERE h2.correo = :correo
+                     )";
         }
-
-        $sql = "SELECT 
-                    p.id_pago, p.estado,
-                    MAX(dp.fecha) AS ultima_fecha,
-                    SUM(dp.monto) AS monto_total,
-                    (SELECT tipo_pago FROM detalles_pagos WHERE pago_id = p.id_pago ORDER BY fecha DESC LIMIT 1) AS tipo_pago_predominante,
-                    CASE WHEN COUNT(DISTINCT a.nro_apartamento) = 1 THEN MAX(a.nro_apartamento) ELSE 'Varios' END AS apartamento,
-                    GROUP_CONCAT(DISTINCT CONCAT(pm_per.mes, '/', pm_per.anio) ORDER BY pm_per.anio, pm_per.mes SEPARATOR ', ') AS periodos -- CORRECCIÓN: Faltaba esta columna por completo
-                FROM pagos p
-                JOIN detalles_pagos dp ON p.id_pago = dp.pago_id
-                LEFT JOIN pagos_mensualidad pm ON p.id_pago = pm.pago_id -- CORRECCIÓN
-                LEFT JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
-                LEFT JOIN periodos_mensualidad pm_per ON m.periodo_id = pm_per.id_periodo -- CORRECCIÓN: Faltaba incluir la tabla de periodos
-                LEFT JOIN apartamentos a ON m.apartamento_id = a.id_apartamento
-                WHERE p.activo = 1 
-                  AND MONTH(dp.fecha) = :mes 
-                  AND YEAR(dp.fecha) = :anio
-                  $condicionCorreo
-                GROUP BY p.id_pago
-                ORDER BY ultima_fecha DESC";
+        
+        $sql .= " ORDER BY ultima_fecha DESC, id_pago DESC";
 
         try {
             $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
@@ -802,6 +748,7 @@ class Pagos extends Conexion
         }
     }
 
+    // REVISAR________
     private function _obtener_periodos_activos()
     {
         // Agrupamos para obtener solo combinaciones únicas, ordenadas del más reciente al más antiguo
@@ -834,19 +781,17 @@ class Pagos extends Conexion
                         vw.mes,
                         vw.anio,
                         vw.deuda_pendiente AS pendiente,
-                        a.nro_apartamento
+                        vw.nro_apartamento
                     FROM vw_estado_cuentas_mensualidad vw
-                    INNER JOIN mensualidad m ON vw.id_mensualidad = m.id_mensualidad
-                    INNER JOIN apartamentos a ON m.apartamento_id = a.id_apartamento
-                    INNER JOIN habitantes_apartamentos ha ON a.id_apartamento = ha.apartamento_id
+                    
+                    INNER JOIN habitantes_apartamentos ha ON vw.apartamento_id = ha.apartamento_id
                     INNER JOIN habitantes h ON ha.habitante_id = h.id_habitante
-                    WHERE vw.estado_pago = 'PENDIENTE' 
+                    WHERE vw.estado_pago = 'Pendiente' 
                       AND h.correo = :correo
-                    GROUP BY vw.id_mensualidad
                     ORDER BY vw.anio ASC, vw.mes ASC";
             $params[':correo'] = $this->correo;
         } else {
-            // Si es Administrador/Presidente, traemos la deuda global de forma plana y limpia
+
             $sql = "SELECT 
                         vw.id_mensualidad,
                         vw.monto_cuota AS monto_original,

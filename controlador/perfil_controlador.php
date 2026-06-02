@@ -24,7 +24,6 @@ if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
     
     // FORZAMOS el ID del usuario en $_POST antes de validar y procesar.
-    // Con esto destruimos cualquier intento de manipulación o inyección desde el HTML.
     $_POST['id_usuario'] = $idUsuarioSesion;
 
     // Obtenemos las reglas centralizadas dictadas por el modelo

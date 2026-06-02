@@ -85,7 +85,23 @@ if (isset($_POST["operacion"])) {
                     break;
                 }
 
-                $contenido_sql = file_get_contents($_FILES['fichero']['tmp_name']);
+                // $contenido_sql = file_get_contents($_FILES['fichero']['tmp_name']);
+                $contenido_sql = file_get_contents('compress.zlib://' . $_FILES['fichero']['tmp_name']);
+
+                $palabras_prohibidas = ['grant all', 'create user', 'drop database', 'mysql.user'];
+                foreach ($palabras_prohibidas as $prohibida) {
+                    if (stripos($contenido_sql, $prohibida) !== false) {
+                        http_response_code(HttpCodigo::BAD_REQUEST->value);
+                        echo json_encode(['estatus' => false, 'mensaje' => 'Seguridad: El archivo contiene sentencias administrativas no autorizadas.']);
+                        exit;
+                    }
+                }
+
+                if ($_FILES['fichero']['size'] > 15 * 1024 * 1024) {
+                    http_response_code(HttpCodigo::BAD_REQUEST->value);
+                    echo json_encode(['estatus' => false, 'mensaje' => 'El archivo supera el límite de tamaño permitido (15MB).']);
+                    exit;
+                }
                 
                 // Validación de seguridad cruzada
                 $es_seguridad = stripos($contenido_sql, "Database: seguridad_haydee_db") !== false;

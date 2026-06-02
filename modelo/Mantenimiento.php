@@ -14,7 +14,7 @@ class Mantenimiento extends Conexion
     private const MYSQL_LINUX = 'mysql';
     private const DIR_BACKUPS = 'Backups';
 
-    // VALIDACIONES CENTRALIZADAS
+    // VALIDACIONES
     public static function obtenerReglas($operacion) {
         $tiposCuentaValidos = implode('|', array_column(TipoBaseDatos::cases(), 'value'));
 
@@ -40,40 +40,52 @@ class Mantenimiento extends Conexion
 
     public function generarCopiaSeguridad($db)
     {
-        $db_copiar = ($db === TipoBaseDatos::NEGOCIO) ? DB_NAME : DB_SECURITY;
+        $db_copiar = ($db === TipoBaseDatos::NEGOCIO->value || $db === 'negocio') ? DB_NAME : DB_SECURITY;
+        
         $mysqldump_path = $this->getMysqldumpPath();
         $backup_dir = $this->getBackupDir();
-        if (!is_dir($backup_dir)) {
-            mkdir($backup_dir, 0777, true);
-        }
+        if (!is_dir($backup_dir)) mkdir($backup_dir, 0777, true);
 
         $timestamp = date('Y-m-d_H-i-s');
-        $tipo = "MANUAL";
+        $backup_file = $backup_dir . "backup_{$db_copiar}_{$timestamp}_MANUAL.sql";
 
-        $backup_file = $backup_dir . "backup_{$db_copiar}_{$timestamp}_{$tipo}.sql";
+        $creds = $this->obtenerCredencialesAdmin();
 
-        $comando = $mysqldump_path
-            . " --host=" . DB_HOST
-            . " --user=" . DB_USER
-            . " --password=" . DB_PASS
-            . " --routines --events --triggers"
-            . " " . $db_copiar
-            . " > " . $backup_file;
+        $comando = sprintf(
+            "%s --host=%s --user=%s --password=%s --routines --events --triggers %s > %s 2>&1",
+            $mysqldump_path,
+            escapeshellarg(DB_HOST),
+            escapeshellarg($creds['user']),
+            escapeshellarg($creds['pass']),
+            escapeshellarg($db_copiar),
+            escapeshellarg($backup_file)
+        );
 
-        system($comando . " 2>&1", $resultado);
+        exec($comando, $output, $resultado);
 
         if ($resultado === 0) {
-            // Limpiar el archivo de cláusulas DEFINER
             $this->removeDefinerFromSql($backup_file);
-            return ['estatus' => true, 'mensaje' => 'Copia de seguridad creada exitosamente', 'archivo' => $backup_file];
+            
+            $gzFilename = $backup_file . '.gz';
+            $fpOut = gzopen($gzFilename, "wb9");
+            $fpIn = fopen($backup_file, "rb");
+            while (!feof($fpIn)) gzwrite($fpOut, fread($fpIn, 1024 * 512));
+            fclose($fpIn);
+            gzclose($fpOut);
+            unlink($backup_file); // Borramos el .sql original pesado
+
+            return ['estatus' => true, 'mensaje' => 'Copia de seguridad creada y comprimida exitosamente', 'archivo' => basename($gzFilename)];
         } else {
-            return ['estatus' => false, 'mensaje' => 'Error al crear la copia de seguridad', 'comando' => $comando];
+            // Ahora mostramos el error real capturado de la consola
+            $error_detalle = implode(" | ", $output);
+            error_log("Error Backup: " . $error_detalle);
+            return ['estatus' => false, 'mensaje' => 'Error al generar: ' . $error_detalle];
         }
     }
 
     public function descargarCopiaSeguridad($db)
     {
-        $db_copiar = ($db === 'negocio') ? DB_NAME : DB_SECURITY;
+        $db_copiar = ($db === TipoBaseDatos::NEGOCIO->value) ? DB_NAME : DB_SECURITY;
         $backup_dir = $this->getBackupDir();
         $backup_file = $backup_dir . 'backup_' . $db_copiar . '_' . date('Y-m-d-H-i-s') . '.sql';
 
@@ -120,7 +132,8 @@ class Mantenimiento extends Conexion
         $archivos = [];
         if ($ficheros !== false) {
             foreach ($ficheros as $fichero) {
-                if ($fichero !== '.' && $fichero !== '..') {
+                // Filtramos para enviar SOLO archivos que terminen en .sql o .sql.gz
+                if ($fichero !== '.' && $fichero !== '..' && preg_match('/\.sql(\.gz)?$/i', $fichero)) {
                     $archivos[] = $fichero;
                 }
             }
@@ -137,21 +150,55 @@ class Mantenimiento extends Conexion
         $ruta_completa = $directorio . $fichero;
 
         if (!file_exists($ruta_completa)) {
-            return ['estatus' => false, 'mensaje' => 'El archivo de copia no existe'];
+            return ['estatus' => false, 'mensaje' => 'El archivo de copia no existe en el servidor.'];
         }
 
-        $dbname = ($db === 'negocio') ? DB_NAME : DB_SECURITY;
+        $dbname = ($db === 'negocio' || $db === TipoBaseDatos::NEGOCIO->value) ? DB_NAME : DB_SECURITY;
         $mysql_path = $this->getMysqlPath();
-
-        // Construir comando de importación
-        $comando = $mysql_path . " --host=" . DB_HOST . " --user=" . DB_USER . " --password=" . DB_PASS . " " . $dbname . " < " . escapeshellarg($ruta_completa) . " 2>&1";
+        $es_gz = (pathinfo($ruta_completa, PATHINFO_EXTENSION) === 'gz');
         
-        system($comando, $resultado);
+        $temp_sql = tempnam(sys_get_temp_dir(), 'restore_');
+
+        if ($es_gz) {
+            $fpIn = gzopen($ruta_completa, 'rb');
+            $fpOut = fopen($temp_sql, 'wb');
+            while (!gzeof($fpIn)) fwrite($fpOut, gzread($fpIn, 1024 * 512));
+            fclose($fpOut);
+            gzclose($fpIn);
+        } else {
+            // Si es un .sql plano viejo, lo copiamos al temporal
+            copy($ruta_completa, $temp_sql);
+        }
+
+        // Borramos las firmas DEFINER=root de los Triggers antes de inyectar
+        $this->removeDefinerFromSql($temp_sql);
+
+        $creds = $this->obtenerCredencialesAdmin();
+
+        $comando = sprintf(
+            "%s --host=%s --user=%s --password=%s %s < %s 2>&1",
+            $mysql_path,
+            escapeshellarg(DB_HOST),
+            escapeshellarg($creds['user']),
+            escapeshellarg($creds['pass']),
+            escapeshellarg($dbname),
+            escapeshellarg($temp_sql)
+        );
+        
+        exec($comando, $output, $resultado);
+
+        // Limpiar el archivo temporal de la memoria del servidor
+        if (file_exists($temp_sql)) {
+            unlink($temp_sql);
+        }
 
         if ($resultado === 0) {
-            return ['estatus' => true, 'mensaje' => 'Copia de seguridad importada exitosamente'];
+            return ['estatus' => true, 'mensaje' => 'Copia de seguridad importada exitosamente.'];
         } else {
-            return ['estatus' => false, 'mensaje' => 'Error al importar la copia de seguridad'];
+            // Devolvemos el error limpio al frontend para que el administrador sepa qué falló
+            $error_detalle = implode(" | ", $output);
+            error_log("Error Restauración: " . $error_detalle);
+            return ['estatus' => false, 'mensaje' => 'Fallo de MySQL: ' . $error_detalle];
         }
     }
 
@@ -163,7 +210,7 @@ class Mantenimiento extends Conexion
      */
     public function importarSQL($contenido_sql, $db)
     {
-        $nombre_db = ($db === 'negocio') ? DB_NAME : DB_SECURITY;
+        $nombre_db = ($db === TipoBaseDatos::NEGOCIO->value) ? DB_NAME : DB_SECURITY;
         $mysql_path = $this->getMysqlPath();
         
         // Creamos un archivo temporal para el contenido SQL
@@ -173,14 +220,16 @@ class Mantenimiento extends Conexion
         // Limpiamos DEFINERs para evitar errores de permisos
         $this->removeDefinerFromSql($temp_file);
 
-        // Construcción del comando (usando credenciales de tus constantes)
-        // -f obliga a continuar incluso si hay errores menores
+        // Llamamos al método para obtener las credenciales administrativas protegidas
+        $creds = $this->obtenerCredencialesAdmin();
+
+        // Construcción del comando blindado
         $comando = sprintf(
             "%s --host=%s --user=%s --password=%s %s < %s 2>&1",
             $mysql_path,
-            DB_HOST,
-            DB_USER,
-            DB_PASS,
+            escapeshellarg(DB_HOST),
+            escapeshellarg($creds['user']),
+            escapeshellarg($creds['pass']),
             escapeshellarg($nombre_db),
             escapeshellarg($temp_file)
         );
@@ -242,7 +291,6 @@ class Mantenimiento extends Conexion
 
     /**
      * Elimina las cláusulas DEFINER del archivo SQL para permitir importación sin SUPER
-     * @param string $filepath Ruta completa al archivo .sql
      */
     private function removeDefinerFromSql($filepath)
     {
@@ -251,4 +299,20 @@ class Mantenimiento extends Conexion
         $content = preg_replace('/\s*DEFINER\s*=\s*[^\s]+/i', '', $content);
         file_put_contents($filepath, $content);
     }
+
+    private function obtenerCredencialesAdmin()
+    {
+        if (DIRECTORY_SEPARATOR === '\\') { // Si es Windows (Local)
+            return [
+                'user' => getenv('DB_BACKUP_USER') ?: 'root',
+                'pass' => getenv('DB_BACKUP_PASS') ?: ''
+            ];
+        }
+        // En producción (AlwaysData), devolvemos las credenciales estándar
+        return [
+            'user' => DB_USER,
+            'pass' => DB_PASS
+        ];
+    }
+
 }

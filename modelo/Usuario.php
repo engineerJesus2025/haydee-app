@@ -489,11 +489,7 @@ class Usuario extends Conexion
             return ['estatus' => false, 'mensaje' => 'Error en la base de datos'];
         }
     }
-
-    // ====================================================================
-    // LÓGICA DE TOKENS (Integrada)
-    // ====================================================================
-
+    
     // SE USA EN EL SERVICIO AUTENTICACION
     private function _registrar_token()
     {
