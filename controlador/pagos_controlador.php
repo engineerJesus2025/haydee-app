@@ -45,7 +45,6 @@ if (isset($_POST["operacion"])) {
         $esModificacion = ($operacion === 'modificar_pago');
         
         $detalles = ConstructorDetalles::ConstruirDetallesPagos($_POST, $_FILES, $esModificacion);
-        // var_dump($detalles);
         if (empty($detalles)) {
             echo json_encode(['estatus' => false, 'mensaje' => 'Debe proporcionar al menos un detalle de pago.']);
             exit;
@@ -56,6 +55,22 @@ if (isset($_POST["operacion"])) {
 
         foreach ($detalles as $index => $detalle) {
             $validadorTemp = new Validador();
+
+            // INTERCEPCIÓN DE IMÁGENES FANTASMA (WEB)
+            if (in_array($detalle['tipo_pago'] ?? '', ['Transferencia', 'Pago Movil'])) {
+                $nombreInputFile = "imagen_{$index}";
+                // Si es modificación, el frontend suele enviar el nombre viejo si no lo cambian
+                $imagenExistente = $_POST["imagen_existente_{$index}"] ?? '';
+                
+                // Si NO hay imagen vieja es nuevo pago o borraron la anterior
+                if (empty($imagenExistente)) {
+                    if (!isset($_FILES[$nombreInputFile]) || $_FILES[$nombreInputFile]['error'] !== UPLOAD_ERR_OK) {
+                        $detalle['imagen'] = ''; // Vaciamos para forzar el error
+                    }
+                }
+            }
+            // =======================================================
+
             $validadorTemp->validarConjunto($detalle, $reglasDetalle);
             
             if ($validadorTemp->tieneErrores()) {
@@ -70,7 +85,7 @@ if (isset($_POST["operacion"])) {
             echo json_encode([
                 'estatus' => false, 
                 'errores' => $erroresDetalles, 
-                'mensaje' => 'Hay errores en los renglones del pago. Por favor, revíselos.'
+                'mensaje' => 'Faltan comprobantes o hay errores en los renglones del pago.'
             ]);
             exit;
         }

@@ -67,9 +67,20 @@ class Mantenimiento extends Conexion
             $this->removeDefinerFromSql($backup_file);
             
             $gzFilename = $backup_file . '.gz';
-            $fpOut = gzopen($gzFilename, "wb9");
-            $fpIn = fopen($backup_file, "rb");
+            
+            //  @ para suprimir el Warning nativo y manejarlo nosotros
+            $fpOut = @gzopen($gzFilename, "wb9");
+            $fpIn = @fopen($backup_file, "rb");
+
+            if (!$fpOut || !$fpIn) {
+                if ($fpOut) gzclose($fpOut);
+                if ($fpIn) fclose($fpIn);
+                error_log("Error Backup: No se pudo abrir el buffer para compresión GZIP.");
+                return ['estatus' => false, 'mensaje' => 'Error de permisos al comprimir el archivo de seguridad.'];
+            }
+
             while (!feof($fpIn)) gzwrite($fpOut, fread($fpIn, 1024 * 512));
+            
             fclose($fpIn);
             gzclose($fpOut);
             unlink($backup_file); // Borramos el .sql original pesado
@@ -85,38 +96,45 @@ class Mantenimiento extends Conexion
 
     public function descargarCopiaSeguridad($db)
     {
-        $db_copiar = ($db === TipoBaseDatos::NEGOCIO->value) ? DB_NAME : DB_SECURITY;
-        $backup_dir = $this->getBackupDir();
-        $backup_file = $backup_dir . 'backup_' . $db_copiar . '_' . date('Y-m-d-H-i-s') . '.sql';
+        try {
+            // Generar el backup temporal
+            $resultado = $this->generarCopiaSeguridad($db);
+            
+            if (!$resultado['estatus']) {
+                throw new Exception($resultado['mensaje']);
+            }
 
-        // Generar el backup temporal
-        $resultado = $this->generarCopiaSeguridad($db);
-        if (!$resultado['estatus']) {
-            // Si falla, redirigir con error
-            header('Location: ?pagina=mantenimiento&accion=inicio&e=1');
-            exit;
-        }
+            $archivo_nombre = $resultado['archivo'];
+            // Armamos la ruta absoluta hacia la carpeta Backups
+            $ruta_archivo = $this->getBackupDir() . $archivo_nombre;
 
-        $archivo = $resultado['archivo'];
+            if (!file_exists($ruta_archivo)) {
+                throw new Exception("El archivo fue generado pero no se encuentra en el directorio: " . $archivo_nombre);
+            }
 
-        if (file_exists($archivo)) {
-            // Cabeceras para forzar la descarga
-            header('Content-Type: application/octet-stream');
-            header('Content-Disposition: attachment; filename="' . basename($archivo) . '"');
+            // Cabeceras optimizadas para archivos GZIP
+            header('Content-Type: application/x-gzip');
+            header('Content-Disposition: attachment; filename="' . $archivo_nombre . '"');
             header('Expires: 0');
             header('Cache-Control: must-revalidate');
             header('Pragma: public');
-            header('Content-Length: ' . filesize($archivo));
+            header('Content-Length: ' . filesize($ruta_archivo));
 
             ob_clean();
             flush();
-            readfile($archivo);
+            readfile($ruta_archivo);
 
             // Eliminar el archivo temporal después de la descarga
-            unlink($archivo);
+            unlink($ruta_archivo);
             exit;
-        } else {
-            header('Location: ?pagina=mantenimiento&accion=inicio&e=1');
+
+        } catch (Exception $e) {
+            // Ahora sí quedará registro en el Log del servidor
+            error_log("Error Descarga Mantenimiento: " . $e->getMessage());
+            
+            // Codificamos el mensaje para enviarlo seguro por la URL
+            $msj_codificado = urlencode($e->getMessage());
+            header("Location: ?pagina=mantenimiento&accion=inicio&e=1&msg={$msj_codificado}");
             exit;
         }
     }
@@ -215,10 +233,16 @@ class Mantenimiento extends Conexion
         
         // Creamos un archivo temporal para el contenido SQL
         $temp_file = tempnam(sys_get_temp_dir(), 'restore_');
-        file_put_contents($temp_file, $contenido_sql);
+        
+        // VALIDACIÓN DE ERRORES: Verificar si se pudo escribir el archivo en RAM/Disco
+        if (file_put_contents($temp_file, $contenido_sql) === false) {
+            error_log("Error Restauración: Fallo al escribir el archivo temporal en el servidor.");
+            return ['estatus' => false, 'mensaje' => 'Error de E/S en el servidor al preparar la restauración.'];
+        }
 
-        // Limpiamos DEFINERs para evitar errores de permisos
         $this->removeDefinerFromSql($temp_file);
+
+        file_put_contents($temp_file, $contenido_sql);
 
         // Llamamos al método para obtener las credenciales administrativas protegidas
         $creds = $this->obtenerCredencialesAdmin();

@@ -149,15 +149,50 @@ try {
 
         // ==================== ESCRITURA (POST) ====================
         case 'registrar_gasto':
-            // Construir detalles desde $_POST/$_FILES (porque pueden venir archivos)
-            $detalles = $datosPeticion['detalles'] ?? ConstructorDetalles::ConstruirDetallesGastos($_POST, $_FILES, false);;
+            $detalles = $datosPeticion['detalles'] ?? ConstructorDetalles::ConstruirDetallesGastos($_POST, $_FILES, false);
+            
             if (empty($detalles)) {
                 http_response_code(HttpCodigo::BAD_REQUEST->value);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Debe proporcionar al menos un detalle de gasto.'];
                 break;
             }
+
+            // EXTRAEMOS REGLAS Y VALIDAMOS RENGLONES
+            $reglasDetalle = Gastos::obtenerReglasDetalles();
+            $erroresDetalles = [];
+
+            foreach ($detalles as $index => $detalle) {
+                $validadorTemp = new Validador();
+                
+                // Intercepción de imágenes fantasma para Gastos
+                if (in_array($detalle['metodo_pago'] ?? '', ['Transferencia', 'Pago Movil'])) {
+                    $nombreInputFile = "imagen_{$index}";
+                    if (!isset($_FILES[$nombreInputFile]) || $_FILES[$nombreInputFile]['error'] !== UPLOAD_ERR_OK) {
+                        $detalle['imagen'] = ''; 
+                    }
+                }
+
+                $validadorTemp->validarConjunto($detalle, $reglasDetalle);
+                if ($validadorTemp->tieneErrores()) {
+                    foreach($validadorTemp->obtenerErrores() as $campo => $mensajes) {
+                        $erroresDetalles["detalle_{$index}_{$campo}"] = $mensajes; 
+                    }
+                }
+            }
+
+            if (!empty($erroresDetalles)) {
+                http_response_code(HttpCodigo::BAD_REQUEST->value);
+                echo json_encode([
+                    'estatus' => false, 
+                    'errores' => $erroresDetalles, 
+                    'mensaje' => 'Datos inválidos. El comprobante es requerido para pagos digitales.'
+                ]);
+                exit; 
+            }
+
             $gastos->set_detalles($detalles);
             $respuesta = $gastos->realizar_consulta('registrar_gasto');
+            
             if ($respuesta['estatus']) {
                 $gastos->set_detalles(null); // limpiar para auditoría
                 $auditor->registrarAuditoria(Accion::REGISTRAR);
@@ -171,9 +206,43 @@ try {
                 $respuesta = ['estatus' => false, 'mensaje' => 'Debe proporcionar al menos un detalle de gasto.'];
                 break;
             }
+
+            $reglasDetalle = Gastos::obtenerReglasDetalles();
+            $erroresDetalles = [];
+
+            foreach ($detalles as $index => $detalle) {
+                $validadorTemp = new Validador();
+                
+                // Intercepción para modificación de Gastos
+                if (in_array($detalle['metodo_pago'] ?? '', ['Transferencia', 'Pago Movil'])) {
+                    $nombreInputFile = "imagen_{$index}";
+                    $imagenExistente = $_POST["imagen_existente_{$index}"] ?? '';
+                    
+                    if (empty($imagenExistente)) {
+                        if (!isset($_FILES[$nombreInputFile]) || $_FILES[$nombreInputFile]['error'] !== UPLOAD_ERR_OK) {
+                            $detalle['imagen'] = ''; 
+                        }
+                    }
+                }
+
+                $validadorTemp->validarConjunto($detalle, $reglasDetalle);
+                if ($validadorTemp->tieneErrores()) {
+                    foreach($validadorTemp->obtenerErrores() as $campo => $mensajes) {
+                        $erroresDetalles["detalle_{$index}_{$campo}"] = $mensajes; 
+                    }
+                }
+            }
+
+            if (!empty($erroresDetalles)) {
+                http_response_code(HttpCodigo::BAD_REQUEST->value);
+                echo json_encode(['estatus' => false, 'errores' => $erroresDetalles, 'mensaje' => 'Datos inválidos en los renglones del gasto.']);
+                exit; 
+            }
+
             $auditor->capturarDatosAnteriores('consultar_gasto');
             $gastos->set_detalles($detalles);
             $respuesta = $gastos->realizar_consulta('modificar_gasto');
+            
             if ($respuesta['estatus']) {
                 $gastos->set_detalles(null);
                 $auditor->registrarAuditoria(Accion::MODIFICAR);

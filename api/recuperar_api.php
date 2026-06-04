@@ -16,6 +16,16 @@ if (!empty($metodoSobreescrito)) {
 
 $datosPeticion = ($metodoHttp === 'GET') ? $_GET : $_POST;
 
+if (empty($datosPeticion) && in_array($metodoHttp, ['POST', 'PUT', 'DELETE'])) {
+    $jsonCrudo = file_get_contents('php://input');
+    $datosDecodificados = json_decode($jsonCrudo, true);
+    
+    if (json_last_error() === JSON_ERROR_NONE && is_array($datosDecodificados)) {
+        $datosPeticion = $datosDecodificados;
+    }
+}
+// =======================================================
+
 $operacion = $datosPeticion['operacion'] ?? '';
 
 if (empty($operacion)) {
@@ -104,6 +114,45 @@ try {
                     $seguridadIP->limpiarFallo();
                 } else {
                     $seguridadIP->registrarFallo();
+                }
+                break;
+
+            case 'validar_otp':
+                $correo = $datosPeticion['correo'] ?? '';
+                $otp = $datosPeticion['codigo'] ?? '';
+
+                if (empty($correo) || empty($otp)) {
+                    http_response_code(HttpCodigo::BAD_REQUEST->value);
+                    $respuesta = ['estatus' => false, 'mensaje' => 'El correo y el código son requeridos.'];
+                    break;
+                }
+                
+                $respuesta = $serviceRecuperar->validarOTP($correo, $otp);
+                
+                if ($respuesta['estatus']) {
+                    $seguridadIP->limpiarFallo();
+                } else {
+                    $seguridadIP->registrarFallo(); // Penaliza intentos de fuerza bruta al OTP
+                }
+                break;
+
+            case 'restablecer_con_token':
+                $correo = $datosPeticion['correo'] ?? '';
+                $tokenAutorizacion = $datosPeticion['token_autorizacion'] ?? '';
+                $contra = $datosPeticion['contra'] ?? '';
+
+                if (empty($correo) || empty($tokenAutorizacion) || empty($contra)) {
+                    http_response_code(HttpCodigo::BAD_REQUEST->value);
+                    $respuesta = ['estatus' => false, 'mensaje' => 'Faltan credenciales de autorización.'];
+                    break;
+                }
+                
+                $respuesta = $serviceRecuperar->restablecerConToken($correo, $tokenAutorizacion, $contra);
+                
+                if ($respuesta['estatus']) {
+                    $seguridadIP->limpiarFallo();
+                } else {
+                    $seguridadIP->registrarFallo(); 
                 }
                 break;
 

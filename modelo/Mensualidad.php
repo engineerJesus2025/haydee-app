@@ -607,7 +607,7 @@ class Mensualidad extends Conexion
                     FROM apartamentos a
                     LEFT JOIN vw_estado_cuentas_mensualidad v 
                         ON a.nro_apartamento = v.nro_apartamento 
-                        AND CAST(v.estado_pago AS CHAR) = 'Pendiente'
+                        AND CAST(v.estado_pago AS CHAR) = 'PENDIENTE'
                     WHERE a.activo = 1
                     GROUP BY a.id_apartamento
                 ) as estado_aptos
@@ -687,17 +687,17 @@ class Mensualidad extends Conexion
                        AND YEAR(dp.fecha) = YEAR(CURDATE())) AS recaudado_mes,
                     (SELECT COUNT(*) 
                      FROM vw_estado_cuentas_mensualidad 
-                     WHERE estado_pago = 'Pendiente') AS recibos_pendientes,
+                     WHERE estado_pago = 'PENDIENTE') AS recibos_pendientes,
                     (SELECT COALESCE(SUM(deuda_pendiente), 0) 
                      FROM vw_estado_cuentas_mensualidad 
-                     WHERE CAST(estado_pago AS CHAR) = 'Pendiente') AS deuda_total";
+                     WHERE CAST(estado_pago AS CHAR) = 'PENDIENTE') AS deuda_total";
         try {
             $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute();
             $datos = $stmt->fetch(PDO::FETCH_ASSOC);
             return ['estatus' => true, 'datos' => $datos];
         } catch (PDOException $e) {
-            error_log("Error en _consultar_kpis_inicio: " . $e->getMessage());
+            error_log("Error en _consultar_tarjetas_resumen: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al consultar los KPIs del inicio'];
         }
     }
@@ -735,13 +735,13 @@ class Mensualidad extends Conexion
         $sql = "SELECT 
                     (SELECT COALESCE(SUM(deuda_pendiente), 0) 
                      FROM vw_estado_cuentas_mensualidad 
-                     WHERE estado_pago = 'Pendiente' $condicionDeuda) AS deuda_total,
+                     WHERE UPPER(estado_pago) = 'PENDIENTE' $condicionDeuda) AS deuda_total,
                      
                     (SELECT COALESCE(SUM(dp.monto), 0) 
                      FROM detalles_pagos dp 
                      JOIN pagos p ON dp.pago_id = p.id_pago 
                      WHERE p.activo = 1 
-                       AND p.estado = 'PROCESADO'
+                       AND UPPER(p.estado) = 'PROCESADO'
                        AND MONTH(dp.fecha) = MONTH(CURDATE()) 
                        AND YEAR(dp.fecha) = YEAR(CURDATE())
                        $condicionPago) AS recaudado_mes,

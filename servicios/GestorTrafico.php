@@ -20,7 +20,8 @@ class GestorTrafico {
 
     // Lista de endpoints que escapan del túnel criptográfico
     private static $rutasSinCifrado = [
-        'handshake'
+        'handshake',
+        'recuperar'
     ];
 
     // Lista de endpoints que no requieren identidad (JWT)

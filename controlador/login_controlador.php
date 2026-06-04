@@ -1,5 +1,6 @@
 <?php
 use haydee\enums\HttpCodigo;
+use haydee\enums\TipoToken;
 use haydee\ayuda\Recaptcha;
 use haydee\ayuda\Validador;
 use haydee\modelo\Usuario;
@@ -178,7 +179,8 @@ switch ($accion) {
         if ($resultado['estatus']) {
             $_SESSION['reset_temp'] = [
                 'correo' => $resultado['datos']['correo'],
-                'id'     => $resultado['datos']['id_usuario']
+                'id'     => $resultado['datos']['id_usuario'],
+                'token'  => $token 
             ];
             require_once "vista/login/login_recuperar.php";
         } else {
@@ -187,17 +189,18 @@ switch ($accion) {
         break;
 
     case 'guardar_contrasenia':
-        if (empty($_SESSION['reset_temp'])) {
+        if (empty($_SESSION['reset_temp']) || empty($_SESSION['reset_temp']['token'])) {
             header("Location: ?pagina=login&accion=inicio&err=4");
             exit;
         }
 
         $recuperacion = new Recuperacion();
         try {
-            $res = $recuperacion->cambiarContrasenia(
+            $res = $recuperacion->restablecerConToken(
                 $_SESSION['reset_temp']['correo'],
+                $_SESSION['reset_temp']['token'], 
                 $_POST['contra'] ?? '',
-                $_SESSION['reset_temp']['id']
+                TipoToken::RECUPERACION->value    
             );
         } finally {
             $recuperacion->cerrar();

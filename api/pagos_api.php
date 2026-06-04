@@ -60,6 +60,8 @@ if (!empty($reglas)) {
     }
 }
 
+
+
 // ==================== PROCESAMIENTO DE NEGOCIO ====================
 $pagos = new Pagos();
 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida en API'];
@@ -81,11 +83,9 @@ try {
         if ($esPropietario) $pagos->set_correo($correoUsuario);
     }
     switch ($operacion) {
-        
         // ==================== CONSULTAS (GET) ====================
         case 'consulta':
             if ($esPropietario) {
-                $pagos->set_correo($correoUsuario);
                 $respuesta = $pagos->realizar_consulta('consultar_por_correo');
             } else {
                 $respuesta = $pagos->realizar_consulta('consultar');
@@ -138,13 +138,12 @@ try {
             if ($esPropietario) {
                 $pagos->set_correo($correoUsuario);
             }
-            // Ejecutamos la consulta siempre, el modelo decidirá el alcance.
             $respuesta = $pagos->realizar_consulta('consultar_estado_cuenta');
             break;
 
         // ==================== ESCRITURA (POST) ====================
         case 'registrar_pago':
-            // SOPORTE HÍBRIDO: El JSON de Expo o el FormData multipart tradicional
+            // Construimos los renglones
             $detalles = $datosPeticion['detalles'] ?? ConstructorDetalles::ConstruirDetallesPagos($_POST, $_FILES, false);
             
             if (empty($detalles)) {
@@ -155,9 +154,31 @@ try {
 
             $reglasDetalle = Pagos::obtenerReglasDetalles();
             $erroresDetalles = [];
+
+            // ITERAMOS Y AUDITAMOS CADA RENGLÓN
             foreach ($detalles as $index => $detalle) {
                 $validadorTemp = new Validador();
+                
+                // Mapeo adaptativo
+                if (isset($detalle['fecha']) && !isset($detalle['fecha_pago'])) {
+                    $detalle['fecha_pago'] = $detalle['fecha'];
+                }
+
+                // Si el método de pago exige imagen, verificamos que el archivo físico llegó al servidor
+                if (in_array($detalle['tipo_pago'] ?? '', ['Transferencia', 'Pago Movil'])) {
+                    $nombreInputFile = "imagen_{$index}"; // Ej: 'imagen_0'
+                    
+                    // Si no llegó archivo físico a la RAM de PHP, o llegó con error...
+                    if (!isset($_FILES[$nombreInputFile]) || $_FILES[$nombreInputFile]['error'] !== UPLOAD_ERR_OK) {
+                        // Ahora el Validador atrapará el campo vacío y bloqueará la API.
+                        $detalle['imagen'] = ''; 
+                    }
+                }
+                // =======================================================
+
+                // Ejecutamos la validación ahora sí con datos crudos y reales
                 $validadorTemp->validarConjunto($detalle, $reglasDetalle);
+                
                 if ($validadorTemp->tieneErrores()) {
                     foreach($validadorTemp->obtenerErrores() as $campo => $mensajes) {
                         $erroresDetalles["detalle_{$index}_{$campo}"] = $mensajes; 
@@ -165,14 +186,21 @@ try {
                 }
             }
 
+            // BLOQUEO DE SEGURIDAD
             if (!empty($erroresDetalles)) {
                 http_response_code(HttpCodigo::BAD_REQUEST->value);
-                echo json_encode(['estatus' => false, 'errores' => $erroresDetalles, 'mensaje' => 'Manipulación detectada en renglones.']);
-                exit;
+                echo json_encode([
+                    'estatus' => false, 
+                    'errores' => $erroresDetalles, 
+                    'mensaje' => 'Faltan comprobantes o referencias requeridas.'
+                ]);
+                exit; // <-- Crucial: Matamos el proceso para que no guarde en BD
             }
 
+            // Si pasa todo, guardamos en la base de datos
             $pagos->set_detalles($detalles);
             $respuesta = $pagos->realizar_consulta('registrar_pago');
+            
             if ($respuesta['estatus']) {
                 $pagos->set_detalles(null);
                 $auditor->registrarAuditoria(Accion::REGISTRAR);

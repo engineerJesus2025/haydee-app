@@ -23,8 +23,6 @@ class Recuperacion
 
     /**
      * Genera un token de recuperación y envía el correo.
-     * @param string $correo
-     * @return array ['estatus' => bool, 'mensaje' => string]
      */
     public function enviarCorreoRecuperacion($correo)
     {
@@ -36,11 +34,14 @@ class Recuperacion
         $usuario = $resultado['datos'];
 
         // Generar token
-        $token = bin2hex(random_bytes(self::LONGITUD_TOKEN_BYTES));
+        $tokenPlano = bin2hex(random_bytes(self::LONGITUD_TOKEN_BYTES));
         $expiracion = date('Y-m-d H:i:s', strtotime(self::TIEMPO_EXPIRACION));
 
+        // Hasheamos el token antes de mandarlo al modelo
+        $tokenCifrado = hash('sha256', $tokenPlano);
+
         $this->usuarioModel->set_id_usuario($usuario['id_usuario']);
-        $this->usuarioModel->set_token($token);
+        $this->usuarioModel->set_token($tokenCifrado); // Se guarda el HASH
         $this->usuarioModel->set_token_expiracion($expiracion);
         $this->usuarioModel->set_token_tipo(TipoToken::RECUPERACION->value);
 
@@ -49,54 +50,29 @@ class Recuperacion
             return ['estatus' => false, 'mensaje' => 'Error al generar token de recuperación.'];
         }
 
-        // Enviar correo
-        $url = $this->generarUrlRecuperacion($token);
+        // Enviamos el token PLANO en la URL del correo
+        $url = $this->generarUrlRecuperacion($tokenPlano);
         $enviado = $this->enviarCorreo($usuario, $url);
-        if (!$enviado) {
-            return ['estatus' => false, 'mensaje' => 'Operacion completada'];
-        }
-
+        
         return ['estatus' => true, 'mensaje' => 'Operacion completada'];
     }
 
     /**
      * Valida un token de recuperación.
-     * @param string $token
-     * @return array ['estatus' => bool, 'mensaje' => string, 'datos' => array|null]
      */
-    public function validarTokenRecuperacion($token)
+    public function validarTokenRecuperacion($tokenPlano)
     {
-        $this->usuarioModel->set_token($token);
+        // Hasheamos el token recibido por GET para poder compararlo en BD
+        $tokenCifrado = hash('sha256', $tokenPlano);
+        
+        $this->usuarioModel->set_token($tokenCifrado);
         $this->usuarioModel->set_token_tipo(TipoToken::RECUPERACION->value);
         $resultado = $this->usuarioModel->realizar_consulta('validar_token');
+        
         if (!$resultado['estatus']) {
             return ['estatus' => false, 'mensaje' => 'Token inválido o expirado.'];
         }
         return $resultado;
-    }
-
-    /**
-     * Cambia la contraseña y elimina el token usado.
-     * @param string $correo
-     * @param string $nuevaContra
-     * @param int $usuarioId
-     * @return array
-     */
-    public function cambiarContrasenia($correo, $nuevaContra, $usuarioId)
-    {
-        $this->usuarioModel->set_correo($correo);
-        $this->usuarioModel->set_contra($nuevaContra);
-        $this->usuarioModel->set_id_usuario($usuarioId);
-        $res = $this->usuarioModel->realizar_consulta('cambiar_contrasenia');
-        if (!$res['estatus']) {
-            return $res;
-        }
-
-        // Eliminar token usado
-        $this->usuarioModel->set_token_tipo(TipoToken::RECUPERACION->value);
-        $this->usuarioModel->realizar_consulta('eliminar_token');
-
-        return ['estatus' => true, 'mensaje' => 'Contraseña actualizada.'];
     }
 
     private function generarUrlRecuperacion($token)
@@ -250,6 +226,72 @@ class Recuperacion
         }
 
         return ['estatus' => false, 'mensaje' => 'No se pudo actualizar la contraseña.'];
+    }
+
+
+    /**
+     * PASO 2: Valida el OTP, lo quema y emite un token de autorización para el cambio de clave.
+     */
+    public function validarOTP($correo, $otpCrudo)
+    {
+        $this->usuarioModel->set_correo($correo);
+        $resUsuario = $this->usuarioModel->realizar_consulta('existe_correo');
+        
+        if (!$resUsuario['estatus']) {
+            return ['estatus' => false, 'mensaje' => 'Código inválido o expirado.'];
+        }
+        
+        $idUsuario = $resUsuario['datos']['id_usuario'];
+        
+        // Consultamos el token OTP actual
+        $this->usuarioModel->set_id_usuario($idUsuario);
+        $this->usuarioModel->set_token_tipo(TipoToken::RECUPERACION->value);
+        $resToken = $this->usuarioModel->realizar_consulta('obtener_token'); 
+        
+        if (!$resToken['estatus'] || !password_verify($otpCrudo, $resToken['datos']['token'])) {
+            return ['estatus' => false, 'mensaje' => 'Código numérico inválido o ha expirado.'];
+        }
+
+        // El OTP coincide: Quemar el token
+        $this->usuarioModel->realizar_consulta('eliminar_token');
+
+        $tokenAutorizacion = bin2hex(random_bytes(32)); 
+        $expiracion = date('Y-m-d H:i:s', strtotime('+10 minutes'));
+
+        $tokenCifradoRapido = hash('sha256', $tokenAutorizacion);
+
+        $this->usuarioModel->set_token($tokenCifradoRapido);
+        $this->usuarioModel->set_token_expiracion($expiracion);
+        $this->usuarioModel->set_token_tipo(TipoToken::AUTORIZACION->value);
+        
+        $registroNuevoToken = $this->usuarioModel->realizar_consulta('registrar_token');
+
+        if ($registroNuevoToken['estatus']) {
+            // Devolvemos el token en claro SOLO esta vez para que React Native lo guarde en memoria
+            return [
+                'estatus' => true, 
+                'mensaje' => 'Código validado correctamente.',
+                'token_autorizacion' => $tokenAutorizacion
+            ];
+        }
+
+        return ['estatus' => false, 'mensaje' => 'Error interno al generar autorización.'];
+    }
+
+    /**
+     * Envía los parámetros limpios al modelo transaccional.
+     */
+    public function restablecerConToken($correo, $tokenPlano, $nuevaContra, $tipoToken = null)
+    {
+        // Si no se le pasa tipo, asume que es el de la APP Móvil por defecto
+        $tipo = $tipoToken ?? TipoToken::AUTORIZACION->value;
+
+        $this->usuarioModel->set_correo($correo);
+        $this->usuarioModel->set_token($tokenPlano); // Pasa en plano, el modelo le aplicará SHA-256
+        $this->usuarioModel->set_contra($nuevaContra); // Pasa en plano, el modelo le aplicará Bcrypt
+        $this->usuarioModel->set_token_tipo($tipo);
+
+        return $this->usuarioModel->realizar_consulta('consumir_token_recuperacion');
     }
 
     public function cerrar()

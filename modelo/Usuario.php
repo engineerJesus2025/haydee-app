@@ -136,6 +136,10 @@ class Usuario extends Conexion
         'refrescar_token' => [
             'metodo_http' => ['POST'],
             'campos' => ['id_usuario', 'token']
+        ],
+        'consumir_token_recuperacion' => [
+            'metodo_http' => ['POST'],
+            'campos' => ['correo', 'token', 'contra', 'token_tipo']
         ]
     ];
 
@@ -655,6 +659,84 @@ class Usuario extends Conexion
             }
             error_log("Error en validarTokenYObtenerUsuario: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error interno al validar credenciales de sesión.'];
+        }
+    }
+
+
+    /**
+     * Valida el token de autorización largo con SHA-256,
+     * actualiza la contraseña con Bcrypt y elimina el token de forma atómica.
+     */
+    private function _consumir_token_recuperacion()
+    {
+        if (empty($this->correo) || empty($this->token) || empty($this->contra) || empty($this->token_tipo)) {
+            return ['estatus' => false, 'mensaje' => 'Datos insuficientes para procesar el restablecimiento.'];
+        }
+
+        try {
+            $db = $this->get_conex(TipoBaseDatos::SEGURIDAD);
+            $db->beginTransaction(); 
+
+            // Buscamos el usuario y bloqueamos su información perimetral
+            $sqlUsuario = "SELECT id_usuario FROM usuarios WHERE correo = :correo AND activo = 1 FOR UPDATE";
+            $stmtU = $db->prepare($sqlUsuario);
+            $stmtU->execute([':correo' => $this->correo]);
+            $usuario = $stmtU->fetch(PDO::FETCH_ASSOC);
+
+            if (!$usuario) {
+                $db->rollBack();
+                return ['estatus' => false, 'mensaje' => 'Solicitud no válida o usuario inexistente.'];
+            }
+
+            $idUsuario = $usuario['id_usuario'];
+
+            // Buscamos el Token de Autorización vigente y bloqueamos la fila
+            $sqlToken = "SELECT token FROM tokens_seguridad 
+                         WHERE usuario_id = :uid 
+                         AND tipo = :tipo 
+                         AND fecha_expiracion > NOW()
+                         ORDER BY fecha_expiracion DESC LIMIT 1 FOR UPDATE";
+            
+            $stmtT = $db->prepare($sqlToken);
+            $stmtT->execute([
+                ':uid'  => $idUsuario,
+                ':tipo' => $this->token_tipo
+            ]);
+            $datosToken = $stmtT->fetch(PDO::FETCH_ASSOC);
+
+            // Verificamos el token aplicando la función SHA-256 
+            $tokenHashEsperado = hash('sha256', $this->token);
+
+            if (!$datosToken || $datosToken['token'] !== $tokenHashEsperado) {
+                $db->rollBack();
+                return ['estatus' => false, 'mensaje' => 'La sesión de recuperación es inválida o ha expirado.'];
+            }
+
+            // El token es legítimo: Generamos el hash Bcrypt para la contraseña en el Modelo
+            $nuevoHashPassword = password_hash($this->contra, PASSWORD_DEFAULT);
+
+            $sqlCambio = "UPDATE usuarios SET contrasenia = :con WHERE id_usuario = :uid";
+            $db->prepare($sqlCambio)->execute([
+                ':con' => $nuevoHashPassword,
+                ':uid' => $idUsuario
+            ]);
+
+            // Quemamos el token de autorización inmediatamente para evitar ataques de repetición
+            $sqlEliminar = "DELETE FROM tokens_seguridad WHERE usuario_id = :uid AND tipo = :tipo";
+            $db->prepare($sqlEliminar)->execute([
+                ':uid'  => $idUsuario,
+                ':tipo' => $this->token_tipo
+            ]);
+
+            $db->commit();
+            return ['estatus' => true, 'mensaje' => 'Contraseña actualizada con éxito.'];
+
+        } catch (PDOException $e) {
+            if ($db && $db->inTransaction()) {
+                $db->rollBack();
+            }
+            error_log("Error crítico en _consumir_token_recuperacion: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error de seguridad interna en el motor de base de datos.'];
         }
     }
     
