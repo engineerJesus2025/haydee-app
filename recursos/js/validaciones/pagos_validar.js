@@ -1,12 +1,6 @@
-/**
- * pagos_validar.js
- * Dependencias: Validador.js, Patrones.js, EstadoInputs.js, Alertas.js, Peticiones.js
- */
 document.addEventListener("DOMContentLoaded", function() {
 
-    // ============================================================
     // VALIDACIONES EN TIEMPO REAL - CABECERA
-    // ============================================================
     const selectsCabecera = ['apartamento_id', 'mensualidad_id', 'estado'];
     selectsCabecera.forEach(id => {
         const select = document.getElementById(id);
@@ -28,9 +22,7 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-    // ============================================================
     // VALIDACIONES EN TIEMPO REAL - DETALLES (Delegación de eventos)
-    // ============================================================
     const contenedor = document.getElementById("detalles_container");
 
     if (contenedor) {
@@ -103,36 +95,23 @@ document.addEventListener("DOMContentLoaded", function() {
             e.preventDefault();
             const accion = this.hasAttribute("modificar") ? "modificar" : "Registrar";
 
+            // Si el formulario pasa las validaciones de formato y unicidad de referencias
             if (await validarFormularioCompleto()) {
-                Swal.fire({
-                    title: "¿Estás seguro?",
-                    text: `¿Desea ${accion.toLowerCase()} este pago?`,
-                    icon: "warning",
-                    showCancelButton: true,
-                    confirmButtonColor: "#1b8a40",
-                    confirmButtonText: `Sí, ${accion}`,
-                    cancelButtonText: "Cancelar"
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        if (accion === "Registrar") {
-                            registrar(); 
-                        } else {
-                            const id = this.getAttribute("id_modificar");
-                            modificar(id); 
-                        }
-                    }
-                });
+                if (accion === "Registrar") {
+                    registrar(); // Delegamos la confirmación con vista previa a pagos_ajax.js
+                } else {
+                    const id = this.getAttribute("id_modificar");
+                    modificar(id); // Delegamos la actualización a pagos_ajax.js
+                }
             }
         });
     }
 });
 
-// ============================================================
 // FUNCIONES AUXILIARES DE VALIDACIÓN
-// ============================================================
 
 async function validarFormularioCompleto() {
-    // 1. Validar Cabecera
+    // Validar Cabecera
     if (!Validador.evaluarSelect("apartamento_id")) {
         Alertas.mostrar("error", "Error", "Debe seleccionar un apartamento");
         return false;
@@ -146,14 +125,14 @@ async function validarFormularioCompleto() {
         return false;
     }
 
-    // 2. Validar que exista al menos un detalle
+    // Validar que exista al menos un detalle
     const bloques = document.querySelectorAll("#detalles_container .detalle-pago");
     if (bloques.length === 0) {
         Alertas.mostrar("error", "Error", "Debe agregar al menos un detalle de pago");
         return false;
     }
 
-    // 3. Validar Detalles iterativamente
+    // Validar Detalles iterativamente
     for (let i = 0; i < bloques.length; i++) {
         const bloque = bloques[i];
         const num = i + 1;
@@ -185,7 +164,7 @@ async function validarFormularioCompleto() {
                 return false;
             }
 
-            const idPagoActual = document.getElementById("boton_formulario").dataset.id || ""; 
+            const idPagoActual = document.getElementById("boton_formulario").getAttribute("id_modificar") || ""; 
 
             const refValida = await Validador.verificarDatoUnico(
                 'referencia', 

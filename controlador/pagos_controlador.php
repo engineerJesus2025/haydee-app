@@ -2,6 +2,7 @@
 use haydee\enums\HttpCodigo;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
+use haydee\enums\TipoEventoNotificacion;
 
 use haydee\servicios\Sesiones;
 use haydee\modelo\Pagos;
@@ -12,7 +13,7 @@ use haydee\ayuda\ConstructorDetalles;
 use haydee\ayuda\Validador;
 use haydee\ayuda\ValidadorBD;
 use haydee\servicios\GestorAuditoria;
-
+use haydee\servicios\GestorNotificaciones;
 // Verificaciones de seguridad
 Sesiones::autorizarAcceso(Modulo::GESTIONAR_PAGOS, Accion::CONSULTAR);
 
@@ -24,6 +25,10 @@ if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
 
     Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_PAGOS, $operacion);
+
+    if (!isset($_POST['estado'])) {
+        $_POST['estado'] = $esPropietario ? 'PENDIENTE' : 'PROCESADO';
+    }
 
     // VALIDACION DE LA CABECERA
     $reglasCabecera = Pagos::obtenerReglas($operacion);
@@ -59,8 +64,9 @@ if (isset($_POST["operacion"])) {
             // INTERCEPCIÓN DE IMÁGENES FANTASMA (WEB)
             if (in_array($detalle['tipo_pago'] ?? '', ['Transferencia', 'Pago Movil'])) {
                 $nombreInputFile = "imagen_{$index}";
-                // Si es modificación, el frontend suele enviar el nombre viejo si no lo cambian
-                $imagenExistente = $_POST["imagen_existente_{$index}"] ?? '';
+                
+                //  Leer el input como arreglo, tal como lo envía el FormData
+                $imagenExistente = $_POST['imagen_existente'][$index] ?? ''; 
                 
                 // Si NO hay imagen vieja es nuevo pago o borraron la anterior
                 if (empty($imagenExistente)) {
@@ -100,7 +106,8 @@ if (isset($_POST["operacion"])) {
     // Asignacion masiva de propiedades esenciales
     $pagos->set_id_pago($_POST['id_pago'] ?? null);
     $pagos->set_id_detalle_pago($_POST['id_detalle_pago'] ?? null);
-    $pagos->set_estado($_POST['estado'] ?? null);
+    $estadoPorDefecto = $esPropietario ? 'PENDIENTE' : 'PROCESADO';
+    $pagos->set_estado($_POST['estado'] ?? $estadoPorDefecto);
     $pagos->set_tasa_dolar($_POST['tasa_dolar'] ?? null);
     $pagos->set_observacion($_POST['observacion'] ?? null);
     $pagos->set_apartamento_id($_POST['apartamento_id'] ?? null);
@@ -142,10 +149,6 @@ if (isset($_POST["operacion"])) {
 
             // ==================== REGISTRO ====================
             case 'registrar_pago':
-                if ($esPropietario) {
-                    $pagos->set_estado('No verificado');
-                }
-
                 $respuesta = $pagos->realizar_consulta('registrar_pago');
 
                 http_response_code($respuesta['estatus'] ? HttpCodigo::CREADO->value : HttpCodigo::BAD_REQUEST->value);
@@ -153,6 +156,18 @@ if (isset($_POST["operacion"])) {
                     // Ocultamos los detalles al auditor para evitar colapsos
                     $pagos->set_detalles(null);
                     $auditor->registrarAuditoria(Accion::REGISTRAR);
+
+                    $id_nuevo_pago = $respuesta['id'] ?? $respuesta['lastId'] ?? null;
+                    
+                    if ($id_nuevo_pago) {
+                        GestorNotificaciones::notificarAdmins(
+                            "Nuevo Pago Registrado", 
+                            "Requiere revisión y aprobación.", 
+                            "pagos", 
+                            $id_nuevo_pago, 
+                            TipoEventoNotificacion::PAGO_RECIBIDO->value
+                        );
+                    }
                 }
                 break;
 
@@ -294,7 +309,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         $registro_apartamento = $apartamento->realizar_consulta('consultar_listado')['datos'] ?? [];
     } else {
         $apartamento->set_correo($_SESSION["usuario"]);
-        $registro_apartamento = $apartamento->realizar_consulta('consultar_por_propietario')['datos'] ?? [];
+        $registro_apartamento = $apartamento->realizar_consulta('obtener_apartamentos_por_correo')['datos'] ?? [];
     }
 }
 $permisosVista = Sesiones::obtenerPermisosVista(Modulo::GESTIONAR_PAGOS);

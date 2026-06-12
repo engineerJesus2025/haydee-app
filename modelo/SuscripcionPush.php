@@ -43,17 +43,13 @@ class SuscripcionPush extends Conexion
         return [];
     }
 
-    // ====================================================================
     // GETTERS Y SETTERS
-    // ====================================================================
     public function set_usuario_id($id) { $this->usuario_id = $id; }
     public function set_endpoint($e) { $this->endpoint = $e; }
     public function set_p256dh($p) { $this->p256dh = $p; }
     public function set_auth($a) { $this->auth = $a; }
 
-    // ====================================================================
     // ENRUTADOR
-    // ====================================================================
     public function realizar_consulta($accion)
     {
         $metodo = '_' . $accion;

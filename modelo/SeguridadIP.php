@@ -3,7 +3,7 @@ namespace haydee\modelo;
 
 use PDO;
 use PDOException;
-use haydee\config\TipoListaIP;
+use haydee\enums\TipoListaIP;
 use haydee\enums\TipoBaseDatos;
 use haydee\enums\HttpCodigo;
 

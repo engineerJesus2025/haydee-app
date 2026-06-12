@@ -240,20 +240,24 @@ class AnioFiscal extends Conexion
     }
 
     /**
-     * Ejecuta el procedimiento almacenado para verificar/cerrar años fiscales.
-     // SE USA EN EL SCRIPT AUTOMATICO
+     * Ejecuta el procedimiento almacenado unificado para periodos
+     * // SE USA EN EL SCRIPT AUTOMATICO
      */
-    private function _verificar_anio_fiscal()
+    private function _gestionar_periodos()
     {
-        $sql = "CALL gestionar_anio_fiscal()";
+        $sql = "CALL sp_gestionar_periodos_automaticos()";
 
         try {
             $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute();
-            return ['estatus' => true, 'mensaje' => 'Procedimiento ejecutado correctamente'];
+            $res = $stmt->fetch(PDO::FETCH_ASSOC);
+            $stmt->closeCursor();
+            
+            return ['estatus' => true, 'mensaje' => $res['mensaje'] ?? 'Procedimiento ejecutado'];
         } catch (PDOException $e) {
-            error_log("Error en _verificar_anio_fiscal: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al ejecutar el procedimiento de verificación'];
+            error_log("Error en _gestionar_periodos: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al ejecutar la gestión automática de periodos.'];
         }
     }
+
 }

@@ -1,24 +1,28 @@
 document.addEventListener('DOMContentLoaded', async () => {
     if ('serviceWorker' in navigator && 'PushManager' in window) {
         try {
-            // 1. Registramos el Service Worker
+            // Registra el Service Worker
             const register = await navigator.serviceWorker.register(URL_BASE + 'sw.js', {
                 scope: URL_BASE
             }); 
             
-            // 2. Pedimos permiso al residente y creamos la suscripción
+            // Pedimos permiso al residente y creamos/obtenemos la suscripción local
             const subscription = await register.pushManager.subscribe({
                 userVisibleOnly: true,
                 applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_KEY)
             });
 
-            // 3. Enviamos a BD
-            guardarSuscripcionEnBD(subscription);
+            // Caché local
+            const endpointActual = subscription.endpoint;
+            const endpointGuardado = localStorage.getItem('haydee_push_endpoint');
+
+            // Solo enviamos a BD si no hay caché o si el navegador cambió el endpoint por seguridad
+            if (endpointActual !== endpointGuardado) {
+                await guardarSuscripcionEnBD(subscription);
+            }
 
         } catch (error) {
             console.warn('El usuario denegó los permisos o hubo un error Push:', error);
-            // Opcional: Mostrar alerta solo si quieres forzar al usuario a aceptar
-            // Alertas.mostrar('warning', 'Aviso', 'Si deseas recibir notificaciones de la cartelera, habilita los permisos en tu navegador.');
         }
     }
 });
@@ -30,18 +34,16 @@ async function guardarSuscripcionEnBD(subscription) {
     formData.append('p256dh', btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('p256dh')))));
     formData.append('auth', btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('auth')))));
 
-    // ====================================================================
-    // USO DE TU HELPER Peticiones.js
-    // Pasamos: 1. formData, 2. La URL, 3. false (para ocultar el modal de carga)
-    // ====================================================================
     const url = '?pagina=suscripcion_push&accion=registrar_suscripcion';
     const respuesta = await Peticiones.enviar(formData, url, false);
 
     if (respuesta && respuesta.estatus) {
-        console.log("Haydee Push:", respuesta.mensaje);
-        // Mantenemos la alerta en silencio para no interrumpir al usuario cada vez que entra
+        console.log("Haydee Push sincronizado con éxito.");
+        // Si el backend guardó con éxito, guardamos el endpoint en la caché del navegador
+        localStorage.setItem('haydee_push_endpoint', subscription.endpoint);
     } else if (respuesta && !respuesta.silencioso) {
         console.error("Haydee Push Error:", respuesta.mensaje);
+        // No guardamos en localStorage para forzar un reintento en la próxima recarga
     }
 }
 

@@ -5,6 +5,8 @@ use haydee\modelo\Notificaciones;
 use haydee\modelo\SuscripcionPush;
 use Minishlink\WebPush\WebPush;
 use Minishlink\WebPush\Subscription;
+use haydee\modelo\SuscripcionPushMovil;
+use haydee\enums\TipoEventoNotificacion;
 
 class GestorNotificaciones
 {
@@ -38,11 +40,10 @@ class GestorNotificaciones
         
         $resultado = $notif->realizar_consulta($accion);
 
-        // ==================================================================
         // PUSH
-        // ==================================================================
         if (isset($resultado['estatus']) && $resultado['estatus'] === true) {
-            self::dispararPush($titulo, $descripcion, $accion);
+            self::dispararPush($titulo, $descripcion, $accion, $tabla_origen, $id_registro);
+            self::dispararPushMovil($titulo, $descripcion, $accion, $tabla_origen, $id_registro, $tipo_evento);
         }
 
         return $resultado;
@@ -51,7 +52,7 @@ class GestorNotificaciones
     /**
      * Lógica para encolar y enviar notificaciones Web Push
      */
-    private static function dispararPush($titulo, $descripcion, $accion_original)
+    private static function dispararPush($titulo, $descripcion, $accion_original, $tabla_origen, $id_registro)
     {
         // Configurar credenciales VAPID 
         $auth = [
@@ -67,7 +68,6 @@ class GestorNotificaciones
             return false;
         }
 
-        // Delegamos la consulta a la base de datos a nuestro MODELO
         $modeloPush = new SuscripcionPush();
         
         // Mapeamos la acción original a la acción del modelo
@@ -85,9 +85,17 @@ class GestorNotificaciones
 
         // Preparar la librería y el mensaje
         $webPush = new WebPush($auth);
+        
+        // Construimos la ruta dinámica idéntica a la que usa tu JS
+        $urlDestino = "?pagina={$tabla_origen}&buscar={$id_registro}";
+
+        // Añadimos el objeto 'data' al payload
         $payload = json_encode([
             'titulo' => $titulo,
-            'descripcion' => $descripcion
+            'descripcion' => $descripcion,
+            'data' => [
+                'url' => $urlDestino
+            ]
         ]);
 
         // Encolar los envíos
@@ -111,5 +119,78 @@ class GestorNotificaciones
         }
 
         return true;
+    }
+
+    /**
+     * Lógica para consultar y enviar notificaciones a React Native (Expo)
+     */
+    private static function dispararPushMovil($titulo, $descripcion, $accion_original, $tabla_origen, $id_registro, $tipo_evento)
+    {
+        $modeloPushMovil = new SuscripcionPushMovil();
+        $accionModelo = ($accion_original === 'notificar_todos') ? 'obtener_todos' : 'obtener_admins';
+        $respuestaModelo = $modeloPushMovil->realizar_consulta($accionModelo);
+
+        if (!$respuestaModelo['estatus'] || empty($respuestaModelo['datos'])) {
+            return false; 
+        }
+
+        $suscripcionesDB = $respuestaModelo['datos'];
+        $mensajes = [];
+
+        $configEvento = self::obtenerConfiguracionEvento($tipo_evento, $tabla_origen);
+
+        foreach ($suscripcionesDB as $row) {
+            $mensajes[] = [
+                "to" => $row['expo_token'],
+                "sound" => ($configEvento['canal'] === 'haydee-silencioso') ? null : "default",
+                "title" => $titulo,
+                "body" => $descripcion,
+                "channelId" => ($row['plataforma'] === 'ANDROID') ? $configEvento['canal'] : null,
+                "data" => [
+                    "ruta" => $configEvento['ruta'],
+                    "id_registro" => $id_registro,
+                    "tabla_origen" => $tabla_origen
+                ]
+            ];
+        }
+
+        // Hacer la petición HTTP a los servidores de Expo mediante cURL
+        $ch = curl_init('https://exp.host/--/api/v2/push/send');
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Accept: application/json',
+            'Accept-encoding: gzip, deflate',
+            'Content-Type: application/json',
+        ]);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($mensajes));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+        $respuesta = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        // IMPRIMIR EL RECIBO DE EXPO EN EL LOG DE PHP -- QUITAR DESPUESSS
+        error_log("Recibo de Expo: " . $respuesta);
+
+        // Manejo básico de errores
+        if ($httpCode !== 200) {
+            error_log("Push Móvil fallido. Código HTTP: {$httpCode}. Respuesta: {$respuesta}");
+            return false;
+        }
+
+        return true;
+    }
+
+    private static function obtenerConfiguracionEvento($tipo_evento, $tabla_origen) 
+    {
+        $mapaEventos = [
+            TipoEventoNotificacion::NUEVA_PUBLICACION->value => ['canal' => 'haydee-urgente', 'ruta' => 'DetalleCartelera'],
+            TipoEventoNotificacion::EMERGENCIA->value        => ['canal' => 'haydee-urgente', 'ruta' => 'Inicio'],
+            TipoEventoNotificacion::PAGO_RECIBIDO->value     => ['canal' => 'haydee-silencioso', 'ruta' => 'DetallePago'],
+            TipoEventoNotificacion::BAJO_SALDO->value        => ['canal' => 'haydee-silencioso', 'ruta' => 'Inicio'],
+            TipoEventoNotificacion::NUEVA_MENSUALIDAD->value => ['canal' => 'haydee-default', 'ruta' => 'Mensualidad'], 
+        ];
+
+        return $mapaEventos[$tipo_evento] ?? ['canal' => 'haydee-default', 'ruta' => 'Inicio'];
     }
 }

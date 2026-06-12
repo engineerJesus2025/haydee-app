@@ -2,14 +2,14 @@ const Tablas = {
     cargarTabulador(idContenedor, url, columnas, opciones = {}, mostrarCarga = true) {
         const config = {
             movableColumns: true,
-            pagination: true,
+            pagination: "local",
             paginationSize: opciones.paginaSize || 10,
             paginationSizeSelector: [5, 10, 20, 50],
             columns: columnas,
             layout: "fitColumns",
             responsiveLayout: "collapse",
             
-            // Formateador responsivo extraído del original
+            // Formateador responsivo
             responsiveLayoutCollapseFormatter: function(data) {
                 if (!data || data.length === 0) return ""; 
                 let lista = document.createElement("ul");

@@ -1,13 +1,4 @@
-/**
- * gastos_validar.js
- * Dependencias: Validador.js, Patrones.js, EstadoInputs.js, Alertas.js, Peticiones.js
- */
-
 document.addEventListener("DOMContentLoaded", function () {
-
-    // ============================================================
-    // VALIDACIONES EN TIEMPO REAL - CAMPOS PRINCIPALES
-    // ============================================================
     const selectClasificacion = document.getElementById("clasificacion");
     if (selectClasificacion) {
         selectClasificacion.addEventListener("change", function () { Validador.evaluarSelect(this.id); });
@@ -136,34 +127,27 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // ============================================================
     // VALIDACIÓN AL ENVIAR EL FORMULARIO
-    // ============================================================
     const btnFormulario = document.getElementById("boton_formulario");
     if (btnFormulario) {
         btnFormulario.addEventListener("click", async function (e) {
             e.preventDefault();
             const accion = this.hasAttribute("modificar") ? "modificar" : "Registrar";
 
-            // if (await validarFormularioCompleto()) {
-                Swal.fire({
-                    title: "¿Estás seguro?",
-                    text: `¿Desea ${accion.toLowerCase()} este gasto?`,
-                    icon: "warning",
-                    showCancelButton: true,
-                    confirmButtonColor: "#1b8a40",
-                    confirmButtonText: `Sí, ${accion}`,
-                    cancelButtonText: "Cancelar"
-                }).then((result) => {
-                    if (result.isConfirmed) {
+            if (await validarFormularioCompleto()) {
+                Alertas.confirmarAccion(
+                    "Confirmar Operación",
+                    `¿Está seguro que desea ${accion.toLowerCase()} este gasto?`,
+                    "question", 
+                    () => {
                         if (accion === "Registrar") {
                             registrar();
                         } else {
                             modificar(this.getAttribute("id_modificar"));
                         }
                     }
-                });
-            // }
+                );
+            }
         });
     }
 
@@ -243,12 +227,6 @@ async function validarFormularioCompleto() {
         const montoInput = bloque.querySelector(".monto");
         if (!Validador.evaluarInput(montoInput, Patrones.monto, "Monto inválido")) {
             Alertas.mostrar("error", `Detalle #${num}`, "Monto inválido (use números y hasta 2 decimales)");
-            return false;
-        }
-
-        const descDet = bloque.querySelector(".descripcion_detalle_gasto");
-        if (!Validador.evaluarInput(descDet, Patrones.textoBreve, "Mínimo 3 caracteres")) {
-            Alertas.mostrar("error", `Detalle #${num}`, "La descripción debe tener al menos 3 caracteres");
             return false;
         }
 

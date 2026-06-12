@@ -1,8 +1,3 @@
-/**
- * Script para la gestión de Mantenimiento (Respaldo y Restauración)
- * Dependencias: utilidades.js (Objeto Utilidades), SweetAlert2
- */
-
 // Elementos del DOM
 const boton_exportar = document.getElementById('boton_exportar');
 const boton_descargar = document.getElementById('boton_descargar');
@@ -16,10 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
     obtenerCopiasGuardadas();
     verificarErroresURL();
 });
-
-// -------------------------------------------------------------------------
-// Event Listeners (Interacción Usuario)
-// -------------------------------------------------------------------------
 
 // Referencias a las pestañas
 const tabServidor = document.getElementById('servidor-tab');
@@ -54,9 +45,8 @@ select_db.addEventListener("change", (e) => {
     validarInput(e.target, valido, "Selección no válida");
 
     if (valido) {
-        divAcciones.style.display = 'flex'; // Usamos flex para mantener la alineación
+        divAcciones.style.display = 'flex'; 
         document.getElementById('db_input').value = valor;
-        // Quitar cualquier "hidden" residual que pudiera haber quedado de versiones anteriores
         boton_exportar.removeAttribute('hidden');
         boton_descargar.removeAttribute('hidden');
     }
@@ -69,19 +59,16 @@ select_copias.addEventListener("change", (e) => {
     const btn = document.getElementById('boton_importar');
     const textoBoton = document.getElementById('texto_boton_importar');
     
-    // Si no hay valor o selecciona la opción por defecto, limpiamos todo
     if (!valor) {
         infoDiv.innerHTML = '';
         btn.style.display = 'none';
-        validarInput(e.target, true); // Quitamos la clase de error si había
+        validarInput(e.target, true); 
         return;
     }
 
     const valorMin = valor.toLowerCase();
-    
     const esSeguridad = valorMin.includes("seguridad");
     const esAutomatico = valorMin.includes("automatico") || valorMin.includes("auto");
-    
     const valido = /^backup_.*_(MANUAL|AUTOMATICO)\.sql(\.gz)?$/i.test(valorMin);
     
     validarInput(e.target, valido, "Archivo no válido o corrupto");
@@ -93,9 +80,8 @@ select_copias.addEventListener("change", (e) => {
         renderizarTarjetaDestino(textoDB, tipoRespaldo);
 
         if(textoBoton) textoBoton.textContent = `Restaurar ${textoDB}`;
-        input_file.value = ''; // Limpiamos la pestaña contraria (PC)
+        input_file.value = ''; 
     } else {
-        // Si es inválido, borramos la tarjeta visual y ocultamos el botón
         infoDiv.innerHTML = '';
         btn.style.display = 'none';
     }
@@ -108,7 +94,6 @@ input_file.addEventListener("change", (e) => {
     const infoDiv = document.getElementById('info_seleccion');
     const archivo = e.target.files[0];
 
-    // Si el usuario cancela la selección
     if (!archivo) {
         btn.style.display = 'none';
         infoDiv.innerHTML = '';
@@ -117,20 +102,16 @@ input_file.addEventListener("change", (e) => {
     }
 
     const nombre = archivo.name.toLowerCase();
-    
-    // Validación de seguridad Frontend:
     const extensionValida = /(\.sql|\.sql\.gz|\.gz)$/i.test(nombre);
     
     validarInput(e.target, extensionValida, "Solo se admiten archivos .sql o .gz");
 
     if (!extensionValida) {
-        // Si no es válido, destruimos la tarjeta visual y ocultamos el botón
         infoDiv.innerHTML = '';
         btn.style.display = 'none';
         return;
     }
 
-    // Si pasó la prueba de extensión, continuamos con la lógica normal
     let dbDetectada = "Desconocido";
     if (nombre.includes("seguridad")) {
         dbDetectada = "Seguridad";
@@ -141,48 +122,44 @@ input_file.addEventListener("change", (e) => {
     const esAutomatico = nombre.includes("automatico") || nombre.includes("auto");
     const tipoRespaldo = esAutomatico ? 'Automática' : 'Manual o Externa';
 
-    select_copias.value = ''; // Limpiamos la pestaña contraria (Servidor)
+    select_copias.value = ''; 
 
     renderizarTarjetaDestino(dbDetectada, tipoRespaldo, archivo.name);
 
-    if (dbDetectada !== "Desconocido") {
-        if(textoBoton) textoBoton.textContent = `Importar en ${dbDetectada}`;
+    if (dbDetectada !== "Desconocido" && textoBoton) {
+        textoBoton.textContent = `Importar en ${dbDetectada}`;
     }
 });
 
-// Botón Exportar (Generar Backup)
+// Botón Exportar (Generar Backup) - Mejorado con pedirConfirmacion
 boton_exportar.addEventListener("click", async () => {
     if (!validarSeleccionDB()) return;
 
-    const confirmacion = await Swal.fire({
-        title: "¿Estás seguro?",
-        text: "¿Está seguro que desea generar una nueva copia de seguridad?",
-        showCancelButton: true,
-        confirmButtonText: "Sí, Exportar",
-        confirmButtonColor: "#1b8a40",
-        cancelButtonText: "Cancelar",
-        icon: "warning"
+    Alertas.pedirConfirmacion(
+        "¿Generar Copia de Seguridad?",
+        `Se creará un respaldo estructurado de la base de datos: <strong>${select_db.value.toUpperCase()}</strong>.`,
+        "question",
+        "Sí, generar respaldo",
+        "Cancelar"
+    ).then((result) => {
+        if (result.isConfirmed) {
+            generarCopiaSeguridad();
+        }
     });
-
-    if (confirmacion.isConfirmed) {
-        generarCopiaSeguridad();
-    }
 });
 
-// Botón Descargar (Submit Formulario tradicional)
+// Botón Descargar - Mejorado con pedirConfirmacion
 boton_descargar.addEventListener("click", (e) => {
     e.preventDefault();
     if (!validarSeleccionDB()) return;
 
-    Swal.fire({
-        title: "¿Estás seguro?",
-        text: "¿Está seguro que desea descargar el archivo de respaldo a su equipo?",
-        showCancelButton: true,
-        confirmButtonText: "Sí, Descargar",
-        confirmButtonColor: "#1b8a40",
-        cancelButtonText: "Cancelar",
-        icon: "info"
-    }).then((result) => {
+    Alertas.pedirConfirmacion(
+        "¿Descargar Respaldo Directo?",
+        `El sistema compilará y descargará un archivo SQL inmediato de la base de datos: <strong>${select_db.value.toUpperCase()}</strong>.`,
+        "question",
+        "Sí, descargar",
+        "Cancelar"
+    ).then((result) => {
         if (result.isConfirmed) {
             document.getElementById('db_input').value = select_db.value;
             e.target.closest("form").submit();
@@ -190,7 +167,7 @@ boton_descargar.addEventListener("click", (e) => {
     });
 });
 
-// Botón Importar (Restaurar)
+// Botón Importar (Restaurar) - ¡Solución del BUG del método inexistente!
 boton_importar.addEventListener("click", async () => {
     const hayCopiaSeleccionada = select_copias.value !== '';
     const hayArchivoSubido = input_file.value !== '';
@@ -200,37 +177,33 @@ boton_importar.addEventListener("click", async () => {
         return;
     }
 
-    // Advertencia fuerte por ser acción destructiva
-    const confirmacion = await Swal.fire({
-        title: "¡Advertencia de Seguridad!",
-        text: "¿Está seguro que desea restaurar la base de datos? Esta acción ELIMINARÁ todos los datos actuales y los reemplazará por la copia. No se puede deshacer.",
-        showCancelButton: true,
-        confirmButtonText: "Sí, Restaurar",
-        confirmButtonColor: "#d33", // Rojo peligro
-        cancelButtonText: "Cancelar",
-        icon: "warning"
-    });
-
-    if (confirmacion.isConfirmed) {
-        if (hayArchivoSubido) {
-            importarSQL();
-        } else {
-            importarCopiaSeguridad();
+    Alertas.pedirConfirmacion(
+        "¡Advertencia de Seguridad!",
+        "<span class='text-danger fw-bold'>Acción crítica de restauración</span>. Esta acción ELIMINARÁ todos los datos actuales de la base de datos destino y los reemplazará por la copia. No se puede revertir.",
+        "warning",
+        "Sí, restaurar sistema",
+        "Cancelar"
+    ).then((result) => {
+        if (result.isConfirmed) {
+            // Enrutamiento dinámico según el origen activo del archivo
+            if (hayCopiaSeleccionada) {
+                importarCopiaSeguridad();
+            } else if (hayArchivoSubido) {
+                importarSQL();
+            }
         }
-    }
+    });
 });
 
 const iconoBoton = document.getElementById('icono_boton_importar');
-
-boton_importar.addEventListener('mouseenter', () => {
-    iconoBoton.classList.remove('bi-arrow-repeat');
-    iconoBoton.classList.add('bi-exclamation-triangle');
-});
-
-boton_importar.addEventListener('mouseleave', () => {
-    iconoBoton.classList.remove('bi-exclamation-triangle');
-    iconoBoton.classList.add('bi-arrow-repeat');
-});
+if (iconoBoton) {
+    boton_importar.addEventListener('mouseenter', () => {
+        iconoBoton.classList.replace('bi-arrow-repeat', 'bi-exclamation-triangle');
+    });
+    boton_importar.addEventListener('mouseleave', () => {
+        iconoBoton.classList.replace('bi-exclamation-triangle', 'bi-arrow-repeat');
+    });
+}
 
 // -------------------------------------------------------------------------
 // Funciones de Lógica de Negocio (AJAX)
@@ -241,17 +214,14 @@ async function obtenerCopiasGuardadas() {
     datos.append('operacion', 'obtener_copias');
 
     const respuesta = await Peticiones.enviar(datos);
-
     if (!respuesta.estatus) {
         Alertas.mostrar('error', 'Error', respuesta.mensaje);
         return;
     }
 
     const listaArchivos = respuesta.datos || [];
+    select_copias.innerHTML = ''; 
 
-    select_copias.innerHTML = ''; // Limpiar select
-
-    // Opción por defecto
     let defaultOption = document.createElement("option");
     defaultOption.textContent = (listaArchivos.length === 0) ? "No hay copias guardadas" : "Seleccione la Copia de Seguridad";
     defaultOption.value = '';
@@ -267,51 +237,37 @@ async function obtenerCopiasGuardadas() {
     select_copias.disabled = false;
     let fragment = document.createDocumentFragment();
 
-    // Ordenar archivos por fecha descendente (más reciente primero)
     listaArchivos.sort((a, b) => {
-        // Extraemos la parte de la fecha YYYY-MM-DD_HH-mm-ss de cada nombre
         const regexFecha = /\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}/;
         const fechaA = a.match(regexFecha) ? a.match(regexFecha)[0] : "";
         const fechaB = b.match(regexFecha) ? b.match(regexFecha)[0] : "";
-
-        // Comparamos de forma descendente (B vs A) para que el más nuevo esté arriba
         return fechaB.localeCompare(fechaA);
     });
 
     listaArchivos.forEach(fichero => {
         let option = document.createElement("option");
-        
-        // Texto formateado con el nuevo icono
         option.textContent = formatearNombreArchivo(fichero);
         option.value = fichero;
-        
         fragment.appendChild(option);
     });
 
     select_copias.appendChild(fragment);
 }
 
-/**
- * Transforma el nombre técnico del archivo en un formato legible
- */
 function formatearNombreArchivo(fichero) {
     const nombreMin = fichero.toLowerCase();
     const esSeguridad = nombreMin.includes("seguridad");
     const esAuto = nombreMin.includes("automatico");
     const esComprimido = nombreMin.endsWith(".gz");
 
-    // Extraer fecha y hora: Busca YYYY-MM-DD_HH-mm-ss
     const match = fichero.match(/(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2}-\d{2})/);
-    
     if (match) {
-        const fecha = match[1].split('-').reverse().join('/'); // DD/MM/YYYY
-        const hora = match[2].replace(/-/g, ':'); // HH:mm:ss
+        const fecha = match[1].split('-').reverse().join('/'); 
+        const hora = match[2].replace(/-/g, ':'); 
         
         const iconoDB = esSeguridad ? "🛡️" : "🏢";
         const etiquetaDB = esSeguridad ? "SEGURIDAD" : "NEGOCIO";
         const origen = esAuto ? "🤖 AUTO" : "👤 MANUAL";
-        
-        // etiqueta visual indicando si está comprimido para ahorrar espacio
         const etiquetaCompresion = esComprimido ? "🗜️ GZ" : "📄 SQL";
 
         return `🔹 ${iconoDB} ${etiquetaDB} [${origen}] | 📅 ${fecha} | 🕒 ${hora} | ${etiquetaCompresion}`;
@@ -320,25 +276,28 @@ function formatearNombreArchivo(fichero) {
 }
 
 async function generarCopiaSeguridad() {
+    // Alertas.mostrarCargando("Generando Respaldo", "Volcando estructuras y registros de la base de datos...");
+    
     let datos = new FormData();
     datos.append("db", select_db.value);
     datos.append('operacion', 'generar_copia_seguridad');
 
     const respuesta = await Peticiones.enviar(datos);
+    // Alertas.cerrar();
 
     if (respuesta.estatus) {
-        Alertas.mostrar('success', 'Éxito', respuesta.mensaje);
-        obtenerCopiasGuardadas(); // Actualizar lista
+        Alertas.mostrar('success', '¡Respaldo Creado!', respuesta.mensaje);
+        obtenerCopiasGuardadas(); 
     } else {
-        Alertas.mostrar('error', 'Error', respuesta.mensaje);
+        Alertas.mostrar('error', 'Error de Volcado', respuesta.mensaje);
     }
 }
 
 async function importarCopiaSeguridad() {
+    // Alertas.mostrarCargando("Restaurando Sistema", "Procesando sentencias SQL del servidor, por favor espere...");
+    
     let datos = new FormData();
     const fichero = select_copias.value;
-    
-    // Usamos nuestra nueva función validadora
     const db = determinarDBDestino(fichero);
 
     datos.append("fichero", fichero);
@@ -346,14 +305,15 @@ async function importarCopiaSeguridad() {
     datos.append('operacion', 'importar_copia_seguridad');
 
     const respuesta = await Peticiones.enviar(datos);
+    // Alertas.cerrar();
     manejarRespuestaImportacion(respuesta);
 }
 
 async function importarSQL() {
+    // Alertas.mostrarCargando("Subiendo e Importando", "Leyendo archivo e inyectando registros en la base de datos...");
+    
     let datos = new FormData();
     const archivo = input_file.files[0];
-    
-    // Usamos nuestra nueva función validadora
     const db = determinarDBDestino(archivo.name);
 
     datos.append("fichero", archivo); 
@@ -361,18 +321,20 @@ async function importarSQL() {
     datos.append('operacion', 'importar_archivo_sql');
 
     const respuesta = await Peticiones.enviar(datos);
+    // Alertas.cerrar();
     manejarRespuestaImportacion(respuesta);
 }
 
-// -------------------------------------------------------------------------
-// Funciones Auxiliares (Locales a este módulo)
-// -------------------------------------------------------------------------
-
 function manejarRespuestaImportacion(respuesta) {
     if (respuesta.estatus) {
-        Alertas.mostrar('success', 'Restauración Completada', respuesta.mensaje);
-        // Recargar la página para limpiar estado
-        // setTimeout(() => window.location.reload(), 2000);
+        // Bloqueo con acción obligatoria para mantener la sanidad del estado de la app
+        Alertas.mostrarConAccion(
+            'success', 
+            'Restauración Completada', 
+            respuesta.mensaje + " El sistema necesita recargarse para sincronizar los nuevos datos de forma segura.",
+            "Entendido",
+            () => { window.location.reload(); }
+        );
     } else {
         Alertas.mostrar('error', 'Fallo en Restauración', respuesta.mensaje);
     }
@@ -393,9 +355,6 @@ function validarSeleccionDB() {
     return true;
 }
 
-/**
- * Aplica clases de validación de Bootstrap y mensaje de error
- */
 function validarInput(input, esValido, mensajeError = "") {
     if (esValido) {
         input.classList.remove('is-invalid');
@@ -406,27 +365,12 @@ function validarInput(input, esValido, mensajeError = "") {
     }
 }
 
-function alternarVisibilidad(elemento, mostrar) {
-    if (!elemento) return;
-    if (mostrar) elemento.removeAttribute("hidden");
-    else elemento.setAttribute("hidden", "");
-}
-
-/**
- * Limpia la URL si hubo error de descarga y muestra una alerta elegante
- */
 function verificarErroresURL() {
     const urlParams = new URLSearchParams(window.location.search);
-    
-    // Si detectamos el parámetro 'e' de error
     if (urlParams.get('e')) {
-        // Obtenemos el mensaje dinámico o ponemos uno por defecto
         const mensajeError = urlParams.get('msg') || 'Ocurrió un error al intentar descargar el archivo.';
-        
-        // Mostramos el SweetAlert (usamos warning porque es un error de usuario, no de sistema)
         Alertas.mostrar('warning', 'Descarga no disponible', mensajeError);
         
-        // Limpiamos la URL silenciosamente sin recargar la página
         const currentURL = new URL(window.location.href);
         currentURL.searchParams.delete('e');
         currentURL.searchParams.delete('msg');
@@ -434,25 +378,14 @@ function verificarErroresURL() {
     }
 }
 
-/**
- * Determina a qué base de datos se debe importar.
- * Prioriza el Select de Emergencia si existe y tiene un valor.
- */
 function determinarDBDestino(nombreArchivo) {
     const selectEmergencia = document.getElementById('select_db_emergencia');
-    
-    // Si el select existe y el usuario eligió una opción, usamos esa
     if (selectEmergencia && selectEmergencia.value) {
         return selectEmergencia.value;
     }
-    
-    // Si no (porque se detectó automáticamente), usamos la lógica del nombre
     return nombreArchivo.toLowerCase().includes("seguridad") ? 'seguridad' : 'negocio';
 }
 
-/**
- * Renderiza la tarjeta con lógica de selección de emergencia si el destino es desconocido
- */
 function renderizarTarjetaDestino(dbDetectada, tipoRespaldo, nombreArchivo = null) {
     const infoDiv = document.getElementById('info_seleccion');
     const btn = document.getElementById('boton_importar');
@@ -492,17 +425,14 @@ function renderizarTarjetaDestino(dbDetectada, tipoRespaldo, nombreArchivo = nul
             ` : ''}
         </div>`;
 
-    // Lógica de habilitación de botón
     if (esDesconocido) {
-        btn.style.display = 'none'; // Oculto hasta que elija en el select de emergencia
+        btn.style.display = 'none'; 
         
-        // Listener para el select de emergencia
         const selectEmergencia = document.getElementById('select_db_emergencia');
         selectEmergencia.addEventListener('change', (e) => {
             const dbManual = e.target.value;
             const textoBoton = document.getElementById('texto_boton_importar');
             
-            // Actualizar interfaz visual
             document.getElementById('badge_destino_final').className = dbManual === 'seguridad' ? 'badge-soft-info rounded-pill fw-bold px-3 py-2' : 'badge-soft-success rounded-pill fw-bold px-3 py-2';
             
             if(textoBoton) textoBoton.textContent = `Importar en ${dbManual.charAt(0).toUpperCase() + dbManual.slice(1)}`;

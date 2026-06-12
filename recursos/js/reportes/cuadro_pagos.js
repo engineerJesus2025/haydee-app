@@ -1,18 +1,12 @@
-/**
- * cuadro_pagos.js 
- * Generación de cuadro de pagos
- * Dependencias: Validador.js, Patrones.js, Alertas.js, Peticiones.js, FormatoFechas.js
- */
-
 let botonCuadroPagos = document.getElementById('boton_cuadro_pagos');
 let arrayMeses = [];
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Cargamos los datos al iniciar la pantalla
+    //  Cargamos los datos al iniciar la pantalla
     consultarMeses();
 });
 
-// 2. Al hacer clic (si está habilitado), poblamos el modal
+// Al hacer clic (si está habilitado), poblamos el modal
 botonCuadroPagos.addEventListener("click", () => {
     document.getElementById("titulo_modal_persona").textContent = 'Generar Cuadro de Pagos';
     document.getElementById('label_reporte').textContent = "Seleccione el mes para generar el cuadro ";

@@ -20,9 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     cargarMesesYAniosConPresupuesto();
 });
 
-// ============================================
 // CONSULTA Y DATATABLE
-// ============================================
 async function consultar() {
     const contenedor = document.querySelector(".tabla-sistema-haydee");
     if (!contenedor) return;
@@ -42,20 +40,19 @@ async function consultar() {
     };
 
     const formatoBotones = (cell) => {
-        const id = cell.getData().id_solicitud;
         let html = `<div class="d-flex justify-content-center flex-wrap gap-2">
-            <button type="button" class="btn btn-primary btn-sm vista-previa" value="${id}" data-tooltip="true" title="Ver Mas">
+            <button type="button" class="btn btn-primary btn-sm vista-previa" data-tooltip="true" title="Ver Mas">
                 <i class="bi bi-eye"></i>
                 <span class="d-none d-lg-inline ms-2">Ver</span>
             </button>`;
         if (permisoModificar) {
-            html += `<button class="btn btn-success btn-sm modificar" value="${id}" data-tooltip="true" title="Modificar los detalles de este registro">
+            html += `<button class="btn btn-success btn-sm modificar" data-tooltip="true" title="Modificar los detalles de este registro">
                         <i class="bi bi-pencil"></i>
                         <span class="d-none d-lg-inline ms-2">Editar</span>
                     </button>`;
         }
         if (permisoEliminar) {
-            html += `<button class="btn btn-danger btn-sm eliminar" value="${id}" data-tooltip="true" title="Quitar este elemento del sistema">
+            html += `<button class="btn btn-danger btn-sm eliminar" data-tooltip="true" title="Quitar este elemento del sistema">
                         <i class="bi bi-trash"></i>
                         <span class="d-none d-lg-inline ms-2">Borrar</span>
                     </button>`;
@@ -76,17 +73,11 @@ async function consultar() {
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
-                const mockEvent = { currentTarget: btn };
+                const id = cell.getData().id_solicitud;
 
-                if (btn.classList.contains('vista-previa')) {
-                    mostrarVistaPrevia(cell.getData());
-                }
-
-                if (btn.classList.contains('modificar')) prepararFormulario(mockEvent);
-                if (btn.classList.contains('eliminar')) {
-                    Swal.fire({ title: '¿Estás seguro?', text: 'Esta acción no se puede deshacer.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e01d22', confirmButtonText: 'Eliminar' })
-                    .then(r => r.isConfirmed && eliminar(btn.value));
-                }
+                if (btn.classList.contains('vista-previa')) mostrarVistaPrevia(cell.getData());
+                if (btn.classList.contains('modificar')) prepararFormulario(id);
+                if (btn.classList.contains('eliminar')) confirmarEliminar(id);
             }
         }
     ];
@@ -163,8 +154,7 @@ async function registrar() {
     });
 }
 
-async function prepararFormulario(e) {
-    const id = e.currentTarget.value;
+async function prepararFormulario(id) {
     const datos = new FormData();
     datos.append('id_solicitud', id);
     datos.append('operacion', 'consultar_solicitud');
@@ -194,16 +184,16 @@ async function prepararFormulario(e) {
 
         document.getElementById('titulo_modal').textContent = 'Modificar Solicitud';
         document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-send-exclamation");
-        // form.querySelector('#boton_formulario').textContent = 'Guardar Cambios';
+        // document.querySelector('#boton_formulario').textContent = 'Guardar Cambios';
         document.getElementById('texto_boton_formulario').textContent = 'Guardar Cambios';
-        form.querySelector('#boton_formulario').dataset.id = id;
+        document.querySelector('#boton_formulario').dataset.id = id;
 
         modal.show();
     });
 }
 
 async function modificar() {
-    const id = form.querySelector('#boton_formulario').dataset.id;
+    const id = document.querySelector('#boton_formulario').dataset.id;
     const montoNuevo = parseFloat(form.querySelector('#monto_estimado').value);
     const montoOriginal = parseFloat(form.querySelector('#monto_estimado').dataset.original) || 0;
     const presupuestoId = form.querySelector('#presupuesto_id').value;
@@ -226,6 +216,15 @@ async function modificar() {
         modal.hide();
         tabla_solicitud_gasto.replaceData();
     });
+}
+
+function confirmarEliminar(id) {
+    Alertas.confirmarAccion(
+        "¿Eliminar Solicitud?",
+        "Esta acción no se puede deshacer.",
+        "error",
+        () => { eliminar(id); }
+    );
 }
 
 async function eliminar(id) {
@@ -358,9 +357,9 @@ document.getElementById('modal_solicitud_gasto').addEventListener('hide.bs.modal
     document.getElementById('titulo_modal').textContent = 'Registrar Solicitud';
     document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-send-plus");
 
-    // form.querySelector('#boton_formulario').textContent = 'Registrar';
+    // document.querySelector('#boton_formulario').textContent = 'Registrar';
     document.getElementById('texto_boton_formulario').textContent = 'Guardar Solicitud';
-    delete form.querySelector('#boton_formulario').dataset.id;
+    delete document.querySelector('#boton_formulario').dataset.id;
 });
 
 document.getElementById('selector_mes').addEventListener('change', buscarPresupuesto);

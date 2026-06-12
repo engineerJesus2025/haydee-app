@@ -51,18 +51,14 @@ document.addEventListener("DOMContentLoaded", function() {
             const esEdicion = this.hasAttribute('modificar');
             const accion = esEdicion ? 'modificar' : 'Registrar';
             if (validarEnvio(accion)) {
-                Swal.fire({
-                    title: '¿Estás seguro?',
-                    text: `¿Desea ${accion} este rol?`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#1b8a40',
-                    confirmButtonText: 'Sí, ' + accion
-                }).then(result => {
-                    if (result.isConfirmed) {
+                Alertas.confirmarAccion(
+                    "Confirmar Operación",
+                    `¿Está seguro que desea ${accion.toLowerCase()} este rol?`,
+                    "question", 
+                    () => {
                         accion === 'modificar' ? modificar() : registrar();
                     }
-                });
+                );
             }
         });
     }

@@ -4,6 +4,8 @@ namespace haydee\modelo;
 use PDO;
 use PDOException;
 use haydee\enums\TipoBaseDatos;
+use haydee\enums\EstadoPago;
+use haydee\enums\TipoVinculo;
 
 class Mensualidad extends Conexion
 {
@@ -234,27 +236,20 @@ class Mensualidad extends Conexion
     private function _consultarPorMeses()
     {
         $sql = "SELECT 
-                    GROUP_CONCAT(m.id_mensualidad) as ids,
-                    GROUP_CONCAT(m.apartamento_id) as ids_apartamentos,
-                    SUM(m.monto) as monto,
+                    GROUP_CONCAT(v.id_mensualidad) as ids,
+                    GROUP_CONCAT(v.apartamento_id) as ids_apartamentos,
+                    SUM(v.monto_cuota) as monto,
                     pm.tasa_dolar,
-                    pm.mes,
-                    pm.anio,
-                    SUM(LEAST(m.monto, COALESCE(pagos.total_pagado, 0))) as pagado,
-                    m.porcentaje_interes,
-                    m.limite_mensualidad
-                FROM mensualidad m
-                INNER JOIN periodos_mensualidad pm ON m.periodo_id = pm.id_periodo
-                LEFT JOIN (
-                    /* Nueva lógica N:M con monto_abonado */
-                    SELECT p_m.mensualidad_id, SUM(p_m.monto_abonado) as total_pagado
-                    FROM pagos_mensualidad p_m
-                    JOIN pagos p ON p_m.pago_id = p.id_pago 
-                    WHERE p.activo = 1
-                    GROUP BY p_m.mensualidad_id
-                ) as pagos ON m.id_mensualidad = pagos.mensualidad_id
-                WHERE m.activo = 1 AND pm.activo = 1
-                GROUP BY pm.id_periodo, pm.mes, pm.anio, pm.tasa_dolar, m.porcentaje_interes, m.limite_mensualidad";
+                    v.mes,
+                    v.anio,
+                    SUM(LEAST(v.monto_cuota, v.total_abonado)) as pagado,
+                    MAX(m.porcentaje_interes) as porcentaje_interes,
+                    MAX(m.limite_mensualidad) as limite_mensualidad
+                FROM vw_estado_cuentas_mensualidad v
+                INNER JOIN periodos_mensualidad pm ON pm.mes = v.mes AND pm.anio = v.anio
+                INNER JOIN mensualidad m ON m.id_mensualidad = v.id_mensualidad
+                WHERE pm.activo = 1
+                GROUP BY pm.id_periodo, v.mes, v.anio, pm.tasa_dolar";
         try {
             $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute();
@@ -271,29 +266,26 @@ class Mensualidad extends Conexion
     {
         $mesInt = (int)$this->mes;
         $anioInt = (int)$this->anio;
+        $propietario = TipoVinculo::PROPIETARIO->value;
 
-        $sql = "SELECT m.id_mensualidad, m.apartamento_id, pm.mes, pm.anio,
-                       a.nro_apartamento,
+        $sql = "SELECT v.id_mensualidad, v.apartamento_id, v.mes, v.anio,
+                       v.nro_apartamento,
                        h.nombre, h.apellido,
-                       m.monto, pm.tasa_dolar,
-                       COALESCE((SELECT SUM(p_m.monto_abonado) FROM pagos_mensualidad p_m
-                                 JOIN pagos p ON p_m.pago_id = p.id_pago
-                                 WHERE p_m.mensualidad_id = m.id_mensualidad AND p.activo = 1),0) as pagado,
-                       ROUND(COALESCE((SELECT SUM(p_m.monto_abonado) FROM pagos_mensualidad p_m
-                                 JOIN pagos p ON p_m.pago_id = p.id_pago
-                                 WHERE p_m.mensualidad_id = m.id_mensualidad AND p.activo = 1),0) / pm.tasa_dolar, 2) as pagado_dolar
-                FROM mensualidad m
-                INNER JOIN periodos_mensualidad pm ON m.periodo_id = pm.id_periodo
-                INNER JOIN apartamentos a ON m.apartamento_id = a.id_apartamento
-                INNER JOIN habitantes_apartamentos ha ON ha.apartamento_id = a.id_apartamento
+                       v.monto_cuota AS monto, pm.tasa_dolar,
+                       v.total_abonado AS pagado,
+                       ROUND(v.total_abonado / pm.tasa_dolar, 2) AS pagado_dolar
+                FROM vw_estado_cuentas_mensualidad v
+                INNER JOIN periodos_mensualidad pm ON pm.mes = v.mes AND pm.anio = v.anio
+                INNER JOIN habitantes_apartamentos ha ON ha.apartamento_id = v.apartamento_id
                 INNER JOIN habitantes h ON ha.habitante_id = h.id_habitante
-                WHERE pm.mes = :mes AND pm.anio = :anio
-                  AND ha.tipo_vinculo = 'Propietario'
-                  AND m.activo = 1";
+                WHERE v.mes = :mes AND v.anio = :anio
+                  AND ha.tipo_vinculo = :propietario
+                  AND pm.activo = 1";
         try {
             $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->bindParam(':mes', $mesInt, PDO::PARAM_INT);
             $stmt->bindParam(':anio', $anioInt, PDO::PARAM_INT);
+            $stmt->bindParam(':propietario', $propietario);
             $stmt->execute();
             $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
             return ['estatus' => true, 'datos' => $datos];
@@ -362,6 +354,9 @@ class Mensualidad extends Conexion
         
         try {
             $con = $this->get_conex(TipoBaseDatos::NEGOCIO);
+
+            // Definición explícita del nivel de aislamiento para esta transacción
+            $con->exec("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ");
             $con->beginTransaction();
 
             // Insertar o reactivar el periodo fiscal
@@ -433,7 +428,9 @@ class Mensualidad extends Conexion
             return ['estatus' => true, 'mensaje' => 'Todas las mensualidades se registraron/reactivaron correctamente.', 'lastId' => $id_mensualidad];
 
         } catch (\Exception $e) {
-            $con->rollBack();
+            if (isset($con) && $con->inTransaction()) {
+                $con->rollBack();
+            }
             error_log("Error en _registrar: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al registrar: ' . $e->getMessage()];
         }
@@ -442,8 +439,11 @@ class Mensualidad extends Conexion
     // SE USA EN EL MODULO
     private function _modificar()
     {
-        $con = $this->get_conex(TipoBaseDatos::NEGOCIO);
         try {
+            $con = $this->get_conex(TipoBaseDatos::NEGOCIO);
+
+            // Definición explícita del nivel de aislamiento para esta transacción
+            $con->exec("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ");
             $con->beginTransaction();
 
             // Actualizar tasa del periodo fiscal
@@ -504,7 +504,9 @@ class Mensualidad extends Conexion
             $con->commit();
             return ['estatus' => true, 'mensaje' => 'Mensualidades sincronizadas correctamente preservando el historial financiero.'];
         } catch (\Exception $e) {
-            $con->rollBack();
+            if (isset($con) && $con->inTransaction()) {
+                $con->rollBack();
+            }
             error_log("Error crítico en _modificar: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al modificar: ' . $e->getMessage()];
         }
@@ -515,6 +517,9 @@ class Mensualidad extends Conexion
     {
         try {
             $con = $this->get_conex(TipoBaseDatos::NEGOCIO);
+
+            // Definición explícita del nivel de aislamiento para esta transacción
+            $con->exec("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ");
             $con->beginTransaction();
 
             // Desactivar el periodo fiscal
@@ -546,7 +551,7 @@ class Mensualidad extends Conexion
             return ['estatus' => true, 'mensaje' => 'Periodo y mensualidades desactivados correctamente'];
 
         } catch (\PDOException $e) {
-            if (isset($con)) {
+            if (isset($con) && $con->inTransaction()) {
                 $con->rollBack();
             }
             error_log("Error en _eliminar: " . $e->getMessage());
@@ -607,7 +612,7 @@ class Mensualidad extends Conexion
                     FROM apartamentos a
                     LEFT JOIN vw_estado_cuentas_mensualidad v 
                         ON a.nro_apartamento = v.nro_apartamento 
-                        AND CAST(v.estado_pago AS CHAR) = 'PENDIENTE'
+                        AND CAST(v.estado_pago AS CHAR) = '" . EstadoPago::PENDIENTE->value . "' 
                     WHERE a.activo = 1
                     GROUP BY a.id_apartamento
                 ) as estado_aptos
@@ -711,6 +716,9 @@ class Mensualidad extends Conexion
         $condicionPago = "";
         $params = [];
 
+        $estadoPendiente = EstadoPago::PENDIENTE->value;
+        $estadoProcesado = EstadoPago::PROCESADO->value;
+
         if (!empty($this->correo)) {
             $condicionDeuda = " AND nro_apartamento IN (
                 SELECT a.nro_apartamento FROM apartamentos a
@@ -735,13 +743,13 @@ class Mensualidad extends Conexion
         $sql = "SELECT 
                     (SELECT COALESCE(SUM(deuda_pendiente), 0) 
                      FROM vw_estado_cuentas_mensualidad 
-                     WHERE UPPER(estado_pago) = 'PENDIENTE' $condicionDeuda) AS deuda_total,
+                     WHERE UPPER(estado_pago) = '" . strtoupper($estadoPendiente) . "' $condicionDeuda) AS deuda_total,
                      
                     (SELECT COALESCE(SUM(dp.monto), 0) 
                      FROM detalles_pagos dp 
                      JOIN pagos p ON dp.pago_id = p.id_pago 
                      WHERE p.activo = 1 
-                       AND UPPER(p.estado) = 'PROCESADO'
+                       AND UPPER(p.estado) = '" . strtoupper($estadoProcesado) . "'
                        AND MONTH(dp.fecha) = MONTH(CURDATE()) 
                        AND YEAR(dp.fecha) = YEAR(CURDATE())
                        $condicionPago) AS recaudado_mes,

@@ -56,20 +56,19 @@ async function consultar() {
     };
 
     const formatoBotones = (cell) => {
-        const id = cell.getData().id_gasto;
         let html = `<div class="d-flex justify-content-center flex-wrap gap-2">
-            <button type="button" class="btn btn-primary btn-sm vista-previa" value="${id}" data-tooltip="true" title="Ver Mas">
+            <button type="button" class="btn btn-primary btn-sm vista-previa" data-tooltip="true" title="Ver Mas">
                 <i class="bi bi-eye"></i>
                 <span class="d-none d-lg-inline ms-2">Ver</span>
             </button>`;
         if (permisoModificar) {
-            html += `<button class="btn btn-success btn-sm modificar" value="${id}" data-tooltip="true" title="Modificar los detalles de este registro">
+            html += `<button class="btn btn-success btn-sm modificar" data-tooltip="true" title="Modificar los detalles de este registro">
                         <i class="bi bi-pencil"></i>
                         <span class="d-none d-lg-inline ms-2">Editar</span>
                     </button>`;
         }
         if (permisoEliminar) {
-            html += `<button class="btn btn-danger btn-sm eliminar" value="${id}" data-tooltip="true" title="Quitar este elemento del sistema">
+            html += `<button class="btn btn-danger btn-sm eliminar" data-tooltip="true" title="Quitar este elemento del sistema">
                         <i class="bi bi-trash"></i>
                         <span class="d-none d-lg-inline ms-2">Borrar</span>
                     </button>`;
@@ -92,10 +91,11 @@ async function consultar() {
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
-                const mockEvent = { target: btn };
-                if (btn.classList.contains('vista-previa')) mostrarVistaPrevia(mockEvent);
-                if (btn.classList.contains('modificar')) prepararFormularioEdicion(mockEvent);
-                if (btn.classList.contains('eliminar')) confirmarEliminar(mockEvent);
+                const id = cell.getData().id_gasto;
+
+                if (btn.classList.contains('vista-previa')) mostrarVistaPrevia(id);
+                if (btn.classList.contains('modificar')) prepararFormulario(id);
+                if (btn.classList.contains('eliminar')) confirmarEliminar(id);
             }
         }       
     ];
@@ -173,8 +173,7 @@ async function registrar() {
 /**
  * Prepara el formulario para edición cargando los datos del gasto
  */
-async function prepararFormularioEdicion(e) {
-    let id = e.target.value || e.target.parentElement.value; 
+async function prepararFormulario(id) {
     const datos = new FormData();
     datos.append('id_gasto', id);
     datos.append('operacion', 'consultar_gasto');
@@ -305,8 +304,7 @@ async function modificar(id) {
 /**
  * Muestra la vista previa de un gasto
  */
-async function mostrarVistaPrevia(e) {
-    let id = e.target.value || e.target.parentElement.value; 
+async function mostrarVistaPrevia(id) {
     const datos = new FormData();
     datos.append('id_gasto', id);
     datos.append('operacion', 'consultar_gasto');
@@ -413,23 +411,14 @@ async function mostrarVistaPreviaDetalle(idDetalle) {
     });
 }
 
-// ============================================================
 // ELIMINACIÓN
-// ============================================================
-
-function confirmarEliminar(e) {
-    let id = e.target.value || e.target.parentElement.value; 
-    Swal.fire({
-        title: '¿Estás seguro?',
-        text: 'Esta acción no se puede deshacer.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#e01d22',
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar'
-    }).then(result => {
-        if (result.isConfirmed) eliminar(id);
-    });
+function confirmarEliminar(id) {
+    Alertas.confirmarAccion(
+        "¿Eliminar Gasto?",
+        "Esta acción no se puede deshacer.",
+        "error",
+        () => { eliminar(id); }
+    );
 }
 
 async function eliminar(id) {
@@ -442,10 +431,6 @@ async function eliminar(id) {
         tabla_gastos.replaceData();
     });
 }
-
-// ============================================================
-// FUNCIONES AUXILIARES
-// ============================================================
 
 /**
  * Agrega un nuevo bloque de detalle al formulario

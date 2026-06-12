@@ -13,6 +13,9 @@ class Usuario extends Conexion
     private const MAX_INTENTOS_LOGIN = 3;
     private const TIEMPO_BLOQUEO_MINUTOS = 15;
     private const MARGEN_EXPIRACION_TOKEN_MINUTOS = 10;
+
+    private const ESTADO_ACTIVO = 1;
+    private const ESTADO_INACTIVO = 0;
     
     // PROPIEDADES (Usuario)
     private $id_usuario;
@@ -199,13 +202,13 @@ class Usuario extends Conexion
     {
         try {
             $db = $this->get_conex(TipoBaseDatos::SEGURIDAD);
+            $db->exec("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ");
             $db->beginTransaction();
 
-            $sqlUsuario = "SELECT u.id_usuario, u.correo, u.nombre, u.apellido, u.contrasenia, 
-                           r.id_rol, r.nombre as nombre_rol
-                    FROM usuarios u 
-                    INNER JOIN roles r ON u.rol_id = r.id_rol 
-                    WHERE u.correo = :correo AND u.activo = 1";
+            $sqlUsuario = "SELECT id_usuario, correo, nombre, apellido, contrasenia, 
+                                  rol_id as id_rol, nombre_rol
+                           FROM vw_perfiles_usuarios 
+                           WHERE correo = :correo AND activo = " . self::ESTADO_ACTIVO;
             
             $stmtU = $db->prepare($sqlUsuario);
             $stmtU->execute([':correo' => $this->correo]);
@@ -213,6 +216,8 @@ class Usuario extends Conexion
 
             if (!$datos) {
                 $db->rollBack();
+                // Simulamos la carga de CPU para enmascarar el tiempo de respuesta :O
+                password_verify('password_falsa', '$2y$10$dummyhashdummyhashdummyhashdummyhashdummyhash');
                 return ['estatus' => false, 'mensaje' => 'Credenciales incorrectas'];
             }
 
@@ -247,35 +252,24 @@ class Usuario extends Conexion
 
             // Validar la contraseña
             if (password_verify($this->contra, $datos['contrasenia'])) {
-                
-                // Limpiamos intentos y confirmamos cambios
-                $db->prepare("DELETE FROM intentos_login WHERE usuario_id = :id")
-                   ->execute([':id' => $id_usuario]);
-
+                $db->prepare("DELETE FROM intentos_login WHERE usuario_id = :id")->execute([':id' => $id_usuario]);
                 $db->commit(); 
-
                 unset($datos['contrasenia']);
                 return ['estatus' => true, 'datos' => $datos];
-                
             } else {
-                
-                // Fallo: Registramos el intento fallido
                 $sqlFallo = "INSERT INTO intentos_login (usuario_id, intentos, ultimo_intento) 
                              VALUES (:id, 1, NOW()) 
                              ON DUPLICATE KEY UPDATE intentos = intentos + 1, ultimo_intento = NOW()";
                 $db->prepare($sqlFallo)->execute([':id' => $id_usuario]);
-
                 $db->commit(); 
                 return ['estatus' => false, 'mensaje' => 'Credenciales incorrectas', 'codigo_http' => HttpCodigo::BAD_REQUEST->value];
-
             }
 
-        } catch (PDOException $e) {
-            // Si algo falla en cualquier punto, revertimos todo para evitar datos inconsistentes
-            if ($db->inTransaction()) {
+        } catch (\Exception $e) {
+            if (isset($db) && $db->inTransaction()) {
                 $db->rollBack();
             }
-            error_log("Error en _validar_usuario con transacción: " . $e->getMessage());
+            error_log("Error en _validar_usuario: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error de seguridad en el sistema'];
         }
     }
@@ -285,11 +279,10 @@ class Usuario extends Conexion
     // SE USA EN EL MODULO
     private function _consultar()
     {
-        $sql = "SELECT u.id_usuario, u.apellido, u.nombre, u.correo, r.nombre as nombre_rol, u.activo
-                FROM usuarios u 
-                INNER JOIN roles r ON u.rol_id = r.id_rol 
-                WHERE u.activo = 1 
-                ORDER BY u.id_usuario";
+        $sql = "SELECT id_usuario, apellido, nombre, correo, nombre_rol, activo
+                FROM vw_perfiles_usuarios 
+                WHERE activo = " . self::ESTADO_ACTIVO . " 
+                ORDER BY id_usuario";
         try {
             $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute();
@@ -303,10 +296,8 @@ class Usuario extends Conexion
     // SE USA EN EL MODULO
     private function _consultar_usuario()
     {
-        $sql = "SELECT u.*, r.nombre as nombre_rol 
-                FROM usuarios u 
-                INNER JOIN roles r ON u.rol_id = r.id_rol 
-                WHERE u.id_usuario = :id AND u.activo = 1";
+        $sql = "SELECT * FROM vw_perfiles_usuarios 
+                WHERE id_usuario = :id AND activo = " . self::ESTADO_ACTIVO;
         try {
             $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute([':id' => $this->id_usuario]);
@@ -322,45 +313,35 @@ class Usuario extends Conexion
     // SE USA EN EL MODULO (perfil)
     private function _consultar_perfil_usuario()
     {
-        $accionLogin = Accion::INICIAR_SESION->value;
-
-        $sql = "SELECT 
-                    u.nombre as nombre_usuario, 
-                    u.apellido, 
-                    u.correo, 
-                    r.nombre as nombre_rol,
-                    COALESCE(
-                        (SELECT b.fecha_hora 
-                         FROM bitacora b 
-                         WHERE b.usuario_id = u.id_usuario 
-                         AND b.accion = :accion 
-                         ORDER BY b.fecha_hora DESC 
-                         LIMIT 1 OFFSET 1),
-                        (SELECT b.fecha_hora 
-                         FROM bitacora b 
-                         WHERE b.usuario_id = u.id_usuario 
-                         AND b.accion = :accion2 
-                         ORDER BY b.fecha_hora DESC 
-                         LIMIT 1)
-                    ) as ultima_vez
-                FROM usuarios u 
-                INNER JOIN roles r ON u.rol_id = r.id_rol 
-                WHERE u.id_usuario = :usuario";
-
         try {
-            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
-            $stmt->execute([
-                ':accion' => $accionLogin,
-                ':accion2' => $accionLogin,
-                ':usuario' => $this->id_usuario
-            ]);
-            $datos = $stmt->fetch(PDO::FETCH_ASSOC);
+            $pdo = $this->get_conex(TipoBaseDatos::SEGURIDAD);
+            
+            //  Uso de la nueva Vista y la Constante
+            $sqlUser = "SELECT nombre as nombre_usuario, apellido, correo, nombre_rol 
+                        FROM vw_perfiles_usuarios 
+                        WHERE id_usuario = :usuario AND activo = " . self::ESTADO_ACTIVO;
+            $stmtU = $pdo->prepare($sqlUser);
+            $stmtU->execute([':usuario' => $this->id_usuario]);
+            $perfil = $stmtU->fetch(PDO::FETCH_ASSOC);
 
-            if (!$datos) {
+            if (!$perfil) {
                 return ['estatus' => false, 'mensaje' => 'Perfil no encontrado'];
             }
 
-            return ['estatus' => true, 'datos' => $datos];
+            $sqlBitacora = "SELECT fecha_hora FROM bitacora 
+                            WHERE usuario_id = :usuario AND accion = :accion 
+                            ORDER BY fecha_hora DESC LIMIT 2";
+            $stmtB = $pdo->prepare($sqlBitacora);
+            $stmtB->execute([
+                ':usuario' => $this->id_usuario,
+                ':accion'  => Accion::INICIAR_SESION->value
+            ]);
+            $historial = $stmtB->fetchAll(PDO::FETCH_COLUMN);
+
+            // Si hay 2 registros, el [1] es la sesión anterior. Si hay 1, es la actual.
+            $perfil['ultima_vez'] = $historial[1] ?? ($historial[0] ?? 'Primer inicio de sesión');
+
+            return ['estatus' => true, 'datos' => $perfil];
         } catch (PDOException $e) {
             error_log("Error en _consultar_perfil_usuario: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al obtener el perfil'];
@@ -370,14 +351,14 @@ class Usuario extends Conexion
     // SE USA EN EL SERVICIO AUTENTICACION (repasar)    
     private function _existe_correo()
     {
-        $sql = "SELECT u.id_usuario, u.nombre, u.apellido, u.correo, u.rol_id, r.nombre as nombre_rol 
-                FROM usuarios u 
-                INNER JOIN roles r ON u.rol_id = r.id_rol 
-                WHERE u.correo = :correo AND u.activo = 1";
+        $sql = "SELECT id_usuario, nombre, apellido, correo, rol_id, nombre_rol 
+                FROM vw_perfiles_usuarios 
+                WHERE correo = :correo AND activo = " . self::ESTADO_ACTIVO;
         try {
             $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute([':correo' => $this->correo]);
             $datos = $stmt->fetch(PDO::FETCH_ASSOC);
+            
             if (!$datos) {
                 return ['estatus' => false, 'mensaje' => 'Correo no encontrado'];
             }
@@ -468,12 +449,25 @@ class Usuario extends Conexion
     private function _eliminar_usuario()
     {
         try {
-            $sql = "UPDATE usuarios SET activo = 0 WHERE id_usuario = :id";
-            $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql)->execute([':id' => $this->id_usuario]);
-            return ['estatus' => true, 'mensaje' => 'Usuario eliminado'];
-        } catch (PDOException $e) {
+            $db = $this->get_conex(TipoBaseDatos::SEGURIDAD);
+            $db->exec("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ");
+            $db->beginTransaction();
+
+            $sql = "UPDATE usuarios SET activo = " . self::ESTADO_INACTIVO . " WHERE id_usuario = :id";
+            $db->prepare($sql)->execute([':id' => $this->id_usuario]);
+
+            // CIERRE DE SESIÓN FORZADO (Revocación Activa)
+            $db->prepare("DELETE FROM tokens_seguridad WHERE usuario_id = :id")->execute([':id' => $this->id_usuario]);
+            $db->prepare("DELETE FROM claves_sesion WHERE usuario_id = :id")->execute([':id' => $this->id_usuario]);
+
+            $db->commit();
+            return ['estatus' => true, 'mensaje' => 'Usuario eliminado y sesiones cerradas con éxito.'];
+        } catch (\Exception $e) {
+            if (isset($db) && $db->inTransaction()) {
+                $db->rollBack();
+            }
             error_log("Error en _eliminar_usuario: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al eliminar'];
+            return ['estatus' => false, 'mensaje' => 'Error al eliminar. Intente más tarde.'];
         }
     }
 
@@ -481,7 +475,7 @@ class Usuario extends Conexion
     private function _cambiar_contrasenia()
     {
         $hash = password_hash($this->contra, PASSWORD_DEFAULT);
-        $sql = "UPDATE usuarios SET contrasenia = :con WHERE correo = :cor AND activo = 1";
+        $sql = "UPDATE usuarios SET contrasenia = :con WHERE correo = :cor AND activo = " . self::ESTADO_ACTIVO;
 
         try {
             $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
@@ -609,6 +603,7 @@ class Usuario extends Conexion
 
         try {
             $conexSeguridad = $this->get_conex(TipoBaseDatos::SEGURIDAD);
+            $conexSeguridad->exec("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ");
             $conexSeguridad->beginTransaction();
 
             // Buscar el token activo y válido en tokens_seguridad
@@ -632,10 +627,9 @@ class Usuario extends Conexion
             }
 
             // Obtener los datos del perfil del usuario y su respectivo rol
-            $sqlUsuario = "SELECT u.id_usuario, u.correo, u.nombre, u.apellido, u.rol_id, r.nombre as nombre_rol 
-                           FROM usuarios u
-                           LEFT JOIN roles r ON u.rol_id = r.id_rol
-                           WHERE u.id_usuario = :uid AND u.activo = 1 LIMIT 1";
+            $sqlUsuario = "SELECT id_usuario, correo, nombre, apellido, rol_id, nombre_rol 
+                           FROM vw_perfiles_usuarios
+                           WHERE id_usuario = :uid AND activo = " . self::ESTADO_ACTIVO . " LIMIT 1";
 
             $stmtUser = $conexSeguridad->prepare($sqlUsuario);
             $stmtUser->execute([':uid' => $usuarioId]);
@@ -654,7 +648,7 @@ class Usuario extends Conexion
             ];
 
         } catch (PDOException $e) {
-            if ($conexSeguridad->inTransaction()) {
+            if (isset($conexSeguridad) && $conexSeguridad->inTransaction()) {
                 $conexSeguridad->rollBack();
             }
             error_log("Error en validarTokenYObtenerUsuario: " . $e->getMessage());
@@ -675,10 +669,13 @@ class Usuario extends Conexion
 
         try {
             $db = $this->get_conex(TipoBaseDatos::SEGURIDAD);
+            $db->exec("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ");
             $db->beginTransaction(); 
 
             // Buscamos el usuario y bloqueamos su información perimetral
-            $sqlUsuario = "SELECT id_usuario FROM usuarios WHERE correo = :correo AND activo = 1 FOR UPDATE";
+            $sqlUsuario = "SELECT id_usuario FROM usuarios WHERE correo = :correo AND activo = " . self::ESTADO_ACTIVO . " FOR UPDATE";
+
+            // Supuestamente es buena práctica no utilizar vistas cuando se hace un bloqueo de fila (FOR UPDATE)
             $stmtU = $db->prepare($sqlUsuario);
             $stmtU->execute([':correo' => $this->correo]);
             $usuario = $stmtU->fetch(PDO::FETCH_ASSOC);
@@ -723,10 +720,11 @@ class Usuario extends Conexion
 
             // Quemamos el token de autorización inmediatamente para evitar ataques de repetición
             $sqlEliminar = "DELETE FROM tokens_seguridad WHERE usuario_id = :uid AND tipo = :tipo";
-            $db->prepare($sqlEliminar)->execute([
-                ':uid'  => $idUsuario,
-                ':tipo' => $this->token_tipo
-            ]);
+            $db->prepare($sqlEliminar)->execute([':uid'  => $idUsuario, ':tipo' => $this->token_tipo]);
+
+            //  Revocar cualquier sesión activa antigua del usuario al cambiar la clave
+            $db->prepare("DELETE FROM claves_sesion WHERE usuario_id = :uid")->execute([':uid' => $idUsuario]);
+            $db->prepare("DELETE FROM tokens_seguridad WHERE usuario_id = :uid AND tipo = '" . TipoToken::REFRESH_MOVIL->value . "'")->execute([':uid' => $idUsuario]);
 
             $db->commit();
             return ['estatus' => true, 'mensaje' => 'Contraseña actualizada con éxito.'];

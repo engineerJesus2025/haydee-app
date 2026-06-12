@@ -5,6 +5,7 @@ use haydee\servicios\Criptografia;
 use haydee\modelo\SeguridadIP;
 use haydee\ayuda\Validador;
 use haydee\modelo\Usuario;
+use haydee\servicios\GestorTrafico;
 
 // ==================== DETECCIÓN DE PROTOCOLO Y PAYLOAD ====================
 $metodoHttp = $_SERVER['REQUEST_METHOD'];
@@ -28,24 +29,22 @@ $reglas = Usuario::obtenerReglas($operacion);
 $validador = new Validador();
 
 if (!$validador->validarMetodoHTTP($metodoHttp, $reglas)) {
-    http_response_code(HttpCodigo::METODO_NO_PERMITIDO->value);
-    echo json_encode(['estatus' => false, 'mensaje' => 'Método HTTP no soportado para esta operación.']);
-    exit;
+    GestorTrafico::abortarConCifrado(
+        ['estatus' => false, 'mensaje' => 'Protocolo HTTP denegado.', 'errores' => $validador->obtenerErrores()],
+        HttpCodigo::METODO_NO_PERMITIDO->value
+    );
 }
 
 // ==================== VALIDACIÓN DE DATOS ====================
 if (!empty($reglas)) {
     // Saltamos la validación UNIQUE en BD porque el login solo inspecciona coincidencia
     $validador->validarConjunto($datosPeticion, $reglas, ['skip_unique' => true]);
-
     if ($validador->tieneErrores()) {
-        http_response_code(HttpCodigo::BAD_REQUEST->value);
-        echo json_encode([
-            'estatus' => false,
-            'errores' => $validador->obtenerErrores(),
-            'mensaje' => 'Formato de credenciales inválido.'
-        ]);
-        exit;
+        $codigoHttp = HttpCodigo::BAD_REQUEST->value;
+        GestorTrafico::abortarConCifrado(
+            ['estatus' => false, 'errores' => $validador->obtenerErrores(), 'mensaje' => 'Formato de credenciales inválido.'], 
+            $codigoHttp
+        );
     }
 }
 
@@ -130,7 +129,5 @@ try {
     // Cierre seguro y liberación de hilos en memoria
     if ($auth) $auth->cerrar();
     if ($seguridadIP) $seguridadIP->cerrar();
-    
     echo json_encode($respuesta);
-    exit;
 }

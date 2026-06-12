@@ -3,12 +3,10 @@ let data_table_habitantes;
 let id_apartamento_seleccionado;
 
 const FormatosVisuales = {
-    // Número de apartamento más limpio y con ícono
     nro: (valor) => `<div class="d-flex align-items-center fw-bold">
                         <i class="bi bi-door-closed text-primary me-2 fs-5"></i> ${valor}
                      </div>`,
 
-    // Participación con contexto visual
     porcentaje: (valor) => `<span class="text-muted fw-semibold">
                                 <i class="bi bi-pie-chart-fill me-1 opacity-50"></i> ${valor}%
                             </span>`,
@@ -50,9 +48,7 @@ const permisoEliminar = window.PermisosModulo?.apartamentos?.eliminar || false;
 const permisoModificarHabitantes = window.PermisosModulo?.habitantes?.modificar || false;
 const permisoEliminarHabitantes = window.PermisosModulo?.habitantes?.eliminar || false;
 
-// ============================================
 // APARTAMENTOS
-// ============================================
 document.addEventListener('DOMContentLoaded', () => {
     consultarApartamentos();
 });
@@ -65,20 +61,19 @@ async function consultarApartamentos() {
     const formatoSiNo = (cell) => FormatosVisuales.siNo(cell.getValue());
 
     const formatoBotones = (cell) => {
-        const id = cell.getData().id_apartamento;
         let html = `<div class="d-flex justify-content-center flex-wrap gap-2">
-                        <button data-tooltip="true" type="button" class="btn btn-primary btn-sm vista-previa" title="Ver Habitantes del Apartamento" value="${id}">
+                        <button data-tooltip="true" type="button" class="btn btn-primary btn-sm vista-previa" title="Ver Habitantes del Apartamento">
                             <i class="bi bi-people-fill"></i>
                             <span class="d-none d-lg-inline ms-2">Habitantes</span>
                         </button>`;
          if (permisoModificar) {
-            html += `<button class="btn btn-success btn-sm modificar" value="${id}" data-tooltip="true" title="Modificar los detalles de este registro">
+            html += `<button class="btn btn-success btn-sm modificar" data-tooltip="true" title="Modificar los detalles de este registro">
                         <i class="bi bi-pencil"></i>
                         <span class="d-none d-lg-inline ms-2">Editar</span>
                     </button>`;
         }
         if (permisoEliminar) {
-            html += `<button class="btn btn-danger btn-sm eliminar" value="${id}" data-tooltip="true" title="Quitar este elemento del sistema">
+            html += `<button class="btn btn-danger btn-sm eliminar" data-tooltip="true" title="Quitar este elemento del sistema">
                         <i class="bi bi-trash"></i>
                         <span class="d-none d-lg-inline ms-2">Borrar</span>
                     </button>`;
@@ -101,23 +96,11 @@ async function consultarApartamentos() {
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
-                
-                // Emulamos el currentTarget para que tus funciones sigan leyendo btn.value
-                const mockEvent = { currentTarget: btn }; 
-                
-                if (btn.classList.contains('vista-previa')) mostrarVistaPrevia(mockEvent);
-                if (btn.classList.contains('modificar')) prepararEdicion(mockEvent);
-                if (btn.classList.contains('eliminar')) {
-                    const id = btn.value;
-                    Swal.fire({
-                        title: '¿Estás seguro?',
-                        text: 'Esta acción no se puede deshacer.',
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#e01d22',
-                        confirmButtonText: 'Eliminar'
-                    }).then(result => result.isConfirmed && eliminarApartamento(id));
-                }
+                const id = cell.getData().id_apartamento;
+
+                if (btn.classList.contains('vista-previa')) mostrarVistaPrevia(id);
+                if (btn.classList.contains('modificar')) prepararFormularioApartamento(id);
+                if (btn.classList.contains('eliminar')) confirmarEliminarApartamento(id);
             }
         }
     ];
@@ -158,8 +141,7 @@ async function registrarApartamento() {
     });
 }
 
-async function prepararEdicion(e) {
-    const id = e.currentTarget.value;
+async function prepararFormularioApartamento(id) {
     const datos = new FormData();
     datos.append('id_apartamento', id);
     datos.append('operacion', 'consulta_especifica');
@@ -199,6 +181,15 @@ async function modificarApartamento() {
     });
 }
 
+function confirmarEliminarApartamento(id) {
+    Alertas.confirmarAccion(
+        "¿Eliminar Apartamento?",
+        "Esta acción no se puede deshacer.",
+        "error",
+        () => { eliminarApartamento(id); }
+    );
+}
+
 async function eliminarApartamento(id) {
     const datos = new FormData();
     datos.append('id_apartamento', id);
@@ -219,11 +210,8 @@ document.getElementById('modal_apartamentos').addEventListener('hide.bs.modal', 
     document.querySelectorAll('.is-valid, .is-invalid').forEach(el => el.classList.remove('is-valid', 'is-invalid'));
 });
 
-// ============================================
 // VISTA PREVIA DE APARTAMENTO Y HABITANTES
-// ============================================
-async function mostrarVistaPrevia(e) {
-    const id = e.currentTarget.value;
+async function mostrarVistaPrevia(id) {
     id_apartamento_seleccionado = id;
 
     // Cargar datos del apartamento actual
@@ -260,20 +248,19 @@ function initTablaHabitantes() {
     const formatoNro = (cell) => FormatosVisuales.nro(cell.getValue());
 
     const formatoBotones = (cell) => {
-        const id = cell.getData().id_habitante;
         let html = `<div class="d-flex justify-content-center flex-wrap gap-2">
-            <button type="button" class="btn btn-primary btn-sm vista-previa-habitante" value="${id}" data-tooltip="true" title="Ver Mas">
+            <button type="button" class="btn btn-primary btn-sm vista-previa-habitante" data-tooltip="true" title="Ver Mas">
                 <i class="bi bi-eye"></i>
                 <span class="d-none d-lg-inline ms-2">Ver</span>
             </button>`;
         if (permisoModificarHabitantes) {
-            html += `<button data-tooltip="true" type="button" class="btn btn-success btn-sm modificar-habitante" title="Modificar los detalles de este registro" value="${id}" data-bs-toggle="modal" data-bs-target="#modal_habitantes">
+            html += `<button data-tooltip="true" type="button" class="btn btn-success btn-sm modificar-habitante" title="Modificar los detalles de este registro" data-bs-toggle="modal" data-bs-target="#modal_habitantes">
                         <i class="bi bi-pencil"></i>
                         <span class="d-none d-lg-inline ms-2">Editar</span>
                     </button>`;
         }
         if (permisoEliminarHabitantes) {
-            html += `<button data-tooltip="true" type="button" class="btn btn-danger btn-sm eliminar-habitante" title="Quitar este elemento del sistema" value="${id}">
+            html += `<button data-tooltip="true" type="button" class="btn btn-danger btn-sm eliminar-habitante" title="Quitar este elemento del sistema">
                         <i class="bi bi-trash"></i>
                         <span class="d-none d-lg-inline ms-2">Borrar</span>
                     </button>`;
@@ -295,22 +282,11 @@ function initTablaHabitantes() {
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
+                const id = cell.getData().id_habitante;
                 
-                const mockEvent = { currentTarget: btn }; 
-                
-                if (btn.classList.contains('vista-previa-habitante')) mostrarVistaPreviaHabitante(mockEvent);
-                if (btn.classList.contains('modificar-habitante')) prepararEdicionHabitante(mockEvent);
-                if (btn.classList.contains('eliminar-habitante')) {
-                    const id = btn.value;
-                    Swal.fire({
-                        title: '¿Estás seguro?',
-                        text: 'Esta acción no se puede deshacer.',
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#e01d22',
-                        confirmButtonText: 'Eliminar'
-                    }).then(result => result.isConfirmed && eliminarHabitante(id));
-                }
+                if (btn.classList.contains('vista-previa-habitante')) mostrarVistaPreviaHabitante(id);
+                if (btn.classList.contains('modificar-habitante')) prepararFormularioHabitantes(id);
+                if (btn.classList.contains('eliminar')) confirmarEliminarHabitante(id);
             }
         }
     ];
@@ -344,8 +320,7 @@ async function registrarHabitante() {
     });
 }
 
-async function prepararEdicionHabitante(e) {
-    const id = e.currentTarget.value;
+async function prepararFormularioHabitantes(id) {
     const datos = new FormData();
     datos.append('id_habitante', id);
     datos.append('operacion', 'consulta_especifica_habitante');
@@ -394,6 +369,15 @@ async function modificarHabitante() {
     });
 }
 
+function confirmarEliminarHabitante(id) {
+    Alertas.confirmarAccion(
+        "¿Eliminar Habitante?",
+        "Esta acción no se puede deshacer.",
+        "error",
+        () => { eliminarHabitante(id); }
+    );
+}
+
 async function eliminarHabitante(id) {
     const datos = new FormData();
     datos.append('id_habitante', id);
@@ -406,8 +390,7 @@ async function eliminarHabitante(id) {
     });
 }
 
-async function mostrarVistaPreviaHabitante(e) {
-    const id = e.currentTarget.value;
+async function mostrarVistaPreviaHabitante(id) {
     const datos = new FormData();
     datos.append('id_habitante', id);
     datos.append('operacion', 'consulta_especifica_habitante');
@@ -454,11 +437,11 @@ document.getElementById('modal_habitantes').addEventListener('hide.bs.modal', ()
 window.registrarApartamento = registrarApartamento;
 window.modificarApartamento = modificarApartamento;
 window.eliminarApartamento = eliminarApartamento;
-window.prepararEdicion = prepararEdicion;
+window.prepararFormularioApartamento = prepararFormularioApartamento;
 window.registrarHabitante = registrarHabitante;
 window.modificarHabitante = modificarHabitante;
 window.eliminarHabitante = eliminarHabitante;
-window.prepararEdicionHabitante = prepararEdicionHabitante;
+window.prepararFormularioHabitantes = prepararFormularioHabitantes;
 
 // ============================================================
 // MÓDULO DE AYUDA INTERACTIVA

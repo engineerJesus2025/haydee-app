@@ -32,21 +32,19 @@ async function consultar() {
     };
 
     const formatoBotones = (cell) => {
-        const id = cell.getData().id_proveedor; 
-        
         let html = `<div class="d-flex justify-content-center flex-wrap gap-2">
-            <button type="button" class="btn btn-primary btn-sm vista-previa" value="${id}" data-tooltip="true" title="Ver Mas">
+            <button type="button" class="btn btn-primary btn-sm vista-previa" data-tooltip="true" title="Ver Mas">
                 <i class="bi bi-eye"></i>
                 <span class="d-none d-lg-inline ms-2">Ver</span>
             </button>`;
         if (permisoModificar) {
-            html += `<button class="btn btn-success btn-sm modificar" value="${id}" data-tooltip="true" title="Modificar los detalles de este registro">
+            html += `<button class="btn btn-success btn-sm modificar" data-tooltip="true" title="Modificar los detalles de este registro">
                         <i class="bi bi-pencil"></i>
                         <span class="d-none d-lg-inline ms-2">Editar</span>
                     </button>`;
         }
         if (permisoEliminar) {
-            html += `<button class="btn btn-danger btn-sm eliminar" value="${id}" data-tooltip="true" title="Quitar este elemento del sistema">
+            html += `<button class="btn btn-danger btn-sm eliminar" data-tooltip="true" title="Quitar este elemento del sistema">
                         <i class="bi bi-trash"></i>
                         <span class="d-none d-lg-inline ms-2">Borrar</span>
                     </button>`;
@@ -70,20 +68,11 @@ async function consultar() {
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
+                const id = cell.getData().id_proveedor;
                 
-                if (btn.classList.contains('vista-previa')) {
-                    mostrarVistaPrevia(cell.getData());
-                }
-                
-                if (btn.classList.contains('modificar')) {
-                    prepararFormulario({ currentTarget: btn }); 
-                }
-                
-                if (btn.classList.contains('eliminar')) {
-                    const id = btn.value;
-                    Swal.fire({ title: '¿Estás seguro?', text: 'Esta acción no se puede deshacer.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e01d22', confirmButtonText: 'Eliminar' })
-                    .then(result => result.isConfirmed && eliminar(id));
-                }
+                if (btn.classList.contains('vista-previa')) mostrarVistaPrevia(cell.getData());
+                if (btn.classList.contains('modificar')) prepararFormulario(id);
+                if (btn.classList.contains('eliminar')) confirmarEliminar(id);
             }
         }
     ];
@@ -95,20 +84,19 @@ async function consultar() {
 
 // Función que lee la memoria de Tabulator (Sin AJAX extra)
 function mostrarVistaPrevia(data) {
-    // 1. Nombre del Proveedor
+    // Nombre del Proveedor
     document.getElementById("vp_nombre_proveedor").textContent = data.nombre_proveedor || 'N/A';
 
-    // 2. RIF
+    //  RIF
     document.getElementById("vp_rif").textContent = `RIF: ${data.rif || 'No registrado'}`;
 
-    // 3. Servicio que presta
+    // Servicio que presta
     document.getElementById("vp_servicio").textContent = data.servicio || 'No especificado';
 
-    // 4. Dirección
+    // Dirección
     document.getElementById("vp_direccion").textContent = data.direccion || 'Dirección no especificada';
 
     // Mostramos el modal
-    // Asumimos que modalDetalles ya está instanciado en tu archivo principal
     modalDetalles.show();
 }
 // ============================================
@@ -128,9 +116,7 @@ async function registrar() {
     });
 }
 
-async function prepararFormulario(e) {
-    const id = e.currentTarget.value;
-
+async function prepararFormulario(id) {
     const datos = new FormData();
     datos.append('id_proveedor', id);
     datos.append('operacion', 'consultar_proveedor');
@@ -150,16 +136,16 @@ async function prepararFormulario(e) {
 
         document.getElementById('titulo_modal').textContent = 'Modificar Proveedor';
         document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-bag-dash");
-        // form.querySelector('#boton_formulario').textContent = 'Guardar Cambios';
+        // document.querySelector('#boton_formulario').textContent = 'Guardar Cambios';
         document.getElementById('texto_boton_formulario').textContent = 'Guardar Cambios';
-        form.querySelector('#boton_formulario').dataset.id = id;
+        document.querySelector('#boton_formulario').dataset.id = id;
 
         modal.show();
     });
 }
 
 async function modificar() {
-    const id = form.querySelector('#boton_formulario').dataset.id;
+    const id = document.querySelector('#boton_formulario').dataset.id;
     const datos = new FormData(form);
     const tipoDoc = datos.get('tipo_documento');
     const rifNum = datos.get('rif');
@@ -174,6 +160,15 @@ async function modificar() {
     });
 }
 
+function confirmarEliminar(id) {
+    Alertas.confirmarAccion(
+        "¿Eliminar Proveedor?",
+        "Esta acción no se puede deshacer.",
+        "error",
+        () => { eliminar(id); }
+    );
+}
+
 async function eliminar(id) {
     const datos = new FormData();
     datos.append('id_proveedor', id);
@@ -185,9 +180,7 @@ async function eliminar(id) {
     });
 }
 
-// ============================================
 // EVENTOS DEL MODAL
-// ============================================
 document.getElementById('modal_proveedores').addEventListener('hide.bs.modal', () => {
     form.reset();
     document.querySelectorAll('.is-valid, .is-invalid').forEach(el => el.classList.remove('is-valid', 'is-invalid'));
@@ -195,7 +188,7 @@ document.getElementById('modal_proveedores').addEventListener('hide.bs.modal', (
     document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-bag-plus");
     document.getElementById('texto_boton_formulario').textContent = 'Guardar Proveedor';
     form.querySelector('#rif').setAttribute('disabled','');
-    delete form.querySelector('#boton_formulario').dataset.id;
+    delete document.querySelector('#boton_formulario').dataset.id;
 });
 
 // ============================================================

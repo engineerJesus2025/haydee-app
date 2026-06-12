@@ -14,6 +14,10 @@ class Mantenimiento extends Conexion
     private const MYSQL_LINUX = 'mysql';
     private const DIR_BACKUPS = 'Backups';
 
+    // CREDENCIALES ADMINISTRATIVAS POR DEFECTO (LOCAL)
+    private const DB_ADMIN_USER_DEFAULT = 'root';
+    private const DB_ADMIN_PASS_DEFAULT = '';
+
     // VALIDACIONES
     public static function obtenerReglas($operacion) {
         $tiposCuentaValidos = implode('|', array_column(TipoBaseDatos::cases(), 'value'));
@@ -222,9 +226,6 @@ class Mantenimiento extends Conexion
 
     /**
      * Importa un contenido SQL directamente a la base de datos especificada.
-     * @param string $contenido_sql El texto del archivo .sql
-     * @param string $db 'negocio' o 'seguridad'
-     * @return array Respuesta con estatus y mensaje
      */
     public function importarSQL($contenido_sql, $db)
     {
@@ -326,13 +327,14 @@ class Mantenimiento extends Conexion
 
     private function obtenerCredencialesAdmin()
     {
-        if (DIRECTORY_SEPARATOR === '\\') { // Si es Windows (Local)
+        if (DIRECTORY_SEPARATOR === '\\') { 
             return [
-                'user' => getenv('DB_BACKUP_USER') ?: 'root',
-                'pass' => getenv('DB_BACKUP_PASS') ?: ''
+                'user' => self::DB_ADMIN_USER_DEFAULT, 
+                'pass' => self::DB_ADMIN_PASS_DEFAULT
             ];
+
         }
-        // En producción (AlwaysData), devolvemos las credenciales estándar
+        // En producción (AlwaysData), devolvemos las credenciales de administración
         return [
             'user' => DB_USER,
             'pass' => DB_PASS

@@ -2,6 +2,7 @@
 use haydee\enums\HttpCodigo;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
+use haydee\enums\TipoEventoNotificacion;
 use haydee\servicios\Sesiones;
 use haydee\modelo\CarteleraVirtual;
 use haydee\modelo\Usuario;
@@ -21,7 +22,7 @@ if (isset($_POST["operacion"])) {
 
     Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_CARTELERA_VIRTUAL, $operacion);
 
-    // 1. Validamos segun la Operación
+    // Validamos segun la Operación
     $reglas = CarteleraVirtual::obtenerReglas($operacion);
 
     if (!isset($_POST['usuario_id'])) {
@@ -79,16 +80,19 @@ if (isset($_POST["operacion"])) {
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria(Accion::REGISTRAR);
 
-                    $tituloNotif = "Nuevo aviso: " . $_POST['titulo'];
-                    // acortar la descripción si es muy larga, o pasarla completa
-                    $descNotif = $_POST['descripcion']; 
-                    
+                    $prioridad = (int)($_POST['prioridad'] ?? 3);
+
+                    // 1 equivale a 'Aviso' (Alta prioridad), lo que dispara la alerta en el canal urgente
+                    $eventoPush = ($prioridad === 1) 
+                        ? TipoEventoNotificacion::EMERGENCIA->value 
+                        : TipoEventoNotificacion::NUEVA_PUBLICACION->value;
+
                     GestorNotificaciones::notificarTodos(
-                        $tituloNotif, 
-                        $descNotif, 
-                        'cartelera_virtual', 
+                        "Nuevo aviso: " . $_POST['titulo'], 
+                        $_POST['descripcion'], 
+                        "cartelera_virtual", 
                         $respuesta['lastId'], 
-                        'CREACION_AVISO'
+                        $eventoPush
                     );
                 }
                 break;

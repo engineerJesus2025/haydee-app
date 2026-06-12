@@ -40,13 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById("modal_mensualidad")?.addEventListener("hide.bs.modal", resetModalMensualidad);
 });
 
-// ============================================================
 // CONSULTAS PRINCIPALES
-// ============================================================
-
-/**
- * Consulta la lista de mensualidades agrupadas por mes
- */
 async function consultarMensualidades() {
     
     // Formato Período 
@@ -140,32 +134,12 @@ async function consultarMensualidades() {
                 const mes = String(row.mes).padStart(2, '0');
                 const fecha = `${row.anio}-${mes}-01`;
 
-                if (btn.classList.contains('vista-previa')) {
-                    mostrarVistaPrevia(row, fecha);
-                } 
+                if (btn.classList.contains('vista-previa')) mostrarVistaPrevia(row, fecha);
+                else if (btn.classList.contains('eliminar')) confirmarEliminar(fecha);
                 else if (btn.classList.contains('modificar')) {
                     const mockFila = { dataset: { intereses: row.porcentaje_interes, limite: row.limite_mensualidad } };
-                    prepararModificarcion(mockFila, fecha, row.ids, row.ids_apartamentos);
+                    prepararFormulario(mockFila, fecha, row.ids, row.ids_apartamentos);
                 } 
-                else if (btn.classList.contains('eliminar')) {
-                    confirmarEliminar(fecha);
-                } 
-                // else if (btn.classList.contains('cuadro-pagos')) {
-                //     let form = document.createElement('form');
-                //     form.action = "?pagina=reportes&accion=cuadro_pagos";
-                //     form.method = "POST";
-                //     form.target = "_blank";
-                    
-                //     let input = document.createElement('input');
-                //     input.type = "hidden";
-                //     input.name = "select_reporte";
-                //     input.value = `${mes}-${row.anio}`;
-
-                //     form.appendChild(input);
-                //     document.body.appendChild(form);
-                //     form.submit();
-                //     document.body.removeChild(form);
-                // }
             }
         }
     ];
@@ -434,7 +408,7 @@ function mostrarVistaPrevia(data, fecha) {
     }, 200);
 }
 
-async function prepararModificarcion(fila, fecha, ids, idsApartamentos) {
+async function prepararFormulario(fila, fecha, ids, idsApartamentos) {
     // ===== Manejo del select de fecha =====
     const select = selectMesAsignar;
     // Buscar si ya existe una opción con esa fecha
@@ -623,24 +597,17 @@ async function modificarMensualidad() {
     });
 }
 
-// ============================================================
 // ELIMINACIÓN
-// ============================================================
 function confirmarEliminar(fecha) {
-    Swal.fire({
-        title: "¿Estás seguro?",
-        text: "Se eliminarán todas las mensualidades de este período.",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#e01d22",
-        confirmButtonText: "Sí, eliminar",
-        cancelButtonText: "Cancelar"
-    }).then(result => {
-        if (result.isConfirmed) eliminarMensualidad(fecha);
-    });
+    Alertas.confirmarAccion(
+        "¿Eliminar Mensualidad?",
+        "Esta acción no se puede deshacer.",
+        "error",
+        () => { eliminar(fecha); }
+    );
 }
 
-async function eliminarMensualidad(fecha) {
+async function eliminar(fecha) {
     const formData = new FormData();
     formData.append("operacion", "eliminar_mensualidad");
 
@@ -743,34 +710,7 @@ function marcarTodosCheckboxes(boton) {
     boton.title = marcar ? 'Desmarcar todos los checkboxes' : 'Marcar todos los checkboxes';
 }
 
-// Función para resaltar fila desde notificación
-function seleccionarMensualidadPorNotificacion() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const idMensualidad = urlParams.get('buscar');
-    if (!idMensualidad) return;
-
-    const interval = setInterval(() => {
-        if (tablaMensualidades && tablaMensualidades.rows().count() > 0) {
-            clearInterval(interval);
-            tablaMensualidades.rows().every(function() {
-                const row = this.node();
-                const ids = row.querySelector('.modificar')?.dataset.ids;
-                if (ids && ids.includes(idMensualidad)) {
-                    row.classList.add('table-primary', 'highlight-row');
-                    window.scrollTo({ 
-                        top: row.getBoundingClientRect().top + window.scrollY - 100, 
-                        behavior: 'smooth' 
-                    });
-                    return false;
-                }
-            });
-        }
-    }, 100);
-}
-
-// ============================================================
 // MÓDULO DE AYUDA INTERACTIVA
-// ============================================================
 document.addEventListener('DOMContentLoaded', () => {
     const stepsPrincipal = [
             { element: '.page-header', popover: { title: 'Módulo de Mensualidades', description: 'Bienvenido. Aquí podrás generar los cobros mensuales del condominio basados en los presupuestos vigentes.', side: "bottom", align: 'center' } },

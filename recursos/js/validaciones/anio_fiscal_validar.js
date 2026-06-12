@@ -50,18 +50,14 @@ document.addEventListener("DOMContentLoaded", function() {
             const accion = this.dataset.id ? 'modificar' : 'Registrar';
             
             if (await validarEnvio(accion)) {
-                Swal.fire({
-                    title: '¿Estás seguro?',
-                    text: `¿Desea ${accion} este año fiscal?`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#1b8a40',
-                    confirmButtonText: 'Sí, ' + accion
-                }).then(result => {
-                    if (result.isConfirmed) {
+                Alertas.confirmarAccion(
+                    "Confirmar Operación",
+                    `¿Está seguro que desea ${accion.toLowerCase()} este año fiscal?`,
+                    "question", 
+                    () => {
                         accion === 'modificar' ? modificar() : registrar();
                     }
-                });
+                );
             }
         });
     }

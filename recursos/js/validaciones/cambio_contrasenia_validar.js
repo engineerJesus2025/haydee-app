@@ -118,17 +118,14 @@ document.addEventListener("DOMContentLoaded", function() {
         btnCambiar.addEventListener('click', async function(e) {
             e.preventDefault();
             if (await validarEnvio()) {
-                Swal.fire({
-                    title: '¿Estás seguro?',
-                    text: '¿Desea cambiar su contraseña?',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#0d6efd',
-                    confirmButtonText: 'Sí, actualizar',
-                    cancelButtonText: 'Cancelar'
-                }).then(result => {
-                    if (result.isConfirmed) formCambiar.submit();
-                });
+                Alertas.confirmarAccion(
+                    "Confirmar Operación",
+                    `¿Está seguro que desea cambiar su contraseña?`,
+                    "question", 
+                    () => {
+                        formCambiar.submit();
+                    }
+                );
             }
         });
     }

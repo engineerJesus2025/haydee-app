@@ -16,20 +16,14 @@ document.addEventListener("DOMContentLoaded", function() {
         const accion = this.hasAttribute("modificar") ? "modificar" : "Registrar";		
         
         if (await validarEnvio()) {
-            Swal.fire({
-                title: "¿Estás seguro?",
-                text: `¿Está seguro que desea ${accion} este Tipo de Gasto?`,
-                showCancelButton: true,
-                confirmButtonText: "Sí, " + accion,
-                confirmButtonColor: "#1b8a40",
-                cancelButtonText: "Cancelar",
-                icon: "warning"
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Se asume que la función envio() está en tu script ajax
-                    envio(accion);						
+            Alertas.confirmarAccion(
+                "Confirmar Operación",
+                `¿Está seguro que desea ${accion.toLowerCase()} este tipo de gasto?`,
+                "question", 
+                () => {
+                    envio(accion);
                 }
-            });
+            );
         }	
     });
 });

@@ -62,18 +62,15 @@ document.addEventListener("DOMContentLoaded", function() {
         e.preventDefault();
         const accion = this.dataset.id ? 'modificar' : 'Registrar';
         if (await validarEnvio(accion)) {
-            Swal.fire({
-                title: '¿Estás seguro?',
-                text: `¿Desea ${accion} esta solicitud?`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#1b8a40',
-                confirmButtonText: 'Sí, ' + accion
-            }).then(result => {
-                if (result.isConfirmed) {
+            Alertas.confirmarAccion(
+                "Confirmar Operación",
+                `¿Está seguro que desea ${accion.toLowerCase()} esta solicitud?`,
+                "question", 
+                () => {
                     accion === 'modificar' ? modificar() : registrar();
+                    if (result.isConfirmed) envio(accion);
                 }
-            });
+            );
         }
     });
 });

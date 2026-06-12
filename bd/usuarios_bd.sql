@@ -1,15 +1,39 @@
--- Script para crear el usuario app_condominio 
-SET @host = 'localhost';
+-- ====================================================================
+-- USUARIO PRINCIPAL DE LA APLICACIÓN (Operaciones Diarias)
+-- ====================================================================
+DROP USER IF EXISTS 'app_condominio'@'localhost';
 
-CREATE USER IF NOT EXISTS 'app_condominio'@'localhost' IDENTIFIED BY PASSWORD '*B6ED59A321FC70AFB3D2FAB21490C032A08DFEA7';
+CREATE USER 'app_condominio'@'localhost' 
+IDENTIFIED BY 'haydee.2025'; 
 
--- Permisos sobre la base de datos de negocio (Solo manipulación de datos)
 GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE, SHOW VIEW 
 ON `haydee_db`.* TO 'app_condominio'@'localhost';
 
--- Permisos sobre la base de datos de seguridad
 GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE, SHOW VIEW 
 ON `seguridad_haydee_db`.* TO 'app_condominio'@'localhost';
 
--- Aplicar cambios
+
+-- ====================================================================
+-- USUARIO EXCLUSIVO DE RESPALDO (Mínimo Privilegio y BCP)
+-- ====================================================================
+DROP USER IF EXISTS 'app_respaldos'@'localhost';
+
+CREATE USER 'app_respaldos'@'localhost' 
+IDENTIFIED BY 'haydee_backup.2026';
+
+-- Privilegios a nivel de base de datos para lectura y estructura
+GRANT SELECT, LOCK TABLES, SHOW VIEW, TRIGGER 
+ON `haydee_db`.* TO 'app_respaldos'@'localhost';
+
+GRANT SELECT, LOCK TABLES, SHOW VIEW, TRIGGER 
+ON `seguridad_haydee_db`.* TO 'app_respaldos'@'localhost';
+
+-- Privilegio global necesario para rotar logs binarios (FLUSH LOGS / RESET MASTER)
+GRANT RELOAD ON *.* TO 'app_respaldos'@'localhost';
+
+
+-- ====================================================================
+-- APLICAR CAMBIOS
+-- ====================================================================
+-- Aplicar de forma atómica y limpiar memoria RAM de privilegios
 FLUSH PRIVILEGES;

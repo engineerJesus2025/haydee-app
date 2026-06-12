@@ -114,7 +114,16 @@
                             </button>
                         </div><br>
                     <?php endif; ?>
-                    <div id="tabla_habitantes" class="tabla-vista-previa"></div>
+
+                    <!-- <div id="tabla_habitantes" class="tabla-vista-previa"></div> -->
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header border-bottom py-3">
+                            <h6 class="mb-0 fw-bold"><i class="bi bi-list-check me-2"></i>Datos de los habitantes</h6>
+                        </div>
+                        <div class="card-body p-0">
+                            <div id="tabla_habitantes" class="tabla-sistema-haydee m-0 border-0 rounded-bottom"></div>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-soft-secondary me-3" data-bs-dismiss="modal">

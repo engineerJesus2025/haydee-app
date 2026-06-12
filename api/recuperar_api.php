@@ -4,6 +4,7 @@ use haydee\ayuda\Validador;
 use haydee\servicios\Recuperacion;
 use haydee\modelo\Usuario;
 use haydee\modelo\SeguridadIP;
+use haydee\servicios\GestorTrafico;
 
 // ==================== DETECCIÓN DE PROTOCOLO Y PAYLOAD ====================
 $metodoHttp = $_SERVER['REQUEST_METHOD'];
@@ -29,9 +30,10 @@ if (empty($datosPeticion) && in_array($metodoHttp, ['POST', 'PUT', 'DELETE'])) {
 $operacion = $datosPeticion['operacion'] ?? '';
 
 if (empty($operacion)) {
-    http_response_code(HttpCodigo::BAD_REQUEST->value);
-    echo json_encode(['estatus' => false, 'mensaje' => 'No se especificó la operación.']);
-    exit;
+    GestorTrafico::abortarConCifrado(
+        ['estatus' => false, 'mensaje' => 'No se especificó la operación.'], 
+        HttpCodigo::BAD_REQUEST->value
+    );
 }
 
 // ==================== REGLAS Y FIREWALL DE PROTOCOLO HTTP ====================
@@ -39,23 +41,21 @@ $reglas = Usuario::obtenerReglas($operacion);
 $validador = new Validador();
 
 if (!$validador->validarMetodoHTTP($metodoHttp, $reglas)) {
-    http_response_code(HttpCodigo::METODO_NO_PERMITIDO->value);
-    echo json_encode(['estatus' => false, 'mensaje' => 'Método HTTP no soportado para esta operación.']);
-    exit;
+    GestorTrafico::abortarConCifrado(
+        ['estatus' => false, 'mensaje' => 'Protocolo HTTP denegado.', 'errores' => $validador->obtenerErrores()],
+        HttpCodigo::METODO_NO_PERMITIDO->value
+    );
 }
 
 // ==================== VALIDACIÓN DE DATOS ====================
 if (!empty($reglas)) {
     $validador->validarConjunto($datosPeticion, $reglas, ['skip_unique' => true, 'skip_exists' => true]);
-
     if ($validador->tieneErrores()) {
-        http_response_code(HttpCodigo::BAD_REQUEST->value);
-        echo json_encode([
-            'estatus' => false,
-            'errores' => $validador->obtenerErrores(),
-            'mensaje' => 'Datos de solicitud inválidos.'
-        ]);
-        exit;
+        $codigoHttp = HttpCodigo::BAD_REQUEST->value;
+        GestorTrafico::abortarConCifrado(
+            ['estatus' => false, 'errores' => $validador->obtenerErrores(), 'mensaje' => 'Datos inválidos.'], 
+            $codigoHttp
+        );
     }
 }
 
@@ -177,7 +177,6 @@ try {
     http_response_code(HttpCodigo::ERROR_INTERNO->value);
     $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor API'];
 } finally {
-    // Cierre y liberación estricta de conexiones en memoria
     if ($serviceRecuperar && method_exists($serviceRecuperar, 'cerrar')) {
         $serviceRecuperar->cerrar();
     }
@@ -186,5 +185,4 @@ try {
     }
     
     echo json_encode($respuesta);
-    exit;
 }

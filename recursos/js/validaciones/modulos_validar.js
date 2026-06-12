@@ -25,22 +25,17 @@ document.getElementById("boton_formulario")?.addEventListener('click', async (e)
     const accion = esEdicion ? 'modificar' : 'Registrar';
 
     if (await validarFormulario()) {
-        Swal.fire({
-            title: '¿Estás seguro?',
-            text: `¿Desea ${accion.toLowerCase()} este módulo?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#1b8a40',
-            confirmButtonText: `Sí, ${accion}`,
-            cancelButtonText: 'Cancelar'
-        }).then(result => {
-            if (result.isConfirmed) {
+        Alertas.confirmarAccion(
+            "Confirmar Operación",
+            `¿Está seguro que desea ${accion.toLowerCase()} este módulo?`,
+            "question", 
+            () => {
                 if (esEdicion) {
                     modificar(document.getElementById("boton_formulario").getAttribute('id_modificar'));
                 } else {
                     registrar();
                 }
             }
-        });
+        );
     }
 });

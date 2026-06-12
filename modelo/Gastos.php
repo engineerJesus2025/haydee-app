@@ -291,74 +291,53 @@ class Gastos extends Conexion
     // SE USA EN EL MODULO
     private function _registrar_gasto()
     {
-        // Validar que haya al menos un detalle
         if (empty($this->detalles)) {
             return ['estatus' => false, 'mensaje' => 'Debe proporcionar al menos un detalle de gasto.'];
         }
 
-        // Validar que las referencias sean únicas
         $valRef = $this->_validar_referencias_unicas();
         if (!$valRef['estatus']) return $valRef;
 
-        $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
         try {
+            $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
+            $pdo->exec("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ");
             $pdo->beginTransaction();
-
-            $tasa_transaccion = $this->tasa_dolar ?? 1;
 
             // Insertar cabecera
             $sqlCab = "INSERT INTO gastos (clasificacion, descripcion_gasto, solicitud_id, tipo_gasto_id, proveedor_id, tasa_dolar, activo) 
                        VALUES (:clas, :desc, :sol_id, :tipo_id, :prov_id, :tasa, 1)";
             $stmtCab = $pdo->prepare($sqlCab);
             $stmtCab->execute([
-                ':clas' => $this->clasificacion,
-                ':desc' => $this->descripcion_gasto,
-                ':sol_id' => $this->solicitud_id ?: null,
+                ':clas'    => $this->clasificacion,
+                ':desc'    => $this->descripcion_gasto,
+                ':sol_id'  => $this->solicitud_id ?: null,
                 ':tipo_id' => $this->tipo_gasto_id,
                 ':prov_id' => $this->proveedor_id ?: null,
-                ':tasa' => $tasa_transaccion 
+                ':tasa'    => $this->tasa_dolar ?? 1
             ]);
             $id_gasto = $pdo->lastInsertId();
 
-            // Insertar detalles 
-            foreach ($this->detalles as $det) {
-                $sqlDet = "INSERT INTO detalles_gastos (fecha, monto, metodo_pago, gasto_id) 
-                   VALUES (:fecha, :monto, :metodo, :gasto_id)";
-                $stmtDet = $pdo->prepare($sqlDet);
-                $stmtDet->execute([
-                    ':fecha' => $det['fecha_detalle'],
-                    ':monto' => $det['monto'],
-                    ':metodo' => $det['metodo_pago'],
-                    ':gasto_id' => $id_gasto
-                ]);
-                $id_detalle = $pdo->lastInsertId();
+            $this->_guardar_detalles($pdo, $id_gasto);
 
-                // Si el método de pago requiere registro bancario
-                if (in_array($det['metodo_pago'], ['Transferencia', 'Pago Movil'])) {
-                    $imagen = $det['imagen'] ?? 'default.png';
-                    $sqlBan = "INSERT INTO egresos_bancarios (referencia, imagen, banco_id, detalle_gasto_id) 
-                               VALUES (:ref, :img, :banco, :det_id)";
-                    $stmtBan = $pdo->prepare($sqlBan);
-                    $stmtBan->execute([
-                        ':ref' => $det['referencia'],
-                        ':img' => $imagen,
-                        ':banco' => $det['banco_id'],
-                        ':det_id' => $id_detalle
-                    ]);
-                }
+            // Actualizar la solicitud si proviene de una
+            if (!empty($this->solicitud_id)) {
+                $pdo->prepare("UPDATE solicitudes_gasto SET estado = 'Procesado' WHERE id_solicitud = ?")
+                    ->execute([$this->solicitud_id]);
             }
 
             $pdo->commit();
             return ['estatus' => true, 'mensaje' => 'Gasto registrado con éxito', 'id' => $id_gasto];
 
-        } catch (PDOException $e) {
-            $pdo->rollBack();
+        } catch (\Exception $e) {
+            if (isset($pdo) && $pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
             error_log("Error en _registrar_gasto: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error del Servidor'];
+            return ['estatus' => false, 'mensaje' => 'Error del Servidor al registrar el gasto.'];
         }
     }
 
-    // SE USA EN EL MODULO
+    // SE USA EN EL MODULO  
     private function _modificar_gasto()
     {
         // Validar que haya al menos un detalle
@@ -370,8 +349,9 @@ class Gastos extends Conexion
         $valRef = $this->_validar_referencias_unicas();
         if (!$valRef['estatus']) return $valRef;
 
-        $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
         try {
+            $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
+            $pdo->exec("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ");
             $pdo->beginTransaction();
 
             $tasa_transaccion = $this->tasa_dolar ?? 1;
@@ -406,34 +386,10 @@ class Gastos extends Conexion
             $pdo->prepare("DELETE FROM egresos_bancarios WHERE detalle_gasto_id IN (SELECT id_detalle_gasto FROM detalles_gastos WHERE gasto_id = ?)")->execute([$this->id_gasto]);
             $pdo->prepare("DELETE FROM detalles_gastos WHERE gasto_id = ?")->execute([$this->id_gasto]);
 
-            // Insertar nuevos detalles
-            foreach ($this->detalles as $det) {
-                $sqlDet = "INSERT INTO detalles_gastos (fecha, monto, metodo_pago, gasto_id) 
-                           VALUES (:fecha, :monto, :metodo, :gasto_id)";
-                $stmtDet = $pdo->prepare($sqlDet);
-                $stmtDet->execute([
-                    ':fecha' => $det['fecha_detalle'],
-                    ':monto' => $det['monto'],
-                    ':metodo' => $det['metodo_pago'],
-                    ':gasto_id' => $this->id_gasto
-                ]);
-                $id_detalle = $pdo->lastInsertId();
+            //Insertar nuevos detalles
+            $this->_guardar_detalles($pdo, $this->id_gasto);
 
-                if (in_array($det['metodo_pago'], ['Transferencia', 'Pago Movil'])) {
-                    $imagen = $det['imagen'];
-                    $sqlBan = "INSERT INTO egresos_bancarios (referencia, imagen, banco_id, detalle_gasto_id) 
-                               VALUES (:ref, :img, :banco, :det_id)";
-                    $stmtBan = $pdo->prepare($sqlBan);
-                    $stmtBan->execute([
-                        ':ref' => $det['referencia'],
-                        ':img' => $imagen,
-                        ':banco' => $det['banco_id'],
-                        ':det_id' => $id_detalle
-                    ]);
-                }
-            }
-
-            // Obtener las imágenes de los nuevos detalles 
+            // Obtener las imágenes de los nuevos detalles (recién insertados)
             $sqlNewImages = "SELECT eb.imagen 
                              FROM egresos_bancarios eb 
                              INNER JOIN detalles_gastos dg ON eb.detalle_gasto_id = dg.id_detalle_gasto 
@@ -450,15 +406,56 @@ class Gastos extends Conexion
                 }
             }
 
-            $pdo->prepare("UPDATE solicitudes_gasto SET estado = 'Procesado' WHERE id_solicitud = ?")->execute([$this->solicitud_id]);
+            if (!empty($this->solicitud_id)) {
+                $pdo->prepare("UPDATE solicitudes_gasto SET estado = 'Procesado' WHERE id_solicitud = ?")->execute([$this->solicitud_id]);
+            }
 
             $pdo->commit();
             return ['estatus' => true, 'mensaje' => 'Gasto actualizado con éxito'];
 
-        } catch (PDOException $e) {
-            $pdo->rollBack();
+        } catch (\Exception $e) { // Captura genérica de excepciones
+            if (isset($pdo) && $pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
             error_log("Error en _modificar_gasto: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Ocurrió un error en el servidor.'];
+        }
+    }
+
+    /**
+     * Procesa e inserta los detalles de un gasto y sus comprobantes bancarios.
+     */
+    private function _guardar_detalles($pdo, $id_gasto)
+    {
+        $sqlDet = "INSERT INTO detalles_gastos (fecha, monto, metodo_pago, gasto_id) 
+                   VALUES (:fecha, :monto, :metodo, :gasto_id)";
+        $stmtDet = $pdo->prepare($sqlDet);
+
+        $sqlBan = "INSERT INTO egresos_bancarios (referencia, imagen, banco_id, detalle_gasto_id) 
+                   VALUES (:ref, :img, :banco, :det_id)";
+        $stmtBan = $pdo->prepare($sqlBan);
+
+        // Uso del Enum para evitar magic strings
+        $metodosBancarios = [MetodoPago::TRANSFERENCIA->value, MetodoPago::PAGO_MOVIL->value];
+
+        foreach ($this->detalles as $det) {
+            $stmtDet->execute([
+                ':fecha' => $det['fecha_detalle'],
+                ':monto' => $det['monto'],
+                ':metodo' => $det['metodo_pago'],
+                ':gasto_id' => $id_gasto
+            ]);
+            
+            $id_detalle = $pdo->lastInsertId();
+
+            if (in_array($det['metodo_pago'], $metodosBancarios)) {
+                $stmtBan->execute([
+                    ':ref'    => $det['referencia'] ?? '',
+                    ':img'    => $det['imagen'] ?? 'default.png',
+                    ':banco'  => $det['banco_id'] ?? null,
+                    ':det_id' => $id_detalle
+                ]);
+            }
         }
     }
 
@@ -488,26 +485,21 @@ class Gastos extends Conexion
     private function _consultar()
     {
         $sql = "SELECT 
-                    g.id_gasto, 
-                    g.descripcion_gasto, 
-                    g.clasificacion, 
-                    SUM(dg.monto) as monto_total,
-                    MAX(dg.fecha) as ultima_fecha,
-                    p.nombre_proveedor as proveedor, 
-                    tg.nombre_tipo_gasto as tipo,
-                    -- Método de pago del último detalle (para mostrar moneda)
-                    (SELECT metodo_pago 
-                     FROM detalles_gastos 
-                     WHERE gasto_id = g.id_gasto 
-                     ORDER BY fecha DESC 
-                     LIMIT 1) as metodo_pago_predominante
-                FROM gastos g
-                LEFT JOIN detalles_gastos dg ON g.id_gasto = dg.gasto_id
-                LEFT JOIN proveedores p ON g.proveedor_id = p.id_proveedor
-                LEFT JOIN tipo_gasto tg ON g.tipo_gasto_id = tg.id_tipo_gasto
-                WHERE g.activo = 1
-                GROUP BY g.id_gasto
-                ORDER BY ultima_fecha DESC";
+                g.id_gasto, 
+                g.descripcion_gasto, 
+                g.clasificacion, 
+                SUM(dg.monto) as monto_total,
+                MAX(dg.fecha) as ultima_fecha,
+                p.nombre_proveedor as proveedor, 
+                tg.nombre_tipo_gasto as tipo,
+                SUBSTRING_INDEX(GROUP_CONCAT(dg.metodo_pago ORDER BY dg.fecha DESC SEPARATOR ','), ',', 1) as metodo_pago_predominante
+            FROM gastos g
+            LEFT JOIN detalles_gastos dg ON g.id_gasto = dg.gasto_id
+            LEFT JOIN proveedores p ON g.proveedor_id = p.id_proveedor
+            LEFT JOIN tipo_gasto tg ON g.tipo_gasto_id = tg.id_tipo_gasto
+            WHERE g.activo = 1
+            GROUP BY g.id_gasto
+            ORDER BY ultima_fecha DESC";
 
         try {
             $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
@@ -693,7 +685,7 @@ class Gastos extends Conexion
                     MAX(dg.fecha) as ultima_fecha,
                     p.nombre_proveedor as proveedor, 
                     tg.nombre_tipo_gasto as tipo,
-                    (SELECT metodo_pago FROM detalles_gastos WHERE gasto_id = g.id_gasto ORDER BY fecha DESC LIMIT 1) as metodo_pago_predominante
+                    SUBSTRING_INDEX(GROUP_CONCAT(dg.metodo_pago ORDER BY dg.fecha DESC SEPARATOR ','), ',', 1) as metodo_pago_predominante
                 FROM gastos g
                 LEFT JOIN detalles_gastos dg ON g.id_gasto = dg.gasto_id
                 LEFT JOIN proveedores p ON g.proveedor_id = p.id_proveedor

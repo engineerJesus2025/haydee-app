@@ -82,19 +82,14 @@ document.addEventListener("DOMContentLoaded", function() {
             const accion = this.hasAttribute("modificar") ? "modificar" : "Registrar";
 
             if (await validarEnvio(accion)) {
-                Swal.fire({
-                    title: "¿Estás seguro?",
-                    text: `¿Está seguro que desea ${accion} este gasto de caja?`,
-                    icon: "warning",
-                    showCancelButton: true,
-                    confirmButtonText: `Sí, ${accion}`,
-                    confirmButtonColor: "#1b8a40",
-                    cancelButtonText: "Cancelar"
-                }).then((result) => {
-                    if (result.isConfirmed) {
+                Alertas.confirmarAccion(
+                    "Confirmar Operación",
+                    `¿Está seguro que desea ${accion.toLowerCase()} este movimiento?`,
+                    "question", 
+                    () => {
                         if(typeof envio === 'function') envio(accion); 
                     }
-                });
+                );
             }
         });
     }
@@ -105,19 +100,14 @@ document.addEventListener("DOMContentLoaded", function() {
         btnReponer.addEventListener("click", async function(e) {
             e.preventDefault();
             if (await validarEnvioReponerCaja()) {
-                Swal.fire({
-                    title: "¿Estás seguro?",
-                    text: "¿Está seguro que desea reponer la caja?",
-                    icon: "warning",
-                    showCancelButton: true,
-                    confirmButtonText: "Sí, reponer",
-                    confirmButtonColor: "#1b8a40",
-                    cancelButtonText: "Cancelar"
-                }).then((result) => {
-                    if (result.isConfirmed) {
+                Alertas.confirmarAccion(
+                    "Confirmar Operación",
+                    `¿Está seguro que desea reponer la caja?`,
+                    "question", 
+                    () => {
                         if(typeof reponerCaja === 'function') reponerCaja(); 
                     }
-                });
+                );
             }
         });
     }
@@ -140,10 +130,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 
-// ============================================
-// FUNCIONES AUXILIARES LÓGICAS
-// ============================================
-
+// FUNCIONES AUXILIARES LÓGICAS 
 function actualizarFondoRestante() {
     let elFondo = document.getElementById("fondos_caja");
     if(!elFondo) return;

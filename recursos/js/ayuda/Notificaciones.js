@@ -63,56 +63,73 @@ const Notificaciones = {
     },
 
     resaltarEnTabulator: function(tabla, campoBusqueda = null) {
-        // Quitamos la lectura de la URL aquí afuera.
-        // Dejaremos que la tabla la lea solo cuando termine de cargar.
+        // Escuchamos renderComplete para asegurarnos de que el HTML ya exista en pantalla
+        tabla.on("renderComplete", function() {
+            let idBuscar = Notificaciones.obtenerIdBusqueda();
+            
+            // Si la URL ya fue limpiada o no hay ID, abortamos pacíficamente
+            if (!idBuscar) return;
 
-        tabla.on("dataLoaded", function() {
-            setTimeout(() => {
-                // Volvemos a consultar la URL en este exacto momento.
-                let idBuscar = Notificaciones.obtenerIdBusqueda();
-                
-                // Si la URL está limpia (porque el Select ya la consumió), abortamos en paz sin dar error
-                if (!idBuscar) return;
-
-                let filas = tabla.getRows();
-                let filaEncontrada = filas.find(fila => {
-                    let data = fila.getData();
-                    
-                    // SI HAY COLUMNA EXPLÍCITA:
-                    if (campoBusqueda) {
-                        let valor = data[campoBusqueda];
-                        if (typeof valor === 'string' && valor.includes(',')) {
-                            return valor.split(',').includes(String(idBuscar));
-                        }
-                        return String(valor) === String(idBuscar);
-                    } 
-                    else {
-                        let clavePrimaria = Object.keys(data).find(key => key.startsWith('id_'));
-                        if (clavePrimaria) {
-                            return String(data[clavePrimaria]) === String(idBuscar);
-                        }
-                        return false;
+            // Obtenemos todas las filas activas (las que pasaron los filtros actuales)
+            let filasActivas = tabla.getRows("active");
+            
+            // Buscamos el índice de la fila deseada en todo el universo de datos locales
+            let indiceFila = filasActivas.findIndex(fila => {
+                let data = fila.getData();
+                if (campoBusqueda) {
+                    let valor = data[campoBusqueda];
+                    if (typeof valor === 'string' && valor.includes(',')) {
+                        return valor.split(',').includes(String(idBuscar));
                     }
-                });
+                    return String(valor) === String(idBuscar);
+                } else {
+                    let clavePrimaria = Object.keys(data).find(key => key.startsWith('id_'));
+                    return clavePrimaria ? String(data[clavePrimaria]) === String(idBuscar) : false;
+                }
+            });
 
-                if (filaEncontrada) {
-                    let elementoDOM = filaEncontrada.getElement();
+            // Si el registro existe en la tabla
+            if (indiceFila !== -1) {
+                let filaEncontrada = filasActivas[indiceFila];
+                let pageSize = tabla.getPageSize() || 10;
+                
+                // Cálculo matemático de la página destino (1-based)
+                let paginaDestino = Math.floor(indiceFila / pageSize) + 1;
+                let paginaActual = tabla.getPage();
+
+                // CONTROL DE FLUJO: Si no estamos en la página correcta, cambiamos de página y salimos
+                if (paginaActual !== paginaDestino) {
+                    tabla.setPage(paginaDestino);
+                    return; // El cambio de página disparará un nuevo 'renderComplete' automáticamente
+                }
+
+                // Si ya estamos en la página correcta, procedemos con el enfoque visual
+                let elementoDOM = filaEncontrada.getElement();
+                if (elementoDOM) {
+                    // Aplicar clases de animación
                     elementoDOM.classList.add('table-primary', 'border-primary', 'resaltar-pulso-azul');
                     
-                    filaEncontrada.scrollTo().then(() => {
+                    setTimeout(() => {
+                        // Desplazamiento nativo de la ventana del navegador (100% infalible)
                         elementoDOM.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    });
+                    }, 100);
 
+                    // Limpiar el color tras 5 segundos
                     setTimeout(() => {
                         elementoDOM.classList.remove('table-primary', 'border-primary', 'resaltar-pulso-azul');
                     }, 5000);
+                }
 
-                    Notificaciones.limpiarUrl(); 
-                } else {
+                // ¡CRÍTICO! Limpiamos la URL para evitar bucles en futuros renders
+                Notificaciones.limpiarUrl();
+
+            } else {
+                // Si la tabla terminó de procesar y tiene datos, pero el ID no está
+                if (filasActivas.length > 0) {
                     Notificaciones.mostrarToast('error', 'No encontrado', 'El registro notificado ya no se encuentra en el sistema.');
                     Notificaciones.limpiarUrl();
                 }
-            }, 300); 
+            }
         });
     },
 

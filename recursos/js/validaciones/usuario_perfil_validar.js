@@ -88,22 +88,17 @@ document.addEventListener("DOMContentLoaded", function() {
     if (btnGuardarPerfil) {
         btnGuardarPerfil.addEventListener('click', async function(e) {
             e.preventDefault();
-            // if (await validarEnvioPerfil()) {
-                Swal.fire({
-                    title: '¿Estás seguro?',
-                    text: '¿Desea guardar los cambios en su perfil?',
-                    showCancelButton: true,
-                    confirmButtonText: 'Sí, Guardar',
-                    confirmButtonColor: '#1b8a40',
-                    cancelButtonText: 'Cancelar',
-                    icon: 'warning'
-                }).then(result => {
-                    if (result.isConfirmed) {
+            if (await validarEnvioPerfil()) {
+                Alertas.confirmarAccion(
+                    "Confirmar Operación",
+                    `¿Desea guardar los cambios en su perfil?`,
+                    "question", 
+                    () => {
                         modificar();
                         correo_an = null;
                     }
-                });
-            // }
+                );
+            }
         });
     }
 
@@ -111,21 +106,16 @@ document.addEventListener("DOMContentLoaded", function() {
     if (btnGuardarContra) {
         btnGuardarContra.addEventListener('click', async function(e) {
             e.preventDefault();
-            // if (await validarEnvioContra()) {
-                Swal.fire({
-                    title: '¿Estás seguro?',
-                    text: '¿Desea cambiar su contraseña?',
-                    showCancelButton: true,
-                    confirmButtonText: 'Sí, Cambiar',
-                    confirmButtonColor: '#1b8a40',
-                    cancelButtonText: 'Cancelar',
-                    icon: 'warning'
-                }).then(result => {
-                    if (result.isConfirmed) {
+            if (await validarEnvioContra()) {
+                Alertas.confirmarAccion(
+                    "Confirmar Operación",
+                    `¿Desea cambiar su contraseña?`,
+                    "question", 
+                    () => {
                         modificarContra();
                     }
-                });
-            // }
+                );
+            }
         });
     }
 });

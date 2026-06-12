@@ -5,6 +5,7 @@ use haydee\modelo\SeguridadIP;
 use haydee\modelo\Usuario;
 use haydee\ayuda\Validador;
 use haydee\servicios\Criptografia;
+use haydee\servicios\GestorTrafico;
 
 // ==================== DETECCIÓN DE PROTOCOLO Y PAYLOAD ====================
 $metodoHttp = $_SERVER['REQUEST_METHOD'];
@@ -24,22 +25,21 @@ $validador = new Validador();
 
 // Validar que el verbo HTTP sea el correcto (POST)
 if (!$validador->validarMetodoHTTP($metodoHttp, $reglas)) {
-    http_response_code(HttpCodigo::METODO_NO_PERMITIDO->value);
-    echo json_encode(['estatus' => false, 'mensaje' => 'Método HTTP no soportado para esta operación.']);
-    exit;
+    GestorTrafico::abortarConCifrado(
+        ['estatus' => false, 'mensaje' => 'Protocolo HTTP denegado.', 'errores' => $validador->obtenerErrores()],
+        HttpCodigo::METODO_NO_PERMITIDO->value
+    );
 }
 
-// Validar la estructura de datos completa 
-$validador->validarConjunto($datosPeticion, $reglas); 
-
-if ($validador->tieneErrores()) {
-    http_response_code(HttpCodigo::BAD_REQUEST->value);
-    echo json_encode([
-        'estatus' => false, 
-        'mensaje' => 'Errores de validación en credenciales de refresco.',
-        'errores' => $validador->obtenerErrores()
-    ]);
-    exit;
+if (!empty($reglas)) {
+    $validador->validarConjunto($datosPeticion, $reglas);
+    if ($validador->tieneErrores()) {
+        $codigoHttp = HttpCodigo::BAD_REQUEST->value;
+        GestorTrafico::abortarConCifrado(
+            ['estatus' => false, 'errores' => $validador->obtenerErrores(), 'mensaje' => 'Errores de validación en credenciales de refresco.'], 
+            $codigoHttp
+        );
+    }
 }
 
 $idUsuarioAutenticado = $datosPeticion['id_usuario'];
@@ -111,5 +111,4 @@ try {
     if ($seguridadIP) $seguridadIP->cerrar();
     
     echo json_encode($respuesta);
-    exit;
 }

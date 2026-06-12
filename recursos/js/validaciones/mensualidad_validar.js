@@ -1,6 +1,3 @@
-/**
- * mensualidad_validar.js
- */
 document.addEventListener("DOMContentLoaded", function() {
     const selectFecha = document.getElementById('mes_select_asignar');
     const inputPorcentaje = document.getElementById('porcentaje_demora');
@@ -46,19 +43,14 @@ document.addEventListener("DOMContentLoaded", function() {
             const accion = this.dataset.op || "Registrar";
             
             if (await validarFormularioCompleto()) {
-               Swal.fire({
-                title: "¿Estás seguro?",
-                text: `¿Desea ${accion.toLowerCase()} esta mensualidad?`,
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonColor: "#1b8a40",
-                confirmButtonText: `Sí, ${accion}`,
-                cancelButtonText: "Cancelar"
-                }).then(result => {
-                    if (result.isConfirmed) {
+                Alertas.confirmarAccion(
+                    "Confirmar Operación",
+                    `¿Está seguro que desea ${accion.toLowerCase()} esta mensualidad?`,
+                    "question", 
+                    () => {
                         accion === "Registrar" ? registrarMensualidad() : modificarMensualidad();
                     }
-                }); 
+                );
             }
         });
     }

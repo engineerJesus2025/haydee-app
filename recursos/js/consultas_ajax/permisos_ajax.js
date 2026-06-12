@@ -1,8 +1,3 @@
-/**
- * permisos_ajax.js
- * Gestión de Permisos - Peticiones AJAX
- */
-
 let tablaPermisos;
 let id_modificar = null;
 const permisoModificar = window.PermisosModulo?.modificar || false;
@@ -27,21 +22,19 @@ async function consultar() {
     if (!contenedor) return;
 
     const formatoBotones = (cell) => {
-        const id = cell.getData().id_permiso; 
-        
         let html = `<div class="d-flex justify-content-center flex-wrap gap-2">
-            <button type="button" class="btn btn-primary btn-sm vista-previa" value="${id}" data-tooltip="true" title="Ver Mas">
+            <button type="button" class="btn btn-primary btn-sm vista-previa" data-tooltip="true" title="Ver Mas">
                 <i class="bi bi-eye"></i>
                 <span class="d-none d-lg-inline ms-2">Ver</span>
             </button>`;
         if (permisoModificar) {
-            html += `<button class="btn btn-success btn-sm modificar" value="${id}" data-tooltip="true" title="Modificar los detalles de este registro">
+            html += `<button class="btn btn-success btn-sm modificar" data-tooltip="true" title="Modificar los detalles de este registro">
                         <i class="bi bi-pencil"></i>
                         <span class="d-none d-lg-inline ms-2">Editar</span>
                     </button>`;
         }
         if (permisoEliminar) {
-            html += `<button class="btn btn-danger btn-sm eliminar" value="${id}" data-tooltip="true" title="Quitar este elemento del sistema">
+            html += `<button class="btn btn-danger btn-sm eliminar" data-tooltip="true" title="Quitar este elemento del sistema">
                         <i class="bi bi-trash"></i>
                         <span class="d-none d-lg-inline ms-2">Borrar</span>
                     </button>`;
@@ -65,20 +58,11 @@ async function consultar() {
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
+                const id = cell.getData().id_permiso;
                 
-                if (btn.classList.contains('vista-previa')) {
-                    mostrarVistaPrevia(cell.getData());
-                }
-                
-                if (btn.classList.contains('modificar')) {
-                    prepararFormulario({ currentTarget: btn }); 
-                }
-                
-                if (btn.classList.contains('eliminar')) {
-                    const id = btn.value;
-                    Swal.fire({ title: '¿Estás seguro?', text: 'Esta acción no se puede deshacer.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e01d22', confirmButtonText: 'Eliminar' })
-                    .then(result => result.isConfirmed && eliminar(id));
-                }
+                if (btn.classList.contains('vista-previa')) mostrarVistaPrevia(cell.getData());
+                if (btn.classList.contains('modificar')) prepararFormulario(id);
+                if (btn.classList.contains('eliminar')) confirmarEliminar(id);
             }
         }
     ];
@@ -101,8 +85,7 @@ function mostrarVistaPrevia(data) {
     modalDetalles.show();
 }
 
-async function prepararFormulario(e) {
-    const id = e.currentTarget.value;
+async function prepararFormulario(id) {
     const datos = new FormData();
     datos.append('id_permiso', id);
     datos.append('operacion', 'consultar_permiso');
@@ -152,17 +135,12 @@ async function modificar(id) {
 }
 
 function confirmarEliminar(id) {
-    Swal.fire({
-        title: '¿Estás seguro?',
-        text: 'Esta acción no se puede deshacer.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#e01d22',
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar'
-    }).then(result => {
-        if (result.isConfirmed) eliminar(id);
-    });
+    Alertas.confirmarAccion(
+        "¿Eliminar Permiso?",
+        "Esta acción no se puede deshacer.",
+        "error", 
+        () => eliminar(id) 
+    );
 }
 
 async function eliminar(id) {
@@ -191,7 +169,7 @@ function obtenerConfigPermiso(nombre) {
     const permiso = (nombre || "").toLowerCase().trim();
     
     // Por defecto
-    let colorClase = "badge-soft-secondary";
+    let colorClase = "secondary";
     let icono = "bi-key-fill"; 
 
     // Mapeo idéntico al de la Bitácora

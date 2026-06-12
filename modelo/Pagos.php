@@ -181,9 +181,7 @@ class Pagos extends Conexion
         }
     }
 
-    // ====================================================================
     // REGLAS DE NEGOCIO Y VALIDACIONES COMPLEJAS
-    // ====================================================================
 
     /**
      * Regla de negocio: Verifica que las referencias bancarias no estén duplicadas 
@@ -207,8 +205,7 @@ class Pagos extends Conexion
                 }
                 $refsUsadas[] = $ref;
 
-                // 2. Dentro del ciclo SOLO ejecutas con el nuevo valor
-                $stmt->execute([':ref' => $ref]); // <--- Reutiliza el plan de ejecución precompilado
+                $stmt->execute([':ref' => $ref]); 
                 $pago_id_bd = $stmt->fetchColumn();
 
                 if ($pago_id_bd) {
@@ -233,7 +230,7 @@ class Pagos extends Conexion
             $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute([':ref' => $referencia]);
             $pago_id_bd = $stmt->fetchColumn();
-
+            
             if ($pago_id_bd) {
                 // Si la referencia existe y NO es de este mismo pago, está OCUPADA (true)
                 if (empty($id_pago_actual) || $pago_id_bd != $id_pago_actual) {
@@ -242,11 +239,12 @@ class Pagos extends Conexion
             }
             return false; // Está DISPONIBLE (false)
         } catch (\PDOException $e) {
+            error_log("Error en verificarReferenciaDisponible: " . $e->getMessage());
             return false;
         }
     }
 
-    // MÉTODOS PÚBLICOS AUXILIARES (mantener compatibilidad)
+    // MÉTODOS PÚBLICOS AUXILIARES (considerar privatizar)
 
     /**
      * Consulta mensualidades pendientes de un apartamento
@@ -415,8 +413,10 @@ class Pagos extends Conexion
         $valRef = $this->_validar_referencias_unicas();
         if (!$valRef['estatus']) return $valRef;
 
-        $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
         try {
+            $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
+
+            $pdo->exec("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ");
             $pdo->beginTransaction();
 
             $tasa_transaccion = $this->tasa_dolar ?? 1;
@@ -454,8 +454,10 @@ class Pagos extends Conexion
                 $total_abonado += (float)$det['monto'];
 
                 // Si requiere comprobante bancario
-                $tipo = strtolower(trim($det['tipo_pago']));
-                if (in_array($tipo, ['transferencia', 'pago movil', 'pago_movil'])) {
+                $tipo = strtoupper(trim($det['tipo_pago']));
+                $metodosBancarios = [MetodoPago::TRANSFERENCIA->value, MetodoPago::PAGO_MOVIL->value];
+
+                if (in_array($tipo, $metodosBancarios)) {
                     $stmtBanco->execute([
                         ':ref'   => $det['referencia'] ?? '',
                         ':img'   => $det['imagen'] ?? 'default.png',
@@ -466,77 +468,15 @@ class Pagos extends Conexion
             }
 
             // Distribución en Cascada (Waterfall)
-            $remanente = $total_abonado;
+            // $remanente = $total_abonado;
+            $this->_distribuir_abono_cascada($pdo, $id_pago, $total_abonado);
 
-            // Buscar la mensualidad seleccionada y los meses posteriores pendientes del mismo apartamento
-            $sqlDeudas = "SELECT 
-                            m.id_mensualidad, 
-                            (m.monto - COALESCE((
-                                SELECT SUM(pm.monto_abonado)
-                                FROM pagos_mensualidad pm
-                                JOIN pagos p ON pm.pago_id = p.id_pago
-                                WHERE pm.mensualidad_id = m.id_mensualidad 
-                                  AND p.activo = 1 
-                                  AND UPPER(p.estado) = 'PROCESADO'
-                            ), 0)) as deuda_actual
-                        FROM mensualidad m
-                        JOIN periodos_mensualidad per ON m.periodo_id = per.id_periodo
-                        WHERE m.apartamento_id = :apt_id 
-                          AND m.activo = 1
-                          AND per.id_periodo >= (SELECT periodo_id FROM mensualidad WHERE id_mensualidad = :mens_id_inicio)
-                        ORDER BY per.id_periodo ASC
-                        FOR UPDATE;";
-            
-            $stmtDeudas = $pdo->prepare($sqlDeudas);
-            $stmtDeudas->execute([
-                ':apt_id' => $this->apartamento_id,
-                ':mens_id_inicio' => $this->mensualidad_id
-            ]);
-            $meses_pendientes = $stmtDeudas->fetchAll(PDO::FETCH_ASSOC);
-
-            $sqlRel = "INSERT INTO pagos_mensualidad (pago_id, mensualidad_id, monto_abonado) VALUES (:pago_id, :mens_id, :monto_abonado)";
-            $stmtRel = $pdo->prepare($sqlRel);
-
-            foreach ($meses_pendientes as $mes) {
-                if ($remanente <= 0) break; // Si se acabó el dinero, detenemos la cascada
-
-                $deuda = (float)$mes['deuda_actual'];
-                
-                // Si este mes ya está solvente, pasamos al siguiente
-                if ($deuda <= 0) continue;
-
-                // Definir cuánto le inyectamos a este mes
-                $abono_aplicar = ($remanente >= $deuda) ? $deuda : $remanente;
-
-                // Insertar en la tabla puente
-                $stmtRel->execute([
-                    ':pago_id' => $id_pago, 
-                    ':mens_id' => $mes['id_mensualidad'],
-                    ':monto_abonado' => $abono_aplicar
-                ]);
-
-                // Descontar del dinero disponible
-                $remanente -= $abono_aplicar;
-            }
-
-            // Si el residente adelantó dinero de meses que aún no han sido creados por el administrador
-            // Guardamos el remanente en el mes original mediante UPSERT para que le quede como "Saldo a Favor"
-            if ($remanente > 0) {
-                $sqlRemanente = "INSERT INTO pagos_mensualidad (pago_id, mensualidad_id, monto_abonado) 
-                                 VALUES (:pago_id, :mens_id, :monto)
-                                 ON DUPLICATE KEY UPDATE monto_abonado = monto_abonado + VALUES(monto_abonado)";
-                
-                $stmtRemanente = $pdo->prepare($sqlRemanente);
-                $stmtRemanente->execute([
-                    ':pago_id' => isset($id_pago) ? $id_pago : $this->id_pago, 
-                    ':mens_id' => $this->mensualidad_id,
-                    ':monto' => $remanente
-                ]);
-            }
             $pdo->commit();
             return ['estatus' => true, 'mensaje' => 'Pago registrado con éxito', 'id' => $id_pago];
         } catch (\Exception $e) {
-            $pdo->rollBack();
+            if (isset($pdo) && $pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
             error_log("Error en _registrar pago: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error del servidor. Intente mas tarde'];
         }
@@ -556,8 +496,10 @@ class Pagos extends Conexion
         $valRef = $this->_validar_referencias_unicas();
         if (!$valRef['estatus']) return $valRef;
 
-        $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
         try {
+            $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
+
+            $pdo->exec("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ");
             $pdo->beginTransaction();
 
             $tasa_transaccion = $this->tasa_dolar ?? 1;
@@ -612,8 +554,10 @@ class Pagos extends Conexion
 
                 $total_abonado += (float)$det['monto'];
 
-                $tipo = strtolower(trim($det['tipo_pago']));
-                if (in_array($tipo, ['transferencia', 'pago movil', 'pago_movil'])) {
+                $tipo = strtoupper(trim($det['tipo_pago']));
+                $metodosBancarios = [MetodoPago::TRANSFERENCIA->value, MetodoPago::PAGO_MOVIL->value];
+
+                if (in_array($tipo, $metodosBancarios)) {
                     $stmtBanco->execute([
                         ':ref'   => $det['referencia'] ?? '',
                         ':img'   => $det['imagen'] ?? 'default.png',
@@ -624,87 +568,93 @@ class Pagos extends Conexion
             }
 
             // Distribución en Cascada (Waterfall)
-            $remanente = $total_abonado;
-
-            // Buscar la mensualidad seleccionada y los meses posteriores pendientes del mismo apartamento
-            $sqlDeudas = "SELECT 
-                            m.id_mensualidad, 
-                            (m.monto - COALESCE((
-                                SELECT SUM(pm.monto_abonado)
-                                FROM pagos_mensualidad pm
-                                JOIN pagos p ON pm.pago_id = p.id_pago
-                                WHERE pm.mensualidad_id = m.id_mensualidad 
-                                  AND p.activo = 1 
-                                  AND UPPER(p.estado) = 'PROCESADO'
-                            ), 0)) as deuda_actual
-                        FROM mensualidad m
-                        JOIN periodos_mensualidad per ON m.periodo_id = per.id_periodo
-                        WHERE m.apartamento_id = :apt_id 
-                          AND m.activo = 1
-                          AND per.id_periodo >= (SELECT periodo_id FROM mensualidad WHERE id_mensualidad = :mens_id_inicio)
-                        ORDER BY per.id_periodo ASC
-                        FOR UPDATE;";
-            
-            $stmtDeudas = $pdo->prepare($sqlDeudas);
-            $stmtDeudas->execute([
-                ':apt_id' => $this->apartamento_id,
-                ':mens_id_inicio' => $this->mensualidad_id
-            ]);
-            $meses_pendientes = $stmtDeudas->fetchAll(PDO::FETCH_ASSOC);
-
-            $sqlRel = "INSERT INTO pagos_mensualidad (pago_id, mensualidad_id, monto_abonado) VALUES (:pago_id, :mens_id, :monto_abonado)";
-            $stmtRel = $pdo->prepare($sqlRel);
-
-            foreach ($meses_pendientes as $mes) {
-                if ($remanente <= 0) break; // Si se acabó el dinero, detenemos la cascada
-
-                $deuda = (float)$mes['deuda_actual'];
-                
-                // Si este mes ya está solvente, pasamos al siguiente
-                if ($deuda <= 0) continue;
-
-                // Definir cuánto le inyectamos a este mes
-                $abono_aplicar = ($remanente >= $deuda) ? $deuda : $remanente;
-
-                // Insertar en la tabla puente
-                $stmtRel->execute([
-                    ':pago_id' => $this->id_pago,
-                    ':mens_id' => $mes['id_mensualidad'],
-                    ':monto_abonado' => $abono_aplicar
-                ]);
-
-                // Descontar del dinero disponible
-                $remanente -= $abono_aplicar;
-            }
-
-            // Si el residente adelantó dinero de meses que aún no han sido creados por el administrador
-            // Guardamos el remanente en el mes original mediante UPSERT para que le quede como "Saldo a Favor"
-            if ($remanente > 0) {
-                $sqlRemanente = "INSERT INTO pagos_mensualidad (pago_id, mensualidad_id, monto_abonado) 
-                                 VALUES (:pago_id, :mens_id, :monto)
-                                 ON DUPLICATE KEY UPDATE monto_abonado = monto_abonado + VALUES(monto_abonado)";
-                
-                $stmtRemanente = $pdo->prepare($sqlRemanente);
-                $stmtRemanente->execute([
-                    ':pago_id' => isset($id_pago) ? $id_pago : $this->id_pago, 
-                    ':mens_id' => $this->mensualidad_id,
-                    ':monto' => $remanente
-                ]);
-            }
+            $this->_distribuir_abono_cascada($pdo, $this->id_pago, $total_abonado);
 
             $pdo->commit();
             return ['estatus' => true, 'mensaje' => 'Pago actualizado con éxito'];
         } catch (\Exception $e) {
-            $pdo->rollBack();
+            if (isset($pdo) && $pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
             error_log("Error en _modificar pago: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al actualizar pago: ' . $e->getMessage()];
+        }
+    }
+
+    /**
+     * Distribuye el dinero de un pago físico entre las deudas pendientes en cascada.
+     * SE USA EN LOS METODOS PROPIOS DE LA CLASE
+     */
+    private function _distribuir_abono_cascada($pdo, $id_pago, $total_abonado)
+    {
+        $remanente = $total_abonado;
+        $estadoProcesado = EstadoPago::PROCESADO->value;
+
+        $sqlDeudas = "SELECT 
+                        m.id_mensualidad, 
+                        (m.monto - COALESCE((
+                            SELECT SUM(pm.monto_abonado)
+                            FROM pagos_mensualidad pm
+                            JOIN pagos p ON pm.pago_id = p.id_pago
+                            WHERE pm.mensualidad_id = m.id_mensualidad 
+                              AND p.activo = 1 
+                              AND UPPER(p.estado) = :estado_procesado
+                        ), 0)) as deuda_actual
+                    FROM mensualidad m
+                    JOIN periodos_mensualidad per ON m.periodo_id = per.id_periodo
+                    WHERE m.apartamento_id = :apt_id 
+                      AND m.activo = 1
+                      AND per.id_periodo >= (SELECT periodo_id FROM mensualidad WHERE id_mensualidad = :mens_id_inicio)
+                    ORDER BY per.id_periodo ASC
+                    FOR UPDATE;"; // Bloqueo pesimista
+        
+        $stmtDeudas = $pdo->prepare($sqlDeudas);
+        $stmtDeudas->execute([
+            ':apt_id' => $this->apartamento_id,
+            ':mens_id_inicio' => $this->mensualidad_id,
+            ':estado_procesado' => $estadoProcesado
+        ]);
+        
+        $meses_pendientes = $stmtDeudas->fetchAll(PDO::FETCH_ASSOC);
+
+        $stmtRel = $pdo->prepare("INSERT INTO pagos_mensualidad (pago_id, mensualidad_id, monto_abonado) VALUES (:pago_id, :mens_id, :monto_abonado)");
+
+        foreach ($meses_pendientes as $mes) {
+            if ($remanente <= 0) break; 
+
+            $deuda = (float)$mes['deuda_actual'];
+            if ($deuda <= 0) continue;
+
+            $abono_aplicar = ($remanente >= $deuda) ? $deuda : $remanente;
+
+            $stmtRel->execute([
+                ':pago_id' => $id_pago, 
+                ':mens_id' => $mes['id_mensualidad'],
+                ':monto_abonado' => $abono_aplicar
+            ]);
+
+            $remanente -= $abono_aplicar;
+        }
+
+        // Manejo de Saldo a Favor (Remanente)
+        if ($remanente > 0) {
+            $stmtRemanente = $pdo->prepare("
+                INSERT INTO pagos_mensualidad (pago_id, mensualidad_id, monto_abonado) 
+                VALUES (:pago_id, :mens_id, :monto)
+                ON DUPLICATE KEY UPDATE monto_abonado = monto_abonado + VALUES(monto_abonado)
+            ");
+            $stmtRemanente->execute([
+                ':pago_id' => $id_pago, 
+                ':mens_id' => $this->mensualidad_id,
+                ':monto' => $remanente
+            ]);
         }
     }
 
     // SE USA EN EL MODULO
     private function _eliminar_pago()
     {
-        $sql = "UPDATE pagos SET activo = 0, estado = 'ANULADO' WHERE id_pago = :id";
+        $sql = "UPDATE pagos SET activo = 0, estado = '" . EstadoPago::ANULADO->value . "' WHERE id_pago = :id";
         try {
             $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute([':id' => $this->id_pago]);
@@ -797,7 +747,7 @@ class Pagos extends Conexion
                     
                     INNER JOIN habitantes_apartamentos ha ON vw.apartamento_id = ha.apartamento_id
                     INNER JOIN habitantes h ON ha.habitante_id = h.id_habitante
-                    WHERE vw.estado_pago = 'PENDIENTE' 
+                    WHERE vw.estado_pago = '" . EstadoPago::PENDIENTE->value . "'
                       AND h.correo = :correo
                     ORDER BY vw.anio ASC, vw.mes ASC";
             $params[':correo'] = $this->correo;
@@ -811,7 +761,7 @@ class Pagos extends Conexion
                         vw.nro_apartamento,
                         vw.deuda_pendiente AS pendiente
                     FROM vw_estado_cuentas_mensualidad vw
-                    WHERE vw.estado_pago = 'PENDIENTE'
+                    WHERE vw.estado_pago = '" . EstadoPago::PENDIENTE->value . "'
                     ORDER BY vw.anio ASC, vw.mes ASC";
         }
                 

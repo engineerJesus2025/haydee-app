@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 02-06-2026 a las 06:42:44
+-- Tiempo de generación: 05-06-2026 a las 00:54:32
 -- Versión del servidor: 10.4.32-MariaDB-log
 -- Versión de PHP: 8.2.12
 
@@ -298,15 +298,8 @@ CREATE TABLE `anio_fiscal` (
 
 INSERT INTO `anio_fiscal` (`id_anio_fiscal`, `estado`, `fecha_inicio`, `fecha_cierre`, `descripcion`, `activo`) VALUES
 (47, 'Abierto', '2026-02-07', '2027-02-07', 'Año fiscal 2026', 1),
-(52, 'Cerrada', '2026-03-12', '2027-03-12', 'asdas', 0),
-(53, 'Cerrada', '2026-03-05', '2027-03-05', 'AAA', 0),
-(54, 'Cerrada', '2026-03-14', '2027-03-14', 'nueva des', 0),
-(55, 'Cerrada', '2026-03-13', '2027-03-13', 'asda', 0),
-(56, 'Cerrada', '2026-03-16', '2027-03-16', '', 0),
-(57, 'Cerrada', '2026-03-02', '2027-03-02', '', 0),
-(58, 'Cerrada', '2026-03-10', '2027-03-10', 'asd', 0),
 (59, 'Cerrada', '2026-04-07', '2027-04-07', 'pepe', 1),
-(60, 'ABIERTO', '2026-06-02', '2027-06-02', 'año fiscal de preuba', 1);
+(63, 'ABIERTO', '2026-05-28', '2027-05-28', 'registro 2', 1);
 
 -- --------------------------------------------------------
 
@@ -442,7 +435,12 @@ INSERT INTO `detalles_gastos` (`id_detalle_gasto`, `fecha`, `monto`, `metodo_pag
 (2048, '2026-05-26', 55.00, 'Efectivo', 214),
 (2049, '2026-05-27', 30.00, 'Transferencia', 215),
 (2050, '2026-05-27', 60.00, 'Efectivo', 216),
-(2051, '2026-05-28', 50.00, 'Pago Movil', 217);
+(2051, '2026-05-28', 50.00, 'Pago Movil', 217),
+(2052, '2026-06-03', 50.00, 'Efectivo', 218),
+(2053, '2026-06-03', 20.00, 'Transferencia', 219),
+(2054, '2026-06-03', 20.00, 'Efectivo', 220),
+(2055, '2026-06-03', 20.00, 'Pago Movil', 221),
+(2056, '2026-06-03', 25.00, 'Efectivo', 222);
 
 -- --------------------------------------------------------
 
@@ -474,7 +472,17 @@ INSERT INTO `detalles_pagos` (`id_detalle_pago`, `fecha`, `monto`, `tipo_pago`, 
 (1041, '2026-05-23', 12.00, 'Divisa', 143),
 (1055, '2026-05-23', 8.00, 'Transferencia', 143),
 (1056, '2026-05-26', 505.00, 'Transferencia', 147),
-(1057, '2026-05-27', 20.00, 'Transferencia', 148);
+(1057, '2026-05-27', 20.00, 'Transferencia', 148),
+(1058, '2026-06-03', 10.00, 'Transferencia', 149),
+(1059, '2026-06-03', 20.00, 'Transferencia', 150),
+(1060, '2026-06-03', 12.00, 'Transferencia', 151),
+(1063, '2026-06-03', 10.00, 'Transferencia', 154),
+(1064, '2026-06-03', 20.00, 'Transferencia', 155),
+(1065, '2026-06-03', 100.00, 'Efectivo', 156),
+(1066, '2026-06-03', 100.00, 'Efectivo', 157),
+(1068, '2026-06-03', 20.00, 'Transferencia', 153),
+(1069, '2026-06-03', 10.00, 'Transferencia', 152),
+(1071, '2026-06-04', 10.00, 'Pago Movil', 158);
 
 -- --------------------------------------------------------
 
@@ -572,6 +580,8 @@ INSERT INTO `egresos_bancarios` (`referencia`, `imagen`, `banco_id`, `detalle_ga
 ('412123', 'mensualidad_1771710356_291.PNG', 6, 2019),
 ('5858822', '955ad5d5-ef40-44a7-8b1a-e3213090e54d_1779922826_345.jpeg', 6, 2049),
 ('508538466', '74df44ed-237d-4196-84eb-ab585842a1ac_1779972265_875.jpeg', 6, 2051),
+('266564464', 'aeaa2ba2-b172-400d-bd3d-1cf7dffe2cae_1780491076_932.png', 6, 2053),
+('208569', 'a65cc271-3c1f-438c-ad40-a44b8dc349f4_1780496404_663.jpeg', 6, 2055),
 ('543524', 'images__2__1773805029_187.png', 9, 2024);
 
 -- --------------------------------------------------------
@@ -616,7 +626,12 @@ INSERT INTO `gastos` (`id_gasto`, `clasificacion`, `tasa_dolar`, `tipo_gasto_id`
 (214, 'FIJO', 1.00, 2, NULL, 4, 'Zbsvss', 1),
 (215, 'VARIABLE', 1.00, 2, NULL, 2, 'Tvybyb', 1),
 (216, 'VARIABLE', 1.00, 2, NULL, 2, 'Hola', 1),
-(217, 'FIJO', 1.00, 4, NULL, 4, 'Hola ', 1);
+(217, 'FIJO', 1.00, 4, NULL, 4, 'Hola ', 1),
+(218, 'VARIABLE', 1.00, 3, NULL, 2, 'Hola ', 1),
+(219, 'VARIABLE', 1.00, 2, NULL, 2, 'Hola buenas ', 1),
+(220, 'VARIABLE', 1.00, 2, NULL, 2, 'Hola ', 1),
+(221, 'VARIABLE', 1.00, 2, NULL, 2, 'Hola ', 1),
+(222, 'VARIABLE', 1.00, 2, NULL, 2, 'Ffff', 1);
 
 -- --------------------------------------------------------
 
@@ -641,7 +656,7 @@ CREATE TABLE `habitantes` (
 --
 
 INSERT INTO `habitantes` (`id_habitante`, `nombre`, `apellido`, `cedula`, `telefono`, `correo`, `fecha_nacimiento`, `sexo`, `activo`) VALUES
-(43, 'jesus', 'asdasda', 'E1105510', '12312312123', 'aaa@gasd.com', '2000-12-12', 'Masculino', 1),
+(43, 'pepe', 'asdasda', 'E1105510', '12312312123', 'pepe@gmail.com', '2000-12-12', 'Masculino', 1),
 (44, 'jesa', 'asdasd', 'V15321212', '21312312121', 'asda@asasd.ocm', '2000-10-10', 'Masculino', 1),
 (45, 'asdasd', 'asdasdas', 'V12012120', '23423423434', 'ASDASD@sfas.com', '1980-10-10', 'Femenino', 1),
 (46, 'papap', 'lalala', 'V23424234', '21312312312', 'lala@gasmic.com', '1950-10-10', 'Masculino', 1),
@@ -703,8 +718,15 @@ INSERT INTO `ingresos_bancarios` (`referencia`, `imagen`, `banco_id`, `detalle_p
 ('53246', 'fiabil_1779159711_524.PNG', 1, 1030),
 ('5865659', '43c0a065-a53e-4115-bd8c-004838072d63_1779235146_170.jpeg', 1, 1031),
 ('4686286', '10367e49-f030-4e26-8ac1-c8342ae380b1_1779920771_991.jpeg', 1, 1057),
+('3235654', 'default.png', 1, 1058),
+('283833468', 'default.png', 1, 1059),
+('5683758', 'default.png', 1, 1060),
+('20464648', 'd2a87bcc-ec8a-4ad8-9944-e6c86c314a78_1780494949_475.jpeg', 1, 1063),
+('289676646', '95e8b8e8-115a-4a02-a081-461511fc0a5e_1780490946_260.jpeg', 1, 1068),
+('268656556', '22c76522-3b75-45c1-85a4-e273383b6fef_1780460215_709.jpeg', 1, 1069),
 ('1345312', 'cog_1779299571_171.PNG', 6, 1035),
-('4686858', 'ff3aa0e1-7886-43ac-b0bc-18e73d4fc263_1779820535_428.jpeg', 6, 1056);
+('4686858', 'ff3aa0e1-7886-43ac-b0bc-18e73d4fc263_1779820535_428.jpeg', 6, 1056),
+('---------', 'd8321413-2506-40fa-9d46-c728a2376ae4_1780495132_607.jpeg', 6, 1064);
 
 -- --------------------------------------------------------
 
@@ -808,7 +830,7 @@ INSERT INTO `movimientos_caja` (`id_movimiento_caja`, `concepto`, `monto`, `fech
 (42, 'cafe', 10.00, '2026-03-09', 'Repuesto', 25, 1),
 (43, 'se pagaron 3 bombillos nuevos', 900.00, '2026-03-15', 'Repuesto', 25, 1),
 (44, 'aaaaa', 10.00, '2026-03-16', 'Pendiente por reposicion', 25, 0),
-(55, 'Compra de bombillos seguros', 50.00, '2026-05-25', 'Pendiente por reposicion', 26, 1);
+(57, 'Compra de bombillos seguros', 50.00, '2026-06-02', 'Pendiente por reposicion', 26, 1);
 
 -- --------------------------------------------------------
 
@@ -836,10 +858,20 @@ INSERT INTO `pagos` (`id_pago`, `estado`, `tasa_dolar`, `observacion`, `activo`)
 (141, 'PROCESADO', 0.00, 'Estado actualizado desde la App Móvil', 1),
 (142, 'RECHAZADO', 520.91, 'pago', 1),
 (143, 'PROCESADO', 535.00, 'Doble revisi?n ejecutada por T2', 1),
-(144, 'PENDIENTE', 535.00, 'Abono registrado por Transacci?n 2', 1),
-(146, 'PENDIENTE', 535.00, 'Abono registrado por Transacci?n 2', 1),
+(144, 'ANULADO', 535.00, 'Abono registrado por Transacci?n 2', 0),
+(146, 'ANULADO', 535.00, 'Abono registrado por Transacci?n 2', 0),
 (147, 'PROCESADO', 1.00, 'Estado actualizado desde la App Móvil', 1),
-(148, 'PROCESADO', 1.00, 'Estado actualizado desde la App Móvil', 1);
+(148, 'PROCESADO', 1.00, 'Estado actualizado desde la App Móvil', 1),
+(149, 'PENDIENTE', 557.97, 'Pago registrado desde la App', 1),
+(150, 'RECHAZADO', 557.97, 'Estado actualizado desde la App Móvil', 1),
+(151, 'PENDIENTE', 557.97, 'Pago registrado desde la App', 1),
+(152, 'PENDIENTE', 557.97, 'Pago registrado desde la Apps', 1),
+(153, 'PENDIENTE', 558.64, 'Pago registrado desde la App', 1),
+(154, 'PENDIENTE', 558.64, 'Pago registrado desde la App', 1),
+(155, 'PROCESADO', 558.64, 'Estado actualizado desde la App Móvil', 1),
+(156, 'PENDIENTE', 558.64, 'Pago registrado desde la App', 1),
+(157, 'RECHAZADO', 558.64, 'Estado actualizado desde la App Móvil', 1),
+(158, 'PENDIENTE', 560.38, 'pago de 2-3', 1);
 
 -- --------------------------------------------------------
 
@@ -869,7 +901,17 @@ INSERT INTO `pagos_mensualidad` (`pago_id`, `mensualidad_id`, `monto_abonado`) V
 (144, 688, 18.65),
 (146, 688, 18.65),
 (147, 690, 505.00),
-(148, 684, 20.00);
+(148, 684, 20.00),
+(149, 686, 10.00),
+(150, 684, 20.00),
+(151, 684, 12.00),
+(152, 684, 10.00),
+(153, 684, 20.00),
+(154, 684, 10.00),
+(155, 684, 20.00),
+(156, 684, 100.00),
+(157, 684, 100.00),
+(158, 685, 10.00);
 
 -- --------------------------------------------------------
 
@@ -890,7 +932,7 @@ CREATE TABLE `periodos_mensualidad` (
 --
 
 INSERT INTO `periodos_mensualidad` (`id_periodo`, `mes`, `anio`, `tasa_dolar`, `activo`) VALUES
-(5, '1', '2026', 515.18, 1),
+(5, '1', '2026', 560.38, 1),
 (7, '05', '2026', 515.18, 1);
 
 -- --------------------------------------------------------
@@ -1215,7 +1257,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW 
 --
 DROP TABLE IF EXISTS `vw_estado_cuentas_mensualidad`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vw_estado_cuentas_mensualidad`  AS SELECT `m`.`id_mensualidad` AS `id_mensualidad`, `m`.`apartamento_id` AS `apartamento_id`, `a`.`nro_apartamento` AS `nro_apartamento`, `p`.`mes` AS `mes`, `p`.`anio` AS `anio`, `m`.`monto` AS `monto_cuota`, coalesce(`abonos`.`total_abonado`,0) AS `total_abonado`, `m`.`monto`- coalesce(`abonos`.`total_abonado`,0) AS `deuda_pendiente`, CASE WHEN `m`.`monto` - coalesce(`abonos`.`total_abonado`,0) <= 0 THEN 'Solvente' ELSE 'Pendiente' END AS `estado_pago` FROM (((`mensualidad` `m` join `apartamentos` `a` on(`m`.`apartamento_id` = `a`.`id_apartamento`)) join `periodos_mensualidad` `p` on(`m`.`periodo_id` = `p`.`id_periodo`)) left join (select `pm`.`mensualidad_id` AS `mensualidad_id`,sum(`pm`.`monto_abonado`) AS `total_abonado` from (`pagos_mensualidad` `pm` join `pagos` `pg` on(`pm`.`pago_id` = `pg`.`id_pago`)) where `pg`.`activo` = 1 group by `pm`.`mensualidad_id`) `abonos` on(`m`.`id_mensualidad` = `abonos`.`mensualidad_id`)) WHERE `m`.`activo` = 1 AND `a`.`activo` = 1 ;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vw_estado_cuentas_mensualidad`  AS SELECT `m`.`id_mensualidad` AS `id_mensualidad`, `m`.`apartamento_id` AS `apartamento_id`, `a`.`nro_apartamento` AS `nro_apartamento`, `p`.`mes` AS `mes`, `p`.`anio` AS `anio`, `m`.`monto` AS `monto_cuota`, coalesce(`abonos`.`total_abonado`,0) AS `total_abonado`, `m`.`monto`- coalesce(`abonos`.`total_abonado`,0) AS `deuda_pendiente`, CASE WHEN `m`.`monto` - coalesce(`abonos`.`total_abonado`,0) <= 0 THEN 'SOLVENTE' ELSE 'PENDIENTE' END AS `estado_pago` FROM (((`mensualidad` `m` join `apartamentos` `a` on(`m`.`apartamento_id` = `a`.`id_apartamento`)) join `periodos_mensualidad` `p` on(`m`.`periodo_id` = `p`.`id_periodo`)) left join (select `pm`.`mensualidad_id` AS `mensualidad_id`,sum(`pm`.`monto_abonado`) AS `total_abonado` from (`pagos_mensualidad` `pm` join `pagos` `pg` on(`pm`.`pago_id` = `pg`.`id_pago`)) where `pg`.`activo` = 1 and ucase(`pg`.`estado`) = 'PROCESADO' group by `pm`.`mensualidad_id`) `abonos` on(`m`.`id_mensualidad` = `abonos`.`mensualidad_id`)) WHERE `m`.`activo` = 1 AND `a`.`activo` = 1 ;
 
 -- --------------------------------------------------------
 
@@ -1224,7 +1266,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW 
 --
 DROP TABLE IF EXISTS `vw_historial_pagos`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vw_historial_pagos`  AS SELECT `p`.`id_pago` AS `id_pago`, `p`.`estado` AS `estado`, `p`.`activo` AS `activo`, max(`dp`.`fecha`) AS `ultima_fecha`, sum(`dp`.`monto`) AS `monto_total`, substring_index(group_concat(`dp`.`tipo_pago` order by `dp`.`fecha` DESC separator ','),',',1) AS `tipo_pago_predominante`, CASE WHEN count(distinct `a`.`nro_apartamento`) = 1 THEN max(`a`.`nro_apartamento`) ELSE 'Varios' END AS `apartamento`, group_concat(distinct concat(`pm_per`.`mes`,'/',`pm_per`.`anio`) separator ', ') AS `periodos` FROM (((((`pagos` `p` left join `detalles_pagos` `dp` on(`p`.`id_pago` = `dp`.`pago_id`)) left join `pagos_mensualidad` `pm` on(`p`.`id_pago` = `pm`.`pago_id`)) left join `mensualidad` `m` on(`pm`.`mensualidad_id` = `m`.`id_mensualidad`)) left join `periodos_mensualidad` `pm_per` on(`m`.`periodo_id` = `pm_per`.`id_periodo`)) left join `apartamentos` `a` on(`m`.`apartamento_id` = `a`.`id_apartamento`)) WHERE `p`.`activo` = 1 GROUP BY `p`.`id_pago` ;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vw_historial_pagos`  AS SELECT `p`.`id_pago` AS `id_pago`, ucase(`p`.`estado`) AS `estado`, `p`.`activo` AS `activo`, coalesce(max(`dp`.`fecha`),curdate()) AS `ultima_fecha`, sum(coalesce(`dp`.`monto`,0)) AS `monto_total`, substring_index(group_concat(coalesce(`dp`.`tipo_pago`,'No asignado') order by `dp`.`fecha` DESC separator ','),',',1) AS `tipo_pago_predominante`, CASE WHEN count(distinct `a`.`nro_apartamento`) = 1 THEN max(`a`.`nro_apartamento`) ELSE 'Varios' END AS `apartamento`, group_concat(distinct concat(`pm_per`.`mes`,'/',`pm_per`.`anio`) separator ', ') AS `periodos` FROM (((((`pagos` `p` left join `detalles_pagos` `dp` on(`p`.`id_pago` = `dp`.`pago_id`)) left join `pagos_mensualidad` `pm` on(`p`.`id_pago` = `pm`.`pago_id`)) left join `mensualidad` `m` on(`pm`.`mensualidad_id` = `m`.`id_mensualidad`)) left join `periodos_mensualidad` `pm_per` on(`m`.`periodo_id` = `pm_per`.`id_periodo`)) left join `apartamentos` `a` on(`m`.`apartamento_id` = `a`.`id_apartamento`)) WHERE `p`.`activo` = 1 GROUP BY `p`.`id_pago` ;
 
 -- --------------------------------------------------------
 
@@ -1411,7 +1453,7 @@ ALTER TABLE `tipo_gasto`
 -- AUTO_INCREMENT de la tabla `anio_fiscal`
 --
 ALTER TABLE `anio_fiscal`
-  MODIFY `id_anio_fiscal` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=61;
+  MODIFY `id_anio_fiscal` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=64;
 
 --
 -- AUTO_INCREMENT de la tabla `apartamentos`
@@ -1435,13 +1477,13 @@ ALTER TABLE `caja_chica`
 -- AUTO_INCREMENT de la tabla `detalles_gastos`
 --
 ALTER TABLE `detalles_gastos`
-  MODIFY `id_detalle_gasto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2052;
+  MODIFY `id_detalle_gasto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2057;
 
 --
 -- AUTO_INCREMENT de la tabla `detalles_pagos`
 --
 ALTER TABLE `detalles_pagos`
-  MODIFY `id_detalle_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1058;
+  MODIFY `id_detalle_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1072;
 
 --
 -- AUTO_INCREMENT de la tabla `detalles_presupuesto`
@@ -1453,7 +1495,7 @@ ALTER TABLE `detalles_presupuesto`
 -- AUTO_INCREMENT de la tabla `gastos`
 --
 ALTER TABLE `gastos`
-  MODIFY `id_gasto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=218;
+  MODIFY `id_gasto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=223;
 
 --
 -- AUTO_INCREMENT de la tabla `habitantes`
@@ -1465,19 +1507,19 @@ ALTER TABLE `habitantes`
 -- AUTO_INCREMENT de la tabla `mensualidad`
 --
 ALTER TABLE `mensualidad`
-  MODIFY `id_mensualidad` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=703;
+  MODIFY `id_mensualidad` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=710;
 
 --
 -- AUTO_INCREMENT de la tabla `movimientos_caja`
 --
 ALTER TABLE `movimientos_caja`
-  MODIFY `id_movimiento_caja` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=56;
+  MODIFY `id_movimiento_caja` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=58;
 
 --
 -- AUTO_INCREMENT de la tabla `pagos`
 --
 ALTER TABLE `pagos`
-  MODIFY `id_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=149;
+  MODIFY `id_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=159;
 
 --
 -- AUTO_INCREMENT de la tabla `periodos_mensualidad`
@@ -1904,6 +1946,7 @@ INSERT INTO `asignacion_permisos` (`rol_id`, `permiso_id`, `modulo_id`) VALUES
 (2, 4, 23),
 (3, 1, 1),
 (3, 2, 1),
+(3, 2, 5),
 (3, 3, 1),
 (3, 4, 1),
 (4, 1, 1),
@@ -2624,7 +2667,189 @@ INSERT INTO `bitacora` (`id_bitacora`, `fecha_hora`, `accion`, `usuario_id`, `mo
 (4664, '2026-06-02 00:24:22', 'CONSULTAR', 1, 9, '{}', '{}'),
 (4665, '2026-06-02 00:24:37', 'REGISTRAR', 1, 9, '{}', '{\"fecha_inicio\":\"2026-06-02\",\"fecha_cierre\":\"2027-06-02\",\"estado\":\"ABIERTO\",\"descripcion\":\"año fiscal de preuba\"}'),
 (4666, '2026-06-02 00:31:49', 'CONSULTAR', 1, 9, '{}', '{}'),
-(4667, '2026-06-02 00:33:00', 'CONSULTAR', 1, 3, '{}', '{}');
+(4667, '2026-06-02 00:33:00', 'CONSULTAR', 1, 3, '{}', '{}'),
+(4668, '2026-06-02 22:57:33', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4669, '2026-06-02 23:09:46', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(4670, '2026-06-02 23:16:32', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4671, '2026-06-03 00:17:08', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(4672, '2026-06-03 08:48:02', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4673, '2026-06-03 09:05:06', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(4674, '2026-06-03 09:51:47', 'INICIAR SESION', 39, 14, '{}', '{}'),
+(4675, '2026-06-03 09:51:58', 'CERRAR SESION', 39, 14, '{}', '{}'),
+(4676, '2026-06-03 09:52:08', 'INICIAR SESION', 39, 14, '{}', '{}'),
+(4677, '2026-06-03 10:11:12', 'CERRAR SESION', 39, 14, '{}', '{}'),
+(4678, '2026-06-03 10:12:21', 'INICIAR SESION', 39, 14, '{}', '{}'),
+(4679, '2026-06-03 10:20:11', 'INICIAR SESION', 39, 14, '{}', '{}'),
+(4680, '2026-06-03 10:31:50', 'CERRAR SESION', 39, 14, '{}', '{}'),
+(4681, '2026-06-03 10:46:44', 'INICIAR SESION', 39, 14, '{}', '{}'),
+(4682, '2026-06-03 10:48:03', 'CERRAR SESION', 39, 14, '{}', '{}'),
+(4683, '2026-06-03 10:48:15', 'INICIAR SESION', 27, 14, '{}', '{}'),
+(4684, '2026-06-03 10:49:12', 'CONSULTAR', 39, 14, '{}', '{}'),
+(4685, '2026-06-03 10:49:20', 'CONSULTAR', 39, 17, '{}', '{}'),
+(4686, '2026-06-03 10:49:37', 'MODIFICAR', 39, 17, '{}', '{\"nombre\":\"Propietario\",\"permisos_asignados\":[{\"modulo_id\":1,\"permiso_id\":1},{\"modulo_id\":1,\"permiso_id\":2},{\"modulo_id\":1,\"permiso_id\":3},{\"modulo_id\":1,\"permiso_id\":4},{\"modulo_id\":5,\"permiso_id\":2}]}'),
+(4687, '2026-06-03 10:49:42', 'CERRAR SESION', 27, 14, '{}', '{}'),
+(4688, '2026-06-03 10:50:01', 'INICIAR SESION', 27, 14, '{}', '{}'),
+(4689, '2026-06-03 10:59:38', 'CERRAR SESION', 39, 14, '{}', '{}'),
+(4690, '2026-06-03 10:59:43', 'INICIAR SESION', 27, 14, '{}', '{}'),
+(4691, '2026-06-03 10:59:47', 'CONSULTAR', 27, 1, '{}', '{}'),
+(4692, '2026-06-03 11:00:06', 'CERRAR SESION', 27, 14, '{}', '{}'),
+(4693, '2026-06-03 11:00:10', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4694, '2026-06-03 11:02:15', 'CERRAR SESION', 27, 14, '{}', '{}'),
+(4695, '2026-06-03 11:02:30', 'INICIAR SESION', 27, 14, '{}', '{}'),
+(4696, '2026-06-03 11:02:52', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(4697, '2026-06-03 11:02:56', 'INICIAR SESION', 27, 14, '{}', '{}'),
+(4698, '2026-06-03 11:03:00', 'CONSULTAR', 27, 1, '{}', '{}'),
+(4699, '2026-06-03 11:03:31', 'CONSULTAR', 27, 1, '{}', '{}'),
+(4700, '2026-06-03 11:25:38', 'CERRAR SESION', 27, 14, '{}', '{}'),
+(4701, '2026-06-03 11:26:11', 'INICIAR SESION', 27, 14, '{}', '{}'),
+(4702, '2026-06-03 11:26:16', 'INICIAR SESION', 27, 14, '{}', '{}'),
+(4703, '2026-06-03 16:22:33', 'CERRAR SESION', 27, 14, '{}', '{}'),
+(4704, '2026-06-03 16:22:44', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4705, '2026-06-03 16:23:19', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(4706, '2026-06-03 16:24:25', 'INICIAR SESION', 27, 14, '{}', '{}'),
+(4707, '2026-06-03 19:12:06', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4708, '2026-06-03 19:12:15', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(4709, '2026-06-03 19:12:35', 'INICIAR SESION', 27, 14, '{}', '{}'),
+(4710, '2026-06-03 20:23:28', 'CERRAR SESION', 27, 14, '{}', '{}'),
+(4711, '2026-06-03 20:23:59', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4712, '2026-06-03 20:24:43', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(4713, '2026-06-03 20:24:55', 'INICIAR SESION', 27, 14, '{}', '{}'),
+(4714, '2026-06-03 20:32:44', 'CERRAR SESION', 27, 14, '{}', '{}'),
+(4715, '2026-06-03 20:32:53', 'INICIAR SESION', 27, 14, '{}', '{}'),
+(4716, '2026-06-03 20:42:39', 'CERRAR SESION', 27, 14, '{}', '{}'),
+(4717, '2026-06-03 20:42:46', 'INICIAR SESION', 27, 14, '{}', '{}'),
+(4718, '2026-06-04 08:32:42', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4719, '2026-06-04 08:32:50', 'CONSULTAR', 1, 19, '{}', '{}'),
+(4720, '2026-06-04 08:33:18', 'CONSULTAR', 1, 19, '{}', '{}'),
+(4721, '2026-06-04 08:33:35', 'CONSULTAR', 1, 19, '{}', '{}'),
+(4722, '2026-06-04 08:34:20', 'CONSULTAR', 1, 19, '{}', '{}'),
+(4723, '2026-06-04 08:35:32', 'RESPALDAR', 1, 19, '{}', '{\"accion\":\"Generó copia de seguridad\",\"base_datos\":\"NEGOCIO\"}'),
+(4724, '2026-06-04 08:35:48', 'CONSULTAR', 1, 19, '{}', '{}'),
+(4725, '2026-06-04 08:45:49', 'RESTAURAR', 1, 19, '{}', '{\"accion\":\"Restauró desde PC\",\"base_datos\":\"SEGURIDAD\"}'),
+(4726, '2026-06-04 08:45:54', 'CONSULTAR', 1, 17, '{}', '{}'),
+(4727, '2026-06-04 08:46:03', 'CONSULTAR', 1, 19, '{}', '{}'),
+(4728, '2026-06-04 09:19:16', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4729, '2026-06-04 09:19:27', 'CONSULTAR', 1, 19, '{}', '{}'),
+(4730, '2026-06-04 09:20:40', 'CONSULTAR', 1, 1, '{}', '{}'),
+(4731, '2026-06-04 09:22:43', 'ELIMINAR', 1, 1, '{\"estado\":\"PENDIENTE\",\"observacion\":\"Abono registrado por Transacci?n 2\"}', '{}'),
+(4732, '2026-06-04 09:22:47', 'ELIMINAR', 1, 1, '{\"estado\":\"PENDIENTE\",\"observacion\":\"Abono registrado por Transacci?n 2\"}', '{}'),
+(4733, '2026-06-04 09:31:38', 'CONSULTAR', 1, 1, '{}', '{}'),
+(4734, '2026-06-04 09:34:15', 'REGISTRAR', 1, 1, '{}', '{\"estado\":\"PENDIENTE\",\"observacion\":\"pago de 2-3\",\"tasa_dolar\":\"560.38\"}'),
+(4735, '2026-06-04 09:41:43', 'MODIFICAR', 1, 1, '{}', '{\"tasa_dolar\":\"558.64\"}'),
+(4736, '2026-06-04 09:42:16', 'MODIFICAR', 1, 1, '{\"observacion\":\"Pago registrado desde la App\"}', '{\"observacion\":\"Pago registrado desde la Apps\",\"tasa_dolar\":\"557.97\"}'),
+(4737, '2026-06-04 09:42:57', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(4738, '2026-06-04 09:43:01', 'INICIAR SESION', 27, 14, '{}', '{}'),
+(4739, '2026-06-04 09:43:06', 'CONSULTAR', 27, 5, '{}', '{}'),
+(4740, '2026-06-04 09:45:03', 'CONSULTAR', 27, 5, '{}', '{}'),
+(4741, '2026-06-04 09:47:49', 'CONSULTAR', 27, 5, '{}', '{}'),
+(4742, '2026-06-04 09:50:47', 'CONSULTAR', 27, 5, '{}', '{}'),
+(4743, '2026-06-04 09:57:26', 'CONSULTAR', 27, 1, '{}', '{}'),
+(4744, '2026-06-04 09:58:12', 'CERRAR SESION', 27, 14, '{}', '{}'),
+(4745, '2026-06-04 10:07:28', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4746, '2026-06-04 10:07:51', 'CONSULTAR', 1, 19, '{}', '{}'),
+(4747, '2026-06-04 10:18:56', 'CONSULTAR', 1, 22, '{}', '{}'),
+(4748, '2026-06-04 10:19:02', 'REGISTRAR', 1, 22, '{}', '{\"accion\":\"errr\"}'),
+(4749, '2026-06-04 10:19:41', 'CONSULTAR', 1, 22, '{}', '{}'),
+(4750, '2026-06-04 10:19:54', 'CONSULTAR', 1, 22, '{}', '{}'),
+(4751, '2026-06-04 10:48:31', 'CONSULTAR', 1, 3, '{}', '{}'),
+(4752, '2026-06-04 10:48:43', 'MODIFICAR', 1, 3, '{\"tasa_dolar\":\"515.18\"}', '{\"tasa_dolar\":\"560.38\"}'),
+(4753, '2026-06-04 11:02:14', 'CONSULTAR', 1, 1, '{}', '{}'),
+(4754, '2026-06-04 11:03:36', 'MODIFICAR', 1, 1, '{}', '{\"tasa_dolar\":\"560.38\"}'),
+(4755, '2026-06-04 11:42:25', 'CONSULTAR', 1, 4, '{}', '{}'),
+(4756, '2026-06-04 11:42:39', 'CONSULTAR', 1, 2, '{}', '{}'),
+(4757, '2026-06-04 11:54:11', 'CONSULTAR', 1, 14, '{}', '{}'),
+(4758, '2026-06-04 17:02:22', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4759, '2026-06-04 17:03:26', 'CONSULTAR', 1, 19, '{}', '{}'),
+(4760, '2026-06-04 17:03:37', 'RESPALDAR', 1, 19, '{}', '{\"accion\":\"Generó copia de seguridad\",\"base_datos\":\"NEGOCIO\"}'),
+(4761, '2026-06-04 17:03:43', 'RESPALDAR', 1, 19, '{}', '{\"accion\":\"Generó copia de seguridad\",\"base_datos\":\"SEGURIDAD\"}'),
+(4762, '2026-06-04 17:04:02', 'CONSULTAR', 1, 3, '{}', '{}'),
+(4763, '2026-06-04 17:04:12', 'CONSULTAR', 1, 2, '{}', '{}'),
+(4764, '2026-06-04 17:04:16', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4765, '2026-06-04 17:05:11', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4766, '2026-06-04 17:05:18', 'REGISTRAR', 1, 9, '{}', '{\"fecha_inicio\":\"2026-06-04\",\"fecha_cierre\":\"2027-06-04\",\"estado\":\"ABIERTO\",\"descripcion\":\"prueba\"}'),
+(4767, '2026-06-04 17:07:10', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4768, '2026-06-04 17:08:31', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4769, '2026-06-04 17:09:06', 'CONSULTAR', 1, 9, '{}', '{}');
+INSERT INTO `bitacora` (`id_bitacora`, `fecha_hora`, `accion`, `usuario_id`, `modulo_id`, `valores_anteriores`, `valores_nuevos`) VALUES
+(4770, '2026-06-04 17:09:15', 'MODIFICAR', 1, 9, '{\"descripcion\":\"año fiscal de preuba\"}', '{\"descripcion\":\"año fiscal de \"}'),
+(4771, '2026-06-04 17:09:21', 'CONSULTAR', 1, 8, '{}', '{}'),
+(4772, '2026-06-04 17:09:27', 'CONSULTAR', 1, 11, '{}', '{}'),
+(4773, '2026-06-04 17:10:18', 'CONSULTAR', 1, 11, '{}', '{}'),
+(4774, '2026-06-04 17:10:25', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4775, '2026-06-04 17:21:14', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4776, '2026-06-04 17:30:07', 'CONSULTAR', 1, 19, '{}', '{}'),
+(4778, '2026-06-04 17:32:44', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4779, '2026-06-04 17:34:33', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4780, '2026-06-04 17:35:14', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4781, '2026-06-04 17:35:34', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4782, '2026-06-04 17:36:22', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4783, '2026-06-04 17:37:03', 'MODIFICAR', 1, 9, '{\"descripcion\":\"año fiscal de preuba\"}', '{\"descripcion\":\"año fiscal de\"}'),
+(4784, '2026-06-04 17:40:42', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4785, '2026-06-04 17:40:46', 'CONSULTAR', 1, 19, '{}', '{}'),
+(4786, '2026-06-04 17:41:18', 'RESTAURAR', 1, 19, '{}', '{\"accion\":\"Restauró desde servidor\",\"base_datos\":\"NEGOCIO\",\"archivo\":\"backup_haydee_db_2026-06-04_23-03-33_MANUAL.sql.gz\"}'),
+(4787, '2026-06-04 17:41:24', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4788, '2026-06-04 17:41:34', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4789, '2026-06-04 17:50:43', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4790, '2026-06-04 17:59:21', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4791, '2026-06-04 18:03:31', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4792, '2026-06-04 18:04:51', 'CONSULTAR', 1, 19, '{}', '{}'),
+(4793, '2026-06-04 18:05:01', 'RESPALDAR', 1, 19, '{}', '{\"accion\":\"Generó copia de seguridad\",\"base_datos\":\"NEGOCIO\"}'),
+(4794, '2026-06-04 18:06:08', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4795, '2026-06-04 18:06:54', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4796, '2026-06-04 18:07:00', 'REGISTRAR', 1, 9, '{}', '{\"fecha_inicio\":\"2026-06-04\",\"fecha_cierre\":\"2027-06-04\",\"estado\":\"ABIERTO\",\"descripcion\":\"saaa\"}'),
+(4797, '2026-06-04 18:07:58', 'CONSULTAR', 1, 2, '{}', '{}'),
+(4798, '2026-06-04 18:08:15', 'CONSULTAR', 1, 19, '{}', '{}'),
+(4799, '2026-06-04 18:08:44', 'RESTAURAR', 1, 19, '{}', '{\"accion\":\"Restauró desde servidor\",\"base_datos\":\"NEGOCIO\",\"archivo\":\"backup_haydee_db_2026-06-05_00-04-57_MANUAL.sql.gz\"}'),
+(4800, '2026-06-04 18:08:48', 'CONSULTAR', 1, 2, '{}', '{}'),
+(4801, '2026-06-04 18:08:51', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4802, '2026-06-04 18:12:21', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4803, '2026-06-04 18:14:47', 'ELIMINAR', 1, 9, '{\"estado\":\"ABIERTO\",\"fecha_inicio\":\"2026-06-02\",\"fecha_cierre\":\"2027-06-02\",\"descripcion\":\"año fiscal de preuba\"}', '{}'),
+(4804, '2026-06-04 18:15:00', 'CONSULTAR', 1, 19, '{}', '{}'),
+(4805, '2026-06-04 18:15:08', 'RESPALDAR', 1, 19, '{}', '{\"accion\":\"Generó copia de seguridad\",\"base_datos\":\"NEGOCIO\"}'),
+(4806, '2026-06-04 18:16:23', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4807, '2026-06-04 18:16:32', 'REGISTRAR', 1, 9, '{}', '{\"fecha_inicio\":\"2026-06-04\",\"fecha_cierre\":\"2027-06-04\",\"estado\":\"ABIERTO\",\"descripcion\":\"prueba\"}'),
+(4808, '2026-06-04 18:17:15', 'CONSULTAR', 1, 19, '{}', '{}'),
+(4809, '2026-06-04 18:17:56', 'RESTAURAR', 1, 19, '{}', '{\"accion\":\"Restauró desde servidor\",\"base_datos\":\"NEGOCIO\",\"archivo\":\"backup_haydee_db_2026-06-05_00-15-06_MANUAL.sql.gz\"}'),
+(4810, '2026-06-04 18:18:13', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4811, '2026-06-04 18:19:35', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4812, '2026-06-04 18:21:32', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4813, '2026-06-04 18:23:29', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4814, '2026-06-04 18:23:37', 'REGISTRAR', 1, 9, '{}', '{\"fecha_inicio\":\"2026-06-04\",\"fecha_cierre\":\"2027-06-04\",\"estado\":\"ABIERTO\",\"descripcion\":\"prueba\"}'),
+(4815, '2026-06-04 18:24:32', 'CONSULTAR', 1, 19, '{}', '{}'),
+(4816, '2026-06-04 18:25:02', 'RESTAURAR', 1, 19, '{}', '{\"accion\":\"Restauró desde servidor\",\"base_datos\":\"NEGOCIO\",\"archivo\":\"backup_haydee_db_2026-06-05_00-15-06_MANUAL.sql.gz\"}'),
+(4817, '2026-06-04 18:25:06', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4818, '2026-06-04 18:25:56', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4819, '2026-06-04 18:27:01', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4820, '2026-06-04 18:31:23', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4821, '2026-06-04 18:31:35', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4822, '2026-06-04 18:34:28', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4823, '2026-06-04 18:34:38', 'REGISTRAR', 1, 9, '{}', '{\"fecha_inicio\":\"2026-06-04\",\"fecha_cierre\":\"2027-06-04\",\"estado\":\"ABIERTO\",\"descripcion\":\"registro\"}'),
+(4824, '2026-06-04 18:35:54', 'ELIMINAR', 1, 9, '{\"estado\":\"ABIERTO\",\"fecha_inicio\":\"2026-06-04\",\"fecha_cierre\":\"2027-06-04\",\"descripcion\":\"registro\"}', '{}'),
+(4825, '2026-06-04 18:35:58', 'CONSULTAR', 1, 19, '{}', '{}'),
+(4826, '2026-06-04 18:36:11', 'RESPALDAR', 1, 19, '{}', '{\"accion\":\"Generó copia de seguridad\",\"base_datos\":\"NEGOCIO\"}'),
+(4827, '2026-06-04 18:36:24', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4828, '2026-06-04 18:36:31', 'REGISTRAR', 1, 9, '{}', '{\"fecha_inicio\":\"2026-06-04\",\"fecha_cierre\":\"2027-06-04\",\"estado\":\"ABIERTO\",\"descripcion\":\"registro\"}'),
+(4829, '2026-06-04 18:37:12', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4830, '2026-06-04 18:37:46', 'REGISTRAR', 1, 9, '{}', '{\"fecha_inicio\":\"2026-05-28\",\"fecha_cierre\":\"2027-05-28\",\"estado\":\"ABIERTO\",\"descripcion\":\"registro 2\"}'),
+(4831, '2026-06-04 18:39:07', 'CONSULTAR', 1, 19, '{}', '{}'),
+(4832, '2026-06-04 18:39:32', 'RESTAURAR', 1, 19, '{}', '{\"accion\":\"Restauró desde servidor\",\"base_datos\":\"NEGOCIO\",\"archivo\":\"backup_haydee_db_2026-06-05_00-36-09_MANUAL.sql.gz\"}'),
+(4833, '2026-06-04 18:39:36', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4834, '2026-06-04 18:40:49', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4835, '2026-06-04 18:40:52', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4836, '2026-06-04 18:40:53', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4837, '2026-06-04 18:41:10', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4838, '2026-06-04 18:41:40', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4839, '2026-06-04 18:42:51', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4840, '2026-06-04 18:42:59', 'CONSULTAR', 1, 9, '{}', '{}'),
+(4841, '2026-06-04 18:49:07', 'CONSULTAR', 1, 3, '{}', '{}'),
+(4842, '2026-06-04 18:49:09', 'CONSULTAR', 1, 2, '{}', '{}'),
+(4843, '2026-06-04 18:49:11', 'CONSULTAR', 1, 1, '{}', '{}'),
+(4844, '2026-06-04 18:49:21', 'CERRAR SESION', 1, 14, '{}', '{}'),
+(4845, '2026-06-04 18:49:34', 'INICIAR SESION', 1, 14, '{}', '{}'),
+(4846, '2026-06-04 18:49:38', 'CONSULTAR', 1, 19, '{}', '{}'),
+(4847, '2026-06-04 18:49:48', 'RESPALDAR', 1, 19, '{}', '{\"accion\":\"Generó copia de seguridad\",\"base_datos\":\"NEGOCIO\"}'),
+(4848, '2026-06-04 18:49:54', 'RESPALDAR', 1, 19, '{}', '{\"accion\":\"Generó copia de seguridad\",\"base_datos\":\"SEGURIDAD\"}'),
+(4849, '2026-06-04 18:50:00', 'CERRAR SESION', 1, 14, '{}', '{}');
 
 -- --------------------------------------------------------
 
@@ -2672,7 +2897,8 @@ INSERT INTO `cartelera_virtual` (`id_cartelera`, `titulo`, `descripcion`, `fecha
 (47, 'Hola ', 'Hola chamo', '2026-05-14 13:03:54', 'aadd8944-bbab-4b0a-bccb-1c29e86ac835_1778778234_743.jpeg', '2', 1),
 (48, 'Nuevo aviso', 'Hay un nuevo avuso', '2026-05-26 10:12:38', 'e3af546b-803d-4d3d-8492-55828c7a6cd3_1779804758_629.jpeg', '2', 1),
 (49, 'Publicacion 2', 'Publicacion número dos', '2026-05-26 14:41:28', '988a6b55-8142-4741-bca9-ba0d6cff8123_1779820888_675.jpeg', '3', 1),
-(50, 'Hola', 'Hola mano como estas', '2026-05-27 18:30:58', '959833da-8fb5-4cb7-89da-9e3c8b16d323_1779921058_442.jpeg', '2', 1);
+(50, 'Hola', 'Hola mano como estas', '2026-05-27 18:30:58', '959833da-8fb5-4cb7-89da-9e3c8b16d323_1779921058_442.jpeg', '2', 1),
+(51, 'Hola ', 'Hola', '2026-06-02 23:02:33', '', '2', 1);
 
 -- --------------------------------------------------------
 
@@ -2693,7 +2919,7 @@ CREATE TABLE `claves_sesion` (
 --
 
 INSERT INTO `claves_sesion` (`dispositivo_id`, `usuario_id`, `clave_aes`, `fecha_creacion`, `ultima_actividad`) VALUES
-('3bb214f0-fa54-4ddb-8fdb-556b5ebfb7c1', 1, 'AYVcQkwpKB90Gikiby4ZKJMVJlkWXUdubxjPvwvCi30=', '2026-05-30 12:15:16', '2026-05-30 12:46:17');
+('3bb214f0-fa54-4ddb-8fdb-556b5ebfb7c1', 27, 'MppkRgG/dA3zE95NiauhwLhkOM3364f8/u2Oq30yg7g=', '2026-06-03 20:42:47', '2026-06-03 20:59:38');
 
 -- --------------------------------------------------------
 
@@ -2865,7 +3091,8 @@ INSERT INTO `permisos` (`id_permiso`, `accion`, `activo`) VALUES
 (1, 'REGISTRAR', 1),
 (2, 'CONSULTAR', 1),
 (3, 'MODIFICAR', 1),
-(4, 'ELIMINAR', 1);
+(4, 'ELIMINAR', 1),
+(90, 'errr', 1);
 
 -- --------------------------------------------------------
 
@@ -2948,7 +3175,7 @@ CREATE TABLE `tokens_seguridad` (
 --
 
 INSERT INTO `tokens_seguridad` (`id_token`, `usuario_id`, `token`, `fecha_expiracion`, `tipo`) VALUES
-(262, 1, 'af73e69436ff72beaa6e878abfb9dbe8e77c40c5e18529d019f2735fcdc559e4', '2026-06-29 18:15:15', 'REFRESH_TOKEN_MOVIL');
+(292, 27, '746720dd632b9db52c35c86e4fbaf2ccae892e5c104fde2d47e2c43808a1f749', '2026-07-04 02:42:47', 'REFRESH_TOKEN_MOVIL');
 
 -- --------------------------------------------------------
 
@@ -2974,7 +3201,7 @@ INSERT INTO `usuarios` (`id_usuario`, `nombre`, `apellido`, `correo`, `contrasen
 (1, 'Jesus', 'Escalona', 'administrador@gmail.com', '$2y$10$PSQuQ6JSX.UcGDlV8w4oauDJkL9o7d06f7AFZc4QCH9xAd2VSHA/G', 1, 1),
 (2, 'francisco', 'mendoza', 'franj@gmail.com', '$2y$10$0KoHFVefo2ZZPv/nh0ocaefcDxfbOKXxcVhnUj844WynuyGhWpaV.', 4, 1),
 (27, 'Pepes', 'Campos', 'pepe@gmail.com', '$2y$10$WWp8M1SADJzTWAg910K.mewfZFglQF77ENnqPYLmq1U9AKmmeruY2', 3, 1),
-(39, 'Yhsius', 'asdasd', 'jesusgescalonae@gmail.com', '$2y$10$oaBgmzfPtYCZsMqfkLeiP.YVCeMS6C1tSPDKIKeDKuFSdDLiWU1p6', 2, 1),
+(39, 'Yhsius', 'asdasd', 'jesusgescalonae@gmail.com', '$2y$10$o5jicwKwqPcPyZmciN/pvOokS9MSOUghVCZMB5aHh3YQ3qZ5oSs8G', 2, 1),
 (53, 'perfil editado', 'perfil editado', 'UsuarioperfilEditada@gmail.com', '$2y$10$AzKv19h61AeAkEYPA/FSA.buvyhYKoRfHT/kUFgMDSWE11PKjpBLS', 4, 0),
 (54, 'usuario', 'cambiocontra', 'cambiocontrasenia@gmail.com', '$2y$10$soYFxka95IzptEPe5eA.IONdFJI/geOcpt0K/L7aAKNIsTyn.5Nd2', 23, 0),
 (89, 'pepe', 'puias', 'pepa@gmail.com', '$2y$10$GtV9.reiR/8A/NindSEEUOtCPjAs.lLxS67Qp9ZNtG6Ug3wzd5nXi', 1, 0),
@@ -2982,6 +3209,32 @@ INSERT INTO `usuarios` (`id_usuario`, `nombre`, `apellido`, `correo`, `contrasen
 (91, 'test', 'test', 'test@gmail.com', '$2y$10$M/b/1lwlXVk7g0bHNfBiIOZ1XM0OQIB6SU5GPG2SL0JnhTQvD4Dqu', 69, 1),
 (92, 'presi', 'presi', 'presi@gmail.com', '$2y$10$mE8PllA/a3G4ecc.UIZi4u9771m5QBZ3vk/7jWRutkQooM5rD1ryG', 23, 1),
 (93, 'test', 'test', 'tests@gmail.com', '$2y$10$apVDsr/j3IR3lOovWTAgje3Czb4e1mmPXBAedAzQnkvGD1PVkF9ia', 4, 0);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura Stand-in para la vista `vw_perfiles_usuarios`
+-- (Véase abajo para la vista actual)
+--
+CREATE TABLE `vw_perfiles_usuarios` (
+`id_usuario` int(11)
+,`nombre` varchar(50)
+,`apellido` varchar(50)
+,`correo` varchar(100)
+,`contrasenia` varchar(255)
+,`activo` tinyint(1)
+,`rol_id` int(11)
+,`nombre_rol` varchar(50)
+);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura para la vista `vw_perfiles_usuarios`
+--
+DROP TABLE IF EXISTS `vw_perfiles_usuarios`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vw_perfiles_usuarios`  AS SELECT `u`.`id_usuario` AS `id_usuario`, `u`.`nombre` AS `nombre`, `u`.`apellido` AS `apellido`, `u`.`correo` AS `correo`, `u`.`contrasenia` AS `contrasenia`, `u`.`activo` AS `activo`, `u`.`rol_id` AS `rol_id`, `r`.`nombre` AS `nombre_rol` FROM (`usuarios` `u` join `roles` `r` on(`u`.`rol_id` = `r`.`id_rol`)) ;
 
 --
 -- Índices para tablas volcadas
@@ -3105,13 +3358,13 @@ ALTER TABLE `usuarios`
 -- AUTO_INCREMENT de la tabla `bitacora`
 --
 ALTER TABLE `bitacora`
-  MODIFY `id_bitacora` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4668;
+  MODIFY `id_bitacora` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4850;
 
 --
 -- AUTO_INCREMENT de la tabla `cartelera_virtual`
 --
 ALTER TABLE `cartelera_virtual`
-  MODIFY `id_cartelera` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=51;
+  MODIFY `id_cartelera` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=52;
 
 --
 -- AUTO_INCREMENT de la tabla `eventos_sistema`
@@ -3141,7 +3394,7 @@ ALTER TABLE `notificaciones`
 -- AUTO_INCREMENT de la tabla `permisos`
 --
 ALTER TABLE `permisos`
-  MODIFY `id_permiso` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=90;
+  MODIFY `id_permiso` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=91;
 
 --
 -- AUTO_INCREMENT de la tabla `roles`
@@ -3159,7 +3412,7 @@ ALTER TABLE `suscripciones_push`
 -- AUTO_INCREMENT de la tabla `tokens_seguridad`
 --
 ALTER TABLE `tokens_seguridad`
-  MODIFY `id_token` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=264;
+  MODIFY `id_token` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=294;
 
 --
 -- AUTO_INCREMENT de la tabla `usuarios`

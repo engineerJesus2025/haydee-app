@@ -2,6 +2,7 @@
 use haydee\enums\HttpCodigo;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
+use haydee\enums\TipoEventoNotificacion;
 
 use haydee\servicios\Sesiones;
 use haydee\modelo\CajaChica;
@@ -53,6 +54,7 @@ if (isset($_POST["operacion"])) {
     $caja->set_concepto($_POST['concepto'] ?? null);
     $caja->set_monto_movimiento($_POST['monto'] ?? null);
     $caja->set_fecha_movimiento($_POST['fecha'] ?? null);
+    $caja->set_tasa_dolar($_POST['tasa_dolar'] ?? null);
 
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
     $auditor = new GestorAuditoria($caja, Modulo::GESTIONAR_CAJA_CHICA);
@@ -117,13 +119,14 @@ if (isset($_POST["operacion"])) {
 
                     // Verificamos si el modelo nos mandó un aviso sobre el saldo
                     if (isset($respuesta['alerta_saldo']) && $respuesta['alerta_saldo'] !== null) {
-                        $alerta = $respuesta['alerta_saldo'];
+                        $id_caja = $_POST['caja_chica_id'] ?? null;
+        
                         GestorNotificaciones::notificarAdmins(
-                            $alerta['titulo'], 
-                            $alerta['desc'], 
-                            'caja_chica', 
-                            $_POST['caja_chica_id'], 
-                            $alerta['tipo']
+                            $respuesta['alerta']['titulo'], 
+                            $respuesta['alerta']['desc'], 
+                            "caja_chica", 
+                            $id_caja, 
+                            TipoEventoNotificacion::BAJO_SALDO->value 
                         );
                     }
                 }

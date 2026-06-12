@@ -221,6 +221,7 @@ function llenarTablaNotificaciones() {
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
+                // const id = btn.value;
 
                 if (btn.classList.contains('ver-notificacion')) {
                     const data = cell.getData();
@@ -272,9 +273,7 @@ function obtenerConfigRol(rol) {
     return { color, icono, texto };
 }
 
-// ============================================
-// FUNCIONES DE MODIFICACIÓN (llamadas desde validaciones)
-// ============================================
+// FUNCIONES DE MODIFICACIÓN
 
 async function modificar() {
     const formData = new FormData();

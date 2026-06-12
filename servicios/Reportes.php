@@ -553,8 +553,6 @@ class Reportes extends Conexion
 
     /**
      * Obtiene y procesa los datos para el reporte mensual de gastos,
-     * clasificándolos en Fijos, Variables y Gas.
-     *
      */
     private function _generar_data_reporte_gastos_mensual()
     {
@@ -586,4 +584,37 @@ class Reportes extends Conexion
             ]
         ];
     }
+
+    /**
+     * Aborta la generación de un reporte de forma limpia.
+     * Cierra la pestaña secundaria e inyecta una alerta en la ventana principal (padre).
+     */
+    public static function abortarConAlerta($mensaje = "No se encontraron datos para generar este reporte.")
+    {
+        $msgSeguro = addslashes($mensaje);
+        echo "<!DOCTYPE html>
+        <html>
+        <head><title>Cancelando reporte...</title></head>
+        <body style='background-color: #f8fafc;'>
+            <script>
+                // Verificar si la vista se abrió en una pestaña secundaria (target='_blank')
+                if (window.opener && !window.opener.closed) {
+                    // Si el helper de Alertas JS existe en la pestaña padre, lo usamos
+                    if (typeof window.opener.Alertas !== 'undefined') {
+                        window.opener.Alertas.mostrarSinDatos('Reporte Vacío', '{$msgSeguro}');
+                    } else {
+                        window.opener.alert('{$msgSeguro}');
+                    }
+                    window.close(); // Cierra la pestaña actual de inmediato
+                } else {
+                    // por si se abrió en la misma ventana
+                    alert('{$msgSeguro}');
+                    window.history.back();
+                }
+            </script>
+        </body>
+        </html>";
+        exit;
+    }
+
 }

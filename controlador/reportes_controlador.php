@@ -13,7 +13,6 @@ use haydee\modelo\Apartamento;
 use haydee\modelo\Bitacora;
 use Dompdf\Dompdf;
 
-
 // Verificaciones de seguridad
 Sesiones::autorizarAcceso(Modulo::GESTIONAR_REPORTES, Accion::CONSULTAR);
 
@@ -167,7 +166,10 @@ switch ($accion) {
     case 'solvencia':
         $habitantesModel->set_id_habitante($_POST['select_reporte'] ?? 0);
         $res = $habitantesModel->realizar_consulta('consultar_habitante');
-        if (!$res['estatus']) die('Habitante no encontrado');
+
+        if (!$res['estatus']) {
+            Reportes::abortarConAlerta('El habitante seleccionado no fue encontrado o no posee registros de pagos.');
+        }
 
         $datos = [
             'registro_propietario' => $res['datos'],
@@ -182,7 +184,11 @@ switch ($accion) {
         $id_habitante = $_POST['select_reporte'] ?? 0;
         $habitantesModel->set_id_habitante($id_habitante);
         $registro_propietario = $habitantesModel->realizar_consulta('consultar_habitante');
-        if (!$registro_propietario['estatus']) die('Habitante no encontrado');
+
+        if (!$registro_propietario['estatus']) {
+            Reportes::abortarConAlerta('No se pudo encontrar al habitante en la base de datos para generar la constancia.');
+        }
+
         $registro_propietario = $registro_propietario['datos'];
         
         $meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
@@ -205,7 +211,17 @@ switch ($accion) {
         $reportesServicio = new Reportes();
         $reportesServicio->set_mes_limite($limite[0] ?? '');
         $reportesServicio->set_anio_limite($limite[1] ?? '');
+
         $res = $reportesServicio->realizar_consulta('cuadro_pagos');
+
+        // Si la consulta falló por error de SQL o validación
+        if (!$res['estatus']) {
+            Reportes::abortarConAlerta($res['mensaje'] ?? 'Ocurrió un error al consultar la base de datos para el cuadro de pagos.');
+        }
+        // Si la consulta fue exitosa, pero no hay datos reales que tabular
+        if (empty($res['datos']['cuerpo'])) {
+            Reportes::abortarConAlerta('No hay deudas ni pagos registrados hasta la fecha seleccionada para construir el cuadro.');
+        }
 
         $mensualidadModel->set_mes($limite[0]);
         $mensualidadModel->set_anio($limite[1]);
@@ -233,7 +249,9 @@ switch ($accion) {
         $reportesServicio->set_anio($_POST['anio'] ?? '');
         
         $res = $reportesServicio->realizar_consulta('generar_data_reporte_gastos_mensual'); 
-        if (!$res['estatus']) die($res['mensaje']);
+        if (!$res['estatus']) {
+            Reportes::abortarConAlerta($res['mensaje']);
+        }
 
         $aptosModel = new Apartamento();
         $aptos = $aptosModel->realizar_consulta('contar_activos');
@@ -262,8 +280,10 @@ switch ($accion) {
         $reportesServicio = new Reportes();
         $reportesServicio->set_id_pago($_POST['select_reporte'] ?? 0);
         $res = $reportesServicio->realizar_consulta('consultar_recibo_pago');
-        
-        if (!$res['estatus']) die("Error");
+        var_dump($_POST);
+        if (!$res['estatus']) {
+            Reportes::abortarConAlerta('La base de datos no devolvió registros válidos para el desglose de este recibo.');
+        }
 
         GestorPDF::generar("vista/reportes/reportes_pdf/pdf/recibo_pago_pdf.php", [
             'detalles_recibo' => $res['datos'],

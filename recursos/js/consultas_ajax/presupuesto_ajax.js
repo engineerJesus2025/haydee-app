@@ -1,12 +1,4 @@
-/**
- * presupuesto_ajax.js
- * Gestión de Presupuestos - Peticiones AJAX
- * Dependencias: utilidades.js, validaciones.js
- */
-
-// ============================================================
 // VARIABLES GLOBALES
-// ============================================================
 const permisoModificar = window.PermisosModulo?.modificar || false;
 const permisoEliminar = window.PermisosModulo?.eliminar || false;
 let boton_formulario = document.querySelector("#boton_formulario");
@@ -623,20 +615,19 @@ async function consultar() {
     };
 
     const formatoBotones = (cell) => {
-        const id = cell.getData().id_presupuesto;
         let html = `<div class="d-flex justify-content-center flex-wrap gap-2">
-            <button type="button" class="btn btn-primary btn-sm vista-previa" value="${id}" data-tooltip="true" title="Ver Mas">
+            <button type="button" class="btn btn-primary btn-sm vista-previa" data-tooltip="true" title="Ver Mas">
                 <i class="bi bi-eye"></i>
                 <span class="d-none d-lg-inline ms-2">Ver</span>
             </button>`;
         if (permisoModificar) {
-            html += `<button class="btn btn-success btn-sm modificar" value="${id}" data-tooltip="true" title="Modificar los detalles de este registro">
+            html += `<button class="btn btn-success btn-sm modificar" data-tooltip="true" title="Modificar los detalles de este registro">
                         <i class="bi bi-pencil"></i>
                         <span class="d-none d-lg-inline ms-2">Editar</span>
                     </button>`;
         }
         if (permisoEliminar) {
-            html += `<button class="btn btn-danger btn-sm eliminar" value="${id}" data-tooltip="true" title="Quitar este elemento del sistema">
+            html += `<button class="btn btn-danger btn-sm eliminar" data-tooltip="true" title="Quitar este elemento del sistema">
                         <i class="bi bi-trash"></i>
                         <span class="d-none d-lg-inline ms-2">Borrar</span>
                     </button>`;
@@ -657,12 +648,11 @@ async function consultar() {
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
-                const mockEvent = { target: btn };
-                if (btn.classList.contains('vista-previa')) {
-                    mostrarVistaPrevia(cell.getData());
-                }
-                if (btn.classList.contains('modificar')) modificar_formulario(mockEvent);
-                if (btn.classList.contains('eliminar')) eventoEliminar(mockEvent);
+                const id = cell.getData().id_presupuesto;
+
+                if (btn.classList.contains('vista-previa')) mostrarVistaPrevia(cell.getData());
+                if (btn.classList.contains('modificar')) prepararFormulario(id);
+                if (btn.classList.contains('eliminar')) confirmarEliminar(id);
             }
         }
     ];
@@ -788,8 +778,6 @@ async function consultarInformacionFormulario() {
     formData.append('operacion', 'consultar_meses_faltantes');
     const respuesta = await Peticiones.enviar(formData);
 
-
-
     Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
         const meses = respuestaServidor.datos || [];
             let boton_registrar = document.getElementById('boton_nuevo_registro');
@@ -799,7 +787,7 @@ async function consultarInformacionFormulario() {
             boton_registrar.setAttribute('style', 'display:none');
             return;
         }
-        else if(boton_registrar.getAttribute('style').includes("display:none")){
+        else if(boton_registrar.getAttribute('style')?.includes("display:none")){
             boton_registrar.removeAttribute('style');
             boton_registrar.nextElementSibling.textContent = "";
         }
@@ -1009,12 +997,10 @@ async function modificar(id) {
 /**
  * Prepara el formulario para edición
  */
-async function modificar_formulario(e) {
+async function prepararFormulario(id) {
     if (document.getElementById("contenedor_presupuestos").childElementCount === 0) {
         await llenarDetallesPresupuestos();
     }
-
-    let id = e.target.closest('button').value;
 
     let formData = new FormData();
     formData.append("id_presupuesto", id);
@@ -1099,23 +1085,14 @@ async function modificar_formulario(e) {
     });
 }
 
-
-// ============================================================
 // ELIMINACIÓN
-// ============================================================
-function eventoEliminar(e) {
-    let id = e.target.closest('button').value;
-    Swal.fire({
-        title: "¿Estás seguro?",
-        text: "¿Eliminar este presupuesto?",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#e01d22",
-        confirmButtonText: "Sí, eliminar",
-        cancelButtonText: "Cancelar"
-    }).then(result => {
-        if (result.isConfirmed) eliminar(id);
-    });
+function confirmarEliminar(id) {
+    Alertas.confirmarAccion(
+        "¿Eliminar Presupuesto?",
+        "Esta acción no se puede deshacer.",
+        "error",
+        () => { eliminar(id); }
+    );
 }
 
 async function eliminar(id) {
@@ -1129,9 +1106,7 @@ async function eliminar(id) {
     });
 }
 
-// ============================================================
 // MÓDULO DE AYUDA INTERACTIVA
-// ============================================================
 document.addEventListener('DOMContentLoaded', () => {
     const stepsPrincipal = [
         { element: '.page-header', popover: { title: 'Gestión de Presupuestos', description: 'Aquí planificas los gastos del mes siguiente para calcular cuánto deberá pagar cada apartamento.', side: "bottom", align: 'center' } },

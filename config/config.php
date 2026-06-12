@@ -16,6 +16,9 @@ if (!defined('DB_USER')) define("DB_USER", $_ENV['DB_USER'] ?? '');
 if (!defined('DB_PASS')) define("DB_PASS", $_ENV['DB_PASS'] ?? '');
 if (!defined('DB_SECURITY')) define("DB_SECURITY", $_ENV['DB_SECURITY'] ?? '');
 
+if (!defined('DB_BACKUP_USER')) define("DB_BACKUP_USER", $_ENV['DB_BACKUP_USER'] ?? '');
+if (!defined('DB_BACKUP_PASS')) define("DB_BACKUP_PASS", $_ENV['DB_BACKUP_PASS'] ?? '');
+
 if (!defined('CLAVE_SITIO_RECAPTCHA')) define('CLAVE_SITIO_RECAPTCHA', $_ENV['CLAVE_SITIO_RECAPTCHA'] ?? '');
 if (!defined('CLAVE_SECRETA_RECAPTCHA')) define('CLAVE_SECRETA_RECAPTCHA', $_ENV['CLAVE_SECRETA_RECAPTCHA'] ?? '');
 

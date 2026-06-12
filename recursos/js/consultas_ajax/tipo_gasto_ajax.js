@@ -47,21 +47,19 @@ async function consultar() {
     if (!contenedor) return;
 
     const formatoBotones = (cell) => {
-        const id = cell.getData().id_tipo_gasto; 
-        
         let html = `<div class="d-flex justify-content-center flex-wrap gap-2">
-            <button type="button" class="btn btn-primary btn-sm vista-previa" value="${id}" data-tooltip="true" title="Ver Mas">
+            <button type="button" class="btn btn-primary btn-sm vista-previa" data-tooltip="true" title="Ver Mas">
                 <i class="bi bi-eye"></i>
                 <span class="d-none d-lg-inline ms-2">Ver</span>
             </button>`;
         if (permisoModificar) {
-            html += `<button class="btn btn-success btn-sm modificar" value="${id}" data-tooltip="true" title="Modificar los detalles de este registro">
+            html += `<button class="btn btn-success btn-sm modificar" data-tooltip="true" title="Modificar los detalles de este registro">
                         <i class="bi bi-pencil"></i>
                         <span class="d-none d-lg-inline ms-2">Editar</span>
                     </button>`;
         }
         if (permisoEliminar) {
-            html += `<button class="btn btn-danger btn-sm eliminar" value="${id}" data-tooltip="true" title="Quitar este elemento del sistema">
+            html += `<button class="btn btn-danger btn-sm eliminar" data-tooltip="true" title="Quitar este elemento del sistema">
                         <i class="bi bi-trash"></i>
                         <span class="d-none d-lg-inline ms-2">Borrar</span>
                     </button>`;
@@ -87,7 +85,6 @@ async function consultar() {
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center" },
         
         { title: "Tipo de Gasto", field: "nombre_tipo_gasto", formatter: formatoTipoGasto, minWidth: 250, responsive: 0, widthGrow: 2 },
-        // ---------------------------------------------
 
         {
             title: "Acciones", formatter: formatoBotones, headerSort: false, 
@@ -97,20 +94,11 @@ async function consultar() {
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
+                const id = cell.getData().id_tipo_gasto;
                 
-                if (btn.classList.contains('vista-previa')) {
-                    mostrarVistaPrevia(cell.getData());
-                }
-                
-                if (btn.classList.contains('modificar')) {
-                    prepararFormulario({ currentTarget: btn }); // Para proveedores
-                }
-                
-                if (btn.classList.contains('eliminar')) {
-                    const id = btn.value;
-                    Swal.fire({ title: '¿Estás seguro?', text: 'Esta acción no se puede deshacer.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e01d22', confirmButtonText: 'Eliminar' })
-                    .then(result => result.isConfirmed && eliminar(id));
-                }
+                if (btn.classList.contains('vista-previa')) mostrarVistaPrevia(cell.getData());
+                if (btn.classList.contains('modificar')) prepararFormulario(id);
+                if (btn.classList.contains('eliminar')) confirmarEliminar(id);
             }
         }
     ];
@@ -144,9 +132,7 @@ async function registrar() {
     });
 }
 
-async function prepararFormulario(e) {
-    const id = e.currentTarget.value;
-	
+async function prepararFormulario(id) {
 	let datos = new FormData();
 	datos.append("id_tipo_gasto", id);
 	datos.append('operacion', 'consultar_tipo_gasto');
@@ -186,19 +172,14 @@ async function modificar(id) {
     });
 }
 
-function eventoEliminar(e) {
-    const id = e.target.value || e.target.parentElement.value;
-    Swal.fire({
-        title: "¿Estás seguro?",
-        text: "¿Está seguro que desea eliminar este tipo de gasto?",
-        showCancelButton: true,
-        confirmButtonText: "Eliminar",
-        confirmButtonColor: "#e01d22",
-        cancelButtonText: "Cancelar",
-        icon: "warning"
-    }).then((resultado) => {
-        if (resultado.isConfirmed) eliminar(id);				
-    });
+
+function confirmarEliminar(id) {
+    Alertas.confirmarAccion(
+        "¿Eliminar Tipo de Gasto?",
+        "Esta acción no se puede deshacer.",
+        "error",
+        () => { eliminar(id); }
+    );
 }
 
 async function eliminar(id) {

@@ -6,11 +6,15 @@ use haydee\ayuda\GestorImagenes;
 use haydee\enums\HttpCodigo;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
+use haydee\enums\TipoEventoNotificacion;
+use haydee\servicios\GestorNotificaciones;
 use haydee\servicios\GestorAuditoria;
+use haydee\servicios\GestorTrafico;
 use haydee\modelo\Bitacora;
 
+
 // ==================== IDENTIDAD Y PERMISOS ====================
-$identidad = Sesiones::autorizarAccesoAPI(Modulo::GESTIONAR_CARTELERA_VIRTUAL, Accion::CONSULTAR, ['GET', 'POST', 'PUT']);
+$identidad = Sesiones::autorizarAccesoAPI(Modulo::GESTIONAR_CARTELERA_VIRTUAL, Accion::CONSULTAR, ['GET', 'POST', 'PUT'], true);
 
 $rolUsuario = strtolower($identidad['rol'] ?? '');
 $esAdministrador = ($rolUsuario === 'administrador'); // o el rol que aplique
@@ -30,25 +34,23 @@ $datosPeticion = ($metodoHttp === 'GET') ? $_GET : $_POST;
 $operacion = $datosPeticion['operacion'] ?? '';
 
 if (empty($operacion)) {
-    http_response_code(HttpCodigo::BAD_REQUEST->value);
-    echo json_encode(['estatus' => false, 'mensaje' => 'No se especificó la operación.']);
-    exit;
+    GestorTrafico::abortarConCifrado(
+        ['estatus' => false, 'mensaje' => 'No se especificó la operación.'], 
+        HttpCodigo::BAD_REQUEST->value
+    );
 }
 
-Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_CARTELERA_VIRTUAL, $operacion);
+Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_CARTELERA_VIRTUAL, $operacion, [], true);
 
 // ==================== REGLAS Y FIREWALL DE PROTOCOLO HTTP ====================
 $reglas = CarteleraVirtual::obtenerReglas($operacion);
 $validador = new Validador();
 
 if (!$validador->validarMetodoHTTP($metodoHttp, $reglas)) {
-    http_response_code(HttpCodigo::METODO_NO_PERMITIDO->value);
-    echo json_encode([
-        'estatus' => false,
-        'errores' => $validador->obtenerErrores(),
-        'mensaje' => 'Protocolo HTTP denegado para esta operación.'
-    ]);
-    exit;
+    GestorTrafico::abortarConCifrado(
+        ['estatus' => false, 'mensaje' => 'Protocolo HTTP denegado.', 'errores' => $validador->obtenerErrores()],
+        HttpCodigo::METODO_NO_PERMITIDO->value
+    );
 }
 
 // ==================== VALIDACIÓN DE DATOS ====================
@@ -56,13 +58,10 @@ if (!empty($reglas)) {
     $validador->validarConjunto($datosPeticion, $reglas);
     if ($validador->tieneErrores()) {
         $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::BAD_REQUEST->value;
-        http_response_code($codigoHttp);
-        echo json_encode([
-            'estatus' => false,
-            'errores' => $validador->obtenerErrores(),
-            'mensaje' => 'Datos inválidos.'
-        ]);
-        exit;
+        GestorTrafico::abortarConCifrado(
+            ['estatus' => false, 'errores' => $validador->obtenerErrores(), 'mensaje' => 'Datos inválidos.'], 
+            $codigoHttp
+        );
     }
 }
 
@@ -103,7 +102,7 @@ try {
             break;
 
         case 'consultar_cartelera':
-            $cartelera->set_id_cartelera($datosPeticion['id'] ?? null);
+            $cartelera->set_id_cartelera($datosPeticion['id_cartelera'] ?? null);
             $respuesta = $cartelera->realizar_consulta('consultar_cartelera');
             if ($respuesta['estatus']) {
                 $auditor->registrarAuditoria(Accion::CONSULTAR);
@@ -125,6 +124,21 @@ try {
             if ($respuesta['estatus']) {
                 $respuesta['nombre_imagen'] = $nombreImagen;
                 $auditor->registrarAuditoria(Accion::REGISTRAR);
+
+                $prioridad = (int)($_POST['prioridad'] ?? 3);
+
+                // 1 equivale a 'Aviso' (Alta prioridad), lo que dispara la alerta en el canal urgente
+                $eventoPush = ($prioridad === 1) 
+                    ? TipoEventoNotificacion::EMERGENCIA->value 
+                    : TipoEventoNotificacion::NUEVA_PUBLICACION->value;
+
+                GestorNotificaciones::notificarTodos(
+                    "Nuevo aviso: " . $_POST['titulo'], 
+                    $_POST['descripcion'], 
+                    "cartelera_virtual", 
+                    $respuesta['lastId'], 
+                    $eventoPush
+                );
             }
             break;
 
@@ -185,5 +199,4 @@ try {
     if ($cartelera) $cartelera->cerrar();
     Bitacora::cerrarConexionBitacora();
     echo json_encode($respuesta);
-    exit;
 }

@@ -6,29 +6,38 @@
 
 let id_modificar;
 const permisoModificar = window.PermisosModulo?.modificar || false;
-const permisoEliminar = window.PermisosModulo?.eliminar || false;
-let nombre_usuario = document.querySelector("#nombre_usuario")?.value || "Desconocido";
+let permisoEliminar = window.PermisosModulo?.eliminar || false;
 
-let boton_formulario = document.querySelector("#boton_formulario");
-let modal = new bootstrap.Modal("#modal_cartelera", { focus: false });
-let modalVistaPrevia = new bootstrap.Modal("#modal_vista_previa");
-let formulario_usar = document.querySelector("#form_cartelera");
+let nombre_usuario;
+let boton_formulario;
+let modal;
+let modalVistaPrevia;
+let formulario_usar;
 let tabla_cartelera;
 
-// Inicializar la tabla al cargar
-consultar();
+// INICIALIZACIÓN SEGURA DEL MÓDULO
+document.addEventListener("DOMContentLoaded", () => {
+    // Capturar elementos de interfaz una vez el DOM esté completamente listo
+    nombre_usuario = document.querySelector("#nombre_usuario")?.value || "Desconocido";
+    boton_formulario = document.querySelector("#boton_formulario");
+    formulario_usar = document.querySelector("#form_cartelera");
+    
+    modal = new bootstrap.Modal("#modal_cartelera", { focus: false });
+    modalVistaPrevia = new bootstrap.Modal("#modal_vista_previa");
 
-// Resetear modal al cerrarlo
-document.querySelector("#modal_cartelera").addEventListener("hide.bs.modal", () => {
+    // Inicializar la tabla de forma segura
+    consultar();
+});
+
+// Resetear modal al cerrarlo (Mover dentro o dejar fuera, funciona igual)
+document.querySelector("#modal_cartelera")?.addEventListener("hide.bs.modal", () => {
     formulario_usar.reset();
     boton_formulario.removeAttribute("modificar");
     boton_formulario.removeAttribute("id_modificar");
-    // boton_formulario.textContent = "Guardar";
     document.getElementById('texto_boton_formulario').textContent = 'Guardar Publicación';
     document.getElementById("titulo_modal").textContent = "Registrar Publicación";
     document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-megaphone");
     
-    // Limpiar mensajes de error
     formulario_usar.querySelectorAll(".w-100").forEach(el => el.textContent = "");
     document.querySelector("#nombre_imagen_cargada").textContent = "";
     document.querySelector("#boton_eliminar_imagen").classList.add("d-none");
@@ -53,7 +62,7 @@ function envio(operacion) {
 }
 
 /**
- * Inicializa DataTable con los datos de cartelera
+ * Inicializa Tabulator con los datos de cartelera
  */
 function consultar() {
     const contenedor = document.querySelector(".tabla-sistema-haydee");
@@ -62,25 +71,23 @@ function consultar() {
     const formatoFecha = (cell) => FormatoFechas.formatoUsuario(cell.getValue());
     const formatoPrioridad = (cell) => {
         const config = obtenerConfigPrioridad(cell.getValue());
-        
         return ComponentesUI.crearSoftBadge(config.color, config.icono, config.texto);
     };
 
     const formatoBotones = (cell) => {
-        const id = cell.getData().id_cartelera;
         let html = `<div class="d-flex justify-content-center flex-wrap gap-2">
-            <button type="button" class="btn btn-primary btn-sm vista-previa" data-id="${id}" data-tooltip="true" title="Ver Mas">
+            <button type="button" class="btn btn-primary btn-sm vista-previa" data-tooltip="true" title="Ver Mas">
                 <i class="bi bi-eye"></i>
                 <span class="d-none d-lg-inline ms-2">Ver</span>
             </button>`;
         if (permisoModificar) {
-            html += `<button class="btn btn-success btn-sm modificar" data-id="${id}" data-tooltip="true" title="Modificar los detalles de este registro">
+            html += `<button class="btn btn-success btn-sm modificar" data-tooltip="true" title="Modificar los detalles de este registro">
                         <i class="bi bi-pencil"></i>
                         <span class="d-none d-lg-inline ms-2">Editar</span>
                     </button>`;
         }
         if (permisoEliminar) {
-            html += `<button class="btn btn-danger btn-sm eliminar" data-id="${id}" data-tooltip="true" title="Quitar este elemento del sistema">
+            html += `<button class="btn btn-danger btn-sm eliminar" data-tooltip="true" title="Quitar este elemento del sistema">
                         <i class="bi bi-trash"></i>
                         <span class="d-none d-lg-inline ms-2">Borrar</span>
                     </button>`;
@@ -101,22 +108,22 @@ function consultar() {
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
-                const mockEvent = { target: btn };
-                if (btn.classList.contains('vista-previa')) {
-                    mostrarVistaPrevia(cell.getData());
-                }
-                if (btn.classList.contains('modificar')) modificar_formulario(mockEvent);
-                if (btn.classList.contains('eliminar')) {
-                    const id = btn.getAttribute('data-id');
-                    Swal.fire({
-                        title: "¿Estás seguro?", text: "¿Desea eliminar esta publicación?", showCancelButton: true, confirmButtonText: "Eliminar", cancelButtonText: "Cancelar", confirmButtonColor: "#e01d22", icon: "warning"
-                    }).then((r) => { if (r.isConfirmed) eliminar(id); });
-                }
+                const id = cell.getData().id_cartelera;
+
+                if (btn.classList.contains('vista-previa')) mostrarVistaPrevia(cell.getData());
+                if (btn.classList.contains('modificar')) prepararFormulario(id);
+                if (btn.classList.contains('eliminar')) confirmarEliminar(id);
             }
         }
     ];
 
-    tabla_cartelera = Tablas.cargarTabulador(contenedor.id, "", columnas, { parametrosExtra: { operacion: 'consulta' } });
+    // CONFIGURACIÓN EXTRA PARA EVITAR AMBIGÜEDADES CON OTROS IDs EN LA FILA
+    const opcionesExtra = {
+        parametrosExtra: { operacion: 'consulta' },
+        columnaBusqueda: 'id_cartelera' // <--- Apunta directamente a la clave primaria correcta
+    };
+
+    tabla_cartelera = Tablas.cargarTabulador(contenedor.id, "", columnas, opcionesExtra);
     
     Tablas.inicializarBuscadorGlobal(tabla_cartelera, "busqueda_global", columnas);
 }
@@ -124,10 +131,7 @@ function consultar() {
 /**
  * Prepara el formulario con los datos de la publicación a modificar
  */
-async function modificar_formulario(e) {
-    const boton = e.target.closest("button");
-    const id = boton.getAttribute("data-id");
-
+async function prepararFormulario(id) {
     const datos = new FormData();
     datos.append("id_cartelera", id);
     datos.append("operacion", "consultar_cartelera");
@@ -241,6 +245,15 @@ async function modificar(id) {
     });
 }
 
+function confirmarEliminar(id) {
+    Alertas.confirmarAccion(
+        "¿Eliminar Publicación?",
+        "Esta acción no se puede deshacer.",
+        "error",
+        () => { eliminar(id); }
+    );
+}
+
 /**
  * Elimina una publicación
  */
@@ -283,16 +296,11 @@ function obtenerConfigPrioridad(prioridad) {
 
 // BOTÓN ELIMINAR IMAGEN EN EL FORMULARIO DE EDICIÓN
 document.querySelector("#boton_eliminar_imagen").addEventListener("click", function () {
-    Swal.fire({
-        title: "¿Eliminar imagen?",
-        text: "La imagen cargada será eliminada de esta publicación.",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#e01d22",
-        cancelButtonText: "Cancelar",
-        confirmButtonText: "Sí, eliminar"
-    }).then((result) => {
-        if (result.isConfirmed) {
+    Alertas.confirmarAccion(
+        "¿Eliminar imagen?",
+        "La imagen cargada será eliminada de esta publicación.",
+        "error", 
+        () => {
             // Agregar un campo hidden al formulario para indicar que se debe eliminar la imagen
             const hiddenEliminar = document.createElement("input");
             hiddenEliminar.type = "hidden";
@@ -302,13 +310,11 @@ document.querySelector("#boton_eliminar_imagen").addEventListener("click", funct
 
             document.querySelector("#nombre_imagen_cargada").textContent = "Imagen eliminada.";
             document.querySelector("#boton_eliminar_imagen").classList.add("d-none");
-        }
-    });
+        } 
+    );
 });
 
-// ============================================================
 // MÓDULO DE AYUDA INTERACTIVA
-// ============================================================
 document.addEventListener('DOMContentLoaded', () => {
     const stepsPrincipal = [
             { element: '.page-header', popover: { title: 'Cartelera Virtual', description: 'Bienvenido. Aquí puedes publicar avisos, noticias y comunicados importantes para todos los residentes del condominio.', side: "bottom", align: 'center' } },

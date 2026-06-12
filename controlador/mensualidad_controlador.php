@@ -2,6 +2,7 @@
 use haydee\enums\HttpCodigo;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
+use haydee\enums\TipoEventoNotificacion;
 
 use haydee\servicios\Sesiones;
 use haydee\modelo\Mensualidad;
@@ -173,11 +174,11 @@ if (isset($_POST["operacion"])) {
                     $auditor->registrarAuditoria(Accion::REGISTRAR);
 
                     GestorNotificaciones::notificarTodos(
-                        "Nueva mensualidad disponible",
-                        "Se han generado las mensualidades para el mes {$mensualidad->get_mes()} del año {$mensualidad->get_anio()}.",
-                        'mensualidad',
-                        $respuesta['lastId'],
-                        'NUEVA_MENSUALIDAD'
+                        "Nueva Mensualidad Generada", 
+                        "Se ha publicado el recibo de condominio correspondiente a este mes. ({$mensualidad->get_mes()} del año {$mensualidad->get_anio()}.)", 
+                        "mensualidad",
+                        $respuesta['lastId'], 
+                        TipoEventoNotificacion::NUEVA_MENSUALIDAD->value
                     );
                 }
                 break;

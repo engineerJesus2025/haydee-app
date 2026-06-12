@@ -107,21 +107,20 @@
 
                     <div class="card border-0 shadow-sm">
                         <div class="card-header border-bottom py-3">
-                            <h6 class="mb-0 fw-bold"><i class="bi bi-list-check me-2"></i>Desglose de Pagos / Facturas</h6>
+                            <h6 class="mb-0 fw-bold"><i class="bi bi-list-check me-2"></i>Desglose de Transferencias / Depósitos</h6>
                         </div>
                         <div class="card-body p-0">
-                            <div id="tabla_detalles_gastos" class="tabla-vista-previa m-0 border-0 rounded-bottom"></div>
+                            <div id="tabla_detalles_gastos" class="tabla-sistema-haydee m-0 border-0 rounded-bottom"></div>
                         </div>
                     </div>
 
                 </div>
                 
-                <div class="modal-footer border-top justify-content-center">
+                <div class="modal-footer justify-content-end">
                     <button type="button" class="btn btn-soft-secondary px-4" data-bs-dismiss="modal">
                         <i class="bi bi-x-circle me-2"></i> Cerrar
                     </button>
                 </div>
-                
             </div>
         </div>
     </div>
@@ -149,8 +148,10 @@
                             imagen.</p>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <div class="modal-footer justify-content-end">
+                    <button type="button" class="btn btn-soft-secondary px-4" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-2"></i> Cerrar
+                    </button>
                 </div>
             </div>
         </div>

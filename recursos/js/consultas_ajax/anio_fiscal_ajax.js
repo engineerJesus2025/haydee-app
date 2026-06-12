@@ -15,9 +15,7 @@ const permisoEliminar = window.PermisosModulo?.eliminar || false;
 
 document.addEventListener('DOMContentLoaded', consultar);
 
-// ============================================
 // CONSULTA Y TABULATOR
-// ============================================
 async function consultar() {
     // Encontrar el contenedor dinámicamente
     const contenedor = document.querySelector(".tabla-sistema-haydee");
@@ -37,20 +35,19 @@ async function consultar() {
     };
 
     const formatoBotones = (cell) => {
-        const id = cell.getData().id_anio_fiscal;
         let html = `<div class="d-flex justify-content-center flex-wrap gap-2">
-            <button type="button" class="btn btn-primary btn-sm vista-previa" value="${id}" data-tooltip="true" title="Ver Mas">
+            <button type="button" class="btn btn-primary btn-sm vista-previa" data-tooltip="true" title="Ver Mas">
                 <i class="bi bi-eye"></i>
                 <span class="d-none d-lg-inline ms-2">Ver</span>
             </button>`;
         if (permisoModificar) {
-            html += `<button class="btn btn-success btn-sm modificar" value="${id}" data-tooltip="true" title="Modificar los detalles de este registro">
+            html += `<button class="btn btn-success btn-sm modificar" data-tooltip="true" title="Modificar los detalles de este registro">
                         <i class="bi bi-pencil"></i>
                         <span class="d-none d-lg-inline ms-2">Editar</span>
                     </button>`;
         }
         if (permisoEliminar) {
-            html += `<button class="btn btn-danger btn-sm eliminar" value="${id}" data-tooltip="true" title="Quitar este elemento del sistema">
+            html += `<button class="btn btn-danger btn-sm eliminar" data-tooltip="true" title="Quitar este elemento del sistema">
                         <i class="bi bi-trash"></i>
                         <span class="d-none d-lg-inline ms-2">Borrar</span>
                     </button>`;
@@ -59,7 +56,7 @@ async function consultar() {
         return html;
     };
 
-    // 3. Estructura de Columnas
+    // Estructura de Columnas
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
         { title: "Estado", field: "estado", formatter: formatoEstado, minWidth: 140, responsive: 0 },
@@ -79,32 +76,16 @@ async function consultar() {
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
+                const id = cell.getData().id_anio_fiscal;
 
-                // Emulamos el evento para que tus funciones prepararFormulario funcionen sin cambios
-                const mockEvent = { currentTarget: btn }; 
-
-                if (btn.classList.contains('vista-previa')) {
-                    mostrarVistaPrevia(cell.getData());
-                }
-
-                if (btn.classList.contains('modificar')) {
-                    prepararFormulario(mockEvent);
-                } else if (btn.classList.contains('eliminar')) {
-                    const id = btn.value;
-                    Swal.fire({
-                        title: '¿Estás seguro?',
-                        text: 'Esta acción no se puede deshacer.',
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#e01d22',
-                        confirmButtonText: 'Eliminar'
-                    }).then(result => result.isConfirmed && eliminar(id));
-                }
+                if (btn.classList.contains('vista-previa')) mostrarVistaPrevia(cell.getData());
+                if (btn.classList.contains('modificar')) prepararFormulario(id) ;
+                if (btn.classList.contains('eliminar')) confirmarEliminar(id);
             }
         }
     ];
 
-    // 4. Inicializar Tabulator enviando la operación a PHP
+    // Inicializar Tabulator enviando la operación a PHP
     const opcionesExtra = {
         parametrosExtra: { operacion: 'consultar_anios_fiscales' }
     };
@@ -139,17 +120,13 @@ async function registrar() {
 
     const respuesta = await Peticiones.enviar(datos, "", true);
 
-    // Le delegamos toda la validación de errores y alertas al Helper
     Validador.procesarRespuesta(respuesta, () => {
-        // Esto solo se ejecuta si la respuesta fue exitosa (estatus: true)
         modal.hide();
-        tabla_anio_fiscal.replaceData(); // Asumiendo que recarga los datos
+        tabla_anio_fiscal.replaceData(); 
     });
 }
 
-async function prepararFormulario(e) {
-    const id = e.currentTarget.value;
-
+async function prepararFormulario(id) {
     const datos = new FormData();
     datos.append('id_anio_fiscal', id);
     datos.append('operacion', 'consulta_especifica');
@@ -167,7 +144,7 @@ async function prepararFormulario(e) {
         document.getElementById('titulo_modal').textContent = 'Modificar Año Fiscal';
         document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-calendar4-week");
         document.getElementById('texto_boton_formulario').textContent = 'Guardar Cambios';
-        form.querySelector('#boton_formulario').dataset.id = id;
+        document.querySelector('#boton_formulario').dataset.id = id;
 
         // Habilitar campos deshabilitados en registro
         form.querySelector('#fecha_cierre').removeAttribute('disabled');
@@ -178,7 +155,7 @@ async function prepararFormulario(e) {
 }
 
 async function modificar() {
-    const id = form.querySelector('#boton_formulario').dataset.id;
+    const id = document.querySelector('#boton_formulario').dataset.id;
     const datos = new FormData(form);
     datos.set('id_anio_fiscal', id);
     datos.set('operacion', 'modificar');
@@ -189,6 +166,15 @@ async function modificar() {
         modal.hide();
         tabla_anio_fiscal.replaceData();
     });
+}
+
+function confirmarEliminar(id) {
+    Alertas.confirmarAccion(
+        "¿Eliminar Año Fiscal?",
+        "Esta acción no se puede deshacer.",
+        "error",
+        () => { eliminar(id); }
+    );
 }
 
 async function eliminar(id) {
@@ -228,9 +214,9 @@ document.getElementById('modal_anio_fiscal').addEventListener('hide.bs.modal', (
     document.querySelectorAll('.is-valid, .is-invalid').forEach(el => el.classList.remove('is-valid', 'is-invalid'));
     document.getElementById('titulo_modal').textContent = 'Registrar Año Fiscal';
     document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-calendar3");
-    // form.querySelector('#boton_formulario').textContent = 'Guardar';
+    // document.querySelector('#boton_formulario').textContent = 'Guardar';
     document.getElementById('texto_boton_formulario').textContent = 'Guardar Año Fiscal'
-    delete form.querySelector('#boton_formulario').dataset.id;
+    delete document.querySelector('#boton_formulario').dataset.id;
 
     // Deshabilitar campos de cierre y estado en registro
     form.querySelector('#fecha_cierre').setAttribute('disabled', '');

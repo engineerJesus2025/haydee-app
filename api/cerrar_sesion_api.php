@@ -3,24 +3,25 @@ use haydee\enums\HttpCodigo;
 use haydee\servicios\Criptografia;
 use haydee\servicios\Autenticacion;
 use haydee\servicios\Sesiones;
+use haydee\servicios\GestorTrafico;
 
 // ==================== IDENTIDAD ====================
 $usuario = Sesiones::validarAutenticacionJWT();
 $idUsuario = $usuario['id_usuario'] ?? null;
 
 if (!$idUsuario) {
-    http_response_code(HttpCodigo::NO_AUTORIZADO->value);
-    echo json_encode(['estatus' => false, 'mensaje' => 'Sesión no identificada o expirada.']);
-    exit;
+    $resultado = ["estatus" => false, "mensaje" => 'Sesión no identificada o expirada.'];
+    $codigoHttp = HttpCodigo::NO_AUTORIZADO->value;
+    GestorTrafico::abortarConCifrado($resultado, $codigoHttp);
 }
 
 // ==================== DETECCIÓN DE PROTOCOLO ====================
 $metodoHttp = $_SERVER['REQUEST_METHOD'];
 
 if ($metodoHttp !== 'POST') {
-    http_response_code(HttpCodigo::METODO_NO_PERMITIDO->value);
-    echo json_encode(['estatus' => false, 'mensaje' => 'Método no permitido.']);
-    exit;
+    $resultado = ["estatus" => false, "mensaje" =>  'Método no permitido.'];
+    $codigoHttp = HttpCodigo::METODO_NO_PERMITIDO->value;
+    GestorTrafico::abortarConCifrado($resultado, $codigoHttp);
 }
 
 // Compatibilidad multiplataforma para extracción de cabeceras (Apache/Nginx)
@@ -28,9 +29,9 @@ $headers = function_exists('apache_request_headers') ? apache_request_headers() 
 $dispositivoId = $_SERVER['HTTP_X_DISPOSITIVO_ID'] ?? $headers['X-Dispositivo-Id'] ?? $headers['x-dispositivo-id'] ?? null;
 
 if (!$dispositivoId) {
-    http_response_code(HttpCodigo::BAD_REQUEST->value);
-    echo json_encode(['estatus' => false, 'mensaje' => 'Identificador de dispositivo ausente.']);
-    exit;
+    $resultado = ["estatus" => false, "mensaje" => 'Identificador de dispositivo ausente.'];
+    $codigoHttp = HttpCodigo::BAD_REQUEST->value;
+    GestorTrafico::abortarConCifrado($resultado, $codigoHttp);
 }
 
 // ==================== PROCESAMIENTO DE CIERRE ====================

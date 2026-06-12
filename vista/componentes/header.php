@@ -61,7 +61,7 @@ $subtitulo_header = $info_header['subtitulo'];
                                         </div>
                                         <div class="notif-date text-muted" data-fecha="<?php echo $notificacion['fecha']; ?>" style="font-size: 0.7rem;">
                                             <i class="bi bi-clock me-1"></i>
-                                            <span class="fecha"><?php echo date('d/m/Y', strtotime($notificacion['fecha'] ?? 'now')); ?></span>
+                                            <span class="fecha"><?php echo date('d/m/Y', strtotime($notificacion['fecha'] ?? 'ahora')); ?></span>
                                         </div>
                                     </div>
                                 </a>

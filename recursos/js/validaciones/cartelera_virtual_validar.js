@@ -7,7 +7,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
     const inputTitulo = document.getElementById("titulo");
     const inputDesc = document.getElementById("descripcion");
-    const inputFecha = document.getElementById("fecha");
     const selectPrioridad = document.getElementById("prioridad");
 
     // Validaciones en tiempo real
@@ -25,11 +24,6 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-    if (inputFecha) {
-        inputFecha.addEventListener("change", function() { Validador.evaluarFecha(this); });
-        inputFecha.addEventListener("keyup", function() { Validador.evaluarFecha(this); });
-    }
-
     if (selectPrioridad) {
         selectPrioridad.addEventListener("change", function() { Validador.evaluarSelect(this.id); });
     }
@@ -41,19 +35,16 @@ document.addEventListener("DOMContentLoaded", function() {
             e.preventDefault();
             const accion = this.hasAttribute("modificar") ? "modificar" : "Registrar";
 
-            // if (await validarEnvio(accion)) {
-                Swal.fire({
-                    title: "¿Estás seguro?",
-                    text: `¿Está seguro que desea ${accion} esta publicación?`,
-                    showCancelButton: true,
-                    confirmButtonText: `Sí, ${accion}`,
-                    confirmButtonColor: "#1b8a40",
-                    cancelButtonText: "Cancelar",
-                    icon: "warning"
-                }).then((result) => {
-                    if (result.isConfirmed) envio(accion);
-                });
-            // }
+            if (await validarEnvio(accion)) {
+                Alertas.confirmarAccion(
+                    "Confirmar Operación",
+                    `¿Está seguro que desea ${accion.toLowerCase()} esta publicación?`,
+                    "question", 
+                    () => {
+                        envio(accion);
+                    }
+                );
+            }
         });
     }
 });
@@ -61,7 +52,6 @@ document.addEventListener("DOMContentLoaded", function() {
 async function validarEnvio(accion) {
     const titulo = document.getElementById("titulo");
     const descripcion = document.getElementById("descripcion");
-    const fecha = document.getElementById("fecha");
 
     if (!Validador.evaluarInput(titulo, Patrones.tituloCartelera, 'Entre 3 y 100 caracteres')) {
         Alertas.mostrar('error', 'Error', 'El título debe tener entre 3 y 100 caracteres.');
@@ -70,11 +60,6 @@ async function validarEnvio(accion) {
 
     if (!Validador.evaluarInput(descripcion, Patrones.descripcionCartelera, 'Entre 3 y 200 caracteres')) {
         Alertas.mostrar('error', 'Error', 'La descripción debe tener entre 3 y 200 caracteres.');
-        return false;
-    }
-
-    if (!Validador.evaluarFecha(fecha)) {
-        Alertas.mostrar('error', 'Error', 'La fecha debe tener formato YYYY-MM-DD.');
         return false;
     }
 

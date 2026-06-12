@@ -52,16 +52,11 @@ document.addEventListener("DOMContentLoaded", function() {
             const accion = this.hasAttribute("modificar") ? "modificar" : "Registrar";
 
             if (await validarFormularioCompleto()) {
-                Swal.fire({
-                    title: "¿Estás seguro?",
-                    text: `¿Desea ${accion.toLowerCase()} este presupuesto?`,
-                    icon: "warning",
-                    showCancelButton: true,
-                    confirmButtonColor: "#1b8a40",
-                    confirmButtonText: `Sí, ${accion}`,
-                    cancelButtonText: "Cancelar"
-                }).then(result => {
-                    if (result.isConfirmed) {
+                Alertas.confirmarAccion(
+                    "Confirmar Operación",
+                    `¿Está seguro que desea ${accion.toLowerCase()} este presupuesto?`,
+                    "question", 
+                    () => {
                         if (accion === "Registrar") {
                             registrar(); 
                         } else {
@@ -69,7 +64,7 @@ document.addEventListener("DOMContentLoaded", function() {
                             modificar(id);
                         }
                     }
-                });
+                );
             }
         });
     }

@@ -165,16 +165,14 @@ document.addEventListener("DOMContentLoaded", function() {
             const accion = this.dataset.id ? 'modificar' : 'Registrar';
             
             if (await validarEnvioApartamento(accion)) {
-                Swal.fire({
-                    title: '¿Estás seguro?',
-                    text: `¿Desea ${accion} este apartamento?`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#1b8a40',
-                    confirmButtonText: 'Sí, ' + accion
-                }).then(result => {
-                    if (result.isConfirmed) accion === 'modificar' ? modificarApartamento() : registrarApartamento();
-                });
+                Alertas.confirmarAccion(
+                    "Confirmar Operación",
+                    `¿Está seguro que desea ${accion.toLowerCase()} este apartamento?`,
+                    "question", 
+                    () => {
+                        accion === 'modificar' ? modificarApartamento() : registrarApartamento();
+                    }
+                );
             }
         });
     }
@@ -187,25 +185,20 @@ document.addEventListener("DOMContentLoaded", function() {
             const accion = this.dataset.id ? 'modificar' : 'Registrar';
             
             if (await validarEnvioHabitante(accion)) {
-                Swal.fire({
-                    title: '¿Estás seguro?',
-                    text: `¿Desea ${accion} este habitante?`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#1b8a40',
-                    confirmButtonText: 'Sí, ' + accion
-                }).then(result => {
-                    if (result.isConfirmed) accion === 'modificar' ? modificarHabitante() : registrarHabitante();
-                });
+                Alertas.confirmarAccion(
+                    "Confirmar Operación",
+                    `¿Está seguro que desea ${accion.toLowerCase()} este habitante?`,
+                    "question", 
+                    () => {
+                        accion === 'modificar' ? modificarHabitante() : registrarHabitante();
+                    }
+                );
             }
         });
     }
 });
 
-// ============================================
-// FUNCIONES DE VALIDACIÓN FINALES
-// ============================================
-
+// FUNCIONES DE VALIDACIÓN
 async function validarEnvioApartamento(accion) {
     let esValido = true;
     const inputNro = document.getElementById('nro_apartamento');

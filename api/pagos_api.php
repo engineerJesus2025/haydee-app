@@ -5,14 +5,17 @@ use haydee\modelo\Banco;
 use haydee\enums\HttpCodigo;
 use haydee\ayuda\ConstructorDetalles;
 use haydee\ayuda\Validador;
-use haydee\servicios\Sesiones;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
-use haydee\servicios\GestorAuditoria;
+use haydee\enums\TipoEventoNotificacion;
 use haydee\modelo\Bitacora;
+use haydee\servicios\Sesiones;
+use haydee\servicios\GestorAuditoria;
+use haydee\servicios\GestorNotificaciones;
+use haydee\servicios\GestorTrafico;
 
 // ==================== IDENTIDAD Y PERMISOS ====================
-$identidad = Sesiones::autorizarAccesoAPI(Modulo::GESTIONAR_PAGOS, Accion::CONSULTAR, ['GET', 'POST', 'PUT']);
+$identidad = Sesiones::autorizarAccesoAPI(Modulo::GESTIONAR_PAGOS, Accion::CONSULTAR, ['GET', 'POST', 'PUT'], true);
 
 $rolUsuario = strtolower($identidad['rol'] ?? '');
 $esPropietario = ($rolUsuario === 'propietario');
@@ -32,21 +35,23 @@ $datosPeticion = ($metodoHttp === 'GET') ? $_GET : $_POST;
 $operacion = $datosPeticion['operacion'] ?? '';
 
 if (empty($operacion)) {
-    http_response_code(HttpCodigo::BAD_REQUEST->value);
-    echo json_encode(['estatus' => false, 'mensaje' => 'No se especificó la operación.']);
-    exit;
+    GestorTrafico::abortarConCifrado(
+        ['estatus' => false, 'mensaje' => 'No se especificó la operación.'], 
+        HttpCodigo::BAD_REQUEST->value
+    );
 }
 
-Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_PAGOS, $operacion);
+Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_PAGOS, $operacion, [], true);
 
 // ==================== REGLAS Y FIREWALL DE PROTOCOLO HTTP ====================
 $reglas = Pagos::obtenerReglas($operacion);
 $validador = new Validador();
 
 if (!$validador->validarMetodoHTTP($metodoHttp, $reglas)) {
-    http_response_code(HttpCodigo::METODO_NO_PERMITIDO->value);
-    echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores(), 'mensaje' => 'Protocolo HTTP denegado.']);
-    exit;
+    GestorTrafico::abortarConCifrado(
+        ['estatus' => false, 'mensaje' => 'Protocolo HTTP denegado.', 'errores' => $validador->obtenerErrores()],
+        HttpCodigo::METODO_NO_PERMITIDO->value
+    );
 }
 
 // ==================== VALIDACIÓN DE DATOS ====================
@@ -54,13 +59,12 @@ if (!empty($reglas)) {
     $validador->validarConjunto($datosPeticion, $reglas);
     if ($validador->tieneErrores()) {
         $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::BAD_REQUEST->value;
-        http_response_code($codigoHttp);
-        echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores(), 'mensaje' => 'Datos inválidos.']);
-        exit;
+        GestorTrafico::abortarConCifrado(
+            ['estatus' => false, 'errores' => $validador->obtenerErrores(), 'mensaje' => 'Datos inválidos.'], 
+            $codigoHttp
+        );
     }
 }
-
-
 
 // ==================== PROCESAMIENTO DE NEGOCIO ====================
 $pagos = new Pagos();
@@ -194,7 +198,7 @@ try {
                     'errores' => $erroresDetalles, 
                     'mensaje' => 'Faltan comprobantes o referencias requeridas.'
                 ]);
-                exit; // <-- Crucial: Matamos el proceso para que no guarde en BD
+                break;
             }
 
             // Si pasa todo, guardamos en la base de datos
@@ -204,6 +208,18 @@ try {
             if ($respuesta['estatus']) {
                 $pagos->set_detalles(null);
                 $auditor->registrarAuditoria(Accion::REGISTRAR);
+
+                $id_nuevo_pago = $respuesta['id'] ?? $respuesta['lastId'] ?? null;
+                
+                if ($id_nuevo_pago) {
+                    GestorNotificaciones::notificarAdmins(
+                        "Nuevo Pago Registrado", 
+                        "Requiere revisión y aprobación.", 
+                        "pagos", 
+                        $id_nuevo_pago, 
+                        TipoEventoNotificacion::PAGO_RECIBIDO->value
+                    );
+                }
             }
             break;
 
@@ -251,5 +267,4 @@ try {
     if ($bancoAux) $bancoAux->cerrar();
     Bitacora::cerrarConexionBitacora();
     echo json_encode($respuesta);
-    exit;
 }

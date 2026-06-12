@@ -12,9 +12,10 @@ use haydee\enums\Modulo;
 use haydee\enums\Accion;
 use haydee\servicios\GestorAuditoria;
 use haydee\modelo\Bitacora;
+use haydee\servicios\GestorTrafico;
 
 // ==================== IDENTIDAD Y PERMISOS ====================
-$identidad = Sesiones::autorizarAccesoAPI(Modulo::GESTIONAR_GASTOS, Accion::CONSULTAR, ['GET', 'POST', 'PUT']);
+$identidad = Sesiones::autorizarAccesoAPI(Modulo::GESTIONAR_GASTOS, Accion::CONSULTAR, ['GET', 'POST', 'PUT'], true);
 
 $rolUsuario = strtolower($identidad['rol'] ?? '');
 $esAdministrador = ($rolUsuario === 'administrador'); // o el rol que corresponda
@@ -34,25 +35,23 @@ $datosPeticion = ($metodoHttp === 'GET') ? $_GET : $_POST;
 $operacion = $datosPeticion['operacion'] ?? '';
 
 if (empty($operacion)) {
-    http_response_code(HttpCodigo::BAD_REQUEST->value);
-    echo json_encode(['estatus' => false, 'mensaje' => 'No se especificó la operación.']);
-    exit;
+    GestorTrafico::abortarConCifrado(
+        ['estatus' => false, 'mensaje' => 'No se especificó la operación.'], 
+        HttpCodigo::BAD_REQUEST->value
+    );
 }
 
-Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_GASTOS, $operacion);
+Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_GASTOS, $operacion, [], true);
 
 // ==================== REGLAS Y FIREWALL DE PROTOCOLO HTTP ====================
 $reglas = Gastos::obtenerReglas($operacion);
 $validador = new Validador();
 
 if (!$validador->validarMetodoHTTP($metodoHttp, $reglas)) {
-    http_response_code(HttpCodigo::METODO_NO_PERMITIDO->value);
-    echo json_encode([
-        'estatus' => false,
-        'errores' => $validador->obtenerErrores(),
-        'mensaje' => 'Protocolo HTTP denegado para esta operación.'
-    ]);
-    exit;
+    GestorTrafico::abortarConCifrado(
+        ['estatus' => false, 'mensaje' => 'Protocolo HTTP denegado.', 'errores' => $validador->obtenerErrores()],
+        HttpCodigo::METODO_NO_PERMITIDO->value
+    );
 }
 
 // ==================== VALIDACIÓN DE DATOS ====================
@@ -60,13 +59,10 @@ if (!empty($reglas)) {
     $validador->validarConjunto($datosPeticion, $reglas);
     if ($validador->tieneErrores()) {
         $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::BAD_REQUEST->value;
-        http_response_code($codigoHttp);
-        echo json_encode([
-            'estatus' => false,
-            'errores' => $validador->obtenerErrores(),
-            'mensaje' => 'Datos inválidos.'
-        ]);
-        exit;
+        GestorTrafico::abortarConCifrado(
+            ['estatus' => false, 'errores' => $validador->obtenerErrores(), 'mensaje' => 'Datos inválidos.'], 
+            $codigoHttp
+        );
     }
 }
 
@@ -187,7 +183,7 @@ try {
                     'errores' => $erroresDetalles, 
                     'mensaje' => 'Datos inválidos. El comprobante es requerido para pagos digitales.'
                 ]);
-                exit; 
+                break; 
             }
 
             $gastos->set_detalles($detalles);
@@ -236,7 +232,7 @@ try {
             if (!empty($erroresDetalles)) {
                 http_response_code(HttpCodigo::BAD_REQUEST->value);
                 echo json_encode(['estatus' => false, 'errores' => $erroresDetalles, 'mensaje' => 'Datos inválidos en los renglones del gasto.']);
-                exit; 
+                break; 
             }
 
             $auditor->capturarDatosAnteriores('consultar_gasto');
@@ -283,5 +279,4 @@ try {
     
     Bitacora::cerrarConexionBitacora();
     echo json_encode($respuesta);
-    exit;
 }

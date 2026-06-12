@@ -103,20 +103,19 @@ async function consultar() {
     };
     
     const formatoBotones = (cell) => {
-        const id = cell.getData().id_usuario;
         let html = `<div class="d-flex justify-content-center flex-wrap gap-2">
-            <button type="button" class="btn btn-primary btn-sm vista-previa" value="${id}" data-tooltip="true" title="Ver Mas">
+            <button type="button" class="btn btn-primary btn-sm vista-previa" data-tooltip="true" title="Ver Mas">
                 <i class="bi bi-eye"></i>
                 <span class="d-none d-lg-inline ms-2">Ver</span>
             </button>`;
         if (permisoModificar) {
-            html += `<button class="btn btn-success btn-sm modificar" value="${id}" data-tooltip="true" title="Modificar los detalles de este registro">
+            html += `<button class="btn btn-success btn-sm modificar" data-tooltip="true" title="Modificar los detalles de este registro">
                         <i class="bi bi-pencil"></i>
                         <span class="d-none d-lg-inline ms-2">Editar</span>
                     </button>`;
         }
         if (permisoEliminar) {
-            html += `<button class="btn btn-danger btn-sm eliminar" value="${id}" data-tooltip="true" title="Quitar este elemento del sistema">
+            html += `<button class="btn btn-danger btn-sm eliminar" data-tooltip="true" title="Quitar este elemento del sistema">
                         <i class="bi bi-trash"></i>
                         <span class="d-none d-lg-inline ms-2">Borrar</span>
                     </button>`;
@@ -143,11 +142,11 @@ async function consultar() {
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
-                if (btn.classList.contains('vista-previa')) {
-                    mostrarVistaPrevia(cell.getData());
-                }
-                if (btn.classList.contains('modificar')) preparar_formulario({ target: btn });
-                if (btn.classList.contains('eliminar')) eventoEliminar({ target: btn });
+                const id = cell.getData().id_usuario;
+
+                if (btn.classList.contains('vista-previa')) mostrarVistaPrevia(cell.getData());
+                if (btn.classList.contains('modificar')) prepararFormulario(id);
+                if (btn.classList.contains('eliminar')) confirmarEliminar(id);
             }
         }       
     ];
@@ -196,9 +195,8 @@ async function registrar() {
     });
 }
 
-async function preparar_formulario(e) {
+async function prepararFormulario(id) {
     let datos = new FormData();
-    let id = e.target.value || e.target.parentElement.value; 
     
     datos.append("id_usuario", id);
     datos.append('operacion', 'consultar_usuario');
@@ -254,20 +252,13 @@ async function modificar(id) {
     });
 }
 
-function eventoEliminar(e){
-    let id = e.target.value || e.target.parentElement.value;
-
-    Swal.fire({
-        title: "¿Estás seguro?",
-        text: "¿Está seguro que desea eliminar este Usuario?",
-        showCancelButton: true,
-        confirmButtonText: "Sí, Eliminar",
-        confirmButtonColor: "#e01d22",
-        cancelButtonText: "Cancelar",
-        icon: "warning"
-    }).then((resultado) => {
-        if (resultado.isConfirmed) eliminar(id);                
-    });
+function confirmarEliminar(id) {
+    Alertas.confirmarAccion(
+        "¿Eliminar Usuario?",
+        "Esta acción no se puede deshacer.",
+        "error",
+        () => { eliminar(id); }
+    );
 }
 
 async function eliminar(id) {

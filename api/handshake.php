@@ -2,6 +2,7 @@
 use haydee\enums\HttpCodigo;
 use haydee\ayuda\Validador;
 use haydee\modelo\SeguridadIP;
+use haydee\servicios\GestorTrafico;
 
 // ==================== DETECCIÓN DE PROTOCOLO Y PAYLOAD ====================
 $metodoHttp = $_SERVER['REQUEST_METHOD'];
@@ -23,9 +24,10 @@ $reglas = [
 $validador = new Validador();
 
 if (!$validador->validarMetodoHTTP($metodoHttp, $reglas)) {
-    http_response_code(HttpCodigo::METODO_NO_PERMITIDO->value);
-    echo json_encode(['estatus' => false, 'mensaje' => 'Método HTTP no soportado. Use GET para esta operación.']);
-    exit;
+    GestorTrafico::abortarConCifrado(
+        ['estatus' => false, 'mensaje' => 'Protocolo HTTP denegado.', 'errores' => $validador->obtenerErrores()],
+        HttpCodigo::METODO_NO_PERMITIDO->value
+    );
 }
 
 // ==================== PROCESAR OPERACIÓN (FLUJO LINEAL) ====================
@@ -91,5 +93,4 @@ try {
     }
     
     echo json_encode($respuesta);
-    exit;
 }

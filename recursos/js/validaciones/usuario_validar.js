@@ -114,27 +114,20 @@ document.addEventListener("DOMContentLoaded", function() {
         let accion = (this.hasAttribute("modificar")) ? "modificar" : "Registrar";      
         
         if(await validarEnvio(accion) === true){
-            Swal.fire({
-                title: "¿Estás seguro?",
-                text: `¿Está seguro que desea ${accion} este usuario?`,
-                showCancelButton: true,
-                confirmButtonText: "Sí, " + accion,
-                confirmButtonColor: "#1b8a40",
-                cancelButtonText: "Cancelar",
-                icon: "warning"
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    envio(accion);                      
+            Alertas.confirmarAccion(
+                "Confirmar Operación",
+                `¿Está seguro que desea ${accion.toLowerCase()} este usuario?`,
+                "question", 
+                () => {
+                    envio(accion);
                     correo_an = null;
                 }
-            });
+            );
         }   
     });
 });
 
-// ============================================
 // FUNCIONES DE VALIDACIÓN GENERALES
-// ============================================
 async function validarEnvio(accion = "Registrar"){  
     
     // Validaciones básicas usando el helper

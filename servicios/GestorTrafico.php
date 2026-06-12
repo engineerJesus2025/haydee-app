@@ -137,4 +137,20 @@ class GestorTrafico {
             }
         }
     }
+
+    /**
+     * Aborta la ejecución de la API de forma segura, garantizando 
+     * que el mensaje de error viaje a través del túnel criptográfico.
+     */
+    public static function abortarConCifrado(array $respuesta, int $codigoHttp = 400) {
+        http_response_code($codigoHttp);
+        $jsonRespuesta = json_encode($respuesta);
+        
+        // Forzamos la intercepción y cifrado del error
+        echo self::interceptarSalida($jsonRespuesta);
+        
+        // Limpiamos rastros en memoria/disco antes de matar el proceso
+        self::limpiarArchivosTemporales();
+        exit;
+    }
 }

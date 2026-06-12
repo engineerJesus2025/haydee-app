@@ -12,6 +12,7 @@ use haydee\modelo\CajaChica;
 use haydee\enums\Accion;
 use haydee\enums\Modulo;
 use Firebase\JWT\JWT;
+use haydee\servicios\GestorTrafico;
 
 class Sesiones
 {
@@ -40,10 +41,7 @@ class Sesiones
         // Verificar año fiscal y caja (proximamente proceso automatico -_-)
         try {
             $anioFiscalModel = new AnioFiscal();
-            $anioFiscalModel->realizar_consulta('verificar_anio_fiscal');
-
-            $caja = new CajaChica();
-            $caja->realizar_consulta('verificar_caja_mes');
+            $anioFiscalModel->realizar_consulta('gestionar_periodos');
         } finally {
             $anioFiscalModel->cerrar();
         }
@@ -77,26 +75,38 @@ class Sesiones
     /**
      * Valida permisos, inundación y devuelve la identidad estructurada para las APIs REST (JWT).
      */
-    public static function autorizarAccesoAPI(?Modulo $modulo = null, ?Accion $permiso = null, $metodos = ['GET', 'POST', 'PUT', 'DELETE'])
+    public static function autorizarAccesoAPI(?Modulo $modulo = null, ?Accion $permiso = null, $metodos = ['GET', 'POST', 'PUT', 'DELETE'], $esApi = true)
     {
         // Capa de Protocolo
-        self::validarMetodoHTTP($metodos);
+        self::validarMetodoHTTP($metodos, $esApi);
 
         // Capa de Identidad
         // Obtenemos el usuario desde el GestorTrafico (que a su vez llamó a validarAutenticacionJWT)
         $usuario = GestorTrafico::$usuarioLogueado;
         if (!$usuario) {
-            http_response_code(HttpCodigo::NO_AUTORIZADO->value);
-            echo json_encode(['estatus' => false, 'mensaje' => 'Identidad no verificada.']);
-            exit;
+            $resultado = ['estatus' => false, 'mensaje' => 'Identidad no verificada.'];
+            $codigoHttp = HttpCodigo::NO_AUTORIZADO->value;
+            if ($esApi) {
+                GestorTrafico::abortarConCifrado($resultado, $codigoHttp);
+            } else {
+                http_response_code($codigoHttp);
+                echo json_encode($resultado);
+                exit;
+            }
         }
 
         // Capa de Autorización (Permisos)
         if ($modulo !== null && $permiso !== null) {
             if (!self::tienePermiso($modulo, $permiso)) {
-                http_response_code(HttpCodigo::PROHIBIDO->value);
-                echo json_encode(['estatus' => false, 'mensaje' => 'Acceso denegado: No tienes permisos para este módulo.']);
-                exit;
+                $resultado = ['estatus' => false, 'mensaje' => 'Acceso denegado: No tienes permisos para este módulo.'];
+                $codigoHttp = HttpCodigo::PROHIBIDO->value;
+                if ($esApi) {
+                    GestorTrafico::abortarConCifrado($resultado, $codigoHttp);
+                } else {
+                    http_response_code($codigoHttp);
+                    echo json_encode($resultado);
+                    exit;
+                }
             }
         }
 
@@ -108,7 +118,7 @@ class Sesiones
         $idTemporal = $_SESSION["id_usuario"] ?? null;
         $_SESSION["id_usuario"] = $usuario['id_usuario'];
         
-        self::verificarInundacion();
+        self::verificarInundacion($esApi);
         
         if ($idTemporal === null) {
             unset($_SESSION["id_usuario"]);
@@ -283,7 +293,7 @@ class Sesiones
      * Evalua el nombre de la operacion para requerir el permiso adecuado automaticamente.
      * Si no tiene permisos, devuelve un JSON con estatus false y termina la ejecuciin.
      */
-    public static function verificarPermisoAccion(Modulo $modulo, $operacion, $mapaExtra = [])
+    public static function verificarPermisoAccion(Modulo $modulo, $operacion, $mapaExtra = [], $esApi = false)
     {
         $permisoRequerido = null;
         $operacionNormalizada = strtolower($operacion);
@@ -302,30 +312,36 @@ class Sesiones
 
         if ($permisoRequerido !== null) {
             if (!self::tienePermiso($modulo, $permisoRequerido)) {
-                http_response_code(HttpCodigo::PROHIBIDO->value); 
-                header('Content-Type: application/json');
-                echo json_encode([
-                    'estatus' => false, 
-                    'mensaje' => 'No tiene permisos suficientes para realizar esta acción.'
-                ]);
-                exit;
+                $mensaje = 'No tiene permisos suficientes para realizar esta acción.';
+                
+                if ($esApi) {
+                    GestorTrafico::abortarConCifrado(['estatus' => false, 'mensaje' => $mensaje], HttpCodigo::PROHIBIDO->value);
+                } else {
+                    http_response_code(HttpCodigo::PROHIBIDO->value); 
+                    header('Content-Type: application/json');
+                    echo json_encode(['estatus' => false, 'mensaje' => $mensaje]);
+                    exit;
+                }
             }
         }
     }
 
 
-    public static function validarMetodoHTTP($metodosPermitidos = ['GET', 'POST'])
+    public static function validarMetodoHTTP($metodosPermitidos = ['GET', 'POST'], $esApi = false)
     {
         $metodoActual = $_SERVER['REQUEST_METHOD'];
         if (!in_array($metodoActual, $metodosPermitidos)) {
-            http_response_code(HttpCodigo::METODO_NO_PERMITIDO->value);
             header('Allow: ' . implode(', ', $metodosPermitidos));
-            header('Content-Type: application/json');
-            echo json_encode([
-                'estatus' => false, 
-                'mensaje' => "El metodo $metodoActual no esta permitido para este recurso."
-            ]);
-            exit;
+            $resultado = ['estatus' => false, 'mensaje' => "El metodo $metodoActual no esta permitido para este recurso."];
+            $codigoHttp = HttpCodigo::METODO_NO_PERMITIDO->value;
+            if ($esApi) {
+                GestorTrafico::abortarConCifrado($resultado, $codigoHttp);
+            } else {
+                http_response_code($codigoHttp);
+                header('Content-Type: application/json');
+                echo json_encode($resultado);
+                exit;
+            }
         }
     }
 
@@ -365,7 +381,7 @@ class Sesiones
      * Previene que un usuario autenticado sature el sistema con peticiones masivas (Anti-DoS).
      * Permite un máximo de 60 peticiones por minuto por usuario.
      */
-    public static function verificarInundacion()
+    public static function verificarInundacion($esApi = false)
     {
         if (!isset($_SESSION["id_usuario"])) return; 
 
@@ -381,13 +397,18 @@ class Sesiones
             $_SESSION['flood_control'][$idUsuario]['peticiones']++;
             $tiempoTranscurrido = time() - $_SESSION['flood_control'][$idUsuario]['inicio'];
 
-            // USAMOS LAS CONSTANTES DE CLASE
             if ($tiempoTranscurrido < self::VENTANA_TIEMPO_SEGUNDOS) {
                 if ($_SESSION['flood_control'][$idUsuario]['peticiones'] > self::MAX_PETICIONES_MINUTO) {
-                    http_response_code(HttpCodigo::DEMASIADAS_PETICIONES->value); 
-                    header('Content-Type: application/json');
-                    echo json_encode(['estatus' => false, 'mensaje' => 'Se ha detectado actividad inusual. Ha superado el limite de operaciones por minuto. Por favor, espere.']);
-                    exit;
+                    $resultado = ["estatus" => false, "mensaje" => 'Se ha detectado actividad inusual. Ha superado el limite de operaciones por minuto. Por favor, espere.'];
+                    $codigoHttp = HttpCodigo::DEMASIADAS_PETICIONES->value;
+                    if ($esApi) {
+                        GestorTrafico::abortarConCifrado($resultado, $codigoHttp);
+                    } else {
+                        http_response_code($codigoHttp);
+                        header('Content-Type: application/json');
+                        echo json_encode($resultado);
+                        exit;
+                    }
                 }
             } else {
                 $_SESSION['flood_control'][$idUsuario] = ['peticiones' => 1, 'inicio' => time()];
@@ -406,9 +427,10 @@ class Sesiones
         $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? $headers['Authorization'] ?? $headers['authorization'] ?? '';
 
         if (empty($authHeader) || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
-            http_response_code(HttpCodigo::NO_AUTORIZADO->value);
-            echo json_encode(["estatus" => false, "mensaje" => "Falta el token de seguridad."]);
-            exit;
+            $resultado = ["estatus" => false, "mensaje" => "Falta el token de seguridad."];
+            $codigoHttp = HttpCodigo::NO_AUTORIZADO->value;
+            GestorTrafico::abortarConCifrado($resultado, $codigoHttp);
+            
         }
 
         try {
@@ -425,10 +447,9 @@ class Sesiones
             return $usuario;
 
         } catch (\Exception $e) {
-            // Si el token expiró o es inválido, reventamos aquí.
-            http_response_code(HttpCodigo::NO_AUTORIZADO->value);
-            echo json_encode(["estatus" => false, "mensaje" => "Sesión inválida o expirada."]);
-            exit; 
+            $resultado = ["estatus" => false, "mensaje" => "Sesión inválida o expirada."];
+            $codigoHttp = HttpCodigo::NO_AUTORIZADO->value;
+            GestorTrafico::abortarConCifrado($resultado, $codigoHttp);
         }
     }
 

@@ -52,16 +52,13 @@
     <div class="modal fade" id="modal_vista_previa" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-scrollable">
             <div class="modal-content border-0 shadow-lg">
-                
                 <div class="modal-header bg-primary text-white border-bottom-0">
                     <h5 class="modal-title fw-bold">
                         <i class="bi bi-receipt me-2"></i>Detalles del Recibo de Pago
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
-                
                 <div class="modal-body rounded-bottom vp-body p-4">
-                    
                     <div class="vp-card p-3 mb-4 rounded border shadow-sm card-item">
                         <div class="row text-center g-3 align-items-center">
                             
@@ -94,23 +91,20 @@
                         <p id="vp_observacion" class="mb-0 fst-italic" style="font-size: 0.9rem;">---</p>
                     </div>
 
-                    <div class="card border-0 shadow-sm vp-card">
-                        <div class="vp-card-header border-bottom py-3 vp-border-color">
-                            <h6 class="mb-0 fw-bold text-muted"><i class="bi bi-list-check me-2"></i>Desglose de Transferencias / Depósitos</h6>
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header border-bottom py-3">
+                            <h6 class="mb-0 fw-bold"><i class="bi bi-list-check me-2"></i>Desglose de Pagos / Facturas</h6>
                         </div>
                         <div class="card-body p-0">
-                            <div id="tabla_detalles_pagos" class="tabla-vista-previa m-0 border-0 rounded-bottom"></div>
+                            <div id="tabla_detalles_pagos" class="tabla-sistema-haydee m-0 border-0 rounded-bottom"></div>
                         </div>
                     </div>
-
-                </div>
-                
-                <div class="modal-footer vp-card border-top justify-content-center vp-border-color">
-                    <button class="btn btn-soft-secondary px-4" data-bs-dismiss="modal">
+                </div>            
+                <div class="modal-footer justify-content-end">
+                    <button type="button" class="btn btn-soft-secondary px-4" data-bs-dismiss="modal">
                         <i class="bi bi-x-circle me-2"></i> Cerrar
                     </button>
                 </div>
-                
             </div>
         </div>
     </div>

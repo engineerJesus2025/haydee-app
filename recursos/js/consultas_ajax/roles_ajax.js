@@ -18,9 +18,7 @@ const permisoEliminar = window.PermisosModulo?.eliminar || false;
 
 document.addEventListener('DOMContentLoaded', consultar);
 
-// ============================================
 // CONSULTA Y DATATABLE
-// ============================================
 async function consultar() {
     const contenedor = document.querySelector(".tabla-sistema-haydee");
     if (!contenedor) return;
@@ -36,26 +34,24 @@ async function consultar() {
     };
 
     const formatoBotones = (cell) => {
-        const id = cell.getData().id_rol;
-        
         // Protección especial para el Rol 1 (Administrador Global)
         if (id == 1) {
             return ComponentesUI.crearSoftBadge('secondary', 'bi-lock-fill', 'No Modificable');
         }
 
         let html = `<div class="d-flex justify-content-center flex-wrap gap-2">
-            <button type="button" class="btn btn-primary btn-sm vista-previa" value="${id}" data-tooltip="true" title="Ver Mas">
+            <button type="button" class="btn btn-primary btn-sm vista-previa" data-tooltip="true" title="Ver Mas">
                 <i class="bi bi-eye"></i>
                 <span class="d-none d-lg-inline ms-2">Ver</span>
             </button>`;
         if (permisoModificar) {
-            html += `<button class="btn btn-success btn-sm modificar" value="${id}" data-tooltip="true" title="Modificar los detalles de este registro">
+            html += `<button class="btn btn-success btn-sm modificar" data-tooltip="true" title="Modificar los detalles de este registro">
                         <i class="bi bi-pencil"></i>
                         <span class="d-none d-lg-inline ms-2">Editar</span>
                     </button>`;
         }
         if (permisoEliminar) {
-            html += `<button class="btn btn-danger btn-sm eliminar" value="${id}" data-tooltip="true" title="Quitar este elemento del sistema">
+            html += `<button class="btn btn-danger btn-sm eliminar" data-tooltip="true" title="Quitar este elemento del sistema">
                         <i class="bi bi-trash"></i>
                         <span class="d-none d-lg-inline ms-2">Borrar</span>
                     </button>`;
@@ -76,17 +72,12 @@ async function consultar() {
                 if (cell.getData().id_rol == 1) return;
 
                 const btn = e.target.closest('button');
-                const mockEvent = { currentTarget: btn };
+                if (!btn) return;
+                const id = cell.getData().id_rol;
                 
-                if (btn.classList.contains('vista-previa')) {
-                    mostrarVistaPrevia(cell.getData());
-                }
-                
-                if (btn.classList.contains('modificar')) prepararFormulario(mockEvent);
-                if (btn.classList.contains('eliminar')) {
-                    Swal.fire({ title: '¿Estás seguro?', text: 'Esta acción no se puede deshacer.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e01d22', confirmButtonText: 'Eliminar' })
-                    .then(r => r.isConfirmed && eliminar(btn.value));
-                }
+                if (btn.classList.contains('vista-previa')) mostrarVistaPrevia(cell.getData());
+                if (btn.classList.contains('modificar')) prepararFormulario(id);
+                if (btn.classList.contains('eliminar')) confirmarEliminar(id);
             }
         }
     ];
@@ -263,6 +254,15 @@ async function modificar() {
     });
 }
 
+function confirmarEliminar(id) {
+    Alertas.confirmarAccion(
+        "¿Eliminar Rol?",
+        "Esta acción no se puede deshacer.",
+        "error",
+        () => { eliminar(id); }
+    );
+}
+
 async function eliminar(id) {
     const formData = new FormData();
     formData.append('operacion', 'eliminar_rol');
@@ -274,8 +274,7 @@ async function eliminar(id) {
     });
 }
 
-async function prepararFormulario(e) {
-    const id = e.currentTarget.closest("button").value;
+async function prepararFormulario(id) {
     id_modificar = id;
 
     const formData = new FormData();
@@ -362,7 +361,7 @@ document.getElementById('modal_roles').addEventListener('hide.bs.modal', () => {
     document.querySelectorAll('.is-valid, .is-invalid').forEach(el => el.classList.remove('is-valid', 'is-invalid'));
     document.getElementById('titulo_modal').textContent = 'Registrar Rol';
     document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-house-door");
-    // form.querySelector('#boton_formulario').textContent = 'Guardar';
+    // document.querySelector('#boton_formulario').textContent = 'Guardar';
     document.getElementById('texto_boton_formulario').textContent = 'Guardar Rol';
     document.querySelector("#boton_formulario").removeAttribute('modificar'); // Limpiamos el atributo modificar
     

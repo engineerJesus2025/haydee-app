@@ -7,19 +7,20 @@ use haydee\enums\Modulo;
 use haydee\enums\Accion;
 use haydee\servicios\GestorAuditoria;
 use haydee\modelo\Bitacora;
+use haydee\servicios\GestorTrafico;
 
 // ==================== IDENTIDAD Y PERMISOS ====================
 // El perfil personal no requiere un módulo ni acción específica para ser consultado
-$identidad = Sesiones::autorizarAccesoAPI(null, null, ['GET', 'POST', 'PUT']);
+$identidad = Sesiones::autorizarAccesoAPI(null, null, ['GET', 'POST', 'PUT'], true);
 
 $idUsuarioAutenticado = $identidad['id_usuario'] ?? null;
 $rolUsuario = strtolower($identidad['rol'] ?? '');
 $correoUsuario = $identidad['correo'] ?? '';
 
 if (empty($idUsuarioAutenticado)) {
-    http_response_code(HttpCodigo::NO_AUTORIZADO->value);
-    echo json_encode(['estatus' => false, 'mensaje' => 'Sesión inválida o expirada.']);
-    exit;
+    $resultado = ["estatus" => false, "mensaje" =>  'Sesión inválida o expirada.'];
+    $codigoHttp = HttpCodigo::NO_AUTORIZADO->value;
+    GestorTrafico::abortarConCifrado($resultado, $codigoHttp);
 }
 
 // ==================== DETECCIÓN DE PROTOCOLO Y PAYLOAD ====================
@@ -35,9 +36,10 @@ $datosPeticion = ($metodoHttp === 'GET') ? $_GET : $_POST;
 $operacion = $datosPeticion['operacion'] ?? '';
 
 if (empty($operacion)) {
-    http_response_code(HttpCodigo::BAD_REQUEST->value);
-    echo json_encode(['estatus' => false, 'mensaje' => 'No se especificó la operación.']);
-    exit;
+    GestorTrafico::abortarConCifrado(
+        ['estatus' => false, 'mensaje' => 'No se especificó la operación.'], 
+        HttpCodigo::BAD_REQUEST->value
+    );
 }
 
 // ==================== REGLAS Y FIREWALL DE PROTOCOLO HTTP ====================
@@ -46,29 +48,22 @@ $validador = new Validador();
 
 // Llamada unificada directa (el validador ya sabe qué hacer si $reglas está vacío)
 if (!$validador->validarMetodoHTTP($metodoHttp, $reglas)) {
-    http_response_code(HttpCodigo::METODO_NO_PERMITIDO->value);
-    echo json_encode([
-        'estatus' => false,
-        'errores' => $validador->obtenerErrores(),
-        'mensaje' => 'Protocolo HTTP denegado para esta operación.'
-    ]);
-    exit;
+    GestorTrafico::abortarConCifrado(
+        ['estatus' => false, 'mensaje' => 'Protocolo HTTP denegado.', 'errores' => $validador->obtenerErrores()],
+        HttpCodigo::METODO_NO_PERMITIDO->value
+    );
 }
 
 // ==================== VALIDACIÓN DE DATOS ====================
 if (!empty($reglas)) {
-    // Contexto estratégico para omitir la validación UNIQUE sobre el correo del propio usuario
     $contexto = ['exclude_id' => $idUsuarioAutenticado]; 
     $validador->validarConjunto($datosPeticion, $reglas, $contexto);
     if ($validador->tieneErrores()) {
         $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::BAD_REQUEST->value;
-        http_response_code($codigoHttp);
-        echo json_encode([
-            'estatus' => false,
-            'errores' => $validador->obtenerErrores(),
-            'mensaje' => 'Datos inválidos.'
-        ]);
-        exit;
+        GestorTrafico::abortarConCifrado(
+            ['estatus' => false, 'errores' => $validador->obtenerErrores(), 'mensaje' => 'Datos inválidos.'], 
+            $codigoHttp
+        );
     }
 }
 
@@ -130,5 +125,4 @@ try {
     if ($usuario) $usuario->cerrar();
     Bitacora::cerrarConexionBitacora();
     echo json_encode($respuesta);
-    exit;
 }

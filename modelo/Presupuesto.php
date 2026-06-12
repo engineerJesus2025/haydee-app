@@ -8,7 +8,11 @@ use haydee\enums\TipoBaseDatos;
 class Presupuesto extends Conexion
 {
     private const ANIO_MINIMO_PERMITIDO = 2000;
-    private const ANIO_MAXIMO_PERMITIDO = 2100;    
+    private const ANIO_MAXIMO_PERMITIDO = 2100;
+
+    private const INTERES_MORA_DEFECTO = 10;
+    private const LIMITE_DIAS_MENSUALIDAD = 15;
+    private const ESTADO_ACTIVO = 1;
 
     // Tabla: presupuesto (Cabecera)
     private $id_presupuesto;
@@ -162,9 +166,10 @@ class Presupuesto extends Conexion
 
         try {
             $con = $this->get_conex(TipoBaseDatos::NEGOCIO);
+            $con->exec("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ");
             $con->beginTransaction();
 
-            // Insertar cabecera presupuesto
+            // Insertar Cabecera
             $sqlHead = "INSERT INTO presupuesto (fecha, cuota_reserva, observacion, tasa_dolar, activo) 
                         VALUES (:fecha, :cuota, :obs, :tasa, 1)";
             $stmtH = $con->prepare($sqlHead);
@@ -176,7 +181,7 @@ class Presupuesto extends Conexion
             ]);
             $id_presupuesto = $con->lastInsertId();
 
-            // Insertar detalles y acumular monto total
+            // Insertar Detalles
             $total_monto = floatval($this->cuota_reserva);
             $ids_detalles = [];
             $sqlDet = "INSERT INTO detalles_presupuesto (monto, nombre_detalle, presupuesto_id, tipo_gasto_id) 
@@ -184,9 +189,6 @@ class Presupuesto extends Conexion
             $stmtD = $con->prepare($sqlDet);
 
             foreach ($this->detalles_temp as $det) {
-                if (!isset($det['monto'], $det['nombre'], $det['tipo_gasto_id'])) {
-                    throw new \Exception('Detalle incompleto');
-                }
                 $stmtD->execute([
                     ':monto'   => $det['monto'],
                     ':nombre'  => $det['nombre'],
@@ -197,16 +199,8 @@ class Presupuesto extends Conexion
                 $total_monto += floatval($det['monto']);
             }
 
-            // Obtener apartamentos activos
-            $stmtApt = $con->query("SELECT id_apartamento, porcentaje_participacion FROM apartamentos WHERE activo = 1");
-            $apartamentos = $stmtApt->fetchAll(PDO::FETCH_ASSOC);
-            if (empty($apartamentos)) {
-                throw new \Exception('No hay apartamentos activos para generar mensualidades');
-            }
-
-            // Gestionar el Periodo de Mensualidad
+            // Gestionar Periodo
             list($anio, $mes) = explode('-', $this->fecha);
-            
             $stmtBuscaPer = $con->prepare("SELECT id_periodo FROM periodos_mensualidad WHERE mes = :mes AND anio = :anio LIMIT 1");
             $stmtBuscaPer->execute([':mes' => $mes, ':anio' => $anio]);
             $periodo_id = $stmtBuscaPer->fetchColumn();
@@ -217,53 +211,24 @@ class Presupuesto extends Conexion
                 $periodo_id = $con->lastInsertId();
             }
 
-            // Generar mensualidades con UPSERT para respetar el índice único
-            $sqlMens = "INSERT INTO mensualidad (monto, periodo_id, apartamento_id, porcentaje_interes, limite_mensualidad, activo) 
-                        VALUES (:monto, :periodo_id, :apt_id, 10, 15, 1)
-                        ON DUPLICATE KEY UPDATE 
-                            monto = VALUES(monto), 
-                            activo = 1";
-            $stmtMens = $con->prepare($sqlMens);
-
-            // Preparar limpieza y re-inserción de tabla puente
-            $stmtGetId = $con->prepare("SELECT id_mensualidad FROM mensualidad WHERE periodo_id = :periodo_id AND apartamento_id = :apt_id");
-            $stmtDelPuente = $con->prepare("DELETE FROM presupuesto_mensualidad WHERE mensualidad_id = :m_id");
-            $sqlPuente = "INSERT INTO presupuesto_mensualidad (mensualidad_id, detalle_presupuesto_id) VALUES (:m_id, :dp_id)";
-            $stmtPuente = $con->prepare($sqlPuente);
-
-            foreach ($apartamentos as $apt) {
-                $monto_apt = round(($total_monto * $apt['porcentaje_participacion']) / 100, 2);
-                
-                $stmtMens->execute([
-                    ':monto'  => $monto_apt,
-                    ':periodo_id' => $periodo_id,
-                    ':apt_id' => $apt['id_apartamento']
-                ]);
-                
-                // Obtener ID real tras el UPSERT
-                $stmtGetId->execute([':periodo_id' => $periodo_id, ':apt_id' => $apt['id_apartamento']]);
-                $id_mensualidad = $stmtGetId->fetchColumn();
-
-                // Limpiar posibles vínculos viejos de esa mensualidad y agregar los nuevos
-                $stmtDelPuente->execute([':m_id' => $id_mensualidad]);
-                foreach ($ids_detalles as $id_det) {
-                    $stmtPuente->execute([':m_id' => $id_mensualidad, ':dp_id' => $id_det]);
-                }
-            }
+            // Sincronizar y generar cascada
+            $this->_sincronizar_mensualidades($con, $periodo_id, $total_monto, $ids_detalles);
 
             $con->commit();
             return ['estatus' => true, 'mensaje' => 'Presupuesto y mensualidades registrados con éxito', 'id' => $id_presupuesto];
         } catch (\Exception $e) {
-            $con->rollBack();
+            if (isset($con) && $con->inTransaction()) {
+                $con->rollBack();
+            }
             error_log("Error en _registrar_presupuesto: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al registrar: ' . $e->getMessage()];
+            return ['estatus' => false, 'mensaje' => 'Error al procesar el presupuesto.'];
         }
     }
 
     /**
      * Edición de presupuesto: actualiza cabecera y reemplaza detalles.
      * No regenera mensualidades.
-     // SE USA EN EL MODULO
+     * SE USA EN EL MODULO
      */
     private function _modificar_presupuesto()
     {
@@ -314,43 +279,69 @@ class Presupuesto extends Conexion
             $periodo_id = $stmtBuscaPer->fetchColumn();
 
             if ($periodo_id) {
-                // Obtener apartamentos y preparar sentencias
-                $stmtApt = $con->query("SELECT id_apartamento, porcentaje_participacion FROM apartamentos WHERE activo = 1");
-                $apartamentos = $stmtApt->fetchAll(PDO::FETCH_ASSOC);
-                
-                $sqlMens = "INSERT INTO mensualidad (monto, periodo_id, apartamento_id, porcentaje_interes, limite_mensualidad, activo) VALUES (:monto, :periodo_id, :apt_id, 10, 15, 1) ON DUPLICATE KEY UPDATE monto = VALUES(monto), activo = 1";
-                $stmtUpdateMens = $con->prepare($sqlMens);
-                $stmtGetId = $con->prepare("SELECT id_mensualidad FROM mensualidad WHERE periodo_id = :periodo_id AND apartamento_id = :apt_id");
-                $stmtPuente = $con->prepare("INSERT INTO presupuesto_mensualidad (mensualidad_id, detalle_presupuesto_id) VALUES (:m_id, :dp_id)");
-                
-                foreach ($apartamentos as $apt) {
-                    // Recalcular la nueva deuda para este apartamento
-                    $monto_apt = round(($total_monto * $apt['porcentaje_participacion']) / 100, 2);
-                    
-                    $stmtUpdateMens->execute([
-                        ':monto' => $monto_apt,
-                        ':periodo_id' => $periodo_id,
-                        ':apt_id' => $apt['id_apartamento']
-                    ]);
-                    
-                    // Volver a vincular los detalles del presupuesto al recibo del apartamento
-                    $stmtGetId->execute([':periodo_id' => $periodo_id, ':apt_id' => $apt['id_apartamento']]);
-                    $id_mensualidad = $stmtGetId->fetchColumn();
-                    
-                    if ($id_mensualidad) {
-                        foreach ($ids_detalles as $id_det) {
-                            $stmtPuente->execute([':m_id' => $id_mensualidad, ':dp_id' => $id_det]);
-                        }
-                    }
-                }
+                $this->_sincronizar_mensualidades($con, $periodo_id, $total_monto, $ids_detalles);
             }
 
             $con->commit();
             return ['estatus' => true, 'mensaje' => 'Presupuesto actualizado correctamente'];
         } catch (\Exception $e) {
-            $con->rollBack();
+            if (isset($con) && $con->inTransaction()) {
+                $con->rollBack();
+            }
             error_log("Error en _modificar: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al modificar: ' . $e->getMessage()];
+        }
+    }
+
+    /**
+     * Sincroniza el presupuesto con los recibos de los residentes.
+     * Calcula la cuota por apartamento y reconstruye la tabla puente.
+     * SE USA EN LOS METODOS PROPIOS DE LA CLASE
+     */
+    private function _sincronizar_mensualidades($con, $periodo_id, $total_monto, $ids_detalles)
+    {
+        $stmtApt = $con->query("SELECT id_apartamento, porcentaje_participacion FROM apartamentos WHERE activo = 1 FOR UPDATE");
+        $apartamentos = $stmtApt->fetchAll(PDO::FETCH_ASSOC);
+        
+        if (empty($apartamentos)) {
+            throw new \Exception('No hay apartamentos activos para generar mensualidades');
+        }
+
+        // UPSERT para las mensualidades
+       $sqlMens = "INSERT INTO mensualidad (monto, periodo_id, apartamento_id, porcentaje_interes, limite_mensualidad, activo) 
+                    VALUES (:monto, :periodo_id, :apt_id, " . self::INTERES_MORA_DEFECTO . ", " . self::LIMITE_DIAS_MENSUALIDAD . ", " . self::ESTADO_ACTIVO . ")
+                    ON DUPLICATE KEY UPDATE 
+                        monto = VALUES(monto), 
+                        activo = " . self::ESTADO_ACTIVO;
+        $stmtMens = $con->prepare($sqlMens);
+
+        $stmtGetId = $con->prepare("SELECT id_mensualidad FROM mensualidad WHERE periodo_id = :periodo_id AND apartamento_id = :apt_id");
+        $stmtDelPuente = $con->prepare("DELETE FROM presupuesto_mensualidad WHERE mensualidad_id = :m_id");
+        
+        // Inserción en la tabla puente
+        $sqlPuente = "INSERT INTO presupuesto_mensualidad (mensualidad_id, detalle_presupuesto_id) VALUES (:m_id, :dp_id)";
+        $stmtPuente = $con->prepare($sqlPuente);
+
+        foreach ($apartamentos as $apt) {
+            $monto_apt = round(($total_monto * $apt['porcentaje_participacion']) / 100, 2);
+            
+            $stmtMens->execute([
+                ':monto'  => $monto_apt,
+                ':periodo_id' => $periodo_id,
+                ':apt_id' => $apt['id_apartamento']
+            ]);
+            
+            // Obtener ID real
+            $stmtGetId->execute([':periodo_id' => $periodo_id, ':apt_id' => $apt['id_apartamento']]);
+            $id_mensualidad = $stmtGetId->fetchColumn();
+
+            // Limpiar y repoblar detalles (Tabla Puente)
+            if ($id_mensualidad) {
+                $stmtDelPuente->execute([':m_id' => $id_mensualidad]);
+                foreach ($ids_detalles as $id_det) {
+                    $stmtPuente->execute([':m_id' => $id_mensualidad, ':dp_id' => $id_det]);
+                }
+            }
         }
     }
 
@@ -402,7 +393,9 @@ class Presupuesto extends Conexion
             $con->commit();
             return ['estatus' => true, 'mensaje' => 'Presupuesto y recibos pendientes eliminados correctamente.'];
         } catch (\Exception $e) {
-            $con->rollBack();
+            if (isset($con) && $con->inTransaction()) {
+                $con->rollBack();
+            }
             error_log("Error en _eliminar_presupuesto: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => $e->getMessage()];
         }
@@ -460,13 +453,13 @@ class Presupuesto extends Conexion
     {
         try {
             $sql = "SELECT p.*, 
-                           (SELECT SUM(monto) FROM detalles_presupuesto WHERE presupuesto_id = p.id_presupuesto) as total_estimado,
-                           COUNT(dp.id_detalle_presupuesto) as cantidad_detalles
-                    FROM presupuesto p
-                    LEFT JOIN detalles_presupuesto dp ON p.id_presupuesto = dp.presupuesto_id
-                    WHERE p.activo = 1
-                    GROUP BY p.id_presupuesto
-                    ORDER BY p.fecha DESC";
+                       COALESCE(SUM(dp.monto), 0) as total_estimado,
+                       COUNT(dp.id_detalle_presupuesto) as cantidad_detalles
+                FROM presupuesto p
+                LEFT JOIN detalles_presupuesto dp ON p.id_presupuesto = dp.presupuesto_id
+                WHERE p.activo = " . self::ESTADO_ACTIVO . "
+                GROUP BY p.id_presupuesto
+                ORDER BY p.fecha DESC";
             $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute();
             return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
@@ -629,5 +622,34 @@ class Presupuesto extends Conexion
         }
     }
 
+    /**
+     * Consulta el estado real de ejecución del presupuesto (Presupuestado vs Gastado).
+     * para una tarjeta de resumen o gráficas analíticas. 
+     * PROXIMAMENTE (si me da el tiempo -_-)
+     */
+    private function _consultar_ejecucion_anual()
+    {
+        // Traemos el año actual por defecto, o el que se haya seteado en $this->fecha
+        $anioFiltro = $this->fecha ? date('Y', strtotime($this->fecha)) : date('Y');
+
+        $sql = "SELECT 
+                    partida,
+                    SUM(monto_presupuestado) as total_presupuestado,
+                    SUM(monto_ejecutado) as total_ejecutado,
+                    SUM(disponible) as total_disponible
+                FROM vw_ejecucion_presupuesto
+                WHERE anio_presupuesto = :anio
+                GROUP BY partida
+                ORDER BY total_presupuestado DESC";
+
+        try {
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+            $stmt->execute([':anio' => $anioFiltro]);
+            return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
+        } catch (PDOException $e) {
+            error_log("Error en _consultar_ejecucion_anual: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al calcular la ejecución presupuestaria'];
+        }
+    }
 
 }

@@ -13,4 +13,5 @@ define('RUTAS_API', [
     'logout' => 'cerrar_sesion_api.php',
     'handshake' => 'handshake.php',
     'refrescar' => 'refrescar_api.php',
+    'suscripcion_push' => 'suscripcion_push_movil_api.php',
 ]);

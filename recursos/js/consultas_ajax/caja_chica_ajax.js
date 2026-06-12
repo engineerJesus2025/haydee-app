@@ -211,10 +211,10 @@ async function consultarCajasChicas() {
 
 // Función que lee la memoria de Tabulator (Sin AJAX extra)
 function mostrarVistaPrevia(data) {
-    // Cálculos de Monto (Usando tu variable global tasa_dolar)
     let montoBs = parseFloat(data.monto);
-    let montoUsd = montoBs / tasa_dolar;
-    
+    const tasaVp = parseFloat(data.tasa_dolar) || parseFloat(tasa_dolar) || 1;
+    let montoUsd = montoBs / tasaVp;
+
     document.getElementById("vp_monto_bs").textContent = `${montoBs.toFixed(2)} Bs.`;
     document.getElementById("vp_monto_usd").textContent = `Ref: ${montoUsd.toFixed(2)} $`;
 
@@ -252,8 +252,10 @@ function inicializarTablaMovimientos() {
 
     const formatoFecha = (cell) => FormatoFechas.formatear(cell.getValue(), 'DD/MM/YYYY');
     const formatoMonto = (cell) => {
-        const row = cell.getData();
-        return `${parseFloat(row.monto).toFixed(2)} Bs. / ${(row.monto / tasa_dolar).toFixed(2)} $`;
+    const row = cell.getData();
+        // Usamos la tasa de la BD. Si no existe, recurre a la global o a 1
+        const tasaHistorica = parseFloat(row.tasa_dolar) || parseFloat(tasa_dolar) || 1;
+        return `${parseFloat(row.monto).toFixed(2)} Bs. / ${(row.monto / tasaHistorica).toFixed(2)} $`;
     };
     const formatoEstado = (cell) => {
         const config = obtenerConfigEstadoCaja(cell.getValue());
@@ -262,20 +264,19 @@ function inicializarTablaMovimientos() {
     }
     
     const formatoBotones = (cell) => {
-        const id = cell.getData().id_movimiento_caja;
         let html = `<div class="d-flex justify-content-center flex-wrap gap-2">
-            <button type="button" class="btn btn-primary btn-sm vista-previa" value="${id}" data-tooltip="true" title="Ver Mas">
+            <button type="button" class="btn btn-primary btn-sm vista-previa" data-tooltip="true" title="Ver Mas">
                 <i class="bi bi-eye"></i>
                 <span class="d-none d-lg-inline ms-2">Ver</span>
             </button>`;
         if (permisoModificar) {
-            html += `<button class="btn btn-success btn-sm modificar" value="${id}" data-tooltip="true" title="Modificar los detalles de este registro">
+            html += `<button class="btn btn-success btn-sm modificar" data-tooltip="true" title="Modificar los detalles de este registro">
                         <i class="bi bi-pencil"></i>
                         <span class="d-none d-lg-inline ms-2">Editar</span>
                     </button>`;
         }
         if (permisoEliminar) {
-            html += `<button class="btn btn-danger btn-sm eliminar" value="${id}" data-tooltip="true" title="Quitar este elemento del sistema">
+            html += `<button class="btn btn-danger btn-sm eliminar" data-tooltip="true" title="Quitar este elemento del sistema">
                         <i class="bi bi-trash"></i>
                         <span class="d-none d-lg-inline ms-2">Borrar</span>
                     </button>`;
@@ -296,13 +297,11 @@ function inicializarTablaMovimientos() {
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
-                const mockEvent = { target: btn };
-                if (btn.classList.contains('vista-previa')) {
-                    mostrarVistaPrevia(cell.getData());
-                }
-                
-                if (btn.classList.contains('modificar')) prepararFormulario(mockEvent);
-                if (btn.classList.contains('eliminar')) eventoEliminar(mockEvent);
+                const id = cell.getData().id_movimiento_caja;
+
+                if (btn.classList.contains('vista-previa')) mostrarVistaPrevia(cell.getData());
+                if (btn.classList.contains('modificar')) prepararFormulario(id);
+                if (btn.classList.contains('eliminar')) confirmarEliminar(id);
             }
         }
     ];
@@ -329,6 +328,7 @@ async function registrar() {
     let montoInput = document.getElementById("monto");
     let monto = (montoInput.getAttribute("monto") === "bs") ? montoInput.value : document.getElementById("monto_cambio").value;
     datos.append("monto", monto);
+    datos.append("tasa_dolar", tasa_dolar);
     datos.append("operacion", "registrar_movimiento");
 
     let respuesta = await Peticiones.enviar(datos);
@@ -340,9 +340,7 @@ async function registrar() {
 }
 
 // ========== PREPARAR FORMULARIO PARA EDICIÓN ==========
-async function prepararFormulario(e) {
-    let id = e.target.closest('button').value;
-
+async function prepararFormulario(id) {
     let datos = new FormData();
     datos.append("id_movimiento_caja", id);
     datos.append("operacion", "consultar_movimiento");
@@ -352,9 +350,11 @@ async function prepararFormulario(e) {
         let mov = respuestaServidor.datos;
         document.getElementById("fecha").value = mov.fecha;
         document.getElementById("concepto").value = mov.concepto;
-        // El monto se carga en Bs. (asumimos que la base guarda en Bs.)
         document.getElementById("monto").value = mov.monto;
-        document.getElementById("monto_cambio").value = (mov.monto / tasa_dolar).toFixed(2);
+
+        // Cálculo con tasa histórica del movimiento
+        const tasaMov = parseFloat(mov.tasa_dolar) || parseFloat(tasa_dolar) || 1;
+        document.getElementById("monto_cambio").value = (mov.monto / tasaMov).toFixed(2);
 
         if (permisoModificar != 1) {
             boton_formulario.setAttribute("hide", true);
@@ -384,7 +384,7 @@ async function modificar(id) {
     let montoInput = document.getElementById("monto");
     let monto = (montoInput.getAttribute("monto") === "bs") ? montoInput.value : document.getElementById("monto_cambio").value;
     datos.append("monto", monto);
-
+    datos.append("tasa_dolar", tasa_dolar);
     datos.append("operacion", "modificar_movimiento"); 
 
     let respuesta = await Peticiones.enviar(datos);
@@ -395,20 +395,13 @@ async function modificar(id) {
 }
 
 // ========== ELIMINAR GASTO ==========
-function eventoEliminar(e) {
-    let id = e.target.closest('button').value;
-
-    Swal.fire({
-        title: "¿Estás seguro?",
-        text: "¿Está seguro que desea eliminar este gasto?",
-        showCancelButton: true,
-        confirmButtonText: "Sí, Eliminar",
-        confirmButtonColor: "#e01d22",
-        cancelButtonText: "Cancelar",
-        icon: "warning"
-    }).then(result => {
-        if (result.isConfirmed) eliminar(id);
-    });
+function confirmarEliminar(id) {
+    Alertas.confirmarAccion(
+        "¿Eliminar Movimiento?",
+        "Esta acción no se puede deshacer.",
+        "error",
+        () => { eliminar(id); }
+    );
 }
 
 async function eliminar(id) {

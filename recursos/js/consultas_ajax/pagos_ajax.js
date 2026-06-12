@@ -1,6 +1,4 @@
-// ============================================================
 // VARIABLES GLOBALES
-// ============================================================
 let tabla_pagos;
 let modal = new bootstrap.Modal(document.getElementById("modal_pagos"), { focus: false });
 let modalVistaPrevia = new bootstrap.Modal(document.getElementById("modal_vista_previa"));
@@ -11,9 +9,7 @@ let tasa_dolar = parseFloat(localStorage.getItem("tasa_dolar") || 1).toFixed(2);
 const permisoModificar = window.PermisosModulo?.modificar || false;
 const permisoEliminar = window.PermisosModulo?.eliminar || false;
 
-// ============================================================
 // INICIALIZACIÓN
-// ============================================================
 document.addEventListener("DOMContentLoaded", () => {
     consultar();
 
@@ -45,12 +41,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Delegación de eventos para mostrar/ocultar campos según Método de Pago
     formulario_usar.addEventListener("change", mostrarCamposMetodoPago);
-
 });
 
-// ============================================================
 // FUNCIONES AUXILIARES DE UI
-// ============================================================
 function resetModalPagos() {
     formulario_usar.reset();
     boton_formulario.removeAttribute("modificar");
@@ -151,8 +144,6 @@ function actualizarVisibilidadMetodo(selectElement) {
 
 /**
  * Procesa el estado de un pago y devuelve su configuración visual
- * @param {string} estado 
- * @returns {object} { color, icono, texto }
  */
 function obtenerConfigEstadoPago(estado) {
     const est = (estado || "No verificado").toUpperCase();
@@ -173,9 +164,6 @@ function obtenerConfigEstadoPago(estado) {
     return { color, icono, texto: est };
 }
 
-// ============================================================
-// CARGA ASÍNCRONA DE DATOS (DEPENDENCIAS)
-// ============================================================
 async function cargarMensualidades() {
     let id_apartamento = this.value;
     if (!id_apartamento) return;
@@ -219,9 +207,7 @@ async function cargarMensualidades() {
     });
 }
 
-// ============================================================
-// CONSULTAS PRINCIPALES Y DATATABLE
-// ============================================================
+// CONSULTAS PRINCIPALES
 async function consultar() {
     const formatoMonto = (cell) => {
         const monto = cell.getValue();
@@ -252,26 +238,25 @@ async function consultar() {
     };
 
     const formatoBotones = (cell) => {
-        const id = cell.getData().id_pago;
         // w-100 justify-content-evenly
         let html = `<div class="d-flex justify-content-center flex-wrap gap-2">
-            <button type="button" class="btn btn-primary btn-sm vista-previa" data-tooltip="true" title="Ver Mas" value="${id}">
+            <button type="button" class="btn btn-primary btn-sm vista-previa" data-tooltip="true" title="Ver Mas">
                 <i class="bi bi-eye"></i>
                 <span class="d-none d-lg-inline ms-2">Ver</span>
             </button>
-            <button data-tooltip="true" type="button" class="btn btn-info btn-sm text-white recibo-pago" style="background-color:#3939a9;" title="Descargar Cuadro de Pagos (PDF)" value="${id}">
+            <button data-tooltip="true" type="button" class="btn btn-info btn-sm text-white recibo-pago" style="background-color:#3939a9;" title="Descargar Cuadro de Pagos (PDF)">
                 <i class="bi bi-card-checklist"></i>
                 <span class="d-none d-lg-inline ms-2">Reporte</span>
             </button>
             `;
         if (permisoModificar) {
-            html += `<button class="btn btn-success btn-sm modificar" data-tooltip="true" title="Modificar los detalles de este registro" value="${id}">
+            html += `<button class="btn btn-success btn-sm modificar" data-tooltip="true" title="Modificar los detalles de este registro">
                         <i class="bi bi-pencil"></i>
                         <span class="d-none d-lg-inline ms-2">Editar</span>
                     </button>`;
         }
         if (permisoEliminar) {
-            html += `<button class="btn btn-danger btn-sm eliminar" data-tooltip="true" title="Quitar este elemento del sistema" value="${id}">
+            html += `<button class="btn btn-danger btn-sm eliminar" data-tooltip="true" title="Quitar este elemento del sistema">
                         <i class="bi bi-trash"></i>
                         <span class="d-none d-lg-inline ms-2">Borrar</span>
                     </button>`;
@@ -293,13 +278,13 @@ async function consultar() {
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
-                const id = btn.value;
+                const id = cell.getData().id_pago;
 
                 if (btn.classList.contains('vista-previa')) mostrarVistaPrevia(id);
-                if (btn.classList.contains('modificar')) prepararEdicion(id);
+                if (btn.classList.contains('modificar')) prepararFormulario(id);
                 if (btn.classList.contains('eliminar')) confirmarEliminar(id);
                 
-                // Formulario dinámico para el PDF sin ensuciar la tabla
+                // Formulario para el PDF sin ensuciar la tabla
                 if (btn.classList.contains('recibo-pago')) {
                     let form = document.createElement('form');
                     form.action = "?pagina=reportes&accion=recibo_pago";
@@ -320,7 +305,12 @@ async function consultar() {
         }
     ];
 
-    tabla_pagos = Tablas.cargarTabulador("tabla_pagos", "", columnas);
+    const opcionesExtra = {
+        parametrosExtra: { operacion: 'consulta' },
+        columnaBusqueda: 'id_pago'
+    };
+
+    tabla_pagos = Tablas.cargarTabulador("tabla_pagos", "", columnas, opcionesExtra);
 
     Tablas.inicializarBuscadorGlobal(tabla_pagos, "busqueda_global", columnas);
 }
@@ -332,9 +322,10 @@ function recolectarDatosFormData(operacion, id_pago = null) {
     if (id_pago) formData.append("id_pago", id_pago);
 
     // Cabecera (Maestro)
+    let estado = document.getElementById("estado")?.value;
+    if (estado) formData.append("estado", estado);
     formData.append("apartamento_id", document.getElementById("apartamento_id").value);
     formData.append("mensualidad_id", document.getElementById("mensualidad_id").value);
-    formData.append("estado", document.getElementById("estado")?.value);
     formData.append("observacion", document.getElementById("observacion").value);
     
     // Capturamos la tasa maestro del primer input disponible
@@ -372,19 +363,184 @@ function recolectarDatosFormData(operacion, id_pago = null) {
     return formData;
 }
 
-// ============================================================
-// ACCIONES (REGISTRAR, modificar, ELIMINAR)
-// ============================================================
 async function registrar() {
-    let formData = recolectarDatosFormData("registrar_pago");
-    let respuesta = await Peticiones.enviar(formData, "", true);
-    Validador.procesarRespuesta(respuesta, () => {
-        modal.hide();
-        tabla_pagos.replaceData();
-    });
+    const estadoSeleccionado = document.getElementById("estado")?.value || "PENDIENTE";
+    const htmlVistaPrevia = generarHtmlVistaPrevia("Desglose de Pagos");
+
+    Alertas.confirmarConVistaPrevia(
+        "Confirmar Datos de Pago",
+        htmlVistaPrevia,
+        async () => {
+            let formData = recolectarDatosFormData("registrar_pago");
+            let respuesta = await Peticiones.enviar(formData, "", true);
+            
+            Validador.procesarRespuesta(respuesta, (resServidor) => {
+                modal.hide();
+                tabla_pagos.replaceData();
+
+                if (estadoSeleccionado === "PROCESADO") {
+                    const obj = resServidor || respuesta;
+                    const idRecibo = obj?.lastId || obj?.last_id || obj?.id_pago || obj?.id || 
+                                     obj?.datos?.id_pago || obj?.datos?.lastId || obj?.datos?.id;
+                    
+                    if (idRecibo) {
+                        Alertas.mostrarExitoConReciboOpcional(
+                            "¡Pago Procesado!",
+                            "El pago se guardó exitosamente en el sistema de administración.",
+                            () => { ejecutarDescargaRecibo(idRecibo); }
+                        );
+                    } else {
+                        Alertas.mostrar("warning", "¡Pago Registrado!", "El pago se procesó con éxito, pero el servidor no devolvió el ID para el PDF inmediato.");
+                    }
+                } else {
+                    Alertas.mostrar("success", "Éxito", (resServidor || respuesta).mensaje || "Pago registrado para verificación.");
+                }
+            });
+        }
+    );
 }
 
-async function prepararEdicion(id) {
+async function modificar(id) {
+    const estadoSeleccionado = document.getElementById("estado")?.value || "PENDIENTE";
+
+    let colorInsignia = "bg-secondary";
+    if (estadoSeleccionado === "PROCESADO") colorInsignia = "bg-success";
+    else if (estadoSeleccionado === "RECHAZADO" || estadoSeleccionado === "ANULADO") colorInsignia = "bg-danger";
+    else if (estadoSeleccionado === "PENDIENTE") colorInsignia = "bg-warning text-dark";
+
+    const htmlBadge = `
+        <div class="text-end border-start ps-3">
+            <div class="text-body-secondary small mb-1"><i class="bi bi-flag me-1"></i> Estatus final</div>
+            <span class="badge ${colorInsignia} fs-6">${estadoSeleccionado}</span>
+        </div>`;
+
+    const htmlVistaPrevia = generarHtmlVistaPrevia("Nuevos Detalles de Pago", htmlBadge);
+
+    Alertas.confirmarConVistaPrevia(
+        "¿Guardar Cambios?",
+        htmlVistaPrevia,
+        async () => {
+            let formData = recolectarDatosFormData("modificar_pago", id);
+            let respuesta = await Peticiones.enviar(formData, "", true);
+
+            Validador.procesarRespuesta(respuesta, () => {
+                modal.hide();
+                tabla_pagos.replaceData();
+
+                if (estadoSeleccionado === "PROCESADO") {
+                    // Flujo opcional para la edición
+                    Alertas.mostrarExitoConReciboOpcional(
+                        "¡Registro Actualizado!",
+                        "La transacción se ha modificado correctamente en la base de datos.",
+                        () => { ejecutarDescargaRecibo(id); }
+                    );
+                } else {
+                    Alertas.mostrar("success", "Éxito", "Los cambios en el pago fueron guardados.");
+                }
+            });
+        }
+    );
+}
+
+/**
+ * Helper que replica de forma exacta la acción del botón de reportes de la tabla
+ */
+function ejecutarDescargaRecibo(idPago) {
+    let form = document.createElement('form');
+    form.action = "?pagina=reportes&accion=recibo_pago";
+    form.method = "POST";
+    form.target = "_blank";
+    
+    let input = document.createElement('input');
+    input.type = "hidden";
+    input.name = "select_reporte";
+    input.value = idPago;
+    
+    form.appendChild(input);
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+}
+
+/**
+ * Helper privado para unificar y reutilizar la construcción del HTML 
+ * de la vista previa bancaria (soporta modo claro y oscuro).
+ */
+function generarHtmlVistaPrevia(tituloCard, BadgeEstatusHtml = "") {
+    const aptoTexto = document.getElementById("apartamento_id").selectedOptions[0]?.text || "";
+    const periodoTexto = document.getElementById("mensualidad_id").selectedOptions[0]?.text || "";
+    const bloques = document.querySelectorAll("#detalles_container .detalle-pago");
+    
+    let totalBs = 0;
+    let periodoLimpio = periodoTexto.split('-')[0]?.trim() || "";
+
+    // Construcción del contenedor principal y cabecera adaptable
+    let html = `
+        <div class="text-start" style="font-size: 0.95rem;">
+            <div class="d-flex justify-content-between align-items-center bg-body-tertiary p-3 rounded-3 mb-3 border shadow-sm">
+                <div>
+                    <div class="text-body-secondary small mb-1"><i class="bi bi-building me-1"></i> Apartamento</div>
+                    <div class="fw-bold fs-6 text-body-emphasis">${aptoTexto}</div>
+                </div>
+                <div class="text-center border-start border-end px-3 flex-grow-1 mx-3">
+                    <div class="text-body-secondary small mb-1"><i class="bi bi-calendar3 me-1"></i> Período</div>
+                    <div class="fw-bold fs-6 text-body-emphasis">${periodoLimpio}</div>
+                </div>
+                ${BadgeEstatusHtml} 
+            </div>
+            
+            <h6 class="text-body-secondary fw-bold mb-2 ps-1"><i class="bi bi-list-check me-2"></i>${tituloCard}</h6>
+            <div class="list-group mb-3 shadow-sm">`;
+
+    // Iteración de detalles unificada
+    bloques.forEach((bloque) => {
+        let metodo = bloque.querySelector(".tipo_pago").value;
+        let monto = parseFloat(bloque.querySelector(".monto").value) || 0;
+        totalBs += monto;
+
+        let iconoMetodo = "bi-credit-card text-secondary";
+        if (metodo === "Efectivo") iconoMetodo = "bi-cash-stack text-success";
+        else if (metodo === "Divisa") iconoMetodo = "bi-currency-dollar text-success";
+        else if (metodo === "Transferencia") iconoMetodo = "bi-bank text-primary";
+        else if (metodo === "Pago Móvil") iconoMetodo = "bi-phone-vibrate text-info";
+
+        html += `
+                <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center p-3">
+                    <div class="d-flex align-items-center">
+                        <div class="fs-3 me-3"><i class="bi ${iconoMetodo}"></i></div>
+                        <div>
+                            <div class="fw-bold text-body-emphasis">${metodo}</div>`;
+        
+        if (metodo !== "Efectivo" && metodo !== "Divisa") {
+            let ref = bloque.querySelector(".referencia").value;
+            html += `<div class="text-body-secondary small" style="font-size: 0.8rem;">Ref: <strong>${ref || 'No indicada'}</strong></div>`;
+        }
+        
+        html += `
+                        </div>
+                    </div>
+                    <div class="fw-bold fs-6 text-body-emphasis">${monto.toFixed(2)} Bs.</div>
+                </div>`;
+    });
+
+    // Cierre con el totalizador dinámico (usa verde para registros y azul para modificaciones)
+    const esModificacion = BadgeEstatusHtml !== "";
+    const colorClase = esModificacion ? "primary" : "success";
+    const textoTotal = esModificacion ? "Total Actualizado" : "Total a Ingresar";
+    const iconoTotal = esModificacion ? "bi-calculator" : "bi-wallet2";
+
+    html += `
+            </div>
+            <div class="d-flex justify-content-between align-items-center p-3 rounded-3 bg-${colorClase} bg-opacity-10 border border-${colorClase} border-opacity-25">
+                <span class="fw-bold text-${colorClase}"><i class="bi ${iconoTotal} me-2"></i>${textoTotal}</span>
+                <span class="fw-bold text-${colorClase} fs-5">${totalBs.toFixed(2)} Bs.</span>
+            </div>
+        </div>`;
+
+    return html;
+}
+
+async function prepararFormulario(id) {
     let datos = new FormData();
     datos.append('id_pago', id);
     datos.append('operacion', 'consultar_pago');
@@ -466,30 +622,14 @@ async function prepararEdicion(id) {
 
 }
 
-async function modificar(id) {
-    let formData = recolectarDatosFormData("modificar_pago", id);
-    let respuesta = await Peticiones.enviar(formData, "", true);
-
-    Validador.procesarRespuesta(respuesta, () => {
-        modal.hide();
-        tabla_pagos.replaceData();
-    });
-}
 
 function confirmarEliminar(id) {
-    Swal.fire({
-        title: "¿Estás seguro?",
-        text: "Este pago será anulado/eliminado permanentemente.",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonColor: "#e01d22",
-        confirmButtonText: "Sí, anular",
-        cancelButtonText: "Cancelar"
-    }).then((result) => {
-        if (result.isConfirmed) {
-            eliminar(id);
-        }
-    });
+    Alertas.confirmarAccion(
+        "¿Anular Pago?",
+        "Este pago será anulado/eliminado permanentemente del sistema de administración.",
+        "error",
+        () => { eliminar(id); }
+    );
 }
 
 async function eliminar(id) {
@@ -579,9 +719,8 @@ async function mostrarVistaPrevia(id) {
     });
 }
 
-// ============================================================
+
 // MÓDULO DE AYUDA INTERACTIVA
-// ============================================================
 document.addEventListener('DOMContentLoaded', () => {
     const stepsPrincipal = [
             { element: '.page-header', popover: { title: 'Módulo de Pagos', description: 'Bienvenido. Desde aquí puedes registrar, verificar y gestionar los pagos de las mensualidades del condominio.', side: "bottom", align: 'start' } },

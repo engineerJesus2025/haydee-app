@@ -62,21 +62,14 @@ $timestamp = date('Y-m-d_H-i-s');
 try {
     $dsn = "mysql:host=$db_host;charset=utf8mb4";
     
-    if (ENTORNO === 'local') {
-        // Si no existen en el sistema, por defecto en XAMPP usamos 'root' sin contraseña
-        $backup_user = getenv('DB_BACKUP_USER') ?: 'root';
-        $backup_pass = getenv('DB_BACKUP_PASS') ?: '';
-        
-        // Sincronizamos para mysqldump local
-        $db_user = $backup_user;
-        $db_pass = $backup_pass;
-    } else {
-        // En producción (AlwaysData), usamos las credenciales limitadas del hosting
-        $backup_user = $db_user;
-        $backup_pass = $db_pass;
-    }
+    $backup_user = DB_BACKUP_USER;
+    $backup_pass = DB_BACKUP_PASS;
     
     $pdo = new PDO($dsn, $backup_user, $backup_pass, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+
+    $db_user = $backup_user;
+    $db_pass = $backup_pass;
+
 } catch (PDOException $e) {
     $exito_total = false;
     die("[ERROR FATAL] No se pudo conectar al motor para backups: " . $e->getMessage() . "\n");
@@ -118,19 +111,37 @@ foreach ($databases as $db) {
                 $mysqldump_path, escapeshellarg($db_host), escapeshellarg($db_user), escapeshellarg($db_pass), escapeshellarg($db), escapeshellarg($filename)
             );
         } else {
-            echo "[CLOUD - DIARIO] Ejecutando Respaldo PARCIAL incremental...\n";
-            $command = sprintf(
-                '%s --host=%s --user=%s --password=%s --no-data --routines --triggers --databases %s > %s 2>&1',
-                $mysqldump_path, escapeshellarg($db_host), escapeshellarg($db_user), escapeshellarg($db_pass), escapeshellarg($db), escapeshellarg($filename)
-            );
+            echo "[PROCESO] Iniciando Dump Parcial (Incremental Diario)...\n";
             
-            if ($db === DB_NAME) {
-                $tablas = ['detalles_pagos', 'detalles_gastos', 'movimientos_caja'];
-                foreach ($tablas as $tabla) {
-                    $command .= sprintf(
-                        ' && %s --host=%s --user=%s --password=%s --no-create-info %s %s --where="fecha = \'%s\'" >> %s 2>&1',
-                        $mysqldump_path, escapeshellarg($db_host), escapeshellarg($db_user), escapeshellarg($db_pass), escapeshellarg($db), $tabla, $fecha_hoy, escapeshellarg($filename)
-                    );
+            // Tablas transaccionales que sufren modificaciones diarias
+            $tablas_incrementales = ['detalles_pagos', 'detalles_gastos', 'movimientos_caja'];
+            
+            // Creamos el archivo limpio para el volcado de hoy
+            file_put_contents($backup_file_sql, "/* CONDOMINIOS HAYDEE - RESPALDO PARCIAL DIARIO " . date('Y-m-d') . " */\n\n");
+
+            foreach ($tablas_incrementales as $tabla) {
+                echo "[PARCIAL] Exportando datos del día para la tabla: $tabla...\n";
+                
+                // --no-create-info: Evita que se genere el DROP TABLE y CREATE TABLE, impidiendo la pérdida de datos históricos.
+                // --skip-add-drop-table: Asegura que no se inyecten estructuras destructivas en el archivo.
+                // --replace: Si al restaurar el parcial un registro ya existe, lo reemplaza en lugar de dar un error de llave duplicada.
+                $comando = sprintf(
+                    "%s -h %s -u %s -p%s --no-create-info --skip-add-drop-table --replace %s %s --where=\"fecha='%s'\" >> %s 2>&1",
+                    $mysqldump,
+                    escapeshellarg($db_host),
+                    escapeshellarg($db_user),
+                    escapeshellarg($db_pass),
+                    escapeshellarg($db_name),
+                    escapeshellarg($tabla),
+                    $fecha_hoy,
+                    escapeshellarg($backup_file_sql)
+                );
+
+                exec($comando, $salida, $codigo_retorno);
+
+                if ($codigo_retorno !== 0) {
+                    $exito_total = false;
+                    echo "[ERROR] Falló el volcado parcial de la tabla $tabla. Código: $codigo_retorno\n";
                 }
             }
         }

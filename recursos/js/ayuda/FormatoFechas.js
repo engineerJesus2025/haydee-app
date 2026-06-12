@@ -50,7 +50,7 @@ const FormatoFechas = (function() {
             return crearFechaLocal(parte1, parte2, parte3);
         }
 
-        // Último recurso: dejar que el constructor Date nativo lo intente (poco fiable, pero cubre casos raros)
+        // Último recurso: dejar que el constructor Date nativo lo intente , cubre casos raros
         const d = new Date(str);
         return isNaN(d.getTime()) ? null : d;
     }
