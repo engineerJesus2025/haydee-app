@@ -75,7 +75,7 @@ try {
     if (ob_get_level() > 0) ob_end_clean();
 
     $mensajeOriginal = $e->getMessage();
-    $codigoHttp = $e->getCode() ?: HttpCodigo::PROHIBIDO->value;
+    $codigoHttp = $e->getCode() ?: HttpCodigo::ERROR_INTERNO->value;
 
     // Intentamos decodificar el mensaje por si viene serializado desde el Validador
     $datosDecodificados = json_decode($mensajeOriginal, true);
@@ -95,9 +95,9 @@ try {
     GestorTrafico::abortarConCifrado($payloadError, $codigoHttp);
 } catch (\Throwable $e) {
     if (ob_get_level() > 0) ob_end_clean();
-    error_log("Colapso Crítico en API Gateway: " . $e->getMessage() . " en " . $e->getFile() . ":" . $e->getLine());
+    error_log("Colapso Critico en API Gateway: " . $e->getMessage() . " en " . $e->getFile() . ":" . $e->getLine());
     GestorTrafico::abortarConCifrado(
-        ["estatus" => false, "mensaje" => "Ocurrió un error interno en el servidor."], 
+        ["estatus" => false, "mensaje" => "Ocurrio un error interno en el servidor."], 
         HttpCodigo::ERROR_INTERNO->value
     );
 } finally {

@@ -222,7 +222,7 @@ class Sesiones
      */
     public static function tienePermiso(Modulo $modulo, Accion $permiso)
     {
-        $listaPermisos = $_SESSION["permisos"] ?? null;
+        $listaPermisos = self::$permisosAPI ?? $_SESSION["permisos"] ?? null;
         if (!$listaPermisos || !is_array($listaPermisos)) {
             return false;
         }

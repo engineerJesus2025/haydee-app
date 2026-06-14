@@ -198,7 +198,6 @@ switch ($accion) {
             header("Location: ?pagina=inicio&accion=inicio");
             exit;
         }
-        echo "<script>const RECAPTCHA_DESACTIVADO = " . ($recaptchaDeshabilitado ? 'true' : 'false') . ";</script>";
         require_once "vista/login/login_vista.php";
         break;
 }

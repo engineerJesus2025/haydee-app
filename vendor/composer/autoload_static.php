@@ -24,8 +24,6 @@ class ComposerStaticInitcbe1707b410f2f343a82925692838e3a
         'ec07570ca5a812141189b1fa81503674' => __DIR__ . '/..' . '/phpunit/phpunit/src/Framework/Assert/Functions.php',
         '0754989a10baadda533479884b399278' => __DIR__ . '/..' . '/resend/resend-php/src/Resend.php',
         '42e3dc2cf7383276e8c418f14b63f194' => __DIR__ . '/../..' . '/config/config.php',
-        '9bbd65f5b9ae3163acdb7bc7779b0c0a' => __DIR__ . '/../..' . '/config/rutas.php',
-        '7aa9a3fb0622a4afb1cb3f4481e69913' => __DIR__ . '/../..' . '/config/rutas_api.php',
         '67b75133d2937837a64ca4997df6eb0e' => __DIR__ . '/../..' . '/config/config_menu.php',
         '5c23ce352d0b05ed532428adc6697491' => __DIR__ . '/../..' . '/config/config_titulos.php',
     );

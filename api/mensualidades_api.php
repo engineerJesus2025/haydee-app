@@ -4,6 +4,7 @@ use haydee\enums\Modulo;
 use haydee\enums\Accion;
 use haydee\ayuda\Validador;
 use haydee\modelo\Bitacora;
+use haydee\modelo\Mensualidad;
 use haydee\servicios\Sesiones;
 use haydee\servicios\GestorAuditoria;
 

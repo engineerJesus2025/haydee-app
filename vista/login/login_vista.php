@@ -174,7 +174,9 @@
             </div>
         </div>
     </div>
-
+    <script>
+        const RECAPTCHA_DESACTIVADO = <?php echo $recaptchaDeshabilitado ? 'true' : 'false'; ?>;
+    </script>
     <script src="<?php echo URL_BASE; ?>recursos/dependencias/bootstrap/bootstrap.bundle.min.js"></script>
     <script src="<?php echo URL_BASE; ?>recursos/dependencias/sweetalert2/sweetalert2.js"></script>
     <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/Patrones.js"></script>
