@@ -3,9 +3,9 @@ namespace haydee\servicios;
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
-use haydee\servicios\Criptografia;
-use haydee\modelo\Usuario;
 use haydee\enums\TipoToken;
+use haydee\modelo\Usuario;
+use haydee\servicios\Criptografia;
 
 class Recuperacion
 {

@@ -2,47 +2,23 @@
 use haydee\enums\HttpCodigo;
 use haydee\servicios\Criptografia;
 use haydee\servicios\Autenticacion;
-use haydee\servicios\Sesiones;
-use haydee\servicios\GestorTrafico;
 
-// ==================== IDENTIDAD ====================
-$usuario = Sesiones::validarAutenticacionJWT();
-$idUsuario = $usuario['id_usuario'] ?? null;
-
-if (!$idUsuario) {
-    $resultado = ["estatus" => false, "mensaje" => 'Sesión no identificada o expirada.'];
-    $codigoHttp = HttpCodigo::NO_AUTORIZADO->value;
-    GestorTrafico::abortarConCifrado($resultado, $codigoHttp);
-}
-
-// ==================== DETECCIÓN DE PROTOCOLO ====================
-$metodoHttp = $_SERVER['REQUEST_METHOD'];
-
-if ($metodoHttp !== 'POST') {
-    $resultado = ["estatus" => false, "mensaje" =>  'Método no permitido.'];
-    $codigoHttp = HttpCodigo::METODO_NO_PERMITIDO->value;
-    GestorTrafico::abortarConCifrado($resultado, $codigoHttp);
-}
-
-// Compatibilidad multiplataforma para extracción de cabeceras (Apache/Nginx)
-$headers = function_exists('apache_request_headers') ? apache_request_headers() : [];
+// Extraemos el identificador único del dispositivo móvil
 $dispositivoId = $_SERVER['HTTP_X_DISPOSITIVO_ID'] ?? $headers['X-Dispositivo-Id'] ?? $headers['x-dispositivo-id'] ?? null;
 
 if (!$dispositivoId) {
-    $resultado = ["estatus" => false, "mensaje" => 'Identificador de dispositivo ausente.'];
-    $codigoHttp = HttpCodigo::BAD_REQUEST->value;
-    GestorTrafico::abortarConCifrado($resultado, $codigoHttp);
+    throw new \Exception('Identificador de dispositivo ausente.', HttpCodigo::BAD_REQUEST->value);
 }
 
-// ==================== PROCESAMIENTO DE CIERRE ====================
+$idUsuario = (int)$identidad['id_usuario'];
 $auth = null;
 
 try {
-    // Destruimos los tokens de sesión (Refresh Token) y registramos en Bitácora
+    // Destruimos los tokens de sesión (Refresh Token) en la base de datos
     $auth = new Autenticacion();
     $auth->logout($idUsuario, true);
 
-    // Rompemos la vinculación criptográfica E2E (Clave AES)
+    // Rompemos la vinculación criptográfica E2E (Destrucción de la clave AES compartida)
     Criptografia::desvincularDispositivo($dispositivoId);
 
     http_response_code(HttpCodigo::OK->value);
@@ -51,10 +27,10 @@ try {
         'mensaje' => 'Sesión cerrada, tokens invalidados y claves destruidas correctamente.'
     ]);
 
-} catch (Exception $e) {
-    error_log("Error en API Logout: " . $e->getMessage());
-    http_response_code(HttpCodigo::ERROR_INTERNO->value);
-    echo json_encode(['estatus' => false, 'mensaje' => 'Error interno al procesar el cierre de sesión.']);
+} catch (\Exception $e) {
+    error_log("Error crítico en API Logout para el Usuario ID {$idUsuario}: " . $e->getMessage());
+    
+    throw new \Exception('Error interno al procesar el cierre de sesión.', HttpCodigo::ERROR_INTERNO->value);
 } finally {
     if ($auth) {
         $auth->cerrar();

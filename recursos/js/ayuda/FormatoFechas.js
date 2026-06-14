@@ -302,6 +302,25 @@ const FormatoFechas = (function() {
                 edad--;
             }
             return edad;
+        },
+        /**
+         * Convierte una cantidad de segundos en una cadena de tiempo humana (H/M/S).
+         * Ej: FormatoFechas.formatearDuracion(3659); // "1h 0m 59s"
+         */
+        formatearDuracion(segundos) {
+            const sNetos = Math.max(0, parseInt(segundos, 10) || 0);
+            if (sNetos === 0) return "0s";
+
+            const h = Math.floor(sNetos / 3600);
+            const m = Math.floor((sNetos % 3600) / 60);
+            const s = sNetos % 60;
+            
+            let texto = "";
+            if (h > 0) texto += h + "h ";
+            if (m > 0) texto += m + "m ";
+            if (s > 0 || texto === "") texto += s + "s";
+            
+            return texto.trim();
         }
     };
 })();

@@ -1,20 +1,17 @@
 <?php
+use Dompdf\Dompdf;
 use haydee\enums\HttpCodigo;
-use haydee\ayuda\Validador;
-use haydee\ayuda\GestorPDF;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
-use haydee\servicios\Sesiones;
-use haydee\servicios\Reportes; 
+use haydee\ayuda\Validador;
+use haydee\ayuda\GestorPDF;
 use haydee\modelo\Habitantes;
 use haydee\modelo\Gastos;
 use haydee\modelo\Mensualidad;
 use haydee\modelo\Apartamento;
 use haydee\modelo\Bitacora;
-use Dompdf\Dompdf;
-
-// Verificaciones de seguridad
-Sesiones::autorizarAcceso(Modulo::GESTIONAR_REPORTES, Accion::CONSULTAR);
+use haydee\servicios\Sesiones;
+use haydee\servicios\Reportes; 
 
 $habitantesModel = new Habitantes();
 $mensualidadModel = new Mensualidad();

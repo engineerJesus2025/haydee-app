@@ -128,7 +128,7 @@ class Validador {
                 }
             }
 
-            // 6. Validación UNIQUE
+            // Validación UNIQUE
             if (isset($regla['unique']) && !isset($contexto['skip_unique'])) {
                 $tabla = $regla['unique']['tabla'];
                 $campoBd = $regla['unique']['campo'] ?? $campo;

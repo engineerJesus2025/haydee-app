@@ -1,12 +1,12 @@
 <?php
 namespace haydee\servicios;
 
-use haydee\modelo\Notificaciones;
-use haydee\modelo\SuscripcionPush;
 use Minishlink\WebPush\WebPush;
 use Minishlink\WebPush\Subscription;
-use haydee\modelo\SuscripcionPushMovil;
 use haydee\enums\TipoEventoNotificacion;
+use haydee\modelo\Notificaciones;
+use haydee\modelo\SuscripcionPush;
+use haydee\modelo\SuscripcionPushMovil;
 
 class GestorNotificaciones
 {

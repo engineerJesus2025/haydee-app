@@ -1,8 +1,8 @@
 <?php
 namespace haydee\ayuda;
 
-use haydee\ayuda\GestorImagenes;
 use haydee\enums\MetodoPago;
+use haydee\ayuda\GestorImagenes;
     
 class ConstructorDetalles
 {

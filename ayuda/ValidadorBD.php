@@ -3,8 +3,8 @@ namespace haydee\ayuda;
 
 use PDO;
 use PDOException;
-use haydee\modelo\Conexion;
 use haydee\enums\TipoBaseDatos;
+use haydee\modelo\Conexion;
 /**
  * Clase ValidadorBD
  * Su única responsabilidad es ejecutar consultas de validación en la Base de Datos.

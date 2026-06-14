@@ -2,12 +2,8 @@
 use haydee\enums\HttpCodigo;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
- 
-use haydee\servicios\Sesiones;
 use haydee\modelo\Bitacora;
-
-// Verificaciones de seguridad
-Sesiones::autorizarAcceso(Modulo::GESTIONAR_SEGURIDAD, Accion::CONSULTAR);
+use haydee\servicios\Sesiones;
 
 // Validamos si es una petición AJAX (POST)
 if (isset($_POST["operacion"])) {

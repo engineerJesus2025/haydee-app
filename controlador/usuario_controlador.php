@@ -2,17 +2,13 @@
 use haydee\enums\HttpCodigo;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
-
-use haydee\servicios\Sesiones;
+use haydee\ayuda\Validador;
+use haydee\ayuda\ValidadorBD;
 use haydee\modelo\Rol;
 use haydee\modelo\Usuario;
 use haydee\modelo\Bitacora;
-use haydee\ayuda\Validador;
-use haydee\ayuda\ValidadorBD;
+use haydee\servicios\Sesiones;
 use haydee\servicios\GestorAuditoria;
-
-// Verificaciones de seguridad
-Sesiones::autorizarAcceso(Modulo::GESTIONAR_USUARIOS, Accion::CONSULTAR);
 
 // Obtener lista de roles para la vista (solo si es necesario)
 $rol_obj = new Rol();

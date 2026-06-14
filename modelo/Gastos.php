@@ -3,10 +3,10 @@ namespace haydee\modelo;
 
 use PDO;
 use PDOException;
-use haydee\ayuda\GestorImagenes;
 use haydee\enums\ClasificacionGasto;
 use haydee\enums\MetodoPago;
 use haydee\enums\TipoBaseDatos;
+use haydee\ayuda\GestorImagenes;
 
 class Gastos extends Conexion
 {

@@ -1,43 +1,18 @@
 <?php
-use haydee\modelo\CarteleraVirtual;
-use haydee\servicios\Sesiones;
-use haydee\ayuda\Validador;
-use haydee\ayuda\GestorImagenes;
 use haydee\enums\HttpCodigo;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
 use haydee\enums\TipoEventoNotificacion;
+use haydee\ayuda\Validador;
+use haydee\ayuda\GestorImagenes;
+use haydee\modelo\CarteleraVirtual;
+use haydee\modelo\Bitacora;
+use haydee\servicios\Sesiones;
 use haydee\servicios\GestorNotificaciones;
 use haydee\servicios\GestorAuditoria;
-use haydee\servicios\GestorTrafico;
-use haydee\modelo\Bitacora;
-
-
-// ==================== IDENTIDAD Y PERMISOS ====================
-$identidad = Sesiones::autorizarAccesoAPI(Modulo::GESTIONAR_CARTELERA_VIRTUAL, Accion::CONSULTAR, ['GET', 'POST', 'PUT'], true);
-
-$rolUsuario = strtolower($identidad['rol'] ?? '');
-$esAdministrador = ($rolUsuario === 'administrador'); // o el rol que aplique
-$correoUsuario = $identidad['correo'] ?? '';
-
-// ==================== DETECCIÓN DE PROTOCOLO Y PAYLOAD ====================
-$metodoHttp = $_SERVER['REQUEST_METHOD'];
-$headers = getallheaders();
-$metodoSobreescrito = $headers['X-HTTP-Method-Override'] ?? $_POST['_method'] ?? $_GET['_method'] ?? null;
-
-if (!empty($metodoSobreescrito)) {
-    $metodoHttp = strtoupper($metodoSobreescrito);
-}
-
-$datosPeticion = ($metodoHttp === 'GET') ? $_GET : $_POST;
-
-$operacion = $datosPeticion['operacion'] ?? '';
 
 if (empty($operacion)) {
-    GestorTrafico::abortarConCifrado(
-        ['estatus' => false, 'mensaje' => 'No se especificó la operación.'], 
-        HttpCodigo::BAD_REQUEST->value
-    );
+    throw new Exception('No se especificó la operación.', HttpCodigo::BAD_REQUEST->value);
 }
 
 Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_CARTELERA_VIRTUAL, $operacion, [], true);
@@ -47,10 +22,11 @@ $reglas = CarteleraVirtual::obtenerReglas($operacion);
 $validador = new Validador();
 
 if (!$validador->validarMetodoHTTP($metodoHttp, $reglas)) {
-    GestorTrafico::abortarConCifrado(
-        ['estatus' => false, 'mensaje' => 'Protocolo HTTP denegado.', 'errores' => $validador->obtenerErrores()],
-        HttpCodigo::METODO_NO_PERMITIDO->value
-    );
+    $datosError = [
+        'mensaje' => 'Protocolo HTTP denegado para esta operación.',
+        'errores' => $validador->obtenerErrores()
+    ];
+    throw new \Exception(json_encode($datosError), HttpCodigo::METODO_NO_PERMITIDO->value);
 }
 
 // ==================== VALIDACIÓN DE DATOS ====================
@@ -58,16 +34,17 @@ if (!empty($reglas)) {
     $validador->validarConjunto($datosPeticion, $reglas);
     if ($validador->tieneErrores()) {
         $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::BAD_REQUEST->value;
-        GestorTrafico::abortarConCifrado(
-            ['estatus' => false, 'errores' => $validador->obtenerErrores(), 'mensaje' => 'Datos inválidos.'], 
-            $codigoHttp
-        );
+        $datosError = [
+            'mensaje' => 'Datos de formulario inválidos o incompletos.',
+            'errores' => $validador->obtenerErrores()
+        ];
+        throw new \Exception(json_encode($datosError), $codigoHttp);
     }
 }
 
 // ==================== INSTANCIACIÓN DE MODELOS Y AUDITOR ====================
 $cartelera = new CarteleraVirtual();
-$respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida en API'];
+$respuesta = ['estatus' => false, 'mensaje' => 'Operacion no valida en API'];
 $auditor = new GestorAuditoria($cartelera, Modulo::GESTIONAR_CARTELERA_VIRTUAL);
 
 
@@ -147,7 +124,7 @@ try {
             // Solo administradores pueden modificar
             if (!$esAdministrador) {
                 http_response_code(HttpCodigo::PROHIBIDO->value);
-                $respuesta = ['estatus' => false, 'mensaje' => 'Acción no autorizada.'];
+                $respuesta = ['estatus' => false, 'mensaje' => 'Accion no autorizada.'];
                 break;
             }
             $auditor->capturarDatosAnteriores('consultar_cartelera');
@@ -161,7 +138,7 @@ try {
         case 'eliminar_cartelera':
             if (!$esAdministrador) {
                 http_response_code(HttpCodigo::PROHIBIDO->value);
-                $respuesta = ['estatus' => false, 'mensaje' => 'Acción no autorizada.'];
+                $respuesta = ['estatus' => false, 'mensaje' => 'Accion no autorizada.'];
                 break;
             }
             $auditor->capturarDatosAnteriores('consultar_cartelera');
@@ -173,7 +150,7 @@ try {
 
         default:
             http_response_code(HttpCodigo::BAD_REQUEST->value);
-            $respuesta = ['estatus' => false, 'mensaje' => 'Operación no reconocida o implementada.'];
+            $respuesta = ['estatus' => false, 'mensaje' => 'Operacion no reconocida o implementada.'];
             break;
     }
 
@@ -185,7 +162,7 @@ try {
         };
         http_response_code($codigoExito);
     } else {
-        // Si ya se asignó un código específico de error (403, 404, etc.) no se sobreescribe
+        // Si ya se asigno un codigo especifico de error (403, 404, etc.) no se sobreescribe
         if (http_response_code() === 200) {
             http_response_code(HttpCodigo::BAD_REQUEST->value);
         }

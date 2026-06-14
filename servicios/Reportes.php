@@ -3,13 +3,13 @@ namespace haydee\servicios;
 
 use PDO;
 use PDOException;
-use haydee\modelo\Conexion;
 use haydee\enums\TipoVinculo;
 use haydee\enums\MetodoPago;
 use haydee\enums\ClasificacionGasto;
 use haydee\enums\TipoBalance;
 use haydee\enums\FiltroTiempo;
 use haydee\enums\TipoBaseDatos;
+use haydee\modelo\Conexion;
 
 class Reportes extends Conexion
 {

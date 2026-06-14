@@ -2,14 +2,10 @@
 use haydee\enums\HttpCodigo;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
-
-use haydee\servicios\Sesiones;
+use haydee\ayuda\Validador;
 use haydee\modelo\Mantenimiento;
 use haydee\modelo\Bitacora;
-use haydee\ayuda\Validador;
-
-// Verificaciones de seguridad
-Sesiones::autorizarAcceso(Modulo::GESTIONAR_MANTENIMIENTO, Accion::CONSULTAR);
+use haydee\servicios\Sesiones;
 
 if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');

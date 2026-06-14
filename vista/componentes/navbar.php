@@ -10,7 +10,6 @@ $es_seguridad     = in_array($modulo, ["rol", "bitacora", "permisos", "modulos"]
 
 //  MATRIZ DE ELEMENTOS (Sacada de config_menu)
 $elementos_menu = obtenerElementosMenu($modulo, $accion);
-
 ?>
 
 <div class="l-navbar show" id="nav-bar">

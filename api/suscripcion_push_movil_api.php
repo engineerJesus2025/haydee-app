@@ -1,23 +1,13 @@
 <?php
-use haydee\modelo\SuscripcionPushMovil;
-use haydee\enums\HttpCodigo;
-use haydee\ayuda\Validador;
-use haydee\servicios\Sesiones;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
-use haydee\servicios\GestorTrafico;
-
-$identidad = Sesiones::autorizarAccesoAPI(Modulo::GESTIONAR_CARTELERA_VIRTUAL, Accion::CONSULTAR, ['POST'], true);
-
-$metodoHttp = $_SERVER['REQUEST_METHOD'];
-$datosPeticion = $_POST;
-$operacion = $datosPeticion['operacion'] ?? '';
+use haydee\enums\HttpCodigo;
+use haydee\ayuda\Validador;
+use haydee\modelo\SuscripcionPushMovil;
+use haydee\servicios\Sesiones;
 
 if (empty($operacion)) {
-    GestorTrafico::abortarConCifrado(
-        ['estatus' => false, 'mensaje' => 'No se especificó la operación.'], 
-        HttpCodigo::BAD_REQUEST->value
-    );
+    throw new Exception('No se especificó la operación.', HttpCodigo::BAD_REQUEST->value);
 }
 
 // Reglas y Validador HTTP
@@ -25,10 +15,11 @@ $reglas = SuscripcionPushMovil::obtenerReglas($operacion);
 $validador = new Validador();
 
 if (!$validador->validarMetodoHTTP($metodoHttp, $reglas)) {
-    GestorTrafico::abortarConCifrado(
-        ['estatus' => false, 'mensaje' => 'Protocolo HTTP denegado.', 'errores' => $validador->obtenerErrores()],
-        HttpCodigo::METODO_NO_PERMITIDO->value
-    );
+    $datosError = [
+        'mensaje' => 'Protocolo HTTP denegado para esta operación.',
+        'errores' => $validador->obtenerErrores()
+    ];
+    throw new \Exception(json_encode($datosError), HttpCodigo::METODO_NO_PERMITIDO->value);
 }
 
 // Validación de Datos
@@ -36,10 +27,11 @@ if (!empty($reglas)) {
     $validador->validarConjunto($datosPeticion, $reglas);
     if ($validador->tieneErrores()) {
         $codigoHttp = HttpCodigo::BAD_REQUEST->value;
-        GestorTrafico::abortarConCifrado(
-            ['estatus' => false, 'errores' => $validador->obtenerErrores(), 'mensaje' => 'Token inválido.'], 
-            $codigoHttp
-        );
+        $datosError = [
+            'mensaje' => 'Token inválidos o incompletos.',
+            'errores' => $validador->obtenerErrores()
+        ];
+        throw new \Exception(json_encode($datosError), $codigoHttp);
     }
 }
 

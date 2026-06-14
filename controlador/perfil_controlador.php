@@ -2,17 +2,14 @@
 use haydee\enums\HttpCodigo;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
-
-use haydee\servicios\Sesiones;
+use haydee\ayuda\Validador;
+use haydee\ayuda\ValidadorBD;
 use haydee\modelo\Rol;
 use haydee\modelo\Usuario;
 use haydee\modelo\Notificaciones;
 use haydee\modelo\Bitacora;
-use haydee\ayuda\Validador;
-use haydee\ayuda\ValidadorBD;
+use haydee\servicios\Sesiones;
 use haydee\servicios\GestorAuditoria;
-
-Sesiones::autorizarAcceso();
 
 $rol_obj = new Rol();
 $roles = $rol_obj->realizar_consulta('consultar_roles');

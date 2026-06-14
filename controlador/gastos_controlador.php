@@ -2,21 +2,17 @@
 use haydee\enums\HttpCodigo;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
-
-use haydee\servicios\Sesiones;
+use haydee\ayuda\ConstructorDetalles;
+use haydee\ayuda\Validador;
+use haydee\ayuda\ValidadorBD;
 use haydee\modelo\Gastos;
 use haydee\modelo\Banco;
 use haydee\modelo\Proveedores;
 use haydee\modelo\SolicitudGasto;
 use haydee\modelo\TipoGasto;
 use haydee\modelo\Bitacora;
-use haydee\ayuda\ConstructorDetalles;
-use haydee\ayuda\Validador;
-use haydee\ayuda\ValidadorBD;
+use haydee\servicios\Sesiones;
 use haydee\servicios\GestorAuditoria;
-
-// Verificaciones de seguridad
-Sesiones::autorizarAcceso(Modulo::GESTIONAR_GASTOS, Accion::CONSULTAR);
 
 if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');

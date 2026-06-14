@@ -20,7 +20,6 @@
 
 				<?php require_once ROOT_PATH . "/vista/componentes/header.php"; ?>
 				<main class="col ps-md-2 pt-2">
-
 					<div class="row justify-content-center px-2" id="contenido">
 					<?php if ($_SESSION["rol"] != "Propietario") { ?>
                         

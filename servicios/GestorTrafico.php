@@ -1,45 +1,25 @@
 <?php
 namespace haydee\servicios;
 
-use Firebase\JWT\JWT;
-use Firebase\JWT\Key;
 use haydee\enums\HttpCodigo;
-use haydee\modelo\Rol;
-use haydee\servicios\Sesiones;
 
 class GestorTrafico {
-    private const JWT_ALGORITMO = 'HS256';
     private const BYTES_IV_NUEVO = 12;
     
     public static $claveActiva = null;
     public static $esCifrado = false;
-    public static $usuarioLogueado = null;
     
-    // Rastreador estático para la limpieza segura de archivos temporales
     private static array $archivosTemporales = [];
 
-    // Lista de endpoints que escapan del túnel criptográfico
+    // Lista de endpoints que escapan del túnel criptográfico (vienen en texto plano)
     private static $rutasSinCifrado = [
         'handshake',
         'recuperar'
     ];
 
-    // Lista de endpoints que no requieren identidad (JWT)
-    private static $rutasSinJWT = [
-        'handshake',
-        'login',
-        'recuperar',
-        'refrescar'
-    ];
-
     public static function interceptarEntrada($endpoint) {
+        // Si el endpoint no maneja cifrado, salimos
         if (in_array($endpoint, self::$rutasSinCifrado)) return;
-
-        // ==================== EVALUACIÓN DE JWT (IDENTIDAD) ====================
-        if (!in_array($endpoint, self::$rutasSinJWT)) {
-            
-            self::$usuarioLogueado = Sesiones::validarAutenticacionJWT();
-        }
 
         // ==================== PROCESAMIENTO CRIPTOGRÁFICO ====================
         $inputRaw = file_get_contents('php://input');
@@ -80,8 +60,6 @@ class GestorTrafico {
                         $tmpPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . uniqid('enc_') . '_' . $nombreLimpio;
                         
                         file_put_contents($tmpPath, base64_decode($archivo['base64']));
-                        
-                        // Guardamos la ruta para eliminarla al finalizar la petición
                         self::$archivosTemporales[] = $tmpPath;
 
                         $_FILES[$campo] = [
@@ -95,7 +73,6 @@ class GestorTrafico {
                     unset($arregloDescifrado['_archivos_adjuntos']); 
                 }
 
-                // Inyección unificada en superglobales: Los endpoints leerán de aquí directamente limpia el payload
                 $_POST = array_merge($_POST, $arregloDescifrado);
                 $_GET = array_merge($_GET, $arregloDescifrado);
             } else {
@@ -126,10 +103,6 @@ class GestorTrafico {
         return $respuestaJsonOriginal;
     }
 
-    /**
-     * Recorre y destruye todos los archivos temporales creados manualmente en la petición.
-     * Previene ataques DoS de llenado de almacenamiento en disco duro.
-     */
     public static function limpiarArchivosTemporales() {
         foreach (self::$archivosTemporales as $rutaArchivo) {
             if (file_exists($rutaArchivo)) {
@@ -138,18 +111,10 @@ class GestorTrafico {
         }
     }
 
-    /**
-     * Aborta la ejecución de la API de forma segura, garantizando 
-     * que el mensaje de error viaje a través del túnel criptográfico.
-     */
     public static function abortarConCifrado(array $respuesta, int $codigoHttp = 400) {
         http_response_code($codigoHttp);
         $jsonRespuesta = json_encode($respuesta);
-        
-        // Forzamos la intercepción y cifrado del error
         echo self::interceptarSalida($jsonRespuesta);
-        
-        // Limpiamos rastros en memoria/disco antes de matar el proceso
         self::limpiarArchivosTemporales();
         exit;
     }

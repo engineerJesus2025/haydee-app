@@ -1,7 +1,6 @@
 <?php
 namespace haydee\modelo;
 
-
 use PDO;
 use PDOException;
 use haydee\enums\EstadoSolicitud;

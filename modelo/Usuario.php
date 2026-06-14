@@ -223,8 +223,7 @@ class Usuario extends Conexion
 
             $id_usuario = $datos['id_usuario'];
 
-            $sqlIntentos = "SELECT intentos, TIMESTAMPDIFF(MINUTE, ultimo_intento, NOW()) as minutos_transcurridos 
-                            FROM intentos_login WHERE usuario_id = :id FOR UPDATE";
+            $sqlIntentos = "SELECT intentos, TIMESTAMPDIFF(MINUTE, ultimo_intento, NOW()) as minutos_transcurridos FROM intentos_login WHERE usuario_id = :id";
             $stmtI = $db->prepare($sqlIntentos);
             $stmtI->execute([':id' => $id_usuario]);
             $registroIntento = $stmtI->fetch(PDO::FETCH_ASSOC);

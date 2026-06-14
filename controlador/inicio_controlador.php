@@ -1,15 +1,12 @@
 <?php
 use haydee\enums\HttpCodigo;
-use haydee\servicios\Sesiones;
 use haydee\modelo\Mensualidad;
 use haydee\modelo\CarteleraVirtual;
 use haydee\modelo\Apartamento;
-use haydee\servicios\Autenticacion;
 use haydee\modelo\Bitacora;
+use haydee\servicios\Sesiones;
+use haydee\servicios\Autenticacion;
 use haydee\servicios\GestorAuditoria;
-
-// Proteccion basica (Red, HTTP, sesion iniciada)
-Sesiones::autorizarAcceso();
 
 if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');

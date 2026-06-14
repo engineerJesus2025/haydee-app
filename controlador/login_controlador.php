@@ -9,9 +9,6 @@ use haydee\servicios\Sesiones;
 use haydee\servicios\Autenticacion;
 use haydee\servicios\Recuperacion;
 
-Sesiones::verificarAccesoRed();
-Sesiones::validarMetodoHTTP(['GET', 'POST']);
-
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -58,29 +55,20 @@ if (isset($_POST["operacion"])) {
                 $seguridadIP = new SeguridadIP();
                 $seguridadIP->set_ip($_SERVER['REMOTE_ADDR']);
 
-                // Verificar Rate Limit temporal ANTES de evaluar claves o captchas
-                $rateLimit = $seguridadIP->verificarRateLimit();
-                if (!$rateLimit['estatus']) {
-                    $seguridadIP->registrarFallo();
-                    http_response_code($rateLimit['codigo_http']); // 429 Too Many Requests
-                    $respuesta = ['estatus' => false, 'mensaje' => $rateLimit['mensaje']];
-                    break; 
-                }
-
-                $recaptchaResponse = $_POST['g-recaptcha-response'] ?? '';
-
                 // Validar reCAPTCHA
+                $recaptchaResponse = $_POST['g-recaptcha-response'] ?? '';
                 $recaptcha = new Recaptcha(null, $recaptchaDeshabilitado);
                 $validacion = $recaptcha->verificar($recaptchaResponse);
                 
-                // Si falla el reCAPTCHA, devolvemos 400 (Bad Request)
+                // Si falla el reCAPTCHA, es comportamiento sospechoso (Bot)
                 if (!$validacion['estatus']) {
-                    $seguridadIP->registrarFallo(); // Para la ip sospechosa
+                    $seguridadIP->registrarFalloCritico(); 
                     http_response_code(HttpCodigo::BAD_REQUEST->value); 
                     $respuesta = ['estatus' => false, 'mensaje' => $validacion['error']];
                     break;
                 }
 
+                // Intentar autenticación (Delegado a Autenticacion.php)
                 $auth = new Autenticacion();
                 try {
                     $resultado = $auth->login($usuario, $contra, $mantenerSesion);
@@ -89,17 +77,21 @@ if (isset($_POST["operacion"])) {
                 }
 
                 if ($resultado['estatus']) {
-                    $seguridadIP->limpiarFallo(); // Limpiamos el historial de fallos de esta IP
+                    $seguridadIP->limpiarFallo(); // Limpiamos historial penal 8-]
 
-                    http_response_code(HttpCodigo::OK->value); // Login exitoso
+                    http_response_code(HttpCodigo::OK->value); 
                     if (isset($resultado['token'])) {
                         Sesiones::recordar($usuario, $resultado['token']);
                     }
                     Sesiones::iniciar($resultado['datos']);
                     session_regenerate_id(true);
                 } else {
-                    $seguridadIP->registrarFallo(); // CUALQUIER FALLO: Sumamos un intento a la IP
-                    $codigoError = $resultado['codigo_http'] ?? 401;// 401 Unauthorized (Credenciales incorrectas)
+                    $codigoError = $resultado['codigo_http'] ?? 401;
+                    // Si el error es 429, la cuenta ya fue congelada por el modelo Usuario.
+                    if ($codigoError !== 429 && $codigoError !== HttpCodigo::DEMASIADAS_PETICIONES->value) {
+                        $seguridadIP->registrarFalloCritico(); // Clave mala: Sumamos infracción
+                    }
+                    
                     http_response_code($codigoError);
                 }
                 
@@ -107,27 +99,18 @@ if (isset($_POST["operacion"])) {
                 break;
 
             case 'enviar_notificacion':
-                // Proteger contra Email Bombing
                 $seguridadIP = new SeguridadIP();
                 $seguridadIP->set_ip($_SERVER['REMOTE_ADDR']);
-                $rateLimit = $seguridadIP->verificarRateLimit();
-                
-                if (!$rateLimit['estatus']) {
-                    $seguridadIP->registrarFallo();
-                    http_response_code($rateLimit['codigo_http']);
-                    $respuesta = ['estatus' => false, 'mensaje' => 'Ha superado el límite de intentos. Intente mañana.'];
-                    break;
-                }
 
                 $recuperacion = new Recuperacion();
                 try {
                     $respuesta = $recuperacion->enviarCorreoRecuperacion($correoRecuperar);
 
                     if (strpos($respuesta['mensaje'], 'Error') !== false) {
-                        $seguridadIP->registrarFallo();
+                        // Si ocurre un error grave (ej. intento de inyección en el correo)
+                        $seguridadIP->registrarFalloCritico();
                         http_response_code(HttpCodigo::ERROR_INTERNO->value); 
                     } else {
-                        $seguridadIP->limpiarFallo();
                         http_response_code(HttpCodigo::OK->value); 
                     }
                 } finally {
@@ -151,9 +134,7 @@ if (isset($_POST["operacion"])) {
     }
 }
 
-// ====================================================================
-// 2. Manejo de Vistas y Redirecciones (GET)
-// ====================================================================
+// Manejo de Vistas y Redirecciones (GET)
 $accion = $_GET['accion'] ?? 'inicio';
 
 switch ($accion) {

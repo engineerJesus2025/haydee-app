@@ -1,69 +1,40 @@
 <?php
-use haydee\modelo\Usuario;
-use haydee\servicios\Sesiones;
-use haydee\ayuda\Validador;
 use haydee\enums\HttpCodigo;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
-use haydee\servicios\GestorAuditoria;
+use haydee\ayuda\Validador;
+use haydee\modelo\Usuario;
 use haydee\modelo\Bitacora;
-use haydee\servicios\GestorTrafico;
-
-// ==================== IDENTIDAD Y PERMISOS ====================
-// El perfil personal no requiere un módulo ni acción específica para ser consultado
-$identidad = Sesiones::autorizarAccesoAPI(null, null, ['GET', 'POST', 'PUT'], true);
-
-$idUsuarioAutenticado = $identidad['id_usuario'] ?? null;
-$rolUsuario = strtolower($identidad['rol'] ?? '');
-$correoUsuario = $identidad['correo'] ?? '';
-
-if (empty($idUsuarioAutenticado)) {
-    $resultado = ["estatus" => false, "mensaje" =>  'Sesión inválida o expirada.'];
-    $codigoHttp = HttpCodigo::NO_AUTORIZADO->value;
-    GestorTrafico::abortarConCifrado($resultado, $codigoHttp);
-}
-
-// ==================== DETECCIÓN DE PROTOCOLO Y PAYLOAD ====================
-$metodoHttp = $_SERVER['REQUEST_METHOD'];
-$headers = getallheaders();
-$metodoSobreescrito = $headers['X-HTTP-Method-Override'] ?? $_POST['_method'] ?? $_GET['_method'] ?? null;
-
-if (!empty($metodoSobreescrito)) {
-    $metodoHttp = strtoupper($metodoSobreescrito);
-}
-
-$datosPeticion = ($metodoHttp === 'GET') ? $_GET : $_POST;
-$operacion = $datosPeticion['operacion'] ?? '';
+use haydee\servicios\Sesiones;
+use haydee\servicios\GestorAuditoria;
 
 if (empty($operacion)) {
-    GestorTrafico::abortarConCifrado(
-        ['estatus' => false, 'mensaje' => 'No se especificó la operación.'], 
-        HttpCodigo::BAD_REQUEST->value
-    );
+    throw new Exception('No se especificó la operación.', HttpCodigo::BAD_REQUEST->value);
 }
 
 // ==================== REGLAS Y FIREWALL DE PROTOCOLO HTTP ====================
 $reglas = Usuario::obtenerReglas($operacion);
 $validador = new Validador();
 
-// Llamada unificada directa (el validador ya sabe qué hacer si $reglas está vacío)
 if (!$validador->validarMetodoHTTP($metodoHttp, $reglas)) {
-    GestorTrafico::abortarConCifrado(
-        ['estatus' => false, 'mensaje' => 'Protocolo HTTP denegado.', 'errores' => $validador->obtenerErrores()],
-        HttpCodigo::METODO_NO_PERMITIDO->value
-    );
+    $datosError = [
+        'mensaje' => 'Protocolo HTTP denegado para esta operación.',
+        'errores' => $validador->obtenerErrores()
+    ];
+    throw new \Exception(json_encode($datosError), HttpCodigo::METODO_NO_PERMITIDO->value);
 }
 
 // ==================== VALIDACIÓN DE DATOS ====================
 if (!empty($reglas)) {
-    $contexto = ['exclude_id' => $idUsuarioAutenticado]; 
+    $contexto = ['exclude_id' => $identidad['id_usuario']]; 
     $validador->validarConjunto($datosPeticion, $reglas, $contexto);
     if ($validador->tieneErrores()) {
         $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::BAD_REQUEST->value;
-        GestorTrafico::abortarConCifrado(
-            ['estatus' => false, 'errores' => $validador->obtenerErrores(), 'mensaje' => 'Datos inválidos.'], 
-            $codigoHttp
-        );
+        $datosError = [
+            'mensaje' => 'Datos de formulario inválidos o incompletos.',
+            'errores' => $validador->obtenerErrores()
+        ];
+        throw new \Exception(json_encode($datosError), $codigoHttp);
     }
 }
 
@@ -75,7 +46,7 @@ $auditor = new GestorAuditoria($usuario, Modulo::GESTIONAR_USUARIOS);
 try {
     // ==================== ASIGNACIÓN MASIVA PROTEGIDA ====================
     // Forzamos el ID del token JWT por seguridad inmutable
-    $usuario->set_id_usuario($idUsuarioAutenticado);
+    $usuario->set_id_usuario($identidad['id_usuario']);
 
     if ($metodoHttp === 'POST' || $metodoHttp === 'PUT') {
         $usuario->set_nombre($datosPeticion['nombre'] ?? null);

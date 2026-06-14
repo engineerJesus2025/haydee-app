@@ -3,19 +3,15 @@ use haydee\enums\HttpCodigo;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
 use haydee\enums\TipoEventoNotificacion;
-
-use haydee\servicios\Sesiones;
+use haydee\ayuda\Validador;
+use haydee\ayuda\ValidadorBD;
 use haydee\modelo\Mensualidad;
 use haydee\modelo\Presupuesto;
 use haydee\modelo\Apartamento;
 use haydee\modelo\Bitacora;
-use haydee\ayuda\Validador;
-use haydee\ayuda\ValidadorBD;
+use haydee\servicios\Sesiones;
 use haydee\servicios\GestorAuditoria;
 use haydee\servicios\GestorNotificaciones;
-
-// Verificaciones de seguridad
-Sesiones::autorizarAcceso(Modulo::GESTIONAR_MENSUALIDAD, Accion::CONSULTAR);
 
 if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');

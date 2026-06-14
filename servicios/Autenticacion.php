@@ -1,13 +1,13 @@
 <?php
 namespace haydee\servicios;
 
+use haydee\enums\TipoToken;
+use haydee\enums\Accion;
+use haydee\enums\Modulo;
 use haydee\modelo\Usuario;
 use haydee\modelo\Rol;
 use haydee\modelo\Notificaciones;
 use haydee\modelo\Bitacora;
-use haydee\enums\TipoToken;
-use haydee\enums\Accion;
-use haydee\enums\Modulo;
 use Firebase\JWT\JWT;
 
 class Autenticacion
@@ -206,6 +206,7 @@ class Autenticacion
         $rolModel->set_id_rol($rolId);
         $resultado = $rolModel->realizar_consulta('consultar_permisos_asignados');
         $rolModel->cerrar();
+
         return $resultado['datos'] ?? [];
     }
 

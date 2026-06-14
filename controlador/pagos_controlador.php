@@ -3,19 +3,16 @@ use haydee\enums\HttpCodigo;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
 use haydee\enums\TipoEventoNotificacion;
-
-use haydee\servicios\Sesiones;
+use haydee\ayuda\ConstructorDetalles;
+use haydee\ayuda\Validador;
+use haydee\ayuda\ValidadorBD;
 use haydee\modelo\Pagos;
 use haydee\modelo\Banco;
 use haydee\modelo\Apartamento;
 use haydee\modelo\Bitacora;
-use haydee\ayuda\ConstructorDetalles;
-use haydee\ayuda\Validador;
-use haydee\ayuda\ValidadorBD;
+use haydee\servicios\Sesiones;
 use haydee\servicios\GestorAuditoria;
 use haydee\servicios\GestorNotificaciones;
-// Verificaciones de seguridad
-Sesiones::autorizarAcceso(Modulo::GESTIONAR_PAGOS, Accion::CONSULTAR);
 
 // Determinar rol
 $esPropietario = (isset($_SESSION["rol"]) && $_SESSION["rol"] == "Propietario");

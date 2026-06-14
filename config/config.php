@@ -1,4 +1,5 @@
 <?php
+date_default_timezone_set('America/Caracas');
 if (!class_exists('Dotenv\Dotenv')) {
     require_once __DIR__ . '/../vendor/autoload.php';
 }

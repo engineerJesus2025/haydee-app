@@ -3,7 +3,6 @@ namespace haydee\modelo;
 
 use PDO;
 use PDOException;
-use DateTime;
 use haydee\enums\EstadoPeriodo;
 use haydee\enums\EstadoMovimientoCaja;
 use haydee\enums\TipoBaseDatos;

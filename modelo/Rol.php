@@ -243,7 +243,7 @@ class Rol extends Conexion
         $stmtDelete = $pdo->prepare($sqlDelete);
         $stmtDelete->execute([':id' => $this->id_rol]);
 
-        // 2. Si hay nuevos permisos en el arreglo, los insertamos
+        // Si hay nuevos permisos en el arreglo, los insertamos
         if (!empty($this->permisos_asignados)) {
             $sqlInsert = "INSERT INTO asignacion_permisos (rol_id, modulo_id, permiso_id) 
                           VALUES (:rol_id, :modulo_id, :permiso_id)";
@@ -269,8 +269,6 @@ class Rol extends Conexion
     /**
      * Valida que un array de asignaciones de permisos sea correcto.
      * Verifica que cada elemento tenga modulo_id y un array de permisos, y que existan.
-     * @param array $asignaciones
-     * @return array ['estatus' => bool, 'mensaje' => string]
      */
     private function validarAsignacionesPermisos($asignaciones)
     {
@@ -331,7 +329,8 @@ class Rol extends Conexion
         try {
             $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute([':id' => $this->id_rol]);
-            return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
+            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return ['estatus' => true, 'datos' => $resultados];
         } catch (PDOException $e) {
             error_log("Error en _consultar_permisos_asignados: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al consultar permisos'];

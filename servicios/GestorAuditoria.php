@@ -1,9 +1,9 @@
 <?php
 namespace haydee\servicios;
 
-use haydee\modelo\Bitacora;
 use haydee\enums\Accion;
 use haydee\enums\Modulo; 
+use haydee\modelo\Bitacora;
 
 class GestorAuditoria
 {

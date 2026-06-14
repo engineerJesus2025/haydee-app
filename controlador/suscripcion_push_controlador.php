@@ -1,11 +1,8 @@
 <?php
 use haydee\enums\HttpCodigo;
-use haydee\servicios\Sesiones;
-use haydee\modelo\SuscripcionPush;
 use haydee\ayuda\Validador;
-
-Sesiones::validarMetodoHTTP(['GET', 'POST']);
-Sesiones::verificarSesion();
+use haydee\modelo\SuscripcionPush;
+use haydee\servicios\Sesiones;
 
 if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');

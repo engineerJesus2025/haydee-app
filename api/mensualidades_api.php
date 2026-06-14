@@ -1,67 +1,45 @@
 <?php
-use haydee\modelo\Mensualidad;
-use haydee\servicios\Sesiones;
-use haydee\ayuda\Validador;
 use haydee\enums\HttpCodigo;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
-use haydee\servicios\GestorAuditoria;
+use haydee\ayuda\Validador;
 use haydee\modelo\Bitacora;
-use haydee\servicios\GestorTrafico;
-
-// ==================== IDENTIDAD Y PERMISOS ====================
-$identidad = Sesiones::autorizarAccesoAPI(Modulo::GESTIONAR_MENSUALIDAD, Accion::CONSULTAR, ['GET', 'POST', 'PUT'], true);
-
-$rolUsuario = strtolower($identidad['rol'] ?? '');
-$esPropietario = ($rolUsuario === 'propietario'); 
-$correoUsuario = $identidad['correo'] ?? '';
-
-// ==================== DETECCIÓN DE PROTOCOLO Y PAYLOAD ====================
-$metodoHttp = $_SERVER['REQUEST_METHOD'];
-$headers = getallheaders();
-$metodoSobreescrito = $headers['X-HTTP-Method-Override'] ?? $_POST['_method'] ?? $_GET['_method'] ?? null;
-
-if (!empty($metodoSobreescrito)) {
-    $metodoHttp = strtoupper($metodoSobreescrito);
-}
-
-$datosPeticion = ($metodoHttp === 'GET') ? $_GET : $_POST;
-
-$operacion = $datosPeticion['operacion'] ?? '';
+use haydee\servicios\Sesiones;
+use haydee\servicios\GestorAuditoria;
 
 if (empty($operacion)) {
-    GestorTrafico::abortarConCifrado(
-        ['estatus' => false, 'mensaje' => 'No se especificó la operación.'], 
-        HttpCodigo::BAD_REQUEST->value
-    );
+    throw new Exception('No se especificó la operación.', HttpCodigo::BAD_REQUEST->value);
 }
 
 Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_MENSUALIDAD, $operacion, [], true);
 
-// ==================== REGLAS Y FIREWALL DE PROTOCOLO HTTP ====================
+// REGLAS Y FIREWALL DE PROTOCOLO HTTP
 $reglas = Mensualidad::obtenerReglas($operacion);
 $validador = new Validador();
 
 if (!$validador->validarMetodoHTTP($metodoHttp, $reglas)) {
-    GestorTrafico::abortarConCifrado(
-        ['estatus' => false, 'mensaje' => 'Protocolo HTTP denegado.', 'errores' => $validador->obtenerErrores()],
-        HttpCodigo::METODO_NO_PERMITIDO->value
-    );
+    $datosError = [
+        'mensaje' => 'Protocolo HTTP denegado para esta operación.',
+        'errores' => $validador->obtenerErrores()
+    ];
+    throw new \Exception(json_encode($datosError), HttpCodigo::METODO_NO_PERMITIDO->value);
 }
 
-// ==================== VALIDACIÓN DE DATOS ====================
+// VALIDACIÓN DE DATOS
 if (!empty($reglas)) {
     $validador->validarConjunto($datosPeticion, $reglas);
     if ($validador->tieneErrores()) {
         $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::BAD_REQUEST->value;
-        GestorTrafico::abortarConCifrado(
-            ['estatus' => false, 'errores' => $validador->obtenerErrores(), 'mensaje' => 'Datos inválidos.'], 
-            $codigoHttp
-        );
+        
+        $datosError = [
+            'mensaje' => 'Datos de formulario inválidos o incompletos.',
+            'errores' => $validador->obtenerErrores()
+        ];
+        throw new \Exception(json_encode($datosError), $codigoHttp);
     }
 }
 
-// ==================== INSTANCIACIÓN DE MODELOS Y AUDITOR ====================
+// INSTANCIACIÓN DE MODELOS
 $mensualidad = new Mensualidad();
 $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida en API'];
 $auditor = new GestorAuditoria($mensualidad, Modulo::GESTIONAR_MENSUALIDAD);

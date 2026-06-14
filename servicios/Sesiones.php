@@ -1,173 +1,144 @@
 <?php
+declare(strict_types=1);
 
 namespace haydee\servicios;
-use haydee\enums\HttpCodigo;
 
-use haydee\servicios\Autenticacion;
+use Exception;
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
+use haydee\enums\HttpCodigo;
+use haydee\enums\Modulo;
+use haydee\enums\Accion;
 use haydee\modelo\SeguridadIP;
 use haydee\modelo\Rol;
-use haydee\modelo\Notificaciones;
-use haydee\modelo\AnioFiscal;
-use haydee\modelo\CajaChica;
-use haydee\enums\Accion;
-use haydee\enums\Modulo;
-use Firebase\JWT\JWT;
-use haydee\servicios\GestorTrafico;
+use haydee\servicios\Autenticacion;
 
 class Sesiones
 {
     private const MAX_PETICIONES_MINUTO = 60;
-    private const VENTANA_TIEMPO_SEGUNDOS = 60;
     private const DIAS_RECORDAR_SESION = 30;
     private const SEGUNDOS_POR_DIA = 86400;
-    private const EXPIRACION_PASADO = 3600; // Segundos a restar para destruir cookies
-    // Memoria temporal para los permisos cuando la petición viene por JWT (API)
+    private const EXPIRACION_PASADO = 3600;
+
     public static $permisosAPI = null;
-    /**
-     * Inicia la sesion con los datos del usuario.
-     */
-    public static function iniciar($datosUsuario)
-    {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-        $_SESSION["id_usuario"] = $datosUsuario['id_usuario'];
-        $_SESSION["usuario"] = $datosUsuario['correo'];
-        $_SESSION["nombre_completo"] = $datosUsuario['nombre_completo'];
-        $_SESSION["rol"] = $datosUsuario['rol'];
-        $_SESSION["permisos"] = $datosUsuario['permisos'];
-        $_SESSION["notificaciones"] = array_filter($datosUsuario["notificaciones"],function($n){return $n['leido'] == 0;});
-
-        // Verificar año fiscal y caja (proximamente proceso automatico -_-)
-        try {
-            $anioFiscalModel = new AnioFiscal();
-            $anioFiscalModel->realizar_consulta('gestionar_periodos');
-        } finally {
-            $anioFiscalModel->cerrar();
-        }
-    }
+    public static $usuarioLogueado = null;
 
     /**
-     * metodo centralizado para autorizar el acceso a un controlador.
-     * Ejecuta secuencialmente: IP -> metodo HTTP -> sesion -> Permisos.
+     * Orquestador de seguridad de entrada (Middleware)
      */
-    public static function autorizarAcceso(?Modulo $modulo = null, ?Accion $permiso = null, $metodos = ['GET', 'POST'])
+    public static function autorizarAcceso(array $configRuta, string $metodoActual): void
     {
-        // Capa de Red (Firewall IP)
+        // Validar el método HTTP
+        self::validarMetodoHTTP($configRuta[Endpoints::CONF_METODOS], $metodoActual);
+
+        // Control de red e IP
         self::verificarAccesoRed();
 
-        // Capa de Protocolo (Metodos permitidos)
-        self::validarMetodoHTTP($metodos);
-
-        // Capa de Identidad (Quien es)
+        // Control de autenticación si la ruta lo exige
+        if ($configRuta[Endpoints::CONF_REQUIERE_AUTH] !== true) {
+            return;
+        }
+            
         self::verificarSesion();
 
-        // Capa de Comportamiento (Anti-Flood)
-        self::verificarInundacion();
+        $usuarioId = (int)($_SESSION['id_usuario'] ?? 0);
 
-        // Capa de Autorización (Que puede hacer)
-        // Solo verifica permisos si el controlador se los exige
-        if ($modulo !== null && $permiso !== null) {
-            self::verificarPermiso($modulo, $permiso);
+        // Anti-Flood en Base de Datos (Delegado al modelo SeguridadIP)
+        self::verificarInundacionBD($usuarioId);
+
+        // Control de permisos por módulo
+        if ($configRuta[Endpoints::CONF_MODULO] !== null) {
+            self::verificarPermiso($configRuta[Endpoints::CONF_MODULO], Accion::CONSULTAR);
+        }
+    }
+
+    public static function autorizarAccesoAPI(array $configRuta): void
+    {
+        // Capa de Protocolo 
+        self::validarMetodoHTTP($configRuta[Endpoints::CONF_METODOS], $_SERVER['REQUEST_METHOD']);
+
+        // Capa de Red Perimetral (WAF / Castigos de IP)
+        self::verificarAccesoRed();
+
+        // Salida temprana para rutas públicas (Login, Recuperar, Handshake)
+        if ($configRuta[Endpoints::CONF_REQUIERE_AUTH] !== true) {
+            return;
+        }
+
+        // Capa de Identidad (Decodificación JWT)
+        self::$usuarioLogueado = self::validarAutenticacionJWT();
+        $usuario = self::$usuarioLogueado;
+
+        // Capa de Comportamiento (Anti-Flood por Usuario)
+        self::verificarInundacionBD((int)$usuario['id_usuario']);
+
+        // Capa de Autorización (RBAC - Derecho de Entrada al Módulo)
+        $modulo = $configRuta[Endpoints::CONF_MODULO];
+        if ($modulo !== null) {
+            if (!self::tienePermiso($modulo, Accion::CONSULTAR)) {
+                throw new Exception("Acceso denegado: No tienes privilegios suficientes para entrar a este módulo.", HttpCodigo::PROHIBIDO->value);
+            }
         }
     }
 
     /**
-     * Valida permisos, inundación y devuelve la identidad estructurada para las APIs REST (JWT).
+     * Verifica accesos de red y listas de IP
      */
-    public static function autorizarAccesoAPI(?Modulo $modulo = null, ?Accion $permiso = null, $metodos = ['GET', 'POST', 'PUT', 'DELETE'], $esApi = true)
+    public static function verificarAccesoRed()
     {
-        // Capa de Protocolo
-        self::validarMetodoHTTP($metodos, $esApi);
-
-        // Capa de Identidad
-        // Obtenemos el usuario desde el GestorTrafico (que a su vez llamó a validarAutenticacionJWT)
-        $usuario = GestorTrafico::$usuarioLogueado;
-        if (!$usuario) {
-            $resultado = ['estatus' => false, 'mensaje' => 'Identidad no verificada.'];
-            $codigoHttp = HttpCodigo::NO_AUTORIZADO->value;
-            if ($esApi) {
-                GestorTrafico::abortarConCifrado($resultado, $codigoHttp);
-            } else {
-                http_response_code($codigoHttp);
-                echo json_encode($resultado);
-                exit;
-            }
-        }
-
-        // Capa de Autorización (Permisos)
-        if ($modulo !== null && $permiso !== null) {
-            if (!self::tienePermiso($modulo, $permiso)) {
-                $resultado = ['estatus' => false, 'mensaje' => 'Acceso denegado: No tienes permisos para este módulo.'];
-                $codigoHttp = HttpCodigo::PROHIBIDO->value;
-                if ($esApi) {
-                    GestorTrafico::abortarConCifrado($resultado, $codigoHttp);
-                } else {
-                    http_response_code($codigoHttp);
-                    echo json_encode($resultado);
-                    exit;
-                }
-            }
-        }
-
-        // Capa Anti-Inundación (Flood Control)
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
+        $ipCliente = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
         
-        $idTemporal = $_SESSION["id_usuario"] ?? null;
-        $_SESSION["id_usuario"] = $usuario['id_usuario'];
+        $seguridad = new SeguridadIP();
+        $seguridad->set_ip($ipCliente);
         
-        self::verificarInundacion($esApi);
-        
-        if ($idTemporal === null) {
-            unset($_SESSION["id_usuario"]);
-        } else {
-            $_SESSION["id_usuario"] = $idTemporal;
+        $acceso = $seguridad->verificarListaAcceso();
+        if (!$acceso['estatus']) {
+            error_log("[Firewall IP] IP bloqueada intento ingresar: {$ipCliente}");
+            throw new Exception($acceso['mensaje'], $acceso['codigo_http'] ?? 403);
         }
 
-        return [
-            'id_usuario'    => $usuario['id_usuario'],
-            'correo'        => $usuario['correo'],
-            'rol'           => strtolower($usuario['rol'] ?? ''),
-            'esPropietario' => (strtolower($usuario['rol'] ?? '') === 'propietario')
-        ];
+        $rateLimitIP = $seguridad->verificarRateLimitGlobal();
+        if (!$rateLimitIP['estatus']) {
+            error_log("[Firewall Rate-Limit] IP saturando el servidor: {$ipCliente}");
+            throw new Exception($rateLimitIP['mensaje'], $rateLimitIP['codigo_http'] ?? 429);
+        }
     }
 
     /**
-     * Verifica si la sesion esta iniciada; si no, intenta con cookies de recordar.
-     * Redirige al login si no hay sesion ni cookies validas.
+     * Anti-Flood delegando la lógica al modelo especializado de Seguridad IP
      */
-    public static function verificarSesion()
+    private static function verificarInundacionBD(int $usuarioId)
     {
-        if (self::estaLogueado()) {
-            return true;
+        $seguridadModelo = new SeguridadIP();
+        $resultado = $seguridadModelo->verificarRateLimitUsuario($usuarioId, self::MAX_PETICIONES_MINUTO);
+
+        if (!$resultado['estatus']) {
+            error_log("[Anti-Flood] Usuario ID {$usuarioId} supero el límite de peticiones por minuto (" . self::MAX_PETICIONES_MINUTO . ")");
+            throw new Exception($resultado['mensaje'], HttpCodigo::DEMASIADAS_PETICIONES->value);
+        }
+    }
+
+    /**
+     * Valida si existe sesión activa o intenta recuperarla por Cookie
+     */
+    private static function verificarSesion()
+    {
+        if (isset($_SESSION["usuario"])) {
+            return;
         }
 
-        // Si hay cookies de "recuerdame", intentamos recuperar la sesion
+        // Si no hay sesión pero existen las cookies, intentamos recordar de forma segura
         if (isset($_COOKIE['token']) && isset($_COOKIE['correo_usuario'])) {
-            return self::procesarTokenRecuerdame();
+            if (self::procesarTokenRecuerdame()) {
+                return;
+            }
         }
 
-        // Si llegamos aqui, no hay sesion.
-        // Si es una petición POST (asumimos AJAX), devolvemos 401.
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            http_response_code(HttpCodigo::NO_AUTORIZADO->value);
-            header('Content-Type: application/json');
-            echo json_encode([
-                'estatus' => false, 
-                'mensaje' => 'Su sesion ha expirado. Por favor, inicie sesion de nuevo.'
-            ]);
-            exit;
-        }
-
-        // Si es una peticion normal (GET), redirigimos al login
-        self::redirigirALogin();
-        return false;
+        throw new Exception("Su sesion ha expirado. Por favor, inicie sesión de nuevo.", HttpCodigo::NO_AUTORIZADO->value);
     }
 
     /**
-     * Procesa el token de "recordar sesion" usando el servicio Autenticacion.
+     * Procesa y valida el token de la cookie "Recuérdame"
      */
     private static function procesarTokenRecuerdame()
     {
@@ -178,16 +149,19 @@ class Sesiones
 
             $autenticacion = new Autenticacion();
             $resultado = $autenticacion->validarTokenRecuerdame($correo, $token);
+            
             if ($resultado['estatus']) {
                 self::iniciar($resultado['datos']);
                 return true;
-            } else {
-                // Token invalido, eliminar cookies
-                setcookie('token', '', time() - self::EXPIRACION_PASADO, '/');
-                setcookie('correo_usuario', '', time() - self::EXPIRACION_PASADO, '/');
-                self::redirigirALogin();
-                return false;
             }
+            
+            // Si el token es inválido, limpiamos las cookies sospechosas
+            setcookie('token', '', time() - self::EXPIRACION_PASADO, '/');
+            setcookie('correo_usuario', '', time() - self::EXPIRACION_PASADO, '/');
+            return false;
+        } catch (Exception $e) {
+            error_log("Error procesando cookie Recuerdame: " . $e->getMessage());
+            return false;
         } finally {
             if ($autenticacion) {
                 $autenticacion->cerrar();
@@ -196,64 +170,66 @@ class Sesiones
     }
 
     /**
-     * Establece las cookies para recordar la sesion.
+     * Crea las cookies en el cliente para mantener la sesión persistente
      */
-    public static function recordar($correo, $token, $dias = self::DIAS_RECORDAR_SESION)
+    public static function recordar(string $correo, string $token)
     {
-        $expiracion = time() + ($dias * self::SEGUNDOS_POR_DIA);
-        // Usar cookies seguras (HttpOnly, Secure en producción)
-        $secure = defined('ENTORNO') && ENTORNO === 'produccion';
-        setcookie('token', $token, $expiracion, '/', '', $secure, true);
-        setcookie('correo_usuario', $correo, $expiracion, '/', '', $secure, true);
+        $tiempoExpiracion = time() + (self::DIAS_RECORDAR_SESION * self::SEGUNDOS_POR_DIA);
+        
+        setcookie('token', $token, $tiempoExpiracion, '/', '', false, true);
+        setcookie('correo_usuario', $correo, $tiempoExpiracion, '/', '', false, true);
     }
 
     /**
-     * Cierra la sesion actual (destruye sesion y elimina cookies).
+     * Valida el método HTTP de la solicitud actual
      */
-    public static function cerrarSesion()
+    public static function validarMetodoHTTP(array $metodosPermitidos, string $metodoActual)
     {
-        if (session_status() === PHP_SESSION_ACTIVE) {
-            session_destroy();
+        $metodosValidos = array_map(fn($m) => $m->value ?? $m, $metodosPermitidos);
+
+        if (!in_array($metodoActual, $metodosValidos, true)) {
+            error_log("[Protocolo HTTP] Metodo no permitido: '{$metodoActual}'. Metodos esperados: " . implode(', ', $metodosValidos));
+            header('Allow: ' . implode(', ', $metodosValidos));
+            throw new Exception("El metodo HTTP {$metodoActual} no esta soportado por esta ruta.", HttpCodigo::METODO_NO_PERMITIDO->value);
         }
-
-        setcookie('token', '', time() - self::EXPIRACION_PASADO, '/');
-        setcookie('correo_usuario', '', time() - self::EXPIRACION_PASADO, '/');
-
-        self::redirigirALogin();
     }
 
     /**
-     * Redirige al login y termina la ejecucion.
+     * Inicializa las variables de sesión de PHP
      */
-    private static function redirigirALogin()
+    public static function iniciar(array $datosUsuario)
     {
-        header("Location: ?pagina=login&accion=inicio");
-        exit;
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        
+        $_SESSION["id_usuario"] = (int)$datosUsuario['id_usuario'];
+        $_SESSION["usuario"] = $datosUsuario['correo'];
+        $_SESSION["nombre_completo"] = $datosUsuario['nombre_completo'];
+        $_SESSION["rol"] = $datosUsuario['rol'];
+        $_SESSION["permisos"] = $datosUsuario['permisos'];
+        
+        // Mantener persistencia si venían notificaciones activas del backend
+        if (isset($datosUsuario["notificaciones"]) && is_array($datosUsuario["notificaciones"])) {
+            $_SESSION["notificaciones"] = array_filter($datosUsuario["notificaciones"], function($n) {
+                return (int)($n['leido'] ?? 1) === 0;
+            });
+        }
     }
 
     /**
-     * Verifica si el usuario esta logueado.
-     */
-    public static function estaLogueado()
-    {
-        return isset($_SESSION["usuario"]);
-    }
-
-    /**
-     * Verifica si el usuario tiene permiso para un modulo y accion.
-
+     * Evalúa si el usuario tiene asignada una acción en un módulo específico
      */
     public static function tienePermiso(Modulo $modulo, Accion $permiso)
     {
-        // Buscamos de dónde sacar los permisos (Prioridad: API -> Web)
-        $listaPermisos = self::$permisosAPI ?? $_SESSION["permisos"] ?? null;
-
+        $listaPermisos = $_SESSION["permisos"] ?? null;
         if (!$listaPermisos || !is_array($listaPermisos)) {
             return false;
         }
 
-        foreach ($listaPermisos as $p) {
-            if ($p["modulo_id"] == $modulo->value && $p["permiso"] == $permiso->value) {
+        foreach ($listaPermisos as $permisoArr) {
+            if ((int)$permisoArr["modulo_id"] === $modulo->value 
+                && $permisoArr["permiso"] === $permiso->value) {
                 return true;
             }
         }
@@ -261,23 +237,31 @@ class Sesiones
     }
 
     /**
-     * Verifica permiso y si no lo tiene, muestra error 403 y detiene la ejecución.
+     * Aplica restricción estricta de permisos
      */
-    public static function verificarPermiso(Modulo $modulo, Accion $permiso)
+    private static function verificarPermiso(Modulo $modulo, Accion $permiso)
     {
-        self::verificarSesion();
-
         if (!self::tienePermiso($modulo, $permiso)) {
-            http_response_code(HttpCodigo::PROHIBIDO->value);
-            require_once "vista/error/403_vista.php";
-            exit;
+            error_log("[RBAC] Acceso Prohibido. Usuario ID: " . ($_SESSION['id_usuario'] ?? 0) . " intentó " . $permiso->name . " en el Modulo " . $modulo->name);
+            throw new Exception("Acceso denegado: No tienes privilegios suficientes para este modulo.", HttpCodigo::PROHIBIDO->value);
         }
     }
 
     /**
-     * Obtiene todos los permisos de un modulo estructurados en un arreglo para la vista.
-
+     * Destruye de forma segura la sesión y las cookies del cliente
      */
+    public static function cerrarSesion()
+    {
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_destroy();
+        }
+        
+        setcookie('token', '', time() - self::EXPIRACION_PASADO, '/');
+        setcookie('correo_usuario', '', time() - self::EXPIRACION_PASADO, '/');
+        header("Location: index.php?pagina=login");
+        exit;
+    }
+
     public static function obtenerPermisosVista(Modulo $modulo)
     {
         return [
@@ -288,11 +272,6 @@ class Sesiones
         ];
     }
 
-    /**
-     * Verifica los permisos para operaciones que se ejecutan via AJAX.
-     * Evalua el nombre de la operacion para requerir el permiso adecuado automaticamente.
-     * Si no tiene permisos, devuelve un JSON con estatus false y termina la ejecuciin.
-     */
     public static function verificarPermisoAccion(Modulo $modulo, $operacion, $mapaExtra = [], $esApi = false)
     {
         $permisoRequerido = null;
@@ -312,10 +291,10 @@ class Sesiones
 
         if ($permisoRequerido !== null) {
             if (!self::tienePermiso($modulo, $permisoRequerido)) {
-                $mensaje = 'No tiene permisos suficientes para realizar esta acción.';
+                $mensaje = 'No tienes permisos suficientes para realizar esta acción.';
                 
                 if ($esApi) {
-                    GestorTrafico::abortarConCifrado(['estatus' => false, 'mensaje' => $mensaje], HttpCodigo::PROHIBIDO->value);
+                    throw new Exception($mensaje, HttpCodigo::PROHIBIDO->value);
                 } else {
                     http_response_code(HttpCodigo::PROHIBIDO->value); 
                     header('Content-Type: application/json');
@@ -326,131 +305,29 @@ class Sesiones
         }
     }
 
-
-    public static function validarMetodoHTTP($metodosPermitidos = ['GET', 'POST'], $esApi = false)
-    {
-        $metodoActual = $_SERVER['REQUEST_METHOD'];
-        if (!in_array($metodoActual, $metodosPermitidos)) {
-            header('Allow: ' . implode(', ', $metodosPermitidos));
-            $resultado = ['estatus' => false, 'mensaje' => "El metodo $metodoActual no esta permitido para este recurso."];
-            $codigoHttp = HttpCodigo::METODO_NO_PERMITIDO->value;
-            if ($esApi) {
-                GestorTrafico::abortarConCifrado($resultado, $codigoHttp);
-            } else {
-                http_response_code($codigoHttp);
-                header('Content-Type: application/json');
-                echo json_encode($resultado);
-                exit;
-            }
-        }
-    }
-
-    /**
-     * Verifica que la IP del cliente no esté bloqueada en la Lista Negra.
-     * Actúa como Firewall (WAF) a nivel de aplicación.
-     */
-    public static function verificarAccesoRed()
-    {
-        $ipCliente = $_SERVER['REMOTE_ADDR'];
-        
-        $seguridad = new SeguridadIP();
-        $seguridad->set_ip($ipCliente); // Usando el setter exigido
-        
-        $acceso = $seguridad->verificarListaAcceso();
-
-        if (!$acceso['estatus']) {
-            // Si es una peticion AJAX/POST
-            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                http_response_code($acceso['codigo_http']);
-                header('Content-Type: application/json');
-                echo json_encode([
-                    'estatus' => false, 
-                    'mensaje' => $acceso['mensaje']
-                ]);
-                exit;
-            } else {
-                // Si es navegacion normal GET
-                http_response_code($acceso['codigo_http']);
-                require_once "vista/error/403_vista.php"; 
-                exit;
-            }
-        }
-    }
-
-    /**
-     * Previene que un usuario autenticado sature el sistema con peticiones masivas (Anti-DoS).
-     * Permite un máximo de 60 peticiones por minuto por usuario.
-     */
-    public static function verificarInundacion($esApi = false)
-    {
-        if (!isset($_SESSION["id_usuario"])) return; 
-
-        $idUsuario = $_SESSION["id_usuario"];
-
-        if (!isset($_SESSION['flood_control'])) {
-            $_SESSION['flood_control'] = [];
-        }
-
-        if (!isset($_SESSION['flood_control'][$idUsuario])) {
-            $_SESSION['flood_control'][$idUsuario] = ['peticiones' => 1, 'inicio' => time()];
-        } else {
-            $_SESSION['flood_control'][$idUsuario]['peticiones']++;
-            $tiempoTranscurrido = time() - $_SESSION['flood_control'][$idUsuario]['inicio'];
-
-            if ($tiempoTranscurrido < self::VENTANA_TIEMPO_SEGUNDOS) {
-                if ($_SESSION['flood_control'][$idUsuario]['peticiones'] > self::MAX_PETICIONES_MINUTO) {
-                    $resultado = ["estatus" => false, "mensaje" => 'Se ha detectado actividad inusual. Ha superado el limite de operaciones por minuto. Por favor, espere.'];
-                    $codigoHttp = HttpCodigo::DEMASIADAS_PETICIONES->value;
-                    if ($esApi) {
-                        GestorTrafico::abortarConCifrado($resultado, $codigoHttp);
-                    } else {
-                        http_response_code($codigoHttp);
-                        header('Content-Type: application/json');
-                        echo json_encode($resultado);
-                        exit;
-                    }
-                }
-            } else {
-                $_SESSION['flood_control'][$idUsuario] = ['peticiones' => 1, 'inicio' => time()];
-            }
-        }
-    }
-
-    /**
-     * Extrae, decodifica y valida el token JWT de las cabeceras HTTP.
-     * Si es válido, retorna los datos del usuario y carga sus permisos en memoria.
-     */
     public static function validarAutenticacionJWT()
     {
-        // Protección multiplataforma para extracción de cabeceras (Apache/Nginx)
         $headers = function_exists('apache_request_headers') ? apache_request_headers() : [];
         $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? $headers['Authorization'] ?? $headers['authorization'] ?? '';
 
         if (empty($authHeader) || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
-            $resultado = ["estatus" => false, "mensaje" => "Falta el token de seguridad."];
-            $codigoHttp = HttpCodigo::NO_AUTORIZADO->value;
-            GestorTrafico::abortarConCifrado($resultado, $codigoHttp);
-            
+            throw new Exception("Falta el token de seguridad JWT.", HttpCodigo::NO_AUTORIZADO->value);
         }
 
         try {
-            // Decodificamos el JWT
-            $decoded = JWT::decode($matches[1], new \Firebase\JWT\Key(JWT_SECRET, 'HS256'));
+            $decoded = JWT::decode($matches[1], new Key(JWT_SECRET, 'HS256'));
             $usuario = (array) $decoded->data;
 
-            // Carga dinámica de permisos del rol en la API
-            $rolModel = new \haydee\modelo\Rol();
+            $rolModel = new Rol();
             $rolModel->set_id_rol($usuario['rol_id']);
             $resPermisos = $rolModel->realizar_consulta('consultar_permisos_asignados');
             self::$permisosAPI = $resPermisos['datos'] ?? [];
 
             return $usuario;
-
         } catch (\Exception $e) {
-            $resultado = ["estatus" => false, "mensaje" => "Sesión inválida o expirada."];
-            $codigoHttp = HttpCodigo::NO_AUTORIZADO->value;
-            GestorTrafico::abortarConCifrado($resultado, $codigoHttp);
+            // delegamos el manejo del error lanzando la excepción (que lo haga otro xd)
+            throw new Exception("Sesión inválida o expirada.", HttpCodigo::NO_AUTORIZADO->value);
         }
     }
-
+    
 }

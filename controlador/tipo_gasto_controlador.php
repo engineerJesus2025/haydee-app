@@ -2,16 +2,12 @@
 use haydee\enums\HttpCodigo;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
-
-use haydee\servicios\Sesiones;
-use haydee\modelo\TipoGasto;
-use haydee\modelo\Bitacora;
 use haydee\ayuda\Validador;
 use haydee\ayuda\ValidadorBD;
+use haydee\modelo\TipoGasto;
+use haydee\modelo\Bitacora;
+use haydee\servicios\Sesiones;
 use haydee\servicios\GestorAuditoria;
-
-// Verificaciones de seguridad
-Sesiones::autorizarAcceso(Modulo::GESTIONAR_TIPO_GASTO, Accion::CONSULTAR);
 
 if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');
