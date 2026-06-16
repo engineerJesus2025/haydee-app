@@ -199,19 +199,19 @@ class Endpoints
             self::CONF_ARCHIVO       => 'cartelera_api.php',
             self::CONF_REQUIERE_AUTH => true,
             self::CONF_MODULO        => Modulo::GESTIONAR_CARTELERA_VIRTUAL,
-            self::CONF_METODOS       => [MetodoHttp::GET]
+            self::CONF_METODOS       => [MetodoHttp::GET, MetodoHttp::POST]
         ],
         'mensualidades' => [
             self::CONF_ARCHIVO       => 'mensualidades_api.php',
             self::CONF_REQUIERE_AUTH => true,
             self::CONF_MODULO        => Modulo::GESTIONAR_MENSUALIDAD,
-            self::CONF_METODOS       => [MetodoHttp::GET, MetodoHttp::POST, MetodoHttp::PUT]
+            self::CONF_METODOS       => [MetodoHttp::GET]
         ],
         'pagos' => [
             self::CONF_ARCHIVO       => 'pagos_api.php',
             self::CONF_REQUIERE_AUTH => true,
             self::CONF_MODULO        => Modulo::GESTIONAR_PAGOS,
-            self::CONF_METODOS       => [MetodoHttp::GET, MetodoHttp::POST]
+            self::CONF_METODOS       => [MetodoHttp::GET, MetodoHttp::POST, MetodoHttp::PUT]
         ],
         'bancos' => [
             self::CONF_ARCHIVO       => 'bancos_api.php',
@@ -229,7 +229,7 @@ class Endpoints
             self::CONF_ARCHIVO       => 'gastos_api.php',
             self::CONF_REQUIERE_AUTH => true,
             self::CONF_MODULO        => Modulo::GESTIONAR_GASTOS,
-            self::CONF_METODOS       => [MetodoHttp::GET]
+            self::CONF_METODOS       => [MetodoHttp::GET, MetodoHttp::POST]
         ],
         'perfil' => [
             self::CONF_ARCHIVO       => 'perfil_api.php',

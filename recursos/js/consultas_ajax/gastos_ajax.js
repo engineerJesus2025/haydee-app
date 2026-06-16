@@ -40,10 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// ============================================================
 // FUNCIONES PRINCIPALES
-// ============================================================
-
 async function consultar() {
     // FORMATOS VISUALES
     const formatoFecha = (cell) => FormatoFechas.formatoUsuario(cell.getValue());
@@ -131,7 +128,7 @@ function recolectarDatosFormulario() {
     bloques.forEach((bloque, index) => {
         formData.append('fecha_detalle[]', bloque.querySelector('.fecha_detalle').value);
         formData.append('monto[]', bloque.querySelector('.monto').value);
-        formData.append('metodo_pago[]', bloque.querySelector('.metodo_pago').value);
+        formData.append('metodo_pago[]', bloque.querySelector('.metodo_pago').value.toUpperCase());
         
 
         const refInput = bloque.querySelector('.referencia');

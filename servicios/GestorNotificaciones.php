@@ -183,14 +183,27 @@ class GestorNotificaciones
 
     private static function obtenerConfiguracionEvento($tipo_evento, $tabla_origen) 
     {
-        $mapaEventos = [
-            TipoEventoNotificacion::NUEVA_PUBLICACION->value => ['canal' => 'haydee-urgente', 'ruta' => 'DetalleCartelera'],
-            TipoEventoNotificacion::EMERGENCIA->value        => ['canal' => 'haydee-urgente', 'ruta' => 'Inicio'],
-            TipoEventoNotificacion::PAGO_RECIBIDO->value     => ['canal' => 'haydee-silencioso', 'ruta' => 'DetallePago'],
-            TipoEventoNotificacion::BAJO_SALDO->value        => ['canal' => 'haydee-silencioso', 'ruta' => 'Inicio'],
-            TipoEventoNotificacion::NUEVA_MENSUALIDAD->value => ['canal' => 'haydee-default', 'ruta' => 'Mensualidad'], 
+        // LA RUTA
+        $mapaRutas = [
+            'cartelera_virtual' => 'DetalleCartelera',
+            'pagos'             => 'DetallePago',
+            'mensualidad'       => 'Mensualidad',
+            'gastos'            => 'Gastos'
+        ];
+        
+        $rutaDestino = $mapaRutas[$tabla_origen] ?? 'Inicio';
+
+        // EL CANAL (PRIORIDAD)
+        $mapaCanales = [
+            TipoEventoNotificacion::AVISO_IMPORTANTE->value  => 'haydee-importante', 
+            TipoEventoNotificacion::NUEVA_PUBLICACION->value => 'haydee-default',
+            TipoEventoNotificacion::PAGO_RECIBIDO->value     => 'haydee-silencioso',
+            TipoEventoNotificacion::BAJO_SALDO->value        => 'haydee-silencioso',
+            TipoEventoNotificacion::NUEVA_MENSUALIDAD->value => 'haydee-default', 
         ];
 
-        return $mapaEventos[$tipo_evento] ?? ['canal' => 'haydee-default', 'ruta' => 'Inicio'];
+        $canalDestino = $mapaCanales[$tipo_evento] ?? 'haydee-default';
+
+        return ['canal' => $canalDestino, 'ruta' => $rutaDestino];
     }
 }

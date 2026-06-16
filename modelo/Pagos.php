@@ -113,19 +113,18 @@ class Pagos extends Conexion
             'referencia' => [
                 'regex' => '/^[a-zA-Z0-9-]{4,20}$/',
                 'opcional' => true,
-                'requerido_si' => ['tipo_pago' => ['Transferencia', 'Pago Movil']]
+                'requerido_si' => ['tipo_pago' => [MetodoPago::TRANSFERENCIA->value, MetodoPago::PAGO_MOVIL->value]]
             ],
-
             'imagen' => [
                 'regex' => '/^[a-zA-Z0-9_.-]+\.(jpg|jpeg|png|gif)$/i',
                 'opcional' => true,
-                'requerido_si' => ['tipo_pago' => ['Transferencia', 'Pago Movil']]
+                'requerido_si' => ['tipo_pago' => [MetodoPago::TRANSFERENCIA->value, MetodoPago::PAGO_MOVIL->value]]
             ],
             'banco_id' => [
                 'regex' => '/^\d+$/',
                 'exists' => ['tabla' => 'bancos', 'campo' => 'id_banco'],
                 'opcional' => true,
-                'requerido_si' => ['tipo_pago' => ['Transferencia', 'Pago Movil']]
+                'requerido_si' => ['tipo_pago' => [MetodoPago::TRANSFERENCIA->value, MetodoPago::PAGO_MOVIL->value]]
             ]
         ];
     }

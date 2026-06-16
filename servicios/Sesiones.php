@@ -6,12 +6,14 @@ namespace haydee\servicios;
 use Exception;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use Firebase\JWT\ExpiredException;
 use haydee\enums\HttpCodigo;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
 use haydee\modelo\SeguridadIP;
 use haydee\modelo\Rol;
 use haydee\servicios\Autenticacion;
+use haydee\servicios\Endpoints;
 
 class Sesiones
 {
@@ -324,9 +326,20 @@ class Sesiones
             self::$permisosAPI = $resPermisos['datos'] ?? [];
 
             return $usuario;
+        } catch (ExpiredException $e) {
+            // El token es genuino pero su tiempo de vida de 1 hora se agotó
+            $errorData = [
+                'mensaje' => 'El token de acceso ha expirado.',
+                'codigo_interno' => 'JWT_EXPIRADO' 
+            ];
+            throw new Exception(json_encode($errorData), HttpCodigo::NO_AUTORIZADO->value);
         } catch (\Exception $e) {
-            // delegamos el manejo del error lanzando la excepción (que lo haga otro xd)
-            throw new Exception("Sesión inválida o expirada.", HttpCodigo::NO_AUTORIZADO->value);
+            // El token fue manipulado, mal formado o la firma no coincide (Posible ataque)
+            $errorData = [
+                'mensaje' => 'Token de seguridad inválido o corrupto.',
+                'codigo_interno' => 'JWT_INVALIDO'
+            ];
+            throw new Exception(json_encode($errorData), HttpCodigo::NO_AUTORIZADO->value);
         }
     }
     

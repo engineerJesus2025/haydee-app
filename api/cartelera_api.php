@@ -86,9 +86,8 @@ try {
             }
             break;
 
-        // ==================== ESCRITURA (POST) ====================
+        // POST
         case 'registrar_cartelera':
-            // Procesar imagen (viene en $_FILES, no en $datosPeticion)
             $nombreImagen = '';
             if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
                 $nombreImagen = GestorImagenes::subir($_FILES['imagen'], 'cartelera_virtual');
@@ -98,28 +97,29 @@ try {
             }
             $cartelera->set_imagen($nombreImagen);
             $respuesta = $cartelera->realizar_consulta('registrar_cartelera');
+            
             if ($respuesta['estatus']) {
                 $respuesta['nombre_imagen'] = $nombreImagen;
                 $auditor->registrarAuditoria(Accion::REGISTRAR);
 
-                $prioridad = (int)($_POST['prioridad'] ?? 3);
+                $prioridad = (int)($datosPeticion['prioridad'] ?? 3);
 
                 // 1 equivale a 'Aviso' (Alta prioridad), lo que dispara la alerta en el canal urgente
                 $eventoPush = ($prioridad === 1) 
-                    ? TipoEventoNotificacion::EMERGENCIA->value 
+                    ? TipoEventoNotificacion::AVISO_IMPORTANTE->value 
                     : TipoEventoNotificacion::NUEVA_PUBLICACION->value;
 
                 GestorNotificaciones::notificarTodos(
-                    "Nuevo aviso: " . $_POST['titulo'], 
-                    $_POST['descripcion'], 
+                    "Nuevo aviso: " . ($datosPeticion['titulo'] ?? 'Importante'), 
+                    $datosPeticion['descripcion'] ?? '', 
                     "cartelera_virtual", 
-                    $respuesta['lastId'], 
+                    $respuesta['lastId'] ?? null, 
                     $eventoPush
                 );
             }
             break;
 
-        // ==================== MODIFICACIONES (PUT) ====================
+        // MODIFICACIONES
         case 'actualizar_cartelera':
             // Solo administradores pueden modificar
             if (!$esAdministrador) {
@@ -134,7 +134,7 @@ try {
             }
             break;
 
-        // ==================== ELIMINACIÓN (DELETE) ====================
+        // ELIMINACIÓN
         case 'eliminar_cartelera':
             if (!$esAdministrador) {
                 http_response_code(HttpCodigo::PROHIBIDO->value);

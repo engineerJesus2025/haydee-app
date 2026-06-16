@@ -1,10 +1,11 @@
 <?php
 use haydee\enums\HttpCodigo;
-use haydee\ayuda\ConstructorDetalles;
-use haydee\ayuda\Validador;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
+use haydee\enums\MetodoPago;
 use haydee\enums\TipoEventoNotificacion;
+use haydee\ayuda\ConstructorDetalles;
+use haydee\ayuda\Validador;
 use haydee\modelo\Pagos;
 use haydee\modelo\Apartamento;
 use haydee\modelo\Banco;
@@ -127,7 +128,7 @@ try {
         case 'registrar_pago':
             // Construimos los renglones
             $detalles = $datosPeticion['detalles'] ?? ConstructorDetalles::ConstruirDetallesPagos($_POST, $_FILES, false);
-            
+
             if (empty($detalles)) {
                 http_response_code(HttpCodigo::BAD_REQUEST->value);
                 $respuesta = ['estatus' => false, 'mensaje' => 'Debe proporcionar al menos un detalle de pago.'];
@@ -147,7 +148,8 @@ try {
                 }
 
                 // Si el método de pago exige imagen, verificamos que el archivo físico llegó al servidor
-                if (in_array($detalle['tipo_pago'] ?? '', ['Transferencia', 'Pago Movil'])) {
+                $metodosConComprobante = [MetodoPago::TRANSFERENCIA->value, MetodoPago::PAGO_MOVIL->value];
+                if (in_array($detalle['tipo_pago'] ?? '', $metodosConComprobante)) {
                     $nombreInputFile = "imagen_{$index}"; // Ej: 'imagen_0'
                     
                     // Si no llegó archivo físico a la RAM de PHP, o llegó con error...
@@ -170,14 +172,23 @@ try {
 
             // BLOQUEO DE SEGURIDAD
             if (!empty($erroresDetalles)) {
-                http_response_code(HttpCodigo::BAD_REQUEST->value);
-                echo json_encode([
-                    'estatus' => false, 
-                    'errores' => $erroresDetalles, 
-                    'mensaje' => 'Faltan comprobantes o referencias requeridas.'
-                ]);
-                break;
+                error_log("[Validación Pagos] Renglones rebotados: " . print_r($erroresDetalles, true));
+
+                // Estructurar el error y lanzarlo al Gateway
+                $datosError = [
+                    'mensaje' => 'Datos inválidos. Faltan comprobantes o referencias requeridas.',
+                    'errores' => $erroresDetalles
+                ];
+                throw new \Exception(json_encode($datosError), HttpCodigo::BAD_REQUEST->value);
             }
+
+            // ==================== INICIO DE DEBUG ====================
+            error_log("=== DEBUG MÓVIL - PAYLOAD PAGOS ===");
+            error_log("POST Recibido: " . print_r($_POST, true));
+            error_log("FILES Recibidos: " . print_r($_FILES, true));
+            error_log("Detalles Construidos: " . print_r($detalles, true));
+            error_log("===========================================");
+            // ==================== FIN DE DEBUG ====================
 
             // Si pasa todo, guardamos en la base de datos
             $pagos->set_detalles($detalles);

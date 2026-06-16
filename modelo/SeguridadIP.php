@@ -260,7 +260,6 @@ class SeguridadIP extends Conexion
     public function limpiarFallo()
     {
         try {
-            error_log("[FIREWALL] [INFO] Limpiando historial volatil para la IP: " . $this->get_ip());
             $sql = "DELETE FROM registro_ips WHERE ip = :ip";
             $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
             $stmt->execute([':ip' => $this->get_ip()]);

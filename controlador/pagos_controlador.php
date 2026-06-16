@@ -3,6 +3,7 @@ use haydee\enums\HttpCodigo;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
 use haydee\enums\TipoEventoNotificacion;
+use haydee\enums\MetodoPago;
 use haydee\ayuda\ConstructorDetalles;
 use haydee\ayuda\Validador;
 use haydee\ayuda\ValidadorBD;
@@ -58,8 +59,10 @@ if (isset($_POST["operacion"])) {
         foreach ($detalles as $index => $detalle) {
             $validadorTemp = new Validador();
 
-            // INTERCEPCIÓN DE IMÁGENES FANTASMA (WEB)
-            if (in_array($detalle['tipo_pago'] ?? '', ['Transferencia', 'Pago Movil'])) {
+            // INTERCEPCIÓN DE IMÁGENES FANTASMA
+            $metodosBancarios = [MetodoPago::TRANSFERENCIA->value, MetodoPago::PAGO_MOVIL->value];
+            
+            if (in_array($detalle['tipo_pago'], $metodosBancarios)) {
                 $nombreInputFile = "imagen_{$index}";
                 
                 //  Leer el input como arreglo, tal como lo envía el FormData
@@ -177,17 +180,6 @@ if (isset($_POST["operacion"])) {
 
                 // Usamos la consulta plana para la bitácora
                 $auditor->capturarDatosAnteriores('consultar_cabecera_pago');
-
-                $configPagos = [
-                    'campos' => ['fecha', 'monto', 'tipo_pago', 'tasa_dolar'],
-                    'bancarios' => ['banco_id', 'referencia'],
-                    'imagenes' => 'imagen',
-                    'metodo_pago_campo' => 'tipo_pago',
-                    'metodos_con_archivo' => ['Transferencia', 'Pago Movil'],
-                    'carpeta_imagenes' => 'pagos',
-                    'campo_existente' => 'imagen_existente',
-                    'indice_archivo_formato' => '/^imagen_(\d+)$/'
-                ];
 
                 $respuesta = $pagos->realizar_consulta('modificar_pago');
 

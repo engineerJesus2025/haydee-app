@@ -339,10 +339,10 @@ function recolectarDatosFormData(operacion, id_pago = null) {
         formData.append("fecha_pago[]", bloque.querySelector(".fecha_pago").value);
         formData.append("monto[]", bloque.querySelector(".monto").value);
         
-        let tipo = bloque.querySelector(".tipo_pago").value;
+        let tipo = bloque.querySelector(".tipo_pago").value.toUpperCase();
         formData.append("tipo_pago[]", tipo);
 
-        if (tipo === "Transferencia" || tipo === "Pago Movil") {
+        if (tipo === "TRANSFERENCIA" || tipo === "PAGO MOVIL") {
             formData.append("referencia[]", bloque.querySelector(".referencia").value);
             formData.append("banco_id[]", bloque.querySelector(".banco_id").value);
             

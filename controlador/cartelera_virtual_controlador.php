@@ -81,7 +81,7 @@ if (isset($_POST["operacion"])) {
 
                     // 1 equivale a 'Aviso' (Alta prioridad), lo que dispara la alerta en el canal urgente
                     $eventoPush = ($prioridad === 1) 
-                        ? TipoEventoNotificacion::EMERGENCIA->value 
+                        ? TipoEventoNotificacion::AVISO_IMPORTANTE->value 
                         : TipoEventoNotificacion::NUEVA_PUBLICACION->value;
 
                     GestorNotificaciones::notificarTodos(

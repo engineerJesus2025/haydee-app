@@ -2,8 +2,8 @@
 namespace haydee\enums;
 
 enum MetodoPago: string {
-    case TRANSFERENCIA = 'Transferencia';
-    case PAGO_MOVIL = 'Pago Movil';
-    case EFECTIVO = 'Efectivo';
-    // case ZELLE = 'Zelle'; // Por si acaso XD
+    case TRANSFERENCIA = 'TRANSFERENCIA';
+    case PAGO_MOVIL    = 'PAGO MOVIL';
+    case EFECTIVO      = 'EFECTIVO';
+    // case ZELLE = 'ZELLE'; // Por si acaso XD
 }

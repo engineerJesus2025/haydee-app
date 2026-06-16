@@ -7,5 +7,5 @@ enum TipoEventoNotificacion: string {
     case BAJO_SALDO        = 'bajo_saldo';
     case GASTO_CAJA_CHICA  = 'gasto_caja_chica';
     case NUEVA_MENSUALIDAD = 'nueva_mensualidad';
-    case EMERGENCIA        = 'emergencia';
+    case AVISO_IMPORTANTE  = 'aviso_importante';
 }

@@ -76,6 +76,7 @@ try {
 
     $mensajeOriginal = $e->getMessage();
     $codigoHttp = $e->getCode() ?: HttpCodigo::ERROR_INTERNO->value;
+    error_log("Colapso Critico en API Gateway: " . $e->getMessage() . " en " . $e->getFile() . ":" . $e->getLine() . ". HTTP: " . $codigoHttp);
 
     // Intentamos decodificar el mensaje por si viene serializado desde el Validador
     $datosDecodificados = json_decode($mensajeOriginal, true);

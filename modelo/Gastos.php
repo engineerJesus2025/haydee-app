@@ -153,18 +153,18 @@ class Gastos extends Conexion
             'referencia' => [
                 'regex' => '/^[a-zA-Z0-9-]{4,20}$/',
                 'opcional' => true,
-                'requerido_si' => ['metodo_pago' => ['Transferencia', 'Pago Movil']]
+                'requerido_si' => ['metodo_pago' => [MetodoPago::TRANSFERENCIA->value, MetodoPago::PAGO_MOVIL->value]]
             ],
             'imagen' => [
                 'regex' => '/^[a-zA-Z0-9_.-]+\.(jpg|jpeg|png|gif)$/i',
                 'opcional' => true,
-                'requerido_si' => ['metodo_pago' => ['Transferencia', 'Pago Movil']]
+                'requerido_si' => ['metodo_pago' => [MetodoPago::TRANSFERENCIA->value, MetodoPago::PAGO_MOVIL->value]]
             ],
             'banco_id' => [
                 'regex' => '/^\d+$/',
                 'exists' => ['tabla' => 'bancos', 'campo' => 'id_banco'],
                 'opcional' => true,
-                'requerido_si' => ['metodo_pago' => ['Transferencia', 'Pago Movil']]
+                'requerido_si' => ['metodo_pago' => [MetodoPago::TRANSFERENCIA->value, MetodoPago::PAGO_MOVIL->value]]
             ]
         ];
     }
@@ -447,8 +447,9 @@ class Gastos extends Conexion
             ]);
             
             $id_detalle = $pdo->lastInsertId();
+            $metodoFormateado = strtoupper(trim($det['metodo_pago']));
 
-            if (in_array($det['metodo_pago'], $metodosBancarios)) {
+            if (in_array($metodoFormateado, $metodosBancarios)) {
                 $stmtBan->execute([
                     ':ref'    => $det['referencia'] ?? '',
                     ':img'    => $det['imagen'] ?? 'default.png',

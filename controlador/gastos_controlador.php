@@ -2,6 +2,7 @@
 use haydee\enums\HttpCodigo;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
+use haydee\enums\MetodoPago;
 use haydee\ayuda\ConstructorDetalles;
 use haydee\ayuda\Validador;
 use haydee\ayuda\ValidadorBD;
@@ -53,11 +54,26 @@ if (isset($_POST["operacion"])) {
 
         foreach ($detalles as $index => $detalle) {
             $validadorTemp = new Validador();
+
+
+            // INTERCEPCIÓN DE IMÁGENES FANTASMA
+            $metodosBancarios = [MetodoPago::TRANSFERENCIA->value, MetodoPago::PAGO_MOVIL->value];
+            
+            if (in_array($detalle['metodo_pago'], $metodosBancarios)) {
+                $nombreInputFile = "imagen_{$index}";
+                $imagenExistente = $_POST['imagen_existente'][$index] ?? ''; 
+                
+                if (empty($imagenExistente)) {
+                    if (!isset($_FILES[$nombreInputFile]) || $_FILES[$nombreInputFile]['error'] !== UPLOAD_ERR_OK) {
+                        $detalle['imagen'] = '';
+                    }
+                }
+            }
+
             $validadorTemp->validarConjunto($detalle, $reglasDetalle);
             
             if ($validadorTemp->tieneErrores()) {
                 $erroresFila = $validadorTemp->obtenerErrores();
-                // Adjuntamos el número de fila (ej: "Fila 1 - monto") para que el Frontend sepa dónde marcar el rojo
                 foreach($erroresFila as $campo => $mensajes) {
                     $erroresDetalles["detalle_" . $index . "_" . $campo] = $mensajes; 
                 }

@@ -2,6 +2,7 @@
 use haydee\enums\HttpCodigo;
 use haydee\enums\Modulo;
 use haydee\enums\Accion;
+use haydee\enums\MetodoPago;
 use haydee\ayuda\Validador;
 use haydee\ayuda\ConstructorDetalles;
 use haydee\modelo\Gastos;
@@ -137,9 +138,10 @@ try {
 
             foreach ($detalles as $index => $detalle) {
                 $validadorTemp = new Validador();
-                
+
                 // Intercepción de imágenes fantasma para Gastos
-                if (in_array($detalle['metodo_pago'] ?? '', ['Transferencia', 'Pago Movil'])) {
+                $metodosConComprobante = [MetodoPago::TRANSFERENCIA->value, MetodoPago::PAGO_MOVIL->value];
+                if (in_array($detalle['metodo_pago'] ?? '', $metodosConComprobante)) {
                     $nombreInputFile = "imagen_{$index}";
                     if (!isset($_FILES[$nombreInputFile]) || $_FILES[$nombreInputFile]['error'] !== UPLOAD_ERR_OK) {
                         $detalle['imagen'] = ''; 
@@ -155,13 +157,13 @@ try {
             }
 
             if (!empty($erroresDetalles)) {
-                http_response_code(HttpCodigo::BAD_REQUEST->value);
-                echo json_encode([
-                    'estatus' => false, 
-                    'errores' => $erroresDetalles, 
-                    'mensaje' => 'Datos inválidos. El comprobante es requerido para pagos digitales.'
-                ]);
-                break; 
+                error_log("[Validación Gastos] Renglones rebotados: " . print_r($erroresDetalles, true));
+                
+                $datosError = [
+                    'mensaje' => 'Datos inválidos. Faltan comprobantes o referencias requeridas.',
+                    'errores' => $erroresDetalles
+                ];
+                throw new \Exception(json_encode($datosError), HttpCodigo::BAD_REQUEST->value);
             }
 
             $gastos->set_detalles($detalles);
@@ -188,7 +190,8 @@ try {
                 $validadorTemp = new Validador();
                 
                 // Intercepción para modificación de Gastos
-                if (in_array($detalle['metodo_pago'] ?? '', ['Transferencia', 'Pago Movil'])) {
+                $metodosConComprobante = [MetodoPago::TRANSFERENCIA->value, MetodoPago::PAGO_MOVIL->value];
+                if (in_array($detalle['metodo_pago'] ?? '', $metodosConComprobante)) {
                     $nombreInputFile = "imagen_{$index}";
                     $imagenExistente = $_POST["imagen_existente_{$index}"] ?? '';
                     
@@ -208,9 +211,13 @@ try {
             }
 
             if (!empty($erroresDetalles)) {
-                http_response_code(HttpCodigo::BAD_REQUEST->value);
-                echo json_encode(['estatus' => false, 'errores' => $erroresDetalles, 'mensaje' => 'Datos inválidos en los renglones del gasto.']);
-                break; 
+                error_log("[Validación Gastos - Edición] Renglones rebotados: " . print_r($erroresDetalles, true));
+                
+                $datosError = [
+                    'mensaje' => 'Datos inválidos. Faltan comprobantes o referencias requeridas.',
+                    'errores' => $erroresDetalles
+                ];
+                throw new \Exception(json_encode($datosError), HttpCodigo::BAD_REQUEST->value);
             }
 
             $auditor->capturarDatosAnteriores('consultar_gasto');

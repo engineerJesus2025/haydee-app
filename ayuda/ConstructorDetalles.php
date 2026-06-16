@@ -48,7 +48,10 @@ class ConstructorDetalles
 
             // Si el método de pago requiere datos bancarios
             $metodoPago = $detalle[$config['metodo_pago_campo']] ?? '';
-            $esBancario = in_array($metodoPago, $config['metodos_con_archivo']);
+            
+            $metodoNormalizado = strtoupper(trim($metodoPago)); 
+            
+            $esBancario = in_array($metodoNormalizado, $config['metodos_con_archivo']);
 
             if ($esBancario) {
                 foreach ($config['bancarios'] as $campoBan) {
