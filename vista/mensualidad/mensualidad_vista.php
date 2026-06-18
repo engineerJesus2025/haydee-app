@@ -62,8 +62,8 @@
     
     <!-- Modales -->
     <div class="modal fade" id="modal_mensualidades_apartamentos" tabindex="-1" aria-labelledby="titulo_modal_mensualidad" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-scrollable">
-            <div class="modal-content border-0 shadow-lg">
+        <div class="modal-dialog modal-dialog-scrollable modal-xl modal-dialog modal-dialog-scrollable-scrollable">
+            <div class="modal-content card shadow-lg">
                 <div class="modal-header bg-primary text-white border-bottom-0">
                     <h5 class="modal-title fw-bold" id="titulo_modal_mensualidad">
                         <i class="bi bi-buildings me-2"></i>Estado de Mensualidades por Apartamento

@@ -1,6 +1,6 @@
 <div class="modal fade" id="modal_tipo_gasto" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content border-0 shadow-lg">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content card shadow-lg">
             <div class="modal-header  bg-primary text-white">
                 <h1 class="modal-title fs-5">
                     <i class="bi bi-clipboard-plus" id="icono_titulo_modal"></i>

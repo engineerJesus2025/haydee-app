@@ -1,6 +1,6 @@
 <div class="modal fade" id="modal_gastos" tabindex="-1" aria-labelledby="titulo-modal" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content border-0 shadow-lg">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg">
+        <div class="modal-content card shadow-lg">
             <div class="modal-header bg-primary text-white">
                 <h1 class="modal-title fs-5">
                     <i class="bi bi-cart-check" id="icono_titulo_modal"></i>
@@ -116,9 +116,9 @@
                                                 <span class="input-group-text"><i class="bi bi-credit-card"></i></span>
                                                 <select class="form-select metodo_pago" name="metodo_pago[]" required>
                                                     <option value="" disabled selected>Seleccione un método</option>
-                                                    <option value="Pago Movil">Pago Movil</option>
-                                                    <option value="Transferencia">Transferencia</option>
-                                                    <option value="Efectivo">Efectivo ($)</option>
+                                                    <option value="PAGO MOVIL">Pago Móvil</option>
+                                                    <option value="TRANSFERENCIA">Transferencia</option>
+                                                    <option value="EFECTIVO">Efectivo ($)</option>
                                                 </select>
                                                 <span class="w-100 invalid-feedback"></span>
                                             </div>
@@ -146,7 +146,7 @@
                                             <div class="input-group has-validation">
                                                 <span class="input-group-text"><i class="bi bi-bank"></i></span>
                                                 <select class="form-select banco" name="banco_id[]">
-                                                    <option value="" disabled selected>Seleccione un banco</option>
+                                                    <option value="" selected>Seleccione un banco</option>
                                                     <?php foreach ($bancos['datos'] as $banco): ?>
                                                         <option value="<?php echo $banco["id_banco"] ?>">
                                                             <?php echo $banco["nombre_banco"] ?>
@@ -219,9 +219,9 @@
                         <span class="input-group-text"><i class="bi bi-credit-card"></i></span>
                         <select class="form-select metodo_pago" name="metodo_pago[]" required>
                             <option value="" disabled selected>Seleccione un método</option>
-                            <option value="Pago Movil">Pago Movil</option>
-                            <option value="Transferencia">Transferencia</option>
-                            <option value="Efectivo">Efectivo ($)</option>
+                            <option value="PAGO MOVIL">Pago Móvil</option>
+                            <option value="TRANSFERENCIA">Transferencia</option>
+                            <option value="EFECTIVO">Efectivo ($)</option>
                         </select>
                         <span class="w-100 invalid-feedback"></span>
                     </div>
@@ -252,7 +252,7 @@
                     <div class="input-group has-validation">
                         <span class="input-group-text"><i class="bi bi-bank"></i></span>
                         <select class="form-select banco" name="banco_id[]">
-                            <option value="" disabled selected>Seleccione un banco</option>
+                            <option value="" selected>Seleccione un banco</option>
                             <?php foreach ($bancos['datos'] as $banco): ?>
                                 <option value="<?= $banco["id_banco"] ?>"><?= $banco["nombre_banco"] ?></option>
                             <?php endforeach; ?>

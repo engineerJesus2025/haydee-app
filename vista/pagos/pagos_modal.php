@@ -1,6 +1,6 @@
 <div class="modal fade" id="modal_pagos" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
     <div class="modal-dialog modal-dialog-scrollable modal-xl">
-        <div class="modal-content card shadow-sm  mt-4 mb-4">
+        <div class="modal-content card shadow-lg">
             <div class="modal-header card-header bg-primary text-white fw-bold d-flex align-items-center justify-content-between">
                 <h1 class="modal-title fs-5 mb-0 d-flex align-items-center">
                     <i class="bi bi-cash-stack" id="icono_titulo_modal"></i>
@@ -176,15 +176,15 @@
                 </form>
             </div>
             <div class="modal-footer">
-             <div class="col-md-12 text-end">
-                 <button type="button" class="btn btn-soft-secondary me-3 mb-2" data-bs-dismiss="modal">
-                     <i class="bi bi-x-circle me-2"></i> Cancelar
-                 </button>
-                 <button class="btn btn-primary px-3 shadow-sm mb-2" type="submit" id="boton_formulario">
-                     <i class="bi bi-check2-circle me-2"></i>
-                     <span id="texto_boton_formulario">Guardar Pago</span>
-                 </button>
-             </div>
+                <div class="col-md-12 text-end">
+                    <button type="button" class="btn btn-soft-secondary me-3 mb-2" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-2"></i> Cancelar
+                    </button>
+                    <button class="btn btn-primary px-3 shadow-sm mb-2" type="submit" id="boton_formulario">
+                        <i class="bi bi-check2-circle me-2"></i>
+                        <span id="texto_boton_formulario">Guardar Pago</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>

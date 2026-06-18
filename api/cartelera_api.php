@@ -33,7 +33,7 @@ if (!$validador->validarMetodoHTTP($metodoHttp, $reglas)) {
 if (!empty($reglas)) {
     $validador->validarConjunto($datosPeticion, $reglas);
     if ($validador->tieneErrores()) {
-        $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::BAD_REQUEST->value;
+        $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::NO_PROCESABLE->value;
         $datosError = [
             'mensaje' => 'Datos de formulario inválidos o incompletos.',
             'errores' => $validador->obtenerErrores()

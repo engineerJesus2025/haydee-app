@@ -101,12 +101,25 @@ const Peticiones = {
                 return { estatus: false, silencioso: true };
             }
 
+            if (respuesta.status === 422) {
+                if (tiempoCarga) clearTimeout(tiempoCarga);
+                if (modalVisible && modalCarga) modalCarga.hide();
+                
+                // Retornamos el JSON directamente para que el Validador marque los inputs en rojo,
+                // sin levantar alertas molestas en mitad de la pantalla de forma automática.
+                return json; 
+            }
+
             // Errores Genéricos desde el backend (500 Interno, 400 Bad Request, etc.)
             if (!respuesta.ok) {
                 if (tiempoCarga) clearTimeout(tiempoCarga);
                 if (modalVisible && modalCarga) modalCarga.hide();
                 
-                // Imprimimos la Referencia de Incidente (Ref) que configuramos en index.php si está presente
+                if (json && json.errores) {
+                    return json;
+                }
+
+                // Si no son errores de validación de campos, procedemos con la alerta genérica de error de servidor
                 let textoError = json.mensaje || 'Ocurrió un error inesperado al procesar la solicitud.';
                 if (json.ref) textoError += `<br><br><span style="font-size: 0.85em; color: #6c757d;">Ref: <b>${json.ref}</b></span>`;
 

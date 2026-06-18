@@ -170,11 +170,9 @@ const Validador = {
                     // Si NO es un detalle, lo buscamos normalmente por su ID (Cabecera)
                     input = document.getElementById(campo);
                 }
-
                 // Evaluamos si encontramos el input en el HTML y si está visible
                 const esInputValido = input && input.nodeName !== 'SELECT' && input.type !== 'hidden';
-                const esSelectValido = input && input.nodeName === 'SELECT' && !input.hidden;
-
+                const esSelectValido = input && input.nodeName === 'SELECT' && !input.hidden;   
                 if (esInputValido || esSelectValido) {
                     EstadoInputs.marcarError(input, primerMensaje);
                 } else {

@@ -1,6 +1,6 @@
 <div class="modal fade" id="modal_registro_gastos" tabindex="-1" aria-labelledby="titulo_modal_registro_gasto" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content border-0 shadow-lg">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg">
+        <div class="modal-content card shadow-lg">
             <div class="modal-header bg-primary text-white">
                 <h1 class="modal-title fs-5">
                     <i class="bi bi-cart-check" id="icono_titulo_modal_gasto"></i>

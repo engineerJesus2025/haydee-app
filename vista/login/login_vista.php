@@ -129,8 +129,8 @@
     </footer>
 
     <div class="modal fade" id="modal_recuperar_contrasenia" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
-        <div class="modal-dialog modal-md modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+        <div class="modal-dialog modal-dialog-scrollable modal-md modal-dialog modal-dialog-scrollable-centered">
+            <div class="modal-content card shadow-lg" style="border-radius: 16px;">
                 <div class="modal-header border-0 pb-0 py-4 pe-4">
                     <button type="button" class="btn-close btn-close-custom" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>

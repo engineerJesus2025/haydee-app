@@ -9,6 +9,7 @@ enum HttpCodigo: int {
     case PROHIBIDO = 403;
     case NO_ENCONTRADO = 404;
     case METODO_NO_PERMITIDO = 405;
+    case NO_PROCESABLE = 422;
     case DEMASIADAS_PETICIONES = 429;
     case ERROR_INTERNO = 500;
 }

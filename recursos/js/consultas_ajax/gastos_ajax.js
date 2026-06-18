@@ -103,11 +103,6 @@ async function consultar() {
     Tablas.inicializarBuscadorGlobal(tabla_gastos, "busqueda_global", columnas);
 }
 
-
-// ============================================================
-// REGISTRO Y EDICIÓN
-// ============================================================
-
 /**
  * Recoge los datos del formulario (cabecera + detalles) y los empaqueta en FormData
  */
@@ -231,7 +226,7 @@ async function prepararFormulario(id) {
                 nuevoBloque.querySelector('.monto').value = det.monto || '';
 
                 // Campos bancarios si aplica
-                if (det.metodo_pago === 'Transferencia' || det.metodo_pago === 'Pago Movil') {
+                if (det.metodo_pago === 'TRANSFERENCIA' || det.metodo_pago === 'PAGO MOVIL') {
                     nuevoBloque.querySelector('.referencia').value = det.referencia || '';
                     nuevoBloque.querySelector('.banco').value = det.banco_id || '';
                     if (det.imagen) {
@@ -294,9 +289,7 @@ async function modificar(id) {
     });
 }
 
-// ============================================================
 // VISTA PREVIA
-// ============================================================
 
 /**
  * Muestra la vista previa de un gasto
@@ -462,23 +455,29 @@ function agregarDetalle() {
 // Nueva función para manejar la visibilidad
 function manejarVisibilidadBancaria(selectMetodo) {
     // Buscar el contenedor padre de esta fila/bloque específico
-    const bloque = selectMetodo.closest('.row'); // Ajusta '.row' si tu contenedor de bloque usa otra clase
-    
+    const bloque = selectMetodo.closest('.row'); 
+    const valorSelect = selectMetodo.value.toUpperCase();
+
     // Obtener los contenedores a ocultar/mostrar
     const camposBancarios = bloque.querySelectorAll('.grupo_bancario');
     const campoImagen = bloque.querySelector('.grupo_imagen');
-    
     // Si es transferencia o pago móvil, mostramos. Si no, ocultamos.
-    const requiereBanco = (selectMetodo.value === 'Transferencia' || selectMetodo.value === 'Pago Movil');
+    const requiereBanco = (valorSelect === 'TRANSFERENCIA' || valorSelect === 'PAGO MOVIL');
 
     if (requiereBanco) {
-        camposBancarios.forEach(campo => campo.classList.remove('d-none'));
-        if(campoImagen) campoImagen.classList.remove('d-none');
+        camposBancarios.forEach(campo => {
+            campo.classList.remove('d-none');
+            campo.querySelector('[name]').disabled = false;
+        });
+        if(campoImagen) {
+            campoImagen.classList.remove('d-none');
+            campoImagen.querySelector('[name]').disabled = false;
+        }
     } else {
         camposBancarios.forEach(campo => campo.classList.add('d-none'));
         if(campoImagen) campoImagen.classList.add('d-none');
         
-        // Opcional pero recomendado: Limpiar los valores ocultos para evitar enviar basura al servidor
+        // Limpiar los valores ocultos para evitar enviar basura al servidor
         const inputRef = bloque.querySelector('.referencia');
         const selectBanco = bloque.querySelector('.banco');
         const inputImg = bloque.querySelector('.imagen');
@@ -587,8 +586,6 @@ function formatearMontoConMoneda(monto, metodoPago) {
 
 /**
  * Procesa la clasificación de un gasto y devuelve su configuración visual
- * @param {string} valor - La clasificación (fijo, variable, reposicion)
- * @returns {object} { color, icono, texto }
  */
 function obtenerConfigClasificacionGasto(valor) {
     let val = (valor || "").toLowerCase();

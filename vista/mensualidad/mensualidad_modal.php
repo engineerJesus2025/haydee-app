@@ -1,6 +1,6 @@
 <div class="modal fade" id="modal_mensualidad" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content border-0 shadow-lg">
+    <div class="modal-dialog modal-dialog-scrollable modal-xl">
+        <div class="modal-content card shadow-lg">
             <div class="modal-header bg-primary text-white">
             	<h1 class="modal-title fs-5">
                     <i class="bi bi-calendar-plus" id="icono_titulo_modal"></i>
@@ -67,7 +67,7 @@
             </div>
 			<div class="modal-footer">
                 <div class="col-md-12 text-end">
-                    <button type="button" class="btn btn-soft-secondary me-3 mb"data-bs-dismiss="modal">
+                    <button type="button" class="btn btn-soft-secondary me-3 mb-2"data-bs-dismiss="modal">
                         <i class="bi bi-x-circle me-2"></i> Cancelar
                     </button>
                     <button class="btn btn-primary px-3 shadow-sm mb-2" type="submit" id="boton_formulario">

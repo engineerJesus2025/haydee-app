@@ -36,7 +36,7 @@ if (isset($_POST["operacion"])) {
         $validador->validarConjunto($_POST, $reglas, ['skip_unique' => true]);
 
         if ($validador->tieneErrores()) {
-            $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::BAD_REQUEST->value;
+            $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::NO_PROCESABLE->value;
             http_response_code($codigoHttp);
             echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
             exit;

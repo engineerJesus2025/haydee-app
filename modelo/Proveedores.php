@@ -24,7 +24,7 @@ class Proveedores extends Conexion
                 'exists' => ['tabla' => 'proveedores', 'campo' => 'id_proveedor']
             ],
             'nombre_proveedor' => [
-                'regex' => '/^[A-Za-záéíóúÁÉÍÓÚñÑ\s]+$/',
+                'regex' => '/^[a-zA-ZáéíóúÁÉÍÓÚñÑ()\s]+$/',
                 'unique' => ['tabla' => 'proveedores', 'campo' => 'nombre_proveedor', 'exclude_field' => 'id_proveedor']
             ],
             'servicio' => [
@@ -35,7 +35,7 @@ class Proveedores extends Conexion
                 'unique' => ['tabla' => 'proveedores', 'campo' => 'rif', 'exclude_field' => 'id_proveedor']
             ],
             'direccion' => [
-                'regex' => '/^[A-Za-z0-9áéíóúÁÉÍÓÚñÑ\s.,:\/-]{5,255}$/'
+                'regex' => '/^[A-Za-z0-9áéíóúÁÉÍÓÚñÑ\s.,:\/-]{3,255}$/'
             ]
         ];
 

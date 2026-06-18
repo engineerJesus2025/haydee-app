@@ -35,6 +35,7 @@ async function consultar() {
 
     const formatoBotones = (cell) => {
         // Protección especial para el Rol 1 (Administrador Global)
+        const id = cell.getData().id_rol;
         if (id == 1) {
             return ComponentesUI.crearSoftBadge('secondary', 'bi-lock-fill', 'No Modificable');
         }
@@ -62,11 +63,11 @@ async function consultar() {
 
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", headerHozAlign: "center", resizable: false, headerSort: false, },
-        { title: "Nombre", field: "nombre", formatter: formatoNombre, minWidth: 200, responsive: 0, widthGrow: 2 },
+        { title: "Nombre", field: "nombre", formatter: formatoNombre, minWidth: 210, responsive: 0, widthGrow: 2 },
         {
             title: "Acciones", 
             formatter: formatoBotones, headerSort: false, 
-            hozAlign: "center", vertAlign: "middle", minWidth: 130, 
+            hozAlign: "center", vertAlign: "middle", minWidth: 150, 
             responsive: 0, download: false, headerHozAlign: "center",
             cellClick: function(e, cell) {
                 if (cell.getData().id_rol == 1) return;

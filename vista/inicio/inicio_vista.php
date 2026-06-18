@@ -310,8 +310,8 @@
 
     <!-- Modales -->
     <div class="modal fade" id="modalVistaPreviaPublicacion" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-            <div class="modal-content border-0 shadow-lg">
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog modal-dialog-scrollable-centered modal-lg modal-dialog modal-dialog-scrollable-scrollable">
+            <div class="modal-content card shadow-lg">
                 
                 <div class="modal-header bg-primary text-white border-bottom-0">
                     <h5 class="modal-title fw-bold">
@@ -380,8 +380,8 @@
         </div>
     </div>
     <div class="modal fade" id="modalInfoApartamento" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-sm modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+        <div class="modal-dialog modal-dialog-scrollable modal-sm modal-dialog modal-dialog-scrollable-centered">
+            <div class="modal-content card shadow-lg rounded-4 overflow-hidden">
                 
                 <div id="info-apt-header" class="modal-header border-0 pb-4 pt-4 justify-content-center position-relative">
                     <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>

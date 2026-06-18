@@ -153,12 +153,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
 }); // Fin DOMContentLoaded
 
-// ============================================================
-// FUNCIONES AUXILIARES DE VALIDACIÓN
-// ============================================================
-
 async function validarFormularioCompleto() {
-    // 1. Validar campos principales
+    // Validar campos principales
     const selectClasificacion = document.getElementById("clasificacion");
     const selectTipoGasto = document.getElementById("tipo_gasto_id");
     const selectProveedor = document.getElementById("proveedor_id");
@@ -208,7 +204,7 @@ async function validarFormularioCompleto() {
         return false;
     }
 
-    // 3. Validar cada detalle
+    // Validar cada detalle
     for (let i = 0; i < bloques.length; i++) {
         const bloque = bloques[i];
         const num = i + 1;
@@ -238,7 +234,7 @@ async function validarFormularioCompleto() {
                 return false;
             }
 
-            const idGastoActual = document.getElementById("boton_formulario").dataset.id || ""; 
+            const idGastoActual = document.getElementById("boton_formulario").getAttribute("id_modificar") || ""; 
 
             const refValida = await Validador.verificarDatoUnico(
                 'referencia', 

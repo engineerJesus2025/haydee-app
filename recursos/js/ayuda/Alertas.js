@@ -16,7 +16,9 @@ const Alertas = {
         return {
             buttonsStyling: false,
             background: 'var(--ch-card-bg)', 
-            color: 'var(--ch-color-titulos)', 
+            color: 'var(--ch-color-titulos)',
+            scrollbarPadding: false,
+            heightAuto: false,
             customClass: {
                 popup: 'vp-border-color shadow-lg rounded-4 border', 
                 title: 'fw-bold',

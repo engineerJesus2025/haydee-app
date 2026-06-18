@@ -1,6 +1,6 @@
 <div class="modal fade" id="modal_detalles" tabindex="-1" aria-labelledby="titulo_modal_detalles" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg">
+    <div class="modal-dialog modal-dialog-scrollable modal-dialog modal-dialog-scrollable-centered">
+        <div class="modal-content card shadow-lg">
             
             <div class="modal-header bg-primary text-white border-bottom-0">
                 <h5 class="modal-title fw-bold" id="titulo_modal_detalles">

@@ -82,7 +82,6 @@ document.addEventListener("DOMContentLoaded", function() {
                     `¿Está seguro que desea ${accion.toLowerCase()} este banco?`,
                     "question", 
                     () => {
-                        envio(accion);
                         if(typeof numero_cuenta_an !== 'undefined') numero_cuenta_an = null;
                         accion === 'modificar' ? modificar() : registrar();
                     }

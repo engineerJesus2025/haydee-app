@@ -2,8 +2,8 @@
 <script src="<?php echo URL_BASE; ?>recursos/dependencias/bootstrap/bootstrap.bundle.min.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/dependencias/sweetalert2/sweetalert2.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/dependencias/tabulator/tabulator.min.js"></script>
-
-<!-- <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/Patrones.js"></script>
+<!-- 
+<script src="<?php echo URL_BASE; ?>recursos/js/ayuda/Patrones.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/Alertas.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/Peticiones.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/js/ayuda/EstadoInputs.js"></script>
@@ -19,8 +19,8 @@
 <script src="<?php echo URL_BASE; ?>recursos/js/src/header.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/js/src/notificaciones.js"></script>
 <script src="<?php echo URL_BASE; ?>recursos/js/src/driver.js"></script>
-<script src="<?php echo URL_BASE; ?>recursos/js/src/tema_global.js"></script> -->
-
+<script src="<?php echo URL_BASE; ?>recursos/js/src/tema_global.js"></script>
+ -->
 <!-- Scripts globales -->
 <script src="<?php echo URL_BASE; ?>recursos/js/dist/app-core.min.js"></script>
 

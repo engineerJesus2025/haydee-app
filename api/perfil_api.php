@@ -29,7 +29,7 @@ if (!empty($reglas)) {
     $contexto = ['exclude_id' => $identidad['id_usuario']]; 
     $validador->validarConjunto($datosPeticion, $reglas, $contexto);
     if ($validador->tieneErrores()) {
-        $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::BAD_REQUEST->value;
+        $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::NO_PROCESABLE->value;
         $datosError = [
             'mensaje' => 'Datos de formulario inválidos o incompletos.',
             'errores' => $validador->obtenerErrores()

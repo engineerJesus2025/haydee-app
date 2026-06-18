@@ -15,10 +15,10 @@ if (isset($_POST["operacion"])) {
 
     Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_BANCOS, $operacion);
     
-    // 1. Obtenemos las reglas centralizadas
+    // Obtenemos las reglas centralizadas
     $reglas = Banco::obtenerReglas($operacion);
 
-    // 2. Ejecutamos la Validación si aplica
+    // Ejecutamos la Validación si aplica
     if (!empty($reglas)) {
         $validador = new Validador();
         
@@ -31,7 +31,7 @@ if (isset($_POST["operacion"])) {
         $validador->validarConjunto($_POST, $reglas, $contexto);
 
         if ($validador->tieneErrores()) {
-            $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::BAD_REQUEST->value;
+            $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::NO_PROCESABLE->value;
             http_response_code($codigoHttp);
             echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
             exit;
@@ -90,8 +90,8 @@ if (isset($_POST["operacion"])) {
             case 'eliminar_banco':
                 $auditor->capturarDatosAnteriores('consultar_banco');
 
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 $respuesta = $banco->realizar_consulta('eliminar_banco');
+                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) { 
                     $auditor->registrarAuditoria(Accion::ELIMINAR); 
                 }

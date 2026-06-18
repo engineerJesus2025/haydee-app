@@ -1,6 +1,6 @@
 <div class="modal fade" id="modal_usuario" tabindex="-1" aria-labelledby="titulo_modal" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content border-0 shadow-lg"> 
+    <div class="modal-dialog modal-dialog-scrollable modal-lg">
+        <div class="modal-content card shadow-lg"> 
             <div class="modal-header bg-primary text-white border-bottom-0">
                 <h5 class="modal-title fw-bold">
                     <i class="bi bi-person-plus me-2" id="icono_titulo_modal"></i>

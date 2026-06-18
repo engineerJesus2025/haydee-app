@@ -39,17 +39,6 @@ document.querySelector("#modal_banco").addEventListener("hide.bs.modal", () => {
     numero_cuenta_an = null;
 });
 
-
-function envio(operacion) {	
-    if (operacion === "modificar") {
-        modificar(boton_formulario.getAttribute("id_modificar"));
-    } else if (operacion === "Registrar") {
-        registrar();
-    } else {
-        Alertas.mostrar('error', 'Atención', 'Ha ocurrido un error durante la operación, inténtelo nuevamente');
-    }
-}
-
 async function consultar() {
     // Encontrar el contenedor dinámicamente
     const contenedor = document.querySelector(".tabla-sistema-haydee");
@@ -123,7 +112,6 @@ async function consultar() {
                 const btn = e.target.closest('button');
                 if (!btn) return;
                 const id = cell.getData().id_banco;
-
                 if (btn.classList.contains('vista-previa')) mostrarVistaPrevia(cell.getData());
                 if (btn.classList.contains('modificar')) prepararFormulario(id);
                 if (btn.classList.contains('eliminar')) confirmarEliminar(id);
@@ -236,12 +224,12 @@ async function registrar() {
 /**
  * Actualiza un banco existente
  */
-async function modificar(id) {	
+async function modificar() {	
     let datos = new FormData(formulario_usar);
     let tipo = datos.get('tipo_documento');
     let rifNum = datos.get('rif');
     datos.set('rif', tipo + rifNum);
-    datos.append("id_banco", id);
+    datos.append("id_banco", id_modificar);
     datos.append('operacion', 'modificar_banco');
 
     let respuesta = await Peticiones.enviar(datos);

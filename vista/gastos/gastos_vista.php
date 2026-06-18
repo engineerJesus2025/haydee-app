@@ -65,8 +65,8 @@
     
     <!-- Modales -->
     <div class="modal fade" id="modal_vista_previa" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-scrollable">
-            <div class="modal-content border-0 shadow-lg">
+        <div class="modal-dialog modal-dialog-scrollable modal-xl modal-dialog modal-dialog-scrollable-scrollable">
+            <div class="modal-content card shadow-lg">
                 
                 <div class="modal-header bg-primary text-white border-bottom-0">
                     <h5 class="modal-title fw-bold">
@@ -125,8 +125,8 @@
         </div>
     </div>
     <div class="modal fade" id="modal_vista_previa_detalles" tabindex="-1" aria-labelledby="modal_vista_previa_label" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content border-0 shadow-lg">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg modal-dialog modal-dialog-scrollable-scrollable">
+            <div class="modal-content card shadow-lg">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title">Información del Detalle de Gasto</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"

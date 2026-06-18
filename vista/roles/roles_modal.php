@@ -27,8 +27,8 @@ $iconos_modulos = [
 ];
 ?>
 <div class="modal fade modal-xl" id="modal_roles" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg"> 
+    <div class="modal-dialog modal-dialog-scrollable modal-dialog modal-dialog-scrollable-centered">
+        <div class="modal-content card shadow-lg"> 
             <div class="modal-header bg-primary text-white">
                 <h1 class="modal-title fs-5">
                     <i class="bi bi-house-door" id="icono_titulo_modal"></i>

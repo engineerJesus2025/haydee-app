@@ -66,7 +66,7 @@
     <!-- Modales -->
     <div class="modal fade" id="modal_vista_previa" tabindex="-1" aria-labelledby="modal_vista_previa_label" aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable modal-xl">
-            <div class="modal-content border-0 shadow-lg">
+            <div class="modal-content card shadow-lg">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title">Habitantes en el Apartamento</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
@@ -135,8 +135,8 @@
     </div>
     <div class="modal fade" id="modal_vista_previa_habitantes" tabindex="-1" aria-labelledby="modal_vista_previa_label"
         aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content border-0 shadow-lg">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg modal-dialog modal-dialog-scrollable-scrollable">
+            <div class="modal-content card shadow-lg">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title">Detalles del Habitante y su Apartamento</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>

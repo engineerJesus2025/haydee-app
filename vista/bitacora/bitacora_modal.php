@@ -1,6 +1,6 @@
 <div class="modal fade" id="modalDetalleBitacora" tabindex="-1" aria-labelledby="modalDetalleBitacoraLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content border-0 shadow-lg">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg modal-dialog modal-dialog-scrollable-scrollable">
+        <div class="modal-content card shadow-lg">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="modalDetalleBitacoraLabel">
                     <i class="bi bi-journal-text me-2"></i>Detalle de Bitácora
