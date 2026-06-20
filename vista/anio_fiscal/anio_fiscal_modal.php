@@ -32,18 +32,13 @@
                                 <span class="w-100 invalid-feedback"></span>
                             </div>
                         </div>
-                        
                     </div>
                     <div class="row m-3">
                         <div class="col-md-4">
-                            <label for="estado">Estado <span class="text-danger">*</span></label>
+                            <label for="estado">Estado Contable</label>
                             <div class="input-group mb-3">
-                                <span class="input-group-text" id="basic-addon1"><i class="bi bi-type"></i></span>
-                                <select class="rounded-end form-select" aria-label="Default select example" name="estado" id="estado" form="form_anio_fiscal" style="pointer-events: none; background-color: #eee;">
-                                    <option value="ABIERTO">Abierto</option>
-                                    <option value="CERRADO">Cerrado</option>
-                                </select>
-                                <span class="w-100 invalid-feedback"></span>
+                                <span class="input-group-text" id="basic-addon1"><i class="bi bi-shield-lock"></i></span>
+                                <input type="text" class="rounded-end form-control bg-light text-muted fw-bold" name="estado" id="estado" value="Abierto" readonly tabindex="-1" data-tooltip="true" title="El estado se gestiona automáticamente" disabled>
                             </div>                
                         </div>
                         <div class="col-md-8">

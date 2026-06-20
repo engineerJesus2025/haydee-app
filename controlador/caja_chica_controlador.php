@@ -7,6 +7,7 @@ use haydee\ayuda\Validador;
 use haydee\ayuda\ValidadorBD;
 use haydee\modelo\CajaChica;
 use haydee\modelo\Bitacora;
+use haydee\servicios\GestorTasa;
 use haydee\servicios\Sesiones;
 use haydee\servicios\GestorAuditoria;
 use haydee\servicios\GestorNotificaciones;
@@ -22,7 +23,7 @@ if (isset($_POST["operacion"])) {
 
     Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_CAJA_CHICA, $operacion, $operacionesEspeciales);
 
-    // 1. Validamos segun la Operación
+    // Validamos segun la Operación
     $reglas = CajaChica::obtenerReglas($operacion);
 
     if (!empty($reglas)) {
@@ -39,7 +40,7 @@ if (isset($_POST["operacion"])) {
 
     $caja = new CajaChica();
 
-    // Asignacion masiva (Manejando tanto el id primario como el foráneo)
+    // Asignacion masiva (Manejando tanto el id primario como el foraneo)
     $caja->set_id_caja_chica($_POST['id_caja_chica'] ?? $_POST['caja_chica_id'] ?? null);
     $caja->set_descripcion($_POST['descripcion'] ?? null);
     $caja->set_fondo_fijo($_POST['fondo_fijo'] ?? null);
@@ -50,7 +51,12 @@ if (isset($_POST["operacion"])) {
     $caja->set_concepto($_POST['concepto'] ?? null);
     $caja->set_monto_movimiento($_POST['monto'] ?? null);
     $caja->set_fecha_movimiento($_POST['fecha'] ?? null);
-    $caja->set_tasa_dolar($_POST['tasa_dolar'] ?? null);
+
+    $operacionesMonetarias = ['registrar_movimiento','modificar_movimiento','reponer_caja'];
+    if (in_array($operacion, $operacionesMonetarias)) {
+        $tasaDolar = GestorTasa::obtener();
+        $caja->set_tasa_dolar($tasaDolar);
+    }
 
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
     $auditor = new GestorAuditoria($caja, Modulo::GESTIONAR_CAJA_CHICA);
@@ -63,6 +69,16 @@ if (isset($_POST["operacion"])) {
                 http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 if ($respuesta['estatus']) {
                     $auditor->registrarAuditoria(Accion::CONSULTAR);
+                }
+                break;
+
+            case 'registrar_caja_chica':
+                $respuesta = $caja->realizar_consulta('registrar_caja_chica');
+
+                http_response_code($respuesta['estatus'] ? HttpCodigo::CREADO->value : HttpCodigo::BAD_REQUEST->value);
+                
+                if ($respuesta['estatus']) {
+                    $auditor->registrarAuditoria(Accion::REGISTRAR);
                 }
                 break;
 

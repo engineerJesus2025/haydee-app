@@ -1,13 +1,4 @@
-/**
- * Script de validaciones para Usuarios
- * Dependencias: Validador.js, Patrones.js, EstadoInputs.js, Peticiones.js, Alertas.js
- */
-
 document.addEventListener("DOMContentLoaded", function() {
-    
-    // ============================================
-    // EVENTOS DE TIEMPO REAL (Filtros visuales)
-    // ============================================
     const inputsNombres = document.querySelectorAll("#nombre, #apellido");
     const inputCorreo = document.querySelector("#correo");
     const inputsContrasenas = document.querySelectorAll("#contra, #confir_contra");
@@ -43,7 +34,7 @@ document.addEventListener("DOMContentLoaded", function() {
         input.addEventListener("keyup", (e) => Validador.evaluarInput(e.target, Patrones.contrasena, 'La contraseña debe tener mínimo 5 caracteres'));
     });
 
-    // === MEDIDOR DE FORTALEZA DE CONTRASEÑA ===
+    // MEDIDOR DE FORTALEZA DE CONTRASEÑA
     const inputContra = document.querySelector("#contra");
     if (inputContra) {
         inputContra.addEventListener('input', function() {
@@ -106,9 +97,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 
-    // ============================================
     // ENVÍO DE FORMULARIO
-    // ============================================
     document.querySelector("#boton_formulario").addEventListener("click", async function(e) {
         e.preventDefault();
         let accion = (this.hasAttribute("modificar")) ? "modificar" : "Registrar";      
@@ -137,7 +126,7 @@ async function validarEnvio(accion = "Registrar"){
     const rolV = Validador.evaluarSelect("rol_id");
 
     if (!nombreV || !apellidoV || !correoV || !rolV) {
-        Alertas.mostrar('error', 'Error', 'Por favor, revise los campos marcados en rojo.');
+        Alertas.mostrar('error', 'Formulario Incompleto', 'Por favor, revise los campos marcados en rojo.');
         return false;
     }
 
@@ -147,61 +136,45 @@ async function validarEnvio(accion = "Registrar"){
     if (accion === "Registrar") {
         const contraV = Validador.evaluarInput(inputContra, Patrones.contrasena, 'Mínimo 5 caracteres');
         if(!contraV) { 
-            Alertas.mostrar('error', 'Error', 'Debe ingresar una contraseña válida.'); 
+            Alertas.mostrar('error', 'Error de Seguridad', 'Debe ingresar una contraseña válida para el nuevo usuario.'); 
             return false; 
         }
 
         if(inputContra.value !== inputConfirContra.value) {
             EstadoInputs.marcarError(inputConfirContra, 'Las contraseñas no coinciden');
-            Alertas.mostrar('error', 'Error', 'Las contraseñas no coinciden.');
+            Alertas.mostrar('error', 'Error de Seguridad', 'Las contraseñas ingresadas no coinciden.');
             return false;
         }
     } else if (accion === "modificar") {
-        // Validar contraseña actual si se está editando
-        let datosContra = new FormData();
-        datosContra.append("validar", 'contra');
-        datosContra.append("id_usuario", id_modificar);
-        datosContra.append("contra", inputContra.value);
-        
-        let contraCorrecta = await Peticiones.enviar(datosContra, "", false); // false para no mostrar spinner extra
-        
-        if(!contraCorrecta){
-            EstadoInputs.marcarError(inputContra, "La contraseña actual ingresada es incorrecta");
-            Alertas.mostrar('error', 'Contraseña Incorrecta', 'Para realizar cambios debe ingresar su contraseña actual correctamente.');
-            return false;
-        }
-
-        // Validar nueva contraseña solo si escribió algo
-        if (inputConfirContra.value !== '') {
-            const nuevaV = Validador.evaluarInput(inputConfirContra, Patrones.contrasena, 'Mínimo 5 caracteres');
+        // Si escribe algo, validamos. Si lo deja en blanco, el backend mantendrá la actual.
+        if (inputContra.value !== '' || inputConfirContra.value !== '') {
+            const nuevaV = Validador.evaluarInput(inputContra, Patrones.contrasena, 'Mínimo 5 caracteres');
+            
             if(!nuevaV) {
-                Alertas.mostrar('error', 'Error en contraseña', 'Formato inválido en la nueva contraseña.');
+                Alertas.mostrar('error', 'Error en contraseña', 'El formato de la nueva contraseña es inválido.');
                 return false;
             }
+
+            if(inputContra.value !== inputConfirContra.value) {
+                EstadoInputs.marcarError(inputConfirContra, 'Las contraseñas no coinciden');
+                Alertas.mostrar('error', 'Error', 'Las nuevas contraseñas no coinciden.');
+                return false;
+            }
+        } else {
+            // Limpiamos los inputs visualmente por si el usuario borró lo que había escrito
+            EstadoInputs.limpiar(inputContra);
+            EstadoInputs.limpiar(inputConfirContra);
         }
     }
     
-    // Verificar correo duplicado si fue modificado
+    // Verificar correo duplicado de forma asíncrona (solo si lo editó)
     const inputCorreoDOM = document.querySelector("#correo");
     if(correo_an !== inputCorreoDOM.value){
         let esValido = await Validador.verificarDuplicadoEnServidor('correo', { correo: inputCorreoDOM.value }, inputCorreoDOM, 'Este correo ya está en uso');
-        if(!esValido) return false;
+        
+        if(esValido === false) {
+            return false;
+        }
     }
-
-    // Validación final del rol contra la BD
-    let selectRolDOM = document.querySelector('#rol_id');  
-    let datosRol = new FormData();
-    datosRol.append('validar', 'validar_clave_foranea');
-    datosRol.append('tabla', 'roles');
-    datosRol.append('nombre_clave', 'id_rol');
-    datosRol.append('valor', selectRolDOM.value);
-
-    let rolExiste = await Peticiones.enviar(datosRol, "", false);
-    if (!rolExiste.estatus) {
-        EstadoInputs.marcarError(selectRolDOM, "El rol seleccionado no existe");
-        Alertas.mostrar('error', 'Atención', 'El rol seleccionado no existe en la BD.');
-        return false;
-    }
-
     return true;
 }

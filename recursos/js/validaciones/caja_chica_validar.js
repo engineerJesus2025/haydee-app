@@ -4,9 +4,8 @@
  */
 
 document.addEventListener("DOMContentLoaded", function() {
-    
     const inputFecha = document.getElementById("fecha");
-    const inputsMonto = document.querySelectorAll("#monto, #monto_reponer");
+    const inputsMonto = document.querySelectorAll("#monto, #monto_reponer, #fondo_fijo_inicial");
     const inputConcepto = document.getElementById("concepto");
     const selectCaja = document.getElementById("mes_select");
     const inputDesc = document.getElementById("descripcion_input_inline");
@@ -23,7 +22,15 @@ document.addEventListener("DOMContentLoaded", function() {
         input.addEventListener("keyup", function() {
             if (Validador.evaluarInput(this, Patrones.monto, "Máximo 12 enteros y 2 decimales")) {
                 let esBs = this.getAttribute("monto") === "bs";
-                let inputConvertir = document.getElementById(this.id === "monto" ? "monto_cambio" : "monto_cambio_reponer");
+                let inputConvertir;
+
+                if (this.id === "monto") {
+                    inputConvertir = document.getElementById("monto_cambio");
+                } else if (this.id === "monto_reponer") {
+                    inputConvertir = document.getElementById("monto_cambio_reponer");
+                } else if (this.id === "fondo_fijo_inicial") {
+                    inputConvertir = document.getElementById("fondo_fijo_inicial_cambio"); // El nuevo espejo
+                }
 
                 if (!this.value || parseFloat(this.value) === 0) {
                     if(inputConvertir) inputConvertir.value = '';
@@ -69,10 +76,6 @@ document.addEventListener("DOMContentLoaded", function() {
             await verificarClaveForanea(this.value);
         });
     }
-
-    // ============================================
-    // ENVÍO DE FORMULARIOS Y EVENTOS DE BOTONES
-    // ============================================
 
     // Botón Gasto
     const btnGastoCaja = document.getElementById("boton_gasto_caja");
@@ -202,9 +205,7 @@ async function verificarClaveForanea(valor) {
     );
 }
 
-// ============================================
 // FUNCIONES DE VALIDACIÓN COMPLETA
-// ============================================
 
 async function validarEnvio(accion) {
     let formularioValido = true;
@@ -245,6 +246,11 @@ async function validarEnvio(accion) {
         return false;
     }
 
+    if (!Validador.evaluarInput(inputMonto, Patrones.monto, 'Formato inválido')) {
+        Alertas.mostrar('error', 'Campos Incorrectos', 'Por favor, corrija el formato del monto del gasto antes de continuar.');
+        return false;
+    }
+
     if (verificarMontoExcedido()) {
         EstadoInputs.marcarError(inputMonto, 'El monto supera el fondo disponible');
         Alertas.mostrar('error', 'Fondos insuficientes', 'El monto supera el fondo disponible en la caja.');
@@ -267,6 +273,11 @@ async function validarEnvioReponerCaja() {
 
     if (!formularioValido) {
         Alertas.mostrar('error', 'Error', 'Revise el monto de reposición.');
+        return false;
+    }
+
+    if (!Validador.evaluarInput(inputMonto, Patrones.monto, 'Formato inválido')) {
+        Alertas.mostrar('error', 'Campos Incorrectos', 'Por favor, corrija el formato del monto del gasto antes de continuar.');
         return false;
     }
 

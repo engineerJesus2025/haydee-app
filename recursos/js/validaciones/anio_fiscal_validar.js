@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const inputInicio = document.getElementById('fecha_inicio');
     const inputCierre = document.getElementById('fecha_cierre');
     const inputDesc = document.getElementById('descripcion');
-    const selectEstado = document.getElementById('estado');
+    const inputEstado = document.getElementById('estado');
 
     // Fechas
     [inputInicio, inputCierre].forEach(input => {
@@ -20,9 +20,15 @@ document.addEventListener("DOMContentLoaded", function() {
     if (inputInicio) {
         inputInicio.addEventListener('change', function() {
             if (Validador.evaluarFecha(this, '')) {
-                const [anio, mes, dia] = this.value.split('-');
-                const nuevoAnio = parseInt(anio) + 1;
-                inputCierre.value = `${nuevoAnio}-${mes}-${dia}`;
+                const fechaBase = new Date(this.value + 'T00:00:00');
+                fechaBase.setFullYear(fechaBase.getFullYear() + 1);
+                
+                // Formatear a YYYY-MM-DD para el input type="date"
+                const nuevoAnio = fechaBase.getFullYear();
+                const nuevoMes = String(fechaBase.getMonth() + 1).padStart(2, '0');
+                const nuevoDia = String(fechaBase.getDate()).padStart(2, '0');
+                
+                inputCierre.value = `${nuevoAnio}-${nuevoMes}-${nuevoDia}`;
                 EstadoInputs.limpiar(inputCierre);
             }
         });
@@ -36,11 +42,11 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-    if (selectEstado) {
-        selectEstado.addEventListener('change', function() {
-            Validador.evaluarInput(this, Patrones.estadoAnio, 'El estado debe tener entre 3 y 15 letras');
-        });
-    }
+    // if (selectEstado) {
+    //     selectEstado.addEventListener('change', function() {
+    //         Validador.evaluarInput(this, Patrones.estadoAnio, 'El estado debe tener entre 3 y 15 letras');
+    //     });
+    // }
 
     // Envío
     const btnForm = document.getElementById('boton_formulario');
@@ -69,7 +75,7 @@ async function validarEnvio(accion) {
     const estado = document.getElementById('estado');
     const desc = document.getElementById('descripcion');
 
-    if (!Validador.evaluarFecha(inicio) || !Validador.evaluarFecha(cierre) || !Validador.evaluarInput(estado, Patrones.estadoAnio, 'Estado inválido')) {
+    if (!Validador.evaluarFecha(inicio) || !Validador.evaluarFecha(cierre)) {
         Alertas.mostrar('error', 'Error', 'Verifique los campos obligatorios');
         return false;
     }

@@ -59,7 +59,7 @@ const Patrones = {
     // Teclas puras y alfanuméricas
     teclasLetras: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s()]+$/,
     teclasAlfanumerico: /^[A-Za-z0-9áéíóúñÁÉÍÓÚÑ\s]$/i,
-    teclasObservacion: /^[A-Za-z0-9ñ.,\s]$/,
+    teclasObservacion: /^[a-zA-Z0-9\sáéíóúñÁÉÍÓÚÑ.,-\s]$/,
     teclasDireccion: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9,.\-#°\s]$/i,
     
     // Teclas numéricas y financieras

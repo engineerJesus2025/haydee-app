@@ -101,7 +101,7 @@ async function validarLogin() {
 }
 
 async function realizarLogin() {
-    // ---- ACTIVAR ESTADO DE CARGA ----
+    //  ACTIVAR ESTADO DE CARGA 
     const btnEnviar = document.getElementById('enviar');
     const textoBoton = document.getElementById('texto-boton');
     const iconoBoton = document.getElementById('icono-boton');
@@ -113,7 +113,6 @@ async function realizarLogin() {
         iconoBoton.classList.add('d-none');     
         spinnerBoton.classList.remove('d-none');
     }
-    // ----------------------------------------
 
     const formData = new FormData();
     formData.append('usuario', document.getElementById('correo_login').value);
@@ -130,7 +129,6 @@ async function realizarLogin() {
     if (resultado.estatus) {
         await obtenerTasaDolar();
         window.location = "?pagina=inicio&accion=inicio";
-        // Nota: No quitamos el loading aquí porque la página ya va a recargar y redireccionar
     } else {
         if (!recaptchaDesactivado && typeof grecaptcha !== 'undefined' && recaptchaWidgetId !== null) {
             grecaptcha.reset(recaptchaWidgetId);
@@ -139,7 +137,6 @@ async function realizarLogin() {
 
         Alertas.mostrar('error', 'Error', resultado.mensaje || 'Datos incorrectos');
         
-        // ---- DESACTIVAR ESTADO DE CARGA SI HUBO ERROR ----
         if (btnEnviar) {
             btnEnviar.disabled = false; 
             textoBoton.textContent = 'Ingresar';  
@@ -219,9 +216,7 @@ async function obtenerTasaDolar() {
     }
 }
 
-// ==========================================
 // VER/OCULTAR CONTRASEÑA
-// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     const btnVerContra = document.getElementById('btn-ver-contra');
     const inputContra = document.getElementById('contra');

@@ -123,7 +123,7 @@ const Peticiones = {
                 let textoError = json.mensaje || 'Ocurrió un error inesperado al procesar la solicitud.';
                 if (json.ref) textoError += `<br><br><span style="font-size: 0.85em; color: #6c757d;">Ref: <b>${json.ref}</b></span>`;
 
-                Alertas.mostrar('error', `Error ${respuesta.status}`, textoError);
+                Alertas.mostrar('error', `Error`, textoError);
                 return { estatus: false, silencioso: true };
             }
 

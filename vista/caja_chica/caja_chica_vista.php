@@ -132,6 +132,7 @@
       require_once ROOT_PATH . "/vista/caja_chica/gasto_caja_modal.php";
       require_once ROOT_PATH . "/vista/caja_chica/repocicion_caja_modal.php";
       require_once ROOT_PATH . "/vista/caja_chica/caja_chica_detalles.php";
+      require_once ROOT_PATH . "/vista/caja_chica/caja_chica_inicial_modal.php";
   ?>
   
   <!-- Scripts personalizado -->

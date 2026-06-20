@@ -25,7 +25,7 @@ class CajaChica extends Conexion
     private $anio_fiscal_id;
     private $activo;
 
-    // Propiedades de Movimientos (Integradas)
+    // Propiedades de Movimientos
     private $id_movimiento_caja;
     private $concepto;
     private $monto_movimiento;
@@ -33,9 +33,7 @@ class CajaChica extends Conexion
     private $estado_movimiento;
     private $tasa_dolar;
 
-    // ====================================================================
     // VALIDACIONES CENTRALIZADAS
-    // ====================================================================
     public static function obtenerReglas($operacion) {
         $reglasGenerales = [
             // Reglas de la Caja Chica
@@ -102,9 +100,7 @@ class CajaChica extends Conexion
         return [];
     }
 
-    // -----------------------------------------------------------------
-    // Getters y Setters (igual)
-    // -----------------------------------------------------------------
+    // Getters y Setters
     public function set_id_caja_chica($id) { $this->id_caja_chica = $id; }
     public function get_id_caja_chica() { return $this->id_caja_chica; }
     public function set_fondo_fijo($fondo) { $this->fondo_fijo = $fondo; }
@@ -148,21 +144,14 @@ class CajaChica extends Conexion
         }
     }
 
-    // -----------------------------------------------------------------
-    // MÉTODOS DE NEGOCIO
-    // -----------------------------------------------------------------
-
     /**
      * Consulta todas las cajas con su saldo calculado desde la vista
      // SE USA EN EL MODULO
      */
     private function _consultar()
     {
-        // 1. Usamos el Enum, liberándonos del string quemado en la base de datos
-        // Asumiendo que tienes el Enum EstadoMovimientoCaja
         $estadoRepuesto = EstadoMovimientoCaja::REPUESTO->value; 
 
-        // 2. Consulta 100% optimizada (1 sola pasada, sin subconsultas)
         $sql = "SELECT 
                     cc.id_caja_chica, cc.fondo_fijo, cc.estado, cc.descripcion, cc.fecha_creacion, cc.anio_fiscal_id,
                     (cc.fondo_fijo - COALESCE(SUM(
@@ -219,17 +208,35 @@ class CajaChica extends Conexion
             $pdo->exec("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ");
             $pdo->beginTransaction();
 
-            //  Bloqueo pesimista: Congelamos la caja chica exacta para evitar sobregiros concurrentes
-            $stmtLock = $pdo->prepare("SELECT id_caja_chica FROM caja_chica WHERE id_caja_chica = :id AND activo = 1 FOR UPDATE");
+            // Congelamos la caja chica exacta para evitar sobregiros concurrentes
+            $stmtLock = $pdo->prepare("SELECT estado FROM caja_chica WHERE id_caja_chica = :id AND activo = 1 FOR UPDATE");
             $stmtLock->execute([':id' => $this->id_caja_chica]);
-            if (!$stmtLock->fetchColumn()) {
-                throw new \Exception('La caja chica no existe o está inactiva.');
+            $estadoCaja = $stmtLock->fetchColumn();
+
+            if (!$estadoCaja) {
+                throw new \Exception('La caja chica no existe o fue eliminada.');
             }
 
-            // Consultar saldo disponible desde la vista (100% seguro y actualizado)
-            $sqlSaldo = "SELECT saldo_disponible FROM vw_saldo_caja_chica WHERE id_caja_chica = :id";
+            if (strtoupper($estadoCaja) !== EstadoPeriodo::ABIERTO->value) {
+                $pdo->rollBack();
+                return ['estatus' => false, 'mensaje' => 'No se pueden registrar movimientos en una caja chica que ya se encuentra cerrada.'];
+            }
+
+            // sin depender de Vistas externas (ACID)
+            $sqlSaldo = "SELECT (cc.fondo_fijo - COALESCE(SUM(
+                            CASE WHEN mc.estado <> :estado_rep AND mc.activo = 1 
+                            THEN mc.monto ELSE 0 END
+                         ), 0))
+                         FROM caja_chica cc
+                         LEFT JOIN movimientos_caja mc ON cc.id_caja_chica = mc.caja_chica_id
+                         WHERE cc.id_caja_chica = :id
+                         GROUP BY cc.id_caja_chica";
+                         
             $stmtS = $pdo->prepare($sqlSaldo);
-            $stmtS->execute([':id' => $this->id_caja_chica]);
+            $stmtS->execute([
+                ':id' => $this->id_caja_chica,
+                ':estado_rep' => EstadoMovimientoCaja::REPUESTO->value
+            ]);
             $saldoActual = (float)$stmtS->fetchColumn();
 
             //  Validar fondos
@@ -239,7 +246,7 @@ class CajaChica extends Conexion
             }
 
             // insertar movimiento
-            $estadoPendiente = EstadoMovimientoCaja::PENDIENTE_REPOSICION->value;
+            $estadoPendiente = EstadoMovimientoCaja::PENDIENTE->value;
             $sqlIns = "INSERT INTO movimientos_caja (concepto, monto, tasa_dolar, fecha, estado, caja_chica_id, activo) 
                        VALUES (:con, :monto, :tasa, :fecha, :estado, :id_caja, 1)";
             $stmt = $pdo->prepare($sqlIns);
@@ -285,14 +292,22 @@ class CajaChica extends Conexion
             $pdo->exec("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ");
             $pdo->beginTransaction();
 
-            // Averiguar a qué caja pertenece este movimiento y bloquear el movimiento
-            $stmtCaja = $pdo->prepare("SELECT caja_chica_id FROM movimientos_caja WHERE id_movimiento_caja = :id FOR UPDATE");
+            // Bloquear y extraer tanto la caja como el estado del movimiento
+            $stmtCaja = $pdo->prepare("SELECT caja_chica_id, estado FROM movimientos_caja WHERE id_movimiento_caja = :id FOR UPDATE");
             $stmtCaja->execute([':id' => $this->id_movimiento_caja]);
-            $id_caja = $stmtCaja->fetchColumn();
+            $movimiento = $stmtCaja->fetch(PDO::FETCH_ASSOC);
 
-            if (!$id_caja) {
+            if (!$movimiento) {
                  throw new \Exception("Movimiento no encontrado.");
             }
+
+            // Inmutabilidad de registros reconciliados
+            if ($movimiento['estado'] === EstadoMovimientoCaja::REPUESTO->value) {
+                $pdo->rollBack();
+                return ['estatus' => false, 'mensaje' => 'Error de Auditoría: No se puede modificar un gasto que ya ha sido repuesto y conciliado en la contabilidad principal.'];
+            }
+
+            $id_caja = $movimiento['caja_chica_id'];
 
             // Bloquear la caja chica principal
             $pdo->prepare("SELECT id_caja_chica FROM caja_chica WHERE id_caja_chica = ? FOR UPDATE")->execute([$id_caja]);
@@ -310,12 +325,25 @@ class CajaChica extends Conexion
             ]);
 
             // Verificación Post-Update: Consultar a la vista si rompimos la caja
-            $stmtS = $pdo->prepare("SELECT saldo_disponible FROM vw_saldo_caja_chica WHERE id_caja_chica = :id");
-            $stmtS->execute([':id' => $id_caja]);
-            $nuevoSaldo = (float)$stmtS->fetchColumn();
+            // sin depender de Vistas externas (ACID)
+            $sqlSaldo = "SELECT (cc.fondo_fijo - COALESCE(SUM(
+                            CASE WHEN mc.estado <> :estado_rep AND mc.activo = 1 
+                            THEN mc.monto ELSE 0 END
+                         ), 0))
+                         FROM caja_chica cc
+                         LEFT JOIN movimientos_caja mc ON cc.id_caja_chica = mc.caja_chica_id
+                         WHERE cc.id_caja_chica = :id
+                         GROUP BY cc.id_caja_chica";
+                         
+            $stmtS = $pdo->prepare($sqlSaldo);
+            $stmtS->execute([
+                ':id' => $this->id_caja_chica,
+                ':estado_rep' => EstadoMovimientoCaja::REPUESTO->value
+            ]);
+            $saldoActual = (float)$stmtS->fetchColumn();
 
-            if ($nuevoSaldo < 0) {
-                // El administrador intentó inflar un gasto excediendo el saldo base. Abortamos.
+            if ($saldoActual < 0) {
+                // El administrador intentó inflar un gasto excediendo el saldo base. Abortamos forest.
                 $pdo->rollBack();
                 return ['estatus' => false, 'mensaje' => 'El nuevo monto excede los fondos disponibles en esta Caja Chica.'];
             }
@@ -351,6 +379,19 @@ class CajaChica extends Conexion
             $pdo->exec("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ");
             $pdo->beginTransaction();
 
+            $stmtCaja = $pdo->prepare("SELECT caja_chica_id, estado FROM movimientos_caja WHERE id_movimiento_caja = :id FOR UPDATE");
+            $stmtCaja->execute([':id' => $this->id_movimiento_caja]);
+            $movimiento = $stmtCaja->fetch(PDO::FETCH_ASSOC);
+
+            if (!$movimiento) {
+                 throw new \Exception("Movimiento no encontrado.");
+            }
+
+            if ($movimiento['estado'] === EstadoMovimientoCaja::REPUESTO->value) {
+                $pdo->rollBack();
+                return ['estatus' => false, 'mensaje' => 'Error de Auditoría: No se puede eliminar un gasto que ya ha sido repuesto y conciliado en la contabilidad principal.'];
+            }
+
             $sql = "UPDATE movimientos_caja SET activo = 0 WHERE id_movimiento_caja = :id";
             $stmt = $pdo->prepare($sql);
             $stmt->execute([':id' => $this->id_movimiento_caja]);
@@ -370,6 +411,46 @@ class CajaChica extends Conexion
             }
             error_log("Error en _eliminar_movimiento: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al eliminar movimiento.'];
+        }
+    }
+
+    /**
+     * Establece el fondo inicial (Solo usado en arranque en frío)
+     */
+    private function _registrar_caja_chica()
+    {
+        try {
+            $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
+            
+            // Verificamos que realmente no exista ninguna caja abierta (Seguridad)
+            $stmtCheck = $pdo->query("SELECT COUNT(*) FROM caja_chica WHERE estado = 'Abierto' AND activo = 1");
+            if ($stmtCheck->fetchColumn() > 0) {
+                return ['estatus' => false, 'mensaje' => 'Operación denegada. Ya existe una caja chica activa en el sistema.'];
+            }
+
+            // Buscamos el Año Fiscal activo para vincularla
+            $stmtAnio = $pdo->query("SELECT id_anio_fiscal FROM anio_fiscal WHERE estado = 'Abierto' AND activo = 1 LIMIT 1");
+            $idAnioActivo = $stmtAnio->fetchColumn();
+
+            if (!$idAnioActivo) {
+                return ['estatus' => false, 'mensaje' => 'Debe existir un Año Fiscal abierto para poder inicializar la Caja Chica.'];
+            }
+
+            // Registramos la primera caja
+            $sql = "INSERT INTO caja_chica (fondo_fijo, estado, descripcion, anio_fiscal_id, activo) 
+                    VALUES (:fondo, 'Abierto', :desc, :anio, 1)";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                ':fondo' => $this->fondo_fijo,
+                ':desc' => $this->descripcion ?: 'Fondo inicial de apertura',
+                ':anio' => $idAnioActivo
+            ]);
+
+            return ['estatus' => true, 'mensaje' => 'Fondo inicial establecido correctamente. El sistema de Caja Chica ya está operativo.'];
+
+        } catch (\Exception $e) {
+            error_log("Error en _registrar_caja_chica: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error al inicializar la caja chica.'];
         }
     }
     

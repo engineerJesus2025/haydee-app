@@ -270,17 +270,18 @@ class Mensualidad extends Conexion
 
         $sql = "SELECT v.id_mensualidad, v.apartamento_id, v.mes, v.anio,
                        v.nro_apartamento,
-                       h.nombre, h.apellido,
+                       COALESCE(h.nombre, 'Sin Propietario') AS nombre, 
+                       COALESCE(h.apellido, '') AS apellido,
                        v.monto_cuota AS monto, pm.tasa_dolar,
                        v.total_abonado AS pagado,
                        ROUND(v.total_abonado / pm.tasa_dolar, 2) AS pagado_dolar
                 FROM vw_estado_cuentas_mensualidad v
                 INNER JOIN periodos_mensualidad pm ON pm.mes = v.mes AND pm.anio = v.anio
-                INNER JOIN habitantes_apartamentos ha ON ha.apartamento_id = v.apartamento_id
-                INNER JOIN habitantes h ON ha.habitante_id = h.id_habitante
+                LEFT JOIN habitantes_apartamentos ha ON ha.apartamento_id = v.apartamento_id AND ha.tipo_vinculo = :propietario
+                LEFT JOIN habitantes h ON ha.habitante_id = h.id_habitante
                 WHERE v.mes = :mes AND v.anio = :anio
-                  AND ha.tipo_vinculo = :propietario
                   AND pm.activo = 1";
+
         try {
             $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->bindParam(':mes', $mesInt, PDO::PARAM_INT);
@@ -446,6 +447,10 @@ class Mensualidad extends Conexion
             $con->exec("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ");
             $con->beginTransaction();
 
+            if ($this->_tiene_pagos_registrados($con)) {
+                throw new \Exception("No se puede alterar ni eliminar esta mensualidad porque posee pagos en estado de revisión o ya procesados.");
+            }
+
             // Actualizar tasa del periodo fiscal
             $sqlUpdatePeriodo = "UPDATE periodos_mensualidad SET tasa_dolar = :tasa_dolar WHERE mes = :mes AND anio = :anio";
             $stmtUpdPer = $con->prepare($sqlUpdatePeriodo);
@@ -508,7 +513,7 @@ class Mensualidad extends Conexion
                 $con->rollBack();
             }
             error_log("Error crítico en _modificar: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al modificar: ' . $e->getMessage()];
+            return ['estatus' => false, 'mensaje' => $e->getMessage()];
         }
     }
 
@@ -521,6 +526,10 @@ class Mensualidad extends Conexion
             // Definición explícita del nivel de aislamiento para esta transacción
             $con->exec("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ");
             $con->beginTransaction();
+
+            if ($this->_tiene_pagos_registrados($con)) {
+                throw new \Exception("No se puede alterar ni eliminar esta mensualidad porque posee pagos en estado de revisión o ya procesados.");
+            }
 
             // Desactivar el periodo fiscal
             $sqlPeriodo = "UPDATE periodos_mensualidad 
@@ -550,13 +559,79 @@ class Mensualidad extends Conexion
             $con->commit();
             return ['estatus' => true, 'mensaje' => 'Periodo y mensualidades desactivados correctamente'];
 
-        } catch (\PDOException $e) {
+        } catch (\Exception $e) {
             if (isset($con) && $con->inTransaction()) {
                 $con->rollBack();
             }
             error_log("Error en _eliminar: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al eliminar mensualidades'];
+            return ['estatus' => false, 'mensaje' => $e->getMessage()];
         }
+    }
+
+    /**
+     * Verifica si la mensualidad (o el periodo) tiene pagos que no hayan sido rechazados o anulados.
+     */
+    private function _tiene_pagos_registrados($con)
+    {
+        // Caso A: Verificamos una factura de mensualidad específica
+        if (!empty($this->id_mensualidad)) {
+            $sqlPagos = "SELECT COUNT(*) FROM pagos_mensualidad pm 
+                         JOIN pagos p ON pm.pago_id = p.id_pago
+                         WHERE pm.mensualidad_id = :id_mensualidad 
+                           AND p.activo = 1 
+                           AND p.estado NOT IN (:rechazado, :anulado)";
+                           
+            $stmtCheck = $con->prepare($sqlPagos);
+            $stmtCheck->execute([
+                ':id_mensualidad' => $this->id_mensualidad,
+                ':rechazado' => EstadoPago::RECHAZADO->value,
+                ':anulado' => EstadoPago::ANULADO->value     
+            ]);
+            
+            return $stmtCheck->fetchColumn() > 0;
+        }
+
+        // Caso B: Verificamos por ID de Periodo
+        if (!empty($this->periodo_id)) {
+            $sqlPagos = "SELECT COUNT(*) FROM pagos_mensualidad pm 
+                         JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad 
+                         JOIN pagos p ON pm.pago_id = p.id_pago
+                         WHERE m.periodo_id = :periodo_id 
+                           AND p.activo = 1 
+                           AND p.estado NOT IN (:rechazado, :anulado)";
+                           
+            $stmtCheck = $con->prepare($sqlPagos);
+            $stmtCheck->execute([
+                ':periodo_id' => $this->periodo_id,
+                ':rechazado' => EstadoPago::RECHAZADO->value,
+                ':anulado' => EstadoPago::ANULADO->value     
+            ]);
+            
+            return $stmtCheck->fetchColumn() > 0;
+        }
+
+        // Caso C (LA SOLUCIÓN): Verificamos por Mes y Año (Usado en las operaciones masivas de _eliminar y _modificar)
+        if (!empty($this->mes) && !empty($this->anio)) {
+            $sqlPagos = "SELECT COUNT(*) FROM pagos_mensualidad pm 
+                         JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad 
+                         JOIN periodos_mensualidad per ON m.periodo_id = per.id_periodo
+                         JOIN pagos p ON pm.pago_id = p.id_pago
+                         WHERE per.mes = :mes AND per.anio = :anio
+                           AND p.activo = 1 
+                           AND p.estado NOT IN (:rechazado, :anulado)";
+                           
+            $stmtCheck = $con->prepare($sqlPagos);
+            $stmtCheck->execute([
+                ':mes' => $this->mes,
+                ':anio' => $this->anio,
+                ':rechazado' => EstadoPago::RECHAZADO->value,
+                ':anulado' => EstadoPago::ANULADO->value     
+            ]);
+            
+            return $stmtCheck->fetchColumn() > 0;
+        }
+
+        return false;
     }
 
     // SE USA EN EL MODULO

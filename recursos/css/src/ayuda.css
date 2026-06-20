@@ -121,10 +121,9 @@
     padding-left: 20px;
     margin-top: 10px;
 }
-
+ 
 /* Colapsos transparentes (evita fondo blanco en submenús) */
-.collapse.show,
-.collapsing {
+:is(#faqAccordion, #accordionFinanzas, #accordionOperaciones) :is(.collapse.show, .collapsing) {
     background-color: transparent !important;
 }
 

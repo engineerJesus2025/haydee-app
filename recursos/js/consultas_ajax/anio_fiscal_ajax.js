@@ -5,7 +5,6 @@ const modal = new bootstrap.Modal(document.getElementById("modal_anio_fiscal"), 
 const modalDetalles = new bootstrap.Modal(document.getElementById("modal_detalles"), { focus: false });
 const form = document.querySelector("#form_anio_fiscal");
 
-// Exponer funciones necesarias para el validador
 window.registrar = registrar;
 window.modificar = modificar;
 window.prepararFormulario = prepararFormulario;
@@ -15,7 +14,6 @@ const permisoEliminar = window.PermisosModulo?.eliminar || false;
 
 document.addEventListener('DOMContentLoaded', consultar);
 
-// CONSULTA Y TABULATOR
 async function consultar() {
     // Encontrar el contenedor dinámicamente
     const contenedor = document.querySelector(".tabla-sistema-haydee");
@@ -35,19 +33,21 @@ async function consultar() {
     };
 
     const formatoBotones = (cell) => {
+        const row = cell.getData();
         let html = `<div class="d-flex justify-content-center flex-wrap gap-2">
             <button type="button" class="btn btn-primary btn-sm vista-previa" data-tooltip="true" title="Ver Mas">
                 <i class="bi bi-eye"></i>
                 <span class="d-none d-lg-inline ms-2">Ver</span>
             </button>`;
         if (permisoModificar) {
-            html += `<button class="btn btn-success btn-sm modificar" data-tooltip="true" title="Modificar los detalles de este registro">
+            html += `<button class="btn btn-success btn-sm modificar" data-tooltip="true" title="Modificar los detalles">
                         <i class="bi bi-pencil"></i>
                         <span class="d-none d-lg-inline ms-2">Editar</span>
                     </button>`;
         }
+        // Condición: Solo mostrar Eliminar si NO está Abierto
         if (permisoEliminar) {
-            html += `<button class="btn btn-danger btn-sm eliminar" data-tooltip="true" title="Quitar este elemento del sistema">
+            html += `<button class="btn btn-danger btn-sm eliminar" data-tooltip="true" title="Quitar este elemento">
                         <i class="bi bi-trash"></i>
                         <span class="d-none d-lg-inline ms-2">Borrar</span>
                     </button>`;
@@ -95,7 +95,6 @@ async function consultar() {
     Tablas.inicializarBuscadorGlobal(tabla_anio_fiscal, "busqueda_global", columnas);
 }
 
-// Función que lee la memoria de Tabulator (Sin AJAX extra)
 function mostrarVistaPrevia(data) {
     const config = obtenerConfigEstadoAnio(data.estado);
     const estadoEl = document.getElementById("vp_estado");
@@ -111,12 +110,15 @@ function mostrarVistaPrevia(data) {
     modalDetalles.show();
 } 
 
-// ============================================
-// OPERACIONES CRUD
-// ============================================
 async function registrar() {
     const datos = new FormData(form);
-    datos.set('operacion', 'registrar');
+
+    let fecha_cierre = form.querySelector('#fecha_cierre').value;
+    let estado = form.querySelector('#estado').value.toUpperCase();
+
+    datos.append('fecha_cierre', fecha_cierre);
+    datos.append('estado', estado);
+    datos.append('operacion', 'registrar');
 
     const respuesta = await Peticiones.enviar(datos, "", true);
 
@@ -131,14 +133,16 @@ async function prepararFormulario(id) {
     datos.append('id_anio_fiscal', id);
     datos.append('operacion', 'consulta_especifica');
 
-    const respuesta = await Peticiones.enviar(datos, "", true);
+    const respuesta = await Peticiones.enviar(datos,    "", true);
 
     Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
         const data = respuestaServidor.datos;
 
+        let estado = data.estado.charAt(0) + data.estado.toLowerCase().slice(1);
+
         form.querySelector('#fecha_inicio').value = data.fecha_inicio;
         form.querySelector('#fecha_cierre').value = data.fecha_cierre;
-        form.querySelector('#estado').value = data.estado;
+        form.querySelector('#estado').value = estado;
         form.querySelector('#descripcion').value = data.descripcion;
 
         document.getElementById('titulo_modal').textContent = 'Modificar Año Fiscal';
@@ -148,7 +152,6 @@ async function prepararFormulario(id) {
 
         // Habilitar campos deshabilitados en registro
         form.querySelector('#fecha_cierre').removeAttribute('disabled');
-        form.querySelector('#estado').removeAttribute('disabled');
 
         modal.show();
     });
@@ -157,6 +160,12 @@ async function prepararFormulario(id) {
 async function modificar() {
     const id = document.querySelector('#boton_formulario').dataset.id;
     const datos = new FormData(form);
+
+    let fecha_cierre = form.querySelector('#fecha_cierre').value;
+    let estado = form.querySelector('#estado').value.toUpperCase();
+
+    datos.append('fecha_cierre', fecha_cierre);
+    datos.append('estado', estado);
     datos.set('id_anio_fiscal', id);
     datos.set('operacion', 'modificar');
 
@@ -218,18 +227,11 @@ document.getElementById('modal_anio_fiscal').addEventListener('hide.bs.modal', (
     document.getElementById('texto_boton_formulario').textContent = 'Guardar Año Fiscal'
     delete document.querySelector('#boton_formulario').dataset.id;
 
-    // Deshabilitar campos de cierre y estado en registro
+    // Deshabilitar campos de cierre  en registro
     form.querySelector('#fecha_cierre').setAttribute('disabled', '');
-    form.querySelector('#estado').setAttribute('disabled', '');
 });
 
-// document.getElementById('modal_anio_fiscal').addEventListener('show.bs.modal', () => {
-    
-// });
-
-// ============================================================
 // MÓDULO DE AYUDA INTERACTIVA
-// ============================================================
 document.addEventListener('DOMContentLoaded', () => {
     const stepsPrincipal = [
             { element: '.page-header', popover: { title: 'Años Fiscales', description: 'Módulo para gestionar los periodos contables del condominio (Apertura y Cierre).', side: "bottom", align: 'center' } },

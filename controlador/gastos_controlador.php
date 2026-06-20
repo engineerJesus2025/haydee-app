@@ -12,6 +12,7 @@ use haydee\modelo\Proveedores;
 use haydee\modelo\SolicitudGasto;
 use haydee\modelo\TipoGasto;
 use haydee\modelo\Bitacora;
+use haydee\servicios\GestorTasa;
 use haydee\servicios\Sesiones;
 use haydee\servicios\GestorAuditoria;
 
@@ -99,18 +100,21 @@ if (isset($_POST["operacion"])) {
         $gastos->set_detalles($detalles);
     }
 
-    // =========================================================
-    // ASIGNACIÓN MASIVA DE CAMPOS ESCALARES
-    // =========================================================
     $gastos->set_id_gasto($_POST['id_gasto'] ?? null);
     $gastos->set_clasificacion($_POST['clasificacion'] ?? null);
     $gastos->set_descripcion_gasto($_POST['descripcion_gasto'] ?? null);
-    $gastos->set_tasa_dolar($_POST['tasa_dolar'] ?? null);
     $gastos->set_solicitud_id($_POST['solicitud'] ?? null);
     $gastos->set_tipo_gasto_id($_POST['tipo_gasto_id'] ?? null);
     $gastos->set_proveedor_id($_POST['proveedor_id'] ?? null);
     $gastos->set_id_detalle_gasto($_POST['id_detalle_gasto'] ?? null);
     $gastos->set_fecha($_POST['fecha'] ?? null);
+
+
+    $operacionesMonetarias = ['registrar_gasto', 'modificar_gasto'];
+    if (in_array($operacion, $operacionesMonetarias)) {
+        $tasaDolar = GestorTasa::obtener();
+        $gastos->set_tasa_dolar($tasaDolar);
+    }
 
     $operacion = $_POST["operacion"];
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];

@@ -11,6 +11,7 @@ use haydee\modelo\Pagos;
 use haydee\modelo\Banco;
 use haydee\modelo\Apartamento;
 use haydee\modelo\Bitacora;
+use haydee\servicios\GestorTasa;
 use haydee\servicios\Sesiones;
 use haydee\servicios\GestorAuditoria;
 use haydee\servicios\GestorNotificaciones;
@@ -75,7 +76,6 @@ if (isset($_POST["operacion"])) {
                     }
                 }
             }
-            // =======================================================
 
             $validadorTemp->validarConjunto($detalle, $reglasDetalle);
             
@@ -108,10 +108,15 @@ if (isset($_POST["operacion"])) {
     $pagos->set_id_detalle_pago($_POST['id_detalle_pago'] ?? null);
     $estadoPorDefecto = $esPropietario ? 'PENDIENTE' : 'PROCESADO';
     $pagos->set_estado($_POST['estado'] ?? $estadoPorDefecto);
-    $pagos->set_tasa_dolar($_POST['tasa_dolar'] ?? null);
     $pagos->set_observacion($_POST['observacion'] ?? null);
     $pagos->set_apartamento_id($_POST['apartamento_id'] ?? null);
     $pagos->set_mensualidad_id($_POST['mensualidad_id'] ?? null);
+
+    $operacionesMonetarias = ['registrar_pago', 'modificar_pago'];
+    if (in_array($operacion, $operacionesMonetarias)) {
+        $tasaDolar = GestorTasa::obtener();
+        $pagos->set_tasa_dolar($tasaDolar);
+    }
     
     // Si es propietario, forzar su correo por seguridad
     if ($esPropietario) {

@@ -22,9 +22,13 @@ document.querySelector(`#modal_usuario`).addEventListener("hide.bs.modal", () =>
     document.getElementById('titulo_modal').textContent = "Registrar Usuario";
     document.getElementById('icono_titulo_modal').setAttribute("class","bi bi-person-plus");
     
-    formulario_usar.querySelector("#confir_contra").parentElement.previousElementSibling.textContent = "Confirmar Contraseña";
     formulario_usar.querySelector("#confir_contra").placeholder = "Confirmar Contraseña";
     formulario_usar.querySelector("#contra").placeholder = "Contraseña";
+
+    formulario_usar.querySelectorAll(".span-contra").forEach(span=>{
+        span.classList.add("text-danger");
+        span.textContent = '*';
+    });
 
     correo_an = null;
 
@@ -216,9 +220,10 @@ async function prepararFormulario(id) {
         document.getElementById('titulo_modal').textContent = "Modificar Usuario";
         document.getElementById('icono_titulo_modal').setAttribute("class","bi bi-person-gear");
         
-        formulario_usar.querySelector("#confir_contra").parentElement.previousElementSibling.textContent = "Nueva Contraseña" ;
-        formulario_usar.querySelector("#confir_contra").placeholder = "Escriba su Nueva Contraseña" ;
-        formulario_usar.querySelector("#contra").placeholder = "Escriba su Contraseña";
+        formulario_usar.querySelectorAll(".span-contra").forEach(span=>{
+            span.classList.remove("text-danger");
+            span.textContent = '(opcional)';
+        });
 
         id_modificar = id;
         correo_an = data.correo;

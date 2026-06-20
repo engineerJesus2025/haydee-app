@@ -5,6 +5,7 @@ let diferencia = 0;
 let modal_carga = new bootstrap.Modal("#modal_carga", { focus: false });
 let modal_registro_gastos = new bootstrap.Modal("#modal_registro_gastos", { focus: false });
 let modal_reposicion_caja = new bootstrap.Modal("#modal_reponer_caja");
+let modal_inicializar_caja = new bootstrap.Modal("#modal_inicializar_caja", { focus: false });
 const modalDetalles = new bootstrap.Modal(document.getElementById("modal_detalles"), { focus: false });
 
 let tabla_movimientos;
@@ -25,13 +26,13 @@ document.getElementById("mes_select").addEventListener("change", (e) => {
     let id_caja = e.target.value;
     let option = e.target.options[e.target.selectedIndex];
 
-    // --- FONDO ACTUAL ---
+    // FONDO ACTUAL
     let saldoActual = option.getAttribute("saldo_actual") || 0;
     let spanFondo = document.getElementById("span_fondo_fijo");
     spanFondo.classList.remove("placeholder-glow"); // Apagamos la animación
     spanFondo.textContent = `${saldoActual} Bs. / ${(saldoActual / tasa_dolar).toFixed(2)} $`;
 
-    // --- OBSERVACIONES ---
+    // OBSERVACIONES
     let descripcionActual = descripciones[id_caja] || '';
     let pDescripciones = document.getElementById("descripciones");
     
@@ -130,7 +131,64 @@ document.getElementById("btn_cancelar_edicion")?.addEventListener('click', () =>
 
 document.getElementById("btn_guardar_edicion")?.addEventListener('click', modificarObservacionInline);
 
-// ========== FUNCIONES AUXILIARES ==========
+document.getElementById("boton_intercambio_monto_inicial")?.addEventListener('click', (e) => {
+    e.preventDefault();
+    intercambiarMoneda('fondo_fijo_inicial', 'fondo_fijo_inicial_cambio'); //
+});
+
+document.getElementById("modal_inicializar_caja")?.addEventListener("hide.bs.modal", () => {
+    document.getElementById("form_inicializar_caja").reset();
+    document.querySelectorAll('#form_inicializar_caja .is-valid, #form_inicializar_caja .is-invalid').forEach(el => el.classList.remove('is-valid', 'is-invalid'));
+    
+    let fondoInput = document.getElementById("fondo_fijo_inicial");
+    if (fondoInput && fondoInput.getAttribute("monto") === "$") {
+        intercambiarMoneda('fondo_fijo_inicial', 'fondo_fijo_inicial_cambio'); //
+    }
+});
+
+document.getElementById("boton_inicializar_caja").addEventListener("click", async function(e) {
+    e.preventDefault();
+    
+    const formInicial = document.getElementById("form_inicializar_caja");
+    const inputFondo = document.getElementById("fondo_fijo_inicial");
+
+    if (!inputFondo.value || parseFloat(inputFondo.value) <= 0) {
+        EstadoInputs.marcarError(inputFondo, 'El monto inicial es obligatorio y debe ser mayor a 0');
+        Alertas.mostrar('error', 'Monto Requerido', 'El monto del fondo inicial es obligatorio y debe ser mayor a cero.');
+        return;
+    }
+
+    if (!Validador.evaluarInput(inputFondo, Patrones.monto, "Máximo 12 enteros y 2 decimales")) {
+        Alertas.mostrar('error', 'Formato de Monto Inválido', 'El monto ingresado no cumple con el formato permitido (Ej: 1500.50). Máximo 2 decimales.');
+        return;
+    }
+
+    Alertas.confirmarAccion(
+        "¿Establecer Fondo Inicial?",
+        "Esta acción inicializará el libro de caja chica para el periodo actual.",
+        "warning",
+        async () => {
+            let datos = new FormData(formInicial);
+            datos.append("operacion", "registrar_caja_chica");
+
+            // --- REGLA DE SOBERANÍA MONETARIA ---
+            // Si el input principal está en '$', significa que los Bolívares se movieron al input de cambio.
+            // Extraemos el valor correcto para que la Base de Datos siempre reciba Bolívares.
+            let fondoRealBs = (inputFondo.getAttribute("monto") === "bs") 
+                ? inputFondo.value 
+                : document.getElementById("fondo_fijo_inicial_cambio").value;
+                
+            datos.set("fondo_fijo", fondoRealBs); // Sobrescribimos el parámetro de forma segura
+
+            let respuesta = await Peticiones.enviar(datos, "", true);
+            Validador.procesarRespuesta(respuesta, () => {
+                modal_inicializar_caja.hide();
+                consultarCajasChicas(); //
+            });
+        }
+    );
+});
+
 function intercambiarMoneda(idMonto, idCambio) {
     let monto = document.getElementById(idMonto);
     let cambio = document.getElementById(idCambio);
@@ -151,7 +209,7 @@ function intercambiarMoneda(idMonto, idCambio) {
     }
 }
 
-// ========== CONSULTA DE CAJAS CHICAS ==========
+//  CONSULTA DE CAJAS CHICAS 
 async function consultarCajasChicas() {
     let datos = new FormData();
     datos.append("operacion", "consultar_cajas_chicas");
@@ -159,11 +217,29 @@ async function consultarCajasChicas() {
     let respuesta = await Peticiones.enviar(datos);
     
     if (!respuesta.datos || respuesta.datos.length === 0) {
-        document.getElementById("span_caja_activa").textContent = "No hay cajas registradas";
-        document.getElementById("span_fondo_fijo").textContent = '';
-        document.getElementById("mes_select").value = '';
+        document.getElementById("span_caja_activa").className = "badge badge-soft-warning rounded-pill fs-6 px-3 py-2 shadow-sm";
+        document.getElementById("span_caja_activa").innerHTML = "<i class='bi bi-exclamation-triangle-fill me-1'></i> Sistema de Caja Chica Inactivo";
+        
+        document.getElementById("span_fondo_fijo").innerHTML = `
+            <button class="btn btn-warning btn-sm shadow-sm" onclick="abrirModalFondoInicial()">
+                <i class="bi bi-safe me-1"></i> Establecer Fondo Inicial
+            </button>
+            <p class="text-muted mt-2 small" style="font-size: 0.75rem; font-weight: normal;">No existe ninguna caja activa. Debe definir el monto base para iniciar las operaciones contables.</p>
+        `;
+        
+        document.getElementById("mes_select").innerHTML = '<option selected disabled>Sistema en blanco</option>';
         document.getElementById("mes_select").setAttribute('disabled','');
+        
+        const contenedorBotones = document.getElementById("botones_movimientos");
+        if (contenedorBotones) {
+            contenedorBotones.classList.add("d-none");
+        }
         return;
+    }
+
+    const contenedorBotones = document.getElementById("botones_movimientos");
+    if (contenedorBotones) {
+        contenedorBotones.classList.remove("d-none");
     }
 
     Validador.procesarRespuesta(respuesta, () => {
@@ -228,14 +304,11 @@ function mostrarVistaPrevia(data) {
     const config = obtenerConfigEstadoCaja(data.estado);
     const estadoEl = document.getElementById("vp_estado");
     
-    // Limpiamos las clases viejas de texto y le inyectamos el Soft Badge flotando a la derecha
-    // estadoEl.className = "text-end mt-2"; 
     estadoEl.innerHTML = ComponentesUI.crearSoftBadge(config.color, config.icono, config.texto);
     
-    if (data.estado === 'Repuesto') {
+    if (data.estado === 'REPUESTO') {
         estadoEl.className = "fw-bold text-end text-success";
-    } else if (data.estado === 'Pendiente por reposicion') {
-        // Un tono naranja/amarillo oscuro para advertir que está pendiente
+    } else if (data.estado === 'PENDIENTE') {
         estadoEl.className = "fw-bold text-end text-warning text-dark";
     } else {
         estadoEl.className = "fw-bold text-end text-secondary";
@@ -245,7 +318,7 @@ function mostrarVistaPrevia(data) {
     modalDetalles.show();
 }
 
-// ========== INICIALIZAR TABLA DE MOVIMIENTOS ==========
+// INICIALIZAR TABLA DE MOVIMIENTOS
 function inicializarTablaMovimientos() {
     const contenedor = document.querySelector(".tabla-sistema-haydee");
     if (!contenedor) return;
@@ -264,23 +337,32 @@ function inicializarTablaMovimientos() {
     }
     
     const formatoBotones = (cell) => {
+        const row = cell.getData();
+        const selectCaja = document.getElementById("mes_select");
+        const estadoCaja = selectCaja.options[selectCaja.selectedIndex].getAttribute("activa");
+        
         let html = `<div class="d-flex justify-content-center flex-wrap gap-2">
             <button type="button" class="btn btn-primary btn-sm vista-previa" data-tooltip="true" title="Ver Mas">
                 <i class="bi bi-eye"></i>
                 <span class="d-none d-lg-inline ms-2">Ver</span>
             </button>`;
-        if (permisoModificar) {
-            html += `<button class="btn btn-success btn-sm modificar" data-tooltip="true" title="Modificar los detalles de este registro">
-                        <i class="bi bi-pencil"></i>
-                        <span class="d-none d-lg-inline ms-2">Editar</span>
-                    </button>`;
+            
+        // Solo si tiene permiso, la caja está ABIERTA y el movimiento NO está REPUESTO
+        if (estadoCaja.toUpperCase() !== 'CERRADO' && row.estado.toUpperCase() !== 'REPUESTO') {
+            if (permisoModificar) {
+                html += `<button class="btn btn-success btn-sm modificar" data-tooltip="true" title="Modificar gasto">
+                            <i class="bi bi-pencil"></i>
+                            <span class="d-none d-lg-inline ms-2">Editar</span>
+                        </button>`;
+            }
+            if (permisoEliminar) {
+                html += `<button class="btn btn-danger btn-sm eliminar" data-tooltip="true" title="Anular gasto">
+                            <i class="bi bi-trash"></i>
+                            <span class="d-none d-lg-inline ms-2">Borrar</span>
+                        </button>`;
+            }
         }
-        if (permisoEliminar) {
-            html += `<button class="btn btn-danger btn-sm eliminar" data-tooltip="true" title="Quitar este elemento del sistema">
-                        <i class="bi bi-trash"></i>
-                        <span class="d-none d-lg-inline ms-2">Borrar</span>
-                    </button>`;
-        }
+        
         html += `</div>`;
         return html;
     };
@@ -505,25 +587,33 @@ function envio(operacion) {
  */
 function obtenerConfigEstadoCaja(valor) {
     let est = valor || "";
-    if (est === 'Pendiente por reposicion') est = 'Por Reponer';
-
+    // Evaluamos contra los nuevos valores del Enum (Mayúsculas)
     let color = "secondary";
     let icono = "bi-circle";
+    let textoVisual = est;
 
-    if (est === "Por Reponer") {
+    if (est === "PENDIENTE") {
         color = "warning";
         icono = "bi-arrow-clockwise";
-    } else if (est === "Repuesto") {
+        textoVisual = "Por Reponer"; 
+    } else if (est === "REPUESTO") {
         color = "success";
         icono = "bi-check-circle-fill";
+        textoVisual = "Repuesto";
     }
 
-    return { color, icono, texto: est };
+    return { color, icono, texto: textoVisual };
 }
 
-// ============================================================
+function abrirModalFondoInicial() {
+    const formInicial = document.getElementById("form_inicializar_caja");
+    formInicial.reset();
+    formInicial.querySelectorAll('.is-valid, .is-invalid').forEach(el => el.classList.remove('is-valid', 'is-invalid'));
+    
+    modal_inicializar_caja.show();
+}
+
 // MÓDULO DE AYUDA INTERACTIVA
-// ============================================================
 document.addEventListener('DOMContentLoaded', () => {
     const stepsPrincipal = [
             { element: '.page-header', popover: { title: 'Módulo de Caja Chica', description: 'Bienvenido. Aquí puedes administrar los fondos menores del condominio y registrar sus movimientos.', side: "bottom", align: 'center' } },

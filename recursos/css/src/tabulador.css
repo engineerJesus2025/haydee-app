@@ -9,6 +9,25 @@
     border: 1px solid var(--ch-table-border) !important;
 }
 
+/* Forzar al contenedor de filas a ser transparente para que muestre el fondo de la tabla */
+.tabulator .tabulator-tableholder {
+    background-color: var(--ch-table-row-bg) !important;
+}
+
+/* Adaptar el contenedor del mensaje "No hay datos disponibles" */
+.tabulator .tabulator-placeholder {
+    background-color: var(--ch-table-row-bg) !important;
+    color: var(--ch-table-text) !important;
+    opacity: 0.8;
+}
+
+/* Asegurar que el contenedor interno del placeholder no fuerce otro color */
+.tabulator .tabulator-placeholder span {
+    background-color: transparent !important;
+    color: inherit !important;
+}
+
+
 /* --- CABECERAS (PRINCIPAL Y DE COLUMNAS) --- */
 :is(.tabulator .tabulator-header,
     .tabulator .tabulator-header .tabulator-col) {

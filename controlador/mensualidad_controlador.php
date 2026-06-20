@@ -9,6 +9,7 @@ use haydee\modelo\Mensualidad;
 use haydee\modelo\Presupuesto;
 use haydee\modelo\Apartamento;
 use haydee\modelo\Bitacora;
+use haydee\servicios\GestorTasa;
 use haydee\servicios\Sesiones;
 use haydee\servicios\GestorAuditoria;
 use haydee\servicios\GestorNotificaciones;
@@ -96,15 +97,20 @@ if (isset($_POST["operacion"])) {
         $mensualidad->set_datos_apartamentos($datos_apartamentos);
     }
 
-    // ASIGNACIÓN DE PROPIEDADES
+    // ASIGNACION DE PROPIEDADES
     $mensualidad->set_id_mensualidad($_POST['id_mensualidad'] ?? null);
     $mensualidad->set_monto($_POST['monto'] ?? null);
-    $mensualidad->set_tasa_dolar($_POST['tasa_dolar'] ?? null);
     $mensualidad->set_mes($_POST['mes'] ?? null);
     $mensualidad->set_anio($_POST['anio'] ?? null);
     $mensualidad->set_apartamento_id($_POST['apartamento_id'] ?? null);
     $mensualidad->set_porcentaje_interes($_POST['porcentaje_interes'] ?? null);
     $mensualidad->set_limite_mensualidad($_POST['limite_mensualidad'] ?? null);
+
+    $operacionesMonetarias = ['registrar_mensualidad', 'modificar_mensualidad'];
+    if (in_array($operacion, $operacionesMonetarias)) {
+        $tasaDolar = GestorTasa::obtener();
+        $mensualidad->set_tasa_dolar($tasaDolar);
+    }
 
     // Desglosar la fecha si viene en operaciones de consulta o eliminación
     if (isset($_POST['fecha']) && strpos($_POST['fecha'], '-') !== false) {

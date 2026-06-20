@@ -361,10 +361,46 @@ function mostrarVistaPrevia(data, fecha) {
 
     modalApartamentos.show();
 
+    const formatoPropietario = (cell) => {
+        const nombre = cell.getValue();
+        const apellido = cell.getData().apellido || "";
+
+        // Si el backend retornó "Sin Propietario" o viene vacío
+        if (!nombre || nombre === "Sin Propietario") {
+            // Pasamos nuestra clase personalizada 'soft-neutral' (o puedes usar 'secondary' si el helper lo mapea directo)
+            // Usamos el icono 'bi-person-dash' o 'bi-person-x' para denotar la ausencia
+            return ComponentesUI.crearSoftBadge("secondary", "bi-person-dash", "Sin Propietario");
+        }
+
+        // Si existe el propietario, mostramos el formato estándar capitalizado
+        const nombreCompleto = `${nombre} ${apellido}`.trim();
+        return `<div class="fw-semibold text-capitalize">${nombreCompleto.toLowerCase()}</div>`;
+    }
+
+    const formatoEstatus = (cell) =>{
+        let row = cell.getData();
+        let deuda = row.monto - row.pagado;
+        
+        if (deuda <= 0) {
+            const badgeSolvente = ComponentesUI.crearSoftBadge('success', 'bi-check2-all', 'Solvente');
+            
+            return `<div class="d-flex align-items-start">
+                        ${badgeSolvente}
+                    </div>`;
+        }
+        
+        const badgeDeuda = ComponentesUI.crearSoftBadge('danger', 'bi-exclamation-circle', 'Deuda');
+        
+        return `<div class="d-flex flex-column align-items-start justify-content-center">
+                    <div class="mb-1">${badgeDeuda}</div>
+                    <span class="fw-bold text-danger" style="font-size: 0.85rem;">${deuda.toFixed(2)} Bs.</span>
+                </div>`;
+    }
+
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
         { title: "Apartamento", field: "nro_apartamento", formatter: (cell) => `<div class="fw-bold"><i class="bi bi-door-closed text-primary me-2 opacity-75"></i>Apt. ${cell.getValue()}</div>`, minWidth: 150, responsive: 0 },
-        { title: "Propietario", field: "nombre", formatter: (cell) => `${cell.getValue()} ${cell.getData().apellido}`, minWidth: 150 },
+        { title: "Propietario", field: "nombre", formatter: formatoPropietario, minWidth: 150 },
         { 
             title: "Monto A Pagar", 
             field: "monto", 
@@ -375,26 +411,7 @@ function mostrarVistaPrevia(data, fecha) {
             title: "Estatus / Deuda", 
             field: "pagado", 
             hozAlign: "center", headerHozAlign: "center",vertAlign:"middle",
-            formatter: (cell) => {
-                let row = cell.getData();
-                let deuda = row.monto - row.pagado;
-                
-                if (deuda <= 0) {
-                    const badgeSolvente = ComponentesUI.crearSoftBadge('success', 'bi-check2-all', 'Solvente');
-                    
-                    return `<div class="d-flex align-items-start">
-                                ${badgeSolvente}
-                            </div>`;
-                }
-                
-                // Invocamos el Helper para el badge de Deuda
-                const badgeDeuda = ComponentesUI.crearSoftBadge('danger', 'bi-exclamation-circle', 'Deuda');
-                
-                return `<div class="d-flex flex-column align-items-start justify-content-center">
-                            <div class="mb-1">${badgeDeuda}</div>
-                            <span class="fw-bold text-danger" style="font-size: 0.85rem;">${deuda.toFixed(2)} Bs.</span>
-                        </div>`;
-            }, 
+            formatter: formatoEstatus, 
             minWidth: 160 
         }
     ];

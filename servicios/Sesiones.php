@@ -28,7 +28,7 @@ class Sesiones
     /**
      * Orquestador de seguridad de entrada (Middleware)
      */
-    public static function autorizarAcceso(array $configRuta, string $metodoActual): void
+    public static function autorizarAcceso($configRuta, $metodoActual)
     {
         // Validar el método HTTP
         self::validarMetodoHTTP($configRuta[Endpoints::CONF_METODOS], $metodoActual);
@@ -54,7 +54,7 @@ class Sesiones
         }
     }
 
-    public static function autorizarAccesoAPI(array $configRuta): void
+    public static function autorizarAccesoAPI($configRuta)
     {
         // Capa de Protocolo 
         self::validarMetodoHTTP($configRuta[Endpoints::CONF_METODOS], $_SERVER['REQUEST_METHOD']);

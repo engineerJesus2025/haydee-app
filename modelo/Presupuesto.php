@@ -4,6 +4,7 @@ namespace haydee\modelo;
 use PDO;
 use PDOException;
 use haydee\enums\TipoBaseDatos;
+use haydee\enums\EstadoPago;
 
 class Presupuesto extends Conexion
 {
@@ -236,6 +237,10 @@ class Presupuesto extends Conexion
         try {
             $con->beginTransaction();
 
+            if ($this->_tiene_pagos_registrados($con, $this->id_presupuesto)) {
+                throw new \Exception("No se puede modificar este presupuesto porque ya existen residentes que han registrado pagos para este periodo.");
+            }
+
             // Actualizar cabecera
             $sqlHead = "UPDATE presupuesto SET fecha = :fecha, cuota_reserva = :cuota, observacion = :obs, tasa_dolar = :tasa WHERE id_presupuesto = :id";
             $stmtH = $con->prepare($sqlHead);
@@ -294,6 +299,55 @@ class Presupuesto extends Conexion
     }
 
     /**
+     * ELIMINAR PRESUPUESTO (Soft delete)
+     // SE USA EN EL MODULO
+     */
+    private function _eliminar_presupuesto()
+    {
+        $con = $this->get_conex(TipoBaseDatos::NEGOCIO);
+        try {
+            $con->beginTransaction();
+
+            // BLOQUEO DE AUDITORÍA: Verificamos pagos
+            if ($this->_tiene_pagos_registrados($con, $this->id_presupuesto)) {
+                throw new \Exception("Auditoría: No se puede eliminar el presupuesto porque ya existen pagos procesados o pendientes para este mes.");
+            }
+
+            // Si pasa la prueba, obtenemos el periodo para desactivar las mensualidades
+            $stmtBusca = $con->prepare("SELECT MONTH(fecha) as mes, YEAR(fecha) as anio FROM presupuesto WHERE id_presupuesto = :id");
+            $stmtBusca->execute([':id' => $this->id_presupuesto]);
+            $fechaPre = $stmtBusca->fetch(PDO::FETCH_ASSOC);
+
+            if ($fechaPre) {
+                $stmtPer = $con->prepare("SELECT id_periodo FROM periodos_mensualidad WHERE mes = :mes AND anio = :anio");
+                $stmtPer->execute([':mes' => $fechaPre['mes'], ':anio' => $fechaPre['anio']]);
+                $id_periodo = $stmtPer->fetchColumn();
+
+                if ($id_periodo) {
+                    $stmtDesactivarMens = $con->prepare("UPDATE mensualidad SET activo = 0 WHERE periodo_id = :periodo_id");
+                    $stmtDesactivarMens->execute([':periodo_id' => $id_periodo]);
+                    $stmtDesactivarPer = $con->prepare("UPDATE periodos_mensualidad SET activo = 0 WHERE id_periodo = :periodo_id");
+                    $stmtDesactivarPer->execute([':periodo_id' => $id_periodo]);
+                }
+            }
+
+            // Borrado lógico del presupuesto
+            $sql = "UPDATE presupuesto SET activo = 0 WHERE id_presupuesto = :id";
+            $stmt = $con->prepare($sql);
+            $stmt->execute([':id' => $this->id_presupuesto]);
+
+            $con->commit();
+            return ['estatus' => true, 'mensaje' => 'Presupuesto y recibos pendientes eliminados correctamente.'];
+        } catch (\Exception $e) {
+            if (isset($con) && $con->inTransaction()) {
+                $con->rollBack();
+            }
+            error_log("Error en _eliminar_presupuesto: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => $e->getMessage()];
+        }
+    }
+
+    /**
      * Sincroniza el presupuesto con los recibos de los residentes.
      * Calcula la cuota por apartamento y reconstruye la tabla puente.
      * SE USA EN LOS METODOS PROPIOS DE LA CLASE
@@ -346,59 +400,39 @@ class Presupuesto extends Conexion
     }
 
     /**
-     * ELIMINAR PRESUPUESTO (Soft delete)
-     // SE USA EN EL MODULO
+     * Verifica si un presupuesto ya tiene pagos procesados o pendientes de aprobación
+     * Retorna TRUE si hay pagos, FALSE si el periodo está limpio.
      */
-    private function _eliminar_presupuesto()
+    private function _tiene_pagos_registrados($con, $id_presupuesto)
     {
-        $con = $this->get_conex(TipoBaseDatos::NEGOCIO);
-        try {
-            $con->beginTransaction();
+        $stmtBusca = $con->prepare("SELECT MONTH(fecha) as mes, YEAR(fecha) as anio FROM presupuesto WHERE id_presupuesto = :id");
+        $stmtBusca->execute([':id' => $id_presupuesto]);
+        $fechaPre = $stmtBusca->fetch(PDO::FETCH_ASSOC);
 
-            // Obtener el periodo asociado a este presupuesto
-            $stmtBusca = $con->prepare("SELECT MONTH(fecha) as mes, YEAR(fecha) as anio FROM presupuesto WHERE id_presupuesto = :id");
-            $stmtBusca->execute([':id' => $this->id_presupuesto]);
-            $fechaPre = $stmtBusca->fetch(PDO::FETCH_ASSOC);
+        if ($fechaPre) {
+            $stmtPer = $con->prepare("SELECT id_periodo FROM periodos_mensualidad WHERE mes = :mes AND anio = :anio");
+            $stmtPer->execute([':mes' => $fechaPre['mes'], ':anio' => $fechaPre['anio']]);
+            $id_periodo = $stmtPer->fetchColumn();
 
-            if ($fechaPre) {
-                $stmtPer = $con->prepare("SELECT id_periodo FROM periodos_mensualidad WHERE mes = :mes AND anio = :anio");
-                $stmtPer->execute([':mes' => $fechaPre['mes'], ':anio' => $fechaPre['anio']]);
-                $id_periodo = $stmtPer->fetchColumn();
-
-                if ($id_periodo) {
-                    // Verificar si ya hay pagos registrados para este periodo
-                    $sqlPagos = "SELECT COUNT(*) FROM pagos_mensualidad pm 
-                                 JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad 
-                                 JOIN pagos p ON pm.pago_id = p.id_pago
-                                 WHERE m.periodo_id = :periodo_id AND p.activo = 1";
-                    $stmtCheck = $con->prepare($sqlPagos);
-                    $stmtCheck->execute([':periodo_id' => $id_periodo]);
-                    $tiene_pagos = $stmtCheck->fetchColumn();
-
-                    if ($tiene_pagos > 0) {
-                        throw new \Exception("No se puede eliminar el presupuesto porque ya existen pagos procesados para este mes.");
-                    }
-
-                    // Borrado lógico de las mensualidades (ya que nadie ha pagado :-)
-                    $stmtDesactivarMens = $con->prepare("UPDATE mensualidad SET activo = 0 WHERE periodo_id = :periodo_id");
-                    $stmtDesactivarMens->execute([':periodo_id' => $id_periodo]);
-                }
+            if ($id_periodo) {
+                $sqlPagos = "SELECT COUNT(*) FROM pagos_mensualidad pm 
+                             JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad 
+                             JOIN pagos p ON pm.pago_id = p.id_pago
+                             WHERE m.periodo_id = :periodo_id 
+                               AND p.activo = 1 
+                               AND p.estado NOT IN (:rechazado, :anulado)";
+                               
+                $stmtCheck = $con->prepare($sqlPagos);
+                $stmtCheck->execute([
+                    ':periodo_id' => $id_periodo,
+                    ':rechazado'  => EstadoPago::RECHAZADO->value,
+                    ':anulado'    => EstadoPago::ANULADO->value   
+                ]);
+                
+                return $stmtCheck->fetchColumn() > 0;
             }
-
-            // Borrado lógico del presupuesto
-            $sql = "UPDATE presupuesto SET activo = 0 WHERE id_presupuesto = :id";
-            $stmt = $con->prepare($sql);
-            $stmt->execute([':id' => $this->id_presupuesto]);
-
-            $con->commit();
-            return ['estatus' => true, 'mensaje' => 'Presupuesto y recibos pendientes eliminados correctamente.'];
-        } catch (\Exception $e) {
-            if (isset($con) && $con->inTransaction()) {
-                $con->rollBack();
-            }
-            error_log("Error en _eliminar_presupuesto: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => $e->getMessage()];
         }
+        return false;
     }
 
     // GESTIÓN DE RELACIÓN CON MENSUALIDAD

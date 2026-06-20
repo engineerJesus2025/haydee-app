@@ -1,39 +1,11 @@
-/**
- * presupuesto_validar.js
- * Dependencias: Validador.js, Patrones.js, EstadoInputs.js, Alertas.js
- */
 document.addEventListener("DOMContentLoaded", function() {
-    
-    const inputCuota = document.querySelector("#cuota_reserva");
     const inputObs = document.querySelector("#observacion");
     const selectFecha = document.querySelector("#fecha");
-
-    // ============================================================
-    // VALIDACIONES EN TIEMPO REAL
-    // ============================================================
-    
-    if (inputCuota) {
-        inputCuota.addEventListener("keypress", (e) => Validador.bloquearTeclasInvalidas(e, Patrones.teclasMonto));
-        inputCuota.addEventListener("keyup", function() {
-            if (Validador.evaluarInput(this, Patrones.monto, "Solo números, máximo 2 decimales")) {
-                // Cálculo de tasa
-                let row = this.closest(".row");
-                let inputConvertir = row ? row.querySelector("[convertido]") : null;
-                
-                if (inputConvertir && typeof tasa_dolar !== 'undefined') {
-                    if (this.getAttribute("monto") === "bs") {
-                        inputConvertir.value = (parseFloat(this.value) / tasa_dolar).toFixed(2) || 0;
-                    } else {
-                        inputConvertir.value = (parseFloat(this.value) * tasa_dolar).toFixed(2);
-                    }
-                }
-            }
-        });
-    }
+    const formularioPresupuesto = document.getElementById("form_presupuesto"); 
 
     if (inputObs) {
         inputObs.addEventListener("keypress", (e) => Validador.bloquearTeclasInvalidas(e, Patrones.teclasObservacion));
-        inputObs.addEventListener("keyup", (e) => Validador.evaluarInput(e.target, Patrones.observacion, "Máximo 50 caracteres"));
+        inputObs.addEventListener("keyup", (e) => Validador.evaluarInput(e.target, Patrones.observacionExtendida, "Máximo 50 caracteres"));
     }
 
     if (selectFecha) {
@@ -42,9 +14,100 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-    // ============================================================
-    // ENVÍO DEL FORMULARIO
-    // ============================================================
+    if (formularioPresupuesto) {
+        const selectorMontos = "input[type='number'], input.monto-detalle, #cuota_reserva";
+        const selectorNombres = "input[type='text'].gasto-nombre-input";
+
+        formularioPresupuesto.addEventListener("keypress", function(e) {
+            if (e.target.matches(selectorMontos)) {
+                Validador.bloquearTeclasInvalidas(e, Patrones.teclasMonto);
+            }
+            if (e.target.matches(selectorNombres)) {
+                let er = /^[A-Za-z áéíóúÁÉÍÓÚñÑ\b]*$/;
+                if (!er.test(e.key)) e.preventDefault();
+            }
+        });
+
+        formularioPresupuesto.addEventListener("focusin", function(e) {
+            if (e.target.matches(selectorMontos)) {
+                if (parseFloat(e.target.value) === 0) {
+                    e.target.value = '';
+                }
+            }
+        });
+
+        formularioPresupuesto.addEventListener("focusout", function(e) {
+            if (e.target.matches(selectorMontos)) {
+                if (e.target.value.trim() === '') {
+                    e.target.value = '0';
+                    let row = e.target.closest(".row"); 
+                    let inputConvertir = row ? row.querySelector("[convertido]") : null;
+                    if (inputConvertir) inputConvertir.value = '0';
+                }
+            }
+        });
+
+        formularioPresupuesto.addEventListener("keyup", function(e) {
+            if (e.target.matches(selectorMontos)) {
+                if (Validador.evaluarInput(e.target, Patrones.monto, "Solo números y máximo 2 decimales")) {
+                    let row = e.target.closest(".row"); 
+                    let inputConvertir = row ? row.querySelector("[convertido]") : null;
+
+                    if (inputConvertir && typeof tasa_dolar !== 'undefined') {
+                        let valorDigitado = parseFloat(e.target.value) || 0;
+                        if (e.target.getAttribute("monto") === "bs") {
+                            inputConvertir.value = (valorDigitado / tasa_dolar).toFixed(2);
+                        } else {
+                            inputConvertir.value = (valorDigitado * tasa_dolar).toFixed(2);
+                        }
+                    }
+                }
+            }
+            if (e.target.matches(selectorNombres)) {
+                let er = /^[A-Za-z áéíóúÁÉÍÓÚñÑ\b]{4,50}$/;
+                if (er.test(e.target.value)) {
+                    e.target.classList.add('is-valid');
+                    e.target.classList.remove('is-invalid');
+                    if (e.target.nextElementSibling) e.target.nextElementSibling.textContent = "";
+                } else {
+                    e.target.classList.add('is-invalid');
+                    e.target.classList.remove('is-valid');
+                    if (e.target.nextElementSibling) e.target.nextElementSibling.textContent = 'Mínimo 4 letras';
+                }
+            }
+        });
+
+        formularioPresupuesto.addEventListener("click", function(e) {
+            let botonIntercambio = e.target.closest(".boton_intercambio, .boton_intercambio_cuota");
+            if (botonIntercambio) {
+                e.preventDefault();
+                
+                let row = botonIntercambio.closest(".row");
+                let input_monto = row.querySelector("[monto]");
+                let input_cambio = row.querySelector("[convertido]");
+                let valor_temporal = 0;
+
+                if (!input_monto || !input_cambio) return;
+
+                if (input_monto.getAttribute("monto") === "bs") {
+                    input_monto.setAttribute("monto", '$');
+                    valor_temporal = input_monto.value;
+                    input_monto.value = input_cambio.value;
+                    input_cambio.value = valor_temporal;
+                    row.querySelector(".icono_moneda").textContent = "$";
+                    row.querySelector("[convertido]").parentElement.querySelector(".icono_moneda").textContent = "Bs.";
+                } else {
+                    input_monto.setAttribute("monto", 'bs');
+                    valor_temporal = input_monto.value;
+                    input_monto.value = input_cambio.value;
+                    input_cambio.value = valor_temporal;
+                    row.querySelector(".icono_moneda").textContent = "Bs.";
+                    row.querySelector("[convertido]").parentElement.querySelector(".icono_moneda").textContent = "$";
+                }
+            }
+        });
+    }
+
     const btnFormulario = document.querySelector("#boton_formulario");
     if (btnFormulario) {
         btnFormulario.addEventListener("click", async function(e) {
@@ -89,7 +152,7 @@ async function validarFormularioCompleto() {
     }
 
     const obs = document.querySelector("#observacion");
-    if (obs.value && !Validador.evaluarInput(obs, Patrones.observacion, "Caracteres no permitidos")) {
+    if (obs.value && !Validador.evaluarInput(obs, Patrones.observacionExtendida, "Caracteres no permitidos")) {
         Alertas.mostrar("error", "Error", "Observación contiene caracteres no permitidos");
         return false;
     }
@@ -105,10 +168,9 @@ function validarDetalles() {
     const contenedor = document.querySelector("#contenedor_presupuestos");
     if (!contenedor) return false;
     
-    contenedor.querySelectorAll("input[type='text']").forEach(input => {
+    contenedor.querySelectorAll(".gasto-nombre-input").forEach(input => {
         if (!Validador.evaluarInput(input, Patrones.nombreDetalle, "Mínimo 4 letras")) {
             todosValidos = false;
-            console.log(input)
             if (!primerError) primerError = "Nombre de detalle inválido (mínimo 4 letras)";
         }
     });
@@ -123,7 +185,7 @@ function validarDetalles() {
     });
 
     if (totalMontos === 0) {
-        Alertas.mostrar("error", "Error", "Debe haber al menos un monto > 0 en los detalles");
+        Alertas.mostrar("error", "Error", "Debe haber al menos un monto que no sea 0 en los detalles");
         return false;
     }
 

@@ -49,7 +49,6 @@ function resetModal() {
     document.querySelectorAll('.is-valid, .is-invalid').forEach(el => el.classList.remove('is-valid', 'is-invalid'));
 
     tasa_dolar = parseFloat(localStorage.getItem("tasa_dolar") || 1).toFixed(2);
-    asignarEventosCambioMoneda();
 }
 
 // FUNCIONES AUXILIARES DE UI (agregar/eliminar filas, etc.)
@@ -67,7 +66,7 @@ function agregar_fila_presupuesto(e) {
     div_nombre.setAttribute("class","col-sm-5");
 
     let input_nombre = document.createElement("input");
-    input_nombre.setAttribute('class','form-control');
+    input_nombre.setAttribute('class','form-control gasto-nombre-input');
     input_nombre.setAttribute('type','text');
     input_nombre.setAttribute('placeholder','nombre del gasto');
 
@@ -87,10 +86,10 @@ function agregar_fila_presupuesto(e) {
     div_input_group.setAttribute("class","input-group");
 
     let input_monto = document.createElement("input");
-    input_monto.setAttribute('class','form-control');
+    input_monto.setAttribute('class','form-control monto-detalle');
     input_monto.setAttribute('type','number');
     input_monto.setAttribute('title','Valor del monto en bolivares');
-    input_monto.setAttribute('placeholder','Ingrese un monto');
+    input_monto.setAttribute('placeholder','Ej: 40.00');
     input_monto.setAttribute('value',0);
     input_monto.setAttribute('monto','bs');
 
@@ -111,16 +110,14 @@ function agregar_fila_presupuesto(e) {
 
     let boton_intercambio = document.createElement("button");
     boton_intercambio.setAttribute('tabindex','-1');
-    boton_intercambio.setAttribute("class","btn btn-soft-info boton_intercambio");
+    boton_intercambio.setAttribute("class","btn btn-soft-info boton_intercambio"); // Delegado por clase
 
     let spam_intercambio = document.createElement("spam");
-
     let icono_intercambio = document.createElement("i");
     icono_intercambio.setAttribute('class','bi bi-arrow-left-right');
 
     spam_intercambio.appendChild(icono_intercambio);
     boton_intercambio.appendChild(spam_intercambio);
-
     div_intercambio.appendChild(boton_intercambio);     
 
     let div_monto_2 = document.createElement("div");
@@ -131,7 +128,7 @@ function agregar_fila_presupuesto(e) {
 
     let input_monto_2 = document.createElement("input");
     input_monto_2.setAttribute('class','form-control');
-    input_monto_2.setAttribute('type','number');
+    input_monto_2.setAttribute('type','text');
     input_monto_2.setAttribute("disabled","");
     input_monto_2.setAttribute('value',0);
     input_monto_2.setAttribute('title','Valor del monto en dolares');
@@ -163,7 +160,6 @@ function agregar_fila_presupuesto(e) {
 
     let icono_agregar = document.createElement('i');
     icono_agregar.setAttribute("class",'bi bi-plus-lg');
-
     boton_agregar.appendChild(icono_agregar);
 
     let boton_eliminar = document.createElement("button");
@@ -173,133 +169,23 @@ function agregar_fila_presupuesto(e) {
 
     let icono_eliminar = document.createElement('i');
     icono_eliminar.setAttribute("class",'bi bi-x-lg');
-
     boton_eliminar.appendChild(icono_eliminar);
 
     div_botones.appendChild(boton_agregar);
     div_botones.appendChild(boton_eliminar);
-    
     div_padre.appendChild(div_botones);
 
     div_global.appendChild(div_padre);
 
-    let boton_a_borrar = e.target;
-    if (!(e.target.getAttribute("accion"))) {
-        boton_a_borrar = e.target.parentElement;
-    }
+    let boton_a_borrar = e.target.getAttribute("accion") ? e.target : e.target.parentElement;
     boton_a_borrar.parentElement.removeChild(boton_a_borrar);
 
-    //eventos
-    boton_eliminar.addEventListener('click',eliminar_fila_presupuesto);
-    boton_agregar.addEventListener('click',agregar_fila_presupuesto);
-
-    input_nombre.addEventListener('keypress',e=>{
-        let er = /^[A-Za-z áéíóúÁÉÍÓÚñÑ\b]*$/;
-        let key = e.keyCode;
-        let tecla = String.fromCharCode(key);
-        let a = er.test(tecla);
-        if (!a) {
-            e.preventDefault();
-        }
-    });
-
-    input_nombre.addEventListener('keyup',e=>{
-        let er = /^[A-Za-z áéíóúÁÉÍÓÚñÑ\b]{4,50}$/;
-        let a = er.test(input_nombre.value);    
-        if(a){
-            input_nombre.classList.add('is-valid');
-            input_nombre.classList.remove('is-invalid');
-            input_nombre.nextElementSibling.textContent = "";
-            return 1;
-        }
-        else{
-            input_nombre.classList.add('is-invalid')
-            input_nombre.classList.remove('is-valid');
-            input_nombre.nextElementSibling.textContent = 'Solo letras, no mas de 50 caracteres';
-            return 0;
-        }
-    });
-
-    input_monto.addEventListener('keypress',e=>{
-        let er = /^[0-9,.]*$/;
-        let key = e.keyCode;
-        let tecla = String.fromCharCode(key);
-        let a = er.test(tecla);
-        if (!a) {
-            e.preventDefault();
-        }
-    });
-
-    input_monto.addEventListener('keyup',e=>{
-        let er = /^[0-9]{0,12}[,.]{0,1}[0-9]{0,2}$/;
-        let a = er.test(input_monto.value); 
-        if(a){
-            input_monto.classList.add('is-valid');
-            input_monto.classList.remove('is-invalid');
-            input_monto.nextElementSibling.textContent = "";
-
-            //Convertimos al contrario          
-            let input_convertir = input_monto.closest(".row").querySelector("[convertido]");
-            
-            if (input_monto.getAttribute("monto") == "bs") {
-                if (input_monto.value <= 0 || input_monto.value == '') {
-                    input_convertir.value = 0;
-                    return;
-                }
-                input_convertir.value = (parseFloat(input_monto.value) / tasa_dolar).toFixed(2) || 0;
-            }
-            else{
-                if (input_monto.value <= 0 || input_monto.value == '') {
-                    input_convertir.value = 0;
-                    return;
-                }
-                input_convertir.value = (parseFloat(input_monto.value) * tasa_dolar).toFixed(2);
-            }
-
-            return 1;
-        }
-        else{
-            input_monto.classList.add('is-invalid')
-            input_monto.classList.remove('is-valid');
-            input_monto.nextElementSibling.textContent = 'Solo numeros, no mas de 15 caracteres';
-            return 0;
-        }
-    });
-
-    boton_intercambio.addEventListener("click",e=>{
-        if (typeof e.preventDefault === 'function') {
-            e.preventDefault();
-        }
-        let valor_temporal = 0;
-
-        if (input_monto.getAttribute("monto") == "bs") {
-            input_monto.setAttribute("monto",'$');
-
-            valor_temporal = input_monto.value;
-            input_monto.value = input_monto_2.value;
-            input_monto_2.value = valor_temporal;
-
-            input_monto.parentElement.querySelector(".icono_moneda").textContent = "$";
-            input_monto_2.parentElement.querySelector(".icono_moneda").textContent = "Bs.";
-        }
-        else{
-            input_monto.setAttribute("monto",'bs');
-
-            valor_temporal = input_monto.value;
-            input_monto.value = input_monto_2.value;
-            input_monto_2.value = valor_temporal;
-
-            input_monto_2.parentElement.querySelector(".icono_moneda").textContent = "Bs.";
-            input_monto_2.parentElement.querySelector(".icono_moneda").textContent = "$";
-        }
-    });
+    boton_eliminar.addEventListener('click', eliminar_fila_presupuesto);
+    boton_agregar.addEventListener('click', agregar_fila_presupuesto);
 }
 
 function eliminar_fila_presupuesto(e) {
-    let boton_eliminar = e.target;
-    if (e.target.title == '') {
-        boton_eliminar = e.target.parentElement;
-    }
+    let boton_eliminar = e.target.title ? e.target : e.target.closest('button');
 
     if (boton_eliminar.previousElementSibling != null) {
         let boton_agregar = document.createElement("button");
@@ -310,19 +196,17 @@ function eliminar_fila_presupuesto(e) {
 
         let icono_agregar = document.createElement('i');
         icono_agregar.setAttribute("class",'bi bi-plus-lg');
-
         boton_agregar.appendChild(icono_agregar);
 
         let div_botones_anterior = boton_eliminar.closest(".row").previousElementSibling.querySelector(".col-sm-2");
-        
-        div_botones_anterior.insertBefore(boton_agregar,div_botones_anterior.querySelector("[title='eliminar monto']"));
+        div_botones_anterior.insertBefore(boton_agregar, div_botones_anterior.querySelector("[title='eliminar monto']"));
 
-        boton_agregar.addEventListener('click',agregar_fila_presupuesto);
+        boton_agregar.addEventListener('click', agregar_fila_presupuesto);
     }
     boton_eliminar.parentElement.parentElement.parentElement.removeChild(boton_eliminar.parentElement.parentElement);
 }
 
-function agregarGastoFijo(nombre_gasto,ultimo = false) {
+function agregarGastoFijo(nombre_gasto, ultimo = false) {
     let div_padre = document.createElement("div");
     div_padre.setAttribute('class','accordion-body row');
 
@@ -330,10 +214,10 @@ function agregarGastoFijo(nombre_gasto,ultimo = false) {
     div_nombre.setAttribute("class","col-sm-5");
 
     let input_nombre = document.createElement("input");
-    input_nombre.setAttribute('class','form-control');
+    input_nombre.setAttribute('class','form-control gasto-nombre-input');
     input_nombre.setAttribute('type','text');
     input_nombre.setAttribute('placeholder','nombre del gasto');
-    input_nombre.setAttribute('value',nombre_gasto);
+    input_nombre.setAttribute('value', nombre_gasto);
     if (nombre_gasto !== '') {
         input_nombre.setAttribute('disabled','');
     }
@@ -354,11 +238,11 @@ function agregarGastoFijo(nombre_gasto,ultimo = false) {
     div_input_group.setAttribute("class","input-group");
 
     let input_monto = document.createElement("input");
-    input_monto.setAttribute('class','  form-control');
+    input_monto.setAttribute('class','form-control monto-detalle');
     input_monto.setAttribute('type','number');
-    input_monto.setAttribute('value',0);
+    input_monto.setAttribute('value', 0);
     input_monto.setAttribute('title','Valor del monto en bolivares');
-    input_monto.setAttribute('placeholder','Ingrese un monto'); 
+    input_monto.setAttribute('placeholder','Ej: 40.00'); 
     input_monto.setAttribute('monto','bs');
 
     let spam_moneda = document.createElement("spam");
@@ -373,7 +257,6 @@ function agregarGastoFijo(nombre_gasto,ultimo = false) {
     div_input_group.appendChild(spam_moneda);
     div_monto.appendChild(div_input_group);
 
-    //boton intercambio
     let div_intercambio = document.createElement("div");
     div_intercambio.setAttribute("class","col-lg-1 col-2 mt-sm-0 mt-2 d-flex justify-content-center align-items-center");
 
@@ -382,13 +265,11 @@ function agregarGastoFijo(nombre_gasto,ultimo = false) {
     boton_intercambio.setAttribute("class","btn btn-soft-info boton_intercambio");   
 
     let spam_intercambio = document.createElement("spam");
-
     let icono_intercambio = document.createElement("i");
     icono_intercambio.setAttribute('class','bi bi-arrow-left-right');
 
     spam_intercambio.appendChild(icono_intercambio);
     boton_intercambio.appendChild(spam_intercambio);
-
     div_intercambio.appendChild(boton_intercambio);     
 
     let div_monto_2 = document.createElement("div");
@@ -399,7 +280,7 @@ function agregarGastoFijo(nombre_gasto,ultimo = false) {
 
     let input_monto_2 = document.createElement("input");
     input_monto_2.setAttribute('class','form-control');
-    input_monto_2.setAttribute('type','number');
+    input_monto_2.setAttribute('type','text');
     input_monto_2.setAttribute("disabled","");
     input_monto_2.setAttribute('value',0);
     input_monto_2.setAttribute('title','Valor del monto en dolares');
@@ -432,169 +313,22 @@ function agregarGastoFijo(nombre_gasto,ultimo = false) {
 
         let icono_agregar = document.createElement('i');
         icono_agregar.setAttribute("class",'bi bi-plus-lg');
-
         boton_agregar.appendChild(icono_agregar);
 
         div_botones.appendChild(boton_agregar);     
     }
     
     div_padre.appendChild(div_botones);
-
-
-    //Eventos
-    input_nombre.addEventListener('keypress',e=>{
-        let er = /^[A-Za-z áéíóúÁÉÍÓÚñÑ\b]*$/;
-        let key = e.keyCode;
-        let tecla = String.fromCharCode(key);
-        let a = er.test(tecla);
-        if (!a) {
-            e.preventDefault();
-        }
-    });
-
-    input_nombre.addEventListener('keyup',e=>{
-        let er = /^[A-Za-z áéíóúÁÉÍÓÚñÑ\b]{4,50}$/;
-        let a = er.test(input_nombre.value);    
-        if(a){
-            input_nombre.classList.add('is-valid');
-            input_nombre.classList.remove('is-invalid');
-            input_nombre.nextElementSibling.textContent = "";
-            return 1;
-        }
-        else{
-            input_nombre.classList.add('is-invalid')
-            input_nombre.classList.remove('is-valid');
-            input_nombre.nextElementSibling.textContent = 'Solo letras, no mas de 50 caracteres';
-            return 0;
-        }
-    });
-
-    input_monto.addEventListener('keypress',e=>{
-        let er = /^[0-9,.]*$/;
-        let key = e.keyCode;
-        let tecla = String.fromCharCode(key);
-        let a = er.test(tecla);
-        if (!a) {
-            e.preventDefault();
-        }
-    });
-
-    input_monto.addEventListener('keyup',e=>{
-        let er = /^[0-9]{0,12}[,.]{0,1}[0-9]{0,2}$/;
-        let a = er.test(input_monto.value); 
-        if(a){
-            input_monto.classList.add('is-valid');
-            input_monto.classList.remove('is-invalid');
-            input_monto.nextElementSibling.textContent = "";
-
-            //Convertimos al contrario
-            let input_convertir = input_monto.closest(".row").querySelector("[convertido]");            
-            
-            if (input_monto.getAttribute("monto") == "bs") {
-                if (input_monto.value <= 0 || input_monto.value == '') {
-                    input_convertir.value = 0;
-                    return;
-                }
-                input_convertir.value = (parseFloat(input_monto.value) / tasa_dolar).toFixed(2) || 0;
-            }
-            else{
-                if (input_monto.value <= 0 || input_monto.value == '') {
-                    input_convertir.value = 0;
-                    return;
-                }
-                input_convertir.value = (parseFloat(input_monto.value) * tasa_dolar).toFixed(2);
-            }
-
-            return 1;
-        }
-        else{
-            input_monto.classList.add('is-invalid')
-            input_monto.classList.remove('is-valid');
-            input_monto.nextElementSibling.textContent = 'Solo numeros, no mas de 15 caracteres';
-            return 0;
-        }
-    });
-
     return div_padre;
 }
 
 function asignarEventosDetalles() {
     detalles_presupuestos_base = document.getElementById('contenedor_presupuestos').innerHTML;
-    document.querySelectorAll("[accion='agregar']").forEach(boton=>{        
-        boton.addEventListener('click',agregar_fila_presupuesto);
+    document.querySelectorAll("[accion='agregar']").forEach(boton => {        
+        boton.addEventListener('click', agregar_fila_presupuesto);
     });
-    document.querySelectorAll("[title='eliminar monto']").forEach((boton_eliminar)=>{
-        boton_eliminar.addEventListener('click',eliminar_fila_presupuesto);
-    });
-
-    document.querySelectorAll("[type='number']").forEach(input=>{
-        if (input.id == "cuota_reserva") return;
-        input.addEventListener("click",e=>{if (e.target.value == 0) e.target.value = ''});
-    });
-}
-
-function asignarEventosCambioMoneda(){
-    let botones_intercambio = document.querySelectorAll(".boton_intercambio");
-    botones_intercambio.forEach(boton=>{
-        boton.addEventListener("click",e=>{
-            if (typeof e.preventDefault === 'function') {
-                e.preventDefault();
-            }
-            let input_monto = e.target.closest(".row").querySelector("[monto]"), 
-            input_cambio = e.target.closest(".row").querySelector("[convertido]"),
-            valor_temporal = 0;
-
-            if (input_monto.getAttribute("monto") == "bs") {
-                input_monto.setAttribute("monto",'$');
-
-                valor_temporal = input_monto.value;
-                input_monto.value = input_cambio.value;
-                input_cambio.value = valor_temporal;
-
-                input_monto.parentElement.querySelector(".icono_moneda").textContent = "$";
-                input_cambio.parentElement.querySelector(".icono_moneda").textContent = "Bs.";
-            }
-            else{
-                input_monto.setAttribute("monto",'bs');
-
-                valor_temporal = input_monto.value;
-                input_monto.value = input_cambio.value;
-                input_cambio.value = valor_temporal;
-
-                input_monto.parentElement.querySelector(".icono_moneda").textContent = "Bs.";
-                input_cambio.parentElement.querySelector(".icono_moneda").textContent = "$";
-            }
-        });
-    });
-
-    document.querySelector(".boton_intercambio_cuota").addEventListener("click",e=>{
-        if (typeof e.preventDefault === 'function') {
-            e.preventDefault();
-        }
-        let input_monto = e.target.closest(".row").querySelector("[monto]"), 
-        input_cambio = e.target.closest(".row").querySelector("[convertido]"),
-        valor_temporal = 0;
-
-        if (input_monto.getAttribute("monto") == "bs") {
-            input_monto.setAttribute("monto",'$');
-
-            valor_temporal = input_monto.value;
-            input_monto.value = input_cambio.value;
-            input_cambio.value = valor_temporal;
-
-            input_monto.parentElement.querySelector(".icono_moneda").textContent = "$";
-            input_cambio.parentElement.querySelector(".icono_moneda").textContent = "Bs.";
-        }
-        else{
-            input_monto.setAttribute("monto",'bs');
-
-            valor_temporal = input_monto.value;
-            input_monto.value = input_cambio.value;
-            input_cambio.value = valor_temporal;
-
-            input_monto.parentElement.querySelector(".icono_moneda").textContent = "Bs.";
-            input_cambio.parentElement.querySelector(".icono_moneda").textContent = "$";
-        }
+    document.querySelectorAll("[title='eliminar monto']").forEach((boton_eliminar) => {
+        boton_eliminar.addEventListener('click', eliminar_fila_presupuesto);
     });
 }
 
@@ -824,7 +558,7 @@ async function llenarDetallesPresupuestos() {
 
             let nombreFormat = tipo.nombre_tipo_gasto.replaceAll(" ", "-");
             let acordeon = document.createElement("div");
-            acordeon.className = "accordion col-12";
+            acordeon.className = "accordion col-12 mb-2";
             acordeon.id = nombreFormat;
             acordeon.setAttribute('id_tipo_gasto', tipo.id_tipo_gasto);
 
@@ -835,6 +569,7 @@ async function llenarDetallesPresupuestos() {
             let boton = document.createElement("button");
             boton.className = "accordion-button";
             boton.type = "button";
+            boton.setAttribute("tabindex",'-1');
             boton.setAttribute('data-bs-toggle', 'collapse');
             boton.setAttribute('data-bs-target', `#${nombreFormat}-body`);
             boton.textContent = tipo.nombre_tipo_gasto;
@@ -872,23 +607,13 @@ async function llenarDetallesPresupuestos() {
             item.appendChild(cuerpo);
             acordeon.appendChild(item);
             fragment.appendChild(acordeon);
-            fragment.appendChild(document.createElement("hr"));
         });
 
         contenedor.appendChild(fragment);
         asignarEventosDetalles();
-        asignarEventosCambioMoneda();
         detalles_presupuestos_base = contenedor.innerHTML; // Guardar para reset
     });
 }
-
-// ============================================================
-// ACCIONES: REGISTRAR, modificar, ELIMINAR
-// ============================================================
-
-// ============================================================
-// ACCIONES: REGISTRAR, modificar, ELIMINAR
-// ============================================================
 
 /**
  * Agrega los datos del formulario (cabecera + detalles) al FormData

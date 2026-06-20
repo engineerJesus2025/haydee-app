@@ -8,6 +8,7 @@ use haydee\ayuda\ConstructorDetalles;
 use haydee\modelo\Presupuesto;
 use haydee\modelo\TipoGasto;
 use haydee\modelo\Bitacora;
+use haydee\servicios\GestorTasa;
 use haydee\servicios\Sesiones;
 use haydee\servicios\GestorAuditoria;
 
@@ -17,9 +18,7 @@ if (isset($_POST["operacion"])) {
 
     Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_PRESUPUESTO, $operacion);
 
-    // =========================================================
-    // 1. VALIDACION DE LA CABECERA
-    // =========================================================
+    // VALIDACION DE LA CABECERA
     $reglasCabecera = Presupuesto::obtenerReglas($operacion);
 
     if (!empty($reglasCabecera)) {
@@ -34,12 +33,8 @@ if (isset($_POST["operacion"])) {
         }
     }
 
-    // =========================================================
-    // 2. CONSTRUCCIÓN Y VALIDACION DE DETALLES
-    // =========================================================
     if ($operacion === 'registrar_presupuesto' || $operacion === 'modificar_presupuesto') {
         
-        // Configuramos el constructor para extraer solo los campos de presupuesto (Sin bancos ni imágenes)
         $configPresupuesto = [
             'campos' => ['nombre', 'monto', 'tipo_gasto_id']
         ];
@@ -54,7 +49,6 @@ if (isset($_POST["operacion"])) {
         $reglasDetalle = Presupuesto::obtenerReglasDetalles();
         $erroresDetalles = [];
 
-        // Validamos cada fila exactamente como en Gastos
         foreach ($detalles as $index => $detalle) {
             $validadorTemp = new Validador();
             $validadorTemp->validarConjunto($detalle, $reglasDetalle);
@@ -79,7 +73,6 @@ if (isset($_POST["operacion"])) {
 
     $presupuesto = new Presupuesto();
 
-    // Asignacion de detalles si existen
     if (isset($detalles)) {
         $presupuesto->setDetallesTemp($detalles); 
     }
@@ -89,7 +82,9 @@ if (isset($_POST["operacion"])) {
     $presupuesto->set_fecha($_POST['fecha'] ?? null);
     $presupuesto->set_cuota_reserva($_POST['cuota_reserva'] ?? null);
     $presupuesto->set_observacion($_POST['observacion'] ?? "Sin observación");
-    $presupuesto->set_tasa_dolar($_POST['tasa_dolar'] ?? 1); 
+
+    $tasaDolar = GestorTasa::obtener();
+    $presupuesto->set_tasa_dolar($tasaDolar);
 
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
     $auditor = new GestorAuditoria($presupuesto, Modulo::GESTIONAR_PRESUPUESTO);

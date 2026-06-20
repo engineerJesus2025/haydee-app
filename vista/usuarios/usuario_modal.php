@@ -58,7 +58,7 @@
                     
                     <div class="row my-4">
                         <div class="col-md-6 mb-3 mb-md-0">
-                            <label for="contra" class="form-label fw-semibold">Contraseña <span class="text-danger">*</span></label>
+                            <label for="contra" class="form-label fw-semibold">Contraseña <span class="text-danger span-contra">*</span></label>
                             <div class="input-group has-validation">
                                 <span class="input-group-text" id="basic-addon5"><i class="bi bi-key"></i></span>
                                 <input type="password" class="form-control contra-input" name="contra" id="contra" placeholder="Contraseña" aria-label="contra" aria-describedby="basic-addon5" minlength="5" maxlength="50" autocomplete="new-password">
@@ -73,7 +73,7 @@
                         </div>
                         
                         <div class="col-md-6">
-                            <label for="confir_contra" class="form-label fw-semibold">Confirmar contraseña <span class="text-danger">*</span></label>
+                            <label for="confir_contra" class="form-label fw-semibold">Confirmar contraseña <span class="text-danger span-contra">*</span></label>
                             <div class="input-group has-validation">
                                 <span class="input-group-text" id="basic-addon6"><i class="bi bi-key-fill"></i></span>
                                 <input type="password" class="form-control contra-input" name="confir_contra" id="confir_contra" placeholder="Confirmar contraseña" aria-label="confir_contra" aria-describedby="basic-addon6" minlength="5" maxlength="50">

@@ -67,7 +67,7 @@
                     <button type="button" class="btn btn-soft-secondary me-3 mb-2" data-bs-dismiss="modal">
                         <i class="bi bi-x-circle me-2"></i> Cancelar
                     </button>
-                    <button class="btn btn-primary px-3 shadow-sm" type="submit" id="boton_gasto_caja">
+                    <button class="btn btn-primary px-3 shadow-sm mb-2" type="submit" id="boton_gasto_caja">
                         <i class="bi bi-check2-circle me-2"></i>
                         <span id="texto_boton_formulario">Guardar Gasto</span>
                     </button>
