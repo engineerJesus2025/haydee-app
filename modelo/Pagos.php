@@ -273,7 +273,7 @@ class Pagos extends Conexion
         }
     }
 
-    // -------------------- CONSULTAS --------------------
+    // CONSULTAS
     // SE USA EN EL MODULO
     private function _consultar()
     {
@@ -326,17 +326,21 @@ class Pagos extends Conexion
         try {
             // Cabecera del pago
             $sqlHead = "SELECT
-                    p.*,
-                    pm.mensualidad_id,
-                    pm.monto_abonado,
-                    m.apartamento_id,
-                    m.monto AS monto_mensualidad,
-                    a.nro_apartamento
-                FROM pagos p
-                LEFT JOIN pagos_mensualidad pm ON p.id_pago = pm.pago_id
-                LEFT JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
-                LEFT JOIN apartamentos a ON a.id_apartamento = m.apartamento_id
-                WHERE p.id_pago = :id AND p.activo = 1 LIMIT 1";
+                p.*,
+                pm.mensualidad_id,
+                pm.monto_abonado,
+                m.apartamento_id,
+                m.monto AS monto_mensualidad,
+                per.id_periodo,
+                per.mes,
+                per.anio,
+                a.nro_apartamento
+            FROM pagos p
+            LEFT JOIN pagos_mensualidad pm ON p.id_pago = pm.pago_id
+            LEFT JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
+            LEFT JOIN periodos_mensualidad per ON m.periodo_id = per.id_periodo
+            LEFT JOIN apartamentos a ON a.id_apartamento = m.apartamento_id
+            WHERE p.id_pago = :id AND p.activo = 1 LIMIT 1";
             
             $stmtH = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlHead);
             $stmtH->execute([':id' => $this->id_pago]);

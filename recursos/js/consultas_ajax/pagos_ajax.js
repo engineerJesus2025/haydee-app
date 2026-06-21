@@ -28,6 +28,11 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("monto_mensualidad").value = seleccion.getAttribute("data-monto") || 0;
     });
 
+    document.getElementById('btn_recibo_vp')?.addEventListener('click', function() {
+        const idPago = this.getAttribute('data-id');
+        if (idPago) ejecutarDescargaRecibo(idPago);
+    });
+
     document.querySelectorAll(".tasa_dolar").forEach(input => input.value = tasa_dolar);
 
     formulario_usar.addEventListener("input", (e) => {
@@ -135,7 +140,7 @@ function actualizarVisibilidadMetodo(selectElement) {
 
     campoMonto.classList.remove("d-none");
 
-    if (metodo === "Efectivo" || metodo === "Divisa") {
+    if (metodo === "EFECTIVO" || metodo === "DIVISA") {
         camposBancarios.forEach(c => c.classList.add("d-none"));
     } else {
         camposBancarios.forEach(c => c.classList.remove("d-none"));
@@ -244,10 +249,6 @@ async function consultar() {
                 <i class="bi bi-eye"></i>
                 <span class="d-none d-lg-inline ms-2">Ver</span>
             </button>
-            <button data-tooltip="true" type="button" class="btn btn-info btn-sm text-white recibo-pago" style="background-color:#3939a9;" title="Descargar Cuadro de Pagos (PDF)">
-                <i class="bi bi-card-checklist"></i>
-                <span class="d-none d-lg-inline ms-2">Reporte</span>
-            </button>
             `;
         if (permisoModificar) {
             html += `<button class="btn btn-success btn-sm modificar" data-tooltip="true" title="Modificar los detalles de este registro">
@@ -274,7 +275,7 @@ async function consultar() {
         {
             title: "Acciones", formatter: formatoBotones, headerSort: false, 
             hozAlign: "center", vertAlign: "middle", minWidth: 130, responsive: 0, 
-            download: false, headerHozAlign: "center", widthGrow: 3,
+            download: false, headerHozAlign: "center", widthGrow: 2,
             cellClick: function(e, cell) {
                 const btn = e.target.closest('button');
                 if (!btn) return;
@@ -283,24 +284,6 @@ async function consultar() {
                 if (btn.classList.contains('vista-previa')) mostrarVistaPrevia(id);
                 if (btn.classList.contains('modificar')) prepararFormulario(id);
                 if (btn.classList.contains('eliminar')) confirmarEliminar(id);
-                
-                // Formulario para el PDF sin ensuciar la tabla
-                if (btn.classList.contains('recibo-pago')) {
-                    let form = document.createElement('form');
-                    form.action = "?pagina=reportes&accion=recibo_pago";
-                    form.method = "POST";
-                    form.target = "_blank"; // abre en otra pestaña
-                    
-                    let input = document.createElement('input');
-                    input.type = "hidden";
-                    input.name = "select_reporte";
-                    input.value = id;
-                    
-                    form.appendChild(input);
-                    document.body.appendChild(form);
-                    form.submit();
-                    document.body.removeChild(form);
-                }
             }
         }
     ];
@@ -680,13 +663,18 @@ async function mostrarVistaPrevia(id) {
             return `${(montoBs / tasa).toFixed(2)} $`;
         }
 
+        function formadoMetodoPago(cell) {
+            const tipo_pago = cell.getData().tipo_pago;
+            return `${tipo_pago.charAt(0) + tipo_pago.toLowerCase().slice(1)}`;
+        }
+
         // Definir columnas de Tabulator
         const columnas = [
             { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
             { title: "Fecha", field: "fecha", formatter: (cell) => FormatoFechas.formatoUsuario(cell.getValue()), minWidth: 100, responsive: 0 },
             { title: "Monto BS", field: "monto", formatter: (cell) => `${cell.getValue()} Bs`, minWidth: 100 },
             { title: "Monto $", field: "tasa_dolar", formatter: formadoMontoDolar, minWidth: 100 },
-            { title: "Método", field: "tipo_pago", minWidth: 120 },
+            { title: "Método", field: "tipo_pago",  formatter: formadoMetodoPago,minWidth: 120 },
             { title: "Banco", field: "nombre_banco", formatter: (cell) => cell.getValue() || '<span class="text-muted">N/A</span>', minWidth: 120 },
             { title: "Referencia", field: "referencia", formatter: (cell) => cell.getValue() || '<span class="text-muted">N/A</span>', minWidth: 120 },
             { 
@@ -705,6 +693,17 @@ async function mostrarVistaPrevia(id) {
                 responsive: 0 
             }
         ];
+        // document.getElementById('btn_recibo_vp').setAttribute('data-id', id);
+
+        const btnReciboVp = document.getElementById('btn_recibo_vp');
+        if (btnReciboVp) {
+            if (data.estado !== "PROCESADO") {
+                btnReciboVp.classList.add("d-none");
+            } else {
+                btnReciboVp.classList.remove("d-none");
+                btnReciboVp.setAttribute('data-id', id);
+            }
+        }
 
         modalVistaPrevia.show();
 
@@ -720,7 +719,7 @@ async function mostrarVistaPrevia(id) {
 }
 
 
-// MÓDULO DE AYUDA INTERACTIVA
+// AYUDA INTERACTIVA
 document.addEventListener('DOMContentLoaded', () => {
     const stepsPrincipal = [
             { element: '.page-header', popover: { title: 'Módulo de Pagos', description: 'Bienvenido. Desde aquí puedes registrar, verificar y gestionar los pagos de las mensualidades del condominio.', side: "bottom", align: 'start' } },

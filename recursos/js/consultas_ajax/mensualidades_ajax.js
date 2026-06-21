@@ -1,12 +1,3 @@
-/**
- * mensualidades_ajax.js
- * Gestión de Mensualidades - Peticiones AJAX
- * Dependencias: utilidades.js, validaciones.js, formatoFechas.js
- */
-
-// ============================================================
-// VARIABLES GLOBALES
-// ============================================================
 let tablaMensualidades;
 let tablaApartamentos;
 let tablaAsignar;
@@ -23,9 +14,7 @@ let tablaAsignarInicial = tablaMensualidadAsignar?.innerHTML || '';
 let tasaDolar = parseFloat(localStorage.getItem("tasa_dolar") || 1).toFixed(2);
 const permisoModificar = window.PermisosModulo?.modificar || false;
 const permisoEliminar = window.PermisosModulo?.eliminar || false;
-// ============================================================
-// INICIALIZACIÓN
-// ============================================================
+
 document.addEventListener('DOMContentLoaded', () => {
     consultarMensualidades();
     verificarMeses();
@@ -135,10 +124,9 @@ async function consultarMensualidades() {
                 const fecha = `${row.anio}-${mes}-01`;
 
                 if (btn.classList.contains('vista-previa')) mostrarVistaPrevia(row, fecha);
-                else if (btn.classList.contains('eliminar')) confirmarEliminar(fecha);
+                else if (btn.classList.contains('eliminar')) confirmarEliminar(row.id_periodo); // Pasa el ID directo
                 else if (btn.classList.contains('modificar')) {
-                    const mockFila = { dataset: { intereses: row.porcentaje_interes, limite: row.limite_mensualidad } };
-                    prepararFormulario(mockFila, fecha, row.ids, row.ids_apartamentos);
+                    prepararFormulario(row);
                 } 
             }
         }
@@ -425,110 +413,86 @@ function mostrarVistaPrevia(data, fecha) {
     }, 200);
 }
 
-async function prepararFormulario(fila, fecha, ids, idsApartamentos) {
-    // ===== Manejo del select de fecha =====
+async function prepararFormulario(row) {
+    const mes = String(row.mes).padStart(2, '0');
+    const fecha = `${row.anio}-${mes}-01`;
+    const id_periodo = row.id_periodo;
+
     const select = selectMesAsignar;
     // Buscar si ya existe una opción con esa fecha
     let opcionExistente = Array.from(select.options).find(opt => opt.id === fecha);
     if (!opcionExistente) {
-        // Crear nueva opción
         const nuevaOpcion = document.createElement('option');
         nuevaOpcion.id = fecha;
-        nuevaOpcion.setAttribute('data-temporal', 'true'); // Marcarla como temporal
-        // Formatear el texto (ej. "ENERO DEL 2025")
-        const partes = fecha.split('-');
-        const mes = parseInt(partes[1], 10);
-        const anio = partes[0];
-        const fechaObj = new Date(anio, mes - 1, 1);
-        const texto = fechaObj.toLocaleString("es-ES", { month: 'long', year: 'numeric' }).toUpperCase();
-        nuevaOpcion.textContent = texto;
+        nuevaOpcion.setAttribute('data-temporal', 'true');
+        const fechaObj = new Date(row.anio, parseInt(mes) - 1, 1);
+        nuevaOpcion.textContent = fechaObj.toLocaleString("es-ES", { month: 'long', year: 'numeric' }).toUpperCase();
         select.appendChild(nuevaOpcion);
         opcionExistente = nuevaOpcion;
     }
-    // Seleccionar la opción y deshabilitar el select
+    
     select.value = '';
     opcionExistente.selected = true;
     select.disabled = true;
 
-    // ===== Cargar tabla de presupuestos =====
+    // Cargar tabla de presupuestos
     tablaMensualidadAsignar.innerHTML = tablaAsignarInicial;
-    
-    // Guardamos el resultado (true o false) de la carga
     const exitoCarga = await cargarTablaPresupuestos(fecha);
 
-    // Si no se cargó (porque el presupuesto fue eliminado), detenemos todo
     if (!exitoCarga) {
-        Alertas.mostrar('error', 'Error de Integridad', 'No se puede modificar esta mensualidad porque el presupuesto base de este mes fue eliminado. Debe registrar un presupuesto para este mes o eliminar esta mensualidad.');
-        resetModalMensualidad(); // Limpiamos el modal por si acaso
-        return; // Abortamos la ejecución, el modal no se abrirá
+        Alertas.mostrar('error', 'Error de Integridad', 'No se puede modificar esta mensualidad porque el presupuesto base de este mes fue eliminado.');
+        resetModalMensualidad();
+        return; 
     }
 
-    // ===== Marcar checkboxes =====
-    const idsArray = ids.split(',');
-    const idsAptArray = idsApartamentos.split(',');
     const formData = new FormData();
     formData.append("operacion", "consultar_presupuestos_asociados");
-    formData.append("ids_mensualidades", ids);
+    formData.append("periodo_id", id_periodo);
 
-    // Pasamos 'true' para bloquear la pantalla con el spinner mientras procesa
     const respuesta = await Peticiones.enviar(formData, "", true); 
     
     if (respuesta.estatus && respuesta.datos) {
-        const presupuestosPorMensualidad = respuesta.datos;
+        const asignaciones = respuesta.datos; // Trae un arreglo de objetos {apartamento_id, id_mensualidad, presupuestos}
         const filas = tablaMensualidadAsignar.querySelectorAll("tbody tr");
         
         filas.forEach((filaTr) => {
-            // Obtenemos el ID del apartamento directamente de la fila
-            const idApartamentoFila = filaTr.id; 
+            const aptoId = filaTr.id; 
+            const asignacion = asignaciones.find(a => String(a.apartamento_id) === aptoId);
             
-            //  Buscamos en qué posición del arreglo de datos se encuentra este apartamento
-            const indiceReal = idsAptArray.indexOf(idApartamentoFila);
-            
-            let idMensualidad = '';
-            let presupuestos = [];
-            
-            // Si el apartamento YA tenía una mensualidad (el índice existe), le asignamos sus datos
-            if (indiceReal !== -1) {
-                idMensualidad = idsArray[indiceReal];
-                presupuestos = presupuestosPorMensualidad[indiceReal] || [];
-            }
-            
-            // Marcamos los presupuestos asociados
-            presupuestos.forEach(p => {
-                const chk = filaTr.querySelector(`input[type="checkbox"][id_presupuestos_asociados*="${p}"]`);
-                if (chk && !chk.checked) {
-                    chk.checked = true;
-                    chk.dispatchEvent(new Event('change'));
+            if (asignacion) {
+                // Asignamos el ID de la mensualidad a la celda total
+                const celdaTotal = filaTr.lastElementChild?.previousElementSibling;
+                if (celdaTotal) {
+                    celdaTotal.dataset.idMensualidad = asignacion.id_mensualidad;
                 }
-            });
-            
-            // Asignamos el ID de la mensualidad a la celda (Si es un apto nuevo, quedará vacío y PHP hará un INSERT)
-            const celdaTotal = filaTr.lastElementChild?.previousElementSibling;
-            if (celdaTotal) {
-                celdaTotal.dataset.idMensualidad = idMensualidad;
+                
+                // Marcamos los presupuestos asociados
+                if (asignacion.presupuestos) {
+                    const presupuestos = asignacion.presupuestos.split(',');
+                    presupuestos.forEach(p => {
+                        const chk = filaTr.querySelector(`input[type="checkbox"][id_presupuestos_asociados*="${p}"]`);
+                        if (chk && !chk.checked) {
+                            chk.checked = true;
+                            chk.dispatchEvent(new Event('change'));
+                        }
+                    });
+                }
             }
         });
     }
 
-    // ===== Cargar valores de porcentaje y límite =====
-    document.getElementById("porcentaje_demora").value = fila.dataset.intereses || '';
-    document.getElementById("dia_limite").value = fila.dataset.limite || '';
+    // Cargar valores de porcentaje y límite directamente de la fila
+    document.getElementById("porcentaje_demora").value = row.porcentaje_interes || '';
+    document.getElementById("dia_limite").value = row.limite_mensualidad || '';
 
-    // ===== Configurar botón =====
-    // botonFormulario.textContent = "Guardar Cambios";
     document.getElementById('texto_boton_formulario').textContent = 'Guardar Cambios';
     botonFormulario.dataset.op = "modificar";
     document.getElementById('titulo_modal').textContent = "Modificar Mensualidad";
     document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-calendar-minus");
-    botonFormulario.dataset.fecha = fecha;
+    botonFormulario.dataset.periodo_id = id_periodo; // PK Relacional
     
-    // La línea que faltaba: Abrir el modal automáticamente al terminar
     modalMensualidad.show();
 }
-
-// ============================================================
-// REGISTRO Y modificarCIÓN MASIVA
-// ============================================================
 
 function recolectarDatosTabla() {
     const filas = tablaMensualidadAsignar.querySelectorAll("tbody tr");
@@ -593,15 +557,9 @@ async function modificarMensualidad() {
         return;
     }
 
-    const fecha = botonFormulario.dataset.fecha;
-    const partes = fecha.split('-');
-    const mes = parseInt(partes[1]);
-    const anio = parseInt(partes[0]);
-
     const formData = new FormData();
     formData.append("operacion", "modificar_mensualidad");
-    formData.append("mes", mes);
-    formData.append("anio", anio);
+    formData.append("periodo_id", botonFormulario.dataset.periodo_id);
     formData.append("tasa_dolar", tasaDolar);
     formData.append("porcentaje_interes", document.getElementById("porcentaje_demora").value);
     formData.append("limite_mensualidad", document.getElementById("dia_limite").value);
@@ -615,25 +573,19 @@ async function modificarMensualidad() {
 }
 
 // ELIMINACIÓN
-function confirmarEliminar(fecha) {
+function confirmarEliminar(id_periodo) {
     Alertas.confirmarAccion(
         "¿Eliminar Mensualidad?",
         "Esta acción no se puede deshacer.",
         "error",
-        () => { eliminar(fecha); }
+        () => { eliminar(id_periodo); }
     );
 }
 
-async function eliminar(fecha) {
+async function eliminar(id_periodo) {
     const formData = new FormData();
     formData.append("operacion", "eliminar_mensualidad");
-
-    const partes = fecha.split('-');
-    const mes = parseInt(partes[1]);
-    const anio = parseInt(partes[0]);
-
-    formData.append("mes", mes);
-    formData.append("anio", anio);
+    formData.append("periodo_id", id_periodo);
 
     const respuesta = await Peticiones.enviar(formData);
     Validador.procesarRespuesta(respuesta, () => {
@@ -641,10 +593,6 @@ async function eliminar(fecha) {
         verificarMeses();
     });
 }
-
-// ============================================================
-// FUNCIONES AUXILIARES
-// ============================================================
 
 function resetModalMensualidad() {
     tablaMensualidadAsignar.innerHTML = tablaAsignarInicial;

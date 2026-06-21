@@ -99,6 +99,7 @@ if (isset($_POST["operacion"])) {
 
     // ASIGNACION DE PROPIEDADES
     $mensualidad->set_id_mensualidad($_POST['id_mensualidad'] ?? null);
+    $mensualidad->set_periodo_id($_POST['periodo_id'] ?? null);
     $mensualidad->set_monto($_POST['monto'] ?? null);
     $mensualidad->set_mes($_POST['mes'] ?? null);
     $mensualidad->set_anio($_POST['anio'] ?? null);
@@ -144,7 +145,6 @@ if (isset($_POST["operacion"])) {
                 break;
 
             case 'consultar_presupuestos_asociados':
-                $mensualidad->set_ids_mensualidades($_POST['ids_mensualidades'] ?? '');
                 $respuesta = $mensualidad->realizar_consulta('consultar_presupuestos_asociados');
                 http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
                 break;

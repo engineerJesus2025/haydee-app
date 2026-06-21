@@ -62,14 +62,18 @@ class Mensualidad extends Conexion
             'apartamento_id' => [
                 'regex' => '/^\d+$/',
                 'exists' => ['tabla' => 'apartamentos', 'campo' => 'id_apartamento']
-            ]
+            ],
+            'periodo_id' => [
+                'regex' => '/^\d+$/',
+                'exists' => ['tabla' => 'periodos_mensualidad', 'campo' => 'id_periodo']
+            ],
         ];
 
         $configPorOperacion = [
-            // ==================== CONSULTAS (GET) ====================
+            // CONSULTAS
             'consultarPorMeses' => [
                 'metodo_http' => ['GET'],
-                'campos' => []   // sin campos específicos, solo consulta general
+                'campos' => [] 
             ],
             'verificarMeses' => [
                 'metodo_http' => ['GET'],
@@ -97,7 +101,7 @@ class Mensualidad extends Conexion
             ],
             'consultar_presupuestos_asociados' => [
                 'metodo_http' => ['GET'],
-                'campos' => ['ids_mensualidades']   // campo especial, se valida manualmente
+                'campos' => ['periodo_id']
             ],
             'consultar_cabecera_mensualidad' => [
                 'metodo_http' => ['GET'],
@@ -112,18 +116,18 @@ class Mensualidad extends Conexion
                 'campos' => []
             ],
 
-            // ==================== ESCRITURA (POST / PUT / DELETE) ====================
+            // POST / PUT / DELETE
             'registrar' => [
                 'metodo_http' => ['POST'],
                 'campos' => ['mes', 'anio', 'tasa_dolar', 'porcentaje_interes', 'limite_mensualidad']
             ],
             'modificar' => [
                 'metodo_http' => ['PUT', 'POST'],
-                'campos' => ['mes', 'anio', 'tasa_dolar', 'porcentaje_interes', 'limite_mensualidad']
+                'campos' => ['periodo_id', 'tasa_dolar', 'porcentaje_interes', 'limite_mensualidad']
             ],
             'eliminar' => [
                 'metodo_http' => ['DELETE', 'POST'],
-                'campos' => ['mes', 'anio']
+                'campos' => ['periodo_id']
             ]
         ];
 
@@ -236,8 +240,7 @@ class Mensualidad extends Conexion
     private function _consultarPorMeses()
     {
         $sql = "SELECT 
-                    GROUP_CONCAT(v.id_mensualidad) as ids,
-                    GROUP_CONCAT(v.apartamento_id) as ids_apartamentos,
+                    pm.id_periodo,
                     SUM(v.monto_cuota) as monto,
                     pm.tasa_dolar,
                     v.mes,
@@ -299,25 +302,22 @@ class Mensualidad extends Conexion
     // SE USA EN EL MODULO
     private function _consultar_presupuestos_asociados()
     {
-        if (empty($this->ids_mensualidades)) {
-            return ['estatus' => false, 'mensaje' => 'No se proporcionaron IDs de mensualidad.'];
+        if (empty($this->periodo_id)) {
+            return ['estatus' => false, 'mensaje' => 'ID de período no proporcionado.'];
         }
 
-        $ids = explode(',', $this->ids_mensualidades);
-        $resultados = [];
+        $sql = "SELECT m.apartamento_id, m.id_mensualidad, 
+                       GROUP_CONCAT(pm.detalle_presupuesto_id) as presupuestos
+                FROM mensualidad m
+                LEFT JOIN presupuesto_mensualidad pm ON m.id_mensualidad = pm.mensualidad_id
+                WHERE m.periodo_id = :periodo_id AND m.activo = 1
+                GROUP BY m.id_mensualidad, m.apartamento_id";
 
         try {
-            foreach ($ids as $id) {
-                $sql = "SELECT detalle_presupuesto_id 
-                        FROM presupuesto_mensualidad 
-                        WHERE mensualidad_id = :id";
-                $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-                $stmt->execute([':id' => $id]);
-                $filas = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                $resultados[] = array_column($filas, 'detalle_presupuesto_id');
-            }
-            return ['estatus' => true, 'datos' => $resultados];
-        } catch (PDOException $e) {
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+            $stmt->execute([':periodo_id' => $this->periodo_id]);
+            return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
+        } catch (\PDOException $e) {
             error_log("Error en _consultar_presupuestos_asociados: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al consultar presupuestos asociados.'];
         }
@@ -329,12 +329,10 @@ class Mensualidad extends Conexion
         $sql = "SELECT pm.tasa_dolar, pm.mes, pm.anio, m.porcentaje_interes, m.limite_mensualidad 
                 FROM mensualidad m
                 INNER JOIN periodos_mensualidad pm ON m.periodo_id = pm.id_periodo
-                WHERE pm.mes = :mes AND pm.anio = :anio AND m.activo = 1 
-                LIMIT 1";
+                WHERE pm.id_periodo = :periodo_id AND m.activo = 1 LIMIT 1";
         try {
             $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->bindParam(':mes', $this->mes, PDO::PARAM_INT);
-            $stmt->bindParam(':anio', $this->anio, PDO::PARAM_INT);
+            $stmt->bindParam(':periodo_id', $this->periodo_id, PDO::PARAM_INT);
             $stmt->execute();
             $datos = $stmt->fetch(PDO::FETCH_ASSOC);
             
@@ -452,13 +450,13 @@ class Mensualidad extends Conexion
             }
 
             // Actualizar tasa del periodo fiscal
-            $sqlUpdatePeriodo = "UPDATE periodos_mensualidad SET tasa_dolar = :tasa_dolar WHERE mes = :mes AND anio = :anio";
+            $sqlUpdatePeriodo = "UPDATE periodos_mensualidad SET tasa_dolar = :tasa_dolar WHERE id_periodo = :periodo_id";
             $stmtUpdPer = $con->prepare($sqlUpdatePeriodo);
-            $stmtUpdPer->execute([':tasa_dolar' => $this->tasa_dolar, ':mes' => $this->mes, ':anio' => $this->anio]);
+            $stmtUpdPer->execute([':tasa_dolar' => $this->tasa_dolar, ':periodo_id' => $this->periodo_id]);
 
             // Buscar el ID del periodo con FOR UPDATE (Bloqueo a nivel de fila)
-            $stmtBusca = $con->prepare("SELECT id_periodo FROM periodos_mensualidad WHERE mes = :mes AND anio = :anio FOR UPDATE");
-            $stmtBusca->execute([':mes' => $this->mes, ':anio' => $this->anio]);
+            $stmtBusca = $con->prepare("SELECT id_periodo FROM periodos_mensualidad WHERE id_periodo = :periodo_id FOR UPDATE");
+            $stmtBusca->execute([':periodo_id' => $this->periodo_id]);
             $id_periodo_actual = $stmtBusca->fetchColumn();
 
             if (!$id_periodo_actual) {
@@ -532,29 +530,13 @@ class Mensualidad extends Conexion
             }
 
             // Desactivar el periodo fiscal
-            $sqlPeriodo = "UPDATE periodos_mensualidad 
-                           SET activo = 0 
-                           WHERE mes = :mes AND anio = :anio";
+            $sqlPeriodo = "UPDATE periodos_mensualidad SET activo = 0 WHERE id_periodo = :periodo_id";
             $stmtP = $con->prepare($sqlPeriodo);
-            $stmtP->execute([
-                ':mes' => $this->mes, 
-                ':anio' => $this->anio
-            ]);
+            $stmtP->execute([':periodo_id' => $this->periodo_id]);
 
-            // Obtener el ID del periodo que acabamos de desactivar
-            $stmtBusca = $con->prepare("SELECT id_periodo FROM periodos_mensualidad WHERE mes = :mes AND anio = :anio");
-            $stmtBusca->execute([
-                ':mes' => $this->mes, 
-                ':anio' => $this->anio
-            ]);
-            $id_periodo = $stmtBusca->fetchColumn();
-
-            // Desactivar en cascada las mensualidades atadas a ese periodo
-            if ($id_periodo) {
-                $sqlMensualidad = "UPDATE mensualidad SET activo = 0 WHERE periodo_id = :id_periodo";
-                $stmtM = $con->prepare($sqlMensualidad);
-                $stmtM->execute([':id_periodo' => $id_periodo]);
-            }
+            $sqlMensualidad = "UPDATE mensualidad SET activo = 0 WHERE periodo_id = :periodo_id";
+            $stmtM = $con->prepare($sqlMensualidad);
+            $stmtM->execute([':periodo_id' => $this->periodo_id]);
 
             $con->commit();
             return ['estatus' => true, 'mensaje' => 'Periodo y mensualidades desactivados correctamente'];

@@ -72,9 +72,9 @@
                                             <span class="  input-group-text"><i class="bi bi-credit-card-fill"></i></span>
                                             <select class="  form-select tipo_pago" name="tipo_pago[]">
                                                 <option selected hidden value="">Seleccione método</option>
-                                                <option value="Transferencia">Transferencia</option>
-                                                <option value="Pago Movil">Pago Móvil</option>
-                                                <option value="Efectivo">Efectivo</option>
+                                                <option value="TRANSFERENCIA">Transferencia</option>
+                                                <option value="PAGO MOVIL">Pago Móvil</option>
+                                                <option value="EFECTIVO">Efectivo</option>
                                             </select>
                                             <span class="w-100 invalid-feedback"></span>
                                         </div>
@@ -210,9 +210,9 @@
                         <span class="  input-group-text"><i class="bi bi-credit-card-fill"></i></span>
                         <select class="  form-select tipo_pago" name="tipo_pago[]">
                             <option selected hidden value="">Seleccione método</option>
-                            <option value="Transferencia">Transferencia</option>
-                            <option value="Pago Movil">Pago Móvil</option>
-                            <option value="Efectivo">Efectivo</option>
+                            <option value="TRANSFERENCIA">Transferencia</option>
+                            <option value="PAGO MOVIL">Pago Móvil</option>
+                            <option value="EFECTIVO">Efectivo</option>
                         </select>
                         <span class="w-100 invalid-feedback"></span>
                     </div>

@@ -75,9 +75,7 @@ class Reportes extends Conexion
         return [];
     }
 
-    // ====================================================================
     // GETTERS Y SETTERS
-    // ====================================================================
     public function set_balance($val) { $this->balance = $val; }
     public function set_metodo_pago($val) { $this->metodo_pago = $val; }
     public function set_tipo_gasto($val) { $this->tipo_gasto = $val; }
@@ -98,9 +96,7 @@ class Reportes extends Conexion
     public function set_filtro_tiempo($val) { $this->filtro_tiempo = $val; }
     public function set_id_pago($val) { $this->id_pago = $val; }
 
-    // ====================================================================
     // ENRUTADOR CON MANEJO DE EXCEPCIONES
-    // ====================================================================
     public function realizar_consulta($accion)
     {
         $metodo = '_' . $accion;
@@ -116,10 +112,7 @@ class Reportes extends Conexion
         }
     }
 
-    // ====================================================================
     // MÉTODOS MIGRADOS DESDE GASTOS
-    // ====================================================================
-    
     private function _listar_meses_con_gastos()
     {
         $sql = "SELECT DISTINCT YEAR(dg.fecha) as anio, MONTH(dg.fecha) as mes 
@@ -270,10 +263,7 @@ class Reportes extends Conexion
         return ['estatus' => true, 'datos' => ['grafico' => $datosGrafico, 'estadisticas' => $resultadosEstadisticas]];
     }
 
-    // ====================================================================
     // MÉTODOS MIGRADOS DESDE HABITANTES
-    // ====================================================================
-
     private function _consultar_personas_solvencia()
     {
         // Un apartamento es solvente si la suma de todas sus mensualidades <= suma de todos sus abonos aprobados -_-
@@ -391,10 +381,7 @@ class Reportes extends Conexion
         }
     }
 
-    // ====================================================================
     // MÉTODOS MIGRADOS DESDE PAGOS
-    // ====================================================================
-
     private function _consultar_recibo_pago()
     {
         $trans = MetodoPago::TRANSFERENCIA->value;
@@ -402,16 +389,19 @@ class Reportes extends Conexion
         $efec = MetodoPago::EFECTIVO->value;
         $prop = TipoVinculo::PROPIETARIO->value;
 
-        // Se usa GROUP_CONCAT para los meses/años y subconsulta para el total del pago sin duplicar
         $sql = "SELECT 
-                    h.nombre, h.apellido, a.nro_apartamento, p.id_pago,
+                    COALESCE(h.nombre, 'Sin Registro') as nombre, 
+                    COALESCE(h.apellido, '') as apellido, 
+                    a.nro_apartamento, 
+                    p.id_pago,
                     MAX(dp.fecha) as fecha_pago, 
-                    MAX(pm_per.mes) as mes, MAX(pm_per.anio) as anio,
+                    MAX(pm_per.mes) as mes, 
+                    MAX(pm_per.anio) as anio,
                     GROUP_CONCAT(DISTINCT CONCAT(pm_per.mes, '/', pm_per.anio) ORDER BY pm_per.anio, pm_per.mes SEPARATOR ', ') as periodos,
                     (SELECT SUM(monto) FROM detalles_pagos WHERE pago_id = p.id_pago) as total,
-                    COUNT(CASE WHEN dp.tipo_pago = '$trans' THEN 1 END) as count_transferencia,
-                    COUNT(CASE WHEN dp.tipo_pago = '$pmov' THEN 1 END) as count_pago_movil,
-                    COUNT(CASE WHEN dp.tipo_pago = '$efec' THEN 1 END) as count_efectivo,
+                    COUNT(CASE WHEN dp.tipo_pago = :trans THEN 1 END) as count_transferencia,
+                    COUNT(CASE WHEN dp.tipo_pago = :pmov THEN 1 END) as count_pago_movil,
+                    COUNT(CASE WHEN dp.tipo_pago = :efec THEN 1 END) as count_efectivo,
                     GROUP_CONCAT(DISTINCT b.nombre_banco SEPARATOR ', ') as bancos,
                     GROUP_CONCAT(DISTINCT ib.referencia SEPARATOR ', ') as referencias
                 FROM pagos p
@@ -422,22 +412,32 @@ class Reportes extends Conexion
                 LEFT JOIN mensualidad m ON pm_rel.mensualidad_id = m.id_mensualidad
                 LEFT JOIN periodos_mensualidad pm_per ON m.periodo_id = pm_per.id_periodo
                 LEFT JOIN apartamentos a ON m.apartamento_id = a.id_apartamento
-                LEFT JOIN habitantes_apartamentos ha ON a.id_apartamento = ha.apartamento_id
+                LEFT JOIN habitantes_apartamentos ha ON a.id_apartamento = ha.apartamento_id AND ha.tipo_vinculo = :vinculo
                 LEFT JOIN habitantes h ON ha.habitante_id = h.id_habitante
-                WHERE p.id_pago = :id_pago AND ha.tipo_vinculo = :vinculo
+                WHERE p.id_pago = :id_pago
                 GROUP BY p.id_pago, h.nombre, h.apellido, a.nro_apartamento";
         
         try {
             $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->execute([':id_pago' => $this->id_pago, ':vinculo' => $prop]);
+            $stmt->execute([
+                ':id_pago' => $this->id_pago, 
+                ':vinculo' => $prop,
+                ':trans'   => $trans,
+                ':pmov'    => $pmov,
+                ':efec'    => $efec
+            ]);
+            
             $datos = $stmt->fetch(PDO::FETCH_ASSOC);
-            if (!$datos) {
-                return ['estatus' => false, 'mensaje' => 'No se encontraron datos para el recibo'];
+            
+            if (!$datos || empty($datos['id_pago'])) {
+                error_log("REPORTES ERROR: _consultar_recibo_pago devolvió un set vacío. Esto ocurre si el ID {$this->id_pago} no existe o no tiene detalles en 'detalles_pagos'.");
+                return ['estatus' => false, 'mensaje' => 'La base de datos no arrojó detalles cruzados para ensamblar este recibo.'];
             }
+            
             return ['estatus' => true, 'datos' => $datos];
-        } catch (PDOException $e) {
-            error_log("Error en _consultar_recibo_pago: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar recibo'];
+        } catch (\PDOException $e) {
+            error_log("REPORTES EXCEPTION en _consultar_recibo_pago: " . $e->getMessage());
+            return ['estatus' => false, 'mensaje' => 'Error estructural en BD: ' . $e->getMessage()];
         }
     }
 
@@ -584,37 +584,4 @@ class Reportes extends Conexion
             ]
         ];
     }
-
-    /**
-     * Aborta la generación de un reporte de forma limpia.
-     * Cierra la pestaña secundaria e inyecta una alerta en la ventana principal (padre).
-     */
-    public static function abortarConAlerta($mensaje = "No se encontraron datos para generar este reporte.")
-    {
-        $msgSeguro = addslashes($mensaje);
-        echo "<!DOCTYPE html>
-        <html>
-        <head><title>Cancelando reporte...</title></head>
-        <body style='background-color: #f8fafc;'>
-            <script>
-                // Verificar si la vista se abrió en una pestaña secundaria (target='_blank')
-                if (window.opener && !window.opener.closed) {
-                    // Si el helper de Alertas JS existe en la pestaña padre, lo usamos
-                    if (typeof window.opener.Alertas !== 'undefined') {
-                        window.opener.Alertas.mostrarSinDatos('Reporte Vacío', '{$msgSeguro}');
-                    } else {
-                        window.opener.alert('{$msgSeguro}');
-                    }
-                    window.close(); // Cierra la pestaña actual de inmediato
-                } else {
-                    // por si se abrió en la misma ventana
-                    alert('{$msgSeguro}');
-                    window.history.back();
-                }
-            </script>
-        </body>
-        </html>";
-        exit;
-    }
-
 }

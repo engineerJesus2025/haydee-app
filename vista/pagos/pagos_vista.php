@@ -69,7 +69,7 @@
                             </div>
 
                             <div class="col-md-3 border-end vp-border-color">
-                                <span class="text-muted text-uppercase fw-bold d-block mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Fecha de Reporte</span>
+                                <span class="text-muted text-uppercase fw-bold d-block mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Fecha del Pago</span>
                                 <h6 id="vp_fecha" class="mb-0 fw-bold">---</h6>
                             </div>
 
@@ -101,6 +101,9 @@
                     </div>
                 </div>            
                 <div class="modal-footer justify-content-end">
+                    <button type="button" class="btn btn-info text-white px-4" id="btn_recibo_vp" style="background-color:#3939a9;">
+                        <i class="bi bi-card-checklist me-2"></i> Descargar Recibo
+                    </button>
                     <button type="button" class="btn btn-soft-secondary px-4" data-bs-dismiss="modal">
                         <i class="bi bi-x-circle me-2"></i> Cerrar
                     </button>

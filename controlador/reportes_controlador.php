@@ -12,6 +12,7 @@ use haydee\modelo\Apartamento;
 use haydee\modelo\Bitacora;
 use haydee\servicios\Sesiones;
 use haydee\servicios\Reportes; 
+use haydee\ayuda\ManejadorVistas;
 
 $habitantesModel = new Habitantes();
 $mensualidadModel = new Mensualidad();
@@ -121,9 +122,7 @@ if (isset($_POST["operacion"])) {
     }
 }
 
-// ====================================================================
-// Validaciones AJAX Puras
-// ====================================================================
+// Validaciones AJAX
 if (isset($_POST["validar"])) {
     header('Content-Type: application/json');
     $validar = $_POST["validar"];
@@ -149,9 +148,7 @@ if (isset($_POST["validar"])) {
     exit;
 }
 
-// ====================================================================
-// Manejo de acciones GET (vistas y generación de PDF)
-// ====================================================================
+// vistas y generación de PDF
 $accion = $_GET['accion'] ?? 'reportes_pdf'; 
 
 switch ($accion) {
@@ -165,7 +162,10 @@ switch ($accion) {
         $res = $habitantesModel->realizar_consulta('consultar_habitante');
 
         if (!$res['estatus']) {
-            Reportes::abortarConAlerta('El habitante seleccionado no fue encontrado o no posee registros de pagos.');
+            ManejadorVistas::renderizarErrorReporte(
+                'El habitante seleccionado no fue encontrado o no posee registros de pagos suficientes para calcular un estado de cuenta.',
+                'Datos Insuficientes'
+            );
         }
 
         $datos = [
@@ -183,7 +183,7 @@ switch ($accion) {
         $registro_propietario = $habitantesModel->realizar_consulta('consultar_habitante');
 
         if (!$registro_propietario['estatus']) {
-            Reportes::abortarConAlerta('No se pudo encontrar al habitante en la base de datos para generar la constancia.');
+            ManejadorVistas::renderizarErrorReporte('No se pudo encontrar al habitante en la base de datos para generar la constancia.');
         }
 
         $registro_propietario = $registro_propietario['datos'];
@@ -213,11 +213,14 @@ switch ($accion) {
 
         // Si la consulta falló por error de SQL o validación
         if (!$res['estatus']) {
-            Reportes::abortarConAlerta($res['mensaje'] ?? 'Ocurrió un error al consultar la base de datos para el cuadro de pagos.');
+            ManejadorVistas::renderizarErrorReporte($res['mensaje'] ?? 'Ocurrió un error al consultar la base de datos para el cuadro de pagos.');
         }
-        // Si la consulta fue exitosa, pero no hay datos reales que tabular
+        
         if (empty($res['datos']['cuerpo'])) {
-            Reportes::abortarConAlerta('No hay deudas ni pagos registrados hasta la fecha seleccionada para construir el cuadro.');
+            ManejadorVistas::renderizarErrorReporte(
+                'No hay deudas ni pagos registrados hasta la fecha seleccionada para construir el cuadro. Seleccione un rango diferente.', 
+                'Cuadro en Blanco'
+            );
         }
 
         $mensualidadModel->set_mes($limite[0]);
@@ -247,7 +250,7 @@ switch ($accion) {
         
         $res = $reportesServicio->realizar_consulta('generar_data_reporte_gastos_mensual'); 
         if (!$res['estatus']) {
-            Reportes::abortarConAlerta($res['mensaje']);
+            ManejadorVistas::renderizarErrorReporte($res['mensaje'], "Cuadro en Blanco");
         }
 
         $aptosModel = new Apartamento();
@@ -277,9 +280,12 @@ switch ($accion) {
         $reportesServicio = new Reportes();
         $reportesServicio->set_id_pago($_POST['select_reporte'] ?? 0);
         $res = $reportesServicio->realizar_consulta('consultar_recibo_pago');
-        var_dump($_POST);
+        
         if (!$res['estatus']) {
-            Reportes::abortarConAlerta('La base de datos no devolvió registros válidos para el desglose de este recibo.');
+            ManejadorVistas::renderizarErrorReporte(
+                'La base de datos no devolvió registros válidos. Esto ocurre si la transacción no ha sido aprobada o si se eliminó el mes de la deuda.',
+                'Recibo no disponible'
+            );
         }
 
         GestorPDF::generar("vista/reportes/reportes_pdf/pdf/recibo_pago_pdf.php", [
