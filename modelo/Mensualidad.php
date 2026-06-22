@@ -164,7 +164,8 @@ class Mensualidad extends Conexion
                 'regex' => '/^\d+$/',
                 'exists' => ['tabla' => 'mensualidad', 'campo' => 'id_mensualidad'],
                 'opcional' => true
-            ]
+            ],
+            'descuento' => ['regex' => '/^\d+(\.\d{1,2})?$/', 'min' => 0]
         ];
     }
 
@@ -306,7 +307,7 @@ class Mensualidad extends Conexion
             return ['estatus' => false, 'mensaje' => 'ID de período no proporcionado.'];
         }
 
-        $sql = "SELECT m.apartamento_id, m.id_mensualidad, 
+        $sql = "SELECT m.apartamento_id, m.id_mensualidad, m.descuento,
                        GROUP_CONCAT(pm.detalle_presupuesto_id) as presupuestos
                 FROM mensualidad m
                 LEFT JOIN presupuesto_mensualidad pm ON m.id_mensualidad = pm.mensualidad_id
@@ -381,14 +382,15 @@ class Mensualidad extends Conexion
             }
 
             // Preparar la consulta UPSERT atómica para las mensualidades
-            $sqlM = "INSERT INTO mensualidad (monto, periodo_id, apartamento_id, porcentaje_interes, limite_mensualidad, activo)
-                     VALUES (:monto, :periodo_id, :apartamento_id, :porcentaje_interes, :limite_mensualidad, 1)
-                     ON DUPLICATE KEY UPDATE 
-                         monto = VALUES(monto),
-                         porcentaje_interes = VALUES(porcentaje_interes),
-                         limite_mensualidad = VALUES(limite_mensualidad),
-                         activo = 1"; 
-            $stmtM = $con->prepare($sqlM);
+            $sqlUpsert = "INSERT INTO mensualidad (monto, descuento, periodo_id, apartamento_id, porcentaje_interes, limite_mensualidad, activo)
+                          VALUES (:monto, :descuento, :periodo_id, :apartamento_id, :porcentaje_interes, :limite_mensualidad, 1)
+                          ON DUPLICATE KEY UPDATE 
+                              monto = VALUES(monto),
+                              descuento = VALUES(descuento),
+                              porcentaje_interes = VALUES(porcentaje_interes),
+                              limite_mensualidad = VALUES(limite_mensualidad),
+                              activo = 1";
+            $stmtM = $con->prepare($sqlUpsert);
 
             // Preparar consultas para refrescar la tabla puente
             $stmtGetId = $con->prepare("SELECT id_mensualidad FROM mensualidad WHERE periodo_id = :periodo_id AND apartamento_id = :apartamento_id");
@@ -400,6 +402,7 @@ class Mensualidad extends Conexion
                 // Ejecutamos el UPSERT
                 $stmtM->execute([
                     ':monto' => $item['monto'],
+                    ':descuento' => $item['descuento'] ?? 0.00,
                     ':periodo_id' => $id_periodo_actual, 
                     ':apartamento_id' => $item['id_apartamento'],
                     ':porcentaje_interes' => $this->porcentaje_interes,
@@ -464,12 +467,14 @@ class Mensualidad extends Conexion
             }
 
             // Si existe actualiza, si no, inserta (una maravilla pana)
-            $sqlUpsert = "INSERT INTO mensualidad (monto, periodo_id, apartamento_id, porcentaje_interes, limite_mensualidad)
-                          VALUES (:monto, :periodo_id, :apartamento_id, :porcentaje_interes, :limite_mensualidad)
+            $sqlUpsert = "INSERT INTO mensualidad (monto, descuento, periodo_id, apartamento_id, porcentaje_interes, limite_mensualidad, activo)
+                          VALUES (:monto, :descuento, :periodo_id, :apartamento_id, :porcentaje_interes, :limite_mensualidad, 1)
                           ON DUPLICATE KEY UPDATE 
                               monto = VALUES(monto),
+                              descuento = VALUES(descuento),
                               porcentaje_interes = VALUES(porcentaje_interes),
-                              limite_mensualidad = VALUES(limite_mensualidad)";
+                              limite_mensualidad = VALUES(limite_mensualidad),
+                              activo = 1";
             $stmtUpsert = $con->prepare($sqlUpsert);
 
             // Preparar consultas para las relaciones de detalles
@@ -481,6 +486,7 @@ class Mensualidad extends Conexion
                 // Ejecutamos el UPSERT
                 $stmtUpsert->execute([
                     ':monto' => $item['monto'],
+                    ':descuento' => $item['descuento'] ?? 0.00,
                     ':periodo_id' => $id_periodo_actual,
                     ':apartamento_id' => $item['id_apartamento'],
                     ':porcentaje_interes' => $this->porcentaje_interes,
@@ -545,8 +551,17 @@ class Mensualidad extends Conexion
             if (isset($con) && $con->inTransaction()) {
                 $con->rollBack();
             }
-            error_log("Error en _eliminar: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => $e->getMessage()];
+            if (isset($e->errorInfo) && $e->errorInfo[0] === '45000') {
+                return [
+                    'estatus' => false,
+                    'mensaje' => $e->errorInfo[2] 
+                ];
+            }
+            error_log("EXCEPCIÓN CRÍTICA DE BD EN _eliminar: " . $e->getMessage());
+            return [
+                'estatus' => false,
+                'mensaje' => 'No se pudo procesar la eliminación debido a un error del servidor.'
+            ];
         }
     }
 

@@ -86,21 +86,5 @@ async function validarFormularioCompleto() {
         return false;
     }
 
-    // Verificar que cada fila tenga al menos un checkbox marcado
-    const filas = document.querySelectorAll('#tabla_mensualidad_asignar tbody tr');
-    let filasSinCheck = [];
-    filas.forEach(fila => {
-        const checks = fila.querySelectorAll('input[type="checkbox"]:checked');
-        if (checks.length === 0) {
-            const nroApto = fila.cells[0]?.textContent.trim() || fila.id;
-            filasSinCheck.push(nroApto);
-        }
-    });
-    
-    if (filasSinCheck.length > 0) {
-        Alertas.mostrar('error', 'Error', 'Los siguientes apartamentos no tienen ningún concepto marcado: ' + filasSinCheck.join(', '));
-        return false;
-    }
-
     return true;
 }

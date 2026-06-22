@@ -199,7 +199,8 @@
 .btn-soft-success,
 .btn-soft-danger,
 .btn-soft-secondary,
-.btn-soft-info {
+.btn-soft-info,
+.btn-soft-warning {
     border: 1px solid transparent;
     transition: all 0.3s ease;
     font-weight: 600;
@@ -212,6 +213,15 @@
 .btn-soft-secondary:hover { background-color: #333c45 !important; color: #fff !important; }
 .btn-soft-info      { background-color: var(--ch-badge-info-bg) !important; color: var(--ch-badge-info-text) !important; border-color: var(--ch-badge-info-border) !important; }
 .btn-soft-info:hover { background-color: var(--ch-badge-info-text) !important; color: #fff !important; }
+.btn-soft-warning { 
+    background-color: var(--ch-badge-warning-bg) !important; 
+    color: var(--ch-badge-warning-text) !important; 
+    border-color: var(--ch-badge-warning-border) !important; 
+}
+.btn-soft-warning:hover { 
+    background-color: var(--ch-badge-warning-text) !important; 
+    color: var(--ch-card-bg) !important; 
+}
 
 /* =========================================================
    ESTILOS GLOBALES

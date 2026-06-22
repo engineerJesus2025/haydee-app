@@ -6,6 +6,115 @@
     <?php
     require_once ROOT_PATH . "/vista/componentes/estilos.php";
     ?>
+    <style>
+ .fila-mensualidad-asignar {
+    transition: all 0.2s ease-in-out;
+    border-left: 3px solid transparent; 
+}
+.fila-mensualidad-asignar:hover {
+    background-color: var(--ch-table-row-hover) !important; 
+    border-left-color: var(--ch-badge-primary-border); 
+    transform: translateX(2px); 
+}
+
+/* Sombra adaptativa */
+.shadow-xs {
+    box-shadow: var(--ch-shadow-sm) !important;
+}
+
+/* Adaptación de la columna de Exoneración al Tema */
+.bg-exoneracion {
+    background-color: var(--ch-badge-warning-bg) !important;
+}
+
+/* Botón del Asistente adaptado a tus variables warning */
+.btn-asistente {
+    background-color: var(--ch-badge-warning-bg) !important;
+    color: var(--ch-badge-warning-text) !important;
+    border-color: var(--ch-badge-warning-border) !important;
+    transition: all 0.2s ease;
+}
+.btn-asistente:hover {
+    background-color: var(--ch-badge-warning-border) !important;
+    color: var(--body-bg) !important;
+}
+
+/* Input de descuento adaptado al tema oscuro/claro */
+.input-descuento {
+    background-color: var(--ch-input-bg) !important;
+    color: var(--ch-table-text) !important;
+    border-color: var(--ch-badge-warning-border) !important;
+}
+.input-descuento:focus {
+    box-shadow: 0 0 0 0.2rem var(--ch-badge-warning-bg) !important;
+    border-color: var(--ch-badge-warning-text) !important;
+}
+
+/* Cabeceras, footer y bordes fusionados con Tabulator */
+.tabla-asignacion-mensualidad thead th,
+.tabla-asignacion-mensualidad tfoot td {
+    background-color: var(--ch-table-header-bg) !important;
+    color: var(--ch-table-header-text) !important;
+    border-color: var(--ch-table-border) !important;
+}
+.tabla-asignacion-mensualidad tbody td {
+    border-color: var(--ch-table-border) !important;
+}
+
+/* Asegurar flechas en inputs numéricos */
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+    opacity: 1; 
+}
+
+
+/* Asegurar comportamiento flex nativo en la celda de la exoneración */
+.tabla-asignacion-mensualidad tbody tr {
+    display: table-row; /* Mantiene la fila con comportamiento estándar */
+}
+
+
+/* Forzar al contenedor del input a anular cualquier margen de Bootstrap */
+.tabla-asignacion-mensualidad .input-group {
+    margin: 0 auto !important;
+    transform: translateY(1px); /* Ajuste milimétrico óptico si fuera necesario */
+}
+
+@media (min-width: 992px) {
+    #modal_mensualidad .table-responsive {
+        overflow-x: hidden !important;
+    }
+}
+
+/* La cabecera mantiene su jerarquía fuerte (Oscuro en ambos modos) */
+.tabla-asignacion-mensualidad thead th {
+    background-color: var(--ch-table-header-bg) !important;
+    color: var(--ch-table-header-text) !important;
+    border-color: var(--ch-table-border) !important;
+}
+
+.tabla-asignacion-mensualidad tfoot td {
+    background-color: var(--ch-table-row-hover) !important;
+    color: var(--ch-color-titulos) !important;
+    border-color: var(--ch-table-border) !important;
+}
+
+[data-bs-theme="dark"] .tabla-asignacion-mensualidad tfoot td{
+    background-color: var(--ch-table-header-bg) !important;
+    color: var(--ch-table-header-text) !important;
+    border-color: var(--ch-table-border) !important;
+}
+
+/* Corrección de contraste para los totales en el footer */
+.tabla-asignacion-mensualidad tfoot td .text-warning {
+    color: var(--bs-orange) !important; /* Un tono más legible sobre gris claro que el amarillo puro */
+}
+
+.text-dark-adaptativo {
+    color: var(--ch-table-text) !important;
+}
+
+    </style>
 </head>
 <body id="body-pd" class="body-pd">
     <div class="container-fluid">
@@ -32,15 +141,24 @@
                     <div class="row my-4 justify-content-center">
                         <div class="col-11">
                             <div class="card p-4 shadow-lg">
-                                <div class="row justify-content-end align-items-start">
-                                    <div class="col-12 col-sm-6 mb-4">
+
+                                <div class="row mb-4 align-items-center justify-content-between">
+                                    <div id="columna_boton_nuevo" class="col-6 col-sm-6 d-flex flex-column align-items-start">
                                         <?php require ROOT_PATH . "/vista/componentes/boton_nuevo.php"; ?>
-                                        <p class="text-danger"></p>
                                     </div>
-                                    <div class="col-12 col-sm-6 mb-4">
+
+                                    <div id="aviso_no_mensualidades" class="col-12 col-sm-6 border rounded-3 py-2 px-3 d-none align-items-center shadow-sm transicion_entrada" style="background-color: var(--ch-badge-info-bg); color: var(--ch-badge-info-text); border-color: var(--ch-badge-info-border);">
+                                        <i class="bi bi-info-circle me-3 fs-4" style="color: var(--ch-badge-info-text);"></i>
+                                        <div class="d-flex flex-column">
+                                            <span class="fw-bold mb-0.5" style="font-size: 0.95rem;">Módulo al día</span>
+                                            <span class="small opacity-90" style="font-size: 0.85rem;">No hay mensualidades pendientes por generar.</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-sm-6">
                                         <?php require_once ROOT_PATH . "/vista/componentes/buscador_global.php"; ?>
                                     </div>
                                 </div>
+
                                 <div id="tabla_mensualidad" class="tabla-sistema-haydee"></div>
                             </div>
                         </div>

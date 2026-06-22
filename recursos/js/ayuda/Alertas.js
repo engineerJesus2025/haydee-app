@@ -50,7 +50,7 @@ const Alertas = {
         // Asignación de botones soft según el tipo
         if (tipo === 'error') config.customClass.confirmButton = 'btn btn-soft-danger mx-2';
         if (tipo === 'info') config.customClass.confirmButton = 'btn btn-soft-info mx-2';
-        if (tipo === 'warning') config.customClass.confirmButton = 'btn btn-warning mx-2'; // Bootstrap nativo para warning
+        if (tipo === 'warning') config.customClass.confirmButton = 'btn btn-soft-warning mx-2'; // Bootstrap nativo para warning
 
         Swal.fire(config);
     },
@@ -205,6 +205,37 @@ const Alertas = {
             // Si el usuario presiona "Generar Recibo" (Deny)
             if (result.isDenied && typeof funcionRecibo === 'function') {
                 funcionRecibo();
+            }
+        });
+    },
+
+    /**
+     * Muestra un asistente interactivo con inyección de HTML personalizado.
+     */
+    mostrarAsistenteInteractivo(titulo, subtitulo, htmlContenido, funcionConfirmar) {
+        if (typeof Swal === 'undefined') return this._ejecutarFallback(titulo, subtitulo, funcionConfirmar);
+
+        Swal.fire({
+            ...this._obtenerConfiguracionBase(),
+            title: `<div class="fs-4 mb-2"><i class="bi bi-magic text-warning me-2"></i>${titulo}</div>`,
+            html: `
+                <p class="text-muted mb-4" style="font-size: 0.9rem; line-height: 1.4;">${subtitulo}</p>
+                <div class="text-start">
+                    ${htmlContenido}
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: '<i class="bi bi-calculator me-2"></i> Aplicar Ajuste',
+            cancelButtonText: '<i class="bi bi-x-circle me-1"></i> Cancelar', // <-- Ícono añadido
+            customClass: {
+                ...this._obtenerConfiguracionBase().customClass,
+                popup: 'vp-border-color shadow-lg rounded-4 border',
+                confirmButton: 'btn btn-soft-warning mx-2 px-4 fw-bold shadow-sm', 
+                cancelButton: 'btn btn-soft-secondary mx-2 px-4'
+            }
+        }).then((result) => {
+            if (result.isConfirmed && typeof funcionConfirmar === 'function') {
+                funcionConfirmar();
             }
         });
     }

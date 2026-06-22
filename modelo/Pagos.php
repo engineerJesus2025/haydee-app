@@ -331,6 +331,7 @@ class Pagos extends Conexion
                 pm.monto_abonado,
                 m.apartamento_id,
                 m.monto AS monto_mensualidad,
+                m.activo AS mensualidad_activa,
                 per.id_periodo,
                 per.mes,
                 per.anio,
@@ -347,6 +348,13 @@ class Pagos extends Conexion
             $cabecera = $stmtH->fetch(PDO::FETCH_ASSOC);
 
             if (!$cabecera) return ['estatus' => false, 'mensaje' => 'Pago no encontrado'];
+
+            if (empty($cabecera['mensualidad_id']) || (isset($cabecera['mensualidad_activa']) && $cabecera['mensualidad_activa'] == 0)) {
+                return [
+                    'estatus' => false,
+                    'mensaje' => 'No se pueden preparar los datos de edición. La mensualidad asociada fue eliminada del historial del condominio.'
+                ];
+            }
 
             // Detalles del pago
             $sqlDet = "SELECT dp.*, p.tasa_dolar, ib.referencia, ib.banco_id, ib.imagen, b.nombre_banco
@@ -370,8 +378,6 @@ class Pagos extends Conexion
 
     /**
      * Consulta plana solo de la cabecera del pago para la bitácora de auditoría.
-     * Actualizado para consultar mensualidad_id y apartamento_id,
-     * permitiendo al GestorAuditoria registrar diferencias exactas.
      // SE USA EN EL MODULO
      */
     private function _consultar_cabecera_pago()
@@ -505,6 +511,45 @@ class Pagos extends Conexion
             $pdo->exec("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ");
             $pdo->beginTransaction();
 
+            $sqlCheck = "SELECT estado FROM pagos WHERE id_pago = :id LIMIT 1";
+
+            $pdo->execute([':id' => $this->id_pago]);
+            $estadoActual = $pdo->fetchColumn();
+
+            if (!$estadoActual) {
+                return ['estatus' => false, 'mensaje' => 'El pago que intenta modificar no existe.'];
+            }
+
+            // if (strtoupper($estadoActual) === 'ANULADO') {
+            //     return [
+            //         'estatus' => false, 
+            //         'mensaje' => 'Seguridad Contable: Este pago se encuentra ANULADO. No está permitido alterar los datos de una transacción anulada.'
+            //     ];
+            // }
+
+            if (strtoupper($estadoActual) === 'PROCESADO') {
+                $sqlDetallesActuales = "SELECT mensualidad_id FROM pagos_mensualidad WHERE pago_id = :id";
+                $stmtDet = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlDetallesActuales);
+                $stmtDet->execute([':id' => $this->id_pago]);
+                $detallesBD = $stmtDet->fetchAll(PDO::FETCH_ASSOC);
+
+                $sqlIntegridad = "SELECT COUNT(*) 
+                                  FROM pagos_mensualidad pm
+                                  JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
+                                  WHERE pm.pago_id = :id_pago AND m.activo = 1";
+                
+                $stmtInt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlIntegridad);
+                $stmtInt->execute([':id_pago' => $this->id_pago]);
+                if ($stmtInt->fetchColumn() == 0) {
+                    return [
+                        'estatus' => false, 
+                        'mensaje' => 'Error de Integridad: La mensualidad vinculada a este pago procesado ya no se encuentra activa en el historial.'
+                    ];
+                }
+
+                // si cambian el monto, es mejor retornar un mensaje de advertencia tipo "Para alterar montos de un pago PROCESADO, primero cambie su estado a PENDIENTE". JESUs del futuro
+            }
+
             $tasa_transaccion = $this->tasa_dolar ?? 1;
             // Actualizar Cabecera
             $sqlHead = "UPDATE pagos SET estado = :estado, observacion = :obs, tasa_dolar = :tasa WHERE id_pago = :id";
@@ -595,7 +640,7 @@ class Pagos extends Conexion
 
         $sqlDeudas = "SELECT 
                         m.id_mensualidad, 
-                        (m.monto - COALESCE((
+                        ((m.monto - m.descuento) - COALESCE((
                             SELECT SUM(pm.monto_abonado)
                             FROM pagos_mensualidad pm
                             JOIN pagos p ON pm.pago_id = p.id_pago
@@ -668,7 +713,6 @@ class Pagos extends Conexion
         }
     }
 
-    // EXCLUSIVO PARA LA APP:
     // EXCLUSIVO PARA LA APP:
     private function _consultar_por_mes_anio($params)
     {
@@ -782,26 +826,55 @@ class Pagos extends Conexion
     // EXCLUSIVO PARA LA APP
     private function _cambiar_estado_pago()
     {
-        if (empty($this->id_pago) || empty($this->estado)) {
-            return ['estatus' => false, 'mensaje' => 'Faltan datos obligatorios (ID o Estado).'];
+        // Conseguir el estado actual en la base de datos antes de cambiarlo
+        $sqlCheck = "SELECT estado FROM pagos WHERE id_pago = :id LIMIT 1";
+        $stmtCheck = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlCheck);
+        $stmtCheck->execute([':id' => $this->id_pago]);
+        $estadoActual = $stmtCheck->fetchColumn();
+
+        if (!$estadoActual) {
+            return ['estatus' => false, 'mensaje' => 'El pago especificado no existe.'];
         }
 
-        $sql = "UPDATE pagos 
-                SET estado = :estado, 
-                    observacion = :observacion 
-                WHERE id_pago = :id_pago AND activo = 1";
+        // if (strtoupper($estadoActual) === 'ANULADO') {
+        //     return [
+        //         'estatus' => false, 
+        //         'mensaje' => 'No se puede modificar el estado de una transacción que ya ha sido marcada como ANULADA.'
+        //     ];
+        // }
 
+        if (strtoupper($this->estado) === 'PROCESADO') {
+            $sqlIntegridad = "SELECT COUNT(*) 
+                              FROM pagos_mensualidad pm
+                              JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
+                              WHERE pm.pago_id = :id_pago AND m.activo = 1";
+            
+            $stmtInt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlIntegridad);
+            $stmtInt->execute([':id_pago' => $this->id_pago]);
+            $mensualidadesValidas = $stmtInt->fetchColumn();
+
+            if ($mensualidadesValidas == 0) {
+                return [
+                    'estatus' => false, 
+                    'mensaje' => 'No se puede procesar el pago porque la mensualidad a la que estaba vinculado fue removida o desactivada.'
+                ];
+            }
+        }
+
+        // Si pasa los filtros, se ejecuta el cambio de estado normal
+        $sql = "UPDATE pagos SET estado = :estado, observacion = :observacion WHERE id_pago = :id_pago";
+        
         try {
             $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute([
-                ':estado'      => $this->estado, // 'PROCESADO' o 'RECHAZADO'
-                ':observacion' => $this->observacion ?? 'Estado actualizado desde la App Móvil',
+                ':estado'      => $this->estado,
+                ':observacion' => $this->observacion ?? 'Estado actualizado desde la administración',
                 ':id_pago'     => $this->id_pago
             ]);
 
             return [
                 'estatus' => true, 
-                'mensaje' => "El pago ha sido marcado como " . strtolower($this->estado) . " con éxito."
+                'mensaje' => "El estado de la transacción ha sido actualizado a " . strtolower($this->estado) . " con éxito."
             ];
         } catch (\PDOException $e) {
             error_log("Error en _cambiar_estado_pago: " . $e->getMessage());
@@ -809,10 +882,7 @@ class Pagos extends Conexion
         }
     }
 
-
-    // -----------------------------------------------------------------
     // Helpers de archivos (privados)
-    // -----------------------------------------------------------------
     private function obtenerNombreImagenPorDetalle($idDetalle)
     {
         $sql = "SELECT imagen FROM ingresos_bancarios WHERE detalle_pago_id = :id";
