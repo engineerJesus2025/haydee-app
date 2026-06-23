@@ -1,0 +1,9 @@
+<svg width="400" height="200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" preserveAspectRatio="none">
+  <rect width="400" height="200" fill="#f8f9fa"/>
+  <path d="M140 80 h35 v90 h-35 z" fill="#dee2e6"/>
+  <path d="M147 90 h8 v8 h-8 z M160 90 h8 v8 h-8 z M147 105 h8 v8 h-8 z M160 105 h8 v8 h-8 z M147 120 h8 v8 h-8 z M160 120 h8 v8 h-8 z M147 135 h8 v8 h-8 z M160 135 h8 v8 h-8 z M147 150 h8 v8 h-8 z M160 150 h8 v8 h-8 z" fill="#f8f9fa"/>
+  <path d="M185 50 h45 v120 h-45 z" fill="#ced4da"/>
+  <path d="M195 65 h10 v10 h-10 z M210 65 h10 v10 h-10 z M195 85 h10 v10 h-10 z M210 85 h10 v10 h-10 z M195 105 h10 v10 h-10 z M210 105 h10 v10 h-10 z M195 125 h10 v10 h-10 z M210 125 h10 v10 h-10 z M195 145 h10 v10 h-10 z M210 145 h10 v10 h-10 z" fill="#f8f9fa"/>
+  <path d="M220 70 h30 v100 h-30 z" fill="#e9ecef"/>
+  <text x="50%" y="190%" fill="#adb5bd" font-size="12" font-family="Arial, sans-serif" font-weight="bold" letter-spacing="2" text-anchor="middle">COMUNICADO</text>
+</svg>

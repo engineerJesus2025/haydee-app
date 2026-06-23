@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "Condominios Haydee",
+    "slug": "evaluacion-electiva-3",
+    "version": "2.0.7",
+    "orientation": "default",
+    "icon": "./assets/icono-app-condominios-haydee.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/condominiosHaydeeLogoSinFondo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1E1E1E"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icono-app-condominios-haydee.png",
+        "backgroundColor": "#1E1E1E"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.yhesus.evaluacionelectiva3",
+      "googleServicesFile": "./google-services.json",
+      "versionCode": 10,
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "2c096fc4-982d-4647-80f5-394dde9240a2"
+      }
+    },
+    "plugins": [
+      "expo-font",
+      "expo-secure-store"
+    ],
+    "owner": "yhesus"
+  }
+}

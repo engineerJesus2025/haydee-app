@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "288810251143",
+    "project_id": "haydee-app",
+    "storage_bucket": "haydee-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:288810251143:android:8ce392887385ad11f15922",
+        "android_client_info": {
+          "package_name": "com.yhesus.evaluacionelectiva3"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAXEXpE8Afrf3EPlCBEhNwkwb3z6WL_EPY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
