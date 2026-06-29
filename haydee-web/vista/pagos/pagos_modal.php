@@ -56,84 +56,97 @@
                             <div class="card-header bg-primary text-white fw-bold">
                                 <i class="bi bi-receipt-cutoff me-2"></i> 1) Detalles del Pago
                             </div>
-                            <div class="card-body">
+                            <div class="card-body p-4">
+    
                                 <div class="row">
-                                    <div class="col-lg-3 col-md-6 mb-3">
-                                        <label class="form-label">Fecha de Transacción <span class="text-danger">*</span></label>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Fecha de Transacción <span class="text-danger">*</span></label>
                                         <div class="input-group has-validation">
-                                            <span class="  input-group-text"><i class="bi bi-calendar-date"></i></span>
-                                            <input type="date" class="  form-control fecha_pago" name="fecha_pago[]">
-                                            <span class="w-100 invalid-feedback"></span>
+                                            <span class="input-group-text"><i class="bi bi-calendar-date"></i></span>
+                                            <input type="date" class="form-control fecha_pago" name="fecha_pago[]">
+                                            <span class="invalid-feedback"></span>
                                         </div>
                                     </div>
-                                    <div class="col-lg-3 col-md-6 mb-3">
-                                        <label class="form-label">Método de Pago <span class="text-danger">*</span></label>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Método de Pago <span class="text-danger">*</span></label>
                                         <div class="input-group has-validation">
-                                            <span class="  input-group-text"><i class="bi bi-credit-card-fill"></i></span>
-                                            <select class="  form-select tipo_pago" name="tipo_pago[]">
+                                            <span class="input-group-text"><i class="bi bi-credit-card-fill"></i></span>
+                                            <select class="form-select tipo_pago" name="tipo_pago[]">
                                                 <option selected hidden value="">Seleccione método</option>
                                                 <option value="TRANSFERENCIA">Transferencia</option>
                                                 <option value="PAGO MOVIL">Pago Móvil</option>
                                                 <option value="EFECTIVO">Efectivo</option>
                                             </select>
-                                            <span class="w-100 invalid-feedback"></span>
+                                            <span class="invalid-feedback"></span>
                                         </div>
                                     </div>
-                                    <div class="col-lg-2 col-md-4 mb-3 campo-monto d-none">
-                                        <label class="form-label">Monto (Bs) <span class="text-danger">*</span></label>
+
+                                    <!-- El capture ahora tiene un tercio completo del modal en PC, espacio de sobra -->
+                                    <div class="col-12 mb-3 campos-bancarios d-none">
+                                        <label class="form-label text-primary fw-bold"><i class="bi bi-magic me-1"></i> Subir Comprobante <span class="text-danger">*</span></label>
                                         <div class="input-group has-validation">
-                                            <span class="  input-group-text">Bs</span>
-                                            <input type="text" class="  form-control monto" placeholder="0.00">
-                                            <span class="w-100 invalid-feedback"></span>
+                                            <span class="input-group-text border-primary text-primary"><i class="bi bi-image-fill"></i></span>
+                                            <input type="file" class="form-control imagen border-primary" accept=".jpg, .jpeg, .png">
+                                            <span class="invalid-feedback"></span>
+                                        </div>
+                                        <small class="nombre_imagen_cargada text-muted d-block mt-1"></small>
+                                    </div>
+                                </div>
+
+                                <div class="row campos-bancarios d-none mt-2">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Banco Emisor <span class="text-danger">*</span></label>
+                                        <div class="input-group has-validation">
+                                            <span class="input-group-text"><i class="bi bi-bank"></i></span>
+                                            <select class="form-select banco_id" name="banco_id[]">
+                                                <option selected hidden value="">Escoja el Banco</option>
+                                                <?php foreach ($registro_banco as $banco): ?>
+                                                    <option value="<?php echo $banco["id_banco"] ?>" data-codigo="<?php echo $banco["codigo"] ?>">
+                                                        <?php echo $banco["nombre_banco"] ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                            <span class="invalid-feedback"></span>
                                         </div>
                                     </div>
-                                    <div class="col-lg-2 col-md-4 mb-3">
-                                        <label class="form-label">Tasa BCV <span class="text-danger">*</span></label>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Nro. Referencia <span class="text-danger">*</span></label>
                                         <div class="input-group has-validation">
-                                            <span class="  input-group-text">Bs/$</span>
-                                            <input type="text" class="  form-control tasa_dolar" placeholder="0.00">
-                                            <span class="w-100 invalid-feedback"></span>
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-2 col-md-4 mb-3">
-                                        <label class="form-label">Equivalente ($) <span class="text-danger">*</span></label>
-                                        <div class="input-group has-validation">
-                                            <span class="  input-group-text">$</span>
-                                            <input type="text" class="  form-control monto_usd_visual" placeholder="0.00" readonly>
-                                            <span class="w-100 invalid-feedback"></span>
+                                            <span class="input-group-text"><i class="bi bi-123"></i></span>
+                                            <input type="text" class="form-control referencia" name="referencia[]" placeholder="Introduzca el número de operación completo">
+                                            <span class="invalid-feedback"></span>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row campos-bancarios d-none">
-                                    <div class="col-lg-3 col-md-6 mb-3">
-                                        <label class="form-label">Nro. Referencia <span class="text-danger">*</span></label>
+
+                                <div class="row campo-monto d-none mt-2">
+                                    <!-- Cada campo se lleva un col-md-4 limpio, pero sobre el 100% del modal. Espacio gigante garantizado -->
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label fw-bold">Monto (Bs) <span class="text-danger">*</span></label>
                                         <div class="input-group has-validation">
-                                            <span class="  input-group-text"><i class="bi bi-123"></i></span>
-                                            <input type="text" class="  form-control referencia" placeholder="Últimos 4-6 dígitos">
-                                            <span class="w-100 invalid-feedback"></span>
+                                            <span class="input-group-text fw-bold">Bs</span>
+                                            <input type="text" class="form-control monto" placeholder="0.00">
+                                            <span class="invalid-feedback"></span>
                                         </div>
                                     </div>
-                                    <div class="col-lg-4 col-md-6 mb-3">
-                                        <label class="form-label">Banco Emisor <span class="text-danger">*</span></label>
+                                    
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label fw-bold">Tasa BCV <span class="text-danger">*</span></label>
                                         <div class="input-group has-validation">
-                                            <span class="  input-group-text"><i class="bi bi-bank"></i></span>
-                                            <select class="  form-select banco_id" name="banco_id[]">
-                                                <option selected hidden value="">Escoja el Banco</option>
-                                                <?php foreach ($registro_banco as $banco): ?>
-                                                    <option value="<?php echo $banco["id_banco"] ?>"><?php echo $banco["nombre_banco"] ?></option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                            <span class="w-100 invalid-feedback"></span>
+                                            <span class="input-group-text text-muted">Bs/$</span>
+                                            <input type="text" class="form-control tasa_dolar" placeholder="0.00">
+                                            <span class="invalid-feedback"></span>
                                         </div>
                                     </div>
-                                    <div class="col-lg-5 mb-3">
-                                        <label class="form-label">Comprobante (Capture) <span class="text-danger">*</span></label>
-                                        <div class="input-group has-validation">
-                                            <span class="  input-group-text"><i class="bi bi-image-fill"></i></span>
-                                            <input type="file" class="  form-control imagen" accept=".jpg, .jpeg, .png">
-                                            <span class="w-100 invalid-feedback"></span>
+                                    
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label fw-bold">Equivalente ($)</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text text-success fw-bold">$</span>
+                                            <input type="text" class="form-control monto_usd_visual" placeholder="0.00" readonly>
                                         </div>
-                                        <small class="nombre_imagen_cargada text-primary fw-bold d-block mt-1"></small>
                                     </div>
                                 </div>
                             </div>
@@ -195,85 +208,94 @@
             <i class="bi bi-receipt-cutoff me-2"></i> Detalles del Pago
         </div>
         <div class="card-body">
-            <div class="row">
-                <div class="col-lg-3 col-md-6 mb-3">
-                    <label class="form-label">Fecha de Transacción <span class="text-danger">*</span></label>
-                    <div class="input-group has-validation">
-                        <span class="  input-group-text"><i class="bi bi-calendar-date"></i></span>
-                        <input type="date" class="  form-control fecha_pago" name="fecha_pago[]">
-                        <span class="w-100 invalid-feedback"></span>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 mb-3">
-                    <label class="form-label">Método de Pago <span class="text-danger">*</span></label>
-                    <div class="input-group has-validation">
-                        <span class="  input-group-text"><i class="bi bi-credit-card-fill"></i></span>
-                        <select class="  form-select tipo_pago" name="tipo_pago[]">
-                            <option selected hidden value="">Seleccione método</option>
-                            <option value="TRANSFERENCIA">Transferencia</option>
-                            <option value="PAGO MOVIL">Pago Móvil</option>
-                            <option value="EFECTIVO">Efectivo</option>
-                        </select>
-                        <span class="w-100 invalid-feedback"></span>
-                    </div>
-                </div>
-                <div class="col-lg-2 col-md-4 mb-3 campo-monto d-none">
-                    <label class="form-label">Monto (Bs) <span class="text-danger">*</span></label>
-                    <div class="input-group has-validation">
-                        <span class="  input-group-text">Bs</span>
-                        <input type="text" class="  form-control monto" placeholder="0.00">
-                        <span class="w-100 invalid-feedback"></span>
-                    </div>
-                </div>
-                <div class="col-lg-2 col-md-4 mb-3">
-                    <label class="form-label">Tasa BCV <span class="text-danger">*</span></label>
-                    <div class="input-group has-validation">
-                        <span class="  input-group-text">Bs/$</span>
-                        <input type="text" class="  form-control tasa_dolar" placeholder="0.00">
-                        <span class="w-100 invalid-feedback"></span>
-                    </div>
-                </div>
-                <div class="col-lg-2 col-md-4 mb-3">
-                    <label class="form-label">Equivalente ($) <span class="text-danger">*</span></label>
-                    <div class="input-group has-validation">
-                        <span class="  input-group-text">$</span>
-                        <input type="text" class="  form-control monto_usd_visual" placeholder="0.00" readonly>
-                        <span class="w-100 invalid-feedback"></span>
-                    </div>
-                </div>
-            </div>
-            <div class="row campos-bancarios d-none">
-                <div class="col-lg-3 col-md-6 mb-3">
-                    <label class="form-label">Nro. Referencia <span class="text-danger">*</span></label>
-                    <div class="input-group has-validation">
-                        <span class="  input-group-text"><i class="bi bi-123"></i></span>
-                        <input type="text" class="  form-control referencia" name="referencia[]" placeholder="Nro de recibo">
-                        <span class="w-100 invalid-feedback"></span>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6 mb-3">
-                    <label class="form-label">Banco <span class="text-danger">*</span></label>
-                    <div class="input-group has-validation">
-                        <span class="  input-group-text"><i class="bi bi-bank"></i></span>
-                        <select class="  form-select banco_id">
-                            <option selected hidden value="">Escoja el Banco</option>
-                            <?php foreach ($registro_banco as $banco): ?>
-                                <option value="<?php echo $banco["id_banco"] ?>"><?php echo $banco["nombre_banco"] ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                        <span class="w-100 invalid-feedback"></span>
-                    </div>
-                </div>
-                <div class="col-lg-5 mb-3">
-                    <label class="form-label">Comprobante (Capture) <span class="text-danger">*</span></label>
-                    <div class="input-group has-validation">
-                        <span class="  input-group-text"><i class="bi bi-image-fill"></i></span>
-                        <input type="file" class="  form-control imagen" accept=".jpg, .jpeg, .png">
-                        <span class="w-100 invalid-feedback"></span>
-                    </div>
-                    <small class="nombre_imagen_cargada text-primary fw-bold d-block mt-1"></small>
-                </div>
+    <!-- Datos Iniciales y Capture -->
+    <div class="row align-items-end">
+        <div class="col-lg-4 col-md-6 mb-3">
+            <label class="form-label">Fecha de Transacción <span class="text-danger">*</span></label>
+            <div class="input-group has-validation">
+                <span class="input-group-text"><i class="bi bi-calendar-date"></i></span>
+                <input type="date" class="form-control fecha_pago" name="fecha_pago[]">
+                <span class="invalid-feedback"></span>
             </div>
         </div>
+        <div class="col-lg-4 col-md-6 mb-3">
+            <label class="form-label">Método de Pago <span class="text-danger">*</span></label>
+            <div class="input-group has-validation">
+                <span class="input-group-text"><i class="bi bi-credit-card-fill"></i></span>
+                <select class="form-select tipo_pago" name="tipo_pago[]">
+                    <option selected hidden value="">Seleccione método</option>
+                    <option value="TRANSFERENCIA">Transferencia</option>
+                    <option value="PAGO MOVIL">Pago Móvil</option>
+                    <option value="EFECTIVO">Efectivo</option>
+                </select>
+                <span class="invalid-feedback"></span>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-12 mb-3 campos-bancarios d-none">
+            <label class="form-label text-primary fw-bold"><i class="bi bi-magic me-1"></i> Subir Capture <span class="text-danger">*</span></label>
+            <div class="input-group has-validation">
+                <input type="file" class="form-control imagen border-primary" accept=".jpg, .jpeg, .png">
+                <span class="invalid-feedback"></span>
+            </div>
+            <small class="nombre_imagen_cargada text-muted d-block mt-1"></small>
+        </div>
+    </div>
+
+    <!-- Datos Bancarios -->
+    <div class="row campos-bancarios d-none">
+        <div class="col-lg-6 col-md-6 mb-3">
+            <label class="form-label">Banco Emisor <span class="text-danger">*</span></label>
+            <div class="input-group has-validation">
+                <span class="input-group-text"><i class="bi bi-bank"></i></span>
+                <select class="form-select banco_id" name="banco_id[]">
+                    <option selected hidden value="">Escoja el Banco</option>
+                    <?php foreach ($registro_banco as $banco): ?>
+                        <!-- Inyectamos el atributo data-codigo -->
+                        <option value="<?php echo $banco["id_banco"] ?>" data-codigo="<?php echo $banco["codigo"] ?>">
+                            <?php echo $banco["nombre_banco"] ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <span class="invalid-feedback"></span>
+            </div>
+        </div>
+        <div class="col-lg-6 col-md-6 mb-3">
+            <label class="form-label">Nro. Referencia <span class="text-danger">*</span></label>
+            <div class="input-group has-validation">
+                <span class="input-group-text"><i class="bi bi-123"></i></span>
+                <input type="text" class="form-control referencia" name="referencia[]" placeholder="Últimos 4-6 dígitos">
+                <span class="invalid-feedback"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Desglose Monetario -->
+    <div class="row campo-monto d-none">
+        <div class="col-lg-4 col-md-4 mb-3">
+            <label class="form-label">Monto (Bs) <span class="text-danger">*</span></label>
+            <div class="input-group has-validation">
+                <span class="input-group-text">Bs</span>
+                <input type="text" class="form-control monto" placeholder="0.00">
+                <span class="invalid-feedback"></span>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-4 mb-3">
+            <label class="form-label">Tasa BCV <span class="text-danger">*</span></label>
+            <div class="input-group has-validation">
+                <span class="input-group-text">Bs/$</span>
+                <input type="text" class="form-control tasa_dolar" placeholder="0.00">
+                <span class="invalid-feedback"></span>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-4 mb-3">
+            <label class="form-label">Equivalente ($) <span class="text-danger">*</span></label>
+            <div class="input-group has-validation">
+                <span class="input-group-text">$</span>
+                <input type="text" class="form-control monto_usd_visual" placeholder="0.00" readonly>
+                <span class="invalid-feedback"></span>
+            </div>
+        </div>
+    </div>
+</div>
     </div>
 </template>

@@ -35,7 +35,7 @@ if (!defined('VAPID_PRIVATE_KEY')) define('VAPID_PRIVATE_KEY', $_ENV['VAPID_PRIV
 
 if (!defined('JWT_SECRET')) define('JWT_SECRET', $_ENV['JWT_SECRET'] ?? '');
 
-if (!defined('URL_BASE')) define('URL_BASE', $_ENV['URL_BASE'] ?? '/haydee-app/');
+if (!defined('URL_BASE')) define('URL_BASE', $_ENV['URL_BASE'] ?? '/condominios-haydee/haydee-web/');
 if (!defined('ENTORNO')) define('ENTORNO', $_ENV['ENTORNO'] ?? '');
 
 if (!defined('ROOT_PATH')) define('ROOT_PATH', dirname(__DIR__));

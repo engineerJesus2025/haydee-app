@@ -46,6 +46,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Delegación de eventos para mostrar/ocultar campos según Método de Pago
     formulario_usar.addEventListener("change", mostrarCamposMetodoPago);
+
+    // Delegación de eventos para capturar cuando se sube una imagen
+    document.getElementById("detalles_container").addEventListener("change", (e) => {
+        if (e.target.classList.contains("imagen") && e.target.files.length > 0) {
+            // Solo iniciamos si pesa menos de 5MB para no ahogar el servidor (validación previa)
+            if (e.target.files[0].size <= 5 * 1024 * 1024) { 
+                ejecutarLecturaOCR(e.target);
+            }
+        }
+    });
 });
 
 // FUNCIONES AUXILIARES DE UI
@@ -716,6 +726,73 @@ async function mostrarVistaPrevia(id) {
             );
         }, 200);
     });
+}
+
+async function ejecutarLecturaOCR(inputImagen) {
+    const bloque = inputImagen.closest('.detalle-pago');
+    const inputMonto = bloque.querySelector('.monto');
+    const inputRef = bloque.querySelector('.referencia');
+    const selectBanco = bloque.querySelector('.banco_id');
+
+    // Bloqueo de UI
+    inputMonto.disabled = true;
+    inputRef.disabled = true;
+    selectBanco.disabled = true;
+
+    // Toast Informativo
+    Notificaciones.mostrarToast('info', 'Analizando comprobante', 'Extrayendo datos con Inteligencia Artificial...');
+
+    let formData = new FormData();
+    formData.append("validar", "escanear_comprobante");
+    formData.append("comprobante", inputImagen.files[0]);
+
+    try {
+        let data = await Peticiones.enviar(formData, "", false);
+
+        if (data.silencioso) {
+            return;
+        }
+
+        if (data.estatus) {
+            Notificaciones.mostrarToast('success', '¡Comprobante leído!', 'Campos autocompletados con alta precisión.');
+            
+            // Llenar monto y disparar el cálculo de dólares
+            inputMonto.value = data.monto;
+            inputMonto.dispatchEvent(new Event('input', { bubbles: true })); 
+            
+            // Llenar referencia y disparar su validación AJAX
+            inputRef.value = data.referencia;
+            inputRef.dispatchEvent(new Event('keyup', { bubbles: true }));
+
+            // Buscar el banco
+            Array.from(selectBanco.options).forEach(opt => {
+                if (opt.dataset.codigo === data.banco) {
+                    selectBanco.value = opt.value;
+                }
+            });
+            selectBanco.dispatchEvent(new Event('change', { bubbles: true }));
+
+        } else {
+            // Falló por baja confianza
+            Notificaciones.mostrarToast('warning', 'Revisión manual sugerida', data.mensaje);
+            
+            if (data.monto) {
+                inputMonto.value = data.monto;
+                inputMonto.dispatchEvent(new Event('input', { bubbles: true })); 
+            }
+            if (data.referencia) {
+                inputRef.value = data.referencia;
+                inputRef.dispatchEvent(new Event('keyup', { bubbles: true }));
+            }
+        }
+    } catch (error) {
+        console.error("Fallo al procesar el OCR en la vista:", error);
+    } finally {
+        // Desbloqueo de UI
+        inputMonto.disabled = false;
+        inputRef.disabled = false;
+        selectBanco.disabled = false;
+    }
 }
 
 

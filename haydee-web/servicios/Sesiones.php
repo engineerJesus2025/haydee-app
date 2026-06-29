@@ -197,7 +197,7 @@ class Sesiones
     }
 
     /**
-     * Inicializa las variables de sesión de PHP
+     Inicializa las variables de sesión de PHP
      */
     public static function iniciar(array $datosUsuario)
     {

@@ -15,6 +15,7 @@ use haydee\servicios\GestorTasa;
 use haydee\servicios\Sesiones;
 use haydee\servicios\GestorAuditoria;
 use haydee\servicios\GestorNotificaciones;
+use haydee\servicios\EscanerComprobantes;
 
 // Determinar rol
 $esPropietario = (isset($_SESSION["rol"]) && $_SESSION["rol"] == "Propietario");
@@ -266,6 +267,10 @@ if (isset($_POST["validar"])) {
                 } else {
                     $respuesta = ['estatus' => false, 'mensaje' => 'Faltan parámetros'];
                 }
+                break;
+
+            case 'escanear_comprobante':
+                $respuesta = EscanerComprobantes::procesarPeticion($_FILES['comprobante'] ?? null);
                 break;
 
             default:

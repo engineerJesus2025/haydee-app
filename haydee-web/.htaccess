@@ -1,16 +1,16 @@
-ErrorDocument 404 /haydee-app/vista/error/404_vista.php
-ErrorDocument 403 /haydee-app/vista/error/403_vista.php
+ErrorDocument 404 /condominios-haydee/haydee-web/vista/error/404_vista.php
+ErrorDocument 403 /condominios-haydee/haydee-web/vista/error/403_vista.php
 
 RewriteEngine On
 Options All -Indexes
 
 # Permitir acceso a la raíz, index.php, sw.js y carpetas públicas
-RewriteCond %{REQUEST_URI} ^/haydee-app/?$ [OR]
-RewriteCond %{REQUEST_URI} ^/haydee-app/index\.php$ [OR]
-RewriteCond %{REQUEST_URI} ^/haydee-app/sw\.js$ [OR] 
-RewriteCond %{REQUEST_URI} ^/haydee-app/recursos/ [OR]
-RewriteCond %{REQUEST_URI} ^/haydee-app/api/index\.php$ [OR]
-RewriteCond %{REQUEST_URI} ^/haydee-app/vista/error/
+RewriteCond %{REQUEST_URI} ^/condominios-haydee/haydee-web/?$ [OR]
+RewriteCond %{REQUEST_URI} ^/condominios-haydee/haydee-web/index\.php$ [OR]
+RewriteCond %{REQUEST_URI} ^/condominios-haydee/haydee-web/sw\.js$ [OR] 
+RewriteCond %{REQUEST_URI} ^/condominios-haydee/haydee-web/recursos/ [OR]
+RewriteCond %{REQUEST_URI} ^/condominios-haydee/haydee-web/api/index\.php$ [OR]
+RewriteCond %{REQUEST_URI} ^/condominios-haydee/haydee-web/vista/error/
 RewriteRule .* - [L]
 
 # Bloquear todo lo demás

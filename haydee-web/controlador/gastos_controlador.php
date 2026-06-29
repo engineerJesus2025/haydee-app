@@ -15,6 +15,7 @@ use haydee\modelo\Bitacora;
 use haydee\servicios\GestorTasa;
 use haydee\servicios\Sesiones;
 use haydee\servicios\GestorAuditoria;
+use haydee\servicios\EscanerComprobantes;
 
 if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');
@@ -263,6 +264,10 @@ if (isset($_POST["validar"])) {
 
                 $existe = $validadorBD->existe($tabla, $campo, $valor);
                 $respuesta = ['estatus' => $existe, 'mensaje' => $existe ? 'OK' : 'No existe'];
+                break;
+
+            case 'escanear_comprobante':
+                $respuesta = EscanerComprobantes::procesarPeticion($_FILES['comprobante'] ?? null);
                 break;
 
             default:

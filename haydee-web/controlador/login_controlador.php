@@ -80,8 +80,8 @@ if (isset($_POST["operacion"])) {
                     $seguridadIP->limpiarFallo(); // Limpiamos historial penal 8-]
 
                     http_response_code(HttpCodigo::OK->value); 
-                    if (isset($resultado['token'])) {
-                        Sesiones::recordar($usuario, $resultado['token']);
+                    if (isset($resultado['refresh_token'])) {
+                        Sesiones::recordar($usuario, $resultado['refresh_token']);
                     }
                     Sesiones::iniciar($resultado['datos']);
                     session_regenerate_id(true);
