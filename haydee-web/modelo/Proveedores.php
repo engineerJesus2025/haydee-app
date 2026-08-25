@@ -14,10 +14,8 @@ class Proveedores extends Conexion
     private $direccion;
     private $activo;
 
-    // ====================================================================
-    // VALIDACIONES CENTRALIZADAS
-    // ====================================================================
-    public static function obtenerReglas($operacion) {
+    public static function obtenerReglas(string $operacion): array
+    {
         $reglasGenerales = [
             'id_proveedor' => [
                 'regex' => '/^\d+$/',
@@ -27,16 +25,12 @@ class Proveedores extends Conexion
                 'regex' => '/^[a-zA-ZáéíóúÁÉÍÓÚñÑ()\s]+$/',
                 'unique' => ['tabla' => 'proveedores', 'campo' => 'nombre_proveedor', 'exclude_field' => 'id_proveedor']
             ],
-            'servicio' => [
-                'regex' => '/^[A-Za-záéíóúÁÉÍÓÚñÑ\s]+$/'
-            ],
+            'servicio' => ['regex' => '/^[A-Za-záéíóúÁÉÍÓÚñÑ\s]+$/'],
             'rif' => [
                 'regex' => '/^[VEJG]{1}[0-9]{7,10}$/',
                 'unique' => ['tabla' => 'proveedores', 'campo' => 'rif', 'exclude_field' => 'id_proveedor']
             ],
-            'direccion' => [
-                'regex' => '/^[A-Za-z0-9áéíóúÁÉÍÓÚñÑ\s.,:\/-]{3,255}$/'
-            ]
+            'direccion' => ['regex' => '/^[A-Za-z0-9áéíóúÁÉÍÓÚñÑ\s.,:\/-]{3,255}$/']
         ];
 
         $camposPorOperacion = [
@@ -46,10 +40,9 @@ class Proveedores extends Conexion
             'consultar_proveedor' => ['id_proveedor']
         ];
 
-        if (isset($camposPorOperacion[$operacion])) {
-            return array_intersect_key($reglasGenerales, array_flip($camposPorOperacion[$operacion]));
-        }
-        return [];
+        return isset($camposPorOperacion[$operacion]) 
+            ? array_intersect_key($reglasGenerales, array_flip($camposPorOperacion[$operacion])) 
+            : [];
     }
 
     // Getters y Setters
@@ -66,10 +59,7 @@ class Proveedores extends Conexion
     public function set_activo($activo) { $this->activo = $activo; }
     public function get_activo() { return $this->activo; }
 
-    /**
-     * Enruta la acción al método privado correspondiente.
-     */
-    public function realizar_consulta($accion)
+    public function realizar_consulta(string $accion): array
     {
         $metodo = '_' . $accion;
         if (!method_exists($this, $metodo)) {
@@ -84,70 +74,55 @@ class Proveedores extends Conexion
         }
     }
 
-    // -----------------------------------------------------------------
-    // Métodos privados (acciones)
-    // -----------------------------------------------------------------
-
-    // SE USA EN EL MODULO
-    private function _consultar()
+    // ACCIONES PRIVADAS
+    private function _consultar(): array
     {
-        $sql = "SELECT id_proveedor, nombre_proveedor, servicio, rif, direccion 
-                FROM proveedores 
-                WHERE activo = 1";
+        $sql = "SELECT id_proveedor, nombre_proveedor, servicio, rif, direccion FROM proveedores WHERE activo = 1";
         try {
             $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute();
-            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $datos];
+            return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
         } catch (PDOException $e) {
             error_log("Error en _consultar: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al consultar proveedores'];
         }
     }
 
-    // SE USA EN EL MODULO
-    private function _consultar_proveedor()
+    private function _consultar_proveedor(): array
     {
-        $sql = "SELECT id_proveedor, nombre_proveedor, servicio, rif, direccion 
-                FROM proveedores 
-                WHERE id_proveedor = :id_proveedor AND activo = 1";
+        $sql = "SELECT id_proveedor, nombre_proveedor, servicio, rif, direccion FROM proveedores WHERE id_proveedor = :id_proveedor AND activo = 1";
         try {
             $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->bindParam(':id_proveedor', $this->id_proveedor);
-            $stmt->execute();
+            $stmt->execute([':id_proveedor' => $this->id_proveedor]);
             $datos = $stmt->fetch(PDO::FETCH_ASSOC);
-            if (!$datos) {
-                return ['estatus' => false, 'mensaje' => 'Proveedor no encontrado'];
-            }
-            return ['estatus' => true, 'datos' => $datos];
+
+            return $datos ? ['estatus' => true, 'datos' => $datos] : ['estatus' => false, 'mensaje' => 'Proveedor no encontrado'];
         } catch (PDOException $e) {
             error_log("Error en _consultar_proveedor: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al consultar el proveedor'];
         }
     }
 
-    // SE USA EN EL MODULO
-    private function _registrar_proveedor()
+    private function _registrar_proveedor(): array
     {
-        $sql = "INSERT INTO proveedores (nombre_proveedor, servicio, rif, direccion) 
-                VALUES (:nombre_proveedor, :servicio, :rif, :direccion)";
+        $sql = "INSERT INTO proveedores (nombre_proveedor, servicio, rif, direccion) VALUES (:nombre_proveedor, :servicio, :rif, :direccion)";
         try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->bindParam(':nombre_proveedor', $this->nombre_proveedor);
-            $stmt->bindParam(':servicio', $this->servicio);
-            $stmt->bindParam(':rif', $this->rif);
-            $stmt->bindParam(':direccion', $this->direccion);
-            $stmt->execute();
-            $lastId = $this->get_conex(TipoBaseDatos::NEGOCIO)->lastInsertId();
-            return ['estatus' => true, 'mensaje' => 'Proveedor registrado correctamente', 'lastId' => $lastId];
+            $db = $this->get_conex(TipoBaseDatos::NEGOCIO);
+            $stmt = $db->prepare($sql);
+            $stmt->execute([
+                ':nombre_proveedor' => $this->nombre_proveedor,
+                ':servicio'         => $this->servicio,
+                ':rif'              => $this->rif,
+                ':direccion'        => $this->direccion
+            ]);
+            return ['estatus' => true, 'mensaje' => 'Proveedor registrado correctamente', 'lastId' => $db->lastInsertId()];
         } catch (PDOException $e) {
-            error_log("Error en _registrar: " . $e->getMessage());
+            error_log("Error en _registrar_proveedor: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al registrar el proveedor'];
         }
     }
 
-    // SE USA EN EL MODULO
-    private function _modificar_proveedor()
+    private function _modificar_proveedor(): array
     {
         $sql = "UPDATE proveedores SET 
                     nombre_proveedor = :nombre_proveedor,
@@ -157,32 +132,29 @@ class Proveedores extends Conexion
                 WHERE id_proveedor = :id_proveedor";
         try {
             $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->bindParam(':id_proveedor', $this->id_proveedor);
-            $stmt->bindParam(':nombre_proveedor', $this->nombre_proveedor);
-            $stmt->bindParam(':servicio', $this->servicio);
-            $stmt->bindParam(':rif', $this->rif);
-            $stmt->bindParam(':direccion', $this->direccion);
-            $stmt->execute();
+            $stmt->execute([
+                ':id_proveedor'     => $this->id_proveedor,
+                ':nombre_proveedor' => $this->nombre_proveedor,
+                ':servicio'         => $this->servicio,
+                ':rif'              => $this->rif,
+                ':direccion'        => $this->direccion
+            ]);
             return ['estatus' => true, 'mensaje' => 'Proveedor modificado correctamente'];
         } catch (PDOException $e) {
-            error_log("Error en _modificar: " . $e->getMessage());
+            error_log("Error en _modificar_proveedor: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al modificar el proveedor'];
         }
     }
 
-    // SE USA EN EL MODULO
-    private function _eliminar_proveedor()
+    private function _eliminar_proveedor(): array
     {
-        $sql = "UPDATE proveedores SET activo = 0 WHERE id_proveedor = :id_proveedor";
         try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->bindParam(':id_proveedor', $this->id_proveedor);
-            $stmt->execute();
+            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare("UPDATE proveedores SET activo = 0 WHERE id_proveedor = :id_proveedor");
+            $stmt->execute([':id_proveedor' => $this->id_proveedor]);
             return ['estatus' => true, 'mensaje' => 'Proveedor eliminado correctamente'];
         } catch (PDOException $e) {
-            error_log("Error en _eliminar: " . $e->getMessage());
+            error_log("Error en _eliminar_proveedor: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al eliminar el proveedor'];
         }
     }
-
 }

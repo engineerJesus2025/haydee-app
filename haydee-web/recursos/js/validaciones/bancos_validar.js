@@ -1,75 +1,42 @@
-/**
- * bancos_validar.js
- * Dependencias: Validador.js, Patrones.js, EstadoInputs.js, Alertas.js
- */
-
 document.addEventListener("DOMContentLoaded", function() {
-
     const inputNombre = document.getElementById("nombre_banco");
     const inputCodigo = document.getElementById("codigo");
-    const inputCuenta = document.getElementById("numero_cuenta");
-    const selecTipoCuenta = document.getElementById("tipo_cuenta");
-    const inputTlf = document.getElementById("telefono_afiliado");
-    const inputRif = document.getElementById("rif");
-    const selectDoc = document.getElementById("tipo_documento");
 
-    // Nombre
+    // Validaciones de Nombre
     if (inputNombre) {
         inputNombre.addEventListener("keypress", e => Validador.bloquearTeclasInvalidas(e, Patrones.teclasLetras));
-        inputNombre.addEventListener("keyup", function() { Validador.evaluarInput(this, Patrones.textoCorto, "Solo letras, mínimo 3 caracteres"); });
+        inputNombre.addEventListener("keyup", function() { 
+            Validador.evaluarInput(this, Patrones.textoCorto, "Solo letras, mínimo 3 caracteres"); 
+        });
     }
 
-    // Código
+    // Validaciones de Código Bancario
     if (inputCodigo) {
         inputCodigo.addEventListener("keypress", e => Validador.bloquearTeclasInvalidas(e, Patrones.teclasNumeros));
-        inputCodigo.addEventListener("keyup", function() { Validador.evaluarInput(this, Patrones.codigoBanco, "Debe ser de 4 dígitos"); });
-    }
+        inputCodigo.addEventListener("keyup", function() { 
+            Validador.evaluarInput(this, Patrones.codigoBanco, "Debe ser de 4 dígitos"); 
+        });
 
-    // Cuenta
-    if (inputCuenta) {
-        inputCuenta.addEventListener("keypress", e => Validador.bloquearTeclasInvalidas(e, Patrones.teclasNumeros));
-        inputCuenta.addEventListener("keyup", function() {
-            if (Validador.evaluarInput(this, Patrones.numeroCuenta, "Entre 18 y 30 dígitos")) {
-                if (typeof numero_cuenta_an !== 'undefined' && this.value === numero_cuenta_an) return;
-                Validador.verificarDuplicadoEnServidor('numero_cuenta', { numero_cuenta: this.value }, this, 'Esta cuenta ya está registrada');
+        inputCodigo.addEventListener("blur", async function() {
+            // Solo consultamos al servidor si el formato regex previo es válido
+            if (Validador.evaluarInput(this, Patrones.codigoBanco, "Debe ser de 4 dígitos")) {
+                
+                const idBancoActual = document.getElementById("boton_formulario").getAttribute("id_modificar") || ""; 
+                
+                await Validador.verificarDatoUnico(
+                    'codigo_banco',
+                    { 
+                        codigo: this.value, 
+                        id_banco: idBancoActual
+                    }, 
+                    this, 
+                    'Este código ya está registrado'
+                );
             }
         });
     }
 
-    // TIpo de Cuenta
-    if (selecTipoCuenta) {
-        selecTipoCuenta.addEventListener("change", function() { Validador.evaluarSelect(this.id); });
-    }
-
-
-    // Teléfono
-    if (inputTlf) {
-        inputTlf.addEventListener("keypress", e => Validador.bloquearTeclasInvalidas(e, Patrones.teclasNumeros));
-        inputTlf.addEventListener("keyup", function() { Validador.evaluarInput(this, Patrones.telefono, "Debe tener 11 dígitos"); });
-    }
-
-    // RIF
-    if (inputRif) {
-        inputRif.addEventListener("keypress", e => Validador.bloquearTeclasInvalidas(e, Patrones.teclasNumeros));
-        inputRif.addEventListener("keyup", function() { Validador.evaluarInput(this, Patrones.rif, "Entre 7 y 9 dígitos"); });
-    }
-
-    // Select Documento
-    if (selectDoc) {
-        selectDoc.addEventListener("change", function() {
-            if (this.value === "") {
-                EstadoInputs.marcarError(this, "Seleccione un tipo");
-                inputRif.disabled = true;
-            } else {
-                EstadoInputs.marcarExito(this);
-                inputRif.disabled = false;
-                // Disparamos la validación manual del RIF
-                Validador.evaluarInput(inputRif, Patrones.rif, "Entre 7 y 9 dígitos");
-            }
-        });
-    }
-
-    // Envío
+    // Envío del Formulario
     const btnForm = document.getElementById("boton_formulario");
     if (btnForm) {
         btnForm.addEventListener("click", async function(e) {
@@ -82,7 +49,6 @@ document.addEventListener("DOMContentLoaded", function() {
                     `¿Está seguro que desea ${accion.toLowerCase()} este banco?`,
                     "question", 
                     () => {
-                        if(typeof numero_cuenta_an !== 'undefined') numero_cuenta_an = null;
                         accion === 'modificar' ? modificar() : registrar();
                     }
                 );
@@ -91,30 +57,37 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 
+/**
+ * Barrera final antes de enviar los datos a guardar
+ */
 async function validarEnvio(accion) {
     const inputNombre = document.getElementById("nombre_banco");
     const inputCodigo = document.getElementById("codigo");
-    const inputCuenta = document.getElementById("numero_cuenta");
-    const selecTipoCuenta = document.getElementById("tipo_cuenta");
-    const inputTlf = document.getElementById("telefono_afiliado");
-    const inputRif = document.getElementById("rif");
     
-    if (!Validador.evaluarInput(inputNombre, Patrones.textoCorto, 'Solo letras, mínimo 3 caracteres') ||
-        !Validador.evaluarInput(inputCodigo, Patrones.codigoBanco, 'Debe ser de 4 dígitos') ||
-        !Validador.evaluarInput(inputCuenta, Patrones.numeroCuenta, 'Entre 18 y 30 dígitos') || 
-        !Validador.evaluarSelect("tipo_cuenta") ||
-        !Validador.evaluarInput(inputTlf, Patrones.telefono, 'Debe tener 11 dígitos') ||
-        !Validador.evaluarSelect("tipo_documento") ||
-        !Validador.evaluarInput(inputRif, Patrones.rif, 'Entre 7 y 9 dígitos')) {
-        
-        Alertas.mostrar('error', 'Error', 'Por favor, revise los campos marcados en rojo.');
+    const nombreValido = Validador.evaluarInput(inputNombre, Patrones.textoCorto, 'Solo letras, mínimo 3 caracteres');
+    const codigoValido = Validador.evaluarInput(inputCodigo, Patrones.codigoBanco, 'Debe ser de 4 dígitos');
+
+    if (!nombreValido || !codigoValido) {
+        Alertas.mostrar('error', 'Error de Formato', 'Por favor, revise los campos marcados en rojo.');
         return false;
     }
 
-    if (typeof numero_cuenta_an !== 'undefined' && numero_cuenta_an !== inputCuenta.value) {
-        const duplicado = await Validador.verificarDuplicadoEnServidor('numero_cuenta', { numero_cuenta: inputCuenta.value }, inputCuenta, 'Esta cuenta ya está registrada');
-        if (!duplicado) return false;
+    const idBancoActual = document.getElementById("boton_formulario").getAttribute("id_modificar") || "";
+    
+    const codigoUnico = await Validador.verificarDatoUnico(
+        'codigo_banco',
+        { 
+            codigo: inputCodigo.value, 
+            id_banco: idBancoActual 
+        }, 
+        inputCodigo, 
+        'Este código ya está registrado'
+    );
+
+    if (!codigoUnico) {
+        Alertas.mostrar('error', 'Código Duplicado', 'El código bancario ingresado ya pertenece a otra entidad o banco inactivo.');
+        return false;
     }
 
-    return true;
+    return true; // Todo en orden, procedemos con el modal de confirmación
 }

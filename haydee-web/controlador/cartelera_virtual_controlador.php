@@ -32,9 +32,7 @@ if (isset($_POST["operacion"])) {
 
         if ($validador->tieneErrores()) {
             $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::NO_PROCESABLE->value;
-            http_response_code($codigoHttp);
-            echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
-            exit;
+            throw new ValidacionException('Datos inválidos.', $validador->obtenerErrores(), $codigoHttp);
         }
     }
 
@@ -46,126 +44,119 @@ if (isset($_POST["operacion"])) {
     $cartelera->set_prioridad($_POST['prioridad'] ?? null);
     $cartelera->set_usuario_id($_SESSION['id_usuario'] ?? null);
 
-    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
+    // Respuesta por defecto
+    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida', 'datos' => []];
 
-    // Instanciamos el auditor
+    // auditor
     $auditor = new GestorAuditoria($cartelera, Modulo::GESTIONAR_CARTELERA_VIRTUAL);
+    $codigoExito = HttpCodigo::OK->value;
+    switch ($operacion) {
+        case 'consulta':
+            $respuesta = $cartelera->realizar_consulta('consultar');
 
-    try {
-        switch ($operacion) {
-            case 'consulta':
-                $respuesta = $cartelera->realizar_consulta('consultar');
-
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) {
-                    $auditor->registrarAuditoria(Accion::CONSULTAR);
-                }
-                break;
-
-            case 'registrar_cartelera':
-                $nombreImagen = '';
-                if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
-                    $nombreImagen = GestorImagenes::subir($_FILES['imagen'], 'cartelera_virtual');
-                    if ($nombreImagen === false) {
-                        throw new Exception('Error al procesar la imagen.');
-                    }
-                }
-                $cartelera->set_imagen($nombreImagen);
-                $respuesta = $cartelera->realizar_consulta('registrar_cartelera');
-
-                http_response_code($respuesta['estatus'] ? HttpCodigo::CREADO->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) {
-                    $auditor->registrarAuditoria(Accion::REGISTRAR);
-
-                    $prioridad = (int)($_POST['prioridad'] ?? 3);
-
-                    // 1 equivale a 'Aviso' (Alta prioridad), lo que dispara la alerta en el canal urgente
-                    $eventoPush = ($prioridad === 1) 
-                        ? TipoEventoNotificacion::AVISO_IMPORTANTE->value 
-                        : TipoEventoNotificacion::NUEVA_PUBLICACION->value;
-
-                    GestorNotificaciones::notificarTodos(
-                        "Nuevo aviso: " . $_POST['titulo'], 
-                        $_POST['descripcion'], 
-                        "cartelera_virtual", 
-                        $respuesta['lastId'], 
-                        $eventoPush
-                    );
-                }
-                break;
-
-            case 'consultar_cartelera':
-                $respuesta = $cartelera->realizar_consulta('consultar_cartelera');
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
-                break;
-
-            case 'modificar_cartelera':
-                // Obtener datos anteriores
-                $auditor->capturarDatosAnteriores('consultar_cartelera');
-
-                $imagenActual = $cartelera->obtenerImagenActual();
-                $eliminarImagen = isset($_POST["eliminar_imagen"]) && $_POST["eliminar_imagen"] == 1;
-                $nuevaImagen = '';
-
-                // (lógica de imagen igual)
-                if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
-                    $nuevaImagen = GestorImagenes::subir($_FILES['imagen'], 'cartelera_virtual');
-                    if ($nuevaImagen === false) {
-                        throw new Exception('Error al procesar la nueva imagen.');
-                    }
-                    if ($imagenActual) {
-                        GestorImagenes::eliminar($imagenActual, 'cartelera_virtual');
-                    }
-                } elseif ($eliminarImagen) {
-                    if ($imagenActual) {
-                        GestorImagenes::eliminar($imagenActual, 'cartelera_virtual');
-                    }
-                    $nuevaImagen = '';
-                } else {
-                    $nuevaImagen = $imagenActual;
-                }
-
-                $cartelera->set_imagen($nuevaImagen);
-                $respuesta = $cartelera->realizar_consulta('modificar_cartelera');
-
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) { 
-                    $auditor->registrarAuditoria(Accion::MODIFICAR); 
-                }
-                break;
-
-            case 'eliminar_cartelera':
-                // Obtener datos anteriores
-                $auditor->capturarDatosAnteriores('consultar_cartelera');
-
-                $respuesta = $cartelera->realizar_consulta('eliminar_cartelera');
-                
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) { 
-                    $auditor->registrarAuditoria(Accion::ELIMINAR); 
-                }
-                break;
-
-            default:
-                http_response_code(HttpCodigo::BAD_REQUEST->value);
-                $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
-        }
-    } catch (Exception $e) {
-        http_response_code(HttpCodigo::ERROR_INTERNO->value);
-        error_log("Error en controlador cartelera virtual: " . $e->getMessage());
-        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
-    } finally {
-        if ($respuesta !== null) {
-            // Cerrar conexiones explicitamente
-            if (isset($cartelera)) {
-                $cartelera->cerrar();
+            if ($respuesta['estatus']) {
+                $auditor->registrarAuditoria(Accion::CONSULTAR);
             }
-            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexion de seguridad
+            break;
 
-            echo json_encode($respuesta);
-            exit;
-        }
+        case 'registrar_cartelera':
+            $nombreImagen = '';
+            if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
+                $nombreImagen = GestorImagenes::subir($_FILES['imagen'], 'cartelera_virtual');
+                if ($nombreImagen === false) {
+                    throw new Exception('Error al procesar la imagen.');
+                }
+            }
+            $cartelera->set_imagen($nombreImagen);
+            $respuesta = $cartelera->realizar_consulta('registrar_cartelera');
+
+            if ($respuesta['estatus']) {
+                $auditor->registrarAuditoria(Accion::REGISTRAR);
+
+                $prioridad = (int)($_POST['prioridad'] ?? 3);
+
+                // 1 equivale a 'Aviso' (Alta prioridad), lo que dispara la alerta en el canal urgente
+                $eventoPush = ($prioridad === 1) 
+                    ? TipoEventoNotificacion::AVISO_IMPORTANTE->value 
+                    : TipoEventoNotificacion::NUEVA_PUBLICACION->value;
+
+                GestorNotificaciones::notificarTodos(
+                    "Nuevo aviso: " . $_POST['titulo'], 
+                    $_POST['descripcion'], 
+                    "cartelera_virtual", 
+                    $respuesta['lastId'], 
+                    $eventoPush
+                );
+
+                $codigoExito = HttpCodigo::CREADO->value;
+            }
+            break;
+
+        case 'consultar_cartelera':
+            $respuesta = $cartelera->realizar_consulta('consultar_cartelera');
+            http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
+            break;
+
+        case 'modificar_cartelera':
+            // Obtener datos anteriores
+            $auditor->capturarDatosAnteriores('consultar_cartelera');
+
+            $imagenActual = $cartelera->obtenerImagenActual();
+            $eliminarImagen = isset($_POST["eliminar_imagen"]) && $_POST["eliminar_imagen"] == 1;
+            $nuevaImagen = '';
+
+            // (lógica de imagen igual)
+            if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
+                $nuevaImagen = GestorImagenes::subir($_FILES['imagen'], 'cartelera_virtual');
+                if ($nuevaImagen === false) {
+                    throw new Exception('Error al procesar la nueva imagen.');
+                }
+                if ($imagenActual) {
+                    GestorImagenes::eliminar($imagenActual, 'cartelera_virtual');
+                }
+            } elseif ($eliminarImagen) {
+                if ($imagenActual) {
+                    GestorImagenes::eliminar($imagenActual, 'cartelera_virtual');
+                }
+                $nuevaImagen = '';
+            } else {
+                $nuevaImagen = $imagenActual;
+            }
+
+            $cartelera->set_imagen($nuevaImagen);
+            $respuesta = $cartelera->realizar_consulta('modificar_cartelera');
+
+            
+            if ($respuesta['estatus']) { 
+                $auditor->registrarAuditoria(Accion::MODIFICAR); 
+            }
+            break;
+
+        case 'eliminar_cartelera':
+            // Obtener datos anteriores
+            $auditor->capturarDatosAnteriores('consultar_cartelera');
+
+            $respuesta = $cartelera->realizar_consulta('eliminar_cartelera');
+            
+            if ($respuesta['estatus']) { 
+                $auditor->registrarAuditoria(Accion::ELIMINAR); 
+            }
+            break;
+
+        default:
+            throw new HaydeeException('Operación no implementada', HttpCodigo::BAD_REQUEST->value);
     }
+
+    if (!$respuesta['estatus']) {
+        throw new HaydeeException($respuesta['mensaje'], HttpCodigo::BAD_REQUEST->value);
+    }
+
+    if (isset($cartelera)) {$cartelera->cerrar();}
+    Bitacora::cerrarConexionBitacora();
+
+    http_response_code($codigoExito);
+    echo json_encode($respuesta);
+    exit;
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

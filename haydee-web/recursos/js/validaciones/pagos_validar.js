@@ -39,6 +39,9 @@ document.addEventListener("DOMContentLoaded", function() {
             else if (target.classList.contains("banco_id")) {
                 Validador.evaluarInput(target, Patrones.digitos, "Debe seleccionar un banco");
             }
+            else if (target.classList.contains("cuenta_id")) {
+                Validador.evaluarInput(target, Patrones.digitos, "Debe seleccionar la cuenta receptora");
+            }
             else if (target.classList.contains("imagen")) {
                 validarImagen(target, 5 * 1024 * 1024);
             }
@@ -184,6 +187,12 @@ async function validarFormularioCompleto() {
             const bancoSelect = bloque.querySelector(".banco_id");
             if (!Validador.evaluarInput(bancoSelect, Patrones.digitos, "Seleccione una opción")) {
                 Alertas.mostrar("error", `Detalle #${num}`, "Seleccione el banco destino");
+                return false;
+            }
+
+            const cuentaSelect = bloque.querySelector(".cuenta_id");
+            if (!Validador.evaluarInput(cuentaSelect, Patrones.digitos, "Seleccione una opción")) {
+                Alertas.mostrar("error", `Detalle #${num}`, "Seleccione la cuenta destino (receptora) del condominio");
                 return false;
             }
 

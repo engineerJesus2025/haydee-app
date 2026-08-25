@@ -23,13 +23,12 @@ if (isset($_POST["operacion"])) {
 
         if ($validador->tieneErrores()) {
             $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::NO_PROCESABLE->value;
-            http_response_code($codigoHttp);
-            echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
-            exit;
+            throw new ValidacionException('Datos inválidos.', $validador->obtenerErrores(), $codigoHttp);
         }
     }
 
-    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
+    // Respuesta por defecto
+    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida', 'datos' => []];
     // Instancia del modelo
     $anioFiscal = new AnioFiscal();
     // Asignacion masiva
@@ -42,68 +41,63 @@ if (isset($_POST["operacion"])) {
     // Instanciamos el auditor
     $auditor = new GestorAuditoria($anioFiscal, Modulo::GESTIONAR_ANIO_FISCAL);
 
-    try {
-        switch ($operacion) {
-            case 'consultar_anios_fiscales':
-                $respuesta = $anioFiscal->realizar_consulta('consultar');
+    $codigoExito = HttpCodigo::OK->value;
+    switch ($operacion) {
+        case 'consultar_anios_fiscales':
+            $respuesta = $anioFiscal->realizar_consulta('consultar');
 
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) {
-                    $auditor->registrarAuditoria(Accion::CONSULTAR);
-                }
-                break;
+            if ($respuesta['estatus']) {
+                $auditor->registrarAuditoria(Accion::CONSULTAR);
+            }
+            break;
 
-            case 'registrar':
-                $auditor->capturarDatosAnteriores('consultar_anio_fiscal');
-                $respuesta = $anioFiscal->realizar_consulta('registrar');
+        case 'registrar':
+            $auditor->capturarDatosAnteriores('consultar_anio_fiscal');
+            $respuesta = $anioFiscal->realizar_consulta('registrar');
 
-                http_response_code($respuesta['estatus'] ? HttpCodigo::CREADO->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) {
-                    $auditor->registrarAuditoria(Accion::REGISTRAR);
-                }
-                break;
+            if ($respuesta['estatus']) {
+                $auditor->registrarAuditoria(Accion::REGISTRAR);
+                $codigoExito = HttpCodigo::CREADO->value;
+            }
+            break;
 
-            case 'consulta_especifica':
-                $respuesta = $anioFiscal->realizar_consulta('consultar_anio_fiscal');
+        case 'consulta_especifica':
+            $respuesta = $anioFiscal->realizar_consulta('consultar_anio_fiscal');
 
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
-                break;
+            http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
+            break;
 
-            case 'modificar':
-                $auditor->capturarDatosAnteriores('consultar_anio_fiscal');
-                $respuesta = $anioFiscal->realizar_consulta('modificar');
-                
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) {
-                    $auditor->registrarAuditoria(Accion::MODIFICAR);
-                }
-                break;
-            case 'eliminar':
-                $auditor->capturarDatosAnteriores('consultar_anio_fiscal');
-                $respuesta = $anioFiscal->realizar_consulta('eliminar');
-                
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) {
-                    $auditor->registrarAuditoria(Accion::ELIMINAR);
-                }
-                break;
+        case 'modificar':
+            $auditor->capturarDatosAnteriores('consultar_anio_fiscal');
+            $respuesta = $anioFiscal->realizar_consulta('modificar');
+            
+            if ($respuesta['estatus']) {
+                $auditor->registrarAuditoria(Accion::MODIFICAR);
+            }
+            break;
+        case 'eliminar':
+            $auditor->capturarDatosAnteriores('consultar_anio_fiscal');
+            $respuesta = $anioFiscal->realizar_consulta('eliminar');
+            
+            if ($respuesta['estatus']) {
+                $auditor->registrarAuditoria(Accion::ELIMINAR);
+            }
+            break;
 
-            default:
-                http_response_code(HttpCodigo::BAD_REQUEST->value);
-                $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
-        }
-    } catch (Exception $e) {
-        http_response_code(HttpCodigo::ERROR_INTERNO->value);
-        error_log("Error en controlador: " . $e->getMessage());
-        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
-    } finally {
-        if ($respuesta !== null) {
-            $anioFiscal->cerrar();
-            Bitacora::cerrarConexionBitacora();
-            echo json_encode($respuesta);
-            exit;
-        }
+        default:
+            throw new HaydeeException('Operación no implementada', HttpCodigo::BAD_REQUEST->value);
     }
+
+    if (!$respuesta['estatus']) {
+        throw new HaydeeException($respuesta['mensaje'], HttpCodigo::BAD_REQUEST->value);
+    }
+
+    if (isset($anioFiscal)) {$anioFiscal->cerrar();}
+    Bitacora::cerrarConexionBitacora();
+
+    http_response_code($codigoExito);
+    echo json_encode($respuesta);
+    exit;
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

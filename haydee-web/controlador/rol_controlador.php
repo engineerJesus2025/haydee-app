@@ -25,9 +25,7 @@ if (isset($_POST["operacion"])) {
 
         if ($validador->tieneErrores()) {
             $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::NO_PROCESABLE->value;
-            http_response_code($codigoHttp);
-            echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
-            exit;
+            throw new ValidacionException('Datos inválidos.', $validador->obtenerErrores(), $codigoHttp);
         }
     }
 
@@ -39,111 +37,119 @@ if (isset($_POST["operacion"])) {
     $permisosJson = $_POST['permisos'] ?? '[]';
     $rol->set_permisos_asignados(json_decode($permisosJson, true) ?: []);
 
-    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
+    // Respuesta por defecto
+    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida', 'datos' => []];
     $auditor = new GestorAuditoria($rol, Modulo::GESTIONAR_ROLES);
+    $codigoExito = HttpCodigo::OK->value;
+    switch ($operacion) {
+        case 'consultar':
+            $respuesta = $rol->realizar_consulta('consultar');
+            if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::CONSULTAR); }
+            break;
 
-    try {
-        switch ($operacion) {
-            case 'consultar':
-                $respuesta = $rol->realizar_consulta('consultar');
+        case 'consultar_rol':
+            $respuesta = $rol->realizar_consulta('consultar_rol');
+            http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
+            break;
 
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::CONSULTAR); }
-                break;
+        case 'registrar_rol':
+            $respuesta = $rol->realizar_consulta('registrar_rol');
+            if ($respuesta['estatus']) { 
+                $auditor->registrarAuditoria(Accion::REGISTRAR);
+                $codigoExito = HttpCodigo::CREADO->value;
+            }
+            break;
 
-            case 'consultar_rol':
-                $respuesta = $rol->realizar_consulta('consultar_rol');
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
-                break;
+        case 'modificar_rol':
+            $auditor->capturarDatosAnteriores('consultar_rol');
+            $respuesta = $rol->realizar_consulta('modificar_rol');
+            if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::MODIFICAR); }
+            break;
 
-            case 'registrar_rol':
-                $respuesta = $rol->realizar_consulta('registrar_rol');
+        case 'eliminar_rol':
+            $auditor->capturarDatosAnteriores('consultar_rol');
+            $respuesta = $rol->realizar_consulta('eliminar_rol');
+            if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::ELIMINAR); }
+            break;
+        case 'consultar_permisos_rol':
+            $respuesta = $rol->realizar_consulta('consultar_permisos_asignados');
+            break;
 
-                http_response_code($respuesta['estatus'] ? HttpCodigo::CREADO->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::REGISTRAR); }
-                break;
-
-            case 'modificar_rol':
-                $auditor->capturarDatosAnteriores('consultar_rol');
-                $respuesta = $rol->realizar_consulta('modificar_rol');
-
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::MODIFICAR); }
-                break;
-
-            case 'eliminar_rol':
-                $auditor->capturarDatosAnteriores('consultar_rol');
-                $respuesta = $rol->realizar_consulta('eliminar_rol');
-
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::ELIMINAR); }
-                break;
-            case 'consultar_permisos_rol':
-                $respuesta = $rol->realizar_consulta('consultar_permisos_asignados');
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                break;
-
-            default:
-                http_response_code(HttpCodigo::BAD_REQUEST->value);
-                $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
-        }
-    } catch (Exception $e) {
-        http_response_code(HttpCodigo::ERROR_INTERNO->value);
-        error_log("Error en controlador roles: " . $e->getMessage());
-        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
-    } finally {
-        if ($respuesta !== null) {
-            if (isset($rol)) { $rol->cerrar(); }
-            Bitacora::cerrarConexionBitacora();
-
-            echo json_encode($respuesta);
-            exit;
-        }
-    }
-}
-
-// =========================================================
-// VALIDACIONES AJAX
-// =========================================================
-if (isset($_POST["validar"])) {
-    header('Content-Type: application/json');
-    $validar = $_POST["validar"];
-    $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
-
-    $validadorBD = new ValidadorBD();
-
-    try {
-        switch ($validar) {
-            case 'nombre':
-                $nombre = $_POST["nombre"] ?? '';
-                $id_rol = $_POST["id_rol"] ?? null;
-                
-                // Verificamos si el nombre existe, ignorando el rol actual
-                $existe = !$validadorBD->esUnico('roles', 'nombre', $nombre, 'id_rol', $id_rol);
-                $respuesta = ['estatus' => true, 'existe' => $existe];
-                break;
-
-            default:
-                http_response_code(HttpCodigo::BAD_REQUEST->value);
-                $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
-        }
-    } catch (Exception $e) {
-        http_response_code(HttpCodigo::ERROR_INTERNO->value);
-        error_log("Error en Validación AJAX Bancos: " . $e->getMessage());
-        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
+        default:
+            throw new HaydeeException('Operación no implementada', HttpCodigo::BAD_REQUEST->value);
     }
 
-    if ($respuesta['estatus'] === true || isset($respuesta['existe'])) {
-        http_response_code(HttpCodigo::OK->value);
+    if (!$respuesta['estatus']) {
+        throw new HaydeeException($respuesta['mensaje'], HttpCodigo::BAD_REQUEST->value);
     }
 
+    if (isset($rol)) {$rol->cerrar();}
+    Bitacora::cerrarConexionBitacora();
+
+    http_response_code($codigoExito);
     echo json_encode($respuesta);
     exit;
 }
 
-// =========================================================
+// VALIDACIONES AJAX
+if (isset($_POST["validar"])) {
+    header('Content-Type: application/json');
+    $validar = $_POST["validar"];
+    $validadorBD = new ValidadorBD();
+
+    switch ($validar) {
+        case 'correo':
+            $correo = $_POST["correo"] ?? '';
+            $id = !empty($_POST["id_usuario"]) ? $_POST["id_usuario"] : null;
+            
+            $existe = !$validadorBD->esUnico('usuarios', 'correo', $correo, 'id_usuario', $id);
+            $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'El correo ya está en uso' : 'Disponible'];
+            break;
+
+        case 'contrasenia_actual':
+            $usuario = new Usuario();
+            $usuario->set_id_usuario($_POST['id_usuario']);
+            $datosUsuario = $usuario->realizar_consulta('consultar_usuario');
+            $contraIngresada = $_POST['contra'] ?? '';
+            $usuario->cerrar();
+
+            $coincide = false;
+            if ($datosUsuario['estatus'] && isset($datosUsuario['datos']['contrasenia'])) {
+                $coincide = password_verify($contraIngresada, $datosUsuario['datos']['contrasenia']);
+            }
+            
+            http_response_code(HttpCodigo::OK->value);
+            echo json_encode($coincide); 
+            exit;
+
+        case 'validar_clave_foranea':
+            $tabla = $_POST['tabla'] ?? '';
+            $campo = $_POST['nombre_clave'] ?? '';
+            $valor = $_POST['valor'] ?? '';
+
+            if (empty($tabla) || empty($campo) || empty($valor)) {
+                 throw new HaydeeException('Faltan parámetros de Validación', HttpCodigo::BAD_REQUEST->value);
+            }
+
+            $tablasPermitidas = ['roles', 'usuarios'];
+            if (!in_array($tabla, $tablasPermitidas)) {
+                 throw new HaydeeException('Tabla no soportada', HttpCodigo::BAD_REQUEST->value);
+            }
+
+            $existe = $validadorBD->existe($tabla, $campo, $valor);
+            $respuesta = ['estatus' => $existe, 'mensaje' => $existe ? 'OK' : 'El valor no existe en la base de datos'];
+            break;
+
+        default:
+            throw new HaydeeException('Validación no reconocida', HttpCodigo::BAD_REQUEST->value);
+    }
+
+    http_response_code(HttpCodigo::OK->value);
+    echo json_encode($respuesta);
+    exit;
+}
+
 // CARGA DE DATOS PARA LA VISTA
-// =========================================================
 $registros_modulos = [];
 $registros_permisos_usuarios = [];
 

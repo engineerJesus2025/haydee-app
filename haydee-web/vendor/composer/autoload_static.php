@@ -38,6 +38,7 @@ class ComposerStaticInitcbe1707b410f2f343a82925692838e3a
             'haydee\\vista\\' => 13,
             'haydee\\servicios\\' => 17,
             'haydee\\modelo\\' => 14,
+            'haydee\\excepciones\\' => 19,
             'haydee\\enums\\' => 13,
             'haydee\\controlador\\' => 19,
             'haydee\\config\\' => 14,
@@ -160,6 +161,10 @@ class ComposerStaticInitcbe1707b410f2f343a82925692838e3a
         'haydee\\modelo\\' =>
         array (
             0 => __DIR__ . '/../..' . '/modelo',
+        ),
+        'haydee\\excepciones\\' =>
+        array (
+            0 => __DIR__ . '/../..' . '/excepciones',
         ),
         'haydee\\enums\\' =>
         array (

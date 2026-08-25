@@ -15,34 +15,26 @@ if (isset($_POST["operacion"])) {
 
     // Instancia del modelo
     $bitacora = new Bitacora();
+    $codigoExito = HttpCodigo::OK->value;
+    switch ($operacion) {
+        case 'consulta':
+            $respuesta = $bitacora->realizar_consulta('consultar');
+            
+            break;
 
-    try {
-        switch ($operacion) {
-            case 'consulta':
-                $respuesta = $bitacora->realizar_consulta('consultar');
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                break;
-
-            default:
-                http_response_code(HttpCodigo::BAD_REQUEST->value);
-                $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
-                break;
-        }
-    } catch (Exception $e) {
-        http_response_code(HttpCodigo::ERROR_INTERNO->value);
-        error_log("Error en controlador Bitacora: " . $e->getMessage());
-        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
-    } finally {
-        if ($respuesta !== null) {
-            // Cerrar conexiones explicitamente
-            if (isset($bitacora)) {
-                $bitacora->cerrar();
-            }
-
-            echo json_encode($respuesta);
-            exit;
-        }
+        default:
+            throw new HaydeeException('Operación no implementada', HttpCodigo::BAD_REQUEST->value);
     }
+
+    if (!$respuesta['estatus']) {
+        throw new HaydeeException($respuesta['mensaje'], HttpCodigo::BAD_REQUEST->value);
+    }
+
+    if (isset($bitacora)) {$bitacora->cerrar();}
+
+    http_response_code($codigoExito);
+    echo json_encode($respuesta);
+    exit;
 }
 
 $placeholder_buscar = "Buscar registro en bitácora...";

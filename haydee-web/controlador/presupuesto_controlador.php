@@ -27,16 +27,14 @@ if (isset($_POST["operacion"])) {
 
         if ($validador->tieneErrores()) {
             $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::NO_PROCESABLE->value;
-            http_response_code($codigoHttp);
-            echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
-            exit;
+            throw new ValidacionException('Datos inválidos.', $validador->obtenerErrores(), $codigoHttp);
         }
     }
 
     if ($operacion === 'registrar_presupuesto' || $operacion === 'modificar_presupuesto') {
         
         $configPresupuesto = [
-            'campos' => ['nombre', 'monto', 'tipo_gasto_id']
+            'campos' => ['concepto_id', 'monto']
         ];
         
         $detalles = ConstructorDetalles::construirDetalles($_POST, [], $configPresupuesto);
@@ -86,140 +84,116 @@ if (isset($_POST["operacion"])) {
     $tasaDolar = GestorTasa::obtener();
     $presupuesto->set_tasa_dolar($tasaDolar);
 
-    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
+    // Respuesta por defecto
+    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida', 'datos' => []];
     $auditor = new GestorAuditoria($presupuesto, Modulo::GESTIONAR_PRESUPUESTO);
+    $codigoExito = HttpCodigo::OK->value;
+    switch ($operacion) {
+        case 'consultar':
+            $respuesta = $presupuesto->realizar_consulta('consultar');
+            if ($respuesta['estatus']) {
+                $auditor->registrarAuditoria(Accion::CONSULTAR);
+            }
+            break;
 
-    try {
-        switch ($operacion) {
-            case 'consultar':
-                $respuesta = $presupuesto->realizar_consulta('consultar');
+        case 'consultar_meses_faltantes':
+            $respuesta = $presupuesto->realizar_consulta('consultar_meses_faltantes');
+            break;
 
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) {
-                    $auditor->registrarAuditoria(Accion::CONSULTAR);
-                }
-                break;
+        case 'consultar_tipo_gastos':
+            $tipoGasto = new TipoGasto();
+            $respuesta = $tipoGasto->realizar_consulta('consultar_conceptos');
+            
+            $tipoGasto->cerrar(); 
+            break;
 
-            case 'consultar_meses_faltantes':
-                $respuesta = $presupuesto->realizar_consulta('consultar_meses_faltantes');
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                break;
+        case 'consultar_presupuesto':
+            $respuesta = $presupuesto->realizar_consulta('consultar_presupuesto');
+            http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
+            break;
 
-            case 'consultar_tipo_gastos':
-                $tipoGasto = new TipoGasto();
-                $respuesta = $tipoGasto->realizar_consulta('consultar');
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                $tipoGasto->cerrar(); 
-                break;
+        case 'registrar_presupuesto':
+            $respuesta = $presupuesto->realizar_consulta('registrar_presupuesto');
+            if ($respuesta['estatus']) {
+                $auditor->registrarAuditoria(Accion::REGISTRAR);
+                $codigoExito = HttpCodigo::CREADO->value;
+            }
+            break;
 
-            case 'consultar_presupuesto':
-                $respuesta = $presupuesto->realizar_consulta('consultar_presupuesto');
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
-                break;
+        case 'modificar_presupuesto':
+            // Obtener datos anteriores (consulta plana)
+            $auditor->capturarDatosAnteriores('consultar_cabecera_presupuesto');
 
-            case 'registrar_presupuesto':
-                $respuesta = $presupuesto->realizar_consulta('registrar_presupuesto');
+            //  Ejecutar y auditar
+            $respuesta = $presupuesto->realizar_consulta('modificar_presupuesto');
+            if ($respuesta['estatus']) { 
+                $auditor->registrarAuditoria(Accion::MODIFICAR); 
+            }
+            break;
 
-                http_response_code($respuesta['estatus'] ? HttpCodigo::CREADO->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) {
-                    $auditor->registrarAuditoria(Accion::REGISTRAR);
-                }
-                break;
+        case 'eliminar_presupuesto':
+            // Utilizamos la consulta plana
+            $auditor->capturarDatosAnteriores('consultar_cabecera_presupuesto');
 
-            case 'modificar_presupuesto':
-                // Obtener datos anteriores (consulta plana)
-                $auditor->capturarDatosAnteriores('consultar_cabecera_presupuesto');
+            $respuesta = $presupuesto->realizar_consulta('eliminar_presupuesto');
+            if ($respuesta['estatus']) { 
+                $auditor->registrarAuditoria(Accion::ELIMINAR); 
+            }
+            break;
 
-                //  Ejecutar y auditar
-                $respuesta = $presupuesto->realizar_consulta('modificar_presupuesto');
-
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) { 
-                    $auditor->registrarAuditoria(Accion::MODIFICAR); 
-                }
-                break;
-
-            case 'eliminar_presupuesto':
-                // Utilizamos la consulta plana
-                $auditor->capturarDatosAnteriores('consultar_cabecera_presupuesto');
-
-                $respuesta = $presupuesto->realizar_consulta('eliminar_presupuesto');
-
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) { 
-                    $auditor->registrarAuditoria(Accion::ELIMINAR); 
-                }
-                break;
-
-            default:
-                http_response_code(HttpCodigo::BAD_REQUEST->value);
-                $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
-        }
-    } catch (Exception $e) {
-        http_response_code(HttpCodigo::ERROR_INTERNO->value);
-        error_log("Error en controlador presupuesto: " . $e->getMessage());
-        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
-    } finally {
-        if ($respuesta !== null) {
-            if (isset($presupuesto)) { $presupuesto->cerrar(); }
-            Bitacora::cerrarConexionBitacora();
-
-            echo json_encode($respuesta);
-            exit;
-        }
+        default:
+            throw new HaydeeException('Operación no implementada', HttpCodigo::BAD_REQUEST->value);
     }
+
+    if (!$respuesta['estatus']) {
+        throw new HaydeeException($respuesta['mensaje'], HttpCodigo::BAD_REQUEST->value);
+    }
+
+    if (isset($presupuesto)) {$presupuesto->cerrar();}
+    Bitacora::cerrarConexionBitacora();
+
+    http_response_code($codigoExito);
+    echo json_encode($respuesta);
+    exit;
 }
 
-// =========================================================
 // VALIDACIONES AJAX
-// =========================================================
 if (isset($_POST["validar"])) {
     header('Content-Type: application/json');
     $validar = $_POST["validar"];
-    $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
-
     $validadorBD = new ValidadorBD();
 
-    try {
-        switch ($validar) {
-            case 'validar_fecha_presupuesto':
-                $fecha = $_POST['fecha'] ?? '';
-                $presupuestoTemp = new Presupuesto();
-                $presupuestoTemp->set_fecha($fecha);
-                
-                $resp = $presupuestoTemp->realizar_consulta('consultar_presupuestos_mensualidades');
-                $existe = $resp['estatus'] && !empty($resp['datos']);
-                $respuesta = ['estatus' => $existe];
-                break;
+    switch ($validar) {
+        case 'validar_fecha_presupuesto':
+            $fecha = $_POST['fecha'] ?? '';
+            $presupuestoTemp = new Presupuesto();
+            $presupuestoTemp->set_fecha($fecha);
+            
+            $resp = $presupuestoTemp->realizar_consulta('consultar_presupuestos_mensualidades');
+            $presupuestoTemp->cerrar();
+            
+            $existe = $resp['estatus'] && !empty($resp['datos']);
+            $respuesta = ['estatus' => $existe];
+            break;
 
-            case 'validar_clave_foranea':
-                $tabla = $_POST['tabla'] ?? '';
-                $campo = $_POST['nombre_clave'] ?? '';
-                $valor = $_POST['valor'] ?? '';
+        case 'validar_clave_foranea':
+            $tabla = $_POST['tabla'] ?? '';
+            $campo = $_POST['nombre_clave'] ?? '';
+            $valor = $_POST['valor'] ?? '';
 
-                if (empty($tabla) || empty($campo) || empty($valor)) {
-                    $respuesta = ['estatus' => false, 'mensaje' => 'Faltan parámetros de Validación'];
-                    break;
-                }
+            if (empty($tabla) || empty($campo) || empty($valor)) {
+                throw new HaydeeException('Faltan parámetros de validación', HttpCodigo::BAD_REQUEST->value);
+            }
 
-                $existe = $validadorBD->existe($tabla, $campo, $valor);
-                $respuesta = ['estatus' => $existe, 'mensaje' => $existe ? 'OK' : 'No existe'];
-                break;
+            $existe = $validadorBD->existe($tabla, $campo, $valor);
+            $respuesta = ['estatus' => $existe, 'mensaje' => $existe ? 'OK' : 'No existe'];
+            break;
 
-            default:
-                http_response_code(HttpCodigo::BAD_REQUEST->value);
-                $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
-        }
-    } catch (Exception $e) {
-        http_response_code(HttpCodigo::ERROR_INTERNO->value);
-        error_log("Error en Validación AJAX Bancos: " . $e->getMessage());
-        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
+        default:
+            throw new HaydeeException('Validación no reconocida', HttpCodigo::BAD_REQUEST->value);
     }
 
-    if ($respuesta['estatus'] === true || isset($respuesta['existe'])) {
-        http_response_code(HttpCodigo::OK->value);
-    }
-
+    http_response_code(HttpCodigo::OK->value);
     echo json_encode($respuesta);
     exit;
 }
@@ -232,7 +206,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
     // Instanciamos solo cuando vamos a renderizar el HTML
     $tipoGasto = new TipoGasto();
-    $tipos_gasto = $tipoGasto->realizar_consulta('consultar');
+    $tipos_gasto = $tipoGasto->realizar_consulta('consultar_conceptos');
 }
 $permisosVista = Sesiones::obtenerPermisosVista(Modulo::GESTIONAR_PRESUPUESTO);
 $btn_nuevo = [

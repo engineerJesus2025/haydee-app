@@ -104,6 +104,12 @@ class Endpoints
             self::CONF_MODULO        => Modulo::GESTIONAR_BANCOS,
             self::CONF_METODOS       => [MetodoHttp::GET, MetodoHttp::POST]
         ],
+        'cuentas' => [
+            self::CONF_ARCHIVO      => 'cuentas_controlador.php',
+            self::CONF_REQUIERE_AUTH => true,
+            self::CONF_MODULO        => Modulo::GESTIONAR_CUENTAS,
+            self::CONF_METODOS       => [MetodoHttp::GET, MetodoHttp::POST]
+        ],
         'proveedores' => [
             self::CONF_ARCHIVO      => 'proveedores_controlador.php',
             self::CONF_REQUIERE_AUTH => true,

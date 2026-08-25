@@ -24,7 +24,6 @@ function resetModal() {
     formulario_usar.reset();
     boton_formulario.removeAttribute("modificar");
     boton_formulario.removeAttribute("id_modificar");
-    // boton_formulario.textContent = "Guardar";
     document.getElementById('texto_boton_formulario').textContent = 'Guardar Presupuesto';
     document.getElementById('titulo_modal').textContent = "Registrar presupuesto";
     document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-journal-plus");
@@ -35,11 +34,6 @@ function resetModal() {
 
     // Restaurar contenido original de los detalles
     document.getElementById('contenedor_presupuestos').innerHTML = detalles_presupuestos_base;
-
-    // Reasignar eventos a los botones de agregar
-    document.querySelectorAll("[accion='agregar']").forEach(boton => {
-        boton.addEventListener('click', agregar_fila_presupuesto);
-    });
 
     // Restablecer valores de inputs numéricos
     document.querySelectorAll("[type='number']").forEach(input => {
@@ -52,287 +46,106 @@ function resetModal() {
 }
 
 // FUNCIONES AUXILIARES DE UI (agregar/eliminar filas, etc.)
-function agregar_fila_presupuesto(e) {
-    if (typeof e.preventDefault === 'function') {
-        e.preventDefault();
-    }
-
-    let div_global = e.target.closest(".accordion-collapse");
-
+function crearFilaConcepto(id_concepto, nombre_concepto) {
     let div_padre = document.createElement("div");
-    div_padre.setAttribute("class","accordion-body row");
+    div_padre.setAttribute('class', 'accordion-body row align-items-start fila-concepto border-bottom pt-2 mx-0');
+    div_padre.setAttribute('data-concepto-id', id_concepto);
 
+    // Columna del Nombre
     let div_nombre = document.createElement("div");
-    div_nombre.setAttribute("class","col-sm-5");
-
-    let input_nombre = document.createElement("input");
-    input_nombre.setAttribute('class','form-control gasto-nombre-input');
-    input_nombre.setAttribute('type','text');
-    input_nombre.setAttribute('placeholder','nombre del gasto');
-
-    let spam_nombre = document.createElement("spam");
-    spam_nombre.setAttribute('class','w-100 invalid-feedback');
-
-    div_nombre.appendChild(input_nombre);
-    div_nombre.appendChild(spam_nombre);
-
-    let div_inputs_montos = document.createElement("div");
-    div_inputs_montos.setAttribute("class","col-sm-5 row my-sm-0 my-3");
-
-    let div_monto = document.createElement("div");
-    div_monto.setAttribute("class","col-md-6");
-
-    let div_input_group = document.createElement("div");
-    div_input_group.setAttribute("class","input-group");
-
-    let input_monto = document.createElement("input");
-    input_monto.setAttribute('class','form-control monto-detalle');
-    input_monto.setAttribute('type','number');
-    input_monto.setAttribute('title','Valor del monto en bolivares');
-    input_monto.setAttribute('placeholder','Ej: 40.00');
-    input_monto.setAttribute('value',0);
-    input_monto.setAttribute('monto','bs');
-
-    let spam_moneda = document.createElement("spam");
-    spam_moneda.setAttribute('class','input-group-text icono_moneda');
-    spam_moneda.textContent = "Bs.";
-
-    let spam_monto = document.createElement("spam");
-    spam_monto.setAttribute('class','w-100 invalid-feedback');
-
-    div_input_group.appendChild(input_monto);
-    div_input_group.appendChild(spam_moneda);
-    div_input_group.appendChild(spam_monto);
-    div_monto.appendChild(div_input_group);
-
-    let div_intercambio = document.createElement("div");
-    div_intercambio.setAttribute("class","col-lg-1 col-2 mt-sm-0 mt-2 d-flex justify-content-center align-items-center");
-
-    let boton_intercambio = document.createElement("button");
-    boton_intercambio.setAttribute('tabindex','-1');
-    boton_intercambio.setAttribute("class","btn btn-soft-info boton_intercambio"); // Delegado por clase
-
-    let spam_intercambio = document.createElement("spam");
-    let icono_intercambio = document.createElement("i");
-    icono_intercambio.setAttribute('class','bi bi-arrow-left-right');
-
-    spam_intercambio.appendChild(icono_intercambio);
-    boton_intercambio.appendChild(spam_intercambio);
-    div_intercambio.appendChild(boton_intercambio);     
-
-    let div_monto_2 = document.createElement("div");
-    div_monto_2.setAttribute("class","col-md-5 col-10 mt-sm-0 mt-2 text-center");
-
-    let div_input_group_2 = document.createElement("div");
-    div_input_group_2.setAttribute("class","input-group");
-
-    let input_monto_2 = document.createElement("input");
-    input_monto_2.setAttribute('class','form-control');
-    input_monto_2.setAttribute('type','text');
-    input_monto_2.setAttribute("disabled","");
-    input_monto_2.setAttribute('value',0);
-    input_monto_2.setAttribute('title','Valor del monto en dolares');
-    input_monto_2.setAttribute('convertido','');
-
-    let spam_moneda_2 = document.createElement("spam");
-    spam_moneda_2.setAttribute('class','input-group-text icono_moneda');
-    spam_moneda_2.textContent = "$";
-
-    div_input_group_2.appendChild(input_monto_2);
-    div_input_group_2.appendChild(spam_moneda_2);
-    div_monto_2.appendChild(div_input_group_2); 
-
-    div_inputs_montos.appendChild(div_monto);
-    div_inputs_montos.appendChild(div_intercambio);
-    div_inputs_montos.appendChild(div_monto_2);
-
-    div_padre.appendChild(div_nombre);
-    div_padre.appendChild(div_inputs_montos);
-
-    let div_botones = document.createElement("div");
-    div_botones.setAttribute("class","col-sm-2 justify-content-evenly d-flex align-items-baseline");
-
-    let boton_agregar = document.createElement("button");
-    boton_agregar.setAttribute('title','presione aquí para añadir otro monto');
-    boton_agregar.setAttribute('class','btn btn-soft-success');
-    boton_agregar.setAttribute('tabindex','-1');
-    boton_agregar.setAttribute('accion',`agregar`);
-
-    let icono_agregar = document.createElement('i');
-    icono_agregar.setAttribute("class",'bi bi-plus-lg');
-    boton_agregar.appendChild(icono_agregar);
-
-    let boton_eliminar = document.createElement("button");
-    boton_eliminar.setAttribute('title','eliminar monto');
-    boton_eliminar.setAttribute('tabindex','-1');
-    boton_eliminar.setAttribute('class','btn btn-soft-danger');  
-
-    let icono_eliminar = document.createElement('i');
-    icono_eliminar.setAttribute("class",'bi bi-x-lg');
-    boton_eliminar.appendChild(icono_eliminar);
-
-    div_botones.appendChild(boton_agregar);
-    div_botones.appendChild(boton_eliminar);
-    div_padre.appendChild(div_botones);
-
-    div_global.appendChild(div_padre);
-
-    let boton_a_borrar = e.target.getAttribute("accion") ? e.target : e.target.parentElement;
-    boton_a_borrar.parentElement.removeChild(boton_a_borrar);
-
-    boton_eliminar.addEventListener('click', eliminar_fila_presupuesto);
-    boton_agregar.addEventListener('click', agregar_fila_presupuesto);
-}
-
-function eliminar_fila_presupuesto(e) {
-    let boton_eliminar = e.target.title ? e.target : e.target.closest('button');
-
-    if (boton_eliminar.previousElementSibling != null) {
-        let boton_agregar = document.createElement("button");
-        boton_agregar.setAttribute('title','presione aquí para añadir otro monto');
-        boton_agregar.setAttribute('class','btn btn-soft-success');
-        boton_agregar.setAttribute('tabindex','-1');
-        boton_agregar.setAttribute('accion',`agregar`);
-
-        let icono_agregar = document.createElement('i');
-        icono_agregar.setAttribute("class",'bi bi-plus-lg');
-        boton_agregar.appendChild(icono_agregar);
-
-        let div_botones_anterior = boton_eliminar.closest(".row").previousElementSibling.querySelector(".col-sm-2");
-        div_botones_anterior.insertBefore(boton_agregar, div_botones_anterior.querySelector("[title='eliminar monto']"));
-
-        boton_agregar.addEventListener('click', agregar_fila_presupuesto);
-    }
-    boton_eliminar.parentElement.parentElement.parentElement.removeChild(boton_eliminar.parentElement.parentElement);
-}
-
-function agregarGastoFijo(nombre_gasto, ultimo = false) {
-    let div_padre = document.createElement("div");
-    div_padre.setAttribute('class','accordion-body row');
-
-    let div_nombre = document.createElement("div");
-    div_nombre.setAttribute("class","col-sm-5");
-
-    let input_nombre = document.createElement("input");
-    input_nombre.setAttribute('class','form-control gasto-nombre-input');
-    input_nombre.setAttribute('type','text');
-    input_nombre.setAttribute('placeholder','nombre del gasto');
-    input_nombre.setAttribute('value', nombre_gasto);
-    if (nombre_gasto !== '') {
-        input_nombre.setAttribute('disabled','');
-    }
-
-    let spam_nombre = document.createElement("spam");
-    spam_nombre.setAttribute('class','w-100 invalid-feedback');
-
-    div_nombre.appendChild(input_nombre);
-    div_nombre.appendChild(spam_nombre);    
-
-    let div_inputs_montos = document.createElement("div");
-    div_inputs_montos.setAttribute("class","col-sm-5 row my-sm-0 my-3");
-
-    let div_monto = document.createElement("div");
-    div_monto.setAttribute("class","col-md-6");
-
-    let div_input_group = document.createElement("div");
-    div_input_group.setAttribute("class","input-group");
-
-    let input_monto = document.createElement("input");
-    input_monto.setAttribute('class','form-control monto-detalle');
-    input_monto.setAttribute('type','number');
-    input_monto.setAttribute('value', 0);
-    input_monto.setAttribute('title','Valor del monto en bolivares');
-    input_monto.setAttribute('placeholder','Ej: 40.00'); 
-    input_monto.setAttribute('monto','bs');
-
-    let spam_moneda = document.createElement("spam");
-    spam_moneda.setAttribute('class','input-group-text icono_moneda');
-    spam_moneda.textContent = "Bs.";
-
-    let spam_monto = document.createElement("spam");
-    spam_monto.setAttribute('class','w-100 invalid-feedback');
-
-    div_input_group.appendChild(input_monto);
-    div_input_group.appendChild(spam_monto);
-    div_input_group.appendChild(spam_moneda);
-    div_monto.appendChild(div_input_group);
-
-    let div_intercambio = document.createElement("div");
-    div_intercambio.setAttribute("class","col-lg-1 col-2 mt-sm-0 mt-2 d-flex justify-content-center align-items-center");
-
-    let boton_intercambio = document.createElement("button");
-    boton_intercambio.setAttribute('tabindex','-1');
-    boton_intercambio.setAttribute("class","btn btn-soft-info boton_intercambio");   
-
-    let spam_intercambio = document.createElement("spam");
-    let icono_intercambio = document.createElement("i");
-    icono_intercambio.setAttribute('class','bi bi-arrow-left-right');
-
-    spam_intercambio.appendChild(icono_intercambio);
-    boton_intercambio.appendChild(spam_intercambio);
-    div_intercambio.appendChild(boton_intercambio);     
-
-    let div_monto_2 = document.createElement("div");
-    div_monto_2.setAttribute("class","col-md-5 col-10 mt-sm-0 mt-2 text-center");
-
-    let div_input_group_2 = document.createElement("div");
-    div_input_group_2.setAttribute("class","input-group");
-
-    let input_monto_2 = document.createElement("input");
-    input_monto_2.setAttribute('class','form-control');
-    input_monto_2.setAttribute('type','text');
-    input_monto_2.setAttribute("disabled","");
-    input_monto_2.setAttribute('value',0);
-    input_monto_2.setAttribute('title','Valor del monto en dolares');
-    input_monto_2.setAttribute('convertido','');
-
-    let spam_moneda_2 = document.createElement("spam");
-    spam_moneda_2.setAttribute('class','input-group-text icono_moneda');
-    spam_moneda_2.textContent = "$";
-
-    div_input_group_2.appendChild(input_monto_2);
-    div_input_group_2.appendChild(spam_moneda_2);
-    div_monto_2.appendChild(div_input_group_2); 
-
-    div_inputs_montos.appendChild(div_monto);
-    div_inputs_montos.appendChild(div_intercambio);
-    div_inputs_montos.appendChild(div_monto_2);
-
-    div_padre.appendChild(div_nombre);
-    div_padre.appendChild(div_inputs_montos);
-
-    let div_botones = document.createElement("div");
-    div_botones.setAttribute("class","col-sm-2 justify-content-evenly d-flex align-items-baseline");
-
-    if (ultimo) {
-        let boton_agregar = document.createElement("button");
-        boton_agregar.setAttribute('title','presione aquí para añadir otro monto');
-        boton_agregar.setAttribute('class','btn btn-soft-success');
-        boton_agregar.setAttribute('tabindex','-1');
-        boton_agregar.setAttribute('accion',`agregar`);
-
-        let icono_agregar = document.createElement('i');
-        icono_agregar.setAttribute("class",'bi bi-plus-lg');
-        boton_agregar.appendChild(icono_agregar);
-
-        div_botones.appendChild(boton_agregar);     
-    }
+    div_nombre.setAttribute("class", "col-12 col-md-5 px-1");
     
-    div_padre.appendChild(div_botones);
+    div_nombre.innerHTML = `
+        <div class="input-group pe-none opacity-100">
+            <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-calendar"></i></span>
+            <input class="form-control bg-light text-muted fw-semibold text-center text-md-start border-start-0" 
+                   type="text" value="${nombre_concepto}" readonly tabindex="-1" disabled>
+        </div>`;
+
+    // Columna de los Montos
+    let div_inputs_montos = document.createElement("div");
+    div_inputs_montos.setAttribute("class", "col-12 col-md-7 row m-0 p-0 align-items-start");
+
+    // Input Bs
+    let div_monto_bs = document.createElement("div");
+    div_monto_bs.setAttribute("class", "col-5 px-1");
+    div_monto_bs.innerHTML = `
+        <div class="input-group">
+            <input class="form-control monto-detalle" type="number" value="0" title="Monto en Bolívares" placeholder="0.00" monto="bs">
+            <span class="w-100 invalid-feedback"></span>
+            <span class="input-group-text icono_moneda">Bs.</span>
+        </div>`;
+
+    // Botón Intercambio
+    let div_intercambio = document.createElement("div");
+    div_intercambio.setAttribute("class", "col-2 px-0 d-flex justify-content-center");
+    div_intercambio.innerHTML = `
+        <button tabindex="-1" class="btn btn-soft-info boton_intercambio w-100 px-1" style="max-width: 42px;" title="Alternar moneda">
+            <i class="bi bi-arrow-left-right"></i>
+        </button>`;
+
+    // Input Dólares
+    let div_monto_usd = document.createElement("div");
+    div_monto_usd.setAttribute("class", "col-5 px-1");
+    div_monto_usd.innerHTML = `
+        <div class="input-group">
+            <input class="form-control" type="text" disabled value="0" title="Monto en Dólares" convertido="">
+            <span class="input-group-text icono_moneda">$</span>
+        </div>`;
+
+    div_inputs_montos.appendChild(div_monto_bs);
+    div_inputs_montos.appendChild(div_intercambio);
+    div_inputs_montos.appendChild(div_monto_usd);
+
+    div_padre.appendChild(div_nombre);
+    div_padre.appendChild(div_inputs_montos);
+
     return div_padre;
 }
 
-function asignarEventosDetalles() {
-    detalles_presupuestos_base = document.getElementById('contenedor_presupuestos').innerHTML;
-    document.querySelectorAll("[accion='agregar']").forEach(boton => {        
-        boton.addEventListener('click', agregar_fila_presupuesto);
+function empaquetarDatosPresupuesto(formData) {
+    let fecha = document.getElementById('fecha').value;
+    let observacion = document.getElementById("observacion").value || "Sin observación";
+
+    let input_reserva = document.getElementById("cuota_reserva");
+    let cuota_reserva = 0;
+    if (input_reserva) {
+        cuota_reserva = input_reserva.getAttribute("monto") === "bs" ?
+            input_reserva.value :
+            input_reserva.closest(".row").querySelector("[convertido]").value;
+    }
+
+    formData.append('fecha', fecha);
+    formData.append('cuota_reserva', parseFloat(cuota_reserva || 0));
+    formData.append('observacion', observacion);
+
+    let cantidadDetalles = 0;
+    
+    // Recorrer todas las filas generadas dinámicamente
+    document.querySelectorAll(".fila-concepto").forEach(fila => {
+        let concepto_id = fila.getAttribute("data-concepto-id");
+        let input_monto = fila.querySelector("[monto]");
+        
+        let monto = 0;
+        if (input_monto) {
+            monto = input_monto.getAttribute("monto") === "bs" ?
+                fila.querySelector("input[type='number']").value :
+                fila.querySelector("[convertido]").value;
+        }
+        
+        monto = parseFloat(monto);
+        
+        // Solo enviamos los conceptos a los que se les haya asignado un presupuesto
+        if (monto > 0) {
+            formData.append('concepto_id[]', concepto_id);
+            formData.append('monto[]', monto);
+            cantidadDetalles++;
+        }
     });
-    document.querySelectorAll("[title='eliminar monto']").forEach((boton_eliminar) => {
-        boton_eliminar.addEventListener('click', eliminar_fila_presupuesto);
-    });
+
+    return cantidadDetalles;
 }
 
-// CONSULTAS
 async function consultar() {
     const formatoPeriodo = (cell) => {
         const row = cell.getData();
@@ -467,7 +280,7 @@ async function mostrarVistaPrevia(data) {
                     <tr>
                         <td class="text-dark align-middle -0 -bottom vp--color">
                             <i class="bi bi-caret-right text-primary me-1" style="font-size: 0.8rem;"></i> 
-                            <span style="color: var(--bs-body-color);">${item.nombre_detalle}</span>
+                            <span style="color: var(--bs-body-color);">${item.nombre_concepto}</span>
                         </td>
                         <td class="text-end fw-semibold text-dark align-middle -0 -bottom vp--color">
                             <span style="color: var(--bs-body-color);">${parseFloat(item.monto).toFixed(2)} Bs.</span>
@@ -548,60 +361,65 @@ async function llenarDetallesPresupuestos() {
     const respuesta = await Peticiones.enviar(formData);
 
     Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
-        const tiposGasto = respuestaServidor.datos || [];
+        const datos = respuestaServidor.datos || [];
         const contenedor = document.getElementById('contenedor_presupuestos');
         contenedor.innerHTML = '';
+        
+        // Agrupar los conceptos por Tipo de Gasto
+        const tiposAgrupados = datos.reduce((acc, fila) => {
+            if (!acc[fila.id_tipo_gasto]) {
+                acc[fila.id_tipo_gasto] = {
+                    id: fila.id_tipo_gasto,
+                    nombre: fila.nombre_tipo_gasto,
+                    conceptos: []
+                };
+            }
+            if (fila.id_concepto) {
+                acc[fila.id_tipo_gasto].conceptos.push({
+                    id: fila.id_concepto,
+                    nombre: fila.nombre_concepto
+                });
+            }
+            return acc;
+        }, {});
+
         let fragment = document.createDocumentFragment();
 
-        tiposGasto.forEach(tipo => {
-        	if (tipo.nombre_tipo_gasto === "Reposición de Caja Chica") return;
+        Object.values(tiposAgrupados).forEach(tipo => {
+            // Saltamos la reposición de caja chica si es regla de negocio
+            if (tipo.nombre.includes("Reposición de Caja Chica")) return;
+            if (tipo.conceptos.length === 0) return; // No renderizar si la categoría está vacía
 
-            let nombreFormat = tipo.nombre_tipo_gasto.replaceAll(" ", "-");
+            let nombreFormat = tipo.nombre.replaceAll(" ", "-").toLowerCase();
             let acordeon = document.createElement("div");
             acordeon.className = "accordion col-12 mb-2";
             acordeon.id = nombreFormat;
-            acordeon.setAttribute('id_tipo_gasto', tipo.id_tipo_gasto);
 
             let item = document.createElement("div");
-            item.className = "accordion-item";
+            item.className = "accordion-item shadow-sm";
+            
             let header = document.createElement("h2");
             header.className = "accordion-header";
+            
             let boton = document.createElement("button");
-            boton.className = "accordion-button";
+            boton.className = "accordion-button collapsed fw-semibold text-uppercase";
             boton.type = "button";
-            boton.setAttribute("tabindex",'-1');
+            boton.setAttribute("tabindex", '-1');
             boton.setAttribute('data-bs-toggle', 'collapse');
             boton.setAttribute('data-bs-target', `#${nombreFormat}-body`);
-            boton.textContent = tipo.nombre_tipo_gasto;
+            // Se le añade un icono para mejor estética visual
+            boton.innerHTML = `<i class="bi bi-folder2-open me-2 text-primary"></i> ${tipo.nombre}`;
             header.appendChild(boton);
 
             let cuerpo = document.createElement("div");
-            cuerpo.className = "align-items-center my-3 accordion-collapse collapse show";
-            cuerpo.setAttribute("style","background-color: transparent !important;");
+            cuerpo.className = "align-items-center accordion-collapse collapse";
+            cuerpo.setAttribute("style", "background-color: transparent !important;");
             cuerpo.id = `${nombreFormat}-body`;
 
-            // Agregar filas según el tipo (similar al código original)
-            if (tipo.nombre_tipo_gasto === "Servicio de Gas") {
-                cuerpo.appendChild(agregarGastoFijo("GAS LARA", true));
-            } else if (tipo.nombre_tipo_gasto === "Servicios Públicos" || tipo.nombre_tipo_gasto === "Servicios Publicos") {
-                cuerpo.appendChild(agregarGastoFijo("CORPOELEC"));
-                cuerpo.appendChild(agregarGastoFijo("HIDROLARA", true));
-            } else if (tipo.nombre_tipo_gasto === "Personal y Obligaciones Laborales") {
-                cuerpo.appendChild(agregarGastoFijo("Trabajadora Residencial"));
-                cuerpo.appendChild(agregarGastoFijo("Bono de alimentacion"));
-                cuerpo.appendChild(agregarGastoFijo("Bono de ayuda"));
-                cuerpo.appendChild(agregarGastoFijo("Seguridad Social", true));
-            } else if (tipo.nombre_tipo_gasto === "Mantenimientos y Reparaciones") {
-                cuerpo.appendChild(agregarGastoFijo("Mantenimiento ascensor", true));
-            } else if (tipo.nombre_tipo_gasto === "Suministros de Limpieza y Operacion") {
-                cuerpo.appendChild(agregarGastoFijo("Bolsas de Basura"));
-                cuerpo.appendChild(agregarGastoFijo("Productos de Limpieza", true));
-            } else if (tipo.nombre_tipo_gasto === "Gastos Administrativos y Financieros") {
-                cuerpo.appendChild(agregarGastoFijo("Comisiones Bancarias"));
-                cuerpo.appendChild(agregarGastoFijo("Exencion cuota del administrador", true));
-            } else {
-                cuerpo.appendChild(agregarGastoFijo("", true));
-            }
+            // Renderizar un input por cada concepto extraído de la BD
+            tipo.conceptos.forEach(concepto => {
+                cuerpo.appendChild(crearFilaConcepto(concepto.id, concepto.nombre));
+            });
 
             item.appendChild(header);
             item.appendChild(cuerpo);
@@ -610,67 +428,8 @@ async function llenarDetallesPresupuestos() {
         });
 
         contenedor.appendChild(fragment);
-        asignarEventosDetalles();
-        detalles_presupuestos_base = contenedor.innerHTML; // Guardar para reset
+        detalles_presupuestos_base = contenedor.innerHTML; // Guardar base para resetModal
     });
-}
-
-/**
- * Agrega los datos del formulario (cabecera + detalles) al FormData
- * simulando el comportamiento de inputs con name="arreglo[]"
- * Retorna la cantidad de renglones válidos procesados.
- */
-function empaquetarDatosPresupuesto(formData) {
-    let fecha = document.getElementById('fecha').value;
-    let observacion = document.getElementById("observacion").value || "Sin observación";
-
-    // Cuota de reserva (siempre en Bs.)
-    let input_reserva = document.getElementById("cuota_reserva");
-    let cuota_reserva = 0;
-    if (input_reserva) {
-        cuota_reserva = input_reserva.getAttribute("monto") === "bs" ?
-            input_reserva.value :
-            input_reserva.closest(".row").querySelector("[convertido]").value;
-    }
-
-    // Cabecera
-    formData.append('fecha', fecha);
-    formData.append('cuota_reserva', parseFloat(cuota_reserva || 0));
-    formData.append('observacion', observacion);
-
-    let cantidadDetalles = 0;
-    let acordeones = document.querySelectorAll(".accordion");
-
-    acordeones.forEach(acordion => {
-        let tipo_gasto_id = acordion.getAttribute("id_tipo_gasto");
-        let filas = acordion.querySelectorAll(".accordion-body");
-        
-        filas.forEach(fila => {
-            let input_nombre = fila.querySelector("[type='text']");
-            if (!input_nombre) return;
-            let nombre = input_nombre.value.trim();
-            if (nombre === "") return;
-
-            let input_monto = fila.querySelector("[monto]");
-            let monto = 0;
-            if (input_monto) {
-                monto = input_monto.getAttribute("monto") === "bs" ?
-                    fila.querySelector("[type='number']").value :
-                    fila.querySelector("[convertido]").value;
-            }
-            monto = parseFloat(monto);
-            if (monto <= 0) return;
-
-            // AQUÍ ESTÁ LA MAGIA: Enviamos los campos como arreglos [] para PHP
-            formData.append('nombre[]', nombre);
-            formData.append('monto[]', monto);
-            formData.append('tipo_gasto_id[]', tipo_gasto_id);
-            
-            cantidadDetalles++;
-        });
-    });
-
-    return cantidadDetalles;
 }
 
 /**
@@ -760,36 +519,18 @@ async function prepararFormulario(id) {
         // Marcar detalles existentes
         if (presupuesto.detalles && presupuesto.detalles.length > 0) {
             presupuesto.detalles.forEach(det => {
-                let encontrado = false;
-                // Buscar si ya existe un input de texto con ese nombre (gasto fijo)
-                document.querySelectorAll("[type='text']").forEach(input => {
-                    if (input.value === det.nombre_detalle) {
-                        input.closest(".row").querySelector("[type='number']").value = det.monto;
-                        let convertido = input.closest(".row").querySelector("[convertido]");
-                        convertido.value = (det.monto / tasa_dolar).toFixed(2);
-                        encontrado = true;
-                    }
-                });
-                // Si no es gasto fijo, agregar nueva fila
-                if (!encontrado) {
-                    let acordeon = document.querySelector(`[id_tipo_gasto='${det.tipo_gasto_id}']`);
-                    if (acordeon) {
-                        let botonAgregar = acordeon.querySelector("[accion='agregar']");
-                        if (botonAgregar) {
-                            // Simular clic nativo para crear nueva fila de forma segura
-                            let clickEvent = new MouseEvent('click', { bubbles: true, cancelable: true });
-                            botonAgregar.dispatchEvent(clickEvent);
-                            
-                            // Pequeño delay para asegurar que el DOM se actualizó antes de buscar los inputs
-                            setTimeout(() => {
-                                let nuevosInputs = acordeon.querySelectorAll("[type='text']");
-                                let ultimo = nuevosInputs[nuevosInputs.length - 1];
-                                ultimo.value = det.nombre_detalle;
-                                ultimo.closest(".row").querySelector("[type='number']").value = det.monto;
-                                let convertido = ultimo.closest(".row").querySelector("[convertido]");
-                                convertido.value = (det.monto / tasa_dolar).toFixed(2);
-                            }, 10);
-                        }
+                let fila = document.querySelector(`.fila-concepto[data-concepto-id='${det.concepto_id}']`);
+                if (fila) {
+                    let inputMonto = fila.querySelector("input[type='number']");
+                    let inputConvertido = fila.querySelector("[convertido]");
+                    
+                    inputMonto.value = parseFloat(det.monto).toFixed(2);
+                    inputConvertido.value = (parseFloat(det.monto) / tasa_dolar).toFixed(2);
+                    
+                    // Abrir el acordeón para que el usuario vea dónde hay montos asignados
+                    let colapso = fila.closest('.accordion-collapse');
+                    if (colapso && !colapso.classList.contains('show')) {
+                        new bootstrap.Collapse(colapso, { toggle: true });
                     }
                 }
             });

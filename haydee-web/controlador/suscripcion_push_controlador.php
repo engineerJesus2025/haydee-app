@@ -7,10 +7,10 @@ use haydee\servicios\Sesiones;
 if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
-    $respuesta = null; 
-
-    try {
-        // Validación de reglas
+    // Respuesta por defecto
+    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida', 'datos' => []]; 
+    $codigoExito = HttpCodigo::OK->value;
+        // Validacion
         $reglas = SuscripcionPush::obtenerReglas($operacion);
 
         if (!empty($reglas)) {
@@ -18,11 +18,9 @@ if (isset($_POST["operacion"])) {
             $validador->validarConjunto($_POST, $reglas);
 
             if ($validador->tieneErrores()) {
-            $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::NO_PROCESABLE->value;
-            http_response_code($codigoHttp);
-            echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
-            exit;
-        }
+                $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::NO_PROCESABLE->value;
+                throw new ValidacionException('Datos inválidos.', $validador->obtenerErrores(), $codigoHttp);
+            }
         }
 
         // Instancia del modelo y Asignacion de datos
@@ -32,28 +30,23 @@ if (isset($_POST["operacion"])) {
         $suscripcion->set_p256dh($_POST['p256dh'] ?? '');
         $suscripcion->set_auth($_POST['auth'] ?? '');
 
-        // Ejecutar Operación
-        switch ($operacion) {
-            case 'registrar_suscripcion':
-                $respuesta = $suscripcion->realizar_consulta($operacion);
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                break;
-            default:
-                http_response_code(HttpCodigo::BAD_REQUEST->value);
-                $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
-        }
-
-    } catch (Exception $e) {
-        if (!isset($respuesta['errores'])) { // Si no fue un error de validación
-            http_response_code(HttpCodigo::ERROR_INTERNO->value);
-            error_log("Error en controlador suscripcion_push: " . $e->getMessage());
-            $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
-        }
-    } finally {
-        if ($respuesta !== null) {
-            if (isset($suscripcion)) { $suscripcion->cerrar(); }
-            echo json_encode($respuesta);
-            exit;
-        }
+    // Ejecutar Operación
+    switch ($operacion) {
+        case 'registrar_suscripcion':
+            $respuesta = $suscripcion->realizar_consulta($operacion);
+            break;
+        default:
+            throw new HaydeeException('Operación no implementada', HttpCodigo::BAD_REQUEST->value);
     }
+
+    if (!$respuesta['estatus']) {
+        throw new HaydeeException($respuesta['mensaje'], HttpCodigo::BAD_REQUEST->value);
+    }
+
+    if (isset($suscripcion)) {$suscripcion->cerrar();}
+    Bitacora::cerrarConexionBitacora();
+
+    http_response_code($codigoExito);
+    echo json_encode($respuesta);
+    exit;
 }

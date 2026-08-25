@@ -8,6 +8,7 @@ class ConstructorDetalles
 {
     private const IMAGEN_POR_DEFECTO = 'default.png';
     private const FORMATO_REGEX_IMAGEN = '/^imagen_(\d+)$/';
+
     /**
      * Construye un array de detalles a partir de los datos POST y FILES.
     */
@@ -41,40 +42,39 @@ class ConstructorDetalles
         for ($i = 0; $i < $numFilas; $i++) {
             $detalle = [];
 
-            // Extraer campos escalares
+            // Extraer campos escalares solicitados
             foreach ($config['campos'] as $campo) {
                 $detalle[$campo] = $post[$campo][$i] ?? null;
             }
 
-            // Si el método de pago requiere datos bancarios
-            $metodoPago = $detalle[$config['metodo_pago_campo']] ?? '';
-            
-            $metodoNormalizado = strtoupper(trim($metodoPago)); 
-            
-            $esBancario = in_array($metodoNormalizado, $config['metodos_con_archivo']);
+            // Solo procesar lógica bancaria/imágenes si el método de pago es parte de los campos
+            if (in_array($config['metodo_pago_campo'], $config['campos'])) {
+                $metodoPago = $detalle[$config['metodo_pago_campo']] ?? '';
+                $metodoNormalizado = strtoupper(trim($metodoPago)); 
+                $esBancario = in_array($metodoNormalizado, $config['metodos_con_archivo']);
 
-            if ($esBancario) {
-                foreach ($config['bancarios'] as $campoBan) {
-                    $detalle[$campoBan] = $post[$campoBan][$i] ?? null;
-                }
-
-                // Procesar imagen
-                if (isset($archivosPorIndice[$i])) {
-                    $nombreImagen = GestorImagenes::subir($archivosPorIndice[$i], $config['carpeta_imagenes'] ?? 'gastos');
-                    $detalle[$config['imagenes']] = $nombreImagen ?: $config['imagen_default'];
-                } else {
-                    if ($esEdicion && isset($post[$config['campo_existente']][$i])) {
-                        $detalle[$config['imagenes']] = $post[$config['campo_existente']][$i];
-                    } else {
-                        $detalle[$config['imagenes']] = $config['imagen_default'];
+                if ($esBancario) {
+                    foreach ($config['bancarios'] as $campoBan) {
+                        $detalle[$campoBan] = $post[$campoBan][$i] ?? null;
                     }
+
+                    // Procesar imagen
+                    if (isset($archivosPorIndice[$i])) {
+                        $nombreImagen = GestorImagenes::subir($archivosPorIndice[$i], $config['carpeta_imagenes'] ?? 'gastos');
+                        $detalle[$config['imagenes']] = $nombreImagen ?: $config['imagen_default'];
+                    } else {
+                        if ($esEdicion && isset($post[$config['campo_existente']][$i])) {
+                            $detalle[$config['imagenes']] = $post[$config['campo_existente']][$i];
+                        } else {
+                            $detalle[$config['imagenes']] = $config['imagen_default'];
+                        }
+                    }
+                } else {
+                    foreach ($config['bancarios'] as $campoBan) {
+                        $detalle[$campoBan] = null;
+                    }
+                    $detalle[$config['imagenes']] = null;
                 }
-            } else {
-                // Si no es bancario, estos campos se dejan como null o se omiten
-                foreach ($config['bancarios'] as $campoBan) {
-                    $detalle[$campoBan] = null;
-                }
-                $detalle[$config['imagenes']] = null;
             }
 
             $detalles[] = $detalle;
@@ -83,14 +83,19 @@ class ConstructorDetalles
         return $detalles;
     }
 
-    /**
-     * Versión simplificada para Gastos con configuración por defecto.
-     */
+    public static function ConstruirConceptosGastos($post)
+    {
+        $config = [
+            'campos' => ['id_concepto', 'nombre_concepto']
+        ];
+        return self::construirDetalles($post, [], $config);
+    }
+
     public static function ConstruirDetallesGastos($post, $files, $esEdicion = false)
     {
         $config = [
             'campos' => ['fecha_detalle', 'monto', 'metodo_pago'],
-            'bancarios' => ['banco_id', 'referencia'],
+            'bancarios' => ['cuenta_id', 'referencia'],
             'imagenes' => 'imagen',
             'metodo_pago_campo' => 'metodo_pago',
             'metodos_con_archivo' => [MetodoPago::TRANSFERENCIA->value, MetodoPago::PAGO_MOVIL->value],
@@ -101,15 +106,11 @@ class ConstructorDetalles
         return self::construirDetalles($post, $files, $config, $esEdicion);
     }
 
-    /**
-     * Versión simplificada para Pagos (ejemplo).
-     */
     public static function ConstruirDetallesPagos($post, $files, $esEdicion = false)
     {
-        // Configuración específica para pagos
         $config = [
             'campos' => ['fecha_pago', 'monto', 'tipo_pago'], 
-            'bancarios' => ['banco_id', 'referencia'],
+            'bancarios' => ['banco_id', 'referencia', 'cuenta_id'],
             'imagenes' => 'imagen',
             'metodo_pago_campo' => 'tipo_pago',
             'metodos_con_archivo' => [MetodoPago::TRANSFERENCIA->value, MetodoPago::PAGO_MOVIL->value],
@@ -119,6 +120,4 @@ class ConstructorDetalles
         ];
         return self::construirDetalles($post, $files, $config, $esEdicion);
     }
-
-    // Se pueden agregar más métodos específicos para Presupuesto o mensualidad
 }

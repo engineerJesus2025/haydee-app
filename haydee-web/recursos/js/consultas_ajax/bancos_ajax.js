@@ -4,7 +4,7 @@
  * Dependencias: utilidades.js
  */
 
-let id_modificar, numero_cuenta_an;
+let id_modificar;
 const permisoModificar = window.PermisosModulo?.modificar || false;
 const permisoEliminar = window.PermisosModulo?.eliminar || false;
 
@@ -32,11 +32,6 @@ document.querySelector("#modal_banco").addEventListener("hide.bs.modal", () => {
     formulario_usar.querySelectorAll('.is-valid').forEach(input => input.classList.remove('is-valid'));
     formulario_usar.querySelectorAll('.is-invalid').forEach(input => input.classList.remove('is-invalid'));
     formulario_usar.querySelectorAll('.w-100').forEach(el => el.textContent = "");
-    
-    // Deshabilitar RIF hasta que se seleccione tipo de documento
-    formulario_usar.querySelector("#rif").setAttribute("disabled", true);
-    
-    numero_cuenta_an = null;
 });
 
 async function consultar() {
@@ -59,13 +54,6 @@ async function consultar() {
         return `<span class="text-muted fw-semibold">
                     <i class="bi bi-upc-scan me-1 opacity-50"></i> ${codigo}
                 </span>`;
-    };
-
-    // Formato para Tipo de Cuenta
-    const formatoTipo = (cell) => {
-        const config = obtenerConfigTipoCuenta(cell.getValue());
-        // Llamamos al helper y le pasamos los parámetros
-        return ComponentesUI.crearSoftBadge(config.color, config.icono, config.texto);
     };
 
     // Formato de Botones
@@ -96,7 +84,6 @@ async function consultar() {
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
         { title: "Banco", field: "nombre_banco", formatter: formatoBanco, minWidth: 150, responsive: 0 },
         { title: "Código", field: "codigo", formatter: formatoCodigo, minWidth: 120 },
-        { title: "Tipo de Cuenta", field: "tipo_cuenta", formatter: formatoTipo, minWidth: 160 },
         {
             title: "Acciones",
             formatter: formatoBotones,
@@ -125,32 +112,16 @@ async function consultar() {
     Tablas.inicializarBuscadorGlobal(tabla_bancos, "busqueda_global", columnas);
 }
 
-// Función que lee la memoria de Tabulator
 function mostrarVistaPrevia(data) {
     // Formatear Nombre del Banco
     let nombreBanco = data.nombre_banco || 'N/A';
     if (nombreBanco !== 'N/A') {
         nombreBanco = nombreBanco.charAt(0).toUpperCase() + nombreBanco.slice(1).toLowerCase();
     }
-    document.getElementById("vp_nombre_banco").textContent = nombreBanco;
+    document.getElementById("detalle_nombre_banco").textContent = nombreBanco;
 
     // Agregar el Código Bancario
-    document.getElementById("vp_codigo").textContent = data.codigo || '---';
-
-    // Formatear Tipo de Cuenta usando el Helper
-    const config = obtenerConfigTipoCuenta(data.tipo_cuenta);
-
-    if (config.texto !== 'N/A') {
-        // Inyectamos el componente limpio
-        document.getElementById("vp_tipo_cuenta").innerHTML = ComponentesUI.crearSoftBadge(config.color, config.icono, config.texto);
-    } else {
-        document.getElementById("vp_tipo_cuenta").textContent = config.texto;
-    }
-
-    // Rellenar el resto de campos normalmente
-    document.getElementById("vp_nro_cuenta").textContent = data.numero_cuenta || 'N/A';
-    document.getElementById("vp_documento").textContent = data.rif || 'N/A';
-    document.getElementById("vp_telefono").textContent = data.telefono_afiliado || 'N/A';
+    document.getElementById("detalle_codigo_banco").textContent = data.codigo || '---';
 
     // Mostramos el modal
     modalDetalles.show();
@@ -173,15 +144,6 @@ async function prepararFormulario(id) {
         // Llenar formulario
         formulario_usar.querySelector("#nombre_banco").value = data.nombre_banco;
         formulario_usar.querySelector("#codigo").value = data.codigo;
-        formulario_usar.querySelector("#tipo_cuenta").value = data.tipo_cuenta;
-        formulario_usar.querySelector("#numero_cuenta").value = data.numero_cuenta;
-        formulario_usar.querySelector("#telefono_afiliado").value = data.telefono_afiliado;
-        // Separar tipo de documento y número
-        let tipoDoc = data.rif.charAt(0);
-        let numeroRif = data.rif.slice(1);
-        formulario_usar.querySelector("#tipo_documento").value = tipoDoc;
-        formulario_usar.querySelector("#rif").value = numeroRif;
-        formulario_usar.querySelector("#rif").removeAttribute("disabled");
 
         if (permisoModificar != 1) {
             boton_formulario.setAttribute("hide", true);
@@ -196,7 +158,6 @@ async function prepararFormulario(id) {
         document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-bank2");
 
         id_modificar = id;
-        numero_cuenta_an = data.numero_cuenta;
 
         modal.show();
     });
@@ -207,10 +168,6 @@ async function prepararFormulario(id) {
  */
 async function registrar() {
     let datos = new FormData(formulario_usar);
-    // Construir RIF completo
-    let tipo = datos.get('tipo_documento');
-    let rifNum = datos.get('rif');
-    datos.set('rif', tipo + rifNum);
     datos.append('operacion', 'registrar_banco');
     
     let respuesta = await Peticiones.enviar(datos);
@@ -226,9 +183,6 @@ async function registrar() {
  */
 async function modificar() {	
     let datos = new FormData(formulario_usar);
-    let tipo = datos.get('tipo_documento');
-    let rifNum = datos.get('rif');
-    datos.set('rif', tipo + rifNum);
     datos.append("id_banco", id_modificar);
     datos.append('operacion', 'modificar_banco');
 
@@ -264,32 +218,7 @@ async function eliminar(id) {
     });
 }
 
-function obtenerConfigTipoCuenta(tipo) {
-    let texto = tipo || "N/A";
-    let color = "secondary";
-    let icono = "bi-wallet2";
-
-    const tipoLower = texto.toLowerCase();
-
-    if (tipoLower === "corriente") {
-        color = "info";
-        icono = "bi-briefcase-fill";
-    } else if (tipoLower === "ahorro") {
-        color = "success";
-        icono = "bi-safe2-fill";
-    } else if (tipoLower.includes("libre convertibilidad")) {
-        // para cuentas en divisas como Libre Convertibilidad USD/EUR (por si aplica en un futuro loco)
-        color = "warning"; 
-        icono = "bi-currency-exchange";
-    }
-
-    return { color, icono, texto };
-}
-
-
-// ============================================================
 // MÓDULO DE AYUDA INTERACTIVA
-// ============================================================
 document.addEventListener('DOMContentLoaded', () => {
     const stepsPrincipal = [
             { element: '.page-header', popover: { title: 'Cuentas Bancarias', description: 'Aquí gestionas los bancos receptores donde el condominio recibe los pagos.', side: "bottom", align: 'center' } },
@@ -300,10 +229,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const stepsModal = [
             { element: '#nombre_banco', popover: { title: 'Entidad Bancaria', description: 'Nombre del banco o plataforma (ej: Banco de Venezuela, Banesco, Binance).', side: 'bottom', align: 'start' } },
             { element: '#codigo', popover: { title: 'Código Bancario', description: 'Los primeros 4 dígitos que identifican al banco (ej: 0102).', side: 'bottom', align: 'start' } },
-            { element: '#numero_cuenta', popover: { title: 'Número de Cuenta', description: 'El número completo de la cuenta o la dirección de la billetera/correo (si es Zelle/Paypal).', side: 'top', align: 'start' } },
-            { element: '#tipo_cuenta', popover: { title: 'Tipo de Cuenta', description: 'El tipo de cuenta utilizado (si es Ahorro o Corriente).', side: 'top', align: 'start' } },
-            { element: '#telefono_afiliado', popover: { title: 'Teléfono Afiliado', description: 'Número de teléfono asociado a la cuenta para validaciones de Pago Móvil.', side: 'top', align: 'start' } },
-            { element: '#rif', popover: { title: 'Titular', description: 'Cédula o RIF del titular de la cuenta bancaria.', side: 'top', align: 'start' } },
             { element: '#boton_formulario', popover: { title: 'Guardar', description: 'Registra la cuenta para empezar a recibir operaciones.', side: 'top', align: 'center' } }
         ];
 

@@ -86,6 +86,12 @@ function resetModalPagos() {
 
     // Restablecer tasa
     document.querySelectorAll(".tasa_dolar").forEach(input => input.value = tasa_dolar);
+    
+    let alertaExistente = document.getElementById("alerta_sin_deuda");
+    if (alertaExistente) alertaExistente.remove();
+    document.getElementById("detalles_container").classList.remove("d-none");
+    document.getElementById("boton_formulario").classList.remove("d-none");
+    document.getElementById("agregar_detalle").classList.remove("d-none");
 }
 
 function agregarDetallePago() {
@@ -179,8 +185,9 @@ function obtenerConfigEstadoPago(estado) {
     return { color, icono, texto: est };
 }
 
-async function cargarMensualidades() {
-    let id_apartamento = this.value;
+async function cargarMensualidades(id_fuerza = null) {
+    // Soporta ser disparado por el DOM (this.value) o por código pasándole el parámetro
+    let id_apartamento = (this && typeof this.value !== 'undefined') ? this.value : id_fuerza;
     if (!id_apartamento) return;
 
     let formData = new FormData();
@@ -194,6 +201,7 @@ async function cargarMensualidades() {
 
         const meses = ["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
         let fragment = document.createDocumentFragment();
+        let hayPendientes = false;
 
         (respuestaServidor.datos || []).forEach(m => {
             let monto_base = parseFloat(m.monto);
@@ -209,6 +217,7 @@ async function cargarMensualidades() {
             let saldo_deuda = Math.max(0, monto_total - total_pagado);
 
             if (saldo_deuda > 0) {
+                hayPendientes = true;
                 let opcion = document.createElement("option");
                 opcion.value = m.id_mensualidad;
                 opcion.textContent = `${meses[parseInt(m.mes)]}/${m.anio} - Restante: ${saldo_deuda.toFixed(2)} Bs`;
@@ -218,7 +227,31 @@ async function cargarMensualidades() {
         });
 
         select_mensualidades.appendChild(fragment);
-        select_mensualidades.removeAttribute('disabled');
+
+        // Ocultar o mostrar formulario
+        let formDetalles = document.getElementById("detalles_container");
+        let btnGuardar = document.getElementById("boton_formulario");
+        let btnAgregarDetalle = document.getElementById("agregar_detalle");
+        let alertaExistente = document.getElementById("alerta_sin_deuda");
+        if (alertaExistente) alertaExistente.remove();
+
+        if (!hayPendientes) {
+            formDetalles.classList.add("d-none");
+            btnGuardar.classList.add("d-none");
+            if (btnAgregarDetalle) btnAgregarDetalle.classList.add("d-none");
+            select_mensualidades.setAttribute("disabled", "true");
+
+            let alerta = document.createElement("div");
+            alerta.id = "alerta_sin_deuda";
+            alerta.className = "alert alert-success mx-3 mt-3 fw-bold shadow-sm";
+            alerta.innerHTML = "<i class='bi bi-check-circle-fill me-2'></i>Este apartamento no presenta mensualidades pendientes.";
+            formDetalles.parentNode.insertBefore(alerta, formDetalles);
+        } else {
+            formDetalles.classList.remove("d-none");
+            btnGuardar.classList.remove("d-none");
+            if (btnAgregarDetalle) btnAgregarDetalle.classList.remove("d-none");
+            select_mensualidades.removeAttribute('disabled');
+        }
     });
 }
 
@@ -338,6 +371,7 @@ function recolectarDatosFormData(operacion, id_pago = null) {
         if (tipo === "TRANSFERENCIA" || tipo === "PAGO MOVIL") {
             formData.append("referencia[]", bloque.querySelector(".referencia").value);
             formData.append("banco_id[]", bloque.querySelector(".banco_id").value);
+            formData.append("cuenta_id[]", bloque.querySelector(".cuenta_id").value);
             
             let inputImagen = bloque.querySelector(".imagen");
             if (inputImagen && inputImagen.files.length > 0) {
@@ -349,6 +383,7 @@ function recolectarDatosFormData(operacion, id_pago = null) {
         } else {
             formData.append("referencia[]", "");
             formData.append("banco_id[]", "");
+            formData.append("cuenta_id[]", "");
             formData.append("imagen_existente[]", "");
         }
     });
@@ -539,7 +574,7 @@ async function prepararFormulario(id) {
     datos.append('operacion', 'consultar_pago');
 
     let respuesta = await Peticiones.enviar(datos, "", true);
-    Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
+    Validador.procesarRespuesta(respuesta, async (respuestaServidor) => { 
         let cabecera = respuestaServidor.datos;
         
         // Llenar Cabecera
@@ -547,15 +582,34 @@ async function prepararFormulario(id) {
         document.getElementById("observacion").value = cabecera.observacion;
         document.getElementById("apartamento_id").value = cabecera.apartamento_id;
         
-        // Forzamos la carga de mensualidades y seteamos la seleccionada manualmente
+        await cargarMensualidades(cabecera.apartamento_id);
+        
         let mensualidadSelect = document.getElementById("mensualidad_id");
-        mensualidadSelect.innerHTML = `<option value="${cabecera.mensualidad_id}" selected>Mensualidad Vinculada</option>`;
-        mensualidadSelect.removeAttribute("disabled");
+        mensualidadSelect.value = cabecera.mensualidad_id;
+
+        // Si la mensualidad ya está saldada y no vino de la BD, la reinyectamos manualmente
+        if (!mensualidadSelect.value) {
+            let opcionVinculada = document.createElement("option");
+            opcionVinculada.value = cabecera.mensualidad_id;
+            opcionVinculada.textContent = `Mensualidad Vinculada (ID: ${cabecera.mensualidad_id})`;
+            opcionVinculada.setAttribute("data-monto", cabecera.monto_mensualidad);
+            mensualidadSelect.appendChild(opcionVinculada);
+            mensualidadSelect.value = cabecera.mensualidad_id;
+
+            document.getElementById("detalles_container").classList.remove("d-none");
+            document.getElementById("boton_formulario").classList.remove("d-none");
+            document.getElementById("agregar_detalle").classList.remove("d-none");
+
+            mensualidadSelect.removeAttribute("disabled");
+            let alertaExistente = document.getElementById("alerta_sin_deuda");
+            if (alertaExistente) alertaExistente.remove();
+        }
+
         document.getElementById("monto_mensualidad").value = cabecera.monto_mensualidad;
 
         // Llenar Detalles
         const container = document.getElementById("detalles_container");
-        container.innerHTML = ""; // Limpiar
+        container.innerHTML = ""; 
         const plantilla = document.getElementById("template_detalle_pago");
 
         cabecera.detalles.forEach((det, index) => {
@@ -581,13 +635,15 @@ async function prepararFormulario(id) {
             let selectTipo = nuevoBloque.querySelector(".tipo_pago");
             selectTipo.value = det.tipo_pago;
 
-            // Disparar lógica de mostrar/ocultar
             actualizarVisibilidadMetodo(selectTipo);
 
-            if (det.tipo_pago === "Transferencia" || det.tipo_pago === "Pago Movil") {
+            let tipoPagoNormalizado = det.tipo_pago.toUpperCase();
+            
+            if (tipoPagoNormalizado === "TRANSFERENCIA" || tipoPagoNormalizado === "PAGO MOVIL") {
                 nuevoBloque.querySelector(".referencia").value = det.referencia;
                 nuevoBloque.querySelector(".banco_id").value = det.banco_id || "";
-
+                nuevoBloque.querySelector(".cuenta_id").value = det.cuenta_id || "";
+    
                 if (det.imagen && det.imagen !== "default.png") {
                     nuevoBloque.querySelector(".nombre_imagen_cargada").textContent = `Comprobante: ${det.imagen}`;
                     let inputOculto = document.createElement("input");
@@ -605,14 +661,12 @@ async function prepararFormulario(id) {
 
         boton_formulario.setAttribute("modificar", "true");
         boton_formulario.setAttribute("id_modificar", id);
-        // boton_formulario.textContent = "Guardar Cambios";
         document.getElementById('texto_boton_formulario').textContent = 'Guardar Cambios';
         document.getElementById("titulo_modal").textContent = "Modificar Pago";
         document.getElementById("icono_titulo_modal").setAttribute("class","bi bi-currency-exchange");
         
         modal.show();
     });
-
 }
 
 
@@ -685,7 +739,8 @@ async function mostrarVistaPrevia(id) {
             { title: "Monto BS", field: "monto", formatter: (cell) => `${cell.getValue()} Bs`, minWidth: 100 },
             { title: "Monto $", field: "tasa_dolar", formatter: formadoMontoDolar, minWidth: 100 },
             { title: "Método", field: "tipo_pago",  formatter: formadoMetodoPago,minWidth: 120 },
-            { title: "Banco", field: "nombre_banco", formatter: (cell) => cell.getValue() || '<span class="text-muted">N/A</span>', minWidth: 120 },
+            { title: "Banco Origen", field: "banco_emisor", formatter: (cell) => cell.getValue() || '<span class="text-muted">N/A</span>', minWidth: 120 },
+            { title: "Cuenta Destino", field: "cuenta_receptora", formatter: (cell) => cell.getValue() || '<span class="text-muted">N/A</span>', minWidth: 150 },
             { title: "Referencia", field: "referencia", formatter: (cell) => cell.getValue() || '<span class="text-muted">N/A</span>', minWidth: 120 },
             { 
                 title: "Comprobante", 
@@ -733,11 +788,13 @@ async function ejecutarLecturaOCR(inputImagen) {
     const inputMonto = bloque.querySelector('.monto');
     const inputRef = bloque.querySelector('.referencia');
     const selectBanco = bloque.querySelector('.banco_id');
+    const inputFecha = bloque.querySelector('.fecha_pago');
 
     // Bloqueo de UI
     inputMonto.disabled = true;
     inputRef.disabled = true;
     selectBanco.disabled = true;
+    if (inputFecha) inputFecha.disabled = true; 
 
     // Toast Informativo
     Notificaciones.mostrarToast('info', 'Analizando comprobante', 'Extrayendo datos con Inteligencia Artificial...');
@@ -757,23 +814,35 @@ async function ejecutarLecturaOCR(inputImagen) {
             Notificaciones.mostrarToast('success', '¡Comprobante leído!', 'Campos autocompletados con alta precisión.');
             
             // Llenar monto y disparar el cálculo de dólares
-            inputMonto.value = data.monto;
-            inputMonto.dispatchEvent(new Event('input', { bubbles: true })); 
+            if (data.monto) {
+                inputMonto.value = data.monto;
+                inputMonto.dispatchEvent(new Event('input', { bubbles: true })); 
+            }
             
             // Llenar referencia y disparar su validación AJAX
-            inputRef.value = data.referencia;
-            inputRef.dispatchEvent(new Event('keyup', { bubbles: true }));
+            if (data.referencia) {
+                inputRef.value = data.referencia;
+                inputRef.dispatchEvent(new Event('keyup', { bubbles: true }));
+            }
+
+            // Llenar fecha 
+            if (data.fecha && inputFecha) {
+                inputFecha.value = data.fecha;
+                inputFecha.dispatchEvent(new Event('change', { bubbles: true }));
+            }
 
             // Buscar el banco
-            Array.from(selectBanco.options).forEach(opt => {
-                if (opt.dataset.codigo === data.banco) {
-                    selectBanco.value = opt.value;
-                }
-            });
-            selectBanco.dispatchEvent(new Event('change', { bubbles: true }));
+            if (data.banco) {
+                Array.from(selectBanco.options).forEach(opt => {
+                    if (opt.dataset.codigo === data.banco) {
+                        selectBanco.value = opt.value;
+                    }
+                });
+                selectBanco.dispatchEvent(new Event('change', { bubbles: true }));
+            }
 
         } else {
-            // Falló por baja confianza
+            // Falló por baja confianza pero se intenta recuperar lo parcial
             Notificaciones.mostrarToast('warning', 'Revisión manual sugerida', data.mensaje);
             
             if (data.monto) {
@@ -784,6 +853,10 @@ async function ejecutarLecturaOCR(inputImagen) {
                 inputRef.value = data.referencia;
                 inputRef.dispatchEvent(new Event('keyup', { bubbles: true }));
             }
+            if (data.fecha && inputFecha) {
+                inputFecha.value = data.fecha;
+                inputFecha.dispatchEvent(new Event('change', { bubbles: true }));
+            }
         }
     } catch (error) {
         console.error("Fallo al procesar el OCR en la vista:", error);
@@ -792,6 +865,7 @@ async function ejecutarLecturaOCR(inputImagen) {
         inputMonto.disabled = false;
         inputRef.disabled = false;
         selectBanco.disabled = false;
+        if (inputFecha) inputFecha.disabled = false; 
     }
 }
 

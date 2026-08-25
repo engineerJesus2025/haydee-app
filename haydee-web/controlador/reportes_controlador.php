@@ -32,13 +32,12 @@ if (isset($_POST["operacion"])) {
 
         if ($validador->tieneErrores()) {
             $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::NO_PROCESABLE->value;
-            http_response_code($codigoHttp);
-            echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
-            exit;
+            throw new ValidacionException('Datos inválidos.', $validador->obtenerErrores(), $codigoHttp);
         }
     }
 
-    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
+    // Respuesta por defecto
+    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida', 'datos' => []];
     
     // INSTANCIAR SERVICIO DE REPORTES
     $reportesServicio = new Reportes();
@@ -60,66 +59,55 @@ if (isset($_POST["operacion"])) {
     $reportesServicio->set_tipo_residente($_POST['tipo_residente'] ?? 'todos');
     $reportesServicio->set_servicios($_POST['servicios'] ?? []);
     $reportesServicio->set_filtro_tiempo($_POST['filtro_tiempo'] ?? 'todo');
-    
-    try {
-        switch ($operacion) {
-            // ---- Operaciones Delegadas al Servicio Reportes ----
-            case 'reporte_ingresos_egresos_completo':
-                $respuesta = $reportesServicio->realizar_consulta('reporte_ingresos_egresos_completo');
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                break;
+    $codigoExito = HttpCodigo::OK->value;
+    switch ($operacion) {
+        // ---- Operaciones Delegadas al Servicio Reportes ----
+        case 'reporte_ingresos_egresos_completo':
+            $respuesta = $reportesServicio->realizar_consulta('reporte_ingresos_egresos_completo');
+            break;
 
-            case 'obtener_datos_reporte_mensual':
-                $respuesta = $reportesServicio->realizar_consulta('obtener_datos_reporte_mensual');
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                break;
+        case 'obtener_datos_reporte_mensual':
+            $respuesta = $reportesServicio->realizar_consulta('obtener_datos_reporte_mensual');
+            break;
 
-            case 'listar_meses_con_gastos':
-                $respuesta = $reportesServicio->realizar_consulta('listar_meses_con_gastos');
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                break;
+        case 'listar_meses_con_gastos':
+            $respuesta = $reportesServicio->realizar_consulta('listar_meses_con_gastos');
+            break;
 
-            case 'consultar_personas_solvencia':
-                $respuesta = $reportesServicio->realizar_consulta('consultar_personas_solvencia');
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                break;
+        case 'consultar_personas_solvencia':
+            $respuesta = $reportesServicio->realizar_consulta('consultar_personas_solvencia');
+            break;
 
-            case 'consultar_personas_residencia':
-                $respuesta = $reportesServicio->realizar_consulta('consultar_propietarios');
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                break;
+        case 'consultar_personas_residencia':
+            $respuesta = $reportesServicio->realizar_consulta('consultar_propietarios');
+            break;
 
-            case 'consultar_habitantes':
-                $respuesta = $reportesServicio->realizar_consulta('obtener_datos_habitantes');
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                break;
+        case 'consultar_habitantes':
+            $respuesta = $reportesServicio->realizar_consulta('obtener_datos_habitantes');
+            break;
 
-            // ---- Operaciones Utilitarias Simples ----
-            case 'consultar_meses_mensualidad':
-                $respuesta = $mensualidadModel->realizar_consulta('consultar_meses_mensualidad');
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                break;
+        // ---- Utilitarias Simples ----
+        case 'consultar_meses_mensualidad':
+            $respuesta = $mensualidadModel->realizar_consulta('consultar_meses_mensualidad');
+            break;
 
-            default:
-                http_response_code(HttpCodigo::BAD_REQUEST->value);
-                $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
-        }
-    } catch (Exception $e) {
-        http_response_code(HttpCodigo::ERROR_INTERNO->value);
-        error_log("Error en controlador reportes (POST): " . $e->getMessage());
-        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
-    } finally {
-        if ($respuesta !== null) {
-            // Cerrar conexiones
-            $reportesServicio->cerrar();
-            $mensualidadModel->cerrar();
-            $gastosModel->cerrar();
-            $habitantesModel->cerrar();
-
-            echo json_encode($respuesta);
-            exit;
-        }
+        default:
+            throw new HaydeeException('Operación no implementada', HttpCodigo::BAD_REQUEST->value);
     }
+
+    if (!$respuesta['estatus']) {
+        throw new HaydeeException($respuesta['mensaje'], HttpCodigo::BAD_REQUEST->value);
+    }
+
+    if (isset($reportesServicio)) {$reportesServicio->cerrar();}
+    if (isset($mensualidadModel)) {$mensualidadModel->cerrar();}
+    if (isset($gastosModel)) {$gastosModel->cerrar();}
+    if (isset($habitantesModel)) {$habitantesModel->cerrar();}
+    Bitacora::cerrarConexionBitacora();
+
+    http_response_code($codigoExito);
+    echo json_encode($respuesta);
+    exit;
 }
 
 // Validaciones AJAX
@@ -136,15 +124,18 @@ if (isset($_POST["validar"])) {
             if ($tabla === 'habitantes' && $campo === 'id_habitante' && !empty($valor)) {
                 $habitantesModel->set_id_habitante($valor);
                 $respuesta = $habitantesModel->realizar_consulta('existe_habitante');
-                echo json_encode($respuesta['estatus'] ? ['estatus' => $respuesta['existe']] : ['estatus' => false, 'mensaje' => $respuesta['mensaje']]);
+                $salida = $respuesta['estatus'] ? ['estatus' => $respuesta['existe']] : ['estatus' => false, 'mensaje' => $respuesta['mensaje']];
             } else {
-                echo json_encode(['estatus' => false, 'mensaje' => 'Validación no soportada']);
+                throw new HaydeeException('Validación no soportada o faltan parámetros.', HttpCodigo::BAD_REQUEST->value);
             }
             break;
+            
         default:
-                http_response_code(HttpCodigo::BAD_REQUEST->value);
-            echo json_encode(['estatus' => false, 'mensaje' => 'Validación no reconocida']);
+            throw new HaydeeException('Validación no reconocida', HttpCodigo::BAD_REQUEST->value);
     }
+    
+    http_response_code(HttpCodigo::OK->value);
+    echo json_encode($salida);
     exit;
 }
 

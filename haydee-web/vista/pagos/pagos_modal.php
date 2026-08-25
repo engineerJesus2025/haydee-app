@@ -82,7 +82,6 @@
                                         </div>
                                     </div>
 
-                                    <!-- El capture ahora tiene un tercio completo del modal en PC, espacio de sobra -->
                                     <div class="col-12 mb-3 campos-bancarios d-none">
                                         <label class="form-label text-primary fw-bold"><i class="bi bi-magic me-1"></i> Subir Comprobante <span class="text-danger">*</span></label>
                                         <div class="input-group has-validation">
@@ -95,7 +94,7 @@
                                 </div>
 
                                 <div class="row campos-bancarios d-none mt-2">
-                                    <div class="col-md-6 mb-3">
+                                    <div class="col-lg-4 col-md-6 mb-3">
                                         <label class="form-label fw-bold">Banco Emisor <span class="text-danger">*</span></label>
                                         <div class="input-group has-validation">
                                             <span class="input-group-text"><i class="bi bi-bank"></i></span>
@@ -110,12 +109,28 @@
                                             <span class="invalid-feedback"></span>
                                         </div>
                                     </div>
+
+                                    <div class="col-lg-4 col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Cuenta Destino <span class="text-danger">*</span></label>
+                                        <div class="input-group has-validation">
+                                            <span class="input-group-text"><i class="bi bi-safe"></i></span>
+                                            <select class="form-select cuenta_id" name="cuenta_id[]">
+                                                <option selected hidden value="">Cuenta del condominio</option>
+                                                <?php foreach ($registro_cuentas as $cta): ?>
+                                                    <option value="<?php echo $cta["id_cuenta"] ?>">
+                                                        <?php echo $cta["nombre_banco"] . ' - ' . $cta["numero_cuenta"] ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                            <span class="invalid-feedback"></span>
+                                        </div>
+                                    </div>
                                     
-                                    <div class="col-md-6 mb-3">
+                                    <div class="col-lg-4 col-md-12 mb-3">
                                         <label class="form-label fw-bold">Nro. Referencia <span class="text-danger">*</span></label>
                                         <div class="input-group has-validation">
                                             <span class="input-group-text"><i class="bi bi-123"></i></span>
-                                            <input type="text" class="form-control referencia" name="referencia[]" placeholder="Introduzca el número de operación completo">
+                                            <input type="text" class="form-control referencia" name="referencia[]" placeholder="Nro de operación">
                                             <span class="invalid-feedback"></span>
                                         </div>
                                     </div>
@@ -242,15 +257,14 @@
     </div>
 
     <!-- Datos Bancarios -->
-    <div class="row campos-bancarios d-none">
-        <div class="col-lg-6 col-md-6 mb-3">
-            <label class="form-label">Banco Emisor <span class="text-danger">*</span></label>
+    <div class="row campos-bancarios d-none mt-2">
+        <div class="col-lg-4 col-md-6 mb-3">
+            <label class="form-label fw-bold">Banco Emisor <span class="text-danger">*</span></label>
             <div class="input-group has-validation">
                 <span class="input-group-text"><i class="bi bi-bank"></i></span>
                 <select class="form-select banco_id" name="banco_id[]">
                     <option selected hidden value="">Escoja el Banco</option>
                     <?php foreach ($registro_banco as $banco): ?>
-                        <!-- Inyectamos el atributo data-codigo -->
                         <option value="<?php echo $banco["id_banco"] ?>" data-codigo="<?php echo $banco["codigo"] ?>">
                             <?php echo $banco["nombre_banco"] ?>
                         </option>
@@ -259,11 +273,28 @@
                 <span class="invalid-feedback"></span>
             </div>
         </div>
-        <div class="col-lg-6 col-md-6 mb-3">
-            <label class="form-label">Nro. Referencia <span class="text-danger">*</span></label>
+
+        <div class="col-lg-4 col-md-6 mb-3">
+            <label class="form-label fw-bold">Cuenta Destino <span class="text-danger">*</span></label>
+            <div class="input-group has-validation">
+                <span class="input-group-text"><i class="bi bi-safe"></i></span>
+                <select class="form-select cuenta_id" name="cuenta_id[]">
+                    <option selected hidden value="">Cuenta del condominio</option>
+                    <?php foreach ($registro_cuentas as $cta): ?>
+                        <option value="<?php echo $cta["id_cuenta"] ?>">
+                            <?php echo $cta["nombre_banco"] . ' - ' . $cta["numero_cuenta"] ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <span class="invalid-feedback"></span>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-12 mb-3">
+            <label class="form-label fw-bold">Nro. Referencia <span class="text-danger">*</span></label>
             <div class="input-group has-validation">
                 <span class="input-group-text"><i class="bi bi-123"></i></span>
-                <input type="text" class="form-control referencia" name="referencia[]" placeholder="Últimos 4-6 dígitos">
+                <input type="text" class="form-control referencia" name="referencia[]" placeholder="Nro de operación">
                 <span class="invalid-feedback"></span>
             </div>
         </div>

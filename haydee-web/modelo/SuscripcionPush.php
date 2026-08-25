@@ -14,33 +14,21 @@ class SuscripcionPush extends Conexion
     private $p256dh;
     private $auth;
 
-    // ====================================================================
-    // VALIDACIONES CENTRALIZADAS
-    // ====================================================================
-    public static function obtenerReglas($operacion) {
+    public static function obtenerReglas(string $operacion): array 
+    {
         $reglasGenerales = [
-            'endpoint' => [
-                'regex' => '/^.+$/' // Permite cualquier URL válida del endpoint
-            ],
-            'p256dh' => [
-                'regex' => '/^[A-Za-z0-9\+\/\=_-]+$/' // Base64
-            ],
-            'auth' => [
-                'regex' => '/^[A-Za-z0-9\+\/\=_-]+$/' // Base64
-            ]
+            'endpoint' => ['regex' => '/^.+$/'],
+            'p256dh'   => ['regex' => '/^[A-Za-z0-9\+\/\=_-]+$/'],
+            'auth'     => ['regex' => '/^[A-Za-z0-9\+\/\=_-]+$/']
         ];
 
-        // Definimos qué campos se validan en cada operación
         $camposPorOperacion = [
-            'registrar_suscripcion'  => ['endpoint', 'p256dh', 'auth']
+            'registrar_suscripcion' => ['endpoint', 'p256dh', 'auth']
         ];
 
-        // Si la operación existe en nuestro mapeo, devolvemos solo las reglas de esos campos
-        if (isset($camposPorOperacion[$operacion])) {
-            return array_intersect_key($reglasGenerales, array_flip($camposPorOperacion[$operacion]));
-        }
-
-        return [];
+        return isset($camposPorOperacion[$operacion]) 
+            ? array_intersect_key($reglasGenerales, array_flip($camposPorOperacion[$operacion])) 
+            : [];
     }
 
     // GETTERS Y SETTERS
@@ -49,8 +37,7 @@ class SuscripcionPush extends Conexion
     public function set_p256dh($p) { $this->p256dh = $p; }
     public function set_auth($a) { $this->auth = $a; }
 
-    // ENRUTADOR
-    public function realizar_consulta($accion)
+    public function realizar_consulta(string $accion): array
     {
         $metodo = '_' . $accion;
         if (!method_exists($this, $metodo)) {
@@ -65,21 +52,16 @@ class SuscripcionPush extends Conexion
         }
     }
 
-    // ====================================================================
-    // MÉTODOS PRIVADOS (LÓGICA)
-    // ====================================================================
-    private function _registrar_suscripcion()
+    private function _registrar_suscripcion(): array
     {
         try {
             $conexion = $this->get_conex(TipoBaseDatos::SEGURIDAD);
             $conexion->beginTransaction();
 
-            $sql_check = "SELECT id_suscripcion FROM suscripciones_push WHERE endpoint = :endpoint";
-            $stmt_check = $conexion->prepare($sql_check);
-            $stmt_check->bindParam(':endpoint', $this->endpoint);
-            $stmt_check->execute();
+            $stmtCheck = $conexion->prepare("SELECT id_suscripcion FROM suscripciones_push WHERE endpoint = :endpoint");
+            $stmtCheck->execute([':endpoint' => $this->endpoint]);
 
-            if ($stmt_check->rowCount() > 0) {
+            if ($stmtCheck->fetchColumn()) {
                 $conexion->rollBack();
                 return ['estatus' => true, 'mensaje' => 'El dispositivo ya estaba registrado en Haydee'];
             }
@@ -88,59 +70,52 @@ class SuscripcionPush extends Conexion
                     VALUES (:usuario_id, :endpoint, :p256dh, :auth)";
             
             $stmt = $conexion->prepare($sql);
-            $stmt->bindParam(':usuario_id', $this->usuario_id);
-            $stmt->bindParam(':endpoint', $this->endpoint);
-            $stmt->bindParam(':p256dh', $this->p256dh);
-            $stmt->bindParam(':auth', $this->auth);
-            $stmt->execute();
+            $stmt->execute([
+                ':usuario_id' => $this->usuario_id,
+                ':endpoint'   => $this->endpoint,
+                ':p256dh'     => $this->p256dh,
+                ':auth'       => $this->auth
+            ]);
             
             $conexion->commit();
             return ['estatus' => true, 'mensaje' => 'Suscripción Push guardada correctamente'];
 
         } catch (PDOException $e) {
-            $conexion->rollBack();
-            error_log("Error en SuscripcionPush::_registrar: " . $e->getMessage());
+            if (isset($conexion) && $conexion->inTransaction()) {
+                $conexion->rollBack();
+            }
+            error_log("Error en SuscripcionPush::_registrar_suscripcion: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al guardar la suscripción del dispositivo'];
         }
     }
 
-    private function _obtener_todos()
+    private function _obtener_todos(): array
     {
         try {
-            $conexion = $this->get_conex(TipoBaseDatos::SEGURIDAD);
-            $sql = "SELECT endpoint, p256dh, auth FROM suscripciones_push";
-            $stmt = $conexion->prepare($sql);
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare("SELECT endpoint, p256dh, auth FROM suscripciones_push");
             $stmt->execute();
-            
-            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $datos];
+            return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
         } catch (PDOException $e) {
             error_log("Error en _obtener_todos: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al obtener las suscripciones.', 'datos' => []];
         }
     }
 
-    // Método para obtener solo los dispositivos de los administradores
-    private function _obtener_admins()
+    private function _obtener_admins(): array
     {
         try {
-            $conexion = $this->get_conex(TipoBaseDatos::SEGURIDAD);
-            
-            $admin = RolSistema::ADMINISTRADOR->value;
-            $superAdmin = RolSistema::SUPER_ADMIN->value;
-
             $sql = "SELECT sp.endpoint, sp.p256dh, sp.auth 
                     FROM suscripciones_push sp
                     INNER JOIN usuarios u ON sp.usuario_id = u.id_usuario
                     WHERE u.rol_id IN (:admin, :superadmin)";
             
-            $stmt = $conexion->prepare($sql);
-            $stmt->bindValue(':admin', $admin, PDO::PARAM_INT);
-            $stmt->bindValue(':superadmin', $superAdmin, PDO::PARAM_INT);
-            $stmt->execute();
+            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
+            $stmt->execute([
+                ':admin'      => RolSistema::ADMINISTRADOR->value,
+                ':superadmin' => RolSistema::SUPER_ADMIN->value
+            ]);
             
-            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $datos];
+            return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
         } catch (PDOException $e) {
             error_log("Error en _obtener_admins: " . $e->getMessage());
             return ['estatus' => false, 'mensaje' => 'Error al obtener suscripciones de administradores.', 'datos' => []];

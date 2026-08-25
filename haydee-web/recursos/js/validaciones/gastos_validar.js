@@ -4,11 +4,11 @@ document.addEventListener("DOMContentLoaded", function () {
         selectClasificacion.addEventListener("change", function () { Validador.evaluarSelect(this.id); });
     }
 
-    const selectTipoGasto = document.getElementById("tipo_gasto_id");
-    if (selectTipoGasto) {
-        selectTipoGasto.addEventListener("change", async function () {
-            if (!Validador.evaluarSelect(this.id)) return;
-            await Validador.verificarExistenciaEnServidor('validar_clave_foranea', { tabla: 'tipo_gasto', nombre_clave: 'id_tipo_gasto', valor: this.value }, this, 'El tipo seleccionado no existe');
+    const selectConcepto = document.getElementById("concepto_id");
+    if (selectConcepto) {
+        selectConcepto.addEventListener("change", async function () {
+            if (!Validador.evaluarSelect(this.id)) return; 
+            await Validador.verificarExistenciaEnServidor('validar_clave_foranea', { tabla: 'conceptos_gasto', nombre_clave: 'id_concepto', valor: this.value }, this, 'El concepto seleccionado no existe');
         });
     }
 
@@ -20,18 +20,11 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    const inputSolicitud = document.getElementById("solicitud");
-    if (inputSolicitud) {
-        inputSolicitud.addEventListener("change", async function () {
-            if (this.value === "") {
-                EstadoInputs.limpiar(this);
-                return;
-            }
-            if (!Patrones.digitos.test(this.value)) {
-                EstadoInputs.marcarError(this, "ID inválido");
-                return;
-            }
-            await Validador.verificarExistenciaEnServidor('validar_clave_foranea', { tabla: 'solicitudes_gasto', nombre_clave: 'id_solicitud', valor: this.value }, this, 'La solicitud no existe');
+    const selectPresupuesto = document.getElementById("presupuesto_id");
+    if (selectPresupuesto) {
+        selectPresupuesto.addEventListener("change", async function () {
+            if (!Validador.evaluarSelect(this.id)) return;
+            await Validador.verificarExistenciaEnServidor('validar_clave_foranea', { tabla: 'presupuesto', nombre_clave: 'id_presupuesto', valor: this.value }, this, 'El presupuesto seleccionado no existe');
         });
     }
 
@@ -58,16 +51,16 @@ document.addEventListener("DOMContentLoaded", function () {
             else if (target.classList.contains("metodo_pago")) {
                 Validador.evaluarInput(target, Patrones.textoCorto, "Método de pago inválido");
             }
-            else if (target.classList.contains("banco")) {
+            else if (target.classList.contains("cuenta")) {
                 if (target.value === "") {
-                    EstadoInputs.marcarError(target, "Seleccione un banco");
+                    EstadoInputs.marcarError(target, "Seleccione una cuenta");
                     return;
                 }
                 if (!Patrones.digitos.test(target.value)) {
                     EstadoInputs.marcarError(target, "ID inválido");
                     return;
                 }
-                await Validador.verificarExistenciaEnServidor('validar_clave_foranea', { tabla: 'bancos', nombre_clave: 'id_banco', valor: target.value }, target, 'El banco no existe');
+                await Validador.verificarExistenciaEnServidor('validar_clave_foranea', { tabla: 'cuentas_condominio', nombre_clave: 'id_cuenta', valor: target.value }, target, 'La cuenta no existe');
             }
             else if (target.classList.contains("referencia")) {
                 if (Validador.evaluarInput(target, Patrones.referenciaBancaria, "De 4 a 20 caracteres alfanuméricos")) {
@@ -151,14 +144,13 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-}); // Fin DOMContentLoaded
+});
 
 async function validarFormularioCompleto() {
-    // Validar campos principales
     const selectClasificacion = document.getElementById("clasificacion");
-    const selectTipoGasto = document.getElementById("tipo_gasto_id");
+    const selectConcepto = document.getElementById("concepto_id");
     const selectProveedor = document.getElementById("proveedor_id");
-    const inputSolicitud = document.getElementById("solicitud");
+    const selectPresupuesto = document.getElementById("presupuesto_id"); // Añadido
     const inputDescGasto = document.getElementById("descripcion_gasto");
 
     if (!Validador.evaluarSelect(selectClasificacion.id)) {
@@ -166,38 +158,33 @@ async function validarFormularioCompleto() {
         return false;
     }
 
-    if (!Validador.evaluarSelect(selectTipoGasto.id)) {
-        Alertas.mostrar("error", "Error", "Debe seleccionar un tipo de gasto");
+    if (!Validador.evaluarSelect(selectConcepto.id)) {
+        Alertas.mostrar("error", "Error", "Debe seleccionar un concepto de gasto");
         return false;
     }
-    
-    const tipoValido = await Validador.verificarExistenciaEnServidor("validar_clave_foranea", { tabla: "tipo_gasto", nombre_clave: "id_tipo_gasto", valor: selectTipoGasto.value }, selectTipoGasto, "El tipo no existe");
-    if (!tipoValido) return false;
+    const conceptoValido = await Validador.verificarExistenciaEnServidor("validar_clave_foranea", { tabla: "conceptos_gasto", nombre_clave: "id_concepto", valor: selectConcepto.value }, selectConcepto, "El concepto no existe");
+    if (!conceptoValido) return false;
 
     if (!Validador.evaluarSelect(selectProveedor.id)) {
         Alertas.mostrar("error", "Error", "Debe seleccionar un proveedor");
         return false;
     }
-    
     const provValido = await Validador.verificarExistenciaEnServidor("validar_clave_foranea", { tabla: "proveedores", nombre_clave: "id_proveedor", valor: selectProveedor.value }, selectProveedor, "El proveedor no existe");
     if (!provValido) return false;
 
-    if (inputSolicitud && inputSolicitud.value.trim() !== "") {
-        if (!Patrones.digitos.test(inputSolicitud.value)) {
-            EstadoInputs.marcarError(inputSolicitud, "ID inválido");
-            Alertas.mostrar("error", "Error", "La solicitud tiene formato inválido");
-            return false;
-        }
-        const solValida = await Validador.verificarExistenciaEnServidor("validar_clave_foranea", { tabla: "solicitudes_gasto", nombre_clave: "id_solicitud", valor: inputSolicitud.value }, inputSolicitud, "La solicitud no existe");
-        if (!solValida) return false;
+    if (!Validador.evaluarSelect(selectPresupuesto.id)) {
+        Alertas.mostrar("error", "Error", "Debe seleccionar un presupuesto base");
+        return false;
     }
+    const presValido = await Validador.verificarExistenciaEnServidor("validar_clave_foranea", { tabla: "presupuesto", nombre_clave: "id_presupuesto", valor: selectPresupuesto.value }, selectPresupuesto, "El presupuesto no existe");
+    if (!presValido) return false;
 
     if (!Validador.evaluarInput(inputDescGasto, Patrones.textoLargo, "La descripción general debe tener al menos 10 caracteres")) {
         Alertas.mostrar("error", "Error", "La descripción general debe tener al menos 10 caracteres");
         return false;
     }
 
-    // 2. Validar que haya al menos un detalle (El -1 que tenías en el bucle original asumo es por alguna fila "plantilla" oculta. Lo respetamos).
+    // Validar que haya al menos un detalle
     const bloques = document.querySelectorAll(".detalle-gasto");
     if (bloques.length === 0 || (bloques.length === 1 && bloques[0].classList.contains("d-none"))) {
         Alertas.mostrar("error", "Error", "Debe agregar al menos un detalle de gasto");
@@ -249,15 +236,15 @@ async function validarFormularioCompleto() {
             }
             
 
-            const bancoSelect = bloque.querySelector(".banco");
-            if (!Validador.evaluarInput(bancoSelect, Patrones.digitos, "Seleccione un banco")) {
-                Alertas.mostrar("error", `Detalle #${num}`, "Debe seleccionar un banco");
+            const cuentaSelect = bloque.querySelector(".cuenta");
+            if (!Validador.evaluarInput(cuentaSelect, Patrones.digitos, "Seleccione una cuenta")) {
+                Alertas.mostrar("error", `Detalle #${num}`, "Debe seleccionar una cuenta de origen");
                 return false;
             }
-            
-            const banValido = await Validador.verificarExistenciaEnServidor("validar_clave_foranea", { tabla: "bancos", nombre_clave: "id_banco", valor: bancoSelect.value }, bancoSelect, "El banco no existe");
+
+            const banValido = await Validador.verificarExistenciaEnServidor("validar_clave_foranea", { tabla: "cuentas_condominio", nombre_clave: "id_cuenta", valor: cuentaSelect.value }, cuentaSelect, "La cuenta no existe");
             if (!banValido) {
-                Alertas.mostrar("error", `Detalle #${num}`, "El banco seleccionado no existe");
+                Alertas.mostrar("error", `Detalle #${num}`, "La cuenta seleccionada no existe");
                 return false;
             }
 

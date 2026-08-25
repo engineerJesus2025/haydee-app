@@ -2,10 +2,11 @@
 namespace haydee\modelo;
 
 use PDO;
-use PDOException;
 use haydee\enums\Sexo;
 use haydee\enums\TipoVinculo;
 use haydee\enums\TipoBaseDatos;
+use haydee\enums\HttpCodigo;
+use haydee\excepciones\NegocioException;
 
 class Habitantes extends Conexion
 {
@@ -24,9 +25,6 @@ class Habitantes extends Conexion
     private $nuevo_apartamento_id;
     private $nuevo_tipo_vinculo;
 
-    /**
-     * Devuelve las reglas de validación según la operación solicitada.
-     */
     public static function obtenerReglas($operacion) {
         $sexosValidos = implode('|', array_column(Sexo::cases(), 'value'));
         $vinculosValidos = implode('|', array_column(TipoVinculo::cases(), 'value'));
@@ -66,16 +64,11 @@ class Habitantes extends Conexion
             'apartamento_id' => [
                 'regex' => '/^\d+$/',
                 'exists' => ['tabla' => 'apartamentos', 'campo' => 'id_apartamento']
-            ],
-            'nuevo_tipo_vinculo' => [
-                'regex' => "/^($vinculosValidos)$/",
-                'opcional' => true
             ]
         ];
 
-        // Mapeamos las operaciones que involucran a habitantes
         $camposPorOperacion = [
-            'registrar_habitantes' => ['nombre', 'apellido', 'cedula', 'telefono', 'correo', 'fecha_nacimiento', 'sexo', 'apartamento_id', 'tipo_vinculo'],
+            'registrar_habitantes'          => ['nombre', 'apellido', 'cedula', 'telefono', 'correo', 'fecha_nacimiento', 'sexo', 'apartamento_id', 'tipo_vinculo'],
             'modificar_habitantes'          => ['id_habitante', 'nombre', 'apellido', 'cedula', 'telefono', 'correo', 'fecha_nacimiento', 'sexo', 'apartamento_id', 'tipo_vinculo'],
             'eliminar_habitantes'           => ['id_habitante'],
             'consulta_especifica_habitante' => ['id_habitante']
@@ -87,7 +80,6 @@ class Habitantes extends Conexion
         return [];
     }
 
-    // Getters y Setters
     public function set_id_habitante($id) { $this->id_habitante = $id; }
     public function get_id_habitante() { return $this->id_habitante; }
     public function set_nombre($nombre) { $this->nombre = $nombre; }
@@ -107,41 +99,21 @@ class Habitantes extends Conexion
     public function set_activo($activo) { $this->activo = $activo; }
     public function get_activo() { return $this->activo; }
 
-    public function set_filtros_reporte($filtros) {
-        $this->filtros_reporte = $filtros;
-    }
-
+    public function set_filtros_reporte($filtros) { $this->filtros_reporte = $filtros; }
     public function set_nuevo_apartamento_id($id) { $this->nuevo_apartamento_id = $id; }
     public function get_nuevo_apartamento_id() { return $this->nuevo_apartamento_id; }
     public function set_nuevo_tipo_vinculo($tipo) { $this->nuevo_tipo_vinculo = $tipo; }
     public function get_nuevo_tipo_vinculo() { return $this->nuevo_tipo_vinculo; }
 
-    /**
-     * Enruta la acción al método privado correspondiente.
-     */
     public function realizar_consulta($accion)
     {
         $metodo = '_' . $accion;
         if (!method_exists($this, $metodo)) {
-            return ['estatus' => false, 'mensaje' => "La acción '$accion' no está implementada."];
+            throw new NegocioException("La acción '$accion' no está implementada.", HttpCodigo::BAD_REQUEST->value);
         }
-
-        try {
-            return $this->$metodo();
-        } catch (\Exception $e) {
-            error_log("Error en realizar_consulta ($accion): " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Ocurrió un error interno en el servidor.'];
-        }
+        return $this->$metodo();
     }
 
-    // -----------------------------------------------------------------
-    // Métodos privados (acciones)
-    // -----------------------------------------------------------------
-
-    /**
-     * Consulta un habitante específico por ID.
-     // SE USA EN EL MODULO
-     */
     private function _consultar_habitante()
     {
         $sql = "SELECT 
@@ -164,42 +136,35 @@ class Habitantes extends Conexion
             LEFT JOIN habitantes_apartamentos ha ON h.id_habitante = ha.habitante_id
             LEFT JOIN apartamentos a ON ha.apartamento_id = a.id_apartamento
             WHERE h.id_habitante = :id_habitante AND h.activo = 1";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->bindParam(':id_habitante', $this->id_habitante);
-            $stmt->execute();
-            $datos = $stmt->fetch(PDO::FETCH_ASSOC);
-            if (!$datos) {
-                return ['estatus' => false, 'mensaje' => 'Habitante no encontrado'];
-            }
-            return ['estatus' => true, 'datos' => $datos];
-        } catch (PDOException $e) {
-            error_log("Error en _consultar_habitante: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar el habitante'];
+
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->bindParam(':id_habitante', $this->id_habitante);
+        $stmt->execute();
+        $datos = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$datos) {
+            throw new NegocioException('Habitante no encontrado.', HttpCodigo::NO_ENCONTRADO->value);
         }
+
+        return ['estatus' => true, 'datos' => $datos];
     }
 
-    /**
-     * Registra un habitante y su relación con un apartamento en una sola transacción.
-     // SE USA EN EL MODULO
-     */
     private function _registrar_habitantes()
     {
         $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
-        try {
-            // Validar regla de negocio estricta (Evitar 2 propietarios por error de concurrencia)
-            if (!empty($this->nuevo_apartamento_id) && $this->nuevo_tipo_vinculo === 'Propietario') {
-                $sqlCheck = "SELECT COUNT(*) FROM habitantes_apartamentos WHERE apartamento_id = :id AND tipo_vinculo = 'Propietario'";
-                $stmtCheck = $pdo->prepare($sqlCheck);
-                $stmtCheck->execute([':id' => $this->nuevo_apartamento_id]);
-                if ($stmtCheck->fetchColumn() > 0) {
-                    return ['estatus' => false, 'mensaje' => 'Este apartamento ya tiene un propietario asignado.'];
-                }
-            }
 
+        if (!empty($this->nuevo_apartamento_id) && $this->nuevo_tipo_vinculo === 'Propietario') {
+            $sqlCheck = "SELECT COUNT(*) FROM habitantes_apartamentos WHERE apartamento_id = :id AND tipo_vinculo = 'Propietario'";
+            $stmtCheck = $pdo->prepare($sqlCheck);
+            $stmtCheck->execute([':id' => $this->nuevo_apartamento_id]);
+            if ($stmtCheck->fetchColumn() > 0) {
+                throw new NegocioException('Este apartamento ya tiene un propietario asignado.', HttpCodigo::BAD_REQUEST->value);
+            }
+        }
+
+        try {
             $pdo->beginTransaction();
 
-            //  Insertar habitante
             $sql = "INSERT INTO habitantes (nombre, apellido, cedula, telefono, correo, fecha_nacimiento, sexo)
                     VALUES (:nombre, :apellido, :cedula, :telefono, :correo, :fecha_nacimiento, :sexo)";
             $stmt = $pdo->prepare($sql);
@@ -214,7 +179,6 @@ class Habitantes extends Conexion
             ]);
             $idHabitante = $pdo->lastInsertId();
 
-            //  Insertar relación directamente en la tabla puente (Sin llamar a Apartamento.php)
             if (!empty($this->nuevo_apartamento_id)) {
                 $sqlRel = "INSERT INTO habitantes_apartamentos (apartamento_id, habitante_id, tipo_vinculo)
                            VALUES (:aid, :hid, :tipo)";
@@ -228,35 +192,30 @@ class Habitantes extends Conexion
 
             $pdo->commit();
             return ['estatus' => true, 'mensaje' => 'Habitante registrado correctamente', 'lastId' => $idHabitante];
-        } catch (\Exception $e) {
+
+        } catch (\Throwable $e) {
             if ($pdo->inTransaction()) $pdo->rollBack();
-            error_log("Error en _registrar_habitantes: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al registrar el habitante.'];
+            throw $e;
         }
     }
 
-    /**
-     * Edita un habitante y sincroniza su vínculo usando el patrón "Sync" (Borrar y Recrear).
-     // SE USA EN EL MODULO
-     */
     private function _modificar_habitantes()
     {
         $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
-        try {
-            // Validar regla de negocio estricta (Ignorando a sí mismo)
-            if (!empty($this->nuevo_apartamento_id) && $this->nuevo_tipo_vinculo === 'Propietario') {
-                $sqlCheck = "SELECT COUNT(*) FROM habitantes_apartamentos 
-                             WHERE apartamento_id = :aid AND tipo_vinculo = 'Propietario' AND habitante_id != :hid";
-                $stmtCheck = $pdo->prepare($sqlCheck);
-                $stmtCheck->execute([':aid' => $this->nuevo_apartamento_id, ':hid' => $this->id_habitante]);
-                if ($stmtCheck->fetchColumn() > 0) {
-                    return ['estatus' => false, 'mensaje' => 'Este apartamento ya tiene otro propietario asignado.'];
-                }
-            }
 
+        if (!empty($this->nuevo_apartamento_id) && $this->nuevo_tipo_vinculo === 'Propietario') {
+            $sqlCheck = "SELECT COUNT(*) FROM habitantes_apartamentos 
+                         WHERE apartamento_id = :aid AND tipo_vinculo = 'Propietario' AND habitante_id != :hid";
+            $stmtCheck = $pdo->prepare($sqlCheck);
+            $stmtCheck->execute([':aid' => $this->nuevo_apartamento_id, ':hid' => $this->id_habitante]);
+            if ($stmtCheck->fetchColumn() > 0) {
+                throw new NegocioException('Este apartamento ya tiene otro propietario asignado.', HttpCodigo::BAD_REQUEST->value);
+            }
+        }
+
+        try {
             $pdo->beginTransaction();
 
-            // Actualizar datos base del habitante
             $sql = "UPDATE habitantes SET 
                         nombre = :nombre, apellido = :apellido, cedula = :cedula, 
                         telefono = :telefono, correo = :correo, fecha_nacimiento = :fecha_nacimiento, sexo = :sexo
@@ -273,12 +232,10 @@ class Habitantes extends Conexion
                 ':id' => $this->id_habitante
             ]);
 
-            // Patrón Sync: Borramos cualquier vínculo anterior que tuviera este habitante
             $sqlDel = "DELETE FROM habitantes_apartamentos WHERE habitante_id = :hid";
             $stmtDel = $pdo->prepare($sqlDel);
             $stmtDel->execute([':hid' => $this->id_habitante]);
 
-            // Si el formulario envió un apartamento, creamos el nuevo vínculo
             if (!empty($this->nuevo_apartamento_id)) {
                 $sqlRel = "INSERT INTO habitantes_apartamentos (apartamento_id, habitante_id, tipo_vinculo)
                            VALUES (:aid, :hid, :tipo)";
@@ -292,55 +249,30 @@ class Habitantes extends Conexion
 
             $pdo->commit();
             return ['estatus' => true, 'mensaje' => 'Habitante actualizado correctamente'];
-        } catch (\Exception $e) {
+
+        } catch (\Throwable $e) {
             if ($pdo->inTransaction()) $pdo->rollBack();
-            error_log("Error en _modificar_habitantes: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al modificar el habitante.'];
+            throw $e;
         }
     }
 
-    /**
-     * Elimina un habitante (soft delete).
-     // SE USA EN EL MODULO
-     */
     private function _eliminar_habitantes()
     {
         $sql = "UPDATE habitantes SET activo = 0 WHERE id_habitante = :id_habitante";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->bindParam(':id_habitante', $this->id_habitante);
-            $stmt->execute();
-            return ['estatus' => true, 'mensaje' => 'Habitante eliminado correctamente'];
-        } catch (PDOException $e) {
-            error_log("Error en _eliminar: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al eliminar el habitante'];
-        }
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->bindParam(':id_habitante', $this->id_habitante);
+        $stmt->execute();
+        return ['estatus' => true, 'mensaje' => 'Habitante eliminado correctamente'];
     }
 
-    // -----------------------------------------------------------------
-    // Métodos públicos auxiliares (reportes, etc.)
-    // -----------------------------------------------------------------
-
-
-    /**
-     * Verifica si un habitante existe en la base de datos (por su ID).
-     * Retorna un booleano en la llave 'existe'.
-     Se usa en reportes
-     */
     private function _existe_habitante()
     {
         $sql = "SELECT COUNT(*) FROM habitantes WHERE id_habitante = :id_habitante AND activo = 1";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->bindParam(':id_habitante', $this->id_habitante);
-            $stmt->execute();
-            $conteo = $stmt->fetchColumn();
-            
-            return ['estatus' => true, 'existe' => ($conteo > 0)];
-        } catch (PDOException $e) {
-            error_log("Error en _existe_habitante: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al validar la existencia del habitante.'];
-        }
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->bindParam(':id_habitante', $this->id_habitante);
+        $stmt->execute();
+        $conteo = $stmt->fetchColumn();
+        
+        return ['estatus' => true, 'existe' => ($conteo > 0)];
     }
-
 }

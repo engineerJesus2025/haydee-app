@@ -14,11 +14,12 @@ def buscar_patrones_bancarios_universal(texto: str) -> dict:
     datos = {
         "numero_referencia": None,
         "monto_detectado": None,
-        "banco_origen": "Desconocido"
+        "banco_origen": "Desconocido",
+        "fecha_operacion": None  # <-- NUEVO CAMPO
     }
     texto_min = texto.lower()
 
-    texto_sin_receptor = re.sub(r"(?:\ba\s*:|destino)[\s\S]*?(monto|referencia|concepto)", r"\1", texto_min) #[cite: 1]
+    texto_sin_receptor = re.sub(r"(?:\ba\s*:|destino)[\s\S]*?(monto|referencia|concepto)", r"\1", texto_min)
 
     mapa_bancos = {
         "0108": ["provincial", "bbva", "0108", "banco provincial"],
@@ -32,40 +33,32 @@ def buscar_patrones_bancarios_universal(texto: str) -> dict:
         "0163": ["tesoro", "0163", "banco del tesoro"]
     }
 
-    for nombre_banco, palabras_clave in mapa_bancos.items(): #[cite: 1]
-        if any(clave in texto_sin_receptor for clave in palabras_clave): #[cite: 1]
-            datos["banco_origen"] = nombre_banco #[cite: 1]
-            break #[cite: 1]
+    for nombre_banco, palabras_clave in mapa_bancos.items():
+        if any(clave in texto_sin_receptor for clave in palabras_clave):
+            datos["banco_origen"] = nombre_banco
+            break
 
-    # --- CORRECCIÓN 1: Evitar falsos positivos como "transferencias" ---
-    # Cambiamos ([a-z0-9\-]+) por ([0-9oilsz]{6,25}) para asegurar que la captura 
-    # se limite a cadenas que parecen números o dígitos confundidos por el OCR.
+    # --- REFERENCIA ---
     patron_ref = re.search(
         r"(?:(?:nro\.?|número|numero)\s*(?:de\s*)?)?"
         r"(?:ref(?:erenc(?:ia|la))?|operaci[óo]n(?:es)?|doc(?:umento)?|recibo)"
         r"[\s\.\:\-]*(?:es\b)?[\s\.\:\-]*(?:nro\.?|no\.?)?[\s\.\:\-]*"
         r"([0-9oilsz]{6,25})\b", 
         texto_min, re.IGNORECASE
-    ) #[cite: 1]
+    )
     
-    if patron_ref: #[cite: 1]
-        ref_sucia = patron_ref.group(1).strip() #[cite: 1]
-        datos["numero_referencia"] = corregir_errores_ocr_numericos(ref_sucia).upper() #[cite: 1]
-    else: #[cite: 1]
-        numeros_largos = re.findall(r"\b\d{6,20}\b", texto) #[cite: 1]
-        for num in numeros_largos: #[cite: 1]
-            prefijos_ignorados = tuple([claves[-1] for claves in mapa_bancos.values()]) #[cite: 1]
-            if not num.startswith(prefijos_ignorados): #[cite: 1]
-                datos["numero_referencia"] = corregir_errores_ocr_numericos(num) #[cite: 1]
-                break #[cite: 1]
+    if patron_ref:
+        ref_sucia = patron_ref.group(1).strip()
+        datos["numero_referencia"] = corregir_errores_ocr_numericos(ref_sucia).upper()
+    else:
+        numeros_largos = re.findall(r"\b\d{6,20}\b", texto)
+        for num in numeros_largos:
+            prefijos_ignorados = tuple([claves[-1] for claves in mapa_bancos.values()])
+            if not num.startswith(prefijos_ignorados):
+                datos["numero_referencia"] = corregir_errores_ocr_numericos(num)
+                break
 
-    # --- CORRECCIÓN 2: Tolerancia a espacios fantasmas en los montos ---
-    # Permitimos espacios entre los números para que no trunque "4 . 540,00"
-    patron_monto_explicito = re.search(r"monto.*?([\d\.\,]+(?:[ \t]+[\d\.\,]+)*)", texto_min) #[cite: 1]
-    monto_str = None #[cite: 1]
-    
-    # --- CORRECCIÓN 2: Tolerancia a espacios y guiones fantasmas en los montos ---
-    # Permitimos el guion (\-) y espacios en blanco durante la captura inicial
+    # --- MONTO ---
     patron_monto_explicito = re.search(r"monto.*?([\d\.\,\-]+(?:[ \t]+[\d\.\,\-]+)*)", texto_min)
     monto_str = None
     
@@ -77,7 +70,6 @@ def buscar_patrones_bancarios_universal(texto: str) -> dict:
             monto_str = patron_bs.group(1) or patron_bs.group(2)
 
     if monto_str:
-        # Aquí eliminamos los guiones, letras coladas y espacios. Solo quedan números, puntos y comas.
         monto_str = re.sub(r"[^\d\.\,]", "", monto_str) 
         if "." in monto_str and "," in monto_str:
             monto_str = monto_str.replace(".", "").replace(",", ".")
@@ -89,14 +81,20 @@ def buscar_patrones_bancarios_universal(texto: str) -> dict:
         except ValueError:
             pass
 
-    return datos #[cite: 1]
+    patron_fecha = re.search(r"\b(\d{2})[\/\-\s]+(\d{2})[\/\-\s]+(\d{4})\b", texto_min)
+    
+    if patron_fecha:
+        dia = patron_fecha.group(1)
+        mes = patron_fecha.group(2)
+        anio = patron_fecha.group(3)
+        datos["fecha_operacion"] = f"{anio}-{mes}-{dia}"
+
+    return datos
 
 def extraer_texto_de_imagen(ruta_imagen: str) -> tuple[str, float]:
     try:
-        # Silenciamos advertencias para no ensuciar el log
         lector = easyocr.Reader(['es'], gpu=False, verbose=False) 
         
-        # QUITAMOS detail=0 para obtener las coordenadas y la confianza
         bloques = lector.readtext(ruta_imagen) 
         
         if not bloques:

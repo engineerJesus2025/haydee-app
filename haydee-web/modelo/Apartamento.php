@@ -2,16 +2,14 @@
 namespace haydee\modelo;
 
 use PDO;
-use PDOException;
 use haydee\enums\TipoVinculo;
 use haydee\enums\EstadoOcupacion;
 use haydee\enums\TipoBaseDatos;
+use haydee\enums\HttpCodigo;
+use haydee\excepciones\NegocioException;
 
 class Apartamento extends Conexion
 {
-    // ====================================================================
-    // PROPIEDADES
-    // ====================================================================
     private $id_apartamento;
     private $nro_apartamento;
     private $porcentaje_participacion;
@@ -52,12 +50,11 @@ class Apartamento extends Conexion
             ]
         ];
 
-        // Definimos qué campos exige cada operación que realiza este modelo
         $camposPorOperacion = [
             'registrar_apartamento'  => ['nro_apartamento', 'porcentaje_participacion', 'gas', 'agua', 'alquilado'],
             'modificar_apartamento'  => ['id_apartamento', 'nro_apartamento', 'porcentaje_participacion', 'gas', 'agua', 'alquilado'],
             'eliminar_apartamento'   => ['id_apartamento'],
-            'consulta_especifica'   => ['id_apartamento'],
+            'consulta_especifica'    => ['id_apartamento'],
             'consultar_habitantes'   => ['id_apartamento'],
             'obtener_apartamentos_por_correo' => ['correo']
         ];
@@ -67,9 +64,7 @@ class Apartamento extends Conexion
         }
         return [];
     }
-    // ====================================================================
-    // GETTERS Y SETTERS
-    // ====================================================================
+
     public function set_id_apartamento($id) { $this->id_apartamento = $id; }
     public function get_id_apartamento() { return $this->id_apartamento; }
     public function set_nro_apartamento($n) { $this->nro_apartamento = $n; }
@@ -88,228 +83,152 @@ class Apartamento extends Conexion
     public function set_correo($correo) { $this->correo = $correo; }
     public function get_correo() { return $this->correo; }
 
-    // ====================================================================
-    // ENRUTADOR CON MANEJO DE EXCEPCIONES
-    // ====================================================================
     public function realizar_consulta($accion)
     {
         $metodo = '_' . $accion;
         if (!method_exists($this, $metodo)) {
-            return ['estatus' => false, 'mensaje' => "La acción '$accion' no está implementada."];
+            throw new NegocioException("La acción '$accion' no está implementada.", HttpCodigo::BAD_REQUEST->value);
         }
-        try {
-            return $this->$metodo();
-        } catch (\Exception $e) {
-            error_log("Error en realizar_consulta ($accion): " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Ocurrió un error interno en el servidor.'];
-        }
+        return $this->$metodo();
     }
 
-    // ====================================================================
-    // LÓGICA DE NEGOCIO: APARTAMENTOS
-    // ====================================================================
-
-    // SE USA EN EL MODULO
     private function _registrar_apartamento()
     {
-        // Los campos opcionales se validarán con sus reglas, pero si no vienen, se usarán los valores por defecto.
         $gas = $this->gas ?? 0;
         $agua = $this->agua ?? 0;
         $alquilado = $this->alquilado ?? 0;
 
-        try {
-            $sql = "INSERT INTO apartamentos (nro_apartamento, porcentaje_participacion, gas, agua, alquilado, activo) 
-                    VALUES (:nro, :porc, :gas, :agua, :alq, 1)";
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->execute([
-                ':nro'  => $this->nro_apartamento,
-                ':porc' => $this->porcentaje_participacion,
-                ':gas'  => $gas,
-                ':agua' => $agua,
-                ':alq'  => $alquilado
-            ]);
-            $lastId = $this->get_conex(TipoBaseDatos::NEGOCIO)->lastInsertId();
-            return ['estatus' => true, 'mensaje' => 'Apartamento registrado correctamente', 'id' => $lastId];
-        } catch (PDOException $e) {
-            error_log("Error en _registrar_apartamento: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error en la base de datos: ' . $e->getMessage()];
-        }
+        $sql = "INSERT INTO apartamentos (nro_apartamento, porcentaje_participacion, gas, agua, alquilado, activo) 
+                VALUES (:nro, :porc, :gas, :agua, :alq, 1)";
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->execute([
+            ':nro'  => $this->nro_apartamento,
+            ':porc' => $this->porcentaje_participacion,
+            ':gas'  => $gas,
+            ':agua' => $agua,
+            ':alq'  => $alquilado
+        ]);
+        $lastId = $this->get_conex(TipoBaseDatos::NEGOCIO)->lastInsertId();
+        return ['estatus' => true, 'mensaje' => 'Apartamento registrado correctamente', 'id' => $lastId];
     }
 
-    // SE USA EN EL MODULO
     private function _modificar_apartamento()
     {
         $gas = $this->gas ?? 0;
         $agua = $this->agua ?? 0;
         $alquilado = $this->alquilado ?? 0;
 
-        try {
-            $sql = "UPDATE apartamentos SET 
-                        nro_apartamento = :nro,
-                        porcentaje_participacion = :porc,
-                        gas = :gas,
-                        agua = :agua,
-                        alquilado = :alq
-                    WHERE id_apartamento = :id";
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->execute([
-                ':nro'  => $this->nro_apartamento,
-                ':porc' => $this->porcentaje_participacion,
-                ':gas'  => $gas,
-                ':agua' => $agua,
-                ':alq'  => $alquilado,
-                ':id'   => $this->id_apartamento
-            ]);
-            return ['estatus' => true, 'mensaje' => 'Apartamento actualizado correctamente'];
-        } catch (PDOException $e) {
-            error_log("Error en _modificar_apartamento: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error en la base de datos: ' . $e->getMessage()];
-        }
+        $sql = "UPDATE apartamentos SET 
+                    nro_apartamento = :nro,
+                    porcentaje_participacion = :porc,
+                    gas = :gas,
+                    agua = :agua,
+                    alquilado = :alq
+                WHERE id_apartamento = :id";
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->execute([
+            ':nro'  => $this->nro_apartamento,
+            ':porc' => $this->porcentaje_participacion,
+            ':gas'  => $gas,
+            ':agua' => $agua,
+            ':alq'  => $alquilado,
+            ':id'   => $this->id_apartamento
+        ]);
+        return ['estatus' => true, 'mensaje' => 'Apartamento actualizado correctamente'];
     }
 
-    // SE USA EN EL MODULO
     private function _eliminar_apartamento()
     {
-        try {
-            $sql = "UPDATE apartamentos SET activo = 0 WHERE id_apartamento = :id";
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->execute([':id' => $this->id_apartamento]);
-            return ['estatus' => true, 'mensaje' => 'Apartamento eliminado correctamente'];
-        } catch (PDOException $e) {
-            error_log("Error en _eliminar_apartamento: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error en la base de datos: ' . $e->getMessage()];
-        }
+        $sql = "UPDATE apartamentos SET activo = 0 WHERE id_apartamento = :id";
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->execute([':id' => $this->id_apartamento]);
+        return ['estatus' => true, 'mensaje' => 'Apartamento eliminado correctamente'];
     }
 
-
-    // ====================================================================
-    // CONSULTAS
-    // ====================================================================
-
-    // SE USA EN EL MODULO
     private function _consultar_listado()
     {
-        try {
-            $sql = "SELECT a.*, 
-                           (SELECT CONCAT(h.nombre, ' ', h.apellido) 
-                            FROM habitantes h 
-                            JOIN habitantes_apartamentos ha ON h.id_habitante = ha.habitante_id 
-                            WHERE ha.apartamento_id = a.id_apartamento AND ha.tipo_vinculo = 'Propietario' 
-                            LIMIT 1) as propietario
-                    FROM apartamentos a 
-                    WHERE a.activo = 1 
-                    ORDER BY a.nro_apartamento";
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->execute();
-            return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
-        } catch (PDOException $e) {
-            error_log("Error en _consultar_listado: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar apartamentos'];
-        }
+        $sql = "SELECT a.*, 
+                       (SELECT CONCAT(h.nombre, ' ', h.apellido) 
+                        FROM habitantes h 
+                        JOIN habitantes_apartamentos ha ON h.id_habitante = ha.habitante_id 
+                        WHERE ha.apartamento_id = a.id_apartamento AND ha.tipo_vinculo = 'Propietario' 
+                        LIMIT 1) as propietario
+                FROM apartamentos a 
+                WHERE a.activo = 1 
+                ORDER BY a.nro_apartamento";
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->execute();
+        return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
     }
 
-    // SE USA EN EL MODULO
     private function _consultar_detalle_completo()
     {
-        try {
-            // Datos del apartamento
-            $sqlApto = "SELECT * FROM apartamentos WHERE id_apartamento = :id AND activo = 1";
-            $stmtA = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlApto);
-            $stmtA->execute([':id' => $this->id_apartamento]);
-            $apto = $stmtA->fetch(PDO::FETCH_ASSOC);
-            if (!$apto) {
-                return ['estatus' => false, 'mensaje' => 'Apartamento no encontrado'];
-            }
+        $sqlApto = "SELECT * FROM apartamentos WHERE id_apartamento = :id AND activo = 1";
+        $stmtA = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlApto);
+        $stmtA->execute([':id' => $this->id_apartamento]);
+        $apto = $stmtA->fetch(PDO::FETCH_ASSOC);
 
-            // Habitantes asociados
-            $sqlHab = "SELECT h.id_habitante, h.nombre, h.apellido, h.cedula, h.telefono, ha.tipo_vinculo, a.nro_apartamento
-                       FROM habitantes h
-                       JOIN habitantes_apartamentos ha ON h.id_habitante = ha.habitante_id
-                       JOIN apartamentos a ON a.id_apartamento = ha.apartamento_id
-                       WHERE ha.apartamento_id = :id AND h.activo = 1";
-            $stmtH = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlHab);
-            $stmtH->execute([':id' => $this->id_apartamento]);
-            $apto['habitantes'] = $stmtH->fetchAll(PDO::FETCH_ASSOC);
-
-            return ['estatus' => true, 'datos' => $apto];
-        } catch (PDOException $e) {
-            error_log("Error en _consultar_detalle_completo: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar detalles del apartamento'];
+        if (!$apto) {
+            throw new NegocioException('Apartamento no encontrado', HttpCodigo::NO_ENCONTRADO->value);
         }
+
+        $sqlHab = "SELECT h.id_habitante, h.nombre, h.apellido, h.cedula, h.telefono, ha.tipo_vinculo, a.nro_apartamento
+                   FROM habitantes h
+                   JOIN habitantes_apartamentos ha ON h.id_habitante = ha.habitante_id
+                   JOIN apartamentos a ON a.id_apartamento = ha.apartamento_id
+                   WHERE ha.apartamento_id = :id AND h.activo = 1";
+        $stmtH = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlHab);
+        $stmtH->execute([':id' => $this->id_apartamento]);
+        $apto['habitantes'] = $stmtH->fetchAll(PDO::FETCH_ASSOC);
+
+        return ['estatus' => true, 'datos' => $apto];
     }
 
-    /**
-     *  SE USA EN MENSUALIDAD
-     */
     private function _consultar_apartamentos_mensualidad() {
         $sql = "SELECT id_apartamento, nro_apartamento, porcentaje_participacion, gas 
                 FROM apartamentos 
                 WHERE activo = 1 
                 ORDER BY nro_apartamento";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            error_log("Error en consultar_apartamentos_mensualidad: " . $e->getMessage());
-            return [];
-        }
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // SE USA EN REPORTES
     private function _contar_activos()
     {
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->query("SELECT COUNT(*) FROM apartamentos WHERE activo = 1");
-            return ['estatus' => true, 'datos' => $stmt->fetchColumn()];
-        } catch (PDOException $e) {
-            error_log("Error en _contar_activos: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al contar apartamentos'];
-        }
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->query("SELECT COUNT(*) FROM apartamentos WHERE activo = 1");
+        return ['estatus' => true, 'datos' => $stmt->fetchColumn()];
     }
 
-    /**
-     * SE USA EN PAGOS
-     */
     private function _obtener_apartamentos_por_correo()
     {
-        try {
-            $sql = "SELECT a.id_apartamento, a.nro_apartamento
-                    FROM habitantes h
-                    INNER JOIN habitantes_apartamentos ha ON h.id_habitante = ha.habitante_id
-                    INNER JOIN apartamentos a ON ha.apartamento_id = a.id_apartamento
-                    WHERE h.correo = :correo
-                      AND h.activo = 1
-                      AND a.activo = 1";
+        $sql = "SELECT a.id_apartamento, a.nro_apartamento
+                FROM habitantes h
+                INNER JOIN habitantes_apartamentos ha ON h.id_habitante = ha.habitante_id
+                INNER JOIN apartamentos a ON ha.apartamento_id = a.id_apartamento
+                WHERE h.correo = :correo
+                  AND h.activo = 1
+                  AND a.activo = 1";
 
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->execute([':correo' => $this->correo]);
-            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->execute([':correo' => $this->correo]);
+        $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            if (empty($resultados)) {
-                return [
-                    'estatus' => true,
-                    'datos'   => [],
-                    'mensaje' => 'El habitante no está vinculado a ningún apartamento activo.'
-                ];
-            }
-
+        if (empty($resultados)) {
             return [
                 'estatus' => true,
-                'datos'   => $resultados,
-                'mensaje' => 'Apartamentos obtenidos correctamente.'
+                'datos'   => [],
+                'mensaje' => 'El habitante no está vinculado a ningún apartamento activo.'
             ];
-        } catch (PDOException $e) {
-            error_log("Error en _obtener_apartamentos_por_correo: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar los apartamentos del habitante.'];
         }
+
+        return [
+            'estatus' => true,
+            'datos'   => $resultados,
+            'mensaje' => 'Apartamentos obtenidos correctamente.'
+        ];
     }
 
-    /**
-     * USADO EN INICIO
-     * Consulta el estado actual de los apartamentos para el Dashboard (Ocupado o Libre),
-     * junto con el nombre del residente principal y el total de deuda.
-     */
     private function _consultar_estado_inicio()
     {
         $vinculoPropietario = TipoVinculo::PROPIETARIO->value;
@@ -345,15 +264,10 @@ class Apartamento extends Conexion
                 FROM apartamentos a
                 WHERE a.activo = 1
                 ORDER BY a.nro_apartamento ASC";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->execute();
-            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $datos];
-        } catch (PDOException $e) {
-            error_log("Error en _consultar_estado_inicio: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar el estado de los apartamentos'];
-        }
-    }
 
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->execute();
+        $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return ['estatus' => true, 'datos' => $datos];
+    }
 }

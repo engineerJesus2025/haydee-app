@@ -2,23 +2,21 @@
 namespace haydee\modelo;
 
 use PDO;
-use PDOException;
 use haydee\enums\TipoBaseDatos;
+use haydee\enums\HttpCodigo;
+use haydee\excepciones\NegocioException;
 
 class Mantenimiento extends Conexion
 {
-    // CONSTANTES DE ENTORNO Y RUTAS
     private const MYSQLDUMP_WIN = '"C:\xampp\mysql\bin\mysqldump.exe"';
     private const MYSQLDUMP_LINUX = 'mysqldump';
     private const MYSQL_WIN = '"C:\xampp\mysql\bin\mysql.exe"';
     private const MYSQL_LINUX = 'mysql';
     private const DIR_BACKUPS = 'Backups';
 
-    // CREDENCIALES ADMINISTRATIVAS POR DEFECTO (LOCAL)
     private const DB_ADMIN_USER_DEFAULT = 'root';
     private const DB_ADMIN_PASS_DEFAULT = '';
 
-    // VALIDACIONES
     public static function obtenerReglas($operacion) {
         $tiposCuentaValidos = implode('|', array_column(TipoBaseDatos::cases(), 'value'));
 
@@ -28,12 +26,11 @@ class Mantenimiento extends Conexion
             ]
         ];
 
-        // Mapeamos las operaciones que existan en tu controlador
         $camposPorOperacion = [
             'generar_copia_seguridad'   => ['db'],
             'descargar_copia_seguridad' => ['db'],
-            'importar_copia_seguridad'  => ['db'], // Para restaurar copias del servidor
-            'importar_archivo_sql'      => ['db']  // Para restaurar archivos desde la PC
+            'importar_copia_seguridad'  => ['db'],
+            'importar_archivo_sql'      => ['db']
         ];
 
         if (isset($camposPorOperacion[$operacion])) {
@@ -72,95 +69,71 @@ class Mantenimiento extends Conexion
             
             $gzFilename = $backup_file . '.gz';
             
-            //  @ para suprimir el Warning nativo y manejarlo nosotros
             $fpOut = @gzopen($gzFilename, "wb9");
             $fpIn = @fopen($backup_file, "rb");
 
             if (!$fpOut || !$fpIn) {
                 if ($fpOut) gzclose($fpOut);
                 if ($fpIn) fclose($fpIn);
-                error_log("Error Backup: No se pudo abrir el buffer para compresión GZIP.");
-                return ['estatus' => false, 'mensaje' => 'Error de permisos al comprimir el archivo de seguridad.'];
+                throw new NegocioException('Error de permisos al comprimir el archivo de seguridad.', HttpCodigo::ERROR_INTERNO->value);
             }
 
             while (!feof($fpIn)) gzwrite($fpOut, fread($fpIn, 1024 * 512));
             
             fclose($fpIn);
             gzclose($fpOut);
-            unlink($backup_file); // Borramos el .sql original pesado
+            unlink($backup_file);
 
             return ['estatus' => true, 'mensaje' => 'Copia de seguridad creada y comprimida exitosamente', 'archivo' => basename($gzFilename)];
         } else {
-            // Ahora mostramos el error real capturado de la consola
             $error_detalle = implode(" | ", $output);
             error_log("Error Backup: " . $error_detalle);
-            return ['estatus' => false, 'mensaje' => 'Error al generar: ' . $error_detalle];
+            throw new NegocioException('Error al generar la copia de seguridad: ' . $error_detalle, HttpCodigo::ERROR_INTERNO->value);
         }
     }
 
     public function descargarCopiaSeguridad($db)
     {
-        try {
-            // Generar el backup temporal
-            $resultado = $this->generarCopiaSeguridad($db);
-            
-            if (!$resultado['estatus']) {
-                throw new Exception($resultado['mensaje']);
-            }
+        $resultado = $this->generarCopiaSeguridad($db);
+        $archivo_nombre = $resultado['archivo'];
+        $ruta_archivo = $this->getBackupDir() . $archivo_nombre;
 
-            $archivo_nombre = $resultado['archivo'];
-            // Armamos la ruta absoluta hacia la carpeta Backups
-            $ruta_archivo = $this->getBackupDir() . $archivo_nombre;
-
-            if (!file_exists($ruta_archivo)) {
-                throw new Exception("El archivo fue generado pero no se encuentra en el directorio: " . $archivo_nombre);
-            }
-
-            // Cabeceras optimizadas para archivos GZIP
-            header('Content-Type: application/x-gzip');
-            header('Content-Disposition: attachment; filename="' . $archivo_nombre . '"');
-            header('Expires: 0');
-            header('Cache-Control: must-revalidate');
-            header('Pragma: public');
-            header('Content-Length: ' . filesize($ruta_archivo));
-
-            ob_clean();
-            flush();
-            readfile($ruta_archivo);
-
-            // Eliminar el archivo temporal después de la descarga
-            unlink($ruta_archivo);
-            exit;
-
-        } catch (Exception $e) {
-            // Ahora sí quedará registro en el Log del servidor
-            error_log("Error Descarga Mantenimiento: " . $e->getMessage());
-            
-            // Codificamos el mensaje para enviarlo seguro por la URL
-            $msj_codificado = urlencode($e->getMessage());
-            header("Location: ?pagina=mantenimiento&accion=inicio&e=1&msg={$msj_codificado}");
-            exit;
+        if (!file_exists($ruta_archivo)) {
+            throw new NegocioException("El archivo fue generado pero no se encuentra en el directorio: " . $archivo_nombre, HttpCodigo::NO_ENCONTRADO->value);
         }
+
+        header('Content-Type: application/x-gzip');
+        header('Content-Disposition: attachment; filename="' . $archivo_nombre . '"');
+        header('Expires: 0');
+        header('Cache-Control: must-revalidate');
+        header('Pragma: public');
+        header('Content-Length: ' . filesize($ruta_archivo));
+
+        ob_clean();
+        flush();
+        readfile($ruta_archivo);
+
+        unlink($ruta_archivo);
+        exit;
     }
 
     public function obtenerCopias()
     {
         $directorio = $this->getBackupDir();
         if (!is_dir($directorio)) {
-            return ['estatus' => false, 'mensaje' => 'El directorio de backups no existe'];
+            throw new NegocioException('El directorio de backups no existe.', HttpCodigo::NO_ENCONTRADO->value);
         }
 
         $ficheros = scandir($directorio);
         $archivos = [];
         if ($ficheros !== false) {
             foreach ($ficheros as $fichero) {
-                // Filtramos para enviar SOLO archivos que terminen en .sql o .sql.gz
                 if ($fichero !== '.' && $fichero !== '..' && preg_match('/\.sql(\.gz)?$/i', $fichero)) {
                     $archivos[] = $fichero;
                 }
             }
         } else {
-            return ['estatus' => false, 'mensaje' => 'No se pudo leer el directorio de backups'];
+            throw new NegocioException('No se pudo leer el directorio de backups.', HttpCodigo::ERROR_INTERNO->value);
         }
 
         return ['estatus' => true, 'datos' => $archivos];
@@ -172,7 +145,7 @@ class Mantenimiento extends Conexion
         $ruta_completa = $directorio . $fichero;
 
         if (!file_exists($ruta_completa)) {
-            return ['estatus' => false, 'mensaje' => 'El archivo de copia no existe en el servidor.'];
+            throw new NegocioException('El archivo de copia no existe en el servidor.', HttpCodigo::NO_ENCONTRADO->value);
         }
 
         $dbname = ($db === 'negocio' || $db === TipoBaseDatos::NEGOCIO->value) ? DB_NAME : DB_SECURITY;
@@ -188,11 +161,9 @@ class Mantenimiento extends Conexion
             fclose($fpOut);
             gzclose($fpIn);
         } else {
-            // Si es un .sql plano viejo, lo copiamos al temporal
             copy($ruta_completa, $temp_sql);
         }
 
-        // Borramos las firmas DEFINER=root de los Triggers antes de inyectar
         $this->removeDefinerFromSql($temp_sql);
 
         $creds = $this->obtenerCredencialesAdmin();
@@ -209,7 +180,6 @@ class Mantenimiento extends Conexion
         
         exec($comando, $output, $resultado);
 
-        // Limpiar el archivo temporal de la memoria del servidor
         if (file_exists($temp_sql)) {
             unlink($temp_sql);
         }
@@ -217,38 +187,27 @@ class Mantenimiento extends Conexion
         if ($resultado === 0) {
             return ['estatus' => true, 'mensaje' => 'Copia de seguridad importada exitosamente.'];
         } else {
-            // Devolvemos el error limpio al frontend para que el administrador sepa qué falló
             $error_detalle = implode(" | ", $output);
             error_log("Error Restauración: " . $error_detalle);
-            return ['estatus' => false, 'mensaje' => 'Fallo de MySQL: ' . $error_detalle];
+            throw new NegocioException('Fallo de MySQL: ' . $error_detalle, HttpCodigo::ERROR_INTERNO->value);
         }
     }
 
-    /**
-     * Importa un contenido SQL directamente a la base de datos especificada.
-     */
     public function importarSQL($contenido_sql, $db)
     {
         $nombre_db = ($db === TipoBaseDatos::NEGOCIO->value) ? DB_NAME : DB_SECURITY;
         $mysql_path = $this->getMysqlPath();
         
-        // Creamos un archivo temporal para el contenido SQL
         $temp_file = tempnam(sys_get_temp_dir(), 'restore_');
         
-        // VALIDACIÓN DE ERRORES: Verificar si se pudo escribir el archivo en RAM/Disco
         if (file_put_contents($temp_file, $contenido_sql) === false) {
-            error_log("Error Restauración: Fallo al escribir el archivo temporal en el servidor.");
-            return ['estatus' => false, 'mensaje' => 'Error de E/S en el servidor al preparar la restauración.'];
+            throw new NegocioException('Error de E/S en el servidor al preparar la restauración.', HttpCodigo::ERROR_INTERNO->value);
         }
 
         $this->removeDefinerFromSql($temp_file);
 
-        file_put_contents($temp_file, $contenido_sql);
-
-        // Llamamos al método para obtener las credenciales administrativas protegidas
         $creds = $this->obtenerCredencialesAdmin();
 
-        // Construcción del comando blindado
         $comando = sprintf(
             "%s --host=%s --user=%s --password=%s %s < %s 2>&1",
             $mysql_path,
@@ -261,7 +220,6 @@ class Mantenimiento extends Conexion
 
         exec($comando, $output, $return_var);
         
-        // Borramos el archivo temporal
         if (file_exists($temp_file)) {
             unlink($temp_file);
         }
@@ -273,21 +231,11 @@ class Mantenimiento extends Conexion
             ];
         } else {
             error_log("Error restaurando SQL: " . implode("\n", $output));
-            return [
-                'estatus' => false, 
-                'mensaje' => "Error al procesar el archivo SQL. Verifique el formato."
-            ];
+            throw new NegocioException("Error al procesar el archivo SQL. Verifique el formato.", HttpCodigo::BAD_REQUEST->value);
         }
     }
 
-    // -----------------------------------------------------------------
-    // Métodos auxiliares privados
-    // -----------------------------------------------------------------
-
-    /**
-     * Obtiene la ruta del ejecutable mysqldump según el entorno.
-     */
-   private function getMysqldumpPath()
+    private function getMysqldumpPath()
     {
         return (DIRECTORY_SEPARATOR === '\\') ? self::MYSQLDUMP_WIN : self::MYSQLDUMP_LINUX;
     }
@@ -297,9 +245,6 @@ class Mantenimiento extends Conexion
         return (DIRECTORY_SEPARATOR === '\\') ? self::MYSQL_WIN : self::MYSQL_LINUX;
     }
 
-    /**
-     * Obtiene el directorio donde se almacenan los backups.
-     */
     private function getBackupDir()
     {
         $base = dirname(__DIR__); 
@@ -314,13 +259,9 @@ class Mantenimiento extends Conexion
         return TipoBaseDatos::NEGOCIO;
     }
 
-    /**
-     * Elimina las cláusulas DEFINER del archivo SQL para permitir importación sin SUPER
-     */
     private function removeDefinerFromSql($filepath)
     {
         $content = file_get_contents($filepath);
-        // Elimina cualquier ocurrencia de DEFINER=usuario@host (con o sin backticks)
         $content = preg_replace('/\s*DEFINER\s*=\s*[^\s]+/i', '', $content);
         file_put_contents($filepath, $content);
     }
@@ -332,13 +273,10 @@ class Mantenimiento extends Conexion
                 'user' => self::DB_ADMIN_USER_DEFAULT, 
                 'pass' => self::DB_ADMIN_PASS_DEFAULT
             ];
-
         }
-        // En producción (AlwaysData), devolvemos las credenciales de administración
         return [
             'user' => DB_USER,
             'pass' => DB_PASS
         ];
     }
-
 }

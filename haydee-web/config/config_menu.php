@@ -12,7 +12,7 @@ function obtenerElementosMenu($modulo, $accion) {
     $sub_reporte_est = ($modulo === "reportes" && in_array($accion, ["reportes_estadisticos", "habitantes", "ingreso_egreso"]));
     $es_reporte      = ($sub_reporte_pdf || $sub_reporte_est);
 
-    $es_configuracion = in_array($modulo, ["proveedores", "bancos", "tipo_gasto"]);
+    $es_configuracion = in_array($modulo, ["proveedores", "bancos", "cuentas", "tipo_gasto"]);
     $es_seguridad     = in_array($modulo, ["rol", "bitacora", "permisos", "modulos"]); 
 
     //  Retornamos la matriz de elementos
@@ -136,6 +136,13 @@ function obtenerElementosMenu($modulo, $accion) {
 	                'url'     => '?pagina=bancos&accion=inicio',
 	                'activo'  => ($modulo === 'bancos'),
 	                'mostrar' => Sesiones::tienePermiso(Modulo::GESTIONAR_BANCOS, Accion::CONSULTAR)
+	            ],
+	            [
+	                'titulo'  => 'Cuentas',
+	                'icono'   => 'bi-bank2',
+	                'url'     => '?pagina=cuentas&accion=inicio',
+	                'activo'  => ($modulo === 'cuentas'),
+	                'mostrar' => Sesiones::tienePermiso(Modulo::GESTIONAR_CUENTAS, Accion::CONSULTAR)
 	            ],
 	            [
 	                'titulo'  => 'Tipo de Gastos',

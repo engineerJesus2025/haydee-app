@@ -8,6 +8,8 @@ use haydee\modelo\Banco;
 use haydee\modelo\Bitacora;
 use haydee\servicios\Sesiones;
 use haydee\servicios\GestorAuditoria;
+use haydee\excepciones\HaydeeException;
+use haydee\excepciones\ValidacionException;
 
 if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');
@@ -15,15 +17,12 @@ if (isset($_POST["operacion"])) {
 
     Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_BANCOS, $operacion);
     
-    // Obtenemos las reglas centralizadas
     $reglas = Banco::obtenerReglas($operacion);
 
-    // Ejecutamos la Validación si aplica
     if (!empty($reglas)) {
         $validador = new Validador();
-        
         $contexto = [];
-        // Permitimos que al modificar, se excluya el ID actual de la regla Unique de la cuenta
+        
         if (strpos($operacion, 'modificar') !== false) {
             $contexto['exclude_id'] = $_POST['id_banco'] ?? null;
         }
@@ -32,144 +31,109 @@ if (isset($_POST["operacion"])) {
 
         if ($validador->tieneErrores()) {
             $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::NO_PROCESABLE->value;
-            http_response_code($codigoHttp);
-            echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
-            exit;
+            throw new ValidacionException('Datos de formulario inválidos.', $validador->obtenerErrores(), $codigoHttp);
         }
     }
-    // Instancia del modelo
-    $banco = new Banco();
 
-    // Asignación masiva 
+    $banco = new Banco();
     $banco->set_id_banco($_POST['id_banco'] ?? null);
     $banco->set_nombre_banco($_POST['nombre_banco'] ?? null);
     $banco->set_codigo($_POST['codigo'] ?? null);
-    $banco->set_numero_cuenta($_POST['numero_cuenta'] ?? null);
-    $banco->set_tipo_cuenta($_POST['tipo_cuenta'] ?? null);
-    $banco->set_telefono_afiliado($_POST['telefono_afiliado'] ?? null);
-    $banco->set_rif($_POST['rif'] ?? null);
 
-    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
+    // Respuesta por defecto
+    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida', 'datos' => []];
     $auditor = new GestorAuditoria($banco, Modulo::GESTIONAR_BANCOS);
 
-    try{
-        switch ($operacion) {
-            case 'consulta':
-                $respuesta = $banco->realizar_consulta('consultar');
+    $codigoExito = HttpCodigo::OK->value;
+    switch ($operacion) {
+        case 'consulta':
+            $respuesta = $banco->realizar_consulta('consultar');
+            if ($respuesta['estatus']) $auditor->registrarAuditoria(Accion::CONSULTAR);
+            break;
 
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) {
-                    $auditor->registrarAuditoria(Accion::CONSULTAR);
-                }
-                break;
-
-            case 'registrar_banco':
-                $respuesta = $banco->realizar_consulta('registrar_banco');
-
-                http_response_code($respuesta['estatus'] ? HttpCodigo::CREADO->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) {
-                    $auditor->registrarAuditoria(Accion::REGISTRAR);
-                }
-                break;
-
-            case 'consultar_banco':
-                $respuesta = $banco->realizar_consulta('consultar_banco');
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
-                break;
-
-            case 'modificar_banco':
-                $auditor->capturarDatosAnteriores('consultar_banco');
-                $respuesta = $banco->realizar_consulta('modificar_banco');
-
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) { 
-                    $auditor->registrarAuditoria(Accion::MODIFICAR); 
-                }
-                break;
-
-            case 'eliminar_banco':
-                $auditor->capturarDatosAnteriores('consultar_banco');
-
-                $respuesta = $banco->realizar_consulta('eliminar_banco');
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) { 
-                    $auditor->registrarAuditoria(Accion::ELIMINAR); 
-                }
-                break;
-
-            default:
-                http_response_code(HttpCodigo::BAD_REQUEST->value);
-                $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
-        }
-    } catch (Exception $e) {
-        http_response_code(HttpCodigo::ERROR_INTERNO->value);
-        error_log("Error en controlador: " . $e->getMessage());
-        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
-    } finally {
-        if ($respuesta !== null) {
-            // Cerrar conexiones explicitamente
-            if (isset($banco)) {
-                $banco->cerrar();
+        case 'registrar_banco':
+            $respuesta = $banco->realizar_consulta('registrar_banco');
+            if ($respuesta['estatus']) {
+                $auditor->registrarAuditoria(Accion::REGISTRAR);
+                $codigoExito = HttpCodigo::CREADO->value;
             }
-            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexion de seguridad
+            break;
 
-            echo json_encode($respuesta);
-            exit;
-        }
+        case 'consultar_banco':
+            $respuesta = $banco->realizar_consulta('consultar_banco');
+            break;
+
+        case 'modificar_banco':
+            $auditor->capturarDatosAnteriores('consultar_banco');
+            $respuesta = $banco->realizar_consulta('modificar_banco');
+            if ($respuesta['estatus']) $auditor->registrarAuditoria(Accion::MODIFICAR); 
+            break;
+
+        case 'eliminar_banco':
+            $auditor->capturarDatosAnteriores('consultar_banco');
+            $respuesta = $banco->realizar_consulta('eliminar_banco');
+            if ($respuesta['estatus']) $auditor->registrarAuditoria(Accion::ELIMINAR); 
+            break;
+
+        default:
+            throw new HaydeeException('Operación no implementada', HttpCodigo::BAD_REQUEST->value);
     }
+
+    if (!$respuesta['estatus']) {
+        throw new HaydeeException($respuesta['mensaje'], HttpCodigo::BAD_REQUEST->value);
+    }
+
+    if (isset($banco)) {$banco->cerrar();}
+    Bitacora::cerrarConexionBitacora();
+
+    http_response_code($codigoExito);
+    echo json_encode($respuesta);
+    exit;
 }
 
 // Validaciones AJAX
 if (isset($_POST["validar"])) {
     header('Content-Type: application/json');
     $validar = $_POST["validar"];
-    $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
-
     $validadorBD = new ValidadorBD();
 
-    try {
-        switch ($validar) {
-            case 'numero_cuenta':
-                $numero_cuenta = $_POST["numero_cuenta"] ?? '';
-                $id = !empty($_POST["id_banco"]) ? $_POST["id_banco"] : null;
-                
-                $existe = !$validadorBD->esUnico('bancos', 'numero_cuenta', $numero_cuenta, 'id_banco', $id);
-                $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'El número de cuenta ya está registrado' : 'Disponible'];
-                break;
+    switch ($validar) {
+        case 'validar_clave_foranea':
+            $tabla = $_POST['tabla'] ?? '';
+            $campo = $_POST['nombre_clave'] ?? '';
+            $valor = $_POST['valor'] ?? '';
 
-            case 'validar_clave_foranea':
-                $tabla = $_POST['tabla'] ?? '';
-                $campo = $_POST['nombre_clave'] ?? '';
-                $valor = $_POST['valor'] ?? '';
+            if (empty($tabla) || empty($campo) || empty($valor)) {
+                throw new HaydeeException('Faltan parámetros de Validación', HttpCodigo::BAD_REQUEST->value);
+            }
+            if ($tabla !== 'bancos') {
+                throw new HaydeeException('Tabla no soportada', HttpCodigo::BAD_REQUEST->value);
+            }
 
-                if (empty($tabla) || empty($campo) || empty($valor)) {
-                    $respuesta = ['estatus' => false, 'mensaje' => 'Faltan parámetros de Validación'];
-                    break;
-                }
+            $existe = $validadorBD->existe($tabla, $campo, $valor);
+            $respuesta = ['estatus' => $existe, 'mensaje' => $existe ? 'OK' : 'No existe'];
+            break;
 
-                if ($tabla !== 'bancos') {
-                    $respuesta = ['estatus' => false, 'mensaje' => 'Tabla no soportada'];
-                    break;
-                }
+        case 'codigo_banco':
+            $codigo = $_POST["codigo"] ?? '';
+            $id_banco = $_POST["id_banco"] ?? null; 
 
-                $existe = $validadorBD->existe($tabla, $campo, $valor);
-                $respuesta = ['estatus' => $existe, 'mensaje' => $existe ? 'OK' : 'No existe'];
-                break;
+            $bancoTemp = new Banco();
+            $existe = $bancoTemp->verificarCodigoEnUso($codigo, $id_banco);
+            $bancoTemp->cerrar();
 
-            default:
-                http_response_code(HttpCodigo::BAD_REQUEST->value);
-                $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
-        }
-    } catch (Exception $e) {
-        http_response_code(HttpCodigo::ERROR_INTERNO->value);
-        error_log("Error en Validación AJAX Bancos: " . $e->getMessage());
-        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
+            $respuesta = [
+                'estatus' => true, 
+                'existe' => $existe, 
+                'mensaje' => $existe ? 'El código ya pertenece a una entidad activa.' : 'Disponible'
+            ];
+            break;
+
+        default:
+            throw new HaydeeException('Validación no reconocida', HttpCodigo::BAD_REQUEST->value);
     }
 
-    if ($respuesta['estatus'] === true || isset($respuesta['existe'])) {
-        http_response_code(HttpCodigo::OK->value);
-    }
-
+    http_response_code(HttpCodigo::OK->value);
     echo json_encode($respuesta);
     exit;
 }
@@ -185,6 +149,4 @@ $btn_nuevo = [
 ];
 $placeholder_buscar = "Buscar banco...";
 
-// Cargar la vista
 require_once "vista/bancos/bancos_vista.php";
-

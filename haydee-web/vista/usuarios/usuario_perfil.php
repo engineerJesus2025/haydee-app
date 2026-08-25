@@ -13,7 +13,6 @@
 </head>
 
 <body id="body-pd" class="body-pd">
-    <input type="hidden" id="id_usuario" value="<?php echo $usuario["id_usuario"] ?>">
     <div class="container-fluid">
         <div class="row flex-nowrap ">
 

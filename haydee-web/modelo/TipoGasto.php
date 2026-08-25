@@ -2,8 +2,9 @@
 namespace haydee\modelo;
 
 use PDO;
-use PDOException;
 use haydee\enums\TipoBaseDatos;
+use haydee\enums\HttpCodigo;
+use haydee\excepciones\NegocioException;
 
 class TipoGasto extends Conexion
 {
@@ -11,9 +12,8 @@ class TipoGasto extends Conexion
     private $nombre_tipo_gasto;
     private $activo;
 
-    // ====================================================================
-    // VALIDACIONES CENTRALIZADAS
-    // ====================================================================
+    private $conceptos_temp = [];
+
     public static function obtenerReglas($operacion) {
         $reglasGenerales = [
             'id_tipo_gasto' => [
@@ -21,8 +21,7 @@ class TipoGasto extends Conexion
                 'exists' => ['tabla' => 'tipo_gasto', 'campo' => 'id_tipo_gasto']
             ],
             'nombre_tipo_gasto' => [
-                'regex' => '/^[a-zA-Z\sñÑáéíóúÁÉÍÓÚ]+$/u',
-                'unique' => ['tabla' => 'tipo_gasto', 'campo' => 'nombre_tipo_gasto', 'exclude_field' => 'id_tipo_gasto']
+                'regex' => '/^[a-zA-Z\sñÑáéíóúÁÉÍÓÚ]+$/u'
             ]
         ];
 
@@ -39,110 +38,194 @@ class TipoGasto extends Conexion
         return [];
     }
 
-    // Getters y Setters
+    public static function obtenerReglasConceptos() {
+        return [
+            'id_concepto' => [
+                'regex' => '/^\d*$/',
+                'opcional' => true
+            ],
+            'nombre_concepto' => [
+                'regex' => '/^[a-zA-Z0-9\sñÑáéíóúÁÉÍÓÚ.,-]+$/u'
+            ]
+        ];
+    }
+
     public function set_id_tipo_gasto($id) { $this->id_tipo_gasto = $id; }
     public function get_id_tipo_gasto() { return $this->id_tipo_gasto; }
     public function set_nombre_tipo_gasto($nombre) { $this->nombre_tipo_gasto = $nombre; }
     public function get_nombre_tipo_gasto() { return $this->nombre_tipo_gasto; }
     public function set_activo($activo) { $this->activo = $activo; }
     public function get_activo() { return $this->activo; }
+    public function setConceptosTemp($conceptos) { $this->conceptos_temp = $conceptos; }
 
-    /**
-     * Enruta la acción al método privado correspondiente.
-     */
     public function realizar_consulta($accion)
     {
         $metodo = '_' . $accion;
         if (!method_exists($this, $metodo)) {
-            return ['estatus' => false, 'mensaje' => "La acción '$accion' no está implementada."];
+            throw new NegocioException("La acción '$accion' no está implementada.", HttpCodigo::BAD_REQUEST->value);
         }
-
-        try {
-            return $this->$metodo();
-        } catch (\Exception $e) {
-            error_log("Error en realizar_consulta ($accion): " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Ocurrió un error interno en el servidor.'];
-        }
+        return $this->$metodo();
     }
-
-    // -----------------------------------------------------------------
-    // Métodos privados (acciones)
-    // -----------------------------------------------------------------
-
-    // SE USA EN EL MODULO
+    
     private function _consultar()
     {
-        $sql = "SELECT * FROM tipo_gasto WHERE activo = 1 ORDER BY id_tipo_gasto";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->execute();
-            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $datos];
-        } catch (PDOException $e) {
-            error_log("Error en _consultar: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar tipos de gasto'];
-        }
+        $sql = "SELECT id_tipo_gasto, nombre_tipo_gasto 
+                FROM tipo_gasto 
+                WHERE activo = 1 
+                ORDER BY id_tipo_gasto DESC";
+
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->execute();
+        return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
     }
-    // SE USA EN EL MODULO
+
     private function _consultar_tipo_gasto()
     {
-        $sql = "SELECT * FROM tipo_gasto WHERE id_tipo_gasto = :id_tipo_gasto AND activo = 1";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->bindParam(':id_tipo_gasto', $this->id_tipo_gasto);
-            $stmt->execute();
-            $datos = $stmt->fetch(PDO::FETCH_ASSOC);
-            if (!$datos) {
-                return ['estatus' => false, 'mensaje' => 'Tipo de gasto no encontrado'];
-            }
-            return ['estatus' => true, 'datos' => $datos];
-        } catch (PDOException $e) {
-            error_log("Error en _consultar_tipo_gasto: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar el tipo de gasto'];
+        $con = $this->get_conex(TipoBaseDatos::NEGOCIO);
+        
+        $sqlHead = "SELECT * FROM tipo_gasto WHERE id_tipo_gasto = :id AND activo = 1";
+        $stmtH = $con->prepare($sqlHead);
+        $stmtH->execute([':id' => $this->id_tipo_gasto]);
+        $datos = $stmtH->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$datos) {
+            throw new NegocioException('Tipo de gasto no encontrado.', HttpCodigo::NO_ENCONTRADO->value);
         }
+
+        $sqlDet = "SELECT id_concepto, nombre_concepto FROM conceptos_gasto WHERE tipo_gasto_id = :id AND activo = 1";
+        $stmtD = $con->prepare($sqlDet);
+        $stmtD->execute([':id' => $this->id_tipo_gasto]);
+        $datos['conceptos'] = $stmtD->fetchAll(PDO::FETCH_ASSOC);
+
+        return ['estatus' => true, 'datos' => $datos];
     }
-    // SE USA EN EL MODULO
+
+    private function _consultar_conceptos()
+    {
+        $sql = "SELECT tg.id_tipo_gasto, tg.nombre_tipo_gasto, cg.id_concepto, cg.nombre_concepto 
+                FROM tipo_gasto tg
+                LEFT JOIN conceptos_gasto cg ON tg.id_tipo_gasto = cg.tipo_gasto_id AND cg.activo = 1
+                WHERE tg.activo = 1 
+                ORDER BY tg.id_tipo_gasto, cg.id_concepto";
+
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->execute();
+        return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
+    }
+
     private function _registrar_tipo_gasto()
     {
-        $sql = "INSERT INTO tipo_gasto (nombre_tipo_gasto) VALUES (:nombre_tipo_gasto)";
+        $con = $this->get_conex(TipoBaseDatos::NEGOCIO);
         try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->bindParam(':nombre_tipo_gasto', $this->nombre_tipo_gasto);
-            $stmt->execute();
-            $lastId = $this->get_conex(TipoBaseDatos::NEGOCIO)->lastInsertId();
-            return ['estatus' => true, 'mensaje' => 'Tipo de gasto registrado correctamente', 'lastId' => $lastId];
-        } catch (PDOException $e) {
-            error_log("Error en _registrar: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al registrar el tipo de gasto'];
+            $con->beginTransaction();
+
+            $sqlHead = "INSERT INTO tipo_gasto (nombre_tipo_gasto, activo) VALUES (:nombre, 1)";
+            $stmtH = $con->prepare($sqlHead);
+            $stmtH->execute([':nombre' => $this->nombre_tipo_gasto]);
+            $id_tipo_gasto = $con->lastInsertId();
+
+            if (!empty($this->conceptos_temp)) {
+                $sqlDet = "INSERT INTO conceptos_gasto (nombre_concepto, tipo_gasto_id, activo) VALUES (:nombre_c, :id_tipo, 1)";
+                $stmtD = $con->prepare($sqlDet);
+                
+                foreach ($this->conceptos_temp as $concepto) {
+                    $stmtD->execute([
+                        ':nombre_c' => $concepto['nombre_concepto'],
+                        ':id_tipo'  => $id_tipo_gasto
+                    ]);
+                }
+            }
+
+            $con->commit();
+            return ['estatus' => true, 'mensaje' => 'Tipo de gasto y conceptos registrados correctamente', 'lastId' => $id_tipo_gasto];
+        } catch (\Throwable $e) {
+            if ($con->inTransaction()) { 
+                $con->rollBack(); 
+            }
+            throw $e;
         }
     }
-    // SE USA EN EL MODULO
+
     private function _modificar_tipo_gasto()
     {
-        $sql = "UPDATE tipo_gasto SET nombre_tipo_gasto = :nombre_tipo_gasto WHERE id_tipo_gasto = :id_tipo_gasto";
+        $con = $this->get_conex(TipoBaseDatos::NEGOCIO);
         try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->bindParam(':id_tipo_gasto', $this->id_tipo_gasto);
-            $stmt->bindParam(':nombre_tipo_gasto', $this->nombre_tipo_gasto);
-            $stmt->execute();
-            return ['estatus' => true, 'mensaje' => 'Tipo de gasto actualizado correctamente'];
-        } catch (PDOException $e) {
-            error_log("Error en _modificar: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al actualizar el tipo de gasto'];
+            $con->beginTransaction();
+
+            $sqlHead = "UPDATE tipo_gasto SET nombre_tipo_gasto = :nombre WHERE id_tipo_gasto = :id";
+            $stmtH = $con->prepare($sqlHead);
+            $stmtH->execute([
+                ':nombre' => $this->nombre_tipo_gasto,
+                ':id'     => $this->id_tipo_gasto
+            ]);
+
+            $ids_recibidos = array_filter(array_column($this->conceptos_temp, 'id_concepto'));
+            
+            if (!empty($ids_recibidos)) {
+                $placeholders = implode(',', array_fill(0, count($ids_recibidos), '?'));
+                $sqlDel = "UPDATE conceptos_gasto SET activo = 0 WHERE tipo_gasto_id = ? AND id_concepto NOT IN ($placeholders)";
+                $stmtDel = $con->prepare($sqlDel);
+                $paramsDel = array_merge([$this->id_tipo_gasto], $ids_recibidos);
+                $stmtDel->execute($paramsDel);
+            } else {
+                $stmtDelTodos = $con->prepare("UPDATE conceptos_gasto SET activo = 0 WHERE tipo_gasto_id = ?");
+                $stmtDelTodos->execute([$this->id_tipo_gasto]);
+            }
+
+            if (!empty($this->conceptos_temp)) {
+                $sqlInsert = "INSERT INTO conceptos_gasto (nombre_concepto, tipo_gasto_id, activo) VALUES (:nombre_c, :id_tipo, 1)";
+                $stmtInsert = $con->prepare($sqlInsert);
+
+                $sqlUpdate = "UPDATE conceptos_gasto SET nombre_concepto = :nombre_c, activo = 1 WHERE id_concepto = :id_c AND tipo_gasto_id = :id_tipo";
+                $stmtUpdate = $con->prepare($sqlUpdate);
+                
+                foreach ($this->conceptos_temp as $concepto) {
+                    if (!empty($concepto['id_concepto'])) {
+                        $stmtUpdate->execute([
+                            ':nombre_c' => $concepto['nombre_concepto'],
+                            ':id_c'     => $concepto['id_concepto'],
+                            ':id_tipo'  => $this->id_tipo_gasto
+                        ]);
+                    } else {
+                        $stmtInsert->execute([
+                            ':nombre_c' => $concepto['nombre_concepto'],
+                            ':id_tipo'  => $this->id_tipo_gasto
+                        ]);
+                    }
+                }
+            }
+
+            $con->commit();
+            return ['estatus' => true, 'mensaje' => 'Catálogo actualizado correctamente'];
+        } catch (\Throwable $e) {
+            if ($con->inTransaction()) { 
+                $con->rollBack(); 
+            }
+            throw $e;
         }
     }
-    // SE USA EN EL MODULO
+
     private function _eliminar_tipo_gasto()
     {
-        $sql = "UPDATE tipo_gasto SET activo = 0 WHERE id_tipo_gasto = :id_tipo_gasto";
+        $con = $this->get_conex(TipoBaseDatos::NEGOCIO);
         try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->bindParam(':id_tipo_gasto', $this->id_tipo_gasto);
-            $stmt->execute();
-            return ['estatus' => true, 'mensaje' => 'Tipo de gasto eliminado correctamente'];
-        } catch (PDOException $e) {
-            error_log("Error en _eliminar: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al eliminar el tipo de gasto'];
+            $con->beginTransaction();
+
+            $sqlH = "UPDATE tipo_gasto SET activo = 0 WHERE id_tipo_gasto = :id";
+            $stmtH = $con->prepare($sqlH);
+            $stmtH->execute([':id' => $this->id_tipo_gasto]);
+
+            $sqlD = "UPDATE conceptos_gasto SET activo = 0 WHERE tipo_gasto_id = :id";
+            $stmtD = $con->prepare($sqlD);
+            $stmtD->execute([':id' => $this->id_tipo_gasto]);
+
+            $con->commit();
+            return ['estatus' => true, 'mensaje' => 'Catálogo eliminado correctamente'];
+        } catch (\Throwable $e) {
+            if ($con->inTransaction()) { 
+                $con->rollBack(); 
+            }
+            throw $e;
         }
     }
 }

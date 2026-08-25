@@ -2,10 +2,11 @@
 namespace haydee\modelo;
 
 use PDO;
-use PDOException;
 use haydee\enums\EstadoSolicitud;
 use haydee\enums\NivelPrioridad;
 use haydee\enums\TipoBaseDatos;
+use haydee\enums\HttpCodigo;
+use haydee\excepciones\NegocioException;
 
 class SolicitudGasto extends Conexion
 {
@@ -19,9 +20,6 @@ class SolicitudGasto extends Conexion
     private $prioridad;
     private $activo;
 
-    // ====================================================================
-    // VALIDACIONES CENTRALIZADAS
-    // ====================================================================
     public static function obtenerReglas($operacion) {
         $estadosValidos = implode('|', array_column(EstadoSolicitud::cases(), 'value'));
         $prioridadesValidas = implode('|', array_column(NivelPrioridad::cases(), 'value'));
@@ -70,7 +68,6 @@ class SolicitudGasto extends Conexion
         return [];
     }
 
-    // Getters y Setters
     public function set_id_solicitud($id) { $this->id_solicitud = $id; }
     public function get_id_solicitud() { return $this->id_solicitud; }
     public function set_fecha_reporte($f) { $this->fecha_reporte = $f; }
@@ -90,30 +87,15 @@ class SolicitudGasto extends Conexion
     public function set_activo($activo) { $this->activo = $activo; }
     public function get_activo() { return $this->activo; }
 
-    /**
-     * Enruta la acción al método privado correspondiente.
-     */
     public function realizar_consulta($accion)
     {
         $metodo = '_' . $accion;
         if (!method_exists($this, $metodo)) {
-            return ['estatus' => false, 'mensaje' => "La acción '$accion' no está implementada."];
+            throw new NegocioException("La acción '$accion' no está implementada.", HttpCodigo::BAD_REQUEST->value);
         }
-
-        try {
-            return $this->$metodo();
-        } catch (\Exception $e) {
-            error_log("Error en realizar_consulta ($accion): " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Ocurrió un error interno en el servidor.'];
-        }
+        return $this->$metodo();
     }
 
-    /**
-     * Calcula el presupuesto disponible para un presupuesto dado.
-     * @param array $contexto Puede contener 'id_solicitud' para excluir la solicitud actual en edición.
-     * @return float|null Monto disponible o null si no se pudo calcular.
-     // SE USA EN LA CLASE
-     */
     private function calcularDisponiblePresupuesto($contexto = [])
     {
         $estadoPendiente = EstadoSolicitud::PENDIENTE->value;
@@ -129,55 +111,41 @@ class SolicitudGasto extends Conexion
                     ), 0) AS total_solicitado
                 FROM presupuesto p
                 WHERE p.id_presupuesto = :id_presupuesto";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->bindParam(':id_presupuesto', $this->presupuesto_id);
-            $stmt->bindValue(':estado_pen', $estadoPendiente);
-            $stmt->bindValue(':estado_apr', $estadoAprobada);
-            $stmt->execute();
-            $datos = $stmt->fetch(PDO::FETCH_ASSOC);
-            if (!$datos || $datos['total_presupuesto'] === null) {
-                return null;
-            }
-            $disponible = $datos['total_presupuesto'] - $datos['total_solicitado'];
-            // Si estamos editando, hay que sumar el monto original de esta solicitud (porque ya está incluido en total_solicitado)
-            if (isset($contexto['id_solicitud']) && $contexto['id_solicitud']) {
-                $sql_original = "SELECT monto_estimado FROM solicitudes_gasto WHERE id_solicitud = :id_solicitud";
-                $stmt_orig = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql_original);
-                $stmt_orig->bindParam(':id_solicitud', $contexto['id_solicitud']);
-                $stmt_orig->execute();
-                $monto_original = $stmt_orig->fetchColumn();
-                if ($monto_original !== false) {
-                    $disponible += $monto_original;
-                }
-            }
-            return $disponible;
-        } catch (PDOException $e) {
-            error_log("Error en calcularDisponiblePresupuesto: " . $e->getMessage());
+
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->bindParam(':id_presupuesto', $this->presupuesto_id);
+        $stmt->bindValue(':estado_pen', $estadoPendiente);
+        $stmt->bindValue(':estado_apr', $estadoAprobada);
+        $stmt->execute();
+        $datos = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$datos || $datos['total_presupuesto'] === null) {
             return null;
         }
+
+        $disponible = $datos['total_presupuesto'] - $datos['total_solicitado'];
+
+        if (isset($contexto['id_solicitud']) && $contexto['id_solicitud']) {
+            $sql_original = "SELECT monto_estimado FROM solicitudes_gasto WHERE id_solicitud = :id_solicitud";
+            $stmt_orig = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql_original);
+            $stmt_orig->bindParam(':id_solicitud', $contexto['id_solicitud']);
+            $stmt_orig->execute();
+            $monto_original = $stmt_orig->fetchColumn();
+            if ($monto_original !== false) {
+                $disponible += $monto_original;
+            }
+        }
+        return $disponible;
     }
 
-    // -----------------------------------------------------------------
-    // Métodos privados (acciones)
-    // -----------------------------------------------------------------
-
-    // SE USA EN EL MODULO
     private function _consultar()
     {
         $sql = "SELECT * FROM solicitudes_gasto WHERE activo = 1";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->execute();
-            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $datos];
-        } catch (PDOException $e) {
-            error_log("Error en _consultar: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar solicitudes'];
-        }
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->execute();
+        return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
     }
 
-    // SE USA EN EL MODULO
     private function _consultar_solicitud()
     {
         $sql = "SELECT 
@@ -190,45 +158,38 @@ class SolicitudGasto extends Conexion
                 FROM solicitudes_gasto sg
                 JOIN presupuesto p ON sg.presupuesto_id = p.id_presupuesto
                 WHERE sg.id_solicitud = :id_solicitud AND sg.activo = 1";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->bindParam(':id_solicitud', $this->id_solicitud);
-            $stmt->execute();
-            $datos = $stmt->fetch(PDO::FETCH_ASSOC);
-            if (!$datos) {
-                return ['estatus' => false, 'mensaje' => 'Solicitud no encontrada'];
-            }
-            return ['estatus' => true, 'datos' => $datos];
-        } catch (PDOException $e) {
-            error_log("Error en _consultar_solicitud_id: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar la solicitud'];
+
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->bindParam(':id_solicitud', $this->id_solicitud);
+        $stmt->execute();
+        $datos = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$datos) {
+            throw new NegocioException('Solicitud no encontrada.', HttpCodigo::NO_ENCONTRADO->value);
         }
+
+        return ['estatus' => true, 'datos' => $datos];
     }
 
-    // SE USA EN EL MODULO
     private function _registrar_solicitud()
     {
         $sql = "INSERT INTO solicitudes_gasto (fecha_reporte, descripcion_necesidad, nombre_solicitante, monto_estimado, estado, presupuesto_id, prioridad)
                 VALUES (:fecha_reporte, :descripcion_necesidad, :nombre_solicitante, :monto_estimado, :estado, :presupuesto_id, :prioridad)";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->bindParam(':fecha_reporte', $this->fecha_reporte);
-            $stmt->bindParam(':descripcion_necesidad', $this->descripcion_necesidad);
-            $stmt->bindParam(':nombre_solicitante', $this->nombre_solicitante);
-            $stmt->bindParam(':monto_estimado', $this->monto_estimado);
-            $stmt->bindParam(':estado', $this->estado);
-            $stmt->bindParam(':presupuesto_id', $this->presupuesto_id);
-            $stmt->bindParam(':prioridad', $this->prioridad);
-            $stmt->execute();
-            $lastId = $this->get_conex(TipoBaseDatos::NEGOCIO)->lastInsertId();
-            return ['estatus' => true, 'mensaje' => 'Solicitud registrada correctamente', 'lastId' => $lastId];
-        } catch (PDOException $e) {
-            error_log("Error en _registrar: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al registrar la solicitud'];
-        }
+
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->bindParam(':fecha_reporte', $this->fecha_reporte);
+        $stmt->bindParam(':descripcion_necesidad', $this->descripcion_necesidad);
+        $stmt->bindParam(':nombre_solicitante', $this->nombre_solicitante);
+        $stmt->bindParam(':monto_estimado', $this->monto_estimado);
+        $stmt->bindParam(':estado', $this->estado);
+        $stmt->bindParam(':presupuesto_id', $this->presupuesto_id);
+        $stmt->bindParam(':prioridad', $this->prioridad);
+        $stmt->execute();
+
+        $lastId = $this->get_conex(TipoBaseDatos::NEGOCIO)->lastInsertId();
+        return ['estatus' => true, 'mensaje' => 'Solicitud registrada correctamente', 'lastId' => $lastId];
     }
 
-    // SE USA EN EL MODULO
     private function _modificar_solicitud()
     {
         $sql = "UPDATE solicitudes_gasto SET
@@ -240,50 +201,36 @@ class SolicitudGasto extends Conexion
                     presupuesto_id = :presupuesto_id,
                     prioridad = :prioridad
                 WHERE id_solicitud = :id_solicitud";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->bindParam(':id_solicitud', $this->id_solicitud);
-            $stmt->bindParam(':fecha_reporte', $this->fecha_reporte);
-            $stmt->bindParam(':descripcion_necesidad', $this->descripcion_necesidad);
-            $stmt->bindParam(':nombre_solicitante', $this->nombre_solicitante);
-            $stmt->bindParam(':monto_estimado', $this->monto_estimado);
-            $stmt->bindParam(':estado', $this->estado);
-            $stmt->bindParam(':presupuesto_id', $this->presupuesto_id);
-            $stmt->bindParam(':prioridad', $this->prioridad);
-            $stmt->execute();
-            return ['estatus' => true, 'mensaje' => 'Solicitud actualizada correctamente'];
-        } catch (PDOException $e) {
-            error_log("Error en _modificar: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al actualizar la solicitud'];
-        }
+
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->bindParam(':id_solicitud', $this->id_solicitud);
+        $stmt->bindParam(':fecha_reporte', $this->fecha_reporte);
+        $stmt->bindParam(':descripcion_necesidad', $this->descripcion_necesidad);
+        $stmt->bindParam(':nombre_solicitante', $this->nombre_solicitante);
+        $stmt->bindParam(':monto_estimado', $this->monto_estimado);
+        $stmt->bindParam(':estado', $this->estado);
+        $stmt->bindParam(':presupuesto_id', $this->presupuesto_id);
+        $stmt->bindParam(':prioridad', $this->prioridad);
+        $stmt->execute();
+
+        return ['estatus' => true, 'mensaje' => 'Solicitud actualizada correctamente'];
     }
 
-    // SE USA EN EL MODULO
     private function _eliminar_solicitud()
     {
         $sql = "UPDATE solicitudes_gasto SET activo = 0 WHERE id_solicitud = :id_solicitud";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->bindParam(':id_solicitud', $this->id_solicitud);
-            $stmt->execute();
-            return ['estatus' => true, 'mensaje' => 'Solicitud eliminada correctamente'];
-        } catch (PDOException $e) {
-            error_log("Error en _eliminar: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al eliminar la solicitud'];
-        }
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->bindParam(':id_solicitud', $this->id_solicitud);
+        $stmt->execute();
+
+        return ['estatus' => true, 'mensaje' => 'Solicitud eliminada correctamente'];
     }
 
-
-    // -----------------------------------------------------------------
-    // Métodos públicos auxiliares (reportes, consultas adicionales)
-    // -----------------------------------------------------------------
-
-    // SE USA EN EL MODULO
     public function consultar_presupuesto($fecha)
     {
         $partes = explode('-', $fecha);
         if (count($partes) != 2) {
-            return ['estatus' => false, 'mensaje' => 'Formato de fecha inválido. Use YYYY-MM'];
+            throw new NegocioException('Formato de fecha inválido. Use YYYY-MM.', HttpCodigo::BAD_REQUEST->value);
         }
         $anio = $partes[0];
         $mes = $partes[1];
@@ -304,48 +251,39 @@ class SolicitudGasto extends Conexion
                 FROM presupuesto p
                 WHERE YEAR(p.fecha) = :anio AND MONTH(p.fecha) = :mes
                 LIMIT 1";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->bindParam(':mes', $mes, PDO::PARAM_INT);
-            $stmt->bindParam(':anio', $anio, PDO::PARAM_INT);
-            $stmt->bindValue(':estado_pen', $estadoPendiente);
-            $stmt->bindValue(':estado_apr', $estadoAprobada);
-            $stmt->execute();
-            $datos = $stmt->fetch(PDO::FETCH_ASSOC);
-            if (!$datos) {
-                return ['estatus' => false, 'mensaje' => 'No hay presupuesto para la fecha indicada'];
-            }
-            return ['estatus' => true] + $datos;
-        } catch (PDOException $e) {
-            error_log("Error en consultar_presupuesto: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar presupuesto'];
+
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->bindParam(':mes', $mes, PDO::PARAM_INT);
+        $stmt->bindParam(':anio', $anio, PDO::PARAM_INT);
+        $stmt->bindValue(':estado_pen', $estadoPendiente);
+        $stmt->bindValue(':estado_apr', $estadoAprobada);
+        $stmt->execute();
+        $datos = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$datos) {
+            throw new NegocioException('No hay presupuesto para la fecha indicada.', HttpCodigo::NO_ENCONTRADO->value);
         }
+
+        return ['estatus' => true] + $datos;
     }
 
-    // SE USA EN EL MODULO
     public function consultar_presupuesto_disponible()
     {
         $disponible = $this->calcularDisponiblePresupuesto();
         if ($disponible === null) {
-            return ['estatus' => false, 'mensaje' => 'No se pudo calcular el presupuesto disponible'];
+            throw new NegocioException('No se pudo calcular el presupuesto disponible.', HttpCodigo::BAD_REQUEST->value);
         }
         return ['estatus' => true, 'disponible' => $disponible];
     }
 
-    // SE USA EN EL MODULO
     public function listar_meses_anios_con_presupuesto()
     {
         $sql = "SELECT DISTINCT MONTH(fecha) as mes, YEAR(fecha) as anio 
                 FROM presupuesto
                 ORDER BY anio DESC, mes DESC";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->execute();
-            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $datos];
-        } catch (PDOException $e) {
-            error_log("Error en listar_meses_anios_con_presupuesto: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al listar meses con presupuesto'];
-        }
+
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->execute();
+        return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
     }
 }

@@ -2,10 +2,11 @@
 namespace haydee\modelo;
 
 use PDO;
-use PDOException;
 use haydee\ayuda\GestorImagenes;
 use haydee\enums\NivelPrioridad;
 use haydee\enums\TipoBaseDatos;
+use haydee\enums\HttpCodigo;
+use haydee\excepciones\NegocioException;
 
 class CarteleraVirtual extends Conexion
 {
@@ -25,11 +26,9 @@ class CarteleraVirtual extends Conexion
     private $limite_paginacion;
     private $offset_paginacion;
 
-    // VALIDACIONES CENTRALIZADAS
     public static function obtenerReglas($operacion) {
         $prioridadesValidas = implode('|', array_column(NivelPrioridad::cases(), 'value'));
 
-        // Reglas base de cada campo
         $reglasCampos = [
             'id_cartelera' => [
                 'regex' => '/^\d+$/',
@@ -54,12 +53,10 @@ class CarteleraVirtual extends Conexion
             ]
         ];
 
-        // Configuración de cada operación: método HTTP permitido y campos requeridos
         $configPorOperacion = [
-            // ==================== CONSULTAS (GET) ====================
             'consulta' => [
                 'metodo_http' => ['GET'],
-                'campos' => []   // sin campos, solo lista
+                'campos' => []
             ],
             'consultar_cartelera' => [
                 'metodo_http' => ['GET'],
@@ -67,10 +64,8 @@ class CarteleraVirtual extends Conexion
             ],
             'consultar_paginada' => [
                 'metodo_http' => ['GET'],
-                'campos' => []   // paginación se maneja internamente
+                'campos' => []
             ],
-
-            // ==================== ESCRITURA (POST / PUT / DELETE) ====================
             'registrar_cartelera' => [
                 'metodo_http' => ['POST'],
                 'campos' => ['titulo', 'descripcion', 'prioridad', 'usuario_id']
@@ -87,18 +82,14 @@ class CarteleraVirtual extends Conexion
 
         if (isset($configPorOperacion[$operacion])) {
             $config = $configPorOperacion[$operacion];
-            // Filtrar solo los campos que necesita la operación
             $reglasFiltradas = array_intersect_key($reglasCampos, array_flip($config['campos']));
-            // Agregar la validación del método HTTP
             $reglasFiltradas['__metodo_http_permitido__'] = $config['metodo_http'];
             return $reglasFiltradas;
         }
 
-        // Si la operación no está definida, se devuelve array vacío (sin reglas)
         return [];
     }
 
-    // Getters y Setters
     public function set_id_cartelera($id) { $this->id_cartelera = $id; }
     public function get_id_cartelera() { return $this->id_cartelera; }
     public function set_titulo($titulo) { $this->titulo = $titulo; }
@@ -116,102 +107,63 @@ class CarteleraVirtual extends Conexion
     public function set_limite_paginacion($l) { $this->limite_paginacion = (int)$l; }
     public function set_offset_paginacion($o) { $this->offset_paginacion = (int)$o; }
 
-    /**
-     * Enruta la acción al método privado correspondiente.
-     */
     public function realizar_consulta($accion)
     {
         $metodo = '_' . $accion;
         if (!method_exists($this, $metodo)) {
-            return ['estatus' => false, 'mensaje' => "La acción '$accion' no está implementada."];
+            throw new NegocioException("La acción '$accion' no está implementada.", HttpCodigo::BAD_REQUEST->value);
         }
-
-        try {
-            return $this->$metodo();
-        } catch (\Exception $e) {
-            error_log("Error en realizar_consulta ($accion): " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Ocurrió un error interno en el servidor.'];
-        }
+        return $this->$metodo();
     }
 
-    // -----------------------------------------------------------------
-    // Métodos privados (acciones)
-    // -----------------------------------------------------------------
-
-    /**
-     * Lista todas las publicaciones (vista resumida).
-     // SE USA EN EL MODULO
-     */
     private function _consultar()
     {
         $sql = "SELECT id_cartelera, titulo, prioridad, fecha, imagen, descripcion, usuarios.nombre as nombre_usuario 
                 FROM cartelera_virtual
                 INNER JOIN usuarios ON usuarios.id_usuario = cartelera_virtual.usuario_id
                 ORDER BY fecha ASC";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
-            $stmt->execute();
-            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $datos];
-        } catch (PDOException $e) {
-            error_log("Error en _consultar: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar cartelera'];
-        }
+
+        $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
+        $stmt->execute();
+        return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
     }
 
-    /**
-     * Consulta detallada de una publicación por ID.
-     // SE USA EN EL MODULO
-     */
     private function _consultar_cartelera()
     {
         $sql = "SELECT cv.*, u.nombre AS nombre_usuario
                 FROM cartelera_virtual cv
                 INNER JOIN usuarios u ON cv.usuario_id = u.id_usuario
                 WHERE cv.id_cartelera = :id_cartelera";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
-            $stmt->bindParam(':id_cartelera', $this->id_cartelera);
-            $stmt->execute();
-            $datos = $stmt->fetch(PDO::FETCH_ASSOC);
-            if (!$datos) {
-                return ['estatus' => false, 'mensaje' => 'Publicación no encontrada'];
-            }
-            return ['estatus' => true, 'datos' => $datos];
-        } catch (PDOException $e) {
-            error_log("Error en _consultar_cartelera_id: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar la publicación'];
+
+        $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
+        $stmt->bindParam(':id_cartelera', $this->id_cartelera);
+        $stmt->execute();
+        $datos = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$datos) {
+            throw new NegocioException('Publicación no encontrada.', HttpCodigo::NO_ENCONTRADO->value);
         }
+
+        return ['estatus' => true, 'datos' => $datos];
     }
 
-    /**
-     * Registra una nueva publicación.
-     // SE USA EN EL MODULO
-     */
     private function _registrar_cartelera()
     {
         $sql = "INSERT INTO cartelera_virtual (titulo, descripcion, imagen, prioridad, usuario_id)
                 VALUES (:titulo, :descripcion, :imagen, :prioridad, :usuario_id)";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
-            $stmt->bindParam(':titulo', $this->titulo);
-            $stmt->bindParam(':descripcion', $this->descripcion);
-            $stmt->bindParam(':imagen', $this->imagen);
-            $stmt->bindParam(':prioridad', $this->prioridad);
-            $stmt->bindParam(':usuario_id', $this->usuario_id);
-            $stmt->execute();
-            $lastId = $this->get_conex(TipoBaseDatos::SEGURIDAD)->lastInsertId();
-            return ['estatus' => true, 'mensaje' => 'Publicación registrada correctamente', 'lastId' => $lastId];
-        } catch (PDOException $e) {
-            error_log("Error en _registrar: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al registrar la publicación'];
-        }
+
+        $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
+        $stmt->bindParam(':titulo', $this->titulo);
+        $stmt->bindParam(':descripcion', $this->descripcion);
+        $stmt->bindParam(':imagen', $this->imagen);
+        $stmt->bindParam(':prioridad', $this->prioridad);
+        $stmt->bindParam(':usuario_id', $this->usuario_id);
+        $stmt->execute();
+
+        $lastId = $this->get_conex(TipoBaseDatos::SEGURIDAD)->lastInsertId();
+        return ['estatus' => true, 'mensaje' => 'Publicación registrada correctamente', 'lastId' => $lastId];
     }
 
-    /**
-     * Actualiza una publicación existente.
-     // SE USA EN EL MODULO
-     */
     private function _modificar_cartelera()
     {
         $sql = "UPDATE cartelera_virtual SET
@@ -221,83 +173,54 @@ class CarteleraVirtual extends Conexion
                     prioridad = :prioridad,
                     usuario_id = :usuario_id
                 WHERE id_cartelera = :id_cartelera";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
-            $stmt->bindParam(':id_cartelera', $this->id_cartelera);
-            $stmt->bindParam(':titulo', $this->titulo);
-            $stmt->bindParam(':descripcion', $this->descripcion);
-            $stmt->bindParam(':imagen', $this->imagen);
-            $stmt->bindParam(':prioridad', $this->prioridad);
-            $stmt->bindParam(':usuario_id', $this->usuario_id);
-            $stmt->execute();
-            return ['estatus' => true, 'mensaje' => 'Publicación actualizada correctamente'];
-        } catch (PDOException $e) {
-            error_log("Error en _modificar_publicacion: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al actualizar la publicación'];
-        }
+
+        $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
+        $stmt->bindParam(':id_cartelera', $this->id_cartelera);
+        $stmt->bindParam(':titulo', $this->titulo);
+        $stmt->bindParam(':descripcion', $this->descripcion);
+        $stmt->bindParam(':imagen', $this->imagen);
+        $stmt->bindParam(':prioridad', $this->prioridad);
+        $stmt->bindParam(':usuario_id', $this->usuario_id);
+        $stmt->execute();
+
+        return ['estatus' => true, 'mensaje' => 'Publicación actualizada correctamente'];
     }
 
-    /**
-     * Elimina una publicación (físicamente) y su imagen asociada.
-     // SE USA EN EL MODULO
-     */
     private function _eliminar_cartelera()
     {
-        // Obtener el nombre de la imagen antes de eliminar
         $imagen = $this->obtenerImagenActual();
 
         $sql = "DELETE FROM cartelera_virtual WHERE id_cartelera = :id_cartelera";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
-            $stmt->bindParam(':id_cartelera', $this->id_cartelera);
-            $stmt->execute();
-            $filas = $stmt->rowCount();
-            if ($filas == 0) {
-                return ['estatus' => false, 'mensaje' => 'No se encontró la publicación'];
-            }
+        $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
+        $stmt->bindParam(':id_cartelera', $this->id_cartelera);
+        $stmt->execute();
 
-            // Eliminar archivo de imagen si existe
-            if ($imagen) {
-                GestorImagenes::eliminar($imagen, 'cartelera');
-            }
-
-            return ['estatus' => true, 'mensaje' => 'Publicación eliminada correctamente'];
-        } catch (PDOException $e) {
-            error_log("Error en _eliminar_publicacion: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al eliminar la publicación'];
+        if ($stmt->rowCount() == 0) {
+            throw new NegocioException('No se encontró la publicación a eliminar.', HttpCodigo::NO_ENCONTRADO->value);
         }
+
+        if ($imagen) {
+            GestorImagenes::eliminar($imagen, 'cartelera');
+        }
+
+        return ['estatus' => true, 'mensaje' => 'Publicación eliminada correctamente'];
     }
 
-    // -----------------------------------------------------------------
-    // Métodos públicos auxiliares
-    // -----------------------------------------------------------------
-
-    /**
-     * Obtiene el nombre de la imagen actual de una publicación.
-     // SE USA EN LA PROPIA CLASE (considerar quitar metodo)
-     */
     public function obtenerImagenActual()
     {
         if (!$this->id_cartelera) {
             return null;
         }
+
         $sql = "SELECT imagen FROM cartelera_virtual WHERE id_cartelera = :id_cartelera";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
-            $stmt->bindParam(':id_cartelera', $this->id_cartelera);
-            $stmt->execute();
-            $res = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $res ? $res['imagen'] : null;
-        } catch (PDOException $e) {
-            error_log("Error en obtener_imagen_actual: " . $e->getMessage());
-            return null;
-        }
+        $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
+        $stmt->bindParam(':id_cartelera', $this->id_cartelera);
+        $stmt->execute();
+        $res = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $res ? $res['imagen'] : null;
     }
 
-    /**
-     * Consulta para la página de inicio (con paginación).
-     // SE USA EN INICIO
-     */
     public function consultar_inicio($limite, $fecha_limite = null)
     {
         $limite_int = (int)$limite;
@@ -320,24 +243,14 @@ class CarteleraVirtual extends Conexion
                     fecha DESC 
                 LIMIT $limiteConsulta OFFSET :offset";
 
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
-            $stmt->bindParam(':offset', $limite_int, PDO::PARAM_INT);
-            $stmt->bindParam(':fecha_limite', $fecha_limite, PDO::PARAM_STR);
-            $stmt->execute();
-            
-            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $datos];
-        } catch (PDOException $e) {
-            error_log("Error en consultar_inicio: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar cartelera para inicio'];
-        }
+        $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
+        $stmt->bindParam(':offset', $limite_int, PDO::PARAM_INT);
+        $stmt->bindParam(':fecha_limite', $fecha_limite, PDO::PARAM_STR);
+        $stmt->execute();
+        
+        return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
     }
 
-    /**
-     * Consulta rápida de las últimas 7 publicaciones para el widget del Dashboard
-     // SE USA EN INICIO
-     */
     public function consultar_widget_dashboard()
     {
         $limite = self::LIMITE_WIDGET;
@@ -346,23 +259,14 @@ class CarteleraVirtual extends Conexion
                 FROM cartelera_virtual
                 INNER JOIN usuarios ON usuarios.id_usuario = cartelera_virtual.usuario_id
                 ORDER BY fecha DESC LIMIT $limite";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
-            $stmt->execute();
-            $datos = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $datos];
-        } catch (\PDOException $e) {
-            error_log("Error en consultar_widget_dashboard: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar publicaciones'];
-        }
+
+        $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
+        $stmt->execute();
+        return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
     }
 
-    /**
-     * Consulta cronológica limpia para el Infinite Scroll de la App Móvil
-     */
     private function _consultar_paginada()
     {
-        // Valores por defecto como mecanismo de seguridad
         $limite = $this->limite_paginacion ?: 10;
         $offset = $this->offset_paginacion ?: 0;
 
@@ -371,19 +275,12 @@ class CarteleraVirtual extends Conexion
                 INNER JOIN usuarios ON usuarios.id_usuario = cartelera_virtual.usuario_id
                 ORDER BY fecha DESC 
                 LIMIT :limite OFFSET :offset";
-                
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
-            $stmt->bindParam(':limite', $limite, PDO::PARAM_INT);
-            $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
-            $stmt->execute();
-            
-            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $datos];
-        } catch (PDOException $e) {
-            error_log("Error en _consultar_paginada: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar cartelera paginada'];
-        }
+
+        $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
+        $stmt->bindParam(':limite', $limite, PDO::PARAM_INT);
+        $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+        
+        return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
     }
-    
 }

@@ -2,43 +2,37 @@
 namespace haydee\modelo;
 
 use PDO;
-use PDOException;
 use haydee\enums\ClasificacionGasto;
 use haydee\enums\MetodoPago;
 use haydee\enums\TipoBaseDatos;
+use haydee\enums\HttpCodigo;
 use haydee\ayuda\GestorImagenes;
+use haydee\excepciones\NegocioException;
 
 class Gastos extends Conexion
 {
-    // Tabla: gastos (Cabecera)
     private $id_gasto;
-    private $clasificacion;     // 'Fijo' o 'Variable'
+    private $clasificacion;
     private $descripcion_gasto;
-    private $solicitud_id;      // Opcional (FK a solicitudes_gasto)
-    private $tipo_gasto_id;     // FK a tipo_gasto
-    private $proveedor_id;      // FK a proveedores (opcional)
+    private $presupuesto_id;
+    private $concepto_id;
+    private $proveedor_id;
     private $activo;
 
-    // Tabla: detalles_gastos
     private $id_detalle_gasto;
     private $fecha;
     private $monto;
     private $tasa_dolar;
-    private $metodo_pago;       // 'Efectivo', 'Pago Movil', 'Transferencia', 'Divisa'
+    private $metodo_pago;
 
-    private $detalles = [];  // Array de detalles (cada detalle es un array asociativo)
+    private $detalles = [];
 
-    // Tabla: egresos_bancarios (solo si método bancario)
     private $referencia;
     private $imagen;
-    private $banco_id;
+    private $cuenta_id;
 
-    /**
-     * Reglas para la tabla principal (Cabecera)
-     */
     public static function obtenerReglas($operacion) {
         $ClasificacionesValidas = implode('|', array_column(ClasificacionGasto::cases(), 'value'));
-        // Reglas base de cada campo (cabecera)
         $reglasCampos = [
             'id_gasto' => [
                 'regex' => '/^\d+$/',
@@ -53,14 +47,13 @@ class Gastos extends Conexion
             'tasa_dolar' => [
                 'regex' => '/^\d+(\.\d{1,2})?$/'
             ],
-            'solicitud_id' => [
+            'presupuesto_id' => [
                 'regex' => '/^\d+$/',
-                'exists' => ['tabla' => 'solicitudes_gasto', 'campo' => 'id_solicitud'],
-                'opcional' => true
+                'exists' => ['tabla' => 'presupuesto', 'campo' => 'id_presupuesto']
             ],
-            'tipo_gasto_id' => [
+            'concepto_id' => [
                 'regex' => '/^\d+$/',
-                'exists' => ['tabla' => 'tipo_gasto', 'campo' => 'id_tipo_gasto']
+                'exists' => ['tabla' => 'conceptos_gasto', 'campo' => 'id_concepto']
             ],
             'proveedor_id' => [
                 'regex' => '/^\d+$/',
@@ -72,7 +65,6 @@ class Gastos extends Conexion
             ]
         ];
 
-        // Configuración de cada operación: método HTTP permitido y campos requeridos
         $configPorOperacion = [
             'consultar' => [
                 'metodo_http' => ['GET'],
@@ -108,11 +100,11 @@ class Gastos extends Conexion
             ],
             'registrar_gasto' => [
                 'metodo_http' => ['POST'],
-                'campos' => ['clasificacion', 'descripcion_gasto', 'solicitud_id', 'tipo_gasto_id', 'proveedor_id', 'tasa_dolar']
+                'campos' => ['clasificacion', 'descripcion_gasto', 'presupuesto_id', 'concepto_id', 'proveedor_id', 'tasa_dolar']
             ],
             'modificar_gasto' => [
                 'metodo_http' => ['PUT', 'POST'],
-                'campos' => ['id_gasto', 'clasificacion', 'descripcion_gasto', 'solicitud_id', 'tipo_gasto_id', 'proveedor_id', 'tasa_dolar']
+                'campos' => ['id_gasto', 'clasificacion', 'descripcion_gasto', 'presupuesto_id', 'concepto_id', 'proveedor_id', 'tasa_dolar']
             ],
             'eliminar_gasto' => [
                 'metodo_http' => ['DELETE', 'POST'],
@@ -122,20 +114,14 @@ class Gastos extends Conexion
 
         if (isset($configPorOperacion[$operacion])) {
             $config = $configPorOperacion[$operacion];
-            // Filtrar solo los campos que necesita la operación
             $reglasFiltradas = array_intersect_key($reglasCampos, array_flip($config['campos']));
-            // Agregar la validación del método HTTP
             $reglasFiltradas['__metodo_http_permitido__'] = $config['metodo_http'];
             return $reglasFiltradas;
         }
 
-        // Si la operación no está definida, se devuelve array vacío (sin reglas)
         return [];
     }
 
-    /**
-     * Reglas para cada fila de la tabla de detalles (Detalles Gastos)
-     */
     public static function obtenerReglasDetalles() {
         $metodosValidos = implode('|', array_column(MetodoPago::cases(), 'value'));
 
@@ -160,26 +146,25 @@ class Gastos extends Conexion
                 'opcional' => true,
                 'requerido_si' => ['metodo_pago' => [MetodoPago::TRANSFERENCIA->value, MetodoPago::PAGO_MOVIL->value]]
             ],
-            'banco_id' => [
+            'cuenta_id' => [
                 'regex' => '/^\d+$/',
-                'exists' => ['tabla' => 'bancos', 'campo' => 'id_banco'],
+                'exists' => ['tabla' => 'cuentas_condominio', 'campo' => 'id_cuenta'],
                 'opcional' => true,
                 'requerido_si' => ['metodo_pago' => [MetodoPago::TRANSFERENCIA->value, MetodoPago::PAGO_MOVIL->value]]
             ]
         ];
     }
 
-    // GETTERS Y SETTERS
     public function set_id_gasto($id) { $this->id_gasto = $id; }
     public function get_id_gasto() { return $this->id_gasto; }
     public function set_clasificacion($c) { $this->clasificacion = $c; }
     public function get_clasificacion() { return $this->clasificacion; }
     public function set_descripcion_gasto($d) { $this->descripcion_gasto = $d; }
     public function get_descripcion_gasto() { return $this->descripcion_gasto; }
-    public function set_solicitud_id($s) { $this->solicitud_id = $s; }
-    public function get_solicitud_id() { return $this->solicitud_id; }
-    public function set_tipo_gasto_id($t) { $this->tipo_gasto_id = $t; }
-    public function get_tipo_gasto_id() { return $this->tipo_gasto_id; }
+    public function set_presupuesto_id($presupuesto_id) { $this->presupuesto_id = $presupuesto_id; }
+    public function get_presupuesto_id() { return $this->presupuesto_id; }
+    public function set_concepto_id($t) { $this->concepto_id = $t; }
+    public function get_concepto_id() { return $this->concepto_id; }
     public function set_proveedor_id($p) { $this->proveedor_id = $p; }
     public function get_proveedor_id() { return $this->proveedor_id; }
 
@@ -198,8 +183,8 @@ class Gastos extends Conexion
     public function get_referencia() { return $this->referencia; }
     public function set_imagen($i) { $this->imagen = $i; }
     public function get_imagen() { return $this->imagen; }
-    public function set_banco_id($b) { $this->banco_id = $b; }
-    public function get_banco_id() { return $this->banco_id; }
+    public function set_cuenta_id($b) { $this->cuenta_id = $b; }
+    public function get_cuenta_id() { return $this->cuenta_id; }
 
     public function set_activo($activo) { $this->activo = $activo; }
     public function get_activo() { return $this->activo; }
@@ -207,31 +192,15 @@ class Gastos extends Conexion
     public function set_detalles($detalles) { $this->detalles = $detalles; }
     public function get_detalles() { return $this->detalles; }
 
-    // ====================================================================
-    // ENRUTADOR CON MANEJO DE EXCEPCIONES
-    // ====================================================================
     public function realizar_consulta($accion, $param = null)
     {
         $metodo = '_' . $accion;
         if (!method_exists($this, $metodo)) {
-            return ['estatus' => false, 'mensaje' => "La acción '$accion' no está implementada."];
+            throw new NegocioException("La acción '$accion' no está implementada.", HttpCodigo::BAD_REQUEST->value);
         }
-        try {
-            return $param !== null ? $this->$metodo($param) : $this->$metodo();
-        } catch (\Exception $e) {
-            error_log("Error en realizar_consulta ($accion): " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Ocurrió un error interno en el servidor.'];
-        }
+        return $param !== null ? $this->$metodo($param) : $this->$metodo();
     }
 
-    // ====================================================================
-    // REGLAS DE NEGOCIO Y VALIDACIONES COMPLEJAS
-    // ====================================================================
-
-    /**
-     * Verifica que las referencias bancarias no estén duplicadas 
-     * en el mismo formulario ni en otros gastos.
-     */
     private function _validar_referencias_unicas() {
         $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
         $refsUsadas = [];
@@ -240,13 +209,11 @@ class Gastos extends Conexion
             if (!empty($det['referencia'])) {
                 $ref = trim($det['referencia']);
                 
-                // 1. Evitar duplicados en los renglones del mismo formulario
                 if (in_array($ref, $refsUsadas)) {
-                    return ['estatus' => false, 'mensaje' => "La referencia '$ref' está repetida en el renglón " . ($idx + 1) . "."];
+                    throw new NegocioException("La referencia '$ref' está repetida en el renglón " . ($idx + 1) . ".", HttpCodigo::BAD_REQUEST->value);
                 }
                 $refsUsadas[] = $ref;
 
-                // 2. Verificar contra la base de datos (egresos_bancarios y detalles_gastos)
                 $sql = "SELECT dg.gasto_id FROM egresos_bancarios eb 
                         JOIN detalles_gastos dg ON eb.detalle_gasto_id = dg.id_detalle_gasto 
                         WHERE eb.referencia = :ref LIMIT 1";
@@ -255,63 +222,52 @@ class Gastos extends Conexion
                 $gasto_id_bd = $stmt->fetchColumn();
 
                 if ($gasto_id_bd) {
-                    // Comprobamos si pertenece a otro gasto distinto al actual
                     if (empty($this->id_gasto) || $gasto_id_bd != $this->id_gasto) {
-                        return ['estatus' => false, 'mensaje' => "La referencia bancaria '$ref' (Renglón " . ($idx + 1) . ") ya se encuentra registrada en otro gasto."];
+                        throw new NegocioException("La referencia bancaria '$ref' (Renglón " . ($idx + 1) . ") ya se encuentra registrada en otro gasto.", HttpCodigo::BAD_REQUEST->value);
                     }
                 }
             }
         }
-        return ['estatus' => true];
+        return true;
     }
 
-    /**
-     * Utilidad para el AJAX: Verifica si la referencia está libre.
-     */
     public function verificarReferenciaDisponible($referencia, $id_gasto_actual = null) {
         $sql = "SELECT dg.gasto_id FROM egresos_bancarios eb 
                 JOIN detalles_gastos dg ON eb.detalle_gasto_id = dg.id_detalle_gasto 
                 WHERE eb.referencia = :ref LIMIT 1";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->execute([':ref' => $referencia]);
-            $gasto_id_bd = $stmt->fetchColumn();
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->execute([':ref' => $referencia]);
+        $gasto_id_bd = $stmt->fetchColumn();
 
-            if ($gasto_id_bd) {
-                if (empty($id_gasto_actual) || $gasto_id_bd != $id_gasto_actual) {
-                    return true; // Ocupada
-                }
+        if ($gasto_id_bd) {
+            if (empty($id_gasto_actual) || $gasto_id_bd != $id_gasto_actual) {
+                return true; 
             }
-            return false; // Disponible
-        } catch (\PDOException $e) {
-            return false;
         }
+        return false; 
     }
 
-    // SE USA EN EL MODULO
     private function _registrar_gasto()
     {
         if (empty($this->detalles)) {
-            return ['estatus' => false, 'mensaje' => 'Debe proporcionar al menos un detalle de gasto.'];
+            throw new NegocioException('Debe proporcionar al menos un detalle de gasto.', HttpCodigo::BAD_REQUEST->value);
         }
 
-        $valRef = $this->_validar_referencias_unicas();
-        if (!$valRef['estatus']) return $valRef;
+        $this->_validar_referencias_unicas();
 
+        $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
         try {
-            $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
             $pdo->exec("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ");
             $pdo->beginTransaction();
 
-            // Insertar cabecera
-            $sqlCab = "INSERT INTO gastos (clasificacion, descripcion_gasto, solicitud_id, tipo_gasto_id, proveedor_id, tasa_dolar, activo) 
-                       VALUES (:clas, :desc, :sol_id, :tipo_id, :prov_id, :tasa, 1)";
+            $sqlCab = "INSERT INTO gastos (clasificacion, descripcion_gasto, presupuesto_id, concepto_id, proveedor_id, tasa_dolar, activo) 
+                       VALUES (:clas, :desc, :presupuesto_id, :concepto_id, :prov_id, :tasa, 1)";
             $stmtCab = $pdo->prepare($sqlCab);
             $stmtCab->execute([
                 ':clas'    => $this->clasificacion,
                 ':desc'    => $this->descripcion_gasto,
-                ':sol_id'  => $this->solicitud_id ?: null,
-                ':tipo_id' => $this->tipo_gasto_id,
+                ':presupuesto_id' => $this->presupuesto_id,
+                ':concepto_id' => $this->concepto_id,
                 ':prov_id' => $this->proveedor_id ?: null,
                 ':tasa'    => $this->tasa_dolar ?? 1
             ]);
@@ -319,49 +275,37 @@ class Gastos extends Conexion
 
             $this->_guardar_detalles($pdo, $id_gasto);
 
-            // Actualizar la solicitud si proviene de una
-            if (!empty($this->solicitud_id)) {
-                $pdo->prepare("UPDATE solicitudes_gasto SET estado = 'Procesado' WHERE id_solicitud = ?")
-                    ->execute([$this->solicitud_id]);
-            }
-
             $pdo->commit();
             return ['estatus' => true, 'mensaje' => 'Gasto registrado con éxito', 'id' => $id_gasto];
 
-        } catch (\Exception $e) {
-            if (isset($pdo) && $pdo->inTransaction()) {
+        } catch (\Throwable $e) {
+            if ($pdo->inTransaction()) {
                 $pdo->rollBack();
             }
-            error_log("Error en _registrar_gasto: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error del Servidor al registrar el gasto.'];
+            throw $e;
         }
     }
 
-    // SE USA EN EL MODULO  
     private function _modificar_gasto()
     {
-        // Validar que haya al menos un detalle
         if (empty($this->detalles)) {
-            return ['estatus' => false, 'mensaje' => 'Debe proporcionar al menos un detalle de gasto.'];
+            throw new NegocioException('Debe proporcionar al menos un detalle de gasto.', HttpCodigo::BAD_REQUEST->value);
         }
 
-        // Validar que las referencias sean únicas
-        $valRef = $this->_validar_referencias_unicas();
-        if (!$valRef['estatus']) return $valRef;
+        $this->_validar_referencias_unicas();
 
+        $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
         try {
-            $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
             $pdo->exec("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ");
             $pdo->beginTransaction();
 
             $tasa_transaccion = $this->tasa_dolar ?? 1;
 
-            // Actualizar cabecera
             $sqlCab = "UPDATE gastos SET 
                         clasificacion = :clas,
                         descripcion_gasto = :desc,
-                        solicitud_id = :sol_id,
-                        tipo_gasto_id = :tipo_id,
+                        presupuesto_id = :presupuesto_id,
+                        concepto_id = :concepto_id,
                         proveedor_id = :prov_id,
                         tasa_dolar = :tasa
                       WHERE id_gasto = :id";
@@ -369,27 +313,23 @@ class Gastos extends Conexion
             $stmtCab->execute([
                 ':clas' => $this->clasificacion,
                 ':desc' => $this->descripcion_gasto,
-                ':sol_id' => $this->solicitud_id ?: null,
-                ':tipo_id' => $this->tipo_gasto_id,
+                ':presupuesto_id' => $this->presupuesto_id,
+                ':concepto_id' => $this->concepto_id,
                 ':prov_id' => $this->proveedor_id ?: null,
                 ':tasa' => $tasa_transaccion, 
                 ':id' => $this->id_gasto
             ]);
 
-            // Obtener los IDs de detalles antiguos (para luego eliminar imágenes)
             $sqlOldDet = "SELECT id_detalle_gasto FROM detalles_gastos WHERE gasto_id = :id";
             $stmtOld = $pdo->prepare($sqlOldDet);
             $stmtOld->execute([':id' => $this->id_gasto]);
             $oldDetalles = $stmtOld->fetchAll(PDO::FETCH_COLUMN);
 
-            // Eliminar registros bancarios y detalles antiguos de la BD
             $pdo->prepare("DELETE FROM egresos_bancarios WHERE detalle_gasto_id IN (SELECT id_detalle_gasto FROM detalles_gastos WHERE gasto_id = ?)")->execute([$this->id_gasto]);
             $pdo->prepare("DELETE FROM detalles_gastos WHERE gasto_id = ?")->execute([$this->id_gasto]);
 
-            //Insertar nuevos detalles
             $this->_guardar_detalles($pdo, $this->id_gasto);
 
-            // Obtener las imágenes de los nuevos detalles (recién insertados)
             $sqlNewImages = "SELECT eb.imagen 
                              FROM egresos_bancarios eb 
                              INNER JOIN detalles_gastos dg ON eb.detalle_gasto_id = dg.id_detalle_gasto 
@@ -398,7 +338,6 @@ class Gastos extends Conexion
             $stmtNew->execute([':gasto_id' => $this->id_gasto]);
             $nuevasImagenes = $stmtNew->fetchAll(PDO::FETCH_COLUMN);
 
-            // Eliminar imágenes físicas antiguas que no estén en las nuevas
             foreach ($oldDetalles as $idDet) {
                 $imgAnterior = $this->obtenerImagenPorDetalle($idDet);
                 if ($imgAnterior && $imgAnterior !== 'default.png' && !in_array($imgAnterior, $nuevasImagenes)) {
@@ -406,36 +345,27 @@ class Gastos extends Conexion
                 }
             }
 
-            if (!empty($this->solicitud_id)) {
-                $pdo->prepare("UPDATE solicitudes_gasto SET estado = 'Procesado' WHERE id_solicitud = ?")->execute([$this->solicitud_id]);
-            }
-
             $pdo->commit();
             return ['estatus' => true, 'mensaje' => 'Gasto actualizado con éxito'];
 
-        } catch (\Exception $e) { // Captura genérica de excepciones
-            if (isset($pdo) && $pdo->inTransaction()) {
+        } catch (\Throwable $e) {
+            if ($pdo->inTransaction()) {
                 $pdo->rollBack();
             }
-            error_log("Error en _modificar_gasto: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Ocurrió un error en el servidor.'];
+            throw $e;
         }
     }
 
-    /**
-     * Procesa e inserta los detalles de un gasto y sus comprobantes bancarios.
-     */
     private function _guardar_detalles($pdo, $id_gasto)
     {
         $sqlDet = "INSERT INTO detalles_gastos (fecha, monto, metodo_pago, gasto_id) 
                    VALUES (:fecha, :monto, :metodo, :gasto_id)";
         $stmtDet = $pdo->prepare($sqlDet);
 
-        $sqlBan = "INSERT INTO egresos_bancarios (referencia, imagen, banco_id, detalle_gasto_id) 
-                   VALUES (:ref, :img, :banco, :det_id)";
+        $sqlBan = "INSERT INTO egresos_bancarios (referencia, imagen, cuenta_id, detalle_gasto_id) 
+                   VALUES (:ref, :img, :cuenta, :det_id)";
         $stmtBan = $pdo->prepare($sqlBan);
 
-        // Uso del Enum para evitar magic strings
         $metodosBancarios = [MetodoPago::TRANSFERENCIA->value, MetodoPago::PAGO_MOVIL->value];
 
         foreach ($this->detalles as $det) {
@@ -453,191 +383,147 @@ class Gastos extends Conexion
                 $stmtBan->execute([
                     ':ref'    => $det['referencia'] ?? '',
                     ':img'    => $det['imagen'] ?? 'default.png',
-                    ':banco'  => $det['banco_id'] ?? null,
+                    ':cuenta'  => $det['cuenta_id'] ?? null,
                     ':det_id' => $id_detalle
                 ]);
             }
         }
     }
 
-    /**
-     * ELIMINAR GASTO (soft delete)
-     // SE USA EN EL MODULO
-     */
     private function _eliminar_gasto()
     {
         $sql = "UPDATE gastos SET activo = 0 WHERE id_gasto = :id";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->bindParam(':id', $this->id_gasto);
-            $stmt->execute();
-            return ['estatus' => true, 'mensaje' => 'Gasto eliminado correctamente'];
-        } catch (PDOException $e) {
-            error_log("Error en _eliminar_gasto: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al eliminar: ' . $e->getMessage()];
-        }
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->bindParam(':id', $this->id_gasto);
+        $stmt->execute();
+        return ['estatus' => true, 'mensaje' => 'Gasto eliminado correctamente'];
     }
 
-    // ====================================================================
-    // CONSULTAS
-    // ====================================================================
-
-    // SE USA EN EL MODULO
     private function _consultar()
     {
         $sql = "SELECT 
-                g.id_gasto, 
-                g.descripcion_gasto, 
-                g.clasificacion, 
-                SUM(dg.monto) as monto_total,
-                MAX(dg.fecha) as ultima_fecha,
-                p.nombre_proveedor as proveedor, 
-                tg.nombre_tipo_gasto as tipo,
-                SUBSTRING_INDEX(GROUP_CONCAT(dg.metodo_pago ORDER BY dg.fecha DESC SEPARATOR ','), ',', 1) as metodo_pago_predominante
-            FROM gastos g
-            LEFT JOIN detalles_gastos dg ON g.id_gasto = dg.gasto_id
-            LEFT JOIN proveedores p ON g.proveedor_id = p.id_proveedor
-            LEFT JOIN tipo_gasto tg ON g.tipo_gasto_id = tg.id_tipo_gasto
-            WHERE g.activo = 1
-            GROUP BY g.id_gasto
-            ORDER BY ultima_fecha DESC";
+            g.id_gasto, 
+            g.descripcion_gasto, 
+            g.clasificacion, 
+            SUM(dg.monto) as monto_total,
+            MAX(dg.fecha) as ultima_fecha,
+            p.nombre_proveedor as proveedor, 
+            cg.nombre_concepto as concepto,
+            tg.nombre_tipo_gasto as tipo,
+            SUBSTRING_INDEX(GROUP_CONCAT(dg.metodo_pago ORDER BY dg.fecha DESC SEPARATOR ','), ',', 1) as metodo_pago_predominante
+        FROM gastos g
+        LEFT JOIN detalles_gastos dg ON g.id_gasto = dg.gasto_id
+        LEFT JOIN proveedores p ON g.proveedor_id = p.id_proveedor
+        LEFT JOIN conceptos_gasto cg ON g.concepto_id = cg.id_concepto
+        LEFT JOIN tipo_gasto tg ON cg.tipo_gasto_id = tg.id_tipo_gasto
+        WHERE g.activo = 1
+        GROUP BY g.id_gasto
+        ORDER BY ultima_fecha DESC";
 
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->execute();
-            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $datos];
-        } catch (PDOException $e) {
-            error_log("Error en _consultar_gastos: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar gastos'];
-        }
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->execute();
+        return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
     }
 
-    /**
-     * Consulta un gasto específico con todos sus detalles y datos bancarios asociados
-     // SE USA EN EL MODULO
-     */
     private function _consultar_gasto()
     {
-        try {
-            // 1. Obtener datos de la cabecera del gasto
-            $sqlCabecera = "SELECT 
-                                g.id_gasto,
-                                g.clasificacion,
-                                g.descripcion_gasto,
-                                g.solicitud_id,
-                                g.tipo_gasto_id,
-                                g.proveedor_id,
-                                g.activo,
-                                p.nombre_proveedor,
-                                tg.nombre_tipo_gasto
-                            FROM gastos g
-                            LEFT JOIN proveedores p ON g.proveedor_id = p.id_proveedor
-                            LEFT JOIN tipo_gasto tg ON g.tipo_gasto_id = tg.id_tipo_gasto
-                            WHERE g.id_gasto = :id_gasto AND g.activo = 1";
-            
-            $stmtCab = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlCabecera);
-            $stmtCab->execute([':id_gasto' => $this->id_gasto]);
-            $cabecera = $stmtCab->fetch(PDO::FETCH_ASSOC);
-            
-            if (!$cabecera) {
-                return ['estatus' => false, 'mensaje' => 'Gasto no encontrado'];
-            }
+        $sqlCabecera = "SELECT 
+                            g.id_gasto,
+                            g.clasificacion,
+                            g.descripcion_gasto,
+                            g.presupuesto_id, 
+                            g.concepto_id,
+                            g.proveedor_id,
+                            g.activo,
+                            p.nombre_proveedor,
+                            cg.nombre_concepto,
+                            tg.nombre_tipo_gasto
+                        FROM gastos g
+                        LEFT JOIN proveedores p ON g.proveedor_id = p.id_proveedor
+                        LEFT JOIN conceptos_gasto cg ON g.concepto_id = cg.id_concepto
+                        LEFT JOIN tipo_gasto tg ON cg.tipo_gasto_id = tg.id_tipo_gasto
+                        WHERE g.id_gasto = :id_gasto AND g.activo = 1";
+        
+        $stmtCab = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlCabecera);
+        $stmtCab->execute([':id_gasto' => $this->id_gasto]);
+        $cabecera = $stmtCab->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$cabecera) {
+            throw new NegocioException('Gasto no encontrado.', HttpCodigo::NO_ENCONTRADO->value);
+        }
 
-            //  Obtener todos los detalles del gasto con sus datos bancarios
-            $sqlDetalles = "SELECT 
-                                dg.id_detalle_gasto,
-                                dg.fecha,
-                                dg.monto,
-                                g.tasa_dolar, 
-                                dg.metodo_pago,
-                                eb.referencia,
-                                eb.imagen,
-                                eb.banco_id,
-                                b.nombre_banco
-                            FROM detalles_gastos dg
-                            JOIN gastos g ON dg.gasto_id = g.id_gasto 
-                            LEFT JOIN egresos_bancarios eb ON dg.id_detalle_gasto = eb.detalle_gasto_id
-                            LEFT JOIN bancos b ON eb.banco_id = b.id_banco
-                            WHERE dg.gasto_id = :id_gasto
-                            ORDER BY dg.fecha DESC";
-            
-            $stmtDet = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlDetalles);
-            $stmtDet->execute([':id_gasto' => $this->id_gasto]);
-            $detalles = $stmtDet->fetchAll(PDO::FETCH_ASSOC);
+        $sqlDetalles = "SELECT 
+                            dg.id_detalle_gasto,
+                            dg.fecha,
+                            dg.monto,
+                            g.tasa_dolar, 
+                            dg.metodo_pago,
+                            eb.referencia,
+                            eb.imagen,
+                            eb.cuenta_id,
+                            CONCAT(b.nombre_banco, ' - ', cc.numero_cuenta) AS nombre_cuenta
+                        FROM detalles_gastos dg
+                        JOIN gastos g ON dg.gasto_id = g.id_gasto 
+                        LEFT JOIN egresos_bancarios eb ON dg.id_detalle_gasto = eb.detalle_gasto_id
+                        LEFT JOIN cuentas_condominio cc ON eb.cuenta_id = cc.id_cuenta
+                        LEFT JOIN bancos b ON cc.banco_id = b.id_banco
+                        WHERE dg.gasto_id = :id_gasto
+                        ORDER BY dg.fecha DESC";
+        
+        $stmtDet = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlDetalles);
+        $stmtDet->execute([':id_gasto' => $this->id_gasto]);
+        $detalles = $stmtDet->fetchAll(PDO::FETCH_ASSOC);
 
-            // 3. Estructurar la respuesta
-            $resultado = [
+        return [
+            'estatus' => true,
+            'datos' => [
                 'gasto' => $cabecera,
                 'detalles' => $detalles
-            ];
-
-            return ['estatus' => true, 'datos' => $resultado];
-
-        } catch (PDOException $e) {
-            error_log("Error en _consultar_gasto_unico: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar el gasto'];
-        }
+            ]
+        ];
     }
 
-    /**
-     * Consulta plana solo de la cabecera del gasto para la bitácora de auditoría.
-     // SE USA EN EL MODULO
-     */
     private function _consultar_cabecera_gasto()
     {
-        $sql = "SELECT clasificacion, descripcion_gasto, solicitud_id, tipo_gasto_id, proveedor_id 
+        $sql = "SELECT clasificacion, descripcion_gasto, presupuesto_id, concepto_id, proveedor_id 
                 FROM gastos WHERE id_gasto = :id_gasto AND activo = 1";
         
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->execute([':id_gasto' => $this->id_gasto]);
-            $datos = $stmt->fetch(PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $datos];
-        } catch (PDOException $e) {
-            error_log("Error en _consultar_cabecera_gasto: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar cabecera'];
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->execute([':id_gasto' => $this->id_gasto]);
+        $datos = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$datos) {
+            throw new NegocioException('Cabecera de gasto no encontrada.', HttpCodigo::NO_ENCONTRADO->value);
         }
+
+        return ['estatus' => true, 'datos' => $datos];
     }
 
-    /**
-     * Consulta todos los detalles de un gasto específico, incluyendo datos bancarios si existen
-     // SE USA EN EL MODULO
-     */
     private function _consultar_detalles_por_gasto()
     {
-        $sql = "SELECT 
-                                dg.id_detalle_gasto,
-                                dg.fecha,
-                                dg.monto,
-                                g.tasa_dolar,
-                                dg.metodo_pago,
-                                eb.referencia,
-                                eb.imagen,
-                                eb.banco_id,
-                                b.nombre_banco
-                            FROM detalles_gastos dg
-                            JOIN gastos g ON dg.gasto_id = g.id_gasto 
-                            LEFT JOIN egresos_bancarios eb ON dg.id_detalle_gasto = eb.detalle_gasto_id
-                            LEFT JOIN bancos b ON eb.banco_id = b.id_banco
-                            WHERE dg.gasto_id = :id_gasto
-                            ORDER BY dg.fecha DESC";
+       $sql = "SELECT 
+                    dg.id_detalle_gasto,
+                    dg.fecha,
+                    dg.monto,
+                    g.tasa_dolar,
+                    dg.metodo_pago,
+                    eb.referencia,
+                    eb.imagen,
+                    eb.cuenta_id,
+                    CONCAT(b.nombre_banco, ' - ', cc.numero_cuenta) AS nombre_cuenta
+                FROM detalles_gastos dg
+                JOIN gastos g ON dg.gasto_id = g.id_gasto 
+                LEFT JOIN egresos_bancarios eb ON dg.id_detalle_gasto = eb.detalle_gasto_id
+                LEFT JOIN cuentas_condominio cc ON eb.cuenta_id = cc.id_cuenta
+                LEFT JOIN bancos b ON cc.banco_id = b.id_banco
+                WHERE dg.gasto_id = :id_gasto
+                ORDER BY dg.fecha DESC";
 
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->execute([':id_gasto' => $this->id_gasto]);
-            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $datos];
-        } catch (PDOException $e) {
-            error_log("Error en _consultar_detalles_por_gasto: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar los detalles del gasto'];
-        }
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->execute([':id_gasto' => $this->id_gasto]);
+        return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
     }
 
-    /**
-     * Consulta un detalle específico de gasto por su ID, incluyendo datos bancarios si existen
-     // SE USA EN EL MODULO
-     */
     private function _consultar_detalle_unico()
     {
         $sql = "SELECT 
@@ -649,35 +535,28 @@ class Gastos extends Conexion
                     dg.gasto_id,
                     eb.referencia,
                     eb.imagen,
-                    eb.banco_id,
-                    b.nombre_banco
+                    eb.cuenta_id,
+                    CONCAT(b.nombre_banco, ' - ', cc.numero_cuenta) AS nombre_cuenta
                 FROM detalles_gastos dg
                 JOIN gastos g ON dg.gasto_id = g.id_gasto 
                 LEFT JOIN egresos_bancarios eb ON dg.id_detalle_gasto = eb.detalle_gasto_id
-                LEFT JOIN bancos b ON eb.banco_id = b.id_banco
+                LEFT JOIN cuentas_condominio cc ON eb.cuenta_id = cc.id_cuenta
+                LEFT JOIN bancos b ON cc.banco_id = b.id_banco
                 WHERE dg.id_detalle_gasto = :id_detalle";
 
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->execute([':id_detalle' => $this->id_detalle_gasto]);
-            $dato = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if (!$dato) {
-                return ['estatus' => false, 'mensaje' => 'Detalle de gasto no encontrado'];
-            }
-            
-            return ['estatus' => true, 'datos' => $dato];
-            
-        } catch (PDOException $e) {
-            error_log("Error en _consultar_detalle_unico: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar el detalle del gasto'];
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->execute([':id_detalle' => $this->id_detalle_gasto]);
+        $dato = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$dato) {
+            throw new NegocioException('Detalle de gasto no encontrado.', HttpCodigo::NO_ENCONTRADO->value);
         }
+        
+        return ['estatus' => true, 'datos' => $dato];
     }
 
-    // EXCLUSIVO PARA LA APP:
     private function _listar_gastos_mes($params)
     {
-        // params trae ['mes' => X, 'anio' => Y]
         $sql = "SELECT 
                     g.id_gasto, 
                     g.descripcion_gasto, 
@@ -685,64 +564,44 @@ class Gastos extends Conexion
                     SUM(dg.monto) as monto_total,
                     MAX(dg.fecha) as ultima_fecha,
                     p.nombre_proveedor as proveedor, 
+                    cg.nombre_concepto as concepto,
                     tg.nombre_tipo_gasto as tipo,
                     SUBSTRING_INDEX(GROUP_CONCAT(dg.metodo_pago ORDER BY dg.fecha DESC SEPARATOR ','), ',', 1) as metodo_pago_predominante
                 FROM gastos g
                 LEFT JOIN detalles_gastos dg ON g.id_gasto = dg.gasto_id
                 LEFT JOIN proveedores p ON g.proveedor_id = p.id_proveedor
-                LEFT JOIN tipo_gasto tg ON g.tipo_gasto_id = tg.id_tipo_gasto
+                LEFT JOIN conceptos_gasto cg ON g.concepto_id = cg.id_concepto
+                LEFT JOIN tipo_gasto tg ON cg.tipo_gasto_id = tg.id_tipo_gasto
                 WHERE g.activo = 1 
                   AND MONTH(dg.fecha) = :mes 
                   AND YEAR(dg.fecha) = :anio
                 GROUP BY g.id_gasto
                 ORDER BY ultima_fecha DESC";
 
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->execute([':mes' => $params['mes'], ':anio' => $params['anio']]);
-            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $datos];
-        } catch (PDOException $e) {
-            error_log("Error en _listar_gastos_mes: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al filtrar gastos del mes'];
-        }
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->execute([':mes' => $params['mes'], ':anio' => $params['anio']]);
+        return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
     }
 
     private function _obtener_periodos_activos()
     {
-        // Agrupamos para obtener solo combinaciones únicas, ordenadas del más reciente al más antiguo
         $sql = "SELECT DISTINCT MONTH(dg.fecha) AS mes, YEAR(dg.fecha) AS anio
                 FROM detalles_gastos dg
                 INNER JOIN gastos g ON dg.gasto_id = g.id_gasto
                 WHERE g.activo = 1
                 ORDER BY anio DESC, mes DESC";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->execute();
-            $datos = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $datos];
-        } catch (\PDOException $e) {
-            error_log("Error en _obtener_periodos_activos (Gastos): " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar períodos'];
-        }
+
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->execute();
+        return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
     }
     
-    // ====================================================================
-    // UTILIDADES (IMÁGENES)
-    // ====================================================================
-
-    // SE USA EN LA PROPIA CLASE (modificar)
     private function obtenerImagenPorDetalle($idDetalle)
     {
         $sql = "SELECT imagen FROM egresos_bancarios WHERE detalle_gasto_id = :id";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->bindParam(':id', $idDetalle);
-            $stmt->execute();
-            return $stmt->fetchColumn();
-        } catch (PDOException $e) {
-            error_log("Error en obtenerImagenPorDetalle: " . $e->getMessage());
-            return false;
-        }
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->bindParam(':id', $idDetalle);
+        $stmt->execute();
+        return $stmt->fetchColumn();
     }
 }

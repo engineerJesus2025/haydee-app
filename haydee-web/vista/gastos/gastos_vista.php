@@ -88,10 +88,9 @@
                             </div>
 
                             <div class="col-md-4 border-end">
-                                <span class="text-muted text-uppercase fw-bold d-block mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Categoría</span>
-                                <h6 id="vp_tipo_gasto" class="mb-0 fw-bold">---</h6>
+                                <span class="text-muted text-uppercase fw-bold d-block mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Concepto:</span>
+                                <h6 id="vista_concepto" class="mb-0 fw-bold">---</h6>
                             </div>
-
                             <div class="col-md-4">
                                 <span class="text-muted text-uppercase fw-bold d-block mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">Proveedor Asociado</span>
                                 <h6 id="vp_proveedor" class="text-primary mb-0 fw-bold">---</h6>
@@ -136,7 +135,7 @@
                     <p><strong>Fecha:</strong> <span id="vista_fecha_detalles"></span></p>
                     <p><strong>Monto:</strong> <span id="vista_monto_detalles"></span></p>
                     <p><strong>Metodo de Pago:</strong> <span id="vista_metodo_pago_detalles"></span></p>
-                    <p><strong>Banco:</strong> <span id="vista_nombre_banco_detalles"></span></p>
+                    <p><strong>Cuenta:</strong> <span id="vista_nombre_cuenta_detalles"></span></p>
                     <p><strong>Referencia:</strong> <span id="vista_referencia_detalles"></span></p>
                     <p><strong>Descripcion:</strong> <span id="vista_descripcion_detalles"></span></p>
 

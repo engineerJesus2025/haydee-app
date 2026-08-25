@@ -2,16 +2,16 @@
 namespace haydee\modelo;
 
 use PDO;
-use PDOException;
 use haydee\enums\EstadoPago; 
 use haydee\enums\MetodoPago;
 use haydee\enums\TipoBaseDatos;
+use haydee\enums\HttpCodigo;
+use haydee\excepciones\NegocioException;
 
 class Pagos extends Conexion
 {
-    // Propiedades (mapeo de tablas)
     private $id_pago;
-    private $estado;      // PENDIENTE, PROCESADO, RECHAZADO, ANULADO
+    private $estado;
     private $observacion;
     private $activo;
 
@@ -19,22 +19,20 @@ class Pagos extends Conexion
     private $fecha;
     private $monto;
     private $tasa_dolar;
-    private $tipo_pago;   // Transferencia, Pago Movil, Efectivo, Divisa
+    private $tipo_pago;
 
     private $referencia;
     private $imagen;
     private $banco_id;
+    private $cuenta_id;
 
     private $mensualidad_id;
-    private $apartamento_id; // Para consultas por apartamento
+    private $apartamento_id;
     private $correo;
 
     private $detalles = [];
-    private $monto_mensualidad; // Añadido para mantener registro si es necesario
+    private $monto_mensualidad;
 
-    /**
-     * Reglas para la tabla principal (Cabecera del Pago)
-     */
     public static function obtenerReglas($operacion) {
         $estadosValidos = implode('|', array_column(EstadoPago::cases(), 'value'));
 
@@ -63,7 +61,6 @@ class Pagos extends Conexion
             ],
         ];
 
-        // Mapeo unificado de operaciones y verbos HTTP correspondientes
         $configPorOperacion = [
             'consulta'                => ['metodo_http' => ['GET'],  'campos' => []],
             'obtener_catalogos_base'  => ['metodo_http' => ['GET'],  'campos' => []],
@@ -72,11 +69,9 @@ class Pagos extends Conexion
             'listar_pagos_mes'        => ['metodo_http' => ['GET'],  'campos' => []],
             'obtener_periodos'        => ['metodo_http' => ['GET'],  'campos' => []],
             'consultar_estado_cuenta' => ['metodo_http' => ['GET'],  'campos' => []],
-            
             'registrar_pago'          => ['metodo_http' => ['POST'], 'campos' => ['apartamento_id', 'observacion', 'mensualidad_id', 'estado', 'tasa_dolar']],
             'cambiar_estado_pago'     => ['metodo_http' => ['PUT'],  'campos' => ['id_pago', 'estado', 'observacion']],
             'eliminar_pago'           => ['metodo_http' => ['DELETE'], 'campos' => ['id_pago']],
-
             'modificar_pago'          => ['metodo_http' => ['POST'], 'campos' => ['id_pago', 'apartamento_id', 'observacion', 'mensualidad_id', 'estado', 'tasa_dolar']]
         ];
 
@@ -87,15 +82,11 @@ class Pagos extends Conexion
             if (isset($config['metodo_http'])) {
                 $reglasFiltradas['__metodo_http_permitido__'] = $config['metodo_http'];
             }
-            
             return $reglasFiltradas;
         }
         return [];
     }
 
-    /**
-     * Reglas para cada fila de la tabla de detalles (Detalles Pagos)
-     */
     public static function obtenerReglasDetalles() {
         $metodosValidos = implode('|', array_column(MetodoPago::cases(), 'value'));
 
@@ -125,11 +116,16 @@ class Pagos extends Conexion
                 'exists' => ['tabla' => 'bancos', 'campo' => 'id_banco'],
                 'opcional' => true,
                 'requerido_si' => ['tipo_pago' => [MetodoPago::TRANSFERENCIA->value, MetodoPago::PAGO_MOVIL->value]]
+            ],
+            'cuenta_id' => [
+                'regex' => '/^\d+$/',
+                'exists' => ['tabla' => 'cuentas_condominio', 'campo' => 'id_cuenta'],
+                'opcional' => true,
+                'requerido_si' => ['tipo_pago' => [MetodoPago::TRANSFERENCIA->value, MetodoPago::PAGO_MOVIL->value]]
             ]
         ];
     }
 
-    // Getters y Setters
     public function set_id_pago($id) { $this->id_pago = $id; }
     public function get_id_pago() { return $this->id_pago; }
     public function set_id_detalle_pago($id) { $this->id_detalle_pago = $id; }
@@ -148,10 +144,12 @@ class Pagos extends Conexion
     public function get_tipo_pago() { return $this->tipo_pago; }
     public function set_referencia($r) { $this->referencia = $r; }
     public function get_referencia() { return $this->referencia; }
-    public function set_imagen($i) { $this->imagen = $i; }
+    public function set_imagen($imagen) { $this->imagen = $imagen; }
     public function get_imagen() { return $this->imagen; }
-    public function set_banco_id($b) { $this->banco_id = $b; }
+    public function set_banco_id($banco_id) { $this->banco_id = $banco_id; }
     public function get_banco_id() { return $this->banco_id; }
+    public function set_cuenta_id($cuenta_id) { $this->cuenta_id = $cuenta_id; }
+    public function get_cuenta_id() { return $this->cuenta_id; }
     public function set_mensualidad_id($m) { $this->mensualidad_id = $m; }
     public function get_mensualidad_id() { return $this->mensualidad_id; }
     public function set_apartamento_id($a) { $this->apartamento_id = $a; }
@@ -163,29 +161,15 @@ class Pagos extends Conexion
     public function set_monto_mensualidad($m) { $this->monto_mensualidad = $m; }
     public function get_monto_mensualidad() { return $this->monto_mensualidad; }
 
-    /**
-     * Enrutador de acciones con soporte para parámetros
-     */
     public function realizar_consulta($accion, $param = null)
     {
         $metodo = '_' . $accion;
         if (!method_exists($this, $metodo)) {
-            return ['estatus' => false, 'mensaje' => "La acción '$accion' no está implementada."];
+            throw new NegocioException("La acción '$accion' no está implementada.", HttpCodigo::BAD_REQUEST->value);
         }
-        try {
-            return $param !== null ? $this->$metodo($param) : $this->$metodo();
-        } catch (\Exception $e) {
-            error_log("Error en realizar_consulta ($accion): " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Ocurrió un error interno en el servidor.'];
-        }
+        return $param !== null ? $this->$metodo($param) : $this->$metodo();
     }
 
-    // REGLAS DE NEGOCIO Y VALIDACIONES COMPLEJAS
-
-    /**
-     * Regla de negocio: Verifica que las referencias bancarias no estén duplicadas 
-     * en el mismo formulario ni registradas en otros pagos.
-     */
     private function _validar_referencias_unicas() {
         $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
         $refsUsadas = [];
@@ -200,7 +184,7 @@ class Pagos extends Conexion
                 $ref = trim($det['referencia']);
                 
                 if (in_array($ref, $refsUsadas)) {
-                    return ['estatus' => false, 'mensaje' => "La referencia '$ref' está repetida en el renglón " . ($idx + 1) . "."];
+                    throw new NegocioException("La referencia '$ref' está repetida en el renglón " . ($idx + 1) . ".", HttpCodigo::BAD_REQUEST->value);
                 }
                 $refsUsadas[] = $ref;
 
@@ -209,46 +193,30 @@ class Pagos extends Conexion
 
                 if ($pago_id_bd) {
                     if (empty($this->id_pago) || $pago_id_bd != $this->id_pago) {
-                        return ['estatus' => false, 'mensaje' => "La referencia bancaria '$ref' (Renglón " . ($idx + 1) . ") ya se encuentra registrada en otro pago."];
+                        throw new NegocioException("La referencia bancaria '$ref' (Renglón " . ($idx + 1) . ") ya se encuentra registrada en otro pago.", HttpCodigo::BAD_REQUEST->value);
                     }
                 }
             }
         }
-        return ['estatus' => true];
+        return true;
     }
 
-    /**
-     * Utilidad para el AJAX: Verifica si la referencia está libre.
-     * Ignora la referencia si pertenece al mismo pago que se está modificando.
-     */
     public function verificarReferenciaDisponible($referencia, $id_pago_actual = null) {
         $sql = "SELECT dp.pago_id FROM ingresos_bancarios ib 
                 JOIN detalles_pagos dp ON ib.detalle_pago_id = dp.id_detalle_pago 
                 WHERE ib.referencia = :ref LIMIT 1";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->execute([':ref' => $referencia]);
-            $pago_id_bd = $stmt->fetchColumn();
-            
-            if ($pago_id_bd) {
-                // Si la referencia existe y NO es de este mismo pago, está OCUPADA (true)
-                if (empty($id_pago_actual) || $pago_id_bd != $id_pago_actual) {
-                    return true; 
-                }
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->execute([':ref' => $referencia]);
+        $pago_id_bd = $stmt->fetchColumn();
+        
+        if ($pago_id_bd) {
+            if (empty($id_pago_actual) || $pago_id_bd != $id_pago_actual) {
+                return true; 
             }
-            return false; // Está DISPONIBLE (false)
-        } catch (\PDOException $e) {
-            error_log("Error en verificarReferenciaDisponible: " . $e->getMessage());
-            return false;
         }
+        return false; 
     }
 
-    // MÉTODOS PÚBLICOS AUXILIARES (considerar privatizar)
-
-    /**
-     * Consulta mensualidades pendientes de un apartamento
-     // SE USA EN EL MODULO
-     */
     public function _consultarMensualidadPendiente()
     {
         $sql = "SELECT 
@@ -261,46 +229,29 @@ class Pagos extends Conexion
                 WHERE apartamento_id = :id_apartamento 
                   AND UPPER(estado_pago) = 'PENDIENTE'
                 ORDER BY anio ASC, mes ASC";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->bindParam(':id_apartamento', $this->apartamento_id, PDO::PARAM_INT);
-            $stmt->execute();
-            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $datos];
-        } catch (PDOException $e) {
-            error_log("Error en _consultarMensualidadPendiente: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar mensualidades pendientes'];
-        }
+
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->bindParam(':id_apartamento', $this->apartamento_id, PDO::PARAM_INT);
+        $stmt->execute();
+        return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
     }
 
-    // CONSULTAS
-    // SE USA EN EL MODULO
     private function _consultar()
     {
         $sql = "SELECT * FROM vw_historial_pagos ORDER BY ultima_fecha DESC";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->execute();
-            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $datos];
-        } catch (PDOException $e) { 
-            error_log("Error en _consultar_pagos: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar pagos'];
-        }
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->execute();
+        return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
     }
 
-    // SE USA EN EL MODULO (WEB Y APP GENERAL)
     private function _consultar_por_correo()
     {
-        // En peticiones GET, $this->correo suele ser nulo por el firewall.
-        // Hacemos un fallback seguro para extraerlo de la sesión o del objeto inyectado.
         $correoFiltro = $this->correo ?? ($_SESSION['usuario'] ?? null);
 
         if (!$correoFiltro) {
-            return ['estatus' => false, 'mensaje' => 'Correo no disponible en sesión o parámetros'];
+            throw new NegocioException('Correo no disponible en sesión o parámetros.', HttpCodigo::BAD_REQUEST->value);
         }
 
-        // Aplicamos la misma arquitectura INNER JOIN segura para esta consulta
         $sql = "SELECT DISTINCT v.* FROM vw_historial_pagos v
                 INNER JOIN pagos_mensualidad pm2 ON v.id_pago = pm2.pago_id
                 INNER JOIN mensualidad m2 ON pm2.mensualidad_id = m2.id_mensualidad
@@ -309,77 +260,68 @@ class Pagos extends Conexion
                 WHERE h2.correo = :correo
                 ORDER BY v.ultima_fecha DESC";
 
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->execute([':correo' => $correoFiltro]);
-            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $datos];
-        } catch (PDOException $e) {
-            error_log("Error en _consultar_por_correo: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar pagos por correo'];
-        }
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->execute([':correo' => $correoFiltro]);
+        return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
     }
 
-    // SE USA EN EL MODULO
     private function _consultar_pago()
     {
-        try {
-            // Cabecera del pago
-            $sqlHead = "SELECT
-                p.*,
-                pm.mensualidad_id,
-                pm.monto_abonado,
-                m.apartamento_id,
-                m.monto AS monto_mensualidad,
-                m.activo AS mensualidad_activa,
-                per.id_periodo,
-                per.mes,
-                per.anio,
-                a.nro_apartamento
-            FROM pagos p
-            LEFT JOIN pagos_mensualidad pm ON p.id_pago = pm.pago_id
-            LEFT JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
-            LEFT JOIN periodos_mensualidad per ON m.periodo_id = per.id_periodo
-            LEFT JOIN apartamentos a ON a.id_apartamento = m.apartamento_id
-            WHERE p.id_pago = :id AND p.activo = 1 LIMIT 1";
-            
-            $stmtH = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlHead);
-            $stmtH->execute([':id' => $this->id_pago]);
-            $cabecera = $stmtH->fetch(PDO::FETCH_ASSOC);
+        $sqlHead = "SELECT
+            p.*,
+            pm.mensualidad_id,
+            pm.monto_abonado,
+            m.apartamento_id,
+            m.monto AS monto_mensualidad,
+            m.activo AS mensualidad_activa,
+            per.id_periodo,
+            per.mes,
+            per.anio,
+            a.nro_apartamento
+        FROM pagos p
+        LEFT JOIN pagos_mensualidad pm ON p.id_pago = pm.pago_id
+        LEFT JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
+        LEFT JOIN periodos_mensualidad per ON m.periodo_id = per.id_periodo
+        LEFT JOIN apartamentos a ON a.id_apartamento = m.apartamento_id
+        WHERE p.id_pago = :id AND p.activo = 1 LIMIT 1";
+        
+        $stmtH = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlHead);
+        $stmtH->execute([':id' => $this->id_pago]);
+        $cabecera = $stmtH->fetch(PDO::FETCH_ASSOC);
 
-            if (!$cabecera) return ['estatus' => false, 'mensaje' => 'Pago no encontrado'];
-
-            if (empty($cabecera['mensualidad_id']) || (isset($cabecera['mensualidad_activa']) && $cabecera['mensualidad_activa'] == 0)) {
-                return [
-                    'estatus' => false,
-                    'mensaje' => 'No se pueden preparar los datos de edición. La mensualidad asociada fue eliminada del historial del condominio.'
-                ];
-            }
-
-            // Detalles del pago
-            $sqlDet = "SELECT dp.*, p.tasa_dolar, ib.referencia, ib.banco_id, ib.imagen, b.nombre_banco
-                       FROM detalles_pagos dp
-                       JOIN pagos p ON dp.pago_id = p.id_pago
-                       LEFT JOIN ingresos_bancarios ib ON dp.id_detalle_pago = ib.detalle_pago_id
-                       LEFT JOIN bancos b ON ib.banco_id = b.id_banco
-                       WHERE dp.pago_id = :id";
-            $stmtD = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlDet);
-            $stmtD->execute([':id' => $this->id_pago]);
-            $detalles = $stmtD->fetchAll(PDO::FETCH_ASSOC);
-
-            $cabecera['detalles'] = $detalles;
-
-            return ['estatus' => true, 'datos' => $cabecera];
-        } catch (PDOException $e) {
-            error_log("Error en _consultar_pago: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar el pago'];
+        if (!$cabecera) {
+            throw new NegocioException('Pago no encontrado.', HttpCodigo::NO_ENCONTRADO->value);
         }
+
+        if (empty($cabecera['mensualidad_id']) || (isset($cabecera['mensualidad_activa']) && $cabecera['mensualidad_activa'] == 0)) {
+            throw new NegocioException('No se pueden preparar los datos de edición. La mensualidad asociada fue eliminada del historial del condominio.', HttpCodigo::BAD_REQUEST->value);
+        }
+
+        $sqlDet = "SELECT 
+               dp.*, 
+               p.tasa_dolar, 
+               ib.referencia, 
+               ib.banco_id, 
+               ib.cuenta_id, 
+               ib.imagen, 
+               b_emisor.nombre_banco AS banco_emisor,
+               CONCAT(b_receptor.nombre_banco, ' - ', cc.numero_cuenta) AS cuenta_receptora
+           FROM detalles_pagos dp
+           JOIN pagos p ON dp.pago_id = p.id_pago
+           LEFT JOIN ingresos_bancarios ib ON dp.id_detalle_pago = ib.detalle_pago_id
+           LEFT JOIN bancos b_emisor ON ib.banco_id = b_emisor.id_banco
+           LEFT JOIN cuentas_condominio cc ON ib.cuenta_id = cc.id_cuenta
+           LEFT JOIN bancos b_receptor ON cc.banco_id = b_receptor.id_banco
+           WHERE dp.pago_id = :id";
+        $stmtD = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlDet);
+        $stmtD->execute([':id' => $this->id_pago]);
+        $detalles = $stmtD->fetchAll(PDO::FETCH_ASSOC);
+
+        $cabecera['detalles'] = $detalles;
+
+        return ['estatus' => true, 'datos' => $cabecera];
     }
 
-    /**
-     * Consulta plana solo de la cabecera del pago para la bitácora de auditoría.
-     // SE USA EN EL MODULO
-     */
     private function _consultar_cabecera_pago()
     {
         $sql = "SELECT 
@@ -393,43 +335,31 @@ class Pagos extends Conexion
                 WHERE p.id_pago = :id_pago AND p.activo = 1
                 LIMIT 1";
         
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->execute([':id_pago' => $this->id_pago]);
-            $datos = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if (!$datos) {
-                return ['estatus' => false, 'mensaje' => 'Pago no encontrado'];
-            }
-            
-            return ['estatus' => true, 'datos' => $datos];
-        } catch (PDOException $e) {
-            error_log("Error en _consultar_cabecera_pago: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar cabecera del pago'];
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->execute([':id_pago' => $this->id_pago]);
+        $datos = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$datos) {
+            throw new NegocioException('Pago no encontrado.', HttpCodigo::NO_ENCONTRADO->value);
         }
+        
+        return ['estatus' => true, 'datos' => $datos];
     }
 
-
-    // -------------------- OPERACIONES DE PAGO --------------------
-    // SE USA EN EL MODULO
     private function _registrar_pago()
     {
         if (empty($this->detalles) || !is_array($this->detalles)) {
-            return ['estatus' => false, 'mensaje' => 'No se recibieron detalles para el pago'];
+            throw new NegocioException('No se recibieron detalles para el pago.', HttpCodigo::BAD_REQUEST->value);
         }
 
-        // Validar que las referencias sean únicas
-        $valRef = $this->_validar_referencias_unicas();
-        if (!$valRef['estatus']) return $valRef;
+        $this->_validar_referencias_unicas();
 
+        $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
         try {
-            $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
-
             $pdo->exec("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ");
             $pdo->beginTransaction();
 
             $tasa_transaccion = $this->tasa_dolar ?? 1;
-            // Insertar Cabecera
             $sqlHead = "INSERT INTO pagos (estado, observacion, tasa_dolar, activo) VALUES (:est, :obs, :tasa, 1)";
             $stmtHead = $pdo->prepare($sqlHead);
             $estado = $this->estado ?? 'PENDIENTE';
@@ -437,19 +367,16 @@ class Pagos extends Conexion
             $stmtHead->execute([':est' => $estado, ':obs' => $obs, ':tasa' => $tasa_transaccion]);
             $id_pago = $pdo->lastInsertId();
 
-            // Preparar consultas para los detalles físicos
             $sqlDet = "INSERT INTO detalles_pagos (fecha, monto, tipo_pago, pago_id) 
                        VALUES (:fecha, :monto, :tipo, :pago_id)";
             $stmtDet = $pdo->prepare($sqlDet);
 
-            $sqlBanco = "INSERT INTO ingresos_bancarios (referencia, imagen, detalle_pago_id, banco_id) 
-                         VALUES (:ref, :img, :det_id, :banco)";
+            $sqlBanco = "INSERT INTO ingresos_bancarios (referencia, imagen, detalle_pago_id, banco_id, cuenta_id) 
+             VALUES (:ref, :img, :det_id, :banco, :cuenta)";
             $stmtBanco = $pdo->prepare($sqlBanco);
 
-            // Calcular el total del dinero físico ingresado para distribuirlo
             $total_abonado = 0;
 
-            // Iterar e insertar los detalles físicos
             foreach ($this->detalles as $det) {
                 $stmtDet->execute([
                     ':fecha' => $det['fecha_pago'],
@@ -459,80 +386,57 @@ class Pagos extends Conexion
                 ]);
                 $id_detalle = $pdo->lastInsertId();
 
-                // Sumamos al total que el residente está abonando en este pago maestro
                 $total_abonado += (float)$det['monto'];
 
-                // Si requiere comprobante bancario
                 $tipo = strtoupper(trim($det['tipo_pago']));
                 $metodosBancarios = [MetodoPago::TRANSFERENCIA->value, MetodoPago::PAGO_MOVIL->value];
 
                 if (in_array($tipo, $metodosBancarios)) {
                     $stmtBanco->execute([
-                        ':ref'   => $det['referencia'] ?? '',
-                        ':img'   => $det['imagen'] ?? 'default.png',
-                        ':det_id'=> $id_detalle,
-                        ':banco' => $det['banco_id'] ?? null
+                        ':ref'    => $det['referencia'] ?? '',
+                        ':img'    => $det['imagen'] ?? 'default.png',
+                        ':det_id' => $id_detalle,
+                        ':banco'  => $det['banco_id'] ?? null,
+                        ':cuenta' => $det['cuenta_id'] ?? null
                     ]);
                 }
             }
 
-            // Distribución en Cascada (Waterfall)
-            // $remanente = $total_abonado;
             $this->_distribuir_abono_cascada($pdo, $id_pago, $total_abonado);
 
             $pdo->commit();
             return ['estatus' => true, 'mensaje' => 'Pago registrado con éxito', 'id' => $id_pago];
-        } catch (\Exception $e) {
-            if (isset($pdo) && $pdo->inTransaction()) {
+        } catch (\Throwable $e) {
+            if ($pdo->inTransaction()) {
                 $pdo->rollBack();
             }
-            error_log("Error en _registrar pago: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error del servidor. Intente mas tarde'];
+            throw $e;
         }
     }
 
-    /**
-     * Edita un pago completo borrando los detalles viejos y registrando los nuevos
-     // SE USA EN EL MODULO
-     */
     private function _modificar_pago()
     {
         if (empty($this->detalles) || !is_array($this->detalles)) {
-            return ['estatus' => false, 'mensaje' => 'No se recibieron detalles para el pago'];
+            throw new NegocioException('No se recibieron detalles para el pago.', HttpCodigo::BAD_REQUEST->value);
         }
 
-        // Validar que las referencias sean únicas
-        $valRef = $this->_validar_referencias_unicas();
-        if (!$valRef['estatus']) return $valRef;
+        $this->_validar_referencias_unicas();
 
+        $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
         try {
-            $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
-
             $pdo->exec("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ");
             $pdo->beginTransaction();
 
             $sqlCheck = "SELECT estado FROM pagos WHERE id_pago = :id LIMIT 1";
-
-            $pdo->execute([':id' => $this->id_pago]);
-            $estadoActual = $pdo->fetchColumn();
+            $stmtCheck = $pdo->prepare($sqlCheck);
+            $stmtCheck->execute([':id' => $this->id_pago]);
+            $estadoActual = $stmtCheck->fetchColumn();
 
             if (!$estadoActual) {
-                return ['estatus' => false, 'mensaje' => 'El pago que intenta modificar no existe.'];
+                throw new NegocioException('El pago que intenta modificar no existe.', HttpCodigo::NO_ENCONTRADO->value);
             }
 
-            // if (strtoupper($estadoActual) === 'ANULADO') {
-            //     return [
-            //         'estatus' => false, 
-            //         'mensaje' => 'Seguridad Contable: Este pago se encuentra ANULADO. No está permitido alterar los datos de una transacción anulada.'
-            //     ];
-            // }
-
             if (strtoupper($estadoActual) === 'PROCESADO') {
-                $sqlDetallesActuales = "SELECT mensualidad_id FROM pagos_mensualidad WHERE pago_id = :id";
-                $stmtDet = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlDetallesActuales);
-                $stmtDet->execute([':id' => $this->id_pago]);
-                $detallesBD = $stmtDet->fetchAll(PDO::FETCH_ASSOC);
-
                 $sqlIntegridad = "SELECT COUNT(*) 
                                   FROM pagos_mensualidad pm
                                   JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
@@ -541,17 +445,11 @@ class Pagos extends Conexion
                 $stmtInt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlIntegridad);
                 $stmtInt->execute([':id_pago' => $this->id_pago]);
                 if ($stmtInt->fetchColumn() == 0) {
-                    return [
-                        'estatus' => false, 
-                        'mensaje' => 'Error de Integridad: La mensualidad vinculada a este pago procesado ya no se encuentra activa en el historial.'
-                    ];
+                    throw new NegocioException('Error de Integridad: La mensualidad vinculada a este pago procesado ya no se encuentra activa en el historial.', HttpCodigo::BAD_REQUEST->value);
                 }
-
-                // si cambian el monto, es mejor retornar un mensaje de advertencia tipo "Para alterar montos de un pago PROCESADO, primero cambie su estado a PENDIENTE". JESUs del futuro
             }
 
             $tasa_transaccion = $this->tasa_dolar ?? 1;
-            // Actualizar Cabecera
             $sqlHead = "UPDATE pagos SET estado = :estado, observacion = :obs, tasa_dolar = :tasa WHERE id_pago = :id";
             $stmtHead = $pdo->prepare($sqlHead);
             $stmtHead->execute([
@@ -561,7 +459,6 @@ class Pagos extends Conexion
                 ':id'     => $this->id_pago
             ]);
 
-            // Gestionar las imágenes
             $imagenesAConservar = array_column($this->detalles, 'imagen');
             $sqlGetDet = "SELECT id_detalle_pago FROM detalles_pagos WHERE pago_id = :id";
             $stmtGet = $pdo->prepare($sqlGetDet);
@@ -577,19 +474,18 @@ class Pagos extends Conexion
                 }
             }
 
-            // Eliminar relaciones y detalles viejos de la BD
             $pdo->prepare("DELETE FROM ingresos_bancarios WHERE detalle_pago_id IN (SELECT id_detalle_pago FROM detalles_pagos WHERE pago_id = ?)")->execute([$this->id_pago]);
-            $pdo->prepare("DELETE FROM pagos_mensualidad WHERE pago_id = ?")->execute([$this->id_pago]); // <-- NUEVA LÓGICA DE BORRADO
+            $pdo->prepare("DELETE FROM pagos_mensualidad WHERE pago_id = ?")->execute([$this->id_pago]);
             $pdo->prepare("DELETE FROM detalles_pagos WHERE pago_id = ?")->execute([$this->id_pago]);
 
-            // Insertar nuevos detalles
             $sqlDet = "INSERT INTO detalles_pagos (fecha, monto, tipo_pago, pago_id) VALUES (:fecha, :monto, :tipo, :pago_id)";
             $stmtDet = $pdo->prepare($sqlDet);
 
-            $sqlBanco = "INSERT INTO ingresos_bancarios (referencia, imagen, detalle_pago_id, banco_id) VALUES (:ref, :img, :det_id, :banco)";
+            $sqlBanco = "INSERT INTO ingresos_bancarios (referencia, imagen, detalle_pago_id, banco_id, cuenta_id) 
+             VALUES (:ref, :img, :det_id, :banco, :cuenta)";
             $stmtBanco = $pdo->prepare($sqlBanco);
 
-            $total_abonado = 0; // ACUMULADOR
+            $total_abonado = 0;
 
             foreach ($this->detalles as $det) {
                 $stmtDet->execute([
@@ -607,32 +503,27 @@ class Pagos extends Conexion
 
                 if (in_array($tipo, $metodosBancarios)) {
                     $stmtBanco->execute([
-                        ':ref'   => $det['referencia'] ?? '',
-                        ':img'   => $det['imagen'] ?? 'default.png',
-                        ':det_id'=> $id_detalle,
-                        ':banco' => $det['banco_id'] ?? null
+                        ':ref'    => $det['referencia'] ?? '',
+                        ':img'    => $det['imagen'] ?? 'default.png',
+                        ':det_id' => $id_detalle,
+                        ':banco'  => $det['banco_id'] ?? null,
+                        ':cuenta' => $det['cuenta_id'] ?? null 
                     ]);
                 }
             }
 
-            // Distribución en Cascada (Waterfall)
             $this->_distribuir_abono_cascada($pdo, $this->id_pago, $total_abonado);
 
             $pdo->commit();
             return ['estatus' => true, 'mensaje' => 'Pago actualizado con éxito'];
-        } catch (\Exception $e) {
-            if (isset($pdo) && $pdo->inTransaction()) {
+        } catch (\Throwable $e) {
+            if ($pdo->inTransaction()) {
                 $pdo->rollBack();
             }
-            error_log("Error en _modificar pago: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al actualizar pago: ' . $e->getMessage()];
+            throw $e;
         }
     }
 
-    /**
-     * Distribuye el dinero de un pago físico entre las deudas pendientes en cascada.
-     * SE USA EN LOS METODOS PROPIOS DE LA CLASE
-     */
     private function _distribuir_abono_cascada($pdo, $id_pago, $total_abonado)
     {
         $remanente = $total_abonado;
@@ -654,7 +545,7 @@ class Pagos extends Conexion
                       AND m.activo = 1
                       AND per.id_periodo >= (SELECT periodo_id FROM mensualidad WHERE id_mensualidad = :mens_id_inicio)
                     ORDER BY per.id_periodo ASC
-                    FOR UPDATE;"; // Bloqueo pesimista
+                    FOR UPDATE;";
         
         $stmtDeudas = $pdo->prepare($sqlDeudas);
         $stmtDeudas->execute([
@@ -684,7 +575,6 @@ class Pagos extends Conexion
             $remanente -= $abono_aplicar;
         }
 
-        // Manejo de Saldo a Favor (Remanente)
         if ($remanente > 0) {
             $stmtRemanente = $pdo->prepare("
                 INSERT INTO pagos_mensualidad (pago_id, mensualidad_id, monto_abonado) 
@@ -699,24 +589,16 @@ class Pagos extends Conexion
         }
     }
 
-    // SE USA EN EL MODULO
     private function _eliminar_pago()
     {
         $sql = "UPDATE pagos SET activo = 0, estado = '" . EstadoPago::ANULADO->value . "' WHERE id_pago = :id";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->execute([':id' => $this->id_pago]);
-            return ['estatus' => true, 'mensaje' => 'Pago anulado correctamente'];
-        } catch (PDOException $e) {
-            error_log("Error en _eliminar_pago: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al anular: ' . $e->getMessage()];
-        }
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->execute([':id' => $this->id_pago]);
+        return ['estatus' => true, 'mensaje' => 'Pago anulado correctamente'];
     }
 
-    // EXCLUSIVO PARA LA APP:
     private function _consultar_por_mes_anio($params)
     {
-        // Casteo estricto para sincronizar con la salida matemática de MONTH()
         $mesFiltro = (int)$params['mes'];
         $anioFiltro = (int)$params['anio'];
         $correoFiltro = $params['correo'] ?? null;
@@ -727,8 +609,6 @@ class Pagos extends Conexion
         ];
 
         if (!empty($correoFiltro)) {
-            // Solución al bug del optimizador de MariaDB: 
-            // Reemplazamos EXISTS por INNER JOIN directos y DISTINCT para evitar duplicados.
             $sql = "SELECT DISTINCT v.* FROM vw_historial_pagos v 
                     INNER JOIN pagos_mensualidad pm2 ON v.id_pago = pm2.pago_id
                     INNER JOIN mensualidad m2 ON pm2.mensualidad_id = m2.id_mensualidad
@@ -740,48 +620,33 @@ class Pagos extends Conexion
                     ORDER BY v.ultima_fecha DESC, v.id_pago DESC";
             $ejecucion[':correo'] = $correoFiltro;
         } else {
-            // Consulta limpia para el administrador (sin filtro de correo)
             $sql = "SELECT v.* FROM vw_historial_pagos v 
                     WHERE MONTH(v.ultima_fecha) = :mes AND YEAR(v.ultima_fecha) = :anio 
                     ORDER BY v.ultima_fecha DESC, v.id_pago DESC";
         }
 
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->execute($ejecucion);
-            return ['estatus' => true, 'datos' => $stmt->fetchAll(\PDO::FETCH_ASSOC)];
-        } catch (\PDOException $e) {
-            error_log("Error en _consultar_por_mes_anio: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al filtrar pagos'];
-        }
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->execute($ejecucion);
+        return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
     }
 
-    // REVISAR________
     private function _obtener_periodos_activos()
     {
-        // Agrupamos para obtener solo combinaciones únicas, ordenadas del más reciente al más antiguo
         $sql = "SELECT DISTINCT MONTH(dp.fecha) AS mes, YEAR(dp.fecha) AS anio
                 FROM detalles_pagos dp
                 INNER JOIN pagos p ON dp.pago_id = p.id_pago
                 WHERE p.activo = 1
                 ORDER BY anio DESC, mes DESC";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->execute();
-            $datos = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $datos];
-        } catch (\PDOException $e) {
-            error_log("Error en _obtener_periodos_activos (Gastos): " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar períodos'];
-        }
+
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->execute();
+        return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
     }
 
-    // EXCLUSIVO PARA LA APP:
     private function _consultar_estado_cuenta()
     {
         $params = [];
         
-        // Si hay un correo configurado (Propietario), filtramos su deuda personal con JOINs
         if (!empty($this->correo)) {
             $sql = "SELECT 
                         vw.id_mensualidad,
@@ -791,7 +656,6 @@ class Pagos extends Conexion
                         vw.deuda_pendiente AS pendiente,
                         vw.nro_apartamento
                     FROM vw_estado_cuentas_mensualidad vw
-                    
                     INNER JOIN habitantes_apartamentos ha ON vw.apartamento_id = ha.apartamento_id
                     INNER JOIN habitantes h ON ha.habitante_id = h.id_habitante
                     WHERE vw.estado_pago = '" . EstadoPago::PENDIENTE->value . "'
@@ -799,7 +663,6 @@ class Pagos extends Conexion
                     ORDER BY vw.anio ASC, vw.mes ASC";
             $params[':correo'] = $this->correo;
         } else {
-
             $sql = "SELECT 
                         vw.id_mensualidad,
                         vw.monto_cuota AS monto_original,
@@ -812,36 +675,21 @@ class Pagos extends Conexion
                     ORDER BY vw.anio ASC, vw.mes ASC";
         }
                 
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->execute($params);
-            $datos = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $datos];
-        } catch (\PDOException $e) {
-            error_log("Error en _consultar_estado_cuenta: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al calcular el estado de cuenta.'];
-        }
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->execute($params);
+        return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
     }
 
-    // EXCLUSIVO PARA LA APP
     private function _cambiar_estado_pago()
     {
-        // Conseguir el estado actual en la base de datos antes de cambiarlo
         $sqlCheck = "SELECT estado FROM pagos WHERE id_pago = :id LIMIT 1";
         $stmtCheck = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlCheck);
         $stmtCheck->execute([':id' => $this->id_pago]);
         $estadoActual = $stmtCheck->fetchColumn();
 
         if (!$estadoActual) {
-            return ['estatus' => false, 'mensaje' => 'El pago especificado no existe.'];
+            throw new NegocioException('El pago especificado no existe.', HttpCodigo::NO_ENCONTRADO->value);
         }
-
-        // if (strtoupper($estadoActual) === 'ANULADO') {
-        //     return [
-        //         'estatus' => false, 
-        //         'mensaje' => 'No se puede modificar el estado de una transacción que ya ha sido marcada como ANULADA.'
-        //     ];
-        // }
 
         if (strtoupper($this->estado) === 'PROCESADO') {
             $sqlIntegridad = "SELECT COUNT(*) 
@@ -854,45 +702,29 @@ class Pagos extends Conexion
             $mensualidadesValidas = $stmtInt->fetchColumn();
 
             if ($mensualidadesValidas == 0) {
-                return [
-                    'estatus' => false, 
-                    'mensaje' => 'No se puede procesar el pago porque la mensualidad a la que estaba vinculado fue removida o desactivada.'
-                ];
+                throw new NegocioException('No se puede procesar el pago porque la mensualidad a la que estaba vinculado fue removida o desactivada.', HttpCodigo::BAD_REQUEST->value);
             }
         }
 
-        // Si pasa los filtros, se ejecuta el cambio de estado normal
         $sql = "UPDATE pagos SET estado = :estado, observacion = :observacion WHERE id_pago = :id_pago";
-        
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->execute([
-                ':estado'      => $this->estado,
-                ':observacion' => $this->observacion ?? 'Estado actualizado desde la administración',
-                ':id_pago'     => $this->id_pago
-            ]);
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->execute([
+            ':estado'      => $this->estado,
+            ':observacion' => $this->observacion ?? 'Estado actualizado desde la administración',
+            ':id_pago'     => $this->id_pago
+        ]);
 
-            return [
-                'estatus' => true, 
-                'mensaje' => "El estado de la transacción ha sido actualizado a " . strtolower($this->estado) . " con éxito."
-            ];
-        } catch (\PDOException $e) {
-            error_log("Error en _cambiar_estado_pago: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error interno al actualizar el estado del pago.'];
-        }
+        return [
+            'estatus' => true, 
+            'mensaje' => "El estado de la transacción ha sido actualizado a " . strtolower($this->estado) . " con éxito."
+        ];
     }
 
-    // Helpers de archivos (privados)
     private function obtenerNombreImagenPorDetalle($idDetalle)
     {
         $sql = "SELECT imagen FROM ingresos_bancarios WHERE detalle_pago_id = :id";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->execute([':id' => $idDetalle]);
-            return $stmt->fetchColumn();
-        } catch (PDOException $e) {
-            error_log("Error en obtenerNombreImagenPorDetalle: " . $e->getMessage());
-            return false;
-        }
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->execute([':id' => $idDetalle]);
+        return $stmt->fetchColumn();
     }
 }

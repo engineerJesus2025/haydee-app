@@ -1,8 +1,6 @@
 @import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap");
 
-/* =========================================================
-   VARIABLES PERSONALIZADAS (LIGHT)
-   ========================================================= */
+/* VARIABLES LIGHT */
 :root {
     --body-bg: rgb(245, 245, 245);
 
@@ -95,9 +93,7 @@
     --ch-shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
 }
 
-/* =========================================================
-   VARIABLES MODO OSCURO
-   ========================================================= */
+/* VARIABLES OSCURO */
 [data-bs-theme="dark"] {
     --body-bg: #151b28f7;
 
@@ -182,9 +178,18 @@
     --ch-shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.85);
 }
 
-/* =========================================================
-   BADGES Y BOTONES SOFT
-   ========================================================= */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Quitar botones en Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* BADGES Y BOTONES SOFT */
 [class*="badge-soft-"] { border: 1px solid transparent !important; }
 .badge-soft-primary    { background-color: var(--ch-badge-primary-bg) !important; color: var(--ch-badge-primary-text) !important; border-color: var(--ch-badge-primary-border) !important; }
 .badge-soft-success    { background-color: var(--ch-badge-success-bg) !important; color: var(--ch-badge-success-text) !important; border-color: var(--ch-badge-success-border) !important; }

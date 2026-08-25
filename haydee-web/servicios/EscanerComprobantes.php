@@ -35,17 +35,22 @@ class EscanerComprobantes
             return [
                 'estatus' => true,
                 'mensaje' => 'Comprobante leído con éxito',
-                'monto' => $datosMotor['datos']['monto_detectado'],
-                'referencia' => $datosMotor['datos']['numero_referencia'],
-                'banco' => $datosMotor['datos']['banco_origen']
+                'monto' => $datosMotor['datos']['monto_detectado'] ?? null,
+                'referencia' => $datosMotor['datos']['numero_referencia'] ?? null,
+                'banco' => $datosMotor['datos']['banco_origen'] ?? null,
+                'fecha' => $datosMotor['datos']['fecha_operacion'] ?? null 
             ];
         } 
         
-        // Falla por confianza baja o lectura parcial
+        // Falla por confianza baja o lectura parcial: Devolvemos los datos recuperados de todos modos
         return [
             'estatus' => false, 
-            'mensaje' => 'La calidad de la imagen es baja o faltan datos. Por favor, introduzca los valores manualmente.',
-            'confianza' => $confianza
+            'mensaje' => 'La calidad de la imagen es baja o faltan datos. Por favor, verifique y complete los valores.',
+            'confianza' => $confianza,
+            'monto' => $datosMotor['datos']['monto_detectado'] ?? null,
+            'referencia' => $datosMotor['datos']['numero_referencia'] ?? null,
+            'banco' => $datosMotor['datos']['banco_origen'] ?? null,
+            'fecha' => $datosMotor['datos']['fecha_operacion'] ?? null 
         ];
     }
 

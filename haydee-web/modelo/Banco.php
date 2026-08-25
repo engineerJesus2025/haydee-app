@@ -2,27 +2,18 @@
 namespace haydee\modelo;
 
 use PDO;
-use PDOException;
-use haydee\enums\TipoCuenta;
 use haydee\enums\TipoBaseDatos;
+use haydee\enums\HttpCodigo;
+use haydee\excepciones\NegocioException;
 
 class Banco extends Conexion
 {
     private $id_banco;
     private $nombre_banco;
     private $codigo;
-    private $tipo_cuenta;
-    private $numero_cuenta;
-    private $telefono_afiliado;
-    private $rif;
     private $activo;
 
-    // ====================================================================
-    // VALIDACIONES CENTRALIZADAS
-    // ====================================================================
     public static function obtenerReglas($operacion) {
-        $tiposCuentaValidos = implode('|', array_column(TipoCuenta::cases(), 'value'));
-        
         $reglasGenerales = [
             'id_banco' => [
                 'regex' => '/^\d+$/',
@@ -34,27 +25,13 @@ class Banco extends Conexion
             'codigo' => [
                 'regex' => '/^\d{4}$/'
             ],
-            'numero_cuenta' => [
-                'regex' => '/^\d{18,30}$/',
-                'unique' => ['tabla' => 'bancos', 'campo' => 'numero_cuenta', 'exclude_field' => 'id_banco']
-            ],
-            'tipo_cuenta' => [
-                'regex' => "/^($tiposCuentaValidos)$/"
-            ],
-            'telefono_afiliado' => [
-                'regex' => '/^\d{11}$/'
-            ],
-            'rif' => [
-                'regex' => '/^[VEJG]{1}[0-9]{7,10}$/'
-            ]
         ];
 
-        // Estandarización de nombres aplicada aquí
         $camposPorOperacion = [
-            'registrar_banco'  => ['nombre_banco', 'codigo', 'numero_cuenta', 'tipo_cuenta', 'telefono_afiliado', 'rif'],
-            'modificar_banco'  => ['id_banco', 'nombre_banco', 'codigo', 'numero_cuenta', 'tipo_cuenta', 'telefono_afiliado', 'rif'],
+            'registrar_banco'  => ['nombre_banco', 'codigo'],
+            'modificar_banco'  => ['id_banco', 'nombre_banco', 'codigo'],
             'eliminar_banco'   => ['id_banco'],
-            'consultar_banco' => ['id_banco']
+            'consultar_banco'  => ['id_banco']
         ];
 
         if (isset($camposPorOperacion[$operacion])) {
@@ -63,158 +40,216 @@ class Banco extends Conexion
         return [];
     }
 
-    // Getters y Setters
     public function set_id_banco($id) { $this->id_banco = $id; }
     public function get_id_banco() { return $this->id_banco; }
     public function set_nombre_banco($nombre) { $this->nombre_banco = $nombre; }
     public function get_nombre_banco() { return $this->nombre_banco; }
     public function set_codigo($codigo) { $this->codigo = $codigo; }
     public function get_codigo() { return $this->codigo; }
-    public function set_tipo_cuenta($tipo_cuenta) { $this->tipo_cuenta = $tipo_cuenta; }
-    public function get_tipo_cuenta() { return $this->tipo_cuenta; }
-    public function set_numero_cuenta($num) { $this->numero_cuenta = $num; }
-    public function get_numero_cuenta() { return $this->numero_cuenta; }
-    public function set_telefono_afiliado($tel) { $this->telefono_afiliado = $tel; }
-    public function get_telefono_afiliado() { return $this->telefono_afiliado; }
-    public function set_rif($rif) { $this->rif = $rif; }
-    public function get_rif() { return $this->rif; }
     public function set_activo($activo) { $this->activo = $activo; }
     public function get_activo() { return $this->activo; }
 
-    /**
-     * Enruta la acción al método privado correspondiente.
-     */
     public function realizar_consulta($accion)
     {
         $metodo = '_' . $accion;
         if (!method_exists($this, $metodo)) {
-            return ['estatus' => false, 'mensaje' => "La acción '$accion' no está implementada."];
+            throw new NegocioException("La acción '$accion' no está implementada.", HttpCodigo::BAD_REQUEST->value);
         }
-
-        try {
-            return $this->$metodo();
-        } catch (\Exception $e) {
-            error_log("Error en realizar_consulta ($accion): " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Ocurrió un error interno en el servidor.'];
-        }
+        return $this->$metodo();
     }
 
+    public function verificarCodigoEnUso($codigo, $id_banco = null)
+    {
+        $db = $this->get_conex(TipoBaseDatos::NEGOCIO);
 
-    // -----------------------------------------------------------------
-    // Métodos privados (acciones)
-    // -----------------------------------------------------------------
+        $sqlActivo = "SELECT id_banco FROM bancos WHERE codigo = :codigo AND activo = 1";
+        if ($id_banco) {
+            $sqlActivo .= " AND id_banco != :id_banco";
+        }
+        $stmtActivo = $db->prepare($sqlActivo);
+        $stmtActivo->bindParam(':codigo', $codigo);
+        if ($id_banco) {
+            $stmtActivo->bindParam(':id_banco', $id_banco);
+        }
+        $stmtActivo->execute();
 
-    /**
-     * Lista todos los bancos activos.
-     // SE USA EN EL MODULO
-     */
+        if ($stmtActivo->fetch(PDO::FETCH_ASSOC)) {
+            return true;
+        }
+
+        $sqlInactivo = "SELECT id_banco FROM bancos WHERE codigo = :codigo AND activo = 0";
+        if ($id_banco) {
+            $sqlInactivo .= " AND id_banco != :id_banco";
+        }
+        $stmtInactivo = $db->prepare($sqlInactivo);
+        $stmtInactivo->bindParam(':codigo', $codigo);
+        if ($id_banco) {
+            $stmtInactivo->bindParam(':id_banco', $id_banco);
+        }
+        $stmtInactivo->execute();
+        $bancoInactivo = $stmtInactivo->fetch(PDO::FETCH_ASSOC);
+
+        if ($bancoInactivo) {
+            if ($this->_contarDependencias($bancoInactivo['id_banco']) > 0) {
+                return true; 
+            }
+        }
+
+        return false;
+    }
+
     private function _consultar()
     {
         $sql = "SELECT * FROM bancos WHERE activo = 1 ORDER BY id_banco";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->execute();
-            $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            return ['estatus' => true, 'datos' => $datos];
-        } catch (PDOException $e) {
-            error_log("Error en _consultar: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar bancos'];
-        }
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->execute();
+        return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
     }
 
-    /**
-     * Consulta un banco específico por ID.
-     // SE USA EN EL MODULO
-     */
     private function _consultar_banco()
     {
         $sql = "SELECT * FROM bancos WHERE id_banco = :id_banco AND activo = 1";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->bindParam(':id_banco', $this->id_banco);
-            $stmt->execute();
-            $datos = $stmt->fetch(PDO::FETCH_ASSOC);
-            if (!$datos) {
-                return ['estatus' => false, 'mensaje' => 'Banco no encontrado'];
-            }
-            return ['estatus' => true, 'datos' => $datos];
-        } catch (PDOException $e) {
-            error_log("Error en _consultar_banco: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar el banco'];
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->bindParam(':id_banco', $this->id_banco);
+        $stmt->execute();
+        $datos = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$datos) {
+            throw new NegocioException('Banco no encontrado', HttpCodigo::NO_ENCONTRADO->value);
         }
+
+        return ['estatus' => true, 'datos' => $datos];
     }
 
-    /**
-     * Registra un nuevo banco.
-     // SE USA EN EL MODULO
-     */
     private function _registrar_banco()
     {
-        $sql = "INSERT INTO bancos (nombre_banco, codigo, numero_cuenta, tipo_cuenta, telefono_afiliado, rif)
-                VALUES (:nombre_banco, :codigo, :numero_cuenta, :tipo_cuenta, :telefono_afiliado, :rif)";
+        $db = $this->get_conex(TipoBaseDatos::NEGOCIO);
+
+        $sqlCheck = "SELECT id_banco, activo FROM bancos WHERE codigo = :codigo LIMIT 1";
+        $stmtCheck = $db->prepare($sqlCheck);
+        $stmtCheck->bindParam(':codigo', $this->codigo);
+        $stmtCheck->execute();
+        $bancoExistente = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+
         try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->bindParam(':nombre_banco', $this->nombre_banco);
-            $stmt->bindParam(':codigo', $this->codigo);
-            $stmt->bindParam(':numero_cuenta', $this->numero_cuenta);
-            $stmt->bindParam(':tipo_cuenta', $this->tipo_cuenta);
-            $stmt->bindParam(':telefono_afiliado', $this->telefono_afiliado);
-            $stmt->bindParam(':rif', $this->rif);
-            $stmt->execute();
-            $lastId = $this->get_conex(TipoBaseDatos::NEGOCIO)->lastInsertId();
-            return ['estatus' => true, 'mensaje' => 'Banco registrado correctamente', 'lastId' => $lastId];
-        } catch (PDOException $e) {
-            error_log("Error en _registrar: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al registrar el banco'];
+            $db->beginTransaction();
+
+            if ($bancoExistente) {
+                if ($bancoExistente['activo'] == 1) {
+                    throw new NegocioException('El código bancario ya se encuentra registrado y activo.', HttpCodigo::BAD_REQUEST->value);
+                }
+
+                if ($this->_contarDependencias($bancoExistente['id_banco']) > 0) {
+                    throw new NegocioException('El código pertenece a un banco inactivo con historial contable y no puede duplicarse.', HttpCodigo::BAD_REQUEST->value);
+                } else {
+                    $sqlHardDelete = "DELETE FROM bancos WHERE id_banco = :id_inactivo";
+                    $stmtHardDelete = $db->prepare($sqlHardDelete);
+                    $stmtHardDelete->bindParam(':id_inactivo', $bancoExistente['id_banco']);
+                    $stmtHardDelete->execute();
+                }
+            }
+
+            $sqlInsert = "INSERT INTO bancos (nombre_banco, codigo) VALUES (:nombre_banco, :codigo)";
+            $stmtInsert = $db->prepare($sqlInsert);
+            $stmtInsert->bindParam(':nombre_banco', $this->nombre_banco);
+            $stmtInsert->bindParam(':codigo', $this->codigo);
+            $stmtInsert->execute();
+            $lastId = $db->lastInsertId();
+
+            $db->commit();
+            return ['estatus' => true, 'mensaje' => 'Banco registrado correctamente.', 'lastId' => $lastId];
+
+        } catch (\Throwable $e) {
+            if ($db->inTransaction()) $db->rollBack();
+            throw $e;
         }
     }
 
-    /**
-     * Actualiza un banco existente.
-     // SE USA EN EL MODULO
-     */
     private function _modificar_banco()
     {
-        $sql = "UPDATE bancos SET 
-                    nombre_banco = :nombre_banco,
-                    codigo = :codigo,
-                    numero_cuenta = :numero_cuenta,
-                    tipo_cuenta = :tipo_cuenta,
-                    telefono_afiliado = :telefono_afiliado,
-                    rif = :rif
-                WHERE id_banco = :id_banco";
+        $db = $this->get_conex(TipoBaseDatos::NEGOCIO);
+
+        $sqlCheckActivo = "SELECT id_banco FROM bancos WHERE codigo = :codigo AND id_banco != :id_banco AND activo = 1 LIMIT 1";
+        $stmtCheckActivo = $db->prepare($sqlCheckActivo);
+        $stmtCheckActivo->bindParam(':codigo', $this->codigo);
+        $stmtCheckActivo->bindParam(':id_banco', $this->id_banco);
+        $stmtCheckActivo->execute();
+
+        if ($stmtCheckActivo->fetch(PDO::FETCH_ASSOC)) {
+            throw new NegocioException('El código bancario ingresado ya está asignado a otra entidad activa.', HttpCodigo::BAD_REQUEST->value);
+        }
+
+        $sqlCheckInactivo = "SELECT id_banco FROM bancos WHERE codigo = :codigo AND id_banco != :id_banco AND activo = 0 LIMIT 1";
+        $stmtCheckInactivo = $db->prepare($sqlCheckInactivo);
+        $stmtCheckInactivo->bindParam(':codigo', $this->codigo);
+        $stmtCheckInactivo->bindParam(':id_banco', $this->id_banco);
+        $stmtCheckInactivo->execute();
+        $bancoInactivo = $stmtCheckInactivo->fetch(PDO::FETCH_ASSOC);
+
         try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+            $db->beginTransaction();
+
+            if ($bancoInactivo) {
+                if ($this->_contarDependencias($bancoInactivo['id_banco']) > 0) {
+                    throw new NegocioException('El código pertenece a un banco inactivo con historial. No puede ser reutilizado.', HttpCodigo::BAD_REQUEST->value);
+                } else {
+                    $sqlHardDelete = "DELETE FROM bancos WHERE id_banco = :id_inactivo";
+                    $stmtHardDelete = $db->prepare($sqlHardDelete);
+                    $stmtHardDelete->bindParam(':id_inactivo', $bancoInactivo['id_banco']);
+                    $stmtHardDelete->execute();
+                }
+            }
+
+            $sql = "UPDATE bancos SET nombre_banco = :nombre_banco, codigo = :codigo WHERE id_banco = :id_banco";
+            $stmt = $db->prepare($sql);
             $stmt->bindParam(':id_banco', $this->id_banco);
             $stmt->bindParam(':nombre_banco', $this->nombre_banco);
             $stmt->bindParam(':codigo', $this->codigo);
-            $stmt->bindParam(':numero_cuenta', $this->numero_cuenta);
-            $stmt->bindParam(':tipo_cuenta', $this->tipo_cuenta);
-            $stmt->bindParam(':telefono_afiliado', $this->telefono_afiliado);
-            $stmt->bindParam(':rif', $this->rif);
             $stmt->execute();
-            return ['estatus' => true, 'mensaje' => 'Banco actualizado correctamente'];
-        } catch (PDOException $e) {
-            error_log("Error en _modificar: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al actualizar el banco'];
+            
+            $db->commit();
+            return ['estatus' => true, 'mensaje' => 'Banco actualizado correctamente.'];
+
+        } catch (\Throwable $e) {
+            if ($db->inTransaction()) $db->rollBack();
+            throw $e;
         }
     }
 
-    /**
-     * Elimina un banco (soft delete).
-     // SE USA EN EL MODULO
-     */
+    private function _contarDependencias($id_banco)
+    {
+        $sql = "
+            SELECT 
+                (SELECT COUNT(*) FROM cuentas_condominio WHERE banco_id = :id_cuenta) +
+                (SELECT COUNT(*) FROM ingresos_bancarios WHERE banco_id = :id_ingreso) AS usos
+        ";
+        
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->bindParam(':id_cuenta', $id_banco, PDO::PARAM_INT);
+        $stmt->bindParam(':id_ingreso', $id_banco, PDO::PARAM_INT);
+        $stmt->execute();
+        
+        return (int) $stmt->fetchColumn();
+    }
+
     private function _eliminar_banco()
     {
-        $sql = "UPDATE bancos SET activo = 0 WHERE id_banco = :id_banco";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->bindParam(':id_banco', $this->id_banco);
-            $stmt->execute();
-            return ['estatus' => true, 'mensaje' => 'Banco eliminado correctamente'];
-        } catch (PDOException $e) {
-            error_log("Error en _eliminar: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al eliminar el banco'];
+        $db = $this->get_conex(TipoBaseDatos::NEGOCIO);
+
+        $sqlCheckCuentas = "SELECT COUNT(*) FROM cuentas_condominio WHERE banco_id = :id_banco AND activo = 1";
+        $stmtCheck = $db->prepare($sqlCheckCuentas);
+        $stmtCheck->bindParam(':id_banco', $this->id_banco);
+        $stmtCheck->execute();
+        
+        if ((int)$stmtCheck->fetchColumn() > 0) {
+            throw new NegocioException('No se puede desactivar el banco porque tiene cuentas corrientes activas asociadas al condominio. Desactive las cuentas primero.', HttpCodigo::BAD_REQUEST->value);
         }
+
+        $sql = "UPDATE bancos SET activo = 0 WHERE id_banco = :id_banco";
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam(':id_banco', $this->id_banco);
+        $stmt->execute();
+        
+        return ['estatus' => true, 'mensaje' => 'Banco desactivado correctamente.'];
     }
 }

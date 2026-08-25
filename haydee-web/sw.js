@@ -1,6 +1,6 @@
 self.addEventListener('push', function(event) {
     if (event.data) {
-        // Recibimos los datos que nos enviará PHP
+        // los datos que enviará PHP
         const data = event.data.json();
         
         const options = {

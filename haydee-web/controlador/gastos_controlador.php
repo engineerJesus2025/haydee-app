@@ -7,9 +7,9 @@ use haydee\ayuda\ConstructorDetalles;
 use haydee\ayuda\Validador;
 use haydee\ayuda\ValidadorBD;
 use haydee\modelo\Gastos;
-use haydee\modelo\Banco;
 use haydee\modelo\Proveedores;
-use haydee\modelo\SolicitudGasto;
+use haydee\modelo\Presupuesto;
+use haydee\modelo\CuentasCondominio;
 use haydee\modelo\TipoGasto;
 use haydee\modelo\Bitacora;
 use haydee\servicios\GestorTasa;
@@ -32,9 +32,7 @@ if (isset($_POST["operacion"])) {
 
         if ($validador->tieneErrores()) {
             $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::NO_PROCESABLE->value;
-            http_response_code($codigoHttp);
-            echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
-            exit;
+            throw new ValidacionException('Datos inválidos.', $validador->obtenerErrores(), $codigoHttp);
         }
     }
 
@@ -104,8 +102,8 @@ if (isset($_POST["operacion"])) {
     $gastos->set_id_gasto($_POST['id_gasto'] ?? null);
     $gastos->set_clasificacion($_POST['clasificacion'] ?? null);
     $gastos->set_descripcion_gasto($_POST['descripcion_gasto'] ?? null);
-    $gastos->set_solicitud_id($_POST['solicitud'] ?? null);
-    $gastos->set_tipo_gasto_id($_POST['tipo_gasto_id'] ?? null);
+    $gastos->set_presupuesto_id($_POST['presupuesto_id'] ?? null);
+    $gastos->set_concepto_id($_POST['concepto_id'] ?? null);
     $gastos->set_proveedor_id($_POST['proveedor_id'] ?? null);
     $gastos->set_id_detalle_gasto($_POST['id_detalle_gasto'] ?? null);
     $gastos->set_fecha($_POST['fecha'] ?? null);
@@ -118,115 +116,95 @@ if (isset($_POST["operacion"])) {
     }
 
     $operacion = $_POST["operacion"];
-    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
+    // Respuesta por defecto
+    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida', 'datos' => []];
 
     // Instanciamos el auditor
     $auditor = new GestorAuditoria($gastos, Modulo::GESTIONAR_GASTOS);
+    $codigoExito = HttpCodigo::OK->value;
+    switch ($operacion) {
+        // CONSULTAS
+        case 'consulta':
+            $respuesta = $gastos->realizar_consulta('consultar');
+            if ($respuesta['estatus']) {
+                $auditor->registrarAuditoria(Accion::CONSULTAR);
+            }
+            break;
 
-    try {
-        switch ($operacion) {
-            // CONSULTAS
-            case 'consulta':
-                $respuesta = $gastos->realizar_consulta('consultar');
+        case 'consultar_gasto':
+            $respuesta = $gastos->realizar_consulta('consultar_gasto');
+            http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
+            break;
 
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) {
-                    $auditor->registrarAuditoria(Accion::CONSULTAR);
-                }
-                break;
+        case 'consultar_detalles':
+            $respuesta = $gastos->realizar_consulta('consultar_detalles_por_gasto');
+            http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
+            break;
 
-            case 'consultar_gasto':
-                $respuesta = $gastos->realizar_consulta('consultar_gasto');
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
-                break;
-
-            case 'consultar_detalles':
-                $respuesta = $gastos->realizar_consulta('consultar_detalles_por_gasto');
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
-                break;
-
-            case 'consulta_especifica_detalles':
+        case 'consulta_especifica_detalles':
                 $respuesta = $gastos->realizar_consulta('consultar_detalle_unico');
                 break;
 
-            // =========================================================
-            // REGISTRO Y EDICIÓN UNIFICADOS
-            // =========================================================
-            case 'registrar_gasto':
-                $respuesta = $gastos->realizar_consulta('registrar_gasto');
+        case 'registrar_gasto':
+            $respuesta = $gastos->realizar_consulta('registrar_gasto');
+            if ($respuesta['estatus']) {
+                // Ocultamos el arreglo masivo al auditor
+                $gastos->set_detalles(null);
+                $auditor->registrarAuditoria(Accion::REGISTRAR);
+                $codigoExito = HttpCodigo::CREADO->value;
+            }
+            break;
 
-                http_response_code($respuesta['estatus'] ? HttpCodigo::CREADO->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) {
-                    // Ocultamos el arreglo masivo al auditor
-                    $gastos->set_detalles(null);
-                    $auditor->registrarAuditoria(Accion::REGISTRAR);
-                }
-                break;
+        case 'modificar_gasto':
+            // Utilizamos la nueva consulta plana para la foto previa
+            $auditor->capturarDatosAnteriores('consultar_cabecera_gasto');
 
-            case 'modificar_gasto':
-                // Utilizamos la nueva consulta plana para la foto previa
-                $auditor->capturarDatosAnteriores('consultar_cabecera_gasto');
+            $respuesta = $gastos->realizar_consulta('modificar_gasto');
+            if ($respuesta['estatus']) { 
+                // Ocultamos el arreglo masivo al auditor
+                $gastos->set_detalles(null);
+                $auditor->registrarAuditoria(Accion::MODIFICAR); 
+            }
+            break;
 
-                $respuesta = $gastos->realizar_consulta('modificar_gasto');
+        case 'eliminar':
+            $auditor->capturarDatosAnteriores('consultar_cabecera_gasto');
 
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) { 
-                    // Ocultamos el arreglo masivo al auditor
-                    $gastos->set_detalles(null);
-                    $auditor->registrarAuditoria(Accion::MODIFICAR); 
-                }
-                break;
+            $respuesta = $gastos->realizar_consulta('eliminar_gasto');
+            if ($respuesta['estatus']) { 
+                $auditor->registrarAuditoria(Accion::ELIMINAR); 
+            }
+            break;
 
-            // =========================================================
-            // ELIMINACIÓN
-            // =========================================================
-            case 'eliminar':
-                // Utilizamos la nueva consulta plana para la foto previa
-                $auditor->capturarDatosAnteriores('consultar_cabecera_gasto');
+        case 'listar_gastos_mes':
+            $respuesta = $gastos->realizar_consulta('listar_gastos_mes');
+            
+            break;
 
-                $respuesta = $gastos->realizar_consulta('eliminar_gasto');
+        case 'filtrar_gastos_mes':
+            $respuesta = $gastos->realizar_consulta('filtrar_por_mes');
+            
+            break;
 
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) { 
-                    $auditor->registrarAuditoria(Accion::ELIMINAR); 
-                }
-                break;
+        case 'totales_metodo_pago':
+            $respuesta = $gastos->realizar_consulta('total_por_metodo_pago');
+            
+            break;
 
-            // =========================================================
-            // REPORTES Y OTROS (opcional)
-            // =========================================================
-            case 'listar_gastos_mes':
-                $respuesta = $gastos->realizar_consulta('listar_gastos_mes');
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                break;
-
-            case 'filtrar_gastos_mes':
-                $respuesta = $gastos->realizar_consulta('filtrar_por_mes');
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                break;
-
-            case 'totales_metodo_pago':
-                $respuesta = $gastos->realizar_consulta('total_por_metodo_pago');
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                break;
-
-            default:
-                http_response_code(HttpCodigo::BAD_REQUEST->value);
-                $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
-        }
-    } catch (Exception $e) {
-        http_response_code(HttpCodigo::ERROR_INTERNO->value);
-        error_log("Error en controlador gastos: " . $e->getMessage());
-        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
-    } finally {
-        if ($respuesta !== null) {
-            if (isset($gastos)) { $gastos->cerrar(); }
-            Bitacora::cerrarConexionBitacora();
-
-            echo json_encode($respuesta);
-            exit;
-        }
+        default:
+            throw new HaydeeException('Operación no implementada', HttpCodigo::BAD_REQUEST->value);
     }
+
+    if (!$respuesta['estatus']) {
+        throw new HaydeeException($respuesta['mensaje'], HttpCodigo::BAD_REQUEST->value);
+    }
+
+    if (isset($gastos)) {$gastos->cerrar();}
+    Bitacora::cerrarConexionBitacora();
+
+    http_response_code($codigoExito);
+    echo json_encode($respuesta);
+    exit;
 }
 
 // =========================================================
@@ -235,75 +213,60 @@ if (isset($_POST["operacion"])) {
 if (isset($_POST["validar"])) {
     header('Content-Type: application/json');
     $validar = $_POST["validar"];
-    $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
-
     $validadorBD = new ValidadorBD();
 
-    try {
-        switch ($validar) {
-            case 'referencia':
-                $referencia = $_POST["referencia"] ?? '';
-                $id_gasto = $_POST["id_gasto"] ?? null; 
-            
-                $gastosTemp = new Gastos();
-                $existe = $gastosTemp->verificarReferenciaDisponible($referencia, $id_gasto);
+    switch ($validar) {
+        case 'referencia':
+            $referencia = $_POST["referencia"] ?? '';
+            $id_gasto = $_POST["id_gasto"] ?? null; 
+        
+            $gastosTemp = new Gastos();
+            $existe = $gastosTemp->verificarReferenciaDisponible($referencia, $id_gasto);
+            $gastosTemp->cerrar();
 
-                $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'La referencia ya está registrada en otro gasto' : 'Disponible'];
-                break;
+            $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'La referencia ya está registrada en otro gasto' : 'Disponible'];
+            break;
 
-            case 'validar_clave_foranea':
-                $tabla = $_POST['tabla'] ?? '';
-                $campo = $_POST['nombre_clave'] ?? '';
-                $valor = $_POST['valor'] ?? '';
+        case 'validar_clave_foranea':
+            $tabla = $_POST['tabla'] ?? '';
+            $campo = $_POST['nombre_clave'] ?? '';
+            $valor = $_POST['valor'] ?? '';
 
-                if (empty($tabla) || empty($campo) || empty($valor)) {
-                    $respuesta = ['estatus' => false, 'mensaje' => 'Faltan parámetros de Validación'];
-                    break;
-                }
+            if (empty($tabla) || empty($campo) || empty($valor)) {
+                throw new HaydeeException('Faltan parámetros de validación', HttpCodigo::BAD_REQUEST->value);
+            }
 
+            $existe = $validadorBD->existe($tabla, $campo, $valor);
+            $respuesta = ['estatus' => $existe, 'mensaje' => $existe ? 'OK' : 'No existe'];
+            break;
 
-                $existe = $validadorBD->existe($tabla, $campo, $valor);
-                $respuesta = ['estatus' => $existe, 'mensaje' => $existe ? 'OK' : 'No existe'];
-                break;
+        case 'escanear_comprobante':
+            $respuesta = EscanerComprobantes::procesarPeticion($_FILES['comprobante'] ?? null);
+            break;
 
-            case 'escanear_comprobante':
-                $respuesta = EscanerComprobantes::procesarPeticion($_FILES['comprobante'] ?? null);
-                break;
-
-            default:
-                http_response_code(HttpCodigo::BAD_REQUEST->value);
-                $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
-        }
-    } catch (Exception $e) {
-        http_response_code(HttpCodigo::ERROR_INTERNO->value);
-        error_log("Error en Validación AJAX Bancos: " . $e->getMessage());
-        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
+        default:
+            throw new HaydeeException('Validación no reconocida', HttpCodigo::BAD_REQUEST->value);
     }
 
-    if ($respuesta['estatus'] === true || isset($respuesta['existe'])) {
-        http_response_code(HttpCodigo::OK->value);
-    }
-
+    http_response_code(HttpCodigo::OK->value);
     echo json_encode($respuesta);
     exit;
 }
 
-// =========================================================
 // CARGA DE DATOS PARA LA VISTA
-// =========================================================
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     GestorAuditoria::inicializarBanderaConsulta(Modulo::GESTIONAR_GASTOS);
 
     // Instanciamos solo cuando vamos a renderizar el HTML
-    $banco = new Banco();
+    $cuenta = new CuentasCondominio();
     $proveedor = new Proveedores();
-    $solicitudGasto = new SolicitudGasto();
     $tipoGasto = new TipoGasto();
+    $presupuesto = new Presupuesto();
 
     $proveedores = $proveedor->realizar_consulta('consultar');
-    $bancos = $banco->realizar_consulta('consultar');
-    $solicitudes_gasto = $solicitudGasto->realizar_consulta('consultar');
-    $tipos_gasto = $tipoGasto->realizar_consulta('consultar');
+    $cuentas = $cuenta->realizar_consulta('consultar');
+    $presupuestos = $presupuesto->realizar_consulta('consultar');
+    $conceptos_gasto = $tipoGasto->realizar_consulta('consultar_conceptos');
 }
 $permisosVista = Sesiones::obtenerPermisosVista(Modulo::GESTIONAR_GASTOS);
 $btn_nuevo = [

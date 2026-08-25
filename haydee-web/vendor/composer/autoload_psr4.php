@@ -10,6 +10,7 @@ return array(
     'haydee\\vista\\' => array($baseDir . '/vista'),
     'haydee\\servicios\\' => array($baseDir . '/servicios'),
     'haydee\\modelo\\' => array($baseDir . '/modelo'),
+    'haydee\\excepciones\\' => array($baseDir . '/excepciones'),
     'haydee\\enums\\' => array($baseDir . '/enums'),
     'haydee\\controlador\\' => array($baseDir . '/controlador'),
     'haydee\\config\\' => array($baseDir . '/config'),

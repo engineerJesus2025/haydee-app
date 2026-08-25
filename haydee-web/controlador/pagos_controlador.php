@@ -9,6 +9,7 @@ use haydee\ayuda\Validador;
 use haydee\ayuda\ValidadorBD;
 use haydee\modelo\Pagos;
 use haydee\modelo\Banco;
+use haydee\modelo\CuentasCondominio;
 use haydee\modelo\Apartamento;
 use haydee\modelo\Bitacora;
 use haydee\servicios\GestorTasa;
@@ -39,9 +40,7 @@ if (isset($_POST["operacion"])) {
 
         if ($validador->tieneErrores()) {
             $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::NO_PROCESABLE->value;
-            http_response_code($codigoHttp);
-            echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
-            exit;
+            throw new ValidacionException('Datos inválidos.', $validador->obtenerErrores(), $codigoHttp);
         }
     }
 
@@ -124,169 +123,145 @@ if (isset($_POST["operacion"])) {
         $pagos->set_correo($_SESSION["usuario"] ?? null);
     }
 
-    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
+    // Respuesta por defecto
+    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida', 'datos' => []];
     $auditor = new GestorAuditoria($pagos, Modulo::GESTIONAR_PAGOS);
+    $codigoExito = HttpCodigo::OK->value;
+    switch ($operacion) {
+        // ==================== CONSULTAS ====================
+        case 'consulta':
+            if ($esPropietario) {
+                $respuesta = $pagos->realizar_consulta('consultar_por_correo');
+            } else {
+                $respuesta = $pagos->realizar_consulta('consultar');
+            }
+            if ($respuesta['estatus']) {
+                $auditor->registrarAuditoria(Accion::CONSULTAR);
+            }
+            break;
 
-    try {
-        switch ($operacion) {
-            // ==================== CONSULTAS ====================
-            case 'consulta':
-                if ($esPropietario) {
-                    $respuesta = $pagos->realizar_consulta('consultar_por_correo');
-                } else {
-                    $respuesta = $pagos->realizar_consulta('consultar');
-                }
+        case 'consultar_mensualidades':
+            $respuesta = $pagos->realizar_consulta('consultarMensualidadPendiente');
+            break;
 
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) {
-                    $auditor->registrarAuditoria(Accion::CONSULTAR);
+        case 'consultar_pago':
+            $respuesta = $pagos->realizar_consulta('consultar_pago');
+            http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
+            break;
+
+        // ==================== REGISTRO ====================
+        case 'registrar_pago':
+            $respuesta = $pagos->realizar_consulta('registrar_pago');
+            if ($respuesta['estatus']) {
+                // Ocultamos los detalles al auditor para evitar colapsos
+                $pagos->set_detalles(null);
+                $auditor->registrarAuditoria(Accion::REGISTRAR);
+
+                $id_nuevo_pago = $respuesta['id'] ?? $respuesta['lastId'] ?? null;
+                
+                if ($id_nuevo_pago) {
+                    GestorNotificaciones::notificarAdmins(
+                        "Nuevo Pago Registrado", 
+                        "Requiere revisión y aprobación.", 
+                        "pagos", 
+                        $id_nuevo_pago, 
+                        TipoEventoNotificacion::PAGO_RECIBIDO->value
+                    );
                 }
+                $codigoExito = HttpCodigo::CREADO->value;
+            }
+            break;
+
+        // MODIFICAR
+        case 'modificar_pago':
+            if ($esPropietario) {
+                $respuesta = ['estatus' => false, 'mensaje' => 'No autorizado para modificar'];
                 break;
+            }
 
-            case 'consultar_mensualidades':
-                $respuesta = $pagos->realizar_consulta('consultarMensualidadPendiente');
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
+            // Usamos la consulta plana para la bitácora
+            $auditor->capturarDatosAnteriores('consultar_cabecera_pago');
+
+            $respuesta = $pagos->realizar_consulta('modificar_pago');
+            if ($respuesta['estatus']) {
+                // Ocultamos los detalles al auditor
+                $pagos->set_detalles(null);
+                $auditor->registrarAuditoria(Accion::MODIFICAR);
+                $codigoExito = HttpCodigo::CREADO->value;
+            }
+            break;
+
+        // ELIMINAR
+        case 'eliminar_pago':
+            if ($esPropietario) {
+                $respuesta = ['estatus' => false, 'mensaje' => 'No autorizado'];
                 break;
+            }
 
-            case 'consultar_pago':
-                $respuesta = $pagos->realizar_consulta('consultar_pago');
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
-                break;
+            // Usamos la consulta plana para la bitácora
+            $auditor->capturarDatosAnteriores('consultar_cabecera_pago');
 
-            // ==================== REGISTRO ====================
-            case 'registrar_pago':
-                $respuesta = $pagos->realizar_consulta('registrar_pago');
+            $respuesta = $pagos->realizar_consulta('eliminar_pago');
+            if ($respuesta['estatus']) {
+                $auditor->registrarAuditoria(Accion::ELIMINAR);
+                $codigoExito = HttpCodigo::CREADO->value;
+            }
+            break;
 
-                http_response_code($respuesta['estatus'] ? HttpCodigo::CREADO->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) {
-                    // Ocultamos los detalles al auditor para evitar colapsos
-                    $pagos->set_detalles(null);
-                    $auditor->registrarAuditoria(Accion::REGISTRAR);
-
-                    $id_nuevo_pago = $respuesta['id'] ?? $respuesta['lastId'] ?? null;
-                    
-                    if ($id_nuevo_pago) {
-                        GestorNotificaciones::notificarAdmins(
-                            "Nuevo Pago Registrado", 
-                            "Requiere revisión y aprobación.", 
-                            "pagos", 
-                            $id_nuevo_pago, 
-                            TipoEventoNotificacion::PAGO_RECIBIDO->value
-                        );
-                    }
-                }
-                break;
-
-            // ==================== MODIFICAR ====================
-            case 'modificar_pago':
-                if ($esPropietario) {
-                    $respuesta = ['estatus' => false, 'mensaje' => 'No autorizado para modificar'];
-                    break;
-                }
-
-                // Usamos la consulta plana para la bitácora
-                $auditor->capturarDatosAnteriores('consultar_cabecera_pago');
-
-                $respuesta = $pagos->realizar_consulta('modificar_pago');
-
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) {
-                    // Ocultamos los detalles al auditor
-                    $pagos->set_detalles(null);
-                    $auditor->registrarAuditoria(Accion::MODIFICAR);
-                }
-                break;
-
-            // ==================== ELIMINAR ====================
-            case 'eliminar_pago':
-                if ($esPropietario) {
-                    $respuesta = ['estatus' => false, 'mensaje' => 'No autorizado'];
-                    break;
-                }
-
-                // Usamos la consulta plana para la bitácora
-                $auditor->capturarDatosAnteriores('consultar_cabecera_pago');
-
-                $respuesta = $pagos->realizar_consulta('eliminar_pago');
-
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) {
-                    $auditor->registrarAuditoria(Accion::ELIMINAR);
-                }
-                break;
-
-            default:
-                http_response_code(HttpCodigo::BAD_REQUEST->value);
-                $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
-        }
-    } catch (Exception $e) {
-        http_response_code(HttpCodigo::ERROR_INTERNO->value);
-        error_log("Error en controlador pagos: " . $e->getMessage());
-        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
-    } finally {
-        if ($respuesta !== null) {
-            if (isset($pagos)) { $pagos->cerrar(); }
-            if (isset($banco)) { $banco->cerrar(); }
-            if (isset($apartamento)) { $apartamento->cerrar(); }
-            
-            Bitacora::cerrarConexionBitacora();
-
-            echo json_encode($respuesta);
-            exit;
-        }
+        default:
+            throw new HaydeeException('Operación no implementada', HttpCodigo::BAD_REQUEST->value);
     }
+
+    if (!$respuesta['estatus']) {
+        throw new HaydeeException($respuesta['mensaje'], HttpCodigo::BAD_REQUEST->value);
+    }
+
+    if (isset($pagos)) {$pagos->cerrar();}
+    if (isset($banco)) {$banco->cerrar();}
+    if (isset($apartamento)) {$apartamento->cerrar();}
+    Bitacora::cerrarConexionBitacora();
+
+    http_response_code($codigoExito);
+    echo json_encode($respuesta);
+    exit;
 }
 
-// =========================================================
 // VALIDACIONES AJAX
-// =========================================================
 if (isset($_POST["validar"])) {
     header('Content-Type: application/json');
     $validar = $_POST["validar"];
-    $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
 
-    try {
-        switch ($validar) {
-            case 'referencia':
-                $referencia = $_POST["referencia"] ?? '';
-                $id_pago = $_POST["id_pago"] ?? null; // Recibimos el ID si estamos modificando
-                
-                // Instanciamos el modelo y usamos la nueva función experta
-                $pagosTemp = new Pagos();
-                $existe = $pagosTemp->verificarReferenciaDisponible($referencia, $id_pago);
-                
-                // Respondemos estatus TRUE (la petición fue exitosa) y enviamos si existe o no
-                $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'La referencia ya está registrada en otro pago' : 'Disponible'];
-                break;
+    switch ($validar) {
+        case 'referencia':
+            $referencia = $_POST["referencia"] ?? '';
+            $id_pago = $_POST["id_pago"] ?? null; 
+            
+            $pagosTemp = new Pagos();
+            $existe = $pagosTemp->verificarReferenciaDisponible($referencia, $id_pago);
+            $pagosTemp->cerrar();
+            
+            $respuesta = ['estatus' => true, 'existe' => $existe, 'mensaje' => $existe ? 'La referencia ya está registrada en otro pago' : 'Disponible'];
+            break;
 
-            case 'validar_clave_foranea':
-                if (isset($_POST['tabla'], $_POST['nombre_clave'], $_POST['valor'])) {
-                    $validadorBD = new ValidadorBD();
-                    $existe = $validadorBD->existe($_POST['tabla'], $_POST['nombre_clave'], $_POST['valor']);
-                    $respuesta = ['estatus' => $existe, 'mensaje' => 'OK'];
-                } else {
-                    $respuesta = ['estatus' => false, 'mensaje' => 'Faltan parámetros'];
-                }
-                break;
+        case 'validar_clave_foranea':
+            if (isset($_POST['tabla'], $_POST['nombre_clave'], $_POST['valor'])) {
+                $validadorBD = new ValidadorBD();
+                $existe = $validadorBD->existe($_POST['tabla'], $_POST['nombre_clave'], $_POST['valor']);
+                $respuesta = ['estatus' => $existe, 'mensaje' => 'OK'];
+            } else {
+                throw new HaydeeException('Faltan parámetros de validación', HttpCodigo::BAD_REQUEST->value);
+            }
+            break;
 
-            case 'escanear_comprobante':
-                $respuesta = EscanerComprobantes::procesarPeticion($_FILES['comprobante'] ?? null);
-                break;
+        case 'escanear_comprobante':
+            $respuesta = EscanerComprobantes::procesarPeticion($_FILES['comprobante'] ?? null);
+            break;
 
-            default:
-                http_response_code(HttpCodigo::BAD_REQUEST->value);
-                $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
-        }
-    } catch (Exception $e) {
-        http_response_code(HttpCodigo::ERROR_INTERNO->value);
-        error_log("Error en Validación AJAX Pagos: " . $e->getMessage());
-        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
+        default:
+            throw new HaydeeException('Validación no reconocida', HttpCodigo::BAD_REQUEST->value);
     }
 
-    if ($respuesta['estatus'] === true || isset($respuesta['existe'])) {
-        http_response_code(HttpCodigo::OK->value);
-    }
-    
+    http_response_code(HttpCodigo::OK->value);
     echo json_encode($respuesta);
     exit;
 }
@@ -299,10 +274,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
     // Modelos auxiliares para selects
     $banco = new Banco();
+    $cuenta = new CuentasCondominio();
     $apartamento = new Apartamento();
 
     // Carga de datos para la vista
     $registro_banco = $banco->realizar_consulta('consultar')['datos'] ?? [];
+    $registro_cuentas = $cuenta->realizar_consulta('consultar')['datos'] ?? [];
     
     if (!$esPropietario) {
         $registro_apartamento = $apartamento->realizar_consulta('consultar_listado')['datos'] ?? [];

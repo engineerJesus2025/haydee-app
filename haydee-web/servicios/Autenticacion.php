@@ -4,6 +4,7 @@ namespace haydee\servicios;
 use haydee\enums\TipoToken;
 use haydee\enums\Accion;
 use haydee\enums\Modulo;
+use haydee\enums\HttpCodigo;
 use haydee\modelo\Usuario;
 use haydee\modelo\Rol;
 use haydee\modelo\Notificaciones;
@@ -17,16 +18,16 @@ class Autenticacion
     private const JWT_ALGORITMO = 'HS256';
     private const JWT_TIEMPO_EXPIRACION = 3600;
 
-    // ==================== CONSTANTES DE CONFIGURACIÓN ====================
+    // CONSTANTES DE CONFIGURACIÓN 
     private const LONGITUD_BYTES_TOKEN = 32;
     private const JWT_ISSUER = 'haydee_api';
     private const JWT_AUDIENCE = 'haydee_app';
 
-    private $usuarioModel;
+    private $usuarioModelo;
 
     public function __construct()
     {
-        $this->usuarioModel = new Usuario();
+        $this->usuarioModelo = new Usuario();
     }
 
     /**
@@ -34,17 +35,45 @@ class Autenticacion
      */
     public function login($correo, $password, $recordar = false, $generarJWT = false)
     {
-        $this->usuarioModel->set_correo($correo);
-        $this->usuarioModel->set_contra($password);
-        $resultado = $this->usuarioModel->realizar_consulta('validar_usuario');
+        $this->usuarioModelo->set_correo($correo);
         
-        if (!$resultado['estatus']) {
-            return $resultado;
+        // Obtener credenciales
+        $resultadoUsuario = $this->usuarioModelo->realizar_consulta('obtener_credenciales_por_correo');
+        
+        if (!$resultadoUsuario['estatus']) {
+            // Mitigación de Timing Attack (Fake hash processing)
+            password_verify('password_falsa', '$2y$10$yhesusestuvoaquihashyhesushashyhesushashyhesushash');
+
+            return ['estatus' => false, 'mensaje' => 'Credenciales incorrectas', 'codigo_http' => HttpCodigo::NO_AUTORIZADO->value];
         }
 
-        $usuario = $resultado['datos'];
+        $usuario = $resultadoUsuario['datos'];
+        $this->usuarioModelo->set_id_usuario($usuario['id_usuario']);
+
+        // Verificar si la cuenta esta bloqueada internamente (Anti-Brute Force de Cuenta)
+        $estadoBloqueo = $this->usuarioModelo->realizar_consulta('verificar_bloqueo_cuenta');
+        if (!$estadoBloqueo['estatus']) {
+            return [
+                'estatus' => false, 
+                'mensaje' => $estadoBloqueo['mensaje'], 
+                'codigo_http' => HttpCodigo::NO_AUTORIZADO->value
+            ];
+        }
+
+        // Validar la contraseña en la capa de servicio
+        if (!password_verify($password, $usuario['contrasenia'])) {
+            // Registrar el fallo
+            $this->usuarioModelo->realizar_consulta('registrar_intento_fallido');
+            return ['estatus' => false, 'mensaje' => 'Credenciales incorrectas', 'codigo_http' => HttpCodigo::NO_AUTORIZADO->value];
+        }
+
+        // Limpiar historial penal de la cuenta
+        $this->usuarioModelo->realizar_consulta('limpiar_intentos_fallidos');
 
         Bitacora::registrar(Accion::INICIAR_SESION, Modulo::GESTIONAR_USUARIOS, $usuario['id_usuario']);
+
+        // Eliminamos el hash de la contraseña de $usuario por seguridad en memoria
+        unset($usuario['contrasenia']);
 
         // Gestión del token persistente (Web o Móvil)
         if ($recordar || $generarJWT) {
@@ -53,23 +82,22 @@ class Autenticacion
             
             $tipoToken = $generarJWT ? TipoToken::REFRESH_MOVIL->value : TipoToken::RECUERDAME->value;
             
-            $this->usuarioModel->set_id_usuario($usuario['id_usuario']);
-            $this->usuarioModel->set_token($token);
-            $this->usuarioModel->set_token_expiracion(date('Y-m-d H:i:s', time() + $segundosExpiracion));
-            $this->usuarioModel->set_token_tipo($tipoToken);
+            $this->usuarioModelo->set_token($token);
+            $this->usuarioModelo->set_token_expiracion(date('Y-m-d H:i:s', time() + $segundosExpiracion));
+            $this->usuarioModelo->set_token_tipo($tipoToken);
 
-            $resToken = $this->usuarioModel->realizar_consulta('registrar_token');
+            $resToken = $this->usuarioModelo->realizar_consulta('registrar_token');
             if ($resToken['estatus']) {
                 $usuario['token_persistente'] = $token;
             }
         } else {
-            // Si es un login web sin recordar, borramos solo la sesión web anterior, 
-            // protegiendo la sesión móvil.
+            // Login web normal: limpiamos sesión web anterior.
             $this->eliminarTokenPorTipo($usuario['id_usuario'], TipoToken::RECUERDAME->value);
         }
 
         $jwt = null;
         
+        // JSON Web Token para la App Móvil
         if ($generarJWT) {
             $tiempoEmision = time();
             $tiempoExpiracion = $tiempoEmision + self::JWT_TIEMPO_EXPIRACION;
@@ -105,12 +133,12 @@ class Autenticacion
     }
 
     /**
-     * Valida un token de recordar sesión (Exclusivo WEB).
+     * Valida un token de recordar sesion (WEB).
      */
     public function validarTokenRecuerdame($correo, $token)
     {
-        $this->usuarioModel->set_correo($correo);
-        $usuarioRes = $this->usuarioModel->realizar_consulta('existe_correo');
+        $this->usuarioModelo->set_correo($correo);
+        $usuarioRes = $this->usuarioModelo->realizar_consulta('existe_correo');
         
         if (!$usuarioRes['estatus']) {
             return $usuarioRes;
@@ -118,13 +146,13 @@ class Autenticacion
 
         $usuarioDatos = $usuarioRes['datos'];
 
-        $this->usuarioModel->set_id_usuario($usuarioDatos['id_usuario']);
-        $this->usuarioModel->set_token($token);
+        $this->usuarioModelo->set_id_usuario($usuarioDatos['id_usuario']);
+        $this->usuarioModelo->set_token($token);
         
         // Bloqueado estrictamente a formato WEB
-        $this->usuarioModel->set_token_tipo(TipoToken::RECUERDAME->value);
+        $this->usuarioModelo->set_token_tipo(TipoToken::RECUERDAME->value);
         
-        $tokenValido = $this->usuarioModel->realizar_consulta('validar_token');
+        $tokenValido = $this->usuarioModelo->realizar_consulta('validar_token');
         if (!$tokenValido['estatus']) {
             return $tokenValido;
         }
@@ -138,15 +166,15 @@ class Autenticacion
     }
 
     /**
-     * Verifica un refresh token válido y genera un nuevo JWT. Usado para la app
+     * Verifica un refresh token valido y genera un nuevo JWT. Usado para la app
      */
     public function renovarTokenJWT($idUsuario, $refreshToken)
     {
-        $this->usuarioModel->set_id_usuario($idUsuario);
-        $this->usuarioModel->set_token($refreshToken);
-        $this->usuarioModel->set_token_tipo(TipoToken::REFRESH_MOVIL->value); 
+        $this->usuarioModelo->set_id_usuario($idUsuario);
+        $this->usuarioModelo->set_token($refreshToken);
+        $this->usuarioModelo->set_token_tipo(TipoToken::REFRESH_MOVIL->value); 
 
-        $resultado = $this->usuarioModel->realizar_consulta('validar_token_jwt');
+        $resultado = $this->usuarioModelo->realizar_consulta('validar_token_jwt');
 
         if (!$resultado['estatus']) {
             return $resultado;
@@ -195,9 +223,9 @@ class Autenticacion
      */
     private function eliminarTokenPorTipo($usuarioId, $tipoToken)
     {
-        $this->usuarioModel->set_id_usuario($usuarioId);
-        $this->usuarioModel->set_token_tipo($tipoToken);
-        $this->usuarioModel->realizar_consulta('eliminar_token');
+        $this->usuarioModelo->set_id_usuario($usuarioId);
+        $this->usuarioModelo->set_token_tipo($tipoToken);
+        $this->usuarioModelo->realizar_consulta('eliminar_token');
     }
 
     private function obtenerPermisos($rolId)
@@ -233,8 +261,8 @@ class Autenticacion
 
     public function cerrar()
     {
-        if ($this->usuarioModel !== null) {
-            $this->usuarioModel->cerrar();
+        if ($this->usuarioModelo !== null) {
+            $this->usuarioModelo->cerrar();
         }
     }
 }

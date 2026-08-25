@@ -109,9 +109,8 @@ const Validador = {
     },
 
     /**
-     Consulta al servidor si un dato EXISTE en la base de datos (Asíncrono).
-     Útil para validar claves foráneas o dependencias (ej: ¿Existe presupuesto para este mes?).
-     Retorna true si EXISTE, false si NO EXISTE.
+     * Consulta al servidor si un dato EXISTE en la base de datos (Asíncrono).
+     * Retorna true si EXISTE, false si NO EXISTE.
      */
     async verificarExistenciaEnServidor(accionBackend, datosExtra, input, mensajeError) {
         const formData = new FormData();

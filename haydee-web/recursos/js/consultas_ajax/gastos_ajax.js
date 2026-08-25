@@ -31,11 +31,17 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('mensaje_error_imagen_detalles').classList.add('d-none')
     });
 
-    // Delegación de eventos para el cambio de Método de Pago
-    contenedorDetalles.addEventListener('change', (e) => {
-        // Verificamos si el elemento que cambió fue un select de método de pago
+    contenedorDetalles.addEventListener("change", (e) => {
         if (e.target.classList.contains('metodo_pago')) {
-            manejarVisibilidadBancaria(e.target);
+            // Reemplazamos manejarVisibilidadBancaria por la función correcta
+            actualizarVisibilidadCampos(e.target);
+        }
+        if (e.target.classList.contains("imagen") && e.target.files.length > 0) {
+            if (e.target.files[0].size <= 5 * 1024 * 1024) { 
+                ejecutarLecturaOCR(e.target);
+            } else {
+                Notificaciones.mostrarToast('error', 'Archivo muy pesado', 'La imagen debe pesar menos de 5MB.');
+            }
         }
     });
 });
@@ -110,12 +116,12 @@ function recolectarDatosFormulario() {
     const formData = new FormData();
 
     formData.append('clasificacion', document.getElementById('clasificacion').value);
-    formData.append('tipo_gasto_id', document.getElementById('tipo_gasto_id').value);
+    formData.append('concepto_id', document.getElementById('concepto_id').value); // Corregido: antes decía tipo_gasto_id
     formData.append('descripcion_gasto', document.getElementById('descripcion_gasto').value);
     formData.append('proveedor_id', document.getElementById('proveedor_id').value);
     
-    const solicitud = document.getElementById('solicitud').value;
-    if (solicitud) formData.append('solicitud', solicitud);
+    const presupuesto = document.getElementById('presupuesto_id').value;
+    if (presupuesto) formData.append('presupuesto_id', presupuesto);
 
     formData.append('tasa_dolar', tasa_dolar_activa);
 
@@ -129,8 +135,8 @@ function recolectarDatosFormulario() {
         const refInput = bloque.querySelector('.referencia');
         formData.append('referencia[]', refInput ? refInput.value : '');
 
-        const bancoInput = bloque.querySelector('.banco');
-        formData.append('banco_id[]', bancoInput ? bancoInput.value : '');
+        const bancoInput = bloque.querySelector('.cuenta');
+        formData.append('cuenta_id[]', bancoInput ? bancoInput.value : '');
 
         const imgExistente = bloque.querySelector('input[name="imagen_existente[]"]');
         formData.append('imagen_existente[]', imgExistente ? imgExistente.value : '');
@@ -194,23 +200,22 @@ async function prepararFormulario(id) {
             // Debatible: Bloquear el campo para evitar que lo cambien a Fijo/Variable
             selectClasificacion.disabled = true; 
             
-            // También debatible: bloquear el "tipo de gasto", "proveedor" y "solicitud" de la misma manera
-            formulario.querySelector('#tipo_gasto_id').disabled = true;
+            // También debatible: bloquear el "tipo de gasto", "proveedor" de la misma manera
+            formulario.querySelector('#concepto_id').disabled = true;
             formulario.querySelector('#proveedor_id').disabled = true;
-            formulario.querySelector('#solicitud').disabled = true;
+            formulario.querySelector('#presupuesto_id').disabled = true;
         } else {
             // Si es un gasto normal, nos aseguramos de que los campos estén habilitados
             selectClasificacion.disabled = false;
-            formulario.querySelector('#tipo_gasto_id').disabled = false;
+            formulario.querySelector('#concepto_id').disabled = false;
             formulario.querySelector('#proveedor_id').disabled = false;
-            formulario.querySelector('#solicitud').disabled = false;
+            formulario.querySelector('#presupuesto_id').disabled = false;
         }
-        // ---------------------------------------
 
         // Llenar cabecera
         selectClasificacion.value = gasto.clasificacion || '';
-        formulario.querySelector('#tipo_gasto_id').value = gasto.tipo_gasto_id || '';
-        formulario.querySelector('#solicitud').value = gasto.solicitud_id || '';
+        formulario.querySelector("#concepto_id").value = gasto.concepto_id;
+        formulario.querySelector('#presupuesto_id').value = gasto.presupuesto_id || '';
         formulario.querySelector('#descripcion_gasto').value = gasto.descripcion_gasto || '';
         formulario.querySelector('#proveedor_id').value = gasto.proveedor_id || '';
 
@@ -228,7 +233,7 @@ async function prepararFormulario(id) {
                 // Campos bancarios si aplica
                 if (det.metodo_pago === 'TRANSFERENCIA' || det.metodo_pago === 'PAGO MOVIL') {
                     nuevoBloque.querySelector('.referencia').value = det.referencia || '';
-                    nuevoBloque.querySelector('.banco').value = det.banco_id || '';
+                    nuevoBloque.querySelector('.cuenta').value = det.cuenta_id || '';
                     if (det.imagen) {
                         nuevoBloque.querySelector('.nombre_imagen_cargada').textContent = `Comprobante: ${det.imagen}`;
                     }
@@ -311,7 +316,7 @@ async function mostrarVistaPrevia(id) {
         clasificacionEl.innerHTML = ComponentesUI.crearSoftBadge(config.color, config.icono, config.texto);
 
         // Tipo de Gasto / Categoría
-        document.getElementById("vp_tipo_gasto").textContent = data.nombre_tipo_gasto || 'No especificada';
+        document.getElementById("vista_concepto").textContent = datos.concepto;
 
         // Proveedor (Si es nulo, mostramos un texto por defecto)
         document.getElementById("vp_proveedor").textContent = data.nombre_proveedor || 'Sin proveedor (No aplica)';
@@ -391,7 +396,7 @@ async function mostrarVistaPreviaDetalle(idDetalle) {
         document.getElementById('vista_fecha_detalles').textContent = FormatoFechas.formatoUsuario(det.fecha);
         document.getElementById('vista_monto_detalles').textContent = formatearMontoConMoneda(det.monto, det.metodo_pago);
         document.getElementById('vista_metodo_pago_detalles').textContent = det.metodo_pago || '';
-        document.getElementById('vista_nombre_banco_detalles').textContent = det.nombre_banco || 'No hay banco registrado';
+        document.getElementById('vista_nombre_cuenta_detalles').textContent = det.nombre_cuenta || 'No hay cuenta registrada';
         document.getElementById('vista_referencia_detalles').textContent = det.referencia || 'No hay referencia';
 
         const img = det.imagen ? `recursos/img/gastos/${det.imagen}` : '';
@@ -420,6 +425,74 @@ async function eliminar(id) {
     Validador.procesarRespuesta(respuesta, () => {    
         tabla_gastos.replaceData();
     });
+}
+
+/**
+ * Llama al motor OCR para extraer datos del comprobante cargado en Gastos
+ */
+async function ejecutarLecturaOCR(inputImagen) {
+    const bloque = inputImagen.closest('.detalle-gasto');
+    const inputMonto = bloque.querySelector('.monto');
+    const inputRef = bloque.querySelector('.referencia');
+    const selectCuenta = bloque.querySelector('.cuenta');
+    const inputFecha = bloque.querySelector('.fecha_detalle');
+
+    inputMonto.disabled = true;
+    inputRef.disabled = true;
+    selectCuenta.disabled = true;
+    inputFecha.disabled = true; 
+
+    Notificaciones.mostrarToast('info', 'Analizando comprobante', 'Extrayendo datos con Inteligencia Artificial...');
+
+    let formData = new FormData();
+    formData.append("validar", "escanear_comprobante"); 
+    formData.append("comprobante", inputImagen.files[0]);
+
+    try {
+        let data = await Peticiones.enviar(formData, "", false);
+
+        if (data.silencioso) return;
+
+        if (data.estatus) {
+            Notificaciones.mostrarToast('success', '¡Comprobante leído!', 'Campos autocompletados con alta precisión.');
+            
+            if (data.monto) {
+                inputMonto.value = data.monto;
+                inputMonto.dispatchEvent(new Event('input', { bubbles: true })); 
+            }
+            if (data.referencia) {
+                inputRef.value = data.referencia;
+                inputRef.dispatchEvent(new Event('keyup', { bubbles: true }));
+            }
+            if (data.fecha) {
+                inputFecha.value = data.fecha;
+                inputFecha.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+            if (data.banco) {
+                Array.from(selectCuenta.options).forEach(opt => {
+                    if (opt.dataset.codigo === data.banco) {
+                        selectCuenta.value = opt.value;
+                    }
+                });
+                selectCuenta.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+
+        } else {
+            Notificaciones.mostrarToast('warning', 'Revisión manual sugerida', data.mensaje);
+            if (data.monto) inputMonto.value = data.monto;
+            if (data.referencia) inputRef.value = data.referencia;
+            if (data.fecha) inputFecha.value = data.fecha;
+        }
+    } catch (error) {
+        console.error("Fallo al procesar el OCR en gastos:", error);
+        Notificaciones.mostrarToast('error', 'Error del Sistema', 'No se pudo contactar con el servicio OCR.');
+    } finally {
+        // Desbloqueo de UI
+        inputMonto.disabled = false;
+        inputRef.disabled = false;
+        selectCuenta.disabled = false;
+        inputFecha.disabled = false; 
+    }
 }
 
 /**
@@ -479,11 +552,11 @@ function manejarVisibilidadBancaria(selectMetodo) {
         
         // Limpiar los valores ocultos para evitar enviar basura al servidor
         const inputRef = bloque.querySelector('.referencia');
-        const selectBanco = bloque.querySelector('.banco');
+        const selectCuenta = bloque.querySelector('.cuenta');
         const inputImg = bloque.querySelector('.imagen');
         
         if(inputRef) inputRef.value = '';
-        if(selectBanco) selectBanco.value = '';
+        if(selectCuenta) selectCuenta.value = '';
         if(inputImg) inputImg.value = '';
     }
 }
@@ -507,12 +580,12 @@ function actualizarVisibilidadCampos(selectMetodo) {
 
     // Habilitar/deshabilitar campos para que no se envíen si están ocultos
     bloque.querySelector('.referencia').disabled = !mostrar;
-    bloque.querySelector('.banco').disabled = !mostrar;
+    bloque.querySelector('.cuenta').disabled = !mostrar;
     bloque.querySelector('.imagen').disabled = !mostrar;
 
     if (!mostrar) {
         bloque.querySelector('.referencia').value = '';
-        bloque.querySelector('.banco').value = '';
+        bloque.querySelector('.cuenta').value = '';
         bloque.querySelector('.imagen').value = null;
     }
 }
@@ -525,9 +598,9 @@ function resetModalGasto() {
     
     const selectClasificacion = formulario.querySelector('#clasificacion');
     selectClasificacion.disabled = false;
-    formulario.querySelector('#tipo_gasto_id').disabled = false;
+    formulario.querySelector('#concepto_id').disabled = false;
     formulario.querySelector('#proveedor_id').disabled = false;
-    formulario.querySelector('#solicitud').disabled = false;
+    formulario.querySelector('#presupuesto_id').disabled = false;
 
     const opcionExistente = selectClasificacion.querySelector('option[value="Reposicion"], option[value="Reposición"]');
     if (opcionExistente) opcionExistente.remove();
@@ -625,7 +698,7 @@ document.addEventListener('DOMContentLoaded', () => {
             { element: '#clasificacion', popover: { title: 'Clasificación', description: 'Indica si este gasto es Fijo (mensual/recurrente) o Variable (esporádico).', side: 'bottom', align: 'start' } },
             { element: '#tipo_gasto_id', popover: { title: 'Tipo de Gasto', description: 'Selecciona la categoría exacta a la que pertenece este gasto.', side: 'bottom', align: 'start' } },
             { element: '#descripcion_gasto', popover: { title: 'Descripción', description: 'Redacta el motivo general del gasto con claridad. (Debe tener al menos 10 caracteres).', side: 'top', align: 'start' } },
-            { element: '#proveedor_id', popover: { title: 'Datos del Proveedor', description: 'Selecciona la empresa o persona a la que se le pagó, y vincula una Solicitud si el gasto proviene de una.', side: 'top', align: 'start' } },
+            { element: '#proveedor_id', popover: { title: 'Proveedor y Presupuesto', description: 'Selecciona la empresa o persona a la que se le pagó, y vincula el Presupuesto Base de donde sale el dinero.', side: 'top', align: 'start' } },
             { element: '.detalle-gasto', popover: { title: 'Detalles del Pago', description: 'En este bloque registrarás cómo y cuándo pagaste este gasto.', side: 'top', align: 'center' } },
             { element: '.metodo_pago', popover: { title: 'Método Dinámico', description: '¡Importante! Si eliges "Transferencia" o "Pago Móvil", aparecerán automáticamente los campos para que ingreses la Referencia, el Banco y la imagen del Comprobante.', side: 'top', align: 'start' } },
             { element: '#agregar_detalle', popover: { title: 'Pagos Fraccionados', description: '¿Pagaste una parte en efectivo y otra por transferencia? Usa este botón para añadir tantos métodos de pago como necesites.', side: 'top', align: 'start' } },

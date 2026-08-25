@@ -65,6 +65,10 @@ const Peticiones = {
                 if (tiempoCarga) clearTimeout(tiempoCarga);
                 if (modalVisible && modalCarga) modalCarga.hide();
 
+                if (window.location.href.includes('login') || (datos instanceof FormData && datos.get('operacion') === 'entrar')) {
+                    return json; 
+                }
+
                 Alertas.mostrarConAccion(
                     'warning', 
                     'Sesión Expirada', 

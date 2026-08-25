@@ -8,6 +8,9 @@ use haydee\modelo\SeguridadIP;
 use haydee\servicios\Sesiones;
 use haydee\servicios\Autenticacion;
 use haydee\servicios\Recuperacion;
+use haydee\excepciones\HaydeeException;
+use haydee\excepciones\ValidacionException;
+use haydee\excepciones\SeguridadException;
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -18,7 +21,6 @@ $recaptchaDeshabilitado = defined('ENTORNO') && ENTORNO === 'local';
 if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');
     $operacion = $_POST["operacion"];
-    $respuesta = ['estatus' => false, 'mensaje' => 'Operación desconocida'];
 
     if (isset($_POST['usuario'])) {
         $_POST['correo'] = $_POST['usuario'];
@@ -27,114 +29,92 @@ if (isset($_POST["operacion"])) {
         $_POST['correo'] = $_POST['correo_recuperar'];
     }
 
-    // --- VALIDACION ---
     $reglas = Usuario::obtenerReglas($operacion);
     if (!empty($reglas)) {
         $validador = new Validador();
         
-        // skip_unique para evitar que rebote por tener el correo registrado
         $validador->validarConjunto($_POST, $reglas, ['skip_unique' => true]);
 
         if ($validador->tieneErrores()) {
             $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::NO_PROCESABLE->value;
-            http_response_code($codigoHttp);
-            echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
-            exit;
+            throw new ValidacionException('Datos inválidos.', $validador->obtenerErrores(), $codigoHttp);
         }
     }
 
-    // Extraer datos comunes
     $usuario = $_POST['usuario'] ?? '';
     $contra = $_POST['contra'] ?? '';
     $mantenerSesion = ($_POST['mantener_sesion'] ?? 'false') === 'true';
     $correoRecuperar = $_POST['correo_recuperar'] ?? '';
+    
+    $codigoExito = HttpCodigo::OK->value;
+    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida', 'datos' => []];
 
-    try {
-        switch ($operacion) {
-            case 'entrar':
-                $seguridadIP = new SeguridadIP();
-                $seguridadIP->set_ip($_SERVER['REMOTE_ADDR']);
+    switch ($operacion) {
+        case 'entrar':
+            $seguridadIP = new SeguridadIP();
+            $seguridadIP->set_ip($_SERVER['REMOTE_ADDR']);
 
-                // Validar reCAPTCHA
-                $recaptchaResponse = $_POST['g-recaptcha-response'] ?? '';
-                $recaptcha = new Recaptcha(null, $recaptchaDeshabilitado);
-                $validacion = $recaptcha->verificar($recaptchaResponse);
+            $recaptchaResponse = $_POST['g-recaptcha-response'] ?? '';
+            $recaptcha = new Recaptcha(null, $recaptchaDeshabilitado);
+            $validacion = $recaptcha->verificar($recaptchaResponse);
+            
+            if (!$validacion['estatus']) {
+                $seguridadIP->registrarFalloCritico(); 
+                throw new SeguridadException($validacion['error'], HttpCodigo::BAD_REQUEST->value);
+            }
+
+            $auth = new Autenticacion();
+            try {
+                $resultado = $auth->login($usuario, $contra, $mantenerSesion);
+            } finally {
+                $auth->cerrar();
+            }
+
+            if ($resultado['estatus']) {
+                $seguridadIP->limpiarFallo(); 
                 
-                // Si falla el reCAPTCHA, es comportamiento sospechoso (Bot)
-                if (!$validacion['estatus']) {
-                    $seguridadIP->registrarFalloCritico(); 
-                    http_response_code(HttpCodigo::BAD_REQUEST->value); 
-                    $respuesta = ['estatus' => false, 'mensaje' => $validacion['error']];
-                    break;
+                if (isset($resultado['refresh_token'])) {
+                    Sesiones::recordar($usuario, $resultado['refresh_token']);
                 }
+                Sesiones::iniciar($resultado['datos']);
+                session_regenerate_id(true);
+            } else {
+                throw new SeguridadException($resultado['mensaje'], $resultado['codigo_http'] ??  HttpCodigo::NO_AUTORIZADO->value);
+            }
+            
+            $respuesta = $resultado;
+            break;
 
-                // Intentar autenticación (Delegado a Autenticacion.php)
-                $auth = new Autenticacion();
-                try {
-                    $resultado = $auth->login($usuario, $contra, $mantenerSesion);
-                } finally {
-                    $auth->cerrar();
-                }
+        case 'enviar_notificacion':
+            $seguridadIP = new SeguridadIP();
+            $seguridadIP->set_ip($_SERVER['REMOTE_ADDR']);
 
-                if ($resultado['estatus']) {
-                    $seguridadIP->limpiarFallo(); // Limpiamos historial penal 8-]
+            $recuperacion = new Recuperacion();
+            try {
+                $respuesta = $recuperacion->enviarCorreoRecuperacion($correoRecuperar);
 
-                    http_response_code(HttpCodigo::OK->value); 
-                    if (isset($resultado['refresh_token'])) {
-                        Sesiones::recordar($usuario, $resultado['refresh_token']);
-                    }
-                    Sesiones::iniciar($resultado['datos']);
-                    session_regenerate_id(true);
-                } else {
-                    $codigoError = $resultado['codigo_http'] ?? 401;
-                    // Si el error es 429, la cuenta ya fue congelada por el modelo Usuario.
-                    if ($codigoError !== 429 && $codigoError !== HttpCodigo::DEMASIADAS_PETICIONES->value) {
-                        $seguridadIP->registrarFalloCritico(); // Clave mala: Sumamos infracción
-                    }
-                    
-                    http_response_code($codigoError);
-                }
-                
-                $respuesta = $resultado;
-                break;
+                if (strpos($respuesta['mensaje'], 'Error') !== false) {
+                    $seguridadIP->registrarFalloCritico();
+                    throw new HaydeeException('Error al enviar recuperación', HttpCodigo::ERROR_INTERNO->value);
+                } 
+            } finally {
+                $recuperacion->cerrar();
+            }
+            break;
 
-            case 'enviar_notificacion':
-                $seguridadIP = new SeguridadIP();
-                $seguridadIP->set_ip($_SERVER['REMOTE_ADDR']);
-
-                $recuperacion = new Recuperacion();
-                try {
-                    $respuesta = $recuperacion->enviarCorreoRecuperacion($correoRecuperar);
-
-                    if (strpos($respuesta['mensaje'], 'Error') !== false) {
-                        // Si ocurre un error grave (ej. intento de inyección en el correo)
-                        $seguridadIP->registrarFalloCritico();
-                        http_response_code(HttpCodigo::ERROR_INTERNO->value); 
-                    } else {
-                        http_response_code(HttpCodigo::OK->value); 
-                    }
-                } finally {
-                    $recuperacion->cerrar();
-                }
-                break;
-
-            default:
-                http_response_code(HttpCodigo::BAD_REQUEST->value);
-                $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
-        }
-    } catch (Exception $e) {
-        http_response_code(HttpCodigo::ERROR_INTERNO->value);
-        error_log("Error en controlador: " . $e->getMessage());
-        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
-    } finally {
-        if ($respuesta !== null) {
-            echo json_encode($respuesta);
-            exit;
-        }
+        default:
+            throw new HaydeeException('Operación no implementada', HttpCodigo::BAD_REQUEST->value);
     }
+
+    if (!$respuesta['estatus']) {
+        throw new HaydeeException($respuesta['mensaje'], HttpCodigo::BAD_REQUEST->value);
+    }
+
+    http_response_code($codigoExito);
+    echo json_encode($respuesta);
+    exit;
 }
 
-// Manejo de Vistas y Redirecciones (GET)
 $accion = $_GET['accion'] ?? 'inicio';
 
 switch ($accion) {

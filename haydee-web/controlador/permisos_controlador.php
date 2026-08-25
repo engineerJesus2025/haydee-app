@@ -15,7 +15,7 @@ if (isset($_POST["operacion"])) {
 
     Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_PERMISOS, $operacion);
     
-    // 1. VALIDACION
+    // VALIDACION
     $reglas = Permisos::obtenerReglas($operacion);
 
     if (!empty($reglas)) {
@@ -24,73 +24,68 @@ if (isset($_POST["operacion"])) {
 
         if ($validador->tieneErrores()) {
             $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::NO_PROCESABLE->value;
-            http_response_code($codigoHttp);
-            echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
-            exit;
+            throw new ValidacionException('Datos inválidos.', $validador->obtenerErrores(), $codigoHttp);
         }
     }
-
-    // 2. LAZY LOADING Y ASIGNACIÓN
+    
     $permiso = new Permisos();
     $permiso->set_id_permiso($_POST['id_permiso'] ?? null);
     $permiso->set_accion($_POST['accion'] ?? null);
 
-    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
+    // Respuesta por defecto
+    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida', 'datos' => []];
     $auditor = new GestorAuditoria($permiso, Modulo::GESTIONAR_PERMISOS);
+    $codigoExito = HttpCodigo::OK->value;
+    switch ($operacion) {
+        case 'consultar':
+            $respuesta = $permiso->realizar_consulta('consultar');
+            
+            if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::CONSULTAR); }
+            break;
 
-    try {
-        switch ($operacion) {
-            case 'consultar':
-                $respuesta = $permiso->realizar_consulta('consultar');
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::CONSULTAR); }
-                break;
+        case 'consultar_permiso':
+            $respuesta = $permiso->realizar_consulta('consultar_permiso');
+            http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
+            break;
 
-            case 'consultar_permiso':
-                $respuesta = $permiso->realizar_consulta('consultar_permiso');
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
-                break;
+        case 'registrar_permiso':
+            $respuesta = $permiso->realizar_consulta('registrar_permiso');
 
-            case 'registrar_permiso':
-                $respuesta = $permiso->realizar_consulta('registrar_permiso');
+            if ($respuesta['estatus']) { 
+                $auditor->registrarAuditoria(Accion::REGISTRAR);
+                $codigoExito = HttpCodigo::CREADO->value;
+            }
+            break;
 
-                http_response_code($respuesta['estatus'] ? HttpCodigo::CREADO->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::REGISTRAR); }
-                break;
+        case 'modificar_permiso':
+            $auditor->capturarDatosAnteriores('consultar_permiso');
+            $respuesta = $permiso->realizar_consulta('modificar_permiso');
 
-            case 'modificar_permiso':
-                $auditor->capturarDatosAnteriores('consultar_permiso');
-                $respuesta = $permiso->realizar_consulta('modificar_permiso');
+            if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::MODIFICAR); }
+            break;
 
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::MODIFICAR); }
-                break;
+        case 'eliminar_permiso':
+            $auditor->capturarDatosAnteriores('consultar_permiso');
+            $respuesta = $permiso->realizar_consulta('eliminar_permiso');
 
-            case 'eliminar_permiso':
-                $auditor->capturarDatosAnteriores('consultar_permiso');
-                $respuesta = $permiso->realizar_consulta('eliminar_permiso');
+            
+            if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::ELIMINAR); }
+            break;
 
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::ELIMINAR); }
-                break;
-
-            default:
-                http_response_code(HttpCodigo::BAD_REQUEST->value);
-                $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
-        }
-    } catch (Exception $e) {
-        http_response_code(HttpCodigo::ERROR_INTERNO->value);
-        error_log("Error en controlador permisos: " . $e->getMessage());
-        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
-    } finally {
-        if ($respuesta !== null) {
-            if (isset($permiso)) { $permiso->cerrar(); }
-            Bitacora::cerrarConexionBitacora();
-
-            echo json_encode($respuesta);
-            exit;
-        }
+        default:
+            throw new HaydeeException('Operación no implementada', HttpCodigo::BAD_REQUEST->value);
     }
+
+    if (!$respuesta['estatus']) {
+        throw new HaydeeException($respuesta['mensaje'], HttpCodigo::BAD_REQUEST->value);
+    }
+
+    if (isset($permiso)) {$permiso->cerrar();}
+    Bitacora::cerrarConexionBitacora();
+
+    http_response_code($codigoExito);
+    echo json_encode($respuesta);
+    exit;
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

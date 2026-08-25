@@ -5,7 +5,7 @@ $sub_reporte_pdf = ($modulo === "reportes" && $accion === "reportes_pdf");
 $sub_reporte_est = ($modulo === "reportes" && in_array($accion, ["reportes_estadisticos", "habitantes", "ingreso_egreso"]));
 $es_reporte      = ($sub_reporte_pdf || $sub_reporte_est);
 
-$es_configuracion = in_array($modulo, ["proveedores", "bancos", "tipo_gasto"]);
+$es_configuracion = in_array($modulo, ["proveedores", "bancos", "cuentas", "tipo_gasto"]);
 $es_seguridad     = in_array($modulo, ["rol", "bitacora", "permisos", "modulos"]); 
 
 //  MATRIZ DE ELEMENTOS (Sacada de config_menu)

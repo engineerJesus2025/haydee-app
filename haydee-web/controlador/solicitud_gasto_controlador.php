@@ -31,9 +31,7 @@ if (isset($_POST["operacion"])) {
 
         if ($validador->tieneErrores()) {
             $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::NO_PROCESABLE->value;
-            http_response_code($codigoHttp);
-            echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
-            exit;
+            throw new ValidacionException('Datos inválidos.', $validador->obtenerErrores(), $codigoHttp);
         }
     }
 
@@ -50,144 +48,115 @@ if (isset($_POST["operacion"])) {
     $solicitud->set_prioridad($_POST['prioridad'] ?? null);
 
     $operacion = $_POST["operacion"];
-    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
+    // Respuesta por defecto
+    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida', 'datos' => []];
 
     // Instanciamos el auditor
     $auditor = new GestorAuditoria($solicitud, Modulo::GESTIONAR_SOLICITUD_GASTO);
-
-    try {
-        switch ($operacion) {
-            case 'consulta':
-                $respuesta = $solicitud->realizar_consulta('consultar');
-
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) {
-                    $auditor->registrarAuditoria(Accion::CONSULTAR);
-                }
-                break;
-
-            case 'consultar_solicitud':
-                $respuesta = $solicitud->realizar_consulta('consultar_solicitud');
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
-                break;
-
-            case 'consultar_presupuesto':
-                // Este metodo es público y no usa realizar_consulta... PELIGRO
-                $respuesta = $solicitud->consultar_presupuesto_disponible();
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                break;
-
-            case 'meses_anios_con_presupuesto':
-                $respuesta = $solicitud->listar_meses_anios_con_presupuesto();
-                
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) {
-                    $respuesta = ['estatus' => true, 'data' => $respuesta['datos']];
-                }
-                break;
-
-            case 'buscar_presupuesto_por_mes_anio':
-                $mes = $_POST["mes"] ?? '';
-                $anio = $_POST["anio"] ?? '';
-                $fecha = "$anio-$mes";
-                $respuesta = $solicitud->consultar_presupuesto($fecha);
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                break;
-
-            case 'registrar_solicitud':
-                $respuesta = $solicitud->realizar_consulta('registrar_solicitud');
-
-                http_response_code($respuesta['estatus'] ? HttpCodigo::CREADO->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) {
-                    $auditor->registrarAuditoria(Accion::REGISTRAR);
-                }
-                break;
-
-            case 'modificar_solicitud':
-                // Obtener datos anteriores
-                $auditor->capturarDatosAnteriores('consultar_solicitud');
-
-                $respuesta = $solicitud->realizar_consulta('modificar_solicitud');
-
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) { 
-                    $auditor->registrarAuditoria(Accion::MODIFICAR); 
-                }
-                break;
-
-            case 'eliminar_solicitud':
-                // Obtener datos anteriores
-                $auditor->capturarDatosAnteriores('consultar_solicitud');
-
-                $respuesta = $solicitud->realizar_consulta('eliminar_solicitud');
-
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) { 
-                    $auditor->registrarAuditoria(Accion::ELIMINAR); 
-                }
-                break;
-
-            default:
-                http_response_code(HttpCodigo::BAD_REQUEST->value);
-                $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
-        }
-    } catch (Exception $e) {
-        http_response_code(HttpCodigo::ERROR_INTERNO->value);
-        error_log("Error en controlador solicitud_gasto: " . $e->getMessage());
-        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
-    } finally {
-        if ($respuesta !== null) {
-            // Cerrar conexiones explicitamente
-            if (isset($notificaciones)) {
-                $notificaciones->cerrar();
+    $codigoExito = HttpCodigo::OK->value;
+    switch ($operacion) {
+        case 'consulta':
+            $respuesta = $solicitud->realizar_consulta('consultar');
+            if ($respuesta['estatus']) {
+                $auditor->registrarAuditoria(Accion::CONSULTAR);
             }
-            if (isset($presupuesto)) {
-                $presupuesto->cerrar();
-            }
-            Bitacora::cerrarConexionBitacora(); //  Bitacora, que cierra su conexion de seguridad
+            break;
 
-            echo json_encode($respuesta);
-            exit;
-        }
+        case 'consultar_solicitud':
+            $respuesta = $solicitud->realizar_consulta('consultar_solicitud');
+            http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
+            break;
+
+        case 'consultar_presupuesto':
+            // Este metodo es público y no usa realizar_consulta... PELIGRO
+            $respuesta = $solicitud->consultar_presupuesto_disponible();
+            
+            break;
+
+        case 'meses_anios_con_presupuesto':
+            $respuesta = $solicitud->listar_meses_anios_con_presupuesto();
+            if ($respuesta['estatus']) {
+                $respuesta = ['estatus' => true, 'data' => $respuesta['datos']];
+            }
+            break;
+
+        case 'buscar_presupuesto_por_mes_anio':
+            $mes = $_POST["mes"] ?? '';
+            $anio = $_POST["anio"] ?? '';
+            $fecha = "$anio-$mes";
+            $respuesta = $solicitud->consultar_presupuesto($fecha);
+            
+            break;
+
+        case 'registrar_solicitud':
+            $respuesta = $solicitud->realizar_consulta('registrar_solicitud');
+            if ($respuesta['estatus']) {
+                $auditor->registrarAuditoria(Accion::REGISTRAR);
+                $codigoExito = HttpCodigo::CREADO->value;
+            }
+            break;
+
+        case 'modificar_solicitud':
+            // Obtener datos anteriores
+            $auditor->capturarDatosAnteriores('consultar_solicitud');
+
+            $respuesta = $solicitud->realizar_consulta('modificar_solicitud');
+            if ($respuesta['estatus']) { 
+                $auditor->registrarAuditoria(Accion::MODIFICAR); 
+            }
+            break;
+
+        case 'eliminar_solicitud':
+            // Obtener datos anteriores
+            $auditor->capturarDatosAnteriores('consultar_solicitud');
+
+            $respuesta = $solicitud->realizar_consulta('eliminar_solicitud');
+            if ($respuesta['estatus']) { 
+                $auditor->registrarAuditoria(Accion::ELIMINAR); 
+            }
+            break;
+
+        default:
+            throw new HaydeeException('Operación no implementada', HttpCodigo::BAD_REQUEST->value);
     }
+
+    if (!$respuesta['estatus']) {
+        throw new HaydeeException($respuesta['mensaje'], HttpCodigo::BAD_REQUEST->value);
+    }
+
+    if (isset($notificaciones)) {$notificaciones->cerrar();}
+    if (isset($presupuesto)) {$presupuesto->cerrar();}
+    Bitacora::cerrarConexionBitacora();
+
+    http_response_code($codigoExito);
+    echo json_encode($respuesta);
+    exit;
 }
 
-// =========================================================
-// VALIDACIONES AJAX (Quedan igual)
-// =========================================================
+// VALIDACIONES AJAX 
 if (isset($_POST["validar"])) {
     header('Content-Type: application/json');
     $validar = $_POST["validar"];
     $presupuesto = new Presupuesto();
-    $respuesta = ['estatus' => false, 'mensaje' => 'Validación no válida'];
 
-    try {
-        switch ($validar) {
-            case 'validar_mes':
-                $presupuesto->set_fecha($_POST["fecha"] ?? null);
-                $respuesta = $presupuesto->realizar_consulta('consultar_mes_presupuesto');
-                break;
+    switch ($validar) {
+        case 'validar_mes':
+            $presupuesto->set_fecha($_POST["fecha"] ?? null);
+            $respuesta = $presupuesto->realizar_consulta('consultar_mes_presupuesto');
+            break;
 
-            case 'validar_anio':
-                $presupuesto->set_fecha($_POST["fecha"] ?? null);
-                $respuesta = $presupuesto->realizar_consulta('consultar_anio_presupuesto');
-                break;
-            default:
-                http_response_code(HttpCodigo::BAD_REQUEST->value);
-                $respuesta = ['estatus' => false, 'mensaje' => 'Validación no reconocida'];
-        }
-    } catch (Exception $e) {
-        http_response_code(HttpCodigo::ERROR_INTERNO->value);
-        error_log("Error en Validación AJAX Solicitud: " . $e->getMessage());
-        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno'];
-    } finally {
-        $presupuesto->cerrar();
+        case 'validar_anio':
+            $presupuesto->set_fecha($_POST["fecha"] ?? null);
+            $respuesta = $presupuesto->realizar_consulta('consultar_anio_presupuesto');
+            break;
+            
+        default:
+            throw new HaydeeException('Validación no reconocida', HttpCodigo::BAD_REQUEST->value);
     }
 
-    if ($respuesta['estatus'] === true || isset($respuesta['existe'])) {
-        http_response_code(HttpCodigo::OK->value);
-    }
+    $presupuesto->cerrar();
 
+    http_response_code(HttpCodigo::OK->value);
     echo json_encode($respuesta);
     exit;
 }

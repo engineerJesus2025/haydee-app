@@ -23,9 +23,7 @@ if (isset($_POST["operacion"])) {
 
         if ($validador->tieneErrores()) {
             $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::NO_PROCESABLE->value;
-            http_response_code($codigoHttp);
-            echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
-            exit;
+            throw new ValidacionException('Datos inválidos.', $validador->obtenerErrores(), $codigoHttp);
         }
     }
 
@@ -33,64 +31,55 @@ if (isset($_POST["operacion"])) {
     $obj_modulo->set_id_modulo($_POST['id_modulo'] ?? null);
     $obj_modulo->set_nombre($_POST['nombre'] ?? null);
 
-    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
+    // Respuesta por defecto
+    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida', 'datos' => []];
     $auditor = new GestorAuditoria($obj_modulo, Modulo::GESTIONAR_MODULOS);
-    
-    try {
-        switch ($operacion) {
-            case 'consultar':
-                $respuesta = $obj_modulo->realizar_consulta('consultar');
+    $codigoExito = HttpCodigo::OK->value;
+    switch ($operacion) {
+        case 'consultar':
+            $respuesta = $obj_modulo->realizar_consulta('consultar');
+            if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::CONSULTAR); }
+            break;
 
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::CONSULTAR); }
-                break;
+        case 'consultar_modulo':
+            $respuesta = $obj_modulo->realizar_consulta('consultar_modulo');
+            http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
+            break;
 
-            case 'consultar_modulo':
-                $respuesta = $obj_modulo->realizar_consulta('consultar_modulo');
+        case 'registrar_modulo':
+            $respuesta = $obj_modulo->realizar_consulta('registrar_modulo');
+            if ($respuesta['estatus']) { 
+                $auditor->registrarAuditoria(Accion::REGISTRAR);
+                $codigoExito = HttpCodigo::CREADO->value;
+            }
+            break;
 
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
-                break;
+        case 'modificar_modulo':
+            $auditor->capturarDatosAnteriores('consultar_modulo');
+            $respuesta = $obj_modulo->realizar_consulta('modificar_modulo');
+            if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::MODIFICAR); }
+            break;
 
-            case 'registrar_modulo':
-                $respuesta = $obj_modulo->realizar_consulta('registrar_modulo');
+        case 'eliminar_modulo':
+            $auditor->capturarDatosAnteriores('consultar_modulo');
+            $respuesta = $obj_modulo->realizar_consulta('eliminar_modulo');
+            if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::ELIMINAR); }
+            break;
 
-                http_response_code($respuesta['estatus'] ? HttpCodigo::CREADO->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::REGISTRAR); }
-                break;
-
-            case 'modificar_modulo':
-                $auditor->capturarDatosAnteriores('consultar_modulo');
-                $respuesta = $obj_modulo->realizar_consulta('modificar_modulo');
-
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::MODIFICAR); }
-                break;
-
-            case 'eliminar_modulo':
-                $auditor->capturarDatosAnteriores('consultar_modulo');
-                $respuesta = $obj_modulo->realizar_consulta('eliminar_modulo');
-
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::ELIMINAR); }
-                break;
-
-            default:
-                http_response_code(HttpCodigo::BAD_REQUEST->value);
-                $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
-        }
-    } catch (Exception $e) {
-        http_response_code(HttpCodigo::ERROR_INTERNO->value);
-        error_log("Error en controlador modulos: " . $e->getMessage());
-        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
-    } finally {
-        if ($respuesta !== null) {
-            if (isset($obj_modulo)) { $obj_modulo->cerrar(); }
-            Bitacora::cerrarConexionBitacora();
-
-            echo json_encode($respuesta);
-            exit;
-        }
+        default:
+            throw new HaydeeException('Operación no implementada', HttpCodigo::BAD_REQUEST->value);
     }
+
+    if (!$respuesta['estatus']) {
+        throw new HaydeeException($respuesta['mensaje'], HttpCodigo::BAD_REQUEST->value);
+    }
+
+    if (isset($obj_modulo)) {$obj_modulo->cerrar();}
+    Bitacora::cerrarConexionBitacora();
+
+    http_response_code($codigoExito);
+    echo json_encode($respuesta);
+    exit;
 }
 
 // Bloque de vista...

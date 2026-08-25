@@ -5,6 +5,7 @@ use PDO;
 use PDOException;
 use haydee\enums\EstadoPeriodo; 
 use haydee\enums\TipoBaseDatos;
+use haydee\excepciones\NegocioException;
 
 class AnioFiscal extends Conexion
 {
@@ -88,8 +89,8 @@ class AnioFiscal extends Conexion
      */
     private function validarAnioActivoUnico($idIgnorar = null)
     {
-        if ($this->estado !== EstadoPeriodo::ABIERTO->value) { //
-            return ['estatus' => true];
+        if ($this->estado !== EstadoPeriodo::ABIERTO->value) {
+            return true;
         }
 
         $sql = "SELECT id_anio_fiscal FROM anio_fiscal WHERE estado = :estado AND activo = 1";
@@ -98,21 +99,20 @@ class AnioFiscal extends Conexion
         }
 
         $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-        $estadoAbierto = EstadoPeriodo::ABIERTO->value; //
+        $estadoAbierto = EstadoPeriodo::ABIERTO->value;
         $stmt->bindParam(':estado', $estadoAbierto);
+        
         if ($idIgnorar !== null) {
             $stmt->bindParam(':id_ignorar', $idIgnorar);
         }
         
         $stmt->execute();
+        
         if ($stmt->fetch()) {
-            return [
-                'estatus' => false, 
-                'mensaje' => 'Ya existe un año fiscal ABIERTO en el sistema. Debe cerrarlo antes de activar uno nuevo.'
-            ];
+            throw new HaydeeException('Ya existe un año fiscal ABIERTO en el sistema. Debe cerrarlo antes de activar uno nuevo.', 400);
         }
 
-        return ['estatus' => true];
+        return true;
     }
 
     private function validarRangoFechas()
@@ -123,63 +123,54 @@ class AnioFiscal extends Conexion
         $dias = (int)$intervalo->format('%a');
 
         if ($dias < self::DIAS_MINIMOS_PERIODO || $dias > self::DIAS_MAXIMOS_PERIODO) {
-            return ['estatus' => false, 'mensaje' => "El período debe ser de aproximadamente un año (" . self::DIAS_MINIMOS_PERIODO . "-" . self::DIAS_MAXIMOS_PERIODO . " días). Días calculados: $dias."];
+            throw new HaydeeException("El período debe ser de aproximadamente un año (" . self::DIAS_MINIMOS_PERIODO . "-" . self::DIAS_MAXIMOS_PERIODO . " días). Días calculados: $dias.", 400);
         }
 
-        return ['estatus' => true];
+        return true;
     }
 
     private function _consultar()
     {
         $sql = "SELECT * FROM anio_fiscal WHERE activo = 1";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->execute();
-            return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
-        } catch (PDOException $e) {
-            error_log("Error en _consultar: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar años fiscales'];
-        }
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->execute();
+        
+        return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
     }
 
     private function _consultar_anio_fiscal()
     {
         $sql = "SELECT * FROM anio_fiscal WHERE id_anio_fiscal = :id_anio_fiscal AND activo = 1";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->bindParam(':id_anio_fiscal', $this->id_anio_fiscal);
-            $stmt->execute();
-            $datos = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $datos ? ['estatus' => true, 'datos' => $datos] : ['estatus' => false, 'mensaje' => 'Año fiscal no encontrado'];
-        } catch (PDOException $e) {
-            error_log("Error en _consultar_anio_fiscal: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al consultar el año fiscal'];
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->bindParam(':id_anio_fiscal', $this->id_anio_fiscal);
+        $stmt->execute();
+        
+        $datos = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$datos) {
+            throw new HaydeeException('Año fiscal no encontrado', 404);
         }
+        
+        return ['estatus' => true, 'datos' => $datos];
     }
 
     private function _registrar()
     {
-        $rango = $this->validarRangoFechas();
-        if (!$rango['estatus']) return $rango;
-
-        // Validar unicidad de año activo
-        $validacionActivo = $this->validarAnioActivoUnico();
-        if (!$validacionActivo['estatus']) return $validacionActivo;
+        $this->validarRangoFechas();
+        $this->validarAnioActivoUnico();
 
         $sql = "INSERT INTO anio_fiscal (fecha_inicio, fecha_cierre, estado, descripcion) 
                 VALUES (:fecha_inicio, :fecha_cierre, :estado, :descripcion)";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->bindParam(':fecha_inicio', $this->fecha_inicio);
-            $stmt->bindParam(':fecha_cierre', $this->fecha_cierre);
-            $stmt->bindParam(':estado', $this->estado);
-            $stmt->bindParam(':descripcion', $this->descripcion);
-            $stmt->execute();
-            return ['estatus' => true, 'mensaje' => 'Año fiscal registrado correctamente'];
-        } catch (PDOException $e) {
-            error_log("Error en _registrar: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al registrar el año fiscal'];
-        }
+                
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->bindParam(':fecha_inicio', $this->fecha_inicio);
+        $stmt->bindParam(':fecha_cierre', $this->fecha_cierre);
+        $stmt->bindParam(':estado', $this->estado);
+        $stmt->bindParam(':descripcion', $this->descripcion);
+        $stmt->execute();
+        
+        $lastId = $this->get_conex(TipoBaseDatos::NEGOCIO)->lastInsertId();
+        return ['estatus' => true, 'mensaje' => 'Año fiscal registrado correctamente', 'lastId' => $lastId];
     }
 
     private function _modificar()
@@ -196,39 +187,23 @@ class AnioFiscal extends Conexion
             $anioBD = $stmtActual->fetch(PDO::FETCH_ASSOC);
 
             if (!$anioBD) {
-                $conexion->rollBack();
-                return ['estatus' => false, 'mensaje' => 'El año fiscal no existe o fue eliminado.'];
+                throw new HaydeeException('El año fiscal no existe o fue eliminado.', 404);
             }
 
             $estadoActualBD = strtoupper($anioBD['estado']);
             $nuevoEstado = strtoupper($this->estado);
 
-            // No revivir años cerrados
-            if ($estadoActualBD === EstadoPeriodo::CERRADO->value && $nuevoEstado === EstadoPeriodo::ABIERTO->value) { //
-                $conexion->rollBack();
-                return ['estatus' => false, 'mensaje' => 'Violación de Integridad: No se puede reabrir un año fiscal histórico que ya ha sido cerrado.'];
+            if ($estadoActualBD === EstadoPeriodo::CERRADO->value && $nuevoEstado === EstadoPeriodo::ABIERTO->value) {
+                throw new HaydeeException('Violación de Integridad: No se puede reabrir un año fiscal histórico que ya ha sido cerrado.', 400);
             }
 
-            // No cerrar abruptamente por formulario
-            if ($estadoActualBD === EstadoPeriodo::ABIERTO->value && $nuevoEstado === EstadoPeriodo::CERRADO->value) { //
-                $conexion->rollBack();
-                return ['estatus' => false, 'mensaje' => 'Transición Inválida: No puede cerrar el año fiscal actual editando el registro. El sistema lo cerrará automáticamente al cumplirse la fecha o mediante el proceso formal de Cierre.'];
+            if ($estadoActualBD === EstadoPeriodo::ABIERTO->value && $nuevoEstado === EstadoPeriodo::CERRADO->value) {
+                throw new HaydeeException('Transición Inválida: No puede cerrar el año fiscal actual editando el registro. El sistema lo cerrará automáticamente al cumplirse la fecha o mediante el proceso formal de Cierre.', 400);
             }
 
-            // Fechas y Unicidad
-            $rango = $this->validarRangoFechas();
-            if (!$rango['estatus']) {
-                $conexion->rollBack();
-                return $rango;
-            }
+            $this->validarRangoFechas();
+            $this->validarAnioActivoUnico($this->id_anio_fiscal);
 
-            $validacionActivo = $this->validarAnioActivoUnico($this->id_anio_fiscal);
-            if (!$validacionActivo['estatus']) {
-                $conexion->rollBack();
-                return $validacionActivo;
-            }
-
-            // actualización si pasó todas las barreras
             $sql = "UPDATE anio_fiscal SET 
                         fecha_inicio = :fecha_inicio, 
                         fecha_cierre = :fecha_cierre, 
@@ -247,12 +222,9 @@ class AnioFiscal extends Conexion
             $conexion->commit();
             return ['estatus' => true, 'mensaje' => 'Año fiscal actualizado correctamente'];
 
-        } catch (PDOException $e) {
-            if ($conexion->inTransaction()) {
-                $conexion->rollBack();
-            }
-            error_log("Error en _modificar: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al actualizar el año fiscal'];
+        } catch (\Throwable $e) { 
+            $conexion->rollBack();
+            throw $e; // Relanzamos para que suba
         }
     }
 
@@ -270,25 +242,19 @@ class AnioFiscal extends Conexion
             $anio = $stmtCheck->fetch(PDO::FETCH_ASSOC);
 
             if (!$anio) {
-                $conexion->rollBack();
-                return ['estatus' => false, 'mensaje' => 'El año fiscal no existe o ya fue eliminado.'];
+                throw new HaydeeException('El año fiscal no existe o ya fue eliminado.', 404);
             }
 
-            // Verificar dependencias reales con Caja Chica
             $sqlDependencias = "SELECT COUNT(*) FROM caja_chica WHERE anio_fiscal_id = :id_anio_fiscal AND activo = 1";
             $stmtDep = $conexion->prepare($sqlDependencias);
             $stmtDep->bindParam(':id_anio_fiscal', $this->id_anio_fiscal);
             $stmtDep->execute();
             
             if ($stmtDep->fetchColumn() > 0) {
-                $conexion->rollBack();
-                return [
-                    'estatus' => false, 
-                    'mensaje' => 'Error de Integridad: No se puede eliminar este periodo porque ya existen cajas chicas operando con él.'
-                ];
+                throw new HaydeeException('Error de Integridad: No se puede eliminar este periodo porque ya existen cajas chicas operando con él.', 400);
             }
 
-            $estadoCerrado = EstadoPeriodo::CERRADO->value; //
+            $estadoCerrado = EstadoPeriodo::CERRADO->value;
             $sql = "UPDATE anio_fiscal SET activo = 0, estado = :estado WHERE id_anio_fiscal = :id_anio_fiscal";
             $stmt = $conexion->prepare($sql);
             $stmt->bindParam(':estado', $estadoCerrado);
@@ -298,27 +264,20 @@ class AnioFiscal extends Conexion
             $conexion->commit();
             return ['estatus' => true, 'mensaje' => 'Año fiscal eliminado del sistema correctamente.'];
 
-        } catch (PDOException $e) {
-            if ($conexion->inTransaction()) {
-                $conexion->rollBack();
-            }
-            error_log("Error crítico en transacción _eliminar: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error interno al procesar la eliminación segura.'];
+        } catch (\Throwable $e) {
+            $conexion->rollBack();
+            throw $e;
         }
     }    
 
     private function _gestionar_periodos()
     {
         $sql = "CALL sp_gestionar_periodos_automaticos()";
-        try {
-            $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-            $stmt->execute();
-            $res = $stmt->fetch(PDO::FETCH_ASSOC);
-            $stmt->closeCursor();
-            return ['estatus' => true, 'mensaje' => $res['mensaje'] ?? 'Procedimiento ejecutado'];
-        } catch (PDOException $e) {
-            error_log("Error en _gestionar_periodos: " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error al ejecutar la gestión automática de periodos.'];
-        }
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->execute();
+        $res = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stmt->closeCursor();
+        
+        return ['estatus' => true, 'mensaje' => $res['mensaje'] ?? 'Procedimiento ejecutado'];
     }
 }

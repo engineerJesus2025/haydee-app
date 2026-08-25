@@ -2,6 +2,8 @@
 namespace haydee\servicios;
 
 use haydee\enums\HttpCodigo;
+use haydee\excepciones\SeguridadException;
+use haydee\excepciones\HaydeeException;
 
 class GestorTrafico {
     private const BYTES_IV_NUEVO = 12;
@@ -11,17 +13,14 @@ class GestorTrafico {
     
     private static array $archivosTemporales = [];
 
-    // Lista de endpoints que escapan del túnel criptográfico (vienen en texto plano)
     private static $rutasSinCifrado = [
         'handshake',
         'recuperar'
     ];
 
     public static function interceptarEntrada($endpoint) {
-        // Si el endpoint no maneja cifrado, salimos
         if (in_array($endpoint, self::$rutasSinCifrado)) return;
 
-        // ==================== PROCESAMIENTO CRIPTOGRÁFICO ====================
         $inputRaw = file_get_contents('php://input');
         $inputData = json_decode($inputRaw, true) ?: []; 
 
@@ -30,9 +29,7 @@ class GestorTrafico {
         $clave_aes_rsa = $inputData['clave_aes_rsa'] ?? $_POST['clave_aes_rsa'] ?? null;
 
         if (!$payload || !$iv) {
-            http_response_code(HttpCodigo::PROHIBIDO->value);
-            echo json_encode(["estatus" => false, "mensaje" => "Acceso denegado. Se requiere canal seguro."]);
-            exit;
+            throw new SeguridadException("Acceso denegado. Se requiere establecer un canal criptográfico seguro.");
         }
 
         self::$esCifrado = true;
@@ -45,7 +42,7 @@ class GestorTrafico {
                 $_POST['_temp_disp'] = $dispositivoId;
             } else {
                 self::$claveActiva = Criptografia::recuperarClaveDispositivo($dispositivoId);
-                if (!self::$claveActiva) throw new \Exception("Canal seguro no establecido.");
+                if (!self::$claveActiva) throw new SeguridadException("Dispositivo no reconocido. Canal seguro no establecido.");
             }
 
             $jsonDescifrado = Criptografia::descifrarPayload($payload, self::$claveActiva, $iv, $inputData['tag'] ?? $_GET['tag'] ?? '');
@@ -53,7 +50,6 @@ class GestorTrafico {
             $arregloDescifrado = json_decode($jsonDescifrado, true);
             if (is_array($arregloDescifrado)) {
                 
-                // Reconstrucción controlada de archivos adjuntos (Móvil)
                 if (isset($arregloDescifrado['_archivos_adjuntos'])) {
                     foreach ($arregloDescifrado['_archivos_adjuntos'] as $campo => $archivo) {
                         $nombreLimpio = preg_replace('/[^a-zA-Z0-9.\-_]/', '', $archivo['name']);
@@ -76,13 +72,11 @@ class GestorTrafico {
                 $_POST = array_merge($_POST, $arregloDescifrado);
                 $_GET = array_merge($_GET, $arregloDescifrado);
             } else {
-                throw new \Exception("JSON inválido.");
+                throw new HaydeeException("El bloque de datos descifrado no contiene un JSON válido.", HttpCodigo::BAD_REQUEST->value);
             }
 
-        } catch (\Exception $e) {
-            http_response_code(HttpCodigo::PROHIBIDO->value);
-            echo json_encode(["estatus" => false, "mensaje" => "Bloqueo criptográfico."]);
-            exit;
+        } catch (\Throwable $e) {
+            throw new SeguridadException("Bloqueo criptográfico: Se ha detectado una anomalía en el túnel de datos.", HttpCodigo::PROHIBIDO->value, ['detalle' => $e->getMessage()]);
         }
     }
 

@@ -48,5 +48,6 @@ enum Modulo: int
     case GESTIONAR_HABITANTES = 21;
     case GESTIONAR_PERMISOS = 22;
     case GESTIONAR_MODULOS = 23;
+    case GESTIONAR_CUENTAS = 26;
 }
 

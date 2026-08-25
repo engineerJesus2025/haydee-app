@@ -15,7 +15,7 @@ if (isset($_POST["operacion"])) {
 
     Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_PROVEEDORES, $operacion);
     
-    // VALIDACION CENTRALIZADA
+    // VALIDACION
     $reglas = Proveedores::obtenerReglas($operacion);
 
     if (!empty($reglas)) {
@@ -26,9 +26,7 @@ if (isset($_POST["operacion"])) {
 
         if ($validador->tieneErrores()) {
             $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::NO_PROCESABLE->value;
-            http_response_code($codigoHttp);
-            echo json_encode(['estatus' => false, 'errores' => $validador->obtenerErrores()]);
-            exit;
+            throw new ValidacionException('Datos inválidos.', $validador->obtenerErrores(), $codigoHttp);
         }
     }
 
@@ -40,66 +38,93 @@ if (isset($_POST["operacion"])) {
     $proveedor->set_rif($_POST['rif'] ?? null);
     $proveedor->set_direccion($_POST['direccion'] ?? null);
 
-    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida'];
+    // Respuesta por defecto
+    $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida', 'datos' => []];
     $auditor = new GestorAuditoria($proveedor, Modulo::GESTIONAR_PROVEEDORES);
+    $codigoExito = HttpCodigo::OK->value;
+    switch ($operacion) {
+        case 'consultar':
+            $respuesta = $proveedor->realizar_consulta('consultar');
+            if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::CONSULTAR); }
+            break;
 
-    try {
-        switch ($operacion) {
-            case 'consultar':
-                $respuesta = $proveedor->realizar_consulta('consultar');
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::CONSULTAR); }
-                break;
+        case 'consultar_proveedor':
+            $respuesta = $proveedor->realizar_consulta('consultar_proveedor');
+            http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
+            break;
 
-            case 'consultar_proveedor':
-                $respuesta = $proveedor->realizar_consulta('consultar_proveedor');
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::NO_ENCONTRADO->value);
-                break;
+        case 'registrar_proveedor':
+            $respuesta = $proveedor->realizar_consulta('registrar_proveedor');
+            if ($respuesta['estatus']) {
+                $auditor->registrarAuditoria(Accion::REGISTRAR);
+                $codigoExito = HttpCodigo::CREADO->value;
+            }
+            break;
 
-            case 'registrar_proveedor':
-                $respuesta = $proveedor->realizar_consulta('registrar_proveedor');
+        case 'modificar_proveedor':
+            $auditor->capturarDatosAnteriores('consultar_proveedor');
+            $respuesta = $proveedor->realizar_consulta('modificar_proveedor');
+            if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::MODIFICAR); }
+            break;
 
-                http_response_code($respuesta['estatus'] ? HttpCodigo::CREADO->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::REGISTRAR); }
-                break;
+        case 'eliminar_proveedor':
+            $auditor->capturarDatosAnteriores('consultar_proveedor');
+            $respuesta = $proveedor->realizar_consulta('eliminar_proveedor');
+            if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::ELIMINAR); }
+            break;
 
-            case 'modificar_proveedor':
-                $auditor->capturarDatosAnteriores('consultar_proveedor');
-                $respuesta = $proveedor->realizar_consulta('modificar_proveedor');
-
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::MODIFICAR); }
-                break;
-
-            case 'eliminar_proveedor':
-                $auditor->capturarDatosAnteriores('consultar_proveedor');
-                $respuesta = $proveedor->realizar_consulta('eliminar_proveedor');
-
-                http_response_code($respuesta['estatus'] ? HttpCodigo::OK->value : HttpCodigo::BAD_REQUEST->value);
-                if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::ELIMINAR); }
-                break;
-
-            default:
-                http_response_code(HttpCodigo::BAD_REQUEST->value);
-                $respuesta = ['estatus' => false, 'mensaje' => 'Operación no implementada'];
-        }
-    } catch (Exception $e) {
-        http_response_code(HttpCodigo::ERROR_INTERNO->value);
-        error_log("Error en controlador proveedores: " . $e->getMessage());
-        $respuesta = ['estatus' => false, 'mensaje' => 'Error interno del servidor'];
-    } finally {
-        if ($respuesta !== null) {
-            if (isset($proveedor)) { $proveedor->cerrar(); }
-            Bitacora::cerrarConexionBitacora();
-
-            echo json_encode($respuesta);
-            exit;
-        }
+        default:
+            throw new HaydeeException('Operación no implementada', HttpCodigo::BAD_REQUEST->value);
     }
+
+    if (!$respuesta['estatus']) {
+        throw new HaydeeException($respuesta['mensaje'], HttpCodigo::BAD_REQUEST->value);
+    }
+
+    if (isset($proveedor)) {$proveedor->cerrar();}
+    Bitacora::cerrarConexionBitacora();
+
+    http_response_code($codigoExito);
+    echo json_encode($respuesta);
+    exit;
 }
 
-// Bloque AJAX Revisar 
-// ...
+// VALIDACIONES AJAX 
+if (isset($_POST["validar"])) {
+    header('Content-Type: application/json');
+    $validar = $_POST["validar"];
+    $validadorBD = new ValidadorBD();
+
+    switch ($validar) {
+        case 'validar_clave_foranea':
+            $tabla = $_POST['tabla'] ?? '';
+            $campo = $_POST['nombre_clave'] ?? '';
+            $valor = $_POST['valor'] ?? '';
+
+            if (empty($tabla) || empty($campo) || empty($valor)) {
+                throw new HaydeeException('Faltan parámetros de validación', HttpCodigo::BAD_REQUEST->value);
+            }
+
+            $existe = $validadorBD->existe($tabla, $campo, $valor);
+            $respuesta = ['estatus' => $existe, 'mensaje' => $existe ? 'OK' : 'No existe'];
+            break;
+            
+        case 'rif':
+            $rif = $_POST["rif"] ?? '';
+            $id_proveedor = $_POST["id_proveedor"] ?? null;
+            
+            $existe = !$validadorBD->esUnico('proveedores', 'rif', $rif, 'id_proveedor', $id_proveedor);
+            $respuesta = ['estatus' => true, 'existe' => $existe];
+            break;
+
+        default:
+            throw new HaydeeException('Validación no reconocida', HttpCodigo::BAD_REQUEST->value);
+    }
+
+    http_response_code(HttpCodigo::OK->value);
+    echo json_encode($respuesta);
+    exit;
+}
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     GestorAuditoria::inicializarBanderaConsulta(Modulo::GESTIONAR_PROVEEDORES);

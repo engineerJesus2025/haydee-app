@@ -14,20 +14,19 @@ use haydee\enums\HttpCodigo;
 use haydee\servicios\GestorTrafico;
 use haydee\servicios\Endpoints; 
 use haydee\servicios\Sesiones;
+use haydee\servicios\Excepciones;
+use haydee\excepciones\HaydeeException;
 
 $endpoint = $_GET['endpoint'] ?? '';
 
-if (!array_key_exists($endpoint, Endpoints::MAPA_API)) {
-    GestorTrafico::abortarConCifrado(
-        ["estatus" => false, "mensaje" => "Endpoint no autorizado o inexistente."], 
-        HttpCodigo::NO_ENCONTRADO->value
-    );
-}
-
-$configRuta = Endpoints::MAPA_API[$endpoint];
-$rutaCompleta = ROOT_PATH . "/api/" . $configRuta[Endpoints::CONF_ARCHIVO];
-
 try {
+    if (!array_key_exists($endpoint, Endpoints::MAPA_API)) {
+        throw new HaydeeException("Endpoint no autorizado o inexistente.", HttpCodigo::NO_ENCONTRADO->value);
+    }
+
+    $configRuta = Endpoints::MAPA_API[$endpoint];
+    $rutaCompleta = ROOT_PATH . "/api/" . $configRuta[Endpoints::CONF_ARCHIVO];
+
     // ESCUDOS Y AUTORIZACION
     Sesiones::autorizarAccesoAPI($configRuta);
 
@@ -71,36 +70,11 @@ try {
 
     echo GestorTrafico::interceptarSalida($respuestaLimpia);
 
-} catch (\Exception $e) {
-    if (ob_get_level() > 0) ob_end_clean();
-
-    $mensajeOriginal = $e->getMessage();
-    $codigoHttp = $e->getCode() ?: HttpCodigo::ERROR_INTERNO->value;
-    error_log("Colapso Critico en API Gateway: " . $e->getMessage() . " en " . $e->getFile() . ":" . $e->getLine() . ". HTTP: " . $codigoHttp);
-
-    // Intentamos decodificar el mensaje por si viene serializado desde el Validador
-    $datosDecodificados = json_decode($mensajeOriginal, true);
-
-    if (json_last_error() === JSON_ERROR_NONE && is_array($datosDecodificados)) {
-        // Es una excepcion estructurada compleja (trae sub-errores de campos)
-        $payloadError = array_merge(['estatus' => false], $datosDecodificados);
-    } else {
-        // Es una excepción de texto plano comun
-        $payloadError = [
-            'estatus' => false,
-            'mensaje' => $mensajeOriginal
-        ];
-    }
-
-    // El Gateway centraliza la salida criptográfica del error
-    GestorTrafico::abortarConCifrado($payloadError, $codigoHttp);
 } catch (\Throwable $e) {
     if (ob_get_level() > 0) ob_end_clean();
-    error_log("Colapso Critico en API Gateway: " . $e->getMessage() . " en " . $e->getFile() . ":" . $e->getLine());
-    GestorTrafico::abortarConCifrado(
-        ["estatus" => false, "mensaje" => "Ocurrio un error interno en el servidor."], 
-        HttpCodigo::ERROR_INTERNO->value
-    );
+    
+    Excepciones::procesar($e, true);
+    
 } finally {
     GestorTrafico::limpiarArchivosTemporales();
     exit;

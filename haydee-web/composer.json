@@ -7,7 +7,8 @@
           "haydee\\ayuda\\": "ayuda/",
           "haydee\\servicios\\": "servicios/",
           "haydee\\config\\": "config/",
-          "haydee\\enums\\": "enums/" 
+          "haydee\\enums\\": "enums/",
+          "haydee\\excepciones\\": "excepciones/" 
         },
         "files": [
             "config/config.php",

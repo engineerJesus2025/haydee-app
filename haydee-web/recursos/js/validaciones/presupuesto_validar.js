@@ -16,15 +16,10 @@ document.addEventListener("DOMContentLoaded", function() {
 
     if (formularioPresupuesto) {
         const selectorMontos = "input[type='number'], input.monto-detalle, #cuota_reserva";
-        const selectorNombres = "input[type='text'].gasto-nombre-input";
 
         formularioPresupuesto.addEventListener("keypress", function(e) {
             if (e.target.matches(selectorMontos)) {
                 Validador.bloquearTeclasInvalidas(e, Patrones.teclasMonto);
-            }
-            if (e.target.matches(selectorNombres)) {
-                let er = /^[A-Za-z áéíóúÁÉÍÓÚñÑ\b]*$/;
-                if (!er.test(e.key)) e.preventDefault();
             }
         });
 
@@ -61,18 +56,6 @@ document.addEventListener("DOMContentLoaded", function() {
                             inputConvertir.value = (valorDigitado * tasa_dolar).toFixed(2);
                         }
                     }
-                }
-            }
-            if (e.target.matches(selectorNombres)) {
-                let er = /^[A-Za-z áéíóúÁÉÍÓÚñÑ\b]{4,50}$/;
-                if (er.test(e.target.value)) {
-                    e.target.classList.add('is-valid');
-                    e.target.classList.remove('is-invalid');
-                    if (e.target.nextElementSibling) e.target.nextElementSibling.textContent = "";
-                } else {
-                    e.target.classList.add('is-invalid');
-                    e.target.classList.remove('is-valid');
-                    if (e.target.nextElementSibling) e.target.nextElementSibling.textContent = 'Mínimo 4 letras';
                 }
             }
         });
@@ -167,13 +150,6 @@ function validarDetalles() {
 
     const contenedor = document.querySelector("#contenedor_presupuestos");
     if (!contenedor) return false;
-    
-    contenedor.querySelectorAll(".gasto-nombre-input").forEach(input => {
-        if (!Validador.evaluarInput(input, Patrones.nombreDetalle, "Mínimo 4 letras")) {
-            todosValidos = false;
-            if (!primerError) primerError = "Nombre de detalle inválido (mínimo 4 letras)";
-        }
-    });
 
     contenedor.querySelectorAll("input[type='number'], input.monto-detalle").forEach(input => {
         if (!Validador.evaluarInput(input, Patrones.monto, "Monto inválido")) {

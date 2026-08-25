@@ -11,6 +11,7 @@ const Patrones = {
     textoLargo: /^.{10,}$/,                           // Mínimo 10 caracteres (Cualquier tipo)
     textoModulo: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ _\s]{3,30}$/,
     digitos: /^\d+$/,                                 // Solo números enteros (útil para IDs)
+    textoAlfanumerico: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9 \s]{3,50}$/,
 
     // FINANZAS, PAGOS Y BANCOS
     monto: /^\d{1,12}([.,]\d{1,2})?$/,                // Hasta 12 enteros y 2 decimales
@@ -72,5 +73,6 @@ const Patrones = {
     teclasContrasenaExtendida: /^[A-Za-z0-9_.+*$#%&@-]$/,
     teclasCartelera: /^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()'\"!?¡¿%°\-\s]*$/,
     teclasApartamento: /^[0-9-]$/,
-    teclasAccion: /^[A-Za-z_]$/
+    teclasAccion: /^[A-Za-z_]$/,
+    teclasModulo: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ _\s]+$/
 };

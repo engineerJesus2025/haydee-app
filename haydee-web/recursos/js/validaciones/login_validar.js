@@ -55,8 +55,15 @@ document.addEventListener('DOMContentLoaded', () => {
         contra.addEventListener('keyup', e => Validador.evaluarInput(e.target, Patrones.contrasena, 'Mínimo 5 caracteres'));
     }
 
-    // Eventos de botones
-    if (btnEnviar) {
+    const formLogin = document.getElementById('form-login'); // Ajusta este ID al de tu HTML
+    
+    if (formLogin) {
+        formLogin.addEventListener('submit', async e => {
+            e.preventDefault(); // Detiene la recarga nativa siempre
+            if (await validarLogin()) await realizarLogin();
+        });
+    } else if (btnEnviar) {
+        // Fallback en caso de que no haya etiqueta <form>
         btnEnviar.addEventListener('click', async e => {
             e.preventDefault();
             if (await validarLogin()) await realizarLogin();
@@ -135,7 +142,9 @@ async function realizarLogin() {
             recaptchaToken = null;
         }
 
-        Alertas.mostrar('error', 'Error', resultado.mensaje || 'Datos incorrectos');
+        if (!resultado.silencioso) {
+            Alertas.mostrar('error', 'Error', resultado.mensaje || 'Datos incorrectos');
+        }
         
         if (btnEnviar) {
             btnEnviar.disabled = false; 
