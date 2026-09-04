@@ -128,21 +128,13 @@ class CajaChica extends Conexion
     public function set_tasa_dolar($tasa) { $this->tasa_dolar = $tasa; }
     public function get_tasa_dolar() { return $this->tasa_dolar; }
 
-    /**
-     * Enrutador con manejo de excepciones
-     */
     public function realizar_consulta($accion)
     {
         $metodo = '_' . $accion;
         if (!method_exists($this, $metodo)) {
-            return ['estatus' => false, 'mensaje' => "La acción '$accion' no está implementada."];
+            throw new NegocioException("La acción '$accion' no está implementada.", HttpCodigo::BAD_REQUEST->value);
         }
-        try {
-            return $this->$metodo();
-        } catch (\Exception $e) {
-            error_log("Error en realizar_consulta ($accion): " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error interno: ' . $e->getMessage()];
-        }
+        return $this->$metodo();
     }
 
     private function _consultar()

@@ -2,7 +2,10 @@
 use haydee\enums\HttpCodigo;
 use haydee\ayuda\Validador;
 use haydee\modelo\SuscripcionPush;
+use haydee\modelo\Bitacora;
 use haydee\servicios\Sesiones;
+use haydee\excepciones\HaydeeException;
+use haydee\excepciones\ValidacionException;
 
 if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');

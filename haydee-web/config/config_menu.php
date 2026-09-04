@@ -67,14 +67,6 @@ function obtenerElementosMenu($modulo, $accion) {
 	    ],
 	    [
 	        'tipo'    => 'enlace',
-	        'titulo'  => 'Solicitud Gasto',
-	        'icono'   => 'bi-clipboard-check',
-	        'url'     => '?pagina=solicitud_gasto&accion=inicio',
-	        'activo'  => ($modulo === 'solicitud_gasto'),
-	        'mostrar' => Sesiones::tienePermiso(Modulo::GESTIONAR_SOLICITUD_GASTO, Accion::CONSULTAR)
-	    ],
-	    [
-	        'tipo'    => 'enlace',
 	        'titulo'  => 'Presupuesto',
 	        'icono'   => 'bi-calculator',
 	        'url'     => '?pagina=presupuesto&accion=inicio',

@@ -4,6 +4,7 @@ use haydee\enums\Modulo;
 use haydee\enums\Accion;
 use haydee\modelo\Bitacora;
 use haydee\servicios\Sesiones;
+use haydee\excepciones\HaydeeException;
 
 // Validamos si es una petición AJAX (POST)
 if (isset($_POST["operacion"])) {

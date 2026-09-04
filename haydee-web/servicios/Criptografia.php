@@ -50,7 +50,7 @@ class Criptografia {
     public static function extraerClaveAESdelLogin($claveRsaBase64) {
         $llavePrivadaPem = file_get_contents(ROOT_PATH . '/config/llave_servidor_privada.pem');
         
-        // OBLIGAMOS a PHP a usar SHA-256 para que coincida exactamente con la App
+        // usar SHA-256 para que coincida exactamente con la App
         $privateKey = RSA::load($llavePrivadaPem)
             ->withPadding(RSA::ENCRYPTION_OAEP)
             ->withHash(self::HASH_ALGO)

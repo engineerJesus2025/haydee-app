@@ -78,12 +78,6 @@ class Endpoints
             self::CONF_MODULO        => Modulo::GESTIONAR_CAJA_CHICA,
             self::CONF_METODOS       => [MetodoHttp::GET, MetodoHttp::POST]
         ],
-        'solicitud_gasto' => [
-            self::CONF_ARCHIVO      => 'solicitud_gasto_controlador.php',
-            self::CONF_REQUIERE_AUTH => true,
-            self::CONF_MODULO        => Modulo::GESTIONAR_SOLICITUD_GASTO,
-            self::CONF_METODOS       => [MetodoHttp::GET, MetodoHttp::POST]
-        ],
         'gastos' => [
             self::CONF_ARCHIVO      => 'gastos_controlador.php',
             self::CONF_REQUIERE_AUTH => true,

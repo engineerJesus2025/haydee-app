@@ -37,15 +37,9 @@ class AnioFiscal extends Conexion
     {
         $metodo = '_' . $accion;
         if (!method_exists($this, $metodo)) {
-            return ['estatus' => false, 'mensaje' => "La acción '$accion' no está implementada."];
+            throw new NegocioException("La acción '$accion' no está implementada.", HttpCodigo::BAD_REQUEST->value);
         }
-
-        try {
-            return $this->$metodo();
-        } catch (\Exception $e) {
-            error_log("Error en realizar_consulta ($accion): " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Ocurrió un error interno en el servidor.'];
-        }
+        return $this->$metodo();
     }
 
     public static function obtenerReglas($operacion) {
@@ -109,7 +103,7 @@ class AnioFiscal extends Conexion
         $stmt->execute();
         
         if ($stmt->fetch()) {
-            throw new HaydeeException('Ya existe un año fiscal ABIERTO en el sistema. Debe cerrarlo antes de activar uno nuevo.', 400);
+            throw new NegocioException('Ya existe un año fiscal ABIERTO en el sistema. Debe cerrarlo antes de activar uno nuevo.', 400);
         }
 
         return true;
@@ -123,7 +117,7 @@ class AnioFiscal extends Conexion
         $dias = (int)$intervalo->format('%a');
 
         if ($dias < self::DIAS_MINIMOS_PERIODO || $dias > self::DIAS_MAXIMOS_PERIODO) {
-            throw new HaydeeException("El período debe ser de aproximadamente un año (" . self::DIAS_MINIMOS_PERIODO . "-" . self::DIAS_MAXIMOS_PERIODO . " días). Días calculados: $dias.", 400);
+            throw new NegocioException("El período debe ser de aproximadamente un año (" . self::DIAS_MINIMOS_PERIODO . "-" . self::DIAS_MAXIMOS_PERIODO . " días). Días calculados: $dias.", 400);
         }
 
         return true;
@@ -148,7 +142,7 @@ class AnioFiscal extends Conexion
         $datos = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if (!$datos) {
-            throw new HaydeeException('Año fiscal no encontrado', 404);
+            throw new NegocioException('Año fiscal no encontrado', 404);
         }
         
         return ['estatus' => true, 'datos' => $datos];
@@ -187,18 +181,18 @@ class AnioFiscal extends Conexion
             $anioBD = $stmtActual->fetch(PDO::FETCH_ASSOC);
 
             if (!$anioBD) {
-                throw new HaydeeException('El año fiscal no existe o fue eliminado.', 404);
+                throw new NegocioException('El año fiscal no existe o fue eliminado.', 404);
             }
 
             $estadoActualBD = strtoupper($anioBD['estado']);
             $nuevoEstado = strtoupper($this->estado);
 
             if ($estadoActualBD === EstadoPeriodo::CERRADO->value && $nuevoEstado === EstadoPeriodo::ABIERTO->value) {
-                throw new HaydeeException('Violación de Integridad: No se puede reabrir un año fiscal histórico que ya ha sido cerrado.', 400);
+                throw new NegocioException('No se puede reabrir un año fiscal histórico que ya ha sido cerrado.', 400);
             }
 
             if ($estadoActualBD === EstadoPeriodo::ABIERTO->value && $nuevoEstado === EstadoPeriodo::CERRADO->value) {
-                throw new HaydeeException('Transición Inválida: No puede cerrar el año fiscal actual editando el registro. El sistema lo cerrará automáticamente al cumplirse la fecha o mediante el proceso formal de Cierre.', 400);
+                throw new NegocioException('No puede cerrar el año fiscal actual editando el registro. El sistema lo cerrará automáticamente al cumplirse la fecha o mediante el proceso formal de Cierre.', 400);
             }
 
             $this->validarRangoFechas();
@@ -242,7 +236,7 @@ class AnioFiscal extends Conexion
             $anio = $stmtCheck->fetch(PDO::FETCH_ASSOC);
 
             if (!$anio) {
-                throw new HaydeeException('El año fiscal no existe o ya fue eliminado.', 404);
+                throw new NegocioException('El año fiscal no existe o ya fue eliminado.', 404);
             }
 
             $sqlDependencias = "SELECT COUNT(*) FROM caja_chica WHERE anio_fiscal_id = :id_anio_fiscal AND activo = 1";
@@ -251,7 +245,7 @@ class AnioFiscal extends Conexion
             $stmtDep->execute();
             
             if ($stmtDep->fetchColumn() > 0) {
-                throw new HaydeeException('Error de Integridad: No se puede eliminar este periodo porque ya existen cajas chicas operando con él.', 400);
+                throw new NegocioException('No se puede eliminar este periodo porque ya existen cajas chicas operando con él.', 400);
             }
 
             $estadoCerrado = EstadoPeriodo::CERRADO->value;

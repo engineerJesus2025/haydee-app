@@ -55,19 +55,13 @@ class Rol extends Conexion
     public function set_permisos_asignados(array $permisos) { $this->permisos_asignados = $permisos; }
     public function get_permisos_asignados(): array { return $this->permisos_asignados; }
 
-    public function realizar_consulta(string $accion): array
+    public function realizar_consulta($accion)
     {
         $metodo = '_' . $accion;
         if (!method_exists($this, $metodo)) {
-            return ['estatus' => false, 'mensaje' => "La acción '$accion' no está implementada."];
+            throw new NegocioException("La acción '$accion' no está implementada.", HttpCodigo::BAD_REQUEST->value);
         }
-
-        try {
-            return $this->$metodo();
-        } catch (\Exception $e) {
-            error_log("Error en realizar_consulta ($accion): " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Error interno: ' . $e->getMessage()];
-        }
+        return $this->$metodo();
     }
 
     private function _verificar_nombre(): array

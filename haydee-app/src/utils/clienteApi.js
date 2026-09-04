@@ -33,7 +33,7 @@ const procesarColaHandshake = (error) => {
   colaRefrescadaHandshake = [];
 };
 
-// INTERCEPTOR DE PETICIÓN (SALIDA)
+// INTERCEPTOR DE PETICION (SALIDA)
 clienteApi.interceptors.request.use(
   async (config) => {
     if (config.skipCrypto) {

@@ -13,6 +13,8 @@ use haydee\modelo\Bitacora;
 use haydee\servicios\Sesiones;
 use haydee\servicios\Reportes; 
 use haydee\ayuda\ManejadorVistas;
+use haydee\excepciones\HaydeeException;
+use haydee\excepciones\ValidacionException;
 
 $habitantesModel = new Habitantes();
 $mensualidadModel = new Mensualidad();

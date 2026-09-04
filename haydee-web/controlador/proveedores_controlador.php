@@ -8,6 +8,8 @@ use haydee\modelo\Proveedores;
 use haydee\modelo\Bitacora;
 use haydee\servicios\Sesiones;
 use haydee\servicios\GestorAuditoria;
+use haydee\excepciones\HaydeeException;
+use haydee\excepciones\ValidacionException;
 
 if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');

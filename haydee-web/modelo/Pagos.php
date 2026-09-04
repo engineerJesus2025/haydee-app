@@ -170,31 +170,41 @@ class Pagos extends Conexion
         return $param !== null ? $this->$metodo($param) : $this->$metodo();
     }
 
-    private function _validar_referencias_unicas() {
-        $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
+    private function _validar_referencias_unicas(?PDO $pdo = null) 
+    {
+        $detallesConReferencia = array_filter($this->detalles, function($det) {
+            return !empty($det['referencia']);
+        });
+
+        if (empty($detallesConReferencia)) {
+            return true;
+        }
+
+        $pdo = $pdo ?? $this->get_conex(TipoBaseDatos::NEGOCIO);
         $refsUsadas = [];
         
         $sql = "SELECT dp.pago_id FROM ingresos_bancarios ib 
                 JOIN detalles_pagos dp ON ib.detalle_pago_id = dp.id_detalle_pago 
-                WHERE ib.referencia = :ref LIMIT 1";
+                WHERE ib.referencia = :ref 
+                LIMIT 1 
+                FOR UPDATE";
         $stmt = $pdo->prepare($sql); 
 
-        foreach ($this->detalles as $idx => $det) {
-            if (!empty($det['referencia'])) {
-                $ref = trim($det['referencia']);
-                
-                if (in_array($ref, $refsUsadas)) {
-                    throw new NegocioException("La referencia '$ref' está repetida en el renglón " . ($idx + 1) . ".", HttpCodigo::BAD_REQUEST->value);
-                }
-                $refsUsadas[] = $ref;
+        foreach ($detallesConReferencia as $idx => $det) {
+            $ref = trim($det['referencia']);
+            
+            // Validacion en memoria contra renglones duplicados en la misma petición
+            if (in_array($ref, $refsUsadas)) {
+                throw new NegocioException("La referencia '$ref' está repetida en el renglón " . ($idx + 1) . ".", HttpCodigo::BAD_REQUEST->value);
+            }
+            $refsUsadas[] = $ref;
 
-                $stmt->execute([':ref' => $ref]); 
-                $pago_id_bd = $stmt->fetchColumn();
+            $stmt->execute([':ref' => $ref]); 
+            $pago_id_bd = $stmt->fetchColumn();
 
-                if ($pago_id_bd) {
-                    if (empty($this->id_pago) || $pago_id_bd != $this->id_pago) {
-                        throw new NegocioException("La referencia bancaria '$ref' (Renglón " . ($idx + 1) . ") ya se encuentra registrada en otro pago.", HttpCodigo::BAD_REQUEST->value);
-                    }
+            if ($pago_id_bd) {
+                if (empty($this->id_pago) || $pago_id_bd != $this->id_pago) {
+                    throw new NegocioException("La referencia bancaria '$ref' (Renglón " . ($idx + 1) . ") ya se encuentra registrada en otro pago.", HttpCodigo::BAD_REQUEST->value);
                 }
             }
         }
@@ -352,12 +362,12 @@ class Pagos extends Conexion
             throw new NegocioException('No se recibieron detalles para el pago.', HttpCodigo::BAD_REQUEST->value);
         }
 
-        $this->_validar_referencias_unicas();
-
         $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
         try {
             $pdo->exec("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ");
             $pdo->beginTransaction();
+
+            $this->_validar_referencias_unicas($pdo);
 
             $tasa_transaccion = $this->tasa_dolar ?? 1;
             $sqlHead = "INSERT INTO pagos (estado, observacion, tasa_dolar, activo) VALUES (:est, :obs, :tasa, 1)";
@@ -420,14 +430,12 @@ class Pagos extends Conexion
             throw new NegocioException('No se recibieron detalles para el pago.', HttpCodigo::BAD_REQUEST->value);
         }
 
-        $this->_validar_referencias_unicas();
-
         $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
         try {
             $pdo->exec("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ");
             $pdo->beginTransaction();
 
-            $sqlCheck = "SELECT estado FROM pagos WHERE id_pago = :id LIMIT 1";
+            $sqlCheck = "SELECT estado FROM pagos WHERE id_pago = :id LIMIT 1 FOR UPDATE";
             $stmtCheck = $pdo->prepare($sqlCheck);
             $stmtCheck->execute([':id' => $this->id_pago]);
             $estadoActual = $stmtCheck->fetchColumn();
@@ -436,16 +444,18 @@ class Pagos extends Conexion
                 throw new NegocioException('El pago que intenta modificar no existe.', HttpCodigo::NO_ENCONTRADO->value);
             }
 
+            $this->_validar_referencias_unicas($pdo);
+
             if (strtoupper($estadoActual) === 'PROCESADO') {
                 $sqlIntegridad = "SELECT COUNT(*) 
                                   FROM pagos_mensualidad pm
                                   JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
                                   WHERE pm.pago_id = :id_pago AND m.activo = 1";
                 
-                $stmtInt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlIntegridad);
+                $stmtInt = $pdo->prepare($sqlIntegridad);
                 $stmtInt->execute([':id_pago' => $this->id_pago]);
                 if ($stmtInt->fetchColumn() == 0) {
-                    throw new NegocioException('Error de Integridad: La mensualidad vinculada a este pago procesado ya no se encuentra activa en el historial.', HttpCodigo::BAD_REQUEST->value);
+                    throw new NegocioException('La mensualidad vinculada a este pago procesado ya no se encuentra activa en el historial.', HttpCodigo::BAD_REQUEST->value);
                 }
             }
 
@@ -682,42 +692,56 @@ class Pagos extends Conexion
 
     private function _cambiar_estado_pago()
     {
-        $sqlCheck = "SELECT estado FROM pagos WHERE id_pago = :id LIMIT 1";
-        $stmtCheck = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlCheck);
-        $stmtCheck->execute([':id' => $this->id_pago]);
-        $estadoActual = $stmtCheck->fetchColumn();
+        $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
+        
+        try {
+            $pdo->beginTransaction();
 
-        if (!$estadoActual) {
-            throw new NegocioException('El pago especificado no existe.', HttpCodigo::NO_ENCONTRADO->value);
-        }
+            $sqlCheck = "SELECT estado FROM pagos WHERE id_pago = :id LIMIT 1 FOR UPDATE";
+            $stmtCheck = $pdo->prepare($sqlCheck);
+            $stmtCheck->execute([':id' => $this->id_pago]);
+            $estadoActual = $stmtCheck->fetchColumn();
 
-        if (strtoupper($this->estado) === 'PROCESADO') {
-            $sqlIntegridad = "SELECT COUNT(*) 
-                              FROM pagos_mensualidad pm
-                              JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
-                              WHERE pm.pago_id = :id_pago AND m.activo = 1";
-            
-            $stmtInt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlIntegridad);
-            $stmtInt->execute([':id_pago' => $this->id_pago]);
-            $mensualidadesValidas = $stmtInt->fetchColumn();
-
-            if ($mensualidadesValidas == 0) {
-                throw new NegocioException('No se puede procesar el pago porque la mensualidad a la que estaba vinculado fue removida o desactivada.', HttpCodigo::BAD_REQUEST->value);
+            if (!$estadoActual) {
+                throw new NegocioException('El pago especificado no existe.', HttpCodigo::NO_ENCONTRADO->value);
             }
+
+            if (strtoupper($this->estado) === 'PROCESADO') {
+                $sqlIntegridad = "SELECT COUNT(*) 
+                                  FROM pagos_mensualidad pm
+                                  JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad
+                                  WHERE pm.pago_id = :id_pago AND m.activo = 1";
+                
+                $stmtInt = $pdo->prepare($sqlIntegridad);
+                $stmtInt->execute([':id_pago' => $this->id_pago]);
+                $mensualidadesValidas = $stmtInt->fetchColumn();
+
+                if ($mensualidadesValidas == 0) {
+                    throw new NegocioException('No se puede procesar el pago porque la mensualidad a la que estaba vinculado fue removida o desactivada.', HttpCodigo::BAD_REQUEST->value);
+                }
+            }
+
+            $sql = "UPDATE pagos SET estado = :estado, observacion = :observacion WHERE id_pago = :id_pago";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                ':estado'      => $this->estado,
+                ':observacion' => $this->observacion ?? 'Estado actualizado desde la administración',
+                ':id_pago'     => $this->id_pago
+            ]);
+
+            $pdo->commit();
+            
+            return [
+                'estatus' => true, 
+                'mensaje' => "El estado de la transacción ha sido actualizado a " . strtolower($this->estado) . " con éxito."
+            ];
+            
+        } catch (\Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            throw $e;
         }
-
-        $sql = "UPDATE pagos SET estado = :estado, observacion = :observacion WHERE id_pago = :id_pago";
-        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-        $stmt->execute([
-            ':estado'      => $this->estado,
-            ':observacion' => $this->observacion ?? 'Estado actualizado desde la administración',
-            ':id_pago'     => $this->id_pago
-        ]);
-
-        return [
-            'estatus' => true, 
-            'mensaje' => "El estado de la transacción ha sido actualizado a " . strtolower($this->estado) . " con éxito."
-        ];
     }
 
     private function obtenerNombreImagenPorDetalle($idDetalle)

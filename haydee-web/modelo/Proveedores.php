@@ -59,19 +59,13 @@ class Proveedores extends Conexion
     public function set_activo($activo) { $this->activo = $activo; }
     public function get_activo() { return $this->activo; }
 
-    public function realizar_consulta(string $accion): array
+    public function realizar_consulta($accion)
     {
         $metodo = '_' . $accion;
         if (!method_exists($this, $metodo)) {
-            return ['estatus' => false, 'mensaje' => "La acción '$accion' no está implementada."];
+            throw new NegocioException("La acción '$accion' no está implementada.", HttpCodigo::BAD_REQUEST->value);
         }
-
-        try {
-            return $this->$metodo();
-        } catch (\Exception $e) {
-            error_log("Error en realizar_consulta ($accion): " . $e->getMessage());
-            return ['estatus' => false, 'mensaje' => 'Ocurrió un error interno en el servidor.'];
-        }
+        return $this->$metodo();
     }
 
     // ACCIONES PRIVADAS

@@ -16,6 +16,8 @@ use haydee\servicios\GestorTasa;
 use haydee\servicios\Sesiones;
 use haydee\servicios\GestorAuditoria;
 use haydee\servicios\EscanerComprobantes;
+use haydee\excepciones\HaydeeException;
+use haydee\excepciones\ValidacionException;
 
 if (isset($_POST["operacion"])) {
     header('Content-Type: application/json');
@@ -207,9 +209,7 @@ if (isset($_POST["operacion"])) {
     exit;
 }
 
-// =========================================================
 // VALIDACIONES AJAX
-// =========================================================
 if (isset($_POST["validar"])) {
     header('Content-Type: application/json');
     $validar = $_POST["validar"];

@@ -71,7 +71,7 @@ export const criptografiaMovil = {
     // codificación nativa
     const utf8String = forge.util.encodeUtf8(jsonString); 
     
-    //Vector de inicialización Único por cada petición
+    // Vector de inicialización Único por cada petición
     const iv = forge.random.getBytesSync(CONFIG.AES_IV_SIZE_BYTES);
     
     const cipher = forge.cipher.createCipher('AES-GCM', _claveAESSesion);

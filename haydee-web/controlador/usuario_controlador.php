@@ -9,7 +9,8 @@ use haydee\modelo\Usuario;
 use haydee\modelo\Bitacora;
 use haydee\servicios\Sesiones;
 use haydee\servicios\GestorAuditoria;
-
+use haydee\excepciones\HaydeeException;
+use haydee\excepciones\ValidacionException;
 // Obtener lista de roles para la vista (solo si es necesario)
 $rol_obj = new Rol();
 $roles = $rol_obj->realizar_consulta('consultar');

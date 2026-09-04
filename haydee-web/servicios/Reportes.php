@@ -147,7 +147,7 @@ class Reportes extends Conexion
 
     private function _reporte_ingresos_egresos_completo()
     {
-        // (El código de este método es el mismo que establecimos en el paso anterior, lo mantienes igual)
+        
         $balance = $this->balance ?? 'todos';
         $metodo_pago = strtolower($this->metodo_pago ?? 'todos');
         $tipo_gasto = strtolower($this->tipo_gasto ?? 'todos');
@@ -184,7 +184,12 @@ class Reportes extends Conexion
         $whereIngresos = !empty($condicionesIngresos) ? " WHERE " . implode(" AND ", $condicionesIngresos) : "";
 
 
-        $sqlEgresosDetalle = "SELECT 'Egreso' as balance, dg.fecha, dg.monto, dg.metodo_pago, g.descripcion_gasto as concepto, tg.nombre_tipo_gasto as tipo FROM detalles_gastos dg INNER JOIN gastos g ON dg.gasto_id = g.id_gasto LEFT JOIN tipo_gasto tg ON g.tipo_gasto_id = tg.id_tipo_gasto $whereEgresos";
+        $sqlEgresosDetalle = "SELECT 'Egreso' as balance, dg.fecha, dg.monto, dg.metodo_pago, g.descripcion_gasto as concepto, tg.nombre_tipo_gasto as tipo 
+                              FROM detalles_gastos dg 
+                              INNER JOIN gastos g ON dg.gasto_id = g.id_gasto 
+                              LEFT JOIN conceptos_gasto cg ON g.concepto_id = cg.id_concepto
+                              LEFT JOIN tipo_gasto tg ON cg.tipo_gasto_id = tg.id_tipo_gasto 
+                              $whereEgresos";
         $sqlIngresosDetalle = "SELECT 'Ingreso' as balance, 
                                       dp.fecha, 
                                       dp.monto, 
@@ -223,8 +228,21 @@ class Reportes extends Conexion
         $resultadosEstadisticas = [];
 
         if ($balance !== 'Ingresos') {
-            $sqlEgresosTotal = "SELECT 'total_gastos' as indicador, SUM(dg.monto) as valor FROM detalles_gastos dg INNER JOIN gastos g ON dg.gasto_id = g.id_gasto LEFT JOIN tipo_gasto tg ON g.tipo_gasto_id = tg.id_tipo_gasto $whereEgresos";
-            $sqlEgresosPorMetodo = "SELECT CONCAT('gastos_', LOWER(REPLACE(dg.metodo_pago, ' ', '_'))) as indicador, SUM(dg.monto) as valor FROM detalles_gastos dg INNER JOIN gastos g ON dg.gasto_id = g.id_gasto LEFT JOIN tipo_gasto tg ON g.tipo_gasto_id = tg.id_tipo_gasto $whereEgresos GROUP BY dg.metodo_pago";
+            $sqlEgresosTotal = "SELECT 'total_gastos' as indicador, SUM(dg.monto) as valor 
+                                FROM detalles_gastos dg 
+                                INNER JOIN gastos g ON dg.gasto_id = g.id_gasto 
+                                LEFT JOIN conceptos_gasto cg ON g.concepto_id = cg.id_concepto
+                                LEFT JOIN tipo_gasto tg ON cg.tipo_gasto_id = tg.id_tipo_gasto 
+                                $whereEgresos";
+
+            
+            $sqlEgresosPorMetodo = "SELECT CONCAT('gastos_', LOWER(REPLACE(dg.metodo_pago, ' ', '_'))) as indicador, SUM(dg.monto) as valor 
+                                    FROM detalles_gastos dg 
+                                    INNER JOIN gastos g ON dg.gasto_id = g.id_gasto 
+                                    LEFT JOIN conceptos_gasto cg ON g.concepto_id = cg.id_concepto
+                                    LEFT JOIN tipo_gasto tg ON cg.tipo_gasto_id = tg.id_tipo_gasto 
+                                    $whereEgresos 
+                                    GROUP BY dg.metodo_pago";
 
             try {
                 $stmt = $con->prepare($sqlEgresosTotal);

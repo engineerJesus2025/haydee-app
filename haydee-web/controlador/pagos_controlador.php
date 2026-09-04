@@ -17,6 +17,8 @@ use haydee\servicios\Sesiones;
 use haydee\servicios\GestorAuditoria;
 use haydee\servicios\GestorNotificaciones;
 use haydee\servicios\EscanerComprobantes;
+use haydee\excepciones\HaydeeException;
+use haydee\excepciones\ValidacionException;
 
 // Determinar rol
 $esPropietario = (isset($_SESSION["rol"]) && $_SESSION["rol"] == "Propietario");

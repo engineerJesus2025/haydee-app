@@ -58,7 +58,8 @@ if (isset($_POST["operacion"])) {
     $respuesta = ['estatus' => false, 'mensaje' => 'Operación no válida', 'datos' => []];
 
     $auditor = new GestorAuditoria($caja, Modulo::GESTIONAR_CAJA_CHICA);
-
+    $codigoExito = HttpCodigo::OK->value;
+    
     switch ($operacion) {
         case 'consultar_cajas_chicas':
             $respuesta = $caja->realizar_consulta('consultar');
