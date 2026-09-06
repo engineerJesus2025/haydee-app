@@ -151,7 +151,7 @@ if (isset($_POST["operacion"])) {
             $respuesta = $gastos->realizar_consulta('registrar_gasto');
             if ($respuesta['estatus']) {
                 // Ocultamos el arreglo masivo al auditor
-                $gastos->set_detalles(null);
+                // $gastos->set_detalles(null);
                 $auditor->registrarAuditoria(Accion::REGISTRAR);
                 $codigoExito = HttpCodigo::CREADO->value;
             }
@@ -159,18 +159,18 @@ if (isset($_POST["operacion"])) {
 
         case 'modificar_gasto':
             // Utilizamos la nueva consulta plana para la foto previa
-            $auditor->capturarDatosAnteriores('consultar_cabecera_gasto');
+            $auditor->capturarDatosAnteriores('consultar_auditoria');
 
             $respuesta = $gastos->realizar_consulta('modificar_gasto');
             if ($respuesta['estatus']) { 
                 // Ocultamos el arreglo masivo al auditor
-                $gastos->set_detalles(null);
+                // $gastos->set_detalles(null);
                 $auditor->registrarAuditoria(Accion::MODIFICAR); 
             }
             break;
 
         case 'eliminar':
-            $auditor->capturarDatosAnteriores('consultar_cabecera_gasto');
+            $auditor->capturarDatosAnteriores('consultar_auditoria');
 
             $respuesta = $gastos->realizar_consulta('eliminar_gasto');
             if ($respuesta['estatus']) { 

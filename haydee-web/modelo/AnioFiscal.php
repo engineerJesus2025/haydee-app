@@ -7,6 +7,11 @@ use haydee\enums\EstadoPeriodo;
 use haydee\enums\TipoBaseDatos;
 use haydee\excepciones\NegocioException;
 
+use haydee\excepciones\ValidacionException;
+use haydee\excepciones\SeguridadException;
+use haydee\excepciones\BaseDatosException;
+use haydee\excepciones\HaydeeException;
+
 class AnioFiscal extends Conexion
 {
     private const DIAS_MINIMOS_PERIODO = 364;
@@ -249,7 +254,7 @@ class AnioFiscal extends Conexion
             }
 
             $estadoCerrado = EstadoPeriodo::CERRADO->value;
-            $sql = "UPDATE anio_fiscal SET activo = 0, estado = :estado WHERE id_anio_fiscal = :id_anio_fiscal";
+            $sql = "UPDAT Eanio_fiscal SET activo = 0, estado = :estado WHERE id_anio_fiscal = :id_anio_fiscal";
             $stmt = $conexion->prepare($sql);
             $stmt->bindParam(':estado', $estadoCerrado);
             $stmt->bindParam(':id_anio_fiscal', $this->id_anio_fiscal);

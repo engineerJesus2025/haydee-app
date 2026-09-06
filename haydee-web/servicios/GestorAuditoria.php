@@ -12,7 +12,7 @@ class GestorAuditoria
     private const SUFIJO_FK = '_id';
 
     private $modelo;
-    private Modulo $modulo; // Tipamos fuertemente la propiedad
+    private Modulo $modulo;
     private $datosAnteriores = null;
 
     public function __construct($modelo, Modulo $modulo)
@@ -21,9 +21,6 @@ class GestorAuditoria
         $this->modulo = $modulo;
     }
 
-    /**
-     * Prepara la sesión para auditar la próxima vez que se consulte la tabla.
-     */
     public static function inicializarBanderaConsulta(Modulo $modulo)
     {
         $_SESSION[self::PREFIJO_SESION . $modulo->value] = true;
@@ -33,7 +30,15 @@ class GestorAuditoria
     {
         $respuestaPrevia = $this->modelo->realizar_consulta($metodoConsultaPrevia);
         if ($respuestaPrevia['estatus'] && !empty($respuestaPrevia['datos'])) {
-            $this->datosAnteriores = $this->limpiarArreglo($respuestaPrevia['datos']);
+            $datos = $respuestaPrevia['datos'];
+
+            // 1. Si la BD trajo detalles y el modelo sabe resumir, generamos el resumen previo
+            if (method_exists($this->modelo, 'resumirDetalles') && isset($datos['detalles'])) {
+                $datos['resumen_detalles'] = $this->modelo->resumirDetalles($datos['detalles']);
+            }
+
+            // 2. Limpiamos (limpiarArreglo se encargará de eliminar 'detalles' crudo)
+            $this->datosAnteriores = $this->limpiarArreglo($datos);
         }
     }
 
@@ -59,7 +64,6 @@ class GestorAuditoria
             $this->calcularDiferencias($anterior, $nuevo);
         }
 
-        // AHORA: Pasamos las instancias puras
         if ($accion !== Accion::MODIFICAR || ($anterior !== null || $nuevo !== null)) {
             Bitacora::registrar($accion, $this->modulo, null, $anterior, $nuevo);
         }
@@ -74,7 +78,11 @@ class GestorAuditoria
             if (array_key_exists($clave, $anterior)) {
                 $valorAnterior = $anterior[$clave];
                 
-                if ((string)$valorNuevo !== (string)$valorAnterior) {
+                // Si el valor es un arreglo (ej: resumen_detalles), comparamos sus JSON
+                $strNuevo = is_array($valorNuevo) ? json_encode($valorNuevo) : (string)$valorNuevo;
+                $strAnterior = is_array($valorAnterior) ? json_encode($valorAnterior) : (string)$valorAnterior;
+
+                if ($strNuevo !== $strAnterior) {
                     $soloAnteriores[$clave] = $valorAnterior;
                     $soloNuevos[$clave] = $valorNuevo;
                 }
@@ -96,14 +104,30 @@ class GestorAuditoria
             if (strpos($metodo, 'get_') === 0) {
                 $propiedad = substr($metodo, 4);
 
-                if ($propiedad === 'activo' || strpos($propiedad, self::SUFIJO_ID) === 0 || substr($propiedad, -strlen(self::SUFIJO_FK)) === self::SUFIJO_FK) {
+                // Filtros estándar de IDs, llaves foráneas y activos
+                if ($propiedad === 'activo' 
+                    || $propiedad === 'resumen_detalles'
+                    || strpos($propiedad, self::SUFIJO_ID) === 0 
+                    || substr($propiedad, -strlen(self::SUFIJO_FK)) === self::SUFIJO_FK) {
                     continue; 
                 }
 
                 $valor = $this->modelo->$metodo();
-                if ($valor !== null) $datos[$propiedad] = $valor;
+
+                // Si el valor es nulo o es un array (como datos_apartamentos o detalles crudos), lo ignoramos
+                if ($valor !== null && !is_array($valor)) {
+                    $datos[$propiedad] = $valor;
+                }
             }
         }
+
+        if (method_exists($this->modelo, 'resumirDetalles') && method_exists($this->modelo, 'get_detalles')) {
+            $detallesActuales = $this->modelo->get_detalles();
+            if (!empty($detallesActuales)) {
+                $datos['resumen_detalles'] = $this->modelo->resumirDetalles($detallesActuales);
+            }
+        }
+
         return $datos;
     }
 
@@ -111,9 +135,16 @@ class GestorAuditoria
     {
         $limpios = [];
         foreach ($datosBd as $clave => $valor) {
-            if ($clave === 'activo' || strpos($clave, self::SUFIJO_ID) === 0 || substr($clave, -strlen(self::SUFIJO_FK)) === self::SUFIJO_FK) {
+            if ($clave === 'activo' 
+                || strpos($clave, self::SUFIJO_ID) === 0 
+                || substr($clave, -strlen(self::SUFIJO_FK)) === self::SUFIJO_FK) {
                 continue;
             }
+
+            if (is_array($valor) && $clave !== 'resumen_detalles') {
+                continue;
+            }
+
             $limpios[$clave] = $valor;
         }
         return $limpios;

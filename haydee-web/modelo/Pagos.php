@@ -161,6 +161,37 @@ class Pagos extends Conexion
     public function set_monto_mensualidad($m) { $this->monto_mensualidad = $m; }
     public function get_monto_mensualidad() { return $this->monto_mensualidad; }
 
+    public function resumirDetalles(?array $detalles): array
+    {
+        if (empty($detalles)) {
+            return [
+                'cantidad_renglones' => 0,
+                'monto_total'        => '0.00',
+                'metodos'            => 'Ninguno'
+            ];
+        }
+
+        $total = 0.0;
+        $metodos = [];
+
+        foreach ($detalles as $det) {
+            $total += (float) ($det['monto'] ?? 0);
+            if (!empty($det['tipo_pago'])) {
+                $metodos[] = strtoupper(trim($det['tipo_pago']));
+            }
+        }
+
+        $metodosUnicos = array_values(array_unique($metodos));
+        sort($metodosUnicos);
+
+        return [
+            'cantidad_renglones' => count($detalles),
+            // Se usa number_format para que "101.00" y 101.00 se comparen como el mismo string
+            'monto_total'        => number_format($total, 2, '.', ''),
+            'metodos'            => empty($metodosUnicos) ? 'N/A' : implode(', ', $metodosUnicos)
+        ];
+    }
+
     public function realizar_consulta($accion, $param = null)
     {
         $metodo = '_' . $accion;

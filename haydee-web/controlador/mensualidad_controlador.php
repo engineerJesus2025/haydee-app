@@ -157,7 +157,7 @@ if (isset($_POST["operacion"])) {
         case 'registrar_mensualidad':
             $respuesta = $mensualidad->realizar_consulta('registrar');
             if ($respuesta['estatus']) {
-                $mensualidad->set_datos_apartamentos(null); // Ocultar datos masivos para auditoría
+                // $mensualidad->set_datos_apartamentos(null);
                 $auditor->registrarAuditoria(Accion::REGISTRAR);
 
                 GestorNotificaciones::notificarTodos(
@@ -172,16 +172,16 @@ if (isset($_POST["operacion"])) {
             break;
 
         case 'modificar_mensualidad':
-            $auditor->capturarDatosAnteriores('consultar_cabecera_mensualidad');
+            $auditor->capturarDatosAnteriores('consultar_auditoria');
             $respuesta = $mensualidad->realizar_consulta('modificar');
             if ($respuesta['estatus']) {
-                $mensualidad->set_datos_apartamentos(null); 
+                // $mensualidad->set_datos_apartamentos(null); 
                 $auditor->registrarAuditoria(Accion::MODIFICAR);
             }
             break;
 
         case 'eliminar_mensualidad':
-            $auditor->capturarDatosAnteriores('consultar_cabecera_mensualidad');
+            $auditor->capturarDatosAnteriores('consultar_auditoria');
             $respuesta = $mensualidad->realizar_consulta('eliminar');
             if ($respuesta['estatus']) {
                 $auditor->registrarAuditoria(Accion::ELIMINAR);

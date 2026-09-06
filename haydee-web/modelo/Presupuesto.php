@@ -107,6 +107,27 @@ class Presupuesto extends Conexion
     public function set_tasa_dolar($t) { $this->tasa_dolar = $t; }
     public function get_tasa_dolar() { return $this->tasa_dolar; }
 
+    public function get_detalles() { 
+        return $this->detalles_temp; 
+    }
+
+    public function resumirDetalles(?array $detalles): array
+    {
+        if (empty($detalles)) {
+            return ['cantidad_renglones' => 0, 'monto_total' => '0.00'];
+        }
+
+        $total = 0.0;
+        foreach ($detalles as $det) {
+            $total += (float) ($det['monto'] ?? 0);
+        }
+
+        return [
+            'cantidad_renglones' => count($detalles),
+            'monto_total'        => number_format($total, 2, '.', '')
+        ];
+    }
+
     public function realizar_consulta($accion)
     {
         $metodo = '_' . $accion;

@@ -94,24 +94,24 @@ if (isset($_POST["operacion"])) {
             $respuesta = $tipoGasto->realizar_consulta('registrar_tipo_gasto');
             
             if ($respuesta['estatus']) { 
-                $tipoGasto->setConceptosTemp(null); // Limpiar arreglo grande antes de auditar
+                // $tipoGasto->setConceptosTemp(null); // Limpiar arreglo grande antes de auditar
                 $auditor->registrarAuditoria(Accion::REGISTRAR); 
                 $codigoExito = HttpCodigo::CREADO->value;
             }
             break;
 
         case 'modificar_tipo_gasto':
-            $auditor->capturarDatosAnteriores('consultar_tipo_gasto');
+            $auditor->capturarDatosAnteriores('consultar_auditoria');
             $respuesta = $tipoGasto->realizar_consulta('modificar_tipo_gasto');
             
             if ($respuesta['estatus']) { 
-                $tipoGasto->setConceptosTemp(null);
+                // $tipoGasto->setConceptosTemp(null);
                 $auditor->registrarAuditoria(Accion::MODIFICAR); 
             }
             break;
 
         case 'eliminar_tipo_gasto':
-            $auditor->capturarDatosAnteriores('consultar_tipo_gasto');
+            $auditor->capturarDatosAnteriores('consultar_auditoria');
             $respuesta = $tipoGasto->realizar_consulta('eliminar_tipo_gasto');
             
             if ($respuesta['estatus']) { $auditor->registrarAuditoria(Accion::ELIMINAR); }

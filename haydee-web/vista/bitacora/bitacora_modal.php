@@ -45,11 +45,11 @@
 				        </ul>
 				        <div class="tab-content p-3 border rounded-end rounded-bottom " id="cambiosTabsContent">
 				            <div class="tab-pane fade show active" id="anteriores" role="tabpanel" aria-labelledby="anteriores-tab">
-				                <pre id="valores_anteriores" class=" p-3 rounded text-dark" style="max-height: 300px; overflow: auto; font-size: 0.85rem;"></pre>
-				            </div>
-				            <div class="tab-pane fade" id="nuevos" role="tabpanel" aria-labelledby="nuevos-tab">
-				                <pre id="valores_nuevos" class=" p-3 rounded text-dark" style="max-height: 300px; overflow: auto; font-size: 0.85rem;"></pre>
-				            </div>
+    <div id="valores_anteriores" class="p-2 rounded" style="max-height: 400px; overflow: auto; font-size: 0.90rem;"></div>
+</div>
+<div class="tab-pane fade" id="nuevos" role="tabpanel" aria-labelledby="nuevos-tab">
+    <div id="valores_nuevos" class="p-2 rounded" style="max-height: 400px; overflow: auto; font-size: 0.90rem;"></div>
+</div>
 				        </div>
 				    </div>
 				    <div id="contenedor_imagen_bitacora" class="row mb-4 d-none">

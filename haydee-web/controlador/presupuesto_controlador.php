@@ -124,7 +124,7 @@ if (isset($_POST["operacion"])) {
 
         case 'modificar_presupuesto':
             // Obtener datos anteriores (consulta plana)
-            $auditor->capturarDatosAnteriores('consultar_cabecera_presupuesto');
+            $auditor->capturarDatosAnteriores('consultar_presupuesto');
 
             //  Ejecutar y auditar
             $respuesta = $presupuesto->realizar_consulta('modificar_presupuesto');
@@ -135,7 +135,7 @@ if (isset($_POST["operacion"])) {
 
         case 'eliminar_presupuesto':
             // Utilizamos la consulta plana
-            $auditor->capturarDatosAnteriores('consultar_cabecera_presupuesto');
+            $auditor->capturarDatosAnteriores('consultar_presupuesto');
 
             $respuesta = $presupuesto->realizar_consulta('eliminar_presupuesto');
             if ($respuesta['estatus']) { 

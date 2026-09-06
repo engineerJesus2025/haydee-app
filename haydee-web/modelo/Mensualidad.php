@@ -186,6 +186,48 @@ class Mensualidad extends Conexion
     public function set_correo($correo) { $this->correo = $correo; }
     public function get_correo() { return $this->correo; }
 
+    public function get_detalles() { 
+        return $this->datos_apartamentos; 
+    }
+
+    public function resumirDetalles(?array $detalles): array
+    {
+        if (empty($detalles)) {
+            return ['cantidad_apartamentos' => 0, 'monto_total_generado' => '0.00', 'descuentos_aplicados' => '0.00'];
+        }
+
+        $total = 0.0;
+        $descuento = 0.0;
+        foreach ($detalles as $det) {
+            $total += (float) ($det['monto'] ?? 0);
+            $descuento += (float) ($det['descuento'] ?? 0);
+        }
+
+        return [
+            'cantidad_apartamentos' => count($detalles),
+            'monto_total_generado'  => number_format($total, 2, '.', ''),
+            'descuentos_aplicados'  => number_format($descuento, 2, '.', '')
+        ];
+    }
+
+    private function _consultar_auditoria()
+    {
+        // Recuperamos la cabecera (tasa, periodo, etc.)
+        $cabecera = $this->_consultar_cabecera_mensualidad()['datos'];
+        
+        // Recuperamos el estado actual de los apartamentos asociados a ese periodo
+        $sql = "SELECT apartamento_id as id_apartamento, monto, descuento 
+                FROM mensualidad 
+                WHERE periodo_id = :periodo_id AND activo = 1";
+        $stmt = $this->get_conex(\haydee\enums\TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->execute([':periodo_id' => $this->periodo_id]);
+        
+        // Lo inyectamos en la clave 'detalles' para que el auditor lo extraiga
+        $cabecera['detalles'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        return ['estatus' => true, 'datos' => $cabecera];
+    }
+
     public function realizar_consulta($accion)
     {
         $metodo = '_' . $accion;

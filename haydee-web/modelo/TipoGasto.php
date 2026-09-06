@@ -58,6 +58,47 @@ class TipoGasto extends Conexion
     public function get_activo() { return $this->activo; }
     public function setConceptosTemp($conceptos) { $this->conceptos_temp = $conceptos; }
 
+    public function get_detalles() 
+    { 
+        return $this->conceptos_temp; 
+    }
+
+    public function resumirDetalles(?array $conceptos): array
+    {
+        if (empty($conceptos)) {
+            return [
+                'cantidad_conceptos'  => 0,
+                'conceptos_asociados' => 'Ninguno'
+            ];
+        }
+
+        $nombres = [];
+        foreach ($conceptos as $c) {
+            if (!empty($c['nombre_concepto'])) {
+                $nombres[] = trim($c['nombre_concepto']);
+            }
+        }
+
+        // alfabéticamente para que reordenar renglones no genere un falso diff
+        sort($nombres, SORT_NATURAL | SORT_FLAG_CASE);
+
+        return [
+            'cantidad_conceptos'  => count($conceptos),
+            'conceptos_asociados' => empty($nombres) ? 'Ninguno' : implode(', ', $nombres)
+        ];
+    }
+
+    private function _consultar_auditoria()
+    {
+        $respuesta = $this->_consultar_tipo_gasto();
+        if ($respuesta['estatus']) {
+            $datos = $respuesta['datos'];
+            $datos['detalles'] = $datos['conceptos'] ?? [];
+            return ['estatus' => true, 'datos' => $datos];
+        }
+        return $respuesta;
+    }
+
     public function realizar_consulta($accion)
     {
         $metodo = '_' . $accion;

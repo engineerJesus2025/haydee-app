@@ -156,7 +156,7 @@ if (isset($_POST["operacion"])) {
             $respuesta = $pagos->realizar_consulta('registrar_pago');
             if ($respuesta['estatus']) {
                 // Ocultamos los detalles al auditor para evitar colapsos
-                $pagos->set_detalles(null);
+                // $pagos->set_detalles(null);
                 $auditor->registrarAuditoria(Accion::REGISTRAR);
 
                 $id_nuevo_pago = $respuesta['id'] ?? $respuesta['lastId'] ?? null;
@@ -182,12 +182,12 @@ if (isset($_POST["operacion"])) {
             }
 
             // Usamos la consulta plana para la bitácora
-            $auditor->capturarDatosAnteriores('consultar_cabecera_pago');
+            $auditor->capturarDatosAnteriores('consultar_pago');
 
             $respuesta = $pagos->realizar_consulta('modificar_pago');
             if ($respuesta['estatus']) {
                 // Ocultamos los detalles al auditor
-                $pagos->set_detalles(null);
+                // $pagos->set_detalles(null);
                 $auditor->registrarAuditoria(Accion::MODIFICAR);
                 $codigoExito = HttpCodigo::CREADO->value;
             }

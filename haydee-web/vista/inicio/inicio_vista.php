@@ -174,7 +174,6 @@
                                     <div class="d-flex flex-wrap gap-3 text-muted-custom" style="font-size: 0.85rem;">
                                         <div class="d-flex align-items-center"><span class="d-inline-block rounded-circle me-2" style="width:10px; height:10px; background-color: var(--ch-badge-primary-border);"></span> Ocupado</div>
                                         <div class="d-flex align-items-center"><span class="d-inline-block rounded-circle me-2" style="width:10px; height:10px; background-color: var(--ch-badge-success-border);"></span> Disponible</div>
-                                        <div class="d-flex align-items-center"><span class="d-inline-block rounded-circle me-2" style="width:10px; height:10px; background-color: var(--ch-badge-warning-border);"></span> Mantenimiento</div>
                                     </div>
                                 </div>
 

@@ -1,9 +1,3 @@
-/**
- * bitacora_ajax.js
- * Gestión de Bitácora - Peticiones AJAX
- * Dependencias: utilidades.js, formatoFechas.js
- */
-
 let tabla_bitacora;
 let modal_carga = new bootstrap.Modal("#modal_carga");
 let modalDetalle = new bootstrap.Modal(document.getElementById('modalDetalleBitacora'));
@@ -265,18 +259,68 @@ function consultar() {
     Tablas.inicializarBuscadorGlobal(tabla_bitacora, "busqueda_global", columnas);
 }
 
-function objetoALista(obj) {
+// function objetoALista(obj) {
+//     if (!obj || Object.keys(obj).length === 0) {
+//         return '<p class="text-muted">No hay datos</p>';
+//     }
+//     let html = '<ul class="list-group">';
+//     for (let [key, value] of Object.entries(obj)) {
+//         // Formatear el valor si es objeto o array
+//         let valorMostrar = value;
+//         if (typeof value === 'object' && value !== null) {
+//             valorMostrar = JSON.stringify(value);
+//         }
+//         html += `<li class="list-group-item"><strong>${key}:</strong> ${valorMostrar}</li>`;
+//     }
+//     html += '</ul>';
+//     return html;
+// }
+
+function objetoALista(obj, esAnidado = false) {
     if (!obj || Object.keys(obj).length === 0) {
-        return '<p class="text-muted">No hay datos</p>';
+        return '<p class="text-muted mb-0"><i class="bi bi-info-circle me-1"></i>No hay datos</p>';
     }
-    let html = '<ul class="list-group">';
+
+    // Si es el nivel principal usamos un list-group, si es el subnivel (resumen) usamos una lista sin estilos con borde lateral
+    let html = esAnidado 
+        ? '<ul class="list-unstyled mb-0 ms-2 mt-2 border-start border-primary border-2 ps-3">' 
+        : '<ul class="list-group list-group-flush shadow-sm border rounded">';
+
     for (let [key, value] of Object.entries(obj)) {
-        // Formatear el valor si es objeto o array
-        let valorMostrar = value;
+        // Limpieza visual: ocultamos la ruta de la imagen en texto ya que el modal la renderiza gráficamente
+        if (key === 'imagen' && !esAnidado) continue;
+
+        // Convertir 'resumen_detalles' a 'Resumen Detalles'
+        let etiqueta = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
         if (typeof value === 'object' && value !== null) {
-            valorMostrar = JSON.stringify(value);
+            // CASO 1: OBJETO ANIDADO (Nuestro resumen_detalles entra aquí)
+            let icono = key === 'resumen_detalles' ? 'bi-list-check' : 'bi-box-seam';
+            
+            html += `
+                <li class="${esAnidado ? 'mb-2' : 'list-group-item'}">
+                    <strong class="text-primary"><i class="bi ${icono} me-2"></i>${etiqueta}</strong>
+                    ${objetoALista(value, true)} <!-- Llamada recursiva para procesar el interior -->
+                </li>`;
+        } else {
+            // CASO 2: VALORES NORMALES (Cabecera)
+            let valorMostrar = value;
+            if (value === null || value === '') {
+                valorMostrar = '<span class="text-muted fst-italic">Vacío</span>';
+            }
+
+            if (esAnidado) {
+                // Estilo para los ítems dentro del resumen
+                html += `<li class="mb-1"><span class="fw-semibold">${etiqueta}:</span> <span>${valorMostrar}</span></li>`;
+            } else {
+                // Estilo para los ítems principales (alineación flexbox a los extremos)
+                html += `
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span class="fw-bold">${etiqueta}:</span> 
+                    <span class="text-end text-break ms-3">${valorMostrar}</span>
+                </li>`;
+            }
         }
-        html += `<li class="list-group-item"><strong>${key}:</strong> ${valorMostrar}</li>`;
     }
     html += '</ul>';
     return html;

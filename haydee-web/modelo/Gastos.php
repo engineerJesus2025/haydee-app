@@ -192,6 +192,42 @@ class Gastos extends Conexion
     public function set_detalles($detalles) { $this->detalles = $detalles; }
     public function get_detalles() { return $this->detalles; }
 
+    private function _consultar_auditoria()
+    {
+        $respuesta = $this->_consultar_gasto();
+        if ($respuesta['estatus']) {
+            $datos = $respuesta['datos']['gasto'];
+            $datos['detalles'] = $respuesta['datos']['detalles'];
+            return ['estatus' => true, 'datos' => $datos];
+        }
+        return $respuesta;
+    }
+
+    public function resumirDetalles(?array $detalles): array
+    {
+        if (empty($detalles)) {
+            return ['cantidad_renglones' => 0, 'monto_total' => '0.00', 'metodos' => 'Ninguno'];
+        }
+
+        $total = 0.0;
+        $metodos = [];
+        foreach ($detalles as $det) {
+            $total += (float) ($det['monto'] ?? 0);
+            if (!empty($det['metodo_pago'])) {
+                $metodos[] = strtoupper(trim($det['metodo_pago']));
+            }
+        }
+
+        $metodosUnicos = array_values(array_unique($metodos));
+        sort($metodosUnicos);
+
+        return [
+            'cantidad_renglones' => count($detalles),
+            'monto_total'        => number_format($total, 2, '.', ''),
+            'metodos'            => empty($metodosUnicos) ? 'N/A' : implode(', ', $metodosUnicos)
+        ];
+    }
+
     public function realizar_consulta($accion, $param = null)
     {
         $metodo = '_' . $accion;
