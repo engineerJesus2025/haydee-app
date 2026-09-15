@@ -11,6 +11,7 @@ use haydee\excepciones\BaseDatosException;
 use haydee\excepciones\HaydeeException;
 use haydee\servicios\GestorTrafico;
 use Throwable;
+use PDOException;
 
 class Excepciones
 {
@@ -28,7 +29,7 @@ class Excepciones
             'color'       => '#6b7280', // Gris 
             'icono'       => 'server-crash', 
         ];
-        $incidenteId = null;
+        $incidenteId = strtoupper(substr(uniqid('ERR-'), -8));
 
         // Clasificación del Error Enriquecida
         if ($e instanceof ValidacionException) {
@@ -47,42 +48,45 @@ class Excepciones
         } elseif ($e instanceof SeguridadException) {
             $datosError['tipo']   = 'seguridad';
             $datosError['titulo'] = 'Acceso Denegado';
-            $datosError['color']  = '#dc2626'; // Rojo/Danger
+            $datosError['color']  = '#dc2626'; 
             $datosError['icono']  = 'shield-off';
+            $datosError['ref']    = $incidenteId;
             
             $ipToken = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
             $metodo  = $_SERVER['REQUEST_METHOD'] ?? 'N/A';
             $uri     = $_SERVER['REQUEST_URI'] ?? 'N/A';
-            $incidenteId = substr(hash('sha256', $ipToken . date('Y-m-d H:i')), 0, 8);
-            $datosError['ref'] = $incidenteId;
             
-            error_log(sprintf("[REF: #%s] [%s] Bloqueo de Seguridad: %s | IP: %s | %s %s", 
+            error_log(sprintf("[REF: %s] [%s] Bloqueo de Seguridad: %s | IP: %s | %s %s", 
                 $incidenteId, $codigoHttp, $mensajeOriginal, $ipToken, $metodo, $uri));
                 
-        } elseif ($e instanceof BaseDatosException) {
+        } elseif ($e instanceof BaseDatosException || $e instanceof \PDOException) {
             $datosError['tipo']   = 'bd';
             $datosError['titulo'] = 'Error de Datos';
-            $datosError['color']  = '#991b1b'; // Rojo oscuro
+            $datosError['color']  = '#991b1b'; 
             $datosError['icono']  = 'database-fail';
+            $datosError['ref']    = $incidenteId;
+            $datosError['mensaje'] = "Ocurrió un problema interno al procesar los datos. Si el problema persiste, contacte a soporte indicando el código de referencia.";
             
-            // la excepción previa (PDOException) si existe para el log
-            $causa = $e->getPrevious() ? $e->getPrevious()->getMessage() : 'Desconocida';
-            error_log("[BD CRÍTICO] {$mensajeOriginal} | Causa interna: {$causa} en {$e->getFile()}:{$e->getLine()}");
+            $causa = $e->getPrevious() ? $e->getPrevious()->getMessage() : $e->getMessage();
+            
+            error_log("[REF: {$incidenteId}] [BD CRÍTICO] {$mensajeOriginal} | Causa interna: {$causa} en {$e->getFile()}:{$e->getLine()}");
             
         } elseif (!$e instanceof HaydeeException) {
-            // Excepciones nativas (ParseError, TypeError)
             $codigoHttp = HttpCodigo::ERROR_INTERNO->value;
             $datosError['tipo']   = 'critico';
             $datosError['titulo'] = 'Fallo Crítico';
-            $datosError['color']  = '#000000'; // Negro/Fatal
+            $datosError['color']  = '#000000'; 
             $datosError['icono']  = 'alert-octagon';
-            $datosError['mensaje'] = "Ocurrió un error interno en el servidor.";
+            $datosError['ref']    = $incidenteId;
+            
+            $datosError['mensaje'] = "Ocurrió un error inesperado en el servidor.";
             
             // Captura la clase del error y un fragmento del Stack Trace
             $claseError = get_class($e);
             $trazaCorta = substr(str_replace("\n", " ", $e->getTraceAsString()), 0, 150);
-            error_log(sprintf("[CRÍTICO] %s: %s en %s:%d | Traza: %s...", 
-                $claseError, $e->getMessage(), $e->getFile(), $e->getLine(), $trazaCorta));
+            
+            error_log(sprintf("[REF: %s] [CRÍTICO] %s: %s en %s:%d | Traza: %s...", 
+                $incidenteId, $claseError, $e->getMessage(), $e->getFile(), $e->getLine(), $trazaCorta));
         }
 
         // Salida

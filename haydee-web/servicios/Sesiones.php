@@ -174,6 +174,7 @@ class Sesiones
         $_SESSION["nombre_completo"] = $datosUsuario['nombre_completo'];
         $_SESSION["rol"] = $datosUsuario['rol'];
         $_SESSION["permisos"] = $datosUsuario['permisos'];
+        $_SESSION["ayuda_general_visto"] = (int)($datosUsuario['ayuda_general_visto'] ?? 0);
         
         if (isset($datosUsuario["notificaciones"]) && is_array($datosUsuario["notificaciones"])) {
             $_SESSION["notificaciones"] = array_filter($datosUsuario["notificaciones"], function($n) {

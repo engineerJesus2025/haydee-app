@@ -3,6 +3,7 @@ use haydee\enums\HttpCodigo;
 use haydee\modelo\Mensualidad;
 use haydee\modelo\CarteleraVirtual;
 use haydee\modelo\Apartamento;
+use haydee\modelo\Usuario;
 use haydee\modelo\Bitacora;
 use haydee\excepciones\HaydeeException;
 
@@ -49,6 +50,14 @@ if (isset($_POST["operacion"])) {
             $cartelera = new CarteleraVirtual();
             $respuesta = $cartelera->consultar_widget_dashboard();
             $cartelera->cerrar();
+            break;
+
+        case 'marcar_ayuda_visto':
+            $usuario = new Usuario();
+            
+            $usuario->set_id_usuario($_SESSION["id_usuario"] ?? 0); 
+            
+            $respuesta = $usuario->realizar_consulta('marcar_ayuda_visto');
             break;
 
         default:

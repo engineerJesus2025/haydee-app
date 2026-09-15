@@ -60,7 +60,7 @@ class Usuario extends Conexion
             ],
             'token_tipo' => [
                 'regex' => '/^[A-Za-z]+$/'
-            ]
+            ],
         ];
 
         $configPorOperacion = [
@@ -139,7 +139,11 @@ class Usuario extends Conexion
             'consumir_token_recuperacion' => [
                 'metodo_http' => ['POST'],
                 'campos' => ['correo', 'token', 'contra', 'token_tipo']
-            ]
+            ],
+            'marcar_ayuda_visto' => [
+                'metodo_http' => ['POST'],
+                'campos' => []
+            ],
         ];
 
         if (isset($configPorOperacion[$operacion])) {
@@ -184,7 +188,7 @@ class Usuario extends Conexion
     }
     
     private function _obtener_credenciales_por_correo() {
-        $sql = "SELECT id_usuario, correo, nombre, apellido, contrasenia, rol_id as id_rol, nombre_rol 
+        $sql = "SELECT id_usuario, correo, nombre, apellido, contrasenia, rol_id as id_rol, nombre_rol, ayuda
                 FROM vw_perfiles_usuarios WHERE correo = :correo AND activo = " . self::ESTADO_ACTIVO;
         $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
         $stmt->execute([':correo' => $this->correo]);
@@ -257,7 +261,7 @@ class Usuario extends Conexion
     {
         $pdo = $this->get_conex(TipoBaseDatos::SEGURIDAD);
         
-        $sqlUser = "SELECT nombre as nombre_usuario, apellido, correo, nombre_rol 
+        $sqlUser = "SELECT nombre as nombre_usuario, apellido, correo, nombre_rol, ayuda 
                     FROM vw_perfiles_usuarios 
                     WHERE id_usuario = :usuario AND activo = " . self::ESTADO_ACTIVO;
         $stmtU = $pdo->prepare($sqlUser);
@@ -597,5 +601,19 @@ class Usuario extends Conexion
             }
             throw $e;
         }
+    }
+
+    private function _marcar_ayuda_visto()
+    {
+        $sql = "UPDATE usuarios SET ayuda_general_visto  = 1 WHERE id_usuario = :id";
+        
+        $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
+        $resultado = $stmt->execute([':id' => $this->id_usuario]);
+
+        if (!$resultado) {
+            throw new NegocioException('Error al actualizar el estado del tour.', HttpCodigo::ERROR_INTERNO->value);
+        }
+
+        return ['estatus' => true, 'mensaje' => 'Tour interactivo marcado como completado'];
     }
 }

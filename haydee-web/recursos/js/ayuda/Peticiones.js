@@ -93,15 +93,14 @@ const Peticiones = {
                 if (tiempoCarga) clearTimeout(tiempoCarga);
                 if (modalVisible && modalCarga) modalCarga.hide();
 
+                // Diferenciamos el tipo de 403:
+                // Si el mensaje indica que la red fue castigada, forzamos recarga para mostrar la vista roja (Firewall)
                 if (json.mensaje && json.mensaje.toLowerCase().includes('suspendida')) {
                     window.location.reload();
                 } else {
-                    // Validamos si trae la nueva estructura enriquecida
-                    if (json.titulo && json.tipo) {
-                        Alertas.mostrarErrorEnriquecido(json);
-                    } else {
-                        Alertas.mostrar('error', 'Acceso Denegado', json.mensaje || 'No tiene permisos para realizar esta acción.');
-                    }
+                    // Si es un simple rechazo por falta de permisos de usuario, mostramos una alerta suave
+                    // Esto evita recargar la página y hacerle perder los datos del formulario al usuario
+                    Alertas.mostrar('error', 'Acceso Denegado', json.mensaje || 'No tiene permisos para realizar esta acción.');
                 }
                 return { estatus: false, silencioso: true };
             }
@@ -109,6 +108,9 @@ const Peticiones = {
             if (respuesta.status === 422) {
                 if (tiempoCarga) clearTimeout(tiempoCarga);
                 if (modalVisible && modalCarga) modalCarga.hide();
+                
+                // Retornamos el JSON directamente para que el Validador marque los inputs en rojo,
+                // sin levantar alertas molestas en mitad de la pantalla de forma automática.
                 return json; 
             }
 
@@ -121,16 +123,11 @@ const Peticiones = {
                     return json;
                 }
 
-                // Disparamos el nuevo modal enriquecido
-                if (json && json.titulo) {
-                    Alertas.mostrarErrorEnriquecido(json);
-                } else {
-                    // Fallback por si el error proviene de una ruta antigua no refactorizada
-                    let textoError = json.mensaje || 'Ocurrió un error inesperado al procesar la solicitud.';
-                    if (json.ref) textoError += `<br><br><span style="font-size: 0.85em; color: #6c757d;">Ref: <b>${json.ref}</b></span>`;
-                    Alertas.mostrar('error', `Error`, textoError);
-                }
-                
+                // Si no son errores de validación de campos, procedemos con la alerta genérica de error de servidor
+                let textoError = json.mensaje || 'Ocurrió un error inesperado al procesar la solicitud.';
+                if (json.ref) textoError += `<br><br><span style="font-size: 0.85em; color: #6c757d;">Ref: <b>${json.ref}</b></span>`;
+
+                Alertas.mostrar('error', `Error`, textoError);
                 return { estatus: false, silencioso: true };
             }
 

@@ -303,6 +303,7 @@
         require_once ROOT_PATH . "/vista/componentes/footer.php";
         require_once ROOT_PATH . "/vista/componentes/script.php";
         require_once ROOT_PATH . "/vista/componentes/modal_carga.php";
+        require_once ROOT_PATH . "/vista/componentes/boton_ayuda.php";
         // Modales
         require_once ROOT_PATH . "/vista/bitacora/bitacora_modal.php";
     ?>
@@ -423,6 +424,10 @@
     </div>
 
 	<script type="text/javascript" src="<?php echo URL_BASE; ?>recursos/dependencias/chartjs/chart.js"></script>
+    <script>
+        const TOUR_STORAGE_KEY = 'ayuda_vista_<?= hash('sha256', $_SESSION["usuario"] ?? 'invitado') ?>';
+        const AYUDA_VISTA_BD = <?= (int)($_SESSION["ayuda_general_visto"] ?? 0) ?>;
+    </script>
 	<script src="<?php echo URL_BASE; ?>recursos/js/consultas_ajax/inicio_ajax.js"></script>
 </body>
 </html>

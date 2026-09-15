@@ -60,114 +60,110 @@
             border-top-right-radius:initial
         }
 
+        /* 1. Cabecera destacada (Mismo color que las tablas principales) */
+        .tabla-permisos thead th {
+            background-color: var(--ch-table-header-bg) !important;
+            color: var(--ch-table-header-text) !important;
+            border-bottom: 2px solid var(--ch-table-border) !important;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+        }
+
+        /* 2. Celdas adaptativas */
+        .tabla-permisos tbody td {
+            border-bottom: 1px solid var(--ch-table-border) !important;
+            color: var(--bs-body-color);
+        }
+
+        /* 3. Acordeones (Botón principal) */
+        .tabla-permisos .accordion-button {
+            background-color: var(--ch-header-hover) !important; /* Un gris/azul sutil */
+            color: var(--bs-body-color) !important;
+            border-radius: 6px !important;
+            border: 1px solid var(--ch-table-border);
+        }
+
+        .tabla-permisos .accordion-button:not(.collapsed) {
+            border-bottom-left-radius: 0 !important;
+            border-bottom-right-radius: 0 !important;
+        }
+
+        /* 4. Cuerpo del acordeón (Donde están los checkboxes) */
+        .tabla-permisos .accordion-body {
+            border-top: none;
+            border-bottom-left-radius: 6px;
+            border-bottom-right-radius: 6px;
+            color: var(--bs-body-color);
+        }
+
+        /* Para que los íconos de la cabecera también hereden el color blanco/claro */
+        .tabla-permisos thead th i {
+            color: inherit !important; 
+        }
+
+        #tabla_permisos .accordion-collapse.collapse.show, #tabla_permisos .accordion-collapse.collapsing {
+            background-color: transparent  !important;
+        }
+
         /* =========================================================
-   TABLA DE PERMISOS (MÓDULO DE ROLES)
-   ========================================================= */
+           TABLA DE PERMISOS (MÓDULO DE ROLES)
+           ========================================================= */
 
-/* 1. Cabecera destacada (Mismo color que las tablas principales) */
-.tabla-permisos thead th {
-    background-color: var(--ch-table-header-bg) !important;
-    color: var(--ch-table-header-text) !important;
-    border-bottom: 2px solid var(--ch-table-border) !important;
-    text-transform: uppercase;
-    font-size: 0.8rem;
-    letter-spacing: 0.5px;
-}
+        /* 1. Cabecera distintiva (Gris claro de día, Pizarra de noche) */
+        .tabla-permisos thead th {
+            background-color: var(--ch-header-hover) !important;
+            color: var(--ch-color-titulos) !important;
+            border-bottom: 2px solid var(--ch-table-border) !important;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
 
-/* 2. Celdas adaptativas */
-.tabla-permisos tbody td {
-    border-bottom: 1px solid var(--ch-table-border) !important;
-    color: var(--bs-body-color);
-}
+        /* 2. Celdas adaptativas (Para dar profundidad respecto al modal) */
+        .tabla-permisos tbody td {
+            border-bottom: 1px solid var(--ch-table-border) !important;
+            color: var(--bs-body-color);
+        }
 
-/* 3. Acordeones (Botón principal) */
-.tabla-permisos .accordion-button {
-    background-color: var(--ch-header-hover) !important; /* Un gris/azul sutil */
-    color: var(--bs-body-color) !important;
-    border-radius: 6px !important;
-    border: 1px solid var(--ch-table-border);
-}
+        /* 3. Acordeones (Botón principal) */
+        .tabla-permisos .accordion-button {
+            background-color: var(--ch-card-bg) !important; /* Resalta como un elemento elevado sobre el td */
+            color: var(--bs-body-color) !important;
+            border-radius: 6px !important;
+            border: 1px solid var(--ch-table-border);
+        }
 
-.tabla-permisos .accordion-button:not(.collapsed) {
-    border-bottom-left-radius: 0 !important;
-    border-bottom-right-radius: 0 !important;
-}
+        .tabla-permisos .accordion-button:not(.collapsed) {
+            border-bottom-left-radius: 0 !important;
+            border-bottom-right-radius: 0 !important;
+        }
 
-/* 4. Cuerpo del acordeón (Donde están los checkboxes) */
-.tabla-permisos .accordion-body {
-    border-top: none;
-    border-bottom-left-radius: 6px;
-    border-bottom-right-radius: 6px;
-    color: var(--bs-body-color);
-}
+        /* 4. Cuerpo del acordeón (Donde están los checkboxes) */
+        .tabla-permisos .accordion-body {
+            background-color: var(--ch-input-bg) !important; /* Efecto hundido para los checkboxes */
+            border-top: none;
+            border-bottom-left-radius: 6px;
+            border-bottom-right-radius: 6px;
+            color: var(--bs-body-color);
+        }
 
-/* Para que los íconos de la cabecera también hereden el color blanco/claro */
-.tabla-permisos thead th i {
-    color: inherit !important; 
-}
+        /* 5. Nombres de Módulos más legibles */
+        .tabla-permisos .nombre-modulo {
+            /* Usamos nuestra variable pastel que brilla en oscuro y es visible en claro */
+            color: var(--ch-badge-primary-text) !important; 
+        }
 
-#tabla_permisos .accordion-collapse.collapse.show, #tabla_permisos .accordion-collapse.collapsing {
-    background-color: transparent  !important;
-}
+        /* Para que los íconos de la cabecera también hereden el color */
+        .tabla-permisos thead th i {
+            color: inherit !important; 
+        }
 
-/* =========================================================
-   TABLA DE PERMISOS (MÓDULO DE ROLES)
-   ========================================================= */
-
-/* 1. Cabecera distintiva (Gris claro de día, Pizarra de noche) */
-.tabla-permisos thead th {
-    background-color: var(--ch-header-hover) !important;
-    color: var(--ch-color-titulos) !important;
-    border-bottom: 2px solid var(--ch-table-border) !important;
-    text-transform: uppercase;
-    font-size: 0.85rem;
-    letter-spacing: 0.5px;
-}
-
-/* 2. Celdas adaptativas (Para dar profundidad respecto al modal) */
-.tabla-permisos tbody td {
-    border-bottom: 1px solid var(--ch-table-border) !important;
-    color: var(--bs-body-color);
-}
-
-/* 3. Acordeones (Botón principal) */
-.tabla-permisos .accordion-button {
-    background-color: var(--ch-card-bg) !important; /* Resalta como un elemento elevado sobre el td */
-    color: var(--bs-body-color) !important;
-    border-radius: 6px !important;
-    border: 1px solid var(--ch-table-border);
-}
-
-.tabla-permisos .accordion-button:not(.collapsed) {
-    border-bottom-left-radius: 0 !important;
-    border-bottom-right-radius: 0 !important;
-}
-
-/* 4. Cuerpo del acordeón (Donde están los checkboxes) */
-.tabla-permisos .accordion-body {
-    background-color: var(--ch-input-bg) !important; /* Efecto hundido para los checkboxes */
-    border-top: none;
-    border-bottom-left-radius: 6px;
-    border-bottom-right-radius: 6px;
-    color: var(--bs-body-color);
-}
-
-/* 5. Nombres de Módulos más legibles */
-.tabla-permisos .nombre-modulo {
-    /* Usamos nuestra variable pastel que brilla en oscuro y es visible en claro */
-    color: var(--ch-badge-primary-text) !important; 
-}
-
-/* Para que los íconos de la cabecera también hereden el color */
-.tabla-permisos thead th i {
-    color: inherit !important; 
-}
-
-#tabla_permisos .accordion-collapse.collapse.show, 
-#tabla_permisos .accordion-collapse.collapsing {
-    background-color: var(--ch-input-bg) !important;
-    margin: 0;
-}
+        #tabla_permisos .accordion-collapse.collapse.show, 
+        #tabla_permisos .accordion-collapse.collapsing {
+            background-color: var(--ch-input-bg) !important;
+            margin: 0;
+        }
 
     </style>
 </head>
