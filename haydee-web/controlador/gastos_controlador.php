@@ -102,7 +102,6 @@ if (isset($_POST["operacion"])) {
     }
 
     $gastos->set_id_gasto($_POST['id_gasto'] ?? null);
-    $gastos->set_clasificacion($_POST['clasificacion'] ?? null);
     $gastos->set_descripcion_gasto($_POST['descripcion_gasto'] ?? null);
     $gastos->set_presupuesto_id($_POST['presupuesto_id'] ?? null);
     $gastos->set_concepto_id($_POST['concepto_id'] ?? null);

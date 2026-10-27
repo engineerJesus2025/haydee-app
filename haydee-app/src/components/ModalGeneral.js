@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal, View, ScrollView, KeyboardAvoidingView, Platform, Keyboard, StyleSheet, StatusBar } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';  
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTema } from '../hooks/useTema';
 
 import HeaderFormulario from './HeaderFormulario';
@@ -11,8 +11,9 @@ export default function ModalGeneral({
   titulo,
   iconoHeader,
   children,
-  footer, 
-  esFormulario = false
+  footer,
+  esFormulario = false,
+  headerAcciones = null,
 }) {
   const { colores } = useTema();
 
@@ -23,7 +24,7 @@ export default function ModalGeneral({
     }, 300);
   };
 
-  const ContenedorTeclado = esFormulario ? KeyboardAvoidingView : View; // otro level
+  const ContenedorTeclado = esFormulario ? KeyboardAvoidingView : View;
 
   return (
     <Modal
@@ -31,18 +32,17 @@ export default function ModalGeneral({
       animationType="slide"
       transparent={false}
       onRequestClose={() => ejecutarConTecladoCerrado(onClose)}
-      statusBarTranslucent={true} // Permite dibujar detrás de la barra de estado
+      statusBarTranslucent={true}
     >
-      {/* barra de estado a oscuras */}
       <StatusBar backgroundColor="#000000" barStyle="light-content" />
 
       <SafeAreaView style={{ flex: 1, backgroundColor: '#000000' }}>
-        
         <View style={{ flex: 1, backgroundColor: colores.background }}>
           <HeaderFormulario
             titulo={titulo}
             evento={() => ejecutarConTecladoCerrado(onClose)}
             icono={iconoHeader}
+            headerAcciones={headerAcciones}  
           />
 
           <ContenedorTeclado
@@ -63,7 +63,6 @@ export default function ModalGeneral({
                 {footer}
               </View>
             )}
-
           </ContenedorTeclado>
         </View>
       </SafeAreaView>
@@ -79,6 +78,6 @@ const styles = StyleSheet.create({
     paddingBottom: 0,
     borderTopWidth: 1,
     borderTopColor: '#e9ecef',
-    gap: 12
-  }
+    gap: 12,
+  },
 });

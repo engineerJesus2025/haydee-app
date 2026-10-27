@@ -18,7 +18,6 @@ use haydee\excepciones\ValidacionException;
 
 $habitantesModel = new Habitantes();
 $mensualidadModel = new Mensualidad();
-$gastosModel = new Gastos();
 
 // Manejo de peticiones AJAX (POST)
 if (isset($_POST["operacion"])) {
@@ -103,7 +102,6 @@ if (isset($_POST["operacion"])) {
 
     if (isset($reportesServicio)) {$reportesServicio->cerrar();}
     if (isset($mensualidadModel)) {$mensualidadModel->cerrar();}
-    if (isset($gastosModel)) {$gastosModel->cerrar();}
     if (isset($habitantesModel)) {$habitantesModel->cerrar();}
     Bitacora::cerrarConexionBitacora();
 

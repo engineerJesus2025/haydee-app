@@ -4,7 +4,9 @@ import { criptografiaMovil } from './criptografiaMovil';
 import * as FileSystem from 'expo-file-system/legacy';
 import { Alert } from 'react-native';
 
-const URL_BASE = process.env.EXPO_PUBLIC_URL_BASE;
+// const URL_BASE = process.env.EXPO_PUBLIC_URL_BASE;
+const URL_BASE = "http://192.168.1.39/condominios-haydee/haydee-web";
+
 let reduxStore;
 
 export const injectStore = (store) => {

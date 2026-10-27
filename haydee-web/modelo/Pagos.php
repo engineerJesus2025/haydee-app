@@ -72,7 +72,8 @@ class Pagos extends Conexion
             'registrar_pago'          => ['metodo_http' => ['POST'], 'campos' => ['apartamento_id', 'observacion', 'mensualidad_id', 'estado', 'tasa_dolar']],
             'cambiar_estado_pago'     => ['metodo_http' => ['PUT'],  'campos' => ['id_pago', 'estado', 'observacion']],
             'eliminar_pago'           => ['metodo_http' => ['DELETE'], 'campos' => ['id_pago']],
-            'modificar_pago'          => ['metodo_http' => ['POST'], 'campos' => ['id_pago', 'apartamento_id', 'observacion', 'mensualidad_id', 'estado', 'tasa_dolar']]
+            'modificar_pago'          => ['metodo_http' => ['POST'], 'campos' => ['id_pago', 'apartamento_id', 'observacion', 'mensualidad_id', 'estado', 'tasa_dolar']],
+            'escanear_comprobante'    => ['metodo_http' => ['POST'], 'campos' => []],
         ];
 
         if (isset($configPorOperacion[$operacion])) {
@@ -258,18 +259,52 @@ class Pagos extends Conexion
         return false; 
     }
 
+    private function _validar_monto_contra_deuda(PDO $pdo, float $total_abonado): void
+    {
+        $sql = "SELECT deuda_pendiente 
+                FROM vw_estado_cuentas_mensualidad 
+                WHERE id_mensualidad = :id_mensualidad 
+                LIMIT 1";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([':id_mensualidad' => $this->mensualidad_id]);
+        $deuda_pendiente = (float) $stmt->fetchColumn();
+
+        if ($deuda_pendiente <= 0) {
+            throw new NegocioException(
+                'La mensualidad seleccionada no presenta deuda pendiente o no existe.',
+                HttpCodigo::BAD_REQUEST->value
+            );
+        }
+
+        // Tolerancia de 1 céntimo para evitar falsos positivos por redondeo
+        if (round($total_abonado, 2) > round($deuda_pendiente, 2)) {
+            throw new NegocioException(
+                'El monto total a pagar (' . number_format($total_abonado, 2, '.', '') . ' Bs) ' .
+                'no puede superar la deuda pendiente de la mensualidad (' .
+                number_format($deuda_pendiente, 2, '.', '') . ' Bs).',
+                HttpCodigo::BAD_REQUEST->value
+            );
+        }
+    }
+
     public function _consultarMensualidadPendiente()
     {
         $sql = "SELECT 
-                    id_mensualidad,
-                    monto_cuota AS monto,
-                    mes,
-                    anio,
-                    deuda_pendiente AS pendiente
-                FROM vw_estado_cuentas_mensualidad
-                WHERE apartamento_id = :id_apartamento 
-                  AND UPPER(estado_pago) = 'PENDIENTE'
-                ORDER BY anio ASC, mes ASC";
+            vw.id_mensualidad,
+            vw.monto_cuota      AS monto,
+            vw.mes,
+            vw.anio,
+            vw.deuda_pendiente  AS pendiente,
+            m.porcentaje_interes,
+            m.limite_mensualidad
+        FROM vw_estado_cuentas_mensualidad vw
+        INNER JOIN mensualidad m ON m.id_mensualidad = vw.id_mensualidad
+        INNER JOIN periodos_mensualidad pm ON pm.id_periodo = m.periodo_id
+        WHERE vw.apartamento_id = :id_apartamento 
+          AND UPPER(vw.estado_pago) = 'PENDIENTE'
+          AND m.activo = 1
+          AND pm.activo = 1
+        ORDER BY vw.anio ASC, vw.mes ASC";
 
         $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
         $stmt->bindParam(':id_apartamento', $this->apartamento_id, PDO::PARAM_INT);
@@ -360,6 +395,23 @@ class Pagos extends Conexion
 
         $cabecera['detalles'] = $detalles;
 
+        $sqlMax = "SELECT 
+                vw.deuda_pendiente 
+                  + COALESCE(pm.monto_abonado, 0) AS maximo_editable
+                FROM vw_estado_cuentas_mensualidad vw
+                LEFT JOIN pagos_mensualidad pm 
+                      ON pm.mensualidad_id = vw.id_mensualidad 
+                     AND pm.pago_id = :id_pago
+                WHERE vw.id_mensualidad = :mensualidad_id
+                LIMIT 1";
+                
+        $stmtMax = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlMax);
+        $stmtMax->execute([
+            ':id_pago'        => $this->id_pago,
+            ':mensualidad_id' => $cabecera['mensualidad_id']
+        ]);
+        $cabecera['maximo_editable'] = (float) ($stmtMax->fetchColumn() ?: 0);
+
         return ['estatus' => true, 'datos' => $cabecera];
     }
 
@@ -442,6 +494,8 @@ class Pagos extends Conexion
                     ]);
                 }
             }
+
+            $this->_validar_monto_contra_deuda($pdo, $total_abonado);
 
             $this->_distribuir_abono_cascada($pdo, $id_pago, $total_abonado);
 
@@ -552,6 +606,8 @@ class Pagos extends Conexion
                     ]);
                 }
             }
+
+            $this->_validar_monto_contra_deuda($pdo, $total_abonado);
 
             $this->_distribuir_abono_cascada($pdo, $this->id_pago, $total_abonado);
 

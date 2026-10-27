@@ -112,12 +112,21 @@ async function consultar() {
             title: "Partida de Gasto", 
             field: "nombre_tipo_gasto", 
             minWidth: 250, 
-            responsive: 0, 
-            widthGrow: 2, 
+            responsive: 0,  
             formatter: (cell) => {
                 const valor = cell.getValue();
                 const icono = obtenerIconoTipoGasto(valor);
                 return `<div class="fw-bold"><i class="bi bi-${icono} me-2 text-primary fs-5"></i>${valor.toUpperCase()}</div>`;
+            }
+        },
+        {
+            title: "Clasificación",
+            field: "clasificacion",
+            minWidth: 130,
+            responsive: 1,
+            formatter: (cell) => {
+                const config = obtenerBadgeClasificacion(cell.getValue());
+                return ComponentesUI.crearSoftBadge(config.color, config.icono, config.texto);
             }
         },
         {
@@ -194,6 +203,7 @@ async function prepararFormulario(id) {
     Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
         let data = respuestaServidor.datos;
         formulario_usar.querySelector("#nombre_tipo_gasto").value = data.nombre_tipo_gasto;
+        formulario_usar.querySelector("#clasificacion").value = data.clasificacion || '';
 
         // Población dinámica de los renglones (Conceptos) en el formulario
         if (contenedorConceptos) {
@@ -273,6 +283,22 @@ function obtenerIconoTipoGasto(nombre){
     return icono;
 }
 
+function obtenerBadgeClasificacion(valor) {
+    const val = (valor || '').toUpperCase();
+    let color = "secondary";
+    let icono = "bi-tag-fill";
+    let texto = val ? val.charAt(0) + val.slice(1).toLowerCase() : '—';
+
+    if (val === 'FIJO') {
+        color = "primary";  icono = "bi-calendar-event";
+    } else if (val === 'VARIABLE') {
+        color = "warning";  icono = "bi-lightning-charge-fill";
+    } else if (val === 'REPOSICION') {
+        color = "success";  icono = "bi-wallet2";  texto = "Reposición";
+    }
+    return { color, icono, texto };
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const stepsPrincipal = [
         { element: '.page-header', popover: { title: 'Tipos de Gastos', description: 'Aquí defines las categorías principales y sus conceptos específicos para clasificar todos los egresos del condominio de manera clara.', side: "bottom", align: 'center' } },
@@ -282,6 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const stepsModal = [
         { element: '#nombre_tipo_gasto', popover: { title: 'Partida Principal', description: 'Escribe el nombre de la partida macro (Ej: "Servicios Públicos", "Gastos de Personal").', side: 'bottom', align: 'start' } },
+        { element: '#clasificacion', popover: { title: 'Clasificación', description: 'Indica si esta partida corresponde a gastos Fijos (recurrentes), Variables (esporádicos) o Reposición (caja chica).', side: 'bottom', align: 'start' } },
         { element: '#btn_agregar_concepto', popover: { title: 'Añadir Conceptos', description: 'Agrega subcategorías específicas (Ej: "Electricidad CORPOELEC", "Agua HIDROLARA") pertenecientes a esta partida.', side: 'left', align: 'center' } },
         { element: '#boton_formulario', popover: { title: 'Guardar', description: 'Registra la estructura completa de manera atómica en la base de datos.', side: 'top', align: 'center' } }
     ];

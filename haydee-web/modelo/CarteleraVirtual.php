@@ -35,10 +35,10 @@ class CarteleraVirtual extends Conexion
                 'exists' => ['tabla' => 'cartelera_virtual', 'campo' => 'id_cartelera']
             ],
             'titulo' => [
-                'regex' => '/^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()\'"!?¡¿%°\- ]{3,200}$/'
+                'regex' => '/^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,:;()\'"!?¡¿%°\-\s]{3,100}$/u'
             ],
             'descripcion' => [
-                'regex' => '/^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()\'"!?¡¿%°\- ]{3,200}$/'
+                'regex' => '/^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,:;()\'"!?¡¿%°\-\s]{3,200}$/u'
             ],
             'imagen' => [
                 'regex' => '/^[a-zA-Z0-9_.\- ]+\.(jpg|jpeg|png|gif)$/i',
@@ -72,7 +72,7 @@ class CarteleraVirtual extends Conexion
             ],
             'modificar_cartelera' => [
                 'metodo_http' => ['PUT', 'POST'],
-                'campos' => ['id_cartelera', 'titulo', 'descripcion', 'prioridad', 'usuario_id']
+                'campos' => ['id_cartelera', 'titulo', 'descripcion', 'prioridad']
             ],
             'eliminar_cartelera' => [
                 'metodo_http' => ['DELETE', 'POST'],
@@ -171,7 +171,6 @@ class CarteleraVirtual extends Conexion
                     descripcion = :descripcion,
                     imagen = :imagen,
                     prioridad = :prioridad,
-                    usuario_id = :usuario_id
                 WHERE id_cartelera = :id_cartelera";
 
         $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
@@ -180,7 +179,6 @@ class CarteleraVirtual extends Conexion
         $stmt->bindParam(':descripcion', $this->descripcion);
         $stmt->bindParam(':imagen', $this->imagen);
         $stmt->bindParam(':prioridad', $this->prioridad);
-        $stmt->bindParam(':usuario_id', $this->usuario_id);
         $stmt->execute();
 
         return ['estatus' => true, 'mensaje' => 'Publicación actualizada correctamente'];

@@ -10,7 +10,8 @@ export default function CustomBoton ({
   loading = false, 
   estilos = {}, 
   fuente = false, 
-  noDark = false 
+  noDark = false,
+  wrapperStyle = {},
 }) {
   const { colores } = useTema()
   const estilosCustomBoton = getEstilosCustomBoton(colores, noDark)
@@ -18,7 +19,7 @@ export default function CustomBoton ({
   const isBotonDeshabilitado = disabled || loading;
   
   return (
-    <View style={estilosCustomBoton.topRow}>
+    <View style={[estilosCustomBoton.topRow, wrapperStyle]}>
       <TouchableOpacity
         style={[
           estilosCustomBoton.primaryBtn, 

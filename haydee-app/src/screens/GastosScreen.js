@@ -24,23 +24,13 @@ export default function GastosScreen () {
   const { puedeRegistrarGasto, usuario: user } = usePermisos();
 
   const {
-    listaGastos,
-    totalGastadoMes,
-    loading,
-    error,
-    cargandoDetalle,
-    modalDetalleVisible,
-    modalGastoVisible,
-    gastoSeleccionado,
-    obtenerGastos,
-    abrirDetalles,
-    cerrarDetalles,
-    abrirNuevoGasto,
-    cerrarNuevoGasto,
-    mesFiltro, 
-    anioFiltro, 
-    cambiarFiltroFecha,
-    periodosDisponibles,
+    listaGastos, totalGastadoMes, loading, error, cargandoDetalle, eliminando,
+    modalDetalleVisible, modalGastoVisible, modalEdicionVisible,
+    gastoSeleccionado, gastoAEditar,
+    obtenerGastos, abrirDetalles, cerrarDetalles,
+    abrirEdicion, cerrarEdicion, handleEliminar,
+    abrirNuevoGasto, cerrarNuevoGasto,
+    mesFiltro, anioFiltro, cambiarFiltroFecha, periodosDisponibles,
     inicializando
   } = useGastos();
 
@@ -93,15 +83,15 @@ export default function GastosScreen () {
       {/* La vista ahora no tiene paddingHorizontal para que la lista maneje sus márgenes nativos */}
       <View style={[estilosGastos.mainContentContainer, { flex: 1, paddingHorizontal: 0, paddingBottom: 0 }]}>
         
-        {error ? (
-           <VistaError 
-            mensaje={error} 
-            onRetry={() => obtenerGastos(true)} 
+        {error && listaGastos.length === 0 ? (
+          <VistaError
+            mensaje={error}
+            onRetry={() => obtenerGastos(true)}
           />
         ) : (
           <ListaRefrescable
             data={estaCargando ? [] : listaGastos} 
-            keyExtractor={(item) => item.id.toString()}
+            keyExtractor={(item, index) => String(item.id ?? `temp-${index}`)}
             cargando={estaCargando && listaGastos.length > 0} 
             onRefresh={() => obtenerGastos(true)}
             cargandoInicial={estaCargando && listaGastos.length === 0}
@@ -121,11 +111,11 @@ export default function GastosScreen () {
       />
       
       <ModalDetalles
-        visible={modalDetalleVisible}
+        visible={modalEdicionVisible === false && modalDetalleVisible && gastoSeleccionado !== null}
         onClose={cerrarDetalles}
         titulo="Detalle de Gasto"
         datos={gastoSeleccionado}
-        campos={[ 
+        campos={[
           { key: 'tipo_gasto', label: 'Categoría' },
           { key: 'proveedor', label: 'Proveedor' },
           { key: 'monto', label: 'Monto Total' },
@@ -133,11 +123,25 @@ export default function GastosScreen () {
           { key: 'descripcion', label: 'Descripción' }
         ]}
         mostrarImagen={true}
+        onEditar={abrirEdicion}
+        onEliminar={handleEliminar}
+        eliminando={eliminando}
+        labelEditar="Editar Gasto"
+        labelEliminar="Eliminar Gasto"
       />
-      
-      <ModalFormularioGasto 
-        visible={modalGastoVisible} 
-        onClose={cerrarNuevoGasto} 
+
+      <ModalFormularioGasto
+        visible={modalGastoVisible}
+        onClose={cerrarNuevoGasto}
+        modo="crear"
+      />
+
+      <ModalFormularioGasto
+        key={modalEdicionVisible ? `editar-${gastoAEditar?.id ?? 'nuevo'}` : 'editar-cerrado'}
+        visible={modalEdicionVisible}
+        onClose={(exito) => cerrarEdicion(exito === true)}
+        modo="editar"
+        gastoAEditar={gastoAEditar}
       />
 
       <CargandoOverlay 

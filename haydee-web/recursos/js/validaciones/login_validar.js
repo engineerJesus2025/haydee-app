@@ -52,7 +52,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const contra = document.getElementById('contra');
     if (contra) {
-        contra.addEventListener('keyup', e => Validador.evaluarInput(e.target, Patrones.contrasena, 'Mínimo 5 caracteres'));
+        contra.addEventListener('keypress', e =>
+            Validador.bloquearTeclasInvalidas(e, Patrones.teclasContrasenaExtendida)
+        );  
+        contra.addEventListener('keyup', e => Validador.evaluarContrasenaFuerte(e.target));
     }
 
     const formLogin = document.getElementById('form-login'); // Ajusta este ID al de tu HTML
@@ -91,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function validarLogin() {
     const vCorreo = Validador.evaluarInput(document.getElementById('correo_login'), Patrones.correo, 'Correo inválido');
-    const vContra = Validador.evaluarInput(document.getElementById('contra'), Patrones.contrasena, 'Contraseña inválida');
+    const vContra = Validador.evaluarContrasenaFuerte(document.getElementById('contra'));
 
     if (!vCorreo || !vContra) {
         Alertas.mostrar('error', 'Error', 'Verifique los campos ingresados');

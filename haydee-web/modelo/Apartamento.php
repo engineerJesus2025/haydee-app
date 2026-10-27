@@ -27,7 +27,7 @@ class Apartamento extends Conexion
                 'exists' => ['tabla' => 'apartamentos', 'campo' => 'id_apartamento']
             ],
             'nro_apartamento' => [
-                'regex' => '/^[0-9\-\b]{1,4}$/',
+                'regex' => '/^([0-9]{1,2}-[0-9]|PH)$/',
                 'unique' => ['tabla' => 'apartamentos', 'campo' => 'nro_apartamento', 'exclude_field' => 'id_apartamento']
             ],
             'porcentaje_participacion' => [
@@ -151,7 +151,7 @@ class Apartamento extends Conexion
                        (SELECT CONCAT(h.nombre, ' ', h.apellido) 
                         FROM habitantes h 
                         JOIN habitantes_apartamentos ha ON h.id_habitante = ha.habitante_id 
-                        WHERE ha.apartamento_id = a.id_apartamento AND ha.tipo_vinculo = 'Propietario' 
+                        WHERE ha.apartamento_id = a.id_apartamento AND ha.tipo_vinculo = 'PROPIETARIO' 
                         LIMIT 1) as propietario
                 FROM apartamentos a 
                 WHERE a.activo = 1 

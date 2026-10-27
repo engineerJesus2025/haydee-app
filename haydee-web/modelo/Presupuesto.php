@@ -345,34 +345,59 @@ class Presupuesto extends Conexion
 
     private function _tiene_pagos_registrados($con, $id_presupuesto)
     {
-        $stmtBusca = $con->prepare("SELECT MONTH(fecha) as mes, YEAR(fecha) as anio FROM presupuesto WHERE id_presupuesto = :id");
+        // 1. Obtener la fecha del presupuesto (formateada como 'MM' y 'YYYY')
+        $stmtBusca = $con->prepare(
+            "SELECT 
+                LPAD(MONTH(fecha), 2, '0') AS mes, 
+                YEAR(fecha) AS anio 
+             FROM presupuesto 
+             WHERE id_presupuesto = :id AND activo = 1"
+        );
         $stmtBusca->execute([':id' => $id_presupuesto]);
         $fechaPre = $stmtBusca->fetch(PDO::FETCH_ASSOC);
 
-        if ($fechaPre) {
-            $stmtPer = $con->prepare("SELECT id_periodo FROM periodos_mensualidad WHERE mes = :mes AND anio = :anio");
-            $stmtPer->execute([':mes' => $fechaPre['mes'], ':anio' => $fechaPre['anio']]);
-            $id_periodo = $stmtPer->fetchColumn();
-
-            if ($id_periodo) {
-                $sqlPagos = "SELECT COUNT(*) FROM pagos_mensualidad pm 
-                             JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad 
-                             JOIN pagos p ON pm.pago_id = p.id_pago
-                             WHERE m.periodo_id = :periodo_id 
-                               AND p.activo = 1 
-                               AND p.estado NOT IN (:rechazado, :anulado)";
-                               
-                $stmtCheck = $con->prepare($sqlPagos);
-                $stmtCheck->execute([
-                    ':periodo_id' => $id_periodo,
-                    ':rechazado'  => EstadoPago::RECHAZADO->value,
-                    ':anulado'    => EstadoPago::ANULADO->value   
-                ]);
-                
-                return $stmtCheck->fetchColumn() > 0;
-            }
+        if (!$fechaPre) {
+            return false;
         }
-        return false;
+
+        // 2. Buscar período ACTIVO comparando ambos lados como números (sin ceros a la izquierda)
+        //    Esto funciona sin importar si `mes` es INT o VARCHAR ('01').
+        $stmtPer = $con->prepare(
+            "SELECT id_periodo 
+             FROM periodos_mensualidad 
+             WHERE CAST(mes AS UNSIGNED) = CAST(:mes AS UNSIGNED)
+               AND CAST(anio AS UNSIGNED) = CAST(:anio AS UNSIGNED)
+               AND activo = 1
+             LIMIT 1"
+        );
+        $stmtPer->execute([
+            ':mes'  => $fechaPre['mes'],
+            ':anio' => $fechaPre['anio']
+        ]);
+        $id_periodo = $stmtPer->fetchColumn();
+
+        if (!$id_periodo) {
+            return false;
+        }
+
+        // 3. Verificar pagos vigentes
+        $sqlPagos = "SELECT COUNT(*) 
+                     FROM pagos_mensualidad pm 
+                     INNER JOIN mensualidad m ON pm.mensualidad_id = m.id_mensualidad 
+                     INNER JOIN pagos p ON pm.pago_id = p.id_pago
+                     WHERE m.periodo_id = :periodo_id 
+                       AND m.activo = 1
+                       AND p.activo = 1 
+                       AND UPPER(COALESCE(p.estado, '')) NOT IN (UPPER(:rechazado), UPPER(:anulado))";
+
+        $stmtCheck = $con->prepare($sqlPagos);
+        $stmtCheck->execute([
+            ':periodo_id' => $id_periodo,
+            ':rechazado'  => EstadoPago::RECHAZADO->value,
+            ':anulado'    => EstadoPago::ANULADO->value
+        ]);
+
+        return $stmtCheck->fetchColumn() > 0;
     }
 
     private function _consultar_presupuestos_mensualidades()

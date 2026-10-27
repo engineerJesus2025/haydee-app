@@ -19,13 +19,13 @@ export const CORREO_REGEX = {
 }
 
 export const CONTRA_REGEX = {
-  patron: /^[A-Za-z0-9_.+*$#%&@-]{5,100}$/,
-  mensaje: 'Solo letras, números y símbolos permitidos (_.+*$#%&@-)',
+  patron: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[_.+*$#%&@-])[A-Za-z0-9_.+*$#%&@-]{8,100}$/,
+  mensaje: 'Debe tener mayúscula, minúscula, número y un carácter especial (_.+*$#%&@-)',
   filtro: /[^A-Za-z0-9_.+*$#%&@-]/g,
   limites: {
-    minimo: 5,
+    minimo: 8,
     maximo: 100,
-    mensaje_min: 'La contraseña debe tener mínimo 5 caracteres',
+    mensaje_min: 'La contraseña debe tener mínimo 8 caracteres',
     mensaje_max: 'Máximo 100 caracteres'
   },
   requerido: {

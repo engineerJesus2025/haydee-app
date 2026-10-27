@@ -79,7 +79,7 @@ export default function FormularioLogin ({ botonBloqueadoPorSeguridad, estadoCon
         rules={validaciones.contra}
         icono={{ nombre: 'lock-closed', color: '#000' }}
         error={errors.contra}
-        placeholder='Ejm: 12345'
+        placeholder='Ejm: MiClave#2024'
         keyboardType='password'
         autoCapitalize='none'
         noDark={true}

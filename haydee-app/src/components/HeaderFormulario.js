@@ -1,72 +1,93 @@
-import { View, Text, StyleSheet } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import Icon from 'react-native-vector-icons/Ionicons'
 
 import { useTema } from './../hooks/useTema'
-import CustomBoton from '../components/CustomBoton'
 
-export default function HeaderFormulario ({ icono = false, titulo, evento, estilos = {},  noDark = false }) {
+export default function HeaderFormulario({
+  icono = false,
+  titulo,
+  evento,
+  estilos = {},
+  noDark = false,
+  headerAcciones = null,
+}) {
   const { colores } = useTema()
-  const estilosHeaderFormulario = getEstilosHeaderFormulario(colores, noDark)
+  const s = getEstilos(colores, noDark)
 
   return (
-    <View style={[estilosHeaderFormulario.header, estilos]}>
-      <View style={estilosHeaderFormulario.actionContainer}>
-        {icono && <Icon name={icono.name} size={24} color={icono.color} />}
-      </View>
-      
-      <Text style={estilosHeaderFormulario.title}>
+    <View style={[s.header, estilos]}>
+      {/* Zona izquierda — solo si hay ícono */}
+      {icono ? (
+        <View style={s.iconZone}>
+          <Icon name={icono.name} size={22} color={icono.color} />
+        </View>
+      ) : (
+        <View style={s.iconZone} />  // placeholder para mantener simetría
+      )}
+
+      {/* Título — centro real */}
+      <Text style={s.title} numberOfLines={1} ellipsizeMode="tail">
         {titulo}
       </Text>
 
-      {/* 2. El botón derecho ahora tiene un contenedor balanceado */}
-      <View style={estilosHeaderFormulario.actionContainer}>
-        <CustomBoton
-          titulo=''
-          evento={evento}
-          icono={{ nombre: 'close-outline', color: '#E1E1F7' }}
-          estilos={estilosHeaderFormulario.closeButton}
-          fuente={24}
-          noDark={false}
-        />
+      {/* Zona derecha — acciones + X */}
+      <View style={s.rightZone}>
+        {headerAcciones}
+        <TouchableOpacity
+          onPress={evento}
+          style={s.closeBtn}
+          hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
+          accessibilityRole="button"
+          accessibilityLabel="Cerrar"
+        >
+          <Icon name="close" size={24} color="#E1E1F7" />
+        </TouchableOpacity>
       </View>
     </View>
   )
-};
+}
 
-const getEstilosHeaderFormulario = (colores, noDark = false) => StyleSheet.create({
+const getEstilos = (colores, noDark = false) => StyleSheet.create({
   header: {
-    backgroundColor: noDark?'#007BFF':colores.backgroundBotones,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: noDark?'#2c3e50':colores.text,
+    backgroundColor: noDark ? '#007BFF' : colores.backgroundBotones,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between'
+    borderBottomWidth: 1,
+    borderBottomColor: noDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 2,
+    zIndex: 10,
   },
-  actionContainer: {
-    width: 40, 
+  iconZone: {
+    width: 32,
+    height: 32,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
   },
   title: {
-    fontSize: 20,
+    flex: 1,
+    fontSize: 18,
     fontWeight: '700',
     color: '#E1E1F7',
     textAlign: 'center',
-    flex: 1,
-    marginHorizontal: 10
+    marginHorizontal: 8,
+    letterSpacing: 0.2,
   },
-  closeButton: {
-    paddingVertical: 0,
-    paddingTop: 5,
-    paddingHorizontal: 0,
-    elevation: 0,
-    marginBottom: 0,
-    marginTop: 0, 
-    minWidth: 40,
+  rightZone: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'start'
-  }
+    gap: 2,
+  },
+  closeBtn: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 22,
+  },
 })

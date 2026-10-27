@@ -34,14 +34,14 @@ class Excepciones
         // Clasificación del Error Enriquecida
         if ($e instanceof ValidacionException) {
             $datosError['tipo']   = 'validacion';
-            $datosError['titulo'] = 'Datos Inválidos';
+            $datosError['titulo'] = 'Datos Invalidos';
             $datosError['color']  = '#f59e0b'; // Amarillo/Warning
             $datosError['icono']  = 'alert-triangle';
             $datosError['errores'] = $e->getErrores();
             
         } elseif ($e instanceof NegocioException) {
             $datosError['tipo']   = 'negocio';
-            $datosError['titulo'] = 'Operación No Permitida';
+            $datosError['titulo'] = 'Operacion No Permitida';
             $datosError['color']  = '#3b82f6'; // Azul/Info
             $datosError['icono']  = 'info-circle';
             
@@ -65,27 +65,27 @@ class Excepciones
             $datosError['color']  = '#991b1b'; 
             $datosError['icono']  = 'database-fail';
             $datosError['ref']    = $incidenteId;
-            $datosError['mensaje'] = "Ocurrió un problema interno al procesar los datos. Si el problema persiste, contacte a soporte indicando el código de referencia.";
+            $datosError['mensaje'] = "Ocurrio un problema interno al procesar los datos. Si el problema persiste, contacte a soporte indicando el codigo de referencia.";
             
             $causa = $e->getPrevious() ? $e->getPrevious()->getMessage() : $e->getMessage();
-            
-            error_log("[REF: {$incidenteId}] [BD CRÍTICO] {$mensajeOriginal} | Causa interna: {$causa} en {$e->getFile()}:{$e->getLine()}");
+            $codigoHttp = 503; // OJO
+            error_log("[REF: {$incidenteId}] [BD CRITICO] {$mensajeOriginal} | Causa interna: {$causa} en {$e->getFile()}:{$e->getLine()}");
             
         } elseif (!$e instanceof HaydeeException) {
             $codigoHttp = HttpCodigo::ERROR_INTERNO->value;
             $datosError['tipo']   = 'critico';
-            $datosError['titulo'] = 'Fallo Crítico';
+            $datosError['titulo'] = 'Fallo Critico';
             $datosError['color']  = '#000000'; 
             $datosError['icono']  = 'alert-octagon';
             $datosError['ref']    = $incidenteId;
             
-            $datosError['mensaje'] = "Ocurrió un error inesperado en el servidor.";
+            $datosError['mensaje'] = "Ocurrio un error inesperado en el servidor.";
             
             // Captura la clase del error y un fragmento del Stack Trace
             $claseError = get_class($e);
             $trazaCorta = substr(str_replace("\n", " ", $e->getTraceAsString()), 0, 150);
             
-            error_log(sprintf("[REF: %s] [CRÍTICO] %s: %s en %s:%d | Traza: %s...", 
+            error_log(sprintf("[REF: %s] [CRITICO] %s: %s en %s:%d | Traza: %s...", 
                 $incidenteId, $claseError, $e->getMessage(), $e->getFile(), $e->getLine(), $trazaCorta));
         }
 

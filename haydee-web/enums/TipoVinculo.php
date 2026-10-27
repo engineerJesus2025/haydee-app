@@ -2,7 +2,7 @@
 namespace haydee\enums;
 
 enum TipoVinculo: string {
-    case PROPIETARIO = 'Propietario';
-    case HABITANTE = 'Habitante';
-    case INQUILINO = 'Inquilino';
+    case PROPIETARIO = 'PROPIETARIO';
+    case FAMILIAR  = 'FAMILIAR';
+    case INQUILINO = 'INQUILINO';
 }

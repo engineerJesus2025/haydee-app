@@ -16,7 +16,7 @@ export default function useHandshake() {
       else setEstadoConexion('conectando');
 
       const respuesta = await clienteApi.get('', { params: { endpoint: 'handshake' } });
-
+      // console.log(respuesta)
       if (respuesta.data.estatus) {
         criptografiaMovil.setLlavePublica(respuesta.data.public_key);
         setLlaveLista(true);

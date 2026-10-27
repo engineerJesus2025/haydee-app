@@ -1,14 +1,20 @@
 document.addEventListener("DOMContentLoaded", function () {
-    const selectClasificacion = document.getElementById("clasificacion");
-    if (selectClasificacion) {
-        selectClasificacion.addEventListener("change", function () { Validador.evaluarSelect(this.id); });
-    }
-
     const selectConcepto = document.getElementById("concepto_id");
+    const selectClasificacionRO = document.getElementById("clasificacion");
+
     if (selectConcepto) {
         selectConcepto.addEventListener("change", async function () {
-            if (!Validador.evaluarSelect(this.id)) return; 
-            await Validador.verificarExistenciaEnServidor('validar_clave_foranea', { tabla: 'conceptos_gasto', nombre_clave: 'id_concepto', valor: this.value }, this, 'El concepto seleccionado no existe');
+            // Reflejar visualmente
+            reflejarClasificacion();
+
+            // Validación existente
+            if (!Validador.evaluarSelect(this.id)) return;
+            await Validador.verificarExistenciaEnServidor(
+                'validar_clave_foranea',
+                { tabla: 'conceptos_gasto', nombre_clave: 'id_concepto', valor: this.value },
+                this,
+                'El concepto seleccionado no existe'
+            );
         });
     }
 
@@ -35,9 +41,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // ============================================================
-    // VALIDACIONES EN TIEMPO REAL - DETALLES (Delegación)
-    // ============================================================
+    // VALIDACIONES EN TIEMPO REAL
     const contenedor = document.getElementById("detalles-container");
 
     if (contenedor) {
@@ -146,17 +150,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
 });
 
+function reflejarClasificacion() {
+    const selectConcepto = document.getElementById("concepto_id");
+    const inputClasificacion  = document.getElementById("clasificacion");
+    if (!selectConcepto || !inputClasificacion ) return;
+    const clasificacion_opt = selectConcepto.selectedOptions[0]?.dataset?.clasificacion;
+    inputClasificacion.value = clasificacion_opt.charAt(0) + clasificacion_opt.slice(1).toLowerCase();
+}
+
 async function validarFormularioCompleto() {
-    const selectClasificacion = document.getElementById("clasificacion");
     const selectConcepto = document.getElementById("concepto_id");
     const selectProveedor = document.getElementById("proveedor_id");
-    const selectPresupuesto = document.getElementById("presupuesto_id"); // Añadido
+    const selectPresupuesto = document.getElementById("presupuesto_id");
     const inputDescGasto = document.getElementById("descripcion_gasto");
-
-    if (!Validador.evaluarSelect(selectClasificacion.id)) {
-        Alertas.mostrar("error", "Error", "Debe seleccionar una clasificación");
-        return false;
-    }
 
     if (!Validador.evaluarSelect(selectConcepto.id)) {
         Alertas.mostrar("error", "Error", "Debe seleccionar un concepto de gasto");

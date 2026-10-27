@@ -42,16 +42,21 @@ export default function CarteleraVirtualScreen () {
     cargando,
     error,
     cargandoMas,
+    eliminando,
     cargarMasPublicaciones,
     obtenerPublicaciones,
     modalVisible,
     modalDetalleVisible,
+    modalEdicionVisible,
     publicacionSeleccionada,
+    publicacionAEditar,
     abrirModalNuevaPublicacion,
     cerrarModalNuevaPublicacion,
     abrirModalDetalle,
     cerrarModalDetalle,
-    handleGuardarEdicion
+    abrirModalEdicion,
+    cerrarModalEdicion,
+    handleEliminar,
   } = useCarteleraVirtual(colores);
 
   const renderPublicacion = useCallback(({ item }) => (
@@ -154,11 +159,20 @@ export default function CarteleraVirtualScreen () {
         onClose={cerrarModalNuevaPublicacion}
       />
 
-      {/* MODAL DE DETALLES */}
+      <ModalFormularioPublicaciones
+        key={modalEdicionVisible ? `editar-${publicacionAEditar?.id ?? 'x'}` : 'editar-cerrado'}
+        visible={modalEdicionVisible}
+        onClose={(exito) => cerrarModalEdicion(exito === true)}
+        publicacionEditar={publicacionAEditar}
+      />
+
       <ModalDetallePublicacion
-        visible={modalDetalleVisible}
+        visible={modalDetalleVisible && !modalEdicionVisible}
         onClose={cerrarModalDetalle}
         publicacion={publicacionSeleccionada}
+        onEditar={abrirModalEdicion}
+        onEliminar={handleEliminar}
+        eliminando={eliminando}
       />
     </View>
   );

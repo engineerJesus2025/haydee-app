@@ -2,6 +2,6 @@
 namespace haydee\enums;
 
 enum Sexo: string {
-    case MASCULINO = 'Masculino';
-    case FEMENINO = 'Femenino';
+    case MASCULINO = 'M';
+    case FEMENINO = 'F';
 }

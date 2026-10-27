@@ -7,53 +7,35 @@
                     <span class="ms-2" id="titulo_modal_reponer_caja">Reponer Caja</span>
                 </h1>
                 <div class="d-flex align-items-center">
-                    <button type="button" class="btn btn-link text-white p-1 me-3 lh-1 d-md-none" id="btn_ayuda_modal" title="Ayuda de este formulario" data-tooltip="true">
-                        <i class="bi bi-question-circle-fill fs-4"></i>
-                    </button>
-                    
                     <button type="button" class="btn-close btn-close-white m-0" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
             </div>
             <div class="modal-body rounded-bottom">
-                <form class="m-3" id="form_registro_gasto">
-                    <div class="row">
-                        <div class="col-lg-5">
-                            <label for="monto_reponer">Monto del gasto: <span class="text-danger">*</span></label>
-                            <div class="input-group mb-3">
-                                <input type="number" name="monto_reponer" id="monto_reponer" class="form-control" maxlength="15" minlength="0" title="Monto del gasto en bolivares" monto="bs" placeholder="Monto">
-                                <span class="rounded-end input-group-text icono_moneda" id="spam_icono_moneda_cuota">Bs.</span>
-                                <span class="w-100 invalid-feedback"></span>
-                            </div>
-                        </div>
-                        <div class="col-2 d-flex justify-content-center align-items-center">
-                            <button class="btn btn-soft-info boton_intercambio_monto" id="boton_intercambio_monto_reponer" title="Presione para cambiar el tipo de moneda">
-                                <span><i class="bi bi-arrow-left-right"></i></span>
-                            </button>            
-                        </div>
-                        <div class="col-lg-5 col-10 text-center">
-                            <label for="monto_cambio_reponer"></label>
-                            <div class="input-group mb-3">
-                                <input type="text" name="monto_cambio_reponer" id="monto_cambio_reponer" minlength="0" value="0" class="form-control" maxlength="15" disabled title="Monto del gasto en dolares">
-                                <span class="input-group-text icono_moneda" id="spam_icono_moneda_cuota_cambio">$</span>
-                            </div>
-                        </div>
-                        <div class="col-12">
-                           <p class="text-muted">Fondos en caja actualmente: <b id="fondos_caja_restantes"></b></p>    
-                        </div>
-                        <div class="col-12">
-                           <p class="text-muted">Total del Fondos Gastados: <b id="fondos_gastados"></b></p>    
+                <div class="m-3">
+                    <div class="alert alert-info d-flex align-items-center small shadow-sm mb-4" role="alert">
+                        <i class="bi bi-info-circle-fill fs-5 me-2 flex-shrink-0"></i>
+                        <div>
+                            El sistema calculará automáticamente el total a reponer basándose en los gastos pendientes y generará el registro contable correspondiente.
                         </div>
                     </div>
-                </form>
+                    
+                    <div class="row">
+                        <div class="col-12 text-center mb-3">
+                           <p class="text-muted mb-1">Total de Fondos Gastados (Pendientes):</p>
+                           <h3 class="text-danger fw-bold" id="fondos_gastados_reponer">0.00 Bs.</h3>
+                           <p class="text-muted small" id="fondos_gastados_reponer_usd">0.00 $</p>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <div class="col-md-12 text-end">
                    <button type="button" class="btn btn-soft-secondary me-3 mb-2" data-bs-dismiss="modal">
                       <i class="bi bi-x-circle me-2"></i> Cancelar
                    </button>
-                   <button class="btn btn-primary px-3 shadow-sm mb-2" type="submit" id="boton_formulario">
+                   <button class="btn btn-primary px-3 shadow-sm mb-2" type="button" id="boton_guardar_reposicion">
                        <i class="bi bi-check2-circle me-2"></i>
-                       <span id="texto_boton_formulario">Guardar Repocición</span>
+                       <span>Procesar Reposición</span>
                    </button>
                 </div>
             </div>

@@ -58,7 +58,7 @@
                                                     <i class="bi bi-person text-primary mi-icono fs-5"></i>
                                                 </div>
                                                 <div class="form-floating flex-grow-1">
-                                                    <input type="email" name="usuario" class="form-control mi-input" id="correo_login" placeholder="Correo" required autofocus>
+                                                    <input type="email" name="usuario" class="form-control mi-input" id="correo_login" placeholder="Ejemplo: usuario@gmail.com" required autofocus>
                                                     <label for="correo_login" class="text-muted">Correo electrónico</label>
                                                 </div>
                                             </div>
@@ -73,7 +73,7 @@
                                                     <i class="bi bi-lock text-primary mi-icono fs-5"></i>
                                                 </div>
                                                 <div class="form-floating flex-grow-1">
-                                                    <input type="password" name="contra" class="form-control mi-input pe-5" id="contra" placeholder="Contraseña" required>
+                                                    <input type="password" name="contra" class="form-control mi-input pe-5" id="contra" placeholder="Ejemplo: MiClave#2024" required>
                                                     <label for="contra" class="text-muted">Contraseña</label>
                                                 </div>
                                                 <button type="button" class="btn btn-link text-decoration-none text-muted position-absolute end-0 top-50 translate-middle-y me-2 contra-btn" id="btn-ver-contra">

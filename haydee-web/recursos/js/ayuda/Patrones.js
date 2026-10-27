@@ -1,7 +1,7 @@
 const Patrones = {
     // VALIDADORES GLOBALES Y TEXTOS GENÉRICOS
     correo: /^[a-zA-Z0-9._+-]{3,35}@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/,
-    contrasena: /^[A-Za-z0-9_.+*$#%&@-]{5,100}$/,
+    contrasena: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[_.+*$#%&@-])[A-Za-z0-9_.+*$#%&@-]{8,100}$/,
     
     // Nombres y textos (Solo letras y espacios)
     nombrePersona: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,40}$/,  // 3 a 40 caracteres
@@ -30,12 +30,12 @@ const Patrones = {
     // MÓDULOS ESPECÍFICOS (Condominio, Cartelera, Caja, etc.)
     
     // Condominio / Apartamentos
-    nroApartamento: /^[0-9-]{1,3}$/,                  // 1 a 3 caracteres (Números y guiones)
+    nroApartamento: /^([0-9]{1,2}-[0-9]|PH)$/,                  // 1 a 3 caracteres (Números y guiones)
     
     // Cartelera Virtual y Solicitudes
     prioridad: /^[1-3]$/,                             // Valores numéricos 1, 2 o 3
     tituloCartelera: /^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()'\"!?¡¿%°\-\s]{3,100}$/,
-    descripcionCartelera: /^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,;()'\"!?¡¿%°\-\s]{3,200}$/,
+    descripcionCartelera: /^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9.,:;()'\"!?¡¿%°\-\s]{3,200}$/,
     
     // Gastos, Presupuestos y Caja Chica
     nombreDetalle: /^[A-Za-záéíóúñÑ \s]{4,50}$/,      // Nombres de ítems de presupuesto
@@ -44,6 +44,7 @@ const Patrones = {
     descripcion: /^[A-Za-z0-9áéíóúñÁÉÍÓÚÑ\s]{3,60}$/, 
     observacion: /^[A-Za-z0-9ñ.,\s]{0,50}$/,          // Opcional (Permite estar vacío)
     observacionExtendida: /^[a-zA-Z0-9\sáéíóúñÁÉÍÓÚÑ.,-]{3,60}$/,
+    clasificacion:/^[a-zA-ZñÑáéíóúÁÉÍÓÚ]{3,30}$/ ,
     
     // Roles y Permisos
     accionPermiso: /^[A-Za-z_]{3,50}$/,               // Solo letras y guión bajo (Ej: GESTIONAR_USUARIOS)

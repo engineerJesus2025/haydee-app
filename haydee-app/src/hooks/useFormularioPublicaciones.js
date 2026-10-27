@@ -1,18 +1,40 @@
-import { useForm } from 'react-hook-form'
-import { useDispatch } from 'react-redux'
-import { useState, useEffect } from 'react'
-import * as ImagePicker from 'expo-image-picker'
-import { Alert } from 'react-native'
-import { fetchPublicaciones, crearPublicacion } from '../store/slices/publicacionesSlice';
+import { useForm } from 'react-hook-form';
+import { useDispatch } from 'react-redux';
+import { useState, useEffect, useMemo } from 'react';
+import * as ImagePicker from 'expo-image-picker';
+import { Alert } from 'react-native';
+import { crearPublicacion, modificarPublicacion } from '../store/slices/publicacionesSlice';
 import { procesarErrorApi } from '../utils/gestorErroresUI';
 import { usePermisos } from './usePermisos';
 
-export const useFormularioPublicaciones = (onClose, publicacionEditar = null) => { 
-  const dispatch = useDispatch()
+export const useFormularioPublicaciones = (onClose, publicacionEditar = null) => {
+  const dispatch = useDispatch();
   const [permissionStatus, requestPermission] = ImagePicker.useMediaLibraryPermissions();
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { usuario } = usePermisos();
-  
+
+  const esEdicion = !!publicacionEditar;
+
+  // ============ VALORES INICIALES (calculados una sola vez) ============
+  const valoresIniciales = useMemo(() => {
+    if (esEdicion) {
+      return {
+        titulo:      publicacionEditar.titulo || '',
+        descripcion: publicacionEditar.descripcion || '',
+        // El tipo ya viene mapeado ('aviso'/'evento'/'noticia') desde el slice
+        tipo:        publicacionEditar.tipo || 'noticia',
+        // Guardamos la URL de la imagen existente (http://...)
+        imagen:      publicacionEditar.imagen || null,
+      };
+    }
+    return {
+      titulo: '',
+      descripcion: '',
+      imagen: null,
+      tipo: 'aviso',
+    };
+  }, [esEdicion, publicacionEditar]);
+
   const {
     control,
     handleSubmit,
@@ -21,37 +43,17 @@ export const useFormularioPublicaciones = (onClose, publicacionEditar = null) =>
     setValue,
     watch,
     trigger,
-    clearErrors
+    setError,
+    clearErrors,
   } = useForm({
     mode: 'onChange',
-    defaultValues: {
-      titulo: '',
-      descripcion: '',
-      imagen: null,
-      tipo: 'aviso'
-    }
-  })
+    defaultValues: valoresIniciales,
+  });
 
-  const imageUri = watch('imagen')
-  const titulo = watch('titulo')
-  const descripcion = watch('descripcion')
-  const tipo = watch('tipo')
-
-  useEffect(() => {
-    if (publicacionEditar) {
-      setValue('titulo', publicacionEditar.titulo || '')
-      setValue('descripcion', publicacionEditar.descripcion || '')
-      setValue('imagen', publicacionEditar.imagen || null)
-      setValue('tipo', publicacionEditar.tipo || '')
-    } else {
-      reset({
-        titulo: '',
-        descripcion: '',
-        imagen: null,
-        tipo: ''
-      })
-    }
-  }, [publicacionEditar, setValue, reset])
+  const imageUri  = watch('imagen');
+  const titulo    = watch('titulo');
+  const descripcion = watch('descripcion');
+  const tipo      = watch('tipo');
 
   useEffect(() => {
     (async () => {
@@ -74,9 +76,9 @@ export const useFormularioPublicaciones = (onClose, publicacionEditar = null) =>
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         allowsEditing: true,
-        aspect: [4, 3], // Formato horizontal para noticias en la cartelera
-        quality: 0.4, 
-        base64: true
+        aspect: [4, 3],
+        quality: 0.4,
+        base64: true,
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
@@ -88,69 +90,79 @@ export const useFormularioPublicaciones = (onClose, publicacionEditar = null) =>
     }
   };
 
-  useEffect(() => {
-      clearErrors('imagen');
-  }, [clearErrors]);
-
   const removeImage = () => {
-    setValue('imagen', null, { shouldValidate: true })
-  }
+    setValue('imagen', null, { shouldValidate: true });
+  };
 
   const onSubmit = async (data) => {
     if (isSubmitting) return;
-
-    // Pausamos para que tenga tiempo de pintar el Spinner
-    await new Promise(resolve => setTimeout(resolve, 50)); // Esto se llama THREAD YIELDING mi estimado
-
+    await new Promise(resolve => setTimeout(resolve, 50));
     setIsSubmitting(true);
 
     try {
       const formData = new FormData();
-      formData.append('operacion', 'registrar_cartelera');
+      formData.append('operacion', esEdicion ? 'modificar_cartelera' : 'registrar_cartelera');
       formData.append('titulo', data.titulo);
       formData.append('descripcion', data.descripcion);
-      formData.append('usuario_id', usuario?.id_usuario); // Temporal hasta usar Tokens de sesión
+      formData.append('usuario_id', usuario?.id_usuario);
 
-      let prioridad = 3; // Por defecto Noticia
+      if (esEdicion) {
+        formData.append('id_cartelera', publicacionEditar.id);
+      }
+
+      let prioridad = 3;
       if (data.tipo === 'aviso') prioridad = 1;
       else if (data.tipo === 'evento') prioridad = 2;
       formData.append('prioridad', prioridad);
 
-      // Empaquetar la imagen para React Native
-      if (data.imagen) {
-        let localUri = data.imagen;
-        let filename = localUri.split('/').pop();
+      // ============ MANEJO DE IMAGEN ============
+      const esImagenNueva = data.imagen && data.imagen.startsWith('file://');
+      const fueEliminada = esEdicion && publicacionEditar.imagen && !data.imagen;
 
-        let match = /\.(\w+)$/.exec(filename);
-        let type = match ? `image/${match[1]}` : `image`;
+      if (esImagenNueva) {
+        // Caso 1: nueva imagen
+        const localUri = data.imagen;
+        const filename = localUri.split('/').pop();
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : 'image';
 
         formData.append('imagen', {
           uri: localUri,
           name: filename,
-          type: type
+          type: type,
         });
+      } else if (fueEliminada) {
+        // Caso 2: quitar la imagen existente sin reemplazarla
+        formData.append('eliminar_imagen', '1');
       }
+      // Caso 3: conservar la actual → no enviamos nada
 
+      // ============ DATOS PARA OPTIMISTIC UI ============
       const datosVisuales = {
         titulo: data.titulo,
         descripcion: data.descripcion,
         tipo: data.tipo,
-        autor: usuario?.nombre_completo || usuario?.nombre || 'Administrador', 
-        imagen: data.imagen
+        autor: usuario?.nombre_completo || usuario?.nombre || 'Administrador',
+        imagen: esImagenNueva ? data.imagen
+              : (fueEliminada ? null : publicacionEditar?.imagen || null),
+        imagen_nombre: esImagenNueva ? null : (fueEliminada ? null : publicacionEditar?.imagen_nombre || null),
       };
 
-      // Despachamos la acción al servidor y esperamos que termine (.unwrap() extrae el resultado o lanza el error)
-      await dispatch(crearPublicacion({ datosVisuales, formData })).unwrap();
+      if (esEdicion) {
+        await dispatch(modificarPublicacion({
+          id_cartelera: publicacionEditar.id,
+          formData,
+          datosVisuales,
+        })).unwrap();
+      } else {
+        await dispatch(crearPublicacion({ datosVisuales, formData })).unwrap();
+      }
 
-      // Cerramos modal y limpiamos
-      onClose();
-      setTimeout(() => {
-        resetForm();
-      }, 400);
+      onClose(esEdicion); // true = refrescar
+      setTimeout(() => reset(valoresIniciales), 400);
 
     } catch (error) {
       procesarErrorApi(error, (status, mensaje, erroresFormulario) => {
-        // Si es un error 400 y trae detalles por campo
         if (status === 400 && erroresFormulario) {
           Object.keys(erroresFormulario).forEach(campo => {
             setError(campo, {
@@ -158,56 +170,40 @@ export const useFormularioPublicaciones = (onClose, publicacionEditar = null) =>
               message: erroresFormulario[campo][0]
             });
           });
-          
-          //Feedback general
           Alert.alert('Datos Inválidos', mensaje || 'Revise los campos marcados en rojo.');
-          
           return true;
         }
-        
-        return false; // Si es un 401, 403, 500, etc.
+        return false;
       });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const resetForm = () => {
-    reset({
-      titulo: '',
-      descripcion: '',
-      imagen: null,
-      tipo: ''
-    })
-    setIsSubmitting(false)
-  }
-
   const handleCancel = () => {
-    onClose()
-    setTimeout(() => {
-      resetForm()
-    }, 400)
-  }
+    onClose(false);
+    setTimeout(() => reset(valoresIniciales), 400);
+  };
 
-  const onError = (errors) => {
-    const primerCampoConError = Object.keys(errors)[0];
-    const mensajeError = errors[primerCampoConError]?.message || 'Por favor, completa este campo correctamente.';
-    
+  const onError = (errs) => {
+    const primerCampoConError = Object.keys(errs)[0];
+    const mensajeError = errs[primerCampoConError]?.message || 'Por favor, completa este campo correctamente.';
+
     const nombresCampos = {
       titulo: 'Título',
       descripcion: 'Descripción',
       tipo: 'Tipo de Publicación'
     };
-    
+
     const nombreLegible = nombresCampos[primerCampoConError] || primerCampoConError;
 
     Alert.alert(
-      "Información incompleta",
+      'Información incompleta',
       `Error en ${nombreLegible}: ${mensajeError}`
     );
   };
 
-  const canSubmit = isValid && !isSubmitting && titulo.trim() && descripcion.trim() && tipo;
+  const canSubmit = isValid && !isSubmitting && titulo?.trim() && descripcion?.trim() && tipo;
 
   return {
     control,
@@ -225,7 +221,6 @@ export const useFormularioPublicaciones = (onClose, publicacionEditar = null) =>
     removeImage,
     onSubmit,
     handleCancel,
-    resetForm,
-    onError
-  }
-}
+    onError,
+  };
+};

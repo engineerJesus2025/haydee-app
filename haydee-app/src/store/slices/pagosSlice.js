@@ -112,6 +112,35 @@ export const registrarPagoServidor = createAsyncThunk(
   }
 );
 
+export const modificarPagoServidor = createAsyncThunk(
+  'pagos/modificarPagoServidor',
+  async ({ id_pago, formData, datosVisuales }, { rejectWithValue }) => {
+    try {
+      const respuesta = await clienteApi.post('', formData, {
+        params: { endpoint: 'pagos' }
+      });
+
+      const json = respuesta.data;
+
+      if (json.estatus) {
+        return { id: id_pago, ...datosVisuales };
+      } else {
+        return rejectWithValue(json.mensaje || 'Error al modificar el pago');
+      }
+    } catch (error) {
+      const esErrorDeRed = !error.response && error.request;
+
+      const errorPlano = {
+        tipo: esErrorDeRed ? 'RED' : 'API_ERROR',
+        mensaje: error.response?.data?.mensaje || error.message || 'Error de conexión con el servidor.',
+        status: error.response?.status || 500,
+        errores: error.response?.data?.errores || null
+      };
+      return rejectWithValue(errorPlano);
+    }
+  }
+);
+
 export const actualizarEstadoPagoServidor = createAsyncThunk(
   'pagos/actualizarEstado',
   async ({ id_pago, nuevoEstado }, { rejectWithValue }) => {
@@ -141,6 +170,39 @@ export const actualizarEstadoPagoServidor = createAsyncThunk(
         mensaje: error.response?.data?.mensaje || error.message || 'Error de conexión con el servidor.',
         status: error.response?.status || 500,
         errores: error.response?.data?.errores || null 
+      };
+      return rejectWithValue(errorPlano);
+    }
+  }
+);
+
+export const eliminarPagoServidor = createAsyncThunk(
+  'pagos/eliminarPagoServidor',
+  async ({ id_pago }, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+      formData.append('operacion', 'eliminar_pago');
+      formData.append('id_pago', id_pago);
+      formData.append('_method', 'DELETE');
+
+      const respuesta = await clienteApi.post('', formData, {
+        params: { endpoint: 'pagos' },
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      if (respuesta.data.estatus) {
+        return { id: id_pago };
+      }
+
+      return rejectWithValue(respuesta.data.mensaje || 'Error al eliminar el pago');
+    } catch (error) {
+      const esErrorDeRed = !error.response && error.request;
+
+      const errorPlano = {
+        tipo: esErrorDeRed ? 'RED' : 'API_ERROR',
+        mensaje: error.response?.data?.mensaje || error.message || 'Error de conexión con el servidor.',
+        status: error.response?.status || 500,
+        errores: error.response?.data?.errores || null
       };
       return rejectWithValue(errorPlano);
     }
@@ -182,37 +244,48 @@ const pagosSlice = createSlice({
         }
       })
       .addMatcher(
-        isPending(fetchPagos, fetchEstadoCuenta, actualizarEstadoPagoServidor),
+        isPending(
+          fetchPagos,
+          fetchEstadoCuenta,
+          actualizarEstadoPagoServidor,
+          modificarPagoServidor,
+          eliminarPagoServidor
+        ),
         (state) => {
           state.loading = true;
           state.error = null;
         }
       )
-      // Apaga el "loading" cuando cualquiera de estos termina con éxito
       .addMatcher(
-        isFulfilled(fetchPagos, fetchEstadoCuenta, actualizarEstadoPagoServidor),
+        isFulfilled(
+          fetchPagos,
+          fetchEstadoCuenta,
+          actualizarEstadoPagoServidor,
+          modificarPagoServidor,
+          eliminarPagoServidor
+        ),
         (state) => {
           state.loading = false;
         }
       )
-      // Atrapa los errores SOLO si provienen de estos thunks específicos
       .addMatcher(
-        isRejected(fetchPagos, fetchEstadoCuenta, actualizarEstadoPagoServidor),
+        isRejected(
+          fetchPagos,
+          fetchEstadoCuenta,
+          actualizarEstadoPagoServidor,
+        ),
         (state, action) => {
           state.loading = false;
-          
+
           if (action.payload && typeof action.payload === 'object' && action.payload.mensaje) {
-            
             if (action.payload.tipo === 'RED' || action.payload.mensaje === 'Network Error') {
               state.error = 'No hay conexión a internet o el servidor no responde. Verifica tu señal.';
             } else {
               state.error = action.payload.mensaje;
             }
-            
           } else if (typeof action.payload === 'string') {
-            // Por si acaso llega como texto plano (en english por el axios)
-            state.error = action.payload === 'Network Error' 
-              ? 'No hay conexión a internet o el servidor no responde. Verifica tu señal.' 
+            state.error = action.payload === 'Network Error'
+              ? 'No hay conexión a internet o el servidor no responde. Verifica tu señal.'
               : action.payload;
           } else {
             state.error = 'Ocurrió un error de conexión o validación.';

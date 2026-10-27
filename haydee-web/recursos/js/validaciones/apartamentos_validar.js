@@ -62,8 +62,8 @@ document.addEventListener("DOMContentLoaded", function() {
     // VALIDACIONES DE HABITANTES (Tiempo Real)
     // ============================================
     const configHabitantes = [
-        { id: 'nombre', patron: Patrones.textoCorto, msj: 'Solo letras, entre 3 y 30 caracteres', teclas: Patrones.teclasLetras },
-        { id: 'apellido', patron: Patrones.textoCorto, msj: 'Solo letras, entre 3 y 30 caracteres', teclas: Patrones.teclasLetras },
+        { id: 'nombre', patron: Patrones.nombrePersona, msj: 'Solo letras, entre 3 y 30 caracteres', teclas: Patrones.teclasLetras },
+        { id: 'apellido', patron: Patrones.nombrePersona, msj: 'Solo letras, entre 3 y 30 caracteres', teclas: Patrones.teclasLetras },
         { id: 'cedula', patron: Patrones.cedula, msj: 'Cédula inválida (7-8 dígitos)', teclas: Patrones.teclasNumeros },
         { id: 'telefono', patron: Patrones.telefono, msj: 'Teléfono inválido (11 dígitos)', teclas: Patrones.teclasNumeros },
         { id: 'correo', patron: Patrones.correo, msj: 'Correo inválido', teclas: Patrones.teclasCorreo }
@@ -229,8 +229,8 @@ async function validarEnvioHabitante(accion) {
     if (!Validador.evaluarSelect('tipo_cedula')) esValido = false;
     const inputCedula = document.getElementById('cedula');
     if (!Validador.evaluarInput(inputCedula, Patrones.cedula, 'Cédula inválida')) esValido = false;
-    if (!Validador.evaluarInput(document.getElementById('nombre'), Patrones.textoCorto, 'Nombre inválido')) esValido = false;
-    if (!Validador.evaluarInput(document.getElementById('apellido'), Patrones.textoCorto, 'Apellido inválido')) esValido = false;
+    if (!Validador.evaluarInput(document.getElementById('nombre'), Patrones.nombrePersona, 'Nombre inválido')) esValido = false;
+    if (!Validador.evaluarInput(document.getElementById('apellido'), Patrones.nombrePersona, 'Apellido inválido')) esValido = false;
     if (!Validador.evaluarFecha(document.getElementById('fecha_nacimiento'), 'Fecha inválida', { maxHoy: true })) esValido = false;
     if (!Validador.evaluarInput(document.getElementById('telefono'), Patrones.telefono, 'Teléfono inválido')) esValido = false;
     

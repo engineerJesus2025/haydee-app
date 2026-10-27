@@ -72,8 +72,8 @@
                                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-gender-male"></i></span>
                                 <select class="form-select sexo" aria-label="Default select example" for="sexo" name="sexo" id="sexo">
                                     <option selected hidden value="">Seleccione un Sexo</option>
-                                    <option value="Masculino">Masculino</option>
-                                    <option value="Femenino">Femenino</option>
+                                    <option value="M">Masculino</option>
+                                    <option value="F">Femenino</option>
                                 </select>
                                 <span class="w-100 invalid-feedback"></span>
                             </div>
@@ -110,8 +110,9 @@
                                 <span class="input-group-text" id="basic-addon1"><i class="bi bi-building"></i></span>
                                 <select class="form-select tipo_vinculo" aria-label="Default select example" for="tipo_vinculo" name="tipo_vinculo" id="tipo_vinculo">
                                     <option selected hidden value="">Seleccione un Vinculo</option>
-                                    <option value="Propietario">Propietario</option>
-                                    <option value="Habitante">Habitante</option>
+                                    <option value="PROPIETARIO">Propietario</option>
+                                    <option value="FAMILIAR">Familiar</option>
+                                    <option value="INQUILINO">Inquilino</option>
                                 </select>
                                 <span class="w-100 invalid-feedback"></span>
                             </div>

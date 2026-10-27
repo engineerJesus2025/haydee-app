@@ -46,7 +46,18 @@ class Usuario extends Conexion
                 'unique' => ['tabla' => 'usuarios', 'campo' => 'correo', 'exclude_field' => 'id_usuario']
             ],
             'contra' => [
-                'regex' => '/^[A-Za-z0-9_.+*$#%&@-]{5,100}$/'
+                'regex' => '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[_.+*$#%&@-])[A-Za-z0-9_.+*$#%&@-]{8,100}$/',
+                // 'regex' => '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[_.+*$#%&@-])[A-Za-z0-9_.+*$#%&@-]{8,100}$/',
+                'opcional' => true,
+                'requerido_si' => [
+                    'operacion' => [
+                        'registrar_usuario',
+                        'guardar_contrasenia',
+                        'cambiar_contrasenia',
+                        'consumir_token_recuperacion',
+                        'entrar'
+                    ]
+                ]
             ],
             'rol_id' => [
                 'regex' => '/^\d+$/',
@@ -60,6 +71,12 @@ class Usuario extends Conexion
             ],
             'token_tipo' => [
                 'regex' => '/^[A-Za-z]+$/'
+            ],
+            'codigo' => [
+                'regex' => '/^\d{6}$/'
+            ],
+            'token_autorizacion' => [
+                'regex' => '/^[a-f0-9]{64}$/'   // bin2hex(random_bytes(32)) = 64 hex chars
             ],
         ];
 
@@ -82,7 +99,7 @@ class Usuario extends Conexion
             ],
             'modificar_usuario' => [
                 'metodo_http' => ['PUT', 'POST'],
-                'campos' => ['id_usuario', 'nombre', 'apellido', 'correo', 'rol_id']
+                'campos' => ['id_usuario', 'nombre', 'apellido', 'correo', 'contra', 'rol_id']
             ],
             'eliminar_usuario' => [
                 'metodo_http' => ['DELETE', 'POST'],
@@ -143,6 +160,26 @@ class Usuario extends Conexion
             'marcar_ayuda_visto' => [
                 'metodo_http' => ['POST'],
                 'campos' => []
+            ],
+            'solicitar_otp' => [
+                'metodo_http' => ['POST'],
+                'campos' => ['correo']
+            ],
+            'validar_otp' => [
+                'metodo_http' => ['POST'],
+                'campos' => ['correo', 'codigo']
+            ],
+            'restablecer_con_token' => [
+                'metodo_http' => ['POST'],
+                'campos' => ['correo', 'token_autorizacion', 'contra']
+            ],
+            'restablecer_con_otp' => [
+                'metodo_http' => ['POST'],
+                'campos' => ['correo', 'codigo', 'contra']
+            ],
+            'enviar_notificacion' => [
+                'metodo_http' => ['POST'],
+                'campos' => ['correo']
             ],
         ];
 
@@ -386,7 +423,7 @@ class Usuario extends Conexion
     private function _cambiar_contrasenia()
     {
         $hash = password_hash($this->contra, PASSWORD_DEFAULT);
-        $sql = "UPDATE usuarios SET contrasenia = :con WHERE correo = :cor AND activo = " . self::ESTADO_ACTIVO;
+        $sql = "UPDATE usuarios SET contrasenia = :con WHERE id_usuario = :id AND activo = " . self::ESTADO_ACTIVO;
 
         $stmt = $this->get_conex(TipoBaseDatos::SEGURIDAD)->prepare($sql);
         $stmt->execute([':con' => $hash, ':cor' => $this->correo]);

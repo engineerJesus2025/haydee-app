@@ -1001,6 +1001,7 @@ class ComposerStaticInitcbe1707b410f2f343a82925692838e3a
         'PHPUnit\\Metadata\\Exception' => __DIR__ . '/..' . '/phpunit/phpunit/src/Metadata/Exception/Exception.php',
         'PHPUnit\\Metadata\\ExcludeGlobalVariableFromBackup' => __DIR__ . '/..' . '/phpunit/phpunit/src/Metadata/ExcludeGlobalVariableFromBackup.php',
         'PHPUnit\\Metadata\\ExcludeStaticPropertyFromBackup' => __DIR__ . '/..' . '/phpunit/phpunit/src/Metadata/ExcludeStaticPropertyFromBackup.php',
+        'PHPUnit\\Metadata\\Group' => __DIR__ . '/..' . '/phpunit/phpunit/src/Metadata/Group.php',
         'PHPUnit\\Metadata\\IgnoreDeprecations' => __DIR__ . '/..' . '/phpunit/phpunit/src/Metadata/IgnoreDeprecations.php',
         'PHPUnit\\Metadata\\IgnorePhpunitDeprecations' => __DIR__ . '/..' . '/phpunit/phpunit/src/Metadata/IgnorePhpunitDeprecations.php',
         'PHPUnit\\Metadata\\InvalidAttributeException' => __DIR__ . '/..' . '/phpunit/phpunit/src/Metadata/Exception/InvalidAttributeException.php',

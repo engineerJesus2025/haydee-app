@@ -35,10 +35,10 @@ class Habitantes extends Conexion
                 'exists' => ['tabla' => 'habitantes', 'campo' => 'id_habitante']
             ],
             'nombre' => [
-                'regex' => '/^[A-Za-z ]{3,30}$/'
+                'regex' => '/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,40}$/'
             ],
             'apellido' => [
-                'regex' => '/^[A-Za-z ]{3,30}$/'
+                'regex' => '/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,40}$/'
             ],
             'cedula' => [
                 'regex' => '/^[VE]{1}[0-9]{7,8}$/',
@@ -153,8 +153,8 @@ class Habitantes extends Conexion
     {
         $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
 
-        if (!empty($this->nuevo_apartamento_id) && $this->nuevo_tipo_vinculo === 'Propietario') {
-            $sqlCheck = "SELECT COUNT(*) FROM habitantes_apartamentos WHERE apartamento_id = :id AND tipo_vinculo = 'Propietario'";
+        if (!empty($this->nuevo_apartamento_id) && $this->nuevo_tipo_vinculo === 'PROPIETARIO') {
+            $sqlCheck = "SELECT COUNT(*) FROM habitantes_apartamentos WHERE apartamento_id = :id AND tipo_vinculo = 'PROPIETARIO'";
             $stmtCheck = $pdo->prepare($sqlCheck);
             $stmtCheck->execute([':id' => $this->nuevo_apartamento_id]);
             if ($stmtCheck->fetchColumn() > 0) {
@@ -203,9 +203,9 @@ class Habitantes extends Conexion
     {
         $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
 
-        if (!empty($this->nuevo_apartamento_id) && $this->nuevo_tipo_vinculo === 'Propietario') {
+        if (!empty($this->nuevo_apartamento_id) && $this->nuevo_tipo_vinculo === 'PROPIETARIO') {
             $sqlCheck = "SELECT COUNT(*) FROM habitantes_apartamentos 
-                         WHERE apartamento_id = :aid AND tipo_vinculo = 'Propietario' AND habitante_id != :hid";
+                         WHERE apartamento_id = :aid AND tipo_vinculo = 'PROPIETARIO' AND habitante_id != :hid";
             $stmtCheck = $pdo->prepare($sqlCheck);
             $stmtCheck->execute([':aid' => $this->nuevo_apartamento_id, ':hid' => $this->id_habitante]);
             if ($stmtCheck->fetchColumn() > 0) {

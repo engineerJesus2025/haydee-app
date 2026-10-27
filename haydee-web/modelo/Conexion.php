@@ -18,7 +18,7 @@ class Conexion extends PDO {
             $this->conexNegocio->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
             
         } catch (PDOException $e) {
-            throw new BaseDatosException("Error crítico de conexión a la base de datos del sistema.", 503, $e);
+            throw new BaseDatosException("Error critico de conexion a la base de datos del sistema.", 503, $e);
         }
     }
 
@@ -44,7 +44,7 @@ class Conexion extends PDO {
             $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
             return $pdo;
         } catch (PDOException $e) {
-            throw new BaseDatosException("Error crítico de conexión al esquema aislado de datos.", 503, $e);
+            throw new BaseDatosException("Error critico de conexion al esquema aislado de datos.", 503, $e);
         }
     }
 

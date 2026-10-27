@@ -22,15 +22,19 @@ class Proveedores extends Conexion
                 'exists' => ['tabla' => 'proveedores', 'campo' => 'id_proveedor']
             ],
             'nombre_proveedor' => [
-                'regex' => '/^[a-zA-ZáéíóúÁÉÍÓÚñÑ()\s]+$/',
+                'regex' => '/^[a-zA-ZáéíóúÁÉÍÓÚñÑ()\s]{3,50}$/u',
                 'unique' => ['tabla' => 'proveedores', 'campo' => 'nombre_proveedor', 'exclude_field' => 'id_proveedor']
             ],
-            'servicio' => ['regex' => '/^[A-Za-záéíóúÁÉÍÓÚñÑ\s]+$/'],
+            'servicio' => [
+                'regex' => '/^[A-Za-záéíóúÁÉÍÓÚñÑ\s]{3,50}$/u'
+            ],
             'rif' => [
-                'regex' => '/^[VEJG]{1}[0-9]{7,10}$/',
+                'regex' => '/^[VEJG][0-9]{7,10}$/',
                 'unique' => ['tabla' => 'proveedores', 'campo' => 'rif', 'exclude_field' => 'id_proveedor']
             ],
-            'direccion' => ['regex' => '/^[A-Za-z0-9áéíóúÁÉÍÓÚñÑ\s.,:\/-]{3,255}$/']
+            'direccion' => [
+                'regex' => '/^[A-Za-z0-9áéíóúÁÉÍÓÚñÑ\s.,:\/-]{3,255}$/u'
+            ]
         ];
 
         $camposPorOperacion = [

@@ -5,6 +5,18 @@ export const procesarErrorApi = (errorObj, manejadorEspecificoFormulario = null)
   // Si llega vacío ignora en silencio
   if (!errorObj) return; 
 
+  if (errorObj.response || errorObj.request || errorObj.isAxiosError) {
+    const esRed = !errorObj.response && errorObj.request;
+    errorObj = {
+      tipo:     esRed ? 'RED' : 'API_ERROR',
+      mensaje:  errorObj.response?.data?.mensaje
+             || errorObj.message
+             || 'Error de conexión con el servidor.',
+      status:   errorObj.response?.status || 500,
+      errores:  errorObj.response?.data?.errores || null,
+    };
+  }
+
   // errores de red crudos de Axios 
   const esErrorDeRedCrudo = 
     errorObj.message === 'Network Error' || 

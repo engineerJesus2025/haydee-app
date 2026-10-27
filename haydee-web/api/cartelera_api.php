@@ -11,7 +11,6 @@ use haydee\servicios\GestorNotificaciones;
 use haydee\servicios\GestorAuditoria;
 use haydee\excepciones\HaydeeException;
 use haydee\excepciones\ValidacionException;
-use haydee\excepciones\SeguridadException;
 
 $operacion = $operacion ?? '';
 if (empty($operacion)) {
@@ -20,7 +19,7 @@ if (empty($operacion)) {
 
 Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_CARTELERA_VIRTUAL, $operacion, [], true);
 
-$reglas = CarteleraVirtual::obtenerReglas($operacion);
+$reglas    = CarteleraVirtual::obtenerReglas($operacion);
 $validador = new Validador();
 
 if (!$validador->validarMetodoHTTP($metodoHttp, $reglas)) {
@@ -30,23 +29,32 @@ if (!$validador->validarMetodoHTTP($metodoHttp, $reglas)) {
 if (!empty($reglas)) {
     $validador->validarConjunto($datosPeticion, $reglas);
     if ($validador->tieneErrores()) {
-        $codigoHttp = $validador->tieneError404() ? HttpCodigo::NO_ENCONTRADO->value : HttpCodigo::NO_PROCESABLE->value;
+        $codigoHttp = $validador->tieneError404()
+            ? HttpCodigo::NO_ENCONTRADO->value
+            : HttpCodigo::NO_PROCESABLE->value;
         throw new ValidacionException('Datos de formulario inválidos o incompletos.', $validador->obtenerErrores(), $codigoHttp);
     }
 }
 
 $cartelera = new CarteleraVirtual();
-$auditor = new GestorAuditoria($cartelera, Modulo::GESTIONAR_CARTELERA_VIRTUAL);
+$auditor   = new GestorAuditoria($cartelera, Modulo::GESTIONAR_CARTELERA_VIRTUAL);
 
 if ($metodoHttp === 'POST' || $metodoHttp === 'PUT') {
     $cartelera->set_id_cartelera($datosPeticion['id_cartelera'] ?? null);
     $cartelera->set_titulo($datosPeticion['titulo'] ?? null);
     $cartelera->set_descripcion($datosPeticion['descripcion'] ?? null);
     $cartelera->set_prioridad($datosPeticion['prioridad'] ?? null);
-    $cartelera->set_usuario_id($datosPeticion['usuario_id'] ?? 1); 
+
+    // El autor siempre se toma del usuario autenticado, nunca del body
+    $cartelera->set_usuario_id($datosPeticion['usuario_id'] ?? ($_SESSION['id_usuario'] ?? null));
+}
+
+if (isset($datosPeticion['id_cartelera'])) {
+    $cartelera->set_id_cartelera($datosPeticion['id_cartelera']);
 }
 
 switch ($operacion) {
+    // ==================== CONSULTAS ====================
     case 'consulta':
         if (isset($datosPeticion['pagina'], $datosPeticion['limite'])) {
             $pagina = (int)$datosPeticion['pagina'];
@@ -68,6 +76,7 @@ switch ($operacion) {
         if ($respuesta['estatus']) $auditor->registrarAuditoria(Accion::CONSULTAR);
         break;
 
+    // ==================== REGISTRO ====================
     case 'registrar_cartelera':
         $nombreImagen = '';
         if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
@@ -78,38 +87,73 @@ switch ($operacion) {
         }
         $cartelera->set_imagen($nombreImagen);
         $respuesta = $cartelera->realizar_consulta('registrar_cartelera');
-        
+
         if ($respuesta['estatus']) {
             $respuesta['nombre_imagen'] = $nombreImagen;
             $auditor->registrarAuditoria(Accion::REGISTRAR);
 
-            $prioridad = (int)($datosPeticion['prioridad'] ?? 3);
-            $eventoPush = ($prioridad === 1) ? TipoEventoNotificacion::AVISO_IMPORTANTE->value : TipoEventoNotificacion::NUEVA_PUBLICACION->value;
+            $prioridad  = (int)($datosPeticion['prioridad'] ?? 3);
+            $eventoPush = ($prioridad === 1)
+                ? TipoEventoNotificacion::AVISO_IMPORTANTE->value
+                : TipoEventoNotificacion::NUEVA_PUBLICACION->value;
 
             GestorNotificaciones::notificarTodos(
-                "Nuevo aviso: " . ($datosPeticion['titulo'] ?? 'Importante'), 
-                $datosPeticion['descripcion'] ?? '', 
-                "cartelera_virtual", 
-                $respuesta['lastId'] ?? null, 
+                "Nuevo aviso: " . ($datosPeticion['titulo'] ?? 'Importante'),
+                $datosPeticion['descripcion'] ?? '',
+                "cartelera_virtual",
+                $respuesta['lastId'] ?? null,
                 $eventoPush
             );
         }
         break;
 
-    case 'actualizar_cartelera':
-        if (!$esAdministrador) throw new SeguridadException('Acción no autorizada.', HttpCodigo::PROHIBIDO->value);
-        
+    // ==================== MODIFICAR ====================
+    case 'modificar_cartelera':
         $auditor->capturarDatosAnteriores('consultar_cartelera');
-        $respuesta = $cartelera->realizar_consulta('actualizar_cartelera');
-        if ($respuesta['estatus']) $auditor->registrarAuditoria(Accion::MODIFICAR);
+
+        $imagenActual  = $cartelera->obtenerImagenActual();
+        $eliminarImagen = !empty($datosPeticion['eliminar_imagen'])
+            || !empty($_POST['eliminar_imagen']);
+
+        $nuevaImagen = '';
+
+        if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
+            // Caso 1: viene una imagen nueva
+            $nuevaImagen = GestorImagenes::subir($_FILES['imagen'], 'cartelera_virtual');
+            if ($nuevaImagen === false) {
+                throw new HaydeeException('Error al procesar la nueva imagen.', HttpCodigo::ERROR_INTERNO->value);
+            }
+            if ($imagenActual) {
+                GestorImagenes::eliminar($imagenActual, 'cartelera_virtual');
+            }
+        } elseif ($eliminarImagen) {
+            // Caso 2: el usuario pidió quitarla sin reemplazarla
+            if ($imagenActual) {
+                GestorImagenes::eliminar($imagenActual, 'cartelera_virtual');
+            }
+            $nuevaImagen = '';
+        } else {
+            // Caso 3: conservar la actual
+            $nuevaImagen = $imagenActual;
+        }
+
+        $cartelera->set_imagen($nuevaImagen);
+        $respuesta = $cartelera->realizar_consulta('modificar_cartelera');
+
+        if ($respuesta['estatus']) {
+            $auditor->registrarAuditoria(Accion::MODIFICAR);
+        }
         break;
 
+    // ==================== ELIMINAR ====================
     case 'eliminar_cartelera':
-        if (!$esAdministrador) throw new SeguridadException('Acción no autorizada.', HttpCodigo::PROHIBIDO->value);
-        
         $auditor->capturarDatosAnteriores('consultar_cartelera');
+
         $respuesta = $cartelera->realizar_consulta('eliminar_cartelera');
-        if ($respuesta['estatus']) $auditor->registrarAuditoria(Accion::ELIMINAR);
+
+        if ($respuesta['estatus']) {
+            $auditor->registrarAuditoria(Accion::ELIMINAR);
+        }
         break;
 
     default:
@@ -120,6 +164,10 @@ if (!$respuesta['estatus']) {
     throw new HaydeeException($respuesta['mensaje'], HttpCodigo::BAD_REQUEST->value);
 }
 
-$codigoExito = ($operacion === 'registrar_cartelera') ? HttpCodigo::CREADO->value : HttpCodigo::OK->value;
+$operacionesCreado = ['registrar_cartelera', 'modificar_cartelera', 'eliminar_cartelera'];
+$codigoExito = in_array($operacion, $operacionesCreado, true)
+    ? HttpCodigo::CREADO->value
+    : HttpCodigo::OK->value;
+
 http_response_code($codigoExito);
 echo json_encode($respuesta);

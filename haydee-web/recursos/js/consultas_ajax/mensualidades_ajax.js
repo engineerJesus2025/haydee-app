@@ -578,7 +578,7 @@ function abrirAsistenteExoneracion(id_apartamento, participacion) {
 
     window.presupuestosActuales.forEach((det, index) => {
         let montoProporcional = ((participacion * parseFloat(det.monto)) / 100).toFixed(2);
-        let montoProporcionalUsd = (montoProporcional / tasaDolar).toFixed(2); // <-- AÑADIDO
+        let montoProporcionalUsd = (montoProporcional / tasaDolar).toFixed(2);
         let estaMarcado = exoneracionesGuardadas.includes(index) ? "" : "checked";
         
         htmlCheckboxes += `

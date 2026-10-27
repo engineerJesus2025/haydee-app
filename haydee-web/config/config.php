@@ -36,38 +36,6 @@ if (!defined('VAPID_PRIVATE_KEY')) define('VAPID_PRIVATE_KEY', $_ENV['VAPID_PRIV
 if (!defined('JWT_SECRET')) define('JWT_SECRET', $_ENV['JWT_SECRET'] ?? '');
 
 if (!defined('URL_BASE')) define('URL_BASE', $_ENV['URL_BASE'] ?? '/condominios-haydee/haydee-web/');
-if (!defined('ENTORNO')) define('ENTORNO', $_ENV['ENTORNO'] ?? '');
+if (!defined('ENTORNO')) define('ENTORNO', $_ENV['ENTORNO'] ?? 'local');
 
 if (!defined('ROOT_PATH')) define('ROOT_PATH', dirname(__DIR__));
-
-    //Local
-    // define("DB_NAME", "haydee_db");
-    // define("DB_HOST", "localhost");
-    // define("DB_USER", "app_condominio");
-    // define("DB_PASS", "haydee.2025");
-    // define("DB_SECURITY", "seguridad_haydee_db");
-    // define('CLAVE_SITIO_RECAPTCHA', "6LdyxecrAAAAAGPib9DW3wss1jKLXMsvnTS8rFN_");
-    // define('CLAVE_SECRETA_RECAPTCHA', "6LdyxecrAAAAAIpvcVgqtEESLleuRmb54dCb46b9");
-
-    //Hosting
- //    define("DB_NAME", "condominioshaydee_haydee");
- //    define("DB_HOST", "mysql-condominioshaydee.alwaysdata.net");
- //    define("DB_USER", "421243");
- //    define("DB_PASS", "Haydee.2025");
- //    define("DB_SECURITY", "condominioshaydee_seguridad");
-	// define('CLAVE_SITIO_RECAPTCHA', "6LcYwOcrAAAAANVy0L4JtP_NSpEpbQGD8h0ZQ2V4");
- // 	define('CLAVE_SECRETA_RECAPTCHA', "6LcYwOcrAAAAACqIboaH-irh7-jfBhF5EAwQ1SlX");    
-
-    //Correo
-    // define('API_CORREO', "re_Xh3Z2XV4_bZajUP5ZbSTS6UzKH61fskAL");
-    // define('SMTP_HOST', 'smtp-condominioshaydee.alwaysdata.net');
-    // define('SMTP_USER', 'condominioshaydee@alwaysdata.net');
-    // define('SMTP_PASS', 'Haydee.2025'); 
-    // define('URL_BASE', 'http://localhost/tu_proyecto/');
-
-    //Otros
-    // define('ENTORNO', 'local'); // local - host
-    // define('ROOT_PATH', dirname(__DIR__));
-
-// condominiohaydee2025   ---   Haydee.2025.
-    //  haydee-app.pages.dev    

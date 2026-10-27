@@ -228,33 +228,22 @@ class Sesiones
         ];
     }
 
-    public static function verificarPermisoAccion(Modulo $modulo, $operacion, $mapaExtra = [], $esApi = false)
+    public static function verificarPermisoAccion(Modulo $modulo, string $operacion, array $mapaExtra = [], bool $esApi = false): void
     {
-        $permisoRequerido = null;
         $operacionNormalizada = strtolower($operacion);
 
-        if (array_key_exists($operacionNormalizada, $mapaExtra)) {
-            $permisoRequerido = $mapaExtra[$operacionNormalizada]; 
-        } else {
-            if (strpos($operacionNormalizada, 'registrar') !== false) {
-                $permisoRequerido = Accion::REGISTRAR;
-            } elseif (strpos($operacionNormalizada, 'modificar') !== false) {
-                $permisoRequerido = Accion::MODIFICAR;
-            } elseif (strpos($operacionNormalizada, 'eliminar') !== false) {
-                $permisoRequerido = Accion::ELIMINAR;
-            }
-        }
+        $permisoRequerido = $mapaExtra[$operacionNormalizada] ?? match (true) {
+            str_contains($operacionNormalizada, 'registrar') => Accion::REGISTRAR,
+            str_contains($operacionNormalizada, 'modificar') => Accion::MODIFICAR,
+            str_contains($operacionNormalizada, 'eliminar')  => Accion::ELIMINAR,
+            default => null,
+        };
 
-        if ($permisoRequerido !== null) {
-            if (!self::tienePermiso($modulo, $permisoRequerido)) {
-                $mensaje = 'No tienes permisos suficientes para realizar esta acción.';
-                
-                if ($esApi) {
-                    throw new SeguridadException($mensaje, HttpCodigo::PROHIBIDO->value);
-                } else {
-                    throw new SeguridadException($mensaje, HttpCodigo::PROHIBIDO->value);
-                }
-            }
+        if ($permisoRequerido !== null && !self::tienePermiso($modulo, $permisoRequerido)) {
+            throw new SeguridadException(
+                'No tienes permisos suficientes para realizar esta acción.', 
+                HttpCodigo::PROHIBIDO->value
+            );
         }
     }
 

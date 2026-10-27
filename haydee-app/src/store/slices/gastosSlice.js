@@ -101,11 +101,76 @@ export const crearGasto = createAsyncThunk(
   }
 );
 
+export const modificarGasto = createAsyncThunk(
+  'gastos/modificarGasto',
+  async ({ id_gasto, formData, datosVisuales }, { rejectWithValue }) => {
+    try {
+      const respuesta = await clienteApi.post('', formData, {
+        params: { endpoint: 'gastos' }
+      });
+
+      const json = respuesta.data;
+      if (json.estatus) {
+        return { id: id_gasto, ...datosVisuales };
+      } else {
+        return rejectWithValue(json.mensaje || 'Error al modificar el gasto');
+      }
+    } catch (error) {
+      const esErrorDeRed = !error.response && error.request;
+
+      const errorPlano = {
+        tipo: esErrorDeRed ? 'RED' : 'API_ERROR',
+        mensaje: error.response?.data?.mensaje || error.message || 'Error de conexión con el servidor.',
+        status: error.response?.status || 500,
+        errores: error.response?.data?.errores || null
+      };
+      return rejectWithValue(errorPlano);
+    }
+  }
+);
+
+export const eliminarGasto = createAsyncThunk(
+  'gastos/eliminarGasto',
+  async ({ id_gasto }, { rejectWithValue }) => {
+    try {
+      const formData = new FormData();
+      formData.append('operacion', 'eliminar_gasto');
+      formData.append('id_gasto', id_gasto);
+      formData.append('_method', 'DELETE');
+
+      const respuesta = await clienteApi.post('', formData, {
+        params: { endpoint: 'gastos' },
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      if (respuesta.data.estatus) {
+        return { id: id_gasto };
+      }
+      return rejectWithValue(respuesta.data.mensaje || 'Error al eliminar el gasto');
+    } catch (error) {
+      const esErrorDeRed = !error.response && error.request;
+
+      const errorPlano = {
+        tipo: esErrorDeRed ? 'RED' : 'API_ERROR',
+        mensaje: error.response?.data?.mensaje || error.message || 'Error de conexión con el servidor.',
+        status: error.response?.status || 500,
+        errores: error.response?.data?.errores || null
+      };
+      return rejectWithValue(errorPlano);
+    }
+  }
+);
+
 const gastosSlice = createSlice({
   name: 'gastos',
   initialState: {
     listaGastos: [],
-    catalogos: { proveedores: [], bancos: [], solicitudes: [], tipos_gasto: [] },
+    catalogos: {
+      proveedores: [],
+      cuentas: [],
+      tipos_gasto: [],
+      conceptos: [], 
+    },
     loading: false,
     error: null,
     totalGastadoMes: "0.00" 
@@ -135,44 +200,52 @@ const gastosSlice = createSlice({
         // Sumamos el monto crudo al Total del Mes
         state.totalGastadoMes = recalcularTotal(state.listaGastos);
       })
+      .addCase(modificarGasto.fulfilled, (state, action) => {
+        const idx = state.listaGastos.findIndex(g => g.id === action.payload.id);
+        if (idx !== -1) {
+          state.listaGastos[idx] = {
+            ...state.listaGastos[idx],
+            ...action.payload,
+          };
+        }
+        state.totalGastadoMes = recalcularTotal(state.listaGastos);
+      })
       .addCase(fetchCatalogosGastos.fulfilled, (state, action) => {
         state.catalogos = action.payload;
       })
       .addMatcher(
-        isPending(fetchGastos, fetchCatalogosGastos),
-        (state) => {
-          state.loading = true;
-          state.error = null;
-        }
+        isPending(fetchGastos, fetchCatalogosGastos, modificarGasto, eliminarGasto),
+        (state) => { state.loading = true; state.error = null; }
       )
-      // Apaga el "loading" cuando cualquiera de estos termina con éxito
       .addMatcher(
-        isFulfilled(fetchGastos, fetchCatalogosGastos),
-        (state) => {
-          state.loading = false;
-        }
+        isFulfilled(fetchGastos, fetchCatalogosGastos, modificarGasto, eliminarGasto),
+        (state) => { state.loading = false; }
       )
       // Atrapa los errores SOLO si provienen de estos thunks específicos
       .addMatcher(
         isRejected(fetchGastos, fetchCatalogosGastos),
         (state, action) => {
           state.loading = false;
-          
-          if (action.payload && typeof action.payload === 'object' && action.payload.mensaje) {
-            
-            if (action.payload.tipo === 'RED' || action.payload.mensaje === 'Network Error') {
-              state.error = 'No hay conexión a internet o el servidor no responde. Verifica tu señal.';
-            } else {
-              state.error = action.payload.mensaje;
+
+          // Si ya hay datos, no sobreescribas con error — solo registra
+          const mensaje = (() => {
+            if (action.payload && typeof action.payload === 'object' && action.payload.mensaje) {
+              if (action.payload.tipo === 'RED' || action.payload.mensaje === 'Network Error') {
+                return 'No hay conexión a internet o el servidor no responde. Verifica tu señal.';
+              }
+              return action.payload.mensaje;
             }
-            
-          } else if (typeof action.payload === 'string') {
-            // Por si acaso llega como texto plano (en english por el axios)
-            state.error = action.payload === 'Network Error' 
-              ? 'No hay conexión a internet o el servidor no responde. Verifica tu señal.' 
-              : action.payload;
-          } else {
-            state.error = 'Ocurrió un error de conexión o validación.';
+            if (typeof action.payload === 'string') {
+              return action.payload === 'Network Error'
+                ? 'No hay conexión a internet o el servidor no responde. Verifica tu señal.'
+                : action.payload;
+            }
+            return 'Ocurrió un error de conexión o validación.';
+          })();
+
+          // Si la lista ya tenía datos, no la vaciamos con un error
+          if (state.listaGastos.length === 0) {
+            state.error = mensaje;
           }
         }
       );

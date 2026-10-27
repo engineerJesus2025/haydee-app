@@ -16,11 +16,27 @@
             <div class="modal-body rounded-bottom p-4">
                 <form id="form_tipo_gasto" name="form_tipo_gasto">
                     <div class="row mb-4">
-                        <div class="col-12">
+                        <div class="col-md-6 col-12 mb-3">
                             <label for="nombre_tipo_gasto" class="form-label fw-bold">Partida Principal (Tipo de Gasto) <span class="text-danger">*</span></label>
                             <div class="input-group has-validation">
                                 <span class="input-group-text"><i class="bi bi-tags"></i></span>
-                                <input type="text" class="form-control nombre_tipo_gasto" name="nombre_tipo_gasto" id="nombre_tipo_gasto" placeholder="Ejem: Servicios Públicos" minlength="3" maxlength="50" required autofocus>
+                                <input type="text" class="form-control nombre_tipo_gasto" name="nombre_tipo_gasto" id="nombre_tipo_gasto"
+                                       placeholder="Ejem: Servicios Públicos" minlength="3" maxlength="50" required autofocus>
+                                <span class="w-100 invalid-feedback"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-12 mb-3">
+                            <label for="clasificacion" class="form-label fw-bold">Clasificación <span class="text-danger">*</span></label>
+                            <div class="input-group has-validation">
+                                <span class="input-group-text"><i class="bi bi-diagram-2"></i></span>
+                                <input type="text" class="form-control" name="clasificacion" id="clasificacion"
+                                       list="lista_clasificaciones" placeholder="Ejem: FIJO, VARIABLE"
+                                       minlength="3" maxlength="30" required>
+                                <datalist id="lista_clasificaciones">
+                                    <?php foreach ($clasificacionesExistentes['datos'] as $c): ?>
+                                        <option value="<?php echo htmlspecialchars($c); ?>"></option>
+                                    <?php endforeach; ?>
+                                </datalist>
                                 <span class="w-100 invalid-feedback"></span>
                             </div>
                         </div>

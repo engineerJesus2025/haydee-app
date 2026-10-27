@@ -100,18 +100,24 @@ document.addEventListener("DOMContentLoaded", function() {
     // Botón Reponer
     const btnReponer = document.getElementById("boton_guardar_reposicion");
     if (btnReponer) {
-        btnReponer.addEventListener("click", async function(e) {
+        btnReponer.addEventListener("click", function(e) {
             e.preventDefault();
-            if (await validarEnvioReponerCaja()) {
-                Alertas.confirmarAccion(
-                    "Confirmar Operación",
-                    `¿Está seguro que desea reponer la caja?`,
-                    "question", 
-                    () => {
-                        if(typeof reponerCaja === 'function') reponerCaja(); 
-                    }
-                );
-            }
+            Alertas.confirmarAccion(
+                "Confirmar Operación",
+                `¿Está seguro que desea reponer la caja? El sistema calculará el total automáticamente.`,
+                "question", 
+                () => {
+                    if(typeof reponerCaja === 'function') reponerCaja(); 
+                }
+            );
+        });
+    }
+
+    const btnRevaluar = document.getElementById("boton_guardar_revaluacion");
+    if (btnRevaluar) {
+        btnRevaluar.addEventListener("click", function(e) {
+            e.preventDefault();
+            if(typeof revaluarFondo === 'function') revaluarFondo();
         });
     }
 
@@ -177,23 +183,6 @@ function verificarMontoExcedido() {
     return monto > (fondo + dif);
 }
 
-function verificarReposicionInsuficiente() {
-    let gastado = parseFloat(document.getElementById("fondos_gastados").textContent.split("Bs")[0]);
-    let montoInput = document.getElementById("monto_reponer");
-    let monto = (montoInput.getAttribute("monto") === "bs")
-        ? parseFloat(montoInput.value.replace(',', '.'))
-        : parseFloat(document.getElementById("monto_cambio_reponer").value.replace(',', '.'));
-    return monto < gastado;
-}
-
-async function verificarReposicionExcedente() {
-    let gastado = parseFloat(document.getElementById("fondos_gastados").textContent.split("Bs")[0]);
-    let montoInput = document.getElementById("monto_reponer");
-    let monto = (montoInput.getAttribute("monto") === "bs")
-        ? parseFloat(montoInput.value.replace(',', '.'))
-        : parseFloat(document.getElementById("monto_cambio_reponer").value.replace(',', '.'));
-    return monto > gastado;
-}
 
 async function verificarClaveForanea(valor) {
     const selectCaja = document.getElementById("mes_select");
@@ -254,42 +243,6 @@ async function validarEnvio(accion) {
     if (verificarMontoExcedido()) {
         EstadoInputs.marcarError(inputMonto, 'El monto supera el fondo disponible');
         Alertas.mostrar('error', 'Fondos insuficientes', 'El monto supera el fondo disponible en la caja.');
-        return false;
-    }
-
-    return true;
-}
-
-async function validarEnvioReponerCaja() {
-    let formularioValido = true;
-    const inputMonto = document.getElementById("monto_reponer");
-
-    if (!inputMonto.value || parseFloat(inputMonto.value) <= 0) {
-        EstadoInputs.marcarError(inputMonto, 'El monto es obligatorio y mayor a 0');
-        formularioValido = false;
-    } else if (!Validador.evaluarInput(inputMonto, Patrones.monto, 'Formato inválido')) {
-        formularioValido = false;
-    }
-
-    if (!formularioValido) {
-        Alertas.mostrar('error', 'Error', 'Revise el monto de reposición.');
-        return false;
-    }
-
-    if (!Validador.evaluarInput(inputMonto, Patrones.monto, 'Formato inválido')) {
-        Alertas.mostrar('error', 'Campos Incorrectos', 'Por favor, corrija el formato del monto del gasto antes de continuar.');
-        return false;
-    }
-
-    if (verificarReposicionInsuficiente()) {
-        EstadoInputs.marcarError(inputMonto, 'La reposición es menor al gasto');
-        Alertas.mostrar('error', 'Error', 'El monto a reponer es menor a lo gastado.');
-        return false;
-    }
-
-    if (await verificarReposicionExcedente()) {
-        EstadoInputs.marcarError(inputMonto, 'La reposición es mayor al gasto');
-        Alertas.mostrar('error', 'Error', 'El monto a reponer supera lo gastado. Verifique.');
         return false;
     }
 

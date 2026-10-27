@@ -9,6 +9,7 @@ import ModalGeneral from './ModalGeneral';
 import CampoFormulario from './CampoFormulario';
 import CustomBoton from './CustomBoton';
 import InputOTP from './InputOTP';
+import MedidorFortalezaContra from './MedidorFortalezaContra';
 
 const ModalRecuperarContrasena = ({ visible, onClose }) => {
   const { colores } = useTema();
@@ -20,6 +21,7 @@ const ModalRecuperarContrasena = ({ visible, onClose }) => {
     errors,
     isValid,
     loading,
+    watch,
     paso,
     handleCerrar,
     correoIngresado,
@@ -27,6 +29,8 @@ const ModalRecuperarContrasena = ({ visible, onClose }) => {
     onSubmitPaso2,
     onSubmitPaso3
   } = useRecuperarContrasenia(onClose);
+
+  const contraValor = watch('contra', '');
 
   const renderBotones = () => {
     let tituloAccion = '';
@@ -138,10 +142,12 @@ const ModalRecuperarContrasena = ({ visible, onClose }) => {
               rules={validaciones.contra}
               iconoInput={{ nombre: 'key', color: '#95a5a6' }}
               error={errors.contra}
-              placeholder='Mínimo 5 caracteres'
+              placeholder='Ej: MiClave#2024'
               esPassword={true} 
               editable={!loading}
             />
+            {/*<MedidorFortalezaContra valor={contraValor} /> Es cuestion de gustos la verdad*/}
+            {contraValor.length > 0 && <MedidorFortalezaContra valor={contraValor} />}
           </>
         )}
 

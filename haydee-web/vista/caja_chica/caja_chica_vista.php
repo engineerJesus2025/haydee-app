@@ -12,6 +12,9 @@
     #cabecera_caja > .border-end-lg {
       border-right: 1px solid #dee2e6 !important;
     }
+    #cabecera_caja > .border-start-lg {
+      border-left: 1px solid #dee2e6 !important;
+    }
   }
 </style>
 </head>
@@ -60,17 +63,21 @@
                                             <button class="btn btn-outline-secondary btn-sm px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#modal_reponer_caja">
                                                 <i class="bi bi-arrow-clockwise me-1"></i> Reponer
                                             </button>
+                                            <button class="btn btn-outline-info btn-sm px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#modal_revaluar_fondo">
+                                                <i class="bi bi-arrow-up-circle me-1"></i> Revaluar
+                                            </button>
                                         </div>
                                     </div>
                                     
-                                    <div class="col-lg-4 border-end-lg px-lg-4 d-flex flex-column justify-content-center align-self-start">
+                                    <div class="col-lg-4 px-lg-4 d-flex flex-column justify-content-center align-self-start">
                                         <p class="text-muted small text-uppercase fw-bold mb-2">Fondo Actual de Caja</p>
                                         <h5 id="span_fondo_fijo" class="fw-bolder mb-0 placeholder-glow">
                                             <span class="placeholder col-8 rounded "></span>
                                         </h5>
+                                        <small class="text-muted mt-1" id="span_info_ucau"></small>
                                     </div>
 
-                                    <div class="col-lg-4 ps-lg-4 d-flex flex-column justify-content-center" id="contenedor_tarjeta_nota">
+                                    <div class="col-lg-4 ps-lg-4 d-flex flex-column justify-content-center border-start-lg" id="contenedor_tarjeta_nota">
                                         <div class="d-flex justify-content-between align-items-center mb-2">
                                             <p class="text-muted small text-uppercase fw-bold mb-0">
                                                 <i class="bi bi-sticky text-warning me-1"></i> Observaciones
@@ -133,6 +140,7 @@
       require_once ROOT_PATH . "/vista/caja_chica/repocicion_caja_modal.php";
       require_once ROOT_PATH . "/vista/caja_chica/caja_chica_detalles.php";
       require_once ROOT_PATH . "/vista/caja_chica/caja_chica_inicial_modal.php";
+      require_once ROOT_PATH . "/vista/caja_chica/revaluacion_fondo_modal.php";
   ?>
   
   <!-- Scripts personalizado -->

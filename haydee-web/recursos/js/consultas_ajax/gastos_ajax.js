@@ -59,23 +59,30 @@ async function consultar() {
     };
 
     const formatoBotones = (cell) => {
+        const data = cell.getData();
+        const esReposicion = data.es_reposicion == 1 || data.es_reposicion === true;
+
         let html = `<div class="d-flex justify-content-center flex-wrap gap-2">
             <button type="button" class="btn btn-primary btn-sm vista-previa" data-tooltip="true" title="Ver Mas">
                 <i class="bi bi-eye"></i>
                 <span class="d-none d-lg-inline ms-2">Ver</span>
             </button>`;
-        if (permisoModificar) {
-            html += `<button class="btn btn-success btn-sm modificar" data-tooltip="true" title="Modificar los detalles de este registro">
-                        <i class="bi bi-pencil"></i>
-                        <span class="d-none d-lg-inline ms-2">Editar</span>
-                    </button>`;
+
+        if (!esReposicion) {
+            if (permisoModificar) {
+                html += `<button class="btn btn-success btn-sm modificar" data-tooltip="true" title="Modificar los detalles de este registro">
+                            <i class="bi bi-pencil"></i>
+                            <span class="d-none d-lg-inline ms-2">Editar</span>
+                        </button>`;
+            }
+            if (permisoEliminar) {
+                html += `<button class="btn btn-danger btn-sm eliminar" data-tooltip="true" title="Quitar este elemento del sistema">
+                            <i class="bi bi-trash"></i>
+                            <span class="d-none d-lg-inline ms-2">Borrar</span>
+                        </button>`;
+            }
         }
-        if (permisoEliminar) {
-            html += `<button class="btn btn-danger btn-sm eliminar" data-tooltip="true" title="Quitar este elemento del sistema">
-                        <i class="bi bi-trash"></i>
-                        <span class="d-none d-lg-inline ms-2">Borrar</span>
-                    </button>`;
-        }
+
         html += `</div>`;
         return html;
     };
@@ -115,8 +122,7 @@ async function consultar() {
 function recolectarDatosFormulario() {
     const formData = new FormData();
 
-    formData.append('clasificacion', document.getElementById('clasificacion').value);
-    formData.append('concepto_id', document.getElementById('concepto_id').value); // Corregido: antes decía tipo_gasto_id
+    formData.append('concepto_id', document.getElementById('concepto_id').value);
     formData.append('descripcion_gasto', document.getElementById('descripcion_gasto').value);
     formData.append('proveedor_id', document.getElementById('proveedor_id').value);
     
@@ -181,43 +187,16 @@ async function prepararFormulario(id) {
         const gasto = respuestaServidor.datos.gasto;
         const detalles = respuestaServidor.datos.detalles;
 
-        const selectClasificacion = formulario.querySelector('#clasificacion');
-
         tasa_dolar_activa = parseFloat(gasto.tasa_dolar) || 1;
 
-        // Limpiamos por si quedó una opción de "Reposición" de una edición anterior
-        const opcionExistente = selectClasificacion.querySelector('option[value="Reposicion"]');
-        if (opcionExistente) opcionExistente.remove();
-
-        // Verificamos si el registro actual es de tipo Reposición
-        if (gasto.clasificacion === 'Reposicion' || gasto.clasificacion === 'Reposición') {
-            // Creamos la opción dinámicamente
-            const opcionRepo = document.createElement('option');
-            opcionRepo.value = gasto.clasificacion; // Usamos el valor exacto de la BD
-            opcionRepo.textContent = 'Reposición';
-            selectClasificacion.appendChild(opcionRepo);
-            
-            // Debatible: Bloquear el campo para evitar que lo cambien a Fijo/Variable
-            selectClasificacion.disabled = true; 
-            
-            // También debatible: bloquear el "tipo de gasto", "proveedor" de la misma manera
-            formulario.querySelector('#concepto_id').disabled = true;
-            formulario.querySelector('#proveedor_id').disabled = true;
-            formulario.querySelector('#presupuesto_id').disabled = true;
-        } else {
-            // Si es un gasto normal, nos aseguramos de que los campos estén habilitados
-            selectClasificacion.disabled = false;
-            formulario.querySelector('#concepto_id').disabled = false;
-            formulario.querySelector('#proveedor_id').disabled = false;
-            formulario.querySelector('#presupuesto_id').disabled = false;
-        }
-
         // Llenar cabecera
-        selectClasificacion.value = gasto.clasificacion || '';
         formulario.querySelector("#concepto_id").value = gasto.concepto_id;
         formulario.querySelector('#presupuesto_id').value = gasto.presupuesto_id || '';
         formulario.querySelector('#descripcion_gasto').value = gasto.descripcion_gasto || '';
         formulario.querySelector('#proveedor_id').value = gasto.proveedor_id || '';
+
+        // Reflejar clasificación leyendo el data-clasificacion del concepto ya seleccionado
+        reflejarClasificacion();
 
         // Limpiar y reconstruir detalles
         contenedorDetalles.innerHTML = '';
@@ -307,7 +286,6 @@ async function mostrarVistaPrevia(id) {
     const respuesta = await Peticiones.enviar(datos);
     Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
         const data = respuestaServidor.datos.gasto;
-
         // Clasificación 
         const config = obtenerConfigClasificacionGasto(data.clasificacion);
         const clasificacionEl = document.getElementById("vp_clasificacion");
@@ -316,7 +294,7 @@ async function mostrarVistaPrevia(id) {
         clasificacionEl.innerHTML = ComponentesUI.crearSoftBadge(config.color, config.icono, config.texto);
 
         // Tipo de Gasto / Categoría
-        document.getElementById("vista_concepto").textContent = datos.concepto;
+        document.getElementById("vista_concepto").textContent = data.nombre_concepto;
 
         // Proveedor (Si es nulo, mostramos un texto por defecto)
         document.getElementById("vp_proveedor").textContent = data.nombre_proveedor || 'Sin proveedor (No aplica)';
@@ -596,14 +574,9 @@ function actualizarVisibilidadCampos(selectMetodo) {
 function resetModalGasto() {
     formulario.reset();
     
-    const selectClasificacion = formulario.querySelector('#clasificacion');
-    selectClasificacion.disabled = false;
     formulario.querySelector('#concepto_id').disabled = false;
     formulario.querySelector('#proveedor_id').disabled = false;
     formulario.querySelector('#presupuesto_id').disabled = false;
-
-    const opcionExistente = selectClasificacion.querySelector('option[value="Reposicion"], option[value="Reposición"]');
-    if (opcionExistente) opcionExistente.remove();
 
     botonFormulario.removeAttribute('modificar');
     botonFormulario.removeAttribute('id_modificar');
@@ -642,6 +615,7 @@ function resetModalGasto() {
     }
 
     tasa_dolar_activa = parseFloat(localStorage.getItem("tasa_dolar") || 1).toFixed(2);
+    document.getElementById("clasificacion").value = '';
 
     id_modificar = null;
 }

@@ -68,6 +68,7 @@ if (isset($_POST["operacion"])) {
     $tipoGasto = new TipoGasto();
     $tipoGasto->set_id_tipo_gasto($_POST['id_tipo_gasto'] ?? null);
     $tipoGasto->set_nombre_tipo_gasto($_POST['nombre_tipo_gasto'] ?? null);
+    $tipoGasto->set_clasificacion(strtoupper(trim($_POST['clasificacion'] ?? '')));
     
     // Inyectamos el arreglo de conceptos si existe
     if (isset($conceptos)) {
@@ -135,6 +136,9 @@ if (isset($_POST["operacion"])) {
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     GestorAuditoria::inicializarBanderaConsulta(Modulo::GESTIONAR_TIPO_GASTO);
+
+    $tipoGasto = new TipoGasto();
+    $clasificacionesExistentes = $tipoGasto->realizar_consulta('listar_clasificaciones');
 }
 $permisosVista = Sesiones::obtenerPermisosVista(Modulo::GESTIONAR_TIPO_GASTO);
 $btn_nuevo = [

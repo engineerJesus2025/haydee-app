@@ -254,7 +254,7 @@ class AnioFiscal extends Conexion
             }
 
             $estadoCerrado = EstadoPeriodo::CERRADO->value;
-            $sql = "UPDAT Eanio_fiscal SET activo = 0, estado = :estado WHERE id_anio_fiscal = :id_anio_fiscal";
+            $sql = "UPDATE anio_fiscal SET activo = 0, estado = :estado WHERE id_anio_fiscal = :id_anio_fiscal";
             $stmt = $conexion->prepare($sql);
             $stmt->bindParam(':estado', $estadoCerrado);
             $stmt->bindParam(':id_anio_fiscal', $this->id_anio_fiscal);

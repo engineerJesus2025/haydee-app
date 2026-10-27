@@ -31,51 +31,17 @@ document.addEventListener("DOMContentLoaded", function() {
     // Contraseñas
     inputsContrasenas.forEach(input => {
         input.addEventListener("keypress", (e) => Validador.bloquearTeclasInvalidas(e, Patrones.teclasContrasenaExtendida));
-        input.addEventListener("keyup", (e) => Validador.evaluarInput(e.target, Patrones.contrasena, 'La contraseña debe tener mínimo 5 caracteres'));
+        input.addEventListener("keyup", (e) => Validador.evaluarContrasenaFuerte(e.target));
     });
 
     // MEDIDOR DE FORTALEZA DE CONTRASEÑA
     const inputContra = document.querySelector("#contra");
     if (inputContra) {
-        inputContra.addEventListener('input', function() {
-            const pass = this.value;
-            let fortaleza = 0;
-            
-            // Reglas de puntaje
-            if (pass.length >= 5) fortaleza += 25; // Longitud mínima
-            if (pass.match(/[A-Z]/)) fortaleza += 25; // Contiene mayúscula
-            if (pass.match(/[0-9]/)) fortaleza += 25; // Contiene número
-            if (pass.match(/[^a-zA-Z\d]/)) fortaleza += 25; // Contiene carácter especial
-
-            const barra = document.getElementById('barra_seguridad');
-            const texto = document.getElementById('texto_seguridad');
-
-            if (!barra || !texto) return;
-
-            barra.style.width = fortaleza + '%';
-
-            if (pass.length === 0) {
-                barra.className = 'progress-bar bg-danger';
-                texto.textContent = 'Nivel de seguridad: Vacío';
-                texto.className = 'fw-medium text-danger d-block mb-3';
-            } else if (fortaleza <= 25) {
-                barra.className = 'progress-bar bg-danger';
-                texto.textContent = 'Nivel de seguridad: Muy Débil';
-                texto.className = 'fw-medium text-danger d-block mb-3';
-            } else if (fortaleza === 50) {
-                barra.className = 'progress-bar bg-warning';
-                texto.textContent = 'Nivel de seguridad: Débil';
-                texto.className = 'fw-medium text-warning d-block mb-3';
-            } else if (fortaleza === 75) {
-                barra.className = 'progress-bar bg-info';
-                texto.textContent = 'Nivel de seguridad: Buena';
-                texto.className = 'fw-medium text-info d-block mb-3';
-            } else {
-                barra.className = 'progress-bar bg-success';
-                texto.textContent = 'Nivel de seguridad: Muy Fuerte';
-                texto.className = 'fw-medium text-success d-block mb-3';
-            }
-        });
+        ComponentesUI.inicializarMedidorContrasena(
+            inputContra,
+            document.getElementById('barra_seguridad'),
+            document.getElementById('texto_seguridad')
+        );
     }
 
     // Validación de Rol (Clave foránea)
@@ -134,10 +100,11 @@ async function validarEnvio(accion = "Registrar"){
     const inputConfirContra = document.querySelector("#confir_contra");
 
     if (accion === "Registrar") {
-        const contraV = Validador.evaluarInput(inputContra, Patrones.contrasena, 'Mínimo 5 caracteres');
-        if(!contraV) { 
-            Alertas.mostrar('error', 'Error de Seguridad', 'Debe ingresar una contraseña válida para el nuevo usuario.'); 
-            return false; 
+        const contraV = Validador.evaluarContrasenaFuerte(inputContra);
+        if (!contraV) {
+            Alertas.mostrar('error', 'Error de Seguridad',
+                'La contraseña debe tener mínimo 8 caracteres, con mayúscula, minúscula, número y un carácter especial.');
+            return false;
         }
 
         if(inputContra.value !== inputConfirContra.value) {
@@ -148,10 +115,10 @@ async function validarEnvio(accion = "Registrar"){
     } else if (accion === "modificar") {
         // Si escribe algo, validamos. Si lo deja en blanco, el backend mantendrá la actual.
         if (inputContra.value !== '' || inputConfirContra.value !== '') {
-            const nuevaV = Validador.evaluarInput(inputContra, Patrones.contrasena, 'Mínimo 5 caracteres');
-            
+            const nuevaV = Validador.evaluarContrasenaFuerte(inputContra);
             if(!nuevaV) {
-                Alertas.mostrar('error', 'Error en contraseña', 'El formato de la nueva contraseña es inválido.');
+                Alertas.mostrar('error', 'Error de Seguridad',
+                'La contraseña debe tener mínimo 8 caracteres, con mayúscula, minúscula, número y un carácter especial.');
                 return false;
             }
 

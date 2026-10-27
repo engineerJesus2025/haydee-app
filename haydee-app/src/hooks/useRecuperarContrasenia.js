@@ -10,7 +10,7 @@ export default function useRecuperarContrasenia(onClose) {
   const [correoIngresado, setcorreoIngresado] = useState('');
   const [tokenAutorizacion, setTokenAutorizacion] = useState('');
 
-  const { control, handleSubmit, formState: { isValid, errors }, reset } = useForm({
+  const { control, handleSubmit, watch, formState: { isValid, errors }, reset } = useForm({
     mode: 'onChange',
     defaultValues: {
       correo: '',
@@ -103,6 +103,7 @@ export default function useRecuperarContrasenia(onClose) {
     errors,
     isValid,
     loading,
+    watch,
     paso,
     handleCerrar,
     correoIngresado,

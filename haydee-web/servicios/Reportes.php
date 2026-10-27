@@ -5,7 +5,6 @@ use PDO;
 use PDOException;
 use haydee\enums\TipoVinculo;
 use haydee\enums\MetodoPago;
-use haydee\enums\ClasificacionGasto;
 use haydee\enums\TipoBalance;
 use haydee\enums\FiltroTiempo;
 use haydee\enums\TipoBaseDatos;
@@ -131,9 +130,11 @@ class Reportes extends Conexion
 
     private function _obtener_datos_reporte_mensual()
     {
-        $sql = "SELECT g.clasificacion, g.descripcion_gasto as concepto, dg.monto
+        $sql = "SELECT tg.clasificacion, g.descripcion_gasto as concepto, dg.monto
                 FROM detalles_gastos dg
                 INNER JOIN gastos g ON dg.gasto_id = g.id_gasto
+                LEFT JOIN conceptos_gasto cg ON g.concepto_id = cg.id_concepto
+                LEFT JOIN tipo_gasto tg ON cg.tipo_gasto_id = tg.id_tipo_gasto
                 WHERE g.activo = 1 AND YEAR(dg.fecha) = :anio AND MONTH(dg.fecha) = :mes";
         try {
             $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
@@ -150,7 +151,7 @@ class Reportes extends Conexion
         
         $balance = $this->balance ?? 'todos';
         $metodo_pago = strtolower($this->metodo_pago ?? 'todos');
-        $tipo_gasto = strtolower($this->tipo_gasto ?? 'todos');
+        $clasificacion = strtolower($this->tipo_gasto ?? 'todos');
         $fecha_inicio = $this->fecha_inicio ?? '';
         $fecha_fin = $this->fecha_fin ?? '';
 
@@ -175,9 +176,9 @@ class Reportes extends Conexion
             $paramsIngresos[':metodo_pago_ingreso'] = $metodo_pago;
         }
 
-        if ($tipo_gasto !== 'todos' && $balance !== 'Ingresos') {
-            $condicionesEgresos[] = "LOWER(g.clasificacion) = LOWER(:tipo_gasto)";
-            $paramsEgresos[':tipo_gasto'] = $tipo_gasto;
+        if ($clasificacion !== 'todos' && $balance !== 'Ingresos') {
+            $condicionesEgresos[] = "LOWER(tg.clasificacion) = LOWER(:clasificacion)";
+            $paramsEgresos[':clasificacion'] = $clasificacion;
         }
 
         $whereEgresos = !empty($condicionesEgresos) ? " WHERE " . implode(" AND ", $condicionesEgresos) : "";
@@ -584,9 +585,10 @@ class Reportes extends Conexion
 
         foreach ($detalles as $row) {
             $monto = (float)($row['monto'] ?? 0);
-            
-            // Usamos el Enum para la clasificación
-            if (($row['clasificacion'] ?? '') === ClasificacionGasto::FIJO->value) {
+            $clasif = strtoupper(trim($row['clasificacion'] ?? ''));
+            if ($clasif === 'REPOSICION') continue;
+
+            if ($clasif === 'FIJO') {
                 $gastos_fijos[] = ['descripcion_gasto' => $row['concepto'], 'monto' => $monto];
             } else {
                 $gastos_variables[] = ['descripcion_gasto' => $row['concepto'], 'monto' => $monto];

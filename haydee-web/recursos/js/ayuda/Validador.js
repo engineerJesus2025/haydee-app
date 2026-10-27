@@ -243,4 +243,21 @@ const Validador = {
         EstadoInputs.marcarExito(input);
         return true; // Es válido porque está disponible
     },
+
+    evaluarContrasenaFuerte(input) {
+        const v = input.value;
+        const fallas = [];
+        if (v.length < 8) fallas.push('mínimo 8 caracteres');
+        if (!/[a-z]/.test(v)) fallas.push('una minúscula');
+        if (!/[A-Z]/.test(v)) fallas.push('una mayúscula');
+        if (!/\d/.test(v)) fallas.push('un número');
+        if (!/[_.+*$#%&@-]/.test(v)) fallas.push('un carácter especial');
+
+        if (fallas.length === 0) {
+            EstadoInputs.marcarExito(input);
+            return true;
+        }
+        EstadoInputs.marcarError(input, 'Falta: ' + fallas.join(', '));
+        return false;
+    }
 };

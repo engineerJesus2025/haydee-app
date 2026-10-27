@@ -63,5 +63,38 @@ const AyudaInteractiva = {
                 }
             });
         }
+    },
+
+    lanzarTourAutomatico(pasos, callbackFinal) {
+        if (typeof window.driver === 'undefined' || typeof window.driver.js === 'undefined') {
+            console.error("Driver.js no está cargado.");
+            return;
+        }
+
+        const driver = window.driver.js.driver;
+        const configBase = {
+            showProgress: true,
+            animate: true,
+            smoothScroll: false, 
+            allowKeyboardControl: false,
+            nextBtnText: 'Siguiente ➔',
+            prevBtnText: '⬅ Anterior',
+            doneBtnText: '¡Comenzar!',
+            progressText: 'Paso {{current}} de {{total}}',
+            onDestroyed: () => {
+                if (typeof callbackFinal === 'function') {
+                    callbackFinal();
+                }
+            },
+            onHighlightStarted: (element) => {
+                if (element) {
+                    element.scrollIntoView({ behavior: 'instant', block: 'center' });
+                    setTimeout(() => window.dispatchEvent(new Event('resize')), 10);
+                }
+            }
+        };
+
+        this.driverActivo = driver({ ...configBase, steps: pasos });
+        this.driverActivo.drive();
     }
 };

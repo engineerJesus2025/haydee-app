@@ -19,7 +19,7 @@ if (isset($_POST["operacion"])) {
     $operacion = $_POST["operacion"];
 
     $operacionesEspeciales = [
-        'reponer_caja' => Accion::REGISTRAR->value
+        'reponer_caja' => Accion::REGISTRAR
     ];
 
     Sesiones::verificarPermisoAccion(Modulo::GESTIONAR_CAJA_CHICA, $operacion, $operacionesEspeciales);
@@ -42,6 +42,10 @@ if (isset($_POST["operacion"])) {
     $caja->set_descripcion($_POST['descripcion'] ?? null);
     $caja->set_fondo_fijo($_POST['fondo_fijo'] ?? null);
     $caja->set_estado($_POST['estado'] ?? null);
+
+    $caja->set_limite_ucau($_POST['limite_ucau'] ?? null);
+    $caja->set_ucau_valor_bs($_POST['ucau_valor_bs'] ?? null);
+    $caja->set_nota_revaluacion($_POST['nota_revaluacion'] ?? null);
     
     $caja->set_id_movimiento_caja($_POST['id_movimiento_caja'] ?? null);
     $caja->set_concepto($_POST['concepto'] ?? null);
@@ -144,6 +148,14 @@ if (isset($_POST["operacion"])) {
                         $respuesta['alerta_saldo']['tipo']
                     );
                 }
+            }
+            break;
+
+        case 'revaluar_fondo':
+            $auditor->capturarDatosAnteriores('consultar_caja_unica');
+            $respuesta = $caja->realizar_consulta('revaluar_fondo');
+            if ($respuesta['estatus']) { 
+                $auditor->registrarAuditoria(Accion::MODIFICAR); 
             }
             break;
 

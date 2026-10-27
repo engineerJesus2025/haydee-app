@@ -25,7 +25,15 @@ document.addEventListener("DOMContentLoaded", () => {
     // Cambio de Mensualidad (Setea el monto)
     document.getElementById("mensualidad_id")?.addEventListener("change", function () {
         let seleccion = this.selectedOptions[0];
-        document.getElementById("monto_mensualidad").value = seleccion.getAttribute("data-monto") || 0;
+        let montoTotal = seleccion.getAttribute("data-monto") || 0;
+        let saldoPendiente = seleccion.getAttribute("data-pendiente") || 0;
+
+        document.getElementById("monto_mensualidad").value = montoTotal;
+
+        document.querySelectorAll("#detalles_container .monto").forEach(inputMonto => {
+            inputMonto.max = saldoPendiente;
+            inputMonto.min = 0;
+        });
     });
 
     document.getElementById('btn_recibo_vp')?.addEventListener('click', function() {
@@ -211,10 +219,12 @@ async function cargarMensualidades(id_fuerza = null) {
             let fechaReferencia = new Date(m.anio, m.mes - 1, 1);
             let diferenciaDias = Math.floor((hoy - fechaReferencia) / (1000 * 60 * 60 * 24));
             
-            let recargo = (diferenciaDias > m.limite_mensualidad) ? monto_base * (m.porcentaje_interes / 100) : 0;
+            let recargo = (diferenciaDias > m.limite_mensualidad)
+                ? monto_base * (m.porcentaje_interes / 100)
+                : 0;
             let monto_total = monto_base + recargo;
+            let saldo_deuda = Math.max(0, monto_total - (monto_base - pendiente_base));
             let total_pagado = monto_base - pendiente_base;
-            let saldo_deuda = Math.max(0, monto_total - total_pagado);
 
             if (saldo_deuda > 0) {
                 hayPendientes = true;
@@ -222,6 +232,7 @@ async function cargarMensualidades(id_fuerza = null) {
                 opcion.value = m.id_mensualidad;
                 opcion.textContent = `${meses[parseInt(m.mes)]}/${m.anio} - Restante: ${saldo_deuda.toFixed(2)} Bs`;
                 opcion.setAttribute("data-monto", monto_total.toFixed(2));
+                opcion.setAttribute("data-pendiente", saldo_deuda.toFixed(2));
                 fragment.appendChild(opcion);
             }
         });
@@ -395,6 +406,8 @@ async function registrar() {
     const estadoSeleccionado = document.getElementById("estado")?.value || "PENDIENTE";
     const htmlVistaPrevia = generarHtmlVistaPrevia("Desglose de Pagos");
 
+    if (!validarMontoTotal()) return;
+
     Alertas.confirmarConVistaPrevia(
         "Confirmar Datos de Pago",
         htmlVistaPrevia,
@@ -429,6 +442,8 @@ async function registrar() {
 }
 
 async function modificar(id) {
+    if (!validarMontoTotal()) return;
+
     const estadoSeleccionado = document.getElementById("estado")?.value || "PENDIENTE";
 
     let colorInsignia = "bg-secondary";
@@ -468,6 +483,20 @@ async function modificar(id) {
             });
         }
     );
+}
+
+function validarMontoTotal() {
+    const saldoPendiente = parseFloat(document.getElementById("mensualidad_id").selectedOptions[0]?.getAttribute("data-pendiente") || 0);
+    let totalIngresado = 0;
+    document.querySelectorAll("#detalles_container .monto").forEach(input => {
+        totalIngresado += parseFloat(input.value) || 0;
+    });
+
+    if (totalIngresado > saldoPendiente) {
+        Alertas.mostrar("warning", "Monto Excedido", `El total ingresado (${totalIngresado.toFixed(2)} Bs) supera la deuda pendiente (${saldoPendiente.toFixed(2)} Bs). Por favor, ajuste los montos.`);
+        return false; // Detiene el envío
+    }
+    return true;
 }
 
 /**
@@ -593,6 +622,7 @@ async function prepararFormulario(id) {
             opcionVinculada.value = cabecera.mensualidad_id;
             opcionVinculada.textContent = `Mensualidad Vinculada (ID: ${cabecera.mensualidad_id})`;
             opcionVinculada.setAttribute("data-monto", cabecera.monto_mensualidad);
+            opcionVinculada.setAttribute("data-pendiente", cabecera.maximo_editable);
             mensualidadSelect.appendChild(opcionVinculada);
             mensualidadSelect.value = cabecera.mensualidad_id;
 
@@ -658,6 +688,16 @@ async function prepararFormulario(id) {
         });
 
         renumerarDetalles();
+
+        const topeEditable = parseFloat(cabecera.maximo_editable) || 0;
+        document.querySelectorAll("#detalles_container .monto").forEach(inputMonto => {
+            inputMonto.max = topeEditable;
+            inputMonto.min = 0;
+        });
+        const opcionActual = mensualidadSelect.selectedOptions[0];
+        if (opcionActual) {
+            opcionActual.setAttribute("data-pendiente", topeEditable);
+        }
 
         boton_formulario.setAttribute("modificar", "true");
         boton_formulario.setAttribute("id_modificar", id);

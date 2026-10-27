@@ -1,12 +1,11 @@
 import React, { useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { View, Text, StyleSheet } from 'react-native';
 
 import HeaderPrincipal from '../components/HeaderPrincipal';
 import PagoCard from '../components/PagoCard';
 import ModalDetalles from '../components/ModalDetalles';
 import ResumenFinancieroCard from '../components/ResumenFinancieroCard';
-import ModalFormularioPago from '../components/ModalFormularioPago'; 
+import ModalFormularioPago from '../components/ModalFormularioPago';
 import ModalEstadoCuenta from '../components/ModalEstadoCuenta';
 import ListaRefrescable from '../components/ListaRefrescable';
 import BotonRegistrar from '../components/BotonRegistrar';
@@ -24,77 +23,61 @@ export default function PagosScreen() {
   const estilosPagos = getEstilosPagos(colores);
 
   const {
-    listaPagos,
-    loading,
-    error,
-    totalDeuda,
-    listaDeudas,
-    esAdmin,
-    modalPagoVisible,
-    modalEstadoCuentaVisible,
-    cargandoDetalle,
-    pagoSeleccionado,
-    setModalPagoVisible,
-    setModalEstadoCuentaVisible,
-    abrirDetalles,
-    cerrarDetalles,
-    obtenerPagos,
-    handleAprobar,
-    handleRechazar,
-    mesFiltro,
-    anioFiltro,
-    cambiarFiltroFecha,
-    periodosDisponibles,
-    puedeAprobarPagos,
-    procesandoEstado,
-    inicializando
+    listaPagos, loading, error, totalDeuda, listaDeudas, esAdmin,
+    modalPagoVisible, modalEdicionVisible, modalEstadoCuentaVisible,
+    cargandoDetalle, pagoSeleccionado, pagoAEditar,
+    setModalPagoVisible, setModalEstadoCuentaVisible,
+    abrirDetalles, cerrarDetalles, abrirEdicion, cerrarEdicion,
+    obtenerPagos, handleAprobar, handleRechazar, handleEliminar,
+    mesFiltro, anioFiltro, cambiarFiltroFecha, periodosDisponibles,
+    puedeAprobarPagos, procesandoEstado, eliminando, inicializando,
   } = usePagos();
 
   const estaCargando = loading || inicializando;
 
   const renderHeader = () => {
-  const tienePagosPendientes = listaPagos.some(p => p.estado.toUpperCase() === 'PENDIENTE');
+    const tienePagosPendientes = listaPagos.some(p => p.estado.toUpperCase() === 'PENDIENTE');
 
-  return (
-    <View style={{ paddingBottom: 5 }}>
-      <ResumenFinancieroCard 
-        monto={totalDeuda} 
-        titulo={esAdmin ? "Deuda de los Apartamentos" : "Tu Deuda Pendiente"}
-        moneda="Bs." 
-        tipo="deuda"
-        onAccion={() => setModalEstadoCuentaVisible(true)}
-        textoAccion="Ver Estado"
-        cargando={estaCargando}
-      />
-      
-      {!esAdmin && tienePagosPendientes && (
-        <BannerPagosPendientes visible={!esAdmin && tienePagosPendientes} />
-      )}
+    return (
+      <View style={{ paddingBottom: 5 }}>
+        <ResumenFinancieroCard
+          monto={totalDeuda}
+          titulo={esAdmin ? "Deuda de los Apartamentos" : "Tu Deuda Pendiente"}
+          moneda="Bs."
+          tipo="deuda"
+          onAccion={() => setModalEstadoCuentaVisible(true)}
+          textoAccion="Ver Estado"
+          cargando={estaCargando}
+        />
 
-      <Text style={[estilosPagos.title, { marginTop: 15, marginBottom: 10, paddingHorizontal: 0 }]}>
-        Historial de Pagos
-      </Text>
+        {!esAdmin && tienePagosPendientes && (
+          <BannerPagosPendientes visible={!esAdmin && tienePagosPendientes} />
+        )}
 
-      <SelectorMesAnio 
-        periodosDisponibles={periodosDisponibles}
-        mesActual={mesFiltro} 
-        anioActual={anioFiltro} 
-        onCambiarMes={(m, a) => cambiarFiltroFecha(m, a)} 
-      />
+        <Text style={[estilosPagos.title, { marginTop: 15, marginBottom: 10, paddingHorizontal: 0 }]}>
+          Historial de Pagos
+        </Text>
 
-      {estaCargando && (
-        <View style={{ paddingTop: 10 }}>
-          <SkeletonCard tipo="pago" />
-          <SkeletonCard tipo="pago" />
-          <SkeletonCard tipo="pago" />
-        </View>
-      )}
-    </View>
-  );
-};
+        <SelectorMesAnio
+          periodosDisponibles={periodosDisponibles}
+          mesActual={mesFiltro}
+          anioActual={anioFiltro}
+          onCambiarMes={(m, a) => cambiarFiltroFecha(m, a)}
+        />
 
-  const ALTURA_HEADER = 200; 
-  const ALTURA_ITEM = 150; 
+        {estaCargando && (
+          <View style={{ paddingTop: 10 }}>
+            <SkeletonCard tipo="pago" />
+            <SkeletonCard tipo="pago" />
+            <SkeletonCard tipo="pago" />
+          </View>
+        )}
+      </View>
+    );
+  };
+
+  const ALTURA_HEADER = 200;
+  const ALTURA_ITEM = 150;
 
   const elGetItemLayout = useCallback((data, index) => ({
     length: ALTURA_ITEM,
@@ -107,19 +90,16 @@ export default function PagosScreen() {
       <HeaderPrincipal />
 
       <View style={[estilosPagos.mainContentContainer, { flex: 1, paddingHorizontal: 0, paddingVertical: 0, padding: 0 }]}>
-        
+
         {error ? (
-          <VistaError 
-            mensaje={error} 
-            onRetry={() => obtenerPagos(true)} 
-          />
+          <VistaError mensaje={error} onRetry={() => obtenerPagos(true)} />
         ) : (
           <ListaRefrescable
             data={estaCargando ? [] : listaPagos}
             keyExtractor={(item) => item.id.toString()}
             cargando={estaCargando && listaPagos.length > 0}
             onRefresh={() => obtenerPagos(true)}
-            ListHeaderComponent={renderHeader()} 
+            ListHeaderComponent={renderHeader()}
             cargandoInicial={estaCargando && listaPagos.length === 0}
             renderItem={({ item }) => (
               <PagoCard pago={item} onPressDetalles={abrirDetalles} />
@@ -130,23 +110,21 @@ export default function PagosScreen() {
         )}
       </View>
 
-      <BotonRegistrar 
+      <BotonRegistrar
         puedeRegistrar={puedeAprobarPagos}
         modalAbrir={() => setModalPagoVisible(true)}
       />
 
       <ModalDetalles
-        visible={modalEstadoCuentaVisible === false && pagoSeleccionado !== null} // Evita solapamientos si abres deudas
+        visible={modalEstadoCuentaVisible === false && modalEdicionVisible === false && pagoSeleccionado !== null}
         onClose={cerrarDetalles}
         titulo="Detalles del Pago"
         datos={pagoSeleccionado}
         campos={[
-          // Lectura rápida en Z
           { key: 'estado', label: 'Estado' },
-          { key: 'monto', label: 'Monto Total' }, 
+          { key: 'monto', label: 'Monto Total' },
           { key: 'mensualidad', label: 'Mensualidad' },
           { key: 'apartamento', label: 'Apartamento' },
-          // Lectura en bloque
           { key: 'fecha', label: 'Fecha de registro', formato: 'fecha_legible' },
           { key: 'observacion', label: 'Observación' }
         ]}
@@ -154,15 +132,30 @@ export default function PagosScreen() {
         esAdmin={esAdmin}
         onAprobar={handleAprobar}
         onRechazar={handleRechazar}
+        onEditar={abrirEdicion}
+        onEliminar={handleEliminar}
         procesando={procesandoEstado}
+        eliminando={eliminando}
+        labelEditar="Editar pago"
+        labelEliminar="Anular pago"
       />
 
-      <ModalFormularioPago 
-        visible={modalPagoVisible} 
+      {/* CREAR */}
+      <ModalFormularioPago
+        visible={modalPagoVisible}
         onClose={() => setModalPagoVisible(false)}
+        modo="crear"
       />
 
-      <ModalEstadoCuenta 
+      {/* EDITAR */}
+      <ModalFormularioPago
+        visible={modalEdicionVisible}
+        onClose={(exito) => cerrarEdicion(exito === true)}
+        modo="editar"
+        pagoAEditar={pagoAEditar}
+      />
+
+      <ModalEstadoCuenta
         visible={modalEstadoCuentaVisible}
         onClose={() => setModalEstadoCuentaVisible(false)}
         totalDeuda={totalDeuda}
@@ -170,24 +163,12 @@ export default function PagosScreen() {
         moneda="Bs."
       />
 
-      <CargandoOverlay 
-        visible={cargandoDetalle} 
-        mensaje="Obteniendo recibo..." 
-      />
+      <CargandoOverlay visible={cargandoDetalle} mensaje="Obteniendo recibo..." />
     </View>
   );
 }
 
 const getEstilosPagos = (colores) => StyleSheet.create({
-  mainContentContainer: {
-    flex: 1,
-    backgroundColor: colores.background,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: colores.textTitle,
-    marginBottom: 16,
-    paddingHorizontal: 4
-  },
+  mainContentContainer: { flex: 1, backgroundColor: colores.background },
+  title: { fontSize: 24, fontWeight: '700', color: colores.textTitle, marginBottom: 16, paddingHorizontal: 4 },
 });

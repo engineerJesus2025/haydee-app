@@ -51,8 +51,8 @@
                                 <span class="input-group-text"><i class="bi bi-wallet2"></i></span>
                                 <select class="form-select" name="tipo_cuenta" id="tipo_cuenta">
                                     <option selected hidden value="">Seleccionar Tipo...</option>
-                                    <option value="Ahorro">Ahorro</option>
-                                    <option value="Corriente">Corriente</option>
+                                    <option value="AHORRO">Ahorro</option>
+                                    <option value="CORRIENTE">Corriente</option>
                                 </select>
                                 <span class="w-100 invalid-feedback"></span>
                             </div>

@@ -311,7 +311,6 @@ async function modificar() {
 async function modificarContra() {
     const formData = new FormData();
     formData.append('contra', document.getElementById('contra').value);
-    formData.append('correo', document.getElementById('p_correo').textContent);
     formData.append('operacion', 'cambiar_contrasenia');
 
     const respuesta = await Peticiones.enviar(formData);

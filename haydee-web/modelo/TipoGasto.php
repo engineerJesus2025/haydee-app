@@ -10,24 +10,31 @@ class TipoGasto extends Conexion
 {
     private $id_tipo_gasto;
     private $nombre_tipo_gasto;
+    private $clasificacion;
+    private const REPOSICION = 'REPOSICION';
+
     private $activo;
 
     private $conceptos_temp = [];
 
     public static function obtenerReglas($operacion) {
+        
         $reglasGenerales = [
             'id_tipo_gasto' => [
-                'regex' => '/^\d+$/',
+                'regex'  => '/^\d+$/',
                 'exists' => ['tabla' => 'tipo_gasto', 'campo' => 'id_tipo_gasto']
             ],
             'nombre_tipo_gasto' => [
                 'regex' => '/^[a-zA-Z\sñÑáéíóúÁÉÍÓÚ]+$/u'
-            ]
+            ],
+            'clasificacion' => [
+                'regex' => '/^[a-zA-ZñÑáéíóúÁÉÍÓÚ]{3,30}$/u'
+            ],
         ];
 
         $camposPorOperacion = [
-            'registrar_tipo_gasto' => ['nombre_tipo_gasto'],
-            'modificar_tipo_gasto' => ['id_tipo_gasto', 'nombre_tipo_gasto'],
+            'registrar_tipo_gasto' => ['nombre_tipo_gasto', 'clasificacion'],
+            'modificar_tipo_gasto' => ['id_tipo_gasto', 'nombre_tipo_gasto', 'clasificacion'],
             'eliminar_tipo_gasto'  => ['id_tipo_gasto'],
             'consultar_tipo_gasto' => ['id_tipo_gasto']
         ];
@@ -57,6 +64,8 @@ class TipoGasto extends Conexion
     public function set_activo($activo) { $this->activo = $activo; }
     public function get_activo() { return $this->activo; }
     public function setConceptosTemp($conceptos) { $this->conceptos_temp = $conceptos; }
+    public function set_clasificacion($clasificacion) { $this->clasificacion = $clasificacion; }
+    public function get_clasificacion() { return $this->clasificacion; }
 
     public function get_detalles() 
     { 
@@ -110,7 +119,7 @@ class TipoGasto extends Conexion
     
     private function _consultar()
     {
-        $sql = "SELECT id_tipo_gasto, nombre_tipo_gasto 
+        $sql = "SELECT id_tipo_gasto, nombre_tipo_gasto, clasificacion 
                 FROM tipo_gasto 
                 WHERE activo = 1 
                 ORDER BY id_tipo_gasto DESC";
@@ -141,17 +150,32 @@ class TipoGasto extends Conexion
         return ['estatus' => true, 'datos' => $datos];
     }
 
+    // Nota, no consulta el tipo de gasto de 'Reposicion' 
     private function _consultar_conceptos()
     {
-        $sql = "SELECT tg.id_tipo_gasto, tg.nombre_tipo_gasto, cg.id_concepto, cg.nombre_concepto 
+        $sql = "SELECT tg.id_tipo_gasto, tg.nombre_tipo_gasto, tg.clasificacion,
+                       cg.id_concepto, cg.nombre_concepto
                 FROM tipo_gasto tg
                 LEFT JOIN conceptos_gasto cg ON tg.id_tipo_gasto = cg.tipo_gasto_id AND cg.activo = 1
-                WHERE tg.activo = 1 
+                WHERE tg.activo = 1
+                  AND cg.activo = 1
+                  AND tg.clasificacion <> '" . self::REPOSICION . "' 
                 ORDER BY tg.id_tipo_gasto, cg.id_concepto";
 
         $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
         $stmt->execute();
         return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
+    }
+
+    private function _listar_clasificaciones()
+    {
+        $sql = "SELECT DISTINCT clasificacion
+                FROM tipo_gasto
+                WHERE activo = 1 AND clasificacion <> ''
+                ORDER BY clasificacion";
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->execute();
+        return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_COLUMN)];
     }
 
     private function _registrar_tipo_gasto()
@@ -160,9 +184,13 @@ class TipoGasto extends Conexion
         try {
             $con->beginTransaction();
 
-            $sqlHead = "INSERT INTO tipo_gasto (nombre_tipo_gasto, activo) VALUES (:nombre, 1)";
+            $sqlHead = "INSERT INTO tipo_gasto (nombre_tipo_gasto, clasificacion, activo)
+            VALUES (:nombre, :clasif, 1)";
             $stmtH = $con->prepare($sqlHead);
-            $stmtH->execute([':nombre' => $this->nombre_tipo_gasto]);
+            $stmtH->execute([
+                ':nombre'  => $this->nombre_tipo_gasto,
+                ':clasif'  => $this->clasificacion
+            ]);
             $id_tipo_gasto = $con->lastInsertId();
 
             if (!empty($this->conceptos_temp)) {
@@ -193,10 +221,12 @@ class TipoGasto extends Conexion
         try {
             $con->beginTransaction();
 
-            $sqlHead = "UPDATE tipo_gasto SET nombre_tipo_gasto = :nombre WHERE id_tipo_gasto = :id";
+            $sqlHead = "UPDATE tipo_gasto SET nombre_tipo_gasto = :nombre, clasificacion = :clasif
+            WHERE id_tipo_gasto = :id";
             $stmtH = $con->prepare($sqlHead);
             $stmtH->execute([
                 ':nombre' => $this->nombre_tipo_gasto,
+                ':clasif' => $this->clasificacion,
                 ':id'     => $this->id_tipo_gasto
             ]);
 

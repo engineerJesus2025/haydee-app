@@ -15,40 +15,38 @@
                             <div class="alert alert-warning d-flex align-items-center small shadow-sm" role="alert">
                                 <i class="bi bi-exclamation-triangle-fill fs-5 me-2 flex-shrink-0"></i>
                                 <div>
-                                    <strong>Atención:</strong> Esta acción establecerá el fondo fijo inicial permanente para el año fiscal vigente. Asegúrese de ingresar el monto correcto asignado por la junta de condominio.
+                                    Esta acción establecerá el fondo fijo inicial permanente para el año fiscal vigente.
                                 </div>
                             </div>
                         </div>
 
-                        <div class="col-lg-5">
-                            <label for="fondo_fijo_inicial">Monto del Fondo Fijo: <span class="text-danger">*</span></label>
-                            <div class="input-group mb-3">
-                                <input type="number" name="fondo_fijo" id="fondo_fijo_inicial" class="form-control" maxlength="15" minlength="0" title="Monto del fondo fijo" monto="bs" placeholder="Monto" required>
-                                <span class="input-group-text icono_moneda">Bs.</span>
-                                <span class="w-100 invalid-feedback"></span>
+                        <div class="col-md-6 mb-3">
+                            <label for="limite_ucau_inicial">Límite Autorizado (UCAU): <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="number" name="limite_ucau" id="limite_ucau_inicial" class="form-control" step="0.01" min="0.01" value="100" required>
+                                <span class="input-group-text">UCAU</span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="ucau_valor_inicial">Valor de 1 UCAU (Bs.): <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="number" name="ucau_valor_bs" id="ucau_valor_inicial" class="form-control" step="0.0001" min="0.01" placeholder="Ej: 43.00" required>
+                                <span class="input-group-text">Bs.</span>
                             </div>
                         </div>
 
-                        <div class="col-2 d-flex justify-content-center align-items-center">
-                            <button class="btn btn-soft-info boton_intercambio_monto" id="boton_intercambio_monto_inicial" title="Presione para cambiar el tipo de moneda">
-                                <span><i class="bi bi-arrow-left-right"></i></span>
-                            </button>            
-                        </div>
-
-                        <div class="col-lg-5 col-10 text-center">
-                            <label for="fondo_fijo_inicial_cambio"></label>
-                            <div class="input-group mb-3">
-                                <input type="text" name="fondo_fijo_cambio" id="fondo_fijo_inicial_cambio" minlength="0" value="0" class="form-control" maxlength="15" disabled title="Monto del fondo en dólares">
-                                <span class="input-group-text icono_moneda">$</span>
-                            </div>
+                        <div class="col-12 mb-3 text-center bg-light p-3 rounded border">
+                            <p class="text-muted mb-1 text-uppercase fw-bold" style="font-size: 0.8rem;">Fondo Fijo Calculado</p>
+                            <h3 class="text-primary fw-bold mb-0" id="fondo_inicial_calculado">0.00 Bs.</h3>
+                            <input type="hidden" name="fondo_fijo" id="fondo_fijo_inicial_hidden" value="0">
                         </div>
 
                         <div class="col-12 mb-2">
                             <label for="descripcion_inicial">Descripción o Nota de Apertura</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-card-text"></i></span>
-                                <input type="text" class="form-control" name="descripcion" id="descripcion_inicial" placeholder="Ej: Fondo fijo asignado para gastos menores" aria-label="Descripción Inicial" maxlength="255">
-                                <span class="w-100 invalid-feedback"></span>
+                                <input type="text" class="form-control" name="descripcion" id="descripcion_inicial" placeholder="Ej: Fondo fijo asignado para gastos menores" maxlength="255">
                             </div>
                         </div>
                     </div>

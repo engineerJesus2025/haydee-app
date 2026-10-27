@@ -7,19 +7,26 @@ use haydee\enums\EstadoPeriodo;
 use haydee\enums\EstadoMovimientoCaja;
 use haydee\enums\TipoBaseDatos;
 use haydee\excepciones\NegocioException;
+use haydee\excepciones\HaydeeException;
+use haydee\excepciones\ValidacionException;
 
 class CajaChica extends Conexion
 {
     // CONSTANTES DE NEGOCIO
     private const UMBRAL_ALERTA_SALDO = 200;
     private const ALERTA_SALDO_BAJO = 'SALDO_BAJO';
-    private const CAJA_ABIERTA = 'Abierto';
-    private const CAJA_CERRADA = 'Cerrada';
     private const ESTADO_ACTIVO = 1;
+    private const NOMBRE_CONCEPTO_REPOSICION = 'Reposición de Caja Chica';
+    private const NOMBRE_PROVEEDOR_ADMIN     = 'Administración (Caja Chica)';
 
     // Propiedades de la Caja
     private $id_caja_chica;
     private $fondo_fijo;
+    private $limite_ucau;
+    private $ucau_valor_bs;
+    private $fecha_ultima_revaluacion;
+    private $revaluaciones_log;
+    private $nota_revaluacion;
     private $estado;
     private $descripcion;
     private $fecha_creacion;
@@ -36,6 +43,7 @@ class CajaChica extends Conexion
 
     // VALIDACIONES CENTRALIZADAS
     public static function obtenerReglas($operacion) {
+        $estadosValidos = implode('|', array_column(EstadoPeriodo::cases(), 'value'));
         $reglasGenerales = [
             // Reglas de la Caja Chica
             'id_caja_chica' => [
@@ -52,10 +60,25 @@ class CajaChica extends Conexion
             ],
             'fondo_fijo' => [
                 'regex' => '/^\d+(\.\d{1,2})?$/',
-                'min' => 1
+                'min' => 1,
+                'opcional' => true // Ahora puede calcularse desde UCAU
+            ],
+            'limite_ucau' => [
+                'regex' => '/^\d+(\.\d{1,2})?$/',
+                'min' => 0.01,
+                'opcional' => true
+            ],
+            'ucau_valor_bs' => [
+                'regex' => '/^\d+(\.\d{1,4})?$/',
+                'min' => 0.01,
+                'opcional' => true
+            ],
+            'nota_revaluacion' => [
+                'regex' => '/^[a-zA-Z0-9 áéíóúÁÉÍÓÚñÑ\.,:\/-]{0,255}$/',
+                'opcional' => true
             ],
             'estado' => [
-                'regex' => '/^(ABIERTO|CERRADO)$/',
+                'regex' => "/^($estadosValidos)$/",
                 'opcional' => true
             ],
 
@@ -65,7 +88,7 @@ class CajaChica extends Conexion
                 'exists' => ['tabla' => 'movimientos_caja', 'campo' => 'id_movimiento_caja']
             ],
             'concepto' => [
-                'regex' => '/^[a-zA-Z0-9 áéíóúÁÉÍÓÚñÑ\.,-]{3,255}$/'
+                'regex' => '/^[a-zA-Z0-9 áéíóúÁÉÍÓÚñÑ\.,-]{3,100}$/'
             ],
             'monto' => [
                 'regex' => '/^\d+(\.\d{1,2})?$/',
@@ -75,18 +98,21 @@ class CajaChica extends Conexion
                 'regex' => '/^\d{4}-\d{2}-\d{2}$/'
             ],
             'tasa_dolar' => [
-                'regex' => '/^\d+(\.\d{1,2})?$/',
-                'min' => 0.01
+                'regex' => '/^\d+(\.\d{1,4})?$/',
+                'min' => 0.01,
+                'opcional' => true
             ],
         ];
 
         // Estandarización de nombres aplicada a la caja y sus movimientos
         $camposPorOperacion = [
-            'registrar_caja_chica' => ['descripcion', 'fondo_fijo'],
+            'registrar_caja_chica' => ['descripcion', 'fondo_fijo', 'limite_ucau', 'ucau_valor_bs'],
             'modificar_caja_chica' => ['id_caja_chica', 'descripcion', 'fondo_fijo', 'estado'],
             'eliminar_caja_chica'  => ['id_caja_chica'],
             'consulta_caja_chica' => ['id_caja_chica'],
-            'reponer_caja' => ['caja_chica_id','monto'],
+            'consultar_caja_unica' => ['id_caja_chica'],
+            'revaluar_fondo' => ['id_caja_chica', 'limite_ucau', 'ucau_valor_bs', 'nota_revaluacion'],
+            'reponer_caja' => ['caja_chica_id'], // 'monto' eliminado
 
             'consultar_movimientos' => ['id_caja_chica'],
             'registrar_movimiento' => ['caja_chica_id', 'concepto', 'monto', 'fecha', 'tasa_dolar'],
@@ -106,6 +132,16 @@ class CajaChica extends Conexion
     public function get_id_caja_chica() { return $this->id_caja_chica; }
     public function set_fondo_fijo($fondo) { $this->fondo_fijo = $fondo; }
     public function get_fondo_fijo() { return $this->fondo_fijo; }
+    public function set_limite_ucau($val) { $this->limite_ucau = $val; }
+    public function get_limite_ucau() { return $this->limite_ucau; }
+    public function set_ucau_valor_bs($val) { $this->ucau_valor_bs = $val; }
+    public function get_ucau_valor_bs() { return $this->ucau_valor_bs; }
+    public function set_fecha_ultima_revaluacion($val) { $this->fecha_ultima_revaluacion = $val; }
+    public function get_fecha_ultima_revaluacion() { return $this->fecha_ultima_revaluacion; }
+    public function set_revaluaciones_log($val) { $this->revaluaciones_log = $val; }
+    public function get_revaluaciones_log() { return $this->revaluaciones_log; }
+    public function set_nota_revaluacion($val) { $this->nota_revaluacion = $val; }
+    public function get_nota_revaluacion() { return $this->nota_revaluacion; }
     public function set_estado($estado) { $this->estado = $estado; }
     public function get_estado() { return $this->estado; }
     public function set_descripcion($desc) { $this->descripcion = $desc; }
@@ -132,7 +168,7 @@ class CajaChica extends Conexion
     {
         $metodo = '_' . $accion;
         if (!method_exists($this, $metodo)) {
-            throw new NegocioException("La acción '$accion' no está implementada.", HttpCodigo::BAD_REQUEST->value);
+            throw new NegocioException("La acción '$accion' no está implementada.", 400);
         }
         return $this->$metodo();
     }
@@ -143,6 +179,7 @@ class CajaChica extends Conexion
 
         $sql = "SELECT 
                     cc.id_caja_chica, cc.fondo_fijo, cc.estado, cc.descripcion, cc.fecha_creacion, cc.anio_fiscal_id,
+                    cc.limite_ucau, cc.ucau_valor_bs, cc.fecha_ultima_revaluacion, cc.revaluaciones_log,
                     (cc.fondo_fijo - COALESCE(SUM(
                         CASE WHEN mc.estado <> :estado_repuesto AND mc.activo = " . self::ESTADO_ACTIVO . " 
                         THEN mc.monto ELSE 0 END
@@ -156,6 +193,22 @@ class CajaChica extends Conexion
         $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
         $stmt->execute([':estado_repuesto' => $estadoRepuesto]);
         return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
+    }
+
+    private function _consultar_caja_unica()
+    {
+        $sql = "SELECT id_caja_chica, fondo_fijo, limite_ucau, ucau_valor_bs, estado, descripcion, fecha_creacion, fecha_ultima_revaluacion, revaluaciones_log 
+                FROM caja_chica 
+                WHERE id_caja_chica = :id AND activo = " . self::ESTADO_ACTIVO;
+                
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->execute([':id' => $this->id_caja_chica]);
+        $dato = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$dato) {
+            throw new HaydeeException('Caja no encontrada', 404);
+        }
+        return ['estatus' => true, 'datos' => $dato];
     }
 
     private function _consultar_movimiento_unico()
@@ -187,11 +240,11 @@ class CajaChica extends Conexion
             $estadoCaja = $stmtLock->fetchColumn();
 
             if (!$estadoCaja) {
-                throw new HaydeeException('La caja chica no existe o fue eliminada.', 404);
+                throw new NegocioException('La caja chica no existe o fue eliminada.', 404);
             }
 
             if (strtoupper($estadoCaja) !== EstadoPeriodo::ABIERTO->value) {
-                throw new HaydeeException('No se pueden registrar movimientos en una caja chica cerrada.', 400);
+                throw new NegocioException('No se pueden registrar movimientos en una caja chica cerrada.', 400);
             }
 
             $sqlSaldo = "SELECT (cc.fondo_fijo - COALESCE(SUM(
@@ -211,7 +264,7 @@ class CajaChica extends Conexion
             $saldoActual = (float)$stmtS->fetchColumn();
 
             if ($saldoActual < $this->monto_movimiento) {
-                throw new HaydeeException("Fondos insuficientes. Disponible: " . number_format($saldoActual, 2, ',', '.'), 400);
+                throw new NegocioException("Fondos insuficientes. Disponible: " . number_format($saldoActual, 2, ',', '.'), 400);
             }
 
             $estadoPendiente = EstadoMovimientoCaja::PENDIENTE->value;
@@ -257,7 +310,7 @@ class CajaChica extends Conexion
             $movimiento = $stmtCaja->fetch(PDO::FETCH_ASSOC);
 
             if (!$movimiento) {
-                 throw new HaydeeException("Movimiento no encontrado.", 404);
+                 throw new NegocioException("Movimiento no encontrado.", 404);
             }
 
             if ($movimiento['estado'] === EstadoMovimientoCaja::REPUESTO->value) {
@@ -295,7 +348,7 @@ class CajaChica extends Conexion
             $saldoActual = (float)$stmtS->fetchColumn();
 
             if ($saldoActual < 0) {
-                throw new HaydeeException('El nuevo monto excede los fondos disponibles en esta Caja Chica.', 400);
+                throw new NegocioException('El nuevo monto excede los fondos disponibles en esta Caja Chica.', 400);
             }
 
             $this->id_caja_chica = $id_caja; 
@@ -326,7 +379,7 @@ class CajaChica extends Conexion
             $movimiento = $stmtCaja->fetch(PDO::FETCH_ASSOC);
 
             if (!$movimiento) {
-                 throw new HaydeeException("Movimiento no encontrado.", 404);
+                 throw new NegocioException("Movimiento no encontrado.", 404);
             }
 
             if ($movimiento['estado'] === EstadoMovimientoCaja::REPUESTO->value) {
@@ -356,23 +409,37 @@ class CajaChica extends Conexion
     {
         $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
         
-        $stmtCheck = $pdo->query("SELECT COUNT(*) FROM caja_chica WHERE estado = 'Abierto' AND activo = 1");
+        $stmtCheck = $pdo->query("SELECT COUNT(*) FROM caja_chica WHERE estado = 'ABIERTO' AND activo = 1");
         if ($stmtCheck->fetchColumn() > 0) {
-            throw new HaydeeException('Operación denegada. Ya existe una caja chica activa en el sistema.', 400);
+            throw new NegocioException('Operación denegada. Ya existe una caja chica activa en el sistema.', 400);
         }
 
-        $stmtAnio = $pdo->query("SELECT id_anio_fiscal FROM anio_fiscal WHERE estado = 'Abierto' AND activo = 1 LIMIT 1");
+        $stmtAnio = $pdo->query("SELECT id_anio_fiscal FROM anio_fiscal WHERE estado = 'ABIERTO' AND activo = 1 LIMIT 1");
         $idAnioActivo = $stmtAnio->fetchColumn();
 
         if (!$idAnioActivo) {
-            throw new HaydeeException('Debe existir un Año Fiscal abierto para poder inicializar la Caja Chica.', 400);
+            throw new NegocioException('Debe existir un Año Fiscal abierto para poder inicializar la Caja Chica.', 400);
         }
 
-        $sql = "INSERT INTO caja_chica (fondo_fijo, estado, descripcion, anio_fiscal_id, activo) 
-                VALUES (:fondo, 'Abierto', :desc, :anio, 1)";
+        // Si se envía UCAU, calculamos el fondo_fijo; si no, usamos el fondo_fijo enviado.
+        $fondo = $this->fondo_fijo;
+        $limite = $this->limite_ucau ?? 1.00;
+        $ucau_bs = $this->ucau_valor_bs ?? $this->fondo_fijo;
+
+        if ($this->limite_ucau && $this->ucau_valor_bs) {
+            $fondo = round($this->limite_ucau * $this->ucau_valor_bs, 2);
+        }
+
+        $logInicial = "Apertura de caja: Fondo Bs " . number_format($fondo, 2, ',', '.') . " (UCAU: {$limite} a Bs {$ucau_bs}).\n";
+
+        $sql = "INSERT INTO caja_chica (fondo_fijo, limite_ucau, ucau_valor_bs, fecha_ultima_revaluacion, revaluaciones_log, estado, descripcion, anio_fiscal_id, activo) 
+                VALUES (:fondo, :limite, :ucau_bs, CURDATE(), :log, 'ABIERTO', :desc, :anio, 1)";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
-            ':fondo' => $this->fondo_fijo,
+            ':fondo' => $fondo,
+            ':limite' => $limite,
+            ':ucau_bs' => $ucau_bs,
+            ':log' => $logInicial,
             ':desc' => $this->descripcion ?: 'Fondo inicial de apertura',
             ':anio' => $idAnioActivo
         ]);
@@ -391,20 +458,181 @@ class CajaChica extends Conexion
         return ['estatus' => true, 'mensaje' => 'Descripción actualizada.'];
     }
 
+        private function _revaluar_fondo()
+    {
+        $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
+        try {
+            $pdo->exec("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ");
+            $pdo->beginTransaction();
+
+            $stmt = $pdo->prepare("SELECT fondo_fijo, estado, revaluaciones_log FROM caja_chica WHERE id_caja_chica = :id AND activo = 1 FOR UPDATE");
+            $stmt->execute([':id' => $this->id_caja_chica]);
+            $caja = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$caja) throw new HaydeeException('Caja no encontrada.', 404);
+            if (strtoupper($caja['estado']) !== EstadoPeriodo::ABIERTO->value) {
+                throw new NegocioException('Solo se puede revaluar una caja abierta.', 400);
+            }
+
+            $fondoAnterior = (float)$caja['fondo_fijo'];
+            $nuevoFondo = round($this->limite_ucau * $this->ucau_valor_bs, 2);
+
+            $nombreUsuario = 'Sistema';
+            $usuarioId = $_SESSION['id_usuario'] ?? null;
+            
+            if ($usuarioId) {
+                try {
+                    $stmtUser = $this->get_conex(TipoBaseDatos::SEGURIDAD)
+                                     ->prepare("SELECT nombre FROM usuarios WHERE id_usuario = :id LIMIT 1");
+                    $stmtUser->execute([':id' => $usuarioId]);
+                    $nombreDb = $stmtUser->fetchColumn();
+                    if ($nombreDb) {
+                        $nombreUsuario = $nombreDb;
+                    }
+                } catch (\Exception $ex) {}
+            } else {
+                $nombreUsuario = $_SESSION['usuario']['nombre'] ?? $_SESSION['nombre_usuario'] ?? $_SESSION['nombre'] ?? 'Sistema';
+            }
+
+            $logLine = date('d/m/Y H:i') . ": Bs " . number_format($fondoAnterior, 2, ',', '.') . " → Bs " . number_format($nuevoFondo, 2, ',', '.') . " (UCAU: " . $this->limite_ucau . " a Bs " . $this->ucau_valor_bs . "). ";
+            if (!empty($this->nota_revaluacion)) {
+                $logLine .= "Nota: " . $this->nota_revaluacion . ". ";
+            }
+            $logLine .= "Usuario: " . $nombreUsuario . "\n";
+
+            $nuevoLogCompleto = ($caja['revaluaciones_log'] ?? '') . $logLine;
+
+            $sqlUpdate = "UPDATE caja_chica 
+                             SET fondo_fijo = :nuevo_fondo, 
+                                 limite_ucau = :limite, 
+                                 ucau_valor_bs = :ucau_bs, 
+                                 fecha_ultima_revaluacion = CURDATE(),
+                                 revaluaciones_log = :nuevo_log
+                           WHERE id_caja_chica = :id";
+            $stmtUpd = $pdo->prepare($sqlUpdate);
+            $stmtUpd->execute([
+                ':nuevo_fondo' => $nuevoFondo,
+                ':limite' => $this->limite_ucau,
+                ':ucau_bs' => $this->ucau_valor_bs,
+                ':nuevo_log' => $nuevoLogCompleto,
+                ':id' => $this->id_caja_chica
+            ]);
+
+            // Actualizamos las propiedades del objeto para que el GestorAuditoria guarde los datos correctos
+            $this->fondo_fijo = $nuevoFondo;
+            $this->revaluaciones_log = $nuevoLogCompleto;
+            
+            // Si la nota estaba vacía, la anulamos para que no ensucie la bitácora
+            if (empty($this->nota_revaluacion)) {
+                $this->nota_revaluacion = null;
+            }
+
+            $pdo->commit();
+            return ['estatus' => true, 'mensaje' => "Fondo revaluado a " . number_format($nuevoFondo, 2, ',', '.') . " Bs correctamente."];
+
+        } catch (\Throwable $e) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            throw $e;
+        }
+    }
+
+    private function _resolver_concepto_reposicion(PDO $pdo): int
+    {
+        // Es seguro buscar por nombre porque el Trigger prohíbe modificarlo
+        $stmt = $pdo->prepare("SELECT id_concepto FROM conceptos_gasto WHERE nombre_concepto = :nombre AND activo = 1 LIMIT 1");
+        $stmt->execute([':nombre' => self::NOMBRE_CONCEPTO_REPOSICION]);
+        $id = $stmt->fetchColumn();
+        
+        if (!$id) {
+            throw new HaydeeException('Configuración incompleta: no existe el concepto "' . self::NOMBRE_CONCEPTO_REPOSICION . '".', 500);
+        }
+        return (int) $id;
+    }
+
+    private function _resolver_proveedor_admin(PDO $pdo): int
+    {
+        // Es seguro buscar por nombre porque el Trigger prohíbe modificarlo
+        $stmt = $pdo->prepare("SELECT id_proveedor FROM proveedores WHERE nombre_proveedor = :nombre AND activo = 1 LIMIT 1");
+        $stmt->execute([':nombre' => self::NOMBRE_PROVEEDOR_ADMIN]);
+        $id = $stmt->fetchColumn();
+        
+        if (!$id) {
+            throw new HaydeeException('Configuración incompleta: no existe el proveedor "' . self::NOMBRE_PROVEEDOR_ADMIN . '".', 500);
+        }
+        return (int) $id;
+    }
+
+        private function _resolver_presupuesto_por_fecha(PDO $pdo, string $fecha): int
+    {
+        [$anio, $mes] = explode('-', $fecha);
+
+        $stmt = $pdo->prepare(
+            "SELECT id_presupuesto FROM presupuesto
+              WHERE MONTH(fecha) = :mes
+                AND YEAR(fecha)  = :anio
+                AND activo = 1
+              LIMIT 1"
+        );
+        $stmt->execute([':mes' => (int) $mes, ':anio' => (int) $anio]);
+        $id = $stmt->fetchColumn();
+
+        if (!$id) {
+            throw new NegocioException(
+                "No existe presupuesto activo para $mes/$anio. "
+                . "Debe registrarse el presupuesto de ese mes antes de reponer la caja.",
+                400
+            );
+        }
+        return (int) $id;
+    }
+
     private function _reponer_caja()
     {
-        $sql = "CALL sp_registrar_reposicion_caja(:monto, :id_caja, :tasa_dolar)";
-        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-        $stmt->execute([
-            ':monto' => $this->monto_movimiento,
-            ':id_caja' => $this->id_caja_chica,
-            ':tasa_dolar' => 1,
-        ]);
+        $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
+        try {
+            $concepto_id    = $this->_resolver_concepto_reposicion($pdo);
+            $proveedor_id   = $this->_resolver_proveedor_admin($pdo);
+            $presupuesto_id = $this->_resolver_presupuesto_por_fecha($pdo, date('Y-m-d'));
 
-        $res = $stmt->fetch(PDO::FETCH_ASSOC);
-        $stmt->closeCursor();
+            $sql = "CALL sp_registrar_reposicion_caja(:id_caja, :concepto_id, :proveedor_id, :presupuesto_id, :tasa_dolar)";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                ':id_caja'        => $this->id_caja_chica,
+                ':concepto_id'    => $concepto_id,
+                ':proveedor_id'   => $proveedor_id,
+                ':presupuesto_id' => $presupuesto_id,
+                ':tasa_dolar'     => $this->tasa_dolar ?? 1,
+            ]);
 
-        return ['estatus' => true, 'mensaje' => $res['mensaje'] ?? 'Reposición procesada.'];
+            $res = $stmt->fetch(PDO::FETCH_ASSOC);
+            $stmt->closeCursor();
+
+            if (!$res) {
+                return ['estatus' => false, 'mensaje' => 'La reposición no fue procesada.'];
+            }
+
+            return [
+                'estatus'  => true,
+                'mensaje'  => "Reposición procesada exitosamente por {$res['total_repuesto']} Bs. Gasto registrado con Nro: {$res['gasto_id']}",
+                'gasto_id' => (int) $res['gasto_id'],
+            ];
+        } catch (\PDOException $e) {
+            if ((string) $e->getCode() === '45000') {
+                $msg = $e->getMessage();
+                
+                if (preg_match('/1644\s+(.*)/', $msg, $matches)) {
+                    $msg = $matches[1];
+                } else {
+                    $msg = str_replace(
+                        ['SQLSTATE[45000]: <>: 1644 ', 'SQLSTATE[45000]: <<Unknown error>>: 1644 '], 
+                        '', 
+                        $msg
+                    );
+                }
+                throw new NegocioException(trim($msg), 400);
+            }
+            throw $e;
+        }
     }
     
     private function _consultar_movimientos()

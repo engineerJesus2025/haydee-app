@@ -380,24 +380,28 @@
         </div>
     </div>
     <div class="modal fade" id="modalInfoApartamento" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-scrollable modal-sm modal-dialog modal-dialog-scrollable-centered">
+        <div class="modal-dialog modal-dialog-scrollable modal-sm modal-dialog-scrollable-centered">
             <div class="modal-content card shadow-lg rounded-4 overflow-hidden">
                 
-                <div id="info-apt-header" class="modal-header border-0 pb-4 pt-4 justify-content-center position-relative">
+                <!-- 1. Header: Le damos padding inferior (pb-5) para que el texto suba y haya espacio para el badge -->
+                <div id="info-apt-header" class="modal-header border-0 pt-4 pb-5 justify-content-center position-relative" style="z-index: 2;">
                     <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+                    
                     <div class="text-center text-white">
                         <i class="bi bi-door-closed fs-1 mb-2 opacity-75"></i>
                         <h4 class="modal-title fw-bold mb-0">Apt. <span id="info-apt-nro"></span></h4>
                     </div>
+
+                    <!-- 2. El Badge: Usamos bottom negativo (-16px) para bajarlo exactamente a la línea -->
+                    <div class="position-absolute start-50" style="bottom: -16px; transform: translateX(-50%); z-index: 10;">
+                        <span id="info-apt-estado" class="badge rounded-pill shadow-sm px-4 py-2 fs-6 text-uppercase border border-2 border-white" style="letter-spacing: 1px;">OCUPADO</span>
+                    </div>
                 </div>
                 
-                <div class="modal-body rounded-bottom text-center pt-4 pb-4 px-4  position-relative vp-body">
+                <!-- 3. Body: Le damos padding superior (pt-5) para que "RESIDENTE PRINCIPAL" no sea tapado por la mitad inferior del badge -->
+                <div class="modal-body rounded-bottom text-center pt-5 pb-4 px-4 position-relative vp-body" style="z-index: 1;">
                     
-                    <div class="position-absolute top-0 start-50 translate-middle">
-                        <span id="info-apt-estado" class="badge rounded-pill shadow-sm px-4 py-2 fs-6 text-uppercase border border-2 border-white" style="letter-spacing: 1px;"></span>
-                    </div>
-                    
-                    <div class="mt-3 mb-4">
+                    <div class="mt-2 mb-4">
                         <p class="text-muted mb-1 fw-bold" style="font-size: 0.7rem; letter-spacing: 1px;">RESIDENTE PRINCIPAL</p>
                         <div class="d-flex align-items-center justify-content-center ">
                             <i class="bi bi-user-circle fs-4 me-2 text-secondary"></i>
@@ -414,6 +418,7 @@
                         </div>
                     </div>
                 </div>
+                
                 <div class="modal-footer justify-content-end">
                     <button type="button" class="btn btn-soft-secondary px-4" data-bs-dismiss="modal">
                         <i class="bi bi-x-circle me-2"></i> Cerrar

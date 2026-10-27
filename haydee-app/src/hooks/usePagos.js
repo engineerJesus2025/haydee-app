@@ -1,13 +1,19 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Alert } from 'react-native';
-import { fetchPagos, actualizarEstadoPagoServidor, fetchEstadoCuenta } from '../store/slices/pagosSlice';
+import {
+  fetchPagos,
+  actualizarEstadoPagoServidor,
+  fetchEstadoCuenta,
+  eliminarPagoServidor,
+} from '../store/slices/pagosSlice';
 import { usePermisos } from './usePermisos';
-import clienteApi from '../utils/clienteApi'; 
+import clienteApi from '../utils/clienteApi';
 import { procesarErrorApi } from '../utils/gestorErroresUI';
 import { formatearMesAnio } from '../utils/dateUtils';
+import { confirmarEliminacion, formatearMonto } from '../utils/confirmaciones';
 
-const URL_BASE = process.env.EXPO_PUBLIC_URL_BASE; 
+const URL_BASE = process.env.EXPO_PUBLIC_URL_BASE;
 
 export const usePagos = () => {
   const dispatch = useDispatch();
@@ -20,20 +26,23 @@ export const usePagos = () => {
   const [anioFiltro, setAnioFiltro] = useState(fechaActual.getFullYear());
   const [periodosDisponibles, setPeriodosDisponibles] = useState([]);
 
-  const [modalVisible, setModalVisible] = useState(false); 
-  const [modalPagoVisible, setModalPagoVisible] = useState(false); 
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalPagoVisible, setModalPagoVisible] = useState(false);
+  const [modalEdicionVisible, setModalEdicionVisible] = useState(false);
   const [modalEstadoCuentaVisible, setModalEstadoCuentaVisible] = useState(false);
+
   const [pagoSeleccionado, setPagoSeleccionado] = useState(null);
+  const [pagoAEditar, setPagoAEditar] = useState(null);
   const [cargandoDetalle, setCargandoDetalle] = useState(false);
   const [procesandoEstado, setProcesandoEstado] = useState(false);
+  const [eliminando, setEliminando] = useState(false);
 
-  // Estado puente para el primer renderizado
   const [inicializando, setInicializando] = useState(true);
 
   const obtenerPagos = (forzar = false, mes = mesFiltro, anio = anioFiltro) => {
     if (forzar || listaPagos.length === 0) {
       dispatch(fetchPagos({ mes, anio }));
-      dispatch(fetchEstadoCuenta()); 
+      dispatch(fetchEstadoCuenta());
     }
   };
 
@@ -53,27 +62,27 @@ export const usePagos = () => {
           );
 
           if (!existeMesActual) {
-            const ultimoPeriodo = periodosBD[0]; 
+            const ultimoPeriodo = periodosBD[0];
             setMesFiltro(Number(ultimoPeriodo.mes));
             setAnioFiltro(Number(ultimoPeriodo.anio));
             obtenerPagos(true, Number(ultimoPeriodo.mes), Number(ultimoPeriodo.anio));
-            setInicializando(false); // Apagamos el puente
-            return; 
+            setInicializando(false);
+            return;
           }
         }
       }
     } catch (err) {
-      const esErrorDeRed = 
-        err.message === 'Network Error' || 
+      const esErrorDeRed =
+        err.message === 'Network Error' ||
         err.code === 'ERR_NETWORK' ||
         (!err.response && err.request);
       if (!esErrorDeRed) {
-        procesarErrorApi(err); 
+        procesarErrorApi(err);
       }
     }
-    
+
     obtenerPagos();
-    setInicializando(false); 
+    setInicializando(false);
   }, [mesFiltro, anioFiltro]);
 
   const cambiarFiltroFecha = (nuevoMes, nuevoAnio) => {
@@ -97,37 +106,46 @@ export const usePagos = () => {
 
       if (respuesta.data.estatus) {
         const dataBackend = respuesta.data.datos;
-        
+
         const detallesProcesados = (dataBackend.detalles || []).map(det => {
           let urlImagen = null;
+          let nombreImagen = null;
           if (det.imagen && det.imagen !== 'default.png') {
             urlImagen = `${URL_BASE}/recursos/img/pagos/${det.imagen}`;
+            nombreImagen = det.imagen;
           }
           return {
             id_detalle: det.id_detalle_pago,
             fecha: det.fecha,
             monto: `${parseFloat(det.monto).toFixed(2)} Bs.`,
+            monto_crudo: parseFloat(det.monto).toFixed(2),
             tipo_pago: det.tipo_pago,
             banco: det.nombre_banco || 'No aplica',
+            banco_id: det.banco_id ?? '',
+            cuenta_id: det.cuenta_id ?? '',
             referencia: det.referencia || 'No aplica',
-            imagen: urlImagen
+            referencia_cruda: det.referencia || '',
+            imagen: urlImagen,
+            imagen_nombre: nombreImagen,
           };
         });
 
         const mensualidadCruda = dataBackend.mensualidad || pagoCabecera.mensualidad;
         const [mes, anio] = mensualidadCruda.includes('/') ? mensualidadCruda.split('/') : ['', ''];
         const apartamento = `Nº ${dataBackend.nro_apartamento}`;
-        
+
         setPagoSeleccionado({
           ...pagoCabecera,
           apartamento,
+          apartamento_id: dataBackend.apartamento_id ?? null,
+          mensualidad_id: dataBackend.mensualidad_id ?? null,
           mensualidad: (mes && anio) ? formatearMesAnio(mes, anio) : mensualidadCruda,
           observacion: dataBackend.observacion || 'Sin observaciones',
           monto_mensualidad: `${parseFloat(dataBackend.monto_mensualidad || 0).toFixed(2)} Bs.`,
           monto_abonado: `${parseFloat(dataBackend.monto_abonado || 0).toFixed(2)} Bs.`,
-          detalles: detallesProcesados 
+          detalles: detallesProcesados
         });
-        
+
         setModalVisible(true);
       } else {
         procesarErrorApi({ tipo: 'SERVIDOR', status: 400, mensaje: respuesta.data.mensaje });
@@ -144,20 +162,75 @@ export const usePagos = () => {
     setPagoSeleccionado(null);
   };
 
+  // ============ EDICIÓN ============
+  const abrirEdicion = (pagoCompleto) => {
+    setPagoAEditar(pagoCompleto);
+    setPagoSeleccionado(null);
+    setModalVisible(false);
+    setModalEdicionVisible(true);
+  };
+
+  const cerrarEdicion = (refrescar = false) => {
+    setModalEdicionVisible(false);
+    setPagoAEditar(null);
+    setPagoSeleccionado(null); 
+    if (refrescar) obtenerPagos(true);
+  };
+
+  // ============ ELIMINACIÓN ============
+  const handleEliminar = (pago) => {
+    const quien = [
+      pago.apartamento && `del apartamento ${pago.apartamento}`,
+      pago.mensualidad && `correspondiente a ${pago.mensualidad}`,
+    ].filter(Boolean).join(' ');
+
+    const monto = formatearMonto(pago.monto_abonado || pago.monto);
+    const nComprobantes = pago.detalles?.length || 0;
+
+    const lineas = [
+      `Se anulará el pago ${quien || 'registrado'}${monto ? ` por ${monto}` : ''}.`,
+    ];
+
+    if (nComprobantes > 0) {
+      lineas.push(
+        `Se eliminarán también ${nComprobantes} detalle${nComprobantes !== 1 ? 's' : ''} adjunto${nComprobantes !== 1 ? 's' : ''}.`
+      );
+    }
+
+    lineas.push('Esta acción no se puede deshacer.');
+
+    confirmarEliminacion({
+      titulo: 'Anular pago',
+      mensaje: lineas.join('\n\n'),
+      labelBoton: 'Sí, anular',
+      onConfirm: async () => {
+        setEliminando(true);
+        try {
+          await dispatch(eliminarPagoServidor({ id_pago: pago.id })).unwrap();
+          cerrarDetalles();
+          obtenerPagos(true);
+        } catch (err) {
+          procesarErrorApi(err);
+        } finally {
+          setEliminando(false);
+        }
+      },
+    });
+  };
+
   const handleAprobar = (pago) => {
     if (!puedeAprobarPagos) return;
     Alert.alert(
-      "Aprobar Pago",
+      'Aprobar Pago',
       `¿Confirmas que el pago por ${pago.monto} es válido y está en la cuenta?`,
       [
-        { text: "Cancelar", style: "cancel" },
-        { 
-          text: "Sí, Aprobar", 
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Sí, Aprobar',
           onPress: async () => {
             setProcesandoEstado(true);
             try {
               await dispatch(actualizarEstadoPagoServidor({ id_pago: pago.id, nuevoEstado: 'PROCESADO' })).unwrap();
-              
               obtenerPagos(true);
             } catch (error) {
               procesarErrorApi(error);
@@ -173,18 +246,17 @@ export const usePagos = () => {
 
   const handleRechazar = (pago) => {
     Alert.alert(
-      "Rechazar Pago",
-      "¿Estás seguro de rechazar este pago? El recibo será marcado como inválido.",
+      'Rechazar Pago',
+      '¿Estás seguro de rechazar este pago? El recibo será marcado como inválido.',
       [
-        { text: "Cancelar", style: "cancel" },
-        { 
-          text: "Sí, Rechazar", 
-          style: "destructive",
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Sí, Rechazar',
+          style: 'destructive',
           onPress: async () => {
             setProcesandoEstado(true);
             try {
               await dispatch(actualizarEstadoPagoServidor({ id_pago: pago.id, nuevoEstado: 'RECHAZADO' })).unwrap();
-              
               obtenerPagos(true);
             } catch (error) {
               procesarErrorApi(error);
@@ -202,38 +274,20 @@ export const usePagos = () => {
     if (typeof cargarPeriodos === 'function') {
       cargarPeriodos();
     } else {
-      obtenerPagos(); 
+      obtenerPagos();
     }
   }, []);
 
   return {
-    listaPagos,
-    loading,
-    error,
-    listaDeudas,
-    totalDeuda,
-    loadingDeudas,
-    esAdmin,
-    puedeAprobarPagos,
-    mesFiltro,
-    setMesFiltro,
-    anioFiltro,
-    setAnioFiltro,
-    periodosDisponibles,
-    modalVisible,
-    modalPagoVisible,
-    modalEstadoCuentaVisible,
-    pagoSeleccionado,
-    cargandoDetalle,
-    setModalPagoVisible,
-    setModalEstadoCuentaVisible,
-    obtenerPagos,
-    abrirDetalles,
-    cerrarDetalles,
-    handleAprobar,
-    handleRechazar,
-    procesandoEstado,
-    inicializando,
-    cambiarFiltroFecha
+    listaPagos, loading, error, listaDeudas, totalDeuda, loadingDeudas,
+    esAdmin, puedeAprobarPagos,
+    mesFiltro, setMesFiltro, anioFiltro, setAnioFiltro, periodosDisponibles,
+    modalVisible, modalPagoVisible, modalEdicionVisible, modalEstadoCuentaVisible,
+    pagoSeleccionado, pagoAEditar, cargandoDetalle, procesandoEstado, eliminando,
+    setModalPagoVisible, setModalEstadoCuentaVisible,
+    obtenerPagos, abrirDetalles, cerrarDetalles,
+    abrirEdicion, cerrarEdicion,
+    handleAprobar, handleRechazar, handleEliminar,
+    inicializando, cambiarFiltroFecha
   };
 };

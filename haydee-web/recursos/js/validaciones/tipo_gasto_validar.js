@@ -2,11 +2,18 @@ document.addEventListener("DOMContentLoaded", function() {
 
     const inputNombre = document.querySelector("#nombre_tipo_gasto");
     const formulario = document.getElementById("form_tipo_gasto");
+    const inputClasificacion = document.querySelector("#clasificacion");
 
     // Validaciones en tiempo real para la Partida Principal
     if (inputNombre) {
         inputNombre.addEventListener("keypress", (e) => Validador.bloquearTeclasInvalidas(e, Patrones.teclasLetras));
         inputNombre.addEventListener("keyup", (e) => Validador.evaluarInput(e.target, Patrones.textoMedio, "Debe ingresar el nombre del tipo de gasto"));
+    }
+
+    if (inputClasificacion) {
+        inputClasificacion.addEventListener("keyup", function () {
+            Validador.evaluarInput(this, Patrones.clasificacion, "Solo texto, sin espacios (3-30 caracteres)");
+        });
     }
     
     if (formulario) {
@@ -48,12 +55,18 @@ document.addEventListener("DOMContentLoaded", function() {
 
 async function validarEnvio() { 
     const inputNombre = document.querySelector("#nombre_tipo_gasto");
-    
-    // Validar cabecera
+    const inputClasificacion  = document.querySelector("#clasificacion");
+
     let formularioValido = Validador.evaluarInput(inputNombre, Patrones.textoMedio, 'Debe ingresar el nombre del tipo de gasto');
+    
     
     if (!formularioValido) {
         Alertas.mostrar('error', 'Atención', 'El nombre de la partida principal es obligatorio y debe tener formato correcto.');
+        return false;
+    }
+
+    if (!Validador.evaluarInput(inputClasificacion, Patrones.clasificacion, 'Clasificación inválida')) {
+        Alertas.mostrar('error', 'Atención', 'La clasificación debe ser solo mayúsculas, sin espacios (3-30 caracteres)');
         return false;
     }
 

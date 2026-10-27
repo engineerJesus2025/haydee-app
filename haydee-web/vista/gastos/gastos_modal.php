@@ -19,54 +19,53 @@
                     <div class="container mt-4">
                         <div class="row mb-3">
                             <div class="col-lg-6 col-12 mb-3">
-                                <label for="clasificacion" class="form-label fw-semibold">Tipo <span class="text-danger">*</span></label>
-                                <div class="input-group has-validation">
-                                    <span class="input-group-text"><i class="bi bi-tags"></i></span>
-                                    <select class="form-select" name="clasificacion" id="clasificacion" required>
-                                        <option value="" selected hidden>Seleccione un tipo</option>
-                                        <option value="FIJO">Fijo</option>
-                                        <option value="VARIABLE">Variable</option>
-                                    </select>
-                                    <span class="w-100 invalid-feedback"></span>
-                                </div>
-                            </div>
-                            <div class="col-lg-6 col-12 mb-3">
                                 <label class="form-label fw-semibold" for="concepto_id">Concepto del Gasto <span class="text-danger">*</span></label>
                                 <div class="input-group has-validation">
                                     <span class="input-group-text"><i class="bi bi-tags"></i></span>
                                     <select class="form-select" name="concepto_id" id="concepto_id" required>
                                         <option value="" selected hidden>Seleccione el concepto</option>
                                         <?php 
-                                        $tipo_actual = "";
-                                        foreach ($conceptos_gasto['datos'] as $concepto): 
-                                            // Si el tipo de gasto cambia respecto al anterior, abrimos un nuevo grupo
-                                            if ($tipo_actual != $concepto["nombre_tipo_gasto"]) {
-                                                // Si no es la primera iteración, cerramos el grupo anterior
-                                                if ($tipo_actual != "") {
-                                                    echo "</optgroup>";
+                                            $tipo_actual = "";
+                                            foreach ($conceptos_gasto['datos'] as $concepto): 
+                                                if ($tipo_actual != $concepto["nombre_tipo_gasto"]) {
+                                                    if ($tipo_actual != "") {
+                                                        echo "</optgroup>";
+                                                    }
+                                                    $tipo_actual = $concepto["nombre_tipo_gasto"];
+                                                    echo "<optgroup label='" . htmlspecialchars($tipo_actual) . "'>";
                                                 }
-                                                $tipo_actual = $concepto["nombre_tipo_gasto"];
-                                                echo "<optgroup label='" . htmlspecialchars($tipo_actual) . "'>";
-                                            }
-                                            
-                                            // por si hay un tipo de gasto vacío
-                                            if (!empty($concepto["id_concepto"])):
-                                        ?>
-                                                <option value="<?php echo $concepto["id_concepto"]; ?>">
-                                                    <?php echo $concepto["nombre_concepto"]; ?>
-                                                </option>
-                                        <?php 
-                                            endif;
-                                        endforeach; 
-                                        if ($tipo_actual != "") echo "</optgroup>"; 
-                                        ?>
+                                                
+                                                if (!empty($concepto["id_concepto"])):
+                                            ?>
+                                                    <option value="<?php echo $concepto['id_concepto']; ?>"
+                                                            data-clasificacion="<?php echo htmlspecialchars($concepto['clasificacion'] ?? ''); ?>">
+                                                        <?php echo $concepto["nombre_concepto"]; ?>
+                                                    </option>
+                                            <?php 
+                                                endif;
+                                            endforeach; 
+                                            if ($tipo_actual != "") echo "</optgroup>"; 
+                                            ?>
                                     </select>
                                     <span class="w-100 invalid-feedback"></span>
                                 </div>
                             </div>
+                            <div class="col-lg-6 col-12 mb-3">
+                                <label for="clasificacion" class="form-label fw-semibold"
+                                       data-tooltip="true"
+                                       title="Se determina automáticamente según el concepto seleccionado">
+                                    Clasificación <i class="bi bi-info-circle text-muted ms-1"></i>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="bi bi-magic text-primary"></i></span>
+                                    <input type="text" class="form-control bg-light" id="clasificacion"
+                                           placeholder="Se completa al elegir el concepto"
+                                           readonly tabindex="-1" aria-readonly="true">
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Fila 3: Descripción general del gasto -->
+                        <!-- Descripción general del gasto -->
                         <div class="row mb-3">
                             <div class="col-12">
                                 <label for="descripcion_gasto" class="form-label fw-semibold">Descripción del Gasto <span class="text-danger">*</span></label>

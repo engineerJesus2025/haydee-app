@@ -216,7 +216,7 @@ class Recuperacion
         }
 
         // El OTP coincide: Actualizamos la contraseña
-        $this->usuarioModel->set_contra(password_hash($nuevaContra, PASSWORD_DEFAULT));
+        $this->usuarioModel->set_contra($nuevaContra);
         $cambio = $this->usuarioModel->realizar_consulta('cambiar_contrasenia');
         
         if ($cambio['estatus']) {

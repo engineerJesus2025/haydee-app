@@ -398,6 +398,8 @@ async function mostrarVistaPreviaHabitante(id) {
     const respuesta = await Peticiones.enviar(datos);
     Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
         const data = respuestaServidor.datos;
+
+        sexoCompleto = data.sexo === "M" ? "Masculino": data.sexo == "F" ? "Femenino" : "";
         // Datos personales
         document.getElementById('vista_nombre').textContent = data.nombre || '';
         document.getElementById('vista_apellido').textContent = data.apellido || '';
@@ -405,7 +407,7 @@ async function mostrarVistaPreviaHabitante(id) {
         document.getElementById('vista_telefono').textContent = data.telefono || '';
         document.getElementById('vista_correo').textContent = data.correo || '';
         document.getElementById('vista_fecha_nacimiento').textContent = FormatoFechas.formatoUsuario(data.fecha_nacimiento);
-        document.getElementById('vista_sexo').textContent = data.sexo || '';
+        document.getElementById('vista_sexo').textContent = sexoCompleto;
         // Datos del apartamento
         document.getElementById('vista_apartamento_nro').textContent = data.nro_apartamento ? `Nro ${data.nro_apartamento}` : 'No asignado';
         document.getElementById('vista_apartamento_porcentaje').textContent = data.porcentaje_participacion || '0';

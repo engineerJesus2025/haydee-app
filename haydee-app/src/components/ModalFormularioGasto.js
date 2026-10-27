@@ -1,21 +1,23 @@
 import React, { useRef } from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native'; 
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { useTema } from '../hooks/useTema';
 import { useFormularioGasto } from '../hooks/useFormularioGasto';
 import useValidaciones from '../hooks/useValidaciones';
 import { Controller } from 'react-hook-form';
 
-import ModalGeneral from './ModalGeneral'; 
+import ModalGeneral from './ModalGeneral';
 import CampoFormulario from './CampoFormulario';
 import CustomBoton from './CustomBoton';
 import MostrarVistaPrevia from './MostrarVistaPrevia';
 import LabelInput from './LabelInput';
 import ErrorFormulario from './ErrorFormulario';
 import SelectorDesplegable from './SelectorDesplegable';
+import TasaDolarCard from './TasaDolarCard';
 
-export default function ModalFormularioGasto({ visible, onClose }) {
+export default function ModalFormularioGasto({ visible, onClose, modo = 'crear', gastoAEditar = null }) {
   const { colores } = useTema();
-  
+  const esEdicion = modo === 'editar';
+
   const montoRef = useRef(null);
   const descripcionRef = useRef(null);
   const referenciaRef = useRef(null);
@@ -23,20 +25,37 @@ export default function ModalFormularioGasto({ visible, onClose }) {
   const {
     control, errors, comprobanteUri, isSubmitting, canSubmit,
     handleSubmit, handleImagePick, removeImage, onSubmit, handleCancel,
-    catalogos, requiereBanco, onError
-  } = useFormularioGasto(onClose);
+    catalogos, requiereBanco, onError,
+    opcionesTiposGasto,
+    opcionesConceptos,
+    opcionesProveedores,
+    opcionesCuentas,
+    handleTipoGastoChange,
+    escanearComprobante,
+    escanerCargando,
+    OCR_HABILITADO,
+    tasaDolar,
+    equivalenteDolares,
+  } = useFormularioGasto(onClose, { modo, gastoAEditar, visible });
 
   const validaciones = useValidaciones();
 
   const BotonesFooter = (
     <>
-      <CustomBoton titulo="Cancelar" evento={handleCancel} icono={{ nombre: 'close-circle-outline', color: '#fff' }} estilos={{ backgroundColor: '#95a5a6', flex: 1 }} fuente={16} />
-      <CustomBoton titulo="Registrar" 
+      <CustomBoton
+        titulo="Cancelar"
+        evento={handleCancel}
+        icono={{ nombre: 'close-circle-outline', color: '#fff' }}
+        estilos={{ backgroundColor: '#95a5a6', flex: 1 }}
+        fuente={16}
+      />
+      <CustomBoton
+        titulo={esEdicion ? 'Guardar Cambios' : 'Registrar'}
         evento={handleSubmit(onSubmit, onError)}
-        icono={{ nombre: 'save-outline', color: '#fff' }} 
-        disabled={isSubmitting} 
-        estilos={{ backgroundColor: '#27ae60', opacity: !isSubmitting ? 1 : 0.6 }} 
-        fuente={16} 
+        icono={{ nombre: esEdicion ? 'save-outline' : 'add-circle-outline', color: '#fff' }}
+        disabled={isSubmitting}
+        estilos={{ backgroundColor: esEdicion ? '#f39c12' : '#27ae60', opacity: !isSubmitting ? 1 : 0.6 }}
+        fuente={16}
         loading={isSubmitting}
       />
     </>
@@ -46,12 +65,13 @@ export default function ModalFormularioGasto({ visible, onClose }) {
     <ModalGeneral
       visible={visible}
       onClose={handleCancel}
-      titulo="Registrar Gasto"
+      titulo={esEdicion ? 'Editar Gasto' : 'Registrar Gasto'}
       iconoHeader={{ name: 'cart-outline', color: '#E1E1F7' }}
       footer={BotonesFooter}
       esFormulario={true}
     >
-      <LabelInput titulo="Tipo de Gasto" icono={{ nombre: 'pricetag-outline', color: '#3498db' }} />
+      {/* CLASIFICACIÓN FIJO / VARIABLE */}
+      <LabelInput titulo="Clasificación" icono={{ nombre: 'pricetag-outline', color: '#3498db' }} />
       <Controller
         control={control}
         name="clasificacion"
@@ -85,88 +105,66 @@ export default function ModalFormularioGasto({ visible, onClose }) {
       />
       <ErrorFormulario error={errors.clasificacion} />
 
-      {/* --- SELECTOR DE TIPO DE GASTO --- */}
+      {/* TIPO DE GASTO */}
       <LabelInput titulo="Tipo de Gasto" icono={{ nombre: 'pricetag-outline', color: '#3498db' }} />
       <Controller
         control={control}
         name="tipo_gasto_id"
         rules={{ required: 'Seleccione un tipo' }}
-        render={({ field: { onChange, value } }) => {
-          
-          const opcionesTipoGasto = (catalogos.tipos_gasto || []).map(tipo => ({
-            label: tipo.nombre_tipo_gasto, 
-            value: tipo.id_tipo_gasto
-          }));
-
-          return (
-            <SelectorDesplegable
-              opciones={opcionesTipoGasto}
-              valorSeleccionado={value}
-              onSelect={onChange}
-              placeholder="Seleccione la categoría..."
-              icono="pricetag-outline"
-            />
-          );
-        }}
+        render={({ field }) => (
+          <SelectorDesplegable
+            opciones={opcionesTiposGasto}
+            valorSeleccionado={field.value}
+            onSelect={handleTipoGastoChange}
+            placeholder="Seleccione el tipo..."
+            icono="pricetag-outline"
+          />
+        )}
       />
       <ErrorFormulario error={errors.tipo_gasto_id} />
 
+      {/* CONCEPTO */}
+      <LabelInput titulo="Concepto" icono={{ nombre: 'list-outline', color: '#3498db' }} />
+      <Controller
+        control={control}
+        name="concepto_id"
+        rules={{ required: 'Seleccione un concepto' }}
+        render={({ field }) => (
+          <SelectorDesplegable
+            opciones={opcionesConceptos}
+            valorSeleccionado={field.value}
+            onSelect={field.onChange}
+            placeholder={
+              opcionesConceptos.length === 0
+                ? 'Sin conceptos para este tipo'
+                : 'Seleccione el concepto...'
+            }
+            icono="list-outline"
+            deshabilitado={opcionesConceptos.length === 0}
+          />
+        )}
+      />
+      <ErrorFormulario error={errors.concepto_id} />
 
-      {/* --- SELECTOR DE PROVEEDOR --- */}
+      {/* PROVEEDOR */}
       <LabelInput titulo="Proveedor / Beneficiario" icono={{ nombre: 'business-outline', color: '#3498db' }} />
       <Controller
         control={control}
         name="proveedor_id"
         rules={{ required: 'Seleccione un proveedor' }}
-        render={({ field: { onChange, value } }) => {
-          
-          const opcionesProveedores = (catalogos.proveedores || []).map(prov => ({
-            // Concatenamos nombre y RIF/Cédula para mayor claridad del administrador
-            label: `${prov.nombre_proveedor} (${prov.rif || 'Sin RIF'})`, 
-            value: prov.id_proveedor
-          }));
-
-          return (
-            <SelectorDesplegable
-              opciones={opcionesProveedores}
-              valorSeleccionado={value}
-              onSelect={onChange}
-              placeholder="Seleccione el proveedor..."
-              icono="person-outline"
-            />
-          );
-        }}
+        render={({ field }) => (
+          <SelectorDesplegable
+            opciones={opcionesProveedores}
+            valorSeleccionado={field.value}
+            onSelect={field.onChange}
+            placeholder="Seleccione el proveedor..."
+            icono="person-outline"
+          />
+        )}
       />
       <ErrorFormulario error={errors.proveedor_id} />
 
-      <CampoFormulario
-        tituloLabel="Descripción del Gasto"
-        iconoLabel={{ nombre: 'document-text-outline', color: '#3498db' }}
-        control={control}
-        name="descripcion_gasto"
-        rules={validaciones.descripcionGasto}
-        iconoInput={{ nombre: 'reader-outline', color: '#95a5a6' }}
-        error={errors.descripcion_gasto}
-        placeholder="Motivo detallado..."
-        inputRef={descripcionRef}
-        returnKeyType="next"
-        onSubmitEditing={() => montoRef.current?.focus()}
-      />
-
-      <CampoFormulario
-        tituloLabel="Monto Total (Bs)"
-        iconoLabel={{ nombre: 'cash-outline', color: '#3498db' }}
-        control={control}
-        name="monto"
-        rules={validaciones.monto}
-        iconoInput={{ nombre: 'cash', color: '#95a5a6' }}
-        error={errors.monto}
-        placeholder="Ejm: 250.00"
-        keyboardType="decimal-pad"
-        inputRef={montoRef}
-      />
-
-      {/* --- SECCIÓN DE PAGOS --- */}
+      {/* MÉTODO DE PAGO */}
       <LabelInput titulo="Método de Pago" icono={{ nombre: 'wallet-outline', color: '#3498db' }} />
       <Controller
         control={control}
@@ -197,22 +195,109 @@ export default function ModalFormularioGasto({ visible, onClose }) {
         )}
       />
 
+      {/* COMPROBANTE + ESCANEAR */}
       {requiereBanco && (
         <>
-          <LabelInput titulo="Banco" icono={{ nombre: 'business', color: '#3498db' }} />
+          <LabelInput titulo="Comprobante Bancario" icono={{ nombre: 'image-outline', color: '#3498db' }} />
+          <ErrorFormulario error={errors.imagen} />
+
+          {!comprobanteUri ? (
+            <CustomBoton
+              titulo="Subir Captura"
+              evento={handleImagePick}
+              icono={{ nombre: 'camera-outline', color: '#fff' }}
+              estilos={{ backgroundColor: '#3498db', alignSelf: 'stretch' }}
+              wrapperStyle={{ width: '100%', marginBottom: 15 }}
+              disabled={isSubmitting}
+            />
+          ) : (
+            <View style={{ flexDirection: 'row', gap: 10, marginBottom: 10 }}>
+              <CustomBoton
+                titulo="Cambiar"
+                evento={handleImagePick}
+                icono={{ nombre: 'camera-outline', color: '#fff' }}
+                estilos={{ backgroundColor: '#3498db', alignSelf: 'stretch' }}
+                wrapperStyle={{ flex: 1 }}
+                disabled={isSubmitting || escanerCargando}
+              />
+              {OCR_HABILITADO && (
+                <CustomBoton
+                  titulo={escanerCargando ? 'Leyendo…' : 'Escanear'}
+                  evento={() => escanearComprobante(comprobanteUri)}
+                  icono={{ nombre: 'scan-outline', color: '#fff' }}
+                  estilos={{ backgroundColor: '#8e44ad', alignSelf: 'stretch' }}
+                  wrapperStyle={{ flex: 1 }}
+                  loading={escanerCargando}
+                  disabled={escanerCargando || isSubmitting}
+                />
+              )}
+            </View>
+          )}
+
+          {comprobanteUri && (
+            <MostrarVistaPrevia
+              titulo="Recibo adjunto:"
+              imageUri={comprobanteUri}
+              onRemove={escanerCargando ? null : removeImage}
+              escaneando={escanerCargando}
+            />
+          )}
+
+          {OCR_HABILITADO && comprobanteUri && !escanerCargando && (
+            <View style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+              marginTop: -5,
+              marginBottom: 15,
+              paddingHorizontal: 4,
+            }}>
+              <Text style={{ color: '#8e44ad', fontSize: 12, fontWeight: '500', flex: 1 }}>
+                💡 Toca "Escanear" para autocompletar monto, cuenta y referencia.
+              </Text>
+            </View>
+          )}
+        </>
+      )}
+
+      {/* TASA */}
+      <TasaDolarCard
+        tasa={tasaDolar}
+        equivalente={equivalenteDolares}
+        moneda="Bs."
+      />
+
+      {/* MONTO */}
+      <CampoFormulario
+        tituloLabel="Monto Total (Bs)"
+        iconoLabel={{ nombre: 'cash-outline', color: '#3498db' }}
+        control={control}
+        name="monto"
+        rules={validaciones.monto}
+        iconoInput={{ nombre: 'cash', color: '#95a5a6' }}
+        error={errors.monto}
+        placeholder="Ejm: 250.00"
+        keyboardType="decimal-pad"
+        inputRef={montoRef}
+      />
+
+      {/* CUENTA y REFERENCIA */}
+      {requiereBanco && (
+        <>
+          <LabelInput titulo="Cuenta del Condominio" icono={{ nombre: 'wallet-outline', color: '#3498db' }} />
           <Controller
             control={control}
-            name="banco_id"
-            rules={validaciones.requeridoSimple('Selecciona un banco')}
-            render={({ field: { onChange, value } }) => (
+            name="cuenta_id"
+            rules={validaciones.requeridoSimple('Selecciona una cuenta')}
+            render={({ field }) => (
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 15 }}>
-                {catalogos.bancos.map((banco) => {
-                  const isSelected = value === banco.id_banco;
+                {(catalogos.cuentas || []).map((cta) => {
+                  const isSelected = field.value === cta.id_cuenta;
                   return (
                     <TouchableOpacity
-                      key={banco.id_banco}
+                      key={cta.id_cuenta}
                       activeOpacity={0.7}
-                      onPress={() => onChange(banco.id_banco)}
+                      onPress={() => field.onChange(cta.id_cuenta)}
                       style={{
                         paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, borderWidth: 1.5, marginRight: 8,
                         borderColor: isSelected ? (colores.primario || '#3498db') : colores.border,
@@ -220,7 +305,7 @@ export default function ModalFormularioGasto({ visible, onClose }) {
                       }}
                     >
                       <Text style={{ color: isSelected ? colores.primario : colores.textPlaceholder, fontWeight: isSelected ? 'bold' : '500' }}>
-                        {banco.nombre_banco}
+                        {cta.nombre_banco} · {cta.numero_cuenta}
                       </Text>
                     </TouchableOpacity>
                   );
@@ -228,7 +313,7 @@ export default function ModalFormularioGasto({ visible, onClose }) {
               </ScrollView>
             )}
           />
-          <ErrorFormulario error={errors.banco_id} />
+          <ErrorFormulario error={errors.cuenta_id} />
 
           <CampoFormulario
             tituloLabel="Nro. de Referencia"
@@ -242,18 +327,21 @@ export default function ModalFormularioGasto({ visible, onClose }) {
             keyboardType="numeric"
             inputRef={referenciaRef}
           />
-
-          <LabelInput titulo="Comprobante Bancario" icono={{ nombre: 'image-outline', color: '#3498db' }} />
-          <ErrorFormulario error={errors.imagen} />
-          <View style={{ flexDirection: 'row', gap: 10, marginBottom: 10 }}>
-            <CustomBoton titulo={comprobanteUri ? 'Cambiar Foto' : 'Subir Captura'} evento={handleImagePick} icono={{ nombre: 'camera-outline', color: '#fff' }} estilos={{ flex: 1 }} />
-            {comprobanteUri && (
-              <CustomBoton titulo="Quitar" evento={removeImage} icono={{ nombre: 'trash-outline', color: '#fff' }} estilos={{ backgroundColor: '#e74c3c' }} />
-            )}
-          </View>
-          {comprobanteUri && <MostrarVistaPrevia titulo="Recibo adjunto:" imageUri={comprobanteUri} />}
         </>
       )}
+
+      {/* DESCRIPCIÓN */}
+      <CampoFormulario
+        tituloLabel="Descripción del Gasto"
+        iconoLabel={{ nombre: 'document-text-outline', color: '#3498db' }}
+        control={control}
+        name="descripcion_gasto"
+        rules={validaciones.descripcionGasto}
+        iconoInput={{ nombre: 'reader-outline', color: '#95a5a6' }}
+        error={errors.descripcion_gasto}
+        placeholder="Motivo detallado..."
+        inputRef={descripcionRef}
+      />
 
     </ModalGeneral>
   );

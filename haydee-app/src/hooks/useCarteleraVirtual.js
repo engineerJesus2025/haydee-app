@@ -1,20 +1,25 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { fetchPublicaciones } from '../store/slices/publicacionesSlice';
+import { Alert } from 'react-native';
+import { fetchPublicaciones, eliminarPublicacion } from '../store/slices/publicacionesSlice';
+import { procesarErrorApi } from '../utils/gestorErroresUI';
+import { confirmarEliminacion, formatearMonto } from '../utils/confirmaciones';
 
-// Recibimos los colores como parámetro
 export const useCarteleraVirtual = (colores) => {
   const dispatch = useDispatch();
   const { listaPublicaciones, cargando, error, hayMas, paginaActual } = useSelector(state => state.publicaciones);
 
   const [modalVisible, setModalVisible] = useState(false);
+  const [modalEdicionVisible, setModalEdicionVisible] = useState(false);
   const [modalDetalleVisible, setModalDetalleVisible] = useState(false);
+
   const [publicacionSeleccionada, setPublicacionSeleccionada] = useState(null);
-  
-  // estado del calendario
-  const [fechaSeleccionada, setFechaSeleccionada] = useState('');
+  const [publicacionAEditar, setPublicacionAEditar] = useState(null);
 
   const [cargandoMas, setCargandoMas] = useState(false);
+  const [eliminando, setEliminando] = useState(false);
+
+  const [fechaSeleccionada, setFechaSeleccionada] = useState('');
 
   const obtenerPublicaciones = (forzar = false) => {
     if (forzar) {
@@ -29,28 +34,27 @@ export const useCarteleraVirtual = (colores) => {
       setCargandoMas(true);
       try {
         await dispatch(fetchPublicaciones({ pagina: paginaActual + 1 })).unwrap();
-      } catch (error) {
-        procesarErrorApi(error);
+      } catch (err) {
+        procesarErrorApi(err);
       } finally {
         setCargandoMas(false);
       }
     }
   };
 
-  // lógica pesada de los puntos del calendario
   const markedDates = useMemo(() => {
     let dates = {};
     if (!listaPublicaciones) return dates;
 
     listaPublicaciones.forEach(post => {
       if (post.fecha) {
-        const fechaFormateada = post.fecha.split(' ')[0]; 
+        const fechaFormateada = post.fecha.split(' ')[0];
         const tipo = post.tipo?.toLowerCase() || 'noticia';
-        
-        let dotColor = '#3498db'; 
-        if (tipo === 'evento') dotColor = '#e74c3c'; 
-        else if (tipo === 'aviso') dotColor = '#f39c12'; 
-        
+
+        let dotColor = '#3498db';
+        if (tipo === 'evento') dotColor = '#e74c3c';
+        else if (tipo === 'aviso') dotColor = '#f39c12';
+
         if (!dates[fechaFormateada]) {
           dates[fechaFormateada] = { dots: [] };
         }
@@ -61,20 +65,19 @@ export const useCarteleraVirtual = (colores) => {
         }
       }
     });
-    
+
     if (fechaSeleccionada) {
       if (!dates[fechaSeleccionada]) dates[fechaSeleccionada] = { dots: [] };
       dates[fechaSeleccionada].selected = true;
       dates[fechaSeleccionada].selectedColor = colores?.primario || '#007BFF';
     }
-    
+
     return dates;
   }, [listaPublicaciones, fechaSeleccionada, colores]);
 
-  // Lógica de filtrado de la lista
   const listaPublicacionesMostrar = useMemo(() => {
-    if (!fechaSeleccionada) return listaPublicaciones; 
-    
+    if (!fechaSeleccionada) return listaPublicaciones;
+
     return listaPublicaciones.filter(post => {
       if (!post.fecha) return false;
       const fechaFormateada = post.fecha.split(' ')[0];
@@ -82,10 +85,11 @@ export const useCarteleraVirtual = (colores) => {
     });
   }, [listaPublicaciones, fechaSeleccionada]);
 
-  // Funciones de modales
+  // ============ MODAL NUEVA ============
   const abrirModalNuevaPublicacion = () => setModalVisible(true);
   const cerrarModalNuevaPublicacion = () => setModalVisible(false);
 
+  // ============ MODAL DETALLE ============
   const abrirModalDetalle = useCallback((publicacion) => {
     setPublicacionSeleccionada(publicacion);
     setModalDetalleVisible(true);
@@ -96,15 +100,56 @@ export const useCarteleraVirtual = (colores) => {
     setModalDetalleVisible(false);
   }, []);
 
-  const abrirModalEdicion = (publicacion) => {
-    setPublicacionSeleccionada(publicacion);
-    setModalEdicionVisible(true);
-  };
-  const cerrarModalEdicion = () => {
+  // ============ MODAL EDICIÓN ============
+  const abrirModalEdicion = useCallback((publicacion) => {
+    setPublicacionAEditar(publicacion);
     setPublicacionSeleccionada(null);
+    setModalDetalleVisible(false);
+    setModalEdicionVisible(true);
+  }, []);
+
+  const cerrarModalEdicion = useCallback((refrescar = false) => {
     setModalEdicionVisible(false);
-  };
-  const handleGuardarEdicion = () => cerrarModalEdicion();
+    setPublicacionAEditar(null);
+    if (refrescar) obtenerPublicaciones(true);
+  }, []);
+
+  // ============ ELIMINAR ============
+  const handleEliminar = useCallback((publicacion) => {
+    const tipoLabel = {
+      evento: 'evento',
+      aviso: 'aviso',
+      noticia: 'noticia',
+    }[publicacion.tipo?.toLowerCase()] || 'publicación';
+
+    const lineas = [
+      `Se eliminará ${tipoLabel === 'publicación' ? 'la publicación' : `el ${tipoLabel}`} "${publicacion.titulo}".`,
+    ];
+
+    if (publicacion.autor) {
+      lineas.push(`Autor: ${publicacion.autor}.`);
+    }
+
+    lineas.push('Esta acción no se puede deshacer.');
+
+    confirmarEliminacion({
+      titulo: 'Eliminar publicación',
+      mensaje: lineas.join('\n\n'),
+      labelBoton: 'Sí, eliminar',
+      onConfirm: async () => {
+        setEliminando(true);
+        try {
+          await dispatch(eliminarPublicacion({ id_cartelera: publicacion.id })).unwrap();
+          cerrarModalDetalle();
+          obtenerPublicaciones(true);
+        } catch (err) {
+          procesarErrorApi(err);
+        } finally {
+          setEliminando(false);
+        }
+      },
+    });
+  }, [dispatch, cerrarModalDetalle]);
 
   useEffect(() => {
     obtenerPublicaciones();
@@ -115,18 +160,27 @@ export const useCarteleraVirtual = (colores) => {
     markedDates,
     fechaSeleccionada,
     setFechaSeleccionada,
-    cargando, 
+    cargando,
     error,
     cargandoMas,
+    eliminando,
     obtenerPublicaciones,
     cargarMasPublicaciones,
+
+    // modales
     modalVisible,
     modalDetalleVisible,
+    modalEdicionVisible,
     publicacionSeleccionada,
+    publicacionAEditar,
+
+    // acciones
     abrirModalNuevaPublicacion,
     cerrarModalNuevaPublicacion,
     abrirModalDetalle,
     cerrarModalDetalle,
-    handleGuardarEdicion
+    abrirModalEdicion,
+    cerrarModalEdicion,
+    handleEliminar,
   };
 };

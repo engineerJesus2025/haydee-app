@@ -2,7 +2,6 @@
 namespace haydee\modelo;
 
 use PDO;
-use haydee\enums\ClasificacionGasto;
 use haydee\enums\MetodoPago;
 use haydee\enums\TipoBaseDatos;
 use haydee\enums\HttpCodigo;
@@ -12,7 +11,6 @@ use haydee\excepciones\NegocioException;
 class Gastos extends Conexion
 {
     private $id_gasto;
-    private $clasificacion;
     private $descripcion_gasto;
     private $presupuesto_id;
     private $concepto_id;
@@ -32,14 +30,10 @@ class Gastos extends Conexion
     private $cuenta_id;
 
     public static function obtenerReglas($operacion) {
-        $ClasificacionesValidas = implode('|', array_column(ClasificacionGasto::cases(), 'value'));
         $reglasCampos = [
             'id_gasto' => [
                 'regex' => '/^\d+$/',
                 'exists' => ['tabla' => 'gastos', 'campo' => 'id_gasto']
-            ],
-            'clasificacion' => [
-                'regex' => "/^($ClasificacionesValidas)$/"
             ],
             'descripcion_gasto' => [
                 'regex' => '/^[a-zA-Z0-9áéíóúñÁÉÍÓÚÑ\s.,:\/-]{3,255}$/'
@@ -49,7 +43,8 @@ class Gastos extends Conexion
             ],
             'presupuesto_id' => [
                 'regex' => '/^\d+$/',
-                'exists' => ['tabla' => 'presupuesto', 'campo' => 'id_presupuesto']
+                'exists' => ['tabla' => 'presupuesto', 'campo' => 'id_presupuesto'],
+                'opcional' => true
             ],
             'concepto_id' => [
                 'regex' => '/^\d+$/',
@@ -100,11 +95,11 @@ class Gastos extends Conexion
             ],
             'registrar_gasto' => [
                 'metodo_http' => ['POST'],
-                'campos' => ['clasificacion', 'descripcion_gasto', 'presupuesto_id', 'concepto_id', 'proveedor_id', 'tasa_dolar']
+                'campos' => ['descripcion_gasto', 'concepto_id', 'proveedor_id', 'tasa_dolar']
             ],
             'modificar_gasto' => [
                 'metodo_http' => ['PUT', 'POST'],
-                'campos' => ['id_gasto', 'clasificacion', 'descripcion_gasto', 'presupuesto_id', 'concepto_id', 'proveedor_id', 'tasa_dolar']
+                'campos' => ['id_gasto', 'descripcion_gasto', 'concepto_id', 'proveedor_id', 'tasa_dolar'],
             ],
             'eliminar_gasto' => [
                 'metodo_http' => ['DELETE', 'POST'],
@@ -157,8 +152,6 @@ class Gastos extends Conexion
 
     public function set_id_gasto($id) { $this->id_gasto = $id; }
     public function get_id_gasto() { return $this->id_gasto; }
-    public function set_clasificacion($c) { $this->clasificacion = $c; }
-    public function get_clasificacion() { return $this->clasificacion; }
     public function set_descripcion_gasto($d) { $this->descripcion_gasto = $d; }
     public function get_descripcion_gasto() { return $this->descripcion_gasto; }
     public function set_presupuesto_id($presupuesto_id) { $this->presupuesto_id = $presupuesto_id; }
@@ -267,6 +260,24 @@ class Gastos extends Conexion
         return true;
     }
 
+    private function _resolver_presupuesto_por_fecha(PDO $pdo, string $fecha)
+    {
+        [$anio, $mes] = explode('-', $fecha);
+
+        $sql = "SELECT id_presupuesto 
+                FROM presupuesto 
+                WHERE MONTH(fecha) = :mes 
+                  AND YEAR(fecha)  = :anio 
+                  AND activo = 1 
+                LIMIT 1";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([':mes' => (int)$mes, ':anio' => (int)$anio]);
+        $id = $stmt->fetchColumn();
+
+        return $id ? (int)$id : null;
+    }
+
     public function verificarReferenciaDisponible($referencia, $id_gasto_actual = null) {
         $sql = "SELECT dg.gasto_id FROM egresos_bancarios eb 
                 JOIN detalles_gastos dg ON eb.detalle_gasto_id = dg.id_detalle_gasto 
@@ -283,6 +294,20 @@ class Gastos extends Conexion
         return false; 
     }
 
+    private function _verificar_gasto_editable()
+    {
+        $sql = "SELECT 1 FROM reposiciones WHERE gasto_id = :id LIMIT 1";
+        $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
+        $stmt->execute([':id' => $this->id_gasto]);
+
+        if ($stmt->fetchColumn() !== false) {
+            throw new NegocioException(
+                'Este gasto fue generado automáticamente por otro módulo y no puede modificarse ni eliminarse desde aquí.',
+                HttpCodigo::BAD_REQUEST->value
+            );
+        }
+    }
+
     private function _registrar_gasto()
     {
         if (empty($this->detalles)) {
@@ -296,16 +321,27 @@ class Gastos extends Conexion
             $pdo->exec("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ");
             $pdo->beginTransaction();
 
-            $sqlCab = "INSERT INTO gastos (clasificacion, descripcion_gasto, presupuesto_id, concepto_id, proveedor_id, tasa_dolar, activo) 
-                       VALUES (:clas, :desc, :presupuesto_id, :concepto_id, :prov_id, :tasa, 1)";
+            // Resolver presupuesto desde la fecha del primer detalle
+            $fechaBase      = $this->detalles[0]['fecha_detalle'];
+            $presupuesto_id = $this->_resolver_presupuesto_por_fecha($pdo, $fechaBase);
+
+            if (!$presupuesto_id) {
+                [$anio, $mes] = explode('-', $fechaBase);
+                throw new NegocioException(
+                    "No existe presupuesto activo para $mes/$anio. Debe registrar el presupuesto de ese mes antes de cargar gastos.",
+                    HttpCodigo::BAD_REQUEST->value
+                );
+            }
+
+            $sqlCab = "INSERT INTO gastos (descripcion_gasto, presupuesto_id, concepto_id, proveedor_id, tasa_dolar, activo) 
+                       VALUES ( :desc, :presupuesto_id, :concepto_id, :prov_id, :tasa, 1)";
             $stmtCab = $pdo->prepare($sqlCab);
             $stmtCab->execute([
-                ':clas'    => $this->clasificacion,
-                ':desc'    => $this->descripcion_gasto,
-                ':presupuesto_id' => $this->presupuesto_id,
-                ':concepto_id' => $this->concepto_id,
-                ':prov_id' => $this->proveedor_id ?: null,
-                ':tasa'    => $this->tasa_dolar ?? 1
+                ':desc'           => $this->descripcion_gasto,
+                ':presupuesto_id' => $presupuesto_id,
+                ':concepto_id'    => $this->concepto_id,
+                ':prov_id'        => $this->proveedor_id ?: null,
+                ':tasa'           => $this->tasa_dolar ?? 1
             ]);
             $id_gasto = $pdo->lastInsertId();
 
@@ -315,15 +351,14 @@ class Gastos extends Conexion
             return ['estatus' => true, 'mensaje' => 'Gasto registrado con éxito', 'id' => $id_gasto];
 
         } catch (\Throwable $e) {
-            if ($pdo->inTransaction()) {
-                $pdo->rollBack();
-            }
+            if ($pdo->inTransaction()) $pdo->rollBack();
             throw $e;
         }
     }
 
     private function _modificar_gasto()
     {
+        $this->_verificar_gasto_editable();
         if (empty($this->detalles)) {
             throw new NegocioException('Debe proporcionar al menos un detalle de gasto.', HttpCodigo::BAD_REQUEST->value);
         }
@@ -337,8 +372,19 @@ class Gastos extends Conexion
 
             $tasa_transaccion = $this->tasa_dolar ?? 1;
 
+            // Re-resolver presupuesto desde la fecha del detalle actual
+            $fechaBase      = $this->detalles[0]['fecha_detalle'];
+            $presupuesto_id = $this->_resolver_presupuesto_por_fecha($pdo, $fechaBase);
+
+            if (!$presupuesto_id) {
+                [$anio, $mes] = explode('-', $fechaBase);
+                throw new NegocioException(
+                    "No existe presupuesto activo para $mes/$anio. Debe registrar el presupuesto de ese mes antes de mover el gasto.",
+                    HttpCodigo::BAD_REQUEST->value
+                );
+            }
+
             $sqlCab = "UPDATE gastos SET 
-                        clasificacion = :clas,
                         descripcion_gasto = :desc,
                         presupuesto_id = :presupuesto_id,
                         concepto_id = :concepto_id,
@@ -347,13 +393,12 @@ class Gastos extends Conexion
                       WHERE id_gasto = :id";
             $stmtCab = $pdo->prepare($sqlCab);
             $stmtCab->execute([
-                ':clas' => $this->clasificacion,
-                ':desc' => $this->descripcion_gasto,
-                ':presupuesto_id' => $this->presupuesto_id,
-                ':concepto_id' => $this->concepto_id,
-                ':prov_id' => $this->proveedor_id ?: null,
-                ':tasa' => $tasa_transaccion, 
-                ':id' => $this->id_gasto
+                ':desc'           => $this->descripcion_gasto,
+                ':presupuesto_id' => $presupuesto_id,
+                ':concepto_id'    => $this->concepto_id,
+                ':prov_id'        => $this->proveedor_id ?: null,
+                ':tasa'           => $tasa_transaccion,
+                ':id'             => $this->id_gasto
             ]);
 
             $sqlOldDet = "SELECT id_detalle_gasto FROM detalles_gastos WHERE gasto_id = :id";
@@ -428,6 +473,7 @@ class Gastos extends Conexion
 
     private function _eliminar_gasto()
     {
+        $this->_verificar_gasto_editable();
         $sql = "UPDATE gastos SET activo = 0 WHERE id_gasto = :id";
         $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
         $stmt->bindParam(':id', $this->id_gasto);
@@ -440,12 +486,13 @@ class Gastos extends Conexion
         $sql = "SELECT 
             g.id_gasto, 
             g.descripcion_gasto, 
-            g.clasificacion, 
             SUM(dg.monto) as monto_total,
             MAX(dg.fecha) as ultima_fecha,
             p.nombre_proveedor as proveedor, 
             cg.nombre_concepto as concepto,
             tg.nombre_tipo_gasto as tipo,
+            tg.clasificacion,
+            EXISTS (SELECT 1 FROM reposiciones r WHERE r.gasto_id = g.id_gasto) AS es_reposicion,
             SUBSTRING_INDEX(GROUP_CONCAT(dg.metodo_pago ORDER BY dg.fecha DESC SEPARATOR ','), ',', 1) as metodo_pago_predominante
         FROM gastos g
         LEFT JOIN detalles_gastos dg ON g.id_gasto = dg.gasto_id
@@ -465,7 +512,6 @@ class Gastos extends Conexion
     {
         $sqlCabecera = "SELECT 
                             g.id_gasto,
-                            g.clasificacion,
                             g.descripcion_gasto,
                             g.presupuesto_id, 
                             g.concepto_id,
@@ -473,6 +519,7 @@ class Gastos extends Conexion
                             g.activo,
                             p.nombre_proveedor,
                             cg.nombre_concepto,
+                            tg.clasificacion,
                             tg.nombre_tipo_gasto
                         FROM gastos g
                         LEFT JOIN proveedores p ON g.proveedor_id = p.id_proveedor
@@ -521,8 +568,11 @@ class Gastos extends Conexion
 
     private function _consultar_cabecera_gasto()
     {
-        $sql = "SELECT clasificacion, descripcion_gasto, presupuesto_id, concepto_id, proveedor_id 
-                FROM gastos WHERE id_gasto = :id_gasto AND activo = 1";
+        $sql = "SELECT tg.clasificacion, g.descripcion_gasto, g.presupuesto_id, g.concepto_id, g.proveedor_id 
+                FROM gastos g 
+                LEFT JOIN conceptos_gasto cg ON g.concepto_id = cg.id_concepto
+                LEFT JOIN tipo_gasto tg ON cg.tipo_gasto_id = tg.id_tipo_gasto
+                WHERE id_gasto = :id_gasto AND activo = 1";
         
         $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
         $stmt->execute([':id_gasto' => $this->id_gasto]);
@@ -596,12 +646,12 @@ class Gastos extends Conexion
         $sql = "SELECT 
                     g.id_gasto, 
                     g.descripcion_gasto, 
-                    g.clasificacion, 
                     SUM(dg.monto) as monto_total,
                     MAX(dg.fecha) as ultima_fecha,
                     p.nombre_proveedor as proveedor, 
                     cg.nombre_concepto as concepto,
                     tg.nombre_tipo_gasto as tipo,
+                    EXISTS (SELECT 1 FROM reposiciones r WHERE r.gasto_id = g.id_gasto) AS es_reposicion,
                     SUBSTRING_INDEX(GROUP_CONCAT(dg.metodo_pago ORDER BY dg.fecha DESC SEPARATOR ','), ',', 1) as metodo_pago_predominante
                 FROM gastos g
                 LEFT JOIN detalles_gastos dg ON g.id_gasto = dg.gasto_id

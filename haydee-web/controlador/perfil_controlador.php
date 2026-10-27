@@ -14,7 +14,7 @@ use haydee\excepciones\HaydeeException;
 use haydee\excepciones\ValidacionException;
 
 $rol_obj = new Rol();
-$roles = $rol_obj->realizar_consulta('consultar_roles');
+$roles = $rol_obj->realizar_consulta('consultar');
 $rol_obj->cerrar();
 
 $idUsuarioSesion = $_SESSION["id_usuario"] ?? 0;

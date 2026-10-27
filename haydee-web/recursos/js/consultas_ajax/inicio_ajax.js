@@ -9,6 +9,7 @@ let graficaChart_2;
 
 document.addEventListener('DOMContentLoaded', () => {
     cargaInicio();
+    verificarYMostrarAyuda();
 });
 
 let scrollTimeout;
@@ -950,4 +951,66 @@ function mostrarVistaPreviaPublicacion(pub) {
     const modalElement = document.getElementById('modalVistaPreviaPublicacion');
     const modalInstance = bootstrap.Modal.getOrCreateInstance(modalElement);
     modalInstance.show();
+}
+
+function verificarYMostrarAyuda() {
+    const vistoLocalmente = localStorage.getItem(TOUR_STORAGE_KEY);
+
+    if ((!vistoLocalmente || vistoLocalmente == 0) && AYUDA_VISTA_BD === 0) {
+        iniciarTourInteractivo();
+    } else if (AYUDA_VISTA_BD === 1 && !vistoLocalmente) {
+        localStorage.setItem(TOUR_STORAGE_KEY, '1');
+    }
+}
+
+async function marcarAyudaComoVista() {
+    localStorage.setItem(TOUR_STORAGE_KEY, '1');
+    await finalizarTour();
+}
+
+
+function iniciarTourInteractivo() {
+    const pasosBienvenida = [
+        { 
+            popover: { 
+                title: '¡Bienvenido al Sistema!', 
+                description: 'Te daremos un breve recorrido para que conozcas las herramientas principales.', 
+                align: 'center' 
+            } 
+        },
+        { 
+            element: '.nav', // Ajusta este selector a la clase o ID de tu menú lateral
+            popover: { 
+                title: 'Navegación Principal', 
+                description: 'Desde aquí puedes acceder a todos los módulos como Años Fiscales, Usuarios y Reportes.', 
+                side: "right", align: 'start' 
+            } 
+        },
+        { 
+            element: '#btn-ayuda-tour', // Reutilizando el ID que ya usas en tu JS
+            popover: { 
+                title: 'Ayuda Contextual', 
+                description: '¿Dudas en alguna pantalla? Haz clic en este botón en cualquier momento para recibir una guía detallada del módulo en el que te encuentres.', 
+                side: "top", align: 'end' 
+            } 
+        }
+    ];
+
+    // Pasamos los pasos y la función que guarda el estado en BD/Local como callback
+    AyudaInteractiva.lanzarTourAutomatico(pasosBienvenida, marcarAyudaComoVista);
+}
+
+async function finalizarTour() {
+    let datos = new FormData();
+    datos.append("operacion", "marcar_ayuda_visto");
+    try {
+        // Aprovechando tu clase global Peticiones
+        let respuesta = await Peticiones.enviar(datos, "", false); 
+        
+        Validador.procesarRespuesta(respuesta, (respuestaServidor) => {
+            console.log("Tour finalizado y registrado en DB.");
+        });
+    } catch (error) {
+        console.error("Error al registrar finalización del tour:", error);
+    }
 }
