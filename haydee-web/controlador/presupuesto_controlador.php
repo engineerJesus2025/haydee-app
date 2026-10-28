@@ -166,18 +166,6 @@ if (isset($_POST["validar"])) {
     $validadorBD = new ValidadorBD();
 
     switch ($validar) {
-        case 'validar_fecha_presupuesto':
-            $fecha = $_POST['fecha'] ?? '';
-            $presupuestoTemp = new Presupuesto();
-            $presupuestoTemp->set_fecha($fecha);
-            
-            $resp = $presupuestoTemp->realizar_consulta('consultar_presupuestos_mensualidades');
-            $presupuestoTemp->cerrar();
-            
-            $existe = $resp['estatus'] && !empty($resp['datos']);
-            $respuesta = ['estatus' => $existe];
-            break;
-
         case 'validar_clave_foranea':
             $tabla = $_POST['tabla'] ?? '';
             $campo = $_POST['nombre_clave'] ?? '';
@@ -200,9 +188,7 @@ if (isset($_POST["validar"])) {
     exit;
 }
 
-// =========================================================
-// CARGA DE DATOS PARA LA VISTA (Solo al cargar la página)
-// =========================================================
+// CARGA DE DATOS PARA LA VISTA
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     GestorAuditoria::inicializarBanderaConsulta(Modulo::GESTIONAR_PRESUPUESTO);
 

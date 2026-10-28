@@ -402,29 +402,55 @@ class Presupuesto extends Conexion
 
     private function _consultar_presupuestos_mensualidades()
     {
-        $mes = date('m', strtotime($this->fecha));
+        $mes  = date('m', strtotime($this->fecha));
         $anio = date('Y', strtotime($this->fecha));
 
+        // Cuota de reserva (fetchColumn, no fetchAll)
+        $sqlReserva = "SELECT COALESCE(SUM(cuota_reserva), 0) 
+                       FROM presupuesto 
+                       WHERE MONTH(fecha) = :mes AND YEAR(fecha) = :anio AND activo = 1";
+        $stmtReserva = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlReserva);
+        $stmtReserva->execute([':mes' => $mes, ':anio' => $anio]);
+        $reserva = (float) $stmtReserva->fetchColumn();
+
+        // Conceptos del mes
         $sql = "SELECT 
-                    tg.nombre_tipo_gasto AS nombre, 
-                    SUM(dp.monto) AS monto, 
+                    tg.id_tipo_gasto,
+                    tg.nombre_tipo_gasto AS tipo_gasto,
+                    tg.clasificacion,                     
+                    cg.id_concepto,
+                    cg.nombre_concepto AS nombre,
+                    SUM(dp.monto) AS monto,
                     GROUP_CONCAT(dp.id_detalle_presupuesto) AS id_presupuestos_asociados
-                FROM tipo_gasto tg
-                INNER JOIN conceptos_gasto cg ON tg.id_tipo_gasto = cg.tipo_gasto_id
-                INNER JOIN detalles_presupuesto dp ON dp.concepto_id = cg.id_concepto
-                INNER JOIN presupuesto p ON dp.presupuesto_id = p.id_presupuesto
+                FROM detalles_presupuesto dp
+                INNER JOIN conceptos_gasto cg ON dp.concepto_id = cg.id_concepto
+                INNER JOIN tipo_gasto tg     ON cg.tipo_gasto_id = tg.id_tipo_gasto
+                INNER JOIN presupuesto p     ON dp.presupuesto_id = p.id_presupuesto
                 WHERE MONTH(p.fecha) = :mes 
                   AND YEAR(p.fecha) = :anio 
                   AND p.activo = 1
-                GROUP BY tg.nombre_tipo_gasto";
+                  AND tg.clasificacion <> 'REPOSICION'
+                GROUP BY tg.id_tipo_gasto, tg.nombre_tipo_gasto, tg.clasificacion, 
+                         cg.id_concepto, cg.nombre_concepto
+                ORDER BY tg.nombre_tipo_gasto ASC, cg.nombre_concepto ASC";
 
         $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
-        $stmt->execute([
-            ':mes' => $mes,
-            ':anio' => $anio
-        ]);
-        
-        return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
+        $stmt->execute([':mes' => $mes, ':anio' => $anio]);
+        $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if ($reserva > 0) {
+            $datos[] = [
+                'id_tipo_gasto'             => null,
+                'tipo_gasto'                => 'Fondo de Reserva',
+                'clasificacion'             => 'FIJO',  
+                'id_concepto'               => null,
+                'nombre'                    => 'Cuota de Reserva',
+                'monto'                     => $reserva,
+                'id_presupuestos_asociados' => ''
+            ];
+        }
+
+        return ['estatus' => true, 'datos' => $datos];
     }
 
     private function _consultar()

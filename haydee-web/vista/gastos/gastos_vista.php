@@ -137,7 +137,6 @@
                     <p><strong>Metodo de Pago:</strong> <span id="vista_metodo_pago_detalles"></span></p>
                     <p><strong>Cuenta:</strong> <span id="vista_nombre_cuenta_detalles"></span></p>
                     <p><strong>Referencia:</strong> <span id="vista_referencia_detalles"></span></p>
-                    <p><strong>Descripcion:</strong> <span id="vista_descripcion_detalles"></span></p>
 
                     <div class="text-center mt-3">
                         <img id="vista_imagen_detalles" src="" class="img-fluid border rounded"

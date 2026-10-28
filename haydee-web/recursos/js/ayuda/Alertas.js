@@ -211,12 +211,16 @@ const Alertas = {
 
     /**
      * Muestra un asistente interactivo con inyección de HTML personalizado.
+     * @param {Object} opciones - Opciones adicionales para Swal.fire() (width, didOpen, etc.).
+     *                            Se aplican sobre los defaults del método.
      */
-    mostrarAsistenteInteractivo(titulo, subtitulo, htmlContenido, funcionConfirmar) {
+    mostrarAsistenteInteractivo(titulo, subtitulo, htmlContenido, funcionConfirmar, opciones = {}) {
         if (typeof Swal === 'undefined') return this._ejecutarFallback(titulo, subtitulo, funcionConfirmar);
 
-        Swal.fire({
-            ...this._obtenerConfiguracionBase(),
+        const baseConfig = this._obtenerConfiguracionBase();
+
+        // Defaults específicos de este método
+        const defaults = {
             title: `<div class="fs-4 mb-2"><i class="bi bi-magic text-warning me-2"></i>${titulo}</div>`,
             html: `
                 <p class="text-muted mb-4" style="font-size: 0.9rem; line-height: 1.4;">${subtitulo}</p>
@@ -226,12 +230,18 @@ const Alertas = {
             `,
             showCancelButton: true,
             confirmButtonText: '<i class="bi bi-calculator me-2"></i> Aplicar Ajuste',
-            cancelButtonText: '<i class="bi bi-x-circle me-1"></i> Cancelar', // <-- Ícono añadido
+            cancelButtonText: '<i class="bi bi-x-circle me-1"></i> Cancelar',
+        };
+
+        Swal.fire({
+            ...baseConfig,
+            ...defaults,
+            ...opciones,
             customClass: {
-                ...this._obtenerConfiguracionBase().customClass,
-                popup: 'vp-border-color shadow-lg rounded-4 border',
-                confirmButton: 'btn btn-soft-warning mx-2 px-4 fw-bold shadow-sm', 
-                cancelButton: 'btn btn-soft-secondary mx-2 px-4'
+                ...baseConfig.customClass,
+                confirmButton: 'btn btn-soft-warning mx-2 px-4 fw-bold shadow-sm',
+                cancelButton: 'btn btn-soft-secondary mx-2 px-4',
+                ...(opciones.customClass || {})
             }
         }).then((result) => {
             if (result.isConfirmed && typeof funcionConfirmar === 'function') {

@@ -549,7 +549,7 @@ function mostrarVistaPrevia(data, fecha) {
             field: "pagado", 
             hozAlign: "center", headerHozAlign: "center",vertAlign:"middle",
             formatter: formatoEstatus, 
-            minWidth: 160 
+            minWidth: 170 
         }
     ];
 
@@ -564,55 +564,184 @@ function mostrarVistaPrevia(data, fecha) {
 
 // Asistente Visual (basicamente otro modal con los checkboxes)
 function abrirAsistenteExoneracion(id_apartamento, participacion) {
-    const fila = document.getElementById(id_apartamento);
+    const fila    = document.getElementById(id_apartamento);
     const nroApto = fila.querySelector('td:first-child').textContent.replace('Apt.', '').trim();
 
     let exoneracionesGuardadas = [];
     if (fila.dataset.exoneraciones) {
-        try {
-            exoneracionesGuardadas = JSON.parse(fila.dataset.exoneraciones);
-        } catch(e) { }
+        try { exoneracionesGuardadas = JSON.parse(fila.dataset.exoneraciones); } catch (e) { }
     }
 
-    let htmlCheckboxes = `<div class="list-group shadow-sm mb-2 rounded-3">`;
+    const montoBaseApto = window.presupuestosActuales.reduce(
+        (s, det) => s + (participacion * parseFloat(det.monto)) / 100, 0
+    );
 
-    window.presupuestosActuales.forEach((det, index) => {
-        let montoProporcional = ((participacion * parseFloat(det.monto)) / 100).toFixed(2);
-        let montoProporcionalUsd = (montoProporcional / tasaDolar).toFixed(2);
-        let estaMarcado = exoneracionesGuardadas.includes(index) ? "" : "checked";
-        
-        htmlCheckboxes += `
-            <label class="list-group-item d-flex justify-content-between align-items-center cursor-pointer border py-3 px-3" style="background-color: var(--ch-input-bg); border-color: var(--ch-table-border) !important; color: var(--ch-table-text); transition: all 0.2s;">
+    // Identificar reserva por firma estructural
+    const esReserva   = (det) => det.id_tipo_gasto === null && det.id_concepto === null;
+    const reservaItem = window.presupuestosActuales.find(esReserva) || null;
+    const conceptos   = window.presupuestosActuales.filter(det => !esReserva(det));
+
+    // Agrupar por clasificación (dinámico)
+    const bloquesPorClasificacion = new Map();
+    conceptos.forEach(det => {
+        const clave = (det.clasificacion || 'OTROS').toUpperCase();
+        if (!bloquesPorClasificacion.has(clave)) bloquesPorClasificacion.set(clave, []);
+        bloquesPorClasificacion.get(clave).push({
+            ...det,
+            index: window.presupuestosActuales.indexOf(det)
+        });
+    });
+
+    // Helpers
+    const calcularMonto = (montoBase) => {
+        const bs = (participacion * parseFloat(montoBase)) / 100;
+        return { bs: bs.toFixed(2), usd: (bs / tasaDolar).toFixed(2) };
+    };
+
+    const renderConceptoItem = (det) => {
+        const monto       = calcularMonto(det.monto);
+        const estaMarcado = exoneracionesGuardadas.includes(det.index) ? "" : "checked";
+        return `
+            <label class="list-group-item exoneracion-item d-flex justify-content-between align-items-center cursor-pointer border mb-0"
+                   style="background-color: var(--ch-input-bg); border-color: var(--ch-table-border) !important;
+                          color: var(--ch-table-text);">
                 <div class="d-flex align-items-center">
-                    <input class="form-check-input check-exoneracion me-3 my-0 border-secondary" type="checkbox" data-index="${index}" data-monto="${montoProporcional}" style="transform: scale(1.3);" ${estaMarcado}>
-                    <span class="fw-semibold fs-6">${det.nombre}</span>
+                    <input class="form-check-input check-exoneracion me-2 my-0"
+                           type="checkbox" data-index="${det.index}" data-monto="${monto.bs}"
+                           style="transform: scale(1.15);" ${estaMarcado}>
+                    <span class="fw-semibold">${det.nombre}</span>
                 </div>
-                <div class="text-end ms-3">
-                    <span class="fw-bold fs-5 text-primary">${montoProporcional}</span>
-                    <span class="text-muted ms-1 font-monospace" style="font-size: 0.8rem;">Bs.</span>
-                    <div class="text-muted small mt-1 font-monospace" style="font-size: 0.75rem;">Ref: ${montoProporcionalUsd} $</div>
+                <div class="text-end ms-2">
+                    <div class="fw-bold text-primary">${monto.bs} <small class="text-muted">Bs.</small></div>
+                    <div class="text-muted font-monospace" style="font-size: 0.72rem;">Ref: ${monto.usd} $</div>
                 </div>
             </label>`;
-    });
-    
-    htmlCheckboxes += `</div>`;
+    };
 
-    const titulo = `Exoneración: Apt. ${nroApto}`;
+    // Reserva aislada
+    let htmlReserva = '';
+    if (reservaItem) {
+        const idxReserva  = window.presupuestosActuales.indexOf(reservaItem);
+        const monto       = calcularMonto(reservaItem.monto);
+        const estaMarcado = exoneracionesGuardadas.includes(idxReserva) ? "" : "checked";
+
+        htmlReserva = `
+            <div class="reserva-card-exoneracion d-flex justify-content-between align-items-center p-2">
+                <div class="d-flex align-items-center">
+                    <input class="form-check-input check-exoneracion me-3 my-0"
+                           type="checkbox" data-index="${idxReserva}" data-monto="${monto.bs}"
+                           style="transform: scale(1.2);" ${estaMarcado}>
+                    <div>
+                        <div class="fw-bold">
+                            <i class="bi bi-shield-lock-fill me-1 text-warning"></i>
+                            ${reservaItem.nombre}
+                        </div>
+                        <div class="text-muted small">Fondo obligatorio del condominio</div>
+                    </div>
+                </div>
+                <div class="text-end">
+                    <div class="fw-bold text-primary fs-5">${monto.bs} <small class="text-muted">Bs.</small></div>
+                    <div class="text-muted font-monospace" style="font-size: 0.72rem;">Ref: ${monto.usd} $</div>
+                </div>
+            </div>`;
+    }
+
+    // Bloques por clasificación
+    let htmlBloques = '';
+    if (bloquesPorClasificacion.size > 0) {
+        const clavesOrdenadas = [...bloquesPorClasificacion.keys()].sort();
+        htmlBloques = '<div class="contenedor-bloques-exoneracion">';
+        clavesOrdenadas.forEach(clasificacion => {
+            const items = bloquesPorClasificacion.get(clasificacion)
+                .sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+            const subtotal = items.reduce(
+                (s, c) => s + (participacion * parseFloat(c.monto)) / 100, 0
+            );
+            const subtotalUsd = (subtotal / tasaDolar).toFixed(2);
+
+            htmlBloques += `
+                <div class="bloque-exoneracion">
+                    <div class="d-flex justify-content-between align-items-center px-2 py-1 mb-1 rounded"
+                         style="background-color: var(--ch-table-header-bg); color: var(--ch-table-header-text);
+                                border: 1px solid var(--ch-table-border);">
+                        <span class="fw-bold text-uppercase" style="letter-spacing: 0.5px;">
+                            <i class="bi bi-tag-fill me-1"></i>${clasificacion}
+                        </span>
+                        <div class="text-end">
+                            <div class="fw-bold font-monospace">${subtotal.toFixed(2)} Bs.</div>
+                            <div class="text-muted font-monospace" style="font-size: 0.72rem;">Ref: ${subtotalUsd} $</div>
+                        </div>
+                    </div>
+                    <div class="list-group shadow-sm rounded-2">
+                        ${items.map(renderConceptoItem).join('')}
+                    </div>
+                </div>`;
+        });
+        htmlBloques += '</div>';
+    }
+
+    const baseUsd = (montoBaseApto / tasaDolar).toFixed(2);
+    const htmlFooter = `
+        <div id="exoneracion_footer" class="exoneracion-footer mt-2">
+            <div class="row g-0 text-center align-items-center">
+                <div class="col-4 border-end" style="border-color: var(--ch-table-border) !important;">
+                    <div class="text-muted text-uppercase fw-semibold" style="font-size: 0.65rem; letter-spacing: 0.5px;">Monto Base</div>
+                    <div class="fw-bold" style="font-size: 1rem;">${montoBaseApto.toFixed(2)} <small class="text-muted fw-normal">Bs.</small></div>
+                    <div class="text-muted font-monospace" style="font-size: 0.68rem;">Ref: ${baseUsd} $</div>
+                </div>
+                <div class="col-4 border-end" style="border-color: var(--ch-table-border) !important;">
+                    <div class="text-muted text-uppercase fw-semibold" style="font-size: 0.65rem; letter-spacing: 0.5px;">
+                        <i class="bi bi-dash-circle text-warning me-1"></i>Exonerado
+                    </div>
+                    <div class="fw-bold text-warning" style="font-size: 1rem;" id="exoneracion_total_display">0.00 <small class="text-muted fw-normal">Bs.</small></div>
+                    <div class="text-muted font-monospace" style="font-size: 0.68rem;">Ref: <span id="exoneracion_total_usd">0.00</span> $</div>
+                </div>
+                <div class="col-4">
+                    <div class="text-muted text-uppercase fw-semibold" style="font-size: 0.65rem; letter-spacing: 0.5px;">
+                        <i class="bi bi-wallet2 text-primary me-1"></i>A Pagar
+                    </div>
+                    <div class="fw-bold text-primary" style="font-size: 1rem;" id="exoneracion_neto_display">${montoBaseApto.toFixed(2)} <small class="text-muted fw-normal">Bs.</small></div>
+                    <div class="text-muted font-monospace" style="font-size: 0.68rem;">Ref: <span id="exoneracion_neto_usd">${baseUsd}</span> $</div>
+                </div>
+            </div>
+        </div>`;
+
+    const htmlCheckboxes = htmlReserva + htmlBloques + htmlFooter;
+    const titulo = `Exoneración: Apartamento N°${nroApto}`;
     const subtitulo = `Desmarca los servicios a los que el apartamento <b>renuncia o no tiene acceso</b>. El sistema deducirá su costo automáticamente.`;
 
+    // Función de recálculo en vivo
+    const actualizarTotales = () => {
+        let totalExonerado = 0;
+        document.querySelectorAll('.check-exoneracion:not(:checked)').forEach(chk => {
+            totalExonerado += parseFloat(chk.dataset.monto) || 0;
+        });
+        const neto = Math.max(0, montoBaseApto - totalExonerado);
+
+        const set = (id, valor) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = valor;
+        };
+        set('exoneracion_total_display',  `${totalExonerado.toFixed(2)} Bs.`);
+        set('exoneracion_total_usd',       (totalExonerado / tasaDolar).toFixed(2));
+        set('exoneracion_neto_display',   `${neto.toFixed(2)} Bs.`);
+        set('exoneracion_neto_usd',        (neto / tasaDolar).toFixed(2));
+    };
+
     Alertas.mostrarAsistenteInteractivo(titulo, subtitulo, htmlCheckboxes, () => {
-        let totalDescuento = 0;
-        let nuevasExoneraciones = []; // Arreglo para guardar la nueva memoria
-        
+        let totalDescuento      = 0;
+        let nuevasExoneraciones = [];
+
         document.querySelectorAll('.check-exoneracion:not(:checked)').forEach(chk => {
             totalDescuento += parseFloat(chk.dataset.monto);
-            nuevasExoneraciones.push(parseInt(chk.dataset.index)); // Guardamos el índice desmarcado
+            nuevasExoneraciones.push(parseInt(chk.dataset.index));
         });
-        
+
         fila.dataset.exoneraciones = JSON.stringify(nuevasExoneraciones);
 
         const inputDescuento = fila.querySelector('.input-descuento');
-        const montoBase = parseFloat(fila.dataset.montoBase) || 0;
+        const montoBase      = parseFloat(fila.dataset.montoBase) || 0;
 
         if (totalDescuento > montoBase) {
             inputDescuento.value = montoBase.toFixed(2);
@@ -620,8 +749,24 @@ function abrirAsistenteExoneracion(id_apartamento, participacion) {
         } else {
             inputDescuento.value = totalDescuento.toFixed(2);
         }
-        
-        recalcularTotalFila(fila); 
+
+        recalcularTotalFila(fila);
+    }, {
+        width: 'min(1200px, 92vw)',
+        didOpen: (modal) => {
+            modal.classList.add('swal-exoneracion');
+
+            const contenedor = modal.querySelector('.swal2-html-container');
+            if (contenedor) {
+                contenedor.addEventListener('change', (e) => {
+                    if (e.target.classList.contains('check-exoneracion')) {
+                        actualizarTotales();
+                    }
+                });
+            }
+
+            actualizarTotales();
+        }
     });
 }
 

@@ -39,7 +39,7 @@
                             <label for="nota_revaluacion">Nota o Referencia (Opcional)</label>
                             <input type="text" name="nota_revaluacion" id="nota_revaluacion" class="form-control" placeholder="Ej: Resolución Conjunta Nro. 001, Gaceta 43.140">
                         </div>
-                        <div class="col-12 text-center p-3 bg-light rounded border">
+                        <div class="col-12 text-center py-3 rounded border card">
                             <p class="text-muted mb-1 text-uppercase fw-bold" style="font-size: 0.8rem;">Nuevo Fondo Fijo Calculado</p>
                             <h2 class="text-success fw-bolder mb-0" id="nuevo_fondo_calculado">0.00 Bs.</h2>
                         </div>
@@ -50,7 +50,7 @@
                     <div class="row">
                         <div class="col-12">
                             <label class="fw-bold mb-2"><i class="bi bi-clock-history me-1"></i> Historial de Revaluaciones</label>
-                            <textarea class="form-control bg-light small" id="revaluaciones_log_text" rows="5" readonly style="resize: none; font-family: monospace;"></textarea>
+                            <textarea class="form-control small" id="revaluaciones_log_text" rows="5" readonly style="resize: none; font-family: monospace;"></textarea>
                         </div>
                     </div>
                 </form>

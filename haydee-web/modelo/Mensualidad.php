@@ -765,6 +765,7 @@ class Mensualidad extends Conexion
         return ['estatus' => true, 'datos' => $stmt->fetch(PDO::FETCH_ASSOC)];
     }
 
+    // Para bitacora
     private function _consultar_desglose()
     {
         if (empty($this->id_mensualidad)) {
@@ -782,6 +783,30 @@ class Mensualidad extends Conexion
 
         $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
         $stmt->execute([':id_mensualidad' => $this->id_mensualidad]);
-        return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
+        $detalles = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Agregar la reserva proporcional como línea virtual
+        $sqlReserva = "SELECT p.cuota_reserva, a.porcentaje_participacion, pm.tasa_dolar
+                       FROM mensualidad m
+                       INNER JOIN periodos_mensualidad pm ON m.periodo_id = pm.id_periodo
+                       INNER JOIN presupuesto p ON MONTH(p.fecha) = pm.mes AND YEAR(p.fecha) = pm.anio AND p.activo = 1
+                       INNER JOIN apartamentos a ON a.id_apartamento = m.apartamento_id
+                       WHERE m.id_mensualidad = :id_mensualidad
+                       LIMIT 1";
+        $stmtR = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlReserva);
+        $stmtR->execute([':id_mensualidad' => $this->id_mensualidad]);
+        if ($res = $stmtR->fetch(PDO::FETCH_ASSOC)) {
+            $montoReserva = ((float)$res['cuota_reserva'] * (float)$res['porcentaje_participacion']) / 100;
+            if ($montoReserva > 0) {
+                $detalles[] = [
+                    'id_detalle_presupuesto' => null,
+                    'concepto'               => 'Cuota de Reserva (Fondo)',
+                    'monto'                  => round($montoReserva, 2),
+                    'tasa_dolar'             => $res['tasa_dolar']
+                ];
+            }
+        }
+
+        return ['estatus' => true, 'datos' => $detalles];
     }
 }

@@ -57,10 +57,8 @@
                                     Clasificación <i class="bi bi-info-circle text-muted ms-1"></i>
                                 </label>
                                 <div class="input-group">
-                                    <span class="input-group-text bg-light"><i class="bi bi-magic text-primary"></i></span>
-                                    <input type="text" class="form-control bg-light" id="clasificacion"
-                                           placeholder="Se completa al elegir el concepto"
-                                           readonly tabindex="-1" aria-readonly="true">
+                                    <span class="input-group-text"><i class="bi bi-magic text-primary"></i></span>
+                                    <input type="text" class="form-control" id="clasificacion" placeholder="Se completa al elegir el concepto" disabled tabindex="-1">
                                 </div>
                             </div>
                         </div>
