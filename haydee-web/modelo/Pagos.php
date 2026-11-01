@@ -7,6 +7,7 @@ use haydee\enums\MetodoPago;
 use haydee\enums\TipoBaseDatos;
 use haydee\enums\HttpCodigo;
 use haydee\excepciones\NegocioException;
+use haydee\servicios\GestorTasa;
 
 class Pagos extends Conexion
 {
@@ -261,27 +262,27 @@ class Pagos extends Conexion
 
     private function _validar_monto_contra_deuda(PDO $pdo, float $total_abonado): void
     {
-        $sql = "SELECT deuda_pendiente 
+        $sql = "SELECT deuda_con_mora 
                 FROM vw_estado_cuentas_mensualidad 
                 WHERE id_mensualidad = :id_mensualidad 
                 LIMIT 1";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([':id_mensualidad' => $this->mensualidad_id]);
-        $deuda_pendiente = (float) $stmt->fetchColumn();
+        $deuda_con_mora = (float) $stmt->fetchColumn();
 
-        if ($deuda_pendiente <= 0) {
+        if ($deuda_con_mora <= 0) {
             throw new NegocioException(
                 'La mensualidad seleccionada no presenta deuda pendiente o no existe.',
                 HttpCodigo::BAD_REQUEST->value
             );
         }
 
-        // Tolerancia de 1 céntimo para evitar falsos positivos por redondeo
-        if (round($total_abonado, 2) > round($deuda_pendiente, 2)) {
+        // Tolerancia de 1 céntimo
+        if (round($total_abonado, 2) > round($deuda_con_mora, 2)) {
             throw new NegocioException(
                 'El monto total a pagar (' . number_format($total_abonado, 2, '.', '') . ' Bs) ' .
                 'no puede superar la deuda pendiente de la mensualidad (' .
-                number_format($deuda_pendiente, 2, '.', '') . ' Bs).',
+                number_format($deuda_con_mora, 2, '.', '') . ' Bs).',
                 HttpCodigo::BAD_REQUEST->value
             );
         }
@@ -289,14 +290,19 @@ class Pagos extends Conexion
 
     public function _consultarMensualidadPendiente()
     {
+        $tasa_actual = GestorTasa::obtener();
+        
         $sql = "SELECT 
             vw.id_mensualidad,
             vw.monto_cuota      AS monto,
             vw.mes,
             vw.anio,
             vw.deuda_pendiente  AS pendiente,
+            vw.deuda_con_mora   AS deuda_con_mora_bs,
+            pm.tasa_dolar       AS tasa_historica, -- Enviamos la tasa histórica
             m.porcentaje_interes,
-            m.limite_mensualidad
+            m.limite_mensualidad,
+            :tasa_actual        AS tasa_actual
         FROM vw_estado_cuentas_mensualidad vw
         INNER JOIN mensualidad m ON m.id_mensualidad = vw.id_mensualidad
         INNER JOIN periodos_mensualidad pm ON pm.id_periodo = m.periodo_id
@@ -308,13 +314,17 @@ class Pagos extends Conexion
 
         $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
         $stmt->bindParam(':id_apartamento', $this->apartamento_id, PDO::PARAM_INT);
+        $stmt->bindParam(':tasa_actual', $tasa_actual);
         $stmt->execute();
         return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
     }
 
     private function _consultar()
     {
-        $sql = "SELECT * FROM vw_historial_pagos ORDER BY ultima_fecha DESC";
+        $sql = "SELECT v.*, p.tasa_dolar 
+                FROM vw_historial_pagos v
+                INNER JOIN pagos p ON v.id_pago = p.id_pago
+                ORDER BY v.ultima_fecha DESC";
         $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
         $stmt->execute();
         return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
@@ -328,7 +338,9 @@ class Pagos extends Conexion
             throw new NegocioException('Correo no disponible en sesión o parámetros.', HttpCodigo::BAD_REQUEST->value);
         }
 
-        $sql = "SELECT DISTINCT v.* FROM vw_historial_pagos v
+        $sql = "SELECT DISTINCT v.*, p.tasa_dolar 
+                FROM vw_historial_pagos v
+                INNER JOIN pagos p ON v.id_pago = p.id_pago
                 INNER JOIN pagos_mensualidad pm2 ON v.id_pago = pm2.pago_id
                 INNER JOIN mensualidad m2 ON pm2.mensualidad_id = m2.id_mensualidad
                 INNER JOIN habitantes_apartamentos ha2 ON m2.apartamento_id = ha2.apartamento_id
@@ -545,12 +557,11 @@ class Pagos extends Conexion
             }
 
             $tasa_transaccion = $this->tasa_dolar ?? 1;
-            $sqlHead = "UPDATE pagos SET estado = :estado, observacion = :obs, tasa_dolar = :tasa WHERE id_pago = :id";
+            $sqlHead = "UPDATE pagos SET estado = :estado, observacion = :obs WHERE id_pago = :id";
             $stmtHead = $pdo->prepare($sqlHead);
             $stmtHead->execute([
                 ':estado' => $this->estado,
                 ':obs'    => $this->observacion,
-                ':tasa'   => $tasa_transaccion,
                 ':id'     => $this->id_pago
             ]);
 
@@ -627,28 +638,23 @@ class Pagos extends Conexion
         $estadoProcesado = EstadoPago::PROCESADO->value;
 
         $sqlDeudas = "SELECT 
-                        m.id_mensualidad, 
-                        ((m.monto - m.descuento) - COALESCE((
-                            SELECT SUM(pm.monto_abonado)
-                            FROM pagos_mensualidad pm
-                            JOIN pagos p ON pm.pago_id = p.id_pago
-                            WHERE pm.mensualidad_id = m.id_mensualidad 
-                              AND p.activo = 1 
-                              AND UPPER(p.estado) = :estado_procesado
-                        ), 0)) as deuda_actual
-                    FROM mensualidad m
-                    JOIN periodos_mensualidad per ON m.periodo_id = per.id_periodo
-                    WHERE m.apartamento_id = :apt_id 
-                      AND m.activo = 1
-                      AND per.id_periodo >= (SELECT periodo_id FROM mensualidad WHERE id_mensualidad = :mens_id_inicio)
-                    ORDER BY per.id_periodo ASC
+                        id_mensualidad, 
+                        deuda_con_mora as deuda_actual
+                    FROM vw_estado_cuentas_mensualidad 
+                    WHERE apartamento_id = :apt_id 
+                      AND CONCAT(anio, LPAD(mes, 2, '0')) >= (
+                          SELECT CONCAT(per.anio, LPAD(per.mes, 2, '0')) 
+                          FROM mensualidad m2 
+                          JOIN periodos_mensualidad per ON m2.periodo_id = per.id_periodo
+                          WHERE m2.id_mensualidad = :mens_id_inicio
+                      )
+                    ORDER BY anio ASC, mes ASC
                     FOR UPDATE;";
         
         $stmtDeudas = $pdo->prepare($sqlDeudas);
         $stmtDeudas->execute([
             ':apt_id' => $this->apartamento_id,
-            ':mens_id_inicio' => $this->mensualidad_id,
-            ':estado_procesado' => $estadoProcesado
+            ':mens_id_inicio' => $this->mensualidad_id
         ]);
         
         $meses_pendientes = $stmtDeudas->fetchAll(PDO::FETCH_ASSOC);

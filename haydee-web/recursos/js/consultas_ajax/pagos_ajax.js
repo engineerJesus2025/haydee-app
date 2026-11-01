@@ -194,7 +194,6 @@ function obtenerConfigEstadoPago(estado) {
 }
 
 async function cargarMensualidades(id_fuerza = null) {
-    // Soporta ser disparado por el DOM (this.value) o por código pasándole el parámetro
     let id_apartamento = (this && typeof this.value !== 'undefined') ? this.value : id_fuerza;
     if (!id_apartamento) return;
 
@@ -212,27 +211,25 @@ async function cargarMensualidades(id_fuerza = null) {
         let hayPendientes = false;
 
         (respuestaServidor.datos || []).forEach(m => {
-            let monto_base = parseFloat(m.monto);
-            let pendiente_base = parseFloat(m.pendiente);
+            // Calculamos igual que en Mensualidades: sin redondear el dólar a mitad de camino
+            let deudaHistoricaBs = parseFloat(m.deuda_con_mora_bs) || 0;
+            let tasaHistorica = parseFloat(m.tasa_historica) || 1;
+            let tasaHoy = parseFloat(m.tasa_actual) || 1;
             
-            let hoy = new Date();
-            let fechaReferencia = new Date(m.anio, m.mes - 1, 1);
-            let diferenciaDias = Math.floor((hoy - fechaReferencia) / (1000 * 60 * 60 * 24));
-            
-            let recargo = (diferenciaDias > m.limite_mensualidad)
-                ? monto_base * (m.porcentaje_interes / 100)
-                : 0;
-            let monto_total = monto_base + recargo;
-            let saldo_deuda = Math.max(0, monto_total - (monto_base - pendiente_base));
-            let total_pagado = monto_base - pendiente_base;
+            let deudaUsd = deudaHistoricaBs / tasaHistorica;
+            let deudaBsHoy = deudaUsd * tasaHoy;
 
-            if (saldo_deuda > 0) {
+            if (deudaUsd > 0.01) {
                 hayPendientes = true;
                 let opcion = document.createElement("option");
                 opcion.value = m.id_mensualidad;
-                opcion.textContent = `${meses[parseInt(m.mes)]}/${m.anio} - Restante: ${saldo_deuda.toFixed(2)} Bs`;
-                opcion.setAttribute("data-monto", monto_total.toFixed(2));
-                opcion.setAttribute("data-pendiente", saldo_deuda.toFixed(2));
+                
+                // Mostramos el monto en Bs a tasa de hoy y entre paréntesis el monto en USD
+                opcion.textContent = `${meses[parseInt(m.mes)]}/${m.anio} - Restante: ${deudaBsHoy.toFixed(2)} Bs ($${deudaUsd.toFixed(2)})`;
+                
+                // Seteamos el total a pagar en Bolívares para que el usuario sepa cuánto transferir
+                opcion.setAttribute("data-monto", deudaBsHoy.toFixed(2));
+                opcion.setAttribute("data-pendiente", deudaBsHoy.toFixed(2));
                 fragment.appendChild(opcion);
             }
         });
@@ -269,8 +266,11 @@ async function cargarMensualidades(id_fuerza = null) {
 // CONSULTAS PRINCIPALES
 async function consultar() {
     const formatoMonto = (cell) => {
-        const monto = cell.getValue();
-        const estado = cell.getData().estado;
+        const row = cell.getData();
+        const montoBs = parseFloat(row.monto_total) || 0;
+        const tasa = parseFloat(row.tasa_dolar) || 1;
+        const montoUsd = montoBs / tasa;
+        const estado = row.estado;
         
         let colorClass = ""; 
 
@@ -279,10 +279,13 @@ async function consultar() {
         } else if (estado === "ANULADO" || estado === "RECHAZADO") {
             colorClass = "text-danger"; // Rojo para problemas
         } else if (estado === "PENDIENTE" || estado === "No verificado") {
-            colorClass = "text-muted fst-italic"; // Gris o cursiva para lo que aún no es "dinero real"
+            colorClass = "text-muted"; // Gris o cursiva para lo que aún no es "dinero real"
         }
 
-        return `<span class="${colorClass}">${monto} Bs.</span>`;
+        return `<div class="d-flex flex-column justify-content-center">
+                    <span class="${colorClass}">$${montoUsd.toFixed(2)}</span>
+                    <span class="text-muted" style="font-size: 0.8rem;">Bs. ${montoBs.toFixed(2)}</span>
+                </div>`;
     };
     const formatoPeriodo = (cell) => {
         let data = cell.getValue();
@@ -635,7 +638,12 @@ async function prepararFormulario(id) {
             if (alertaExistente) alertaExistente.remove();
         }
 
-        document.getElementById("monto_mensualidad").value = cabecera.monto_mensualidad;
+        const opcionActual = mensualidadSelect.selectedOptions[0];
+        if (opcionActual && opcionActual.getAttribute("data-monto")) {
+            document.getElementById("monto_mensualidad").value = opcionActual.getAttribute("data-monto");
+        } else {
+            document.getElementById("monto_mensualidad").value = cabecera.monto_mensualidad;
+        }
 
         // Llenar Detalles
         const container = document.getElementById("detalles_container");
@@ -694,7 +702,6 @@ async function prepararFormulario(id) {
             inputMonto.max = topeEditable;
             inputMonto.min = 0;
         });
-        const opcionActual = mensualidadSelect.selectedOptions[0];
         if (opcionActual) {
             opcionActual.setAttribute("data-pendiente", topeEditable);
         }
@@ -746,8 +753,9 @@ async function mostrarVistaPrevia(id) {
         document.getElementById("vp_fecha").textContent = FormatoFechas.formatoUsuario(data.detalles[0]?.fecha);
 
         // Monto
-        const monto = parseFloat(data.monto_mensualidad) || 0;
-        document.getElementById("vp_monto").textContent = `${monto.toFixed(2)} Bs.`;
+        let totalPagado = 0;
+        (data.detalles || []).forEach(det => totalPagado += parseFloat(det.monto) || 0);
+        document.getElementById("vp_monto").textContent = `${totalPagado.toFixed(2)} Bs.`;
 
         // Estado con Colores Dinámicos
         const config = obtenerConfigEstadoPago(data.estado);

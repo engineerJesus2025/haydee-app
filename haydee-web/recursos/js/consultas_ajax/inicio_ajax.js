@@ -52,14 +52,15 @@ async function cargarGraficos() {
     datos_consulta.append("operacion", "consulta_inicio_grafico");
 
     try {
-        // Pedimos los datos (sin spinner)
         let respuesta = await Peticiones.enviar(datos_consulta, "", false);
         Validador.procesarRespuesta(respuesta, (respuestaServidor) => {    
             const data = respuestaServidor.datos;
 
-            // ==================================================
-            // PREPARAR GRÁFICO 1: ESTADO DE DEUDAS
-            // ==================================================
+            // Formateadores globales para esta función
+            const formatUSD = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+            const formatBS = new Intl.NumberFormat('es-VE', { style: 'currency', currency: 'VES' });
+
+            // ESTADO DE DEUDAS
             let deudasData = [
                 data.grafico_deudas.aptos_solventes || 0,
                 data.grafico_deudas.aptos_morosos || 0
@@ -72,13 +73,11 @@ async function cargarGraficos() {
             document.getElementById('canva_1').parentElement.classList.add('animacion-aparecer');
             document.getElementById('canva_1').parentElement.style.height = '250px';
 
-            // Actualizar datos inferiores
+            // Actualizar datos inferiores (IDs correctos para el gráfico 1)
             document.getElementById('esqueleto_dato_1_1').textContent = `${deudasData[0]} Aptos.`;
             document.getElementById('esqueleto_dato_1_1').classList.add('animacion-aparecer');
             document.getElementById('esqueleto_dato_2_1').textContent = `${deudasData[1]} Aptos.`;
             document.getElementById('esqueleto_dato_2_1').classList.add('animacion-aparecer');
-
-            // .className.add('animacion-aparecer');
 
             if (deudasData[0] === 0 && deudasData[1] === 0) {
                 document.getElementById('div_alert_1').removeAttribute('hidden');
@@ -101,39 +100,35 @@ async function cargarGraficos() {
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        plugins: {
-                            legend: { position: 'bottom' }
-                        },
+                        plugins: { legend: { position: 'bottom' } },
                         cutout: '70%',
                         animation: {
-                            animateScale: true,   // Crece desde el centro
-                            animateRotate: true,  // Gira mientras aparece
-                            duration: 1500,       // Dura 1.5 segundos (muy fluido)
-                            easing: 'easeOutQuart' // Aceleración elegante
+                            animateScale: true,
+                            animateRotate: true,
+                            duration: 1500,
+                            easing: 'easeOutQuart'
                         }
                     }
                 });
             }
 
-            // ==================================================
-            // PREPARAR GRÁFICO 2: INGRESOS VS GASTOS
-            // ==================================================
+            // INGRESOS VS GASTOS
             let labelsMeses = [];
             let datosIngresos = [];
             let datosGastos = [];
             
-            // Sumatorias para la parte inferior
             let ingresoMesActual = 0;
             let gastoMesActual = 0;
 
             data.grafico_ingresos_gastos.forEach((mes, index) => {
                 labelsMeses.push(mes.etiqueta);
-                datosIngresos.push(mes.ingresos);
-                datosGastos.push(mes.gastos);
+                // El gráfico se sigue dibujando en Bs (escala más manejable visualmente)
+                datosIngresos.push(mes.ingresos_bs || mes.ingresos || 0);
+                datosGastos.push(mes.gastos_bs || mes.gastos || 0);
                 
                 if (index === data.grafico_ingresos_gastos.length - 1) {
-                    ingresoMesActual = mes.ingresos;
-                    gastoMesActual = mes.gastos;
+                    ingresoMesActual = mes;
+                    gastoMesActual = mes;
                 }
             });
 
@@ -144,10 +139,25 @@ async function cargarGraficos() {
             document.getElementById('canva_2').parentElement.classList.add('animacion-aparecer');
             document.getElementById('canva_2').parentElement.style.height = '250px';
 
-            // Actualizar datos inferiores
-            document.getElementById('esqueleto_dato_1_2').textContent = `${parseFloat(ingresoMesActual).toFixed(2)} Bs.`;
+            // Actualizar datos inferiores (Dólares grande, Bolívares pequeño)
+            document.getElementById('esqueleto_dato_1_2').innerHTML = `
+                <div class="d-flex flex-column align-items-end">
+                    <span>${formatUSD.format(ingresoMesActual.ingresos_usd || 0)}</span>
+                    <span class="text-muted" style="font-size: 0.75rem; font-weight: normal; margin-top: 2px;">
+                        ${formatBS.format(ingresoMesActual.ingresos_bs || 0)}
+                    </span>
+                </div>
+            `;
             document.getElementById('esqueleto_dato_1_2').classList.add('animacion-aparecer');
-            document.getElementById('esqueleto_dato_2_2').textContent = `${parseFloat(gastoMesActual).toFixed(2)} Bs.`;
+
+            document.getElementById('esqueleto_dato_2_2').innerHTML = `
+                <div class="d-flex flex-column align-items-end">
+                    <span>${formatUSD.format(gastoMesActual.gastos_usd || 0)}</span>
+                    <span class="text-muted" style="font-size: 0.75rem; font-weight: normal; margin-top: 2px;">
+                        ${formatBS.format(gastoMesActual.gastos_bs || 0)}
+                    </span>
+                </div>
+            `;
             document.getElementById('esqueleto_dato_2_2').classList.add('animacion-aparecer');
             
             const ctx2 = document.getElementById('canva_2').getContext('2d');
@@ -159,13 +169,13 @@ async function cargarGraficos() {
                     labels: labelsMeses,
                     datasets: [
                         {
-                            label: 'Ingresos',
+                            label: 'Ingresos (Bs.)',
                             data: datosIngresos,
                             backgroundColor: ['#3b82f6'],
                             borderRadius: 4
                         },
                         {
-                            label: 'Egresos',
+                            label: 'Egresos (Bs.)',
                             data: datosGastos,
                             backgroundColor: ['#f43f5e'],
                             borderRadius: 4
@@ -182,9 +192,8 @@ async function cargarGraficos() {
                     },
                     animation: {
                         duration: 1500,
-                        easing: 'easeOutBack', // Da un pequeñísimo "rebote" al terminar de subir
+                        easing: 'easeOutBack',
                         delay: (context) => {
-                            // Crea un efecto de "ola" retrasando cada barra un poquito
                             let delay = 0;
                             if (context.type === 'data' && context.mode === 'default' && !context.dropped) {
                                 delay = context.dataIndex * 150 + context.datasetIndex * 100;
@@ -306,16 +315,28 @@ async function cargarTarjetasInicio() {
             // Textos principales
             document.getElementById('kpi-aptos').textContent = `${kpis.apartamentos_ocupados}/${kpis.total_apartamentos}`;
             document.getElementById('kpi-residentes').textContent = kpis.residentes_activos;
-            document.getElementById('kpi-recaudado').textContent = `${parseFloat(kpis.recaudado_mes).toFixed(2)} Bs.`;
+            
+            // Formatear montos
+            const formatUSD = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+            const formatBS = new Intl.NumberFormat('es-VE', { style: 'currency', currency: 'VES' });
+            const tasaHoy = parseFloat(kpis.tasa_actual) || 1;
+
+            document.getElementById('kpi-recaudado').innerHTML = `
+                ${formatUSD.format(kpis.recaudado_mes_usd)}
+                <div class="text-muted" style="font-size: 0.8rem; font-weight: normal; margin-top: 2px;">
+                    ${formatBS.format(kpis.recaudado_mes_bs)}
+                </div>
+            `;
+
             document.getElementById('kpi-pendientes').textContent = kpis.recibos_pendientes;
             
-            // --- APLICAR ANIMACIÓN A LAS TARJETAS ---
+            // --- ANIMACION A LAS TARJETAS ---
             ['kpi-aptos', 'kpi-residentes', 'kpi-recaudado', 'kpi-pendientes', 'badge-aptos', 'badge-pendientes'].forEach(id => {
                 let elemento = document.getElementById(id);
                 if(elemento) elemento.classList.add('animacion-aparecer');
             });
 
-            // Badge 1: Porcentaje de ocupación
+            // Porcentaje de ocupacion
             let porcentajeOcupacion = 0;
             if (kpis.total_apartamentos > 0) {
                 porcentajeOcupacion = Math.round((kpis.apartamentos_ocupados / kpis.total_apartamentos) * 100);
@@ -323,10 +344,13 @@ async function cargarTarjetasInicio() {
             document.getElementById('badge-aptos').textContent = `${porcentajeOcupacion}% Ocupado`;
             document.getElementById('badge-aptos').removeAttribute("hidden");
 
-            // Badge 4: Monto total de deuda
+            // Monto total de deuda
             let badgePendientes = document.getElementById('badge-pendientes');
             if(badgePendientes) {
-                badgePendientes.textContent = `${parseFloat(kpis.deuda_total).toFixed(2)} Bs.`;
+                const deudaBsHoy = kpis.deuda_total_usd * tasaHoy;
+                
+                badgePendientes.innerHTML = formatUSD.format(kpis.deuda_total_usd);
+                badgePendientes.setAttribute('title', `Equivale a ${formatBS.format(deudaBsHoy)} a la tasa de hoy`);
                 badgePendientes.removeAttribute("hidden");
             }
         });
@@ -467,7 +491,7 @@ async function cargarApartamentos() {
 // --- Llena y abre el modal de Apartamentos ---
 function mostrarInfoApartamento(apt) {
     document.getElementById('info-apt-nro').textContent = apt.nro_apartamento;
-    document.getElementById('info-apt-residente').textContent = apt.residente_principal.toLowerCase(); // Convertimos a minúscula para que el CSS haga el Capitalize
+    document.getElementById('info-apt-residente').textContent = apt.residente_principal.toLowerCase(); 
     
     // 1. Configurar colores de cabecera y estado
     const header = document.getElementById('info-apt-header');
@@ -483,31 +507,43 @@ function mostrarInfoApartamento(apt) {
         badgeEstado.className = 'badge bg-success text-white rounded-pill shadow-sm px-4 py-2 fs-6 text-uppercase border border-2 border-white';
     }
 
-    // 2. Configurar colores de la caja de deuda
+    // 2. Configurar colores y montos de la caja de deuda
     const cajaDeuda = document.getElementById('info-apt-caja-deuda');
     const h3Deuda = document.getElementById('info-apt-deuda');
     const msgDeuda = document.getElementById('info-apt-mensaje-deuda');
     const iconoDeuda = document.getElementById('info-apt-icono-deuda');
-    const montoDeuda = parseFloat(apt.deuda_total);
+    
+    // Recibimos los montos del backend
+    const deudaUSD = parseFloat(apt.deuda_total_usd) || 0;
+    const tasaHoy = parseFloat(apt.tasa_actual) || 1;
+    const deudaBS_Actual = deudaUSD * tasaHoy;
+    
+    // Formateadores de moneda
+    const formatUSD = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+    const formatBS = new Intl.NumberFormat('es-VE', { style: 'currency', currency: 'VES' });
 
-    h3Deuda.textContent = `${montoDeuda.toFixed(2)} Bs.`;
+    // Aplicamos el diseño: Dólares grande, Bolívares pequeño en gris
+    h3Deuda.innerHTML = `
+        ${formatUSD.format(deudaUSD)}
+        ${deudaUSD > 0 ? `<div class="text-muted mt-1" style="font-size: 0.85rem; font-weight: normal; letter-spacing: 0;">${formatBS.format(deudaBS_Actual)}</div>` : ''}
+    `;
 
     cajaDeuda.style.backgroundColor = '';
     cajaDeuda.style.color = '';
 
-    if (montoDeuda > 0) {
-        // Estado: Con Deuda (Usa nuestras variables dinámicas rojas)
+    if (deudaUSD > 0) {
+        // Estado: Con Deuda
         cajaDeuda.className = 'p-3 rounded-4 mt-2 mb-1 transition-all badge-soft-danger border-0';
         h3Deuda.className = 'fw-bolder mb-0';
         iconoDeuda.className = 'fas fa-exclamation-triangle me-1';
         msgDeuda.textContent = 'Posee deuda pendiente';
         msgDeuda.className = 'fw-bold';
     } else {
-        // Estado: Solvente (Usa nuestras variables dinámicas verdes)
+        // Estado: Solvente
         cajaDeuda.className = 'p-3 rounded-4 mt-2 mb-1 transition-all badge-soft-success border-0';
         h3Deuda.className = 'fw-bolder mb-0';
         iconoDeuda.className = 'fas fa-check-circle me-1';
-        msgDeuda.textContent = 'Solvente';
+        msgDeuda.textContent = 'Solvente (Al día)';
         msgDeuda.className = 'fw-bold';
     }
 

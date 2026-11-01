@@ -202,6 +202,18 @@ class Presupuesto extends Conexion
     {
         $con = $this->get_conex(TipoBaseDatos::NEGOCIO);
 
+        $stmtExiste = $con->prepare(
+        "SELECT id_presupuesto FROM presupuesto 
+          WHERE id_presupuesto = :id AND activo = 1"
+        );
+        $stmtExiste->execute([':id' => $this->id_presupuesto]);
+        if (!$stmtExiste->fetchColumn()) {
+            throw new NegocioException(
+                'Presupuesto no encontrado.',
+                HttpCodigo::NO_ENCONTRADO->value
+            );
+        }
+
         if ($this->_tiene_pagos_registrados($con, $this->id_presupuesto)) {
             throw new NegocioException("No se puede modificar este presupuesto porque ya existen residentes que han registrado pagos para este periodo.", HttpCodigo::BAD_REQUEST->value);
         }

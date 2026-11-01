@@ -114,7 +114,7 @@ if (isset($_POST["operacion"])) {
     $pagos->set_apartamento_id($_POST['apartamento_id'] ?? null);
     $pagos->set_mensualidad_id($_POST['mensualidad_id'] ?? null);
 
-    $operacionesMonetarias = ['registrar_pago', 'modificar_pago'];
+    $operacionesMonetarias = ['registrar_pago'];
     if (in_array($operacion, $operacionesMonetarias)) {
         $tasaDolar = GestorTasa::obtener();
         $pagos->set_tasa_dolar($tasaDolar);

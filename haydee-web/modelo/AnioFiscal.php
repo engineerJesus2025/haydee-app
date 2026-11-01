@@ -5,6 +5,7 @@ use PDO;
 use PDOException;
 use haydee\enums\EstadoPeriodo; 
 use haydee\enums\TipoBaseDatos;
+use haydee\enums\HttpCodigo;
 use haydee\excepciones\NegocioException;
 
 use haydee\excepciones\ValidacionException;

@@ -100,16 +100,29 @@ async function consultarMensualidades() {
     // Formato Deuda
     const formatoDeuda = (cell) => {
         const row = cell.getData();
-        let deuda = row.monto - row.pagado;
+        let deudaHistoricaBs = parseFloat(row.deuda_real) || 0;
+        let moraHistoricaBs = parseFloat(row.mora_total) || 0;
+        let tasaHistorica = parseFloat(row.tasa_dolar) || 1;
+        let tasaHoy = parseFloat(row.tasa_actual) || 1;
         
-        if (deuda <= 0) {
+        // 1. Calculamos la deuda real en dólares (usando la tasa histórica)
+        let deudaUsd = deudaHistoricaBs / tasaHistorica;
+        let moraUsd = moraHistoricaBs / tasaHistorica;
+
+        if (deudaUsd <= 0) {
             return `<span class="text-success fw-bold"><i class="bi bi-check2-all me-1"></i> Sin Deuda</span>`;
         }
-        
-        // Mostramos Bs grande y $ pequeño abajo para no alargar la tabla
+
+        // 2. Calculamos el equivalente en Bolívares a la tasa de HOY
+        let deudaBsHoy = deudaUsd * tasaHoy;
+
+        let iconoMora = moraUsd > 0 
+            ? `<i class="bi bi-exclamation-circle-fill text-warning ms-1" data-tooltip="true" title="Incluye $${moraUsd.toFixed(2)} de mora"></i>` 
+            : '';
+
         return `<div class="d-flex flex-column justify-content-center">
-                    <span class="text-danger fw-bold">${deuda.toFixed(2)} Bs.</span>
-                    <span class="text-muted" style="font-size: 0.8rem;">Ref: ${(deuda / row.tasa_dolar).toFixed(2)} $</span>
+                    <span class="text-danger fw-bold">$${deudaUsd.toFixed(2)} ${iconoMora}</span>
+                    <span class="text-muted" style="font-size: 0.8rem;">Bs. ${deudaBsHoy.toFixed(2)}</span>
                 </div>`;
     };
 
@@ -140,7 +153,7 @@ async function consultarMensualidades() {
     const columnas = [
         { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center" },
         { title: "Período", field: "anio", formatter: formatoMes, minWidth: 200, responsive: 0 },
-        { title: "Estado", formatter: formatoEstado, minWidth: 140, hozAlign: "center", headerHozAlign: "center" }, // NUEVA COLUMNA DINÁMICA
+        { title: "Estado", formatter: formatoEstado, minWidth: 150, hozAlign: "center", headerHozAlign: "center" }, // NUEVA COLUMNA DINÁMICA
         { title: "Pendiente", field: "pagado", formatter: formatoDeuda, minWidth: 140 },
         {
             title: "Acciones", formatter: formatoBotones, headerSort: false, 
@@ -270,7 +283,7 @@ async function verificarMeses() {
 // Variable global para almacenar el presupuesto del mes seleccionado
 window.presupuestosActuales = [];
 
-async function cargarTablaPresupuestos(fecha) {
+async function cargarTablaPresupuestos(fecha, tasaPeriodo = null) {
     const formData = new FormData();
     formData.append("operacion", "consultar_presupuestos_mensualidades");
     formData.append("fecha", fecha);
@@ -285,6 +298,7 @@ async function cargarTablaPresupuestos(fecha) {
 
     let sumaFooterBase = 0;
     const filas = tablaMensualidadAsignar.querySelectorAll("tbody tr");
+    let tasaCalculo = tasaPeriodo ? parseFloat(tasaPeriodo) : parseFloat(tasaDolar);
 
     // Recorremos las filas existentes de la vista
     filas.forEach(fila => {
@@ -297,38 +311,42 @@ async function cargarTablaPresupuestos(fecha) {
         delete fila.dataset.exoneraciones; 
 
         fila.querySelector(".celda-monto-base").textContent = `${montoBaseApto.toFixed(2)} Bs.`;
-        fila.querySelector(".celda-monto-base-usd").textContent = (montoBaseApto / tasaDolar).toFixed(2);
+        fila.querySelector(".celda-monto-base-usd").textContent = (montoBaseApto / tasaCalculo).toFixed(2);
         
         fila.querySelector(".input-descuento").value = "0.00";
         fila.querySelector(".celda-exoneracion-usd").textContent = "0.00";
         
         fila.querySelector(".celda-total-neto").textContent = montoBaseApto.toFixed(2);
-        fila.querySelector(".celda-total-neto-usd").textContent = (montoBaseApto / tasaDolar).toFixed(2);
+        fila.querySelector(".celda-total-neto-usd").textContent = (montoBaseApto / tasaCalculo).toFixed(2);
     });
 
     // Actualizamos los identificadores del footer directamente
     document.getElementById("foot_monto_base").textContent = `${sumaFooterBase.toFixed(2)}`;
-    document.getElementById("foot_monto_base_usd").textContent = (sumaFooterBase / tasaDolar).toFixed(2);
+    document.getElementById("foot_monto_base_usd").textContent = (sumaFooterBase / tasaCalculo).toFixed(2);
     
     document.getElementById("foot_total_exoneracion").textContent = "0.00";
     document.getElementById("foot_total_exoneracion_usd").textContent = "0.00";
     
     document.getElementById("foot_total_neto").textContent = sumaFooterBase.toFixed(2);
-    document.getElementById("foot_total_neto_usd").textContent = (sumaFooterBase / tasaDolar).toFixed(2);
+    document.getElementById("foot_total_neto_usd").textContent = (sumaFooterBase / tasaCalculo).toFixed(2);
 
     return true;
 }
 
 function recalcularTotalFila(fila) {
+    const select = selectMesAsignar;
+    let tasaCalculo = parseFloat(tasaDolar); 
     let montoApartamentoBruto = parseFloat(fila.dataset.montoBase) || 0;
     let descuento = parseFloat(fila.querySelector('.input-descuento').value) || 0;
-    
-    // Actualizar Ref USD de la exoneración al vuelo
-    fila.querySelector('.celda-exoneracion-usd').textContent = (descuento / tasaDolar).toFixed(2);
+
+    let montoBaseUSD_Original = parseFloat(fila.querySelector(".celda-monto-base-usd").textContent) || 1;
+    let tasaRealUsada = montoApartamentoBruto / montoBaseUSD_Original;
+
+    fila.querySelector('.celda-exoneracion-usd').textContent = (descuento / tasaRealUsada).toFixed(2);
     
     let montoNetoFinal = Math.max(0, montoApartamentoBruto - descuento);
     fila.querySelector(".celda-total-neto").textContent = montoNetoFinal.toFixed(2);
-    fila.querySelector(".celda-total-neto-usd").textContent = (montoNetoFinal / tasaDolar).toFixed(2); // <-- AÑADIDO
+    fila.querySelector(".celda-total-neto-usd").textContent = (montoNetoFinal / tasaRealUsada).toFixed(2);
     
     let sumaNetoGeneral = 0;
     let sumaExoneracionGeneral = 0;
@@ -404,7 +422,7 @@ async function prepararFormulario(row) {
     opcionExistente.selected = true;
     select.disabled = true;
 
-    const exitoCarga = await cargarTablaPresupuestos(fecha);
+    const exitoCarga = await cargarTablaPresupuestos(fecha, row.tasa_dolar);
 
     if (!exitoCarga) {
         Alertas.mostrar('error', 'Error de Integridad', 'No se puede modificar esta mensualidad porque el presupuesto base de este mes fue eliminado.');
@@ -514,23 +532,53 @@ function mostrarVistaPrevia(data, fecha) {
         return `<div class="fw-semibold text-capitalize">${nombreCompleto.toLowerCase()}</div>`;
     }
 
-    const formatoEstatus = (cell) =>{
+    const formatoEstatus = (cell) => {
         let row = cell.getData();
-        let deuda = row.monto - row.pagado;
-        
-        if (deuda <= 0) {
+        let deudaHistoricaBs = parseFloat(row.deuda_con_mora) || 0;
+        let tasaHistorica = parseFloat(row.tasa_dolar) || 1;
+        let tasaHoy = parseFloat(row.tasa_actual) || 1;
+
+        let deudaUsd = deudaHistoricaBs / tasaHistorica;
+        let deudaBsHoy = deudaUsd * tasaHoy;
+
+        if (deudaUsd <= 0) {
             const badgeSolvente = ComponentesUI.crearSoftBadge('success', 'bi-check2-all', 'Solvente');
-            
-            return `<div class="d-flex align-items-start">
-                        ${badgeSolvente}
-                    </div>`;
+            return `<div class="d-flex align-items-center justify-content-center">${badgeSolvente}</div>`;
         }
+
+        return `<div class="d-flex flex-column align-items-center justify-content-center">
+                    <span class="fw-bold text-danger" style="font-size: 1.1rem;">$${deudaUsd.toFixed(2)}</span>
+                    <span class="text-muted" style="font-size: 0.8rem;">Bs. ${deudaBsHoy.toFixed(2)}</span>
+                </div>`;
+    }
+
+    const formatoMonto = (cell) => {
+        let row = cell.getData();
+        let baseHistoricaBs = parseFloat(row.monto) || 0;
+        let tasaHistorica = parseFloat(row.tasa_dolar) || 1;
+        let tasaHoy = parseFloat(row.tasa_actual) || 1;
         
-        const badgeDeuda = ComponentesUI.crearSoftBadge('danger', 'bi-exclamation-circle', 'Deuda');
+        let baseUsd = baseHistoricaBs / tasaHistorica;
+        let baseBsHoy = baseUsd * tasaHoy;
         
-        return `<div class="d-flex flex-column align-items-start justify-content-center">
-                    <div class="mb-1">${badgeDeuda}</div>
-                    <span class="fw-bold text-danger" style="font-size: 0.85rem;">${deuda.toFixed(2)} Bs.</span>
+        let moraHistoricaBs = parseFloat(row.monto_mora) || 0;
+        let moraUsd = moraHistoricaBs / tasaHistorica;
+        let moraBsHoy = moraUsd * tasaHoy;
+
+        let htmlMora = '';
+        if (moraUsd > 0) {
+            htmlMora = `<div class="text-warning mt-1" style="font-size: 0.75rem; font-weight: 600;">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>Mora: $${moraUsd.toFixed(2)} (Bs. ${moraBsHoy.toFixed(2)})
+                        </div>`;
+        }
+
+        // Mostramos el equivalente en Bs de HOY
+        return `<div class="d-flex flex-column">
+                    <div>
+                        <span class="fw-semibold">${baseBsHoy.toFixed(2)} Bs.</span> 
+                        <span class="text-muted small">/ ${baseUsd.toFixed(2)} $</span>
+                    </div>
+                    ${htmlMora}
                 </div>`;
     }
 
@@ -541,7 +589,7 @@ function mostrarVistaPrevia(data, fecha) {
         { 
             title: "Monto A Pagar", 
             field: "monto", 
-            formatter: (cell) => `<span class="fw-semibold">${parseFloat(cell.getValue()).toFixed(2)} Bs.</span> <span class="text-muted small">/ ${(cell.getValue() / cell.getData().tasa_dolar).toFixed(2)} $</span>`, 
+            formatter: formatoMonto, 
             minWidth: 180 
         },
         { 

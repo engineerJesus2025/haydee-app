@@ -17,6 +17,7 @@ class GestorTasa
     {
         $rutaArchivo = self::obtenerRutaCache();
 
+
         if (file_exists($rutaArchivo)) {
             $cache = json_decode(file_get_contents($rutaArchivo), true);
             
@@ -24,6 +25,7 @@ class GestorTasa
                 return (float)$cache['tasa'];
             }
         }
+        error_log($rutaArchivo);
 
         return self::actualizar();
     }

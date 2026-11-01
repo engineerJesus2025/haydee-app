@@ -7,6 +7,7 @@ use haydee\enums\EstadoOcupacion;
 use haydee\enums\TipoBaseDatos;
 use haydee\enums\HttpCodigo;
 use haydee\excepciones\NegocioException;
+use haydee\servicios\GestorTasa;
 
 class Apartamento extends Conexion
 {
@@ -254,12 +255,20 @@ class Apartamento extends Conexion
                          ORDER BY CASE WHEN ha.tipo_vinculo = '$vinculoPropietario' THEN 1 ELSE 2 END 
                          LIMIT 1), 
                     'Sin habitante registrado') as residente_principal,
+                    
                     COALESCE(
-                        (SELECT SUM(deuda_pendiente) 
+                        (SELECT SUM(deuda_usd) 
                          FROM vw_estado_cuentas_mensualidad 
                          WHERE nro_apartamento = a.nro_apartamento 
-                           AND deuda_pendiente > 0), 
-                    0.00) as deuda_total
+                           AND deuda_usd > 0), 
+                    0.00) as deuda_total_usd,
+
+                    COALESCE(
+                        (SELECT SUM(deuda_con_mora) 
+                         FROM vw_estado_cuentas_mensualidad 
+                         WHERE nro_apartamento = a.nro_apartamento 
+                           AND deuda_con_mora > 0), 
+                    0.00) as deuda_total_bs
                     
                 FROM apartamentos a
                 WHERE a.activo = 1
@@ -268,6 +277,13 @@ class Apartamento extends Conexion
         $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
         $stmt->execute();
         $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Inyectamos la tasa real del día a cada apartamento
+        $tasa_dia = GestorTasa::obtener();
+        foreach ($datos as &$apto) {
+            $apto['tasa_actual'] = $tasa_dia;
+        }
+
         return ['estatus' => true, 'datos' => $datos];
     }
 }

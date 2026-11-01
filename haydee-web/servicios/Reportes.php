@@ -460,40 +460,18 @@ class Reportes extends Conexion
         }
     }
 
-    // MÉTODOS MIGRADOS DESDE MENSUALIDAD (Cuadro de Pagos)
-
-    // Helper interno para el cuadro de pagos (antes en Mensualidad.php)
+    // Helper interno para el cuadro de pagos
     private function consultarMensualidadesPendientes()
     {
-        $sql = "WITH FacturacionMensual AS (
-                    SELECT m.apartamento_id, pm.anio, pm.mes, SUM(m.monto) AS total_facturado
-                    FROM mensualidad m 
-                    JOIN periodos_mensualidad pm ON m.periodo_id = pm.id_periodo
-                    WHERE m.activo = 1 
-                    GROUP BY m.apartamento_id, pm.anio, pm.mes
-                ),
-                PagosMensuales AS (
-                    -- AHORA USAMOS monto_abonado Y ENLAZAMOS POR pago_id
-                    SELECT m.apartamento_id, pm.anio, pm.mes, SUM(p_m.monto_abonado) AS total_pagado
-                    FROM pagos_mensualidad p_m
-                    JOIN pagos p ON p_m.pago_id = p.id_pago
-                    JOIN mensualidad m ON p_m.mensualidad_id = m.id_mensualidad 
-                    JOIN periodos_mensualidad pm ON m.periodo_id = pm.id_periodo
-                    WHERE p.activo = 1 AND p.estado = 'PROCESADO'
-                    GROUP BY m.apartamento_id, pm.anio, pm.mes
-                ),
-                BalanceDelMes AS (
-                    SELECT f.apartamento_id, f.anio, f.mes, (COALESCE(f.total_facturado, 0) - COALESCE(p.total_pagado, 0)) AS cambio_neto_mes
-                    FROM FacturacionMensual f LEFT JOIN PagosMensuales p ON f.apartamento_id = p.apartamento_id AND f.anio = p.anio AND f.mes = p.mes
-                    UNION
-                    SELECT p.apartamento_id, p.anio, p.mes, (COALESCE(f.total_facturado, 0) - COALESCE(p.total_pagado, 0)) AS cambio_neto_mes
-                    FROM FacturacionMensual f RIGHT JOIN PagosMensuales p ON f.apartamento_id = p.apartamento_id AND f.anio = p.anio AND f.mes = p.mes
-                    WHERE f.apartamento_id IS NULL
-                )
-                SELECT a.nro_apartamento, b.anio, b.mes, b.cambio_neto_mes, SUM(b.cambio_neto_mes) OVER (PARTITION BY b.apartamento_id ORDER BY b.anio, b.mes) AS deuda_acumulada
-                FROM BalanceDelMes b 
-                JOIN apartamentos a ON b.apartamento_id = a.id_apartamento
-                ORDER BY a.nro_apartamento, b.anio, b.mes";
+        $sql = "SELECT 
+                    nro_apartamento, 
+                    anio, 
+                    mes, 
+                    deuda_usd AS cambio_neto_mes, 
+                    SUM(deuda_usd) OVER (PARTITION BY apartamento_id ORDER BY anio, mes) AS deuda_acumulada_usd
+                FROM vw_estado_cuentas_mensualidad
+                ORDER BY nro_apartamento, anio, mes";
+
         try {
             $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
             $stmt->execute();
@@ -504,7 +482,7 @@ class Reportes extends Conexion
         }
     }
 
-    private function _cuadro_pagos()
+        private function _cuadro_pagos()
     {
         $mes_limite = $this->mes_limite;
         $anio_limite = $this->anio_limite;
@@ -519,46 +497,137 @@ class Reportes extends Conexion
         $deudas_globales = $resp_deudas['datos'];
         $meses_nombres = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 
-        $periodos = [];
+        // 1. Obtener todos los periodos válidos hasta el límite
+        $periodos_all = [];
         foreach ($deudas_globales as $deuda) {
-            $periodo = $deuda['anio'] . '-' . str_pad($deuda['mes'], 2, '0', STR_PAD_LEFT);
+            $periodo_key = $deuda['anio'] . '-' . str_pad($deuda['mes'], 2, '0', STR_PAD_LEFT);
             if ($deuda['anio'] < $anio_limite || ($deuda['anio'] == $anio_limite && $deuda['mes'] <= $mes_limite)) {
-                $periodos[$periodo] = ['anio' => $deuda['anio'], 'mes' => $deuda['mes']];
+                $periodos_all[$periodo_key] = ['anio' => $deuda['anio'], 'mes' => $deuda['mes']];
             }
         }
-
-        uasort($periodos, function($a, $b) {
+        
+        uasort($periodos_all, function($a, $b) {
             if ($a['anio'] == $b['anio']) return $a['mes'] - $b['mes'];
             return $a['anio'] - $b['anio'];
         });
 
-        $cabecera_tabla = [];
-        foreach ($periodos as $per) {
-            $cabecera_tabla[] = $meses_nombres[$per['mes'] - 1] . ' ' . $per['anio'];
-        }
-
-        $cuerpo_tabla = [];
-        $total_mensual = array_fill(0, count($periodos), 0);
-        $periodos_indexados = array_values($periodos);
+        // 2. Construir matriz completa de deudas por apartamento y mes
+        $matriz_completa = [];
+        $meses_con_deuda = [];
 
         foreach ($deudas_globales as $deuda) {
             $anio = $deuda['anio'];
             $mes = $deuda['mes'];
             $apto = $deuda['nro_apartamento'];
-            $deuda_acum = $deuda['deuda_acumulada'];
+            $deuda_mes = (float)$deuda['cambio_neto_mes'];
 
             if ($anio < $anio_limite || ($anio == $anio_limite && $mes <= $mes_limite)) {
-                if (!isset($cuerpo_tabla[$apto])) $cuerpo_tabla[$apto] = array_fill(0, count($periodos_indexados), 0);
-                
-                foreach ($periodos_indexados as $idx => $per) {
-                    if ($per['anio'] == $anio && $per['mes'] == $mes) {
-                        $cuerpo_tabla[$apto][$idx] = $deuda_acum;
-                        $total_mensual[$idx] += $deuda_acum; 
-                        break;
-                    }
+                $periodo_key = $anio . '-' . str_pad($mes, 2, '0', STR_PAD_LEFT);
+                if (!isset($matriz_completa[$apto])) $matriz_completa[$apto] = [];
+                $matriz_completa[$apto][$periodo_key] = $deuda_mes;
+
+                if ($deuda_mes > 0.01) {
+                    $meses_con_deuda[$periodo_key] = true;
                 }
             }
         }
+
+        // 3. Recortar meses iniciales vacíos
+        $periodos_filtrados = [];
+        $encontrado_primer_mes = false;
+        foreach ($periodos_all as $key => $data) {
+            if (isset($meses_con_deuda[$key])) {
+                $encontrado_primer_mes = true;
+            }
+            if ($encontrado_primer_mes) {
+                $periodos_filtrados[$key] = $data;
+            }
+        }
+
+        if (empty($periodos_filtrados)) {
+            return ['estatus' => true, 'datos' => ['cabecera' => [], 'cuerpo' => [], 'totales' => []]];
+        }
+
+        // 4. Resumir meses antiguos si hay más de 4
+        $limite_columnas = 4;
+        $total_periodos = count($periodos_filtrados);
+        $resumen_antiguos = [];
+        $columnas_individuales = [];
+
+        if ($total_periodos > $limite_columnas) {
+            $periodos_array_keys = array_keys($periodos_filtrados);
+            $cantidad_resumir = $total_periodos - $limite_columnas;
+
+            for ($i = 0; $i < $cantidad_resumir; $i++) {
+                $resumen_antiguos[] = $periodos_array_keys[$i];
+            }
+            for ($i = $cantidad_resumir; $i < $total_periodos; $i++) {
+                $columnas_individuales[] = $periodos_array_keys[$i];
+            }
+        } else {
+            $columnas_individuales = array_keys($periodos_filtrados);
+        }
+
+        // 5. Construir la tabla final (AQUI INCLUIMOS TODOS LOS APARTAMENTOS)
+        $cabecera_tabla = [];
+        if (!empty($resumen_antiguos)) {
+            $cabecera_tabla[] = 'Deuda Anterior';
+        }
+        foreach ($columnas_individuales as $key) {
+            $p = $periodos_filtrados[$key];
+            $cabecera_tabla[] = $meses_nombres[$p['mes'] - 1] . ' ' . $p['anio'];
+        }
+
+        $cuerpo_tabla = [];
+        $total_mensual = array_fill(0, count($cabecera_tabla), 0);
+
+        // CONSULTA PARA TRAER TODOS LOS APARTAMENTOS
+        $sqlAptos = "SELECT nro_apartamento FROM apartamentos WHERE activo = 1 ORDER BY CAST(nro_apartamento AS UNSIGNED), nro_apartamento";
+        $stmtAptos = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sqlAptos);
+        $stmtAptos->execute();
+        $todos_aptos = $stmtAptos->fetchAll(PDO::FETCH_COLUMN);
+
+        foreach ($todos_aptos as $apto) {
+            $fila = [];
+
+            // Sumar los meses agrupados
+            if (!empty($resumen_antiguos)) {
+                $suma_antiguos = 0;
+                if (isset($matriz_completa[$apto])) {
+                    foreach ($resumen_antiguos as $key) {
+                        if (isset($matriz_completa[$apto][$key])) $suma_antiguos += $matriz_completa[$apto][$key];
+                    }
+                }
+                $fila[] = $suma_antiguos;
+                $total_mensual[0] += $suma_antiguos;
+            }
+
+            // Agregar los últimos meses detallados
+            $offset = !empty($resumen_antiguos) ? 1 : 0;
+            foreach ($columnas_individuales as $idx => $key) {
+                $valor = 0;
+                if (isset($matriz_completa[$apto]) && isset($matriz_completa[$apto][$key])) {
+                    $valor = $matriz_completa[$apto][$key];
+                }
+                $fila[] = $valor;
+                $total_mensual[$idx + $offset] += $valor;
+            }
+
+            // GUARDAMOS LA FILA (Sin importar si debe o no)
+            $cuerpo_tabla[$apto] = $fila;
+        }
+
+        // Ordenar los apartamentos: números primero, alfanumericos al final
+        uksort($cuerpo_tabla, function($a, $b) {
+            $a_num = is_numeric($a);
+            $b_num = is_numeric($b);
+            if ($a_num && $b_num) {
+                return (float)$a <=> (float)$b;
+            }
+            if ($a_num) return -1;
+            if ($b_num) return 1;
+            return strcmp($a, $b);
+        });
 
         return [
             'estatus' => true,

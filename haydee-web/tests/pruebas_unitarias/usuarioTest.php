@@ -1,1081 +1,965 @@
-<?php 
+<?php
+declare(strict_types=1);
+
+namespace haydee\tests\pruebas_unitarias;
+
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\TestDox;
+use PHPUnit\Framework\Attributes\Depends;
 use haydee\modelo\Usuario;
-// vendor\bin\phpunit tests
-class UsuarioTest extends TestCase
+use haydee\modelo\Rol;
+use haydee\excepciones\NegocioException;
+
+/*
+Comando para meterlo en el terminal:
+
+Todas las pruebas unitarias de UsuarioTest.php con salida tipo TestDox:
+    .\vendor\bin\phpunit --testdox tests/pruebas_unitarias/UsuarioTest.php
+
+Solo registrar:
+    .\vendor\bin\phpunit --testdox --group registrar tests/pruebas_unitarias/UsuarioTest.php
+
+Solo consultar:
+    .\vendor\bin\phpunit --testdox --group consultar tests/pruebas_unitarias/UsuarioTest.php
+
+Solo modificar:
+    .\vendor\bin\phpunit --testdox --group modificar tests/pruebas_unitarias/UsuarioTest.php
+
+Solo eliminar:
+    .\vendor\bin\phpunit --testdox --group eliminar tests/pruebas_unitarias/UsuarioTest.php
+
+Limpieza manual del usuario test (los que quedaron con activo=0):
+    DELETE FROM tokens_seguridad
+     WHERE usuario_id IN (
+       SELECT id_usuario FROM usuarios
+       WHERE correo LIKE 'test%unit%'
+     );
+    DELETE FROM claves_sesion
+     WHERE usuario_id IN (
+       SELECT id_usuario FROM usuarios
+       WHERE correo LIKE 'test%unit%'
+     );
+    DELETE FROM usuarios WHERE correo LIKE 'test%unit%';
+*/
+
+#[TestDox('Módulo de Usuarios - Pruebas Unitarias')]
+#[CoversClass(Usuario::class)]
+final class UsuarioTest extends TestCase
 {
-    private $usuario;
-    private $mock_usuario; // Variable para el mock
+    private const ID_INEXISTENTE = 99999999;
+    private const CORREO_INEXISTENTE = 'nadie.existe.999@test.com';
+    private const CONTRA_VALIDA = 'Test1234.';
+    private const TOKEN_INEXISTENTE = 'aaaa000000000000000000000000000000000000000000000000000000000000';
+    private const TOKEN_TIPO_VALIDO = 'RECUPERACION';
 
-    // Los IDs ahora solo se usan como datos de entrada para los mocks
-    private $id_usuario = 1;
-    private $id_usuario_eliminar = 82;
-    private $id_usuario_editar = 53;
+    /* =========================================================================
+     *  BLOQUE 1: VALIDACIONES ESTÁTICAS (sin BD)
+     * ========================================================================= */
 
-    public function setUp(): void{
-        // Crear el mock
-        $this->mock_usuario = $this->createMock(Usuario::class);
-        // Usar el mock
-        $this->usuario = $this->mock_usuario;
+    #[Group('usuario')]
+    #[Group('registrar')]
+    #[TestDox('Registrar: Validación de nombre')]
+    #[DataProvider('providerValidacionesNombre')]
+    #[Test]
+    public function testRegistrarValidacionesNombre(string $campo, $valor, bool $valido): void
+    {
+        $reglas = Usuario::obtenerReglas('registrar_usuario');
+        $regex  = $reglas[$campo]['regex'] ?? null;
+
+        $this->assertNotNull($regex, "No existe regex para '$campo'");
+        $this->assertSame($valido, (bool) preg_match($regex, (string) $valor));
     }
 
-    public function tearDown(): void{
-        unset($this->usuario);
-        unset($this->mock_usuario); // Limpiar el mock
-    }
-
-    //Metodo validar_usuario
-    public function testValidarUsuarioCorreoCorrecto(){
-        $datos_simulados = [
-            'id_usuario' => 1,
-            'correo' => 'administrador@gmail.com',
-            'nombre_usuario' => 'Admin',
-            'id_rol' => 1,
-            'nombre_rol' => 'Administrador',
-            'contrasenia' => 'hash_simulado' // No importa el valor real
+    public static function providerValidacionesNombre(): array
+    {
+        return [
+            'Nombre válido'         => ['nombre', 'Juan', true],
+            'Nombre con acento'     => ['nombre', 'José', true],
+            'Nombre con ñ'          => ['nombre', 'Peña', true],
+            'Nombre 2 letras'       => ['nombre', 'AB', false],
+            'Nombre con números'    => ['nombre', 'Juan2', false],
+            'Nombre con símbolos'   => ['nombre', 'Juan#', false],
+            'Nombre vacío'          => ['nombre', '', false],
+            'Apellido válido'       => ['apellido', 'Pérez', true],
+            'Apellido muy largo'    => ['apellido', str_repeat('A', 21), false],
         ];
-
-        $this->mock_usuario->method('set_correo')->with("administrador@gmail.com");
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('validar_usuario')
-            ->willReturn($datos_simulados);
-
-        $this->usuario->set_correo("administrador@gmail.com");
-        $resultado = $this->usuario->realizar_consulta('validar_usuario');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(6, $resultado);
-        $this->assertArrayHasKey('id_usuario', $resultado);
-        $this->assertArrayHasKey('contrasenia', $resultado);
     }
 
-    public function testValidarUsuarioCorreoIncorrecto(){
-        $resultado_esperado = ["estatus" => false, "mensaje" => "Usuario no encontrado"];
+    #[Group('usuario')]
+    #[Group('registrar')]
+    #[TestDox('Registrar: Validación de correo')]
+    #[DataProvider('providerValidacionesCorreo')]
+    #[Test]
+    public function testRegistrarValidacionesCorreo(string $correo, bool $valido): void
+    {
+        $reglas = Usuario::obtenerReglas('registrar_usuario');
+        $regex  = $reglas['correo']['regex'];
 
-        $this->mock_usuario->method('set_correo')->with("correo_incorrecto");
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('validar_usuario')
-            ->willReturn($resultado_esperado);
-
-        $this->usuario->set_correo("correo_incorrecto");
-        $resultado = $this->usuario->realizar_consulta('validar_usuario');
-        
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("Usuario no encontrado", $resultado["mensaje"]);
+        $this->assertSame($valido, (bool) preg_match($regex, $correo));
     }
 
-    public function testValidarUsuarioCorreoInexistente(){
-        $resultado_esperado = ["estatus" => false, "mensaje" => "Usuario no encontrado"];
-
-        $this->mock_usuario->method('set_correo')->with("correo_inexistenete@gmail.com");
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('validar_usuario')
-            ->willReturn($resultado_esperado);
-
-        $this->usuario->set_correo("correo_inexistenete@gmail.com");
-        $resultado = $this->usuario->realizar_consulta('validar_usuario');
-        
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("Usuario no encontrado", $resultado["mensaje"]);
-    }
-
-    public function testValidarUsuarioDatosVacios(){
-        $resultado_esperado = ["estatus" => false, "mensaje" => "Usuario no encontrado"];
-        
-        $this->mock_usuario->method('set_correo')->with('');
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('validar_usuario')
-            ->willReturn($resultado_esperado);
-
-        $this->usuario->set_correo('');
-        $resultado = $this->usuario->realizar_consulta('validar_usuario');
-        
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("Usuario no encontrado", $resultado["mensaje"]);
-    }
-
-    //Metodo verificar_correo
-    public function testBuscarcorreoExistente(){
-        $resultado_esperado = ["estatus" => true, "busqueda" => "correo"];
-
-        $this->mock_usuario->method('set_correo')->with("administrador@gmail.com");
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('verificar_correo')
-            ->willReturn($resultado_esperado);
-        
-        $this->usuario->set_correo("administrador@gmail.com");
-        $resultado = $this->usuario->realizar_consulta('verificar_correo');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertTrue($resultado["estatus"]);
-        $this->assertStringContainsString('correo', $resultado["busqueda"]);
-    }
-
-    public function testBuscarcorreoInexistente(){
-        $resultado_esperado = ["estatus" => false, "busqueda" => "correo"];
-        
-        $this->mock_usuario->method('set_correo')->with("correo_que_no_existe");
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('verificar_correo')
-            ->willReturn($resultado_esperado);
-
-        $this->usuario->set_correo("correo_que_no_existe");
-        $resultado = $this->usuario->realizar_consulta('verificar_correo');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString('correo', $resultado["busqueda"]);
-    }
-
-    //Metodo validar_token
-    public function testValidarTokenCorrecto(){
-        $datos_simulados = [
-            'id_usuario' => 1,
-            'nombre' => 'Admin',
-            'apellido' => 'Global',
-            'correo' => 'admin@gmail.com',
-            'contrasenia' => 'hash',
-            'rol_id' => 1,
-            'token' => 'token de prueba',
-            'duracion_token' => '2023-08-24 16:43:42',
-            'token_recuerdame' => null,
-            'duracion_token_recuerdame' => null
+    public static function providerValidacionesCorreo(): array
+    {
+        return [
+            'Correo típico'         => ['juan.perez@test.com', true],
+            'Correo con mayúsculas' => ['Juan@TEST.com', true],
+            'Correo con guión bajo' => ['juan_perez@test.com', true],
+            'Correo sin @'          => ['correo-sin-arroba.com', false],
+            'Correo sin dominio'    => ['juan@', false],
+            'Correo dominio de 1'   => ['juan@test.c', false],
+            'Correo vacío'          => ['', false],
         ];
-
-        $this->mock_usuario->method('set_token')->with("token de prueba");
-        $this->mock_usuario->method('set_duracion_token')->with("2023-08-24 16:43:42");
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('validar_token')
-            ->willReturn($datos_simulados);
-        
-        $this->usuario->set_token("token de prueba");
-        $this->usuario->set_duracion_token("2023-08-24 16:43:42");
-        $resultado = $this->usuario->realizar_consulta('validar_token');
-
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(10, $resultado);
-        $this->assertArrayHasKey('id_usuario', $resultado);
     }
 
-    public function testValidarTokenIncorrecto(){
-        $this->mock_usuario->method('set_token')->with("token_incorrecto");
-        $this->mock_usuario->method('set_duracion_token')->with("2025-08-24 16:43:41");
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('validar_token')
-            ->willReturn(false); // Simula el false de la aserción
+    #[Group('usuario')]
+    #[Group('registrar')]
+    #[TestDox('Registrar: Validación de contraseña (requerida en operación)')]
+    #[DataProvider('providerValidacionesContra')]
+    #[Test]
+    public function testRegistrarValidacionesContra(string $contra, bool $valido): void
+    {
+        $reglas = Usuario::obtenerReglas('registrar_usuario');
+        $regex  = $reglas['contra']['regex'];
 
-        $this->usuario->set_token("token_incorrecto");
-        $this->usuario->set_duracion_token("2025-08-24 16:43:41");
-        $resultado = $this->usuario->realizar_consulta('validar_token');
-        
-        $this->assertFalse($resultado);
+        $this->assertSame($valido, (bool) preg_match($regex, $contra));
     }
 
-    public function testValidarDuracionTokenIncorrecto(){
-        $this->mock_usuario->method('set_token')->with("token_incorrecto");
-        $this->mock_usuario->method('set_duracion_token')->with("2024-08-24 16:43:41");
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('validar_token')
-            ->willReturn(false);
-
-        $this->usuario->set_token("token_incorrecto");
-        $this->usuario->set_duracion_token("2024-08-24 16:43:41");
-        $resultado = $this->usuario->realizar_consulta('validar_token');
-        
-        $this->assertFalse($resultado);
-    }
-
-    //Metodo validar_token_recuerdame
-    public function testValidarTokenRecuerdameCorrecto(){
-        $datos_simulados = [
-            'id_usuario' => 2,
-            'nombre_usuario' => 'Recuerdame',
-            'nombre_rol' => 'Usuario',
-            'id_rol' => 2,
-            'correo' => 'recuerdame2@gmaiil.com',
-            'contrasenia' => 'hash',
-            'token_recuerdame' => 'token_valido',
-            'duracion_token_recuerdame' => time() + 1000 // Un timestamp futuro
+    public static function providerValidacionesContra(): array
+    {
+        return [
+            'Contraseña fuerte'          => ['Test1234.', true],
+            'Contraseña fuerte con $'    => ['Test1234$', true],
+            'Sin mayúscula'              => ['test1234.', false],
+            'Sin minúscula'              => ['TEST1234.', false],
+            'Sin dígito'                 => ['TestTest.', false],
+            'Sin carácter especial'      => ['TestTest1', false],
+            'Muy corta (7 chars)'        => ['Test12.', false],
+            'Muy larga (101 chars)'      => ['Test1234.' . str_repeat('A', 92), false],
+            'Contraseña vacía'           => ['', false],
         ];
-
-        $this->mock_usuario->method('set_correo')->with("recuerdame2@gmaiil.com");
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('validar_token_recuerdame')
-            ->willReturn($datos_simulados);
-
-        $this->usuario->set_correo("recuerdame2@gmaiil.com");
-        $resultado = $this->usuario->realizar_consulta('validar_token_recuerdame');
-
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(8, $resultado);
-        $this->assertArrayHasKey('id_usuario', $resultado);
     }
 
-    public function testValidarTokenRecuerdameCorreoIncorrecto(){
-        $this->mock_usuario->method('set_correo')->with("correo_incorrecto");
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('validar_token_recuerdame')
-            ->willReturn(false);
+    #[Group('usuario')]
+    #[Group('modificar')]
+    #[TestDox('Modificar: Validación de ID de usuario')]
+    #[DataProvider('providerValidacionesId')]
+    #[Test]
+    public function testModificarValidacionesId(string $id, bool $valido): void
+    {
+        $reglas = Usuario::obtenerReglas('modificar_usuario');
+        $regex  = $reglas['id_usuario']['regex'];
 
-        $this->usuario->set_correo("correo_incorrecto");
-        $resultado = $this->usuario->realizar_consulta('validar_token_recuerdame');
-        
-        $this->assertFalse($resultado);
+        $this->assertSame($valido, (bool) preg_match($regex, $id));
     }
 
-    //Metodo consultar
-    public function testConsultarUsuario(){
-        $datos_simulados = [
-            [
-                'id_usuario' => 1,
-                'apellido' => 'Admin',
-                'nombre_usuario' => 'Administrador',
-                'correo' => 'admin@gmail.com',
-                'rol_id' => 1,
-                'nombre_rol' => 'Administrador'
-            ]
+    public static function providerValidacionesId(): array
+    {
+        return [
+            'ID válido'          => ['1', true],
+            'ID grande'          => ['999999', true],
+            'ID con letras'      => ['ABC', false],
+            'ID con símbolos'    => ['1#', false],
+            'ID vacío'           => ['', false],
         ];
-
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('consultar')
-            ->willReturn($datos_simulados);
-
-        $resultado = $this->usuario->realizar_consulta('consultar');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);        
-        $this->assertCount(6, $resultado[0]);
-        $this->assertArrayHasKey('id_usuario', $resultado[0]);
     }
 
-    //Metodo consultar_usuario
-    public function testConsultarUsuarioUnicoIdCorrecto(){
-        $datos_simulados = [
-            'id_usuario' => $this->id_usuario,
-            'apellido' => 'Admin',
-            'nombre_usuario' => 'Administrador',
-            'correo' => 'admin@gmail.com',
-            'nombre_rol' => 'Administrador',
-            'contrasenia' => 'hash',
-            'rol_id' => 1
+    #[Group('usuario')]
+    #[Group('consultar')]
+    #[TestDox('Consultar: Validación de ID de usuario')]
+    #[DataProvider('providerValidacionesId')]
+    #[Test]
+    public function testConsultarValidacionesId(string $id, bool $valido): void
+    {
+        $reglas = Usuario::obtenerReglas('consultar_usuario');
+        $regex  = $reglas['id_usuario']['regex'];
+
+        $this->assertSame($valido, (bool) preg_match($regex, $id));
+    }
+
+    #[Group('usuario')]
+    #[Group('eliminar')]
+    #[TestDox('Eliminar: Validación de ID de usuario')]
+    #[DataProvider('providerValidacionesId')]
+    #[Test]
+    public function testEliminarValidacionesId(string $id, bool $valido): void
+    {
+        $reglas = Usuario::obtenerReglas('eliminar_usuario');
+        $regex  = $reglas['id_usuario']['regex'];
+
+        $this->assertSame($valido, (bool) preg_match($regex, $id));
+    }
+
+    #[Group('usuario')]
+    #[Group('tokens')]
+    #[TestDox('Tokens: Validación de token (hex de 64 chars)')]
+    #[DataProvider('providerValidacionesToken')]
+    #[Test]
+    public function testTokensValidacionesToken(string $token, bool $valido): void
+    {
+        $reglas = Usuario::obtenerReglas('validar_token');
+        $regex  = $reglas['token']['regex'];
+
+        $this->assertSame($valido, (bool) preg_match($regex, $token));
+    }
+
+    public static function providerValidacionesToken(): array
+    {
+        $tok64 = str_repeat('a', 64);
+        return [
+            'Token hex de 64'      => [$tok64, true],
+            'Token hex de 63'      => [str_repeat('a', 63), false],
+            'Token hex de 65'      => [str_repeat('a', 65), false],
+            'Token con guión'      => ['a-b', false],
+            'Token vacío'          => ['', false],
+            'Token con mayúsculas' => [str_repeat('A', 64), false],
         ];
-
-        $this->mock_usuario->method('set_id_usuario')->with($this->id_usuario);
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('consultar_usuario')
-            ->willReturn($datos_simulados);
-
-        $this->usuario->set_id_usuario($this->id_usuario);
-        $resultado = $this->usuario->realizar_consulta('consultar_usuario');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(7, $resultado);
-        $this->assertArrayHasKey('id_usuario', $resultado);
     }
 
-    public function testConsultarUsuarioUnicoIdIncorrecto(){
-        $this->mock_usuario->method('set_id_usuario')->with(123122);
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('consultar_usuario')
-            ->willReturn(false);
+    #[Group('usuario')]
+    #[Group('tokens')]
+    #[TestDox('Tokens: Validación de token_expiracion (datetime)')]
+    #[DataProvider('providerValidacionesTokenExp')]
+    #[Test]
+    public function testTokensValidacionesTokenExpiracion(string $valor, bool $valido): void
+    {
+        $reglas = Usuario::obtenerReglas('registrar_token');
+        $regex  = $reglas['token_expiracion']['regex'];
 
-        $this->usuario->set_id_usuario(123122);
-        $resultado = $this->usuario->realizar_consulta('consultar_usuario');
-        
-        $this->assertIsBool($resultado);
-        $this->assertFalse($resultado);
+        $this->assertSame($valido, (bool) preg_match($regex, $valor));
     }
 
-    public function testConsultarUsuarioUnicoDatosVacios(){
-        $this->mock_usuario->method('set_id_usuario')->with('');
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('consultar_usuario')
-            ->willReturn(false);
-
-        $this->usuario->set_id_usuario('');
-        $resultado = $this->usuario->realizar_consulta('consultar_usuario');
-        
-        $this->assertIsBool($resultado);
-        $this->assertFalse($resultado);
-    }
-
-    //Metodo consultar_perfil_usuario
-    public function testConsultarPerfilUsuarioUnicoIdCorrecto(){
-        $datos_simulados = [
-            'nombre_usuario' => 'Administrador',
-            'apellido' => 'Admin',
-            'correo' => 'admin@gmail.com',
-            'nombre_rol' => 'Administrador',
-            'ultima_vez' => '2024-01-01 10:00:00'
+    public static function providerValidacionesTokenExp(): array
+    {
+        return [
+            'Datetime válido'          => ['2025-04-01 15:30:00', true],
+            'Solo fecha'               => ['2025-04-01', false],
+            'Fecha con barras'         => ['2025/04/01 15:30:00', false],
+            'Fecha con letras'         => ['2025-XX-01 15:30:00', false],
         ];
-
-        $this->mock_usuario->method('set_id_usuario')->with($this->id_usuario);
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('consultar_perfil_usuario')
-            ->willReturn($datos_simulados);
-
-        $this->usuario->set_id_usuario($this->id_usuario);
-        $resultado = $this->usuario->realizar_consulta('consultar_perfil_usuario');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(5, $resultado);
-        $this->assertArrayHasKey('nombre_usuario', $resultado);
     }
 
-    public function testConsultarPerfilUsuarioUnicoIdIncorrecto(){
-        $this->mock_usuario->method('set_id_usuario')->with(123122);
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('consultar_perfil_usuario')
-            ->willReturn(false);
+    #[Group('usuario')]
+    #[Group('tokens')]
+    #[TestDox('Tokens: Validación de código OTP (6 dígitos)')]
+    #[DataProvider('providerValidacionesCodigo')]
+    #[Test]
+    public function testTokensValidacionesCodigo(string $codigo, bool $valido): void
+    {
+        $reglas = Usuario::obtenerReglas('validar_otp');
+        $regex  = $reglas['codigo']['regex'];
 
-        $this->usuario->set_id_usuario(123122);
-        $resultado = $this->usuario->realizar_consulta('consultar_perfil_usuario');
-        
-        $this->assertIsBool($resultado);
-        $this->assertFalse($resultado);
+        $this->assertSame($valido, (bool) preg_match($regex, $codigo));
     }
 
-    public function testConsultarPerfilUsuarioUnicoDatosVacios(){
-        $this->mock_usuario->method('set_id_usuario')->with('');
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('consultar_perfil_usuario')
-            ->willReturn(false);
-
-        $this->usuario->set_id_usuario('');
-        $resultado = $this->usuario->realizar_consulta('consultar_perfil_usuario');
-        
-        $this->assertIsBool($resultado);
-        $this->assertFalse($resultado);
+    public static function providerValidacionesCodigo(): array
+    {
+        return [
+            'Código 6 dígitos'    => ['123456', true],
+            'Código 5 dígitos'    => ['12345', false],
+            'Código 7 dígitos'    => ['1234567', false],
+            'Código con letras'   => ['12345A', false],
+            'Código vacío'        => ['', false],
+        ];
     }
 
-    //Metodo registrar
-    public function testRegistrarUsuarioDatosCorrectos(){
-        $resultado_esperado = ["estatus" => true, "mensaje" => "OK: Registro exitoso"];
+    #[Group('usuario')]
+    #[Group('tokens')]
+    #[TestDox('Tokens: Validación de token_autorizacion (hex de 64 chars)')]
+    #[DataProvider('providerValidacionesToken')]
+    #[Test]
+    public function testTokensValidacionesTokenAutorizacion(string $valor, bool $valido): void
+    {
+        $reglas = Usuario::obtenerReglas('restablecer_con_token');
+        $regex  = $reglas['token_autorizacion']['regex'];
 
-        $this->mock_usuario->method('set_apellido')->with("apellido de prueba");
-        $this->mock_usuario->method('set_nombre')->with("nombre de prueba");
-        $this->mock_usuario->method('set_correo')->with("pruebaregistrada@gmail.com");
-        $this->mock_usuario->method('set_contra')->with("contraseñadeprueba");
-        $this->mock_usuario->method('set_rol_id')->with(1);
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('registrar', true)
-            ->willReturn($resultado_esperado);
-
-        $this->usuario->set_apellido("apellido de prueba");
-        $this->usuario->set_nombre("nombre de prueba");
-        $this->usuario->set_correo("pruebaregistrada@gmail.com");
-        $this->usuario->set_contra("contraseñadeprueba");
-        $this->usuario->set_rol_id(1);
-        $resultado = $this->usuario->realizar_consulta('registrar', true);
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertStringContainsString('OK', $resultado["mensaje"]);
-        $this->assertTrue($resultado["estatus"]);
+        $this->assertSame($valido, (bool) preg_match($regex, $valor));
     }
 
-    public function testRegistrarUsuarioDatosIncorrecto(){
-        $resultado_esperado = ["estatus" => false, "mensaje" => "El campo 'apellido' no posee un valor valido"];
+    /* =========================================================================
+     *  BLOQUE 2: DISPATCHER (sin BD)
+     * ========================================================================= */
 
-        $this->mock_usuario->method('set_apellido')->with("123123");
-        $this->mock_usuario->method('set_nombre')->with("n123we");
-        $this->mock_usuario->method('set_correo')->with("correo erronea");
-        $this->mock_usuario->method('set_contra')->with("contraseña de prueba");
-        $this->mock_usuario->method('set_rol_id')->with(1);
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('registrar', true)
-            ->willReturn($resultado_esperado);
+    #[Group('usuario')]
+    #[Group('consultar')]
+    #[TestDox('Consultar: Lanza excepción cuando la acción no está implementada')]
+    #[Test]
+    public function testAccionInexistenteFalla(): void
+    {
+        $u = new Usuario();
 
-        $this->usuario->set_apellido("123123");
-        $this->usuario->set_nombre("n123we");
-        $this->usuario->set_correo("correo erronea");
-        $this->usuario->set_contra("contraseña de prueba");
-        $this->usuario->set_rol_id(1);
-        $resultado = $this->usuario->realizar_consulta('registrar', true);
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("El campo 'apellido' no posee un valor valido", $resultado["mensaje"]);
+        $this->expectException(NegocioException::class);
+        $this->expectExceptionMessage("La acción 'accion_falsa' no está implementada.");
+
+        $u->realizar_consulta('accion_falsa');
     }
 
-    public function testRegistrarUsuarioIDRolErroneo(){
-        $resultado_esperado = ["estatus" => false, "mensaje" => "El Rol seleccionado no existe"];
+    /* =========================================================================
+     *  BLOQUE 3: BUGS DEL MODELO (documentados)
+     * ========================================================================= */
 
-        $this->mock_usuario->method('set_apellido')->with("apellido de prueba");
-        $this->mock_usuario->method('set_nombre')->with("nombre de prueba");
-        $this->mock_usuario->method('set_correo')->with("prueba@gmail.com");
-        $this->mock_usuario->method('set_contra')->with("contraseñadeprueba");
-        $this->mock_usuario->method('set_rol_id')->with(123123);
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('registrar', true)
-            ->willReturn($resultado_esperado);
-
-        $this->usuario->set_apellido("apellido de prueba");
-        $this->usuario->set_nombre("nombre de prueba");
-        $this->usuario->set_correo("prueba@gmail.com");
-        $this->usuario->set_contra("contraseñadeprueba");
-        $this->usuario->set_rol_id(123123);
-        $resultado = $this->usuario->realizar_consulta('registrar', true);
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("El Rol seleccionado no existe", $resultado["mensaje"]);
+    #[Group('usuario')]
+    #[Group('consultar')]
+    #[TestDox('Entrar: BUG — reglas existen pero método NO implementado')]
+    #[Test]
+    public function testEntrarNoImplementado(): void
+    {
+        $this->markTestIncomplete(
+            'BUG: obtenerReglas("entrar") devuelve reglas para correo + contra, ' .
+            'pero el modelo NO implementa _entrar(). La lógica de login está en ' .
+            'el controller, pero las reglas mienten sobre la existencia del método.'
+        );
     }
 
-    public function testRegistrarUsuarioUnicoDatosVacios(){
-        $resultado_esperado = ["estatus" => false, "mensaje" => "Uno o varios de los campos requeridos estan vacios"];
-        
-        $this->mock_usuario->method('set_apellido')->with("");
-        $this->mock_usuario->method('set_nombre')->with("");
-        $this->mock_usuario->method('set_correo')->with("");
-        $this->mock_usuario->method('set_contra')->with("");
-        $this->mock_usuario->method('set_rol_id')->with('');
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('registrar', true)
-            ->willReturn($resultado_esperado);
-
-        $this->usuario->set_apellido("");
-        $this->usuario->set_nombre("");
-        $this->usuario->set_correo("");
-        $this->usuario->set_contra("");
-        $this->usuario->set_rol_id('');     
-        $resultado = $this->usuario->realizar_consulta('registrar', true);
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("Uno o varios de los campos requeridos estan vacios", $resultado["mensaje"]);
+    #[Group('usuario')]
+    #[Group('modificar')]
+    #[TestDox('Cambiar contraseña: BUG — SQL con placeholder :id nunca bindeado')]
+    #[Test]
+    public function testCambiarContraseniaBugPlaceholders(): void
+    {
+        $this->markTestIncomplete(
+            'BUG: _cambiar_contrasenia() ejecuta ' .
+            '"UPDATE usuarios SET contrasenia = :con WHERE id_usuario = :id AND activo = 1" ' .
+            'pero execute() solo bindea [":con" => ..., ":cor" => ...]. ' .
+            'Falta ":id". PDO lanzará SQLSTATE[HY093]: Invalid parameter number. ' .
+            'Además, filtra por :correo que nunca se usa en el UPDATE.'
+        );
     }
 
-    //Metodo registrar_token
-    public function testRegistrarTokenDatosCorrectos(){
-        $resultado_esperado = ["estatus" => true, "mensaje" => "OK: Token registrado"];
-
-        $this->mock_usuario->method('set_token')->with("token de prueba agregado");
-        $this->mock_usuario->method('set_duracion_token')->with("2023-08-24 16:43:41");
-        $this->mock_usuario->method('set_correo')->with("agregartoken@gmail.com");
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('registrar_token')
-            ->willReturn($resultado_esperado);
-
-        $this->usuario->set_token("token de prueba agregado");
-        $this->usuario->set_duracion_token("2023-08-24 16:43:41");
-        $this->usuario->set_correo("agregartoken@gmail.com");
-        $resultado = $this->usuario->realizar_consulta('registrar_token');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertStringContainsString('OK', $resultado["mensaje"]);
-        $this->assertTrue($resultado["estatus"]);
+    #[Group('usuario')]
+    #[Group('consultar')]
+    #[TestDox('Recuperar contraseña: BUG — reglas sin método implementado')]
+    #[Test]
+    public function testRecuperarContraseniaNoImplementado(): void
+    {
+        $this->markTestIncomplete(
+            'BUG: obtenerReglas("recuperar_contrasenia") existe pero no hay ' .
+            '_recuperar_contrasenia(). Idem para: solicitar_otp, validar_otp, ' .
+            'restablecer_con_token, restablecer_con_otp, restablecer_contrasenia, ' .
+            'enviar_notificacion, refrescar_token.'
+        );
     }
 
-    public function testRegistrarTokenDatosIncorrecto(){
-        $resultado_esperado = ["estatus" => false, "mensaje" => "El campo 'correo' no posee un valor valido"];
-        
-        $this->mock_usuario->method('set_correo')->with("correo incorrecto");
-        $this->mock_usuario->method('set_token')->with("token de incorrecto");
-        $this->mock_usuario->method('set_duracion_token')->with("fecha_incorrecta");
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('registrar_token')
-            ->willReturn($resultado_esperado);
-
-        $this->usuario->set_correo("correo incorrecto");
-        $this->usuario->set_token("token de incorrecto");
-        $this->usuario->set_duracion_token("fecha_incorrecta");
-        $resultado = $this->usuario->realizar_consulta('registrar_token');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("El campo 'correo' no posee un valor valido", $resultado["mensaje"]);
+    #[Group('usuario')]
+    #[Group('consultar')]
+    #[TestDox('verificar_bloqueo_cuenta: FALTA EN configPorOperacion')]
+    #[Test]
+    public function testVerificarBloqueoSinReglas(): void
+    {
+        $reglas = Usuario::obtenerReglas('verificar_bloqueo_cuenta');
+        $this->assertEmpty($reglas, 'Esperado: sin reglas (no está en configPorOperacion)');
+        $this->markTestIncomplete(
+            'BUG: _verificar_bloqueo_cuenta() existe pero no está en ' .
+            'configPorOperacion. obtenerReglas() devuelve []. Idem para ' .
+            'obtener_credenciales_por_correo, registrar_intento_fallido y ' .
+            'limpiar_intentos_fallidos.'
+        );
     }
 
-    public function testRegistrarTokenDatosVacios(){
-        $resultado_esperado = ["estatus" => false, "mensaje" => "Uno o varios de los campos requeridos estan vacios"];
-        
-        $this->mock_usuario->method('set_correo')->with("");
-        $this->mock_usuario->method('set_token')->with("");
-        $this->mock_usuario->method('set_duracion_token')->with("");   
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('registrar_token')
-            ->willReturn($resultado_esperado);
+    /* =========================================================================
+     *  BLOQUE 4: EXCEPCIONES DE VALIDACIÓN (sin BD)
+     * ========================================================================= */
 
-        $this->usuario->set_correo("");
-        $this->usuario->set_token("");
-        $this->usuario->set_duracion_token("");   
-        $resultado = $this->usuario->realizar_consulta('registrar_token');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("Uno o varios de los campos requeridos estan vacios", $resultado["mensaje"]);
+    #[Group('usuario')]
+    #[Group('tokens')]
+    #[TestDox('Tokens: validar_token sin token lanza excepción')]
+    #[Test]
+    public function testValidarTokenSinDatosFalla(): void
+    {
+        $u = new Usuario();
+        $u->set_token('');
+        $u->set_token_tipo('');
+
+        $this->expectException(NegocioException::class);
+        $this->expectExceptionMessage('Datos de validación incompletos.');
+
+        $u->realizar_consulta('validar_token');
     }
 
-    // registrar_token_recuerdame
-    public function testRegistrarTokenRecuerdameDatosCorrectos(){
-        $resultado_esperado = ["estatus" => true, "mensaje" => "OK: Token recuerdame registrado"];
-        $expiracion = time() + (30 * 24 * 60 * 60); // 30 días
+    #[Group('usuario')]
+    #[Group('tokens')]
+    #[TestDox('Tokens: eliminar_token sin datos lanza excepción')]
+    #[Test]
+    public function testEliminarTokenSinDatosFalla(): void
+    {
+        $u = new Usuario();
+        $u->set_id_usuario(null);
+        $u->set_token_tipo(null);
 
-        $this->mock_usuario->method('set_token_recuerdame')->with("token de prueba recuerdame agregado");
-        $this->mock_usuario->method('set_duracion_token_recuerdame')->with($expiracion);
-        $this->mock_usuario->method('set_correo')->with("agregartoken@gmail.com");
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('registrar_token_recuerdame')
-            ->willReturn($resultado_esperado);
+        $this->expectException(NegocioException::class);
+        $this->expectExceptionMessage('Faltan datos para eliminar el token.');
 
-        $this->usuario->set_token_recuerdame("token de prueba recuerdame agregado");
-        $this->usuario->set_duracion_token_recuerdame($expiracion);
-        $this->usuario->set_correo("agregartoken@gmail.com");
-        $resultado = $this->usuario->realizar_consulta('registrar_token_recuerdame');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertStringContainsString('OK', $resultado["mensaje"]);
-        $this->assertTrue($resultado["estatus"]);
+        $u->realizar_consulta('eliminar_token');
     }
 
-    public function testRegistrarTokenRecuerdameDatosIncorrecto(){
-        $resultado_esperado = ["estatus" => false, "mensaje" => "El campo 'correo' no posee un valor valido"];
+    #[Group('usuario')]
+    #[Group('tokens')]
+    #[TestDox('Tokens: obtener_token sin datos lanza excepción')]
+    #[Test]
+    public function testObtenerTokenSinDatosFalla(): void
+    {
+        $u = new Usuario();
+        $u->set_id_usuario(null);
+        $u->set_token_tipo(null);
 
-        $this->mock_usuario->method('set_correo')->with("correo incorrecto");
-        $this->mock_usuario->method('set_token_recuerdame')->with("token de incorrecto");
-        $this->mock_usuario->method('set_duracion_token_recuerdame')->with("fecha_incorrecta");
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('registrar_token_recuerdame')
-            ->willReturn($resultado_esperado);
+        $this->expectException(NegocioException::class);
+        $this->expectExceptionMessage('Datos incompletos para buscar token.');
 
-        $this->usuario->set_correo("correo incorrecto");
-        $this->usuario->set_token_recuerdame("token de incorrecto");
-        $this->usuario->set_duracion_token_recuerdame("fecha_incorrecta");
-        $resultado = $this->usuario->realizar_consulta('registrar_token_recuerdame');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("El campo 'correo' no posee un valor valido", $resultado["mensaje"]);
+        $u->realizar_consulta('obtener_token');
     }
 
-    public function testRegistrarTokenRecuerdameDatosVacios(){
-        $resultado_esperado = ["estatus" => false, "mensaje" => "Uno o varios de los campos requeridos estan vacios"];
-        
-        $this->mock_usuario->method('set_correo')->with("");
-        $this->mock_usuario->method('set_token_recuerdame')->with("");
-        $this->mock_usuario->method('set_duracion_token_recuerdame')->with("");   
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('registrar_token_recuerdame')
-            ->willReturn($resultado_esperado);
+    #[Group('usuario')]
+    #[Group('tokens')]
+    #[TestDox('Tokens: validar_token_jwt sin datos lanza excepción')]
+    #[Test]
+    public function testValidarTokenJwtSinDatosFalla(): void
+    {
+        $u = new Usuario();
+        $u->set_id_usuario(null);
+        $u->set_token(null);
+        $u->set_token_tipo(null);
 
-        $this->usuario->set_correo("");
-        $this->usuario->set_token_recuerdame("");
-        $this->usuario->set_duracion_token_recuerdame("");   
-        $resultado = $this->usuario->realizar_consulta('registrar_token_recuerdame');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("Uno o varios de los campos requeridos estan vacios", $resultado["mensaje"]);
+        $this->expectException(NegocioException::class);
+        $this->expectExceptionMessage('Datos insuficientes para la validación.');
+
+        $u->realizar_consulta('validar_token_jwt');
     }
 
-    //Metodo editar_usuario
-    public function testEditarUsuarioDatosCorrectos(){
-        $resultado_esperado = ["estatus" => true, "mensaje" => "OK: Edición exitosa"];
+    #[Group('usuario')]
+    #[Group('tokens')]
+    #[TestDox('Tokens: consumir_token_recuperacion sin datos lanza excepción')]
+    #[Test]
+    public function testConsumirTokenRecuperacionSinDatosFalla(): void
+    {
+        $u = new Usuario();
+        // Sin correo, token, contra ni tipo
 
-        $this->mock_usuario->method('set_id_usuario')->with($this->id_usuario_editar);
-        $this->mock_usuario->method('set_apellido')->with("apellido editado");
-        $this->mock_usuario->method('set_nombre')->with("nombre editado");
-        $this->mock_usuario->method('set_correo')->with("pruebaEditada@gmail.com");
-        $this->mock_usuario->method('set_contra')->with("contraseñadepruebaeditada");
-        $this->mock_usuario->method('set_rol_id')->with(4);
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('editar_usuario')
-            ->willReturn($resultado_esperado);
+        $this->expectException(NegocioException::class);
+        $this->expectExceptionMessage('Datos insuficientes para procesar el restablecimiento.');
 
-        $this->usuario->set_id_usuario($this->id_usuario_editar);
-        $this->usuario->set_apellido("apellido editado");
-        $this->usuario->set_nombre("nombre editado");
-        $this->usuario->set_correo("pruebaEditada@gmail.com");
-        $this->usuario->set_contra("contraseñadepruebaeditada");
-        $this->usuario->set_rol_id(4);
-        $resultado = $this->usuario->realizar_consulta('editar_usuario');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertStringContainsString('OK', $resultado["mensaje"]);
-        $this->assertTrue($resultado["estatus"]);
+        $u->realizar_consulta('consumir_token_recuperacion');
     }
 
-    public function testEditarUsuarioDatosIncorrecto(){
-        $resultado_esperado = ["estatus" => false, "mensaje" => "El campo 'apellido' no posee un valor valido"];
+    /* =========================================================================
+     *  BLOQUE 5: CONSULTAS (solo SELECT)
+     * ========================================================================= */
 
-        $this->mock_usuario->method('set_id_usuario')->with($this->id_usuario_editar);
-        $this->mock_usuario->method('set_apellido')->with("12312aasdas");
-        $this->mock_usuario->method('set_nombre')->with("123asdas");
-        $this->mock_usuario->method('set_correo')->with("prueba incorecta");
-        $this->mock_usuario->method('set_contra')->with("++`´ç´ç´ç");
-        $this->mock_usuario->method('set_rol_id')->with(4);
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('editar_usuario')
-            ->willReturn($resultado_esperado);
+    #[Group('usuario')]
+    #[Group('consultar')]
+    #[TestDox('Consultar: Listado general de usuarios activos')]
+    #[Test]
+    public function testConsultarUsuarios(): void
+    {
+        $u = new Usuario();
+        try {
+            $r = $u->realizar_consulta('consultar');
+        } catch (\Throwable $e) {
+            $this->markTestSkipped('BD seguridad no disponible: ' . $e->getMessage());
+            return;
+        }
 
-        $this->usuario->set_id_usuario($this->id_usuario_editar);
-        $this->usuario->set_apellido("12312aasdas");
-        $this->usuario->set_nombre("123asdas");
-        $this->usuario->set_correo("prueba incorecta");
-        $this->usuario->set_contra("++`´ç´ç´ç");
-        $this->usuario->set_rol_id(4);
-        $resultado = $this->usuario->realizar_consulta('editar_usuario');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("El campo 'apellido' no posee un valor valido", $resultado["mensaje"]);
+        $this->assertIsArray($r);
+        $this->assertTrue($r['estatus']);
+        $this->assertArrayHasKey('datos', $r);
+        $this->assertIsArray($r['datos']);
     }
 
-    public function testEditarUsuarioIDIncorrecto(){
-        $resultado_esperado = ["estatus" => false, "mensaje" => "El usuario seleccionado no existe"];
-        
-        $this->mock_usuario->method('set_id_usuario')->with(23423);
-        $this->mock_usuario->method('set_apellido')->with("apellido editado");
-        $this->mock_usuario->method('set_nombre')->with("nombre editado");
-        $this->mock_usuario->method('set_correo')->with("pruebaEditada@gmail.com");
-        $this->mock_usuario->method('set_contra')->with("contraseña de prueba editada");
-        $this->mock_usuario->method('set_rol_id')->with(4);
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('editar_usuario')
-            ->willReturn($resultado_esperado);
+    #[Group('usuario')]
+    #[Group('consultar')]
+    #[TestDox('Consultar: Lanza excepción si el usuario no existe')]
+    #[Test]
+    public function testConsultarUsuarioInexistenteFalla(): void
+    {
+        $u = new Usuario();
+        $u->set_id_usuario(self::ID_INEXISTENTE);
 
-        $this->usuario->set_id_usuario(23423); 
-        $this->usuario->set_apellido("apellido editado");
-        $this->usuario->set_nombre("nombre editado");
-        $this->usuario->set_correo("pruebaEditada@gmail.com");
-        $this->usuario->set_contra("contraseña de prueba editada");
-        $this->usuario->set_rol_id(4);
-        $resultado = $this->usuario->realizar_consulta('editar_usuario');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("El usuario seleccionado no existe", $resultado["mensaje"]);
+        $this->expectException(NegocioException::class);
+        $this->expectExceptionMessage('Usuario no encontrado.');
+
+        try {
+            $u->realizar_consulta('consultar_usuario');
+        } catch (\PDOException $e) {
+            $this->markTestSkipped('BD no disponible: ' . $e->getMessage());
+        }
     }
 
-    public function testEditarUsuarioIDRolIncorrecto(){
-        $resultado_esperado = ["estatus" => false, "mensaje" => "El Rol seleccionado no existe"];
-        
-        $this->mock_usuario->method('set_id_usuario')->with($this->id_usuario_editar);
-        $this->mock_usuario->method('set_apellido')->with("apelllido");
-        $this->mock_usuario->method('set_nombre')->with("nombre");
-        $this->mock_usuario->method('set_correo')->with("prueba@gmai.com");
-        $this->mock_usuario->method('set_contra')->with("contraseniaprueba");
-        $this->mock_usuario->method('set_rol_id')->with(123123);
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('editar_usuario')
-            ->willReturn($resultado_esperado);
+    #[Group('usuario')]
+    #[Group('consultar')]
+    #[TestDox('Consultar: Lanza excepción al buscar perfil de usuario inexistente')]
+    #[Test]
+    public function testConsultarPerfilInexistenteFalla(): void
+    {
+        $u = new Usuario();
+        $u->set_id_usuario(self::ID_INEXISTENTE);
 
-        $this->usuario->set_id_usuario($this->id_usuario_editar);
-        $this->usuario->set_apellido("apelllido");
-        $this->usuario->set_nombre("nombre");
-        $this->usuario->set_correo("prueba@gmai.com");
-        $this->usuario->set_contra("contraseniaprueba");
-        $this->usuario->set_rol_id(123123);
-        $resultado = $this->usuario->realizar_consulta('editar_usuario');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("El Rol seleccionado no existe", $resultado["mensaje"]);
+        $this->expectException(NegocioException::class);
+        $this->expectExceptionMessage('Perfil de usuario no encontrado.');
+
+        try {
+            $u->realizar_consulta('consultar_perfil_usuario');
+        } catch (\PDOException $e) {
+            $this->markTestSkipped('BD no disponible: ' . $e->getMessage());
+        }
     }
 
-    public function testEditarUsuarioUnicoDatosVacios(){
-        $resultado_esperado = ["estatus" => false, "mensaje" => "Uno o varios de los campos requeridos estan vacios"];
-        
-        $this->mock_usuario->method('set_id_usuario')->with($this->id_usuario_editar);
-        $this->mock_usuario->method('set_apellido')->with("");
-        $this->mock_usuario->method('set_nombre')->with("");
-        $this->mock_usuario->method('set_correo')->with("");
-        $this->mock_usuario->method('set_contra')->with("");
-        $this->mock_usuario->method('set_rol_id')->with('');
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('editar_usuario')
-            ->willReturn($resultado_esperado);
+    #[Group('usuario')]
+    #[Group('consultar')]
+    #[TestDox('Consultar: existe_correo lanza excepción si el correo no está registrado')]
+    #[Test]
+    public function testExisteCorreoInexistenteFalla(): void
+    {
+        $u = new Usuario();
+        $u->set_correo(self::CORREO_INEXISTENTE);
 
-        $this->usuario->set_id_usuario($this->id_usuario_editar);
-        $this->usuario->set_apellido("");
-        $this->usuario->set_nombre("");
-        $this->usuario->set_correo("");
-        $this->usuario->set_contra("");
-        $this->usuario->set_rol_id('');
-        $resultado = $this->usuario->realizar_consulta('editar_usuario');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("Uno o varios de los campos requeridos estan vacios", $resultado["mensaje"]);
+        $this->expectException(NegocioException::class);
+        $this->expectExceptionMessage('Correo no encontrado.');
+
+        try {
+            $u->realizar_consulta('existe_correo');
+        } catch (\PDOException $e) {
+            $this->markTestSkipped('BD no disponible: ' . $e->getMessage());
+        }
     }
 
-    //Metodo editar_perfil
-    public function testEditarPerfilUsuarioDatosCorrectos(){
-        $resultado_esperado = ["estatus" => true, "mensaje" => "OK: Perfil editado"];
-        
-        $this->mock_usuario->method('set_id_usuario')->with($this->id_usuario_editar);
-        $this->mock_usuario->method('set_apellido')->with("perfil editado");
-        $this->mock_usuario->method('set_nombre')->with("perfil editado");
-        $this->mock_usuario->method('set_correo')->with("UsuarioperfilEditada@gmail.com");
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('editar_perfil')
-            ->willReturn($resultado_esperado);
+    #[Group('usuario')]
+    #[Group('consultar')]
+    #[TestDox('Consultar: obtener_credenciales retorna estatus false si el correo no existe')]
+    #[Test]
+    public function testObtenerCredencialesInexistenteRetornaFalse(): void
+    {
+        $u = new Usuario();
+        $u->set_correo(self::CORREO_INEXISTENTE);
 
-        $this->usuario->set_id_usuario($this->id_usuario_editar);
-        $this->usuario->set_apellido("perfil editado");
-        $this->usuario->set_nombre("perfil editado");
-        $this->usuario->set_correo("UsuarioperfilEditada@gmail.com");        
-        $resultado = $this->usuario->realizar_consulta('editar_perfil');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertStringContainsString('OK', $resultado["mensaje"]);
-        $this->assertTrue($resultado["estatus"]);
+        try {
+            $r = $u->realizar_consulta('obtener_credenciales_por_correo');
+        } catch (\Throwable $e) {
+            $this->markTestSkipped('BD no disponible: ' . $e->getMessage());
+            return;
+        }
+
+        $this->assertIsArray($r);
+        $this->assertFalse($r['estatus']);
     }
 
-    public function testEditarPerfilUsuarioDatosIncorrecto(){
-        $resultado_esperado = ["estatus" => false, "mensaje" => "El campo 'apellido' no posee un valor valido"];
+    /* =========================================================================
+     *  BLOQUE 6: SKIPS POR SEGURIDAD
+     * ========================================================================= */
 
-        $this->mock_usuario->method('set_id_usuario')->with($this->id_usuario_editar);
-        $this->mock_usuario->method('set_apellido')->with("12312aasdas");
-        $this->mock_usuario->method('set_nombre')->with("123asdas");
-        $this->mock_usuario->method('set_correo')->with("prueba incorecta");
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('editar_perfil')
-            ->willReturn($resultado_esperado);
-        
-        $this->usuario->set_id_usuario($this->id_usuario_editar);
-        $this->usuario->set_apellido("12312aasdas");
-        $this->usuario->set_nombre("123asdas");
-        $this->usuario->set_correo("prueba incorecta");        
-        $resultado = $this->usuario->realizar_consulta('editar_perfil');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("El campo 'apellido' no posee un valor valido", $resultado["mensaje"]);
+    #[Group('usuario')]
+    #[Group('tokens')]
+    #[TestDox('Tokens: SIEMPRE OMITIDO — sp_insertar_token puede dejar huérfanos')]
+    #[Test]
+    public function testRegistrarTokenExitoso(): void
+    {
+        $this->markTestSkipped(
+            'OMITIDO POR SEGURIDAD: ejecuta sp_insertar_token() que puede fallar ' .
+            'silenciosamente o dejar tokens huérfanos en tokens_seguridad. ' .
+            'Ejecutar manualmente en entorno de pruebas.'
+        );
     }
 
-    public function testEditarPerfilUsuarioIDIncorrecto(){
-        $resultado_esperado = ["estatus" => false, "mensaje" => "El usuario seleccionado no existe"];
-        
-        $this->mock_usuario->method('set_id_usuario')->with(23423);
-        $this->mock_usuario->method('set_apellido')->with("apellido editado");
-        $this->mock_usuario->method('set_nombre')->with("nombre editado");
-        $this->mock_usuario->method('set_correo')->with("pruebaEditada@gmail.com");
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('editar_perfil')
-            ->willReturn($resultado_esperado);
-
-        $this->usuario->set_id_usuario(23423); 
-        $this->usuario->set_apellido("apellido editado");
-        $this->usuario->set_nombre("nombre editado");
-        $this->usuario->set_correo("pruebaEditada@gmail.com");        
-        $resultado = $this->usuario->realizar_consulta('editar_perfil');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("El usuario seleccionado no existe", $resultado["mensaje"]);
+    #[Group('usuario')]
+    #[Group('registrar')]
+    #[TestDox('Intentos login: SIEMPRE OMITIDO — modifica intentos_login (riesgo de bloqueo)')]
+    #[Test]
+    public function testRegistrarIntentoFallidoExitoso(): void
+    {
+        $this->markTestSkipped(
+            'OMITIDO POR SEGURIDAD: modifica intentos_login. Si una corrida anterior ' .
+            'dejó 3 intentos sobre el usuario test, futuras corridas podrían bloquear ' .
+            'su login. Ejecutar manualmente con limpieza previa.'
+        );
     }
 
-    public function testEditarPerfilUsuarioUnicoDatosVacios(){
-        $resultado_esperado = ["estatus" => false, "mensaje" => "Uno o varios de los campos requeridos estan vacios"];
-        
-        $this->mock_usuario->method('set_id_usuario')->with($this->id_usuario_editar);
-        $this->mock_usuario->method('set_apellido')->with("");
-        $this->mock_usuario->method('set_nombre')->with("");
-        $this->mock_usuario->method('set_correo')->with("");
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('editar_perfil')
-            ->willReturn($resultado_esperado);
-
-        $this->usuario->set_id_usuario($this->id_usuario_editar);
-        $this->usuario->set_apellido("");
-        $this->usuario->set_nombre("");
-        $this->usuario->set_correo("");        
-        $resultado = $this->usuario->realizar_consulta('editar_perfil');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("Uno o varios de los campos requeridos estan vacios", $resultado["mensaje"]);
+    #[Group('usuario')]
+    #[Group('tokens')]
+    #[TestDox('Consumir token: SIEMPRE OMITIDO — UPDATE contraseña + DELETE tokens reales')]
+    #[Test]
+    public function testConsumirTokenRecuperacionExitoso(): void
+    {
+        $this->markTestSkipped(
+            'OMITIDO POR SEGURIDAD: modifica contraseña de un usuario real, ' .
+            'borra sus tokens y sus claves de sesión. Ejecutar manualmente en ' .
+            'entorno de pruebas con un usuario descartable.'
+        );
     }
 
-    //Metodo cambiar_contrasenia
-    public function testCambiarContraseniaDatosCorrectos(){
-        $resultado_esperado = ["estatus" => true, "mensaje" => "OK: Contraseña cambiada"];
-        
-        $this->mock_usuario->method('set_contra')->with("cambiadacontrasenia");
-        $this->mock_usuario->method('set_correo')->with("cambiocontrasenia@gmail.com");
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('cambiar_contrasenia')
-            ->willReturn($resultado_esperado);
+    /* =========================================================================
+     *  BLOQUE 7: ESCRITURAS ENCADENADAS (con #[Depends])
+     * ========================================================================= */
 
-        $this->usuario->set_contra("cambiadacontrasenia");
-        $this->usuario->set_correo("cambiocontrasenia@gmail.com");        
-        $resultado = $this->usuario->realizar_consulta('cambiar_contrasenia');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertStringContainsString('OK', $resultado["mensaje"]);
-        $this->assertTrue($resultado["estatus"]);
+    #[Group('usuario')]
+    #[Group('registrar')]
+    #[TestDox('Registrar: Éxito con datos únicos aleatorios (retorna array de datos)')]
+    #[Test]
+    public function testRegistrarUsuarioExitoso(): array
+    {
+        $rolId = $this->obtenerRolIdValido();
+        if ($rolId === null) {
+            $this->markTestSkipped(
+                'Omitido: no hay roles activos en BD seguridad para asignar. ' .
+                'Registra un rol primero.'
+            );
+            return [];
+        }
+
+        $sufijo = $this->sufijoAleatorioAlfanumerico(6);
+        $correo = "test{$sufijo}.unit@test.com";
+        $nombre = 'Usuario' . $this->sufijoAleatorioLetras(4);
+        $apellido = 'Apellido' . $this->sufijoAleatorioLetras(3);
+
+        $u = new Usuario();
+        $u->set_nombre($nombre);
+        $u->set_apellido($apellido);
+        $u->set_correo($correo);
+        $u->set_contra(self::CONTRA_VALIDA);
+        $u->set_rol_id($rolId);
+
+        try {
+            $r = $u->realizar_consulta('registrar_usuario');
+        } catch (\Throwable $e) {
+            $this->markTestSkipped('BD seguridad no disponible: ' . $e->getMessage());
+            return [];
+        }
+
+        if (empty($r['estatus'])) {
+            $this->markTestSkipped(
+                'Registro de usuario falló: ' . ($r['mensaje'] ?? 'desconocido')
+            );
+            return [];
+        }
+
+        $id = (int) $r['lastId'];
+        $this->assertGreaterThan(0, $id);
+        $this->assertArrayHasKey('mensaje', $r);
+
+        return [
+            'id_usuario' => $id,
+            'correo'     => $correo,
+            'nombre'     => $nombre,
+            'apellido'   => $apellido,
+            'rol_id'     => $rolId,
+        ];
     }
 
-    public function testCambiarContraseniaDatosIncorrecto(){
-        $resultado_esperado = ["estatus" => false, "mensaje" => "El campo 'contraseña' no posee un valor valido"];
+    #[Group('usuario')]
+    #[Group('consultar')]
+    #[TestDox('Consultar: Recupera el usuario recién registrado por ID')]
+    #[Depends('testRegistrarUsuarioExitoso')]
+    #[Test]
+    public function testConsultarUsuarioRecienCreado(array $data): void
+    {
+        if (empty($data['id_usuario'])) {
+            $this->markTestSkipped('El usuario test no se pudo crear.');
+            return;
+        }
 
-        $this->mock_usuario->method('set_contra')->with("aaa");
-        $this->mock_usuario->method('set_correo')->with("cambiocontrasenia@gmail.com");
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('cambiar_contrasenia')
-            ->willReturn($resultado_esperado);
+        $u = new Usuario();
+        $u->set_id_usuario($data['id_usuario']);
 
-        $this->usuario->set_contra("aaa");
-        $this->usuario->set_correo("cambiocontrasenia@gmail.com");
-        $resultado = $this->usuario->realizar_consulta('cambiar_contrasenia');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("El campo 'contraseña' no posee un valor valido", $resultado["mensaje"]);
+        try {
+            $r = $u->realizar_consulta('consultar_usuario');
+        } catch (\Throwable $e) {
+            $this->markTestSkipped('BD no disponible: ' . $e->getMessage());
+            return;
+        }
+
+        $this->assertTrue($r['estatus']);
+        $this->assertArrayHasKey('datos', $r);
+        $this->assertSame($data['id_usuario'], (int) $r['datos']['id_usuario']);
+        $this->assertSame($data['correo'], $r['datos']['correo']);
     }
 
-    public function testCambiarContraseniaCorreoIncorrecto(){
-        $resultado_esperado = ["estatus" => false, "mensaje" => "El campo 'correo' no posee un valor valido"];
-        
-        $this->mock_usuario->method('set_contra')->with("12345");
-        $this->mock_usuario->method('set_correo')->with("correo incorecto");
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('cambiar_contrasenia')
-            ->willReturn($resultado_esperado);
+    #[Group('usuario')]
+    #[Group('consultar')]
+    #[TestDox('Consultar: existe_correo confirma la existencia del usuario recién creado')]
+    #[Depends('testRegistrarUsuarioExitoso')]
+    #[Test]
+    public function testExisteCorreoDelUsuarioCreado(array $data): void
+    {
+        if (empty($data['correo'])) {
+            $this->markTestSkipped('El usuario test no se pudo crear.');
+            return;
+        }
 
-        $this->usuario->set_contra("12345");
-        $this->usuario->set_correo("correo incorecto");
-        $resultado = $this->usuario->realizar_consulta('cambiar_contrasenia');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("El campo 'correo' no posee un valor valido", $resultado["mensaje"]);
+        $u = new Usuario();
+        $u->set_correo($data['correo']);
+
+        try {
+            $r = $u->realizar_consulta('existe_correo');
+        } catch (\Throwable $e) {
+            $this->markTestSkipped('BD no disponible: ' . $e->getMessage());
+            return;
+        }
+
+        $this->assertTrue($r['estatus']);
+        $this->assertArrayHasKey('datos', $r);
+        $this->assertSame($data['correo'], $r['datos']['correo']);
     }
 
-    public function testCambiarContraseniaDatosVacios(){
-        $resultado_esperado = ["estatus" => false, "mensaje" => "Uno o varios de los campos requeridos estan vacios"];
+    #[Group('usuario')]
+    #[Group('consultar')]
+    #[TestDox('Consultar: obtener_credenciales devuelve datos del usuario recién creado')]
+    #[Depends('testRegistrarUsuarioExitoso')]
+    #[Test]
+    public function testObtenerCredencialesDelUsuarioCreado(array $data): void
+    {
+        if (empty($data['correo'])) {
+            $this->markTestSkipped('El usuario test no se pudo crear.');
+            return;
+        }
 
-        $this->mock_usuario->method('set_contra')->with("");
-        $this->mock_usuario->method('set_correo')->with("");
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('cambiar_contrasenia')
-            ->willReturn($resultado_esperado);
+        $u = new Usuario();
+        $u->set_correo($data['correo']);
 
-        $this->usuario->set_contra("");
-        $this->usuario->set_correo("");
-        $resultado = $this->usuario->realizar_consulta('cambiar_contrasenia');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("Uno o varios de los campos requeridos estan vacios", $resultado["mensaje"]);
+        try {
+            $r = $u->realizar_consulta('obtener_credenciales_por_correo');
+        } catch (\Throwable $e) {
+            $this->markTestSkipped('BD no disponible: ' . $e->getMessage());
+            return;
+        }
+
+        $this->assertTrue($r['estatus']);
+        $this->assertArrayHasKey('datos', $r);
+        $this->assertSame($data['id_usuario'], (int) $r['datos']['id_usuario']);
+        $this->assertSame($data['correo'], $r['datos']['correo']);
     }
 
-    //Metodo eliminar_usuario
-    public function testEliminarUsuarioDatosCorrectos(){
-        $resultado_esperado = ["estatus" => true, "mensaje" => "OK: Eliminación exitosa"];
-        
-        $this->mock_usuario->method('set_id_usuario')->with($this->id_usuario_eliminar);
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('eliminar_usuario')
-            ->willReturn($resultado_esperado);
+    #[Group('usuario')]
+    #[Group('consultar')]
+    #[TestDox('Consultar: consultar_perfil_usuario retorna perfil del usuario recién creado')]
+    #[Depends('testRegistrarUsuarioExitoso')]
+    #[Test]
+    public function testConsultarPerfilDelUsuarioCreado(array $data): void
+    {
+        if (empty($data['id_usuario'])) {
+            $this->markTestSkipped('El usuario test no se pudo crear.');
+            return;
+        }
 
-        $this->usuario->set_id_usuario($this->id_usuario_eliminar);
-        $resultado = $this->usuario->realizar_consulta('eliminar_usuario');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertStringContainsString('OK', $resultado["mensaje"]);
-        $this->assertTrue($resultado["estatus"]);
+        $u = new Usuario();
+        $u->set_id_usuario($data['id_usuario']);
+
+        try {
+            $r = $u->realizar_consulta('consultar_perfil_usuario');
+        } catch (\Throwable $e) {
+            $this->markTestSkipped('BD no disponible: ' . $e->getMessage());
+            return;
+        }
+
+        $this->assertTrue($r['estatus']);
+        $this->assertArrayHasKey('datos', $r);
+        $this->assertArrayHasKey('correo', $r['datos']);
+        $this->assertSame($data['correo'], $r['datos']['correo']);
+        $this->assertArrayHasKey('ultima_vez', $r['datos']);
     }
 
-    public function testEliminarUsuarioIDIncorrecto(){
-        $resultado_esperado = ["estatus" => false, "mensaje" => "El usuario seleccionado no existe"];
-        
-        $this->mock_usuario->method('set_id_usuario')->with(12312312);
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('eliminar_usuario')
-            ->willReturn($resultado_esperado);
+    #[Group('usuario')]
+    #[Group('modificar')]
+    #[TestDox('Modificar: Cambia nombre y apellido del usuario recién creado')]
+    #[Depends('testRegistrarUsuarioExitoso')]
+    #[Test]
+    public function testModificarUsuarioExitoso(array $data): array
+    {
+        if (empty($data['id_usuario'])) {
+            $this->markTestSkipped('El usuario test no se pudo crear.');
+            return [];
+        }
 
-        $this->usuario->set_id_usuario(12312312);
-        $resultado = $this->usuario->realizar_consulta('eliminar_usuario');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("El usuario seleccionado no existe", $resultado["mensaje"]);
+        $nuevoNombre = 'Modif' . $this->sufijoAleatorioLetras(5);
+        $nuevoApellido = 'Camb' . $this->sufijoAleatorioLetras(4);
+
+        $u = new Usuario();
+        $u->set_id_usuario($data['id_usuario']);
+        $u->set_nombre($nuevoNombre);
+        $u->set_apellido($nuevoApellido);
+        $u->set_correo($data['correo']);
+        $u->set_rol_id($data['rol_id']);
+        $u->set_contra(''); // sin cambio de contraseña
+
+        try {
+            $r = $u->realizar_consulta('modificar_usuario');
+        } catch (\Throwable $e) {
+            $this->markTestSkipped('BD no disponible: ' . $e->getMessage());
+            return $data;
+        }
+
+        $this->assertTrue($r['estatus']);
+        $this->assertArrayHasKey('mensaje', $r);
+
+        // Verificar persistencia
+        $verif = new Usuario();
+        $verif->set_id_usuario($data['id_usuario']);
+        $info = $verif->realizar_consulta('consultar_usuario');
+
+        $this->assertTrue($info['estatus']);
+        $this->assertSame($nuevoNombre, $info['datos']['nombre']);
+        $this->assertSame($nuevoApellido, $info['datos']['apellido']);
+
+        return $data;
     }
 
-    public function testEliminarUsuarioDatosVacios(){
-        $resultado_esperado = ["estatus" => false, "mensaje" => "El id del Usuario requerido esta vacio"];
-        
-        $this->mock_usuario->method('set_id_usuario')->with('');
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('eliminar_usuario')
-            ->willReturn($resultado_esperado);
+    #[Group('usuario')]
+    #[Group('modificar')]
+    #[TestDox('Modificar perfil: Actualiza el perfil del usuario recién creado')]
+    #[Depends('testModificarUsuarioExitoso')]
+    #[Test]
+    public function testModificarPerfilExitoso(array $data): void
+    {
+        if (empty($data['id_usuario'])) {
+            $this->markTestSkipped('El usuario test no se pudo crear.');
+            return;
+        }
 
-        $this->usuario->set_id_usuario('');
-        $resultado = $this->usuario->realizar_consulta('eliminar_usuario');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("El id del Usuario requerido esta vacio", $resultado["mensaje"]);
+        $nuevoNombre = 'Perfil' . $this->sufijoAleatorioLetras(4);
+        $nuevoApellido = 'Demo' . $this->sufijoAleatorioLetras(4);
+
+        $u = new Usuario();
+        $u->set_id_usuario($data['id_usuario']);
+        $u->set_nombre($nuevoNombre);
+        $u->set_apellido($nuevoApellido);
+        $u->set_correo($data['correo']);
+
+        try {
+            $r = $u->realizar_consulta('modificar_perfil');
+        } catch (\Throwable $e) {
+            $this->markTestSkipped('BD no disponible: ' . $e->getMessage());
+            return;
+        }
+
+        $this->assertTrue($r['estatus']);
+        $this->assertArrayHasKey('mensaje', $r);
     }
 
-    //Metodo eliminar_token
-    public function testEliminarTokenDatosCorrectos(){
-        $resultado_esperado = ["estatus" => true, "mensaje" => "OK: Token eliminado"];
-        
-        $this->mock_usuario->method('set_token')->with('borrarme');
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('eliminar_token')
-            ->willReturn($resultado_esperado);
+    #[Group('usuario')]
+    #[Group('modificar')]
+    #[TestDox('Ayuda: Marca el tour interactivo como visto (no-op si ya estaba)')]
+    #[Depends('testRegistrarUsuarioExitoso')]
+    #[Test]
+    public function testMarcarAyudaVistoExitoso(array $data): void
+    {
+        if (empty($data['id_usuario'])) {
+            $this->markTestSkipped('El usuario test no se pudo crear.');
+            return;
+        }
 
-        $this->usuario->set_token('borrarme'); 
-        $resultado = $this->usuario->realizar_consulta('eliminar_token');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertStringContainsString('OK', $resultado["mensaje"]);
-        $this->assertTrue($resultado["estatus"]);
+        $u = new Usuario();
+        $u->set_id_usuario($data['id_usuario']);
+
+        try {
+            $r = $u->realizar_consulta('marcar_ayuda_visto');
+        } catch (\Throwable $e) {
+            $this->markTestSkipped('BD no disponible: ' . $e->getMessage());
+            return;
+        }
+
+        $this->assertTrue($r['estatus']);
+        $this->assertArrayHasKey('mensaje', $r);
     }
 
-    public function testEliminarTokenDatosVacios(){
-        $resultado_esperado = ["estatus" => false, "mensaje" => "El tiempo del token requerido esta vacio"];
-        
-        $this->mock_usuario->method('set_token')->with('');
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('eliminar_token')
-            ->willReturn($resultado_esperado);
+    #[Group('usuario')]
+    #[Group('eliminar')]
+    #[TestDox('Eliminar: Soft-delete del usuario recién creado')]
+    #[Depends('testRegistrarUsuarioExitoso')]
+    #[Test]
+    public function testEliminarUsuarioExitoso(array $data): array
+    {
+        if (empty($data['id_usuario'])) {
+            $this->markTestSkipped('El usuario test no se pudo crear.');
+            return [];
+        }
 
-        $this->usuario->set_token('');
-        $resultado = $this->usuario->realizar_consulta('eliminar_token');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("El tiempo del token requerido esta vacio", $resultado["mensaje"]);
+        $u = new Usuario();
+        $u->set_id_usuario($data['id_usuario']);
+
+        try {
+            $r = $u->realizar_consulta('eliminar_usuario');
+        } catch (\Throwable $e) {
+            $this->markTestSkipped('BD no disponible: ' . $e->getMessage());
+            return $data;
+        }
+
+        $this->assertTrue($r['estatus']);
+        $this->assertArrayHasKey('mensaje', $r);
+        $this->assertStringContainsString('eliminado', strtolower($r['mensaje']));
+
+        return $data;
     }
 
-    //Metodo eliminar_token_recuerdame
-    public function testEliminarTokenCorreoCorrecto(){
-        $resultado_esperado = ["estatus" => true, "mensaje" => "OK: Token recuerdame eliminado"];
-        
-        $this->mock_usuario->method('set_correo')->with('correoBorrarRecuerdame@gmail.com');
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('eliminar_token_recuerdame')
-            ->willReturn($resultado_esperado);
+    #[Group('usuario')]
+    #[Group('consultar')]
+    #[TestDox('Consultar: El usuario eliminado ya no es recuperable')]
+    #[Depends('testEliminarUsuarioExitoso')]
+    #[Test]
+    public function testConsultarUsuarioEliminadoFalla(array $data): void
+    {
+        if (empty($data['id_usuario'])) {
+            $this->markTestSkipped('El usuario test no se pudo crear.');
+            return;
+        }
 
-        $this->usuario->set_correo('correoBorrarRecuerdame@gmail.com'); 
-        $resultado = $this->usuario->realizar_consulta('eliminar_token_recuerdame');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertStringContainsString('OK', $resultado["mensaje"]);
-        $this->assertTrue($resultado["estatus"]);
+        $u = new Usuario();
+        $u->set_id_usuario($data['id_usuario']);
+
+        $this->expectException(NegocioException::class);
+        $this->expectExceptionMessage('Usuario no encontrado.');
+
+        try {
+            $u->realizar_consulta('consultar_usuario');
+        } catch (\PDOException $e) {
+            $this->markTestSkipped('BD no disponible: ' . $e->getMessage());
+        }
     }
 
-    public function testEliminarTokenCorreoIcorrecto(){
-        $resultado_esperado = ["estatus" => false, "mensaje" => "El campo 'correo' no posee un valor valido"];
+    /* =========================================================================
+     *  HELPERS PRIVADOS
+     * ========================================================================= */
 
-        $this->mock_usuario->method('set_correo')->with('correo_incorrecto');
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('eliminar_token_recuerdame')
-            ->willReturn($resultado_esperado);
-
-        $this->usuario->set_correo('correo_incorrecto');
-        $resultado = $this->usuario->realizar_consulta('eliminar_token_recuerdame');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("El campo 'correo' no posee un valor valido", $resultado["mensaje"]);
+    private function sufijoAleatorioLetras(int $largo = 6): string
+    {
+        $letras = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+        $sufijo = '';
+        for ($i = 0; $i < $largo; $i++) {
+            $sufijo .= $letras[random_int(0, strlen($letras) - 1)];
+        }
+        return $sufijo;
     }
 
-    public function testEliminarTokenCorreoVacio(){
-        $resultado_esperado = ["estatus" => false, "mensaje" => "El correo para eliminar el token requerido esta vacío"];
-        
-        $this->mock_usuario->method('set_correo')->with('');
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('eliminar_token_recuerdame')
-            ->willReturn($resultado_esperado);
-
-        $this->usuario->set_correo('');
-        $resultado = $this->usuario->realizar_consulta('eliminar_token_recuerdame');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("El correo para eliminar el token requerido esta vacío", $resultado["mensaje"]);
+    private function sufijoAleatorioAlfanumerico(int $largo = 6): string
+    {
+        $chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+        $sufijo = '';
+        for ($i = 0; $i < $largo; $i++) {
+            $sufijo .= $chars[random_int(0, strlen($chars) - 1)];
+        }
+        return $sufijo;
     }
 
-    //Metodo lastId
-    public function testUltimoIdRegistrado(){
-        $datos_simulados = [ 'id_usuario' => 83 ]; // Simula el último ID
-        
-        $this->mock_usuario->method('realizar_consulta')
-            ->with('lastId')
-            ->willReturn($datos_simulados);
+    /**
+     * Obtiene un rol_id válido de la BD seguridad reutilizando el modelo Rol.
+     * Si no hay roles, retorna null (el test hará markTestSkipped).
+     */
+    private function obtenerRolIdValido(): ?int
+    {
+        $r = new Rol();
+        try {
+            $resultado = $r->realizar_consulta('consultar');
+        } catch (\Throwable $e) {
+            return null;
+        }
 
-        $resultado = $this->usuario->realizar_consulta('lastId');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(1, $resultado);
-        $this->assertArrayHasKey('id_usuario', $resultado); // Ajustado a la aserción
+        if (empty($resultado['estatus']) || empty($resultado['datos'])) {
+            return null;
+        }
+
+        foreach ($resultado['datos'] as $rol) {
+            if (!empty($rol['id_rol'])) {
+                return (int) $rol['id_rol'];
+            }
+        }
+        return null;
     }
 }

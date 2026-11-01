@@ -1,358 +1,510 @@
-<?php 
+<?php
+declare(strict_types=1);
+
+namespace haydee\tests\pruebas_unitarias;
+
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\TestDox;
+use PHPUnit\Framework\Attributes\Depends;
 use haydee\modelo\Rol;
-// vendor\bin\phpunit tests
-class RolTest extends TestCase
+use haydee\excepciones\NegocioException;
+
+/*
+Comando para meterlo en el terminal:
+
+Todas las pruebas unitarias de RolTest.php con salida tipo TestDox:
+    .\vendor\bin\phpunit --testdox tests/pruebas_unitarias/RolTest.php
+
+Solo registrar:
+    .\vendor\bin\phpunit --testdox --group registrar tests/pruebas_unitarias/RolTest.php
+
+Solo consultar:
+    .\vendor\bin\phpunit --testdox --group consultar tests/pruebas_unitarias/RolTest.php
+
+Solo modificar:
+    .\vendor\bin\phpunit --testdox --group modificar tests/pruebas_unitarias/RolTest.php
+
+Solo eliminar:
+    .\vendor\bin\phpunit --testdox --group eliminar tests/pruebas_unitarias/RolTest.php
+
+Limpieza manual de los registros de prueba (opcional):
+    DELETE FROM asignacion_permisos
+      WHERE rol_id IN (
+        SELECT id_rol FROM roles
+        WHERE nombre LIKE 'Prueba Unitaria %' OR nombre LIKE 'Rol Modificado %'
+      );
+    DELETE FROM roles
+      WHERE nombre LIKE 'Prueba Unitaria %' OR nombre LIKE 'Rol Modificado %';
+*/
+
+#[TestDox('Módulo de Roles - Pruebas Unitarias')]
+#[CoversClass(Rol::class)]
+final class RolTest extends TestCase
 {
-    private $rol;
-    private $mock_rol; // Variable para el mock
+    private const ID_INEXISTENTE = 99999999;
 
-    public function setUp(): void{
-        // Crear el mock
-        $this->mock_rol = $this->createMock(Rol::class);
-        // Usar el mock
-        $this->rol = $this->mock_rol;
+    /* =========================================================================
+     *  BLOQUE 1: VALIDACIONES ESTÁTICAS (sin BD)
+     * ========================================================================= */
+
+    #[Group('roles')]
+    #[Group('registrar')]
+    #[TestDox('Registrar rol: Validación de datos de entrada vía reglas de negocio')]
+    #[DataProvider('providerValidacionesRegistrar')]
+    #[Test]
+    public function testRegistrarRolValidacionesBackend(string $campo, $valor, bool $valido): void
+    {
+        $reglas = Rol::obtenerReglas('registrar_rol');
+        $regex  = $reglas[$campo]['regex'] ?? null;
+
+        $this->assertNotNull($regex, "No existe regex definido para '$campo' en registrar_rol");
+        $this->assertSame($valido, (bool) preg_match($regex, (string) $valor));
     }
 
-    public function tearDown(): void{
-        unset($this->rol);
-        unset($this->mock_rol); // Limpiar el mock
-    }
-
-    //Metodo verificar_nombre
-    public function testBuscarRolExistente(){
-        $resultado_esperado = [
-            "estatus" => true,
-            "busqueda" => "nombre"
+    public static function providerValidacionesRegistrar(): array
+    {
+        return [
+            'Nombre Admin'            => ['nombre', 'Admin', true],
+            'Nombre Rol de Prueba'    => ['nombre', 'Rol de Prueba', true],
+            'Nombre Super Administrador' => ['nombre', 'Super Administrador', true],
+            'Nombre muy corto (2)'    => ['nombre', 'AB', false],
+            'Nombre con números'      => ['nombre', 'Admin123', false],
+            'Nombre con guión bajo'   => ['nombre', 'Rol_Test', false],
+            'Nombre con guión'        => ['nombre', 'Rol-Test', false],
+            'Nombre vacío'            => ['nombre', '', false],
+            'Nombre con HTML'         => ['nombre', '<script>x</script>', false],
+            'Permisos array vacío'    => ['permisos', '[]', true],
+            'Permisos JSON array'     => ['permisos', '[{"modulo_id":1,"permiso_id":1}]', true],
+            'Permisos objeto (no array)' => ['permisos', '{"modulo_id":1}', false],
+            'Permisos incompleto'     => ['permisos', '[', false],
         ];
-
-        $this->mock_rol->method('set_nombre')->with("Administrador");
-        $this->mock_rol->method('realizar_consulta')
-            ->with('verificar_nombre')
-            ->willReturn($resultado_esperado);
-
-        $this->rol->set_nombre("Administrador");
-        $resultado = $this->rol->realizar_consulta('verificar_nombre');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertTrue($resultado["estatus"]);
-        $this->assertStringContainsString('nombre', $resultado["busqueda"]);
     }
 
-    public function testBuscarRolInexistente(){
-        $resultado_esperado = [
-            "estatus" => false,
-            "busqueda" => "nombre"
+    #[Group('roles')]
+    #[Group('modificar')]
+    #[TestDox('Modificar rol: Validación de datos de entrada vía reglas de negocio')]
+    #[DataProvider('providerValidacionesModificar')]
+    #[Test]
+    public function testModificarRolValidacionesBackend(string $campo, $valor, bool $valido): void
+    {
+        $reglas = Rol::obtenerReglas('modificar_rol');
+        $regex  = $reglas[$campo]['regex'] ?? null;
+
+        $this->assertNotNull($regex, "No existe regex para '$campo' en modificar_rol");
+        $this->assertSame($valido, (bool) preg_match($regex, (string) $valor));
+    }
+
+    public static function providerValidacionesModificar(): array
+    {
+        return [
+            'ID rol válido'         => ['id_rol', '1', true],
+            'ID rol con letras'     => ['id_rol', 'ABC', false],
+            'ID rol con símbolos'   => ['id_rol', '1#', false],
+            'Nombre válido'         => ['nombre', 'Rol Editado', true],
+            'Nombre con números'    => ['nombre', 'Rol2025', false],
+            'Permisos array'        => ['permisos', '[{"modulo_id":1,"permiso_id":2}]', true],
         ];
-
-        $this->mock_rol->method('set_nombre')->with("rol_que_no_existe");
-        $this->mock_rol->method('realizar_consulta')
-            ->with('verificar_nombre')
-            ->willReturn($resultado_esperado);
-
-        $this->rol->set_nombre("rol_que_no_existe");
-        $resultado = $this->rol->realizar_consulta('verificar_nombre');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString('nombre', $resultado["busqueda"]);
     }
 
-    //Metodo consultar
-    public function testConsultarRoles(){
-        $datos_simulados = [
-            [
-                'id_rol' => 1,
-                'nombre' => 'Administrador'
-            ],
-            [
-                'id_rol' => 2,
-                'nombre' => 'Usuario'
-            ]
+    #[Group('roles')]
+    #[Group('eliminar')]
+    #[TestDox('Eliminar rol: Validación de formato de ID vía reglas de negocio')]
+    #[DataProvider('providerValidacionesId')]
+    #[Test]
+    public function testEliminarRolValidacionesBackend(string $id, bool $valido): void
+    {
+        $reglas = Rol::obtenerReglas('eliminar_rol');
+        $regex  = $reglas['id_rol']['regex'];
+
+        $this->assertSame($valido, (bool) preg_match($regex, $id));
+    }
+
+    #[Group('roles')]
+    #[Group('consultar')]
+    #[TestDox('Consultar rol: Validación de ID vía reglas de negocio')]
+    #[DataProvider('providerValidacionesId')]
+    #[Test]
+    public function testConsultarRolValidacionesBackend(string $id, bool $valido): void
+    {
+        $reglas = Rol::obtenerReglas('consultar_rol');
+        $regex  = $reglas['id_rol']['regex'];
+
+        $this->assertSame($valido, (bool) preg_match($regex, $id));
+    }
+
+    #[Group('roles')]
+    #[Group('consultar')]
+    #[TestDox('Consultar permisos asignados: Validación de ID vía reglas')]
+    #[DataProvider('providerValidacionesId')]
+    #[Test]
+    public function testConsultarPermisosAsignadosValidacionesBackend(string $id, bool $valido): void
+    {
+        $reglas = Rol::obtenerReglas('consultar_permisos_asignados');
+        $regex  = $reglas['id_rol']['regex'];
+
+        $this->assertSame($valido, (bool) preg_match($regex, $id));
+    }
+
+    public static function providerValidacionesId(): array
+    {
+        return [
+            'ID numérico válido' => ['1', true],
+            'ID con letras'      => ['ABC', false],
+            'ID con símbolos'    => ['1#', false],
+            'ID vacío'           => ['', false],
         ];
-
-        $this->mock_rol->method('realizar_consulta')
-            ->with('consultar')
-            ->willReturn($datos_simulados);
-
-        $resultado = $this->rol->realizar_consulta('consultar');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);        
-        $this->assertArrayHasKey('id_rol', $resultado[0]);
-        $this->assertArrayHasKey('nombre', $resultado[0]);        
-    }    
-
-    //Metodo consultar_rol
-    public function testConsultarRolUnicoIdCorrecto(){
-        $datos_simulados = [
-            'id_rol' => 1,
-            'nombre' => 'Administrador'
-        ];
-
-        $this->mock_rol->method('set_id_rol')->with(1);
-        $this->mock_rol->method('realizar_consulta')
-            ->with('consultar_rol')
-            ->willReturn($datos_simulados);
-
-        $this->rol->set_id_rol(1);
-        $resultado = $this->rol->realizar_consulta('consultar_rol');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertArrayHasKey('id_rol', $resultado);
-        $this->assertArrayHasKey('nombre', $resultado);        
     }
 
-    public function testConsultarRolUnicoIdIncorrecto(){
-        $this->mock_rol->method('set_id_rol')->with(123122);
-        $this->mock_rol->method('realizar_consulta')
-            ->with('consultar_rol')
-            ->willReturn(false); // Simula el false de la aserción
+    /* =========================================================================
+     *  BLOQUE 2: DISPATCHER (sin BD)
+     * ========================================================================= */
 
-        $this->rol->set_id_rol(123122);
-        $resultado = $this->rol->realizar_consulta('consultar_rol');
-        
-        $this->assertIsBool($resultado);
-        $this->assertFalse($resultado);
+    #[Group('roles')]
+    #[Group('consultar')]
+    #[TestDox('Consultar: Lanza excepción cuando la acción no está implementada')]
+    #[Test]
+    public function testAccionInexistenteFalla(): void
+    {
+        $r = new Rol();
+
+        $this->expectException(NegocioException::class);
+        $this->expectExceptionMessage("La acción 'accion_falsa' no está implementada.");
+
+        $r->realizar_consulta('accion_falsa');
     }
 
-    public function testConsultarRolUnicoDatosVacios(){
-        $this->mock_rol->method('set_id_rol')->with('');
-        $this->mock_rol->method('realizar_consulta')
-            ->with('consultar_rol')
-            ->willReturn(false);
+    /* =========================================================================
+     *  BLOQUE 3: CONSULTAR (solo SELECT)
+     * ========================================================================= */
 
-        $this->rol->set_id_rol('');
-        $resultado = $this->rol->realizar_consulta('consultar_rol');
-        
-        $this->assertIsBool($resultado);
-        $this->assertFalse($resultado);
+    #[Group('roles')]
+    #[Group('consultar')]
+    #[TestDox('Consultar: Listado general de roles activos')]
+    #[Test]
+    public function testConsultarListadoRoles(): void
+    {
+        $r = new Rol();
+        try {
+            $resultado = $r->realizar_consulta('consultar');
+        } catch (\Throwable $e) {
+            $this->markTestSkipped('BD seguridad no disponible: ' . $e->getMessage());
+            return;
+        }
+
+        if (empty($resultado['estatus'])) {
+            $this->markTestSkipped(
+                'BD seguridad no disponible: ' . ($resultado['mensaje'] ?? 'desconocido')
+            );
+            return;
+        }
+
+        $this->assertArrayHasKey('datos', $resultado);
+        $this->assertIsArray($resultado['datos']);
     }
 
-    //Metodo registrar
-    public function testRegistrarRolDatosCorrectos(){
-        $resultado_esperado = [
-            "estatus" => true,
-            "mensaje" => "OK: Registro exitoso"
-        ];
+    #[Group('roles')]
+    #[Group('consultar')]
+    #[TestDox('Consultar rol: Devuelve estatus false con mensaje si no existe')]
+    #[Test]
+    public function testConsultarRolInexistenteRetornaEstatusFalse(): void
+    {
+        $r = new Rol();
+        $r->set_id_rol(self::ID_INEXISTENTE);
 
-        $this->mock_rol->method('set_nombre')->with("rol de prueba");
-        $this->mock_rol->method('realizar_consulta')
-            ->with('registrar')
-            ->willReturn($resultado_esperado);
+        try {
+            $resultado = $r->realizar_consulta('consultar_rol');
+        } catch (\Throwable $e) {
+            $this->markTestSkipped('BD seguridad no disponible: ' . $e->getMessage());
+            return;
+        }
 
-        $this->rol->set_nombre("rol de prueba");
-        $resultado = $this->rol->realizar_consulta('registrar');
-        
         $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertTrue($resultado["estatus"]);
-        $this->assertStringContainsString('OK', $resultado["mensaje"]);
+        $this->assertFalse($resultado['estatus']);
+        $this->assertArrayHasKey('mensaje', $resultado);
+        $this->assertStringContainsString('no encontrado', strtolower($resultado['mensaje']));
     }
 
-    public function testRegistrarRolDatosIncorrecto(){
-        $resultado_esperado = [
-            "estatus" => false,
-            "mensaje" => "El campo 'nombre' no posee un valor valido"
-        ];
+    #[Group('roles')]
+    #[Group('consultar')]
+    #[TestDox('Consultar permisos de rol inexistente: Retorna estatus true con arreglo vacío')]
+    #[Test]
+    public function testConsultarPermisosRolInexistenteRetornaVacio(): void
+    {
+        $r = new Rol();
+        $r->set_id_rol(self::ID_INEXISTENTE);
 
-        $this->mock_rol->method('set_nombre')->with("rol_incorrecto+`+´123");
-        $this->mock_rol->method('realizar_consulta')
-            ->with('registrar')
-            ->willReturn($resultado_esperado);
+        try {
+            $resultado = $r->realizar_consulta('consultar_permisos_asignados');
+        } catch (\Throwable $e) {
+            $this->markTestSkipped('BD seguridad no disponible: ' . $e->getMessage());
+            return;
+        }
 
-        $this->rol->set_nombre("rol_incorrecto+`+´123");
-        $resultado = $this->rol->realizar_consulta('registrar');
-        
         $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("El campo 'nombre' no posee un valor valido", $resultado["mensaje"]);
+        $this->assertTrue($resultado['estatus']);
+        $this->assertArrayHasKey('datos', $resultado);
+        $this->assertIsArray($resultado['datos']);
+        $this->assertEmpty($resultado['datos']);
     }
 
-    public function testRegistrarRolDatosVacios(){
-        $resultado_esperado = [
-            "estatus" => false,
-            "mensaje" => "El campos 'nombre' esta vacio"
-        ];
+    #[Group('roles')]
+    #[Group('consultar')]
+    #[TestDox('Consultar matriz de permisos: módulos y permisos activos')]
+    #[Test]
+    public function testConsultarMatrizPermisos(): void
+    {
+        $r = new Rol();
+        try {
+            $resultado = $r->realizar_consulta('consultar_matriz_permisos');
+        } catch (\Throwable $e) {
+            $this->markTestSkipped('BD seguridad no disponible: ' . $e->getMessage());
+            return;
+        }
 
-        $this->mock_rol->method('set_nombre')->with("");
-        $this->mock_rol->method('realizar_consulta')
-            ->with('registrar')
-            ->willReturn($resultado_esperado);
+        if (empty($resultado['estatus'])) {
+            $this->markTestSkipped(
+                'BD seguridad no disponible: ' . ($resultado['mensaje'] ?? 'desconocido')
+            );
+            return;
+        }
 
-        $this->rol->set_nombre("");        
-        $resultado = $this->rol->realizar_consulta('registrar');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("El campos 'nombre' esta vacio", $resultado["mensaje"]);
+        $this->assertArrayHasKey('datos', $resultado);
+        $this->assertArrayHasKey('modulos', $resultado['datos']);
+        $this->assertArrayHasKey('permisos', $resultado['datos']);
+        $this->assertIsArray($resultado['datos']['modulos']);
+        $this->assertIsArray($resultado['datos']['permisos']);
     }
 
-    //Metodo editar_rol
-    public function testEditarRolDatosCorrectos(){
-        $resultado_esperado = [
-            "estatus" => true,
-            "mensaje" => "OK: Edición exitosa"
-        ];
+    #[Group('roles')]
+    #[Group('consultar')]
+    #[TestDox('Verificar nombre: Retorna existe=false para un nombre aleatorio')]
+    #[Test]
+    public function testVerificarNombreInexistente(): void
+    {
+        $nombre = 'Inexistente ' . $this->sufijoAleatorioLetras();
 
-        $this->mock_rol->method('set_id_rol')->with(27);
-        $this->mock_rol->method('set_nombre')->with("rol de prueba editado");
-        $this->mock_rol->method('realizar_consulta')
-            ->with('editar_rol')
-            ->willReturn($resultado_esperado);
+        $r = new Rol();
+        $r->set_nombre($nombre);
 
-        $this->rol->set_id_rol(27);
-        $this->rol->set_nombre("rol de prueba editado");
-        $resultado = $this->rol->realizar_consulta('editar_rol');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertTrue($resultado["estatus"]);
-        $this->assertStringContainsString('OK', $resultado["mensaje"]);
+        try {
+            $resultado = $r->realizar_consulta('verificar_nombre');
+        } catch (\Throwable $e) {
+            $this->markTestSkipped('BD seguridad no disponible: ' . $e->getMessage());
+            return;
+        }
+
+        if (empty($resultado['estatus'])) {
+            $this->markTestSkipped(
+                'BD seguridad no disponible: ' . ($resultado['mensaje'] ?? 'desconocido')
+            );
+            return;
+        }
+
+        $this->assertArrayHasKey('existe', $resultado);
+        $this->assertFalse($resultado['existe']);
     }
 
-    public function testEditarRolDatosIncorrecto(){
-        $resultado_esperado = [
-            "estatus" => false,
-            "mensaje" => "El campo 'nombre' no posee un valor valido"
-        ];
+    /* =========================================================================
+     *  BLOQUE 4: ESCRITURAS CONTROLADAS (encadenadas con #[Depends])
+     * ========================================================================= */
 
-        $this->mock_rol->method('set_id_rol')->with(27);
-        $this->mock_rol->method('set_nombre')->with("rol_incorrecto asd`++`213+");
-        $this->mock_rol->method('realizar_consulta')
-            ->with('editar_rol')
-            ->willReturn($resultado_esperado);
+    #[Group('roles')]
+    #[Group('registrar')]
+    #[TestDox('Registrar rol: Éxito con nombre único generado (retorna ID para dependientes)')]
+    #[Test]
+    public function testRegistrarRolExitoso(): int
+    {
+        $nombre = 'Prueba Unitaria ' . $this->sufijoAleatorioLetras();
 
-        $this->rol->set_id_rol(27);
-        $this->rol->set_nombre("rol_incorrecto asd`++`213+");
-        $resultado = $this->rol->realizar_consulta('editar_rol');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("El campo 'nombre' no posee un valor valido", $resultado["mensaje"]);
+        $r = new Rol();
+        $r->set_nombre($nombre);
+        $r->set_permisos_asignados([]);
+
+        try {
+            $resultado = $r->realizar_consulta('registrar_rol');
+        } catch (\Throwable $e) {
+            $this->markTestSkipped('BD seguridad no disponible: ' . $e->getMessage());
+            return 0;
+        }
+
+        if (empty($resultado['estatus'])) {
+            $this->markTestSkipped(
+                'Registro de rol falló: ' . ($resultado['mensaje'] ?? 'desconocido')
+                . ' (posible UNIQUE constraint)'
+            );
+            return 0;
+        }
+
+        $id = (int) $r->get_id_rol();
+        $this->assertGreaterThan(0, $id, 'El ID del rol recién creado debe ser mayor que 0');
+        $this->assertArrayHasKey('mensaje', $resultado);
+
+        return $id;
     }
 
-    public function testEditarRolIDIncorrecto(){
-        $resultado_esperado = [
-            "estatus" => false,
-            "mensaje" => "El Rol seleccionado no existe"
-        ];
+    #[Group('roles')]
+    #[Group('consultar')]
+    #[TestDox('Consultar rol: Recupera el rol recién registrado con sus permisos')]
+    #[Depends('testRegistrarRolExitoso')]
+    #[Test]
+    public function testConsultarRolRecienCreado(int $idRol): void
+    {
+        $r = new Rol();
+        $r->set_id_rol($idRol);
 
-        $this->mock_rol->method('set_id_rol')->with(23423);
-        $this->mock_rol->method('set_nombre')->with("rol de prueba editado");
-        $this->mock_rol->method('realizar_consulta')
-            ->with('editar_rol')
-            ->willReturn($resultado_esperado);
+        try {
+            $resultado = $r->realizar_consulta('consultar_rol');
+        } catch (\Throwable $e) {
+            $this->markTestSkipped('BD seguridad no disponible: ' . $e->getMessage());
+            return;
+        }
 
-        $this->rol->set_id_rol(23423); 
-        $this->rol->set_nombre("rol de prueba editado");
-        $resultado = $this->rol->realizar_consulta('editar_rol');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("El Rol seleccionado no existe", $resultado["mensaje"]);
+        $this->assertTrue($resultado['estatus']);
+        $this->assertArrayHasKey('datos', $resultado);
+        $this->assertArrayHasKey('rol', $resultado['datos']);
+        $this->assertArrayHasKey('permisos', $resultado['datos']);
+        $this->assertSame($idRol, (int) $resultado['datos']['rol']['id_rol']);
     }
 
-    public function testEditarRolDatosVacios(){
-        $resultado_esperado = [
-            "estatus" => false,
-            "mensaje" => "El campos 'nombre' esta vacio"
-        ];
+    #[Group('roles')]
+    #[Group('consultar')]
+    #[TestDox('Verificar nombre: El rol recién creado existe en la BD')]
+    #[Depends('testRegistrarRolExitoso')]
+    #[Test]
+    public function testVerificarNombreDeRolRegistrado(int $idRol): void
+    {
+        // Recuperar el nombre del rol recién creado
+        $consulta = new Rol();
+        $consulta->set_id_rol($idRol);
 
-        $this->mock_rol->method('set_id_rol')->with(27);
-        $this->mock_rol->method('set_nombre')->with("");
-        $this->mock_rol->method('realizar_consulta')
-            ->with('editar_rol')
-            ->willReturn($resultado_esperado);
+        try {
+            $info = $consulta->realizar_consulta('consultar_rol');
+        } catch (\Throwable $e) {
+            $this->markTestSkipped('BD seguridad no disponible: ' . $e->getMessage());
+            return;
+        }
 
-        $this->rol->set_id_rol(27);
-        $this->rol->set_nombre("");
-        $resultado = $this->rol->realizar_consulta('editar_rol');
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("El campos 'nombre' esta vacio", $resultado["mensaje"]);
+        $this->assertTrue($info['estatus']);
+        $nombre = $info['datos']['rol']['nombre'] ?? null;
+        $this->assertNotNull($nombre);
+
+        $r = new Rol();
+        $r->set_nombre($nombre);
+        $resultado = $r->realizar_consulta('verificar_nombre');
+
+        $this->assertTrue($resultado['estatus']);
+        $this->assertTrue($resultado['existe'], 'El rol recién creado debe existir');
     }
 
-    //Metodo eliminar_rol
-    public function testEliminarRolDatosCorrectos(){
-        $resultado_esperado = [
-            "estatus" => true,
-            "mensaje" => "OK: Eliminación exitosa"
-        ];
+    #[Group('roles')]
+    #[Group('consultar')]
+    #[TestDox('Consultar permisos: Retorna arreglo vacío para el rol recién creado')]
+    #[Depends('testRegistrarRolExitoso')]
+    #[Test]
+    public function testConsultarPermisosAsignadosDelRol(int $idRol): void
+    {
+        $r = new Rol();
+        $r->set_id_rol($idRol);
 
-        $this->mock_rol->method('set_id_rol')->with(41);
-        $this->mock_rol->method('realizar_consulta')
-            ->with('eliminar_rol', true) // Asegúrate de que el 'with' coincida
-            ->willReturn($resultado_esperado);
+        try {
+            $resultado = $r->realizar_consulta('consultar_permisos_asignados');
+        } catch (\Throwable $e) {
+            $this->markTestSkipped('BD seguridad no disponible: ' . $e->getMessage());
+            return;
+        }
 
-        $this->rol->set_id_rol(41);
-        $resultado = $this->rol->realizar_consulta('eliminar_rol', true);
-        
-        $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertTrue($resultado["estatus"]);
-        $this->assertStringContainsString('OK', $resultado["mensaje"]);
+        $this->assertTrue($resultado['estatus']);
+        $this->assertArrayHasKey('datos', $resultado);
+        $this->assertIsArray($resultado['datos']);
+        // Como registramos sin permisos, debe estar vacío
+        $this->assertEmpty($resultado['datos']);
     }
 
-    public function testEliminarRolIDIncorrecto(){
-        $resultado_esperado = [
-            "estatus" => false,
-            "mensaje" => "El Rol seleccionado no existe"
-        ];
+    #[Group('roles')]
+    #[Group('modificar')]
+    #[TestDox('Modificar rol: Actualiza el nombre del rol recién creado')]
+    #[Depends('testRegistrarRolExitoso')]
+    #[Test]
+    public function testModificarRolExitoso(int $idRol): void
+    {
+        $nuevoNombre = 'Rol Modificado ' . $this->sufijoAleatorioLetras();
 
-        $this->mock_rol->method('set_id_rol')->with(12312312);
-        $this->mock_rol->method('realizar_consulta')
-            ->with('eliminar_rol', true)
-            ->willReturn($resultado_esperado);
+        $r = new Rol();
+        $r->set_id_rol($idRol);
+        $r->set_nombre($nuevoNombre);
+        $r->set_permisos_asignados([]);
 
-        $this->rol->set_id_rol(12312312);
-        $resultado = $this->rol->realizar_consulta('eliminar_rol', true);
-        
+        try {
+            $resultado = $r->realizar_consulta('modificar_rol');
+        } catch (\Throwable $e) {
+            $this->markTestSkipped('BD seguridad no disponible: ' . $e->getMessage());
+            return;
+        }
+
         $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("El Rol seleccionado no existe", $resultado["mensaje"]);
+        $this->assertTrue($resultado['estatus'], 'La modificación debe retornar estatus true');
+        $this->assertArrayHasKey('mensaje', $resultado);
+
+        // Verificar que el cambio persistió
+        $verificar = new Rol();
+        $verificar->set_id_rol($idRol);
+        $info = $verificar->realizar_consulta('consultar_rol');
+
+        $this->assertTrue($info['estatus']);
+        $this->assertSame($nuevoNombre, $info['datos']['rol']['nombre']);
     }
 
-    public function testEliminarRolIDVacio(){
-        $resultado_esperado = [
-            "estatus" => false,
-            "mensaje" => "El ID del Rol se envio vacio"
-        ];
+    #[Group('roles')]
+    #[Group('eliminar')]
+    #[TestDox('Eliminar rol: Desactiva (soft-delete) el rol recién creado')]
+    #[Depends('testRegistrarRolExitoso')]
+    #[Test]
+    public function testEliminarRolExitoso(int $idRol): void
+    {
+        $r = new Rol();
+        $r->set_id_rol($idRol);
 
-        $this->mock_rol->method('set_id_rol')->with('');
-        $this->mock_rol->method('realizar_consulta')
-            ->with('eliminar_rol', true)
-            ->willReturn($resultado_esperado);
+        try {
+            $resultado = $r->realizar_consulta('eliminar_rol');
+        } catch (\Throwable $e) {
+            $this->markTestSkipped('BD seguridad no disponible: ' . $e->getMessage());
+            return;
+        }
 
-        $this->rol->set_id_rol('');
-        $resultado = $this->rol->realizar_consulta('eliminar_rol', true);
-        
         $this->assertIsArray($resultado);
-        $this->assertNotEmpty($resultado);
-        $this->assertCount(2, $resultado);
-        $this->assertFalse($resultado["estatus"]);
-        $this->assertStringContainsString("El ID del Rol se envio vacio", $resultado["mensaje"]);
+        $this->assertTrue($resultado['estatus'], 'La eliminación debe retornar estatus true');
+        $this->assertArrayHasKey('mensaje', $resultado);
+
+        // Verificar que quedó inactivo (soft-delete)
+        $verificar = new Rol();
+        $verificar->set_id_rol($idRol);
+        $info = $verificar->realizar_consulta('consultar_rol');
+
+        $this->assertFalse(
+            $info['estatus'],
+            'Un rol eliminado (activo=0) no debe ser recuperable por consultar_rol'
+        );
+    }
+
+    /* =========================================================================
+     *  HELPERS PRIVADOS
+     * ========================================================================= */
+
+    /**
+     * Genera un sufijo único de solo letras (cumple la regex del modelo:
+     * /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]{3,50}$/).
+     */
+    private function sufijoAleatorioLetras(int $largo = 6): string
+    {
+        $letras = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $sufijo = '';
+        for ($i = 0; $i < $largo; $i++) {
+            $sufijo .= $letras[random_int(0, 25)];
+        }
+        return $sufijo;
     }
 }

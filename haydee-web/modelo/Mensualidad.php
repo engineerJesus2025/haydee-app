@@ -7,6 +7,7 @@ use haydee\enums\EstadoPago;
 use haydee\enums\TipoVinculo;
 use haydee\enums\HttpCodigo;
 use haydee\excepciones\NegocioException;
+use haydee\servicios\GestorTasa;
 
 class Mensualidad extends Conexion
 {
@@ -260,6 +261,8 @@ class Mensualidad extends Conexion
         $sql = "SELECT 
                     pm.id_periodo,
                     SUM(v.monto_cuota) as monto,
+                    SUM(v.deuda_con_mora) as deuda_real,
+                    SUM(v.monto_mora) as mora_total,
                     pm.tasa_dolar,
                     v.mes,
                     v.anio,
@@ -274,7 +277,14 @@ class Mensualidad extends Conexion
 
         $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
         $stmt->execute();
-        return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
+        $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $tasa_actual = GestorTasa::obtener();
+        foreach ($datos as &$fila) {
+            $fila['tasa_actual'] = $tasa_actual;
+        }
+
+        return ['estatus' => true, 'datos' => $datos];
     }
 
     private function _consultar_mensualidad_apartamentos()
@@ -289,6 +299,8 @@ class Mensualidad extends Conexion
                        COALESCE(h.apellido, '') AS apellido,
                        v.monto_cuota AS monto, pm.tasa_dolar,
                        v.total_abonado AS pagado,
+                       v.monto_mora,
+                       v.deuda_con_mora,
                        ROUND(v.total_abonado / pm.tasa_dolar, 2) AS pagado_dolar
                 FROM vw_estado_cuentas_mensualidad v
                 INNER JOIN periodos_mensualidad pm ON pm.mes = v.mes AND pm.anio = v.anio
@@ -302,7 +314,15 @@ class Mensualidad extends Conexion
         $stmt->bindParam(':anio', $anioInt, PDO::PARAM_INT);
         $stmt->bindParam(':propietario', $propietario);
         $stmt->execute();
-        return ['estatus' => true, 'datos' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
+        $datos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Inyectamos la tasa del día
+        $tasa_actual = GestorTasa::obtener();
+        foreach ($datos as &$fila) {
+            $fila['tasa_actual'] = $tasa_actual;
+        }
+
+        return ['estatus' => true, 'datos' => $datos];
     }
 
     private function _consultar_presupuestos_asociados()
@@ -612,15 +632,15 @@ class Mensualidad extends Conexion
         return ['estatus' => true, 'datos' => $stmt->fetch(PDO::FETCH_ASSOC)];
     }
 
-    private function _consultar_estadisticas_inicio()
+        private function _consultar_estadisticas_inicio()
     {
         $pdo = $this->get_conex(TipoBaseDatos::NEGOCIO);
         $sql = "
             SELECT 
-                SUM(CASE WHEN deuda_pendiente > 0 THEN 1 ELSE 0 END) as aptos_morosos,
-                SUM(CASE WHEN deuda_pendiente = 0 OR deuda_pendiente IS NULL THEN 1 ELSE 0 END) as aptos_solventes
+                SUM(CASE WHEN deuda_con_mora > 0 THEN 1 ELSE 0 END) as aptos_morosos,
+                SUM(CASE WHEN deuda_con_mora <= 0 OR deuda_con_mora IS NULL THEN 1 ELSE 0 END) as aptos_solventes
             FROM (
-                SELECT a.id_apartamento, COALESCE(SUM(v.deuda_pendiente), 0) as deuda_pendiente
+                SELECT a.id_apartamento, COALESCE(SUM(v.deuda_con_mora), 0) as deuda_con_mora
                 FROM apartamentos a
                 LEFT JOIN vw_estado_cuentas_mensualidad v 
                     ON a.nro_apartamento = v.nro_apartamento 
@@ -640,12 +660,19 @@ class Mensualidad extends Conexion
             $fecha_calculo = strtotime("-$i months");
             $llave_mes = date('Y-m', $fecha_calculo); 
             $nombre_mes = $meses_nombres[date('m', $fecha_calculo)] . ' ' . date('y', $fecha_calculo);
-            $grafico_2[$llave_mes] = ['etiqueta' => $nombre_mes, 'ingresos' => 0, 'gastos' => 0];
+            $grafico_2[$llave_mes] = [
+                'etiqueta' => $nombre_mes, 
+                'ingresos' => 0, 'ingresos_bs' => 0, 'ingresos_usd' => 0,
+                'gastos' => 0, 'gastos_bs' => 0, 'gastos_usd' => 0
+            ];
         }
         
         $fecha_inicio_filtro = date('Y-m-01', strtotime("-5 months"));
 
-        $sql_ingresos = "SELECT DATE_FORMAT(dp.fecha, '%Y-%m') as mes_anio, SUM(dp.monto) as total
+        // Ingresos en Bs y USD
+        $sql_ingresos = "SELECT DATE_FORMAT(dp.fecha, '%Y-%m') as mes_anio, 
+                                SUM(dp.monto) as total_bs,
+                                SUM(dp.monto / p.tasa_dolar) as total_usd
                          FROM detalles_pagos dp
                          JOIN pagos p ON dp.pago_id = p.id_pago
                          WHERE p.activo = 1 AND LOWER(p.estado) = 'procesado' AND dp.fecha >= :fecha_inicio
@@ -655,11 +682,16 @@ class Mensualidad extends Conexion
         
         while ($row = $stmt_in->fetch(PDO::FETCH_ASSOC)) {
             if (isset($grafico_2[$row['mes_anio']])) {
-                $grafico_2[$row['mes_anio']]['ingresos'] = (float)$row['total'];
+                $grafico_2[$row['mes_anio']]['ingresos_bs'] = (float)$row['total_bs'];
+                $grafico_2[$row['mes_anio']]['ingresos_usd'] = (float)$row['total_usd'];
+                $grafico_2[$row['mes_anio']]['ingresos'] = (float)$row['total_bs']; // Para la gráfica en Bs
             }
         }
 
-        $sql_gastos = "SELECT DATE_FORMAT(dg.fecha, '%Y-%m') as mes_anio, SUM(dg.monto) as total
+        // Gastos en Bs y USD
+        $sql_gastos = "SELECT DATE_FORMAT(dg.fecha, '%Y-%m') as mes_anio, 
+                              SUM(dg.monto) as total_bs,
+                              SUM(dg.monto / g.tasa_dolar) as total_usd
                        FROM detalles_gastos dg
                        JOIN gastos g ON dg.gasto_id = g.id_gasto
                        WHERE g.activo = 1 AND dg.fecha >= :fecha_inicio
@@ -669,7 +701,9 @@ class Mensualidad extends Conexion
         
         while ($row = $stmt_out->fetch(PDO::FETCH_ASSOC)) {
             if (isset($grafico_2[$row['mes_anio']])) {
-                $grafico_2[$row['mes_anio']]['gastos'] = (float)$row['total'];
+                $grafico_2[$row['mes_anio']]['gastos_bs'] = (float)$row['total_bs'];
+                $grafico_2[$row['mes_anio']]['gastos_usd'] = (float)$row['total_usd'];
+                $grafico_2[$row['mes_anio']]['gastos'] = (float)$row['total_bs']; // Para la gráfica en Bs
             }
         }
 
@@ -691,22 +725,42 @@ class Mensualidad extends Conexion
                      JOIN habitantes h ON ha.habitante_id = h.id_habitante 
                      WHERE h.activo = 1) AS apartamentos_ocupados,
                     (SELECT COUNT(*) FROM habitantes WHERE activo = 1) AS residentes_activos,
+                    
+                    -- RECAUDADO DEL MES (USD y BS)
+                    (SELECT COALESCE(SUM(dp.monto / p.tasa_dolar), 0) 
+                     FROM detalles_pagos dp 
+                     JOIN pagos p ON dp.pago_id = p.id_pago 
+                     WHERE p.activo = 1 
+                       AND MONTH(dp.fecha) = MONTH(CURDATE()) 
+                       AND YEAR(dp.fecha) = YEAR(CURDATE())) AS recaudado_mes_usd,
+                       
                     (SELECT COALESCE(SUM(dp.monto), 0) 
                      FROM detalles_pagos dp 
                      JOIN pagos p ON dp.pago_id = p.id_pago 
                      WHERE p.activo = 1 
                        AND MONTH(dp.fecha) = MONTH(CURDATE()) 
-                       AND YEAR(dp.fecha) = YEAR(CURDATE())) AS recaudado_mes,
+                       AND YEAR(dp.fecha) = YEAR(CURDATE())) AS recaudado_mes_bs,
+
                     (SELECT COUNT(*) 
                      FROM vw_estado_cuentas_mensualidad 
                      WHERE estado_pago = 'PENDIENTE') AS recibos_pendientes,
-                    (SELECT COALESCE(SUM(deuda_pendiente), 0) 
+                     
+                    -- DEUDA TOTAL (USD y BS)
+                    (SELECT COALESCE(SUM(deuda_usd), 0) 
                      FROM vw_estado_cuentas_mensualidad 
-                     WHERE CAST(estado_pago AS CHAR) = 'PENDIENTE') AS deuda_total";
+                     WHERE CAST(estado_pago AS CHAR) = 'PENDIENTE') AS deuda_total_usd,
+                     
+                    (SELECT COALESCE(SUM(deuda_con_mora), 0) 
+                     FROM vw_estado_cuentas_mensualidad 
+                     WHERE CAST(estado_pago AS CHAR) = 'PENDIENTE') AS deuda_total_bs";
 
         $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
         $stmt->execute();
-        return ['estatus' => true, 'datos' => $stmt->fetch(PDO::FETCH_ASSOC)];
+        $datos = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        $datos['tasa_actual'] = GestorTasa::obtener();
+
+        return ['estatus' => true, 'datos' => $datos];
     }
 
     private function _consultar_kpis()
@@ -740,10 +794,25 @@ class Mensualidad extends Conexion
         }
 
         $sql = "SELECT 
-                    (SELECT COALESCE(SUM(deuda_pendiente), 0) 
+                    -- DEUDA
+                    (SELECT COALESCE(SUM(deuda_usd), 0) 
                      FROM vw_estado_cuentas_mensualidad 
-                     WHERE UPPER(estado_pago) = '" . strtoupper($estadoPendiente) . "' $condicionDeuda) AS deuda_total,
+                     WHERE UPPER(estado_pago) = '" . strtoupper($estadoPendiente) . "' $condicionDeuda) AS deuda_total_usd,
                      
+                    (SELECT COALESCE(SUM(deuda_con_mora), 0) 
+                     FROM vw_estado_cuentas_mensualidad 
+                     WHERE UPPER(estado_pago) = '" . strtoupper($estadoPendiente) . "' $condicionDeuda) AS deuda_total_bs,
+                     
+                    -- RECAUDADO
+                    (SELECT COALESCE(SUM(dp.monto / p.tasa_dolar), 0) 
+                     FROM detalles_pagos dp 
+                     JOIN pagos p ON dp.pago_id = p.id_pago 
+                     WHERE p.activo = 1 
+                       AND UPPER(p.estado) = '" . strtoupper($estadoProcesado) . "'
+                       AND MONTH(dp.fecha) = MONTH(CURDATE()) 
+                       AND YEAR(dp.fecha) = YEAR(CURDATE())
+                       $condicionPago) AS recaudado_mes_usd,
+                       
                     (SELECT COALESCE(SUM(dp.monto), 0) 
                      FROM detalles_pagos dp 
                      JOIN pagos p ON dp.pago_id = p.id_pago 
@@ -751,14 +820,22 @@ class Mensualidad extends Conexion
                        AND UPPER(p.estado) = '" . strtoupper($estadoProcesado) . "'
                        AND MONTH(dp.fecha) = MONTH(CURDATE()) 
                        AND YEAR(dp.fecha) = YEAR(CURDATE())
-                       $condicionPago) AS recaudado_mes,
+                       $condicionPago) AS recaudado_mes_bs,
+                       
+                    -- GASTADO
+                    (SELECT COALESCE(SUM(dg.monto / g.tasa_dolar), 0) 
+                     FROM detalles_gastos dg 
+                     JOIN gastos g ON dg.gasto_id = g.id_gasto 
+                     WHERE g.activo = 1 
+                       AND MONTH(dg.fecha) = MONTH(CURDATE()) 
+                       AND YEAR(dg.fecha) = YEAR(CURDATE())) AS gastado_mes_usd,
                        
                     (SELECT COALESCE(SUM(dg.monto), 0) 
                      FROM detalles_gastos dg 
                      JOIN gastos g ON dg.gasto_id = g.id_gasto 
                      WHERE g.activo = 1 
                        AND MONTH(dg.fecha) = MONTH(CURDATE()) 
-                       AND YEAR(dg.fecha) = YEAR(CURDATE())) AS gastado_mes";
+                       AND YEAR(dg.fecha) = YEAR(CURDATE())) AS gastado_mes_bs";
 
         $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
         $stmt->execute($params);
@@ -773,19 +850,20 @@ class Mensualidad extends Conexion
         }
 
         $sql = "SELECT 
-                    dp.id_detalle_presupuesto, 
-                    dp.nombre_detalle AS concepto, 
-                    dp.monto, 
-                    dp.tasa_dolar 
+                    dp.id_detalle_presupuesto,
+                    cg.nombre_concepto AS concepto,
+                    dp.monto,
+                    p.tasa_dolar
                 FROM presupuesto_mensualidad pm
                 INNER JOIN detalles_presupuesto dp ON pm.detalle_presupuesto_id = dp.id_detalle_presupuesto
+                INNER JOIN conceptos_gasto cg ON dp.concepto_id = cg.id_concepto
+                INNER JOIN presupuesto p ON dp.presupuesto_id = p.id_presupuesto
                 WHERE pm.mensualidad_id = :id_mensualidad";
 
         $stmt = $this->get_conex(TipoBaseDatos::NEGOCIO)->prepare($sql);
         $stmt->execute([':id_mensualidad' => $this->id_mensualidad]);
         $detalles = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Agregar la reserva proporcional como línea virtual
         $sqlReserva = "SELECT p.cuota_reserva, a.porcentaje_participacion, pm.tasa_dolar
                        FROM mensualidad m
                        INNER JOIN periodos_mensualidad pm ON m.periodo_id = pm.id_periodo

@@ -107,8 +107,6 @@ class CajaChica extends Conexion
         // Estandarización de nombres aplicada a la caja y sus movimientos
         $camposPorOperacion = [
             'registrar_caja_chica' => ['descripcion', 'fondo_fijo', 'limite_ucau', 'ucau_valor_bs'],
-            'modificar_caja_chica' => ['id_caja_chica', 'descripcion', 'fondo_fijo', 'estado'],
-            'eliminar_caja_chica'  => ['id_caja_chica'],
             'consulta_caja_chica' => ['id_caja_chica'],
             'consultar_caja_unica' => ['id_caja_chica'],
             'revaluar_fondo' => ['id_caja_chica', 'limite_ucau', 'ucau_valor_bs', 'nota_revaluacion'],
@@ -118,7 +116,8 @@ class CajaChica extends Conexion
             'registrar_movimiento' => ['caja_chica_id', 'concepto', 'monto', 'fecha', 'tasa_dolar'],
             'modificar_movimiento' => ['id_movimiento_caja', 'concepto', 'monto', 'fecha', 'tasa_dolar'],
             'eliminar_movimiento'  => ['id_movimiento_caja'],
-            'consultar_movimiento_unico' => ['id_movimiento_caja']
+            'consultar_movimiento_unico' => ['id_movimiento_caja'],
+            'modificar_descripcion' => ['id_caja_chica', 'descripcion'],
         ];
 
         if (isset($camposPorOperacion[$operacion])) {
@@ -342,7 +341,7 @@ class CajaChica extends Conexion
                          
             $stmtS = $pdo->prepare($sqlSaldo);
             $stmtS->execute([
-                ':id' => $this->id_caja_chica,
+                ':id' => $id_caja,
                 ':estado_rep' => EstadoMovimientoCaja::REPUESTO->value
             ]);
             $saldoActual = (float)$stmtS->fetchColumn();
@@ -351,7 +350,7 @@ class CajaChica extends Conexion
                 throw new NegocioException('El nuevo monto excede los fondos disponibles en esta Caja Chica.', 400);
             }
 
-            $this->id_caja_chica = $id_caja; 
+            $this->id_caja_chica = $id_caja;
             $alertaSaldo = $this->verificarEstadoSaldo();
             
             $pdo->commit();

@@ -85,7 +85,7 @@
                         <div class="col-11 mb-4" id="div_graficos">
                             <div class="row g-4">
                                 <div class="col-lg-6">
-                                    <div class="card dashboard-card p-4 h-100">
+                                    <div class="card dashboard-card p-3 h-100">
                                         <div class="d-flex justify-content-between align-items-center mb-4">
                                             <div class="d-flex align-items-center">
                                                 <svg class=" me-2" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
@@ -124,7 +124,7 @@
                                 </div>
 
                                 <div class="col-lg-6">
-                                    <div class="card dashboard-card p-4 h-100">
+                                    <div class="card dashboard-card p-3 h-100">
                                         <div class="d-flex justify-content-between align-items-center mb-4">
                                             <div class="d-flex align-items-center">
                                                 <svg class=" me-2" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
