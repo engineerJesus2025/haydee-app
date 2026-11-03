@@ -536,7 +536,13 @@ function inicializarTablaMovimientos() {
     const formatoMonto = (cell) => {
         const row = cell.getData();
         const tasaHistorica = parseFloat(row.tasa_dolar) || tasa_dolar || 1;
-        return `${parseFloat(row.monto).toFixed(2)} Bs. / ${(row.monto / tasaHistorica).toFixed(2)} $`;
+        const montoBs = parseFloat(row.monto) || 0;
+        const montoUsd = montoBs / tasaHistorica;
+
+        return `<div class="d-flex flex-column">
+                    <span class="fw-bold">$${montoUsd.toFixed(2)}</span>
+                    <span class="text-muted" style="font-size: 0.8rem;">Bs. ${montoBs.toFixed(2)}</span>
+                </div>`;
     };
     const formatoEstado = (cell) => {
         const config = obtenerConfigEstadoCaja(cell.getValue());

@@ -485,7 +485,8 @@ class Gastos extends Conexion
     {
         $sql = "SELECT 
             g.id_gasto, 
-            g.descripcion_gasto, 
+            g.descripcion_gasto,
+            g.tasa_dolar,
             SUM(dg.monto) as monto_total,
             MAX(dg.fecha) as ultima_fecha,
             p.nombre_proveedor as proveedor, 
@@ -645,7 +646,8 @@ class Gastos extends Conexion
     {
         $sql = "SELECT 
                     g.id_gasto, 
-                    g.descripcion_gasto, 
+                    g.descripcion_gasto,
+                    g.tasa_dolar,
                     SUM(dg.monto) as monto_total,
                     MAX(dg.fecha) as ultima_fecha,
                     p.nombre_proveedor as proveedor, 

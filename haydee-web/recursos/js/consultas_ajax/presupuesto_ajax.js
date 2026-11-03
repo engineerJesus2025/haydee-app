@@ -157,8 +157,14 @@ async function consultar() {
 
     const formatoMonto = (cell) => {
         const data = cell.getData();
-        const tasaHistorica = parseFloat(data.tasa_dolar) || 1; // Tasa de la BD
-        return `${parseFloat(data.total_estimado).toFixed(2)} Bs. / ${(data.total_estimado / tasaHistorica).toFixed(2)} $`;
+        const tasaHistorica = parseFloat(data.tasa_dolar) || 1;
+        const montoBs  = parseFloat(data.total_estimado) || 0;
+        const montoUsd = montoBs / tasaHistorica;
+
+        return `<div class="d-flex flex-column justify-content-center">
+                    <span class="fw-bold">$${montoUsd.toFixed(2)}</span>
+                    <span class="text-muted" style="font-size: 0.8rem;">Bs. ${montoBs.toFixed(2)}</span>
+                </div>`;
     };
 
     const formatoBotones = (cell) => {

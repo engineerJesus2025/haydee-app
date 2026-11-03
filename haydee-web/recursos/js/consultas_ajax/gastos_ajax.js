@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function consultar() {
     // FORMATOS VISUALES
     const formatoFecha = (cell) => FormatoFechas.formatoUsuario(cell.getValue());
-    const formatoMonto = (cell) => formatearMontoConMoneda(cell.getValue(), cell.getData().metodo_pago);
+    const formatoMonto = (cell) => formatearMontoConMoneda(cell.getValue(), cell.getData());
 
     const formatoClasificacion = (cell) => {
         const config = obtenerConfigClasificacionGasto(cell.getValue());
@@ -327,7 +327,7 @@ async function cargarDetallesEnTabla(idGasto) {
         const columnas = [
             { formatter: "responsiveCollapse", width: 40, minWidth: 40, hozAlign: "center", resizable: false, headerSort: false, headerHozAlign: "center", },
             { title: "Fecha", field: "fecha", formatter: (cell) => FormatoFechas.formatoUsuario(cell.getValue()), minWidth: 120, responsive: 0 },
-            { title: "Monto", field: "monto", formatter: (cell) => formatearMontoConMoneda(cell.getValue(), cell.getData().metodo_pago), minWidth: 120 },
+            { title: "Monto", field: "monto", formatter: (cell) => formatearMontoConMoneda(cell.getValue(), cell.getData()), minWidth: 120 },
             { title: "Método", field: "metodo_pago", minWidth: 120 },
             {
                 title: "Acciones",
@@ -372,7 +372,7 @@ async function mostrarVistaPreviaDetalle(idDetalle) {
         const det = respuestaServidor.datos;
 
         document.getElementById('vista_fecha_detalles').textContent = FormatoFechas.formatoUsuario(det.fecha);
-        document.getElementById('vista_monto_detalles').textContent = formatearMontoConMoneda(det.monto, det.metodo_pago);
+        document.getElementById('vista_monto_detalles').textContent = formatearMontoConMoneda(det.monto, det);
         document.getElementById('vista_metodo_pago_detalles').textContent = det.metodo_pago || '';
         document.getElementById('vista_nombre_cuenta_detalles').textContent = det.nombre_cuenta || 'No hay cuenta registrada';
         document.getElementById('vista_referencia_detalles').textContent = det.referencia || 'No hay referencia';
@@ -620,14 +620,21 @@ function resetModalGasto() {
     id_modificar = null;
 }
 
-/**
- * Formatea un monto con moneda según el método de pago
- */
-function formatearMontoConMoneda(monto, metodoPago) {
+function formatearMontoConMoneda(monto, row) {
     const num = parseFloat(monto);
-    if (isNaN(num)) return '0,00 Bs';
-    const formateado = num.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    return metodoPago && metodoPago.toLowerCase().includes('efectivo') ? `${formateado} Bs` : `${formateado} Bs`;
+    if (isNaN(num) || num === 0) {
+        return `<span class="text-muted">0,00 Bs</span>`;
+    }
+
+    const tasa = parseFloat(row?.tasa_dolar)
+              || parseFloat(localStorage.getItem("tasa_dolar"))
+              || 1;
+    const montoUsd = num / tasa;
+
+    return `<div class="d-flex flex-column">
+                <span class="fw-bold">$${montoUsd.toFixed(2)}</span>
+                <span class="text-muted" style="font-size: 0.8rem;">Bs. ${num.toFixed(2)}</span>
+            </div>`;
 }
 
 

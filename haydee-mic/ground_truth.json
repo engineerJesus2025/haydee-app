@@ -1,0 +1,1338 @@
+{
+  "Exterior-01.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "000000918190",
+    "monto_detectado": 1400.0,
+    "banco_origen": "0115",
+    "fecha_operacion": "2026-10-15",
+    "texto_completo": "Pago Enviado Ref. 000000918190 Fecha: 15/10/2026 07:58 PM Desde Número: 4245521280 Banco Origen de los Fondos: BANCO EXTERIOR ID Beneficiario: V12698850 Al Número: 4145223119 Banco Destino de los Fondos: BANCO DEL TESORO Monto: 1.400,00 Concepto: pagoBlgica"
+  },
+  "BTesoro-01.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "89610489",
+    "monto_detectado": 1800.0,
+    "banco_origen": "0163",
+    "fecha_operacion": "2026-10-10",
+    "texto_completo": "Banco del Tesoro Pago móvil exitoso Referencia: 89610489 Fecha 10/10/2026 - 09:28:32 Teléfono 04127721822 Número de identificación V-30353397 Banco 0108 - Provincial Monto 1.800,00 Bs. Descripción 3 papitas"
+  },
+  "FondoComun-1.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "81879381",
+    "monto_detectado": 11000.0,
+    "banco_origen": "0151",
+    "fecha_operacion": "2026-09-27",
+    "texto_completo": "BFC BancoFondoComún Banco Universal Realizaste un Pago Móvil de Bs. 11.000,00 Fecha: 27/09/2026 11:19 AM Comprobante: 81879381 Cuenta a Debitar: 0151************4289 Número de Teléfono: 04245528892 Cédula de Identidad / RIF: V-15816366 Banco: Banco de Venezuela Concepto: Pago Tu Pago Móvil fue Exitoso"
+  },
+  "Bancamiga-01.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "18913875",
+    "monto_detectado": 117253.0,
+    "banco_origen": "0172",
+    "fecha_operacion": "2026-04-15",
+    "texto_completo": "Bancamiga Banco Universal Resumen de transferencia Fecha: 15-04-2026 04:18 pm Número de referencia: 18913875 Nombre del Ordenante: MICHELLE ALEJANDRA SANCHEZ MOTTA Documento del Ordenante: V-29624646 Nombre del Beneficiario: UNIFORMES TU MEDIDA Documento del Beneficiario: J-506058669 Cuenta a debitar: 0172-****-**-*****3044 Cuenta a acreditar: 0108-****-**-*****3593 Monto Bs: 117.253,00 Concepto: Abono 1 Resultado: Operación Exitosa"
+  },
+  "Bancamiga-02.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "133738265974",
+    "monto_detectado": 8500.0,
+    "banco_origen": "0172",
+    "fecha_operacion": "2026-10-18",
+    "texto_completo": "Bancamiga Banco Universal NUMERO DE REFERENCIA: 133738265974 MONTO DE LA OPERACIÓN: Bs. 8.500,00 TELF BENEFICIARIO: 584122078170 BANCO: MERCANTIL CONCEPTO: pago FECHA: 18/10/26 01:37 pm"
+  },
+  "Bancamiga-03.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "191616850344",
+    "monto_detectado": 9688.79,
+    "banco_origen": "0172",
+    "fecha_operacion": "2026-10-19",
+    "texto_completo": "Bancamiga Banco Universal NUMERO DE REFERENCIA: 191616850344 MONTO DE LA OPERACIÓN: Bs. 9.688,79 CI /RIF BENEFICIARIO: V-30019674 TELF BENEFICIARIO: 04245923503 BANCO: BANCAMIGA BANCO UNIVERSAL FECHA: 19/10/26 07:16 pm CONCEPTO: PIZZA"
+  },
+  "BNC-01.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "278038307",
+    "monto_detectado": 114.0,
+    "banco_origen": "0191",
+    "fecha_operacion": "",
+    "texto_completo": "Cta. Ahorro Naranja BNC: ***9129 Beneficiario: 0426-2651822 Maribel de Reinoso V-18137139 - 0102 - Venezuela Monto: Bs. 114,00 Comisión: Bs. 0,34 Total: Bs. 114,34 Referencia: 278038307 Código autorizador: 002079 ¿El beneficiario fue registrado en el directorio?: Sí Concepto: pago Jesús y Ana"
+  },
+  "BNC-02.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "732827747",
+    "monto_detectado": 6591.24,
+    "banco_origen": "0191",
+    "fecha_operacion": "",
+    "texto_completo": "Su pago móvil ha sido Ejecutado exitosamente Cuenta debitada: Cta. Corriente BNC: ***0905 Beneficiario: 0414-5656620 MICHELLE SÁNCHEZ V-29624646 - BANCAMIGA Monto: Bs. 6.591,24 Comisión: Bs. 19,77 Total: Bs. 6.611,01 Referencia: 732827747 Código autorizador: 104574 Concepto: Manga corta Roberth"
+  },
+  "BNC-03.jpeg": {
+    "tipo": "foto",
+    "numero_referencia": "734051606",
+    "monto_detectado": 6939.43,
+    "banco_origen": "0191",
+    "fecha_operacion": "",
+    "texto_completo": "Su pago móvil ha sido Ejecutado exitosamente Cuenta debitada: Cta. Ahorro Naranja BNC: ***4697 Beneficiario: 0414-5656620 Michelle V-29624646 - 0172 - Bancamiga Monto: Bs. 6.939,43 Comisión: Bs. 20,82 Total: Bs. 6.960,25 Referencia: 734051606 Código autorizador: 583653"
+  },
+  "BNC-04.jpeg": {
+    "tipo": "foto",
+    "numero_referencia": "927945565",
+    "monto_detectado": 4400.58,
+    "banco_origen": "0191",
+    "fecha_operacion": "2026-10-16",
+    "texto_completo": "BNC Soluciones financieras justo a tu medida. ¡Su pago móvil ha sido enviado con éxito! Cuenta Debitada: ***5895 Beneficiario: 4145223119 JACSON LUCENA V012698850 / 0175-BDT Monto: 4.400,58 Bs. Comisión: 14,00 Bs. Referencia: 927945565 Fecha y Hora: 16/10/2026 04:41:45.p. Concepto: Pago abrazadera manguera agua"
+  },
+  "Banesco-01.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "061056673045",
+    "monto_detectado": 6939.43,
+    "banco_origen": "0134",
+    "fecha_operacion": "2026-04-15",
+    "texto_completo": "¡Operación en Proceso! NÚMERO DE REFERENCIA 061056673045 FECHA 15/04/2026 12:22:17PM NÚMERO CELULAR DE ORIGEN 04**-***7448 NÚMERO CELULAR DE DESTINO 0414-5656620 IDENTIFICACIÓN RECEPTOR V-29624646 BANCO EMISOR BANESCO BANCO UNIVERSAL S.A.C.A. BANCO RECEPTOR BANCAMIGA BANCO UNIVERSAL, C.A. MONTO DE LA OPERACIÓN Bs. 6.939,43 CONCEPTO Efrain Pastran ML"
+  },
+  "Banesco-02.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "062900631024",
+    "monto_detectado": 1000.0,
+    "banco_origen": "0134",
+    "fecha_operacion": "2026-10-17",
+    "texto_completo": "Recibo ¡Operación Exitosa! NÚMERO DE REFERENCIA 062900631024 FECHA 17/10/2026 03:19:43PM NÚMERO CELULAR DE ORIGEN 04**-***8748 NÚMERO CELULAR DE DESTINO 0414-5223119 IDENTIFICACIÓN RECEPTOR V-12698850 BANCO EMISOR BANESCO BANCO UNIVERSAL S.A.C.A. BANCO RECEPTOR BANCO DEL TESORO MONTO DE LA OPERACIÓN Bs. 1.000,00 CONCEPTO Pago a ya son consjo comuna"
+  },
+  "Banesco-03.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "062849272607",
+    "monto_detectado": 400.0,
+    "banco_origen": "0134",
+    "fecha_operacion": "2026-10-11",
+    "texto_completo": "¡Operación Exitosa! NÚMERO DE REFERENCIA 062849272607 FECHA 11/10/2026 04:55:11PM NÚMERO CELULAR DE ORIGEN 04**-***6364 NÚMERO CELULAR DE DESTINO 0424-5528892 IDENTIFICACIÓN RECEPTOR V-15816366 BANCO EMISOR BANESCO BANCO UNIVERSAL S.A.C.A. BANCO RECEPTOR BANCO DE VENEZUELA MONTO DE LA OPERACIÓN Bs. 400,00 CONCEPTO Pago a ana cochino"
+  },
+  "Banesco-04.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "062849268967",
+    "monto_detectado": 400.0,
+    "banco_origen": "0134",
+    "fecha_operacion": "2026-10-11",
+    "texto_completo": "¡Operación Exitosa! NÚMERO DE REFERENCIA 062849268967 FECHA 11/10/2026 04:53:45PM NÚMERO CELULAR DE ORIGEN 04**-***6364 NÚMERO CELULAR DE DESTINO 0424-5528892 IDENTIFICACIÓN RECEPTOR V-15816366 BANCO EMISOR BANESCO BANCO UNIVERSAL S.A.C.A. BANCO RECEPTOR BANCO DE VENEZUELA MONTO DE LA OPERACIÓN Bs. 400,00 CONCEPTO Pago a ana cochino"
+  },
+  "Banesco-05.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "062849150355",
+    "monto_detectado": 2580.54,
+    "banco_origen": "0134",
+    "fecha_operacion": "2026-10-11",
+    "texto_completo": "¡Operación Exitosa! NÚMERO DE REFERENCIA 062849150355 FECHA 11/10/2026 04:08:21PM NÚMERO CELULAR DE ORIGEN 04**-***6364 NÚMERO CELULAR DE DESTINO 0424-5528892 IDENTIFICACIÓN RECEPTOR V-15816366 BANCO EMISOR BANESCO BANCO UNIVERSAL S.A.C.A. BANCO RECEPTOR BANCO DE VENEZUELA MONTO DE LA OPERACIÓN Bs. 2.580,54 CONCEPTO p"
+  },
+  "Banesco-06.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "062848083600",
+    "monto_detectado": 2580.54,
+    "banco_origen": "0134",
+    "fecha_operacion": "2026-10-11",
+    "texto_completo": "¡Operación en Proceso! NÚMERO DE REFERENCIA 062848083600 FECHA 11/10/2026 10:37:46AM NÚMERO CELULAR DE ORIGEN 04**-***6364 NÚMERO CELULAR DE DESTINO 0416-3503853 IDENTIFICACIÓN RECEPTOR V-15816366 BANCO EMISOR BANESCO BANCO UNIVERSAL S.A.C.A. BANCO RECEPTOR BANCO MERCANTIL MONTO DE LA OPERACIÓN Bs. 2.580,54 CONCEPTO pago"
+  },
+  "Banesco-07.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "062618544700",
+    "monto_detectado": 13586.0,
+    "banco_origen": "0134",
+    "fecha_operacion": "2026-09-18",
+    "texto_completo": "¡Operación Exitosa! NÚMERO DE REFERENCIA 062618544700 FECHA 18/09/2026 12:10PM NÚMERO CELULAR DE ORIGEN 04**-***6364 NÚMERO CELULAR DE DESTINO 0424-5528892 IDENTIFICACIÓN RECEPTOR V-15816366 BANCO EMISOR BANESCO BANCO UNIVERSAL S.A.C.A. BANCO RECEPTOR BANCO DE VENEZUELA MONTO DE LA OPERACIÓN Bs. 13.586,00 CONCEPTO p"
+  },
+  "Banesco-08.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "062618523188",
+    "monto_detectado": 13600.0,
+    "banco_origen": "0134",
+    "fecha_operacion": "2026-09-18",
+    "texto_completo": "Recibo Transacción Fallida Usted no está autorizado para realizar esta transacción NÚMERO DE REFERENCIA 062618523188 FECHA 18/09/2026 12:05:45PM NÚMERO CELULAR DE ORIGEN 04**-***6364 NÚMERO CELULAR DE DESTINO 0424-5528892 IDENTIFICACIÓN RECEPTOR V-15826366 BANCO RECEPTOR BANCO DE VENEZUELA MONTO DE LA OPERACIÓN Bs. 13.600,00 CONCEPTO p"
+  },
+  "Banesco-09.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "062957715484",
+    "monto_detectado": 9000.0,
+    "banco_origen": "0134",
+    "fecha_operacion": "2026-10-22",
+    "texto_completo": "¡Operación Exitosa! NÚMERO DE REFERENCIA 062957715484 FECHA 22/10/2026 04:44PM NÚMERO CELULAR DE ORIGEN 04**-***6364 NÚMERO CELULAR DE DESTINO 0424-5528892 IDENTIFICACIÓN RECEPTOR V-15816366 BANCO EMISOR BANESCO BANCO UNIVERSAL S.A.C.A. BANCO RECEPTOR BANCO DE VENEZUELA MONTO DE LA OPERACIÓN Bs. 9.000,00 CONCEPTO Pago a ana cochino"
+  },
+  "Banesco-10.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "061044400017",
+    "monto_detectado": 6925.58,
+    "banco_origen": "0134",
+    "fecha_operacion": "2026-04-14",
+    "texto_completo": "¡Operación Exitosa! NÚMERO DE REFERENCIA 061044400017 FECHA 14/04/2026 04:12:57PM NÚMERO CELULAR DE ORIGEN 04**-***8013 NÚMERO CELULAR DE DESTINO 0414-5656620 IDENTIFICACIÓN RECEPTOR V-29624646 BANCO EMISOR BANESCO BANCO UNIVERSAL S.A.C.A. BANCO RECEPTOR BANCAMIGA BANCO UNIVERSAL, C.A. MONTO DE LA OPERACIÓN Bs. 6.925,58 CONCEPTO brian gonzalez"
+  },
+  "Banesco-11.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "061043331470",
+    "monto_detectado": 6592.0,
+    "banco_origen": "0134",
+    "fecha_operacion": "2026-04-14",
+    "texto_completo": "¡Operación Exitosa! NÚMERO DE REFERENCIA 061043331470 FECHA 14/04/2026 11:19:10AM NÚMERO CELULAR DE ORIGEN 04**-***4452 NÚMERO CELULAR DE DESTINO 0414-5656620 IDENTIFICACIÓN RECEPTOR V-29624646 BANCO EMISOR BANESCO BANCO UNIVERSAL S.A.C.A. BANCO RECEPTOR BANCAMIGA BANCO UNIVERSAL, C.A. MONTO DE LA OPERACIÓN Bs. 6.592,00 CONCEPTO Pago Ma Valentina Pineda"
+  },
+  "Provincial-01.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "",
+    "monto_detectado": 7306.0,
+    "banco_origen": "0108",
+    "fecha_operacion": "2026-05-03",
+    "texto_completo": "Pagar MICHELLE ALEJANDRA SANCHEZ MOTTA El dinero fue enviado Bs. 7.306,00 Dinero Rápido BBVA Provincial Pago a: KIMBERLEY MELISSA TILLERO ARRAYAGO Cuenta: 0108-****-**-******-7564 Concepto: Prof Tilleros Fecha: 03/05/2026"
+  },
+  "Provincial-02.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "000022129",
+    "monto_detectado": 4540.0,
+    "banco_origen": "0108",
+    "fecha_operacion": "2026-06-26",
+    "texto_completo": "Pagar a Otros Bancos EDDIE JOSE RODRIGUEZ NEGRON El dinero fue enviado Bs. 4.540,00 Dinero Rápido BBVA Provincial Banco: BANCO DE VENEZUELA Número celular: 04245528892 Identificación: V15816366 Concepto: Pa Fecha: 26/06/2026 Referencia: 000022129"
+  },
+  "Provincial-03.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "000022733",
+    "monto_detectado": 29950.0,
+    "banco_origen": "0108",
+    "fecha_operacion": "2026-09-25",
+    "texto_completo": "6:29 Pagar a Otros Bancos EDDIE JOSE RODRIGUEZ NEGRON Monto a enviar Bs. 29.950,00 Dinero Rápido BBVA Provincial Banco: BANCO VZLA Número celular: 04245528892 Identificación: V15816366 Concepto: Pa Fecha: 25/09/2026 Referencia: 000022733"
+  },
+  "Provincial-04.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "000022674",
+    "monto_detectado": 29700.0,
+    "banco_origen": "0108",
+    "fecha_operacion": "2026-09-18",
+    "texto_completo": "7:20 Pagar a Otros Bancos EDDIE JOSE RODRIGUEZ NEGRON El dinero fue enviado Bs. 29.700,00 Dinero Rápido BBVA Provincial Banco: BANCO VZLA Número celular: 04245528892 Identificación: V15816366 Concepto: Pa Fecha: 18/09/2026 Referencia: 000022674"
+  },
+  "Provincial-05.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "000022569",
+    "monto_detectado": 27942.0,
+    "banco_origen": "0108",
+    "fecha_operacion": "2026-09-04",
+    "texto_completo": "9:39 Pagar a Otros Bancos EDDIE JOSE RODRIGUEZ NEGRON El dinero fue enviado Bs. 27.942,00 Dinero Rápido BBVA Provincial Banco: BANCO VZLA Número celular: 04245528892 Identificación: V15816366 Concepto: Pa Fecha: 04/09/2026 Referencia: 000022569"
+  },
+  "Provincial-06.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "000022295",
+    "monto_detectado": 25830.0,
+    "banco_origen": "0108",
+    "fecha_operacion": "2026-07-24",
+    "texto_completo": "EDDIE JOSE RODRIGUEZ NEGRON El dinero fue enviado Bs. 25.830,00 Dinero Rápido BBVA Provincial Banco: BANCO VZLA Número celular: 04245528892 Identificación: V15816366 Concepto: Pa Fecha: 24/07/2026 Referencia: 000022295"
+  },
+  "Provincial-07.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "000022603",
+    "monto_detectado": 29140.0,
+    "banco_origen": "0108",
+    "fecha_operacion": "2026-09-11",
+    "texto_completo": "EDDIE JOSE RODRIGUEZ NEGRON El dinero fue enviado Bs. 29.140,00 Dinero Rápido BBVA Provincial Banco: BANCO VZLA Número celular: 04245528892 Identificación: V15816366 Concepto: Pa Fecha: 11/09/2026 Referencia: 000022603"
+  },
+  "Provincial-08.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "000022497",
+    "monto_detectado": 27710.0,
+    "banco_origen": "0108",
+    "fecha_operacion": "2026-08-28",
+    "texto_completo": "EDDIE JOSE RODRIGUEZ NEGRON El dinero fue enviado Bs. 27.710,00 Dinero Rápido BBVA Provincial Banco: BANCO VZLA Número celular: 04245528892 Identificación: V15816366 Concepto: Pa Fecha: 28/08/2026 Referencia: 000022497"
+  },
+  "Provincial-09.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "000022328",
+    "monto_detectado": 26135.0,
+    "banco_origen": "0108",
+    "fecha_operacion": "2026-07-31",
+    "texto_completo": "EDDIE JOSE RODRIGUEZ NEGRON El dinero fue enviado Bs. 26.135,00 Dinero Rápido BBVA Provincial Banco: BANCO VZLA Número celular: 04245528892 Identificación: V15816366 Concepto: Pa Fecha: 31/07/2026 Referencia: 000022328"
+  },
+  "Provincial-10.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "000022795",
+    "monto_detectado": 30330.0,
+    "banco_origen": "0108",
+    "fecha_operacion": "2026-10-02",
+    "texto_completo": "EDDIE JOSE RODRIGUEZ NEGRON Monto a enviar Bs. 30.330,00 Dinero Rápido BBVA Provincial Banco: BANCO VZLA Número celular: 04245528892 Identificación: V15816366 Concepto: Pa Fecha: 02/10/2026 Referencia: 000022795"
+  },
+  "Provincial-11.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "000022957",
+    "monto_detectado": 31020.0,
+    "banco_origen": "0108",
+    "fecha_operacion": "2026-10-23",
+    "texto_completo": "EDDIE JOSE RODRIGUEZ NEGRON Monto a enviar Bs. 31.020,00 Dinero Rápido BBVA Provincial Banco: BANCO VZLA Número celular: 04245528892 Identificación: V15816366 Concepto: Pa Fecha: 23/10/2026 Referencia: 000022957"
+  },
+  "Provincial-12.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "000022853",
+    "monto_detectado": 30650.0,
+    "banco_origen": "0108",
+    "fecha_operacion": "2026-10-09",
+    "texto_completo": "EDDIE JOSE RODRIGUEZ NEGRON Monto a enviar Bs. 30.650,00 Dinero Rápido BBVA Provincial Banco: BANCO VZLA Número celular: 04245528892 Identificación: V15816366 Concepto: Pa Fecha: 09/10/2026 Referencia: 000022853"
+  },
+  "Provincial-13.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "000022371",
+    "monto_detectado": 26485.0,
+    "banco_origen": "0108",
+    "fecha_operacion": "2026-08-07",
+    "texto_completo": "EDDIE JOSE RODRIGUEZ NEGRON El dinero fue enviado Bs. 26.485,00 Dinero Rápido BBVA Provincial Banco: BANCO VZLA Número celular: 04245528892 Identificación: V15816366 Concepto: Pa Fecha: 07/08/2026 Referencia: 000022371"
+  },
+  "Provincial-14.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "000022451",
+    "monto_detectado": 27300.0,
+    "banco_origen": "0108",
+    "fecha_operacion": "2026-08-21",
+    "texto_completo": "EDDIE JOSE RODRIGUEZ NEGRON El dinero fue enviado Bs. 27.300,00 Dinero Rápido BBVA Provincial Banco: BANCO VZLA Número celular: 04245528892 Identificación: V15816366 Concepto: Pa Fecha: 21/08/2026 Referencia: 000022451"
+  },
+  "Mercantil-01.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "48311558857",
+    "monto_detectado": 1500.0,
+    "banco_origen": "0105",
+    "fecha_operacion": "2026-05-01",
+    "texto_completo": "Enviar Tpago ¡Listo! Tu Tpago fue exitoso Monto (Bs.): 1.500,00 Nro. de referencia: 48311558857 Fecha y hora del envío: 01/05/2026 a las 11:14:48 PM Cuenta origen: Cta. Corriente *3922 Beneficiario: 0424-5369149 Documento de identidad: V-26.007.777 Banco destino: 0105 - Banco Mercantil, C.a. S.a.c.a. Banco Universal"
+  },
+  "Mercantil-02.jpeg": {
+    "tipo": "foto",
+    "numero_referencia": "27733015",
+    "monto_detectado": 6283.39,
+    "banco_origen": "0105",
+    "fecha_operacion": "2026-04-23",
+    "texto_completo": "Enviar Tpago ¡Listo! Tu Tpago fue exitoso Monto (Bs.): 6.283,39 Nro. de referencia: 27733015 Fecha y hora del envío: 23/04/2026 a las 12:53:45 PM Cuenta origen: Cta. Corriente *3922 Beneficiario: 0414-5656620 Documento de identidad: V-29.624.646 Banco destino: 0172 - Bancamiga, Banco Universal"
+  },
+  "Mercantil-03.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "22461503",
+    "monto_detectado": 991.24,
+    "banco_origen": "0105",
+    "fecha_operacion": "2026-04-14",
+    "texto_completo": "¡Listo! Tu Tpago fue exitoso Monto (Bs.): 991,24 Nro. de referencia: 22461503 Fecha y hora del envío: 14/04/2026 a las 6:41:40 PM Cuenta origen: Cta. Ahorro *0815 Beneficiario: 0414-5656620 Documento de identidad: V-29624646 Banco destino: 0172 - Bancamiga, Banco Universal Mercantil"
+  },
+  "Mercantil-05.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "318831506622",
+    "monto_detectado": 2500.0,
+    "banco_origen": "0105",
+    "fecha_operacion": "2026-07-07",
+    "texto_completo": "¡Listo! Tu Tpago fue exitoso Monto (Bs.): 2.500,00 Nro. de referencia: 318831506622 Fecha y hora del envío: 07/07/2026 a las 7:56:30 PM Cuenta origen: Cta. Corriente *5562 Beneficiario: 0426-3503853 Documento de identidad: V-30.601.403 Banco destino: 0102 - Banco De Venezuela S.a.c.a. Banco Universal"
+  },
+  "Mercantil-06.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "617539920548",
+    "monto_detectado": 1667.62,
+    "banco_origen": "0105",
+    "fecha_operacion": "2026-06-24",
+    "texto_completo": "¡Listo! Tu Tpago fue exitoso Monto (Bs.): 1.667,62 Nro. de referencia: 617539920548 Fecha y hora del envío: 24/06/2026 a las 8:13:52 AM Cuenta origen: Cta. Corriente *5562 Beneficiario: Imelda Agua - 0424-5202776 Documento de identidad: V-11.589.241 Banco destino: 0102 - Banco De Venezuela S.a.c.a. Banco Universal Concepto: agua"
+  },
+  "Mercantil-07.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "929037860687",
+    "monto_detectado": 900.0,
+    "banco_origen": "0105",
+    "fecha_operacion": "2026-10-17",
+    "texto_completo": "Resumen Financiero > Tpago Enviar Tpago ¡Listo! Tu Tpago fue exitoso Nro. Referencia: 929037860687 Desde mi cuenta Cuenta Corriente - ****2309 Enviar (Bs.) 900,00 Al beneficiario V - 12.698.850 0414-522.31.19 Banco Del Tesoro, C.A. Banco Universal Concepto"
+  },
+  "Mercantil-08.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "43679763",
+    "monto_detectado": 1000.0,
+    "banco_origen": "0105",
+    "fecha_operacion": "2026-10-16",
+    "texto_completo": "Enviar Tpago ¡Listo! Tu Tpago fue exitoso Monto (Bs.): 1.000,00 Nro. de referencia: 43679763 Fecha y hora del envío: 16/10/2026 a las 9:18:38 PM Cuenta origen: Cta. Corriente *5480 Beneficiario: 0414-5223119 Documento de identidad: V-12.698.850 Banco destino: 0175 - Banco Digital De Los Trabajadores Concepto:"
+  },
+  "Mercantil-09.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "42676863",
+    "monto_detectado": 1400.0,
+    "banco_origen": "0105",
+    "fecha_operacion": "2026-10-15",
+    "texto_completo": "Enviar Tpago ¡Listo! Tu Tpago fue exitoso Monto (Bs.): 1.400,00 Nro. de referencia: 42676863 Fecha y hora del envío: 15/10/2026 a las 8:19:32 PM Cuenta origen: Cta. Corriente *5308 Beneficiario: Jackson bombona - 0414-5223119 Documento de identidad: V-12.698.850 Banco destino: 0163 - Banco Del Tesoro, C.a. Banco Universal Concepto: pago Maritza"
+  },
+  "Mercantil-10.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "47288847",
+    "monto_detectado": 12000.0,
+    "banco_origen": "0105",
+    "fecha_operacion": "2026-10-22",
+    "texto_completo": "¡Listo! Tu Tpago fue exitoso Monto (Bs.): 12.000,00 Nro. de referencia: 47288847 Fecha y hora del envío: 22/10/2026 a las 9:31:07 AM Cuenta origen: Cta. Corriente *5562 Beneficiario: Yenny Gaby - 0412-7058472 Documento de identidad: V-25.989.141 Banco destino: 0134 - Banesco Banco Universal S.a.c.a."
+  },
+  "Mercantil-11.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "0025511315595",
+    "monto_detectado": 39107.0,
+    "banco_origen": "0105",
+    "fecha_operacion": "2026-10-16",
+    "texto_completo": "¡Listo! Tu transferencia fue exitosa Monto (Bs.): 39.107,00 Nro. de referencia: 0025511315595 Fecha y hora de envío: 16/10/2026 a las 11:06:35 AM Cuenta origen: Cta. Corriente *5562 - Olenis Escalona Cuenta destino: condominio *2463 Concepto: Yaritza Mercantil"
+  },
+  "Mercantil-12.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "0025547847177",
+    "monto_detectado": 323.0,
+    "banco_origen": "0105",
+    "fecha_operacion": "2026-10-16",
+    "texto_completo": "¡Listo! Tu transferencia fue exitosa Monto (Bs.): 323,00 Nro. de referencia: 0025547847177 Fecha y hora de envío: 16/10/2026 a las 11:36:57 AM Cuenta origen: Cta. Corriente *5562 - Olenis Escalona Cuenta destino: Condominio Oasis *2463 - Condominio Concepto: Yaritza Mercantil"
+  },
+  "Mercantil-13.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "39353945",
+    "monto_detectado": 5780.0,
+    "banco_origen": "0105",
+    "fecha_operacion": "2026-10-11",
+    "texto_completo": "¡Listo! Tu Tpago fue exitoso Monto (Bs.): 5.780,00 Nro. de referencia: 39353945 Fecha y hora del envío: 11/10/2026 a las 5:04:52 PM Cuenta origen: Cta. Corriente *5562 Beneficiario: 0412-5905845 Documento de identidad: V-30.621.898 Banco destino: 0134 - Banesco Banco Universal S.a.c.a."
+  },
+  "Mercantil-14.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "34923898",
+    "monto_detectado": 2080.0,
+    "banco_origen": "0105",
+    "fecha_operacion": "2026-10-05",
+    "texto_completo": "¡Listo! Tu Tpago fue exitoso Monto (Bs.): 2.080,00 Nro. de referencia: 34923898 Fecha y hora del envío: 05/10/2026 a las 10:39:26 AM Cuenta origen: Cta. Corriente *5562 Beneficiario: Agua100 Por Ciento - 0422-5005270 Documento de identidad: V-3.861.192 Banco destino: 0134 - Banesco Banco Universal S.a.c.a."
+  },
+  "Mercantil-15.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "23593288",
+    "monto_detectado": 2040.0,
+    "banco_origen": "0105",
+    "fecha_operacion": "2026-09-19",
+    "texto_completo": "¡Listo! Tu Tpago fue exitoso Monto (Bs.): 2.040,00 Nro. de referencia: 23593288 Fecha y hora del envío: 19/09/2026 a las 9:42:17 AM Cuenta origen: Cta. Corriente *5562 Beneficiario: Agua100 Por Ciento - 0422-5005270 Documento de identidad: V-3.861.192 Banco destino: 0134 - Banesco Banco Universal S.a.c.a."
+  },
+  "Mercantil-16.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "2775289",
+    "monto_detectado": 4651.0,
+    "banco_origen": "0105",
+    "fecha_operacion": "2026-08-19",
+    "texto_completo": "¡Listo! Tu Tpago fue exitoso Monto (Bs.): 4.651,00 Nro. de referencia: 2775289 Fecha y hora del envío: 19/08/2026 a las 4:04:23 PM Cuenta origen: Cta. Corriente *5562 Beneficiario: lucy vecina - 0412-5503365 Documento de identidad: V-22.329.193 Banco destino: 0134 - Banesco Banco Universal S.a.c.a."
+  },
+  "Mercantil-17.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "49313460",
+    "monto_detectado": 4780.0,
+    "banco_origen": "0105",
+    "fecha_operacion": "2026-10-24",
+    "texto_completo": "Enviar Tpago ¡Listo! Tu Tpago fue exitoso Monto (Bs.): 4.780,00 Nro. de referencia: 49313460 Fecha y hora del envío: 24/10/2026 a las 6:48:34 PM Cuenta origen: Cta. Corriente *0009 Beneficiario: 0424-5728713 Documento de identidad: V-29.578.172 Banco destino: 0108 - Banco Provincial, S.a. Banco Universal"
+  },
+  "Mercantil-18.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "727354623633",
+    "monto_detectado": 2740.41,
+    "banco_origen": "0105",
+    "fecha_operacion": "2026-09-30",
+    "texto_completo": "Enviar Tpago ¡Listo! Tu Tpago fue exitoso Monto (Bs.): 2.740,41 Nro. de referencia: 727354623633 Fecha y hora del envío: 30/09/2026 a las 11:08:53 AM Cuenta origen: Cta. Corriente *0009 Beneficiario: 0414-1123777 Documento de identidad: J-41255205-8 Banco destino: 0191 - Banco Nacional Crédito, C.a. Banco Universal"
+  },
+  "Mercantil-19.jpeg": {
+    "tipo": "foto",
+    "numero_referencia": "96087623",
+    "monto_detectado": 5900.0,
+    "banco_origen": "0105",
+    "fecha_operacion": "2026-08-09",
+    "texto_completo": "Enviar Tpago ¡Listo! Tu Tpago fue exitoso Monto (Bs.): 5.900,00 Nro. de referencia: 96087623 Fecha y hora del envío: 09/08/2026 a las 9:21:19 AM Cuenta origen: Cta. Corriente *5480 Beneficiario: 0414-5223119 Documento de identidad: V-12.698.850 Banco destino: 0163 - Banco Del Tesoro, C.a. Banco Universal Concepto:"
+  },
+  "BDV-01.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "059137375577",
+    "monto_detectado": 21504.25,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-10-03",
+    "texto_completo": "Comprobante de operación Transferencias a terceros 21.504,25 Bs Fecha: 03/10/2026 Operación: 059137375577 Nombre: Proyeccion De Imagen Y Sonido Origen: 0102****4054 Destino: 0102****0658 Concepto: pago de servicios"
+  },
+  "BDV-02.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "007533382241",
+    "monto_detectado": 800.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-10-02",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 800,00 Bs Fecha: 02/10/2026 Operación: 007533382241 Identificación: 30031917 Origen: 0102****4054 Destino: 04125685901 Banco: 0108 - BBVA PROVINCIAL"
+  },
+  "BDV-04.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "007012609446",
+    "monto_detectado": 2315.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-08-15",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 2.315,00 Bs Fecha: 15/08/2026 Operación: 007012609446 Identificación: 11589881 Origen: 0102****4054 Destino: 04141571527 Banco: 0104 - BANCO VENEZOLANO DE CREDITO Concepto: pago de leche"
+  },
+  "BDV-05.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "007260171704",
+    "monto_detectado": 200.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-09-07",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 200,00 Bs Fecha: 07/09/2026 Operación: 007260171704 Identificación: 18811457 Origen: 0102****4054 Destino: 04128679501 Banco: 0105 - BANCO MERCANTIL"
+  },
+  "BDV-06.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "007258602629",
+    "monto_detectado": 1298.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-09-07",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 1.298,00 Bs Fecha: 07/09/2026 Operación: 007258602629 Identificación: 12698850 Origen: 0102****4054 Destino: 04145223119 Banco: 0163 - BANCO DEL TESORO Concepto: pago del gas"
+  },
+  "BDV-07.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "059131503453",
+    "monto_detectado": 19958.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-09-04",
+    "texto_completo": "Comprobante de operación Transferencias a terceros 19.958,00 Bs Fecha: 04/09/2026 Operación: 059131503453 Nombre: Proyeccion De Imagen Y Sonido Origen: 0102****4054 Destino: 0102****0658 Concepto: pago de servicios"
+  },
+  "BDV-08.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "007008225860",
+    "monto_detectado": 775.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-08-15",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 775,00 Bs Fecha: 15/08/2026 Operación: 007008225860 Identificación: 9617283 Origen: 0102****4054 Destino: 04122060079 Banco: 0102 - BANCO DE VENEZUELA Concepto: pasaje"
+  },
+  "BDV-09.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "006952295339",
+    "monto_detectado": 1200.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-08-09",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 1.200,00 Bs Fecha: 09/08/2026 Operación: 006952295339 Identificación: 20044699 Origen: 0102****4054 Destino: 04245804218 Banco: 0108 - BBVA PROVINCIAL"
+  },
+  "BDV-10.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "006781276958",
+    "monto_detectado": 7380.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-07-24",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 7.380,00 Bs Fecha: 24/07/2026 Operación: 006781276958 Identificación: 16956631 Origen: 0102****4054 Destino: 04149509155 Banco: 0105 - BANCO MERCANTIL Concepto: pago camisa"
+  },
+  "BDV-11.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "059139252916",
+    "monto_detectado": 18719.5,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-08-01",
+    "texto_completo": "Comprobante de operación Transferencias a terceros 18.719,50 Bs Fecha: 01/08/2026 Operación: 059139252916 Nombre: Proyeccion De Imagen Y Sonido Origen: 0102****4054 Destino: 0102****0658 Concepto: pago de servicios"
+  },
+  "BDV-12.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "006951574354",
+    "monto_detectado": 5900.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-08-09",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 5.900,00 Bs Fecha: 09/08/2026 Operación: 006951574354 Identificación: 12698850 Origen: 0102****4054 Destino: 04145223119 Banco: 0163 - BANCO DEL TESORO Concepto: pago combo proteico"
+  },
+  "BDV-14.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "006629417048",
+    "monto_detectado": 230.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-07-10",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 230,00 Bs Fecha: 10/07/2026 Operación: 006629417048 Identificación: 15730101 Origen: 0102****4054 Destino: 04245246038 Banco: 0102 - BANCO DE VENEZUELA"
+  },
+  "BDV-15.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "059135157792",
+    "monto_detectado": 15834.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-07-03",
+    "texto_completo": "Comprobante de operación Transferencias a terceros 15.834,00 Bs Fecha: 03/07/2026 Operación: 059135157792 Nombre: Proyeccion De Imagen Y Sonido Origen: 0102****4054 Destino: 0102****0658 Concepto: pago de servicios"
+  },
+  "BDV-16.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "006132458762",
+    "monto_detectado": 120.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-05-24",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 120,00 Bs Fecha: 24/05/2026 Operación: 006132458762 Identificación: 18811457 Origen: 0102****4054 Destino: 04128679501 Banco: 0105 - BANCO MERCANTIL"
+  },
+  "BDV-17.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "006586037651",
+    "monto_detectado": 190.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-07-05",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 190,00 Bs Fecha: 05/07/2026 Operación: 006586037651 Identificación: 15351574 Origen: 0102****4054 Destino: 04222004526 Banco: 0105 - BANCO MERCANTIL"
+  },
+  "BDV-18.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "006340659184",
+    "monto_detectado": 800.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-06-12",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 800,00 Bs Fecha: 12/06/2026 Operación: 006340659184 Identificación: 13881351 Origen: 0102****4054 Destino: 04220042873 Banco: 0108 - BBVA PROVINCIAL Concepto: pasaje"
+  },
+  "BDV-19.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "006289914516",
+    "monto_detectado": 300.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-06-07",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 300,00 Bs Fecha: 07/06/2026 Operación: 006289914516 Identificación: 13188010 Origen: 0102****4054 Destino: 04264557702 Banco: 0102 - BANCO DE VENEZUELA Concepto: pasaje"
+  },
+  "BDV-20.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "005977440899",
+    "monto_detectado": 150.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-05-10",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 150,00 Bs Fecha: 10/05/2026 Operación: 005977440899 Identificación: 24549548 Origen: 0102****4054 Destino: 04129933332 Banco: 0102 - BANCO DE VENEZUELA"
+  },
+  "BDV-21.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "005954115034",
+    "monto_detectado": 700.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-05-08",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 700,00 Bs Fecha: 08/05/2026 Operación: 005954115034 Identificación: 23491898 Origen: 0102****4054 Destino: 04145353523 Banco: 0102 - BANCO DE VENEZUELA"
+  },
+  "BDV-22.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "006134723932",
+    "monto_detectado": 700.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-05-24",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 700,00 Bs Fecha: 24/05/2026 Operación: 006134723932 Identificación: 12593188 Origen: 0102****4054 Destino: 04129874075 Banco: 0168 - BANCRECER"
+  },
+  "BDV-23.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "005980347091",
+    "monto_detectado": 700.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-05-10",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 700,00 Bs Fecha: 10/05/2026 Operación: 005980347091 Identificación: 22265242 Origen: 0102****4054 Destino: 04264568248 Banco: 0102 - BANCO DE VENEZUELA Concepto: pasaje"
+  },
+  "BDV-24.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "005988839511",
+    "monto_detectado": 700.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-05-11",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 700,00 Bs Fecha: 11/05/2026 Operación: 005988839511 Identificación: 18923841 Origen: 0102****4054 Destino: 04125293403 Banco: 0102 - BANCO DE VENEZUELA Concepto: pasaje"
+  },
+  "BDV-25.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "005826017610",
+    "monto_detectado": 700.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-04-26",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 700,00 Bs Fecha: 26/04/2026 Operación: 005826017610 Identificación: 14352079 Origen: 0102****4054 Destino: 04245132417 Banco: 0108 - BBVA PROVINCIAL"
+  },
+  "BDV-26.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "005893192134",
+    "monto_detectado": 800.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-05-02",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 800,00 Bs Fecha: 02/05/2026 Operación: 005893192134 Identificación: 16418052 Origen: 0102****4054 Destino: 04245044984 Banco: 0108 - BBVA PROVINCIAL Concepto: pasaje"
+  },
+  "BDV-27.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "059137944009",
+    "monto_detectado": 12238.75,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-05-04",
+    "texto_completo": "Comprobante de operación Transferencias a terceros 12.238,75 Bs Fecha: 04/05/2026 Operación: 059137944009 Nombre: Proyeccion De Imagen Y Sonido Origen: 0102****4054 Destino: 0102****0658 Concepto: pago de servicios"
+  },
+  "BDV-28.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "005890281483",
+    "monto_detectado": 120.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-05-02",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 120,00 Bs Fecha: 02/05/2026 Operación: 005890281483 Identificación: 19827535 Origen: 0102****4054 Destino: 04145700264 Banco: 0102 - BANCO DE VENEZUELA"
+  },
+  "BDV-29.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "005842936620",
+    "monto_detectado": 2450.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-04-28",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 2.450,00 Bs Fecha: 28/04/2026 Operación: 005842936620 Identificación: 28565754 Origen: 0102****4054 Destino: 04122697035 Banco: 0104 - BANCO VENEZOLANO DE CREDITO Concepto: corte de cabello"
+  },
+  "BDV-30.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "005822944352",
+    "monto_detectado": 120.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-04-26",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 120,00 Bs Fecha: 26/04/2026 Operación: 005822944352 Identificación: 11786283 Origen: 0102****4054 Destino: 04145462897 Banco: 0102 - BANCO DE VENEZUELA"
+  },
+  "BDV-34.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "000133763624",
+    "monto_detectado": 10.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "",
+    "texto_completo": "Resultado de PagomóvilBDV Tu PagomóvilBDV ha sido realizado con éxito. El número de operación es: 000133763624 Banco Receptor: BANCO NACIONAL DE CREDITO Teléfono Receptor: 0416***7754 Cédula Receptor: 19***631 Monto de la Operación: 10,00 Concepto: Banco de Venezuela, S.A. Banco Universal © RIF G-20009997-6"
+  },
+  "BDV-35.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "000097211893",
+    "monto_detectado": 50.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "",
+    "texto_completo": "Resultado de PagomóvilBDV Tu PagomóvilBDV ha sido realizado con éxito. El número de operación es: 000097211893 Banco Receptor: BANCO NACIONAL DE CREDITO Teléfono Receptor: 0416***7754 Cédula Receptor: 19***631 Monto de la Operación: 50,00 Concepto: Banco de Venezuela, S.A. Banco Universal © RIF G-20009997-6"
+  },
+  "BDV-36.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "000079665610",
+    "monto_detectado": 30.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "",
+    "texto_completo": "Resultado de PagomóvilBDV Tu PagomóvilBDV ha sido realizado con éxito. El número de operación es: 000079665610 Banco Receptor: BANCO NACIONAL DE CREDITO Teléfono Receptor: 0416***7754 Cédula Receptor: 19***631 Monto de la Operación: 30,00 Concepto:"
+  },
+  "BDV-37.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "000561537746",
+    "monto_detectado": 60.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2024-02-20",
+    "texto_completo": "Bienvenido Olenis Beatriz Escalona Última conexión - 20-02-2024 10:01:58 a.m. Resultado de PagomóvilBDV Tu PagomóvilBDV ha sido realizado con éxito. El número de operación es: 000561537746 Banco Receptor: BANCO NACIONAL DE CREDITO Teléfono Receptor: 0416***7754 Cédula Receptor: 19***631 Monto de la Operación: 60,00 Concepto: Banco de Venezuela, S.A. Banco Universal © RIF G-20009997-6 Operación Realizada Satisfactoriamente."
+  },
+  "BDV-38.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "000155974301",
+    "monto_detectado": 50.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "",
+    "texto_completo": "Resultado de PagomóvilBDV Tu PagomóvilBDV ha sido realizado con éxito. El número de operación es: 000155974301 Banco Receptor: BANCO NACIONAL DE CREDITO Teléfono Receptor: 0416***7754 Cédula Receptor: 19***631 Monto de la Operación: 50,00"
+  },
+  "BDV-39.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "000149044642",
+    "monto_detectado": 20.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "",
+    "texto_completo": "Resultado de PagomóvilBDV Tu PagomóvilBDV ha sido realizado con éxito. El número de operación es: 000149044642 Banco Receptor: BANCO MERCANTIL Teléfono Receptor: 0414***9155 Cédula Receptor: 16***631 Monto de la Operación: 20,00"
+  },
+  "BDV-40.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "000520967073",
+    "monto_detectado": 90.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2024-01-24",
+    "texto_completo": "Bienvenido Olenis Beatriz Escalona Última conexión - 24-01-2024 02:36:47 p.m. Resultado de PagomóvilBDV Tu PagomóvilBDV ha sido realizado con éxito. El número de operación es: 000520967073 Banco Receptor: BANCO NACIONAL DE CREDITO Teléfono Receptor: 0416***7754 Cédula Receptor: 19***631 Monto de la Operación: 90,00 Concepto: Banco de Venezuela, S.A. Banco Universal © RIF G-20009997-6 Operación Realizada Satisfactoriamente."
+  },
+  "BDV-41.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "000574315896",
+    "monto_detectado": 70.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2024-03-03",
+    "texto_completo": "Bienvenido Olenis Beatriz Escalona Última conexión - 03-03-2024 05:08:29 p.m. Resultado de PagomóvilBDV Tu PagomóvilBDV ha sido realizado con éxito. El número de operación es: 000574315896 Banco Receptor: BANCO NACIONAL DE CREDITO Teléfono Receptor: 0416***7754 Cédula Receptor: 19***631 Monto de la Operación: 70,00 Concepto: Banco de Venezuela, S.A. Banco Universal © RIF G-20009997-6 Operación Realizada Satisfactoriamente."
+  },
+  "BDV-42.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "007281510154",
+    "monto_detectado": 6560.81,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-09-09",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 6.560,81 Bs Fecha: 09/09/2026 Operación: 007281510154 Identificación: 30601403 Origen: 0102****7660 Destino: 04263503853 Banco: 0102 - BANCO DE VENEZUELA Concepto: Pago chuleta"
+  },
+  "BDV-43.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "005685229145",
+    "monto_detectado": 6925.58,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-04-14",
+    "texto_completo": "PagomóvilBDV Personas 6.925,58 Bs Fecha: 14/04/2026 Operación: 005685229145 Identificación: 29624646 Origen: 0102****9887 Destino: 04145656620 Banco: 0172 - BANCAMIGA BANCO UNIVERSAL, C.A. Concepto: pago mairelys marin"
+  },
+  "BDV-44.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "005689324931",
+    "monto_detectado": 5600.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-04-14",
+    "texto_completo": "PagomóvilBDV Personas 5.600,00 Bs Fecha: 14/04/2026 Operación: 005689324931 Identificación: 29624646 Origen: 0102****9901 Destino: 04145656620 Banco: 0172 - BANCAMIGA BANCO UNIVERSAL, C.A."
+  },
+  "BDV-45.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "059138041398",
+    "monto_detectado": 2000.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-10-03",
+    "texto_completo": "Transferencias a terceros 2.000,00 Bs Fecha: 03/10/2026 Operación: 059138041398 Nombre: Jesus Gabriel Escalona Escalona Origen: 0102****2289 Destino: 0102****4054 Concepto: pasaje"
+  },
+  "BDV-46.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "007535148160",
+    "monto_detectado": 1800.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-10-02",
+    "texto_completo": "PagomóvilBDV Personas 1.800,00 Bs Fecha: 02/10/2026 Operación: 0075335148160 Identificación: 11589744 Origen: 0102****2289 Destino: 04161160191 Banco: 0105 - BANCO MERCANTIL Concepto: ana"
+  },
+  "BDV-47.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "007676487521",
+    "monto_detectado": 1400.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-10-15",
+    "texto_completo": "PagomóvilBDV Personas 1.400,00 Bs Fecha: 15/10/2026 Operación: 007676487521 Identificación: 12698850 Origen: 0102****2289 Destino: 04145223119 Banco: 0163 - BANCO DEL TESORO Concepto: gas"
+  },
+  "BDV-48.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "059135746771",
+    "monto_detectado": 21672.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-10-02",
+    "texto_completo": "Transferencias a terceros 21.672,00 Bs Fecha: 02/10/2026 Operación: 059135746771 Nombre: Jesus Gabriel Escalona Escalona Origen: 0102****2289 Destino: 0102****4054 Concepto: wifi"
+  },
+  "BDV-49.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "059131090962",
+    "monto_detectado": 20185.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-09-04",
+    "texto_completo": "Transferencias a terceros 20.185,00 Bs Fecha: 04/09/2026 Operación: 059131090962 Nombre: Jesus Gabriel Escalona Escalona Origen: 0102****2289 Destino: 0102****4054 Concepto: internet"
+  },
+  "BDV-50.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "007117937747",
+    "monto_detectado": 7850.69,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-08-25",
+    "texto_completo": "PagomóvilBDV Personas 7.850,69 Bs Fecha: 25/08/2026 Operación: 007117937747 Identificación: 30601403 Origen: 0102****3008 Destino: 04263503853 Banco: 0102 - BANCO DE VENEZUELA Concepto: pasaje"
+  },
+  "BDV-51.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "059137102063",
+    "monto_detectado": 5200.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-09-25",
+    "texto_completo": "Transferencias a terceros 5.200,00 Bs Fecha: 25/09/2026 Operación: 059137102063 Nombre: Jesus Gabriel Escalona Escalona Origen: 0102****2289 Destino: 0102****4054 Concepto: pasaje"
+  },
+  "BDV-52.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "059138049394",
+    "monto_detectado": 3000.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-09-26",
+    "texto_completo": "Transferencias a terceros 3.000,00 Bs Fecha: 26/09/2026 Operación: 059138049394 Nombre: Olenis Beatriz Escalona Origen: 0102****4054 Destino: 0102****2289 Concepto: Tres mil"
+  },
+  "BDV-53.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "059138458046",
+    "monto_detectado": 10000.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-09-11",
+    "texto_completo": "Transferencias a terceros 10.000,00 Bs Fecha: 11/09/2026 Operación: 059138458046 Nombre: Jesus Gabriel Escalona Escalona Origen: 0102****2289 Destino: 0102****4054 Concepto: comida"
+  },
+  "BDV-54.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "059135631629",
+    "monto_detectado": 3000.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-08-23",
+    "texto_completo": "Transferencias a terceros 3.000,00 Bs Fecha: 23/08/2026 Operación: 059135631629 Nombre: Olenis Beatriz Escalona Origen: 0102****4054 Destino: 0102****2289 Concepto: Tres mil"
+  },
+  "BDV-55.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "059134327694",
+    "monto_detectado": 10000.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-08-22",
+    "texto_completo": "Transferencias a terceros 10.000,00 Bs Fecha: 22/08/2026 Operación: 059134327694 Nombre: Jesus Gabriel Escalona Escalona Origen: 0102****2289 Destino: 0102****4054 Concepto: jesus"
+  },
+  "BDV-56.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "006703877954",
+    "monto_detectado": 5859.84,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-07-17",
+    "texto_completo": "PagomóvilBDV Personas 5.859,84 Bs Fecha: 17/07/2026 Operación: 006703877954 Identificación: 24400767 Origen: 0102****2289 Destino: 04244492574 Banco: 0102 - BANCO DE VENEZUELA Concepto: ana"
+  },
+  "BDV-57.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "007105136058",
+    "monto_detectado": 2400.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-08-23",
+    "texto_completo": "PagomóvilBDV Personas 2.400,00 Bs Fecha: 23/08/2026 Operación: 007105136058 Identificación: 26577115 Origen: 0102****4054 Destino: 04164875305 Banco: 0105 - BANCO MERCANTIL Concepto: pago"
+  },
+  "BDV-58.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "059136034576",
+    "monto_detectado": 22000.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-08-07",
+    "texto_completo": "Transferencias a terceros 22.000,00 Bs Fecha: 07/08/2026 Operación: 059136034576 Nombre: Jesus Gabriel Escalona Escalona Origen: 0102****2289 Destino: 0102****4054 Concepto: comida"
+  },
+  "BDV-59.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "0591385028522",
+    "monto_detectado": 30065.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "",
+    "texto_completo": "BDVenlínea personas Resultado de Transferencia Cuentas de Terceros Tu transferencia de fondos ha sido realizada con éxito. El número de operación es 0591385028522 Instrumento Origen: 0102***2289 Instrumento Destino: 01020308210000300894 Monto Operación: 30.065,00 Concepto: pago"
+  },
+  "BDV-61.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "059139570328",
+    "monto_detectado": 7371.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-07-24",
+    "texto_completo": "Transferencias a terceros 7.371,00 Bs Fecha: 24/07/2026 Operación: 059139570328 Nombre: Jesus Gabriel Escalona Escalona Origen: 0102****2289 Destino: 0102****4054 Concepto: camisa"
+  },
+  "BDV-62.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "001404951139",
+    "monto_detectado": 6000.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "",
+    "texto_completo": "BDVenlínea personas Tu PagomóvilBDV ha sido realizado con éxito. El número de operación es: 001404951139 Banco Receptor: BANCO MERCANTIL Teléfono Receptor: 0426***1629 Cédula Receptor: 16***028 Monto de la Operación: 6.000,00 Concepto:"
+  },
+  "BDV-63.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "059132146914",
+    "monto_detectado": 2000.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-06-21",
+    "texto_completo": "Transferencias a terceros 2.000,00 Bs Fecha: 21/06/2026 Operación: 059132146914 Nombre: Olenis Beatriz Escalona Origen: 0102****4054 Destino: 0102****2289 Concepto: comida"
+  },
+  "BDV-64.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "059137790504",
+    "monto_detectado": 13750.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-05-04",
+    "texto_completo": "Transferencias a terceros 13.750,00 Bs Fecha: 04/05/2026 Operación: 059137790504 Nombre: Jesus Gabriel Escalona Escalona Origen: 0102****2289 Destino: 0102****4054 Concepto: wifi y pasajes"
+  },
+  "BDV-65.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "059138153689",
+    "monto_detectado": 13000.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-05-22",
+    "texto_completo": "Transferencias a terceros 13.000,00 Bs Fecha: 22/05/2026 Operación: 059138153689 Nombre: Jesus Gabriel Escalona Escalona Origen: 0102****2289 Destino: 0102****4054 Concepto: comida"
+  },
+  "BDV-66.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "001386312725",
+    "monto_detectado": 1460.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "",
+    "texto_completo": "Tu PagomóvilBDV ha sido realizado con éxito. El número de operación es: 001386312725 Banco Receptor: BANCO NACIONAL DE CREDITO Teléfono Receptor: 0414***1527 Cédula Receptor: 11***881 Monto de la Operación: 1.460,00 Concepto: Pago de la leche"
+  },
+  "BDV-67.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "006431069085",
+    "monto_detectado": 1211.25,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-06-19",
+    "texto_completo": "PagomóvilBDV Personas 1.211,25 Bs Fecha: 19/06/2026 Operación: 006431069085 Identificación: 11589881 Origen: 0102****2289 Destino: 04141571527 Banco: 0104 - BANCO VENEZOLANO DE CREDITO Concepto: suero"
+  },
+  "BDV-68.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "001305661870",
+    "monto_detectado": 4000.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "",
+    "texto_completo": "Resultado de PagomóvilBDV Tu PagomóvilBDV ha sido realizado con éxito. El número de operación es: 001305661870 Banco Receptor: BANCO DE VENEZUELA Teléfono Receptor: 0412***3476 Cédula Receptor: 19***360 Monto de la Operación: 4.000,00 Concepto: Deuda pasajes"
+  },
+  "BDV-69.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "0050399646726",
+    "monto_detectado": 2949.16,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-02-13",
+    "texto_completo": "Operacion pagomovilbdv otros banco -2.949,16 Bs Fecha: 13/02/2026 Hora: 12:17 PM Operación: 0050399646726"
+  },
+  "BDV-70.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "001305660707",
+    "monto_detectado": 2856.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "",
+    "texto_completo": "Resultado de PagomóvilBDV Tu PagomóvilBDV ha sido realizado con éxito. El número de operación es: 001305660707 Banco Receptor: BANCO DE VENEZUELA Teléfono Receptor: 0426***8025 Cédula Receptor: 24***819 Monto de la Operación: 2.856,00 Concepto: Diezmos"
+  },
+  "BDV-71.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "005161456782",
+    "monto_detectado": 3300.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-02-21",
+    "texto_completo": "PagomóvilBDV Personas 3.300,00 Bs Fecha: 21/02/2026 Operación: 005161456782 Identificación: 12698850 Origen: 0102****4054 Destino: 04145223119 Banco: 0175 - BANCO DIGITAL DE LOS TRABAJADORES, BANCO UNIVERSAL"
+  },
+  "BDV-72.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "001312247805",
+    "monto_detectado": 1260.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "",
+    "texto_completo": "Resultado de PagomóvilBDV Tu PagomóvilBDV ha sido realizado con éxito. El número de operación es: 001312247805 Banco Receptor: BANCO NACIONAL DE CREDITO Teléfono Receptor: 0414***1527 Cédula Receptor: 11***881 Monto de la Operación: 1.260,00 Concepto: Pago de leche"
+  },
+  "BDV-73.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "001305659300",
+    "monto_detectado": 805.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "",
+    "texto_completo": "Resultado de PagomóvilBDV Tu PagomóvilBDV ha sido realizado con éxito. El número de operación es: 001305659300 Banco Receptor: BANCO NACIONAL DE CREDITO Teléfono Receptor: 0414***1527 Cédula Receptor: 11***881 Monto de la Operación: 805,00 Concepto: Pago de leche"
+  },
+  "BDV-74.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "001299622518",
+    "monto_detectado": 1572.89,
+    "banco_origen": "0102",
+    "fecha_operacion": "",
+    "texto_completo": "Tu PagomóvilBDV ha sido realizado con éxito. El número de operación es: 001299622518 Banco Receptor: BANCO NACIONAL DE CREDITO Teléfono Receptor: 0414***1527 Cédula Receptor: 11***881 Monto de la Operación: 1.572,89 Concepto: Pago leche"
+  },
+  "BDV-75.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "001299624583",
+    "monto_detectado": 3350.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "",
+    "texto_completo": "Tu PagomóvilBDV ha sido realizado con éxito. El número de operación es: 001299624583 Banco Receptor: BANCO DE VENEZUELA Teléfono Receptor: 0426***8025 Cédula Receptor: 24***819 Monto de la Operación: 3.350,00 Concepto: Diezmos"
+  },
+  "BDV-76.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "005014197344",
+    "monto_detectado": 7622.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-02-06",
+    "texto_completo": "PagomóvilBDV Personas 7.622,00 Bs Fecha: 06/02/2026 Operación: 005014197344 Identificación: 12698850 Origen: 0102****2289 Destino: 04145223119 Banco: 0175 - BANCO DIGITAL DE LOS TRABAJADORES, BANCO UNIVERSAL Concepto: yaczonnuevo"
+  },
+  "BDV-77.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "001285415023",
+    "monto_detectado": 14668.5,
+    "banco_origen": "0102",
+    "fecha_operacion": "",
+    "texto_completo": "Resultado de PagomóvilBDV Tu PagomóvilBDV ha sido realizado con éxito. El número de operación es: 001285415023 Banco Receptor: BANCO DE VENEZUELA Teléfono Receptor: 0426***1822 Cédula Receptor: 18***139 Monto de la Operación: 14.668,50 Concepto:"
+  },
+  "BDV-78.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "005047767741",
+    "monto_detectado": 1541.09,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-02-10",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 1.541,09 Bs Fecha: 10/02/2026 Operación: 005047767741 Identificación: 293811554 Origen: 0102****2289 Destino: 04129178712 Banco: 0191 - BANCO NACIONAL DE CREDITO Concepto: zapatos"
+  },
+  "BDV-79.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "001281873747",
+    "monto_detectado": 1400.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "",
+    "texto_completo": "Resultado de PagomóvilBDV Tu PagomóvilBDV ha sido realizado con éxito. El número de operación es: 001281873747 Banco Receptor: BANCO NACIONAL DE CREDITO Teléfono Receptor: 0414***1527 Cédula Receptor: 11***881 Monto de la Operación: 1400,00 Concepto:"
+  },
+  "BDV-80.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "001248255952",
+    "monto_detectado": 1000.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "",
+    "texto_completo": "Resultado de PagomóvilBDV Tu PagomóvilBDV ha sido realizado con éxito. El número de operación es: 001248255952 Banco Receptor: BANCO DE VENEZUELA Teléfono Receptor: 0412***3476 Cédula Receptor: 19***360 Monto de la Operación: 1000,00 Concepto:"
+  },
+  "BDV-81.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "001054608937",
+    "monto_detectado": 200.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2025-05-03",
+    "texto_completo": "BDVenlínea personas Bienvenido Olenis Beatriz Escalona Última conexión - 03-05-2025 12:19:41 p.m. Resultado de PagomóvilBDV Tu PagomóvilBDV ha sido realizado con éxito. El número de operación es: 001054608937 Banco Receptor: 0102 - BANCO DE VENEZUELA Teléfono Receptor: 0426***7660 Cédula Receptor: 15***228 Monto de la Operación: 200,00 Concepto:"
+  },
+  "BDV-82.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "004736582886",
+    "monto_detectado": 10000.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-01-06",
+    "texto_completo": "PagomóvilBDV Personas 10.000,00 Bs Fecha: 06/01/2026 Operación: 004736582886 Identificación: 30601403 Origen: 0102****2289 Destino: 04263503853 Banco: 0102 - BANCO DE VENEZUELA"
+  },
+  "BDV-83.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "003260503096",
+    "monto_detectado": 75.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2025-07-20",
+    "texto_completo": "PagomóvilBDV Personas 75,00 Bs Fecha: 20/07/2025 Operación: 003260503096 Identificación: 12698850 Origen: 0102****2289 Destino: 04145223119 Banco: 0102 - BANCO DE VENEZUELA Concepto: pago del gas"
+  },
+  "BDV-84.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "12046914080",
+    "monto_detectado": 4800.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-01-19",
+    "texto_completo": "Detalles de la Transferencia Fecha: 19/01/2026 11:28 Referencia: 12046914080 Datos de la transferencia Monto: Bs 4.800,00 Canal: Plataforma Patria Monedero Origen: Monedero Bolívar Digital de V-15816366 Monedero Destino: Banco de Venezuela Descripción: Transferencia a Banco Cuenta Bancaria: 0102-0111-00-0000452289 Titular de la Cuenta Bancaria: V-15816366 Respuesta: En espera"
+  },
+  "BDV-85.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "85670146054",
+    "monto_detectado": 31786.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2025-09-12",
+    "texto_completo": "todoticket Detalle de la transacción ¡Operación exitosa! Número de referencia 85670146054 Fecha de la transacción 12-09-2025 10:51 a.m. Número de tarjeta Todoticket 4221 **** **** 4296 Número de cuenta destino 0102 **** **** **** 4054 Cédula del receptor V-30601403 Banco receptor Banco de Venezuela, S.A. Monto Bs. 31.786,00 Concepto Pago"
+  },
+  "BDV-86.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "",
+    "monto_detectado": 525.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "",
+    "texto_completo": "Resultado de PagomóvilBDV Tu PagomóvilBDV ha sido realizado con éxito. El número de operación es: Banco Receptor: BANCO DE VENEZUELA Teléfono Receptor: 0412***2406 Cédula Receptor: 28***937 Monto de la Operación: 525,00 Concepto: Electrodos"
+  },
+  "BDV-87.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "002887901772",
+    "monto_detectado": 209.5,
+    "banco_origen": "0102",
+    "fecha_operacion": "2025-05-30",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 209,50 Bs Fecha: 30/05/2025 Operación: 002887901772 Identificación: 24158819 Origen: 0102****4054 Destino: 04264528025 Banco: 0102 - BANCO DE VENEZUELA Concepto: diezmos"
+  },
+  "BDV-88.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "001097482823",
+    "monto_detectado": 628.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "",
+    "texto_completo": "Resultado de PagomóvilBDV Tu PagomóvilBDV ha sido realizado con éxito. El número de operación es: 001097482823 Banco Receptor: BANCO DE VENEZUELA Teléfono Receptor: 0426***8025 Cédula Receptor: 24***819 Monto de la Operación: 628,00 Concepto: Diezmo"
+  },
+  "BDV-89.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "001079196646",
+    "monto_detectado": 337.1,
+    "banco_origen": "0102",
+    "fecha_operacion": "",
+    "texto_completo": "Resultado de PagomóvilBDV Tu PagomóvilBDV ha sido realizado con éxito. El número de operación es: 001079196646 Banco Receptor: BANCO DE VENEZUELA Teléfono Receptor: 0426***8025 Cédula Receptor: 24***819 Monto de la Operación: 337,10 Concepto: Diezmos"
+  },
+  "BDV-90.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "001059935032",
+    "monto_detectado": 610.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2025-05-10",
+    "texto_completo": "BDVenlínea personas Bienvenido Olenis Beatriz Escalona Última conexión - 10-05-2025 11:27:06 a.m. Resultado de PagomóvilBDV Tu PagomóvilBDV ha sido realizado con éxito. El número de operación es: 001059935032 Banco Receptor: BANCO DE VENEZUELA Teléfono Receptor: 0426***8025 Cédula Receptor: 24***819 Monto de la Operación: 610,00 Concepto: Diezmos"
+  },
+  "BDV-91.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "001085152721",
+    "monto_detectado": 850.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "",
+    "texto_completo": "Resultado de PagomóvilBDV Tu PagomóvilBDV ha sido realizado con éxito. El número de operación es: 001085152721 Banco Receptor: BANCO DE VENEZUELA Teléfono Receptor: 0426***8025 Cédula Receptor: 24***819 Monto de la Operación: 850,00 Concepto: Diezmos"
+  },
+  "BDV-92.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "001109074631",
+    "monto_detectado": 2900.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "",
+    "texto_completo": "Resultado de PagomóvilBDV Tu PagomóvilBDV ha sido realizado con éxito. El número de operación es: 001109074631 Banco Receptor: BANCO DE VENEZUELA Teléfono Receptor: 0426***3853 Cédula Receptor: 30***403 Monto de la Operación: 2900,00 Concepto: Internet"
+  },
+  "BDV-93.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "001109525662",
+    "monto_detectado": 777.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "",
+    "texto_completo": "Resultado de PagomóvilBDV Tu PagomóvilBDV ha sido realizado con éxito. El número de operación es: 001109525662 Banco Receptor: BANCO DE VENEZUELA Teléfono Receptor: 0426***8025 Cédula Receptor: 24***819 Monto de la Operación: 777,00 Concepto: Diezmos"
+  },
+  "BDV-94.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "001097488566",
+    "monto_detectado": 105.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "",
+    "texto_completo": "Resultado de PagomóvilBDV Tu PagomóvilBDV ha sido realizado con éxito. El número de operación es: 001097488566 Banco Receptor: BANCO DE VENEZUELA Teléfono Receptor: 0426***8025 Cédula Receptor: 24***819 Monto de la Operación: 105,00 Concepto: Diezmo"
+  },
+  "BDV-95.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "001109079813",
+    "monto_detectado": 2220.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "",
+    "texto_completo": "Resultado de PagomóvilBDV Tu PagomóvilBDV ha sido realizado con éxito. El número de operación es: 001109079813 Banco Receptor: BANCO DE VENEZUELA Teléfono Receptor: 0412***3476 Cédula Receptor: 19***360 Monto de la Operación: 2220,00 Concepto: 20 dolares"
+  },
+  "BDV-96.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "",
+    "monto_detectado": 645.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "",
+    "texto_completo": "Resultado de PagomóvilBDV Tu PagomóvilBDV ha sido realizado con éxito. El número de operación es: Banco Receptor: BANCO DE VENEZUELA Teléfono Receptor: 0426***8025 Cédula Receptor: 24***819 Monto de la Operación: 645,00 Concepto: Diezmos"
+  },
+  "BDV-97.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "001115922103",
+    "monto_detectado": 924.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "",
+    "texto_completo": "Resultado de PagomóvilBDV Tu PagomóvilBDV ha sido realizado con éxito. El número de operación es: 001115922103 Banco Receptor: BANCO DE VENEZUELA Teléfono Receptor: 0426***8025 Cédula Receptor: 24***819 Monto de la Operación: 924,00 Concepto: Diezmos"
+  },
+  "BDV-98.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "001115932852",
+    "monto_detectado": 924.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "",
+    "texto_completo": "Resultado de PagomóvilBDV Tu PagomóvilBDV ha sido realizado con éxito. El número de operación es: 001115932852 Banco Receptor: BANCO DE VENEZUELA Teléfono Receptor: 0426***7660 Cédula Receptor: 15***228 Monto de la Operación: 924,00 Concepto: Pago danny"
+  },
+  "BDV-99.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "001122462560",
+    "monto_detectado": 714.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "",
+    "texto_completo": "Resultado de PagomóvilBDV Tu PagomóvilBDV ha sido realizado con éxito. El número de operación es: 001122462560 Banco Receptor: BANCO DE VENEZUELA Teléfono Receptor: 0426***8025 Cédula Receptor: 24***819 Monto de la Operación: 714,00 Concepto: Diezmos"
+  },
+  "BDV-100.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "007707941907",
+    "monto_detectado": 2000.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-10-17",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 2.000,00 Bs Fecha: 17/10/2026 Operación: 007707941907 Identificación: 12698850 Origen: 0102****6542 Destino: 04145223119 Banco: 0163 - BANCO DEL TESORO Concepto: pago"
+  },
+  "BDV-101.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "007707761661",
+    "monto_detectado": 1000.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-10-17",
+    "texto_completo": "PagomóvilBDV Personas 1.000,00 Bs Fecha: 17/10/2026 Operación: 007707761661 Identificación: 12698850 Origen: 0102****5584 Destino: 04145223119 Banco: 0163 - BANCO DEL TESORO Concepto: pago"
+  },
+  "BDV-102.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "007695564761",
+    "monto_detectado": 900.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-10-16",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 900,00 Bs Fecha: 16/10/2026 Operación: 007695564761 Identificación: 12698850 Origen: 0102****7660 Destino: 04145223119 Banco: 0175 - BANCO DIGITAL DE LOS TRABAJADORES, BANCO UNIVERSAL Concepto: colaboracion agua"
+  },
+  "BDV-103.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "007707389030",
+    "monto_detectado": 500.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-10-17",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 500,00 Bs Fecha: 17/10/2026 Operación: 007707389030 Identificación: 12698850 Origen: 0102****2014 Destino: 04145223119 Banco: 0163 - BANCO DEL TESORO"
+  },
+  "BDV-104.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "007676467626",
+    "monto_detectado": 1400.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-10-15",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 1.400,00 Bs Fecha: 15/10/2026 Operación: 007676467626 Identificación: 12698850 Origen: 0102****6448 Destino: 04145223119 Banco: 0163 - BANCO DEL TESORO Concepto: Gas Sra Zoraya"
+  },
+  "BDV-105.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "007678346819",
+    "monto_detectado": 2800.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-10-15",
+    "texto_completo": "PagomóvilBDV Personas 2.800,00 Bs Fecha: 15/10/2026 Operación: 007678346819 Identificación: 12698850 Origen: 0102****0894 Destino: 04145223119 Banco: 0163 - BANCO DEL TESORO Concepto: pagar"
+  },
+  "BDV-106.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "007678134365",
+    "monto_detectado": 1400.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-10-15",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 1.400,00 Bs Fecha: 15/10/2026 Operación: 007678134365 Identificación: 12698850 Origen: 0102****6957 Destino: 04145223119 Banco: 0163 - BANCO DEL TESORO Concepto: pago gas tania"
+  },
+  "BDV-107.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "007676560614",
+    "monto_detectado": 1400.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-10-15",
+    "texto_completo": "PagomóvilBDV Personas 1.400,00 Bs Fecha: 15/10/2026 Operación: 007676560614 Identificación: 12698850 Origen: 0102****3653 Destino: 04145223119 Banco: 0163 - BANCO DEL TESORO Concepto: Pago De Gas"
+  },
+  "BDV-108.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "007677598314",
+    "monto_detectado": 1400.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-10-15",
+    "texto_completo": "PagomóvilBDV Personas 1.400,00 Bs Fecha: 15/10/2026 Operación: 007677598314 Identificación: 12698850 Origen: 0102****0397 Destino: 04145223119 Banco: 0163 - BANCO DEL TESORO Concepto: pGo"
+  },
+  "BDV-109.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "007677479231",
+    "monto_detectado": 1400.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-10-15",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 1.400,00 Bs Fecha: 15/10/2026 Operación: 007677479231 Identificación: 12698850 Origen: 0102****7644 Destino: 04145223119 Banco: 0163 - BANCO DEL TESORO"
+  },
+  "BDV-110.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "007675898554",
+    "monto_detectado": 1400.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-10-15",
+    "texto_completo": "PagomóvilBDV Personas 1.400,00 Bs Fecha: 15/10/2026 Operación: 007675898554 Identificación: 12698850 Origen: 0102****8960 Destino: 04145223119 Banco: 0163 - BANCO DEL TESORO Concepto: pago"
+  },
+  "BDV-111.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "007262140016",
+    "monto_detectado": 1298.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-09-07",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 1.298,00 Bs Fecha: 07/09/2026 Operación: 007262140016 Identificación: 12698850 Origen: 0102****6957 Destino: 04145223119 Banco: 0163 - BANCO DEL TESORO Concepto: pago de gas tania"
+  },
+  "BDV-112.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "007676074800",
+    "monto_detectado": 1400.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-10-15",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 1.400,00 Bs Fecha: 15/10/2026 Operación: 007676074800 Identificación: 12698850 Origen: 0102****6542 Destino: 04145223119 Banco: 0163 - BANCO DEL TESORO Concepto: pago"
+  },
+  "BDV-113.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "007676011029",
+    "monto_detectado": 1400.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-10-15",
+    "texto_completo": "PagomóvilBDV Personas 1.400,00 Bs Fecha: 15/10/2026 Operación: 007676011029 Identificación: 12698850 Origen: 0102****3653 Destino: 04145223119 Banco: 0163 - BANCO DEL TESORO Concepto: Pago De Gas"
+  },
+  "BDV-114.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "007274732831",
+    "monto_detectado": 1298.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-09-08",
+    "texto_completo": "PagomóvilBDV Personas 1.298,00 Bs Fecha: 08/09/2026 Operación: 007274732831 Identificación: 12698850 Origen: 0102****3653 Destino: 04145223119 Banco: 0163 - BANCO DEL TESORO"
+  },
+  "BDV-115.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "007258590903",
+    "monto_detectado": 1298.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-09-07",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 1.298,00 Bs Fecha: 07/09/2026 Operación: 007258590903 Identificación: 12698850 Origen: 0102****6542 Destino: 04145223119 Banco: 0163 - BANCO DEL TESORO Concepto: pago gas"
+  },
+  "BDV-116.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "007275768220",
+    "monto_detectado": 1300.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-09-08",
+    "texto_completo": "PagomóvilBDV Personas 1.300,00 Bs Fecha: 08/09/2026 Operación: 007275768220 Identificación: 12698850 Origen: 0102****1396 Destino: 04145223119 Banco: 0163 - BANCO DEL TESORO Concepto: pago gas"
+  },
+  "BDV-117.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "007257653957",
+    "monto_detectado": 2600.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-09-06",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 2.600,00 Bs Fecha: 06/09/2026 Operación: 007257653957 Identificación: 12698850 Origen: 0102****3796 Destino: 04145223119 Banco: 0163 - BANCO DEL TESORO Concepto: bonbonas"
+  },
+  "BDV-118.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "006953532858",
+    "monto_detectado": 5900.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-08-09",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 5.900,00 Bs Fecha: 09/08/2026 Operación: 006953532858 Identificación: 12698850 Origen: 0102****6957 Destino: 04145223119 Banco: 0163 - BANCO DEL TESORO Concepto: pago combo tania"
+  },
+  "BDV-119.jpeg": {
+    "tipo": "digital",
+    "numero_referencia": "007257642600",
+    "monto_detectado": 1298.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-09-06",
+    "texto_completo": "PagomóvilBDV Personas 1.298,00 Bs Fecha: 06/09/2026 Operación: 007257642600 Identificación: 12698850 Origen: 0102****3434 Destino: 04145223119 Banco: 0163 - BANCO DEL TESORO Concepto: pago"
+  },
+  "BDV-120.jpeg": {
+    "tipo": "foto",
+    "numero_referencia": "006953316306",
+    "monto_detectado": 5900.0,
+    "banco_origen": "0102",
+    "fecha_operacion": "2026-08-09",
+    "texto_completo": "Comprobante de operación PagomóvilBDV Personas 5.900,00 Bs Fecha: 09/08/2026 Operación: 006953316306 Identificación: 12698850 Origen: 0102****6957 Destino: 04145223119 Banco: 0102 - BANCO DE VENEZUELA Concepto: pago de tania para el combo"
+  }
+}
